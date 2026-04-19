@@ -1,21 +1,20 @@
-@{
+ï»¿@{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
 }
 
 <script>
-(function () {
+(function (window, $) {
+    if (!window || !$) return;
 
-    const desdePosPago = @Html.Raw((desdePos ? "true" : "false"));
-    const urlBuscarCheque = '@Url.Action("BuscarChequePorNro", "Finanzas")';
-    const urlValidarChequeParaPago = '@Url.Action("ValidarChequeParaPago", "Finanzas")';
+    var desdePosPago = @Html.Raw((desdePos ? "true" : "false"));
 
-    function swalPago(opciones) {
-        const base = {
+    window.swalPago = function (opciones) {
+        var base = {
             allowOutsideClick: false
         };
 
         if (desdePosPago) {
-            const target =
+            var target =
                 document.querySelector("#modalPagoPOS .modal-content") ||
                 document.querySelector("#modalFinanzasPOS .modal-content") ||
                 document.body;
@@ -24,7 +23,7 @@
         }
 
         return Swal.fire(Object.assign(base, opciones || {}));
-    }
+    };
 
     window.volverDesdePago = function () {
         if (desdePosPago) {
@@ -36,7 +35,7 @@
             desactivarProteccionSalida();
         }
 
-        const urlVolver = $("#urlVolverPago").val();
+        var urlVolver = $("#urlVolverPago").val();
         if (urlVolver) {
             window.location.href = urlVolver;
             return;
@@ -45,496 +44,85 @@
         window.history.back();
     };
 
+    window.PagoChequeSeed = [
+        @if (Model != null && Model.Cheques != null)
+        {
+            for (int i = 0; i < Model.Cheques.Count; i++)
+            {
+                var c = Model.Cheques[i];
+<text>{ Id: @c.Id, NroCheque: '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(c.NroCheque))', Banco: '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(c.Banco))', FechaPago: '@c.FechaPago.ToString("yyyy-MM-dd")', Importe: @c.Importe.ToString(System.Globalization.CultureInfo.InvariantCulture) }@(i < Model.Cheques.Count - 1 ? "," : "")</text>
+            }
+        }
+    ];
+
+    function actualizarVisibilidad() {
+        var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
+        var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
+
+        var esCheque =
+            valor === "cheque" ||
+            valor === "eftvocheque" ||
+            valor === "efvtocheque" ||
+            texto === "cheque" ||
+            texto === "eftvocheque" ||
+            texto === "efvtocheque";
+
+        var esMixto =
+            valor === "eftvocheque" ||
+            valor === "efvtocheque" ||
+            texto === "eftvocheque" ||
+            texto === "efvtocheque";
+
+        if (esCheque) {
+            $("#bloqueCheques").show();
+            $("#importe").prop("readonly", true);
+
+            if (esMixto) {
+                $("#bloqueEfectivo").show();
+            } else {
+                $("#bloqueEfectivo").hide();
+                $("#Efectivo").val(0);
+            }
+
+            if (window.PagoCheques) {
+                window.PagoCheques.recalcularTotales();
+            }
+            return;
+        }
+
+        $("#bloqueCheques").hide();
+        $("#bloqueEfectivo").hide();
+        $("#importe").prop("readonly", false);
+
+        if (window.PagoCheques) {
+            window.PagoCheques.clearCheques();
+        } else {
+            $("#tablaCheques tbody").empty();
+            $("#txtTotalCheques").val(0);
+        }
+    }
+
     $(document)
         .off("change.posPagoProteccion keyup.posPagoProteccion", "#formPago input, #formPago select, #formPago textarea")
         .on("change.posPagoProteccion keyup.posPagoProteccion", "#formPago input, #formPago select, #formPago textarea", function () {
             if (!desdePosPago && typeof activarProteccionSalida === "function") {
                 activarProteccionSalida();
             }
-        });
-
-    $(document)
-        .off("hidden.bs.modal.posPagoInterno", "#modalBuscarCheques, #modalAltaCheque")
-        .on("hidden.bs.modal.posPagoInterno", "#modalBuscarCheques, #modalAltaCheque", function (e) {
-            e.stopPropagation();
-
-            if (desdePosPago) {
-                setTimeout(function () {
-                    $("body").addClass("modal-open");
-                }, 0);
+        })
+        .off("change.posPago", "#formaPago")
+        .on("change.posPago", "#formaPago", function () {
+            actualizarVisibilidad();
+        })
+        .off("input.posPago", "#Efectivo")
+        .on("input.posPago", "#Efectivo", function () {
+            if (window.PagoCheques) {
+                window.PagoCheques.recalcularTotales();
             }
-        });
-
-    $(document)
-        .off("shown.bs.modal.posPagoInterno", "#modalBuscarCheques, #modalAltaCheque")
-        .on("shown.bs.modal.posPagoInterno", "#modalBuscarCheques, #modalAltaCheque", function (e) {
-            e.stopPropagation();
         });
 
     $(document).ready(function () {
-
-        $("#SucursalId").focus();
-
-        function actualizarVisibilidad() {
-            const $formaPago = $("#formaPago");
-            const valor = ($formaPago.val() || "").toString().trim().toLowerCase();
-            const texto = ($formaPago.find("option:selected").text() || "").toString().trim().toLowerCase();
-
-            const esCheque =
-                valor === "cheque" ||
-                valor === "eftvocheque" ||
-                valor === "efvtocheque" ||
-                texto === "cheque" ||
-                texto === "eftvocheque" ||
-                texto === "efvtocheque";
-
-            const esEfectivoCheque =
-                valor === "eftvocheque" ||
-                valor === "efvtocheque" ||
-                texto === "eftvocheque" ||
-                texto === "efvtocheque";
-
-            if (esCheque) {
-                $("#bloqueCheques").show();
-                $("#importe").prop("readonly", true);
-
-                if (esEfectivoCheque) {
-                    $("#bloqueEfectivo").show();
-                } else {
-                    $("#bloqueEfectivo").hide();
-                    $("#Efectivo").val(0);
-                }
-
-                actualizarImporte();
-            } else {
-                $("#bloqueCheques").hide();
-                $("#bloqueEfectivo").hide();
-                $("#importe").prop("readonly", false);
-
-                $("#tablaCheques tbody").empty();
-                $("#txtTotalCheques").val(0);
-            }
-
-            console.log("formaPago valor:", valor);
-            console.log("formaPago texto:", texto);
-            console.log("bloqueCheques visible:", $("#bloqueCheques").is(":visible"));
-        }
-
-        $("#formaPago").off("change.posPago").on("change.posPago", function () {
-            actualizarVisibilidad();
-        });
-
-        setTimeout(function () {
-            actualizarVisibilidad();
-        }, 0);
-
-        $("#txtNroCheque")
-            .off("keydown.posPago")
-            .on("keydown.posPago", function (e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    buscarChequePorNumero();
-                    return false;
-                }
-            });
-
-        $("#btnAgregarCheque")
-            .off("click.posPago")
-            .on("click.posPago", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                buscarChequePorNumero();
-                return false;
-            });
-
-        $("#btnBuscarCheques")
-            .off("click.posPago")
-            .on("click.posPago", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $("#modalBuscarCheques").modal("show");
-                cargarCheques();
-                return false;
-            });
-
-        function buscarChequePorNumero() {
-            var nro = $("#txtNroCheque").val().trim();
-            if (nro === "") return;
-
-            $.get(urlBuscarCheque,
-                {
-                    numero: nro,
-                    pagoId: $("#Id").val(),
-                    esAProveedor: $("#AProveedor").val() === "true"
-                },
-                function (data) {
-                    if (!data.ok) {
-                        if (data.mensaje && data.mensaje.includes("No existe un cheque con ese número")) {
-                            swalPago({
-                                title: "No existe un cheque con ese número",
-                                text: "¿Desea darlo de alta?",
-                                icon: "warning",
-                                showCancelButton: true,
-                                confirmButtonText: "Sí, agregar",
-                                cancelButtonText: "No"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    ModalAltaCheque.abrir(nro);
-                                }
-                            });
-
-                            return;
-                        }
-
-                        swalPago({
-                            title: "Atención",
-                            html: (data.mensaje || "No se pudo validar el cheque.").replace(/\n/g, "<br>"),
-                            icon: "error"
-                        });
-
-                        return;
-                    }
-
-                    agregarChequeATabla(
-                        data.cheque.Id,
-                        data.cheque.NroCheque,
-                        data.cheque.Banco,
-                        data.cheque.FechaPago,
-                        data.cheque.Importe,
-                        true
-                    );
-                }
-            ).fail(function () {
-                swalPago({
-                    title: "Error",
-                    text: "No se pudo consultar el cheque.",
-                    icon: "error"
-                });
-            });
-        }
-
-        $(document)
-            .off("cheque:guardado.posPago")
-            .on("cheque:guardado.posPago", function () {
-                buscarChequePorNumero();
-            });
-
-        $(document)
-            .off("chequeCreado.posPago")
-            .on("chequeCreado.posPago", function (e, cheque) {
-                $("#txtNroCheque").val(cheque.NroCheque);
-                buscarChequePorNumero();
-            });
-
-        let fecha = new Date();
-        fecha.setDate(fecha.getDate() - 31);
-        let a = fecha.getFullYear();
-        let m = ("0" + (fecha.getMonth() + 1)).slice(-2);
-        let d = ("0" + fecha.getDate()).slice(-2);
-        $("#filtroDesde").val(`${a}-${m}-${d}`);
-
-        $("#btnFiltrarCheques")
-            .off("click.posPago")
-            .on("click.posPago", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                cargarCheques();
-                return false;
-            });
-
-        function cargarCheques() {
-            let estado = $("#filtroEstado").val();
-            let nroCheque = $("#filtroNroCheque").val();
-            let desde = $("#filtroDesde").val();
-
-            $.ajax({
-                url: '@Url.Action("GetCheques", "Finanzas")',
-                type: 'GET',
-                data: { estado, nroCheque, desde },
-                success: function (lista) {
-                    let tbody = $("#tablaModalCheques tbody");
-                    tbody.empty();
-
-                    lista.forEach(c => {
-                        let fila = `
-                            <tr
-                                data-id="${c.Id}"
-                                data-nro="${c.NroCheque}"
-                                data-banco="${c.Banco}"
-                                data-fechapago="${c.FechaPago}"
-                                data-importe="${c.Importe.toFixed(2)}"
-                            >
-                                <td>${c.Id}</td>
-                                <td>${c.NroCheque}</td>
-                                <td>${c.Banco}</td>
-                                <td>$${c.Importe.toFixed(2)}</td>
-                                <td>${c.FechaPago}</td>
-                                <td>${c.Estado}</td>
-                                <td>${c.Titular}</td>
-                            </tr>
-                        `;
-
-                        tbody.append(fila);
-                    });
-                },
-                error: function () {
-                    swalPago({
-                        title: "Error",
-                        text: "No se pudieron cargar los cheques.",
-                        icon: "error"
-                    });
-                }
-            });
-        }
-
-        $("#tablaModalCheques")
-            .off("dblclick.posPago", "tr")
-            .on("dblclick.posPago", "tr", function () {
-                let nro = $(this).data("nro");
-                $("#txtNroCheque").val(nro);
-                $("#modalBuscarCheques").modal("hide");
-
-                $("#modalBuscarCheques").one("hidden.bs.modal", function (e) {
-                    e.stopPropagation();
-                    buscarChequePorNumero();
-                });
-            });
-
-        function agregarFilaCheque(id, nro, banco, fechapago, importe) {
-            let index = $("#tablaCheques tbody tr").length;
-
-            let fila = `
-                <tr data-id="${id}">
-                    <td>
-                        ${nro}
-                        <input type="hidden" name="Cheques[${index}].Numero" value="${nro}">
-                    </td>
-
-                    <td>
-                        ${banco}
-                        <input type="hidden" name="Cheques[${index}].Banco" value="${banco}">
-                    </td>
-
-                    <td>
-                        ${fechapago}
-                        <input type="hidden" name="Cheques[${index}].FechaPago" value="${fechapago}">
-                    </td>
-
-                    <td class="imp">
-                        $${parseFloat(importe).toFixed(2)}
-                        <input type="hidden" name="Cheques[${index}].Importe" value="${parseFloat(importe).toFixed(2)}">
-                    </td>
-
-                    <td>
-                        <input type="hidden" name="Cheques[${index}].Id" value="${id}">
-                        <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">Quitar</button>
-                    </td>
-                </tr>
-            `;
-
-            $("#tablaCheques tbody").append(fila);
-            actualizarImporte();
-            $("#txtNroCheque").val("");
-        }
-
-        function agregarChequeATabla(id, nro, banco, fechapago, importe, validarCheque = false) {
-            if ($("#tablaCheques tbody tr[data-id='" + id + "']").length > 0) {
-                swalPago({
-                    title: "Aviso",
-                    text: "Este cheque ya fue agregado.",
-                    icon: "info"
-                });
-                return false;
-            }
-
-            if (!validarCheque) {
-                agregarFilaCheque(id, nro, banco, fechapago, importe);
-                return true;
-            }
-
-            $.get(urlValidarChequeParaPago, {
-                numero: nro,
-                pagoActual: $("#Id").val(),
-                esAProveedor: $("#AProveedor").val() === "true",
-                validarCheque: true
-            })
-            .done(function (resp) {
-                if (!resp.ok) {
-                    swalPago({
-                        title: "No se puede agregar",
-                        text: resp.mensaje,
-                        icon: "warning"
-                    });
-                    return;
-                }
-
-                agregarFilaCheque(id, nro, banco, fechapago, importe);
-            })
-            .fail(function () {
-                swalPago({
-                    title: "Error",
-                    text: "Error al validar el cheque.",
-                    icon: "error"
-                });
-            });
-        }
-
-        $("#tablaCheques")
-            .off("click.posPago", ".btnQuitarCheque")
-            .on("click.posPago", ".btnQuitarCheque", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $(this).closest("tr").remove();
-                reindexarCheques();
-                actualizarImporte();
-                return false;
-            });
-
-        function reindexarCheques() {
-            $("#tablaCheques tbody tr").each(function (i) {
-                $(this).find("input").each(function () {
-                    let name = $(this).attr("name");
-                    name = name.replace(/\[\d+\]/, `[${i}]`);
-                    $(this).attr("name", name);
-                });
-            });
-        }
-
-        function actualizarImporte() {
-            let totalCheques = 0;
-
-            $("#tablaCheques tbody tr").each(function () {
-                let texto = $(this).find(".imp").text()
-                    .replace("$", "")
-                    .trim();
-
-                let valor = parseFloat(texto);
-
-                if (!isNaN(valor)) totalCheques += valor;
-            });
-
-            $("#txtTotalCheques").val(totalCheques.toFixed(2));
-
-            let efectivo = parseFloat($("#Efectivo").val() || "") || 0;
-            $("#importe").val((totalCheques + efectivo).toFixed(2));
-        }
-
-        $("#Efectivo").off("input.posPago").on("input.posPago", actualizarImporte);
-
-        @if (Model != null && Model.Id > 0 && Model.Cheques != null)
-        {
-            foreach (var c in Model.Cheques)
-            {
-                <text>
-                    agregarChequeATabla(
-                        @c.Id,
-                        "@c.NroCheque",
-                        "@c.Banco",
-                        "@c.FechaPago.ToString("yyyy-MM-dd")",
-                        @c.Importe.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                    );
-                </text>
-            }
-        }
-
+        $("#SucursalId").trigger("focus");
+        setTimeout(actualizarVisibilidad, 0);
     });
-
-    $(document)
-        .off("submit.posPago", "#formPago")
-        .on("submit.posPago", "#formPago", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            var suc = $("#SucursalId").val();
-
-            if (!suc) {
-                swalPago({
-                    title: "Atención",
-                    text: "Debe seleccionar una sucursal antes de guardar.",
-                    icon: "warning"
-                });
-                return false;
-            }
-
-            let imp = $("#importe").val()?.trim() ?? "";
-            $("#importe").val(imp);
-
-            let impEf = $("#Efectivo").val()?.trim();
-            if (!impEf) impEf = "0";
-            $("#Efectivo").val(impEf);
-
-            let lista = [];
-
-            $("#tablaCheques tbody tr").each(function () {
-                lista.push({
-                    Id: $(this).data("id") || 0,
-                    NroCheque: $(this).find("td:eq(0)").contents().filter(function () {
-                        return this.nodeType === 3;
-                    }).text().trim(),
-                    Banco: $(this).find("td:eq(1)").contents().filter(function () {
-                        return this.nodeType === 3;
-                    }).text().trim(),
-                    FechaPago: $(this).find("td:eq(2)").contents().filter(function () {
-                        return this.nodeType === 3;
-                    }).text().trim(),
-                    Importe: parseFloat(
-                        $(this).find("td:eq(3)").contents().filter(function () {
-                            return this.nodeType === 3;
-                        }).text().replace("$", "").trim()
-                    ) || 0
-                });
-            });
-
-            $("#ChequesJson").val(JSON.stringify(lista));
-
-            $.ajax({
-                url: this.action,
-                type: "POST",
-                data: $(this).serialize(),
-                dataType: "json",
-                success: function (resp) {
-                    if (!resp.ok) {
-                        swalPago({
-                            icon: "warning",
-                            title: "Validación",
-                            text: resp.mensaje
-                        });
-                        return;
-                    }
-
-                    swalPago({
-                        icon: "success",
-                        title: "Pago guardado correctamente"
-                    }).then(() => {
-                        if (desdePosPago) {
-                            $("#modalPagoPOS").modal("hide");
-                            return;
-                        }
-
-                        if (resp.redirectUrl) {
-                            window.location.href = resp.redirectUrl;
-                        } else {
-                            volverDesdePago();
-                        }
-                    });
-                },
-                error: function (xhr) {
-                    let mensaje = "Ocurrió un error inesperado al guardar el pago.";
-
-                    if (xhr?.responseJSON?.mensaje) {
-                        mensaje = xhr.responseJSON.mensaje;
-                    }
-
-                    swalPago({
-                        icon: "error",
-                        title: "Error",
-                        text: mensaje
-                    });
-                }
-            });
-
-            return false;
-        });
-})();
+})(window, jQuery);
 </script>

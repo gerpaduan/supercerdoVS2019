@@ -33,31 +33,138 @@ namespace Datos
 
         private static string LikePattern(string text) => "%" + EscapeLike((text ?? "").Trim()) + "%";
 
+        private static bool ColumnaExiste(SqlDataReader dr, string columna)
+        {
+            try { return dr.GetOrdinal(columna) >= 0; }
+            catch { return false; }
+        }
+
+        private static string GetString(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value
+                ? Convert.ToString(dr[columna])
+                : "";
+        }
+
+        private static int GetInt(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value
+                ? Convert.ToInt32(dr[columna])
+                : 0;
+        }
+
+        private static float GetFloat(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value
+                ? Convert.ToSingle(dr[columna])
+                : 0f;
+        }
+
+        private static bool GetBool(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value && Convert.ToBoolean(dr[columna]);
+        }
+
+        private Entidades.Usuario MapUsuarioLiviano(SqlDataReader dr, string prefix)
+        {
+            int id = GetInt(dr, prefix + "Id");
+            if (id <= 0) return null;
+
+            return new Entidades.Usuario
+            {
+                Id = id,
+                Nombre = GetString(dr, prefix + "Nombre"),
+                User = GetString(dr, prefix + "User"),
+                Email = GetString(dr, prefix + "Email"),
+                IdSucursal = GetInt(dr, prefix + "IdSucursal"),
+                IdEmpresa = GetInt(dr, prefix + "IdEmpresa")
+            };
+        }
+
+        private Entidades.Sucursal MapSucursalLiviana(SqlDataReader dr, string prefix)
+        {
+            int id = GetInt(dr, prefix + "Id");
+            if (id <= 0) return null;
+
+            return new Entidades.Sucursal
+            {
+                IdSucursal = id,
+                SucursalNombre = GetString(dr, prefix + "Nombre"),
+                IdEmpresa = GetInt(dr, prefix + "IdEmpresa"),
+                CodPuntoVentaAfip = GetInt(dr, prefix + "CodPuntoVentaAfip"),
+                Direccion = GetString(dr, prefix + "Direccion"),
+                Localidad = GetString(dr, prefix + "Localidad"),
+                Provincia = GetString(dr, prefix + "Provincia"),
+                Pais = GetString(dr, prefix + "Pais")
+            };
+        }
+
+        private Entidades.Persona MapPersonaLiviana(SqlDataReader dr, string prefix)
+        {
+            int id = GetInt(dr, prefix + "Id");
+            if (id <= 0) return null;
+
+            return new Entidades.Persona
+            {
+                idPersona = id,
+                Identificacion = GetString(dr, prefix + "Identificacion"),
+                razonSocial = GetString(dr, prefix + "RazonSocial"),
+                IdIva = GetInt(dr, prefix + "IdIva"),
+                Iva = GetString(dr, prefix + "Iva"),
+                Cuit = GetString(dr, prefix + "Cuit"),
+                Telefono = GetString(dr, prefix + "Telefono"),
+                Domicilio = GetString(dr, prefix + "Domicilio"),
+                Ciudad = GetString(dr, prefix + "Ciudad"),
+                CtaCte = GetBool(dr, prefix + "CtaCte"),
+                Bonificacion = GetFloat(dr, prefix + "Bonificacion")
+            };
+        }
+
         #endregion
 
         #region Cuenta Corriente
 
-        public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona)
+        public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona, string ordenSaldo = "DESC")
         {
+            string orden = string.Equals(ordenSaldo, "ASC", StringComparison.OrdinalIgnoreCase)
+                ? "ASC"
+                : "DESC";
+
             const string sql = @"
-                SELECT 
+                WITH Saldos AS (
+                    SELECT
+                        m.idPersona,
+                        SUM(m.importe) AS Saldo
+                    FROM dbo.MovCtaCte m
+                    GROUP BY m.idPersona
+                )
+                SELECT
                     p.idPersona AS IdPersona,
                     p.identificacion AS [Nombre Identif.],
                     p.razonSocial AS [Razon Social],
-                    SUM(m.importe) AS Saldo
-                FROM dbo.Personas p
-                INNER JOIN dbo.MovCtaCte m ON p.idPersona = m.idPersona
-                WHERE 
+                    s.Saldo AS Saldo
+                FROM Saldos s
+                INNER JOIN dbo.Personas p ON p.idPersona = s.idPersona
+                WHERE
                     (
-                        @idPersona IS NOT NULL AND @idPersona <> 0 AND p.idPersona = @idPersona
+                        @idPersona IS NOT NULL
+                        AND @idPersona <> 0
+                        AND p.idPersona = @idPersona
                     )
                     OR
                     (
                         (@idPersona IS NULL OR @idPersona = 0)
-                        AND (p.identificacion LIKE @texto ESCAPE '\' OR p.razonSocial LIKE @texto ESCAPE '\')
+                        AND
+                        (
+                            @textoBusqueda = ''
+                            OR p.identificacion LIKE @texto ESCAPE '\'
+                            OR p.razonSocial LIKE @texto ESCAPE '\'
+                        )
                     )
-                GROUP BY p.idPersona, p.identificacion, p.razonSocial
-                ORDER BY p.razonSocial;";
+                ORDER BY
+                    CASE WHEN @ordenSaldo = 'ASC' THEN s.Saldo END ASC,
+                    CASE WHEN @ordenSaldo = 'DESC' THEN s.Saldo END DESC,
+                    p.razonSocial ASC;";
 
             return Db.DataTable(
                 _empresa,
@@ -66,7 +173,9 @@ namespace Datos
                 setParams: p =>
                 {
                     p.Add("@idPersona", SqlDbType.Int).Value = (object)idPersona ?? DBNull.Value;
+                    p.Add("@textoBusqueda", SqlDbType.NVarChar, 200).Value = (txtBusqueda ?? "").Trim();
                     p.Add("@texto", SqlDbType.NVarChar, 200).Value = LikePattern(txtBusqueda);
+                    p.Add("@ordenSaldo", SqlDbType.VarChar, 4).Value = orden;
                 }
             );
         }
@@ -92,15 +201,90 @@ namespace Datos
             Entidades.MovCtaCte.getBy getBy)
         {
             string sql = (getBy == Entidades.MovCtaCte.getBy.Id)
-                ? "SELECT TOP 1 * FROM MovCtaCte WHERE id = @id ORDER BY id DESC"
-                : "SELECT TOP 1 * FROM MovCtaCte WHERE tabla = @tabla AND idTabla = @idTabla ORDER BY id DESC";
-
-            Entidades.MovCtaCte mov = null;
-
-            int idPersona = 0;
-            int idSucursal = 0;
-            int idCreadoPor = 0;
-            int? idActualizadoPor = null;
+                ? @"
+                    SELECT TOP 1
+                        m.*,
+                        p.idPersona AS personaId,
+                        p.identificacion AS personaIdentificacion,
+                        p.razonSocial AS personaRazonSocial,
+                        p.idIva AS personaIdIva,
+                        iva.iva AS personaIva,
+                        p.cuit AS personaCuit,
+                        p.telefono AS personaTelefono,
+                        p.domicilio AS personaDomicilio,
+                        p.ciudad AS personaCiudad,
+                        p.ctaCte AS personaCtaCte,
+                        p.bonificacion AS personaBonificacion,
+                        s.idSucursal AS sucursalId,
+                        s.sucursal AS sucursalNombre,
+                        s.idEmpresa AS sucursalIdEmpresa,
+                        s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
+                        s.direccion AS sucursalDireccion,
+                        s.localidad AS sucursalLocalidad,
+                        s.provincia AS sucursalProvincia,
+                        s.pais AS sucursalPais,
+                        uc.id AS creadoPorId,
+                        uc.nombre AS creadoPorNombre,
+                        uc.usuario AS creadoPorUser,
+                        uc.email AS creadoPorEmail,
+                        uc.idSucursalUser AS creadoPorIdSucursal,
+                        uc.idEmpresa AS creadoPorIdEmpresa,
+                        ua.id AS actualizadoPorId,
+                        ua.nombre AS actualizadoPorNombre,
+                        ua.usuario AS actualizadoPorUser,
+                        ua.email AS actualizadoPorEmail,
+                        ua.idSucursalUser AS actualizadoPorIdSucursal,
+                        ua.idEmpresa AS actualizadoPorIdEmpresa
+                    FROM MovCtaCte m
+                    LEFT JOIN Personas p ON p.idPersona = m.idPersona
+                    LEFT JOIN Iva iva ON iva.id = p.idIva
+                    LEFT JOIN Sucursal s ON s.idSucursal = m.idSucursal
+                    LEFT JOIN Usuarios uc ON uc.id = m.creadoPor
+                    LEFT JOIN Usuarios ua ON ua.id = m.actualizadoPor
+                    WHERE m.id = @id
+                    ORDER BY m.id DESC"
+                : @"
+                    SELECT TOP 1
+                        m.*,
+                        p.idPersona AS personaId,
+                        p.identificacion AS personaIdentificacion,
+                        p.razonSocial AS personaRazonSocial,
+                        p.idIva AS personaIdIva,
+                        iva.iva AS personaIva,
+                        p.cuit AS personaCuit,
+                        p.telefono AS personaTelefono,
+                        p.domicilio AS personaDomicilio,
+                        p.ciudad AS personaCiudad,
+                        p.ctaCte AS personaCtaCte,
+                        p.bonificacion AS personaBonificacion,
+                        s.idSucursal AS sucursalId,
+                        s.sucursal AS sucursalNombre,
+                        s.idEmpresa AS sucursalIdEmpresa,
+                        s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
+                        s.direccion AS sucursalDireccion,
+                        s.localidad AS sucursalLocalidad,
+                        s.provincia AS sucursalProvincia,
+                        s.pais AS sucursalPais,
+                        uc.id AS creadoPorId,
+                        uc.nombre AS creadoPorNombre,
+                        uc.usuario AS creadoPorUser,
+                        uc.email AS creadoPorEmail,
+                        uc.idSucursalUser AS creadoPorIdSucursal,
+                        uc.idEmpresa AS creadoPorIdEmpresa,
+                        ua.id AS actualizadoPorId,
+                        ua.nombre AS actualizadoPorNombre,
+                        ua.usuario AS actualizadoPorUser,
+                        ua.email AS actualizadoPorEmail,
+                        ua.idSucursalUser AS actualizadoPorIdSucursal,
+                        ua.idEmpresa AS actualizadoPorIdEmpresa
+                    FROM MovCtaCte m
+                    LEFT JOIN Personas p ON p.idPersona = m.idPersona
+                    LEFT JOIN Iva iva ON iva.id = p.idIva
+                    LEFT JOIN Sucursal s ON s.idSucursal = m.idSucursal
+                    LEFT JOIN Usuarios uc ON uc.id = m.creadoPor
+                    LEFT JOIN Usuarios ua ON ua.id = m.actualizadoPor
+                    WHERE m.tabla = @tabla AND m.idTabla = @idTabla
+                    ORDER BY m.id DESC";
 
             using (var con = Db.Open(_empresa))
             using (var cmd = new SqlCommand(sql, con))
@@ -118,7 +302,7 @@ namespace Datos
                     if (!dr.Read())
                         return null;
 
-                    mov = new Entidades.MovCtaCte
+                    return new Entidades.MovCtaCte
                     {
                         Id = Convert.ToInt32(dr["id"]),
                         Fecha = Convert.ToDateTime(dr["fecha"]),
@@ -130,28 +314,14 @@ namespace Datos
                         Importe = float.Parse(dr["importe"].ToString()),
                         QuitadoCtaCta = dr["quitadoCtaCte"] != DBNull.Value && Convert.ToBoolean(dr["quitadoCtaCte"]),
                         Creado = Convert.ToDateTime(dr["creado"]),
-                        Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(dr["actualizado"])
+                        Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(dr["actualizado"]),
+                        Persona = MapPersonaLiviana(dr, "persona"),
+                        Sucursal = MapSucursalLiviana(dr, "sucursal"),
+                        CreadoPor = MapUsuarioLiviano(dr, "creadoPor"),
+                        ActualizadoPor = MapUsuarioLiviano(dr, "actualizadoPor")
                     };
-
-                    idPersona = dr["idPersona"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idPersona"]);
-                    idSucursal = dr["idSucursal"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursal"]);
-                    idCreadoPor = dr["creadoPor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["creadoPor"]);
-                    idActualizadoPor = dr["actualizadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["actualizadoPor"]);
                 }
             }
-
-            // Relaciones fuera del reader
-            var oUsuarioD = new Datos.Usuario(_empresa, _param);
-            mov.CreadoPor = idCreadoPor > 0 ? oUsuarioD.getUsuarioById(idCreadoPor) : null;
-            mov.ActualizadoPor = idActualizadoPor.HasValue ? oUsuarioD.getUsuarioById(idActualizadoPor.Value) : null;
-
-            var oSucursalD = new Datos.Sucursal(_empresa, _param);
-            mov.Sucursal = idSucursal > 0 ? oSucursalD.findById(idSucursal) : null;
-
-            var oPersonaD = new Datos.Persona(_empresa, _param);
-            mov.Persona = idPersona > 0 ? oPersonaD.findById(idPersona) : null;
-
-            return mov;
         }
 
         public Entidades.MovCtaCte addOrEditMovCtaCte(Entidades.MovCtaCte oMovCtaCteE)
@@ -630,7 +800,47 @@ namespace Datos
             Entidades.Pago oPagoE = null;
 
             using (var con = Db.Open(_empresa))
-            using (var cmd = new SqlCommand("SELECT * FROM Pagos WHERE id = @id", con))
+            using (var cmd = new SqlCommand(@"
+                SELECT
+                    p.*,
+                    per.idPersona AS personaId,
+                    per.identificacion AS personaIdentificacion,
+                    per.razonSocial AS personaRazonSocial,
+                    per.idIva AS personaIdIva,
+                    iva.iva AS personaIva,
+                    per.cuit AS personaCuit,
+                    per.telefono AS personaTelefono,
+                    per.domicilio AS personaDomicilio,
+                    per.ciudad AS personaCiudad,
+                    per.ctaCte AS personaCtaCte,
+                    per.bonificacion AS personaBonificacion,
+                    s.idSucursal AS sucursalId,
+                    s.sucursal AS sucursalNombre,
+                    s.idEmpresa AS sucursalIdEmpresa,
+                    s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
+                    s.direccion AS sucursalDireccion,
+                    s.localidad AS sucursalLocalidad,
+                    s.provincia AS sucursalProvincia,
+                    s.pais AS sucursalPais,
+                    uc.id AS creadoPorId,
+                    uc.nombre AS creadoPorNombre,
+                    uc.usuario AS creadoPorUser,
+                    uc.email AS creadoPorEmail,
+                    uc.idSucursalUser AS creadoPorIdSucursal,
+                    uc.idEmpresa AS creadoPorIdEmpresa,
+                    ua.id AS actualizadoPorId,
+                    ua.nombre AS actualizadoPorNombre,
+                    ua.usuario AS actualizadoPorUser,
+                    ua.email AS actualizadoPorEmail,
+                    ua.idSucursalUser AS actualizadoPorIdSucursal,
+                    ua.idEmpresa AS actualizadoPorIdEmpresa
+                FROM Pagos p
+                LEFT JOIN Personas per ON per.idPersona = p.idPersona
+                LEFT JOIN Iva iva ON iva.id = per.idIva
+                LEFT JOIN Sucursal s ON s.idSucursal = p.idSucursal
+                LEFT JOIN Usuarios uc ON uc.id = p.creadoPor
+                LEFT JOIN Usuarios ua ON ua.id = p.actualizadoPor
+                WHERE p.id = @id", con))
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandTimeout = Conexion.timeOut;
@@ -659,7 +869,11 @@ namespace Datos
                             Creado = Convert.ToDateTime(dr["creado"]),
                             Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(dr["actualizado"]),
                             IdCreadoPor = Convert.ToInt32(dr["creadoPor"]),
-                            IdActualizadoPor = dr["actualizadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["actualizadoPor"])
+                            IdActualizadoPor = dr["actualizadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["actualizadoPor"]),
+                            Persona = MapPersonaLiviana(dr, "persona"),
+                            Sucursal = MapSucursalLiviana(dr, "sucursal"),
+                            CreadoPor = MapUsuarioLiviano(dr, "creadoPor"),
+                            ActualizadoPor = MapUsuarioLiviano(dr, "actualizadoPor")
                         };
                     }
                 }
@@ -674,14 +888,6 @@ namespace Datos
 
             if (conCheques)
                 oPagoE.Cheques = getChequesPorPago(oPagoE.Id, false);
-
-            var oSucursalD = new Datos.Sucursal(_empresa, _param);
-            oPagoE.Sucursal = oSucursalD.findById(oPagoE.IdSucursal);
-
-            var oUsuarioD = new Datos.Usuario(_empresa, _param);
-            oPagoE.CreadoPor = oUsuarioD.getUsuarioById(oPagoE.IdCreadoPor);
-            if (oPagoE.IdActualizadoPor.HasValue)
-                oPagoE.ActualizadoPor = oUsuarioD.getUsuarioById(oPagoE.IdActualizadoPor.Value);
 
             return oPagoE;
         }

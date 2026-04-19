@@ -116,6 +116,14 @@
                             @Html.EnumDropDownListFor(m => m.FormaPago_, new { @class = "form-control", id = "formaPago" })
                         </div>
 
+                        <div id="pagoModoResumen" class="pago-modo-resumen pago-modo-neutro" aria-live="polite">
+                            <div class="pago-modo-badge" id="pagoModoBadge">Pago simple</div>
+                            <div class="pago-modo-texto">
+                                <strong id="pagoModoTitulo">Importe manual</strong>
+                                <span id="pagoModoDescripcion">Ingresá el importe total del pago.</span>
+                            </div>
+                        </div>
+
                         <div class="form-group importe-destacado">
                             <label>Importe</label>
                             @Html.TextBoxFor(m => m.Importe, new
@@ -191,6 +199,7 @@
                         <input type="hidden" id="ChequesJson" name="ChequesJson" />
 
                         <button type="submit"
+                                id="btnGuardarPago"
                                 onclick="if (!@desdePos.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
                                 class="btn btn-success btn-block">
                             Guardar
@@ -203,7 +212,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalBuscarCheques" tabindex="-1" role="dialog" aria-labelledby="modalBuscarChequesLabel" aria-hidden="true">
+<div class="modal fade" id="modalBuscarCheques" tabindex="-1" role="dialog" aria-labelledby="modalBuscarChequesLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
 
@@ -260,10 +269,15 @@
                                 <th>Fecha Pago</th>
                                 <th>Estado</th>
                                 <th>Titular</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+
+                <div class="small text-muted mt-2">
+                    Doble clic sobre un cheque para cargarlo al pago.
                 </div>
 
             </div>
@@ -278,26 +292,100 @@
 
 @Html.Partial("_ModalAltaCheque")
 
+<div class="modal fade" id="modalDetalleCheque" tabindex="-1" role="dialog" aria-labelledby="modalDetalleChequeLabel" aria-hidden="true" data-backdrop="static" data-keyboard="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="modalDetalleChequeLabel">Detalle del cheque</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Numero</small>
+                        <strong id="detalleChequeNumero">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Estado</small>
+                        <strong id="detalleChequeEstado">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Origen</small>
+                        <strong id="detalleChequeOrigen">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Banco</small>
+                        <strong id="detalleChequeBanco">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Recibido de</small>
+                        <strong id="detalleChequeRecibidoDe">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Entregado a</small>
+                        <strong id="detalleChequeEntregadoA">-</strong>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Observaciones</small>
+                        <div id="detalleChequeObservaciones" class="detalle-cheque-box">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (desdePos)
 {
+    @Html.Partial("_AddOrEditPagoScripts")
     <script>
         window.urls = {
-            guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")'
+            guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")',
+            buscarChequePorNro: '@Url.Action("BuscarChequePorNro", "Finanzas")',
+            getCheques: '@Url.Action("GetCheques", "Finanzas")'
         };
     </script>
     <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
-    @Html.Partial("_AddOrEditPagoScripts")
+    <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=2")"></script>
+    <script>
+        window.PagoCheques && window.PagoCheques.init({
+            desdePos: true,
+            guardarCheque: window.urls.guardarCheque,
+            buscarChequePorNro: window.urls.buscarChequePorNro,
+            getCheques: window.urls.getCheques
+        });
+        window.PagoUX && window.PagoUX.init();
+    </script>
 }
 else
 {
     @section Scripts{
+        @Html.Partial("_AddOrEditPagoScripts")
         <script>
             window.urls = {
-                guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")'
+                guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")',
+                buscarChequePorNro: '@Url.Action("BuscarChequePorNro", "Finanzas")',
+                getCheques: '@Url.Action("GetCheques", "Finanzas")'
             };
         </script>
         <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
-        @Html.Partial("_AddOrEditPagoScripts")
+        <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
+        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=2")"></script>
+        <script>
+            window.PagoCheques && window.PagoCheques.init({
+                desdePos: false,
+                guardarCheque: window.urls.guardarCheque,
+                buscarChequePorNro: window.urls.buscarChequePorNro,
+                getCheques: window.urls.getCheques
+            });
+            window.PagoUX && window.PagoUX.init();
+        </script>
     }
 }
 
@@ -318,5 +406,107 @@ else
         border-radius: 6px;
         padding: 12px;
         margin-bottom: 12px;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .bloque-pago.activo {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 3px rgba(78, 115, 223, .12);
+        background: #fbfcff;
+    }
+
+    .pago-modo-resumen {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        border-radius: 10px;
+        padding: .45rem .7rem;
+        margin-bottom: .75rem;
+        border: 1px solid #dbe5f3;
+        background: #f8fafc;
+    }
+
+    .pago-modo-badge {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        padding: .18rem .5rem;
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        background: #e9eef8;
+        color: #35539a;
+    }
+
+    .pago-modo-texto {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .pago-modo-texto strong {
+        color: #1f2937;
+        line-height: 1.1;
+        font-size: .82rem;
+        font-weight: 600;
+    }
+
+    .pago-modo-texto span {
+        color: #64748b;
+        font-size: .74rem;
+        line-height: 1.2;
+    }
+
+    .pago-modo-neutro {
+        border-color: #dbe5f3;
+        background: #f8fafc;
+    }
+
+    .pago-modo-neutro .pago-modo-badge {
+        background: #e9eef8;
+        color: #35539a;
+    }
+
+    .pago-modo-efectivo {
+        border-color: #c8ead6;
+        background: #f3fbf6;
+    }
+
+    .pago-modo-efectivo .pago-modo-badge {
+        background: #dff5e7;
+        color: #1f7a46;
+    }
+
+    .pago-modo-cheque {
+        border-color: #d7def8;
+        background: #f5f7ff;
+    }
+
+    .pago-modo-cheque .pago-modo-badge {
+        background: #e4e9ff;
+        color: #3451b2;
+    }
+
+    .pago-modo-mixto {
+        border-color: #f3dbba;
+        background: #fff8ef;
+    }
+
+    .pago-modo-mixto .pago-modo-badge {
+        background: #ffe8c7;
+        color: #9a5a12;
+    }
+
+    #tablaModalCheques tbody tr.is-selected {
+        background: rgba(13, 110, 253, 0.12);
+    }
+
+    .detalle-cheque-box {
+        min-height: 72px;
+        border: 1px solid #dbe5f3;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: .75rem;
+        white-space: pre-wrap;
     }
 </style>

@@ -1,9 +1,9 @@
 ﻿//// Abrir modal
 
-// Buscar en vivo
-$(document).on('keyup', '#filtroPersona', function (e) {
-    // Evitar que Enter dispare cargar de nuevo
-    if (e.key === 'Enter') return;
+// Buscar en vivo solo cuando cambia el texto.
+// Si escuchamos keyup para todo, las flechas tambien disparan una nueva carga
+// y se pierde la seleccion mientras el usuario navega la lista.
+$(document).on('input', '#filtroPersona', function () {
     cargarPersonas();
 });
 
@@ -112,5 +112,24 @@ $(document).on('dblclick', '#tablaPersonas tr.fila-persona', function () {
 function seleccionarPersona(idPersona, razonSocial) {
     $('#idPersona').val(idPersona);
     $('#razonSocial').val(razonSocial);
+    // Marcamos que hubo una seleccion real para que el POS pueda decidir
+    // acciones posteriores cuando el modal termine de cerrarse.
+    $('#modalBuscarPersona').data('persona-seleccionada', true);
     $('#modalBuscarPersona').modal('hide');
 }
+
+// Cuando el modal termina de cerrarse, devolvemos el foco al codigo del POS.
+// Si hubo seleccion, el comportamiento es el mismo; si se cerro sin elegir,
+// tambien volvemos al flujo principal de carga.
+$(document).on('hidden.bs.modal', '#modalBuscarPersona', function () {
+    $('#filtroPersona').val('');
+    $('#tablaPersonas').empty();
+    $(this).removeData('persona-seleccionada');
+    $(document).trigger('pos:foco-codigo');
+
+    // Refuerzo extra: cuando Bootstrap termina de devolver el foco,
+    // nos aseguramos de volver al input de codigo del POS.
+    setTimeout(function () {
+        $(document).trigger('pos:foco-codigo');
+    }, 0);
+});

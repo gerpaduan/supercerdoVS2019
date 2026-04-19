@@ -24,6 +24,103 @@ namespace Datos
             catch { return false; }
         }
 
+        private static string GetString(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value
+                ? Convert.ToString(dr[columna])
+                : "";
+        }
+
+        private static int GetInt(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value
+                ? Convert.ToInt32(dr[columna])
+                : 0;
+        }
+
+        private static float GetFloat(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value
+                ? Convert.ToSingle(dr[columna])
+                : 0f;
+        }
+
+        private static bool GetBool(SqlDataReader dr, string columna)
+        {
+            return ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value && Convert.ToBoolean(dr[columna]);
+        }
+
+        private void CargarRelacionesVenta(SqlDataReader drVenta, Entidades.Venta oVentaE)
+        {
+            bool tieneJoinVendedor = ColumnaExiste(drVenta, "vendedorNombre");
+            bool tieneJoinSucursal = ColumnaExiste(drVenta, "sucursalNombre");
+            bool tieneJoinPersona = ColumnaExiste(drVenta, "personaRazonSocial");
+
+            if (tieneJoinVendedor)
+            {
+                // Para listados alcanza con una versión liviana del vendedor.
+                oVentaE.Vendedor = new Entidades.Usuario
+                {
+                    Id = oVentaE.IdVendedor,
+                    Nombre = GetString(drVenta, "vendedorNombre"),
+                    User = GetString(drVenta, "vendedorUsuario"),
+                    Email = GetString(drVenta, "vendedorEmail"),
+                    IdSucursal = oVentaE.IdSucursal,
+                    IdEmpresa = GetInt(drVenta, "vendedorIdEmpresa")
+                };
+            }
+            else
+            {
+                var oUsuarioD = new Usuario(_empresa);
+                oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
+            }
+
+            if (tieneJoinSucursal)
+            {
+                // Mantiene la misma entidad que esperan Web y WinForms, pero sin consultas extra.
+                oVentaE.Sucursal = new Entidades.Sucursal
+                {
+                    IdSucursal = oVentaE.IdSucursal,
+                    SucursalNombre = GetString(drVenta, "sucursalNombre"),
+                    IdEmpresa = GetInt(drVenta, "sucursalIdEmpresa"),
+                    CodPuntoVentaAfip = GetInt(drVenta, "sucursalCodPuntoVentaAfip"),
+                    Direccion = GetString(drVenta, "sucursalDireccion"),
+                    Localidad = GetString(drVenta, "sucursalLocalidad"),
+                    Provincia = GetString(drVenta, "sucursalProvincia"),
+                    Pais = GetString(drVenta, "sucursalPais")
+                };
+            }
+            else
+            {
+                var oSucursalD = new Sucursal(_empresa);
+                oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
+            }
+
+            if (tieneJoinPersona)
+            {
+                oVentaE.Persona = new Entidades.Persona
+                {
+                    idPersona = oVentaE.IdPersona,
+                    razonSocial = GetString(drVenta, "personaRazonSocial"),
+                    Identificacion = GetString(drVenta, "personaIdentificacion"),
+                    IdIva = GetInt(drVenta, "personaIdIva"),
+                    Iva = GetString(drVenta, "personaIva"),
+                    Cuit = GetString(drVenta, "personaCuit"),
+                    Telefono = GetString(drVenta, "personaTelefono"),
+                    Domicilio = GetString(drVenta, "personaDomicilio"),
+                    Ciudad = GetString(drVenta, "personaCiudad"),
+                    CtaCte = GetBool(drVenta, "personaCtaCte"),
+                    Bonificacion = GetFloat(drVenta, "personaBonificacion"),
+                    ConsumidorFinal = oVentaE.IdPersona > 0 && _param != null && _param.GetInt(ParamKeys.IdConsumidorFinal, 0) == oVentaE.IdPersona
+                };
+            }
+            else
+            {
+                var oPersonaD = new Datos.Persona(_empresa, _param);
+                oVentaE.Persona = oPersonaD.findById(oVentaE.IdPersona);
+            }
+        }
+
         private Entidades.Venta MapVenta(SqlDataReader drVenta, bool cargarLineas = true)
         {
             var oVentaE = new Entidades.Venta
@@ -48,23 +145,21 @@ namespace Datos
                 IdPersona = drVenta["idPersona"] == DBNull.Value ? 0 : Convert.ToInt32(drVenta["idPersona"])
             };
 
-            // Relacionados (ojo N+1 si listás muchas ventas)
-            var oUsuarioD = new Usuario(_empresa);
-            oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
-
-            var oSucursalD = new Sucursal(_empresa);
-            oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
-
-            var oPersonaD = new Datos.Persona(_empresa, _param);
-            oVentaE.Persona = oPersonaD.findById(oVentaE.IdPersona);
+            CargarRelacionesVenta(drVenta, oVentaE);
 
             if (cargarLineas)
             {
                 oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
                 oVentaE.CantItems = oVentaE.getCantItems(oVentaE).ToString();
             }
+            else if (ColumnaExiste(drVenta, "cantItemsCalculado"))
+            {
+                oVentaE.CantItems = GetInt(drVenta, "cantItemsCalculado").ToString();
+            }
 
-            oVentaE.TotalImporte = getTotalVenta(oVentaE.IdVenta);
+            oVentaE.TotalImporte = ColumnaExiste(drVenta, "totalImporteCalculado")
+                ? GetFloat(drVenta, "totalImporteCalculado")
+                : getTotalVenta(oVentaE.IdVenta);
             oVentaE.TotalImporteOriginal = oVentaE.TotalImporte;
 
             return oVentaE;
@@ -104,20 +199,58 @@ namespace Datos
             bool cargarLineas)
         {
             const string sql = @"
-                SELECT *
-                FROM Ventas
-                WHERE fechaVenta >= @fechaDesde
-                  AND fechaVenta <  @fechaHastaMas1
-                  AND (@idVendedor = -1 OR idVendedor = @idVendedor)
-                  AND (@idCliente  = -1 OR idPersona  = @idCliente)
-                  AND (@idSucursal = -1 OR idSucursal = @idSucursal)
+                SELECT
+                    v.*,
+                    ISNULL(lv.totalImporteCalculado, 0) AS totalImporteCalculado,
+                    ISNULL(lv.cantItemsCalculado, 0) AS cantItemsCalculado,
+                    u.nombre AS vendedorNombre,
+                    u.usuario AS vendedorUsuario,
+                    u.email AS vendedorEmail,
+                    u.idEmpresa AS vendedorIdEmpresa,
+                    s.sucursal AS sucursalNombre,
+                    s.idEmpresa AS sucursalIdEmpresa,
+                    s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
+                    s.direccion AS sucursalDireccion,
+                    s.localidad AS sucursalLocalidad,
+                    s.provincia AS sucursalProvincia,
+                    s.pais AS sucursalPais,
+                    p.razonSocial AS personaRazonSocial,
+                    p.identificacion AS personaIdentificacion,
+                    p.idIva AS personaIdIva,
+                    i.iva AS personaIva,
+                    p.cuit AS personaCuit,
+                    p.telefono AS personaTelefono,
+                    p.domicilio AS personaDomicilio,
+                    p.ciudad AS personaCiudad,
+                    p.ctaCte AS personaCtaCte,
+                    p.bonificacion AS personaBonificacion
+                FROM Ventas v
+                LEFT JOIN Usuarios u ON u.id = v.idVendedor
+                LEFT JOIN Sucursal s ON s.idSucursal = v.idSucursal
+                LEFT JOIN Personas p ON p.idPersona = v.idPersona
+                LEFT JOIN Iva i ON i.id = p.idIva
+                LEFT JOIN (
+                    SELECT
+                        idVenta,
+                        SUM(cantKg * precioKg) AS totalImporteCalculado,
+                        COUNT(*) AS cantItemsCalculado
+                    FROM dbo.LineaVenta
+                    GROUP BY idVenta
+                ) lv ON lv.idVenta = v.idVenta
+                WHERE v.fechaVenta >= @fechaDesde
+                  AND v.fechaVenta <  @fechaHastaMas1
+                  AND (@idVendedor = -1 OR v.idVendedor = @idVendedor)
+                  AND (@idCliente  = -1 OR v.idPersona  = @idCliente)
+                  AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
                   AND (@soloAnulados = 0 OR estado = 'ANULADO')
                   AND (
                         @texto = '' OR
-                        nroRemito LIKE '%' + @texto + '%' OR
-                        observaciones LIKE '%' + @texto + '%'
+                        v.nroRemito LIKE '%' + @texto + '%' OR
+                        v.observaciones LIKE '%' + @texto + '%' OR
+                        p.razonSocial LIKE '%' + @texto + '%' OR
+                        p.identificacion LIKE '%' + @texto + '%'
                       )
-                ORDER BY fechaVenta DESC;";
+                ORDER BY v.fechaVenta DESC;";
 
             return Db.Reader(
                 _empresa,

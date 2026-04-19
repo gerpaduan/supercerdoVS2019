@@ -162,6 +162,13 @@
         </div>
     }
 
+    @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    {
+        <div class="line"></div>
+        <div class="left bold">Comentario</div>
+        <div class="left">@Model.Observaciones</div>
+    }
+
     <div class="spacer"></div>
 
     <!-- Footer -->

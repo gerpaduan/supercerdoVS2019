@@ -22,9 +22,9 @@ namespace Negocio
             oCtaCteD = new Datos.CuentaCorriente(empresa, param);
         }
 
-        public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona)
+        public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona, string ordenSaldo = "DESC")
         {
-            return oCtaCteD.obtenerCtasCtes(txtBusqueda, idPersona);
+            return oCtaCteD.obtenerCtasCtes(txtBusqueda, idPersona, ordenSaldo);
         }
 
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde)
@@ -434,10 +434,6 @@ namespace Negocio
                 "\nTitular: " + oCheque.Titular +
                 "\nRecibido de: " + (oCheque.Propio ? "Propio" : (oCheque.PagoDe != null ? oCheque.PagoDe.Persona.RazonSocial : "-")) +
                 "\nEntregado a: " + (oCheque.PagoA != null ? oCheque.PagoA.Persona.RazonSocial : "-");
-
-            // Duplicado dentro del mismo pago
-            if (pagoActual.Cheques.Any(c => c.NroCheque == oCheque.NroCheque))
-                return (false, "El cheque ya está asignado a este pago.", null);
 
             // Pagar proveedor → debe ser propio o recibido
             if (esAProveedor && !(oCheque.Propio || (oCheque.PagoDe?.Id > 0)))

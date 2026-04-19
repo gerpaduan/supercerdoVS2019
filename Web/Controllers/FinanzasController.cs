@@ -48,6 +48,38 @@ namespace Web.Controllers
             set { TempData["OCierreCajaE"] = value; }
         }
 
+        private static string AppendCacheBuster(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
+
+            string separator = url.Contains("?") ? "&" : "?";
+            return url + separator + "_ts=" + DateTime.UtcNow.Ticks;
+        }
+
+        private static string DecodeReturnUrlIfNeeded(string returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(returnUrl))
+                return returnUrl;
+
+            if (returnUrl.StartsWith("/") || returnUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                return returnUrl;
+
+            try
+            {
+                string decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(returnUrl));
+
+                if (decoded.StartsWith("/") || decoded.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    return decoded;
+            }
+            catch
+            {
+                // Si no venia en base64 valido, lo dejamos tal cual.
+            }
+
+            return returnUrl;
+        }
+
 
         // ============================================================
         // GET: /Finanzas/CtasCtes
@@ -69,15 +101,17 @@ namespace Web.Controllers
                     }
                 }
 
+                ordenSaldo = string.Equals(ordenSaldo, "ASC", StringComparison.OrdinalIgnoreCase)
+                    ? "ASC"
+                    : "DESC";
+
                 ViewBag.Buscar = buscar;
                 ViewBag.DesdePOS = desdePos;
                 ViewBag.OrdenSaldo = ordenSaldo;
 
-                DataTable dt = oCtaCteN.obtenerCtasCtes(buscar, null);
-
-                DataView dv = dt.DefaultView;
-                dv.Sort = $"Saldo {ordenSaldo}";
-                dt = dv.ToTable();
+                // F2 puede traer muchas cuentas corrientes. Ordenar en SQL evita
+                // un paso extra caro en memoria sobre toda la tabla ya cargada.
+                DataTable dt = oCtaCteN.obtenerCtasCtes(buscar, null, ordenSaldo);
 
                 if (desdePos)
                     return PartialView("CtasCtes", dt);
@@ -163,56 +197,44 @@ namespace Web.Controllers
             if (dtMov.Rows.Count == 0)
                 return dtMov;
 
-            // Trabajamos sobre una copia para no tocar la original inesperadamente
-            DataTable dt = dtMov.Copy();
+            // Version O(n): para cada combinacion (tabla, idTabla, sucursal)
+            // nos quedamos con el registro de mayor ID, igual que la logica anterior
+            // pero sin comparar cada fila contra todas las demas.
+            var maxIdPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-            int[] aBorrar = new int[dt.Rows.Count];
-            for (int i = 0; i < aBorrar.Length; i++)
+            foreach (DataRow row in dtMov.Rows)
             {
-                aBorrar[i] = -1;
-            }
+                string clave = string.Join("|",
+                    Convert.ToString(row["tabla"]),
+                    Convert.ToString(row["idTabla"]),
+                    Convert.ToString(row["sucursal"]));
 
-            for (int filaPrimer = 0; filaPrimer < dt.Rows.Count; filaPrimer++)
-            {
-                if (dt.Rows[filaPrimer].RowState == DataRowState.Deleted)
-                    continue;
+                int id = Convert.ToInt32(row["id"]);
 
-                for (int fila = 0; fila < dt.Rows.Count; fila++)
+                if (!maxIdPorClave.TryGetValue(clave, out int idActual) || id > idActual)
                 {
-                    if (dt.Rows[fila].RowState == DataRowState.Deleted)
-                        continue;
-
-                    if (aBorrar[filaPrimer] == 1)
-                        break;
-
-                    string tablaPrimer = dt.Rows[filaPrimer]["tabla"].ToString();
-                    string idtablaPrimer = dt.Rows[filaPrimer]["idTabla"].ToString();
-                    string sucursalPrimer = dt.Rows[filaPrimer]["sucursal"].ToString();
-                    int idPrimer = Convert.ToInt32(dt.Rows[filaPrimer]["id"].ToString());
-
-                    string tabla = dt.Rows[fila]["tabla"].ToString();
-                    string idtabla = dt.Rows[fila]["idTabla"].ToString();
-                    string sucursal = dt.Rows[fila]["sucursal"].ToString();
-                    int id = Convert.ToInt32(dt.Rows[fila]["id"].ToString());
-
-                    if (tabla.Equals(tablaPrimer) &&
-                        idtabla.Equals(idtablaPrimer) &&
-                        sucursal.Equals(sucursalPrimer) &&
-                        id < idPrimer)
-                    {
-                        aBorrar[fila] = 1;
-                    }
+                    maxIdPorClave[clave] = id;
                 }
             }
 
-            for (int i = 0; i < aBorrar.Length; i++)
+            DataTable filtrado = dtMov.Clone();
+
+            foreach (DataRow row in dtMov.Rows)
             {
-                if (aBorrar[i] == 1)
-                    dt.Rows[i].Delete();
+                string clave = string.Join("|",
+                    Convert.ToString(row["tabla"]),
+                    Convert.ToString(row["idTabla"]),
+                    Convert.ToString(row["sucursal"]));
+
+                int id = Convert.ToInt32(row["id"]);
+
+                if (maxIdPorClave.TryGetValue(clave, out int idMaximo) && id == idMaximo)
+                {
+                    filtrado.ImportRow(row);
+                }
             }
 
-            dt.AcceptChanges();
-            return dt;
+            return filtrado;
         }
 
         // POST: Finanzas/CtaCtePersona
@@ -326,17 +348,11 @@ namespace Web.Controllers
         public ActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false)
         {
             var sucursales = oSucursalN.findAll();
+            string returnUrlDecodificada = DecodeReturnUrlIfNeeded(returnUrl);
 
             ViewBag.Sucursales = sucursales;
-            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.ReturnUrl = returnUrlDecodificada;
             ViewBag.DesdePOS = desdePos;
-
-            if (!string.IsNullOrEmpty(returnUrl) && idPago == 0)
-            {
-                ViewBag.ReturnUrl = System.Text.Encoding.UTF8.GetString(
-                    Convert.FromBase64String(returnUrl)
-                );
-            }
 
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
 
@@ -391,6 +407,8 @@ namespace Web.Controllers
             string ChequesJson = "",
             bool desdePos = false)
         {
+            returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
+
             oPagoE.Sucursal = oSucursalN.findById(SucursalId);
             oPagoE.Persona = oPersonasN.findById(idPersona);
 
@@ -446,6 +464,8 @@ namespace Web.Controllers
                         desdePos = true
                     });
 
+                urlRetornoPos = AppendCacheBuster(urlRetornoPos);
+
                 return Json(new
                 {
                     ok = true,
@@ -455,10 +475,10 @@ namespace Web.Controllers
             }
 
             if (!string.IsNullOrEmpty(returnUrl))
-                return Json(new { ok = true, redirectUrl = returnUrl });
+                return Json(new { ok = true, redirectUrl = AppendCacheBuster(returnUrl) });
 
             if (Request.IsAjaxRequest())
-                return Json(new { ok = true, redirectUrl = Url.Action("CtasCtes") });
+                return Json(new { ok = true, redirectUrl = AppendCacheBuster(Url.Action("CtasCtes")) });
 
             return RedirectToAction("CtasCtes");
         }
@@ -529,6 +549,17 @@ namespace Web.Controllers
 
             foreach (DataRow row in dt.Rows)
             {
+                int recibidoDe = row["recibidoDe"] == DBNull.Value ? 0 : Convert.ToInt32(row["recibidoDe"]);
+                int entregadoA = row["entregadoA"] == DBNull.Value ? 0 : Convert.ToInt32(row["entregadoA"]);
+                string estadoDb = row["estado"]?.ToString() ?? "";
+                string estadoVista = estadoDb;
+
+                if (string.Equals(estadoDb, Entidades.Cheque.EstadoEnum.PENDIENTE.ToString(), StringComparison.OrdinalIgnoreCase)
+                    && entregadoA > 0)
+                {
+                    estadoVista = Entidades.Cheque.EstadoEnum.ENTREGADO.ToString();
+                }
+
                 listaCheques.Add(new
                 {
                     Id = row["id"]?.ToString(),
@@ -539,7 +570,13 @@ namespace Web.Controllers
                     Importe = Convert.ToDouble(row["importe"] ?? 0),
                     FechaPago = row["fechaPago"] == DBNull.Value ? "" :
                                 Convert.ToDateTime(row["fechaPago"]).ToString("yyyy-MM-dd"),
-                    Estado = row["estado"]?.ToString()
+                    Estado = estadoVista,
+                    EstadoDb = estadoDb,
+                    RecibidoDe = recibidoDe,
+                    RecibidoDeNombre = row["Recibido_De"]?.ToString(),
+                    EntregadoA = entregadoA,
+                    EntregadoANombre = row["Entregado_A"]?.ToString(),
+                    Observaciones = row["obs."]?.ToString()
                 });
             }
 

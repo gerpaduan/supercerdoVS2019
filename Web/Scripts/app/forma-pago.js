@@ -5,6 +5,17 @@ let totalVentaActual = 0;
 let otroTipoPagoSeleccionado = null;
 let ventaEnProceso = false;
 
+function setEstadoVentaEnProceso(activa) {
+    ventaEnProceso = !!activa;
+
+    // Deshabilitamos los puntos de accion que podrian repetir la venta
+    // mientras el servidor aun no termino de responder.
+    $('#btnFinalizar').prop('disabled', ventaEnProceso);
+    $('.btn-forma-pago').prop('disabled', ventaEnProceso);
+    $('#btnFinalizarPagoMixto').prop('disabled', ventaEnProceso);
+    $('#chkPagoMixto').prop('disabled', ventaEnProceso);
+}
+
 window.mostrarModalPostVenta = window.mostrarModalPostVenta || function (ventaId, telefonoCliente) {
 
     const tel = telefonoCliente || '';
@@ -28,6 +39,10 @@ $('#modalFormaPago').on('shown.bs.modal', function () {
 
     resetPagoMixto();
 });
+
+if (window.POSGuard) {
+    window.POSGuard.bindModal('#modalFormaPago', 'formaPago');
+}
 
 // ===============================
 // Atajos: seleccionar forma de pago (GLOBAL)
@@ -157,6 +172,7 @@ $('#btnFinalizarPagoMixto').on('click', function () {
 function finalizarVenta(data) {
 
     if (ventaEnProceso) return;
+    if (window.POSGuard && !window.POSGuard.startAction('venta:finalizar')) return;
 
     if (!window.lineasVenta || window.lineasVenta.length === 0) {
         Swal.fire({
@@ -164,16 +180,18 @@ function finalizarVenta(data) {
             title: 'Venta vacía',
             text: 'No hay productos cargados en la venta'
         });
+        window.POSGuard?.endAction('venta:finalizar');
         return;
     }
 
-    ventaEnProceso = true;
+    setEstadoVentaEnProceso(true);
 
     const payload = {
         formaPago: data.formaPago,
         esPagoMixto: data.esPagoMixto,
         efectivo: data.efectivo,
         idPersona: data.idPersona,
+        Observaciones: window.POSState?.getObservaciones?.() || '',
         lineasVenta: window.lineasVenta.map(l => ({
             Codigo: l.codigo,
             CantKg: parseFloat(l.cant),
@@ -199,7 +217,8 @@ function finalizarVenta(data) {
                     title: 'Error',
                     text: resp.msg || 'No se pudo finalizar la venta'
                 });
-                ventaEnProceso = false;
+                setEstadoVentaEnProceso(false);
+                window.POSGuard?.endAction('venta:finalizar');
                 return;
             }
 
@@ -233,7 +252,8 @@ function finalizarVenta(data) {
                 title: 'Error',
                 text: xhr.responseJSON?.msg || 'Error del servidor'
             });
-            ventaEnProceso = false;
+            setEstadoVentaEnProceso(false);
+            window.POSGuard?.endAction('venta:finalizar');
         }
     });
 
@@ -251,6 +271,12 @@ function resetPagoMixto() {
     $('#montoEfectivo').val('');
     $('#montoOtroPago').val('');
     $('#labelOtroPago').text('Otro Medio');
+
+    if (!ventaEnProceso) {
+        $('.btn-forma-pago').prop('disabled', false);
+        $('#chkPagoMixto').prop('disabled', false);
+        $('#btnFinalizarPagoMixto').prop('disabled', false);
+    }
 }
 
 // ===============================

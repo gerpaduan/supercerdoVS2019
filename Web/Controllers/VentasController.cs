@@ -139,7 +139,8 @@ namespace Web.Controllers
                 venta.Sucursal = oSucursalN.findById(user.IdSucursal);
 
                 venta.TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString());
-                venta.Observaciones = venta.Observaciones ?? "";
+
+                venta.Observaciones = request.Observaciones ?? venta.Observaciones ?? "";
 
                 // ===============================
                 // FORMAS DE PAGO

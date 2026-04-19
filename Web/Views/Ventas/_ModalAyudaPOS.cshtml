@@ -1,0 +1,182 @@
+<!-- INICIO AYUDA POS -->
+<style>
+    .pos-help-modal .modal-dialog {
+        max-width: 820px;
+    }
+
+    .pos-help-modal .modal-header {
+        background: #f8f9fa;
+    }
+
+    .pos-help-title {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .pos-help-subtitle {
+        font-size: .92rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .pos-help-grid .col-12 {
+        margin-bottom: .75rem;
+    }
+
+    .pos-help-action {
+        text-align: left;
+        min-height: 62px;
+        border-radius: 10px;
+    }
+
+        .pos-help-action .pos-help-action-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            width: 100%;
+        }
+
+        .pos-help-action .pos-help-label {
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .pos-help-action .pos-help-key {
+            white-space: nowrap;
+            font-size: .82rem;
+            padding: .4rem .55rem;
+            border-radius: .5rem;
+        }
+
+    .pos-help-note {
+        font-size: .9rem;
+    }
+
+    @@media (max-width: 576px) {
+        .pos-help-action {
+            min-height: 58px;
+            padding-top: .75rem;
+            padding-bottom: .75rem;
+        }
+
+            .pos-help-action .pos-help-label {
+                font-size: .95rem;
+            }
+    }
+</style>
+
+<div class="modal fade pos-help-modal" id="modalAyudaPOS" tabindex="-1" role="dialog" aria-labelledby="modalAyudaPOSTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title pos-help-title" id="modalAyudaPOSTitle">
+                    <i class="fas fa-keyboard mr-2"></i>Ayuda y atajos del POS
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row pos-help-grid">
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="Home">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Foco en codigo</span>
+                                <span class="badge badge-primary pos-help-key">Inicio</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-success btn-block pos-help-action" data-accion="End">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Finalizar venta</span>
+                                <span class="badge badge-success pos-help-key">Fin</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F2">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Cuentas corrientes</span>
+                                <span class="badge badge-secondary pos-help-key">F2</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F3">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Calculo de billetes</span>
+                                <span class="badge badge-secondary pos-help-key">F3</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F5">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Nueva compra</span>
+                                <span class="badge badge-secondary pos-help-key">F5</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F6">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Mis egresos caja</span>
+                                <span class="badge badge-secondary pos-help-key">F6</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F7">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Egresos caja</span>
+                                <span class="badge badge-secondary pos-help-key">F7</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="AvPag">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Expendios</span>
+                                <span class="badge badge-secondary pos-help-key">AvPag/PgDn</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F9">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Buscar cliente</span>
+                                <span class="badge badge-primary pos-help-key">F9</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F10">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Buscar producto</span>
+                                <span class="badge badge-primary pos-help-key">F10</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted">Esc cierra la ayuda.</small>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FIN AYUDA POS -->

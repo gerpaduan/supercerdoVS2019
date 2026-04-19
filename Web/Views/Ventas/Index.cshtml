@@ -198,6 +198,16 @@
                                     }
                                     <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
                                     <div class="venta-id">idVenta @venta.IdVenta</div>
+                                    @if (!string.IsNullOrWhiteSpace(venta.Observaciones))
+                                    {
+                                        <div class="venta-obs" title="@venta.Observaciones">
+                                            <i class="fas fa-sticky-note mr-1"></i>@(
+                                                venta.Observaciones.Length > 45
+                                                    ? venta.Observaciones.Substring(0, 45) + "..."
+                                                    : venta.Observaciones
+                                            )
+                                        </div>
+                                    }
                                 </div>
 
                                 <div class="venta-total">
@@ -393,6 +403,16 @@
     .venta-id {
         font-size: 0.8rem;
         color: #6c757d;
+    }
+
+    .venta-obs {
+        font-size: 0.8rem;
+        color: #4f5d75;
+        margin-top: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 30rem;
     }
 
     .venta-total {

@@ -259,7 +259,10 @@
                                             <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
                                         </div>
                                         <div class="col-4">
-                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
+                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
+                                                Comentario
+                                                <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
+                                            </button>
                                         </div>
                                         <div class="col-4">
                                             <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
@@ -519,197 +522,17 @@ else
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
-
-@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
-@Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
-@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
-
-<!-- INICIO AYUDA POS -->
-<style>
-    .pos-help-modal .modal-dialog {
-        max-width: 820px;
-    }
-
-    .pos-help-modal .modal-header {
-        background: #f8f9fa;
-    }
-
-    .pos-help-title {
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .pos-help-subtitle {
-        font-size: .92rem;
-        color: #6c757d;
-        margin-bottom: 1rem;
-    }
-
-    .pos-help-grid .col-12 {
-        margin-bottom: .75rem;
-    }
-
-    .pos-help-action {
-        text-align: left;
-        min-height: 62px;
-        border-radius: 10px;
-    }
-
-        .pos-help-action .pos-help-action-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: .75rem;
-            width: 100%;
-        }
-
-        .pos-help-action .pos-help-label {
-            font-weight: 600;
-            line-height: 1.2;
-        }
-
-        .pos-help-action .pos-help-key {
-            white-space: nowrap;
-            font-size: .82rem;
-            padding: .4rem .55rem;
-            border-radius: .5rem;
-        }
-
-    .pos-help-note {
-        font-size: .9rem;
-    }
-
-    @@media (max-width: 576px) {
-        .pos-help-action {
-            min-height: 58px;
-            padding-top: .75rem;
-            padding-bottom: .75rem;
-        }
-
-            .pos-help-action .pos-help-label {
-                font-size: .95rem;
-            }
-    }
-</style>
-
-<div class="modal fade pos-help-modal" id="modalAyudaPOS" tabindex="-1" role="dialog" aria-labelledby="modalAyudaPOSTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
-        <div class="modal-content shadow">
-            <div class="modal-header">
-                <h5 class="modal-title pos-help-title" id="modalAyudaPOSTitle">
-                    <i class="fas fa-keyboard mr-2"></i>Ayuda y atajos del POS
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">×</span>
-                </button>
-            </div>
-
-            <div class="modal-body">
-
-                <div class="row pos-help-grid">
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="Home">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Foco en código</span>
-                                <span class="badge badge-primary pos-help-key">Inicio</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-success btn-block pos-help-action" data-accion="End">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Finalizar venta</span>
-                                <span class="badge badge-success pos-help-key">Fin</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F2">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Cuentas corrientes</span>
-                                <span class="badge badge-secondary pos-help-key">F2</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F3">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Cálculo de billetes</span>
-                                <span class="badge badge-secondary pos-help-key">F3</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F5">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Nueva compra</span>
-                                <span class="badge badge-secondary pos-help-key">F5</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F6">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Mis egresos caja</span>
-                                <span class="badge badge-secondary pos-help-key">F6</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F7">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Egresos caja</span>
-                                <span class="badge badge-secondary pos-help-key">F7</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="AvPag">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Expendios</span>
-                                <span class="badge badge-secondary pos-help-key">AvPág/PgDn</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F9">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Buscar cliente</span>
-                                <span class="badge badge-primary pos-help-key">F9</span>
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-6">
-                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F10">
-                            <span class="pos-help-action-inner">
-                                <span class="pos-help-label">Buscar producto</span>
-                                <span class="badge badge-primary pos-help-key">F10</span>
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer justify-content-between">
-                <small class="text-muted">Esc cierra la ayuda.</small>
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- FIN AYUDA POS -->
+@Html.Partial("~/Views/Ventas/_ModalComentarioVenta.cshtml")
+@Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
 
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=1")"></script>
     <script>
 
 
@@ -876,82 +699,11 @@ else
     window.api.producto = window.api.producto || {};
     window.api.producto.listar = '@Url.Action("ListarParaPOS", "Productos")';
 
-    function abrirBuscadorProductosPOS() {
-        if (typeof window.abrirBuscarProductoModal !== "function") {
-            alert("No se pudo abrir el buscador de productos. Verificá que el script global del modal esté cargado.");
-            return;
-        }
-
-        // Evita que quede “activo” el input del POS mientras el modal está abierto
-        inputActivo = null;
-
-        window.abrirBuscarProductoModal({
-            modalSelector: "#modalBuscarProducto",
-            mostrarPrecio: true, // en POS normalmente sí
-            onSelect: function (producto) {
-                const codigo = String((producto && producto.codigo) || "").trim();
-                if (!codigo) {
-                    volverACodigo();
-                    return;
-                }
-
-                // Cargar código en POS
-                $("#inputCodigo").val(codigo);
-                clearTimeout(typingTimer);
-
-                // Buscar el producto en el backend y seguir flujo normal POS
-                terminarEscritura(codigo, function (ok) {
-                    // Si terminarEscritura devolvió error lógico
-                    if (ok === false) {
-                        volverACodigo();
-                        return;
-                    }
-
-                    // Validación de que realmente quedó seleccionado el mismo código
-                    const codigoActual = normalizarEntrada($("#inputCodigo").val());
-                    const codigoProducto = normalizarEntrada(productoSeleccionado?.codigo);
-
-                    if (!codigoProducto || codigoProducto !== codigoActual) {
-                        mostrarSinCoincidencia();
-                        productoSeleccionado = null;
-                        volverACodigo();
-                        return;
-                    }
-
-                    // Si tu lógica EAN autoagrega, no forzamos foco en cantidad
-                    if (typeof esEANValido === "function" && esEANValido(codigoActual)) {
-                        return;
-                    }
-
-                    pasarAFocoCantidad();
-                });
-            }
-        });
-    }
-
-    $('#btnAgregarManual').off('click').on('click', function (e) {
-        e.preventDefault();
-        abrirBuscadorProductosPOS();
-    });
-
-    let typingTimer = null;
-    let productoSeleccionado = null;
-    let precioActual = 0;
-
-    let buscandoProducto = false;
-    let ultimoCodigoPedido = null;
-    let reqProducto = null;
-
-    const norm = (x) => String(x ?? "").trim();
-
     // ===== ESTADO POS EN MEMORIA =====
-    let carrito = [];
-    window.lineasVenta = carrito;
-    window.fechaVenta = new Date();
-    let indexLinea = 1;
-    let ingresoCantidadX = false;
-    let enterDesdeTecladoVirtual = false;
-    let lineaSeleccionada = null;
+    const POSState = window.POSState;
+    const carrito = POSState.getLineas();
+    POSState.setFechaVenta(new Date());
+    POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
 
     (function () {
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -982,38 +734,66 @@ else
         setInterval(actualizarFechaHora, 60000);
     })();
 
+    if (window.POSGuard) {
+        window.POSGuard.bindModal('#modalBuscarPersona', 'persona');
+        window.POSGuard.bindModal('#modalFinanzasPOS', 'finanzas');
+        window.POSGuard.bindModal('#modalPagoPOS', 'pagoPos');
+    }
+
     // BUSCAR PERSONA
     $(document).on('click', '#btnBuscarPersona', function () {
-        $('#contenedorModalPersona').load(window.api.persona.buscar, function () {
-            $('#modalBuscarPersona').modal('show');
-            cargarPersonas();
-        });
+        const $btn = $(this);
+        const $contenedor = $('#contenedorModalPersona');
+
+        if ($contenedor.find('#modalBuscarPersona').length) {
+            const abierto = window.POSGuard
+                ? window.POSGuard.requestModalOpen('persona', function () {
+                    $('#modalBuscarPersona').modal('show');
+                    cargarPersonas();
+                })
+                : true;
+
+            if (!abierto) return;
+            return;
+        }
+
+        if (window.POSGuard && !window.POSGuard.startModalLoad('persona')) return;
+
+        $btn.prop('disabled', true);
+
+        $.get(window.api.persona.buscar)
+            .done(function (html) {
+                $contenedor.html(html);
+                window.POSGuard?.endModalLoad('persona');
+
+                const abierto = window.POSGuard
+                    ? window.POSGuard.requestModalOpen('persona', function () {
+                        $('#modalBuscarPersona').modal('show');
+                        cargarPersonas();
+                    })
+                    : true;
+
+                if (!abierto) {
+                    $('#modalBuscarPersona').modal('show');
+                    cargarPersonas();
+                }
+            })
+            .fail(function () {
+                window.POSGuard?.endModalLoad('persona');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cliente',
+                    text: 'No se pudo cargar el buscador de clientes'
+                });
+            })
+            .always(function () {
+                $btn.prop('disabled', false);
+            });
     });
 
     $('#btnConsumidorFinal').on('click', function () {
         $('#idPersona').val('@Entidades.Persona.idConsumidorFinal');
         $('#razonSocial').val('Consumidor Final');
-    });
-
-    // BÚSQUEDA EN VIVO
-    $("#inputCodigo").on("keyup", function (e) {
-        let cod = this.value.trim().toUpperCase();
-
-        if (e.key === "Enter") {
-            clearTimeout(typingTimer);
-            return;
-        }
-
-        if (cod.includes("X")) {
-            mostrarSinCoincidencia();
-            clearTimeout(typingTimer);
-            return;
-        }
-
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => {
-            terminarEscritura(cod);
-        }, 250);
     });
 
     document.addEventListener("keydown", function (e) {
@@ -1050,221 +830,6 @@ else
         }
     });
 
-        // ===============================
-        // Helpers robustos (X / x / × + float)
-        // ===============================
-        function normalizarEntrada(raw) {
-            return String(raw ?? "")
-                .trim()
-                .toUpperCase()
-                .replace(/×/g, "X"); // por si viene el símbolo de multiplicación
-        }
-
-        function parseFloatAR(s) {
-            const n = parseFloat(String(s ?? "").trim().replace(",", "."));
-            return Number.isFinite(n) ? n : NaN;
-        }
-
-        // Devuelve { cant, codigo } o null
-        function parseCantidadXCodigo(entrada) {
-            const s = normalizarEntrada(entrada);
-
-            // cantidad puede ser float: 1,25 o 1.25
-            // codigo: lo que venga después de la X (no vacío)
-            const m = s.match(/^([0-9]+(?:[.,][0-9]+)?)X(.+)$/);
-            if (!m) return null;
-
-            const cant = parseFloatAR(m[1]);
-            const codigo = String(m[2] ?? "").trim();
-
-            if (!codigo) return null;
-            if (!Number.isFinite(cant) || cant <= 0) return null;
-
-            return { cant, codigo};
-        }
-
-        // ===============================
-        // terminarEscritura (AHORA con flag ingresoCantidadXParam)
-        // ===============================
-        function terminarEscritura(codigo, callback = null, ingresoCantidadXParam = false) {
-
-            const codigoTrim = normalizarEntrada(codigo);
-
-            // Sin código → estado inicial
-            if (!codigoTrim) {
-                mostrarEsperando();
-                return;
-            }
-
-            // Si existe un request anterior y lo estás usando, abortalo (opcional, no rompe si no existía)
-            if (typeof reqProducto !== "undefined" && reqProducto && reqProducto.readyState !== 4) {
-                reqProducto.abort();
-            }
-
-            // Si usás estas banderas en tu script, las mantenemos (no rompe si no existen)
-            if (typeof buscandoProducto !== "undefined") buscandoProducto = true;
-            if (typeof ultimoCodigoPedido !== "undefined") ultimoCodigoPedido = codigoTrim;
-
-            reqProducto = $.ajax({
-                url: window.buscarProductoUrl,
-                type: "GET",
-                dataType: "json",
-                data: {
-                    codigo: codigoTrim,
-                    ingresoCantidadX: ingresoCantidadXParam
-                },
-                timeout: 3000,
-
-                success: function (data) {
-
-                    if (typeof buscandoProducto !== "undefined") buscandoProducto = false;
-
-                    // Si tenés control anti-respuesta vieja, respetalo (no rompe si no existe)
-                    if (typeof ultimoCodigoPedido !== "undefined") {
-                        const codigoActual = normalizarEntrada($("#inputCodigo").val());
-                        if (codigoActual !== ultimoCodigoPedido) return;
-                    }
-
-                    if (data && data.success === false) {
-                        productoSeleccionado = null;
-                        mostrarSinCoincidencia(data.message);
-
-                        if (typeof callback === "function") callback(false, data);
-                        return;
-                    }
-
-
-                    productoSeleccionado = data;
-                    mostrarProducto(data);
-
-                    //validar si es EAN agregar
-                    if (typeof esEANValido === "function" && esEANValido(codigoTrim)) {
-                        $("#inputCantidad").val("1");
-                        document.querySelector("#inputCantidad").focus();
-                        manejarEnter();
-                    }
-
-                    if (typeof callback === "function") callback();
-                },
-
-                error: function (xhr, status) {
-
-                    if (status === "abort") return;
-                    if (typeof buscandoProducto !== "undefined") buscandoProducto = false;
-
-                    if (status === "timeout") {
-                        mostrarErrorConexion("La conexión es lenta. Reintente.");
-                        return;
-                    }
-
-                    if (!navigator.onLine) {
-                        mostrarErrorConexion("Sin conexión a Internet");
-                        return;
-                    }
-
-                    mostrarErrorConexion("No se pudo contactar al servidor");
-                }
-            });
-        }
-
-        window.terminarEscritura = terminarEscritura;
-
-        // ===============================
-        // procesarCodigoConCantidad (DEVUELVE true si disparó auto-agregado)
-        // ===============================
-        function procesarCodigoConCantidad() {
-
-            const input = document.getElementById("inputCodigo");
-            if (!input) return false;
-
-            const entrada = normalizarEntrada(input.value);
-
-            // 1) Formato: cantidadXcodigo  (2X123, 1.25X779, 1,25X779)
-            const parsed = parseCantidadXCodigo(entrada);
-            if (parsed) {
-
-                $("#inputCantidad").val(String(parsed.cant));
-                $("#inputCodigo").val(parsed.codigo);
-
-                // auto agrega al terminar de buscar
-                terminarEscritura(parsed.codigo, function () {
-                    agregarProducto();
-                    mostrarEsperando();
-                }, true);
-
-                return true;
-            }
-
-            // 2) Si es EAN válido (escaneo / ingreso directo): auto agrega con cantidad 1
-            //    OJO: esto mantiene tu comportamiento anterior (scanner => agrega 1)
-            if (typeof esEANValido === "function" && esEANValido(entrada)) {
-
-                $("#inputCantidad").val("1");
-                $("#inputCodigo").val(entrada);
-
-                terminarEscritura(entrada, function () {
-                    agregarProducto();
-                    mostrarEsperando();
-                }, true);
-
-                return true;
-            }
-
-            return false; // no era auto-agregado
-        }
-
-        // ===============================
-        // manejarEnter (usa procesarCodigoConCantidad robusto)
-        // ===============================
-        function manejarEnter() {
-
-            if (!inputActivo) return;
-
-            // ENTER en cantidad => agregar
-            if (inputActivo.id === "inputCantidad") {
-                agregarProducto();
-                enterDesdeTecladoVirtual = false;
-                return;
-            }
-
-            // ENTER en código
-            if (enterDesdeTecladoVirtual || inputActivo.id === "inputCodigo") {
-
-                // 1) Intentar auto-agregado por cantidadXcodigo o EAN
-                const auto = procesarCodigoConCantidad();
-                enterDesdeTecladoVirtual = false;
-
-                if (auto) return;
-
-                // 2) Búsqueda normal (sin auto-agregado)
-                const codigoInput = normalizarEntrada($("#inputCodigo").val());
-
-                // si aún contiene X, es que escribieron mal (ej: "2X" o "X123")
-                if (codigoInput.includes("X")) {
-                    mostrarSinCoincidencia("Formato inválido (use 2X123)");
-                    return;
-                }
-
-                if (typeof buscandoProducto !== "undefined" && buscandoProducto) return;
-
-                terminarEscritura(codigoInput, function () {
-
-                    const codigoActual = normalizarEntrada($("#inputCodigo").val());
-                    const codigoProducto = normalizarEntrada(productoSeleccionado?.codigo);
-
-                    if (!codigoProducto || codigoProducto !== codigoActual) {
-                        mostrarSinCoincidencia();
-                        productoSeleccionado = null;
-                        return;
-                    }
-
-                    pasarAFocoCantidad();
-                });
-
-                return;
-            }
-        }
-
 
     function mostrarErrorConexion(msg) {
         Swal.fire({
@@ -1274,250 +839,6 @@ else
             allowOutsideClick: false
         });
     }
-
-    function mostrarProducto(p) {
-        $("#prodNombre").text(p.nombre).removeClass("text-muted").addClass("fw-bold");
-        $("#prodPrecio").text("$ " + p.precioKg.toLocaleString("es-AR")).removeClass("text-muted").addClass("fw-bold");
-
-        precioActual = p.precioKg;
-
-        $("#inputCantidad").prop("disabled", false);
-        $("#prodSubtotal").text("$ 0,00");
-        calcularSubtotal();
-        $("#btnAgregarProducto").prop("disabled", false);
-    }
-
-    function mostrarSinCoincidencia(msg = "Sin coincidencia") {
-        productoSeleccionado = null;
-        precioActual = 0;
-
-        $("#prodNombre").text(msg).removeClass("fw-bold").addClass("text-muted");
-        $("#prodPrecio").text("").addClass("text-muted");
-        $("#prodSubtotal").text("$ 0,00");
-
-        $("#inputCantidad").prop("disabled", true).val("");
-        $("#btnAgregarProducto").prop("disabled", true);
-
-        $("#inputCodigo").focus();
-    }
-
-    function mostrarEsperando() {
-        productoSeleccionado = null;
-        precioActual = 0;
-
-        $("#prodNombre").text("Info producto...").removeClass("fw-bold").addClass("text-muted");
-        $("#prodPrecio").text("");
-        $("#prodSubtotal").text("$ 0,00");
-        $("#inputCantidad").prop("disabled", true).val("");
-        $("#btnAgregarProducto").prop("disabled", true);
-    }
-
-    function mostrarBuscando(msg = "Buscando...") {
-        productoSeleccionado = null;
-        precioActual = 0;
-
-        $("#prodNombre").text(msg).removeClass("fw-bold").addClass("text-muted");
-        $("#prodPrecio").text("").addClass("text-muted");
-        $("#prodSubtotal").text("$ 0,00");
-        $("#inputCantidad").prop("disabled", true).val("");
-        $("#btnAgregarProducto").prop("disabled", true);
-    }
-
-    $("#inputCantidad").on("input", calcularSubtotal);
-
-    function calcularSubtotal() {
-        let cant = parseFloat($("#inputCantidad").val().replace(",", "."));
-
-        if (isNaN(cant) || cant <= 0 || precioActual <= 0) {
-            $("#prodSubtotal").text("$ 0,00");
-            $("#btnAgregarProducto").prop("disabled", true);
-            return;
-        }
-
-        let subtotal = cant * precioActual;
-
-        $("#prodSubtotal").text(
-            "$ " + subtotal.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        );
-
-        $("#btnAgregarProducto").prop("disabled", false);
-    }
-
-    function recalcularTotal() {
-        let total = 0;
-
-        carrito.forEach(l => {
-            if (!l.anulado) {
-                const valor = parseFloat(l.subtotal.replace("$", "").replace(",", "."));
-                if (!isNaN(valor)) total += valor;
-            }
-        });
-
-        $("#lblSubtotal").text(`$ ${total.toFixed(2).replace(".", ",")}`);
-    }
-
-    // ENTER en código
-    $("#inputCodigo").on("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            clearTimeout(typingTimer);
-            enterDesdeTecladoVirtual = false;
-            manejarEnter();
-        }
-    });
-
-    // ENTER en cantidad
-    $("#inputCantidad").on("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            agregarProducto();
-        }
-    });
-
-    $("#btnAgregarProducto").on("click", function () {
-        agregarProducto();
-    });
-
-    // ====================================================
-    // ✅ AGREGAR PRODUCTO (con scroll correcto)
-    // ====================================================
-    function agregarProducto() {
-        if (!productoSeleccionado) {
-            //alert("Selecciona un producto primero");
-            volverACodigo();
-            return;
-        }
-
-        let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
-        if (isNaN(cantidad) || cantidad <= 0) {
-            alert("Cantidad inválida");
-            return;
-        }
-
-        const subtotal = cantidad * productoSeleccionado.precioKg;
-
-        if (!Number.isFinite(subtotal) || subtotal <= 0) {
-            alert("No se puede agregar: el producto no tiene precio cargado (debe ser mayor a 0).");
-            volverACodigo(); // opcional: vuelve al input código
-            return;
-        }
-
-        const linea = {
-            index: indexLinea++,
-            producto: productoSeleccionado.nombre,
-            codigo: productoSeleccionado.codigo,
-            cant: cantidad.toFixed(3),
-            precio: `$ ${productoSeleccionado.precioKg.toFixed(2)}`,
-            precioOriginal: `$ ${productoSeleccionado.precioOriginal.toFixed(2)}`,
-            subtotal: `$ ${(subtotal).toFixed(2)}`,
-            bonificacion: 0,
-            anulado: false,
-            balanza: productoSeleccionado.balanza
-        };
-
-        carrito.push(linea);
-
-        renderTablaProductos(carrito);
-        recalcularTotal();
-        beep();
-        navigator.vibrate?.(80);
-
-        // ✅ Scroll/foco al último agregado (cuando el DOM ya pintó)
-        requestAnimationFrame(() => {
-            scrollTablaAlFinal();
-            // mantiene tu experiencia mobile (si aplica)
-            setTimeout(scrollPantallaMobile, 50);
-        });
-
-
-        // limpiar campos
-        $("#inputCodigo").val("").focus();
-        $("#inputCantidad").val("");
-        $("#prodSubtotal").text("$ 0,00");
-
-        actualizarEstadoVentaEnCurso();
-        productoSeleccionado = null;
-        mostrarEsperando();
-    }
-
-    function renderTablaProductos(lineas) {
-        let tbody = $("#tablaItems");
-        tbody.empty();
-
-        if (!lineas || lineas.length === 0) {
-            tbody.append(`
-                <tr id="filaVacia">
-                    <td class="text-muted text-center py-3">
-                        No hay productos agregados
-                    </td>
-                </tr>
-            `);
-            return;
-        }
-
-        lineas.forEach(l => {
-            const claseAnulada = l.anulado ? 'fila-anulada' : '';
-            const bonificacion = l.bonificacion == 0 ? '' : (l.bonificacion > 0 ?
-                ' | Bonif:' + l.bonificacion + '%' :
-                ' | Recargo:' + (l.bonificacion * -1) + '%');
-
-            tbody.append(`
-                <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
-                    <td>
-                        <div class="fw-bold">
-                            #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
-                        </div>
-
-                        <div class="d-flex justify-content-between item-detalle">
-                            <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}</span>
-                            <span class="fw-bold">${l.subtotal}</span>
-                        </div>
-                    </td>
-                </tr>
-            `);
-        });
-
-        // ✅ marca visual del último item
-        tbody.find("tr.fila-item").removeClass("fila-ultimo");
-        tbody.find("tr.fila-item:last").addClass("fila-ultimo");
-    }
-
-        function scrollTablaAlFinal() {
-            const isDesktop = window.matchMedia('(min-width: 992px)').matches;
-
-            const zonaTabla = document.querySelector('.carrito-col .zona-tabla');
-            const tbody = document.getElementById('tablaItems');
-            if (!tbody) return;
-
-            const ultimaFila = tbody.querySelector('tr.fila-item:last-child');
-            if (!ultimaFila) return;
-
-            // ✅ Marca visual + foco real (sin “saltar” el scroll)
-            tbody.querySelectorAll('tr.fila-item').forEach(tr => tr.classList.remove('fila-ultimo', 'pos-last-added'));
-            ultimaFila.classList.add('fila-ultimo', 'pos-last-added');
-
-            // hacerlo focusable y darle foco (foco real en el último agregado)
-            ultimaFila.tabIndex = -1;
-            try { ultimaFila.focus({ preventScroll: true }); }
-            catch { try { ultimaFila.focus(); } catch { } }
-
-            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const behavior = reduceMotion ? 'auto' : 'smooth';
-
-            if (isDesktop && zonaTabla) {
-                // ✅ Desktop: scroll interno SOLO en zona-tabla (Total no se pierde)
-                zonaTabla.scrollTo({ top: zonaTabla.scrollHeight, behavior });
-            } else {
-                // ✅ Responsive: se scrollea la página al último item
-                ultimaFila.scrollIntoView({ behavior, block: 'start' });
-            }
-
-            // quitar resaltado al rato (opcional)
-            setTimeout(() => ultimaFila.classList.remove('pos-last-added'), 900);
-
-            volverACodigo();
-        }
-
 
     function scrollPantallaMobile() {
         if (!window.matchMedia('(max-width: 576px)').matches) return;
@@ -1531,641 +852,55 @@ else
         anchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-        let hayVentaEnCurso = false;
-        let omitirAvisoSalidaPOS = false;
-
-        // Calcula si realmente hay líneas activas (no anuladas)
-        function actualizarEstadoVentaEnCurso() {
-            hayVentaEnCurso = Array.isArray(carrito) && carrito.some(l => l && !l.anulado);
-        }
-
-        // Para usarlo cuando la venta terminó OK (antes de redirigir / recargar)
-        window.desactivarAvisoSalidaPOS = function () {
-            omitirAvisoSalidaPOS = true;
-            hayVentaEnCurso = false;
-        };
-
-        // Si alguna vez querés reactivarlo manualmente
-        window.activarAvisoSalidaPOS = function () {
-            omitirAvisoSalidaPOS = false;
-            actualizarEstadoVentaEnCurso();
-        };
-
-        window.addEventListener("beforeunload", function (e) {
-            // recalcula por si cambió el carrito y no se actualizó la bandera
-            actualizarEstadoVentaEnCurso();
-
-            if (omitirAvisoSalidaPOS || !hayVentaEnCurso) return;
-
-            e.preventDefault();
-            e.returnValue = ""; // necesario para que el navegador muestre el aviso
-        });
-
-    // TECLADO
-    inputActivo = document.getElementById("inputCodigo");
-    if (inputActivo) {
-        inputActivo.focus();
-        try { inputActivo.select(); } catch { }
-    }
-
-    document.addEventListener("focusin", e => {
-        const t = e.target;
-        if (!t || t.tagName !== "INPUT") return;
-
-        // SOLO inputs del POS (no el input del modal buscar producto)
-        if (t.id === "inputCodigo" || t.id === "inputCantidad") {
-            inputActivo = t;
+    let posProduct = null;
+    let posCart = null;
+    const posHelp = window.POSHelp.create({
+        focusCodigo: function () { return posKeyboard.focusCodigo(); },
+        clickIfEnabled: function (selector) {
+            const button = document.querySelector(selector);
+            if (button && !button.disabled) {
+                button.click();
+            }
         }
     });
-
-    document.querySelectorAll(".btn-key").forEach(btn => {
-        btn.addEventListener("mousedown", e => { e.preventDefault(); });
-
-        btn.addEventListener("click", () => {
-            const tecla = btn.innerText.trim();
-            if (!inputActivo) return;
-
-            switch (tecla) {
-                case "←": borrarCaracter(); break;
-                case "Enter":
-                    enterDesdeTecladoVirtual = true;
-                    manejarEnter();
-                    break;
-                case "×": escribirX(); break;
-                case "g":
-                case "G": escribirG(); break;
-                default: escribirCaracter(tecla); break;
-            }
-        });
+    const posComment = window.POSComment.create({
+        POSState: POSState,
+        focusCodigo: function () { return posKeyboard.focusCodigo(); }
+    });
+    const posKeyboard = window.POSKeyboard.create({
+        handleEnter: function () { return posProduct ? posProduct.handleEnter() : null; },
+        calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+        finishTyping: function (value) { return posProduct ? posProduct.finishTyping(value) : null; },
+        setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; }
     });
 
-    function volverACodigo() { $("#inputCodigo").focus().select(); }
-    function pasarAFocoCantidad() { $("#inputCantidad").focus().select(); }
-
-        $("#modalBuscarProducto")
-            .off("shown.bs.modal.posBuscar hidden.bs.modal.posBuscar")
-            .on("shown.bs.modal.posBuscar", function () {
-                // mientras está abierto el modal, el teclado POS no debe escribir en inputs del modal
-                inputActivo = null;
-            })
-            .on("hidden.bs.modal.posBuscar", function () {
-                setTimeout(function () {
-                    volverACodigo();
-                }, 0);
-            });
-
-    function escribirCaracter(valor) {
-        if (!inputActivo) return;
-
-        if (inputActivo.id === "inputCantidad") {
-            if (!/^[0-9.]$/.test(valor)) return;
-            if (valor === "." && inputActivo.value.includes(".")) return;
-            if (valor === "." && inputActivo.value === "") inputActivo.value = "0";
-        }
-
-        inputActivo.value += valor;
-
-        if (inputActivo.id === "inputCantidad")
-            calcularSubtotal();
-        else terminarEscritura(inputActivo.value);
-    }
-
-    function escribirX() {
-        if (inputActivo.id !== "inputCodigo") return;
-        if (inputActivo.value.includes("X")) return;
-        inputActivo.value += "X";
-    }
-
-    function escribirG() {
-        if (inputActivo.id !== "inputCodigo") return;
-        if (inputActivo.value.includes("G")) return;
-        inputActivo.value += "G";
-    }
-
-    function borrarCaracter() {
-        if (!inputActivo) return;
-        inputActivo.value = inputActivo.value.slice(0, -1);
-        terminarEscritura(inputActivo.value);
-    }
-
-        ////////////////////
-        // MODAL LINEA VENTA - modalLineaVenta
-        // - Bonificar (precio / porcentaje)
-        // - Cantidad con decimales (coma o punto)
-        // - Botones + / - suman/restan 1 (parte entera)
-        // - Aplicar cantidad actualiza la línea y la tabla
-        ////////////////////
-
-        ////////////////////
-        // MODAL LINEA VENTA - modalLineaVenta
-        // - Bonificar (precio / porcentaje)
-        // - Cantidad editable con decimales (coma o punto)
-        // - + / - suman/restan 1 manteniendo decimales
-        // - Validación SOLO al aplicar cantidad
-        ////////////////////
-
-        if (!window.__posLineaVentaModalInit) {
-            window.__posLineaVentaModalInit = true;
-
-            if (typeof window.lineaSeleccionada === "undefined") window.lineaSeleccionada = null;
-
-            // ---------- helpers float (precio / subtotal) ----------
-            function fnum(v) {
-                return parseFloat(
-                    String(v ?? "")
-                        .replace(/\$/g, "")
-                        .trim()
-                        .replace(",", ".")
-                ) || 0.0;
-            }
-
-            // ===== Cantidad (editable) =====
-            const CANT_DECIMALES = 3;
-
-            function roundCant(n) {
-                const p = Math.pow(10, CANT_DECIMALES);
-                return Math.round(n * p) / p;
-            }
-
-            // Convierte "1,150" o "1.150" => 1.15
-            // NO fuerza formato ni mínimo: eso se valida al aplicar
-            function parseCant(v) {
-                let s = String(v ?? "").trim();
-
-                // permitir solo dígitos + coma/punto
-                s = s.replace(/[^0-9.,]/g, "");
-                if (s === "") return NaN;
-
-                // tomar el primer separador como decimal y borrar los demás
-                const m = s.match(/[.,]/);
-                if (m) {
-                    const i = s.indexOf(m[0]);
-                    const intPart = s.slice(0, i).replace(/[.,]/g, "");
-                    const decPart = s.slice(i + 1).replace(/[.,]/g, "");
-                    s = intPart + "." + decPart;
-                } else {
-                    s = s.replace(/[.,]/g, "");
-                }
-
-                const n = parseFloat(s);
-                return isFinite(n) ? n : NaN;
-            }
-
-            // Mostrar con coma y 3 decimales
-            function fmtCant(n) {
-                n = roundCant(n);
-                return n.toFixed(CANT_DECIMALES).replace(".", ",");
-            }
-
-            function precioLineaAplicadoNum() {
-                let p = fnum(window.lineaSeleccionada?.precio);
-                if (p > 0) return p;
-
-                p = fnum(window.lineaSeleccionada?.precioOriginal ?? 0);
-                if (p > 0) return p;
-
-                return fnum($("#modalPrecio").val());
-            }
-
-            // Preview de subtotal SIN tocar el texto del input (para no mover el cursor)
-            function previewSubtotalDesdeCantidad() {
-                if (!window.lineaSeleccionada) return;
-
-                const raw = String($("#modalCantidad").val() ?? "").trim();
-                if (raw === "") {
-                    $("#modalSubtotal").val("");
-                    return;
-                }
-
-                const cant = parseCant(raw);
-                if (!isFinite(cant) || cant < 0) {   // permito tipear cualquier cosa "numérica"; si <0, invalido preview
-                    $("#modalSubtotal").val("");
-                    return;
-                }
-
-                // si bonificar está visible, recalculo desde el modo actual (pero sin formatear cantidad)
-                if ($("#bloqueBonificar").is(":visible")) {
-                    if ($("#chkPorcentaje").is(":checked")) syncDesdePorcentaje();
-                    else syncDesdePrecio();
-                    return;
-                }
-
-                const subtotal = precioLineaAplicadoNum() * cant;
-                $("#modalSubtotal").val(subtotal.toFixed(2));
-            }
-
-            function setModoBonificacion(porcentajeMode) {
-                $("#chkPorcentaje").prop("checked", porcentajeMode);
-
-                $("#txtPorcentaje").prop("readonly", !porcentajeMode);
-                $("#txtPrecioKg").prop("readonly", porcentajeMode);
-
-                if (porcentajeMode) {
-                    $("#lblTipoPorcentaje").text("% bonificación (- para recargo)");
-                    requestAnimationFrame(() => $("#txtPorcentaje").focus().select());
-                    syncDesdePorcentaje();
-                } else {
-                    $("#lblTipoPorcentaje").text("% bonificación");
-                    requestAnimationFrame(() => $("#txtPrecioKg").focus().select());
-                    syncDesdePrecio();
-                }
-            }
-
-            function syncDesdePrecio() {
-                if (!window.lineaSeleccionada) return;
-
-                const precioLista = fnum($("#modalPrecio").data("precio"));
-                const precioNuevo = fnum($("#txtPrecioKg").val());
-
-                const cant = parseCant($("#modalCantidad").val());
-                if (!precioLista || !precioNuevo || !isFinite(cant) || cant <= 0) {
-                    $("#txtPorcentaje").val("");
-                    $("#modalSubtotal").val("");
-                    return;
-                }
-
-                let pct = (1 - (precioNuevo / precioLista)) * 100.0;
-                pct = Math.round(pct * 100) / 100.0;
-
-                $("#txtPorcentaje").val(pct);
-
-                if (pct > 0) $("#lblTipoPorcentaje").text("% bonificación");
-                else if (pct < 0) $("#lblTipoPorcentaje").text("% recargo");
-                else $("#lblTipoPorcentaje").text("%");
-
-                $("#modalSubtotal").val((precioNuevo * cant).toFixed(2));
-            }
-
-            function syncDesdePorcentaje() {
-                if (!window.lineaSeleccionada) return;
-
-                const precioLista = fnum($("#modalPrecio").data("precio"));
-                const pct = fnum($("#txtPorcentaje").val());
-
-                const cant = parseCant($("#modalCantidad").val());
-                if (!precioLista || !isFinite(cant) || cant <= 0) {
-                    $("#txtPrecioKg").val("");
-                    $("#modalSubtotal").val("");
-                    return;
-                }
-
-                const precioNuevo = precioLista * (1 - (pct / 100.0));
-                const subtotal = precioNuevo * cant;
-
-                $("#txtPrecioKg").val(precioNuevo.toFixed(2));
-                $("#modalSubtotal").val(subtotal.toFixed(2));
-
-                if (pct > 0) $("#lblTipoPorcentaje").text("% bonificación");
-                else if (pct < 0) $("#lblTipoPorcentaje").text("% recargo");
-                else $("#lblTipoPorcentaje").text("%");
-            }
-
-            function scrollLineaVisible(idLinea) {
-                const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
-                if (!fila) return;
-
-                const isDesktop = window.matchMedia("(min-width: 992px)").matches;
-                const zonaTabla = document.querySelector(".carrito-col .zona-tabla");
-
-                fila.tabIndex = -1;
-                try { fila.focus({ preventScroll: true }); } catch { }
-
-                if (isDesktop && zonaTabla) fila.scrollIntoView({ block: "nearest" });
-                else fila.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-
-            // ---------- abrir modal ----------
-            $(document).on("click", "#tablaItems tr.fila-item", function () {
-
-                $("#btnEliminarItem").removeClass("d-none");
-                $("#btnMostrarBonificar").removeClass("d-none");
-                $("#btnMostrarCantidad").removeClass("d-none");
-
-                const index = parseInt($(this).data("id"), 10);
-                window.lineaSeleccionada = carrito.find(l => l.index === index);
-                if (!window.lineaSeleccionada) return;
-
-                cargarModalLineaVenta(window.lineaSeleccionada);
-            });
-
-            window.cargarModalLineaVenta = function (linea) {
-
-                $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
-
-                // mostramos cantidad con formato (pero editable después)
-                const cantNum = parseCant(linea.cant);
-                $("#modalCantidad").val(isFinite(cantNum) ? fmtCant(cantNum) : String(linea.cant ?? ""));
-
-                const precioListaNum = fnum(linea.precioOriginal ?? linea.precio);
-                $("#modalPrecio").val(String(linea.precioOriginal ?? linea.precio).replace("$", "").trim());
-                $("#modalPrecio").data("precio", precioListaNum);
-
-                $("#modalSubtotal").val(String(linea.subtotal).replace("$", "").trim());
-
-                const bonif = fnum(linea.bonificacion);
-                let texto = "Total";
-                if (bonif !== 0) texto += bonif > 0 ? ` | Desc:${bonif}%` : ` | Recargo:${Math.abs(bonif)}%`;
-                $("#lblTotalModalLineaVenta").text(texto);
-
-                $("#txtPrecioKg").val(String(linea.precio ?? "").replace("$", "").trim());
-                $("#txtPorcentaje").val(linea.bonificacion ?? 0);
-
-                // reset bonificar
-                $("#chkPorcentaje").prop("checked", false);
-                $("#txtPorcentaje").prop("readonly", true);
-                $("#txtPrecioKg").prop("readonly", false);
-
-                // reset cantidad UI
-                $("#bloqueCantidad").hide();
-                $("#modalCantidad").prop("readonly", true);
-                $("#btnCantMenos").addClass("d-none");
-                $("#btnCantMas").addClass("d-none");
-
-                if (bonif !== 0) {
-                    $("#bloqueBonificar").show();
-
-                    $("#btnMostrarCantidad").removeClass("d-none");
-                    $("#btnEliminarItem").removeClass("d-none");
-                    $("#btnMostrarBonificar").addClass("d-none");
-
-                    setModoBonificacion(true);
-                } else {
-                    $("#bloqueBonificar").hide();
-                    setModoBonificacion(false);
-                }
-
-                $("#modalLineaVenta").modal("show");
-            };
-
-            // ---------- Bonificar ----------
-            $("#btnMostrarBonificar").off("click").on("click", function () {
-                if (!window.lineaSeleccionada) return;
-
-                $("#bloqueBonificar").slideDown(120);
-
-                $("#btnMostrarBonificar").addClass("d-none");
-                $("#btnMostrarCantidad").removeClass("d-none");
-                $("#btnEliminarItem").removeClass("d-none");
-
-                setModoBonificacion(false);
-            });
-
-            $("#chkPorcentaje").off("change").on("change", function () {
-                setModoBonificacion($(this).is(":checked"));
-            });
-
-            $("#txtPrecioKg").off("input").on("input", function () {
-                if ($("#chkPorcentaje").is(":checked")) return;
-                syncDesdePrecio();
-            });
-
-            $("#txtPorcentaje").off("input").on("input", function () {
-                if (!$("#chkPorcentaje").is(":checked")) return;
-                syncDesdePorcentaje();
-            });
-
-            $("#btnAplicarBonificacion").off("click").on("click", function () {
-                if (!window.lineaSeleccionada) return;
-
-                const precioNuevo = fnum($("#txtPrecioKg").val());
-                if (!precioNuevo || precioNuevo <= 0) {
-                    alert("Precio inválido");
-                    return;
-                }
-
-                // cantidad: validar numérica y >0
-                const cant = parseCant($("#modalCantidad").val());
-                if (!isFinite(cant)) {
-                    alert("Cantidad inválida");
-                    return;
-                }
-                if (cant <= 0) { // si querés permitir 0, cambiá a: if (cant < 0)
-                    alert("La cantidad debe ser mayor a 0");
-                    return;
-                }
-
-                window.lineaSeleccionada.cant = roundCant(cant);
-
-                const subtotal = precioNuevo * cant;
-
-                window.lineaSeleccionada.precio = `$ ${precioNuevo.toFixed(2)}`;
-                window.lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
-
-                const bonificacion = fnum($("#txtPorcentaje").val());
-                window.lineaSeleccionada.bonificacion = bonificacion;
-
-                renderTablaProductos(carrito);
-                recalcularTotal();
-
-                $("#modalLineaVenta").modal("hide");
-                requestAnimationFrame(() => scrollLineaVisible(window.lineaSeleccionada.index));
-            });
-
-            // ---------- Eliminar ----------
-            $("#btnEliminarItem").off("click").on("click", function () {
-                if (!window.lineaSeleccionada) return;
-                if (!confirm("¿Eliminar el producto?")) return;
-
-                const idx = carrito.findIndex(l => l.index === window.lineaSeleccionada.index);
-                if (idx !== -1) carrito[idx].anulado = true;
-
-                renderTablaProductos(carrito);
-                recalcularTotal();
-
-                $("#modalLineaVenta").modal("hide");
-                requestAnimationFrame(() => scrollLineaVisible(window.lineaSeleccionada.index));
-
-                $("#inputCodigo").val("").focus();
-            });
-
-            // ---------- Cantidad ----------
-            $("#btnMostrarCantidad").off("click").on("click", function () {
-                if (!window.lineaSeleccionada) return;
-
-                $("#bloqueCantidad").slideDown(120);
-
-                $("#btnMostrarCantidad").addClass("d-none");
-                $("#btnEliminarItem").removeClass("d-none");
-
-                $("#modalCantidad").prop("readonly", false);
-                $("#btnCantMenos").removeClass("d-none");
-                $("#btnCantMas").removeClass("d-none");
-
-                // ✅ solo foco (NO select, para no “pelear” con el cursor)
-                requestAnimationFrame(() => $("#modalCantidad").focus());
-
-                previewSubtotalDesdeCantidad();
-            });
-
-            // Solo permitir teclas válidas (sin reescribir el value)
-            $("#modalCantidad")
-                .off("keydown.cant")
-                .on("keydown.cant", function (e) {
-                    if ($(this).prop("readonly")) return;
-
-                    const k = e.key;
-                    const ctrl = e.ctrlKey || e.metaKey;
-
-                    // permitir navegación/edición
-                    const allow = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Tab", "Enter"];
-                    if (allow.includes(k)) return;
-
-                    // permitir atajos
-                    if (ctrl && ["a", "c", "v", "x"].includes(k.toLowerCase())) return;
-
-                    // permitir números
-                    if (/^[0-9]$/.test(k)) return;
-
-                    // permitir separador decimal
-                    if (k === "," || k === ".") return;
-
-                    // bloquear lo demás
-                    e.preventDefault();
-                })
-                .off("input.cant")
-                .on("input.cant", function () {
-                    if ($(this).prop("readonly")) return;
-                    previewSubtotalDesdeCantidad();
-                });
-
-            // + / - suman/restan 1 manteniendo decimales
-            $("#btnCantMas").off("click").on("click", function () {
-                const actual = parseCant($("#modalCantidad").val());
-                const base = isFinite(actual) ? actual : 0;
-
-                const nuevo = roundCant(base + 1);
-                $("#modalCantidad").val(fmtCant(nuevo));
-                previewSubtotalDesdeCantidad();
-            });
-
-            $("#btnCantMenos").off("click").on("click", function () {
-                const actual = parseCant($("#modalCantidad").val());
-                const base = isFinite(actual) ? actual : 0;
-
-                const nuevo = roundCant(base - 1);
-                // no permitir negativo (si querés permitir 0, dejalo en 0)
-                const final = Math.max(0, nuevo);
-                $("#modalCantidad").val(fmtCant(final));
-                previewSubtotalDesdeCantidad();
-            });
-
-            // Aplicar cantidad: recién acá validamos
-            $("#btnAplicarCantidad").off("click").on("click", function () {
-                if (!window.lineaSeleccionada) return;
-
-                const cant = parseCant($("#modalCantidad").val());
-
-                if (!isFinite(cant)) {
-                    alert("Cantidad inválida (ingresá un número).");
-                    return;
-                }
-
-                // ✅ validación al aplicar:
-                // si querés permitir 0, cambiá a: if (cant < 0)
-                if (cant <= 0) {
-                    alert("La cantidad debe ser mayor a 0.");
-                    return;
-                }
-
-                const cantOk = roundCant(cant);
-
-                window.lineaSeleccionada.cant = cantOk;
-
-                const p = precioLineaAplicadoNum();
-                const subtotal = p * cantOk;
-
-                window.lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
-
-                // opcional: dejar el input prolijo ya aplicado
-                $("#modalCantidad").val(fmtCant(cantOk));
-
-                renderTablaProductos(carrito);
-                recalcularTotal();
-
-                $("#modalLineaVenta").modal("hide");
-                requestAnimationFrame(() => scrollLineaVisible(window.lineaSeleccionada.index));
-            });
-
-            // ---------- al cerrar modal ----------
-            $("#modalLineaVenta").on("hidden.bs.modal", function () {
-
-                $("#btnEliminarItem").removeClass("d-none");
-                $("#btnMostrarBonificar").removeClass("d-none");
-                $("#btnMostrarCantidad").removeClass("d-none");
-
-                $("#bloqueBonificar").hide();
-                $("#chkPorcentaje").prop("checked", false);
-                $("#txtPorcentaje").prop("readonly", true);
-                $("#txtPrecioKg").prop("readonly", false);
-
-                $("#bloqueCantidad").hide();
-                $("#modalCantidad").prop("readonly", true);
-                $("#btnCantMenos").addClass("d-none");
-                $("#btnCantMas").addClass("d-none");
-
-                window.lineaSeleccionada = null;
-            });
-        }
-
-        ////////////////////
-        // FIN MODAL LINEA VENTA
-        ////////////////////
-
-        // ===============================
-        // HELPERS NUMÉRICOS (AR)
-        // ===============================
-        function toFloatAR(v) {
-            // Acepta: "12,34" | "12.34" | "$ 12,34" | "$ 12.34"
-            // Si vienen ambos separadores, asume "." miles y "," decimales.
-            let s = String(v ?? "").trim();
-
-            // dejar solo números, coma, punto y signo
-            s = s.replace(/[^0-9,.\-]/g, "");
-
-            const hasComma = s.includes(",");
-            const hasDot = s.includes(".");
-
-            if (hasComma && hasDot) {
-                // 1.234,56 => 1234.56
-                s = s.replace(/\./g, "").replace(",", ".");
-            } else if (hasComma) {
-                // 1234,56 => 1234.56
-                s = s.replace(",", ".");
-            }
-            const n = parseFloat(s);
-            return isNaN(n) ? 0.0 : n;
-        }
-
-        // ===============================
-        // TOTAL VENTA (GLOBAL)
-        // ===============================
-        window.obtenerTotalVenta = function obtenerTotalVenta() {
-            const lineas = (window.lineasVenta && Array.isArray(window.lineasVenta) && window.lineasVenta.length)
-                ? window.lineasVenta
-                : (typeof carrito !== "undefined" ? carrito : []);
-
-            let total = 0.0;
-
-            for (const l of lineas) {
-                if (!l || l.anulado) continue;
-
-                // si viene subtotal formateado lo usamos
-                let sub = toFloatAR(l.subtotal);
-
-                // fallback: si no hay subtotal, calculamos cant * precio
-                if (!sub) {
-                    const cant = toFloatAR(l.cant);
-                    const precio = toFloatAR(l.precio);
-                    sub = cant * precio;
-                }
-
-                total += sub;
-            }
-            return total;
-        };
-
-
-
+    posProduct = window.POSProduct.create({
+        calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+        addProduct: function () { return posCart ? posCart.addProduct() : null; },
+        getInputActivo: function () { return posKeyboard.getInputActivo(); },
+        clearInputActivo: function () { return posKeyboard.clearInputActivo(); },
+        showConnectionError: mostrarErrorConexion
+    });
+
+    posCart = window.POSCart.create({
+        POSState: POSState,
+        getProductoSeleccionado: function () { return posProduct.getProductoSeleccionado(); },
+        setProductoSeleccionado: function (value) { return posProduct.setProductoSeleccionado(value); },
+        getPrecioActual: function () { return posProduct.getPrecioActual(); },
+        beep: beep,
+        focusCodigo: function () { return posKeyboard.focusCodigo(); },
+        showWaiting: function () { return posProduct.showWaiting(); },
+        scrollPantallaMobile: scrollPantallaMobile,
+        handleEnter: function () { return posProduct.handleEnter(); },
+        getTypingTimer: function () { return posProduct.getTypingTimer(); },
+        setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); }
+    });
+
+    posProduct.init();
+    posCart.init();
+    posKeyboard.init();
+    posHelp.init();
+    posComment.init();
     // Helper: scroll a una línea (desktop scroll interno / responsive scroll página)
     function scrollTablaAItem(idLinea) {
         const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
@@ -2196,7 +931,14 @@ else
             return;
         }
 
-        $('#modalFormaPago').modal('show');
+        const abierto = window.POSGuard
+            ? window.POSGuard.requestModalOpen('formaPago', function () {
+                $('#modalFormaPago').modal('show');
+            })
+            : true;
+
+        if (!abierto) return;
+
         scrollPantallaMobile();
     });
 
@@ -2335,228 +1077,6 @@ else
     </script>
 
     <script>
-        // INICIO AYUDA POS
-        $(function () {
-            if (!document.getElementById("pos-app")) return;
-
-            window.posHotkeysHooks = window.posHotkeysHooks || {};
-
-            function limpiarEstadoModalBootstrap() {
-                $(".modal-backdrop").remove();
-                $("body").removeClass("modal-open");
-                $("body").css("padding-right", "");
-            }
-
-            function hayOtroModalAbierto() {
-                return $(".modal.show").not("#modalAyudaPOS").length > 0;
-            }
-
-            function ayudaAbierta() {
-                return $("#modalAyudaPOS").hasClass("show");
-            }
-
-            function focoCodigo() {
-                var inp = document.getElementById("inputCodigo");
-                if (inp) {
-                    inp.focus();
-                    try { inp.select(); } catch (e) { }
-                }
-            }
-
-            function abrirAyudaPOS() {
-                if (hayOtroModalAbierto()) return;
-                $("#modalAyudaPOS").modal("show");
-            }
-
-            function cerrarAyudaPOS(callback) {
-                var $modal = $("#modalAyudaPOS");
-
-                if (!$modal.length) {
-                    if (typeof callback === "function") callback();
-                    return;
-                }
-
-                if (!$modal.hasClass("show")) {
-                    limpiarEstadoModalBootstrap();
-                    if (typeof callback === "function") {
-                        setTimeout(function () {
-                            callback();
-                        }, 0);
-                    }
-                    return;
-                }
-
-                $modal
-                    .off("hidden.bs.modal.posAyudaAccion")
-                    .one("hidden.bs.modal.posAyudaAccion", function () {
-                        limpiarEstadoModalBootstrap();
-
-                        if (typeof callback === "function") {
-                            setTimeout(function () {
-                                callback();
-                            }, 80);
-                        }
-                    });
-
-                $modal.modal("hide");
-            }
-
-            function ejecutarHook(clave) {
-                if (window.posHotkeysHooks && typeof window.posHotkeysHooks[clave] === "function") {
-                    window.posHotkeysHooks[clave]();
-                    return true;
-                }
-
-                $(document).trigger("pos:atajo:" + clave, [{ clave: clave }]);
-                return false;
-            }
-
-            function ejecutarAccionAyuda(clave, cerrarModalPrimero) {
-                var run = function () {
-                    switch (clave) {
-                        case "Home":
-                            focoCodigo();
-                            break;
-
-                        case "End":
-                            var btnFinalizar = document.getElementById("btnFinalizar");
-                            if (btnFinalizar && !btnFinalizar.disabled) btnFinalizar.click();
-                            break;
-
-                        case "F9":
-                            var btnBuscarPersona = document.getElementById("btnBuscarPersona");
-                            if (btnBuscarPersona && !btnBuscarPersona.disabled) btnBuscarPersona.click();
-                            break;
-
-                        case "F10":
-                            if (typeof abrirBuscadorProductosPOS === "function") {
-                                abrirBuscadorProductosPOS();
-                            }
-                            break;
-
-                        case "F2":
-                            ejecutarHook("F2");
-                            break;
-
-                        case "F3":
-                            ejecutarHook("F3");
-                            break;
-
-                        case "F5":
-                            ejecutarHook("F5");
-                            break;
-
-                        case "F6":
-                            ejecutarHook("F6");
-                            break;
-
-                        case "F7":
-                            ejecutarHook("F7");
-                            break;
-                    }
-                };
-
-                if (cerrarModalPrimero && ayudaAbierta()) {
-                    cerrarAyudaPOS(run);
-                } else {
-                    run();
-                }
-            }
-
-            $(document)
-                .off("click.posAyudaBtn", "#btnAyuda")
-                .on("click.posAyudaBtn", "#btnAyuda", function (e) {
-                    e.preventDefault();
-                    abrirAyudaPOS();
-                });
-
-            $(document)
-                .off("click.posAyudaAction", ".pos-help-action")
-                .on("click.posAyudaAction", ".pos-help-action", function () {
-                    var accion = $(this).data("accion");
-                    ejecutarAccionAyuda(accion, true);
-                });
-
-            $("#modalAyudaPOS")
-                .off("hidden.bs.modal.posAyuda")
-                .on("hidden.bs.modal.posAyuda", function () {
-                    setTimeout(function () {
-                        limpiarEstadoModalBootstrap();
-
-                        if (!$(".modal.show").length) {
-                            focoCodigo();
-                        }
-                    }, 0);
-                });
-
-            document.addEventListener("keydown", function (e) {
-                var key = e.key;
-                var helpOpen = ayudaAbierta();
-                var otherModalOpen = hayOtroModalAbierto();
-
-                if (key === "F1") {
-                    e.preventDefault();
-
-                    if (helpOpen) {
-                        cerrarAyudaPOS();
-                    } else if (!otherModalOpen) {
-                        abrirAyudaPOS();
-                    }
-                    return;
-                }
-
-                if (otherModalOpen && !helpOpen) {
-                    return;
-                }
-
-                if (key === "F2" || key === "F3" || key === "F5" || key === "F6" || key === "F7") {
-                    e.preventDefault();
-                    ejecutarAccionAyuda(key, false);
-                    return;
-                }
-
-                if (helpOpen) {
-                    if (key === "Escape") {
-                        e.preventDefault();
-                        cerrarAyudaPOS();
-                        return;
-                    }
-
-                    if (key === "Home" || key === "End" || key === "F9" || key === "F10") {
-                        e.preventDefault();
-                        ejecutarAccionAyuda(key, true);
-                    }
-                }
-            }, true);
-
-            /*
-                HOOKS PARA CONECTAR DESPUÉS
-
-                window.posHotkeysHooks.F2 = function () {
-                    // Cuentas corrientes
-                };
-
-                window.posHotkeysHooks.F3 = function () {
-                    // Cálculo de billetes
-                };
-
-                window.posHotkeysHooks.F5 = function () {
-                    // Nueva compra
-                };
-
-                window.posHotkeysHooks.F6 = function () {
-                    // Mis egresos caja
-                };
-
-                window.posHotkeysHooks.F7 = function () {
-                    // Egresos caja
-                };
-            */
-        });
-        // FIN AYUDA POS
-    </script>
-
-    <script>
     // INICIO FINANZAS POS
     $(function () {
         if (!document.getElementById("pos-app")) return;
@@ -2636,6 +1156,23 @@ else
             ejecutarScript(0);
         }
 
+        function enfocarBuscadorFinanzasPOS() {
+            function intentar() {
+                var input = document.getElementById("txtBuscar");
+                if (!input) return;
+
+                input.focus();
+                try { input.select(); } catch (e) { }
+
+                var evt = $.Event("pos:finanzas-buscador-activo");
+                $(document).trigger(evt);
+            }
+
+            setTimeout(intentar, 0);
+            setTimeout(intentar, 120);
+            setTimeout(intentar, 260);
+        }
+
         function mostrarErrorFinanzas(msg) {
             var html = '<div class="alert alert-danger m-3 mb-0">' + msg + '</div>';
             $("#contenedorFinanzasPOS").html(html);
@@ -2648,9 +1185,23 @@ else
 
         window.POSFinanzas = {
             cargar: function (url, titulo) {
+                if (window.POSGuard && !window.POSGuard.startAction("finanzas:cargar")) {
+                    return;
+                }
+
                 $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                 $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
-                $("#modalFinanzasPOS").modal("show");
+
+                const abierto = window.POSGuard
+                    ? window.POSGuard.requestModalOpen('finanzas', function () {
+                        $("#modalFinanzasPOS").modal("show");
+                    })
+                    : true;
+
+                if (!abierto) {
+                    window.POSGuard?.endAction("finanzas:cargar");
+                    return;
+                }
 
                 $.ajax({
                     url: url,
@@ -2658,17 +1209,35 @@ else
                     cache: false,
                     success: function (html) {
                         renderConScripts(html, "#contenedorFinanzasPOS");
+                        enfocarBuscadorFinanzasPOS();
                     },
                     error: function () {
                         mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
+                    },
+                    complete: function () {
+                        window.POSGuard?.endAction("finanzas:cargar");
                     }
                 });
             },
 
             cargarPago: function (url, titulo) {
+                if (window.POSGuard && !window.POSGuard.startAction("pago:cargar")) {
+                    return;
+                }
+
                 $("#modalPagoPOSTitle").text(titulo || "Pago / Cobro");
                 $("#contenedorPagoPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
-                $("#modalPagoPOS").modal("show");
+
+                const abierto = window.POSGuard
+                    ? window.POSGuard.requestModalOpen('pagoPos', function () {
+                        $("#modalPagoPOS").modal("show");
+                    })
+                    : true;
+
+                if (!abierto) {
+                    window.POSGuard?.endAction("pago:cargar");
+                    return;
+                }
 
                 setTimeout(function () {
                     $("body").addClass("modal-open");
@@ -2683,6 +1252,9 @@ else
                     },
                     error: function () {
                         mostrarErrorPago("No se pudo cargar el pago.");
+                    },
+                    complete: function () {
+                        window.POSGuard?.endAction("pago:cargar");
                     }
                 });
             },
@@ -2719,6 +1291,11 @@ else
 
                 this.cargarPago(url, "Pago / Cobro");
             }
+        };
+
+        window.POSFinanzasState = window.POSFinanzasState || {
+            redirectDespuesDePago: null,
+            tituloDespuesDePago: "Cuenta corriente"
         };
 
         window.posHotkeysHooks = window.posHotkeysHooks || {};
@@ -2769,6 +1346,20 @@ else
             $("#contenedorPagoPOS").html("");
 
             setTimeout(function () {
+                if (window.POSFinanzasState && window.POSFinanzasState.redirectDespuesDePago) {
+                    var urlRecarga = window.POSFinanzasState.redirectDespuesDePago;
+                    var tituloRecarga = window.POSFinanzasState.tituloDespuesDePago || "Cuenta corriente";
+
+                    window.POSFinanzasState.redirectDespuesDePago = null;
+                    window.POSFinanzasState.tituloDespuesDePago = "Cuenta corriente";
+
+                    if ($("#modalFinanzasPOS").hasClass("show")) {
+                        window.POSFinanzas.cargar(urlRecarga, tituloRecarga);
+                        $("body").addClass("modal-open");
+                        return;
+                    }
+                }
+
                 if ($("#modalFinanzasPOS").hasClass("show")) {
                     $("body").addClass("modal-open");
                     return;
@@ -2790,6 +1381,19 @@ else
                     focoCodigoPOS();
                 }
             }, 0);
+        });
+
+        $("#modalFinanzasPOS").on("shown.bs.modal", function () {
+            function enfocarBuscadorCtas() {
+                var input = document.getElementById("txtBuscar");
+                if (!input) return;
+                input.focus();
+                try { input.select(); } catch { }
+            }
+
+            setTimeout(enfocarBuscadorCtas, 0);
+            setTimeout(enfocarBuscadorCtas, 140);
+            setTimeout(enfocarBuscadorCtas, 300);
         });
 
         document.addEventListener('keydown', function (e) {

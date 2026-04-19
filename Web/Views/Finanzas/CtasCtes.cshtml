@@ -85,34 +85,6 @@
 </div>
 
 <script>
-    window.addEventListener("DOMContentLoaded", function () {
-        try {
-            let cabeceras = document.querySelectorAll("#tablaCtasCtes thead th");
-            let indiceSaldo = -1;
-
-            cabeceras.forEach((th, i) => {
-                if (th.innerText.trim().toLowerCase().startsWith("saldo")) {
-                    indiceSaldo = i;
-                }
-            });
-
-            if (indiceSaldo >= 0) {
-                let filas = document.querySelectorAll("#tablaCtasCtes tbody tr");
-
-                filas.forEach(fila => {
-                    let celda = fila.children[indiceSaldo];
-                    let valor = celda.innerText.replace(",", ".").trim();
-
-                    if (!isNaN(valor) && valor !== "") {
-                        celda.innerText = parseFloat(valor).toFixed(2);
-                    }
-                });
-            }
-        } catch (e) {
-            console.error("Error formateando columna Saldo:", e);
-        }
-    });
-
     function irACtaCte(row) {
         let id = row.children[0].innerText.trim();
 
@@ -133,17 +105,150 @@
         window.location.href = url;
     }
 
-    const txtBuscar = document.getElementById("txtBuscar");
+    (function () {
+        const $txtBuscar = $("#txtBuscar");
+        const $tbody = $("#tbodyCtas");
+        const $tabla = $("#tablaCtasCtes");
 
-    txtBuscar.addEventListener("input", function () {
-        let filtro = this.value.toLowerCase();
-        let filas = document.querySelectorAll("#tbodyCtas tr");
+        function formatearSaldo() {
+            try {
+                let indiceSaldo = -1;
 
-        filas.forEach(fila => {
-            let textoFila = fila.innerText.toLowerCase();
-            fila.style.display = textoFila.includes(filtro) ? "" : "none";
-        });
-    });
+                $tabla.find("thead th").each(function (i) {
+                    if ($(this).text().trim().toLowerCase().startsWith("saldo")) {
+                        indiceSaldo = i;
+                    }
+                });
+
+                if (indiceSaldo < 0) return;
+
+                $tbody.find("tr").each(function () {
+                    const celda = this.children[indiceSaldo];
+                    if (!celda) return;
+
+                    const valor = (celda.innerText || "").replace(",", ".").trim();
+                    if (!isNaN(valor) && valor !== "") {
+                        celda.innerText = parseFloat(valor).toFixed(2);
+                    }
+                });
+            } catch (e) {
+                console.error("Error formateando columna Saldo:", e);
+            }
+        }
+
+        function filasVisibles() {
+            return $tbody.find("tr").filter(function () {
+                return $(this).css("display") !== "none";
+            });
+        }
+
+        function marcarSeleccion($fila) {
+            $tbody.find("tr").removeClass("is-selected");
+            if ($fila && $fila.length) {
+                $fila.addClass("is-selected");
+            }
+        }
+
+        function asegurarSeleccionVisible() {
+            const $visibles = filasVisibles();
+            if (!$visibles.length) {
+                marcarSeleccion($());
+                return;
+            }
+
+            const $actual = $visibles.filter(".is-selected").first();
+            if ($actual.length) return;
+
+            marcarSeleccion($visibles.first());
+        }
+
+        function filtrarCuentas() {
+            const filtro = ($txtBuscar.val() || "").toLowerCase();
+
+            $tbody.find("tr").each(function () {
+                const textoFila = ($(this).text() || "").toLowerCase();
+                this.style.display = textoFila.includes(filtro) ? "" : "none";
+            });
+
+            asegurarSeleccionVisible();
+        }
+
+        function moverSeleccion(delta) {
+            const $visibles = filasVisibles();
+            if (!$visibles.length) return;
+
+            let indexActual = $visibles.index($visibles.filter(".is-selected").first());
+            if (indexActual < 0) indexActual = 0;
+
+            const nuevoIndex = Math.max(0, Math.min($visibles.length - 1, indexActual + delta));
+            const $nueva = $visibles.eq(nuevoIndex);
+
+            marcarSeleccion($nueva);
+
+            if ($nueva.length && $nueva[0].scrollIntoView) {
+                $nueva[0].scrollIntoView({ block: "nearest" });
+            }
+        }
+
+        function abrirFilaSeleccionada() {
+            const $fila = filasVisibles().filter(".is-selected").first();
+            if ($fila.length) {
+                irACtaCte($fila[0]);
+            }
+        }
+
+        function enfocarBuscador() {
+            if (!$txtBuscar.length) return;
+
+            function intentarFoco() {
+                const input = $txtBuscar.get(0);
+                if (!input) return;
+
+                input.focus();
+                $txtBuscar.trigger("focus");
+                $txtBuscar.trigger("select");
+                asegurarSeleccionVisible();
+            }
+
+            setTimeout(intentarFoco, 0);
+            setTimeout(intentarFoco, 120);
+            setTimeout(intentarFoco, 260);
+        }
+
+        formatearSaldo();
+        filtrarCuentas();
+        enfocarBuscador();
+
+        $txtBuscar
+            .off(".ctasCtes")
+            .on("input.ctasCtes", function () {
+                filtrarCuentas();
+            })
+            .on("keydown.ctasCtes", function (e) {
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    moverSeleccion(1);
+                    return;
+                }
+
+                if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    moverSeleccion(-1);
+                    return;
+                }
+
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    abrirFilaSeleccionada();
+                }
+            });
+
+        $tbody
+            .off("click.ctasCtes", "tr")
+            .on("click.ctasCtes", "tr", function () {
+                marcarSeleccion($(this));
+            });
+    })();
 </script>
 
 <style>
@@ -153,6 +258,10 @@
         min-width: 0;
         width: 100%;
         box-sizing: border-box;
+    }
+
+    #tbodyCtas tr.is-selected {
+        background: rgba(13, 110, 253, 0.12);
     }
 
     /* ----- PANTALLAS GRANDES ----- */
