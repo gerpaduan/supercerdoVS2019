@@ -10,6 +10,18 @@ namespace Datos
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        private static bool ColumnaExiste(SqlDataReader dr, string columna)
+        {
+            try
+            {
+                return dr.GetOrdinal(columna) >= 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public CierreCaja(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
@@ -323,7 +335,9 @@ namespace Datos
             oEgresoCaja.Id = Convert.ToInt32(dr["id"].ToString());
             oEgresoCaja.Fecha = Convert.ToDateTime(dr["fechaHora"].ToString());
             oEgresoCaja.IdTipoEgresoCaja = Convert.ToInt32(dr["idTipoEgresoCaja"].ToString());
-            oEgresoCaja.TipoEgresoCaja = dr["tipoEgresoCaja"] != DBNull.Value ? dr["tipoEgresoCaja"].ToString() : "";
+            oEgresoCaja.TipoEgresoCaja = ColumnaExiste(dr, "tipoEgresoCaja") && dr["tipoEgresoCaja"] != DBNull.Value
+                ? dr["tipoEgresoCaja"].ToString()
+                : "";
             oEgresoCaja.Descripcion = dr["descripcion"] != DBNull.Value ? dr["descripcion"].ToString() : "";
             oEgresoCaja.Detalle = dr["detalle"] != DBNull.Value ? dr["detalle"].ToString() : "";
             oEgresoCaja.Monto = dr["monto"] == DBNull.Value ? 0f : float.Parse(dr["monto"].ToString());
