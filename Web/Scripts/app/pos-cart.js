@@ -30,6 +30,15 @@
             return isNaN(n) ? 0.0 : n;
         }
 
+        function showMessage(icon, title, text) {
+            if (window.Swal) {
+                Swal.fire({ icon: icon, title: title, text: text });
+                return;
+            }
+
+            alert(text || title);
+        }
+
         const CANT_DECIMALES = 3;
         let hayVentaEnCurso = false;
         let omitirAvisoSalidaPOS = false;
@@ -89,6 +98,31 @@
         function recalculateTotal() {
             const total = POSState.getTotal();
             $("#lblSubtotal").text(`$ ${total.toFixed(2).replace(".", ",")}`);
+            updateCartSummary();
+        }
+
+        function updateCartSummary() {
+            const lineas = POSState.getLineas();
+            const activas = lineas.filter(function (linea) { return linea && !linea.anulado; }).length;
+            const anuladas = lineas.filter(function (linea) { return linea && linea.anulado; }).length;
+            const $resumen = $("#posVentaResumen");
+            const $cancelar = $("#btnCancelarItem");
+
+            if ($resumen.length) {
+                if (!activas && !anuladas) {
+                    $resumen.text("Sin productos");
+                } else {
+                    $resumen.text(activas + (activas === 1 ? " ítem activo" : " ítems activos") +
+                        (anuladas ? " | " + anuladas + (anuladas === 1 ? " anulado" : " anulados") : ""));
+                }
+            }
+
+            if ($cancelar.length) {
+                $cancelar
+                    .prop("disabled", lineas.length === 0)
+                    .toggleClass("btn-outline-danger", activas > 0)
+                    .toggleClass("btn-outline-secondary", activas === 0);
+            }
         }
 
         // Compatibilidad con scripts viejos como forma-pago.js
@@ -106,13 +140,13 @@
 
             let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
             if (isNaN(cantidad) || cantidad <= 0) {
-                alert("Cantidad inválida");
+                showMessage("warning", "Cantidad inválida", "Ingrese una cantidad mayor a 0.");
                 return;
             }
 
             const subtotal = cantidad * productoSeleccionado.precioKg;
             if (!Number.isFinite(subtotal) || subtotal <= 0) {
-                alert("No se puede agregar: el producto no tiene precio cargado (debe ser mayor a 0).");
+                showMessage("warning", "No se puede agregar", "El producto no tiene precio cargado o el precio es 0.");
                 options.focusCodigo();
                 return;
             }
@@ -163,6 +197,7 @@
                         </td>
                     </tr>
                 `);
+                updateCartSummary();
                 return;
             }
 
@@ -191,6 +226,7 @@
 
             $tbody.find("tr.fila-item").removeClass("fila-ultimo");
             $tbody.find("tr.fila-item:last").addClass("fila-ultimo");
+            updateCartSummary();
         }
 
         function scrollTableToEnd() {
@@ -257,10 +293,11 @@
         window.addEventListener("beforeunload", function (e) {
             updateSaleState();
 
-            if (omitirAvisoSalidaPOS || !hayVentaEnCurso) return;
+            if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso)) return;
 
+            window.POSDraft?.save?.();
             e.preventDefault();
-            e.returnValue = "";
+            e.returnValue = 'Debe presionar "Cancelar Venta".';
         });
 
         function precioLineaAplicadoNum() {
@@ -420,6 +457,17 @@
                 const index = parseInt($(this).data("id"), 10);
                 window.lineaSeleccionada = POSState.findLineaByIndex(index);
                 if (!window.lineaSeleccionada) return;
+                if (window.lineaSeleccionada.anulado) {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: "info",
+                            title: "Línea anulada",
+                            text: "Esta línea ya fue anulada y no se puede modificar."
+                        });
+                    }
+                    window.lineaSeleccionada = null;
+                    return;
+                }
 
                 loadLineModal(window.lineaSeleccionada);
             });
@@ -454,17 +502,17 @@
 
                 const precioNuevo = fnum($("#txtPrecioKg").val());
                 if (!precioNuevo || precioNuevo <= 0) {
-                    alert("Precio inválido");
+                    showMessage("warning", "Precio inválido", "Ingrese un precio mayor a 0.");
                     return;
                 }
 
                 const cant = parseCant($("#modalCantidad").val());
                 if (!isFinite(cant)) {
-                    alert("Cantidad inválida");
+                    showMessage("warning", "Cantidad inválida", "Ingrese una cantidad válida.");
                     return;
                 }
                 if (cant <= 0) {
-                    alert("La cantidad debe ser mayor a 0");
+                    showMessage("warning", "Cantidad inválida", "La cantidad debe ser mayor a 0.");
                     return;
                 }
 
@@ -479,19 +527,28 @@
                 $("#modalLineaVenta").modal("hide");
                 requestAnimationFrame(function () { scrollLineVisible(window.lineaSeleccionada.index); });
             });
-
             $("#btnEliminarItem").off("click").on("click", function () {
                 if (!window.lineaSeleccionada) return;
-                if (!confirm("¿Eliminar el producto?")) return;
+                const linea = window.lineaSeleccionada;
 
-                POSState.anularLinea(window.lineaSeleccionada.index);
-                renderTable(POSState.getLineas());
-                recalculateTotal();
+                Swal.fire({
+                    icon: "warning",
+                    title: "¿Eliminar el producto?",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí",
+                    cancelButtonText: "No"
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
 
-                $("#modalLineaVenta").modal("hide");
-                requestAnimationFrame(function () { scrollLineVisible(window.lineaSeleccionada.index); });
+                    POSState.anularLinea(linea.index);
+                    renderTable(POSState.getLineas());
+                    recalculateTotal();
 
-                $("#inputCodigo").val("").focus();
+                    $("#modalLineaVenta").modal("hide");
+                    requestAnimationFrame(function () { scrollLineVisible(linea.index); });
+
+                    $("#inputCodigo").val("").focus();
+                });
             });
 
             $("#btnMostrarCantidad").off("click").on("click", function () {
@@ -550,11 +607,11 @@
 
                 const cant = parseCant($("#modalCantidad").val());
                 if (!isFinite(cant)) {
-                    alert("Cantidad inválida (ingresá un número).");
+                    showMessage("warning", "Cantidad inválida", "Ingrese un número válido.");
                     return;
                 }
                 if (cant <= 0) {
-                    alert("La cantidad debe ser mayor a 0.");
+                    showMessage("warning", "Cantidad inválida", "La cantidad debe ser mayor a 0.");
                     return;
                 }
 
@@ -623,7 +680,8 @@
             recalculateTotal: recalculateTotal,
             addProduct: addProduct,
             renderTable: renderTable,
-            updateSaleState: updateSaleState
+            updateSaleState: updateSaleState,
+            updateCartSummary: updateCartSummary
         };
 
         window.calcularSubtotal = calculateSubtotal;

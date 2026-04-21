@@ -63,8 +63,22 @@
             $('#inputCantidad').focus().select();
         }
 
+        function setSearchingState(active) {
+            $('#inputCodigo').toggleClass('pos-input-buscando', !!active);
+        }
+
+        function showMessage(icon, title, text) {
+            if (window.Swal) {
+                Swal.fire({ icon: icon, title: title, text: text });
+                return;
+            }
+
+            alert(text || title);
+        }
+
         // Restablece el panel de producto al estado neutro.
         function showWaiting() {
+            setSearchingState(false);
             productoSeleccionado = null;
             precioActual = 0;
 
@@ -77,6 +91,7 @@
 
         // Muestra un mensaje de espera mientras el backend responde.
         function showSearching(message, keepQuantity) {
+            setSearchingState(true);
             const cantidadActual = keepQuantity ? $('#inputCantidad').val() : '';
 
             productoSeleccionado = null;
@@ -91,6 +106,7 @@
 
         // Deja la UI lista para un nuevo intento cuando no encontramos coincidencia.
         function showNoMatch(message) {
+            setSearchingState(false);
             productoSeleccionado = null;
             precioActual = 0;
 
@@ -148,6 +164,7 @@
                 timeout: 3000,
                 success: function (data) {
                     buscandoProducto = false;
+                    setSearchingState(false);
 
                     const codigoActual = normalizeInput($('#inputCodigo').val());
                     if (codigoActual !== ultimoCodigoPedido) return;
@@ -181,6 +198,7 @@
                     if (status === 'abort') return;
 
                     buscandoProducto = false;
+                    setSearchingState(false);
 
                     if (status === 'timeout') {
                         options.showConnectionError('La conexion es lenta. Reintente.');
@@ -282,7 +300,7 @@
         // reusa el mismo flujo de busqueda que usa el input de codigo.
         function openSearchModal() {
             if (typeof window.abrirBuscarProductoModal !== 'function') {
-                alert('No se pudo abrir el buscador de productos. Verifica que el script global del modal este cargado.');
+                showMessage('error', 'Buscador de productos', 'No se pudo abrir el buscador de productos. Verifica que el script global del modal esté cargado.');
                 return;
             }
 

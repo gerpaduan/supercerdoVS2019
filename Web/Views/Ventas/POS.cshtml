@@ -34,12 +34,21 @@
                     </div>
                 </div>
 
-                <button class="btn btn-light btn-sm pos-btn-fullscreen"
-                        id="btn-toggle-fullscreen"
-                        type="button"
-                        title="Pantalla completa">
-                    <i class="fas fa-expand-arrows-alt"></i>
-                </button>
+                <div class="pos-top-actions">
+                    <a class="btn btn-light btn-sm pos-btn-layout"
+                       href="@Url.Action("Index", "Home")"
+                       title="Volver al sistema">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Salir del POS</span>
+                    </a>
+
+                    <button class="btn btn-light btn-sm pos-btn-fullscreen"
+                            id="btn-toggle-fullscreen"
+                            type="button"
+                            title="Pantalla completa">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- IZQUIERDA (en desktop) / ABAJO (en mobile): cliente + buscar + CF -->
@@ -101,9 +110,16 @@
                             </div>
 
                             <div class="zona-total">
+                                <div id="posVentaRestaurada" class="pos-restore-banner d-none">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Venta restaurada. Debe presionar <strong>Cancelar Venta</strong> para salir.
+                                </div>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h3 class="m-0 pos-total-label">Total</h3>
                                     <h1 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h1>
+                                </div>
+                                <div id="posVentaResumen" class="pos-sale-summary text-muted">
+                                    Sin productos
                                 </div>
                             </div>
 
@@ -256,7 +272,7 @@
                                 <div class="zona-botones">
                                     <div class="row g-2">
                                         <div class="col-4">
-                                            <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>Cancelar Venta</button>
                                         </div>
                                         <div class="col-4">
                                             <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
@@ -527,9 +543,9 @@ else
 
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=1")"></script>
@@ -704,6 +720,85 @@ else
     const carrito = POSState.getLineas();
     POSState.setFechaVenta(new Date());
     POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
+    window.POSFinalizandoVenta = false;
+    window.POSVentaFinalizada = false;
+
+    window.POSDraft = window.POSDraft || (function () {
+        const key = "carnisys-pos-venta-en-curso";
+
+        function getLineasActivas() {
+            return POSState.getLineas().filter(function (linea) {
+                return linea && !linea.anulado;
+            });
+        }
+
+        function save() {
+            if (window.POSFinalizandoVenta || window.POSVentaFinalizada) {
+                localStorage.removeItem(key);
+                return;
+            }
+
+            const lineas = POSState.getLineas();
+
+            if (!lineas.some(function (linea) { return linea && !linea.anulado; })) {
+                if (window.POSCancelacionEnCurso) return;
+                localStorage.removeItem(key);
+                return;
+            }
+
+            localStorage.setItem(key, JSON.stringify({
+                lineas: lineas,
+                idPersona: $("#idPersona").val(),
+                razonSocial: $("#razonSocial").val(),
+                observaciones: POSState.getObservaciones(),
+                fechaVenta: $("#fechaVenta").val()
+            }));
+        }
+
+        function restore() {
+            let draft = null;
+
+            try {
+                draft = JSON.parse(localStorage.getItem(key) || "null");
+            } catch (e) {
+                localStorage.removeItem(key);
+                return false;
+            }
+
+            if (!draft || !Array.isArray(draft.lineas)) return false;
+
+            const lineasActivas = draft.lineas.filter(function (linea) {
+                return linea && !linea.anulado;
+            });
+
+            if (!lineasActivas.length) {
+                localStorage.removeItem(key);
+                return false;
+            }
+
+            POSState.setLineas(draft.lineas);
+
+            if (draft.idPersona) $("#idPersona").val(draft.idPersona);
+            if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
+            if (draft.observaciones != null) POSState.setObservaciones(draft.observaciones);
+            if (draft.fechaVenta) $("#fechaVenta").val(draft.fechaVenta);
+
+            return true;
+        }
+
+        function clear() {
+            localStorage.removeItem(key);
+        }
+
+        return {
+            save: save,
+            restore: restore,
+            clear: clear,
+            getLineasActivas: getLineasActivas
+        };
+    })();
+
+    const ventaRestauradaPOS = window.POSDraft.restore();
 
     (function () {
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -901,6 +996,197 @@ else
     posKeyboard.init();
     posHelp.init();
     posComment.init();
+
+    if (ventaRestauradaPOS) {
+        posCart.renderTable(window.POSState.getLineas());
+        posCart.recalculateTotal();
+        posCart.updateSaleState();
+        $("#posVentaRestaurada").removeClass("d-none");
+
+        Swal.fire({
+            icon: "warning",
+            title: "Venta en curso restaurada",
+            text: 'Debe presionar "Cancelar Venta" para salir del POS.'
+        });
+    }
+
+    window.setInterval(function () {
+        window.POSDraft?.save?.();
+    }, 1000);
+
+    let cancelandoVentaPOS = false;
+    let indicesCancelacionPOS = [];
+
+    window.resetPOS = function () {
+        window.POSFinalizandoVenta = false;
+        window.POSVentaFinalizada = false;
+        window.POSCancelacionEnCurso = false;
+        cancelandoVentaPOS = false;
+        indicesCancelacionPOS = [];
+
+        window.POSState?.clear?.();
+        window.POSDraft?.clear?.();
+
+        const ahora = new Date();
+        POSState.setFechaVenta(ahora);
+        $("#fechaVenta").val(ahora.toISOString().slice(0, 19));
+        $("#idPersona").val('@Entidades.Persona.idConsumidorFinal');
+        $("#razonSocial").val('Consumidor Final');
+        $("#inputCodigo").val("");
+        $("#inputCantidad").val("").prop("disabled", true);
+        $("#prodSubtotal").text("$ 0,00");
+        $("#posVentaRestaurada").addClass("d-none");
+
+        posProduct.setProductoSeleccionado(null);
+        posProduct.showWaiting();
+        posCart.renderTable(POSState.getLineas());
+        posCart.recalculateTotal();
+        posCart.updateSaleState();
+        posCart.updateCartSummary?.();
+        posComment.updateButtonState?.();
+
+        $("#chkPagoMixto").prop("checked", false).prop("disabled", false);
+        $("#montoEfectivo, #montoOtroPago").val("");
+        $("#labelOtroPago").text("Otro Medio");
+        $("#bloquePagoMixto").hide();
+        $(".btn-forma-pago, #btnFinalizarPagoMixto, #btnFinalizar").prop("disabled", false);
+        $("#modalFormaPago, #modalLineaVenta").modal("hide");
+
+        window.activarAvisoSalidaPOS?.();
+        setTimeout(function () { posKeyboard.focusCodigo(); }, 50);
+    };
+
+    window.resetPOSDespuesDeFinalizar = function () {
+        $.ajax({
+            url: '@Url.Action("POS", "Ventas")',
+            type: "GET",
+            cache: false
+        }).done(function () {
+            window.resetPOS();
+        }).fail(function () {
+            window.location.href = '@Url.Action("POS", "Ventas")';
+        });
+    };
+
+    function hayVentaActivaPOS() {
+        if (window.POSFinalizandoVenta) return false;
+        if (window.POSCancelacionEnCurso) return true;
+
+        return !!(window.POSState &&
+            typeof window.POSState.hasVentaEnCurso === "function" &&
+            window.POSState.hasVentaEnCurso());
+    }
+
+    function mostrarBloqueoSalidaPOS() {
+        Swal.fire({
+            icon: "warning",
+            title: "No puede salir con una venta en curso",
+            text: 'Debe presionar "Cancelar Venta".'
+        });
+    }
+
+    function bloquearSalidaSiVentaEnCurso(e) {
+        if (!hayVentaActivaPOS()) return false;
+
+        if (e) {
+            e.preventDefault();
+            if (typeof e.stopImmediatePropagation === "function") {
+                e.stopImmediatePropagation();
+            } else if (typeof e.stopPropagation === "function") {
+                e.stopPropagation();
+            }
+        }
+
+        window.POSDraft?.save?.();
+        mostrarBloqueoSalidaPOS();
+        return true;
+    }
+
+    document.addEventListener("keydown", function (e) {
+        const key = (e.key || "").toLowerCase();
+        const intentaRecargar = e.key === "F5" || ((e.ctrlKey || e.metaKey) && key === "r");
+
+        if (intentaRecargar) {
+            bloquearSalidaSiVentaEnCurso(e);
+        }
+    }, true);
+
+    $(document).on("click.posSalidaVenta", "a[href]", function (e) {
+        const href = ($(this).attr("href") || "").trim();
+
+        if (!href || href === "#" || href.indexOf("javascript:") === 0) return;
+        if ($(this).data("pos-ajax") === true || $(this).attr("data-pos-ajax") === "true") return;
+        if ($(this).attr("data-toggle") === "modal" || $(this).attr("data-dismiss") === "modal") return;
+
+        bloquearSalidaSiVentaEnCurso(e);
+    });
+
+    $("#btnCancelarItem").off("click.posCancelarVenta").on("click.posCancelarVenta", function () {
+        if (cancelandoVentaPOS) return;
+
+        const lineas = window.POSState?.getLineas?.() || [];
+        const lineasActivas = lineas.filter(function (linea) {
+            return linea && !linea.anulado;
+        });
+
+        if (!lineas.length) {
+            Swal.fire({
+                icon: "info",
+                title: "Venta vacía",
+                text: "No hay una venta en curso para cancelar."
+            });
+            return;
+        }
+
+        Swal.fire({
+            icon: "warning",
+            title: "¿Realmente desea cancelar la venta?",
+            showCancelButton: true,
+            confirmButtonText: "Sí",
+            cancelButtonText: "No"
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+
+            cancelandoVentaPOS = true;
+            window.POSCancelacionEnCurso = true;
+            indicesCancelacionPOS = lineasActivas.map(function (linea) {
+                return linea.index;
+            });
+            $("#btnCancelarItem").prop("disabled", true);
+
+            lineasActivas.forEach(function (linea) {
+                window.POSState.anularLinea(linea.index);
+            });
+
+            posCart.renderTable(window.POSState.getLineas());
+            posCart.recalculateTotal();
+            posCart.updateSaleState();
+
+            finalizarVenta({
+                formaPago: "Efectivo",
+                esPagoMixto: false,
+                efectivo: 0,
+                idPersona: $("#idPersona").val(),
+                omitirPostVenta: true
+            });
+        });
+    });
+
+    $(document).off("ventaCancelacion:error.posCancelarVenta").on("ventaCancelacion:error.posCancelarVenta", function () {
+        indicesCancelacionPOS.forEach(function (index) {
+            const linea = window.POSState?.findLineaByIndex?.(index);
+            if (linea) linea.anulado = false;
+        });
+
+        indicesCancelacionPOS = [];
+        cancelandoVentaPOS = false;
+        window.POSCancelacionEnCurso = false;
+        $("#btnCancelarItem").prop("disabled", false);
+        posCart.renderTable(window.POSState.getLineas());
+        posCart.recalculateTotal();
+        posCart.updateSaleState();
+    });
+
     // Helper: scroll a una línea (desktop scroll interno / responsive scroll página)
     function scrollTablaAItem(idLinea) {
         const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
@@ -922,11 +1208,25 @@ else
 
 
     $('#btnFinalizar').on('click', function () {
-        if (carrito.length === 0) {
+        const lineasActuales = window.POSState?.getLineas?.() || [];
+        const tieneLineasActivas = lineasActuales.some(function (linea) {
+            return linea && !linea.anulado;
+        });
+
+        if (lineasActuales.length === 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Venta vacía',
                 text: 'Debe agregar al menos un producto'
+            });
+            return;
+        }
+
+        if (!tieneLineasActivas) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Venta anulada',
+                text: 'Para cerrar una venta anulada debe presionar "Cancelar Venta".'
             });
             return;
         }
@@ -1488,12 +1788,45 @@ else
         justify-content: center;
     }
 
+    #inputCodigo.pos-input-buscando {
+        background-image: linear-gradient(90deg, rgba(78, 115, 223, .10), rgba(78, 115, 223, .22), rgba(78, 115, 223, .10));
+        background-size: 240% 100%;
+        animation: posBuscarProducto 1s linear infinite;
+    }
+
+    @@keyframes posBuscarProducto {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        100% {
+            background-position: 240% 50%;
+        }
+    }
+
+    .pos-top-actions {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: stretch;
+        gap: .35rem;
+    }
+
+    .pos-btn-layout {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        white-space: nowrap;
+        min-height: 44px;
+    }
+
     @@media (min-width: 992px) {
         .pos-meta {
             min-width: 0;
         }
 
-        .pos-btn-fullscreen {
+        .pos-btn-fullscreen,
+        .pos-btn-layout {
             height: 100%;
             min-height: 44px;
         }
@@ -1502,6 +1835,10 @@ else
     @@media (max-width: 991.98px) {
         .pos-meta {
             text-align: left !important;
+        }
+
+        .pos-btn-layout span {
+            display: none;
         }
     }
 
@@ -1572,6 +1909,29 @@ else
         border-top: 1px solid var(--pos-border);
     }
 
+    .pos-sale-summary {
+        font-size: .86rem;
+        line-height: 1.2;
+        text-align: right;
+    }
+
+    .pos-restore-banner {
+        border: 1px solid #f1c36d;
+        background: #fff8e7;
+        color: #7a4b00;
+        border-radius: 8px;
+        padding: .35rem .55rem;
+        margin-bottom: .35rem;
+        font-size: .85rem;
+        line-height: 1.2;
+    }
+
+    html.dark-mode .pos-restore-banner {
+        background: rgba(255, 193, 7, .12);
+        border-color: rgba(255, 193, 7, .35);
+        color: #ffd77a;
+    }
+
     .pos-total-label {
         color: #adb5bd;
     }
@@ -1616,6 +1976,11 @@ else
     .fila-anulada {
         text-decoration: line-through;
         opacity: .6;
+        cursor: not-allowed;
+    }
+
+    .fila-anulada:hover {
+        background: transparent;
     }
 
     /* ✅ highlight último item */

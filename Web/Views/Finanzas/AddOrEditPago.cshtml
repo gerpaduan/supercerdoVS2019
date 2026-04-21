@@ -6,6 +6,9 @@
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
     bool requestAjax = Request != null && Request.IsAjaxRequest();
     bool renderComoModal = desdePos || renderSinLayout || requestAjax;
+    bool usuarioAdmin = ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin;
+    bool mostrarSucursales = !desdePos || usuarioAdmin;
+    string estiloComboSucursales = mostrarSucursales ? "" : "display:none;";
     var chequeBusquedaPagoViewData = new ViewDataDictionary(ViewData);
     chequeBusquedaPagoViewData["ChequeBusquedaEnPago"] = true;
 
@@ -30,34 +33,31 @@
     <div class="row">
         <div class="col-12 col-lg-8 mx-auto">
 
-            <div class="mb-3">
-                <button type="button"
-                        class="btn btn-outline-secondary"
-                        onclick="volverDesdePago()">
-                    <i class="fas fa-arrow-left mr-1"></i> Volver
-                </button>
-            </div>
-
             <!-- =======================
              CABECERA PERSONA + SALDO
              ======================= -->
-            <div class="alert alert-primary d-flex justify-content-between align-items-center">
-                <div>
+            <div class="pago-cabecera">
+                <div class="pago-cabecera-persona">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary pago-volver-btn"
+                            onclick="volverDesdePago()"
+                            title="Volver"
+                            aria-label="Volver">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
                     <h5 class="mb-0"><strong>@persona</strong></h5>
                 </div>
-                <div>
-                    <h5 class="mb-0">
-                        Saldo:
-                        @if (saldo >= 0)
-                        {
-                            <span class="text-success font-weight-bold">$ @saldo.ToString("N2")</span>
-                        }
-                        else
-                        {
-                            <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
-                        }
-                    </h5>
-                </div>
+                <h5 class="mb-0 pago-cabecera-saldo">
+                    <span>Saldo:</span>
+                    @if (saldo >= 0)
+                    {
+                        <span class="text-success font-weight-bold">$ @saldo.ToString("N2")</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
+                    }
+                </h5>
             </div>
 
             <div class="card shadow mb-4">
@@ -72,7 +72,7 @@
                         <input type="hidden" id="idPersona" name="idPersona" value="@ViewBag.Persona.IdPersona" />
                         <input type="hidden" name="desdePos" value="@(renderComoModal.ToString().ToLower())" />
 
-                        <div id="comboSucursales" class="mb-3">
+                        <div id="comboSucursales" class="mb-3" style="@estiloComboSucursales">
                             <div class="form-group">
                                 <label>Sucursal</label>
                                 <select class="form-control" id="SucursalId" name="SucursalId">
@@ -89,8 +89,36 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group pago-operacion-grupo">
                             <label>Tipo de Operación</label>
+                            <div class="pago-operacion-selector" role="radiogroup" aria-label="Tipo de Operación">
+                                <button type="button"
+                                        class="pago-operacion-opcion"
+                                        data-operacion-valor="true"
+                                        aria-pressed="false">
+                                    <span class="pago-operacion-icono pago-operacion-icono-pagar">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </span>
+                                    <span class="pago-operacion-contenido">
+                                        <strong>Pagar</strong>
+                                        <small>Egreso</small>
+                                    </span>
+                                </button>
+
+                                <button type="button"
+                                        class="pago-operacion-opcion"
+                                        data-operacion-valor="false"
+                                        aria-pressed="false">
+                                    <span class="pago-operacion-icono pago-operacion-icono-cobrar">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </span>
+                                    <span class="pago-operacion-contenido">
+                                        <strong>Cobrar</strong>
+                                        <small>Ingreso</small>
+                                    </span>
+                                </button>
+                            </div>
+
                             @Html.DropDownListFor(
                                 m => m.AProveedor,
                                 new List<SelectListItem>
@@ -98,8 +126,14 @@
                                     new SelectListItem { Text = "Pagar (egreso)", Value = "true"},
                                     new SelectListItem { Text = "Cobrar (ingreso)", Value = "false"}
                                 },
-                                new { @class = "form-control" }
+                                new { @class = "form-control pago-operacion-select" }
                             )
+
+                            <div id="pagoOperacionResumen" class="pago-operacion-resumen pago-operacion-pago" aria-live="polite">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <strong>Estás registrando un PAGO</strong>
+                                <span>Salida de dinero de caja o cuenta corriente.</span>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -207,7 +241,7 @@
                                 id="btnGuardarPago"
                                 onclick="if (!@renderComoModal.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
                                 class="btn btn-success btn-block">
-                            Guardar
+                            Guardar pago
                         </button>
                     }
                 </div>
@@ -364,6 +398,177 @@ else
         border-color: #4e73df;
         box-shadow: 0 0 0 3px rgba(78, 115, 223, .12);
         background: #fbfcff;
+    }
+
+    .pago-cabecera {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        border: 1px solid #b8d6f5;
+        border-radius: 8px;
+        background: #eef6ff;
+        color: #1f3b64;
+        padding: .55rem .75rem;
+        margin-bottom: .75rem;
+    }
+
+    .pago-cabecera-persona {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        min-width: 0;
+    }
+
+    .pago-cabecera-persona h5 {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pago-volver-btn {
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .pago-cabecera-saldo {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .pago-operacion-selector {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .6rem;
+        margin-bottom: .55rem;
+    }
+
+    .pago-operacion-opcion {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        min-height: 64px;
+        width: 100%;
+        border: 1px solid #dbe5f3;
+        border-radius: 8px;
+        background: #fff;
+        color: #334155;
+        padding: .65rem .75rem;
+        text-align: left;
+        transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .pago-operacion-opcion:hover,
+    .pago-operacion-opcion:focus {
+        border-color: #9fb3d8;
+        box-shadow: 0 0 0 3px rgba(78, 115, 223, .12);
+        outline: none;
+    }
+
+    .pago-operacion-opcion.activo-pagar {
+        border-color: #e2a4a4;
+        background: #fff6f6;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, .12);
+    }
+
+    .pago-operacion-opcion.activo-cobrar {
+        border-color: #9bd3ad;
+        background: #f4fbf6;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, .12);
+    }
+
+    .pago-operacion-icono {
+        flex: 0 0 38px;
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .pago-operacion-icono-pagar {
+        background: #fde2e2;
+        color: #b4232d;
+    }
+
+    .pago-operacion-icono-cobrar {
+        background: #dcf5e3;
+        color: #1f7a46;
+    }
+
+    .pago-operacion-contenido {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .pago-operacion-contenido strong {
+        line-height: 1.15;
+        font-size: 1rem;
+    }
+
+    .pago-operacion-contenido small {
+        color: #64748b;
+        font-size: .76rem;
+        line-height: 1.2;
+    }
+
+    .pago-operacion-select {
+        display: none;
+    }
+
+    .pago-operacion-resumen {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .25rem .35rem;
+        border-radius: 8px;
+        padding: .45rem .65rem;
+        font-size: .86rem;
+        border: 1px solid #dbe5f3;
+    }
+
+    .pago-operacion-resumen span {
+        color: #64748b;
+    }
+
+    .pago-operacion-pago {
+        border-color: #efc2c2;
+        background: #fff7f7;
+        color: #9f1f2a;
+    }
+
+    .pago-operacion-cobro {
+        border-color: #bfe6ca;
+        background: #f3fbf6;
+        color: #1f7a46;
+    }
+
+    @@media (max-width: 575.98px) {
+        .pago-cabecera {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .pago-cabecera-saldo {
+            padding-left: 2.45rem;
+        }
+
+        .pago-operacion-selector {
+            grid-template-columns: 1fr;
+        }
     }
 
     .pago-modo-resumen {

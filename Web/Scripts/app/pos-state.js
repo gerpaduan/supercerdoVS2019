@@ -39,6 +39,10 @@
 
         setLineas: function (lineas) {
             state.lineasVenta = normalizarLineas(lineas);
+            state.nextIndex = state.lineasVenta.reduce(function (max, linea) {
+                const index = parseInt(linea && linea.index, 10) || 0;
+                return Math.max(max, index + 1);
+            }, 1);
             return state.lineasVenta;
         },
 

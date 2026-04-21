@@ -120,6 +120,38 @@
         cambioProgramaticoPago = true;
         $("#AProveedor").val(valorAnterior);
         cambioProgramaticoPago = false;
+        actualizarOperacionPago();
+    }
+
+    function actualizarOperacionPago() {
+        var esPago = ($("#AProveedor").val() || "").toString().toLowerCase() === "true";
+        var $opciones = $(".pago-operacion-opcion");
+        var $resumen = $("#pagoOperacionResumen");
+        var $guardar = $("#btnGuardarPago");
+
+        $opciones
+            .removeClass("activo-pagar activo-cobrar")
+            .attr("aria-pressed", "false");
+
+        $opciones.filter("[data-operacion-valor='" + (esPago ? "true" : "false") + "']")
+            .addClass(esPago ? "activo-pagar" : "activo-cobrar")
+            .attr("aria-pressed", "true");
+
+        if ($resumen.length) {
+            $resumen
+                .removeClass("pago-operacion-pago pago-operacion-cobro")
+                .addClass(esPago ? "pago-operacion-pago" : "pago-operacion-cobro")
+                .html(esPago
+                    ? '<i class="fas fa-arrow-up mr-1"></i><strong>Estas registrando un PAGO</strong><span>Salida de dinero de caja o cuenta corriente.</span>'
+                    : '<i class="fas fa-arrow-down mr-1"></i><strong>Estas registrando un COBRO</strong><span>Ingreso de dinero a caja o cuenta corriente.</span>');
+        }
+
+        if ($guardar.length) {
+            $guardar
+                .removeClass("btn-success btn-danger")
+                .addClass(esPago ? "btn-danger" : "btn-success")
+                .text(esPago ? "Guardar pago" : "Guardar cobro");
+        }
     }
 
     function validarChequesContraTipoOperacion(esAProveedor, onComplete) {
@@ -251,6 +283,7 @@
             var valorNuevo = $(this).val();
 
             if (valorAnterior === valorNuevo) {
+                actualizarOperacionPago();
                 return;
             }
 
@@ -261,7 +294,15 @@
                 }
 
                 estadoPagoForm.ultimoAProveedor = valorNuevo;
+                actualizarOperacionPago();
             });
+        })
+        .off("click.posPagoOperacion", ".pago-operacion-opcion")
+        .on("click.posPagoOperacion", ".pago-operacion-opcion", function () {
+            var valor = ($(this).attr("data-operacion-valor") || "").toString();
+            if (!valor) return;
+
+            $("#AProveedor").val(valor).trigger("change");
         })
         .off("input.posPago", "#Efectivo")
         .on("input.posPago", "#Efectivo", function () {
@@ -274,6 +315,7 @@
         estadoPagoForm.ultimaFormaPago = $("#formaPago").val() || "";
         estadoPagoForm.ultimoAProveedor = $("#AProveedor").val() || "";
         $("#SucursalId").trigger("focus");
+        actualizarOperacionPago();
         setTimeout(actualizarVisibilidad, 0);
     });
 })(window, jQuery);

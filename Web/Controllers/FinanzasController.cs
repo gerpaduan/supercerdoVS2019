@@ -400,6 +400,7 @@ namespace Web.Controllers
         {
             bool modoPos = desdePos || DesdePOS;
             bool renderParcial = modoPos || Request.IsAjaxRequest();
+            var user = Session["Usuario"] as Entidades.Usuario;
             var sucursales = oSucursalN.findAll();
             string returnUrlDecodificada = DecodeReturnUrlIfNeeded(returnUrl);
 
@@ -407,6 +408,7 @@ namespace Web.Controllers
             ViewBag.ReturnUrl = returnUrlDecodificada;
             ViewBag.DesdePOS = modoPos;
             ViewBag.RenderSinLayout = renderParcial;
+            ViewBag.UsuarioAdmin = user != null && user.Admin;
 
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
 
@@ -431,7 +433,6 @@ namespace Web.Controllers
                 model = new Pago();
                 model.Fecha = DateTime.Now;
 
-                var user = Session["Usuario"] as Entidades.Usuario;
                 model.Sucursal = user.Sucursal;
 
                 model.NroRecibo = oCtaCteN.getNroReciboAutomatico(model.Sucursal.idSucursal);                
@@ -461,6 +462,10 @@ namespace Web.Controllers
             bool desdePos = false)
         {
             returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
+            var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+
+            if (desdePos && usuarioActual != null && !usuarioActual.Admin && usuarioActual.Sucursal != null)
+                SucursalId = usuarioActual.Sucursal.IdSucursal;
 
             oPagoE.Sucursal = oSucursalN.findById(SucursalId);
             oPagoE.Persona = oPersonasN.findById(idPersona);
@@ -484,10 +489,10 @@ namespace Web.Controllers
 
             oPagoE.CreadoPor = oPagoE.Id > 0
                 ? oCtaCteN.getPagoById(oPagoE.Id).CreadoPor
-                : Session["Usuario"] as Entidades.Usuario;
+                : usuarioActual;
 
             oPagoE.ActualizadoPor = oPagoE.Id > 0
-                ? Session["Usuario"] as Entidades.Usuario
+                ? usuarioActual
                 : oPagoE.ActualizadoPor;
 
             oPagoE.FormaPago = oPagoE.FormaPago_.ToString();

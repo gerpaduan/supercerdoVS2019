@@ -169,22 +169,76 @@ $('#btnFinalizarPagoMixto').on('click', function () {
 // ===============================
 // FINALIZAR VENTA (POST)
 // ===============================
+function parseNumeroPOS(value) {
+    let s = String(value ?? '').trim();
+    s = s.replace(/[^0-9,.\-]/g, '');
+
+    const hasComma = s.includes(',');
+    const hasDot = s.includes('.');
+
+    if (hasComma && hasDot) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else if (hasComma) {
+        s = s.replace(',', '.');
+    }
+
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : NaN;
+}
+
 function finalizarVenta(data) {
 
     if (ventaEnProceso) return;
     if (window.POSGuard && !window.POSGuard.startAction('venta:finalizar')) return;
 
-    if (!window.lineasVenta || window.lineasVenta.length === 0) {
+    const lineasParaFinalizar = window.POSState?.getLineas?.() || window.lineasVenta || [];
+
+    if (!lineasParaFinalizar.length) {
         Swal.fire({
             icon: 'warning',
             title: 'Venta vacía',
             text: 'No hay productos cargados en la venta'
         });
+        window.POSFinalizandoVenta = false;
         window.POSGuard?.endAction('venta:finalizar');
         return;
     }
 
+    window.POSFinalizandoVenta = true;
+    window.POSVentaFinalizada = false;
     setEstadoVentaEnProceso(true);
+
+    const lineasPayload = lineasParaFinalizar.map(l => ({
+        Codigo: l.codigo,
+        CantKg: parseNumeroPOS(l.cant),
+        PrecioKg: parseNumeroPOS(l.precio),
+        Bonificacion: parseNumeroPOS(l.bonificacion) || 0,
+        Estado: (l.anulado ? 1 : 0),
+        Balanza: l.balanza
+    }));
+
+    const lineaInvalida = lineasPayload.find(l =>
+        !l.Codigo ||
+        !Number.isFinite(l.CantKg) || l.CantKg <= 0 ||
+        !Number.isFinite(l.PrecioKg) || l.PrecioKg <= 0
+    );
+
+    if (lineaInvalida) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Hay una línea de venta con cantidad, precio o código inválido. Vuelva a cargar el producto.'
+        });
+        window.POSFinalizandoVenta = false;
+        window.POSVentaFinalizada = false;
+        setEstadoVentaEnProceso(false);
+        window.POSGuard?.endAction('venta:finalizar');
+        if (data.omitirPostVenta) {
+            window.POSCancelacionEnCurso = false;
+            $(document).trigger('ventaCancelacion:error');
+        }
+        return;
+    }
 
     const payload = {
         formaPago: data.formaPago,
@@ -192,14 +246,7 @@ function finalizarVenta(data) {
         efectivo: data.efectivo,
         idPersona: data.idPersona,
         Observaciones: window.POSState?.getObservaciones?.() || '',
-        lineasVenta: window.lineasVenta.map(l => ({
-            Codigo: l.codigo,
-            CantKg: parseFloat(l.cant),
-            PrecioKg: parseFloat(l.precio.replace('$', '')),
-            Bonificacion: l.bonificacion,
-            Estado: (l.anulado ? 1 : 0),
-            Balanza: l.balanza
-        }))
+        lineasVenta: lineasPayload
     };
 
     $.ajax({
@@ -217,17 +264,39 @@ function finalizarVenta(data) {
                     title: 'Error',
                     text: resp.msg || 'No se pudo finalizar la venta'
                 });
+                window.POSFinalizandoVenta = false;
+                window.POSVentaFinalizada = false;
                 setEstadoVentaEnProceso(false);
                 window.POSGuard?.endAction('venta:finalizar');
+                if (data.omitirPostVenta) {
+                    window.POSCancelacionEnCurso = false;
+                    $(document).trigger('ventaCancelacion:error');
+                }
                 return;
             }
 
 
             // ✅ Venta OK
+            window.POSFinalizandoVenta = true;
+            window.POSVentaFinalizada = true;
             window.desactivarAvisoSalidaPOS?.();
+            window.POSDraft?.clear?.();
 
             const ventaId = resp.ventaId;
             const tel = resp.whatsapp || ''; // o de donde lo saques
+
+            if (data.omitirPostVenta) {
+                window.POSCancelacionEnCurso = false;
+                setEstadoVentaEnProceso(false);
+                window.POSGuard?.endAction('venta:finalizar');
+                if (typeof window.resetPOSDespuesDeFinalizar === 'function') {
+                    window.resetPOSDespuesDeFinalizar();
+                } else {
+                    window.POSState?.clear?.();
+                    window.location.href = '/Ventas/POS';
+                }
+                return;
+            }
 
             const $fp = $('#modalFormaPago');
 
@@ -252,8 +321,14 @@ function finalizarVenta(data) {
                 title: 'Error',
                 text: xhr.responseJSON?.msg || 'Error del servidor'
             });
+            window.POSFinalizandoVenta = false;
+            window.POSVentaFinalizada = false;
             setEstadoVentaEnProceso(false);
             window.POSGuard?.endAction('venta:finalizar');
+            if (data.omitirPostVenta) {
+                window.POSCancelacionEnCurso = false;
+                $(document).trigger('ventaCancelacion:error');
+            }
         }
     });
 
