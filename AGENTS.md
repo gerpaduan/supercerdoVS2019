@@ -23,6 +23,20 @@ Antes de modificar cualquier archivo:
 - No tocar configuraciones de impresión, balanzas, serial ports, facturación o sincronización si el cambio pedido no está relacionado con eso.
 - No romper compatibilidad con .NET Framework, WinForms, librerías actuales ni con el entorno de producción.
 
+## Regla de renderizado para vistas modales desde POS
+
+En este sistema existen vistas compartidas entre el layout principal y POS.
+
+### Regla obligatoria
+Toda vista que se abra **dentro de un modal desde POS** debe renderizarse como **PartialView** y **sin `LayoutBase`**.
+
+### Qué significa esto
+- No debe cargar el layout principal del sistema.
+- No debe mostrar menú lateral, navbar, header ni contenedores del layout general.
+- No debe inyectar estructura de página completa.
+- Debe devolver únicamente el contenido interno de la vista para ser insertado dentro del modal.
+
+
 ## Sobre WinForms
 Prestar especial atención a:
 - eventos de botones, grillas, combos y timers
