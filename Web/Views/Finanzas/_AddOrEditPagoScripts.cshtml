@@ -7,6 +7,11 @@
     if (!window || !$) return;
 
     var desdePosPago = @Html.Raw((desdePos ? "true" : "false"));
+    var cambioProgramaticoPago = false;
+    var estadoPagoForm = {
+        ultimaFormaPago: "",
+        ultimoAProveedor: ""
+    };
 
     window.swalPago = function (opciones) {
         var base = {
@@ -15,8 +20,11 @@
 
         if (desdePosPago) {
             var target =
-                document.querySelector("#modalPagoPOS .modal-content") ||
-                document.querySelector("#modalFinanzasPOS .modal-content") ||
+                document.querySelector("#modalDetalleCheque.show .modal-content") ||
+                document.querySelector("#modalAltaCheque.show .modal-content") ||
+                document.querySelector("#modalBuscarCheques.show .modal-content") ||
+                document.querySelector("#modalPagoPOS.show .modal-content") ||
+                document.querySelector("#modalFinanzasPOS.show .modal-content") ||
                 document.body;
 
             base.target = target;
@@ -55,23 +63,113 @@
         }
     ];
 
+    function normalizarFormaPago(valor, texto) {
+        var valorNorm = (valor || "").toString().trim().toLowerCase();
+        var textoNorm = (texto || "").toString().trim().toLowerCase();
+
+        return {
+            valor: valorNorm,
+            texto: textoNorm
+        };
+    }
+
+    function esFormaCheque(valor, texto) {
+        var fp = normalizarFormaPago(valor, texto);
+        return fp.valor === "cheque" ||
+            fp.valor === "eftvocheque" ||
+            fp.valor === "efvtocheque" ||
+            fp.texto === "cheque" ||
+            fp.texto === "eftvocheque" ||
+            fp.texto === "efvtocheque";
+    }
+
+    function esFormaMixta(valor, texto) {
+        var fp = normalizarFormaPago(valor, texto);
+        return fp.valor === "eftvocheque" ||
+            fp.valor === "efvtocheque" ||
+            fp.texto === "eftvocheque" ||
+            fp.texto === "efvtocheque";
+    }
+
+    function tieneChequesAsignados() {
+        return $("#tablaCheques tbody tr").length > 0;
+    }
+
+    function obtenerNumeroChequesAsignados() {
+        var numeros = [];
+        $("#tablaCheques tbody tr").each(function () {
+            var nro = ($(this).find("td:eq(0)").text() || "").trim();
+            if (nro) {
+                numeros.push(nro);
+            }
+        });
+        return numeros;
+    }
+
+    function revertirFormaPago(valorAnterior) {
+        cambioProgramaticoPago = true;
+        $("#formaPago").val(valorAnterior);
+        cambioProgramaticoPago = false;
+        setTimeout(actualizarVisibilidad, 0);
+        if (window.PagoUX && typeof window.PagoUX.actualizarResumenModo === "function") {
+            window.PagoUX.actualizarResumenModo();
+        }
+    }
+
+    function revertirAProveedor(valorAnterior) {
+        cambioProgramaticoPago = true;
+        $("#AProveedor").val(valorAnterior);
+        cambioProgramaticoPago = false;
+    }
+
+    function validarChequesContraTipoOperacion(esAProveedor, onComplete) {
+        var numeros = obtenerNumeroChequesAsignados();
+
+        if (!numeros.length) {
+            onComplete(true);
+            return;
+        }
+
+        var pagoId = $("#Id").val() || 0;
+        var mensajes = [];
+        var pendientes = numeros.length;
+
+        numeros.forEach(function (numero) {
+            $.get(window.urls.buscarChequePorNro, {
+                numero: numero,
+                pagoId: pagoId,
+                esAProveedor: esAProveedor
+            }).done(function (resp) {
+                if (!resp || !resp.ok) {
+                    mensajes.push((resp && resp.mensaje) || ("El cheque " + numero + " no es válido para esta operación."));
+                }
+            }).fail(function () {
+                mensajes.push("No se pudo validar el cheque " + numero + ".");
+            }).always(function () {
+                pendientes--;
+                if (pendientes === 0) {
+                    if (mensajes.length) {
+                        window.swalPago({
+                            icon: "warning",
+                            title: "Validación",
+                            text: mensajes[0]
+                        });
+                        onComplete(false);
+                        return;
+                    }
+
+                    onComplete(true);
+                }
+            });
+        });
+    }
+
     function actualizarVisibilidad() {
         var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
         var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
 
-        var esCheque =
-            valor === "cheque" ||
-            valor === "eftvocheque" ||
-            valor === "efvtocheque" ||
-            texto === "cheque" ||
-            texto === "eftvocheque" ||
-            texto === "efvtocheque";
-
-        var esMixto =
-            valor === "eftvocheque" ||
-            valor === "efvtocheque" ||
-            texto === "eftvocheque" ||
-            texto === "efvtocheque";
+        var esCheque = esFormaCheque(valor, texto);
+        var esMixto = esFormaMixta(valor, texto);
 
         if (esCheque) {
             $("#bloqueCheques").show();
@@ -111,7 +209,59 @@
         })
         .off("change.posPago", "#formaPago")
         .on("change.posPago", "#formaPago", function () {
+            if (cambioProgramaticoPago) return;
+
+            var valorNuevo = $(this).val();
+            var textoNuevo = $("#formaPago option:selected").text();
+            var valorAnterior = estadoPagoForm.ultimaFormaPago || valorNuevo;
+            var textoAnterior = $("#formaPago option[value='" + valorAnterior + "']").text();
+
+            if (!esFormaCheque(valorNuevo, textoNuevo) && tieneChequesAsignados()) {
+                window.swalPago({
+                    icon: "warning",
+                    title: "Validación",
+                    text: "Para cambiar la forma de pago primero debe quitar los cheques asignados."
+                });
+                revertirFormaPago(valorAnterior);
+                return;
+            }
+
+            var efectivoActual = parseFloat($("#Efectivo").val() || "0") || 0;
+            if (esFormaCheque(valorNuevo, textoNuevo) &&
+                !esFormaMixta(valorNuevo, textoNuevo) &&
+                esFormaMixta(valorAnterior, textoAnterior) &&
+                efectivoActual > 0) {
+                window.swalPago({
+                    icon: "warning",
+                    title: "Validación",
+                    text: "El campo Efectivo tiene asignado un importe. Bórralo o ponelo en 0 para cambiar la forma de pago."
+                });
+                revertirFormaPago(valorAnterior);
+                return;
+            }
+
+            estadoPagoForm.ultimaFormaPago = valorNuevo;
             actualizarVisibilidad();
+        })
+        .off("change.posPagoOperacion", "#AProveedor")
+        .on("change.posPagoOperacion", "#AProveedor", function () {
+            if (cambioProgramaticoPago) return;
+
+            var valorAnterior = estadoPagoForm.ultimoAProveedor || $(this).val();
+            var valorNuevo = $(this).val();
+
+            if (valorAnterior === valorNuevo) {
+                return;
+            }
+
+            validarChequesContraTipoOperacion(valorNuevo === "true", function (ok) {
+                if (!ok) {
+                    revertirAProveedor(valorAnterior);
+                    return;
+                }
+
+                estadoPagoForm.ultimoAProveedor = valorNuevo;
+            });
         })
         .off("input.posPago", "#Efectivo")
         .on("input.posPago", "#Efectivo", function () {
@@ -121,6 +271,8 @@
         });
 
     $(document).ready(function () {
+        estadoPagoForm.ultimaFormaPago = $("#formaPago").val() || "";
+        estadoPagoForm.ultimoAProveedor = $("#AProveedor").val() || "";
         $("#SucursalId").trigger("focus");
         setTimeout(actualizarVisibilidad, 0);
     });

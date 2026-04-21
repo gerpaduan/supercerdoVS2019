@@ -181,7 +181,7 @@
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="@Url.Action("CtasCtes","Finanzas")">Cuentas Corrientes</a>
                         <a class="collapse-item" href="cards.html">Pagos</a>
-                        <a class="collapse-item" href="cards.html">Cheques</a>
+                        <a class="collapse-item" href="@Url.Action("Cheques","Finanzas")">Cheques</a>
                     </div>
                 </div>
             </li>
@@ -521,6 +521,22 @@
 
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", function () {
+                var host = (window.location && window.location.hostname || "").toLowerCase();
+                var esLocalhost = host === "localhost" || host === "127.0.0.1" || host === "::1";
+
+                if (esLocalhost) {
+                    navigator.serviceWorker.getRegistrations()
+                        .then(function (registrations) {
+                            registrations.forEach(function (registration) {
+                                registration.unregister();
+                            });
+                        })
+                        .catch(function (error) {
+                            console.error("Error al desregistrar Service Workers en localhost:", error);
+                        });
+                    return;
+                }
+
                 navigator.serviceWorker.register("/sw.js")
                     .then(function (registration) {
                         console.log("Service Worker registrado con éxito.");

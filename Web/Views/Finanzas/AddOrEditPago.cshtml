@@ -3,9 +3,14 @@
 
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
+    bool requestAjax = Request != null && Request.IsAjaxRequest();
+    bool renderComoModal = desdePos || renderSinLayout || requestAjax;
+    var chequeBusquedaPagoViewData = new ViewDataDictionary(ViewData);
+    chequeBusquedaPagoViewData["ChequeBusquedaEnPago"] = true;
 
     ViewBag.Title = "Agregar / Editar Pago";
-    Layout = desdePos ? null : "~/Views/Shared/_LayoutBase.cshtml";
+    Layout = renderComoModal ? null : "~/Views/Shared/_LayoutBase.cshtml";
 
     string persona = ViewBag.Persona.RazonSocial;
     decimal saldo = ViewBag.SaldoPersona;
@@ -65,7 +70,7 @@
                         @Html.HiddenFor(m => m.Id)
 
                         <input type="hidden" id="idPersona" name="idPersona" value="@ViewBag.Persona.IdPersona" />
-                        <input type="hidden" name="desdePos" value="@(desdePos.ToString().ToLower())" />
+                        <input type="hidden" name="desdePos" value="@(renderComoModal.ToString().ToLower())" />
 
                         <div id="comboSucursales" class="mb-3">
                             <div class="form-group">
@@ -200,7 +205,7 @@
 
                         <button type="submit"
                                 id="btnGuardarPago"
-                                onclick="if (!@desdePos.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
+                                onclick="if (!@renderComoModal.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
                                 class="btn btn-success btn-block">
                             Guardar
                         </button>
@@ -224,61 +229,7 @@
             </div>
 
             <div class="modal-body">
-
-                <div class="row mb-3">
-
-                    <div class="col-md-3">
-                        <label>Estado</label>
-                        <select id="filtroEstado" class="form-control">
-                            <option value="">-- Todos --</option>
-                            <option value="PENDIENTE">Pendiente</option>
-                            <option value="ENTREGADO">Entregado</option>
-                            <option value="DEPOSITADO">Depositado</option>
-                            <option value="ACREDITADO">Acreditado</option>
-                            <option value="RECHAZADO">Rechazado</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label>N° Cheque</label>
-                        <input type="text" id="filtroNroCheque" class="form-control" placeholder="Buscar por número">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label>Fecha desde</label>
-                        <input type="date" id="filtroDesde" class="form-control">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label>&nbsp;</label>
-                        <button class="btn btn-primary btn-block" id="btnFiltrarCheques">
-                            Buscar
-                        </button>
-                    </div>
-
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" id="tablaModalCheques">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>N° Cheque</th>
-                                <th>Banco</th>
-                                <th>Importe</th>
-                                <th>Fecha Pago</th>
-                                <th>Estado</th>
-                                <th>Titular</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <div class="small text-muted mt-2">
-                    Doble clic sobre un cheque para cargarlo al pago.
-                </div>
+                @Html.Partial("_ChequeBusquedaTabla", null, chequeBusquedaPagoViewData)
 
             </div>
 
@@ -340,7 +291,7 @@
     </div>
 </div>
 
-@if (desdePos)
+@if (renderComoModal)
 {
     @Html.Partial("_AddOrEditPagoScripts")
     <script>
@@ -350,7 +301,7 @@
             getCheques: '@Url.Action("GetCheques", "Finanzas")'
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=2")"></script>
     <script>
@@ -374,7 +325,7 @@ else
                 getCheques: '@Url.Action("GetCheques", "Finanzas")'
             };
         </script>
-        <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=2")"></script>
         <script>
@@ -497,7 +448,7 @@ else
         color: #9a5a12;
     }
 
-    #tablaModalCheques tbody tr.is-selected {
+    #tablaBusquedaCheques tbody tr.is-selected {
         background: rgba(13, 110, 253, 0.12);
     }
 
@@ -508,5 +459,27 @@ else
         background: #f8fafc;
         padding: .75rem;
         white-space: pre-wrap;
+    }
+
+    .modal.modal-fondo-activo .modal-dialog {
+        transform: scale(.992);
+        transition: transform .16s ease;
+    }
+
+    .modal .modal-content.modal-content-fondo-activo {
+        background: #eef2f7;
+        border-color: #cfd8e3;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, .16);
+        opacity: .92;
+    }
+
+    .modal .modal-content.modal-content-fondo-activo .modal-header {
+        background-color: #7b8794 !important;
+        border-bottom-color: #cfd8e3;
+    }
+
+    .modal .modal-content.modal-content-fondo-activo .modal-body,
+    .modal .modal-content.modal-content-fondo-activo .modal-footer {
+        background: #f4f7fb;
     }
 </style>

@@ -377,9 +377,10 @@ namespace Datos
                 SELECT 
                     c.id, c.nroCheque, c.banco, c.propio,
                     CASE c.propio WHEN 1 THEN 'Propio' WHEN 0 THEN '3ro' END AS Origen,
-                    c.fechaEmision, c.fechaPago, c.importe, c.estado, c.recibidoDe,
+                    c.fechaEmision, c.fechaPago, c.importe, c.estado, c.titular, c.recibidoDe,
                     RecibidoPor.identificacion AS Recibido_De,
                     c.entregadoA, EntregadoPor.identificacion AS Entregado_A,
+                    c.observaciones,
                     CASE WHEN LEN(c.observaciones) > 30 THEN LEFT(c.observaciones, 30) + '...' ELSE c.observaciones END AS [obs.],
                     c.creado, CreadoPor.nombre AS CreadoPor,
                     c.actualizado, ActualizadoPor.nombre AS ActualizadoPor

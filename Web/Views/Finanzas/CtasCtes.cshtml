@@ -2,9 +2,10 @@
 
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
 
     ViewBag.Title = "Cuentas Corrientes";
-    Layout = desdePos ? null : "~/Views/Shared/_LayoutBase.cshtml";
+    Layout = (desdePos || renderSinLayout) ? null : "~/Views/Shared/_LayoutBase.cshtml";
 
     string buscar = ViewBag.Buscar ?? "";
     string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";

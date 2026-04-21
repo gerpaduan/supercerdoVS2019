@@ -1,0 +1,494 @@
+@{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
+    var chequeBusquedaViewData = new ViewDataDictionary(ViewData);
+    chequeBusquedaViewData["ChequeBusquedaEnPago"] = false;
+
+    ViewBag.Title = "Cheques";
+    Layout = (desdePos || renderSinLayout) ? null : "~/Views/Shared/_LayoutBase.cshtml";
+
+    string filtroEstado = ViewBag.FiltroEstado ?? "";
+    string filtroNroCheque = ViewBag.FiltroNroCheque ?? "";
+    string filtroDesde = ViewBag.FiltroDesde ?? "";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <button type="button" class="btn btn-success" id="btnNuevoCheque">
+                    <i class="fas fa-plus mr-1"></i> Nuevo cheque
+                </button>
+            </div>
+            <div class="mt-3">
+                @Html.Partial("_ChequeBusquedaTabla", null, chequeBusquedaViewData)
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("_ModalAltaCheque")
+
+@if (renderSinLayout)
+{
+    <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
+    <script>
+        (function (window) {
+            function iniciarVistaCheques() {
+                var $ = window.jQuery;
+                if (!$ || !document.getElementById("tablaBusquedaCheques")) {
+                    window.setTimeout(iniciarVistaCheques, 60);
+                    return;
+                }
+
+                if (window.__vistaChequesInicializada) {
+                    return;
+                }
+
+                window.__vistaChequesInicializada = true;
+
+                var debounceFiltro = null;
+
+                window.urls = window.urls || {};
+                window.urls.getCheques = '@Url.Action("GetCheques", "Finanzas")';
+                window.urls.getCheque = '@Url.Action("GetCheque", "Finanzas")';
+                window.urls.guardarCheque = '@Url.Action("GuardarCheque", "Finanzas")';
+
+                function normalizarImporte(valor) {
+                    var numero = parseFloat((valor || 0).toString().replace(",", "."));
+                    return isNaN(numero) ? 0 : numero;
+                }
+
+                function escapeHtml(valor) {
+                    return $("<div>").text(valor == null ? "" : valor).html();
+                }
+
+                function textoSeguro(valor, fallback) {
+                    var texto = (valor || "").toString().trim();
+                    return texto ? texto : (fallback || "-");
+                }
+
+                function badgeEstado(estado) {
+                    var css = "badge-secondary";
+                    switch ((estado || "").toUpperCase()) {
+                        case "PENDIENTE":
+                            css = "badge-warning";
+                            break;
+                        case "ENTREGADO":
+                            css = "badge-info";
+                            break;
+                        case "DEPOSITADO":
+                            css = "badge-primary";
+                            break;
+                        case "ACREDITADO":
+                            css = "badge-success";
+                            break;
+                        case "RECHAZADO":
+                            css = "badge-danger";
+                            break;
+                    }
+
+                    return '<span class="badge ' + css + '">' + escapeHtml(textoSeguro(estado, "-")) + '</span>';
+                }
+
+                function renderizarTabla(lista) {
+                    var $tbody = $("#tablaBusquedaCheques tbody");
+                    if (!$tbody.length) return;
+
+                    var html = "";
+                    (lista || []).forEach(function (c) {
+                        var detalleId = "detCheque_" + escapeHtml(c.Id);
+                        html += [
+                            '<tr class="fila-cheque" data-id="' + escapeHtml(c.Id) + '">',
+                            "  <td>" + escapeHtml(c.Id) + "</td>",
+                            "  <td>" + escapeHtml(c.NroCheque) + "</td>",
+                            "  <td>" + escapeHtml(c.Banco) + "</td>",
+                            "  <td>$" + normalizarImporte(c.Importe).toFixed(2) + "</td>",
+                            "  <td>" + escapeHtml(c.FechaPago) + "</td>",
+                            "  <td>" + badgeEstado(c.Estado) + "</td>",
+                            "  <td>" + escapeHtml(textoSeguro(c.Titular, "-")) + "</td>",
+                            "  <td class=\"text-nowrap\">",
+                            '    <button type="button" class="btn btn-sm btn-link text-decoration-none btn-detalles-cheque" data-toggle="collapse" data-target="#' + detalleId + '" aria-expanded="false" aria-controls="' + detalleId + '"><i class="fas fa-chevron-down"></i> Detalles</button>',
+                            '    <button type="button" class="btn btn-primary btn-sm btn-modificar-cheque" data-id="' + escapeHtml(c.Id) + '">Modificar</button>',
+                            "  </td>",
+                            "</tr>",
+                            '<tr class="tr-detalles-cheque">',
+                            '  <td colspan="8" class="p-0">',
+                            '    <div id="' + detalleId + '" class="collapse">',
+                            '      <div class="p-3 bg-light border-top">',
+                            '        <div class="row">',
+                            '          <div class="col-lg-6">',
+                            '            <div class="mb-2"><span class="text-muted">Origen:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.Origen, "-")) + '</span></div>',
+                            '            <div class="mb-2"><span class="text-muted">Fecha emision:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.FechaEmision, "-")) + '</span></div>',
+                            '            <div class="mb-2"><span class="text-muted">Recibido de:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.RecibidoDeNombre, "-")) + '</span></div>',
+                            '            <div class="mb-2"><span class="text-muted">Entregado a:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.EntregadoANombre, "-")) + '</span></div>',
+                            "          </div>",
+                            '          <div class="col-lg-6">',
+                            '            <div class="mb-2"><span class="text-muted">Creado:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.Creado, "-")) + '</span></div>',
+                            '            <div class="mb-2"><span class="text-muted">Creado por:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.CreadoPor, "-")) + '</span></div>',
+                            '            <div class="mb-2"><span class="text-muted">Actualizado:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.Actualizado, "-")) + '</span></div>',
+                            '            <div class="mb-2"><span class="text-muted">Actualizado por:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.ActualizadoPor, "-")) + '</span></div>',
+                            "          </div>",
+                            "        </div>",
+                            '        <div class="mt-2">',
+                            '          <div class="text-muted mb-1">Observaciones</div>',
+                            '          <div class="font-weight-bold">' + escapeHtml(textoSeguro(c.Observaciones, "-")) + '</div>',
+                            "        </div>",
+                            "      </div>",
+                            "    </div>",
+                            "  </td>",
+                            "</tr>"
+                        ].join("");
+                    });
+
+                    if (!html) {
+                        html = "<tr><td colspan='8' class='text-center text-muted'>No se encontraron cheques.</td></tr>";
+                    }
+
+                    $tbody.html(html);
+                }
+
+                function cargarCheques() {
+                    $.ajax({
+                        url: window.urls.getCheques,
+                        type: "GET",
+                        dataType: "json",
+                        data: {
+                            estado: $("#filtroEstado").val(),
+                            nroCheque: $("#filtroNroCheque").val(),
+                            desde: $("#filtroDesde").val()
+                        }
+                    }).done(function (lista) {
+                        renderizarTabla(lista);
+                    }).fail(function () {
+                        Swal.fire("Error", "No se pudieron cargar los cheques.", "error");
+                    });
+                }
+
+                function abrirModificarCheque(idCheque) {
+                    $.ajax({
+                        url: window.urls.getCheque,
+                        type: "GET",
+                        dataType: "json",
+                        data: { id: idCheque }
+                    }).done(function (resp) {
+                        if (!resp || !resp.ok || !resp.cheque) {
+                            Swal.fire("Error", (resp && (resp.mensaje || resp.message)) || "No se pudo cargar el cheque.", "error");
+                            return;
+                        }
+
+                        window.ModalAltaCheque && window.ModalAltaCheque.abrir("", resp.cheque);
+                    }).fail(function () {
+                        Swal.fire("Error", "No se pudo cargar el cheque.", "error");
+                    });
+                }
+
+                function abrirNuevoCheque() {
+                    if (window.ModalAltaCheque && typeof window.ModalAltaCheque.abrir === "function") {
+                        window.ModalAltaCheque.abrir();
+                        return;
+                    }
+
+                    var form = document.getElementById("formCheque");
+                    if (form) {
+                        form.reset();
+                    }
+
+                    $("#ChequeId").val(0);
+                    $("#tituloModalCheque").text("Alta de Cheque");
+                    $("#modalAltaCheque").modal("show");
+                }
+
+                function programarBusqueda(delay) {
+                    window.clearTimeout(debounceFiltro);
+                    debounceFiltro = window.setTimeout(function () {
+                        cargarCheques();
+                    }, delay || 250);
+                }
+
+                $(document)
+                    .off(".vistaCheques")
+                    .on("click.vistaCheques", "#btnFiltrarCheques", function () {
+                        cargarCheques();
+                    })
+                    .on("click.vistaCheques", "#btnNuevoCheque", function () {
+                        abrirNuevoCheque();
+                    })
+                    .on("click.vistaCheques", ".btn-modificar-cheque", function () {
+                        abrirModificarCheque($(this).data("id"));
+                    })
+                    .on("click.vistaCheques", ".btn-detalles-cheque", function () {
+                        var $icono = $(this).find("i");
+                        window.setTimeout(function () {
+                            var expanded = $(this).attr("aria-expanded") === "true";
+                            $icono.toggleClass("fa-chevron-down", !expanded);
+                            $icono.toggleClass("fa-chevron-up", expanded);
+                        }.bind(this), 0);
+                    })
+                    .on("cheque:guardado.vistaCheques", function () {
+                        cargarCheques();
+                    })
+                    .on("keydown.vistaCheques", "#filtroNroCheque", function (e) {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            cargarCheques();
+                        }
+                    })
+                    .on("input.vistaCheques", "#filtroNroCheque", function () {
+                        programarBusqueda(220);
+                    })
+                    .on("change.vistaCheques", "#filtroEstado, #filtroDesde", function () {
+                        cargarCheques();
+                    });
+
+                cargarCheques();
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", iniciarVistaCheques);
+            } else {
+                iniciarVistaCheques();
+            }
+
+            window.addEventListener("load", iniciarVistaCheques);
+        })(window);
+    </script>
+}
+else
+{
+    @section Scripts {
+        <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
+        <script>
+            (function (window) {
+                function iniciarVistaCheques() {
+                    var $ = window.jQuery;
+                    if (!$ || !document.getElementById("tablaBusquedaCheques")) {
+                        window.setTimeout(iniciarVistaCheques, 60);
+                        return;
+                    }
+
+                    if (window.__vistaChequesInicializada) {
+                        return;
+                    }
+
+                    window.__vistaChequesInicializada = true;
+
+                    var debounceFiltro = null;
+
+                    window.urls = window.urls || {};
+                    window.urls.getCheques = '@Url.Action("GetCheques", "Finanzas")';
+                    window.urls.getCheque = '@Url.Action("GetCheque", "Finanzas")';
+                    window.urls.guardarCheque = '@Url.Action("GuardarCheque", "Finanzas")';
+
+                    function normalizarImporte(valor) {
+                        var numero = parseFloat((valor || 0).toString().replace(",", "."));
+                        return isNaN(numero) ? 0 : numero;
+                    }
+
+                    function escapeHtml(valor) {
+                        return $("<div>").text(valor == null ? "" : valor).html();
+                    }
+
+                    function textoSeguro(valor, fallback) {
+                        var texto = (valor || "").toString().trim();
+                        return texto ? texto : (fallback || "-");
+                    }
+
+                    function badgeEstado(estado) {
+                        var css = "badge-secondary";
+                        switch ((estado || "").toUpperCase()) {
+                            case "PENDIENTE":
+                                css = "badge-warning";
+                                break;
+                            case "ENTREGADO":
+                                css = "badge-info";
+                                break;
+                            case "DEPOSITADO":
+                                css = "badge-primary";
+                                break;
+                            case "ACREDITADO":
+                                css = "badge-success";
+                                break;
+                            case "RECHAZADO":
+                                css = "badge-danger";
+                                break;
+                        }
+
+                        return '<span class="badge ' + css + '">' + escapeHtml(textoSeguro(estado, "-")) + '</span>';
+                    }
+
+                    function renderizarTabla(lista) {
+                        var $tbody = $("#tablaBusquedaCheques tbody");
+                        if (!$tbody.length) return;
+
+                        var html = "";
+                        (lista || []).forEach(function (c) {
+                            var detalleId = "detCheque_" + escapeHtml(c.Id);
+                            html += [
+                                '<tr class="fila-cheque" data-id="' + escapeHtml(c.Id) + '">',
+                                "  <td>" + escapeHtml(c.Id) + "</td>",
+                                "  <td>" + escapeHtml(c.NroCheque) + "</td>",
+                                "  <td>" + escapeHtml(c.Banco) + "</td>",
+                                "  <td>$" + normalizarImporte(c.Importe).toFixed(2) + "</td>",
+                                "  <td>" + escapeHtml(c.FechaPago) + "</td>",
+                                "  <td>" + badgeEstado(c.Estado) + "</td>",
+                                "  <td>" + escapeHtml(textoSeguro(c.Titular, "-")) + "</td>",
+                                "  <td class=\"text-nowrap\">",
+                                '    <button type="button" class="btn btn-sm btn-link text-decoration-none btn-detalles-cheque" data-toggle="collapse" data-target="#' + detalleId + '" aria-expanded="false" aria-controls="' + detalleId + '"><i class="fas fa-chevron-down"></i> Detalles</button>',
+                                '    <button type="button" class="btn btn-primary btn-sm btn-modificar-cheque" data-id="' + escapeHtml(c.Id) + '">Modificar</button>',
+                                "  </td>",
+                                "</tr>",
+                                '<tr class="tr-detalles-cheque">',
+                                '  <td colspan="8" class="p-0">',
+                                '    <div id="' + detalleId + '" class="collapse">',
+                                '      <div class="p-3 bg-light border-top">',
+                                '        <div class="row">',
+                                '          <div class="col-lg-6">',
+                                '            <div class="mb-2"><span class="text-muted">Origen:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.Origen, "-")) + '</span></div>',
+                                '            <div class="mb-2"><span class="text-muted">Fecha emision:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.FechaEmision, "-")) + '</span></div>',
+                                '            <div class="mb-2"><span class="text-muted">Recibido de:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.RecibidoDeNombre, "-")) + '</span></div>',
+                                '            <div class="mb-2"><span class="text-muted">Entregado a:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.EntregadoANombre, "-")) + '</span></div>',
+                                "          </div>",
+                                '          <div class="col-lg-6">',
+                                '            <div class="mb-2"><span class="text-muted">Creado:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.Creado, "-")) + '</span></div>',
+                                '            <div class="mb-2"><span class="text-muted">Creado por:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.CreadoPor, "-")) + '</span></div>',
+                                '            <div class="mb-2"><span class="text-muted">Actualizado:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.Actualizado, "-")) + '</span></div>',
+                                '            <div class="mb-2"><span class="text-muted">Actualizado por:</span> <span class="font-weight-bold">' + escapeHtml(textoSeguro(c.ActualizadoPor, "-")) + '</span></div>',
+                                "          </div>",
+                                "        </div>",
+                                '        <div class="mt-2">',
+                                '          <div class="text-muted mb-1">Observaciones</div>',
+                                '          <div class="font-weight-bold">' + escapeHtml(textoSeguro(c.Observaciones, "-")) + '</div>',
+                                "        </div>",
+                                "      </div>",
+                                "    </div>",
+                                "  </td>",
+                                "</tr>"
+                            ].join("");
+                        });
+
+                        if (!html) {
+                            html = "<tr><td colspan='8' class='text-center text-muted'>No se encontraron cheques.</td></tr>";
+                        }
+
+                        $tbody.html(html);
+                    }
+
+                    function cargarCheques() {
+                        $.ajax({
+                            url: window.urls.getCheques,
+                            type: "GET",
+                            dataType: "json",
+                            data: {
+                                estado: $("#filtroEstado").val(),
+                                nroCheque: $("#filtroNroCheque").val(),
+                                desde: $("#filtroDesde").val()
+                            }
+                        }).done(function (lista) {
+                            renderizarTabla(lista);
+                        }).fail(function () {
+                            Swal.fire("Error", "No se pudieron cargar los cheques.", "error");
+                        });
+                    }
+
+                    function abrirModificarCheque(idCheque) {
+                        $.ajax({
+                            url: window.urls.getCheque,
+                            type: "GET",
+                            dataType: "json",
+                            data: { id: idCheque }
+                        }).done(function (resp) {
+                            if (!resp || !resp.ok || !resp.cheque) {
+                                Swal.fire("Error", (resp && (resp.mensaje || resp.message)) || "No se pudo cargar el cheque.", "error");
+                                return;
+                            }
+
+                            window.ModalAltaCheque && window.ModalAltaCheque.abrir("", resp.cheque);
+                        }).fail(function () {
+                            Swal.fire("Error", "No se pudo cargar el cheque.", "error");
+                        });
+                    }
+
+                    function abrirNuevoCheque() {
+                        if (window.ModalAltaCheque && typeof window.ModalAltaCheque.abrir === "function") {
+                            window.ModalAltaCheque.abrir();
+                            return;
+                        }
+
+                        var form = document.getElementById("formCheque");
+                        if (form) {
+                            form.reset();
+                        }
+
+                        $("#ChequeId").val(0);
+                        $("#tituloModalCheque").text("Alta de Cheque");
+                        $("#modalAltaCheque").modal("show");
+                    }
+
+                    function programarBusqueda(delay) {
+                        window.clearTimeout(debounceFiltro);
+                        debounceFiltro = window.setTimeout(function () {
+                            cargarCheques();
+                        }, delay || 250);
+                    }
+
+                    $(document)
+                        .off(".vistaCheques")
+                        .on("click.vistaCheques", "#btnFiltrarCheques", function () {
+                            cargarCheques();
+                        })
+                        .on("click.vistaCheques", "#btnNuevoCheque", function () {
+                            abrirNuevoCheque();
+                        })
+                        .on("click.vistaCheques", ".btn-modificar-cheque", function () {
+                            abrirModificarCheque($(this).data("id"));
+                        })
+                        .on("click.vistaCheques", ".btn-detalles-cheque", function () {
+                            var $icono = $(this).find("i");
+                            window.setTimeout(function () {
+                                var expanded = $(this).attr("aria-expanded") === "true";
+                                $icono.toggleClass("fa-chevron-down", !expanded);
+                                $icono.toggleClass("fa-chevron-up", expanded);
+                            }.bind(this), 0);
+                        })
+                        .on("cheque:guardado.vistaCheques", function () {
+                            cargarCheques();
+                        })
+                        .on("keydown.vistaCheques", "#filtroNroCheque", function (e) {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                cargarCheques();
+                            }
+                        })
+                        .on("input.vistaCheques", "#filtroNroCheque", function () {
+                            programarBusqueda(220);
+                        })
+                        .on("change.vistaCheques", "#filtroEstado, #filtroDesde", function () {
+                            cargarCheques();
+                        });
+
+                    cargarCheques();
+                }
+
+                if (document.readyState === "loading") {
+                    document.addEventListener("DOMContentLoaded", iniciarVistaCheques);
+                } else {
+                    iniciarVistaCheques();
+                }
+
+                window.addEventListener("load", iniciarVistaCheques);
+            })(window);
+        </script>
+        <style>
+            #tablaBusquedaCheques td,
+            #tablaBusquedaCheques th {
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .tr-detalles-cheque td {
+                white-space: normal !important;
+            }
+        </style>
+    }
+}

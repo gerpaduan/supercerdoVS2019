@@ -13,6 +13,7 @@ using Datos;
 using System.Collections.Generic;
 using System.Web;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace Web.Controllers
 {
@@ -87,10 +88,11 @@ namespace Web.Controllers
 
         public ActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC", bool desdePos = false)
         {
+            bool modoPos = desdePos || DesdePOS;
+            bool renderParcial = modoPos || Request.IsAjaxRequest();
+
             try
             {
-                bool modoPos = desdePos || DesdePOS;
-
                 if (!modoPos)
                 {
                     var user = Session["Usuario"] as Entidades.Usuario;
@@ -106,33 +108,81 @@ namespace Web.Controllers
                     : "DESC";
 
                 ViewBag.Buscar = buscar;
-                ViewBag.DesdePOS = desdePos;
+                ViewBag.DesdePOS = modoPos;
+                ViewBag.RenderSinLayout = renderParcial;
                 ViewBag.OrdenSaldo = ordenSaldo;
 
                 // F2 puede traer muchas cuentas corrientes. Ordenar en SQL evita
                 // un paso extra caro en memoria sobre toda la tabla ya cargada.
                 DataTable dt = oCtaCteN.obtenerCtasCtes(buscar, null, ordenSaldo);
 
-                if (desdePos)
+                if (renderParcial)
                     return PartialView("CtasCtes", dt);
 
                 return View("CtasCtes", dt);
             }
             catch (Exception ex)
             {
-                if (desdePos)
+                if (renderParcial)
                     return Content("<div class='alert alert-danger m-3'>Error: " + HttpUtility.HtmlEncode(ex.Message) + "</div>");
 
                 return Content("Error: " + ex.Message);
             }
         }
+
+        public ActionResult Cheques(string estado = "", string nroCheque = "", string desde = "", bool desdePos = false)
+        {
+            bool modoPos = desdePos || DesdePOS;
+            bool renderParcial = modoPos || Request.IsAjaxRequest();
+
+            try
+            {
+                if (!modoPos)
+                {
+                    if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCheques, null))
+                    {
+                        ViewBag.Seccion = "Cheques";
+                        return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    }
+                }
+
+                DateTime fechaDesde = DateTime.Today.AddMonths(-1);
+                if (!string.IsNullOrWhiteSpace(desde))
+                {
+                    DateTime.TryParse(desde, out fechaDesde);
+                    if (fechaDesde == DateTime.MinValue)
+                        fechaDesde = DateTime.Today.AddMonths(-1);
+                }
+
+                ViewBag.DesdePOS = modoPos;
+                ViewBag.RenderSinLayout = renderParcial;
+                ViewBag.FiltroEstado = estado ?? "";
+                ViewBag.FiltroNroCheque = nroCheque ?? "";
+                ViewBag.FiltroDesde = fechaDesde.ToString("yyyy-MM-dd");
+                ViewBag.Bancos = oCtaCteN.getBancos();
+
+                if (renderParcial)
+                    return PartialView("Cheques");
+
+                return View("Cheques");
+            }
+            catch (Exception ex)
+            {
+                if (renderParcial)
+                    return Content("<div class='alert alert-danger m-3'>Error: " + HttpUtility.HtmlEncode(ex.Message) + "</div>");
+
+                return Content("Error: " + ex.Message);
+            }
+        }
+
         // GET: Finanzas/CtaCtePersona
         public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, bool desdePos = false)
         {
+            bool modoPos = desdePos || DesdePOS;
+            bool renderParcial = modoPos || Request.IsAjaxRequest();
+
             try
             {
-                bool modoPos = desdePos || DesdePOS;
-
                 if (!modoPos)
                 {
                     var user = Session["Usuario"] as Entidades.Usuario;
@@ -169,9 +219,10 @@ namespace Web.Controllers
                 ViewBag.SaldoPersona = saldo;
                 ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd");
                 ViewBag.MostrarAnulados = mostrarAnulados;
-                ViewBag.DesdePOS = desdePos;
+                ViewBag.DesdePOS = modoPos;
+                ViewBag.RenderSinLayout = renderParcial;
 
-                if (desdePos)
+                if (renderParcial)
                     return PartialView("CtaCtePersona", dtMov);
 
                 return View(dtMov);
@@ -179,10 +230,11 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 ViewBag.Error = "Error al cargar cuenta corriente: " + ex.Message;
-                ViewBag.DesdePOS = desdePos;
+                ViewBag.DesdePOS = modoPos;
+                ViewBag.RenderSinLayout = renderParcial;
                 ViewBag.MostrarAnulados = mostrarAnulados;
 
-                if (desdePos)
+                if (renderParcial)
                     return PartialView("CtaCtePersona", new DataTable());
 
                 return View(new DataTable());
@@ -311,7 +363,7 @@ namespace Web.Controllers
         // ============================================================
         //  DETALLE DE MOVIMIENTO (placeholder)
         // ============================================================
-        public ActionResult verMovimientoCtaCte(int idPersona, string returnUrl, string tabla, int idTabla = 0)
+        public ActionResult verMovimientoCtaCte(int idPersona, string returnUrl, string tabla, int idTabla = 0, bool desdePos = false)
         {
             Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
             Entidades.MovCtaCte.tablas tablaEnum = oMovCtaCteE.getTablaEnum(tabla);
@@ -333,8 +385,7 @@ namespace Web.Controllers
                     return RedirectToAction("ModificarCompra", "Compras", new { id = idTabla });
 
                 case Entidades.MovCtaCte.tablas.Pagos:
-                    return RedirectToAction("AddOrEditPago", "Finanzas",
-                        new { idPersona = idPersona, returnUrl = decodedReturnUrl, idPago = idTabla });
+                    return AddOrEditPago(idPersona, decodedReturnUrl, idTabla, desdePos);
 
                 default:
                     return HttpNotFound();
@@ -347,12 +398,15 @@ namespace Web.Controllers
 
         public ActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false)
         {
+            bool modoPos = desdePos || DesdePOS;
+            bool renderParcial = modoPos || Request.IsAjaxRequest();
             var sucursales = oSucursalN.findAll();
             string returnUrlDecodificada = DecodeReturnUrlIfNeeded(returnUrl);
 
             ViewBag.Sucursales = sucursales;
             ViewBag.ReturnUrl = returnUrlDecodificada;
-            ViewBag.DesdePOS = desdePos;
+            ViewBag.DesdePOS = modoPos;
+            ViewBag.RenderSinLayout = renderParcial;
 
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
 
@@ -376,7 +430,6 @@ namespace Web.Controllers
             {
                 model = new Pago();
                 model.Fecha = DateTime.Now;
-                model.AProveedor = !desdePos;
 
                 var user = Session["Usuario"] as Entidades.Usuario;
                 model.Sucursal = user.Sucursal;
@@ -390,7 +443,7 @@ namespace Web.Controllers
                     return HttpNotFound();
             }
 
-            if (desdePos)
+            if (renderParcial)
                 return PartialView("AddOrEditPago", model);
 
             return View(model);
@@ -453,39 +506,35 @@ namespace Web.Controllers
             }
             _ = oCtaCteN.addOrEditPago(oPagoE, null, null);
 
+            string urlRetornoDefault = !string.IsNullOrWhiteSpace(returnUrl)
+                ? returnUrl
+                : Url.Action("CtaCtePersona", "Finanzas", new
+                {
+                    idPersona = idPersona,
+                    fechaDesde = DateTime.Today.ToString("yyyy-MM-dd")
+                });
+
+            string urlRetornoConCache = AppendCacheBuster(urlRetornoDefault);
+
             if (desdePos)
             {
-                string urlRetornoPos = !string.IsNullOrEmpty(returnUrl)
-                    ? returnUrl
-                    : Url.Action("CtaCtePersona", "Finanzas", new
-                    {
-                        idPersona = idPersona,
-                        fechaDesde = DateTime.Today.ToString("yyyy-MM-dd"),
-                        desdePos = true
-                    });
-
-                urlRetornoPos = AppendCacheBuster(urlRetornoPos);
-
                 return Json(new
                 {
                     ok = true,
-                    redirectUrl = urlRetornoPos,
+                    redirectUrl = urlRetornoConCache,
                     cerrarModalPago = true
                 });
             }
 
-            if (!string.IsNullOrEmpty(returnUrl))
-                return Json(new { ok = true, redirectUrl = AppendCacheBuster(returnUrl) });
-
             if (Request.IsAjaxRequest())
-                return Json(new { ok = true, redirectUrl = AppendCacheBuster(Url.Action("CtasCtes")) });
+                return Json(new { ok = true, redirectUrl = urlRetornoConCache });
 
-            return RedirectToAction("CtasCtes");
+            return Redirect(urlRetornoConCache);
         }
 
 
         [HttpGet]
-        public JsonResult BuscarChequePorNro(string numero, int pagoId = 0, bool esAProveedor = true)
+        public JsonResult BuscarChequePorNro(string numero, int pagoId = 0, bool esAProveedor = true, string chequesJson = "")
         {
             try
             {
@@ -496,6 +545,29 @@ namespace Web.Controllers
 
                 if (pagoActual.Cheques == null)
                     pagoActual.Cheques = new List<Cheque>();
+
+                if (!string.IsNullOrWhiteSpace(chequesJson))
+                {
+                    var chequesActuales = JsonConvert.DeserializeObject<List<Cheque>>(chequesJson) ?? new List<Cheque>();
+
+                    foreach (var chequeActual in chequesActuales)
+                    {
+                        if (chequeActual == null)
+                            continue;
+
+                        bool yaExiste = pagoActual.Cheques.Any(c =>
+                            c != null &&
+                            (
+                                (chequeActual.Id > 0 && c.Id == chequeActual.Id) ||
+                                (!string.IsNullOrWhiteSpace(chequeActual.NroCheque) &&
+                                 !string.IsNullOrWhiteSpace(c.NroCheque) &&
+                                 c.NroCheque.Equals(chequeActual.NroCheque, StringComparison.OrdinalIgnoreCase))
+                            ));
+
+                        if (!yaExiste)
+                            pagoActual.Cheques.Add(chequeActual);
+                    }
+                }
 
                 var (ok, mensaje, cheque) = oCtaCteN.ValidarChequeParaPago(numero, pagoActual, esAProveedor);
 
@@ -568,19 +640,66 @@ namespace Web.Controllers
                     NroCheque = row["nroCheque"]?.ToString(),
                     Banco = row["banco"]?.ToString(),
                     Importe = Convert.ToDouble(row["importe"] ?? 0),
+                    FechaEmision = row["fechaEmision"]?.ToString() ?? "",
                     FechaPago = row["fechaPago"] == DBNull.Value ? "" :
                                 Convert.ToDateTime(row["fechaPago"]).ToString("yyyy-MM-dd"),
                     Estado = estadoVista,
                     EstadoDb = estadoDb,
+                    Titular = row["titular"]?.ToString(),
                     RecibidoDe = recibidoDe,
                     RecibidoDeNombre = row["Recibido_De"]?.ToString(),
                     EntregadoA = entregadoA,
                     EntregadoANombre = row["Entregado_A"]?.ToString(),
-                    Observaciones = row["obs."]?.ToString()
+                    Observaciones = row["observaciones"]?.ToString(),
+                    ObservacionesCorta = row["obs."]?.ToString(),
+                    Creado = row["creado"] == DBNull.Value ? "" :
+                                Convert.ToDateTime(row["creado"]).ToString("yyyy-MM-dd HH:mm"),
+                    CreadoPor = row["CreadoPor"]?.ToString(),
+                    Actualizado = row["actualizado"] == DBNull.Value ? "" :
+                                Convert.ToDateTime(row["actualizado"]).ToString("yyyy-MM-dd HH:mm"),
+                    ActualizadoPor = row["ActualizadoPor"]?.ToString()
                 });
             }
 
             return Json(listaCheques, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult GetCheque(int id)
+        {
+            try
+            {
+                var cheque = oCtaCteN.getChequePorIDorNro(id, "");
+
+                if (cheque == null || cheque.Id <= 0)
+                {
+                    Response.StatusCode = 404;
+                    return Json(new { ok = false, mensaje = "Cheque no encontrado." }, JsonRequestBehavior.AllowGet);
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    cheque = new
+                    {
+                        cheque.Id,
+                        cheque.NroCheque,
+                        cheque.Banco,
+                        cheque.Propio,
+                        cheque.FechaEmision,
+                        FechaPago = cheque.FechaPago.ToString("yyyy-MM-dd"),
+                        cheque.Importe,
+                        cheque.Estado,
+                        cheque.Titular,
+                        Observaciones = cheque.Observaciones ?? ""
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         private float ParseFloat(string value)
@@ -597,11 +716,17 @@ namespace Web.Controllers
             return 0;
         }
         [HttpPost]
-        public JsonResult GuardarCheque(Cheque cheque, string importe)
+        public JsonResult GuardarCheque(Cheque cheque, string importe, bool? esAProveedor = null)
         {
             try
             {
                 var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null)
+                    return Json(new { ok = false, message = "No se encontró un usuario activo." });
+
+                if (cheque == null)
+                    return Json(new { ok = false, message = "No se recibieron los datos del cheque." });
+
                 //busco el creador de cheque si id > 0
                 int idUserCreador = cheque.Id > 0 ? (oCtaCteN.getChequePorIDorNro(cheque.Id, "").CreadoPor.Id) : user.Id;
 
@@ -612,7 +737,30 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "No tienes permisos para esta acción." });
                 }
 
-                cheque.Importe = ParseFloat(importe);
+                if (string.IsNullOrWhiteSpace(cheque.Banco))
+                    return Json(new { ok = false, message = "El Banco ingresado no es válido." });
+
+                if (string.IsNullOrWhiteSpace(cheque.NroCheque))
+                    return Json(new { ok = false, message = "Debe ingresar el número de cheque." });
+
+                float importeCheque = !string.IsNullOrWhiteSpace(importe)
+                    ? ParseFloat(importe)
+                    : (float)cheque.Importe;
+
+                if (importeCheque <= 0)
+                    return Json(new { ok = false, message = "El importe ingresado no es válido." });
+
+                if (cheque.FechaPago == DateTime.MinValue)
+                    return Json(new { ok = false, message = "Debe ingresar la fecha de pago." });
+
+                if (esAProveedor.HasValue && !esAProveedor.Value && cheque.Propio)
+                    return Json(new { ok = false, message = "No se puede registrar un Cobro con un cheque propio." });
+
+                cheque.NroCheque = cheque.NroCheque.Trim();
+                cheque.Banco = cheque.Banco.Trim();
+                cheque.Titular = cheque.Titular == null ? "" : cheque.Titular.Trim();
+                cheque.Observaciones = cheque.Observaciones == null ? "" : cheque.Observaciones.Trim();
+                cheque.Importe = importeCheque;
 
                 if (cheque.Id == 0)
                 {
@@ -627,7 +775,27 @@ namespace Web.Controllers
 
                 oCtaCteN.AddOrEditCheque(cheque);
 
-                return Json(new { ok = true });
+                var chequeGuardado = cheque.Id > 0
+                    ? oCtaCteN.getChequePorIDorNro(cheque.Id, "")
+                    : oCtaCteN.getChequePorIDorNro(0, cheque.NroCheque);
+
+                return Json(new
+                {
+                    ok = true,
+                    cheque = chequeGuardado == null ? null : new
+                    {
+                        chequeGuardado.Id,
+                        chequeGuardado.NroCheque,
+                        chequeGuardado.Banco,
+                        chequeGuardado.Propio,
+                        chequeGuardado.FechaEmision,
+                        FechaPago = chequeGuardado.FechaPago.ToString("yyyy-MM-dd"),
+                        chequeGuardado.Importe,
+                        chequeGuardado.Estado,
+                        chequeGuardado.Titular,
+                        Observaciones = chequeGuardado.Observaciones ?? ""
+                    }
+                });
             }
             catch (Exception ex)
             {

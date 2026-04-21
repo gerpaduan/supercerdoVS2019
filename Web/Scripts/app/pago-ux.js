@@ -9,6 +9,135 @@
         let submitEnCurso = false;
         let debounceBuscarCheques = null;
 
+        function mostrarMensaje(opciones) {
+            if (typeof window.swalPago === "function") {
+                return window.swalPago(opciones || {});
+            }
+
+            if (window.Swal && typeof window.Swal.fire === "function") {
+                return window.Swal.fire(opciones || {});
+            }
+
+            const texto = (opciones && (opciones.text || opciones.title)) || "Ocurrió un error.";
+            alert(texto);
+            return Promise.resolve();
+        }
+
+        function esDesdePos() {
+            return ($("#formPago input[name='desdePos']").val() || "").toString().toLowerCase() === "true";
+        }
+
+        function construirChequesJson() {
+            const lista = [];
+
+            $("#tablaCheques tbody tr").each(function () {
+                lista.push({
+                    Id: $(this).data("id") || 0,
+                    NroCheque: ($(this).find("td:eq(0)").text() || "").trim(),
+                    Banco: ($(this).find("td:eq(1)").text() || "").trim(),
+                    FechaPago: ($(this).find("td:eq(2)").text() || "").trim(),
+                    Importe: parseFloat(($(this).find("td:eq(3)").text() || "").replace("$", "").trim()) || 0
+                });
+            });
+
+            $("#ChequesJson").val(JSON.stringify(lista));
+        }
+
+        function normalizarImportes() {
+            const importe = ($("#importe").val() || "").toString().trim();
+            $("#importe").val(importe);
+
+            const efectivo = ($("#Efectivo").val() || "").toString().trim();
+            $("#Efectivo").val(efectivo || "0");
+        }
+
+        function validarAntesDeGuardar() {
+            const sucursal = $("#SucursalId").val();
+
+            if (!sucursal) {
+                mostrarMensaje({
+                    icon: "warning",
+                    title: "Validación",
+                    text: "Debe seleccionar una sucursal antes de guardar."
+                });
+                return false;
+            }
+
+            return true;
+        }
+
+        function resolverRedirectNoPos(resp) {
+            const redirectUrl = (resp && resp.redirectUrl) || $("#urlVolverPago").val() || window.location.href;
+
+            mostrarMensaje({
+                icon: "success",
+                title: "Pago guardado correctamente"
+            }).then(function () {
+                window.location.href = redirectUrl;
+            });
+        }
+
+        function resolverRedirectPos(resp) {
+            if (window.POSFinanzasState && resp && resp.redirectUrl) {
+                window.POSFinanzasState.redirectDespuesDePago = resp.redirectUrl;
+                window.POSFinanzasState.tituloDespuesDePago = "Cuenta corriente";
+            }
+
+            mostrarMensaje({
+                icon: "success",
+                title: "Pago guardado correctamente"
+            }).then(function () {
+                if (resp && resp.cerrarModalPago && $("#modalPagoPOS").length) {
+                    $("#modalPagoPOS").modal("hide");
+                    return;
+                }
+
+                if (resp && resp.redirectUrl && window.POSFinanzas && typeof window.POSFinanzas.cargar === "function") {
+                    window.POSFinanzas.cargar(resp.redirectUrl, "Cuenta corriente");
+                }
+            });
+        }
+
+        function enviarFormularioAjax(form) {
+            $.ajax({
+                url: form.action,
+                type: "POST",
+                data: $(form).serialize(),
+                success: function (resp) {
+                    if (!resp || !resp.ok) {
+                        finalizarSubmit();
+                        mostrarMensaje({
+                            icon: "warning",
+                            title: "Validación",
+                            text: (resp && resp.mensaje) || "No se pudo guardar el pago."
+                        });
+                        return;
+                    }
+
+                    if (esDesdePos()) {
+                        resolverRedirectPos(resp);
+                        return;
+                    }
+
+                    resolverRedirectNoPos(resp);
+                },
+                error: function (xhr) {
+                    finalizarSubmit();
+
+                    let mensaje = "Ocurrió un error inesperado al guardar el pago.";
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) {
+                        mensaje = xhr.responseJSON.mensaje;
+                    }
+
+                    mostrarMensaje({
+                        icon: "error",
+                        title: "Error",
+                        text: mensaje
+                    });
+                }
+            });
+        }
+
         function obtenerModoPago() {
             const valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
             const texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
@@ -162,8 +291,19 @@
         function bindSubmitGuard() {
             $(document)
                 .off("submit.pagoUX", "#formPago")
-                .on("submit.pagoUX", "#formPago", function () {
-                    return iniciarSubmit();
+                .on("submit.pagoUX", "#formPago", function (e) {
+                    e.preventDefault();
+
+                    if (!iniciarSubmit()) return false;
+                    if (!validarAntesDeGuardar()) {
+                        finalizarSubmit();
+                        return false;
+                    }
+
+                    normalizarImportes();
+                    construirChequesJson();
+                    enviarFormularioAjax(this);
+                    return false;
                 });
 
             $(document)

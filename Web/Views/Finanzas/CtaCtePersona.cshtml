@@ -2,10 +2,11 @@
 
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
     bool mostrarAnulados = ViewBag.MostrarAnulados != null && (bool)ViewBag.MostrarAnulados;
 
     ViewBag.Title = "Cuenta Corriente";
-    Layout = desdePos ? null : "~/Views/Shared/_LayoutBase.cshtml";
+    Layout = (desdePos || renderSinLayout) ? null : "~/Views/Shared/_LayoutBase.cshtml";
 
     string persona = ViewBag.Persona.RazonSocial;
     decimal saldo = ViewBag.SaldoPersona;
@@ -15,7 +16,7 @@
      );
 }
 
-<div class="container-fluid p-0" style="height:100vh; display:flex; flex-direction:column;">
+<div class="container-fluid p-0" style="@(desdePos ? "display:flex; flex-direction:column;" : "height:100vh; display:flex; flex-direction:column;")">
     <!-- =======================
          CABECERA PERSONA + SALDO
          ======================= -->
@@ -204,21 +205,21 @@
     function verMovimientoCtaCte(tabla, idTabla) {
         const tablaNorm = String(tabla || "").toLowerCase();
 
-        if (desdePos && tablaNorm === "pagos" && window.POSFinanzas) {
-            let url = '@Url.Action("AddOrEditPago", "Finanzas")'
-                    + '?idPersona=@ViewBag.IdPersona'
-                    + '&returnUrl=' + encodeURIComponent(returnUrl)
-                    + '&idPago=' + encodeURIComponent(idTabla)
-                    + '&desdePos=true';
-
-            window.POSFinanzas.cargarPago(url, "Pago / Cobro");
-            return;
-        }
-
         let url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
                     + '&returnUrl=' + returnUrl
                     + '&tabla=' + encodeURIComponent(tabla)
-                    + '&idTabla=' + encodeURIComponent(idTabla);
+                    + '&idTabla=' + encodeURIComponent(idTabla)
+                    + '&desdePos=' + desdePos;
+
+        if (desdePos && window.POSFinanzas) {
+            if (tablaNorm === "pagos") {
+                window.POSFinanzas.cargarPago(url, "Pago / Cobro");
+                return;
+            }
+
+            window.POSFinanzas.cargar(url, "Cuenta corriente");
+            return;
+        }
 
         window.location.href = url;
     }

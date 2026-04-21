@@ -314,6 +314,10 @@ namespace Negocio
             if (oPagoE == null)
                 return (false, "No se recibió información del pago.");
 
+            bool formaIncluyeCheque =
+                !string.IsNullOrWhiteSpace(oPagoE.FormaPago) &&
+                oPagoE.FormaPago.IndexOf(Pago.formasPago.Cheque.ToString(), StringComparison.OrdinalIgnoreCase) >= 0;
+
             // ===============================
             // PERSONA
             // ===============================
@@ -352,7 +356,7 @@ namespace Negocio
             // ===============================
             // EFTVO + CHEQUE
             // ===============================
-            if (oPagoE.FormaPago == "EftvoCheque")
+            if (formaIncluyeCheque)
             {
                 if (oPagoE.Cheques == null || !oPagoE.Cheques.Any())
                 {
@@ -360,7 +364,7 @@ namespace Negocio
                         "Debe ingresar el/los cheques que forman parte del pago.");
                 }
 
-                if (oPagoE.Efectivo <= 0)
+                if (oPagoE.FormaPago == Pago.formasPago.EftvoCheque.ToString() && oPagoE.Efectivo <= 0)
                 {
                     return (false,
                         "Ingrese un importe en efectivo mayor a 0.");
@@ -399,6 +403,44 @@ namespace Negocio
                     string.Join("\n- ", faltantes));
             }
 
+            // ===============================
+            // VALIDACION DE CHEQUES
+            // ===============================
+            if (formaIncluyeCheque)
+            {
+                var numerosCheque = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var chequeActual in oPagoE.Cheques)
+                {
+                    Cheque cheque = chequeActual;
+
+                    if (cheque == null)
+                        return (false, "Hay cheques inválidos en el pago.");
+
+                    if ((cheque.Id <= 0) && string.IsNullOrWhiteSpace(cheque.NroCheque))
+                        return (false, "Hay cheques inválidos en el pago.");
+
+                    if (cheque.Id > 0)
+                    {
+                        cheque = getChequePorIDorNro(cheque.Id, "");
+                    }
+                    else if (!string.IsNullOrWhiteSpace(cheque.NroCheque))
+                    {
+                        cheque = getChequePorIDorNro(0, cheque.NroCheque.Trim());
+                    }
+
+                    if (cheque == null || string.IsNullOrWhiteSpace(cheque.NroCheque))
+                        return (false, "Hay cheques inválidos en el pago.");
+
+                    if (!numerosCheque.Add(cheque.NroCheque.Trim()))
+                        return (false, "El mismo cheque no puede asignarse más de una vez al pago actual.");
+
+                    var validacionCheque = ValidarChequeParaPago(cheque.NroCheque, oPagoE, oPagoE.AProveedor);
+                    if (!validacionCheque.ok)
+                        return (false, validacionCheque.mensaje);
+                }
+            }
+
             return (true, string.Empty);
         }
 
@@ -434,6 +476,17 @@ namespace Negocio
                 "\nTitular: " + oCheque.Titular +
                 "\nRecibido de: " + (oCheque.Propio ? "Propio" : (oCheque.PagoDe != null ? oCheque.PagoDe.Persona.RazonSocial : "-")) +
                 "\nEntregado a: " + (oCheque.PagoA != null ? oCheque.PagoA.Persona.RazonSocial : "-");
+
+            bool yaAsignadoEnPagoActual = pagoActual.Cheques.Any(c =>
+                c != null &&
+                (
+                    (c.Id > 0 && c.Id == oCheque.Id) ||
+                    (!string.IsNullOrWhiteSpace(c.NroCheque) &&
+                     c.NroCheque.Trim().Equals(oCheque.NroCheque, StringComparison.OrdinalIgnoreCase))
+                ));
+
+            if (yaAsignadoEnPagoActual)
+                return (false, "El cheque ya ha sido asignado al pago actual." + infoCheque, null);
 
             // Pagar proveedor → debe ser propio o recibido
             if (esAProveedor && !(oCheque.Propio || (oCheque.PagoDe?.Id > 0)))

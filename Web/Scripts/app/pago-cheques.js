@@ -84,6 +84,19 @@
             return isNaN(numero) ? 0 : numero;
         }
 
+        function obtenerChequesActualesJson() {
+            var lista = [];
+
+            $("#tablaCheques tbody tr").each(function () {
+                lista.push({
+                    Id: $(this).data("id") || 0,
+                    NroCheque: ($(this).find("td:eq(0)").text() || "").trim()
+                });
+            });
+
+            return JSON.stringify(lista);
+        }
+
         function reindexarCheques() {
             $("#tablaCheques tbody tr").each(function (index) {
                 $(this).find("input[name]").each(function () {
@@ -185,13 +198,13 @@
         }
 
         function filasChequesVisibles() {
-            return $("#tablaModalCheques tbody tr").filter(function () {
+            return $("#tablaBusquedaCheques tbody tr.fila-cheque-busqueda").filter(function () {
                 return $(this).css("display") !== "none";
             });
         }
 
         function marcarChequeSeleccionado($fila) {
-            $("#tablaModalCheques tbody tr").removeClass("is-selected");
+            $("#tablaBusquedaCheques tbody tr.fila-cheque-busqueda").removeClass("is-selected");
             if ($fila && $fila.length) {
                 $fila.addClass("is-selected");
             }
@@ -253,7 +266,8 @@
             $.get(window.urls.buscarChequePorNro, {
                 numero: nro,
                 pagoId: $("#Id").val(),
-                esAProveedor: $("#AProveedor").val() === "true"
+                esAProveedor: $("#AProveedor").val() === "true",
+                chequesJson: obtenerChequesActualesJson()
             }, function (data) {
                 if (!data || !data.ok || !data.cheque) {
                     var mensaje = (data && data.mensaje) || "No se pudo validar el cheque.";
@@ -288,34 +302,98 @@
             return false;
         }
 
+        function seleccionarChequeDesdeFila(fila, opciones) {
+            var $fila = $(fila);
+            if (!$fila.length) return false;
+
+            var nroCheque = ($fila.data("nro") || "").toString().trim();
+            if (!nroCheque) return false;
+
+            $("#txtNroCheque").val(nroCheque).trigger("input");
+            return agregarChequePorNumero(nroCheque, opciones || { cerrarModal: true });
+        }
+
         function renderizarTablaBusqueda(lista) {
-            var $tbody = $("#tablaModalCheques tbody");
+            var $tbody = $("#tablaBusquedaCheques tbody");
             if (!$tbody.length || !Array.isArray(lista)) return;
+
+            function badgeEstado(estado) {
+                var css = "badge-secondary";
+                switch ((estado || "").toUpperCase()) {
+                    case "PENDIENTE":
+                        css = "badge-warning";
+                        break;
+                    case "ENTREGADO":
+                        css = "badge-info";
+                        break;
+                    case "DEPOSITADO":
+                        css = "badge-primary";
+                        break;
+                    case "ACREDITADO":
+                        css = "badge-success";
+                        break;
+                    case "RECHAZADO":
+                        css = "badge-danger";
+                        break;
+                }
+
+                return '<span class="badge ' + css + '">' + escapeHtml(estado || "-") + "</span>";
+            }
 
             var html = "";
             lista.forEach(function (c) {
+                var detalleId = "detChequePago_" + escapeHtml(c.Id);
                 html += [
                     '<tr',
+                    ' class="fila-cheque-busqueda"',
                     ' data-id="' + escapeHtml(c.Id) + '"',
                     ' data-nro="' + escapeHtml(c.NroCheque) + '"',
                     ' data-banco="' + escapeHtml(c.Banco) + '"',
+                    ' data-fechaemision="' + escapeHtml(c.FechaEmision || "") + '"',
                     ' data-fechapago="' + escapeHtml(c.FechaPago) + '"',
                     ' data-importe="' + escapeHtml(normalizarImporte(c.Importe).toFixed(2)) + '"',
                     ' data-estado="' + escapeHtml(c.Estado) + '"',
                     ' data-origen="' + escapeHtml(c.Origen) + '"',
+                    ' data-titular="' + escapeHtml(c.Titular || "") + '"',
                     ' data-recibidode="' + escapeHtml(c.RecibidoDeNombre || "-") + '"',
                     ' data-entregadoa="' + escapeHtml(c.EntregadoANombre || "-") + '"',
                     ' data-observaciones="' + escapeHtml(c.Observaciones || "-") + '"',
-                    ' ondblclick="return window.POSPagoSeleccionarChequeDesdeFila(this);"',
+                    ' data-creado="' + escapeHtml(c.Creado || "") + '"',
+                    ' data-creadopor="' + escapeHtml(c.CreadoPor || "") + '"',
+                    ' data-actualizado="' + escapeHtml(c.Actualizado || "") + '"',
+                    ' data-actualizadopor="' + escapeHtml(c.ActualizadoPor || "") + '"',
                     ">",
                     "  <td>" + escapeHtml(c.Id) + "</td>",
                     "  <td>" + escapeHtml(c.NroCheque) + "</td>",
                     "  <td>" + escapeHtml(c.Banco) + "</td>",
                     "  <td>$" + normalizarImporte(c.Importe).toFixed(2) + "</td>",
                     "  <td>" + escapeHtml(c.FechaPago) + "</td>",
-                    "  <td>" + escapeHtml(c.Estado) + "</td>",
+                    "  <td>" + badgeEstado(c.Estado) + "</td>",
                     "  <td>" + escapeHtml(c.Titular || "") + "</td>",
-                    '  <td><button type="button" class="btn btn-primary btn-sm mr-1 btn-seleccionar-cheque" onclick="return window.POSPagoSeleccionarChequeDesdeFila(this.closest(\'tr\'));">Seleccionar</button><button type="button" class="btn btn-outline-secondary btn-sm btn-ver-detalle-cheque" onclick="return window.POSPagoVerDetalleChequeDesdeFila(this.closest(\'tr\'));">Ver</button></td>',
+                    '  <td><button type="button" class="btn btn-sm btn-link text-decoration-none btn-detalles-cheque" data-toggle="collapse" data-target="#' + detalleId + '" aria-expanded="false" aria-controls="' + detalleId + '"><i class="fas fa-chevron-down"></i> Detalles</button><button type="button" class="btn btn-primary btn-sm mr-1 btn-seleccionar-cheque">Seleccionar</button></td>',
+                    "</tr>",
+                    '<tr class="tr-detalles-cheque-busqueda">',
+                    '  <td colspan="8" class="p-0">',
+                    '    <div id="' + detalleId + '" class="collapse">',
+                    '      <div class="p-3 bg-light border-top">',
+                    '        <div class="row">',
+                    '          <div class="col-lg-6">',
+                    '            <div class="mb-2"><span class="text-muted">Origen:</span> <span class="font-weight-bold">' + escapeHtml(c.Origen || "-") + '</span></div>',
+                    '            <div class="mb-2"><span class="text-muted">Fecha emision:</span> <span class="font-weight-bold">' + escapeHtml(c.FechaEmision || "-") + '</span></div>',
+                    '            <div class="mb-2"><span class="text-muted">Recibido de:</span> <span class="font-weight-bold">' + escapeHtml(c.RecibidoDeNombre || "-") + '</span></div>',
+                    '            <div class="mb-2"><span class="text-muted">Entregado a:</span> <span class="font-weight-bold">' + escapeHtml(c.EntregadoANombre || "-") + '</span></div>',
+                    "          </div>",
+                    '          <div class="col-lg-6">',
+                    '            <div class="mb-2"><span class="text-muted">Creado:</span> <span class="font-weight-bold">' + escapeHtml(c.Creado || "-") + '</span></div>',
+                    '            <div class="mb-2"><span class="text-muted">Creado por:</span> <span class="font-weight-bold">' + escapeHtml(c.CreadoPor || "-") + '</span></div>',
+                    '            <div class="mb-2"><span class="text-muted">Actualizado:</span> <span class="font-weight-bold">' + escapeHtml(c.Actualizado || "-") + '</span></div>',
+                    '            <div class="mb-2"><span class="text-muted">Actualizado por:</span> <span class="font-weight-bold">' + escapeHtml(c.ActualizadoPor || "-") + '</span></div>',
+                    "          </div>",
+                    "        </div>",
+                    '        <div class="mt-2"><div class="text-muted mb-1">Observaciones</div><div class="font-weight-bold">' + escapeHtml(c.Observaciones || "-") + "</div></div>",
+                    "      </div>",
+                    "    </div>",
+                    "  </td>",
                     "</tr>"
                 ].join("");
             });
@@ -357,6 +435,40 @@
                 if (!$modal.parent().is("body")) {
                     $modal.appendTo("body");
                 }
+            });
+        }
+
+        function obtenerModalesVisiblesOrdenados() {
+            return $(".modal.show").filter(function () {
+                return $(this).is(":visible");
+            }).get().sort(function (a, b) {
+                var zA = parseInt($(a).css("z-index"), 10) || 0;
+                var zB = parseInt($(b).css("z-index"), 10) || 0;
+
+                if (zA !== zB) {
+                    return zA - zB;
+                }
+
+                return $(a).index() - $(b).index();
+            });
+        }
+
+        function actualizarEstadoVisualModales() {
+            var visibles = obtenerModalesVisiblesOrdenados();
+
+            $(".modal.modal-fondo-activo")
+                .removeClass("modal-fondo-activo")
+                .find(".modal-content")
+                .removeClass("modal-content-fondo-activo");
+
+            if (visibles.length <= 1) {
+                return;
+            }
+
+            visibles.slice(0, visibles.length - 1).forEach(function (modal) {
+                var $modal = $(modal);
+                $modal.addClass("modal-fondo-activo");
+                $modal.find(".modal-content").first().addClass("modal-content-fondo-activo");
             });
         }
 
@@ -429,11 +541,13 @@
                 .on("shown.bs.modal.pagoCheques", "#modalBuscarCheques", function (e) {
                     e.stopPropagation();
                     aislarModalesHijosPago();
+                    actualizarEstadoVisualModales();
                     enfocarBuscadorCheques();
                     programarSeleccionPrimeraFila(50);
                 })
                 .on("hidden.bs.modal.pagoCheques", "#modalBuscarCheques", function (e) {
                     e.stopPropagation();
+                    actualizarEstadoVisualModales();
                     enfocarInputChequePrincipal();
 
                     if (config.desdePos && ($("#modalPagoPOS").hasClass("show") || $("#modalFinanzasPOS").hasClass("show"))) {
@@ -445,6 +559,7 @@
                 .on("shown.bs.modal.pagoCheques hidden.bs.modal.pagoCheques hide.bs.modal.pagoCheques", "#modalAltaCheque, #modalDetalleCheque", function (e) {
                     e.stopPropagation();
                     aislarModalesHijosPago();
+                    actualizarEstadoVisualModales();
 
                     if (e.type === "hidden" && config.desdePos && ($("#modalPagoPOS").hasClass("show") || $("#modalFinanzasPOS").hasClass("show"))) {
                         setTimeout(function () {
@@ -452,8 +567,33 @@
                         }, 0);
                     }
                 })
-                .on("click.pagoCheques", "#tablaModalCheques tbody tr", function () {
+                .on("click.pagoCheques", "#tablaBusquedaCheques tbody tr.fila-cheque-busqueda", function () {
                     marcarChequeSeleccionado($(this));
+                })
+                .on("dblclick.pagoCheques", "#tablaBusquedaCheques tbody tr.fila-cheque-busqueda", function (e) {
+                    if ($(e.target).closest(".btn-detalles-cheque").length) {
+                        return false;
+                    }
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return seleccionarChequeDesdeFila(this, { cerrarModal: true });
+                })
+                .on("click.pagoCheques", ".btn-seleccionar-cheque", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return seleccionarChequeDesdeFila($(this).closest("tr"), { cerrarModal: true });
+                })
+                .on("click.pagoCheques", ".btn-detalles-cheque", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var $icono = $(this).find("i");
+                    window.setTimeout(function () {
+                        var expanded = $(this).attr("aria-expanded") === "true";
+                        $icono.toggleClass("fa-chevron-down", !expanded);
+                        $icono.toggleClass("fa-chevron-up", expanded);
+                    }.bind(this), 0);
+                    return false;
                 })
                 .on("keydown.pagoCheques", "#filtroNroCheque", function (e) {
                     var $visibles = filasChequesVisibles();
@@ -523,6 +663,7 @@
 
         function init(options) {
             config = $.extend({}, config, options || {});
+            seedAplicado = false;
 
             window.urls = window.urls || {};
             window.urls.buscarChequePorNro = config.buscarChequePorNro;
@@ -534,15 +675,14 @@
             bindEvents();
             aplicarSeed();
             recalcularTotales();
+            actualizarEstadoVisualModales();
 
             window.POSPagoSeleccionarChequeBusqueda = function (nroCheque) {
                 return agregarChequePorNumero(nroCheque, { cerrarModal: true });
             };
 
             window.POSPagoSeleccionarChequeDesdeFila = function (fila) {
-                var $fila = $(fila);
-                if (!$fila.length) return false;
-                return agregarChequePorNumero($fila.data("nro"), { cerrarModal: true });
+                return seleccionarChequeDesdeFila(fila, { cerrarModal: true });
             };
 
             window.POSPagoVerDetalleChequeDesdeFila = function (fila) {
