@@ -218,9 +218,13 @@
                                             </div>
                                         </div>
                                         <button id="btnAgregarProducto"
-                                                class="btn btn-outline-success btn-lg w-100 btn-agregar-pos d-none d-md-block"
+                                                class="btn btn-success btn-lg w-100 btn-agregar-pos d-none d-md-flex"
                                                 disabled>
-                                            ➕ Agregar a la venta
+                                            <i class="fas fa-cart-plus"></i>
+                                            <span>
+                                                <strong>Agregar</strong>
+                                                <small>a la venta</small>
+                                            </span>
                                         </button>
 
 
@@ -260,8 +264,11 @@
                             <!-- BOTONES FINALES -->
                             <div class="mb-3">
                                 <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
-                                    <i class="fas fa-credit-card mr-2"></i>
-                                    Finalizar y Pagar
+                                    <i class="fas fa-cash-register"></i>
+                                    <span>
+                                        <strong>Finalizar</strong>
+                                        <small>y cobrar</small>
+                                    </span>
                                 </button>
                             </div>
                             <div id="pos-bottom-anchor"></div>
@@ -543,9 +550,9 @@ else
 
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=9")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=1")"></script>
@@ -732,6 +739,12 @@ else
             });
         }
 
+        function getLineasCargadas() {
+            return POSState.getLineas().filter(function (linea) {
+                return !!linea;
+            });
+        }
+
         function save() {
             if (window.POSFinalizandoVenta || window.POSVentaFinalizada) {
                 localStorage.removeItem(key);
@@ -740,7 +753,7 @@ else
 
             const lineas = POSState.getLineas();
 
-            if (!lineas.some(function (linea) { return linea && !linea.anulado; })) {
+            if (!lineas.some(function (linea) { return !!linea; })) {
                 if (window.POSCancelacionEnCurso) return;
                 localStorage.removeItem(key);
                 return;
@@ -767,11 +780,11 @@ else
 
             if (!draft || !Array.isArray(draft.lineas)) return false;
 
-            const lineasActivas = draft.lineas.filter(function (linea) {
-                return linea && !linea.anulado;
+            const lineasCargadas = draft.lineas.filter(function (linea) {
+                return !!linea;
             });
 
-            if (!lineasActivas.length) {
+            if (!lineasCargadas.length) {
                 localStorage.removeItem(key);
                 return false;
             }
@@ -794,7 +807,8 @@ else
             save: save,
             restore: restore,
             clear: clear,
-            getLineasActivas: getLineasActivas
+            getLineasActivas: getLineasActivas,
+            getLineasCargadas: getLineasCargadas
         };
     })();
 
@@ -887,7 +901,7 @@ else
     });
 
     $('#btnConsumidorFinal').on('click', function () {
-        $('#idPersona').val('@Entidades.Persona.idConsumidorFinal');
+        $('#idPersona').val(@Model.IdPersona);
         $('#razonSocial').val('Consumidor Final');
     });
 
@@ -1030,7 +1044,7 @@ else
         const ahora = new Date();
         POSState.setFechaVenta(ahora);
         $("#fechaVenta").val(ahora.toISOString().slice(0, 19));
-        $("#idPersona").val('@Entidades.Persona.idConsumidorFinal');
+        $("#idPersona").val('@Model.IdPersona');
         $("#razonSocial").val('Consumidor Final');
         $("#inputCodigo").val("");
         $("#inputCantidad").val("").prop("disabled", true);
@@ -1072,9 +1086,10 @@ else
         if (window.POSFinalizandoVenta) return false;
         if (window.POSCancelacionEnCurso) return true;
 
-        return !!(window.POSState &&
-            typeof window.POSState.hasVentaEnCurso === "function" &&
-            window.POSState.hasVentaEnCurso());
+        const lineas = window.POSState?.getLineas?.() || [];
+        return lineas.some(function (linea) {
+            return !!linea;
+        });
     }
 
     function mostrarBloqueoSalidaPOS() {
@@ -1992,6 +2007,139 @@ else
         background: rgba(32,201,151,.12);
     }
 
+    .btn-agregar-pos {
+        align-items: center;
+        justify-content: center;
+        gap: .55rem;
+        min-height: 56px;
+        background: #e7f6ee;
+        border: 1px solid #9fd7b9;
+        color: #176b3a;
+        border-radius: 8px;
+        font-weight: 800;
+        line-height: 1.05;
+        box-shadow: 0 4px 10px rgba(25, 135, 84, .10);
+        transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, border-color .12s ease;
+    }
+
+    .btn-agregar-pos i {
+        font-size: 1.25rem;
+    }
+
+    .btn-agregar-pos span {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btn-agregar-pos small {
+        font-size: .72rem;
+        font-weight: 700;
+        opacity: .86;
+        letter-spacing: 0;
+    }
+
+    .btn-agregar-pos:not(:disabled):hover {
+        transform: translateY(-1px);
+        background: #d8f0e4;
+        border-color: #79c79f;
+        color: #145f34;
+        box-shadow: 0 6px 14px rgba(25, 135, 84, .14);
+    }
+
+    .btn-agregar-pos:disabled {
+        background: #e9ecef;
+        border-color: #dee2e6;
+        color: #6c757d;
+        opacity: 1;
+        box-shadow: none;
+    }
+
+    html.dark-mode .btn-agregar-pos {
+        background: rgba(32, 201, 151, .14);
+        border-color: rgba(32, 201, 151, .34);
+        color: #8ee0bf;
+        box-shadow: none;
+    }
+
+    html.dark-mode .btn-agregar-pos:not(:disabled):hover {
+        background: rgba(32, 201, 151, .20);
+        border-color: rgba(32, 201, 151, .46);
+        color: #a7ebd0;
+    }
+
+    html.dark-mode .btn-agregar-pos:disabled {
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.12);
+        color: rgba(255,255,255,.55);
+    }
+
+    #btnFinalizar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .65rem;
+        min-height: 62px;
+        background: #176b4d;
+        border: 1px solid #155f45;
+        border-radius: 8px;
+        color: #fff;
+        font-weight: 800;
+        line-height: 1.05;
+        box-shadow: 0 6px 16px rgba(23, 107, 77, .18);
+        transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, border-color .12s ease;
+    }
+
+    #btnFinalizar i {
+        font-size: 1.35rem;
+    }
+
+    #btnFinalizar span {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #btnFinalizar small {
+        font-size: .75rem;
+        font-weight: 700;
+        opacity: .9;
+        letter-spacing: 0;
+    }
+
+    #btnFinalizar:not(:disabled):hover {
+        transform: translateY(-1px);
+        background: #135d43;
+        border-color: #104f39;
+        box-shadow: 0 8px 18px rgba(23, 107, 77, .24);
+    }
+
+    #btnFinalizar:disabled {
+        background: #e9ecef;
+        border-color: #dee2e6;
+        color: #6c757d;
+        opacity: 1;
+        box-shadow: none;
+    }
+
+    html.dark-mode #btnFinalizar {
+        background: rgba(32, 201, 151, .22);
+        border-color: rgba(32, 201, 151, .48);
+        color: #d8fff1;
+        box-shadow: none;
+    }
+
+    html.dark-mode #btnFinalizar:not(:disabled):hover {
+        background: rgba(32, 201, 151, .28);
+        border-color: rgba(32, 201, 151, .62);
+    }
+
+    html.dark-mode #btnFinalizar:disabled {
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.12);
+        color: rgba(255,255,255,.55);
+    }
+
     /* =========================================================
       6) COLUMNA DERECHA (desktop): todo entra
       ========================================================= */
@@ -2032,11 +2180,6 @@ else
 
         #pos-app .col-md-6.d-flex.flex-column > .mt-auto {
             flex: 0 0 auto;
-        }
-
-        #btnFinalizar {
-            padding-top: .6rem;
-            padding-bottom: .6rem;
         }
 
         .zona-botones {

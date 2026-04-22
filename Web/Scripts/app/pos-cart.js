@@ -103,6 +103,7 @@
 
         function updateCartSummary() {
             const lineas = POSState.getLineas();
+            const cargadas = lineas.filter(function (linea) { return !!linea; }).length;
             const activas = lineas.filter(function (linea) { return linea && !linea.anulado; }).length;
             const anuladas = lineas.filter(function (linea) { return linea && linea.anulado; }).length;
             const $resumen = $("#posVentaResumen");
@@ -119,9 +120,9 @@
 
             if ($cancelar.length) {
                 $cancelar
-                    .prop("disabled", lineas.length === 0)
-                    .toggleClass("btn-outline-danger", activas > 0)
-                    .toggleClass("btn-outline-secondary", activas === 0);
+                    .prop("disabled", cargadas === 0)
+                    .toggleClass("btn-outline-danger", cargadas > 0)
+                    .toggleClass("btn-outline-secondary", cargadas === 0);
             }
         }
 
@@ -161,6 +162,7 @@
                 subtotal: `$ ${(subtotal).toFixed(2)}`,
                 bonificacion: 0,
                 anulado: false,
+                indexAnulado: -1,
                 balanza: productoSeleccionado.balanza
             };
 
@@ -277,7 +279,10 @@
         }
 
         function updateSaleState() {
-            hayVentaEnCurso = POSState.hasVentaEnCurso();
+            const lineas = POSState.getLineas();
+            hayVentaEnCurso = lineas.some(function (linea) {
+                return !!linea;
+            });
         }
 
         window.desactivarAvisoSalidaPOS = function () {
