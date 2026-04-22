@@ -20,7 +20,7 @@ namespace Web.Models.DTO
         public float Bonificacion { get; set; }
         public int Estado { get; set; }
         public bool Balanza { get; set; }
-        public int IndexAnulado { get; set; }
+        public int IndexAnulado { get; set; } = -1;
     }
 
 }

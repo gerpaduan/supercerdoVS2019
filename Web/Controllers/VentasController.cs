@@ -136,6 +136,9 @@ namespace Web.Controllers
 
 
                 venta.Persona = oPersonaN.findById(request.IdPersona);
+                if (venta.Persona == null)
+                    return Json(new { ok = false, msg = "El Cliente no existe." });
+
                 venta.Sucursal = oSucursalN.findById(user.IdSucursal);
 
                 venta.TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString());
@@ -182,6 +185,7 @@ namespace Web.Controllers
                     linea.PrecioKg = l.PrecioKg;
                     linea.Bonificacion = l.Bonificacion;
                     linea.Estado = l.Estado;
+                    linea.IndexAnulado = l.IndexAnulado;
 
                     lineasVenta.Add(linea);
                 }
@@ -193,7 +197,7 @@ namespace Web.Controllers
                 for (int index = 0; index < lineasVenta.Count; index++)
                 {
                     ///crear Lineas de anulacion
-                    if (Entidades.LineaVenta.esAnulado(lineasVenta[index].Estado))
+                    if (Entidades.LineaVenta.esAnulado(lineasVenta[index].Estado) && lineasVenta[index].IndexAnulado == -1)
                     {
                         lineasVenta[index].Estado = 0;//se lo setea a No anulado xq se esta creando el registro opuesto
 
@@ -206,7 +210,7 @@ namespace Web.Controllers
                         oLineaVenta.PrecioKg = lineasVenta[index].PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.Bonificacion = lineasVenta[index].Bonificacion;
-                        oLineaVenta.IndexAnulado = (index + 1);
+                        oLineaVenta.IndexAnulado = index;
                         oLineaVenta.IdExpendio = lineasVenta[index].IdExpendio;
 
                         //se agrega el index del anulado al corte seleccionado para anular

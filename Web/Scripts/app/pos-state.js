@@ -9,8 +9,22 @@
         observaciones: ''
     };
 
+    function normalizarLinea(linea) {
+        if (!linea) return linea;
+
+        const index = parseInt(linea.index, 10);
+        if (Number.isFinite(index)) linea.index = index;
+
+        linea.anulado = linea.anulado === true || linea.anulado === 1 || linea.anulado === "1" || linea.anulado === "true";
+
+        const indexAnulado = parseInt(linea.indexAnulado, 10);
+        linea.indexAnulado = Number.isFinite(indexAnulado) ? indexAnulado : -1;
+
+        return linea;
+    }
+
     function normalizarLineas(lineas) {
-        return Array.isArray(lineas) ? lineas : [];
+        return Array.isArray(lineas) ? lineas.map(normalizarLinea) : [];
     }
 
     function toFloatAR(value) {
@@ -47,8 +61,9 @@
         },
 
         addLinea: function (linea) {
-            state.lineasVenta.push(linea);
-            return linea;
+            const lineaNormalizada = normalizarLinea(linea);
+            state.lineasVenta.push(lineaNormalizada);
+            return lineaNormalizada;
         },
 
         clear: function () {
@@ -63,8 +78,9 @@
         },
 
         findLineaByIndex: function (index) {
+            const indexBuscado = parseInt(index, 10);
             return state.lineasVenta.find(function (linea) {
-                return linea && linea.index === index;
+                return linea && parseInt(linea.index, 10) === indexBuscado;
             }) || null;
         },
 
@@ -73,6 +89,7 @@
             if (!linea) return false;
 
             linea.anulado = true;
+            linea.indexAnulado = Number.isFinite(parseInt(linea.indexAnulado, 10)) ? parseInt(linea.indexAnulado, 10) : -1;
             return true;
         },
 

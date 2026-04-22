@@ -186,6 +186,15 @@ function parseNumeroPOS(value) {
     return Number.isFinite(n) ? n : NaN;
 }
 
+function getMensajeErrorFinalizarVenta(resp) {
+    const msg = resp?.msg || '';
+    return msg || 'No se pudo finalizar la venta';
+}
+
+function esLineaAnuladaPOS(linea) {
+    return linea && (linea.anulado === true || linea.anulado === 1 || linea.anulado === '1' || linea.anulado === 'true');
+}
+
 function finalizarVenta(data) {
 
     if (ventaEnProceso) return;
@@ -213,7 +222,8 @@ function finalizarVenta(data) {
         CantKg: parseNumeroPOS(l.cant),
         PrecioKg: parseNumeroPOS(l.precio),
         Bonificacion: parseNumeroPOS(l.bonificacion) || 0,
-        Estado: (l.anulado ? 1 : 0),
+        Estado: (esLineaAnuladaPOS(l) ? 1 : 0),
+        IndexAnulado: Number.isFinite(parseInt(l.indexAnulado, 10)) ? parseInt(l.indexAnulado, 10) : -1,
         Balanza: l.balanza
     }));
 
@@ -262,7 +272,7 @@ function finalizarVenta(data) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: resp.msg || 'No se pudo finalizar la venta'
+                    text: getMensajeErrorFinalizarVenta(resp)
                 });
                 window.POSFinalizandoVenta = false;
                 window.POSVentaFinalizada = false;
@@ -319,7 +329,7 @@ function finalizarVenta(data) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: xhr.responseJSON?.msg || 'Error del servidor'
+                text: getMensajeErrorFinalizarVenta(xhr.responseJSON) || 'Error del servidor'
             });
             window.POSFinalizandoVenta = false;
             window.POSVentaFinalizada = false;
