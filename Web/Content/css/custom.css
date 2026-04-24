@@ -153,3 +153,175 @@
     outline: 2px solid rgba(0,0,0,.2);
     background: rgba(0,0,0,.06);
 }
+
+/* Egresos de Caja */
+.egresos-page,
+.egresos-pos {
+    width: 100%;
+}
+
+.egresos-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: .75rem;
+}
+
+.egresos-filtros,
+.egresos-pos-toolbar,
+.egreso-form-wrap {
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.egresos-pos-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: 1rem;
+}
+
+.egresos-resumen {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-bottom: .75rem;
+}
+
+.egresos-resumen > div {
+    min-width: 120px;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #f8f9fc;
+    padding: .45rem .7rem;
+    text-align: right;
+}
+
+.egresos-resumen span,
+.egresos-resumen strong {
+    display: block;
+}
+
+.egresos-tabla-desktop td,
+.egresos-tabla-desktop th {
+    vertical-align: middle;
+}
+
+.egresos-cards-mobile {
+    display: none;
+}
+
+.egreso-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: .75rem;
+    margin-bottom: .6rem;
+}
+
+.egreso-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.egreso-card-top span {
+    flex: 0 0 auto;
+    font-weight: 700;
+    color: #1f7a46;
+}
+
+.egreso-card-line,
+.egreso-card-detail,
+.egreso-card-foot {
+    margin-top: .35rem;
+}
+
+.egreso-card-line {
+    color: #4a5568;
+}
+
+.egreso-card-detail {
+    border-top: 1px solid #edf2f7;
+    padding-top: .45rem;
+    white-space: pre-wrap;
+}
+
+.egreso-card-foot {
+    color: #858796;
+    font-size: .85rem;
+}
+
+.egreso-form-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #f8f9fc;
+    padding: .65rem .75rem;
+    margin-bottom: .85rem;
+}
+
+.egreso-monto {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.egresos-actividad-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.egreso-row-anulado {
+    opacity: .72;
+}
+
+.egreso-row-anulado td,
+.egreso-row-anulado .egreso-card-line {
+    text-decoration: line-through;
+}
+
+@media (min-width: 992px) {
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+        max-width: 570px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .egresos-actions {
+        justify-content: stretch;
+    }
+
+    .egresos-actions .btn,
+    .egresos-pos-toolbar .btn {
+        width: 100%;
+    }
+
+    .egresos-pos-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .egresos-resumen {
+        justify-content: stretch;
+    }
+
+    .egresos-resumen > div {
+        flex: 1 1 0;
+    }
+
+    .egresos-tabla-desktop {
+        display: none;
+    }
+
+    .egresos-cards-mobile {
+        display: block;
+    }
+}

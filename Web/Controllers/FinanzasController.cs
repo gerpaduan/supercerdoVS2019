@@ -20,6 +20,7 @@ namespace Web.Controllers
     public class FinanzasController : BaseController
     {
         private Negocio.CuentaCorriente oCtaCteN;
+        private Negocio.CierreCaja oCierreN;
         private Negocio.Sucursal oSucursalN;
         private Negocio.Usuario oUsuarioN;
         private Negocio.Persona oPersonasN;
@@ -29,6 +30,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
 
             oCtaCteN = new Negocio.CuentaCorriente(empresa, param);
+            oCierreN = new Negocio.CierreCaja(empresa);
             oSucursalN = new Negocio.Sucursal(empresa, param);
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oPersonasN = new Negocio.Persona(empresa, param);
@@ -404,6 +406,20 @@ namespace Web.Controllers
             var sucursales = oSucursalN.findAll();
             string returnUrlDecodificada = DecodeReturnUrlIfNeeded(returnUrl);
 
+            if (user != null && user.IdSucursal > 0 &&
+                (user.Sucursal == null || user.Sucursal.IdSucursal != user.IdSucursal))
+            {
+                user.Sucursal = oSucursalN.findById(user.IdSucursal);
+                Session["Usuario"] = user;
+            }
+
+            if (modoPos)
+            {
+                var cierreCajaActual = ObtenerCajaAbiertaUsuario(user);
+                if (cierreCajaActual == null)
+                    return new HttpStatusCodeResult(403, "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS.");
+            }
+
             ViewBag.Sucursales = sucursales;
             ViewBag.ReturnUrl = returnUrlDecodificada;
             ViewBag.DesdePOS = modoPos;
@@ -432,8 +448,9 @@ namespace Web.Controllers
             {
                 model = new Pago();
                 model.Fecha = DateTime.Now;
-
-                model.Sucursal = user.Sucursal;
+                model.Sucursal = user != null ? user.Sucursal : null;
+                if (model.Sucursal == null)
+                    model.Sucursal = oSucursalN.findById(user != null ? user.IdSucursal : 0);
 
                 model.NroRecibo = oCtaCteN.getNroReciboAutomatico(model.Sucursal.idSucursal);                
             }
@@ -463,9 +480,17 @@ namespace Web.Controllers
         {
             returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
             var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+            bool modoPos = desdePos || DesdePOS;
 
-            if (desdePos && usuarioActual != null && !usuarioActual.Admin && usuarioActual.Sucursal != null)
-                SucursalId = usuarioActual.Sucursal.IdSucursal;
+            if (usuarioActual != null && usuarioActual.IdSucursal > 0 &&
+                (usuarioActual.Sucursal == null || usuarioActual.Sucursal.IdSucursal != usuarioActual.IdSucursal))
+            {
+                usuarioActual.Sucursal = oSucursalN.findById(usuarioActual.IdSucursal);
+                Session["Usuario"] = usuarioActual;
+            }
+
+            if (modoPos && usuarioActual != null && !usuarioActual.Admin)
+                SucursalId = usuarioActual.IdSucursal;
 
             oPagoE.Sucursal = oSucursalN.findById(SucursalId);
             oPagoE.Persona = oPersonasN.findById(idPersona);
@@ -487,8 +512,12 @@ namespace Web.Controllers
             oPagoE.NroCheque = "";
             oPagoE.TitularCheque = "";
 
+            Pago pagoAnterior = oPagoE.Id > 0 ? oCtaCteN.getPagoById(oPagoE.Id) : null;
+            if (oPagoE.Id > 0 && pagoAnterior == null)
+                return Json(new { ok = false, mensaje = "No se encontró el pago o cobro a modificar." });
+
             oPagoE.CreadoPor = oPagoE.Id > 0
-                ? oCtaCteN.getPagoById(oPagoE.Id).CreadoPor
+                ? pagoAnterior.CreadoPor
                 : usuarioActual;
 
             oPagoE.ActualizadoPor = oPagoE.Id > 0
@@ -509,7 +538,42 @@ namespace Web.Controllers
                         : mensaje
                 });
             }
-            _ = oCtaCteN.addOrEditPago(oPagoE, null, null);
+
+            Entidades.CierreCaja cierreCajaActual = null;
+            if (modoPos)
+            {
+                cierreCajaActual = ObtenerCajaAbiertaUsuario(usuarioActual);
+                if (cierreCajaActual == null)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS."
+                    });
+                }
+
+                if (oPagoE.Sucursal == null || oPagoE.Sucursal.IdSucursal != usuarioActual.IdSucursal)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "El pago o cobro debe registrarse en la sucursal activa del POS."
+                    });
+                }
+
+                if (!cierreCajaActual.FechaHoraInicio.HasValue ||
+                    oPagoE.Fecha < cierreCajaActual.FechaHoraInicio.Value ||
+                    oPagoE.Fecha > DateTime.Now)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "La fecha y hora del pago o cobro debe corresponder a una caja abierta del vendedor."
+                    });
+                }
+            }
+
+            _ = oCtaCteN.addOrEditPago(oPagoE, cierreCajaActual, pagoAnterior);
 
             string urlRetornoDefault = !string.IsNullOrWhiteSpace(returnUrl)
                 ? returnUrl
@@ -521,7 +585,7 @@ namespace Web.Controllers
 
             string urlRetornoConCache = AppendCacheBuster(urlRetornoDefault);
 
-            if (desdePos)
+            if (modoPos)
             {
                 return Json(new
                 {
@@ -535,6 +599,29 @@ namespace Web.Controllers
                 return Json(new { ok = true, redirectUrl = urlRetornoConCache });
 
             return Redirect(urlRetornoConCache);
+        }
+
+        private Entidades.CierreCaja ObtenerCajaAbiertaUsuario(Entidades.Usuario user)
+        {
+            if (user == null || user.IdSucursal == 0)
+                return null;
+
+            if (user.Sucursal == null || user.Sucursal.IdSucursal != user.IdSucursal)
+                user.Sucursal = oSucursalN.findById(user.IdSucursal);
+
+            if (user.Sucursal == null || user.Sucursal.IdSucursal == 0)
+                return null;
+
+            var cierre = new Entidades.CierreCaja
+            {
+                Sucursal = user.Sucursal,
+                UsuarioInicio = user
+            };
+
+            cierre = oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+
+            bool abierta = cierre != null && cierre.UsuarioCierre != null && cierre.UsuarioCierre.Id == 0;
+            return abierta ? cierre : null;
         }
 
 

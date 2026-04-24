@@ -127,12 +127,32 @@ namespace Web.Controllers
                 var venta = Session["VentaActiva"] as Venta;
                 var user = Session["Usuario"] as Entidades.Usuario;
 
+                if (user == null)
+                    return Json(new { ok = false, msg = "Sesión expirada" });
+
                 if (venta == null)
                     return Json(new { ok = false, msg = "No hay venta activa" });
 
                 if (request.LineasVenta == null || !request.LineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
 
+                if (user.IdSucursal == 0)
+                    return Json(new { ok = false, msg = "Seleccione una sucursal antes de finalizar la venta." });
+
+                if (request.IdSucursalPOS != user.IdSucursal)
+                {
+                    var sucursalPos = oSucursalN.findById(request.IdSucursalPOS);
+                    string nombreSucursalPos = sucursalPos != null && !string.IsNullOrWhiteSpace(sucursalPos.SucursalNombre)
+                        ? sucursalPos.SucursalNombre
+                        : "original del POS";
+
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = "La venta fue iniciada en la sucursal " + nombreSucursalPos +
+                              ". Vuelva a la pantalla principal, cambie a esa sucursal y luego finalice la venta."
+                    });
+                }
 
 
                 venta.Persona = oPersonaN.findById(request.IdPersona);
@@ -140,6 +160,8 @@ namespace Web.Controllers
                     return Json(new { ok = false, msg = "El Cliente no existe." });
 
                 venta.Sucursal = oSucursalN.findById(user.IdSucursal);
+                if (venta.Sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida." });
 
                 venta.TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString());
 
@@ -268,7 +290,19 @@ namespace Web.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            user.Sucursal = user.Sucursal == null ? oSucursalN.findById(user.IdSucursal) : user.Sucursal;
+            user.Sucursal = oSucursalN.findById(user.IdSucursal);
+            if (user.Sucursal == null)
+            {
+                TempData["AlertType"] = "info";
+                TempData["AlertTitle"] = "Sucursal inválida";
+                TempData["AlertMsg"] = "Seleccione una sucursal válida desde el icono de usuario (arriba a la derecha) y vuelve a entrar al Punto de Venta.";
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            user.SucursalNombre = user.Sucursal.SucursalNombre;
+            Session["Usuario"] = user;
+
             // Inicializo cierre
             var cierre = new Entidades.CierreCaja
             {
@@ -290,6 +324,7 @@ namespace Web.Controllers
             // Paso info a la vista
             ViewBag.CajaAbierta = cajaAbierta;
             ViewBag.SucursalNombre = user.SucursalNombre;
+            ViewBag.IdSucursalPOS = user.IdSucursal;
 
             // 🚨 Si NO hay caja abierta, NO inicializo venta
             if (!cajaAbierta)

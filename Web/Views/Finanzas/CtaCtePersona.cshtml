@@ -1,4 +1,5 @@
 ﻿@model System.Data.DataTable
+@using System.Collections.Generic
 
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
@@ -14,6 +15,28 @@
     var returnUrl = Convert.ToBase64String(
          System.Text.Encoding.UTF8.GetBytes(Request.RawUrl)
      );
+
+    Func<System.Data.DataRow, string> claveMovimiento = row =>
+        string.Join("|",
+            Convert.ToString(row["Tabla"]),
+            Convert.ToString(row["IdTabla"]),
+            Convert.ToString(row["Sucursal"]));
+
+    var ultimoIdPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    var cantidadPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+    foreach (System.Data.DataRow row in Model.Rows)
+    {
+        string clave = claveMovimiento(row);
+        int id = Convert.ToInt32(row["ID"]);
+
+        if (!ultimoIdPorClave.ContainsKey(clave) || id > ultimoIdPorClave[clave])
+            ultimoIdPorClave[clave] = id;
+
+        cantidadPorClave[clave] = cantidadPorClave.ContainsKey(clave)
+            ? cantidadPorClave[clave] + 1
+            : 1;
+    }
 }
 
 <div class="container-fluid p-0" style="@(desdePos ? "display:flex; flex-direction:column;" : "height:100vh; display:flex; flex-direction:column;")">
@@ -164,7 +187,17 @@
                     <tbody>
                         @foreach (System.Data.DataRow row in Model.Rows)
                         {
-                            <tr onclick="verMovimientoCtaCte('@row["Tabla"]', @row["IdTabla"])" style="cursor:pointer;">
+                            string clave = claveMovimiento(row);
+                            int id = Convert.ToInt32(row["ID"]);
+                            bool tieneMasVersiones = cantidadPorClave.ContainsKey(clave) && cantidadPorClave[clave] > 1;
+                            bool esVersionActual = ultimoIdPorClave.ContainsKey(clave) && ultimoIdPorClave[clave] == id;
+                            bool esHistorico = tieneMasVersiones && !esVersionActual;
+                            bool esPago = string.Equals(Convert.ToString(row["Tabla"]), "Pagos", StringComparison.OrdinalIgnoreCase);
+                            bool mostrarAdvertenciaAdmin = tieneMasVersiones && !esPago;
+
+                            <tr onclick="verMovimientoCtaCte('@row["Tabla"]', @row["IdTabla"])"
+                                class="@(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "")"
+                                style="cursor:pointer;">
 
                                 <!-- ID oculto -->
                                 <td name="id" style="display:none;">@row["ID"]</td>
@@ -172,8 +205,28 @@
                                 <td name="idTabla" style="display:none;">@row["IdTabla"]</td>
 
                                 <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
-                                <td>@row["Tabla"]</td>
-                                <td>[ID: @row["IdTabla"]] @row["Detalle"]</td>
+                                <td>
+                                    @row["Tabla"]
+                                    @if (esHistorico)
+                                    {
+                                        <span class="badge badge-secondary ml-1">Versión anterior</span>
+                                    }
+                                    else if (mostrarAdvertenciaAdmin)
+                                    {
+                                        <span class="badge badge-warning ml-1">Modificado</span>
+                                    }
+                                </td>
+                                <td>
+                                    [ID: @row["IdTabla"]] @row["Detalle"]
+                                    @if (esHistorico && esPago)
+                                    {
+                                        <div class="small text-muted mt-1">Registro anterior anulado por modificación.</div>
+                                    }
+                                    else if (!esHistorico && mostrarAdvertenciaAdmin)
+                                    {
+                                        <div class="small text-warning mt-1">Verificar cambios del registro original.</div>
+                                    }
+                                </td>
 
                                 <td style="text-align:right; color:@(Convert.ToDecimal(row["Importe"]) >= 0 ? "green" : "red"); font-weight:bold;">
                                     @Convert.ToDecimal(row["Importe"]).ToString("N2")
@@ -246,5 +299,15 @@
 <style>
     #tablaPersona td, #tablaPersona th {
         white-space: nowrap;
+    }
+
+    #tablaPersona tr.ctacte-row-historico td {
+        color: #6c757d;
+        text-decoration: line-through;
+        opacity: 0.8;
+    }
+
+    #tablaPersona tr.ctacte-row-modificado:not(.ctacte-row-historico) {
+        background-color: #fff8e1;
     }
 </style>

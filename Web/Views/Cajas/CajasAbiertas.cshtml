@@ -53,6 +53,39 @@
 
 </div>
 
+<div class="modal fade" id="modalEgresoCaja" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalEgresoCajaTitulo">Nuevo Egreso de Caja</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenedorEgresoCaja">
+                <div class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Actividades -->
+<div class="modal fade" id="modalActividadesCaja" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Actividades</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="contenedorActividadesCaja" class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Cerrar Caja -->
 <div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
@@ -154,6 +187,11 @@
 
 @section Scripts {
     <script>
+        window.EgresosCajaUrls = {
+            nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
+            guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+        };
+
         function filtrar() {
             const idSucursal = $("#idSucursal").val() || "";
             const buscar = $("#buscarVendedor").val() || "";
@@ -195,6 +233,54 @@
         $(function () {
             filtrar();
         });
+
+        $(document)
+            .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja')
+            .on('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja', function () {
+                var zIndex = 1040 + (10 * $('.modal.show').length);
+                $(this).css('z-index', zIndex);
+
+                setTimeout(function () {
+                    $('.modal-backdrop').not('.modal-stack').last()
+                        .css('z-index', zIndex - 1)
+                        .addClass('modal-stack');
+                }, 0);
+            });
+
+        function abrirModalActividades(idCierre, filtroActividad) {
+            window.CajasAbiertas = window.CajasAbiertas || {};
+            window.CajasAbiertas.idCierreActividadActual = idCierre;
+            $("#contenedorActividadesCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalActividadesCaja").modal("show");
+
+            $.ajax({
+                url: '@Url.Action("ActividadesCaja", "Cajas")',
+                type: 'GET',
+                data: {
+                    idCierre: idCierre,
+                    filtroActividad: filtroActividad || "todos"
+                },
+                cache: false,
+                success: function (html) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                        return;
+                    }
+
+                    $("#contenedorActividadesCaja").html(html);
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron cargar las actividades de la caja.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#contenedorActividadesCaja").html('<div class="alert alert-danger m-3">' + $('<div>').text(mensaje).html() + '</div>');
+                }
+            });
+        }
+
+        window.CajasAbiertas = window.CajasAbiertas || {};
+        window.CajasAbiertas.abrirActividades = abrirModalActividades;
 
         function abrirModalCerrarCaja(Id) {
             $("#cerrarCajaError").addClass("d-none").text("");
@@ -321,4 +407,5 @@
             }
         }
     </script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=1")"></script>
 }

@@ -1,0 +1,374 @@
+@model System.Data.DataTable
+@using System.Data
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Linq
+
+@functions {
+    string Valor(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return "";
+
+        return Convert.ToString(row[columna]);
+    }
+
+    string Descripcion(DataRow row)
+    {
+        if (row == null || row.Table == null)
+            return "";
+
+        foreach (DataColumn column in row.Table.Columns)
+        {
+            string nombre = column.ColumnName;
+            string nombreSinAcentos = new string(nombre.Normalize(System.Text.NormalizationForm.FormD)
+                .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                .ToArray());
+
+            if (string.Equals(nombreSinAcentos, "Descripcion", StringComparison.OrdinalIgnoreCase))
+                return Valor(row, nombre);
+        }
+
+        return "";
+    }
+
+    string Fecha(DataRow row, string columna)
+    {
+        DateTime fecha;
+        return DateTime.TryParse(Valor(row, columna), out fecha) ? fecha.ToString("dd/MM/yyyy HH:mm") : Valor(row, columna);
+    }
+
+    string Monto(DataRow row)
+    {
+        decimal monto;
+        string valor = Valor(row, "Monto");
+        if (decimal.TryParse(valor, NumberStyles.Any, CultureInfo.CurrentCulture, out monto) ||
+            decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out monto))
+            return monto.ToString("N2");
+
+        return valor;
+    }
+
+    string Id(DataRow row)
+    {
+        return Valor(row, "id");
+    }
+
+    bool EsPagoElectronico(DataRow row)
+    {
+        return string.Equals(Valor(row, "TipoEgresoCaja"), "Pago Electronico", StringComparison.OrdinalIgnoreCase);
+    }
+
+    bool EsCtaCte(DataRow row)
+    {
+        return string.Equals(Valor(row, "TipoEgresoCaja"), "Cta Cte", StringComparison.OrdinalIgnoreCase);
+    }
+
+    bool EsPagoCobro(DataRow row)
+    {
+        string tipo = Valor(row, "TipoEgresoCaja");
+        if (string.IsNullOrWhiteSpace(tipo))
+            return false;
+
+        string tipoNormalizado = tipo.Replace(" ", "");
+        return tipoNormalizado.IndexOf("Pago", StringComparison.OrdinalIgnoreCase) >= 0 &&
+               tipoNormalizado.IndexOf("Cobro", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    bool EsAnulacion(DataRow row)
+    {
+        return Descripcion(row).StartsWith("ANULACION", StringComparison.OrdinalIgnoreCase);
+    }
+
+    bool FueReemplazadoPorAnulacion(DataRow row, ISet<string> descripcionesAnuladas)
+    {
+        if (row == null || descripcionesAnuladas == null || descripcionesAnuladas.Count == 0)
+            return false;
+
+        return descripcionesAnuladas.Contains(Descripcion(row));
+    }
+
+    bool EsEgresoCajaModificado(DataRow row)
+    {
+        if (row == null)
+            return false;
+
+        if (EsPagoCobro(row) || EsCtaCte(row) || EsPagoElectronico(row) || EsAnulacion(row))
+            return false;
+
+        return !string.IsNullOrWhiteSpace(Valor(row, "Actualizado"));
+    }
+
+    string Categoria(DataRow row)
+    {
+        if (EsPagoCobro(row))
+            return "Pago | Cobro";
+        if (EsCtaCte(row))
+            return "Cta Cte";
+        if (EsPagoElectronico(row))
+            return "Pago electronico";
+        return "Egreso de caja";
+    }
+}
+
+@{
+    int items = Model != null ? Model.Rows.Count : 0;
+    decimal total = 0;
+    bool modoActividades = ViewBag.ModoActividades != null && (bool)ViewBag.ModoActividades;
+    var idsModificables = ViewBag.IdsEgresosModificables as HashSet<int> ?? new HashSet<int>();
+    var descripcionesAnuladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    if (Model != null && Model.Columns.Contains("Monto"))
+    {
+        foreach (DataRow row in Model.Rows)
+        {
+            decimal monto;
+            string valor = Convert.ToString(row["Monto"]);
+            if (decimal.TryParse(valor, NumberStyles.Any, CultureInfo.CurrentCulture, out monto) ||
+                decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out monto))
+            {
+                total += monto;
+            }
+
+            string descripcion = Descripcion(row);
+            if (descripcion.StartsWith("ANULACION:", StringComparison.OrdinalIgnoreCase))
+            {
+                string descripcionOriginal = descripcion.Substring("ANULACION:".Length).Trim();
+                if (!string.IsNullOrWhiteSpace(descripcionOriginal))
+                {
+                    descripcionesAnuladas.Add(descripcionOriginal);
+                }
+            }
+        }
+    }
+}
+
+@if (!modoActividades)
+{
+    <div class="egresos-resumen">
+        <div>
+            <span class="text-muted">Items</span>
+            <strong>@items</strong>
+        </div>
+        <div>
+            <span class="text-muted">Total</span>
+            <strong>$ @total.ToString("N2")</strong>
+        </div>
+    </div>
+}
+
+<div class="table-responsive egresos-tabla-desktop">
+    <table class="table table-sm table-bordered table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Descripcion</th>
+                <th class="text-right">Monto</th>
+                <th class="text-nowrap">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No se encontraron egresos.</td>
+                </tr>
+            }
+            else
+            {
+                int index = 0;
+                foreach (DataRow row in Model.Rows)
+                {
+                    index++;
+                    string id = Id(row);
+                    string detalleId = "egreso_det_" + (!string.IsNullOrWhiteSpace(id) ? id : index.ToString());
+                    bool esAnulacion = EsAnulacion(row);
+                    bool esHistorico = !esAnulacion && FueReemplazadoPorAnulacion(row, descripcionesAnuladas);
+                    bool esEgresoModificado = !esHistorico && EsEgresoCajaModificado(row);
+                    int idInt;
+                    bool puedeModificar = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
+
+                    <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id">
+                        <td class="text-nowrap">@Fecha(row, "Fecha")</td>
+                        <td>
+                            @Valor(row, "TipoEgresoCaja")
+                            @if (modoActividades)
+                            {
+                                <span class="badge badge-light ml-1">@Categoria(row)</span>
+                                if (esAnulacion)
+                                {
+                                    <span class="badge badge-warning ml-1">Anulacion</span>
+                                }
+                                else if (esHistorico)
+                                {
+                                    <span class="badge badge-secondary ml-1">Version anterior</span>
+                                }
+                                else if (esEgresoModificado)
+                                {
+                                    <span class="badge badge-light border ml-1">Modificado</span>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @Descripcion(row)
+                            @if (esHistorico)
+                            {
+                                <div class="small text-muted mt-1">Registro anterior reemplazado por una modificacion.</div>
+                            }
+                            else if (esEgresoModificado)
+                            {
+                                <div class="small text-muted mt-1">Registro modificado. Verificar cambios.</div>
+                            }
+                        </td>
+                        <td class="text-right text-nowrap">$ @Monto(row)</td>
+                        <td class="text-nowrap">
+                            <button type="button"
+                                    class="btn btn-sm btn-link text-decoration-none btn-detalle-egreso"
+                                    data-toggle="collapse"
+                                    data-target="#@detalleId"
+                                    aria-expanded="false"
+                                    aria-controls="@detalleId">
+                                <i class="fas fa-chevron-down"></i> Detalles
+                            </button>
+                            @if (puedeModificar && !string.IsNullOrWhiteSpace(id))
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-primary btn-modificar-egreso"
+                                        data-id="@id">
+                                    <i class="fas fa-edit"></i> Modificar
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                    <tr class="egreso-detalle-row">
+                        <td colspan="5" class="p-0">
+                            <div id="@detalleId" class="collapse egreso-detalle-collapse">
+                                <div class="p-3 bg-light border-top">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <span class="text-muted d-block">Detalle</span>
+                                            <strong>@Valor(row, "Detalle")</strong>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <span class="text-muted d-block">Sucursal</span>
+                                            <strong>@Valor(row, "Sucursal")</strong>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <span class="text-muted d-block">Creado por</span>
+                                            <strong>@Valor(row, "Creado Por")</strong>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <span class="text-muted d-block">Creado</span>
+                                            <strong>@Fecha(row, "Creado")</strong>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <span class="text-muted d-block">Actualizado por</span>
+                                            <strong>@Valor(row, "Actualizado Por")</strong>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <span class="text-muted d-block">Actualizado</span>
+                                            <strong>@Fecha(row, "Actualizado")</strong>
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <span class="text-muted d-block">ID</span>
+                                            <strong>@id</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="egresos-cards-mobile">
+    @if (Model == null || Model.Rows.Count == 0)
+    {
+        <div class="text-center text-muted py-4">No se encontraron egresos.</div>
+    }
+    else
+    {
+        int index = 0;
+        foreach (DataRow row in Model.Rows)
+        {
+            index++;
+            string id = Id(row);
+            string detalleId = "egreso_card_det_" + (!string.IsNullOrWhiteSpace(id) ? id : index.ToString());
+            bool esAnulacion = EsAnulacion(row);
+            bool esHistorico = !esAnulacion && FueReemplazadoPorAnulacion(row, descripcionesAnuladas);
+            bool esEgresoModificado = !esHistorico && EsEgresoCajaModificado(row);
+            int idInt;
+            bool puedeModificar = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
+
+            <div class="egreso-card @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")">
+                <div class="egreso-card-top">
+                    <strong>
+                        @Valor(row, "TipoEgresoCaja")
+                        @if (modoActividades)
+                        {
+                            <span class="badge badge-light ml-1">@Categoria(row)</span>
+                            if (esAnulacion)
+                            {
+                                <span class="badge badge-warning ml-1">Anulacion</span>
+                            }
+                            else if (esHistorico)
+                            {
+                                <span class="badge badge-secondary ml-1">Version anterior</span>
+                            }
+                            else if (esEgresoModificado)
+                            {
+                                <span class="badge badge-light border ml-1">Modificado</span>
+                            }
+                        }
+                    </strong>
+                    <span>$ @Monto(row)</span>
+                </div>
+                <div class="egreso-card-line">@Fecha(row, "Fecha")</div>
+                <div class="egreso-card-line">
+                    @Descripcion(row)
+                    @if (esHistorico)
+                    {
+                        <div class="small text-muted mt-1">Registro anterior reemplazado por una modificacion.</div>
+                    }
+                    else if (esEgresoModificado)
+                    {
+                        <div class="small text-muted mt-1">Registro modificado. Verificar cambios.</div>
+                    }
+                </div>
+                <div class="d-flex flex-wrap mt-2">
+                    <button type="button"
+                            class="btn btn-sm btn-link text-decoration-none pl-0 btn-detalle-egreso"
+                            data-toggle="collapse"
+                            data-target="#@detalleId"
+                            aria-expanded="false"
+                            aria-controls="@detalleId">
+                        <i class="fas fa-chevron-down"></i> Detalles
+                    </button>
+                    @if (puedeModificar && !string.IsNullOrWhiteSpace(id))
+                    {
+                        <button type="button"
+                                class="btn btn-sm btn-primary btn-modificar-egreso"
+                                data-id="@id">
+                            <i class="fas fa-edit"></i> Modificar
+                        </button>
+                    }
+                </div>
+                <div id="@detalleId" class="collapse egreso-detalle-collapse">
+                    @if (!string.IsNullOrWhiteSpace(Valor(row, "Detalle")))
+                    {
+                        <div class="egreso-card-detail">@Valor(row, "Detalle")</div>
+                    }
+                    <div class="egreso-card-line">Sucursal: @Valor(row, "Sucursal")</div>
+                    <div class="egreso-card-line">Creado: @Fecha(row, "Creado")</div>
+                    <div class="egreso-card-line">Creado por: @Valor(row, "Creado Por")</div>
+                    <div class="egreso-card-line">Actualizado: @Fecha(row, "Actualizado")</div>
+                    <div class="egreso-card-line">Actualizado por: @Valor(row, "Actualizado Por")</div>
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,121 @@
+@model Entidades.EgresoCaja
+@using System.Data
+@using System.Globalization
+
+@{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool usuarioAdmin = ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin;
+    bool esEdicion = ViewBag.EsEdicion != null && (bool)ViewBag.EsEdicion;
+    var usuario = ViewBag.UsuarioActual as Entidades.Usuario;
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    var tipos = ViewBag.TiposEgresoCaja as DataTable;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    int idSucursal = Model != null && Model.Sucursal != null && Model.Sucursal.idSucursal > 0 ? Model.Sucursal.idSucursal : (ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0);
+    bool mostrarSucursales = !desdePos && idCierreActividad == 0;
+    string monto = Model != null && Model.Monto > 0 ? Model.Monto.ToString("0.##", CultureInfo.InvariantCulture) : "";
+}
+
+<div class="egreso-form-wrap">
+    <form id="formEgresoCaja" data-desde-pos="@desdePos.ToString().ToLower()" data-id-cierre="@idCierreActividad">
+        <input type="hidden" name="id" value="@(Model != null ? Model.Id : 0)" />
+        <input type="hidden" name="desdePos" value="@desdePos.ToString().ToLower()" />
+        <input type="hidden" name="idCierre" value="@idCierreActividad" />
+
+        <div id="egresoCajaError" class="alert alert-danger d-none"></div>
+
+        <div class="egreso-form-head">
+            <div>
+                <span class="text-muted d-block">@(esEdicion ? "Modificación" : "Vendedor")</span>
+                <strong>@(usuario != null ? usuario.Nombre : "-")</strong>
+            </div>
+            @if (desdePos)
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVolverMisEgresos">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            }
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-12 col-md-6">
+                <label>Fecha</label>
+                <input type="datetime-local"
+                       class="form-control"
+                       name="fecha"
+                       value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm")" />
+            </div>
+
+            <div class="form-group col-12 col-md-6" style="@(mostrarSucursales ? "" : "display:none;")">
+                <label>Sucursal</label>
+                <select class="form-control" name="idSucursal">
+                    @if (sucursales != null)
+                    {
+                        foreach (var s in sucursales)
+                        {
+                            <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            @if (!mostrarSucursales)
+            {
+                <input type="hidden" name="idSucursal" value="@idSucursal" />
+            }
+        </div>
+
+        <div class="form-group">
+            <label>Tipo</label>
+            <select class="form-control" name="idTipoEgresoCaja" id="idTipoEgresoCaja">
+                <option value="0">Seleccione un tipo</option>
+                @if (tipos != null)
+                {
+                    foreach (DataRow row in tipos.Rows)
+                    {
+                        int idTipo = Convert.ToInt32(row["id"]);
+                        if (idTipo == 0) { continue; }
+                        <option value="@idTipo" @(Model != null && idTipo == Model.IdTipoEgresoCaja ? "selected" : "")>@row["tipoEgresoCaja"]</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Descripcion</label>
+            <input type="text" class="form-control" name="descripcion" maxlength="100" autocomplete="off" value="@(Model != null ? Model.Descripcion : "")" />
+        </div>
+
+        <div class="form-group">
+            <label>Monto</label>
+            <input type="text" class="form-control solo-decimal egreso-monto" name="monto" inputmode="decimal" autocomplete="off" value="@monto" />
+        </div>
+
+        <div class="form-group">
+            <label>Detalle</label>
+            <textarea class="form-control" name="detalle" rows="3">@(Model != null ? Model.Detalle : "")</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-block">
+            <i class="fas fa-save mr-1"></i> @(esEdicion ? "Guardar modificación" : "Guardar egreso")
+        </button>
+    </form>
+</div>
+
+<script>
+    (function () {
+        if (window.EgresosCaja && typeof window.EgresosCaja.bindForm === "function") {
+            window.EgresosCaja.bindForm("#formEgresoCaja");
+        }
+
+        setTimeout(function () {
+            var selector = @Html.Raw(desdePos ? "\"#idTipoEgresoCaja\"" : "\"#formEgresoCaja [name='fecha']\"");
+            var el = document.querySelector(selector);
+            if (el) {
+                el.focus();
+                if (typeof el.select === "function") {
+                    el.select();
+                }
+            }
+        }, 100);
+    })();
+</script>

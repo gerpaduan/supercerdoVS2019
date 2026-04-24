@@ -255,6 +255,7 @@ function finalizarVenta(data) {
         esPagoMixto: data.esPagoMixto,
         efectivo: data.efectivo,
         idPersona: data.idPersona,
+        idSucursalPOS: parseInt($('#idSucursalPOS').val(), 10) || 0,
         Observaciones: window.POSState?.getObservaciones?.() || '',
         lineasVenta: lineasPayload
     };

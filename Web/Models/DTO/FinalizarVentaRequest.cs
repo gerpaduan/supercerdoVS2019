@@ -11,6 +11,7 @@ namespace Web.Models.DTO
         public bool EsPagoMixto { get; set; }
         public float Efectivo { get; set; }
         public int IdPersona { get; set; }
+        public int IdSucursalPOS { get; set; }
         public string Observaciones { get; set; }
         public List<LineaVentaDto> LineasVenta { get; set; }
     }

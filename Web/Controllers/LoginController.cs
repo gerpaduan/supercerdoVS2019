@@ -107,8 +107,13 @@ namespace Web.Controllers
                 oUsuarioN = new Negocio.Usuario(empresa);
                 oSucursalN = new Negocio.Sucursal(empresa);
 
-                usuario.IdSucursal = idSucursal;
-                usuario.SucursalNombre = oSucursalN.findById(idSucursal).SucursalNombre;
+                var sucursal = oSucursalN.findById(idSucursal);
+                if (sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida" });
+
+                usuario.IdSucursal = sucursal.IdSucursal;
+                usuario.Sucursal = sucursal;
+                usuario.SucursalNombre = sucursal.SucursalNombre;
 
                 oUsuarioN.setSucursalUsuario(usuario);
                 Session["Usuario"] = usuario;

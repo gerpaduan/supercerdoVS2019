@@ -1,0 +1,91 @@
+@model System.Data.DataTable
+
+@{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    string mensaje = ViewBag.Mensaje as string;
+    decimal total = ViewBag.TotalVisible != null ? (decimal)ViewBag.TotalVisible : 0;
+    string filtroActividad = ViewBag.FiltroActividad as string ?? "todos";
+    bool permitirNuevo = ViewBag.PermitirNuevo == null || (bool)ViewBag.PermitirNuevo;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    string tituloActividades = ViewBag.TituloActividades as string ?? "Mis actividades";
+    string subtituloActividades = ViewBag.SubtituloActividades as string;
+}
+
+<div class="egresos-pos">
+    @if (!string.IsNullOrWhiteSpace(mensaje))
+    {
+        <div class="alert alert-warning m-3">@mensaje</div>
+    }
+    else
+    {
+        <div class="egresos-pos-toolbar">
+            <div class="mr-3">
+                <h5 class="mb-0">@tituloActividades</h5>
+                @if (!string.IsNullOrWhiteSpace(subtituloActividades))
+                {
+                    <small class="text-muted d-block mt-1">@subtituloActividades</small>
+                }
+            </div>
+            <div class="d-flex flex-wrap align-items-center ml-auto">
+                <div class="egresos-actividad-filtros mr-3 mb-2 mb-md-0" role="group" aria-label="Filtro de actividades">
+                    <button type="button" class="btn btn-sm @(filtroActividad == "todos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="todos">Todos</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "gastos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="gastos">Egresos de caja</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "pagoElectronico" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="pagoElectronico">Pagos electronicos</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "ctaCte" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="ctaCte">Cta Cte</button>
+                </div>
+                <div class="custom-control custom-switch mr-3 mb-2 mb-md-0">
+                    <input type="checkbox" class="custom-control-input" id="switchVistaCompletaEgresos">
+                    <label class="custom-control-label" for="switchVistaCompletaEgresos">Vista completa</label>
+                </div>
+                @if (permitirNuevo)
+                {
+                    <button type="button" class="btn btn-success" id="btnNuevoEgresoDesdeMis">
+                        <i class="fas fa-plus mr-1"></i> Nuevo Egreso
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="px-3 pb-3">
+            <div class="egresos-resumen">
+                <div>
+                    <span class="text-muted">El total corresponde solo a egresos de caja</span>
+                    <strong>$ @total.ToString("N2")</strong>
+                </div>
+            </div>
+            <div id="misActividadesContenido">
+                @Html.Partial("~/Views/Cajas/_EgresosCajaTabla.cshtml", Model)
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    (function () {
+        $(document)
+            .off("click.misEgresos", "#btnNuevoEgresoDesdeMis")
+            .on("click.misEgresos", "#btnNuevoEgresoDesdeMis", function () {
+                if (window.POSEgresos && typeof window.POSEgresos.abrirNuevo === "function") {
+                    window.POSEgresos.abrirNuevo();
+                    return;
+                }
+
+                if (window.EgresosCaja && typeof window.EgresosCaja.abrirNuevo === "function") {
+                    window.EgresosCaja.abrirNuevo();
+                }
+            })
+            .off("click.misActividadesFiltro", "[data-filtro-actividad]")
+            .on("click.misActividadesFiltro", "[data-filtro-actividad]", function () {
+                var filtro = $(this).data("filtro-actividad") || "todos";
+                if (window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
+                    window.POSEgresos.abrirMis(filtro);
+                    return;
+                }
+
+                if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
+                    window.CajasAbiertas.idCierreActividadActual = @idCierreActividad;
+                    window.CajasAbiertas.abrirActividades(@idCierreActividad, filtro);
+                }
+            });
+    })();
+</script>

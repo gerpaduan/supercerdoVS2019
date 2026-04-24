@@ -1,0 +1,156 @@
+@model System.Data.DataTable
+@using System.Data
+
+@{
+    ViewBag.Title = "Egresos de Caja";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    var usuarios = ViewBag.Usuarios as DataTable;
+    var tipos = ViewBag.TiposEgresoCaja as DataTable;
+    int idSucursal = ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0;
+    int idUsuario = ViewBag.IdUsuario != null ? (int)ViewBag.IdUsuario : -1;
+    int idTipo = ViewBag.IdTipoEgresoCaja != null ? (int)ViewBag.IdTipoEgresoCaja : 0;
+    string descripcion = ViewBag.Descripcion ?? "";
+    DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today;
+    DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today.AddDays(1).AddSeconds(-1);
+    bool soloGastos = ViewBag.SoloGastos != null && (bool)ViewBag.SoloGastos;
+    bool sinPermiso = ViewBag.SinPermiso != null && (bool)ViewBag.SinPermiso;
+    string mensajePermiso = ViewBag.MensajePermiso as string ?? "No tiene permisos para acceder a esta pantalla.";
+}
+
+<div class="egresos-page">
+    @if (sinPermiso)
+    {
+        <div class="alert alert-warning">
+            @mensajePermiso
+        </div>
+    }
+    else
+    {
+        <div class="egresos-actions">
+            <button type="button" class="btn btn-success" id="btnNuevoEgresoCaja">
+                <i class="fas fa-plus mr-1"></i> Nuevo Egreso
+            </button>
+        </div>
+
+        <form id="formFiltrosEgresos" class="egresos-filtros">
+            <div class="form-row">
+                <div class="form-group col-12 col-md-3">
+                    <label>Sucursal</label>
+                    <select name="idSucursal" id="filtroSucursalEgreso" class="form-control">
+                        <option value="0" @(idSucursal == 0 ? "selected" : "")>Todas</option>
+                        @if (sucursales != null)
+                        {
+                            foreach (var s in sucursales)
+                            {
+                                <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-12 col-md-3">
+                    <label>Usuario</label>
+                    <select name="idUsuario" id="filtroUsuarioEgreso" class="form-control">
+                        @if (usuarios != null)
+                        {
+                            foreach (DataRow row in usuarios.Rows)
+                            {
+                                int id = Convert.ToInt32(row["id"]);
+                                <option value="@id" @(id == idUsuario ? "selected" : "")>@row["nombre"]</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-12 col-md-3">
+                    <label>Tipo</label>
+                    <select name="idTipoEgresoCaja" id="filtroTipoEgreso" class="form-control">
+                        <option value="0">Todos</option>
+                        @if (tipos != null)
+                        {
+                            foreach (DataRow row in tipos.Rows)
+                            {
+                                int id = Convert.ToInt32(row["id"]);
+                                if (id == 0) { continue; }
+                                <option value="@id" @(id == idTipo ? "selected" : "")>@row["tipoEgresoCaja"]</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-12 col-md-3">
+                    <label>Descripcion</label>
+                    <input type="text" name="descripcion" id="filtroDescripcionEgreso" value="@descripcion" class="form-control" autocomplete="off" />
+                </div>
+
+                <div class="form-group col-6 col-md-3">
+                    <label>Desde</label>
+                    <input type="date" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                </div>
+
+                <div class="form-group col-6 col-md-3">
+                    <label>Hasta</label>
+                    <input type="date" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                </div>
+
+                <div class="form-group col-12 col-md-3 d-flex align-items-end">
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input" id="soloGastos" name="soloGastos" value="true" @(soloGastos ? "checked" : "")>
+                        <label class="custom-control-label" for="soloGastos">Solo gastos</label>
+                    </div>
+                </div>
+
+                <div class="form-group col-12 col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search mr-1"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="d-flex justify-content-end align-items-center mb-2">
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchVistaCompletaEgresos">
+                <label class="custom-control-label" for="switchVistaCompletaEgresos">Vista completa</label>
+            </div>
+        </div>
+
+        <div id="tablaEgresosCaja">
+            @Html.Partial("~/Views/Cajas/_EgresosCajaTabla.cshtml", Model)
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="modalEgresoCaja" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalEgresoCajaTitulo">Nuevo Egreso de Caja</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenedorEgresoCaja">
+                <div class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.EgresosCajaUrls = {
+            listar: '@Url.Action("EgresosCaja", "Cajas")',
+            nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
+            guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+        };
+
+        window.EgresosCajaPermisos = {
+            sinPermiso: @Html.Raw((sinPermiso ? "true" : "false")),
+            mensaje: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(mensajePermiso))
+        };
+    </script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=1")"></script>
+}

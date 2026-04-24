@@ -144,7 +144,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\EgresosCajaPolicy.cs" />
     <Compile Include="Helpers\PermisosHelper.cs" />
+    <Compile Include="Helpers\PermisosPantallasWeb.cs" />
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
@@ -1851,6 +1853,7 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\app\factura-electronica.js" />
+    <Content Include="Scripts\app\egresos-caja.js" />
     <Content Include="Scripts\app\modal-cheque.js" />
     <Content Include="Scripts\app\forma-pago.js" />
     <Content Include="Scripts\app\modal-postventa.js" />
@@ -2044,6 +2047,10 @@
     <Content Include="Views\Shared\AccesoDenegado.cshtml" />
     <Content Include="Views\Productos\AddOrEdit.cshtml" />
     <Content Include="Views\Cajas\CajasAbiertas.cshtml" />
+    <Content Include="Views\Cajas\EgresosCaja.cshtml" />
+    <Content Include="Views\Cajas\_AddOrEditEgresoCaja.cshtml" />
+    <Content Include="Views\Cajas\_EgresosCajaTabla.cshtml" />
+    <Content Include="Views\Cajas\_MisEgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_TablaCajasAbiertas.cshtml" />
     <Content Include="Views\Ventas\DetalleVenta.cshtml" />
     <Content Include="Views\Finanzas\CtasCtes.cshtml" />

@@ -6,6 +6,9 @@
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
     bool showAbrirCajaModal = ViewBag.ShowAbrirCajaModal != null && (bool)ViewBag.ShowAbrirCajaModal;
+    int idConsumidorFinal = Model != null ? Model.IdPersona : 0;
+    int idSucursalPOS = ViewBag.IdSucursalPOS != null ? (int)ViewBag.IdSucursalPOS : 0;
+    int idUsuarioPOS = Session["Usuario"] != null ? ((Entidades.Usuario)Session["Usuario"]).Id : 0;
 }
 
 @if (cajaAbierta && Model != null)
@@ -31,6 +34,7 @@
                     <div class="pos-fecha">
                         <span id="fechaHoraPOS" class="font-weight-bold"></span>
                         <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
+                        <input type="hidden" id="idSucursalPOS" value="@idSucursalPOS" />
                     </div>
                 </div>
 
@@ -556,7 +560,14 @@ else
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=1")"></script>
     <script>
+    window.EgresosCajaUrls = {
+        listar: '@Url.Action("EgresosCaja", "Cajas")',
+        mis: '@Url.Action("MisEgresosCaja", "Cajas", new { desdePos = true })',
+        nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas", new { desdePos = true })',
+        guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+    };
 
 
     $(function () {
@@ -731,7 +742,11 @@ else
     window.POSVentaFinalizada = false;
 
     window.POSDraft = window.POSDraft || (function () {
-        const key = "carnisys-pos-venta-en-curso";
+        const keyBase = "carnisys-pos-venta-en-curso";
+        const idSucursalActual = parseInt($("#idSucursalPOS").val(), 10) || 0;
+        const idUsuarioActual = @idUsuarioPOS;
+        const key = keyBase + "-" + idUsuarioActual + "-" + idSucursalActual;
+        const legacyKey = keyBase;
 
         function getLineasActivas() {
             return POSState.getLineas().filter(function (linea) {
@@ -748,6 +763,7 @@ else
         function save() {
             if (window.POSFinalizandoVenta || window.POSVentaFinalizada) {
                 localStorage.removeItem(key);
+                localStorage.removeItem(legacyKey);
                 return;
             }
 
@@ -756,36 +772,83 @@ else
             if (!lineas.some(function (linea) { return !!linea; })) {
                 if (window.POSCancelacionEnCurso) return;
                 localStorage.removeItem(key);
+                localStorage.removeItem(legacyKey);
                 return;
             }
 
             localStorage.setItem(key, JSON.stringify({
                 lineas: lineas,
+                idUsuarioPOS: idUsuarioActual,
+                idSucursalPOS: idSucursalActual,
                 idPersona: $("#idPersona").val(),
                 razonSocial: $("#razonSocial").val(),
                 observaciones: POSState.getObservaciones(),
                 fechaVenta: $("#fechaVenta").val()
             }));
+
+            localStorage.removeItem(legacyKey);
         }
 
-        function restore() {
-            let draft = null;
-
+        function tryParseDraft(storageKey) {
             try {
-                draft = JSON.parse(localStorage.getItem(key) || "null");
+                return JSON.parse(localStorage.getItem(storageKey) || "null");
             } catch (e) {
-                localStorage.removeItem(key);
-                return false;
+                localStorage.removeItem(storageKey);
+                return null;
             }
+        }
 
+        function esDraftCompatible(draft) {
             if (!draft || !Array.isArray(draft.lineas)) return false;
 
             const lineasCargadas = draft.lineas.filter(function (linea) {
                 return !!linea;
             });
 
-            if (!lineasCargadas.length) {
-                localStorage.removeItem(key);
+            if (!lineasCargadas.length) return false;
+
+            const draftSucursal = parseInt(draft.idSucursalPOS, 10);
+            if (Number.isFinite(draftSucursal) && draftSucursal > 0 && draftSucursal !== idSucursalActual) {
+                return false;
+            }
+
+            const draftUsuario = parseInt(draft.idUsuarioPOS, 10);
+            if (Number.isFinite(draftUsuario) && draftUsuario > 0 && draftUsuario !== idUsuarioActual) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function restore() {
+            let draft = tryParseDraft(key);
+
+            if (!esDraftCompatible(draft)) {
+                if (draft != null) {
+                    localStorage.removeItem(key);
+                }
+                draft = null;
+            }
+
+            if (draft == null) {
+                const legacyDraft = tryParseDraft(legacyKey);
+                if (esDraftCompatible(legacyDraft)) {
+                    draft = legacyDraft;
+                    localStorage.setItem(key, JSON.stringify({
+                        lineas: legacyDraft.lineas,
+                        idUsuarioPOS: idUsuarioActual,
+                        idSucursalPOS: idSucursalActual,
+                        idPersona: legacyDraft.idPersona,
+                        razonSocial: legacyDraft.razonSocial,
+                        observaciones: legacyDraft.observaciones,
+                        fechaVenta: legacyDraft.fechaVenta
+                    }));
+                }
+
+                localStorage.removeItem(legacyKey);
+            }
+
+            if (!draft) {
                 return false;
             }
 
@@ -801,6 +864,7 @@ else
 
         function clear() {
             localStorage.removeItem(key);
+            localStorage.removeItem(legacyKey);
         }
 
         return {
@@ -901,7 +965,7 @@ else
     });
 
     $('#btnConsumidorFinal').on('click', function () {
-        $('#idPersona').val(@Model.IdPersona);
+        $('#idPersona').val(@idConsumidorFinal);
         $('#razonSocial').val('Consumidor Final');
     });
 
@@ -1044,7 +1108,7 @@ else
         const ahora = new Date();
         POSState.setFechaVenta(ahora);
         $("#fechaVenta").val(ahora.toISOString().slice(0, 19));
-        $("#idPersona").val('@Model.IdPersona');
+        $("#idPersona").val('@idConsumidorFinal');
         $("#razonSocial").val('Consumidor Final');
         $("#inputCodigo").val("");
         $("#inputCantidad").val("").prop("disabled", true);
@@ -1504,6 +1568,7 @@ else
                     return;
                 }
 
+                $("#modalFinanzasPOS").removeClass("modal-egreso-pos-compacto");
                 $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                 $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
 
@@ -1608,6 +1673,71 @@ else
             }
         };
 
+        window.POSEgresos = {
+            cargarEnModal: function (url, titulo, compacto) {
+                if (window.EgresosCaja &&
+                    typeof window.EgresosCaja.formDirty === "function" &&
+                    window.EgresosCaja.formDirty()) {
+                    window.EgresosCaja.confirmarSalidaCambios(function () {
+                        window.EgresosCaja.permitirSalida();
+                        window.POSEgresos.cargarEnModal(url, titulo, compacto);
+                    });
+                    return;
+                }
+
+                if (window.POSGuard && !window.POSGuard.startAction("egresos:cargar")) {
+                    return;
+                }
+
+                $("#modalFinanzasPOS").toggleClass("modal-egreso-pos-compacto", compacto === true);
+                $("#modalFinanzasPOSTitle").text(titulo || "Egresos de Caja");
+                $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+
+                const abierto = window.POSGuard
+                    ? window.POSGuard.requestModalOpen('finanzas', function () {
+                        $("#modalFinanzasPOS").modal("show");
+                    })
+                    : true;
+
+                if (!abierto) {
+                    window.POSGuard?.endAction("egresos:cargar");
+                    return;
+                }
+
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    cache: false,
+                    success: function (html) {
+                        if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                            window.EgresosCaja.renderConScripts(html, "#contenedorFinanzasPOS");
+                        } else {
+                            $("#contenedorFinanzasPOS").html(html);
+                        }
+                    },
+                    error: function () {
+                        mostrarErrorFinanzas("No se pudo cargar egresos de caja.");
+                    },
+                    complete: function () {
+                        window.POSGuard?.endAction("egresos:cargar");
+                    }
+                });
+            },
+
+            abrirMis: function (filtroActividad) {
+                var url = window.EgresosCajaUrls.mis;
+                if (filtroActividad) {
+                    url += (url.indexOf("?") >= 0 ? "&" : "?") + "filtroActividad=" + encodeURIComponent(filtroActividad);
+                }
+
+                this.cargarEnModal(url, "Mis actividades", false);
+            },
+
+            abrirNuevo: function () {
+                this.cargarEnModal(window.EgresosCajaUrls.nuevo, "Nuevo Egreso de Caja", true);
+            }
+        };
+
         window.POSFinanzasState = window.POSFinanzasState || {
             redirectDespuesDePago: null,
             tituloDespuesDePago: "Cuenta corriente"
@@ -1616,6 +1746,14 @@ else
         window.posHotkeysHooks = window.posHotkeysHooks || {};
         window.posHotkeysHooks.F2 = function () {
             window.POSFinanzas.abrirCtasCtes();
+        };
+
+        window.posHotkeysHooks.F6 = function () {
+            window.POSEgresos.abrirMis();
+        };
+
+        window.posHotkeysHooks.F7 = function () {
+            window.POSEgresos.abrirNuevo();
         };
 
         $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {
