@@ -7,7 +7,6 @@ namespace Web.Models.DTO
 {
     public class LineaVentaDto
     {
-
         public int IdLineaVenta { get; set; }
         public int IdCorte { get; set; }
         public long Codigo { get; set; }

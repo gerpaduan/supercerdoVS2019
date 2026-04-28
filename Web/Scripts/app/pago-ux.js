@@ -69,6 +69,29 @@
         function resolverRedirectNoPos(resp) {
             const redirectUrl = (resp && resp.redirectUrl) || $("#urlVolverPago").val() || window.location.href;
 
+            if ($("#modalEgresoCaja").hasClass("show") &&
+                $("#contenedorActividadesCaja").length &&
+                redirectUrl &&
+                window.EgresosCaja &&
+                typeof window.EgresosCaja.renderConScripts === "function") {
+                mostrarMensaje({
+                    icon: "success",
+                    title: "Pago guardado correctamente"
+                }).then(function () {
+                    $.ajax({
+                        url: redirectUrl,
+                        type: "GET",
+                        cache: false
+                    }).done(function (html) {
+                        $("#modalEgresoCaja").modal("hide");
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                    }).fail(function () {
+                        window.location.href = redirectUrl;
+                    });
+                });
+                return;
+            }
+
             mostrarMensaje({
                 icon: "success",
                 title: "Pago guardado correctamente"

@@ -31,7 +31,9 @@
         int id = Convert.ToInt32(row["ID"]);
 
         if (!ultimoIdPorClave.ContainsKey(clave) || id > ultimoIdPorClave[clave])
+        {
             ultimoIdPorClave[clave] = id;
+        }
 
         cantidadPorClave[clave] = cantidadPorClave.ContainsKey(clave)
             ? cantidadPorClave[clave] + 1
@@ -257,6 +259,22 @@
 
     function verMovimientoCtaCte(tabla, idTabla) {
         const tablaNorm = String(tabla || "").toLowerCase();
+        const returnUrlEncoded = encodeURIComponent(returnUrl);
+
+        if (tablaNorm === "ventas") {
+            let urlDetalleVenta = '@Url.Action("DetalleVenta", "Ventas")'
+                + '?id=' + encodeURIComponent(idTabla)
+                + '&returnUrl=' + returnUrlEncoded;
+
+            if (desdePos && window.POSFinanzas) {
+                urlDetalleVenta += '&modal=true&desdePos=true';
+                window.POSFinanzas.cargar(urlDetalleVenta, "Detalle de venta");
+                return;
+            }
+
+            window.location.href = urlDetalleVenta;
+            return;
+        }
 
         let url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
                     + '&returnUrl=' + returnUrl

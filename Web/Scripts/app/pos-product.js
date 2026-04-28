@@ -12,6 +12,7 @@
         let ultimoCodigoPedido = null;
         let reqProducto = null;
         let enterDesdeTecladoVirtual = false;
+        const soloFormaPago = options.soloFormaPago === true;
 
         // Normaliza el codigo para que todas las comparaciones hablen el mismo
         // idioma: mayusculas, sin espacios sobrantes y con la X consistente.
@@ -50,6 +51,7 @@
 
         // Devuelve el foco al input principal del POS.
         function focusCodigo(selectText) {
+            if (soloFormaPago) return;
             const $input = $('#inputCodigo');
             $input.focus();
 
@@ -60,6 +62,7 @@
 
         // Lleva el foco a cantidad cuando ya confirmamos un producto valido.
         function focusCantidad() {
+            if (soloFormaPago) return;
             $('#inputCantidad').focus().select();
         }
 
@@ -137,6 +140,7 @@
         // original: abortar requests viejos, ignorar respuestas atrasadas y
         // permitir callbacks para los casos de auto-agregado.
         function finishTyping(codigo, callback, ingresoCantidadXParam) {
+            if (soloFormaPago) return;
             const codigoTrim = normalizeInput(codigo);
 
             if (!codigoTrim) {
@@ -218,6 +222,7 @@
         // Interpreta formatos rapidos como "2X123" o un EAN directo.
         // Si consigue resolverlos y dispara auto-agregado, devuelve true.
         function processCodeWithQuantity() {
+            if (soloFormaPago) return false;
             const input = document.getElementById('inputCodigo');
             if (!input) return false;
 
@@ -257,6 +262,7 @@
         // Si el foco esta en cantidad, agrega.
         // Si el foco esta en codigo, busca o intenta auto-agregado.
         function handleEnter() {
+            if (soloFormaPago) return;
             const inputActivo = options.getInputActivo();
             if (!inputActivo) return;
 
@@ -299,6 +305,7 @@
         // Abre el modal global de productos y, cuando el usuario elige uno,
         // reusa el mismo flujo de busqueda que usa el input de codigo.
         function openSearchModal() {
+            if (soloFormaPago) return;
             if (typeof window.abrirBuscarProductoModal !== 'function') {
                 showMessage('error', 'Buscador de productos', 'No se pudo abrir el buscador de productos. Verifica que el script global del modal esté cargado.');
                 return;
@@ -348,6 +355,7 @@
         // Escucha lo que se escribe en codigo y dispara una busqueda con debounce.
         // El Enter no se procesa aca para no duplicar logica.
         function bindLiveSearch() {
+            if (soloFormaPago) return;
             $('#inputCodigo').on('keyup', function (e) {
                 const codigo = String(this.value ?? '').trim().toUpperCase();
 
@@ -387,6 +395,7 @@
         }
 
         function bindDomEvents() {
+            if (soloFormaPago) return;
             $('#btnAgregarManual').off('click').on('click', function (e) {
                 e.preventDefault();
                 openSearchModal();

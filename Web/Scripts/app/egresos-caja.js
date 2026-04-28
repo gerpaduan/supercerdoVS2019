@@ -217,6 +217,35 @@
         abrirFormulario(id);
     }
 
+    function abrirPago(url, titulo) {
+        if (!url) return;
+
+        if (estaEnPos() && window.POSFinanzas && typeof window.POSFinanzas.cargarPago === "function") {
+            window.POSFinanzas.cargarPago(url, titulo || "Pago / Cobro");
+            return;
+        }
+
+        if ($("#modalEgresoCaja").length) {
+            setTituloModal(titulo || "Pago / Cobro");
+            $("#contenedorEgresoCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalEgresoCaja").modal("show");
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                cache: false
+            }).done(function (html) {
+                renderConScripts(html, "#contenedorEgresoCaja");
+            }).fail(function (xhr) {
+                var mensaje = (xhr && (xhr.statusText || xhr.responseText)) || "No se pudo cargar el pago.";
+                $("#contenedorEgresoCaja").html('<div class="alert alert-danger m-3">' + $("<div>").text(mensaje).html() + '</div>');
+            });
+            return;
+        }
+
+        window.location.href = url;
+    }
+
     function bindForm(selector) {
         $(document)
             .off("submit.egresoCaja", selector)
@@ -296,6 +325,14 @@
             })
             .off("click.egresosModificar", ".btn-modificar-egreso")
             .on("click.egresosModificar", ".btn-modificar-egreso", function () {
+                var tipoModificacion = ($(this).data("tipo-modificacion") || "").toString().toLowerCase();
+                var url = $(this).data("url");
+
+                if (tipoModificacion === "pago" && url) {
+                    abrirPago(url, "Modificar Pago / Cobro");
+                    return;
+                }
+
                 abrirModificar($(this).data("id"));
             })
             .off("change.egresosVistaCompleta", "#switchVistaCompletaEgresos")

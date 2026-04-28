@@ -5,6 +5,101 @@ let totalVentaActual = 0;
 let otroTipoPagoSeleccionado = null;
 let ventaEnProceso = false;
 
+function formatearImporteFormaPago(valor) {
+    const numero = Number(valor || 0);
+    return numero.toLocaleString('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function normalizarNombreFormaPago(tipo) {
+    const mapa = {
+        Debito: 'Débito',
+        Credito: 'Crédito',
+        CtaCte: 'Cta. Cte.',
+        QR: 'QR',
+        Qr: 'QR',
+        Transferencia: 'Transferencia',
+        Efectivo: 'Efectivo'
+    };
+
+    return mapa[tipo] || tipo || '';
+}
+
+function actualizarLeyendaFormaPagoActual() {
+    const $info = $('#formaPagoActualInfo');
+    if (!$info.length) return;
+
+    const data = window.POSFormaPagoActual || {};
+    const formaPago = String(data.formaPago || '').trim();
+    const efectivo = Number(data.pagoMixtoEfectivo || 0);
+    const total = Number(data.total || obtenerTotalVenta() || 0);
+
+    if (!formaPago) {
+        $info.hide().html('');
+        return;
+    }
+
+    let texto = '<strong>Forma de pago actual:</strong> ' + normalizarNombreFormaPago(formaPago);
+
+    if (efectivo > 0) {
+        const otroMonto = total - efectivo;
+        texto = '<strong>Forma de pago actual:</strong> Mixto - Efectivo $' + formatearImporteFormaPago(efectivo) +
+            ' + ' + normalizarNombreFormaPago(formaPago) + ' $' + formatearImporteFormaPago(otroMonto > 0 ? otroMonto : 0);
+    }
+
+    $info.html(texto).show();
+}
+
+function limpiarSeleccionFormaPago() {
+    $('.btn-forma-pago').removeClass('active');
+}
+
+function marcarFormaPagoSeleccionada(tipo) {
+    limpiarSeleccionFormaPago();
+    if (!tipo) return;
+    $(`.btn-forma-pago[data-tipo="${tipo}"]`).addClass('active');
+}
+
+window.preCargarFormaPagoActual = function () {
+    const data = window.POSFormaPagoActual || {};
+    const total = Number(data.total || obtenerTotalVenta() || 0);
+    const formaPago = String(data.formaPago || '').trim();
+    const efectivo = Number(data.pagoMixtoEfectivo || 0);
+    const esMixto = efectivo > 0;
+    const otroMonto = total - efectivo;
+
+    totalVentaActual = total;
+    $('#totalVenta').val(total.toFixed(2));
+    limpiarSeleccionFormaPago();
+    $('#bloquePagoMixto').hide();
+    $('#chkPagoMixto').prop('checked', false);
+    $('#montoEfectivo').val('');
+    $('#montoOtroPago').val('');
+    $('#labelOtroPago').text('Otro Medio');
+    otroTipoPagoSeleccionado = null;
+    $('.btn-forma-pago').prop('disabled', false);
+    $('.btn-forma-pago[data-tipo="Efectivo"]').prop('disabled', false);
+    $('.btn-forma-pago[data-tipo="CtaCte"]').prop('disabled', false);
+    actualizarLeyendaFormaPagoActual();
+
+    if (!formaPago) return;
+
+    marcarFormaPagoSeleccionada(formaPago);
+
+    if (esMixto) {
+        $('#chkPagoMixto').prop('checked', true);
+        $('#bloquePagoMixto').show();
+        $('#montoEfectivo').val(efectivo.toFixed(2));
+        $('#montoOtroPago').val((otroMonto > 0 ? otroMonto : 0).toFixed(2));
+        $('#labelOtroPago').text(formaPago);
+        otroTipoPagoSeleccionado = formaPago;
+        $('.btn-forma-pago[data-tipo="Efectivo"]').prop('disabled', true);
+        $('.btn-forma-pago[data-tipo="CtaCte"]').prop('disabled', true);
+    }
+};
+
 function setEstadoVentaEnProceso(activa) {
     ventaEnProceso = !!activa;
 
@@ -38,6 +133,7 @@ $('#modalFormaPago').on('shown.bs.modal', function () {
     $('#totalVenta').val(totalVentaActual.toFixed(2));
 
     resetPagoMixto();
+    window.preCargarFormaPagoActual?.();
 });
 
 if (window.POSGuard) {
@@ -108,6 +204,7 @@ $('.btn-forma-pago').on('click', function () {
     // ---------------------------
     otroTipoPagoSeleccionado = tipo;
     $('#labelOtroPago').text(tipo);
+    marcarFormaPagoSeleccionada(tipo);
 });
 
 // ===============================
@@ -145,8 +242,19 @@ $('#btnFinalizarPagoMixto').on('click', function () {
         return;
     }
 
-    const efectivo = parseFloat($('#montoEfectivo').val()) || 0;
-    const otro = parseFloat($('#montoOtroPago').val()) || 0;
+    const valorEfectivo = ($('#montoEfectivo').val() || '').trim();
+    const valorOtro = ($('#montoOtroPago').val() || '').trim();
+    const efectivo = parseFloat(valorEfectivo) || 0;
+    const otro = parseFloat(valorOtro) || 0;
+
+    if (!valorEfectivo || !valorOtro || efectivo <= 0 || otro <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Pago mixto incompleto',
+            text: 'Debe ingresar ambos importes y los dos deben ser mayores a cero.'
+        });
+        return;
+    }
 
     if ((efectivo + otro).toFixed(2) !== totalVentaActual.toFixed(2)) {
         Swal.fire({
@@ -228,9 +336,11 @@ function finalizarVenta(data) {
     }));
 
     const lineaInvalida = lineasPayload.find(l =>
-        !l.Codigo ||
-        !Number.isFinite(l.CantKg) || l.CantKg <= 0 ||
-        !Number.isFinite(l.PrecioKg) || l.PrecioKg <= 0
+        l.Estado !== 1 && (
+            !l.Codigo ||
+            !Number.isFinite(l.CantKg) || l.CantKg < 0.010 ||
+            !Number.isFinite(l.PrecioKg) || l.PrecioKg <= 0
+        )
     );
 
     if (lineaInvalida) {
@@ -251,17 +361,20 @@ function finalizarVenta(data) {
     }
 
     const payload = {
+        idVenta: parseInt($('#idVentaEditar').val(), 10) || 0,
+        fechaVenta: ($('#fechaVenta').val() || null),
         formaPago: data.formaPago,
         esPagoMixto: data.esPagoMixto,
         efectivo: data.efectivo,
         idPersona: data.idPersona,
         idSucursalPOS: parseInt($('#idSucursalPOS').val(), 10) || 0,
+        soloFormaPago: !!window.POSModo?.soloFormaPago,
         Observaciones: window.POSState?.getObservaciones?.() || '',
         lineasVenta: lineasPayload
     };
 
     $.ajax({
-        url: api.venta.finalizar,
+        url: payload.idVenta > 0 ? api.venta.modificar : api.venta.finalizar,
         type: 'POST',
         contentType: 'application/json',
         dataType: 'json', // 🔥 CLAVE
@@ -309,6 +422,35 @@ function finalizarVenta(data) {
                 return;
             }
 
+            if (payload.idVenta > 0) {
+                if (window.POSModo?.soloFormaPago) {
+                    window.POSSoloFormaPagoGuardado = true;
+                }
+                const $fpEdicion = $('#modalFormaPago');
+                $fpEdicion.find(':focus').trigger('blur');
+                if (document.activeElement) document.activeElement.blur();
+                $fpEdicion.modal('hide');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Venta actualizada',
+                    text: 'Los cambios se guardaron correctamente.'
+                }).then(function () {
+                    const returnUrl = window.POSModo?.returnUrl || $('#returnUrlPOS').val() || '';
+                    if (returnUrl) {
+                        window.location.href = returnUrl;
+                        return;
+                    }
+
+                    window.location.href = api.venta.detalle + '?id=' + encodeURIComponent(ventaId);
+                });
+
+                hayVentaEnCurso = false;
+                window.POSGuard?.endAction('venta:finalizar');
+                setEstadoVentaEnProceso(false);
+                return;
+            }
+
             const $fp = $('#modalFormaPago');
 
             // 1) Sacar el foco de adentro ANTES de ocultar (evita el warning)
@@ -352,6 +494,7 @@ function finalizarVenta(data) {
 function resetPagoMixto() {
 
     otroTipoPagoSeleccionado = null;
+    limpiarSeleccionFormaPago();
 
     $('#chkPagoMixto').prop('checked', false);
     $('#montoEfectivo').val('');

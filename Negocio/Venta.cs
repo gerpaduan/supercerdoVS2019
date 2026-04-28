@@ -202,9 +202,16 @@ namespace Negocio
                     ///Si se llema a eliminar lineas - Desde FormUltimaVenta no se eliminan pero sí en formModificarVenta
                     if (eliminarLineas)
                     {
-                        foreach (Entidades.LineaVenta linea in oVentaE.LineasVenta)
+                        for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
                         {
-                            agregarLineaVenta(linea);
+                            var linea = oVentaE.LineasVenta[i];
+                            linea.Venta = oVentaE;
+                            linea.CantKg = linea.KgsTotalCalculado;
+                            linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado)
+                                ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta
+                                : Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                            oVentaE.LineasVenta[i] = agregarLineaVenta(linea);
                         }
                     }
 
@@ -223,8 +230,6 @@ namespace Negocio
                 }
             }
         }
-
-
         public void crearMovCtaCteVenta(Entidades.Venta oVentaE)
         {
             //oVentaE = oVentaD.getVentaById(oVentaE.IdVenta);

@@ -13,6 +13,53 @@
         return Convert.ToString(row[columna]);
     }
 
+    string NormalizarNombreColumna(string nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+            return "";
+
+        return new string(nombre.Normalize(System.Text.NormalizationForm.FormD)
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray())
+            .Replace(" ", "")
+            .Trim()
+            .ToLowerInvariant();
+    }
+
+    string ValorFlexible(DataRow row, params string[] columnas)
+    {
+        if (row == null || row.Table == null || columnas == null || columnas.Length == 0)
+            return "";
+
+        foreach (string columna in columnas)
+        {
+            if (string.IsNullOrWhiteSpace(columna))
+                continue;
+
+            if (row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                return Convert.ToString(row[columna]);
+        }
+
+        foreach (DataColumn column in row.Table.Columns)
+        {
+            string nombreActual = NormalizarNombreColumna(column.ColumnName);
+
+            foreach (string columna in columnas)
+            {
+                if (NormalizarNombreColumna(columna) == nombreActual && row[column] != DBNull.Value)
+                    return Convert.ToString(row[column]);
+            }
+        }
+
+        return "";
+    }
+
+    int ValorIntFlexible(DataRow row, params string[] columnas)
+    {
+        int valor;
+        return int.TryParse(ValorFlexible(row, columnas), out valor) ? valor : 0;
+    }
+
     string Descripcion(DataRow row)
     {
         if (row == null || row.Table == null)
@@ -117,6 +164,8 @@
     bool modoActividades = ViewBag.ModoActividades != null && (bool)ViewBag.ModoActividades;
     var idsModificables = ViewBag.IdsEgresosModificables as HashSet<int> ?? new HashSet<int>();
     var descripcionesAnuladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    string returnUrlActual = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Request.RawUrl ?? ""));
+    string sucursalActividad = ViewBag.SucursalActividad as string ?? "";
 
     if (Model != null && Model.Columns.Contains("Monto"))
     {
@@ -187,7 +236,15 @@
                     bool esHistorico = !esAnulacion && FueReemplazadoPorAnulacion(row, descripcionesAnuladas);
                     bool esEgresoModificado = !esHistorico && EsEgresoCajaModificado(row);
                     int idInt;
-                    bool puedeModificar = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
+                    bool puedeModificarEgreso = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
+                    bool mostrarBotonModificar = puedeModificarEgreso && !string.IsNullOrWhiteSpace(id);
+                    string sucursalFila = ValorFlexible(row, "Sucursal", "sucursal");
+                    if (string.IsNullOrWhiteSpace(sucursalFila))
+                    {
+                        sucursalFila = sucursalActividad;
+                    }
+                    string urlModificar = "";
+                    string tipoModificacion = "egreso";
 
                     <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id">
                         <td class="text-nowrap">@Fecha(row, "Fecha")</td>
@@ -231,11 +288,13 @@
                                     aria-controls="@detalleId">
                                 <i class="fas fa-chevron-down"></i> Detalles
                             </button>
-                            @if (puedeModificar && !string.IsNullOrWhiteSpace(id))
+                            @if (mostrarBotonModificar)
                             {
                                 <button type="button"
                                         class="btn btn-sm btn-primary btn-modificar-egreso"
-                                        data-id="@id">
+                                        data-id="@id"
+                                        data-url="@urlModificar"
+                                        data-tipo-modificacion="@tipoModificacion">
                                     <i class="fas fa-edit"></i> Modificar
                                 </button>
                             }
@@ -252,7 +311,7 @@
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <span class="text-muted d-block">Sucursal</span>
-                                            <strong>@Valor(row, "Sucursal")</strong>
+                                            <strong>@sucursalFila</strong>
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <span class="text-muted d-block">Creado por</span>
@@ -302,7 +361,15 @@
             bool esHistorico = !esAnulacion && FueReemplazadoPorAnulacion(row, descripcionesAnuladas);
             bool esEgresoModificado = !esHistorico && EsEgresoCajaModificado(row);
             int idInt;
-            bool puedeModificar = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
+            bool puedeModificarEgreso = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
+            bool mostrarBotonModificar = puedeModificarEgreso && !string.IsNullOrWhiteSpace(id);
+            string sucursalFila = ValorFlexible(row, "Sucursal", "sucursal");
+            if (string.IsNullOrWhiteSpace(sucursalFila))
+            {
+                sucursalFila = sucursalActividad;
+            }
+            string urlModificar = "";
+            string tipoModificacion = "egreso";
 
             <div class="egreso-card @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")">
                 <div class="egreso-card-top">
@@ -348,11 +415,13 @@
                             aria-controls="@detalleId">
                         <i class="fas fa-chevron-down"></i> Detalles
                     </button>
-                    @if (puedeModificar && !string.IsNullOrWhiteSpace(id))
+                    @if (mostrarBotonModificar)
                     {
                         <button type="button"
                                 class="btn btn-sm btn-primary btn-modificar-egreso"
-                                data-id="@id">
+                                data-id="@id"
+                                data-url="@urlModificar"
+                                data-tipo-modificacion="@tipoModificacion">
                             <i class="fas fa-edit"></i> Modificar
                         </button>
                     }
@@ -362,7 +431,7 @@
                     {
                         <div class="egreso-card-detail">@Valor(row, "Detalle")</div>
                     }
-                    <div class="egreso-card-line">Sucursal: @Valor(row, "Sucursal")</div>
+                    <div class="egreso-card-line">Sucursal: @sucursalFila</div>
                     <div class="egreso-card-line">Creado: @Fecha(row, "Creado")</div>
                     <div class="egreso-card-line">Creado por: @Valor(row, "Creado Por")</div>
                     <div class="egreso-card-line">Actualizado: @Fecha(row, "Actualizado")</div>

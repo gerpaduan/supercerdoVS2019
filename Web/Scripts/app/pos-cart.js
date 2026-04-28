@@ -3,6 +3,7 @@
 
     function createPOSCart(options) {
         const POSState = options.POSState;
+        const soloFormaPago = options.soloFormaPago === true;
 
         function fnum(v) {
             return parseFloat(
@@ -40,6 +41,7 @@
         }
 
         const CANT_DECIMALES = 3;
+        const CANT_MINIMA = 0.010;
         let hayVentaEnCurso = false;
         let omitirAvisoSalidaPOS = false;
 
@@ -132,6 +134,7 @@
         };
 
         function addProduct() {
+            if (soloFormaPago) return;
             const productoSeleccionado = options.getProductoSeleccionado();
 
             if (!productoSeleccionado) {
@@ -140,8 +143,8 @@
             }
 
             let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
-            if (isNaN(cantidad) || cantidad <= 0) {
-                showMessage("warning", "Cantidad inválida", "Ingrese una cantidad mayor a 0.");
+            if (isNaN(cantidad) || cantidad < CANT_MINIMA) {
+                showMessage("warning", "Cantidad inválida", "La cantidad mínima es 0,010 kg.");
                 return;
             }
 
@@ -406,6 +409,7 @@
         }
 
         function loadLineModal(linea) {
+            if (soloFormaPago) return;
             $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
 
             const cantNum = parseCant(linea.cant);
@@ -455,6 +459,7 @@
             if (typeof window.lineaSeleccionada === "undefined") window.lineaSeleccionada = null;
 
             $(document).on("click", "#tablaItems tr.fila-item", function () {
+                if (soloFormaPago) return;
                 $("#btnEliminarItem").removeClass("d-none");
                 $("#btnMostrarBonificar").removeClass("d-none");
                 $("#btnMostrarCantidad").removeClass("d-none");
@@ -480,6 +485,7 @@
             window.cargarModalLineaVenta = loadLineModal;
 
             $("#btnMostrarBonificar").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
                 $("#bloqueBonificar").slideDown(120);
                 $("#btnMostrarBonificar").addClass("d-none");
@@ -503,6 +509,7 @@
             });
 
             $("#btnAplicarBonificacion").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
 
                 const precioNuevo = fnum($("#txtPrecioKg").val());
@@ -516,8 +523,8 @@
                     showMessage("warning", "Cantidad inválida", "Ingrese una cantidad válida.");
                     return;
                 }
-                if (cant <= 0) {
-                    showMessage("warning", "Cantidad inválida", "La cantidad debe ser mayor a 0.");
+                if (cant < CANT_MINIMA) {
+                    showMessage("warning", "Cantidad inválida", "La cantidad mínima es 0,010 kg.");
                     return;
                 }
 
@@ -533,6 +540,7 @@
                 requestAnimationFrame(function () { scrollLineVisible(window.lineaSeleccionada.index); });
             });
             $("#btnEliminarItem").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
                 const linea = window.lineaSeleccionada;
 
@@ -557,6 +565,7 @@
             });
 
             $("#btnMostrarCantidad").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
 
                 $("#bloqueCantidad").slideDown(120);
@@ -594,6 +603,7 @@
                 });
 
             $("#btnCantMas").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 const actual = parseCant($("#modalCantidad").val());
                 const base = isFinite(actual) ? actual : 0;
                 $("#modalCantidad").val(fmtCant(roundCant(base + 1)));
@@ -601,6 +611,7 @@
             });
 
             $("#btnCantMenos").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 const actual = parseCant($("#modalCantidad").val());
                 const base = isFinite(actual) ? actual : 0;
                 $("#modalCantidad").val(fmtCant(Math.max(0, roundCant(base - 1))));
@@ -608,6 +619,7 @@
             });
 
             $("#btnAplicarCantidad").off("click").on("click", function () {
+                if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
 
                 const cant = parseCant($("#modalCantidad").val());
@@ -615,8 +627,8 @@
                     showMessage("warning", "Cantidad inválida", "Ingrese un número válido.");
                     return;
                 }
-                if (cant <= 0) {
-                    showMessage("warning", "Cantidad inválida", "La cantidad debe ser mayor a 0.");
+                if (cant < CANT_MINIMA) {
+                    showMessage("warning", "Cantidad inválida", "La cantidad mínima es 0,010 kg.");
                     return;
                 }
 
@@ -653,6 +665,7 @@
         }
 
         function bindDomEvents() {
+            if (soloFormaPago) return;
             $("#inputCantidad").on("input", calculateSubtotal);
 
             $("#inputCodigo").on("keydown", function (e) {

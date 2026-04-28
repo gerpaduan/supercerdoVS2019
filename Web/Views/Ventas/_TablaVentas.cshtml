@@ -1,0 +1,109 @@
+@model List<Entidades.Venta>
+@using System.Web
+
+@{
+    bool modoModal = ViewBag.ModoModalVentas != null && (bool)ViewBag.ModoModalVentas;
+    string detalleBaseUrl = ViewBag.DetalleVentaBaseUrl as string ?? "";
+}
+
+<ul id="listaVentas" class="list-group list-group-flush">
+    @if (Model == null || Model.Count == 0)
+    {
+        <li class="list-group-item text-center text-muted py-4">
+            <i class="fas fa-search fa-2x mb-2"></i><br />
+            No hay coincidencias
+        </li>
+    }
+    else
+    {
+        foreach (var ventaAgrupada in Model.GroupBy(v => v.FechaVenta.Date))
+        {
+            if (ventaAgrupada.Any())
+            {
+                <li class="list-group-item bg-light font-weight-bold fecha-grupo">
+                    @ventaAgrupada.Key.ToString("dd/MM/yyyy")
+                </li>
+
+                foreach (var venta in ventaAgrupada)
+                {
+                    var detalleUrl = !string.IsNullOrWhiteSpace(detalleBaseUrl)
+                        ? detalleBaseUrl + "?id=" + venta.IdVenta + "&returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl ?? "")
+                        : Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta });
+                    var atributosModal = modoModal
+                        ? $"data-venta-id=\"{venta.IdVenta}\""
+                        : $"onclick=\"location.href='{detalleUrl}'\"";
+
+                    <li class="list-group-item venta-item @(modoModal ? "venta-item-modal" : "")"
+                        data-forma-pago="@venta.FormaPago.ToString()"
+                        data-cliente="@venta.Persona.razonSocial"
+                        data-identificacion="@venta.Persona.Identificacion"
+                        data-vendedor="@venta.Vendedor.Nombre.ToLower()"
+                        @Html.Raw(atributosModal)>
+                        <div class="venta-icono">
+                            @if (!string.IsNullOrEmpty(venta.FormaPago))
+                            {
+                                switch (venta.FormaPago.ToLower())
+                                {
+                                    case "efectivo":
+                                        <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                                        break;
+                                    case "qr":
+                                        <i class="fas fa-qrcode fa-2x text-primary"></i>
+                                        break;
+                                    case "debito":
+                                    case "credito":
+                                        <i class="fas fa-credit-card fa-2x text-info"></i>
+                                        break;
+                                    case "ctacte":
+                                        <i class="fas fa-university fa-2x text-warning"></i>
+                                        break;
+                                    case "transferencia":
+                                        <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
+                                        break;
+                                    default:
+                                        <i class="fas fa-money-check fa-2x text-muted"></i>
+                                        break;
+                                }
+                            }
+                        </div>
+
+                        <div class="venta-info">
+                            <div class="venta-tipo-persona font-weight-bold">
+                                @venta.TipoComprobante - @venta.FormaPago
+                            </div>
+                            @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
+                            {
+                                <div class="venta-tipo-persona font-weight-bold">
+                                    a @venta.Persona.razonSocial
+                                </div>
+                            }
+                            <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
+                            <div class="venta-id">idVenta @venta.IdVenta</div>
+                            @if (!string.IsNullOrWhiteSpace(venta.Observaciones))
+                            {
+                                <div class="venta-obs" title="@venta.Observaciones">
+                                    <i class="fas fa-sticky-note mr-1"></i>@(
+                                        venta.Observaciones.Length > 45
+                                            ? venta.Observaciones.Substring(0, 45) + "..."
+                                            : venta.Observaciones
+                                    )
+                                </div>
+                            }
+                        </div>
+
+                        <div class="venta-total">
+                            <div class="importe @(venta.TotalImporte <= 0 ? "text-danger font-weight-bold" : "")"
+                                 data-valor="@venta.TotalImporte">
+                                @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
+                            </div>
+
+                            <div class="text-muted small">
+                                @venta.FechaVenta.ToString("HH:mm") hs
+                            </div>
+                        </div>
+                    </li>
+                }
+            }
+        }
+    }
+</ul>

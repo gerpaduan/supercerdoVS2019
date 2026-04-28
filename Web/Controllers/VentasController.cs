@@ -13,6 +13,7 @@ using Web.Models.DTO;
 using AFIP;
 using static Entidades.Venta;
 using System.IO;
+using System.Data;
 
 namespace Web.Controllers
 {
@@ -95,8 +96,37 @@ namespace Web.Controllers
             return View(ventas);
         }
 
+        public ActionResult MisVentas(bool desdePos = false, int idCierre = 0)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return new HttpStatusCodeResult(401, "Sesión inválida");
+
+            var cierre = ObtenerCierreMisVentas(user, desdePos, idCierre);
+            if (cierre == null)
+            {
+                ViewBag.Mensaje = "No hay una caja abierta para consultar ventas.";
+                ViewBag.DesdePOS = desdePos;
+                ViewBag.IdCierreActividad = idCierre;
+                return PartialView("~/Views/Ventas/_MisVentas.cshtml", new List<Entidades.Venta>());
+            }
+
+            var ventas = ConvertirVentasResumen(oVentaN.getVentasVendedorCierreCaja(cierre, false));
+
+            ViewBag.DesdePOS = desdePos;
+            ViewBag.IdCierreActividad = cierre.Id;
+            ViewBag.CierreCaja = cierre;
+            ViewBag.TotalVisible = ventas.Sum(v => v.TotalImporte);
+            ViewBag.TituloVentas = "Mis ventas";
+            ViewBag.SubtituloVentas = cierre.UsuarioInicio != null && cierre.Sucursal != null
+                ? cierre.UsuarioInicio.Nombre + " | " + cierre.Sucursal.sucursal
+                : "";
+
+            return PartialView("~/Views/Ventas/_MisVentas.cshtml", ventas);
+        }
+
         // GET: Ventas/DetalleVenta/5
-        public ActionResult DetalleVenta(int id)
+        public ActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "")
         {
             // Buscar la venta por ID
             var venta = oVentaN.getVentaById(id);
@@ -111,7 +141,19 @@ namespace Web.Controllers
                 return HttpNotFound();
             }
 
+            ViewBag.ModoModal = modal;
+            ViewBag.DesdePOS = desdePos;
+            ViewBag.IdCierreActividad = idCierre;
+            ViewBag.ReturnUrlDetalle = DecodeReturnUrlIfNeeded(returnUrl);
+            ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta);
+            ViewBag.MotivoNoPuedeModificarVenta = ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta);
+            ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
+            ViewBag.MotivoNoPuedeCambiarFormaPago = ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
+
             // Pasar la venta a la vista
+            if (modal)
+                return PartialView(venta);
+
             return View(venta);
         }
 
@@ -154,7 +196,6 @@ namespace Web.Controllers
                     });
                 }
 
-
                 venta.Persona = oPersonaN.findById(request.IdPersona);
                 if (venta.Persona == null)
                     return Json(new { ok = false, msg = "El Cliente no existe." });
@@ -192,62 +233,8 @@ namespace Web.Controllers
                     return Json(new { ok = false, msg = msg_ });
                 }
 
-                List<Entidades.LineaVenta> lineasVenta = new List<LineaVenta>();
-                Entidades.LineaVenta linea;
-
-                foreach (var l in request.LineasVenta)
-                {
-                    linea = new Entidades.LineaVenta();
-
-
-                    linea.Corte = oCorteN.findCorteByCodigo(l.Codigo, false);
-
-                    // En Negocio hace la asignacion inversa 'no recuerdo xq hice esto, posiblente por redondeo'
-                    linea.KgsTotalCalculado = l.CantKg = l.CantKg;
-                    linea.PrecioKg = l.PrecioKg;
-                    linea.Bonificacion = l.Bonificacion;
-                    linea.Estado = l.Estado;
-                    linea.IndexAnulado = l.IndexAnulado;
-
-                    lineasVenta.Add(linea);
-                }
-
-                List<Entidades.LineaVenta> lineasAnuladas = new List<LineaVenta>();
-                Entidades.LineaVenta oLineaVenta;
-                int cantLineaParam = lineasVenta.Count; //cantidad de lineas q vienen por param
-
-                for (int index = 0; index < lineasVenta.Count; index++)
-                {
-                    ///crear Lineas de anulacion
-                    if (Entidades.LineaVenta.esAnulado(lineasVenta[index].Estado) && lineasVenta[index].IndexAnulado == -1)
-                    {
-                        lineasVenta[index].Estado = 0;//se lo setea a No anulado xq se esta creando el registro opuesto
-
-                        oLineaVenta = new Entidades.LineaVenta();
-                        oLineaVenta.Corte = lineasVenta[index].Corte;
-                        oLineaVenta.Venta = lineasVenta[index].Venta;
-                        oLineaVenta.CantKg = lineasVenta[index].CantKg * -1;
-                        oLineaVenta.KgsTotalCalculado = lineasVenta[index].KgsTotalCalculado * -1;
-                        oLineaVenta.KgsAjusteTarj = lineasVenta[index].KgsAjusteTarj * -1;
-                        oLineaVenta.PrecioKg = lineasVenta[index].PrecioKg;
-                        oLineaVenta.Estado = 1;//anulado
-                        oLineaVenta.Bonificacion = lineasVenta[index].Bonificacion;
-                        oLineaVenta.IndexAnulado = index;
-                        oLineaVenta.IdExpendio = lineasVenta[index].IdExpendio;
-
-                        //se agrega el index del anulado al corte seleccionado para anular
-                        //--el index equivale a la cantidad en listaLineaVenta antes de cargarLista--
-                        lineasVenta[index].IndexAnulado = cantLineaParam++;
-
-                        lineasAnuladas.Add(oLineaVenta);
-                    }
-                }
-
-                //cargo las lineas anuladas
-                for (int index = 0; index < lineasAnuladas.Count; index++)
-                {
-                    lineasVenta.Add(lineasAnuladas[index]);
-                }
+                List<Entidades.LineaVenta> lineasVenta = ConstruirLineasVentaDesdeRequest(request);
+                CompletarAnulacionesVenta(lineasVenta);
 
                 // ===============================
                 // LINEAS DE VENTA (CLAVE)
@@ -273,9 +260,114 @@ namespace Web.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult ModificarVenta(FinalizarVentaRequest request)
+        {
+            try
+            {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                bool soloFormaPago = request != null && request.SoloFormaPago;
+
+                if (user == null)
+                    return Json(new { ok = false, msg = "Sesión expirada" });
+
+                if (request == null || request.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta inválida" });
+
+                var venta = oVentaN.getVentaById(request.IdVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "La venta no existe." });
+
+                var cierreActual = ObtenerCierreCajaActual(user);
+                bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, user);
+
+                if (soloFormaPago)
+                {
+                    if (!PuedeCambiarFormaPago(venta, user, cierreActual))
+                        return Json(new { ok = false, msg = ObtenerMotivoNoPuedeCambiarFormaPago(venta, user, cierreActual) });
+                }
+                else
+                {
+                    if (!PuedeModificarUltimaVenta(venta, user, cierreActual))
+                        return Json(new { ok = false, msg = "No tiene permisos para modificar esta venta." });
+                }
+
+                if (request.LineasVenta == null || !request.LineasVenta.Any())
+                    return Json(new { ok = false, msg = "No hay productos en la venta" });
+
+                if (user.IdSucursal == 0 && !tienePermisoAdministrativoVenta)
+                    return Json(new { ok = false, msg = "Seleccione una sucursal antes de guardar la venta." });
+
+                if (!tienePermisoAdministrativoVenta &&
+                    (request.IdSucursalPOS != user.IdSucursal || venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal))
+                    return Json(new { ok = false, msg = "La venta pertenece a otra sucursal. Cambie a la sucursal correcta antes de modificarla." });
+
+                venta.Persona = oPersonaN.findById(request.IdPersona);
+                if (venta.Persona == null)
+                    return Json(new { ok = false, msg = "El Cliente no existe." });
+
+                int idSucursalDestino = venta.Sucursal != null && venta.Sucursal.idSucursal > 0
+                    ? venta.Sucursal.idSucursal
+                    : user.IdSucursal;
+
+                venta.Sucursal = oSucursalN.findById(idSucursalDestino);
+                if (venta.Sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida." });
+
+                if (!tienePermisoAdministrativoVenta && (cierreActual == null || cierreActual.UsuarioInicio == null))
+                    return Json(new { ok = false, msg = "La caja ha sido cerrada." });
+
+                bool cajaAbierta = tienePermisoAdministrativoVenta ||
+                    oCierreN.validarCajaAbiertaVendedor(venta.FechaVenta, venta.Sucursal, cierreActual.UsuarioInicio);
+
+                if (!cajaAbierta)
+                    return Json(new { ok = false, msg = "La caja ha sido cerrada." });
+
+                venta.Observaciones = request.Observaciones ?? venta.Observaciones ?? "";
+                venta.FormaPago = request.FormaPago;
+                venta.EnCtaCte = request.FormaPago == formaPagoEnum.CtaCte.ToString();
+                venta.PagoMixtoEfectivo = request.EsPagoMixto ? request.Efectivo : 0;
+
+                if (!soloFormaPago && request.FechaVenta.HasValue && request.FechaVenta.Value != venta.FechaVenta)
+                {
+                    if (!PuedeEditarFechaVenta(venta, request.FechaVenta.Value))
+                        return Json(new { ok = false, msg = "No tiene permisos para modificar la venta con la fecha seleccionada." });
+
+                    venta.FechaVenta = request.FechaVenta.Value;
+                }
+
+                if (venta.EnCtaCte && (!venta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
+                    venta.Persona.idPersona.Equals(param.GetInt(ParamKeys.IdConsumidorFinal, 0))))
+                {
+                    string msg_ = "Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
+                        "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.";
+                    return Json(new { ok = false, msg = msg_ });
+                }
+
+                venta.LineasVenta = ConstruirLineasVentaDesdeRequest(request);
+                CompletarAnulacionesVenta(venta.LineasVenta);
+
+                oVentaN.modificarVenta(venta, venta.Sucursal.idSucursal, !soloFormaPago, null);
+
+                Session.Remove("VentaActiva");
+
+                return Json(new { ok = true, ventaId = venta.IdVenta }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Error al modificar la venta",
+                    error = ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
 
         #region POS
-        public ActionResult POS()
+        public ActionResult POS(int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "", int abrirDetalleVentaId = 0, string returnUrlDetalle = "")
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
@@ -325,6 +417,10 @@ namespace Web.Controllers
             ViewBag.CajaAbierta = cajaAbierta;
             ViewBag.SucursalNombre = user.SucursalNombre;
             ViewBag.IdSucursalPOS = user.IdSucursal;
+            ViewBag.SoloFormaPago = soloFormaPago;
+            ViewBag.ReturnUrlPOS = DecodeReturnUrlIfNeeded(returnUrl);
+            ViewBag.AbrirDetalleVentaId = abrirDetalleVentaId;
+            ViewBag.ReturnUrlDetalle = DecodeReturnUrlIfNeeded(returnUrlDetalle);
 
             // 🚨 Si NO hay caja abierta, NO inicializo venta
             if (!cajaAbierta)
@@ -335,9 +431,41 @@ namespace Web.Controllers
             // ==========================
             // POS habilitado
             // ==========================
-            var venta = Session["VentaActiva"] as Venta;
+            bool esEdicionVenta = idVentaEditar > 0;
+            var venta = esEdicionVenta ? oVentaN.getVentaById(idVentaEditar) : Session["VentaActiva"] as Venta;
 
-            if (venta == null)
+            if (esEdicionVenta)
+            {
+                if (venta == null)
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Venta inexistente";
+                    TempData["AlertMsg"] = "No se encontró la venta seleccionada para modificar.";
+                    return RedirectToAction("POS");
+                }
+
+                bool puedeEditarVenta = !soloFormaPago && PuedeModificarUltimaVenta(venta, user, cierre);
+                bool puedeCambiarPago = soloFormaPago && PuedeCambiarFormaPago(venta, user, cierre);
+
+                if (!puedeEditarVenta && !puedeCambiarPago)
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = soloFormaPago ? "Venta fuera de caja" : "Sin permisos";
+                    TempData["AlertMsg"] = soloFormaPago
+                        ? ObtenerMotivoNoPuedeCambiarFormaPago(venta, user, cierre)
+                        : "No tiene permisos para modificar esta venta.";
+                    return RedirectToAction("POS");
+                }
+
+                if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal)
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Sucursal incorrecta";
+                    TempData["AlertMsg"] = "Cambie a la sucursal de la venta antes de modificarla.";
+                    return RedirectToAction("POS");
+                }
+            }
+            else if (venta == null)
             {
                 venta = new Venta
                 {
@@ -346,11 +474,21 @@ namespace Web.Controllers
             }
 
             var oCliente = oPersonaN.getConsumidorFinal();
+            ViewBag.IdConsumidorFinal = oCliente.idPersona;
 
-            venta.Persona = oCliente;
-            venta.IdPersona = oCliente.idPersona;
+            if (venta.Persona == null)
+            {
+                venta.Persona = oCliente;
+                venta.IdPersona = oCliente.idPersona;
+            }
+
             venta.Vendedor = user;
-            venta.FechaVenta = DateTime.Now;
+            if (venta.FechaVenta == DateTime.MinValue)
+                venta.FechaVenta = DateTime.Now;
+
+            ViewBag.EsEdicionVenta = esEdicionVenta;
+            ViewBag.IdVentaEditar = idVentaEditar;
+            ViewBag.PuedeEditarFechaVenta = esEdicionVenta && PuedeModificarUltimaVenta(venta, user, cierre) && PuedeEditarFechaVenta(venta);
 
             Session["VentaActiva"] = venta;
 
@@ -692,6 +830,315 @@ namespace Web.Controllers
 
         #region MAPEAR
 
+        private Entidades.CierreCaja ObtenerCierreMisVentas(Entidades.Usuario user, bool desdePos, int idCierre)
+        {
+            if (idCierre > 0)
+            {
+                var cierrePorId = oCierreN.findByIdOrLast(
+                    new Entidades.CierreCaja { Id = idCierre },
+                    Entidades.CierreCaja.tipoBusqueda.FindById,
+                    ""
+                );
+
+                bool abierta = cierrePorId != null && (cierrePorId.UsuarioCierre == null || cierrePorId.UsuarioCierre.Id == 0);
+                return abierta ? cierrePorId : null;
+            }
+
+            if (!desdePos || user == null || user.IdSucursal == 0)
+                return null;
+
+            if (user.Sucursal == null)
+                user.Sucursal = oSucursalN.findById(user.IdSucursal);
+
+            var cierre = new Entidades.CierreCaja
+            {
+                Sucursal = user.Sucursal,
+                UsuarioInicio = user
+            };
+
+            cierre = oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+            return cajaAbierta ? cierre : null;
+        }
+
+        private static string DecodeReturnUrlIfNeeded(string returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(returnUrl))
+                return returnUrl;
+
+            if (returnUrl.StartsWith("/") || returnUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                return returnUrl;
+
+            try
+            {
+                string decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(returnUrl));
+                return string.IsNullOrWhiteSpace(decoded) ? returnUrl : decoded;
+            }
+            catch
+            {
+                return returnUrl;
+            }
+        }
+
+        private List<Entidades.Venta> ConvertirVentasResumen(DataTable dt)
+        {
+            var ventas = new List<Entidades.Venta>();
+            if (dt == null)
+                return ventas;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                var venta = new Entidades.Venta
+                {
+                    IdVenta = ObtenerValor(row, "idVenta", 0),
+                    FechaVenta = ObtenerValor(row, "fechaVenta", DateTime.MinValue),
+                    FormaPago = ObtenerValor(row, "formaPago", ""),
+                    TipoComprobante = ObtenerTipoComprobante(row),
+                    Observaciones = ObtenerValor(row, "observaciones", ""),
+                    TotalImporte = ObtenerValor(row, "totalS", 0f),
+                    Persona = new Entidades.Persona
+                    {
+                        razonSocial = ObtenerValor(row, "razonSocial", ""),
+                        Identificacion = ""
+                    },
+                    Vendedor = new Entidades.Usuario
+                    {
+                        Nombre = ObtenerValor(row, "nombre", "")
+                    }
+                };
+
+                ventas.Add(venta);
+            }
+
+            return ventas;
+        }
+
+        private T ObtenerValor<T>(DataRow row, string columnName, T valorDefault)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+                return valorDefault;
+
+            return (T)Convert.ChangeType(row[columnName], typeof(T));
+        }
+
+        private char ObtenerTipoComprobante(DataRow row)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains("tipoComprobante") || row["tipoComprobante"] == DBNull.Value)
+                return 'X';
+
+            var texto = Convert.ToString(row["tipoComprobante"]);
+            return string.IsNullOrWhiteSpace(texto) ? 'X' : texto[0];
+        }
+
+        private Entidades.CierreCaja ObtenerCierreCajaActual(Entidades.Usuario user)
+        {
+            if (user == null || user.IdSucursal == 0)
+                return null;
+
+            if (user.Sucursal == null)
+                user.Sucursal = oSucursalN.findById(user.IdSucursal);
+
+            if (user.Sucursal == null)
+                return null;
+
+            var cierre = new Entidades.CierreCaja
+            {
+                Sucursal = user.Sucursal,
+                UsuarioInicio = user
+            };
+
+            cierre = oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+            return cajaAbierta ? cierre : null;
+        }
+
+        private bool PuedeModificarUltimaVenta(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null)
+                return false;
+
+            user = user ?? (Session["Usuario"] as Entidades.Usuario);
+            if (user == null)
+                return false;
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user))
+                return true;
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.UsuarioInicio == null)
+                return false;
+
+            var ultimaVenta = oVentaN.getUltimaVentaVendedor(cierre);
+            if (ultimaVenta == null || ultimaVenta.IdVenta != venta.IdVenta)
+                return false;
+
+            return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
+        }
+
+        private string ObtenerMotivoNoPuedeModificarUltimaVenta(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null)
+                return "Venta inexistente.";
+
+            user = user ?? (Session["Usuario"] as Entidades.Usuario);
+            if (user == null)
+                return "Sesión inválida.";
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user))
+                return "";
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.UsuarioInicio == null)
+                return "No hay una caja abierta para el usuario actual.";
+
+            var ultimaVenta = oVentaN.getUltimaVentaVendedor(cierre);
+            if (ultimaVenta == null)
+                return "No se encontró una última venta para este cajero.";
+
+            if (ultimaVenta.IdVenta != venta.IdVenta)
+                return "La venta visible no es la última venta del cajero.";
+
+            bool tienePermiso = PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
+            if (!tienePermiso)
+                return "El usuario no tiene permiso vigente para formUltimaVenta.";
+
+            return "";
+        }
+
+        private bool PuedeEditarFechaVenta(Entidades.Venta venta, DateTime? fechaSeleccionada = null)
+        {
+            if (venta == null)
+                return false;
+
+            int vendedorId = venta.Vendedor != null ? venta.Vendedor.Id : -1;
+            return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.NuevaVenta, fechaSeleccionada ?? venta.FechaVenta, vendedorId);
+        }
+
+        private bool PuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null)
+                return false;
+
+            user = user ?? (Session["Usuario"] as Entidades.Usuario);
+            if (user == null || user.IdSucursal == 0)
+                return false;
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user))
+                return true;
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.FechaHoraInicio == null || cierre.UsuarioInicio == null)
+                return false;
+
+            if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal)
+                return false;
+
+            if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id)
+                return false;
+
+            DateTime inicio = cierre.FechaHoraInicio.Value;
+            DateTime fin = cierre.FechaHoraCierre ?? DateTime.Now;
+            return venta.FechaVenta >= inicio && venta.FechaVenta <= fin;
+        }
+
+        private string ObtenerMotivoNoPuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null)
+                return "Venta inexistente.";
+
+            user = user ?? (Session["Usuario"] as Entidades.Usuario);
+            if (user == null || user.IdSucursal == 0)
+                return "Sesión inválida o sucursal no seleccionada.";
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user))
+                return "";
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.FechaHoraInicio == null || cierre.UsuarioInicio == null)
+                return "No hay una caja abierta para el usuario actual.";
+
+            if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal)
+                return "La venta pertenece a otra sucursal.";
+
+            if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id)
+                return "La venta no pertenece a la caja actual del cajero.";
+
+            DateTime inicio = cierre.FechaHoraInicio.Value;
+            DateTime fin = cierre.FechaHoraCierre ?? DateTime.Now;
+            if (venta.FechaVenta < inicio || venta.FechaVenta > fin)
+                return "La venta está fuera del rango de la caja actual.";
+
+            return "";
+        }
+
+        private bool TienePermisoAdministrativoSobreVenta(Entidades.Venta venta, Entidades.Usuario user = null)
+        {
+            if (venta == null)
+                return false;
+
+            user = user ?? (Session["Usuario"] as Entidades.Usuario);
+            if (user == null)
+                return false;
+
+            int idCreador = venta.Vendedor != null ? venta.Vendedor.Id : -1;
+            return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, idCreador);
+        }
+
+        private List<Entidades.LineaVenta> ConstruirLineasVentaDesdeRequest(FinalizarVentaRequest request)
+        {
+            List<Entidades.LineaVenta> lineasVenta = new List<LineaVenta>();
+
+            foreach (var l in request.LineasVenta)
+            {
+                var linea = new Entidades.LineaVenta();
+                linea.Corte = oCorteN.findCorteByCodigo(l.Codigo, false);
+                linea.KgsTotalCalculado = l.CantKg;
+                linea.CantKg = l.CantKg;
+                linea.PrecioKg = l.PrecioKg;
+                linea.Bonificacion = l.Bonificacion;
+                linea.Estado = l.Estado;
+                linea.IndexAnulado = l.IndexAnulado;
+                linea.PesoBalanza = l.Balanza;
+
+                lineasVenta.Add(linea);
+            }
+
+            return lineasVenta;
+        }
+
+        private void CompletarAnulacionesVenta(List<Entidades.LineaVenta> lineasVenta)
+        {
+            List<Entidades.LineaVenta> lineasAnuladas = new List<LineaVenta>();
+            int cantLineaParam = lineasVenta.Count;
+
+            for (int index = 0; index < lineasVenta.Count; index++)
+            {
+                if (Entidades.LineaVenta.esAnulado(lineasVenta[index].Estado) && lineasVenta[index].IndexAnulado == -1)
+                {
+                    lineasVenta[index].Estado = 0;
+
+                    Entidades.LineaVenta oLineaVenta = new Entidades.LineaVenta();
+                    oLineaVenta.Corte = lineasVenta[index].Corte;
+                    oLineaVenta.Venta = lineasVenta[index].Venta;
+                    oLineaVenta.CantKg = lineasVenta[index].CantKg * -1;
+                    oLineaVenta.KgsTotalCalculado = lineasVenta[index].KgsTotalCalculado * -1;
+                    oLineaVenta.KgsAjusteTarj = lineasVenta[index].KgsAjusteTarj * -1;
+                    oLineaVenta.PrecioKg = lineasVenta[index].PrecioKg;
+                    oLineaVenta.Estado = 1;
+                    oLineaVenta.Bonificacion = lineasVenta[index].Bonificacion;
+                    oLineaVenta.IndexAnulado = index;
+                    oLineaVenta.IdExpendio = lineasVenta[index].IdExpendio;
+
+                    lineasVenta[index].IndexAnulado = cantLineaParam++;
+                    lineasAnuladas.Add(oLineaVenta);
+                }
+            }
+
+            for (int index = 0; index < lineasAnuladas.Count; index++)
+            {
+                lineasVenta.Add(lineasAnuladas[index]);
+            }
+        }
 
         public FacturaElectronicaDTO BuildFacturaDTO(
                      Entidades.Venta venta,

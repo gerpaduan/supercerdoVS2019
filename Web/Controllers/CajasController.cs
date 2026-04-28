@@ -6,6 +6,7 @@ using System.Data;
 using System.Globalization;
 using Web.Helpers;
 using Utilidades;
+using System.Linq;
 
 namespace Web.Controllers
 {
@@ -132,6 +133,7 @@ namespace Web.Controllers
             ViewBag.SoloEgresos = soloEgresos;
             ViewBag.FiltroActividad = filtroActividad ?? "todos";
             ViewBag.CierreCaja = cierre;
+            ViewBag.SucursalActividad = cierre != null && cierre.Sucursal != null ? cierre.Sucursal.sucursal : "";
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
             ViewBag.ModoActividades = desdePos;
             CargarPermisosEdicionEgresos(dt, desdePos);
@@ -168,6 +170,7 @@ namespace Web.Controllers
                                     user != null &&
                                     PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.AltaEdicion, DateTime.Today, user.Id);
             ViewBag.IdCierreActividad = idCierre;
+            ViewBag.SucursalActividad = nombreSucursal;
             ViewBag.TituloActividades = "Actividades";
             ViewBag.SubtituloActividades = string.IsNullOrWhiteSpace(nombreSucursal)
                 ? nombreVendedor
@@ -248,6 +251,11 @@ namespace Web.Controllers
                 egreso.Sucursal = oSucursalN.findById(idSucursal);
 
             return PartialView("~/Views/Cajas/_AddOrEditEgresoCaja.cshtml", egreso);
+        }
+
+        public ActionResult EditarPagoActividad(int id, string returnUrl = "", bool desdePos = false)
+        {
+            return new HttpStatusCodeResult(403, "La modificación de pagos y cobros no está disponible desde Mis actividades.");
         }
 
         [HttpPost]
@@ -743,10 +751,12 @@ namespace Web.Controllers
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             var idsModificables = new HashSet<int>();
+            var pagosModificables = new Dictionary<int, int>();
 
             if (user == null || dt == null || !dt.Columns.Contains("id"))
             {
                 ViewBag.IdsEgresosModificables = idsModificables;
+                ViewBag.PagosModificables = pagosModificables;
                 return;
             }
 
@@ -757,12 +767,22 @@ namespace Web.Controllers
                     continue;
 
                 var egreso = oCierreN.getEgresoCajaById(id);
+                bool esPagoCobro = egreso != null &&
+                                   egreso.Id > 0 &&
+                                   string.Equals(egreso.Tabla, Entidades.EgresoCaja.tablas.Pagos.ToString(), StringComparison.OrdinalIgnoreCase) &&
+                                   egreso.IdTabla.HasValue &&
+                                   egreso.IdTabla.Value > 0;
+
+                if (esPagoCobro)
+                    pagosModificables[id] = egreso.IdTabla.Value;
+
                 var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egreso, desdePos, empresa, oCierreN.validarCajaAbiertaVendedor);
                 if (validacion.PuedeModificar && (cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)))
                     idsModificables.Add(id);
             }
 
             ViewBag.IdsEgresosModificables = idsModificables;
+            ViewBag.PagosModificables = pagosModificables;
         }
 
         private bool CajaSigueAbierta(CierreCaja cierre)

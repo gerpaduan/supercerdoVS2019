@@ -27,6 +27,9 @@
                 }
             </div>
             <div class="d-flex flex-wrap align-items-center ml-auto">
+                <button type="button" class="btn btn-outline-primary mr-3 mb-2 mb-md-0" id="btnAbrirMisVentasDesdeActividades">
+                    <i class="fas fa-shopping-cart mr-1"></i> Mis ventas
+                </button>
                 <div class="egresos-actividad-filtros mr-3 mb-2 mb-md-0" role="group" aria-label="Filtro de actividades">
                     <button type="button" class="btn btn-sm @(filtroActividad == "todos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="todos">Todos</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "gastos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="gastos">Egresos de caja</button>
@@ -85,6 +88,17 @@
                 if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
                     window.CajasAbiertas.idCierreActividadActual = @idCierreActividad;
                     window.CajasAbiertas.abrirActividades(@idCierreActividad, filtro);
+                }
+            })
+            .off("click.misVentasDesdeActividades", "#btnAbrirMisVentasDesdeActividades")
+            .on("click.misVentasDesdeActividades", "#btnAbrirMisVentasDesdeActividades", function () {
+                if (window.POSVentas && typeof window.POSVentas.abrirMis === "function") {
+                    window.POSVentas.abrirMis();
+                    return;
+                }
+
+                if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirVentas === "function") {
+                    window.CajasAbiertas.abrirVentas(@idCierreActividad);
                 }
             });
     })();

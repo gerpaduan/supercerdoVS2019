@@ -1,13 +1,30 @@
 ﻿@model Entidades.Venta
 
-@{ ViewBag.Title = "Detalle Ventas";
-    Layout = "~/Views/Shared/_LayoutBase.cshtml";
-    var index = 1; }
+@{
+    ViewBag.Title = "Detalle Ventas";
+    bool modoModal = ViewBag.ModoModal != null && (bool)ViewBag.ModoModal;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
+    Layout = modoModal ? null : "~/Views/Shared/_LayoutBase.cshtml";
+    var index = 1;
+    bool mostrarBotonVolver = modoModal || !string.IsNullOrWhiteSpace(returnUrlDetalle);
+    string hrefBotonVolver = (!modoModal && !string.IsNullOrWhiteSpace(returnUrlDetalle)) ? returnUrlDetalle : "#";
+    string returnUrlPosDetalle = Url.Action("POS", "Ventas", new { abrirDetalleVentaId = Model.IdVenta, returnUrlDetalle = returnUrlDetalle });
+}
 
-<div class="card shadow mb-4 w-100 w-md-50 mx-auto vista-venta">
+<div class="card shadow mb-4 w-100 w-md-50 @(modoModal ? "" : "mx-auto") vista-venta @(modoModal ? "vista-venta-modal" : "")">
     <!-- Encabezado -->
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Detalle de Venta</h6>
+        <div class="d-flex align-items-center">
+            @if (mostrarBotonVolver)
+            {
+                <a href="@hrefBotonVolver" class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverListadoVentasDetalle">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            }
+            <h6 class="m-0 font-weight-bold text-primary">Detalle de Venta</h6>
+        </div>
         <span class="badge badge-info">#@Model.IdVenta</span>
     </div>
 
@@ -89,9 +106,32 @@
             <button class="btn btn-light btn-block text-left mb-2">
                 <i class="fas fa-ban mr-2"></i> Anular Venta
             </button>
-            <button class="btn btn-light btn-block text-left mb-2">
-                <i class="fas fa-sync-alt mr-2"></i> Cambiar Forma de Pago
-            </button>
+            @if (ViewBag.PuedeModificarVenta != null && (bool)ViewBag.PuedeModificarVenta)
+            {
+                <a href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, returnUrl = (modoModal && desdePos ? returnUrlPosDetalle : ""), returnUrlDetalle = returnUrlDetalle })"
+                   class="btn btn-light btn-block text-left mb-2">
+                    <i class="fas fa-edit mr-2"></i> Modificar venta
+                </a>
+            }
+            else if (ViewBag.MotivoNoPuedeModificarVenta != null && !string.IsNullOrWhiteSpace(ViewBag.MotivoNoPuedeModificarVenta.ToString()))
+            {
+                <div class="alert alert-warning py-2 mb-2">
+                    No se habilita "Modificar venta": @ViewBag.MotivoNoPuedeModificarVenta
+                </div>
+            }
+            @if (ViewBag.PuedeCambiarFormaPago != null && (bool)ViewBag.PuedeCambiarFormaPago)
+            {
+                <a href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, returnUrl = (modoModal && desdePos ? returnUrlPosDetalle : Url.Action("DetalleVenta", "Ventas", new { id = Model.IdVenta, returnUrl = returnUrlDetalle })), returnUrlDetalle = returnUrlDetalle })"
+                   class="btn btn-light btn-block text-left mb-2">
+                    <i class="fas fa-sync-alt mr-2"></i> Cambiar Forma de Pago
+                </a>
+            }
+            else if (ViewBag.MotivoNoPuedeCambiarFormaPago != null && !string.IsNullOrWhiteSpace(ViewBag.MotivoNoPuedeCambiarFormaPago.ToString()))
+            {
+                <div class="alert alert-warning py-2 mb-2">
+                    No se habilita "Cambiar Forma de Pago": @ViewBag.MotivoNoPuedeCambiarFormaPago
+                </div>
+            }
             @*<a class="btn btn-light btn-block text-left"
                asp-controller="Ventas"
                asp-action="Imprimir"
@@ -100,6 +140,7 @@
             </a>*@
 
             <a href="@Url.Action("Imprimir", "Ventas", new { id = @Model.IdVenta })"
+               data-pos-descarga="true"
                class="btn btn-light btn-block text-left">
                 <i class="fas fa-file-pdf"></i>  Generar PDF
             </a>
@@ -137,7 +178,87 @@
         }
     }
 
+    .vista-venta-modal {
+        width: 100% !important;
+        max-width: 700px;
+        margin: 0 auto 1rem auto !important;
+    }
+
+    .vista-venta-modal .card-body,
+    .vista-venta-modal .card-header {
+        text-align: left;
+    }
+
+    .vista-venta-modal .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .vista-venta-modal .col {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    @@media (min-width: 992px) {
+        .vista-venta-modal {
+            width: 100% !important;
+            margin: 0 auto 1rem auto !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+
     .comentario-venta {
         white-space: pre-wrap;
     }
 </style>
+
+@if (mostrarBotonVolver)
+{
+    <script>
+        (function () {
+            function volverDetalleVenta() {
+                var returnUrl = @Html.Raw(Json.Encode(returnUrlDetalle));
+
+                if (returnUrl) {
+                    if (@(modoModal && desdePos ? "true" : "false") && window.POSFinanzas && typeof window.POSFinanzas.cargar === "function") {
+                        window.POSFinanzas.cargar(returnUrl, "Cuenta corriente");
+                        return;
+                    }
+
+                    window.location.href = returnUrl;
+                    return;
+                }
+
+                if (@(desdePos ? "true" : "false") && window.POSVentas && typeof window.POSVentas.abrirMis === "function") {
+                    window.POSVentas.abrirMis();
+                    return;
+                }
+
+                if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirVentas === "function") {
+                    window.CajasAbiertas.abrirVentas(@idCierreActividad);
+                    return;
+                }
+
+                window.history.back();
+            }
+
+            function enlazarBotonVolverDetalle() {
+                var btn = document.getElementById("btnVolverListadoVentasDetalle");
+                if (!btn || btn.dataset.volverDetalleBound === "true") return;
+
+                btn.dataset.volverDetalleBound = "true";
+                btn.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    volverDetalleVenta();
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", enlazarBotonVolverDetalle);
+            } else {
+                enlazarBotonVolverDetalle();
+            }
+        })();
+    </script>
+}

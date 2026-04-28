@@ -185,11 +185,24 @@
     </div>
 </div>
 
+<style>
+    @@media (min-width: 992px) {
+        #modalActividadesCaja .modal-dialog {
+            width: 60%;
+            max-width: none;
+        }
+    }
+</style>
+
 @section Scripts {
     <script>
         window.EgresosCajaUrls = {
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
             guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+        };
+        window.VentasCajaUrls = {
+            mis: '@Url.Action("MisVentas", "Ventas")',
+            detalle: '@Url.Action("DetalleVenta", "Ventas")'
         };
 
         function filtrar() {
@@ -279,8 +292,68 @@
             });
         }
 
+        function abrirModalVentas(idCierre) {
+            window.CajasAbiertas = window.CajasAbiertas || {};
+            window.CajasAbiertas.idCierreActividadActual = idCierre;
+            $("#contenedorActividadesCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalActividadesCaja").modal("show");
+
+            $.ajax({
+                url: window.VentasCajaUrls.mis,
+                type: 'GET',
+                data: {
+                    idCierre: idCierre
+                },
+                cache: false,
+                success: function (html) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                        return;
+                    }
+
+                    $("#contenedorActividadesCaja").html(html);
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron cargar las ventas de la caja.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#contenedorActividadesCaja").html('<div class="alert alert-danger m-3">' + $('<div>').text(mensaje).html() + '</div>');
+                }
+            });
+        }
+
+        function abrirDetalleVenta(idVenta, idCierre) {
+            $("#contenedorActividadesCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalActividadesCaja").modal("show");
+
+            $.ajax({
+                url: window.VentasCajaUrls.detalle,
+                type: 'GET',
+                data: {
+                    id: idVenta,
+                    modal: true,
+                    idCierre: idCierre
+                },
+                cache: false,
+                success: function (html) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                        return;
+                    }
+
+                    $("#contenedorActividadesCaja").html(html);
+                },
+                error: function () {
+                    $("#contenedorActividadesCaja").html('<div class="alert alert-danger m-3">No se pudo cargar el detalle de la venta.</div>');
+                }
+            });
+        }
+
         window.CajasAbiertas = window.CajasAbiertas || {};
         window.CajasAbiertas.abrirActividades = abrirModalActividades;
+        window.CajasAbiertas.abrirVentas = abrirModalVentas;
+        window.CajasAbiertas.abrirDetalleVenta = abrirDetalleVenta;
 
         function abrirModalCerrarCaja(Id) {
             $("#cerrarCajaError").addClass("d-none").text("");
@@ -407,5 +480,5 @@
             }
         }
     </script>
-    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=3")"></script>
 }

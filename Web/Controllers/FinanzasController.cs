@@ -405,6 +405,7 @@ namespace Web.Controllers
             var user = Session["Usuario"] as Entidades.Usuario;
             var sucursales = oSucursalN.findAll();
             string returnUrlDecodificada = DecodeReturnUrlIfNeeded(returnUrl);
+            Pago pagoExistente = null;
 
             if (user != null && user.IdSucursal > 0 &&
                 (user.Sucursal == null || user.Sucursal.IdSucursal != user.IdSucursal))
@@ -418,6 +419,16 @@ namespace Web.Controllers
                 var cierreCajaActual = ObtenerCajaAbiertaUsuario(user);
                 if (cierreCajaActual == null)
                     return new HttpStatusCodeResult(403, "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS.");
+            }
+
+            if (idPago > 0)
+            {
+                pagoExistente = oCtaCteN.getPagoById(idPago);
+                if (pagoExistente == null)
+                    return HttpNotFound();
+
+                if (idPersona <= 0 && pagoExistente.Persona != null)
+                    idPersona = pagoExistente.Persona.IdPersona;
             }
 
             ViewBag.Sucursales = sucursales;
@@ -456,15 +467,13 @@ namespace Web.Controllers
             }
             else
             {
-                model = oCtaCteN.getPagoById(idPago);
-                if (model == null)
-                    return HttpNotFound();
+                model = pagoExistente;
             }
 
             if (renderParcial)
                 return PartialView("AddOrEditPago", model);
 
-            return View(model);
+            return View("AddOrEditPago", model);
         }
 
         [HttpPost]

@@ -6,9 +6,47 @@
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
     bool showAbrirCajaModal = ViewBag.ShowAbrirCajaModal != null && (bool)ViewBag.ShowAbrirCajaModal;
-    int idConsumidorFinal = Model != null ? Model.IdPersona : 0;
+    int idConsumidorFinal = ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0;
     int idSucursalPOS = ViewBag.IdSucursalPOS != null ? (int)ViewBag.IdSucursalPOS : 0;
     int idUsuarioPOS = Session["Usuario"] != null ? ((Entidades.Usuario)Session["Usuario"]).Id : 0;
+    bool esEdicionVenta = ViewBag.EsEdicionVenta != null && (bool)ViewBag.EsEdicionVenta;
+    bool puedeEditarFechaVenta = ViewBag.PuedeEditarFechaVenta != null && (bool)ViewBag.PuedeEditarFechaVenta;
+    int idVentaEditar = ViewBag.IdVentaEditar != null ? (int)ViewBag.IdVentaEditar : 0;
+    bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
+    string returnUrlPOS = ViewBag.ReturnUrlPOS as string ?? "";
+    int abrirDetalleVentaId = ViewBag.AbrirDetalleVentaId != null ? (int)ViewBag.AbrirDetalleVentaId : 0;
+    string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
+    var lineasActivas = (Model != null && Model.LineasVenta != null)
+        ? Model.LineasVenta.Where(l => !Entidades.LineaVenta.esAnulado(l.Estado)).ToList()
+        : new List<Entidades.LineaVenta>();
+    var lineasAnuladasPorLinea = (Model != null && Model.LineasVenta != null)
+        ? Model.LineasVenta
+            .Where(l => Entidades.LineaVenta.esAnulado(l.Estado) && l.IndexAnulado > 0)
+            .GroupBy(l => l.IndexAnulado)
+            .ToDictionary(g => g.Key, g => g.First())
+        : new Dictionary<int, Entidades.LineaVenta>();
+    var lineasEdicionPos = new List<object>();
+    if (esEdicionVenta)
+    {
+        var indexLinea = 1;
+        foreach (var linea in lineasActivas)
+        {
+            lineasEdicionPos.Add(new
+            {
+                index = indexLinea++,
+                producto = linea.Corte.CorteDesc,
+                codigo = linea.Corte.codigo,
+                cant = Math.Abs(linea.CantKg).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
+                precio = "$ " + linea.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                precioOriginal = "$ " + linea.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                subtotal = "$ " + (Math.Abs(linea.CantKg) * linea.PrecioKg).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                bonificacion = linea.Bonificacion,
+                anulado = lineasAnuladasPorLinea.ContainsKey(linea.IdLineaVenta),
+                indexAnulado = -1,
+                balanza = linea.PesoBalanza
+            });
+        }
+    }
 }
 
 @if (cajaAbierta && Model != null)
@@ -32,14 +70,28 @@
                     </div>
 
                     <div class="pos-fecha">
-                        <span id="fechaHoraPOS" class="font-weight-bold"></span>
-                        <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
+                        @if (puedeEditarFechaVenta)
+                        {
+                            <label for="fechaVentaEditable" class="small d-block mb-1">Fecha y hora</label>
+                            <input type="datetime-local"
+                                   id="fechaVentaEditable"
+                                   class="form-control form-control-sm"
+                                   value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm")" />
+                        }
+                        else
+                        {
+                            <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                        }
+                        <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        <input type="hidden" id="idVentaEditar" value="@idVentaEditar" />
                         <input type="hidden" id="idSucursalPOS" value="@idSucursalPOS" />
+                        <input type="hidden" id="returnUrlPOS" value="@returnUrlPOS" />
                     </div>
                 </div>
 
                 <div class="pos-top-actions">
                     <a class="btn btn-light btn-sm pos-btn-layout"
+                       id="btnSalirPOS"
                        href="@Url.Action("Index", "Home")"
                        title="Volver al sistema">
                         <i class="fas fa-arrow-left"></i>
@@ -114,6 +166,13 @@
                             </div>
 
                             <div class="zona-total">
+                                @if (esEdicionVenta)
+                                {
+                                    <div class="pos-restore-banner">
+                                        <i class="fas fa-pen mr-1"></i>
+                                        @(soloFormaPago ? "Cambiando forma de pago" : "Modificando venta") <strong>#@idVentaEditar</strong>
+                                    </div>
+                                }
                                 <div id="posVentaRestaurada" class="pos-restore-banner d-none">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
                                     Venta restaurada. Debe presionar <strong>Cancelar Venta</strong> para salir.
@@ -270,8 +329,8 @@
                                 <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
                                     <i class="fas fa-cash-register"></i>
                                     <span>
-                                        <strong>Finalizar</strong>
-                                        <small>y cobrar</small>
+                                        <strong>@(esEdicionVenta ? "Guardar" : "Finalizar")</strong>
+                                        <small>@(esEdicionVenta ? "cambios" : "y cobrar")</small>
                                     </span>
                                 </button>
                             </div>
@@ -283,7 +342,7 @@
                                 <div class="zona-botones">
                                     <div class="row g-2">
                                         <div class="col-4">
-                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>Cancelar Venta</button>
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>@(esEdicionVenta ? "Salir edición" : "Cancelar Venta")</button>
                                         </div>
                                         <div class="col-4">
                                             <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
@@ -516,6 +575,30 @@ else
     </div>
 </div>
 
+<style>
+    #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
+        max-width: 760px;
+        width: calc(100% - 1rem);
+        margin: 1.75rem auto;
+    }
+
+    #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
+        padding: 1rem !important;
+        background-color: #f8f9fc;
+    }
+
+    @@media (max-width: 767.98px) {
+        #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
+            width: calc(100% - .75rem);
+            margin: .5rem auto;
+        }
+
+        #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
+            padding: .5rem !important;
+        }
+    }
+</style>
+
 <div class="modal fade" id="modalPagoPOS" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div class="modal-content">
@@ -554,13 +637,13 @@ else
 
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=9")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=12")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=3")"></script>
     <script>
     window.EgresosCajaUrls = {
         listar: '@Url.Action("EgresosCaja", "Cajas")',
@@ -736,10 +819,46 @@ else
     // ===== ESTADO POS EN MEMORIA =====
     const POSState = window.POSState;
     const carrito = POSState.getLineas();
+    const esEdicionVenta = @(esEdicionVenta ? "true" : "false");
+    const soloFormaPago = @(soloFormaPago ? "true" : "false");
+    const puedeEditarFechaVenta = @(puedeEditarFechaVenta ? "true" : "false");
+    const lineasEdicionPos = @Html.Raw(Json.Encode(lineasEdicionPos));
     POSState.setFechaVenta(new Date());
     POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
     window.POSFinalizandoVenta = false;
     window.POSVentaFinalizada = false;
+    window.POSSoloFormaPagoGuardado = false;
+    window.POSModo = window.POSModo || {};
+    window.POSModo.soloFormaPago = soloFormaPago;
+    window.POSModo.returnUrl = @Html.Raw(Json.Encode(returnUrlPOS));
+    window.POSModo.abrirDetalleVentaId = @abrirDetalleVentaId;
+    window.POSModo.returnUrlDetalle = @Html.Raw(Json.Encode(returnUrlDetalle));
+    window.POSFormaPagoActual = {
+        formaPago: @Html.Raw(Json.Encode(Model != null ? Model.FormaPago ?? "" : "")),
+        pagoMixtoEfectivo: @Html.Raw(Json.Encode(Model != null ? Model.PagoMixtoEfectivo : 0f)),
+        total: @Html.Raw(Json.Encode(Model != null ? Model.TotalImporte : 0f))
+    };
+
+    function getFechaVentaPOS() {
+        return $("#fechaVentaEditable").length ? $("#fechaVentaEditable").val() : $("#fechaVenta").val();
+    }
+
+    function setFechaVentaPOS(value) {
+        if (!value) return;
+        $("#fechaVenta").val(value);
+        if ($("#fechaVentaEditable").length) {
+            $("#fechaVentaEditable").val(String(value).slice(0, 16));
+        }
+    }
+
+    if ($("#fechaVentaEditable").length) {
+        $("#fechaVentaEditable").on("change input", function () {
+            const value = $(this).val();
+            if (value) {
+                $("#fechaVenta").val(value);
+            }
+        });
+    }
 
     window.POSDraft = window.POSDraft || (function () {
         const keyBase = "carnisys-pos-venta-en-curso";
@@ -761,6 +880,11 @@ else
         }
 
         function save() {
+            if (esEdicionVenta) {
+                clear();
+                return;
+            }
+
             if (window.POSFinalizandoVenta || window.POSVentaFinalizada) {
                 localStorage.removeItem(key);
                 localStorage.removeItem(legacyKey);
@@ -783,7 +907,7 @@ else
                 idPersona: $("#idPersona").val(),
                 razonSocial: $("#razonSocial").val(),
                 observaciones: POSState.getObservaciones(),
-                fechaVenta: $("#fechaVenta").val()
+                fechaVenta: getFechaVentaPOS()
             }));
 
             localStorage.removeItem(legacyKey);
@@ -857,7 +981,7 @@ else
             if (draft.idPersona) $("#idPersona").val(draft.idPersona);
             if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
             if (draft.observaciones != null) POSState.setObservaciones(draft.observaciones);
-            if (draft.fechaVenta) $("#fechaVenta").val(draft.fechaVenta);
+            if (draft.fechaVenta) setFechaVentaPOS(draft.fechaVenta);
 
             return true;
         }
@@ -876,18 +1000,19 @@ else
         };
     })();
 
-    const ventaRestauradaPOS = window.POSDraft.restore();
+    const ventaRestauradaPOS = esEdicionVenta ? false : window.POSDraft.restore();
 
     (function () {
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         function actualizarFechaHora() {
+            if (esEdicionVenta) return;
             if (!(carrito.length === 0 || carrito.length === 1)) return;
 
             const ahora = new Date();
             const fechaSql = ahora.toISOString().slice(0, 19);
-            $('#fechaVenta').val(fechaSql);
+            setFechaVentaPOS(fechaSql);
 
             const diaSemana = dias[ahora.getDay()];
             const dia = ahora.getDate();
@@ -1048,6 +1173,7 @@ else
     });
 
     posProduct = window.POSProduct.create({
+        soloFormaPago: soloFormaPago,
         calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
         addProduct: function () { return posCart ? posCart.addProduct() : null; },
         getInputActivo: function () { return posKeyboard.getInputActivo(); },
@@ -1057,6 +1183,7 @@ else
 
     posCart = window.POSCart.create({
         POSState: POSState,
+        soloFormaPago: soloFormaPago,
         getProductoSeleccionado: function () { return posProduct.getProductoSeleccionado(); },
         setProductoSeleccionado: function (value) { return posProduct.setProductoSeleccionado(value); },
         getPrecioActual: function () { return posProduct.getPrecioActual(); },
@@ -1075,7 +1202,27 @@ else
     posHelp.init();
     posComment.init();
 
-    if (ventaRestauradaPOS) {
+    if (esEdicionVenta) {
+        window.POSState.setLineas(lineasEdicionPos || []);
+        posCart.renderTable(window.POSState.getLineas());
+        posCart.recalculateTotal();
+        posCart.updateSaleState();
+        posCart.updateCartSummary?.();
+        posComment.updateButtonState?.();
+
+        if (!puedeEditarFechaVenta) {
+            const fechaEdicion = getFechaVentaPOS();
+            if (fechaEdicion) {
+                const fecha = new Date(fechaEdicion);
+                if (!isNaN(fecha.getTime())) {
+                    const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    const formato = `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}, ${fecha.getFullYear()} · ${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
+                    $("#fechaHoraPOS").text(formato);
+                }
+            }
+        }
+    } else if (ventaRestauradaPOS) {
         posCart.renderTable(window.POSState.getLineas());
         posCart.recalculateTotal();
         posCart.updateSaleState();
@@ -1092,6 +1239,39 @@ else
         window.POSDraft?.save?.();
     }, 1000);
 
+    function volverDesdeSoloFormaPago() {
+        var returnUrl = window.POSModo?.returnUrl || $("#returnUrlPOS").val() || "";
+        window.desactivarAvisoSalidaPOS?.();
+        if (returnUrl) {
+            window.location.href = returnUrl;
+            return;
+        }
+
+        window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + encodeURIComponent($("#idVentaEditar").val());
+    }
+
+    function aplicarModoSoloFormaPago() {
+        if (!soloFormaPago) return;
+
+        $("body").addClass("pos-solo-forma-pago");
+        $("#inputCodigo, #inputCantidad, #fechaVentaEditable, #btnAgregarManual, #btnBuscarPersona, #btnConsumidorFinal, #btnScanner")
+            .prop("disabled", true)
+            .attr("readonly", "readonly");
+        $("#tablaItems").addClass("pos-bloqueado");
+        $("#btnSalirPOS").attr("href", $("#returnUrlPOS").val() || '@Url.Action("DetalleVenta", "Ventas")?id=' + encodeURIComponent($("#idVentaEditar").val()));
+
+        setTimeout(function () {
+            const abierto = window.POSGuard
+                ? window.POSGuard.requestModalOpen('formaPago', function () {
+                    $('#modalFormaPago').modal('show');
+                })
+                : true;
+
+            if (!abierto) return;
+            window.preCargarFormaPagoActual?.();
+        }, 250);
+    }
+
     let cancelandoVentaPOS = false;
     let indicesCancelacionPOS = [];
 
@@ -1099,6 +1279,7 @@ else
         window.POSFinalizandoVenta = false;
         window.POSVentaFinalizada = false;
         window.POSCancelacionEnCurso = false;
+        window.POSSoloFormaPagoGuardado = false;
         cancelandoVentaPOS = false;
         indicesCancelacionPOS = [];
 
@@ -1107,7 +1288,7 @@ else
 
         const ahora = new Date();
         POSState.setFechaVenta(ahora);
-        $("#fechaVenta").val(ahora.toISOString().slice(0, 19));
+        setFechaVentaPOS(ahora.toISOString().slice(0, 19));
         $("#idPersona").val('@idConsumidorFinal');
         $("#razonSocial").val('Consumidor Final');
         $("#inputCodigo").val("");
@@ -1195,12 +1376,13 @@ else
 
         if (!href || href === "#" || href.indexOf("javascript:") === 0) return;
         if ($(this).data("pos-ajax") === true || $(this).attr("data-pos-ajax") === "true") return;
+        if ($(this).attr("data-pos-descarga") === "true") return;
         if ($(this).attr("data-toggle") === "modal" || $(this).attr("data-dismiss") === "modal") return;
 
         bloquearSalidaSiVentaEnCurso(e);
     });
 
-    $("#btnCancelarItem").off("click.posCancelarVenta").on("click.posCancelarVenta", function () {
+    function guardarVentaAnuladaDirectamente(omitirPostVenta) {
         if (cancelandoVentaPOS) return;
 
         const lineas = window.POSState?.getLineas?.() || [];
@@ -1217,6 +1399,52 @@ else
             return;
         }
 
+        cancelandoVentaPOS = true;
+        window.POSCancelacionEnCurso = true;
+        indicesCancelacionPOS = lineasActivas.map(function (linea) {
+            return linea.index;
+        });
+        $("#btnCancelarItem").prop("disabled", true);
+
+        lineasActivas.forEach(function (linea) {
+            window.POSState.anularLinea(linea.index);
+        });
+
+        posCart.renderTable(window.POSState.getLineas());
+        posCart.recalculateTotal();
+        posCart.updateSaleState();
+
+        finalizarVenta({
+            formaPago: "Efectivo",
+            esPagoMixto: false,
+            efectivo: 0,
+            idPersona: $("#idPersona").val(),
+            omitirPostVenta: omitirPostVenta === true
+        });
+    }
+
+    $("#btnCancelarItem").off("click.posCancelarVenta").on("click.posCancelarVenta", function () {
+        if (soloFormaPago) {
+            volverDesdeSoloFormaPago();
+            return;
+        }
+
+        if (esEdicionVenta) {
+            Swal.fire({
+                icon: "warning",
+                title: "¿Salir de la edición?",
+                text: "Se descartarán los cambios no guardados.",
+                showCancelButton: true,
+                confirmButtonText: "Sí",
+                cancelButtonText: "No"
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                window.desactivarAvisoSalidaPOS?.();
+                window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + encodeURIComponent($("#idVentaEditar").val());
+            });
+            return;
+        }
+
         Swal.fire({
             icon: "warning",
             title: "¿Realmente desea cancelar la venta?",
@@ -1225,29 +1453,7 @@ else
             cancelButtonText: "No"
         }).then(function (result) {
             if (!result.isConfirmed) return;
-
-            cancelandoVentaPOS = true;
-            window.POSCancelacionEnCurso = true;
-            indicesCancelacionPOS = lineasActivas.map(function (linea) {
-                return linea.index;
-            });
-            $("#btnCancelarItem").prop("disabled", true);
-
-            lineasActivas.forEach(function (linea) {
-                window.POSState.anularLinea(linea.index);
-            });
-
-            posCart.renderTable(window.POSState.getLineas());
-            posCart.recalculateTotal();
-            posCart.updateSaleState();
-
-            finalizarVenta({
-                formaPago: "Efectivo",
-                esPagoMixto: false,
-                efectivo: 0,
-                idPersona: $("#idPersona").val(),
-                omitirPostVenta: true
-            });
+            guardarVentaAnuladaDirectamente(true);
         });
     });
 
@@ -1287,6 +1493,10 @@ else
 
 
     $('#btnFinalizar').on('click', function () {
+        if (soloFormaPago) {
+            window.preCargarFormaPagoActual?.();
+        }
+
         const lineasActuales = window.POSState?.getLineas?.() || [];
         const tieneLineasActivas = lineasActuales.some(function (linea) {
             return linea && !linea.anulado;
@@ -1302,11 +1512,7 @@ else
         }
 
         if (!tieneLineasActivas) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Venta anulada',
-                text: 'Para cerrar una venta anulada debe presionar "Cancelar Venta".'
-            });
+            guardarVentaAnuladaDirectamente(!esEdicionVenta);
             return;
         }
 
@@ -1339,16 +1545,33 @@ else
 
     $(document).ready(configurarInputsPOS);
     $(window).on('resize', configurarInputsPOS);
+    $(document).on('hidden.bs.modal.posSoloFormaPago', '#modalFormaPago', function () {
+        if (!soloFormaPago) return;
+        if (window.POSSoloFormaPagoGuardado) return;
+        volverDesdeSoloFormaPago();
+    });
+    aplicarModoSoloFormaPago();
+    if (!soloFormaPago && !esEdicionVenta && (window.POSModo?.abrirDetalleVentaId || 0) > 0) {
+        setTimeout(function () {
+            window.POSVentas?.abrirDetalle?.(window.POSModo.abrirDetalleVentaId, window.POSModo?.returnUrlDetalle || "");
+        }, 250);
+    }
 
     // URLs MVC
     window.api = window.api || {};
     window.api.venta = {
         finalizar: '@Url.Action("FinalizarVenta", "Ventas")',
+        modificar: '@Url.Action("ModificarVenta", "Ventas")',
+        detalle: '@Url.Action("DetalleVenta", "Ventas")',
         imprimir: '@Url.Action("ImprimirTicket", "Ventas")',
     };
     window.api.persona = {
         listar: '@Url.Action("Listar", "Personas")',
         buscar: '@Url.Action("Buscar", "Personas")'
+    };
+    window.VentasUrls = {
+        mis: '@Url.Action("MisVentas", "Ventas", new { desdePos = true })',
+        detalle: '@Url.Action("DetalleVenta", "Ventas")'
     };
 
     // FULLSCREEN + recordar al recargar
@@ -1568,7 +1791,11 @@ else
                     return;
                 }
 
-                $("#modalFinanzasPOS").removeClass("modal-egreso-pos-compacto");
+                var esDetalleVenta = !!url && url.indexOf("/Ventas/DetalleVenta") >= 0;
+
+                $("#modalFinanzasPOS")
+                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto")
+                    .toggleClass("modal-detalle-venta-pos-compacto", esDetalleVenta);
                 $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                 $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
 
@@ -1735,6 +1962,21 @@ else
 
             abrirNuevo: function () {
                 this.cargarEnModal(window.EgresosCajaUrls.nuevo, "Nuevo Egreso de Caja", true);
+            }
+        };
+
+        window.POSVentas = {
+            abrirMis: function () {
+                window.POSFinanzas.cargar(window.VentasUrls.mis, "Mis ventas");
+            },
+            abrirDetalle: function (idVenta, returnUrlDetalle) {
+                var url = window.VentasUrls.detalle
+                    + '?id=' + encodeURIComponent(idVenta)
+                    + '&modal=true&desdePos=true';
+                if (returnUrlDetalle) {
+                    url += '&returnUrl=' + encodeURIComponent(returnUrlDetalle);
+                }
+                window.POSFinanzas.cargar(url, "Detalle de venta");
             }
         };
 
@@ -1920,6 +2162,11 @@ else
             padding-top: .10rem;
             padding-bottom: .10rem;
         }
+
+    body.pos-solo-forma-pago #tablaItems.pos-bloqueado {
+        pointer-events: none;
+        opacity: .9;
+    }
 
     .pos-empresa {
         font-weight: 700;
