@@ -12,6 +12,11 @@
     string persona = ViewBag.Persona.RazonSocial;
     decimal saldo = ViewBag.SaldoPersona;
     string fechaDesde = ViewBag.FechaDesde ?? "";
+    string returnUrlCtaCte = ViewBag.ReturnUrlCtaCte as string ?? "";
+    bool mostrarBotonVolver = !desdePos && !renderSinLayout;
+    string hrefBotonVolver = !string.IsNullOrWhiteSpace(returnUrlCtaCte)
+        ? returnUrlCtaCte
+        : Url.Action("CtasCtes", "Finanzas");
     var returnUrl = Convert.ToBase64String(
          System.Text.Encoding.UTF8.GetBytes(Request.RawUrl)
      );
@@ -41,12 +46,18 @@
     }
 }
 
-<div class="container-fluid p-0" style="@(desdePos ? "display:flex; flex-direction:column;" : "height:100vh; display:flex; flex-direction:column;")">
+<div id="ctactePersonaContainer" class="container-fluid p-0" style="@(desdePos ? "display:flex; flex-direction:column;" : "height:100vh; display:flex; flex-direction:column;")">
     <!-- =======================
          CABECERA PERSONA + SALDO
          ======================= -->
     <div class="alert alert-primary d-flex justify-content-between align-items-center">
-        <div>
+        <div class="d-flex align-items-center">
+            @if (mostrarBotonVolver)
+            {
+                <a href="@hrefBotonVolver" class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverCtasCtesPersona">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            }
             <h5 class="mb-0"><strong>@persona</strong></h5>
         </div>
         <div>
@@ -77,7 +88,11 @@
 
                 <input type="hidden" name="idPersona" value="@ViewBag.IdPersona" />
                 <input type="hidden" name="desdePos" value="@(desdePos.ToString().ToLower())" />
-                <input type="hidden" name="mostrarAnulados" id="mostrarAnuladosHidden" value="@(mostrarAnulados.ToString().ToLower())" />
+                @if (desdePos)
+                {
+                    <input type="hidden" name="mostrarAnulados" id="mostrarAnuladosHidden" value="@(mostrarAnulados.ToString().ToLower())" />
+                }
+                <input type="hidden" name="returnUrl" value="@returnUrlCtaCte" />
 
                 <!-- FECHA + FILTRAR: usamos input-group para que queden SIEMPRE en la misma línea -->
                 <div class="input-group mb-3" style="max-width: 520px;">
@@ -92,10 +107,23 @@
                     </div>
 
                     <div class="custom-control custom-switch">
-                        <input type="checkbox"
-                               class="custom-control-input"
-                               id="chkMostrarAnulados"
-                               @(mostrarAnulados ? "checked" : "") />
+                        @if (!desdePos)
+                        {
+                            <input type="checkbox"
+                                   class="custom-control-input"
+                                   id="chkMostrarAnulados"
+                                   name="mostrarAnulados"
+                                   value="true"
+                                   onchange="this.form.submit();"
+                                   @(mostrarAnulados ? "checked" : "") />
+                        }
+                        else
+                        {
+                            <input type="checkbox"
+                                   class="custom-control-input"
+                                   id="chkMostrarAnulados"
+                                   @(mostrarAnulados ? "checked" : "") />
+                        }
                         <label class="custom-control-label" for="chkMostrarAnulados">
                             Mostrar anulados
                         </label>
@@ -300,8 +328,14 @@
         $(document)
             .off("change.ctacteMostrarAnulados", "#chkMostrarAnulados")
             .on("change.ctacteMostrarAnulados", "#chkMostrarAnulados", function () {
+                if (!desdePos) {
+                    return;
+                }
+
                 $("#mostrarAnuladosHidden").val(this.checked ? "true" : "false");
-                $(this).closest("form").trigger("submit");
+
+                var $form = $(this).closest("form");
+                $form.trigger("submit");
             });
 
         $(document)
@@ -311,8 +345,6 @@
             });
     })();
 </script>
-
-}
 
 <style>
     #tablaPersona td, #tablaPersona th {

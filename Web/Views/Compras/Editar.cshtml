@@ -146,6 +146,15 @@
 
                 <div id="panelLineaCorte" class="compra-linea-panel" @(mostrarMediaInicial ? new HtmlString("style=\"display:none;\"") : null)>
                     <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar producto</h6>
+                    <div class="custom-control custom-switch mb-3">
+                        <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
+                        <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
+                    </div>
+                    <div id="panelCargaContinuaProducto" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
+                        <div><strong>Producto en carga:</strong> <span id="lblProductoContinuo">-</span></div>
+                        <div><strong>Precio compra:</strong> <span id="lblPrecioContinuo">-</span></div>
+                    </div>
+                    <div id="alertUltimoAgregadoProducto" class="alert alert-success py-2 px-3 mb-3" style="display:none;"></div>
                     <div class="row">
                         <div class="col-12 col-md-2">
                             <div class="form-group">
@@ -252,8 +261,6 @@
                         </div>
                     </div>
 
-                    <div id="alertUltimoAgregado" class="alert alert-success py-2 px-3 mb-3" style="display:none;"></div>
-
                     <div class="d-flex align-items-center justify-content-end flex-wrap mb-3">
                         <button type="button" class="btn btn-primary mt-2 mt-md-0" id="btnAgregarLineaCorte">
                             <i class="fas fa-plus"></i> Agregar producto
@@ -263,20 +270,23 @@
 
                 <div id="panelLineaMediaRes" class="compra-linea-panel" @(mostrarMediaInicial ? null : new HtmlString("style=\"display:none;\""))>
                     <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar media</h6>
+                    <div class="custom-control custom-switch mb-3">
+                        <input type="checkbox" class="custom-control-input" id="chkCargaContinuaMedia" />
+                        <label class="custom-control-label" for="chkCargaContinuaMedia">Cargar varias medias con el mismo precio</label>
+                    </div>
+                    <div id="panelCargaContinuaMedia" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
+                        <div><strong>Precio media en carga:</strong> <span id="lblPrecioMediaContinuo">-</span></div>
+                    </div>
+                    <div id="alertUltimoAgregadoMedia" class="alert alert-success py-2 px-3 mb-3" style="display:none;"></div>
                     <div class="row">
-                        <div class="col-12 col-md-4">
-                            <div class="form-group">
-                                <label for="txtNroTropa">Nro. tropa</label>
-                                <input type="text" id="txtNroTropa" class="form-control" maxlength="100" />
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-4">
+                        <input type="hidden" id="txtNroTropa" />
+                        <div class="col-6 col-md-6">
                             <div class="form-group">
                                 <label for="txtKgMedia">Kg media</label>
                                 <input type="number" id="txtKgMedia" class="form-control" min="0" step="0.01" />
                             </div>
                         </div>
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-6">
                             <div class="form-group">
                                 <label for="txtPrecioMedia">Precio media</label>
                                 <input type="number" id="txtPrecioMedia" class="form-control" min="0" step="0.01" />
@@ -295,7 +305,7 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>Detalle</th>
-                                <th class="text-right">Kg</th>
+                                <th class="text-right">Cantidad</th>
                                 <th class="text-right">Precio</th>
                                 <th class="text-right">P. venta</th>
                                 <th class="text-right">Margen</th>
@@ -364,12 +374,12 @@
                                 <strong id="totalItems">@Model.CantItems</strong>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Total kg</span>
+                                <span>Total cantidad</span>
                                 <strong id="totalKg">@Model.TotalKg.ToString("0.00")</strong>
                             </div>
                             <div class="d-flex justify-content-between">
                                 <span>Total compra</span>
-                                <strong id="totalImporte">@Model.TotalImporte.ToString("0.00")</strong>
+                                <strong id="totalImporte">$ @Model.TotalImporte.ToString("0.00")</strong>
                             </div>
                         </div>
                     </div>
@@ -406,7 +416,7 @@
 
 @if (Model.DesdePos)
 {
-    <script src="@Url.Content("~/Scripts/app/compras.js?v=9")"></script>
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=10")"></script>
     <script>
         (function () {
             if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
@@ -437,7 +447,7 @@
 else
 {
     @section Scripts {
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=9")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=10")"></script>
         <script>
             (function () {
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {

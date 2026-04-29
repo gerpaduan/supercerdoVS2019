@@ -144,6 +144,32 @@
         return toNumber($form.find('#txtCantKgs').val()) * getAdjustedUnitPrice($form);
     }
 
+    function isContinuousProductMode($form) {
+        return $form.find('#chkCargaContinuaProducto').is(':checked');
+    }
+
+    function isContinuousMediaMode($form) {
+        return $form.find('#chkCargaContinuaMedia').is(':checked');
+    }
+
+    function syncContinuousProductState($form) {
+        var enabled = isContinuousProductMode($form);
+        var productName = $.trim($form.find('#txtProductoNombre').val() || '');
+        var priceText = $.trim($form.find('#txtPrecioKg').val() || '');
+
+        $form.find('#panelCargaContinuaProducto').toggle(enabled);
+        $form.find('#lblProductoContinuo').text(productName || '-');
+        $form.find('#lblPrecioContinuo').text(priceText ? formatNumber(priceText) : '-');
+    }
+
+    function syncContinuousMediaState($form) {
+        var enabled = isContinuousMediaMode($form);
+        var priceText = $.trim($form.find('#txtPrecioMedia').val() || '');
+
+        $form.find('#panelCargaContinuaMedia').toggle(enabled);
+        $form.find('#lblPrecioMediaContinuo').text(priceText ? formatNumber(priceText) : '-');
+    }
+
     function updateSubtotalPreview($form) {
         $form.find('#txtSubtotalLinea').val(formatNumber(getCurrentSubtotal($form)));
     }
@@ -201,6 +227,7 @@
         $form.find('#panelIva').toggle($form.find('#chkAplicarIva').is(':checked'));
         updateSubtotalPreview($form);
         syncPrecioVentaMargen($form, source);
+        syncContinuousProductState($form);
     }
 
     function clearProductoInputs($form, preserveCode) {
@@ -225,10 +252,21 @@
         syncPriceHelpers($form, 'reset');
     }
 
+    function clearProductoCantidadOnly($form) {
+        $form.find('#txtCantKgs').val('');
+        $form.find('#txtSubtotalLinea').val('');
+        syncPriceHelpers($form, 'change');
+    }
+
     function clearMediaResInputs($form) {
         $form.find('#txtNroTropa').val('');
         $form.find('#txtKgMedia').val('');
         $form.find('#txtPrecioMedia').val('');
+        syncContinuousMediaState($form);
+    }
+
+    function clearMediaResCantidadOnly($form) {
+        $form.find('#txtKgMedia').val('');
     }
 
     function setProductoActual($form, producto) {
@@ -240,9 +278,9 @@
         syncPriceHelpers($form, 'producto');
     }
 
-    function showUltimoAgregado($form, message) {
+    function showUltimoAgregado($form, message, alertSelector) {
         var state = getState($form);
-        var $alert = $form.find('#alertUltimoAgregado');
+        var $alert = $form.find(alertSelector || '#alertUltimoAgregadoProducto');
         if (!$alert.length) return;
 
         window.clearTimeout(state.ultimoAgregadoTimer);
@@ -300,7 +338,7 @@
             if (linea.tipoLinea === 'MediaRes') {
                 var totalMedia = toNumber(linea.kgMedia) * toNumber(linea.precioMedia);
                 html += '<tr data-index="' + index + '">'
-                    + '<td><strong>Tropa:</strong> ' + escapeHtml(linea.nroTropa || '-') + '</td>'
+                    + '<td><strong>Media</strong></td>'
                     + '<td class="text-right">' + formatNumber(linea.kgMedia) + '</td>'
                     + '<td class="text-right">' + formatNumber(linea.precioMedia) + '</td>'
                     + '<td class="text-right">-</td>'
@@ -609,17 +647,22 @@
         state.lineas.push(linea);
         renderLineas($form);
         rebuildHiddenInputs($form);
-        showUltimoAgregado($form, 'Agregado correctamente: ' + linea.corteNombre + ' | Cantidad ' + formatNumber(linea.cantKgs) + ' | Precio ' + formatNumber(linea.precioKg));
-        clearProductoInputs($form);
+        showUltimoAgregado($form, 'Agregado correctamente: ' + linea.corteNombre + ' | Cantidad ' + formatNumber(linea.cantKgs) + ' | Precio ' + formatNumber(linea.precioKg), '#alertUltimoAgregadoProducto');
         scheduleDraft($form);
-        $form.find('#txtCodigoProducto').focus();
+        if (isContinuousProductMode($form)) {
+            clearProductoCantidadOnly($form);
+            $form.find('#txtCantKgs').focus().select();
+        } else {
+            clearProductoInputs($form);
+            $form.find('#txtCodigoProducto').focus();
+        }
     }
 
     function addLineaMediaRes($form) {
         var state = getState($form);
         var linea = {
             tipoLinea: 'MediaRes',
-            nroTropa: $form.find('#txtNroTropa').val(),
+            nroTropa: '',
             kgMedia: toNumber($form.find('#txtKgMedia').val()),
             precioMedia: toNumber($form.find('#txtPrecioMedia').val())
         };
@@ -636,10 +679,16 @@
         state.lineas.push(linea);
         renderLineas($form);
         rebuildHiddenInputs($form);
-        showUltimoAgregado($form, 'Agregado correctamente: Tropa ' + (linea.nroTropa || '-') + ' | Kg ' + formatNumber(linea.kgMedia) + ' | Precio ' + formatNumber(linea.precioMedia));
-        clearMediaResInputs($form);
+        showUltimoAgregado($form, 'Agregado correctamente: Media | Kg ' + formatNumber(linea.kgMedia) + ' | Precio ' + formatNumber(linea.precioMedia), '#alertUltimoAgregadoMedia');
         scheduleDraft($form);
-        $form.find('#txtNroTropa').focus();
+        if (isContinuousMediaMode($form)) {
+            clearMediaResCantidadOnly($form);
+            syncContinuousMediaState($form);
+            $form.find('#txtKgMedia').focus().select();
+        } else {
+            clearMediaResInputs($form);
+            $form.find('#txtKgMedia').focus();
+        }
     }
 
     function focusNextAfterPrice($form) {
@@ -659,6 +708,10 @@
             }
             return;
         }
+        if (isContinuousProductMode($form)) {
+            $form.find('#txtCantKgs').focus().select();
+            return;
+        }
         $form.find('#btnAgregarLineaCorte').focus();
     }
 
@@ -669,6 +722,10 @@
             } else {
                 $form.find('#txtPrecioVenta').focus().select();
             }
+            return;
+        }
+        if (isContinuousProductMode($form)) {
+            $form.find('#txtCantKgs').focus().select();
             return;
         }
         $form.find('#btnAgregarLineaCorte').focus();
@@ -740,6 +797,14 @@
 
         $form.on('input.compras change.compras', '#txtCantKgs, #txtPrecioKg, #txtDescRecargo, #txtIvaCompra, #txtMargen, #txtPrecioVenta, #chkAplicarDescRecargo, #chkAplicarIva, #chkAplicarPrecioVentaMargen, #optMargen, #optPrecioVenta', function () {
             syncPriceHelpers($form, this.id === 'txtPrecioVenta' || this.id === 'txtMargen' ? 'manual' : 'change');
+        });
+
+        $form.on('input.compras change.compras', '#txtPrecioMedia, #chkCargaContinuaMedia', function () {
+            syncContinuousMediaState($form);
+        });
+
+        $form.on('change.compras', '#chkCargaContinuaProducto', function () {
+            syncContinuousProductState($form);
         });
 
         $form.on('click.compras', '#btnBuscarProveedor', function () {
@@ -818,6 +883,10 @@
         $form.on('keydown.compras', '#txtCantKgs', function (e) {
             if (e.key !== 'Enter') return;
             e.preventDefault();
+            if (isContinuousProductMode($form)) {
+                addLineaCorte($form);
+                return;
+            }
             $form.find('#txtPrecioKg').focus().select();
         });
 
@@ -855,6 +924,26 @@
             if (e.key !== 'Enter') return;
             e.preventDefault();
             $form.find('#btnAgregarLineaCorte').focus();
+        });
+
+        $form.on('keydown.compras', '#txtKgMedia', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (isContinuousMediaMode($form)) {
+                addLineaMediaRes($form);
+                return;
+            }
+            $form.find('#txtPrecioMedia').focus().select();
+        });
+
+        $form.on('keydown.compras', '#txtPrecioMedia', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (isContinuousMediaMode($form)) {
+                $form.find('#txtKgMedia').focus().select();
+                return;
+            }
+            $form.find('#btnAgregarLineaMediaRes').focus();
         });
 
         $(document)
@@ -903,6 +992,12 @@
         });
 
         $form.on('click.compras', '#btnAgregarLineaMediaRes', function () {
+            addLineaMediaRes($form);
+        });
+
+        $form.on('keydown.compras', '#btnAgregarLineaMediaRes', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
             addLineaMediaRes($form);
         });
 
@@ -984,6 +1079,8 @@
         setState($form, state);
         syncTipoPanels($form);
         syncPriceHelpers($form, 'init');
+        syncContinuousProductState($form);
+        syncContinuousMediaState($form);
         renderLineas($form);
         rebuildHiddenInputs($form);
 

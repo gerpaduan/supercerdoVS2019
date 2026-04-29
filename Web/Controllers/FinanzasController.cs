@@ -178,7 +178,7 @@ namespace Web.Controllers
         }
 
         // GET: Finanzas/CtaCtePersona
-        public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, bool desdePos = false)
+        public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, bool desdePos = false, string returnUrl = "")
         {
             bool modoPos = desdePos || DesdePOS;
             bool renderParcial = modoPos || Request.IsAjaxRequest();
@@ -219,6 +219,7 @@ namespace Web.Controllers
                 ViewBag.IdPersona = idPersona;
                 ViewBag.Persona = oPersonasN.findById(idPersona);
                 ViewBag.SaldoPersona = saldo;
+                ViewBag.ReturnUrlCtaCte = DecodeReturnUrlIfNeeded(returnUrl);
                 ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd");
                 ViewBag.MostrarAnulados = mostrarAnulados;
                 ViewBag.DesdePOS = modoPos;

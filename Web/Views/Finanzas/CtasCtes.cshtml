@@ -70,9 +70,17 @@
                         @foreach (System.Data.DataRow row in Model.Rows)
                         {
                             <tr onclick="irACtaCte(this)" style="cursor:pointer;">
-                                @foreach (var item in row.ItemArray)
+                                @foreach (System.Data.DataColumn col in Model.Columns)
                                 {
-                                    <td>@item</td>
+                                    if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        decimal saldoFila = row[col] == DBNull.Value ? 0m : Convert.ToDecimal(row[col]);
+                                        <td>@saldoFila.ToString("N2")</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@row[col]</td>
+                                    }
                                 }
                             </tr>
                         }
@@ -96,6 +104,7 @@
         let url = '@Url.Action("CtaCtePersona", "Finanzas")'
                   + '?idPersona=' + encodeURIComponent(id)
                   + '&fechaDesde=' + encodeURIComponent(fechaDesde)
+                  + '&returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search)
                   + '&desdePos=@(desdePos.ToString().ToLower())';
 
         if (@Html.Raw(desdePos.ToString().ToLower()) && window.POSFinanzas) {
