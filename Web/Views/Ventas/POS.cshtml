@@ -1965,6 +1965,13 @@ else
             }
         };
 
+        window.POSCompras = {
+            abrirNueva: function () {
+                var url = '@Url.Action("NuevaCompra", "Compras", new { origen = "pos" })';
+                window.POSFinanzas.cargar(url, "Nueva compra");
+            }
+        };
+
         window.POSVentas = {
             abrirMis: function () {
                 window.POSFinanzas.cargar(window.VentasUrls.mis, "Mis ventas");
@@ -1988,6 +1995,10 @@ else
         window.posHotkeysHooks = window.posHotkeysHooks || {};
         window.posHotkeysHooks.F2 = function () {
             window.POSFinanzas.abrirCtasCtes();
+        };
+
+        window.posHotkeysHooks.F5 = function () {
+            window.POSCompras.abrirNueva();
         };
 
         window.posHotkeysHooks.F6 = function () {

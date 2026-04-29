@@ -1,0 +1,468 @@
+@model Web.Models.CompraEditVm
+@using System
+@using System.Collections.Generic
+@using System.Web.Helpers
+@using Entidades
+
+@{
+    Layout = Model.DesdePos ? null : "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = Model.EsEdicion ? "Modificar Compra" : "Nueva Compra";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    var modalProductoData = new ViewDataDictionary
+    {
+        { "ModalId", "modalBuscarProductoCompra" },
+        { "ApiUrl", Url.Action("BuscarCorte", "Compras") },
+        { "Titulo", "Buscar Producto de Compra" },
+        { "MostrarPrecio", "true" }
+    };
+    string tipoCortes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);
+    string tipoMediaRes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes);
+    bool permiteMediaRes = Model.EmpresaCuit == 20306210786;
+    bool mostrarSelectorTipo = permiteMediaRes;
+    string tipoCompraInicial = !permiteMediaRes && !Model.EsEdicion ? tipoCortes : (string.IsNullOrWhiteSpace(Model.TipoCompra) ? tipoCortes : Model.TipoCompra);
+    bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="container-fluid px-2 px-md-3 compra-page" data-compra-page="1">
+    <div id="compraDraftBanner" class="alert alert-warning d-none" role="alert">
+        Se encontró un borrador local de esta compra.
+        <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form id="formCompra" method="post" action="@Url.Action("Guardar", "Compras")" novalidate>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IdCompra)
+                @Html.HiddenFor(m => m.Origen)
+                @Html.HiddenFor(m => m.DraftKey)
+                @Html.HiddenFor(m => m.EmpresaCuit)
+                @Html.HiddenFor(m => m.KgsMedias, new { id = "KgsMedias" })
+                <input type="hidden" id="idPersona" name="IdProveedor" value="@Model.IdProveedor" />
+                <div id="lineasHiddenContainer"></div>
+
+                <div class="row">
+                    @if (mostrarSelectorTipo)
+                    {
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label for="TipoCompra">Tipo compra</label>
+                                <select id="TipoCompra" name="TipoCompra" class="form-control">
+                                    <option value="@tipoCortes" @(string.Equals(tipoCompraInicial, tipoCortes, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Producto</option>
+                                    <option value="@tipoMediaRes" @(string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Media</option>
+                                </select>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" id="TipoCompra" name="TipoCompra" value="@tipoCompraInicial" />
+                    }
+
+                    <div class="col-12 col-lg-@(mostrarSelectorTipo ? "3" : "4")">
+                        <div class="form-group">
+                            <label for="IdSucursal">Sucursal</label>
+                            @if (Model.SucursalEditable)
+                            {
+                                <select id="IdSucursal" name="IdSucursal" class="form-control">
+                                    <option value="0">Seleccione...</option>
+                                    @foreach (var sucursal in sucursales)
+                                    {
+                                        <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursal ? "selected" : "")>
+                                            @sucursal.SucursalNombre
+                                        </option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="hidden" id="IdSucursal" name="IdSucursal" value="@Model.IdSucursal" />
+                                <input type="text" class="form-control" value="@Model.SucursalNombre" readonly />
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <div class="form-group">
+                            <label for="FechaCompra">Fecha</label>
+                            <input type="datetime-local"
+                                   id="FechaCompra"
+                                   name="FechaCompra"
+                                   class="form-control"
+                                   value="@Model.FechaCompra.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-2">
+                        <div class="form-group pt-lg-4 mt-lg-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="EnCtaCte" name="EnCtaCte" value="true" @(Model.EnCtaCte ? "checked" : "") />
+                                <input type="hidden" name="EnCtaCte" value="false" />
+                                <label class="custom-control-label" for="EnCtaCte">Cuenta corriente</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-6">
+                        <div class="form-group">
+                            <label for="razonSocial">Proveedor</label>
+                            <div class="input-group">
+                                <input type="text" id="razonSocial" class="form-control" value="@Model.ProveedorNombre" placeholder="Seleccione un proveedor" readonly />
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-primary" id="btnBuscarProveedor" title="Buscar proveedor (F9)">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btnLimpiarProveedor">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="NroRemito">Número documento</label>
+                            @Html.TextBoxFor(m => m.NroRemito, new { @class = "form-control", id = "NroRemito", maxlength = 100 })
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3 js-mediares-only" @(mostrarMediaInicial ? null : new HtmlString("style=\"display:none;\""))>
+                        <div class="form-group">
+                            <label for="CantMedias">Cantidad medias</label>
+                            <input type="number" class="form-control" id="CantMedias" name="CantMedias" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="Observaciones">Observaciones</label>
+                    @Html.TextAreaFor(m => m.Observaciones, 3, 1, new { @class = "form-control", id = "Observaciones" })
+                </div>
+
+                <hr />
+
+                <div id="panelLineaCorte" class="compra-linea-panel" @(mostrarMediaInicial ? new HtmlString("style=\"display:none;\"") : null)>
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar producto</h6>
+                    <div class="row">
+                        <div class="col-12 col-md-2">
+                            <div class="form-group">
+                                <label for="txtCodigoProducto">Código</label>
+                                <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="form-group">
+                                <label for="txtProductoNombre">Producto</label>
+                                <div class="input-group">
+                                    <input type="hidden" id="txtProductoId" />
+                                    <input type="hidden" id="txtPrecioActualProducto" />
+                                    <input type="text" id="txtProductoNombre" class="form-control" readonly />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarProducto" title="Buscar producto (F10)">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="form-group">
+                                <label for="txtCantKgs">Cantidad</label>
+                                <input type="number" id="txtCantKgs" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="form-group">
+                                <label for="txtPrecioKg">Precio</label>
+                                <input type="number" id="txtPrecioKg" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <div class="form-group">
+                                <label for="txtSubtotalLinea">Subtotal</label>
+                                <input type="text" id="txtSubtotalLinea" class="form-control" readonly />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <div class="custom-control custom-switch mb-3">
+                            <input type="checkbox" class="custom-control-input" id="chkAplicarDescRecargo" />
+                            <label class="custom-control-label" for="chkAplicarDescRecargo">Aplicar descuento / recargo</label>
+                        </div>
+                        <div id="panelDescRecargo" class="row" style="display:none;">
+                            <div class="col-12 col-md-4">
+                                <div class="form-group">
+                                    <label for="txtDescRecargo">Descuento / recargo (%)</label>
+                                    <input type="number" id="txtDescRecargo" class="form-control" step="0.01" value="0" />
+                                    <small class="form-text text-muted">Se aplica por porcentaje. Use negativo para descuento y positivo para recargo.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="custom-control custom-switch mb-3">
+                            <input type="checkbox" class="custom-control-input" id="chkAplicarIva" />
+                            <label class="custom-control-label" for="chkAplicarIva">Aplicar IVA</label>
+                        </div>
+                        <div id="panelIva" class="row" style="display:none;">
+                            <div class="col-12 col-md-4">
+                                <div class="form-group mb-0">
+                                    <label for="txtIvaCompra">IVA (%)</label>
+                                    <input type="number" id="txtIvaCompra" class="form-control" min="0" step="0.01" value="0" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border rounded p-3 mb-3">
+                        <div class="custom-control custom-switch mb-3">
+                            <input type="checkbox" class="custom-control-input" id="chkAplicarPrecioVentaMargen" />
+                            <label class="custom-control-label" for="chkAplicarPrecioVentaMargen">Aplicar margen / cambiar precio de venta</label>
+                        </div>
+                        <div id="panelPrecioVentaMargen" style="display:none;">
+                            <div class="alert alert-light border py-2 px-3 mb-3">
+                                Precio actual del producto:
+                                <strong id="lblPrecioActualProducto">-</strong>
+                            </div>
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="optMargen" name="modoPrecioVenta" class="custom-control-input" checked />
+                                <label class="custom-control-label" for="optMargen">Margen %</label>
+                            </div>
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" id="optPrecioVenta" name="modoPrecioVenta" class="custom-control-input" />
+                                <label class="custom-control-label" for="optPrecioVenta">Nuevo precio venta</label>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12 col-md-4">
+                                    <div class="form-group">
+                                        <label for="txtMargen">Margen</label>
+                                        <input type="number" id="txtMargen" class="form-control" step="0.01" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="form-group">
+                                        <label for="txtPrecioVenta">Precio venta</label>
+                                        <input type="number" id="txtPrecioVenta" class="form-control" min="0" step="0.01" />
+                                        <small id="lblAdvertenciaPrecioVenta" class="form-text text-danger" style="display:none;">El nuevo precio de venta es menor al precio actual del producto.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="alertUltimoAgregado" class="alert alert-success py-2 px-3 mb-3" style="display:none;"></div>
+
+                    <div class="d-flex align-items-center justify-content-end flex-wrap mb-3">
+                        <button type="button" class="btn btn-primary mt-2 mt-md-0" id="btnAgregarLineaCorte">
+                            <i class="fas fa-plus"></i> Agregar producto
+                        </button>
+                    </div>
+                </div>
+
+                <div id="panelLineaMediaRes" class="compra-linea-panel" @(mostrarMediaInicial ? null : new HtmlString("style=\"display:none;\""))>
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar media</h6>
+                    <div class="row">
+                        <div class="col-12 col-md-4">
+                            <div class="form-group">
+                                <label for="txtNroTropa">Nro. tropa</label>
+                                <input type="text" id="txtNroTropa" class="form-control" maxlength="100" />
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-group">
+                                <label for="txtKgMedia">Kg media</label>
+                                <input type="number" id="txtKgMedia" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="form-group">
+                                <label for="txtPrecioMedia">Precio media</label>
+                                <input type="number" id="txtPrecioMedia" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right mb-3">
+                        <button type="button" class="btn btn-primary" id="btnAgregarLineaMediaRes">
+                            <i class="fas fa-plus"></i> Agregar media
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover table-sm" id="tablaLineasCompra">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Detalle</th>
+                                <th class="text-right">Kg</th>
+                                <th class="text-right">Precio</th>
+                                <th class="text-right">P. venta</th>
+                                <th class="text-right">Margen</th>
+                                <th class="text-right">Total</th>
+                                <th style="width: 70px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Lineas != null && Model.Lineas.Count > 0)
+                            {
+                                foreach (var linea in Model.Lineas)
+                                {
+                                    if (linea.EsMediaRes)
+                                    {
+                                        <tr>
+                                            <td><strong>Tropa:</strong> @(string.IsNullOrWhiteSpace(linea.NroTropa) ? "-" : linea.NroTropa)</td>
+                                            <td class="text-right">@linea.KgMedia.ToString("0.00")</td>
+                                            <td class="text-right">@linea.PrecioMedia.ToString("0.00")</td>
+                                            <td class="text-right">-</td>
+                                            <td class="text-right">-</td>
+                                            <td class="text-right">@linea.TotalLinea.ToString("0.00")</td>
+                                            <td></td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@linea.CorteNombre</strong><br />
+                                                <small class="text-muted">Código: @(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")@(linea.Balanza ? " | Balanza" : "")</small>
+                                            </td>
+                                            <td class="text-right">@linea.CantKgs.ToString("0.00")</td>
+                                            <td class="text-right">@linea.PrecioKg.ToString("0.00")</td>
+                                            <td class="text-right">@(linea.PrecioVenta > 0 ? linea.PrecioVenta.ToString("0.00") : "-")</td>
+                                            <td class="text-right">@(linea.Margen != 0 ? linea.Margen.ToString("0.00") : "-")</td>
+                                            <td class="text-right">@linea.TotalLinea.ToString("0.00")</td>
+                                            <td></td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                <tr class="js-empty-row">
+                                    <td colspan="7" class="text-center text-muted">Todavía no hay líneas cargadas.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-8">
+                        @if (Model.EsEdicion)
+                        {
+                            <div class="small text-muted mb-3">
+                                <span class="d-block">Creado: @Model.Creado por @Model.CreadoPor</span>
+                                <span class="d-block">Actualizado: @Model.Actualizado por @Model.ActualizadoPor</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="border rounded p-3 bg-light">
+                            <div class="d-flex justify-content-between">
+                                <span>Items</span>
+                                <strong id="totalItems">@Model.CantItems</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Total kg</span>
+                                <strong id="totalKg">@Model.TotalKg.ToString("0.00")</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Total compra</span>
+                                <strong id="totalImporte">@Model.TotalImporte.ToString("0.00")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between flex-wrap mt-4">
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-outline-secondary" id="btnLimpiarBorrador">
+                            Limpiar borrador
+                        </button>
+                    </div>
+                    <div class="mb-2">
+                        @if (!Model.DesdePos)
+                        {
+                            <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        }
+                        <button type="submit" class="btn btn-success" id="btnGuardarCompra">
+                            <i class="fas fa-save"></i> Guardar compra
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="contenedorModalPersonaCompra"></div>
+@if (!Model.DesdePos)
+{
+    @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+}
+
+@if (Model.DesdePos)
+{
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=9")"></script>
+    <script>
+        (function () {
+            if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
+                return;
+            }
+
+            window.ComprasUI.init({
+                formSelector: "#formCompra",
+                desdePos: true,
+                widgetFijo: true,
+                permiteMediaRes: @(permiteMediaRes ? "true" : "false"),
+                esEdicion: @(Model.EsEdicion ? "true" : "false"),
+                draftKey: "@Model.DraftKey",
+                modalProductoSelector: "#modalBuscarProducto",
+                initialLines: @Html.Raw(Json.Encode(Model.Lineas)),
+                urls: {
+                    guardar: "@Url.Action("Guardar", "Compras")",
+                    personaBuscarModal: "@Url.Action("Buscar", "Personas")",
+                    personaListar: "@Url.Action("Listar", "Personas")",
+                    buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
+                    editarLayout: "@Url.Action("Editar", "Compras")",
+                    nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
+                }
+            });
+        })();
+    </script>
+}
+else
+{
+    @section Scripts {
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=9")"></script>
+        <script>
+            (function () {
+                if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
+                    return;
+                }
+
+                window.ComprasUI.init({
+                    formSelector: "#formCompra",
+                    desdePos: false,
+                    widgetFijo: false,
+                    permiteMediaRes: @(permiteMediaRes ? "true" : "false"),
+                    esEdicion: @(Model.EsEdicion ? "true" : "false"),
+                    draftKey: "@Model.DraftKey",
+                    modalProductoSelector: "#modalBuscarProductoCompra",
+                    initialLines: @Html.Raw(Json.Encode(Model.Lineas)),
+                    urls: {
+                        guardar: "@Url.Action("Guardar", "Compras")",
+                        personaBuscarModal: "@Url.Action("Buscar", "Personas")",
+                        personaListar: "@Url.Action("Listar", "Personas")",
+                        buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
+                        editarLayout: "@Url.Action("Editar", "Compras")",
+                        nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
+                    }
+                });
+            })();
+        </script>
+    }
+}

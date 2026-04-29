@@ -1,0 +1,120 @@
+@model Web.Models.CompraIndexVm
+@using System
+@using System.Collections.Generic
+@using System.Data
+
+@{
+    var dt = Model != null ? Model.Compras : null;
+    var detalles = Model != null ? Model.Detalles : new Dictionary<int, Web.Models.CompraIndexDetalleVm>();
+    bool mostrarTipoCompra = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
+    int totalColumnas = 8 + (mostrarTipoCompra ? 1 : 0);
+}
+
+<div class="table-responsive tabla-full">
+    <table class="table table-bordered table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th>Fecha</th>
+                <th>NumeroDocumento</th>
+                <th>Proveedor</th>
+                @if (mostrarTipoCompra)
+                {
+                    <th>TipoCompra</th>
+                }
+                <th class="text-right">Cantidad</th>
+                <th class="text-right">CantidadMedias</th>
+                <th class="text-right">Total</th>
+                <th style="width: 180px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (dt == null || dt.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="@totalColumnas" class="text-center text-muted py-4">No se encontraron compras para el filtro seleccionado.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    int idCompra = Convert.ToInt32(row["idCompra"]);
+                    DateTime? fechaCompra = row["fechaCompra"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaCompra"]);
+                    float cantKg = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]);
+                    float totalS = row["totalS"] == DBNull.Value ? 0f : Convert.ToSingle(row["totalS"]);
+                    int cantMedias = row.Table.Columns.Contains("cantMedias") && row["cantMedias"] != DBNull.Value ? Convert.ToInt32(row["cantMedias"]) : 0;
+                    string estado = row.Table.Columns.Contains("estado") && row["estado"] != DBNull.Value ? row["estado"].ToString() : "";
+                    bool anulado = !string.IsNullOrWhiteSpace(estado) && !estado.Equals("Alta", StringComparison.OrdinalIgnoreCase);
+                    string detailId = "detCompra_" + idCompra;
+                    Web.Models.CompraIndexDetalleVm detalle = detalles.ContainsKey(idCompra) ? detalles[idCompra] : null;
+
+                    <tr class="@(anulado ? "table-danger" : "")">
+                        <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td>@row["nroRemito"]</td>
+                        <td>@row["razonSocial"]</td>
+                        @if (mostrarTipoCompra)
+                        {
+                            <td>@row["tipoCompra"]</td>
+                        }
+                        <td class="text-right">@cantKg.ToString("N2")</td>
+                        <td class="text-right">@cantMedias</td>
+                        <td class="text-right">@totalS.ToString("N2")</td>
+                        <td class="text-center text-nowrap">
+                            <button type="button"
+                                    class="btn btn-sm btn-link text-decoration-none btn-detalles-compra"
+                                    data-target="#@detailId"
+                                    aria-expanded="false"
+                                    aria-controls="@detailId">
+                                <i class="fas fa-chevron-down"></i> Detalles
+                            </button>
+                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("ModificarCompra", "Compras", new { id = idCompra, origen = "layout" })">
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="tr-detalles-compra">
+                        <td colspan="@totalColumnas" class="p-0">
+                            <div id="@detailId" class="collapse compra-detalle-collapse">
+                                <div class="p-3 bg-light border-top">
+                                    @if (detalle == null)
+                                    {
+                                        <div class="text-muted">No se pudieron cargar los detalles de la compra.</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="row">
+                                            <div class="col-12 col-lg-6">
+                                                <div class="mb-2"><span class="text-muted">ID Compra:</span> <span class="font-weight-bold">@detalle.IdCompra</span></div>
+                                                <div class="mb-2"><span class="text-muted">Fecha:</span> <span class="font-weight-bold">@(detalle.FechaCompra.HasValue ? detalle.FechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">NumeroDocumento:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.NumeroDocumento) ? detalle.NumeroDocumento : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Proveedor:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Proveedor) ? detalle.Proveedor : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">TipoCompra:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.TipoCompra) ? detalle.TipoCompra : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Sucursal) ? detalle.Sucursal : "-")</span></div>
+                                            </div>
+                                            <div class="col-12 col-lg-6">
+                                                <div class="mb-2"><span class="text-muted">Cantidad:</span> <span class="font-weight-bold">@detalle.Cantidad.ToString("N2")</span></div>
+                                                <div class="mb-2"><span class="text-muted">CantidadMedias:</span> <span class="font-weight-bold">@detalle.CantidadMedias</span></div>
+                                                <div class="mb-2"><span class="text-muted">Total:</span> <span class="font-weight-bold">@detalle.Total.ToString("N2")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Cuenta corriente:</span> <span class="font-weight-bold">@(detalle.EnCtaCte ? "Sí" : "No")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Estado:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Estado) ? detalle.Estado : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Observaciones) ? detalle.Observaciones : "-")</span></div>
+                                            </div>
+                                            <div class="col-12 col-lg-6">
+                                                <div class="mb-2"><span class="text-muted">UsuarioCreacion:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.UsuarioCreacion) ? detalle.UsuarioCreacion : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">FechaCreacion:</span> <span class="font-weight-bold">@(detalle.FechaCreacion.HasValue ? detalle.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</span></div>
+                                            </div>
+                                            <div class="col-12 col-lg-6">
+                                                <div class="mb-2"><span class="text-muted">UsuarioActualizacion:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.UsuarioActualizacion) ? detalle.UsuarioActualizacion : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">FechaActualizacion:</span> <span class="font-weight-bold">@(detalle.FechaActualizacion.HasValue ? detalle.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</span></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
