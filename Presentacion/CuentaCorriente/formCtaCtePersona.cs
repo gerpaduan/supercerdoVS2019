@@ -11,6 +11,8 @@ using Presentacion.Caja;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using System.IO;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Presentacion.CuentaCorriente
 {
@@ -89,51 +91,9 @@ namespace Presentacion.CuentaCorriente
                     fechaDesdePick.Value = limitFechaDesde;
                 }
 
-                dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+                dtMov = ObtenerMovimientosVisibles();
 
                 ultimaFechaDesde = fechaDesdePick.Value;
-
-                if (!checkSinRegRepetidos.Checked)
-                {
-                    int[] aBorrar = new int[dtMov.Rows.Count];
-                    for (int i = 0; i < aBorrar.Length; i++)
-                    {
-                        aBorrar[i] = -1;
-                    }
-
-                    for (int filaPrimer = 0; filaPrimer < dtMov.Rows.Count; filaPrimer++)
-                    {
-                        for (int fila = 0; fila < dtMov.Rows.Count; fila++)
-                        {
-                            if (aBorrar[filaPrimer] == 1)
-                                break;
-
-                            string tablaPrimer = dtMov.Rows[filaPrimer]["tabla"].ToString();
-                            string idtablaPrimer = dtMov.Rows[filaPrimer]["idTabla"].ToString();
-                            string sucursalPrimer = dtMov.Rows[filaPrimer]["sucursal"].ToString();
-                            int idPrimer = Convert.ToInt32(dtMov.Rows[filaPrimer]["id"].ToString());
-
-                            string tabla = dtMov.Rows[fila]["tabla"].ToString();
-                            string idtabla = dtMov.Rows[fila]["idTabla"].ToString();
-                            string sucursal = dtMov.Rows[fila]["sucursal"].ToString();
-                            int id = Convert.ToInt32(dtMov.Rows[fila]["id"].ToString());
-
-                            if (tabla.Equals(tablaPrimer) && idtabla.Equals(idtablaPrimer) &&
-                                 sucursal.Equals(sucursalPrimer) && id < idPrimer)
-                            {
-                                aBorrar[fila] = 1;
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < aBorrar.Length; i++)
-                    {
-                        if (aBorrar[i] == 1)
-                            dtMov.Rows[i].Delete();
-                    }
-
-                    dtMov.AcceptChanges();
-                }
 
                 grillaMovCtaCte.DataSource = dtMov;
                 grillaMovCtaCte.AutoGenerateColumns = false;
@@ -163,6 +123,71 @@ namespace Presentacion.CuentaCorriente
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private DataTable ObtenerMovimientosVisibles()
+        {
+            DataTable movimientos = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+
+            if (checkSinRegRepetidos.Checked)
+                return movimientos;
+
+            return FiltrarRegistrosRepetidos(movimientos);
+        }
+
+        private DataTable ObtenerMovimientosParaExportar()
+        {
+            if (dtMov != null)
+                return dtMov.Copy();
+
+            return ObtenerMovimientosVisibles();
+        }
+
+        private DataTable FiltrarRegistrosRepetidos(DataTable movimientos)
+        {
+            if (movimientos == null)
+                return new DataTable();
+
+            if (movimientos.Rows.Count == 0)
+                return movimientos;
+
+            Dictionary<string, int> maxIdPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (DataRow row in movimientos.Rows)
+            {
+                string clave = string.Join("|",
+                    Convert.ToString(row["tabla"]),
+                    Convert.ToString(row["idTabla"]),
+                    Convert.ToString(row["sucursal"]));
+
+                int id = Convert.ToInt32(row["id"]);
+
+                int idActual;
+                if (!maxIdPorClave.TryGetValue(clave, out idActual) || id > idActual)
+                {
+                    maxIdPorClave[clave] = id;
+                }
+            }
+
+            DataTable filtrado = movimientos.Clone();
+
+            foreach (DataRow row in movimientos.Rows)
+            {
+                string clave = string.Join("|",
+                    Convert.ToString(row["tabla"]),
+                    Convert.ToString(row["idTabla"]),
+                    Convert.ToString(row["sucursal"]));
+
+                int id = Convert.ToInt32(row["id"]);
+
+                int idMaximo;
+                if (maxIdPorClave.TryGetValue(clave, out idMaximo) && id == idMaximo)
+                {
+                    filtrado.ImportRow(row);
+                }
+            }
+
+            return filtrado;
         }
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
@@ -293,20 +318,15 @@ namespace Presentacion.CuentaCorriente
             //tipoTicket.ctaCtePersona(oPersonaE, dtMov);
             try
             {
-                DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+                DataTable dtMov = ObtenerMovimientosParaExportar();
 
                 // Obtener persona y saldo igual que en la vista
-                string persona = oPersonaE.razonSocial;
-
-                foreach (char c in Path.GetInvalidFileNameChars())
-                {
-                    persona = persona.Replace(c, '_');
-                }
+                string persona = SanitizarNombreArchivo(oPersonaE.razonSocial);
 
                 byte[] pdfBytes = Utilidades.GenerarDocs.GenerarPdfCtaCtePersona(dtMov, fechaDesdePick.Value); // GenerarPdfPersona(dtMov, persona, saldo, fechaD);
 
                 // 2. Guardar el PDF en una ruta temporal automática
-                string tempPath = Path.Combine(Path.GetTempPath(), $"{persona}_CuentaCorriente.pdf");
+                string tempPath = Path.Combine(Path.GetTempPath(), $"CuentaCorriente_{persona}_Desde_{fechaDesdePick.Value:yyyy-MM-dd}.pdf");
                 File.WriteAllBytes(tempPath, pdfBytes);
 
                 // 3. Abrir el PDF
@@ -393,9 +413,56 @@ namespace Presentacion.CuentaCorriente
             }           
         }
 
+        private void menuExcel_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DataTable movimientos = ObtenerMovimientosParaExportar();
+                string persona = SanitizarNombreArchivo(oPersonaE.razonSocial);
+
+                StringBuilder csv = new StringBuilder();
+                csv.AppendLine("Fecha;Tabla;Detalle;Importe;Saldo;Sucursal");
+
+                foreach (DataRow row in movimientos.Rows)
+                {
+                    csv.AppendFormat("{0};{1};{2};{3};{4};{5}",
+                        Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy"),
+                        Convert.ToString(row["Tabla"]),
+                        Convert.ToString(row["Detalle"]),
+                        Convert.ToDecimal(row["Importe"]).ToString("N2", CultureInfo.InvariantCulture),
+                        Convert.ToDecimal(row["Saldo"]).ToString("N2", CultureInfo.InvariantCulture),
+                        Convert.ToString(row["Sucursal"]));
+                    csv.AppendLine();
+                }
+
+                string tempPath = Path.Combine(Path.GetTempPath(), $"CuentaCorriente_{persona}_Desde_{fechaDesdePick.Value:yyyy-MM-dd}.csv");
+                File.WriteAllText(tempPath, csv.ToString(), Encoding.UTF8);
+                System.Diagnostics.Process.Start(tempPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
         private void btnWhatsApp_Click(object sender, EventArgs e)
         {
             Utilidades.Util_Form.enviarWhatsApp(oPersonaE.Telefono);
+        }
+
+        private static string SanitizarNombreArchivo(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return "Persona";
+
+            string limpio = valor.Trim();
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                limpio = limpio.Replace(c, '_');
+            }
+
+            limpio = Regex.Replace(limpio, "\\s+", "_");
+            return string.IsNullOrWhiteSpace(limpio) ? "Persona" : limpio;
         }
     }
 }

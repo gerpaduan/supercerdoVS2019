@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Web;
 using Newtonsoft.Json;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Web.Controllers
 {
@@ -303,11 +304,15 @@ namespace Web.Controllers
         // ============================================================
         //  EXPORTAR A EXCEL
         // ============================================================
-        public ActionResult ExportarExcelPersona(int idPersona, string fechaDesde)
+        public ActionResult ExportarExcelPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false)
         {
             DateTime fecha = DateTime.ParseExact(fechaDesde, "yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             DataTable dt = oCtaCteN.getCtaCteByIdPersona(idPersona, fecha);
+            if (!mostrarAnulados)
+            {
+                dt = FiltrarRegistrosRepetidos(dt);
+            }
 
             // Calcular saldos
             decimal saldo = 0;
@@ -334,20 +339,26 @@ namespace Web.Controllers
 
             byte[] buffer = System.Text.Encoding.UTF8.GetBytes(csv);
 
-            return File(buffer, "text/csv", "CuentaCorriente.csv");
+            string persona = ObtenerNombreArchivoPersona(dt, idPersona);
+            string fileName = $"CuentaCorriente_{persona}_Desde_{fecha:yyyy-MM-dd}.csv";
+            return File(buffer, "text/csv", fileName);
         }
 
 
         // ============================================================
         //  EXPORTAR A PDF
         // ============================================================
-        public ActionResult ExportarPdfPersona(int idPersona, string fechaDesde)
+        public ActionResult ExportarPdfPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false)
         {
             DateTime fechaD;
             if (!DateTime.TryParse(fechaDesde, out fechaD))
                 fechaD = DateTime.Today.AddMonths(-1);
 
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaD);
+            if (!mostrarAnulados)
+            {
+                dtMov = FiltrarRegistrosRepetidos(dtMov);
+            }
 
             // Obtener persona y saldo igual que en la vista
             string persona = "";
@@ -357,9 +368,45 @@ namespace Web.Controllers
                 persona = dtMov.Rows[0]["razonSocial"].ToString();
             }
 
+            persona = SanitizarNombreArchivo(persona);
+
             byte[] pdfBytes = Utilidades.GenerarDocs.GenerarPdfCtaCtePersona(dtMov, fechaD); // GenerarPdfPersona(dtMov, persona, saldo, fechaD);
 
-            return File(pdfBytes, "application/pdf", $"{persona}_CuentaCorriente.pdf");
+            string fileName = $"CuentaCorriente_{persona}_Desde_{fechaD:yyyy-MM-dd}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
+        private string ObtenerNombreArchivoPersona(DataTable dt, int idPersona)
+        {
+            string persona = "";
+
+            if (dt != null && dt.Rows.Count > 0 && dt.Columns.Contains("razonSocial"))
+            {
+                persona = Convert.ToString(dt.Rows[0]["razonSocial"]);
+            }
+
+            if (string.IsNullOrWhiteSpace(persona))
+            {
+                var personaObj = oPersonasN.findById(idPersona);
+                persona = personaObj != null ? personaObj.razonSocial : "Persona";
+            }
+
+            return SanitizarNombreArchivo(persona);
+        }
+
+        private static string SanitizarNombreArchivo(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return "Persona";
+
+            string limpio = valor.Trim();
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                limpio = limpio.Replace(c, '_');
+            }
+
+            limpio = Regex.Replace(limpio, "\\s+", "_");
+            return string.IsNullOrWhiteSpace(limpio) ? "Persona" : limpio;
         }
 
 

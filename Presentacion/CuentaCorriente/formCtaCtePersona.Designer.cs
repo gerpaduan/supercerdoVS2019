@@ -47,6 +47,7 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.menuNuevoPago = new System.Windows.Forms.ToolStripButton();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
+            this.menuExcel = new System.Windows.Forms.ToolStripButton();
             this.btnWhatsApp = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovCtaCte)).BeginInit();
             this.pnlBuscar.SuspendLayout();
@@ -242,7 +243,8 @@
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.menuNuevoPago,
-            this.Imprimir});
+            this.Imprimir,
+            this.menuExcel});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -264,15 +266,27 @@
             // 
             // Imprimir
             // 
-            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
+            this.Imprimir.Image = ((System.Drawing.Image)(global::Presentacion.Properties.Resources.application_side_contract));
             this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.Imprimir.Name = "Imprimir";
             this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.Imprimir.Size = new System.Drawing.Size(59, 42);
-            this.Imprimir.Text = "Imprimir";
+            this.Imprimir.Size = new System.Drawing.Size(43, 42);
+            this.Imprimir.Text = "PDF";
             this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
+            // 
+            // menuExcel
+            // 
+            this.menuExcel.Image = ((System.Drawing.Image)(global::Presentacion.Properties.Resources.accounting));
+            this.menuExcel.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuExcel.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuExcel.Name = "menuExcel";
+            this.menuExcel.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuExcel.Size = new System.Drawing.Size(50, 42);
+            this.menuExcel.Text = "Excel";
+            this.menuExcel.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuExcel.Click += new System.EventHandler(this.menuExcel_Click);
             // 
             // btnWhatsApp
             // 
@@ -328,6 +342,7 @@
         protected System.Windows.Forms.ToolStripButton menuNuevoPago;
         private System.Windows.Forms.CheckBox checkSinRegRepetidos;
         protected System.Windows.Forms.ToolStripButton Imprimir;
+        protected System.Windows.Forms.ToolStripButton menuExcel;
         private System.Windows.Forms.Button btnWhatsApp;
     }
 }
