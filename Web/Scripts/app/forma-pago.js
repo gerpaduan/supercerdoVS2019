@@ -71,7 +71,7 @@ window.preCargarFormaPagoActual = function () {
     const otroMonto = total - efectivo;
 
     totalVentaActual = total;
-    $('#totalVenta').val(total.toFixed(2));
+    $('#totalVenta').val(formatearImporteFormaPago(total));
     limpiarSeleccionFormaPago();
     $('#bloquePagoMixto').hide();
     $('#chkPagoMixto').prop('checked', false);
@@ -130,7 +130,7 @@ window.mostrarModalPostVenta = window.mostrarModalPostVenta || function (ventaId
 $('#modalFormaPago').on('shown.bs.modal', function () {
 
     totalVentaActual = obtenerTotalVenta(); // ya existente
-    $('#totalVenta').val(totalVentaActual.toFixed(2));
+    $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
 
     resetPagoMixto();
     window.preCargarFormaPagoActual?.();

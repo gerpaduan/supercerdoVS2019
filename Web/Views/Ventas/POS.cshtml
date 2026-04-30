@@ -639,7 +639,7 @@ else
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=4")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=12")"></script>
+<script src="@Url.Content("~/Scripts/app/pos-cart.js?v=13")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
@@ -2353,6 +2353,16 @@ else
 
     html.dark-mode .pos-total-value {
         color: #6ea8fe;
+    }
+
+    @@media (min-width: 1200px) {
+        .pos-total-label {
+            font-size: 1.1rem;
+        }
+
+        .pos-total-value {
+            font-size: 3.6rem;
+        }
     }
 
     /* =========================================================

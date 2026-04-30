@@ -1,4 +1,5 @@
-﻿using System.Web.Mvc;
+using System.Web;
+using System.Web.Mvc;
 using Utilidades;
 
 namespace Web.Controllers
@@ -10,21 +11,33 @@ namespace Web.Controllers
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            if (Session["Usuario"] == null)
+            HttpSessionStateBase session = filterContext.HttpContext.Session;
+            bool sesionInvalida = session == null
+                || session["Usuario"] == null
+                || session["IdEmpresa"] == null;
+
+            if (sesionInvalida)
             {
-                filterContext.Result = RedirectToAction("Index", "Login");
+                if (session != null)
+                {
+                    session.Remove("PARAM_CTX");
+                    session.Remove("IdEmpresa");
+                    session.Remove("Usuario");
+                }
+
+                TempData["Error"] = "La sesión venció o faltan datos de contexto. Iniciá sesión nuevamente.";
+                string returnUrl = filterContext.HttpContext.Request.RawUrl ?? "";
+                filterContext.Result = RedirectToAction("Index", "Login", new { returnUrl = returnUrl });
                 return;
             }
 
-            // ✅ tu EmpresaContextWeb actual (usa Session["IdEmpresa"])
             empresa = new EmpresaContextWeb();
 
-            // ✅ cargar parámetros por empresa una sola vez (por sesión)
             param = Session["PARAM_CTX"] as IParametrosContext;
             if (param == null)
             {
                 param = new Negocio.Parametros(empresa);
-                param.Reload(); // opcional
+                param.Reload();
                 Session["PARAM_CTX"] = param;
             }
 

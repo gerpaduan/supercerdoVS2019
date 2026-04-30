@@ -21,13 +21,18 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public ActionResult Index()
+        public ActionResult Index(string returnUrl = "")
         {
+            ViewBag.ReturnUrl = returnUrl ?? "";
+            if (TempData["Error"] != null && ViewBag.Error == null)
+            {
+                ViewBag.Error = TempData["Error"];
+            }
             return View();
         }
 
         [HttpPost]
-        public ActionResult Index(string usuario, string clave)
+        public ActionResult Index(string usuario, string clave, string returnUrl = "")
         {
             var user = oUsuarioN.validarUsuario(usuario, clave, false);
 
@@ -62,11 +67,17 @@ namespace Web.Controllers
                 paramCtx.Reload(); // opcional (precarga)
                 Session["PARAM_CTX"] = paramCtx;
 
+                if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+
                 return RedirectToAction("Index", "Home");
             }
 
             string error = user == null ? "Usuario o clave incorrectos." : (!user.Activo ? "cuenta inactiva" : "");
             ViewBag.Error = error;
+            ViewBag.ReturnUrl = returnUrl ?? "";
             return View();
         }
 

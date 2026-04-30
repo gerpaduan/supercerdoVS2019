@@ -99,7 +99,12 @@
         // Recalcula el total usando POSState como fuente única de verdad.
         function recalculateTotal() {
             const total = POSState.getTotal();
-            $("#lblSubtotal").text(`$ ${total.toFixed(2).replace(".", ",")}`);
+            $("#lblSubtotal").text(
+                "$ " + total.toLocaleString("es-AR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+            );
             updateCartSummary();
         }
 

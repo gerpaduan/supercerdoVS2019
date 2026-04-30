@@ -68,6 +68,8 @@
 
                         @using (Html.BeginForm("Index", "Login", FormMethod.Post, new { @class = "user" }))
                         {
+                            <input type="hidden" name="returnUrl" value="@((string)ViewBag.ReturnUrl ?? "")" />
+
                             <div class="form-group">
                                 <input type="text" name="usuario"
                                        class="form-control form-control-user"
