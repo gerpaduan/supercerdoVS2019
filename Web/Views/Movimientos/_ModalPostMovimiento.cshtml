@@ -1,0 +1,54 @@
+<div class="modal fade" id="modalPostMovimiento" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">Movimiento guardado</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3" style="font-size:1.05rem;">Que deseas hacer ahora?</p>
+
+                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnPostMovimientoNoImprimir" type="button">
+                    <span class="badge badge-light mr-2">1</span>
+                    No imprimir
+                </button>
+
+                <div class="d-flex mb-2">
+                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2" id="btnPostMovimientoImprimir" type="button">
+                        <span class="badge badge-primary mr-2">2</span>
+                        <span id="lblMovimientoTicketAccion">Imprimir</span>
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-lg" id="btnCambiarTicketMovimiento" type="button" title="Cambiar tamaño de ticket">
+                        Cambiar
+                    </button>
+                </div>
+
+                <div class="collapse mb-2" id="bloqueTicketOpcionesMovimiento">
+                    <div class="card card-body p-2">
+                        <button class="btn btn-outline-primary btn-block mb-2 btnTicketMovimientoOpt" type="button" data-mm="58">
+                            Ticket 58 mm
+                        </button>
+
+                        <button class="btn btn-outline-primary btn-block btnTicketMovimientoOpt" type="button" data-mm="80">
+                            Ticket 80 mm
+                        </button>
+
+                        <small class="text-muted mt-2 d-block">
+                            Elegi un tamaño y se imprimira automaticamente.
+                        </small>
+                    </div>
+                </div>
+
+                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostMovimientoPdf" type="button">
+                    <span class="badge badge-light mr-2">3</span>
+                    Generar PDF
+                </button>
+
+                <button class="btn btn-success btn-lg btn-block" id="btnPostMovimientoWhatsapp" type="button">
+                    <span class="badge badge-light mr-2">4</span>
+                    <i class="fab fa-whatsapp mr-2"></i>Enviar a WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

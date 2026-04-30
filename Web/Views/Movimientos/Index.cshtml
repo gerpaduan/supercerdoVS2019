@@ -1,0 +1,155 @@
+@model Web.Models.MovimientoIndexVm
+@using System.Collections.Generic
+@using Entidades
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Movimientos";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+}
+
+<div class="container-fluid px-2 px-md-3" data-movimientos-index="1" data-detalle-url="@Url.Action("Detalle", "Movimientos")">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h4 class="mb-0">Movimientos</h4>
+        <a class="btn btn-primary" href="@Url.Action("Nuevo", "Movimientos")">
+            <i class="fas fa-plus mr-1"></i> Nuevo movimiento
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row">
+                <div class="col-12 col-md-3">
+                    <div class="form-group">
+                        <label for="idSucursalOrigen">Sucursal origen</label>
+                        <select id="idSucursalOrigen" name="idSucursalOrigen" class="form-control">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursalOrigen ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <div class="form-group">
+                        <label for="idSucursalDestino">Sucursal destino</label>
+                        <select id="idSucursalDestino" name="idSucursalDestino" class="form-control">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursalDestino ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-group">
+                        <label for="fechaDesde">Fecha desde</label>
+                        <input type="date" id="fechaDesde" name="fechaDesde" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-group">
+                        <label for="fechaHasta">Fecha hasta</label>
+                        <input type="date" id="fechaHasta" name="fechaHasta" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div class="col-12 col-md-2">
+                    <div class="form-group mb-2">
+                        <label class="d-block">Ver detalles</label>
+                        <div class="custom-control custom-switch pt-2">
+                            <input type="checkbox" class="custom-control-input" id="verDetalles" name="verDetalles" value="true" @(Model.VerDetalles ? "checked" : "") />
+                            <label class="custom-control-label" for="verDetalles">Expandir todos</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search mr-1"></i> Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaMovimientos">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width:140px;">Fecha movimiento</th>
+                            <th>Origen</th>
+                            @if (Model.MostrarColumnasInternas)
+                            {
+                                <th style="width:100px;">De origen</th>
+                                <th style="width:120px;">Estado</th>
+                            }
+                            <th>Destino</th>
+                            <th class="text-right" style="width:120px;">Total unidad</th>
+                            <th class="text-right" style="width:120px;">Total kilos</th>
+                            <th class="text-center" style="width:70px;">OBS</th>
+                            <th style="width:150px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Movimientos == null || Model.Movimientos.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="@(Model.MostrarColumnasInternas ? 9 : 7)" class="text-center text-muted py-4">
+                                    No se encontraron movimientos para los filtros seleccionados.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var movimiento in Model.Movimientos)
+                            {
+                                <tr data-movimiento-row="@movimiento.IdMovimiento">
+                                    <td>@movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@movimiento.Origen</td>
+                                    @if (Model.MostrarColumnasInternas)
+                                    {
+                                        <td>@(string.IsNullOrWhiteSpace(movimiento.DeOrigen) ? "-" : movimiento.DeOrigen)</td>
+                                        <td>@movimiento.Estado</td>
+                                    }
+                                    <td>@movimiento.Destino</td>
+                                    <td class="text-right">@movimiento.TotalUnidad.ToString("N0")</td>
+                                    <td class="text-right">@movimiento.TotalKilos.ToString("N3")</td>
+                                    <td class="text-center">
+                                        @if (movimiento.TieneObservaciones)
+                                        {
+                                            <span class="badge badge-pill badge-info" title="@movimiento.Observaciones">1</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a class="btn btn-outline-primary" href="@Url.Action("Editar", "Movimientos", new { id = movimiento.IdMovimiento })" title="Modificar movimiento">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary js-toggle-detalle"
+                                                    data-id="@movimiento.IdMovimiento"
+                                                    data-target="#movDetalle_@movimiento.IdMovimiento"
+                                                    title="Ver detalle">
+                                                <i class="fas fa-angle-down"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr id="movDetalle_@movimiento.IdMovimiento" class="d-none bg-light" data-detalle-row="@movimiento.IdMovimiento" data-loaded="false">
+                                    <td colspan="@(Model.MostrarColumnasInternas ? 9 : 7)">
+                                        <div class="p-3 js-detalle-container text-muted">Cargando detalle...</div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=8")"></script>
+}

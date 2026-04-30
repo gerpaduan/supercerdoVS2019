@@ -135,6 +135,7 @@
     <Compile Include="Controllers\FinanzasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\MovimientosController.cs" />
     <Compile Include="Controllers\PersonasController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
@@ -151,6 +152,8 @@
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
     <Compile Include="Models\CompraIndexVm.cs" />
+    <Compile Include="Models\MovimientoEditVm.cs" />
+    <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />

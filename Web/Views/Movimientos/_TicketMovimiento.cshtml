@@ -1,0 +1,60 @@
+@model Entidades.Movimiento
+@{
+    Layout = null;
+    var lineas = Model.ListaCortesPorMov ?? new List<Entidades.CortePorMovimiento>();
+    int totalUnidades = lineas.Sum(x => x.CantUnidad);
+    float totalKilos = lineas.Sum(x => x.CantKg);
+    int ticketMm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 80;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body { font-family: Consolas, "Courier New", monospace; color: #000; margin: 0; }
+        .ticket-80 { width: 80mm; font-size: 12px; }
+        .ticket-58 { width: 58mm; font-size: 11px; }
+        .center { text-align: center; }
+        .left { text-align: left; }
+        .row { display: flex; justify-content: space-between; }
+        .line { border-top: 1px dashed #000; margin: 6px 0; }
+        .bold { font-weight: bold; }
+        .spacer { height: 6px; }
+    </style>
+</head>
+<body class="@(ticketMm == 58 ? "ticket-58" : "ticket-80")" onload="window.print()">
+    <div class="center bold">Movimiento</div>
+    <div class="spacer"></div>
+    <div class="left">Origen: @(Model.SucursalOrigen != null ? Model.SucursalOrigen.SucursalNombre : "-")</div>
+    <div class="left">Destino: @(Model.SucursalDestino != null ? Model.SucursalDestino.SucursalNombre : "-")</div>
+    <div class="left">Fecha: @Model.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</div>
+    <div class="left">Movimiento: @Model.IdMovimiento</div>
+    <div class="line"></div>
+    <div class="left bold">Producto          Cant.     Kgs.</div>
+    <div class="line"></div>
+    @foreach (var linea in lineas)
+    {
+        var descripcion = ((linea.Corte != null ? linea.Corte.Codigo.ToString() + " " + linea.Corte.CorteDesc : "") + "              ").Substring(0, Math.Min(14, (linea.Corte != null ? linea.Corte.Codigo.ToString() + " " + linea.Corte.CorteDesc : "").Length > 14 ? 14 : (linea.Corte != null ? linea.Corte.Codigo.ToString() + " " + linea.Corte.CorteDesc : "").Length));
+        <div class="left">@((linea.Corte != null ? (linea.Corte.Codigo + " " + linea.Corte.CorteDesc) : ""))</div>
+        <div class="row">
+            <div>@linea.CantUnidad</div>
+            <div>@linea.CantKg.ToString("N3")</div>
+        </div>
+    }
+    <div class="line"></div>
+    <div class="row bold">
+        <div>Total unidades</div>
+        <div>@totalUnidades</div>
+    </div>
+    <div class="row bold">
+        <div>Total kilos</div>
+        <div>@totalKilos.ToString("N3")</div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    {
+        <div class="line"></div>
+        <div class="left bold">Observaciones</div>
+        <div class="left">@Model.Observaciones</div>
+    }
+</body>
+</html>

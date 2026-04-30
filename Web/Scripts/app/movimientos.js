@@ -1,0 +1,676 @@
+(function () {
+    function showAlert(icon, title, text) {
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            Swal.fire({ icon: icon, title: title, text: text });
+        } else {
+            alert(text);
+        }
+    }
+
+    function toInt(value) {
+        var n = parseInt(value, 10);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function toFloat(value) {
+        if (value === null || value === undefined) return 0;
+        var raw = String(value).replace(',', '.').trim();
+        var n = parseFloat(raw);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function formatKg(value) {
+        return toFloat(value).toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    }
+
+    function formatInt(value) {
+        return toInt(value).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+    }
+
+    function initIndex() {
+        var $page = $('[data-movimientos-index="1"]');
+        if (!$page.length) return;
+
+        var detalleUrl = $page.data('detalle-url');
+
+        function loadDetalle(id, $row, done) {
+            if ($row.attr('data-loaded') === 'true') {
+                if (typeof done === 'function') done();
+                return;
+            }
+
+            $.get(detalleUrl, { id: id })
+                .done(function (html) {
+                    $row.find('.js-detalle-container').html(html);
+                    $row.attr('data-loaded', 'true');
+                    if (typeof done === 'function') done();
+                })
+                .fail(function () {
+                    $row.find('.js-detalle-container').html('<div class="text-danger">No se pudo cargar el detalle.</div>');
+                    if (typeof done === 'function') done();
+                });
+        }
+
+        function expandRow($btn) {
+            var id = $btn.data('id');
+            var target = $btn.data('target');
+            var $row = $(target);
+            if (!$row.length) return;
+
+            loadDetalle(id, $row, function () {
+                $row.removeClass('d-none');
+                $btn.find('i').removeClass('fa-angle-down').addClass('fa-angle-up');
+                $btn.attr('data-open', 'true');
+            });
+        }
+
+        function collapseRow($btn) {
+            var target = $btn.data('target');
+            $(target).addClass('d-none');
+            $btn.find('i').removeClass('fa-angle-up').addClass('fa-angle-down');
+            $btn.attr('data-open', 'false');
+        }
+
+        $(document).on('click.movimientosIndex', '.js-toggle-detalle', function () {
+            var $btn = $(this);
+            if ($btn.attr('data-open') === 'true') collapseRow($btn);
+            else expandRow($btn);
+        });
+
+        $('#verDetalles').on('change.movimientosIndex', function () {
+            var checked = $(this).is(':checked');
+            $('.js-toggle-detalle').each(function () {
+                var $btn = $(this);
+                if (checked) expandRow($btn);
+                else collapseRow($btn);
+            });
+        });
+
+        if ($('#verDetalles').is(':checked')) {
+            $('#verDetalles').trigger('change');
+        }
+    }
+
+    function initEdit() {
+        var $page = $('[data-movimiento-page="1"]');
+        if (!$page.length) return;
+
+        var state = {
+            lines: Array.isArray(window.movimientoLineasIniciales) ? window.movimientoLineasIniciales.slice() : [],
+            draftTimer: null,
+            saving: false
+        };
+
+        var config = window.movimientosConfig || {};
+
+        var $codigo = $('#txtCodigoProducto');
+        var $productoId = $('#txtProductoId');
+        var $productoNombre = $('#txtProductoNombre');
+        var $productoTipo = $('#txtProductoTipo');
+        var $productoPromedio = $('#txtProductoPromedio');
+        var $cantUnidad = $('#txtCantUnidad');
+        var $cantKgs = $('#txtCantKgs');
+        var $balanza = $('#chkBalanzaLinea');
+        var $permitirWrap = $('#wrapPermitirIngreso');
+        var $permitir = $('#chkPermitirIngreso');
+        var $feedback = $('#movimientoFeedback');
+        var $warning = $('#movimientoWarning');
+        var $btnImprimirMovimiento = $('#btnImprimirMovimiento');
+        var $observaciones = $('#Observaciones');
+        var balanzaDisponible = false;
+
+        function getDraftKey() {
+            return config.draftKey || '';
+        }
+
+        function readDraft() {
+            var key = getDraftKey();
+            if (!key || !window.localStorage) return null;
+            try {
+                var raw = window.localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function hideDraftBanner() {
+            $page.find('#movimientoDraftBanner').addClass('d-none');
+        }
+
+        function showDraftBanner() {
+            $page.find('#movimientoDraftBanner').removeClass('d-none');
+        }
+
+        function clearDraft() {
+            var key = getDraftKey();
+            if (!key || !window.localStorage) return;
+            window.localStorage.removeItem(key);
+            hideDraftBanner();
+        }
+
+        function buildDraft() {
+            return {
+                idSucursalOrigen: $('#IdSucursalOrigen').val(),
+                idSucursalDestino: $('#IdSucursalDestino').val(),
+                fechaMovimiento: $('#FechaMovimiento').val(),
+                observaciones: $observaciones.val(),
+                currentLine: {
+                    id: $productoId.val(),
+                    codigo: $codigo.val(),
+                    nombre: $productoNombre.val(),
+                    tipo: $productoTipo.val(),
+                    promedio: $productoPromedio.val(),
+                    cantUnidad: $cantUnidad.val(),
+                    cantKg: $cantKgs.val(),
+                    pesoBalanza: $balanza.is(':checked'),
+                    permitirIngreso: $permitir.is(':checked')
+                },
+                lineas: state.lines
+            };
+        }
+
+        function saveDraft() {
+            var key = getDraftKey();
+            if (!key || !window.localStorage || state.saving) return;
+            try {
+                window.localStorage.setItem(key, JSON.stringify(buildDraft()));
+            } catch (err) {
+            }
+        }
+
+        function scheduleDraft() {
+            window.clearTimeout(state.draftTimer);
+            state.draftTimer = window.setTimeout(function () {
+                saveDraft();
+            }, 250);
+        }
+
+        function showFeedback(text) {
+            $feedback.text(text).removeClass('d-none');
+            setTimeout(function () { $feedback.addClass('d-none'); }, 2200);
+        }
+
+        function showWarning(text) {
+            $warning.text(text).removeClass('d-none');
+        }
+
+        function clearWarning() {
+            $warning.addClass('d-none').text('');
+        }
+
+        function setProducto(producto) {
+            $productoId.val(producto.id || '');
+            $codigo.val(producto.codigo || '');
+            $productoNombre.val(producto.nombre || '');
+            $productoTipo.val(producto.tipo || '');
+            $productoPromedio.val(producto.promedio || 0);
+            scheduleDraft();
+        }
+
+        function clearProducto() {
+            $productoId.val('');
+            $codigo.val('');
+            $productoNombre.val('');
+            $productoTipo.val('');
+            $productoPromedio.val('');
+            $cantUnidad.val('');
+            $cantKgs.val('');
+            $permitir.prop('checked', false);
+            $permitirWrap.addClass('d-none');
+            clearWarning();
+        }
+
+        function applyDraft(draft) {
+            if (!draft) return;
+
+            $('#IdSucursalOrigen').val(draft.idSucursalOrigen || $('#IdSucursalOrigen').val());
+            $('#IdSucursalDestino').val(draft.idSucursalDestino || $('#IdSucursalDestino').val());
+            $('#FechaMovimiento').val(draft.fechaMovimiento || $('#FechaMovimiento').val());
+            $observaciones.val(draft.observaciones || '');
+
+            if (draft.currentLine) {
+                $productoId.val(draft.currentLine.id || '');
+                $codigo.val(draft.currentLine.codigo || '');
+                $productoNombre.val(draft.currentLine.nombre || '');
+                $productoTipo.val(draft.currentLine.tipo || '');
+                $productoPromedio.val(draft.currentLine.promedio || '');
+                $cantUnidad.val(draft.currentLine.cantUnidad || '');
+                $cantKgs.val(draft.currentLine.cantKg || '');
+                $balanza.prop('checked', draft.currentLine.pesoBalanza === true);
+                $permitir.prop('checked', draft.currentLine.permitirIngreso === true);
+            }
+
+            state.lines = $.isArray(draft.lineas) ? draft.lineas : [];
+            renderLines();
+            validarRelacionCantidadKilos();
+            autoResizeObservaciones();
+            scheduleDraft();
+        }
+
+        function focusCodigo() {
+            setTimeout(function () {
+                $codigo.focus().select();
+            }, 30);
+        }
+
+        function autoResizeObservaciones() {
+            if (!$observaciones.length) return;
+            $observaciones.css('height', 'auto');
+            $observaciones.css('height', $observaciones[0].scrollHeight + 'px');
+        }
+
+        function setBalanzaDisponible(disponible) {
+            balanzaDisponible = !!disponible;
+            if (!balanzaDisponible) {
+                $balanza.prop('checked', false);
+            }
+        }
+
+        function balanzaConectadaDesdePayload(data) {
+            if (!data) return false;
+            var estado = String(data.estado || data.status || '').toLowerCase();
+            var pesoRaw = data.peso;
+            if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.valor;
+            if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.weight;
+            var peso = Number(pesoRaw);
+            return estado === 'ok' || estado === 'connected' || (!isNaN(peso) && peso !== 0);
+        }
+
+        function verificarBalanza(callback) {
+            if (!config.balanzaUrl) {
+                setBalanzaDisponible(false);
+                if (typeof callback === 'function') callback(false);
+                return;
+            }
+
+            $.ajax({
+                url: config.balanzaUrl,
+                method: 'GET',
+                cache: false,
+                timeout: 1200
+            }).done(function (data) {
+                var disponible = balanzaConectadaDesdePayload(data);
+                setBalanzaDisponible(disponible);
+                if (typeof callback === 'function') callback(disponible);
+            }).fail(function () {
+                setBalanzaDisponible(false);
+                if (typeof callback === 'function') callback(false);
+            });
+        }
+
+        function intentarActivarBalanza() {
+            verificarBalanza(function (disponible) {
+                if (!disponible) {
+                    $balanza.prop('checked', false);
+                    showAlert('warning', 'Balanza', 'No hay balanza conectada.');
+                    return;
+                }
+
+                $balanza.prop('checked', true);
+            });
+        }
+
+        function renderLines() {
+            var html = '';
+            var hidden = '';
+            var totalItems = state.lines.length;
+            var totalUnidades = 0;
+            var totalKilos = 0;
+
+            state.lines.forEach(function (line, index) {
+                totalUnidades += toInt(line.CantUnidad);
+                totalKilos += toFloat(line.CantKg);
+
+                html += '<tr>'
+                    + '<td>' + line.Codigo + '</td>'
+                    + '<td>' + line.Producto + '</td>'
+                    + '<td class="text-right">' + formatInt(line.CantUnidad) + '</td>'
+                    + '<td class="text-right">' + formatKg(line.CantKg) + '</td>'
+                    + '<td class="text-center">' + (line.PesoBalanza ? 'Sí' : 'No') + '</td>'
+                    + '<td class="text-center">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</td>'
+                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
+                    + '</tr>';
+
+                hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorteMovimiento" value="' + (line.IdCorteMovimiento || 0) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (line.IdCorte || 0) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (line.Codigo || 0) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].Producto" value="' + $('<div>').text(line.Producto || '').html() + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].TipoProducto" value="' + $('<div>').text(line.TipoProducto || '').html() + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].PromedioProducto" value="' + toFloat(line.PromedioProducto) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].CantUnidad" value="' + toInt(line.CantUnidad) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].CantKg" value="' + toFloat(line.CantKg) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].PesoBalanza" value="' + (line.PesoBalanza ? 'true' : 'false') + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].PermitirIngreso" value="' + (line.PermitirIngreso ? 'true' : 'false') + '" />';
+            });
+
+            if (!html) {
+                html = '<tr><td colspan="7" class="text-center text-muted">Todavía no agregaste productos al movimiento.</td></tr>';
+            }
+
+            $('#tablaLineasMovimiento tbody').html(html);
+            $('#lineasHiddenContainer').html(hidden);
+            $('#lblTotalItems').text(formatInt(totalItems));
+            $('#lblTotalUnidades').text(formatInt(totalUnidades));
+            $('#lblTotalKilos').text(formatKg(totalKilos));
+        }
+
+        function buildAcumulados() {
+            var map = {};
+            state.lines.forEach(function (line) {
+                var key = String(line.IdCorte || '') || String(line.Codigo || '');
+                if (!map[key]) {
+                    map[key] = {
+                        Codigo: line.Codigo,
+                        Producto: line.Producto,
+                        CantUnidad: 0,
+                        CantKg: 0
+                    };
+                }
+                map[key].CantUnidad += toInt(line.CantUnidad);
+                map[key].CantKg += toFloat(line.CantKg);
+            });
+            return Object.keys(map).map(function (key) { return map[key]; }).sort(function (a, b) {
+                return String(a.Codigo).localeCompare(String(b.Codigo));
+            });
+        }
+
+        function renderAcumulados() {
+            var items = buildAcumulados();
+            var html = '';
+            if (!items.length) {
+                html = '<tr><td colspan="4" class="text-center text-muted">No hay productos cargados.</td></tr>';
+            } else {
+                items.forEach(function (item) {
+                    html += '<tr>'
+                        + '<td>' + item.Codigo + '</td>'
+                        + '<td>' + item.Producto + '</td>'
+                        + '<td class="text-right">' + formatInt(item.CantUnidad) + '</td>'
+                        + '<td class="text-right">' + formatKg(item.CantKg) + '</td>'
+                        + '</tr>';
+                });
+            }
+            $('#tbodyAcumuladosMovimiento').html(html);
+        }
+
+        function validarRelacionCantidadKilos() {
+            var promedio = toFloat($productoPromedio.val());
+            var cantUnidad = toInt($cantUnidad.val());
+            var cantKg = toFloat($cantKgs.val());
+
+            $permitirWrap.addClass('d-none');
+            clearWarning();
+
+            if (promedio <= 0 || cantUnidad <= 0 || cantKg <= 0 || $permitir.is(':checked')) return true;
+
+            var limitInferior = promedio * (cantUnidad - 1);
+            var limitSuperior = promedio * (cantUnidad + 1);
+            if (!(limitInferior < cantKg && cantKg < limitSuperior)) {
+                $permitirWrap.removeClass('d-none');
+                showWarning('La cantidad ingresada no es consistente con los kilos del producto. Revisá la línea o habilitá permitir ingreso.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function buildCurrentLine() {
+            return {
+                IdCorteMovimiento: 0,
+                IdCorte: toInt($productoId.val()),
+                Codigo: toInt($codigo.val()),
+                Producto: $productoNombre.val(),
+                TipoProducto: $productoTipo.val(),
+                PromedioProducto: toFloat($productoPromedio.val()),
+                CantUnidad: toInt($cantUnidad.val()),
+                CantKg: toFloat($cantKgs.val()),
+                PesoBalanza: $balanza.is(':checked'),
+                PermitirIngreso: $permitir.is(':checked')
+            };
+        }
+
+        function validateCurrentLine() {
+            if (toInt($productoId.val()) <= 0) {
+                showAlert('warning', 'Movimiento', 'Seleccioná un producto válido.');
+                focusCodigo();
+                return false;
+            }
+            if (($cantUnidad.val() || '').trim() === '') {
+                showAlert('warning', 'Movimiento', 'Ingresá la cantidad.');
+                $cantUnidad.focus().select();
+                return false;
+            }
+            if (($cantKgs.val() || '').trim() === '' || toFloat($cantKgs.val()) <= 0) {
+                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.');
+                $cantKgs.focus().select();
+                return false;
+            }
+            if (!validarRelacionCantidadKilos() && !$permitir.is(':checked')) {
+                $cantUnidad.focus().select();
+                return false;
+            }
+            return true;
+        }
+
+        function addCurrentLine() {
+            if (!validateCurrentLine()) return;
+            var line = buildCurrentLine();
+            state.lines.push(line);
+            renderLines();
+            showFeedback('Agregado correctamente: ' + line.Producto + ' | Cantidad ' + line.CantUnidad + ' | Kilos ' + formatKg(line.CantKg));
+            clearProducto();
+            scheduleDraft();
+            focusCodigo();
+        }
+
+        function buscarPorCodigo(callback) {
+            var codigo = toInt($codigo.val());
+            if (!codigo || !config.urlBuscarProductoPorCodigo) return;
+
+            $.get(config.urlBuscarProductoPorCodigo, { codigo: codigo })
+                .done(function (resp) {
+                    if (resp && resp.ok) {
+                        setProducto(resp);
+                        if (typeof callback === 'function') callback(true);
+                    } else {
+                        showAlert('warning', 'Producto', (resp && resp.mensaje) || 'No se encontró el producto.');
+                        clearProducto();
+                        focusCodigo();
+                        if (typeof callback === 'function') callback(false);
+                    }
+                })
+                .fail(function () {
+                    showAlert('error', 'Producto', 'No se pudo buscar el producto.');
+                    if (typeof callback === 'function') callback(false);
+                });
+        }
+
+        function openProductoModal() {
+            if (typeof window.abrirBuscarProductoModal !== 'function') {
+                showAlert('error', 'Producto', 'No se pudo abrir el buscador de productos.');
+                return;
+            }
+
+            window.abrirBuscarProductoModal({
+                modalSelector: '#modalBuscarProductoMovimiento',
+                mostrarPrecio: false,
+                onSelect: function (producto) {
+                    $codigo.val(producto.codigo || '');
+                    buscarPorCodigo(function (ok) {
+                        if (ok) {
+                            $cantUnidad.focus().select();
+                        }
+                    });
+                }
+            });
+        }
+
+        function openPrintOptions() {
+            if (!config.imprimirUrl || !window.PostMovimientoModal || typeof window.PostMovimientoModal.open !== 'function') {
+                showAlert('warning', 'Movimiento', 'Todavía no se pueden mostrar las opciones de impresión para este movimiento.');
+                return;
+            }
+
+            window.PostMovimientoModal.open({
+                redirectUrl: '',
+                imprimirUrl: config.imprimirUrl,
+                pdfUrl: config.pdfUrl,
+                whatsappTexto: config.whatsappTexto,
+                stayOnPage: true
+            });
+        }
+
+        $(document).on('click.movimientoBuscarProducto', '#btnBuscarProducto', function (e) {
+            e.preventDefault();
+            openProductoModal();
+        });
+
+        $('#btnAgregarProducto').on('click', function () {
+            addCurrentLine();
+        });
+
+        $('#btnVerAcumulados').on('click', function () {
+            renderAcumulados();
+            $('#modalAcumuladosMovimiento').modal('show');
+        });
+
+        $(document).on('click.movimientoLine', '.js-remove-line', function () {
+            var index = toInt($(this).data('index'));
+            state.lines.splice(index, 1);
+            renderLines();
+            scheduleDraft();
+        });
+
+        $btnImprimirMovimiento.on('click', function (e) {
+            e.preventDefault();
+            openPrintOptions();
+        });
+
+        $codigo.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarPorCodigo(function (ok) {
+                    if (ok) $cantUnidad.focus().select();
+                });
+            } else if (e.key === 'F10') {
+                e.preventDefault();
+                openProductoModal();
+            }
+        });
+
+        $cantUnidad.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $cantKgs.focus().select();
+            }
+        });
+
+        $cantKgs.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $('#btnAgregarProducto').focus();
+            }
+        });
+
+        $('#btnAgregarProducto').on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCurrentLine();
+            }
+        });
+
+        $('#txtCantUnidad, #txtCantKgs, #chkPermitirIngreso').on('input change', function () {
+            validarRelacionCantidadKilos();
+        });
+
+        $observaciones.on('input', autoResizeObservaciones);
+
+        $balanza.on('change', function () {
+            if ($balanza.is(':checked') && !balanzaDisponible) {
+                intentarActivarBalanza();
+            }
+
+            scheduleDraft();
+        });
+
+        $(document).on('keydown.movimientoGlobal', function (e) {
+            if (!$page.length) return;
+            var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            if (e.key === 'F10' && tag !== 'textarea') {
+                e.preventDefault();
+                openProductoModal();
+                return;
+            }
+
+            if (e.key === '*' && tag !== 'textarea') {
+                e.preventDefault();
+                if ($balanza.is(':checked')) {
+                    $balanza.prop('checked', false).trigger('change');
+                } else {
+                    intentarActivarBalanza();
+                }
+            }
+        });
+
+        $('#formMovimiento').on('submit', function (e) {
+            e.preventDefault();
+            renderLines();
+            clearWarning();
+            state.saving = true;
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize()
+            }).done(function (resp) {
+                if (!resp || !resp.ok) {
+                    state.saving = false;
+                    showAlert('error', 'Movimiento', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
+                    return;
+                }
+
+                clearDraft();
+                if (window.PostMovimientoModal && typeof window.PostMovimientoModal.open === 'function') {
+                    window.PostMovimientoModal.open(resp);
+                } else {
+                    showAlert('success', 'Movimiento', resp.mensaje || 'El movimiento se guardó correctamente.');
+                    window.location.href = resp.redirectUrl || config.redirectUrl || '/Movimientos';
+                }
+            }).fail(function (xhr) {
+                state.saving = false;
+                var mensaje = 'No se pudo guardar el movimiento.';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
+                showAlert('error', 'Movimiento', mensaje);
+            });
+        });
+
+        $page.on('click.movimientosDraft', '[data-action="restore-draft"]', function () {
+            var draft = readDraft();
+            if (!draft) return;
+            applyDraft(draft);
+            hideDraftBanner();
+        });
+
+        $page.on('click.movimientosDraft', '[data-action="clear-draft"]', function () {
+            if (!confirm('Se eliminará el borrador local de este movimiento. ¿Continuar?')) return;
+            clearDraft();
+        });
+
+        $('#formMovimiento').on('input change', 'input, select, textarea', function () {
+            scheduleDraft();
+        });
+
+        renderLines();
+        verificarBalanza();
+        autoResizeObservaciones();
+        if (readDraft()) {
+            showDraftBanner();
+        }
+        focusCodigo();
+    }
+
+    $(function () {
+        initIndex();
+        initEdit();
+    });
+})();
