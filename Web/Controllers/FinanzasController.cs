@@ -29,6 +29,7 @@ namespace Web.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
 
             oCtaCteN = new Negocio.CuentaCorriente(empresa, param);
             oCierreN = new Negocio.CierreCaja(empresa);

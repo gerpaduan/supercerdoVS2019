@@ -1,0 +1,252 @@
+@model Web.Models.CompraIndexVm
+@using System
+@using System.Collections.Generic
+@using System.Data
+
+@{
+    ViewBag.Title = "Stock";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    int idSucursal = ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0;
+    string tipoCompra = ViewBag.TipoCompra as string ?? "Ver Todos";
+    DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today.AddDays(-7);
+    DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today;
+    float totalKg = ViewBag.TotalKg != null ? (float)ViewBag.TotalKg : 0f;
+    string successMessage = TempData["StockSuccessMessage"] as string ?? "";
+}
+
+<div class="container-fluid stock-index-page">
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div id="stockSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3 stock-acciones-card">
+        <div class="card-body">
+            <div class="stock-acciones-grid">
+                <a class="btn btn-success stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Ingreso Stock" })">
+                    <i class="fas fa-box-open"></i>
+                    <span>Ingreso</span>
+                </a>
+                <a class="btn btn-danger stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Egreso Stock" })">
+                    <i class="fas fa-minus-circle"></i>
+                    <span>Egreso</span>
+                </a>
+                <a class="btn btn-primary stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Cierre Stock" })">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Cierre</span>
+                </a>
+                <a class="btn btn-info stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Pesaje Cortes" })">
+                    <i class="fas fa-weight-hanging"></i>
+                    <span>Pesaje</span>
+                </a>
+                <a class="btn btn-warning stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Ajuste Stock" })">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Ajuste</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 stock-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index", "Stock")">
+                <div class="stock-filtros-stack">
+                    <div class="stock-filtros-row stock-filtros-row-sucursal">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Sucursal</label>
+                            <select name="idSucursal" class="form-control">
+                                @foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Acción</label>
+                            <select name="tipoCompra" class="form-control">
+                                <option value="Ver Todos" @(tipoCompra == "Ver Todos" ? "selected" : "")>Todas</option>
+                                <option value="Ingreso Stock" @(tipoCompra == "Ingreso Stock" ? "selected" : "")>Ingreso</option>
+                                <option value="Egreso Stock" @(tipoCompra == "Egreso Stock" ? "selected" : "")>Egreso</option>
+                                <option value="Cierre Stock" @(tipoCompra == "Cierre Stock" ? "selected" : "")>Cierre</option>
+                                <option value="Pesaje Cortes" @(tipoCompra == "Pesaje Cortes" ? "selected" : "")>Pesaje</option>
+                                <option value="Ajuste Stock" @(tipoCompra == "Ajuste Stock" ? "selected" : "")>Ajuste</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="stock-filtros-row stock-filtros-row-fechas">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Desde</label>
+                            <input type="date" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Hasta</label>
+                            <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                        </div>
+
+                        <div class="form-group mb-0 stock-filtro-accion">
+                            <label class="stock-filtro-label d-none d-lg-block">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search mr-1"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card border-left-primary shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center mb-2">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="switchVistaCompletaStock">
+            <label class="custom-control-label" for="switchVistaCompletaStock">Ver detalles</label>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @Html.Partial("~/Views/Stock/_StockTabla.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<style>
+    .stock-acciones-card,
+    .stock-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .stock-acciones-grid,
+    .stock-filtros-stack,
+    .stock-filtros-row {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .stock-filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .stock-filtros-card .form-control,
+    .stock-filtros-card .btn,
+    .stock-action-btn {
+        min-height: 2.7rem;
+        border-radius: .6rem;
+    }
+
+    .stock-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .55rem;
+        font-weight: 600;
+    }
+
+    @@media (min-width: 1200px) {
+        .stock-acciones-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .stock-filtros-row-sucursal,
+        .stock-filtros-row-fechas {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stock-filtros-row-fechas {
+            grid-template-columns: 1fr 1fr 140px;
+            align-items: end;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .stock-acciones-grid,
+        .stock-filtros-row-sucursal,
+        .stock-filtros-row-fechas {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stock-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .stock-acciones-grid,
+        .stock-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var successAlert = document.getElementById("stockSuccessAlert");
+            if (successAlert) {
+                window.setTimeout(function () {
+                    $(successAlert).alert("close");
+                }, 2500);
+            }
+
+            const switchVista = document.getElementById("switchVistaCompletaStock");
+            if (!switchVista) return;
+
+            function syncIcon(button, expanded) {
+                if (!button) return;
+                button.setAttribute("aria-expanded", expanded ? "true" : "false");
+                const icon = button.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("fa-chevron-down", !expanded);
+                    icon.classList.toggle("fa-chevron-up", expanded);
+                }
+            }
+
+            document.addEventListener("click", function (e) {
+                const btn = e.target.closest(".btn-detalles-stock");
+                if (!btn) return;
+
+                e.preventDefault();
+                const selector = btn.getAttribute("data-target");
+                const detalle = selector ? document.querySelector(selector) : null;
+                if (!detalle) return;
+
+                const expanded = detalle.classList.contains("show");
+                $(detalle).collapse(expanded ? "hide" : "show");
+                syncIcon(btn, !expanded);
+            });
+
+            switchVista.addEventListener("change", function () {
+                const expandir = switchVista.checked;
+                document.querySelectorAll(".stock-detalle-collapse").forEach(function (detalle) {
+                    $(detalle).collapse(expandir ? "show" : "hide");
+                    const btn = document.querySelector('.btn-detalles-stock[data-target="#' + detalle.id + '"]');
+                    syncIcon(btn, expandir);
+                });
+            });
+        })();
+    </script>
+}

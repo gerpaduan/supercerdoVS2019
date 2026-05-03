@@ -12,99 +12,98 @@
 
 <div class="container-fluid  p-0 vista-venta">
 
-    <!-- 🗓 Filtro por fechas y Sucursal -->
-    <div class="card mb-3 shadow-sm p-3">
+    <!-- Filtro por fechas, sucursal y búsqueda rápida -->
+    <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
         <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
-
-            <!-- ⭐ FILA 1: Fechas + Botón -->
-            <div class="form-inline mb-3">
-
-                <div class="form-group mr-3">
-                    <label for="fechaDesde" class="mr-1">Desde:</label>
-                    <input type="datetime-local"
-                           id="fechaDesde"
-                           name="fechaDesde"
-                           class="form-control"
-                           value="@(string.IsNullOrEmpty(Request["fechaDesde"])
+            <div class="filtros-ventas-stack">
+                <div class="filtros-fila filtros-fila-fechas">
+                    <div class="form-group mb-0">
+                        <label for="fechaDesde" class="filtro-label">Desde</label>
+                        <input type="datetime-local"
+                               id="fechaDesde"
+                               name="fechaDesde"
+                               class="form-control"
+                               value="@(string.IsNullOrEmpty(Request["fechaDesde"])
 ? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
 : Request["fechaDesde"])" />
-                </div>
+                    </div>
 
-                <div class="form-group mr-3">
-                    <label for="fechaHasta" class="mr-1">Hasta:</label>
-                    <input type="datetime-local"
-                           id="fechaHasta"
-                           name="fechaHasta"
-                           class="form-control"
-                           value="@(string.IsNullOrEmpty(Request["fechaHasta"])
+                    <div class="form-group mb-0">
+                        <label for="fechaHasta" class="filtro-label">Hasta</label>
+                        <input type="datetime-local"
+                               id="fechaHasta"
+                               name="fechaHasta"
+                               class="form-control"
+                               value="@(string.IsNullOrEmpty(Request["fechaHasta"])
 ? DateTime.Today.ToString("yyyy-MM-ddT23:59")
 : Request["fechaHasta"])" />
+                    </div>
+
+                    <div class="form-group mb-0 filtro-accion">
+                        <label class="filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit"
+                                id="btnFiltrarFechas"
+                                class="btn btn-primary btn-block"
+                                disabled>
+                            Aplicar
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit"
-                        id="btnFiltrarFechas"
-                        class="btn btn-primary"
-                        disabled>
-                    Filtrar fechas
-                </button>
+                <div class="filtros-fila filtros-fila-sucursal">
+                    <div class="form-group mb-0 filtro-sucursal">
+                        <label for="idSucursal" class="filtro-label">Sucursal</label>
+                        <select id="idSucursal" name="idSucursal" class="form-control"
+                                onchange="this.form.submit()">
+                            <option value="">Todas las sucursales</option>
+
+                            @foreach (var s in ViewBag.Sucursales)
+                            {
+                                <option value="@s.IdSucursal"
+                                        @(ViewBag.IdSucursalSeleccionada == s.IdSucursal ? "selected" : "")>
+                                    @s.SucursalNombre
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filtros-fila filtros-fila-busqueda">
+                    <div class="form-group mb-0">
+                        <label for="buscadorVendedor" class="filtro-label">Vendedor</label>
+                        <input type="text"
+                               id="buscadorVendedor"
+                               class="form-control"
+                               placeholder="Nombre del vendedor" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="buscadorCliente" class="filtro-label">Cliente</label>
+                        <input type="text"
+                               id="buscadorCliente"
+                               class="form-control"
+                               placeholder="Nombre o identificación" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="formaPago" class="filtro-label">Forma de pago</label>
+                        <select id="formaPago"
+                                name="formaPago"
+                                class="form-control">
+                            <option value="">Todas las formas de pago</option>
+
+                            @foreach (Entidades.Venta.FormaPagoEnum fp
+                                    in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
+                            {
+                                <option value="@fp.ToString()">
+                                    @fp.ToString()
+                                </option>
+                            }
+
+                        </select>
+                    </div>
+                </div>
             </div>
-
-            <!-- ⭐ FILA 2: Sucursal y Cliente -->
-            <div class="form-inline">
-
-                <!-- Sucursal -->
-                <div class="form-group mr-3">
-                    @*<label for="idSucursal" class="mr-1">Sucursal:</label>*@
-                    <select id="idSucursal" name="idSucursal" class="form-control"
-                            onchange="this.form.submit()">
-                        <option value="">— Sucursal (todas) —</option>
-
-                        @foreach (var s in ViewBag.Sucursales)
-                        {
-                            <option value="@s.IdSucursal"
-                                    @(ViewBag.IdSucursalSeleccionada == s.IdSucursal ? "selected" : "")>
-                                @s.SucursalNombre
-                            </option>
-                        }
-                    </select>
-                </div>
-                <!-- Vendedor -->
-                <div class="form-group mr-3">
-
-                    <input type="text"
-                           id="buscadorVendedor"
-                           class="form-control"
-                           placeholder="Buscar vendedor..." />
-                </div>
-
-                <!-- Cliente -->
-                <div class="form-group mr-3">
-                    <input type="text" id="buscadorCliente" class="form-control"
-                           placeholder="Buscar cliente..." />
-                </div>
-
-                <!-- Forma de pago -->
-                <div class="form-group mr-3">
-                    <select id="formaPago"
-                            name="formaPago"
-                            class="form-control">
-                        <option value="">— Forma de pago (todas) —</option>
-
-                        @foreach (Entidades.Venta.FormaPagoEnum fp
-                                in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
-                        {
-                            <option value="@fp.ToString()">
-                                @fp.ToString()
-                            </option>
-                        }
-
-                    </select>
-                </div>
-
-
-
-            </div>
-
         </form>
     </div>
 
@@ -343,6 +342,38 @@
         background-color: #f8f9fc;
     }
 
+    .filtros-ventas-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .filtros-ventas-stack {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .filtros-fila {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .filtros-ventas-card .form-control {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .filtros-ventas-card .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
     /* Solo en pantallas grandes */
     @@media (min-width: 992px) {
         .vista-venta {
@@ -351,6 +382,42 @@
             margin: 0 !important; /* elimina auto margins de Bootstrap */
             padding-left: 0;
             padding-right: 0;
+        }
+    }
+
+    @@media (min-width: 1200px) {
+        .filtros-fila-fechas {
+            grid-template-columns: 1.15fr 1.15fr 140px;
+            align-items: end;
+        }
+
+        .filtro-sucursal {
+            max-width: 420px;
+        }
+
+        .filtros-fila-busqueda {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .filtros-fila-fechas,
+        .filtros-fila-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .filtro-accion {
+            grid-column: 2;
+        }
+
+        .filtros-fila-sucursal {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .filtros-fila {
+            grid-template-columns: 1fr;
         }
     }
 </style>

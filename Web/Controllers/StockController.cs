@@ -1,0 +1,593 @@
+using Entidades;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Web.Mvc;
+using Web.Helpers;
+using Web.Models;
+
+namespace Web.Controllers
+{
+    public class StockController : BaseController
+    {
+        private Negocio.Compra oCompraN;
+        private Negocio.Sucursal oSucursalN;
+        private Negocio.Usuario oUsuarioN;
+        private Negocio.Corte oCorteN;
+        private Negocio.Persona oPersonaN;
+
+        private static readonly string[] TiposStock =
+        {
+            Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock),
+            Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock),
+            Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock),
+            Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes),
+            Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock)
+        };
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
+
+            oCompraN = new Negocio.Compra(empresa, param);
+            oSucursalN = new Negocio.Sucursal(empresa, param);
+            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oCorteN = new Negocio.Corte(empresa, param);
+            oPersonaN = new Negocio.Persona(empresa, param);
+        }
+
+        public ActionResult Index(int? idSucursal = null, string tipoCompra = "Ver Todos", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                ViewBag.Seccion = "Stock";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
+            string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
+
+            DataTable dt = oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde.Date, hasta.Date, null) ?? new DataTable();
+            dt = FiltrarSoloStock(dt);
+
+            var model = new CompraIndexVm
+            {
+                Compras = dt,
+                Detalles = ConstruirDetallesIndex(dt)
+            };
+
+            ViewBag.Title = "Stock";
+            ViewBag.Seccion = "Stock";
+            ViewBag.Sucursales = oSucursalN.findAll();
+            ViewBag.IdSucursal = sucursalSeleccionada;
+            ViewBag.TipoCompra = tipoNormalizado;
+            ViewBag.FechaDesde = desde;
+            ViewBag.FechaHasta = hasta;
+            ViewBag.TotalKg = CalcularTotalKg(dt);
+
+            return View("~/Views/Stock/Index.cshtml", model);
+        }
+
+        public ActionResult Nuevo(string tipoCompra)
+        {
+            string tipoNormalizado = NormalizarTipoOperacion(tipoCompra);
+            if (string.IsNullOrWhiteSpace(tipoNormalizado))
+                return RedirectToAction("Index");
+
+            return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado });
+        }
+
+        public ActionResult Editar(int id = 0, string tipoCompra = "")
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            Entidades.Compra compra = null;
+            if (id > 0)
+            {
+                compra = oCompraN.findById_convertToCompra(id);
+                if (compra == null || compra.IdCompra == 0)
+                    return HttpNotFound("No se encontró el movimiento de stock.");
+            }
+
+            string tipoOperacion = compra != null ? compra.TipoCompra : NormalizarTipoOperacion(tipoCompra);
+            if (string.IsNullOrWhiteSpace(tipoOperacion) || !EsTipoStock(tipoOperacion))
+                return RedirectToAction("Index");
+
+            DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
+            int idCreador = compra != null && compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador))
+            {
+                ViewBag.Seccion = "Stock";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            if (EsAjuste(tipoOperacion) && (user == null || !user.Admin))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para realizar Ajuste de Stock.";
+                return RedirectToAction("Index");
+            }
+
+            var model = compra != null ? CrearViewModelEdicion(compra, user) : CrearViewModelNuevo(user, tipoOperacion);
+            CargarViewBags(model);
+
+            return View("~/Views/Stock/Editar.cshtml", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Guardar(StockEditVm model)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            if (model == null)
+            {
+                TempData["AlertType"] = "error";
+                TempData["AlertTitle"] = "Error";
+                TempData["AlertMsg"] = "No se recibieron datos para guardar.";
+                return RedirectToAction("Index");
+            }
+
+            string tipoOperacion = NormalizarTipoOperacion(model.TipoCompra);
+            Entidades.Compra compraActual = null;
+            if (model.IdCompra > 0)
+            {
+                compraActual = oCompraN.findById_convertToCompra(model.IdCompra);
+                if (compraActual == null || compraActual.IdCompra == 0)
+                {
+                    TempData["AlertType"] = "error";
+                    TempData["AlertTitle"] = "No encontrado";
+                    TempData["AlertMsg"] = "No se encontró el movimiento de stock a modificar.";
+                    return RedirectToAction("Index");
+                }
+
+                tipoOperacion = compraActual.TipoCompra;
+            }
+
+            model.TipoCompra = tipoOperacion;
+            string error = ValidarModelo(model, user);
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                ModelState.AddModelError("", error);
+                CargarViewBags(model);
+                RecalcularTotales(model);
+                return View("~/Views/Stock/Editar.cshtml", model);
+            }
+
+            DateTime fechaPermiso = model.FechaCompra;
+            int idCreador = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador))
+            {
+                ViewBag.Seccion = "Stock";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            Entidades.Sucursal sucursal = oSucursalN.findById(model.IdSucursal);
+            if (sucursal == null || sucursal.IdSucursal <= 0)
+            {
+                ModelState.AddModelError("", "Seleccione una sucursal válida.");
+                CargarViewBags(model);
+                RecalcularTotales(model);
+                return View("~/Views/Stock/Editar.cshtml", model);
+            }
+
+            int idProveedor = EsPesaje(tipoOperacion) ? model.IdProveedor : param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+            Entidades.Persona proveedor = ResolverProveedor(idProveedor);
+            if (proveedor == null || proveedor.IdPersona <= 0)
+            {
+                ModelState.AddModelError("", "No se pudo resolver la persona para este movimiento.");
+                CargarViewBags(model);
+                RecalcularTotales(model);
+                return View("~/Views/Stock/Editar.cshtml", model);
+            }
+
+            var compra = compraActual ?? new Entidades.Compra();
+            compra.IdCompra = model.IdCompra;
+            compra.TipoCompra = tipoOperacion;
+            compra.NroRemito = compraActual != null ? compraActual.NroRemito ?? "" : "";
+            compra.FechaCompra = model.FechaCompra;
+            compra.Proveedor = proveedor;
+            compra.CantMedias = model.CantMedias;
+            compra.KgsMedias = model.KgsMedias;
+            compra.Observaciones = (model.Observaciones ?? string.Empty).Trim();
+            compra.Sucursal = sucursal;
+            compra.EnCtaCte = false;
+            compra.Estado = compraActual != null ? compraActual.Estado ?? "" : "";
+            compra.CreadoPor = compraActual != null ? compraActual.CreadoPor : user;
+            compra.ActualizadoPor = compraActual != null ? user : null;
+
+            var lineas = new List<Entidades.CortePorCompra>();
+            int index = 0;
+            foreach (var linea in model.Lineas ?? new List<StockLineaVm>())
+            {
+                index++;
+                var corte = oCorteN.findCorteById(linea.IdCorte ?? 0, false);
+                if (corte == null || corte.IdCorte <= 0)
+                {
+                    ModelState.AddModelError("", "No se encontró el producto de la línea " + index + ".");
+                    CargarViewBags(model);
+                    RecalcularTotales(model);
+                    return View("~/Views/Stock/Editar.cshtml", model);
+                }
+
+                float cantidad = linea.CantKgs;
+                if (EsEgreso(tipoOperacion) && cantidad > 0)
+                    cantidad = cantidad * -1;
+
+                lineas.Add(new Entidades.CortePorCompra
+                {
+                    Compra = compra,
+                    Corte = corte,
+                    CantKgs = cantidad,
+                    precioKg = 0,
+                    PrecioVenta = 0,
+                    Margen = 0,
+                    Desc_recargo = 0,
+                    Iva_compra = 0,
+                    Balanza = linea.Balanza,
+                    Sucursal = sucursal,
+                    Creado = DateTime.Now,
+                    CreadoPor = user
+                });
+            }
+
+            try
+            {
+                oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
+                TempData["StockSuccessMessage"] = model.IdCompra > 0
+                    ? "El movimiento de stock se guardó correctamente."
+                    : "El movimiento de stock se registró correctamente.";
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Error al guardar el movimiento de stock. " + ex.Message);
+                CargarViewBags(model);
+                RecalcularTotales(model);
+                return View("~/Views/Stock/Editar.cshtml", model);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult BuscarCorte(string q = "")
+        {
+            try
+            {
+                var productos = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+                if (!string.IsNullOrWhiteSpace(q))
+                {
+                    string filtro = q.Trim();
+                    productos = productos.Where(p =>
+                        (!string.IsNullOrWhiteSpace(p.CorteDesc) && p.CorteDesc.IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                        p.Codigo.ToString().IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+                }
+
+                var resultado = productos.Take(200).Select(p => new
+                {
+                    id = p.IdCorte,
+                    codigo = p.Codigo,
+                    nombre = p.CorteDesc,
+                    tipo = p.Tipo ?? "",
+                    promedio = p.Promedio,
+                    pesable = p.Pesable
+                }).ToList();
+
+                return Json(resultado, JsonRequestBehavior.AllowGet);
+            }
+            catch
+            {
+                return Json(new List<object>(), JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult BuscarCortePorCodigo(long? codigo)
+        {
+            if (!codigo.HasValue || codigo.Value <= 0)
+                return Json(new { ok = false, mensaje = "Código inválido." }, JsonRequestBehavior.AllowGet);
+
+            var corte = oCorteN.findCorteByCodigo(codigo.Value, false);
+            if (corte == null || corte.IdCorte <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el producto." }, JsonRequestBehavior.AllowGet);
+
+            return Json(new
+            {
+                ok = true,
+                id = corte.IdCorte,
+                codigo = corte.Codigo,
+                nombre = corte.CorteDesc,
+                tipo = corte.Tipo ?? "",
+                promedio = corte.Promedio,
+                pesable = corte.Pesable
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        private static bool EsTipoStock(string tipoCompra)
+        {
+            return TiposStock.Contains(tipoCompra ?? "", StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static bool EsPesaje(string tipoCompra)
+        {
+            return string.Equals(tipoCompra,
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EsAjuste(string tipoCompra)
+        {
+            return string.Equals(tipoCompra,
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EsEgreso(string tipoCompra)
+        {
+            return string.Equals(tipoCompra,
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizarTipoFiltro(string tipoCompra)
+        {
+            if (string.IsNullOrWhiteSpace(tipoCompra))
+                return "Ver Todos";
+
+            if (string.Equals(tipoCompra, "Todos", StringComparison.OrdinalIgnoreCase))
+                return "Ver Todos";
+
+            return tipoCompra.Trim();
+        }
+
+        private static string NormalizarTipoOperacion(string tipoCompra)
+        {
+            if (string.IsNullOrWhiteSpace(tipoCompra))
+                return "";
+
+            string tipo = tipoCompra.Trim();
+            return EsTipoStock(tipo) ? tipo : "";
+        }
+
+        private DataTable FiltrarSoloStock(DataTable origen)
+        {
+            if (origen == null)
+                return new DataTable();
+
+            if (!origen.Columns.Contains("tipoCompra"))
+                return origen.Copy();
+
+            var filas = origen.AsEnumerable()
+                .Where(row => EsTipoStock(row["tipoCompra"] != DBNull.Value ? row["tipoCompra"].ToString() : ""))
+                .ToList();
+
+            if (filas.Count == 0)
+                return origen.Clone();
+
+            return filas.CopyToDataTable();
+        }
+
+        private StockEditVm CrearViewModelNuevo(Entidades.Usuario user, string tipoCompra)
+        {
+            int idSucursal = user != null && user.IdSucursal > 0 ? user.IdSucursal : 0;
+            Entidades.Sucursal sucursal = idSucursal > 0 ? oSucursalN.findById(idSucursal) : null;
+            int idProveedor = param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+
+            var model = new StockEditVm
+            {
+                IdCompra = 0,
+                EsEdicion = false,
+                TipoCompra = tipoCompra,
+                IdSucursal = idSucursal,
+                SucursalNombre = sucursal != null ? sucursal.SucursalNombre : "",
+                FechaCompra = DateTime.Now,
+                DraftKey = BuildDraftKey(user, idSucursal, tipoCompra, 0),
+                IdProveedor = idProveedor
+            };
+
+            if (EsPesaje(tipoCompra))
+            {
+                var proveedor = ResolverProveedor(idProveedor);
+                model.ProveedorNombre = proveedor != null ? proveedor.RazonSocial : "";
+                model.ProveedorCuit = proveedor != null ? proveedor.Cuit : "";
+            }
+
+            return model;
+        }
+
+        private StockEditVm CrearViewModelEdicion(Entidades.Compra compra, Entidades.Usuario user)
+        {
+            var model = new StockEditVm
+            {
+                IdCompra = compra.IdCompra,
+                EsEdicion = true,
+                TipoCompra = compra.TipoCompra,
+                IdSucursal = compra.Sucursal != null ? compra.Sucursal.IdSucursal : (user != null ? user.IdSucursal : 0),
+                SucursalNombre = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
+                FechaCompra = compra.FechaCompra,
+                Observaciones = compra.Observaciones,
+                Estado = compra.Estado,
+                IdProveedor = compra.Proveedor != null ? compra.Proveedor.IdPersona : param.GetInt(Entidades.ParamKeys.IdIndefinido, 0),
+                ProveedorNombre = compra.Proveedor != null ? compra.Proveedor.RazonSocial : "",
+                ProveedorCuit = compra.Proveedor != null ? compra.Proveedor.Cuit : "",
+                CantMedias = compra.CantMedias,
+                KgsMedias = compra.KgsMedias,
+                Creado = FormatearFechaHora(compra.Creado),
+                CreadoPor = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "-",
+                Actualizado = FormatearFechaHora(compra.Actualizado),
+                ActualizadoPor = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "-",
+                DraftKey = BuildDraftKey(user, compra.Sucursal != null ? compra.Sucursal.IdSucursal : (user != null ? user.IdSucursal : 0), compra.TipoCompra, compra.IdCompra)
+            };
+
+            var cortes = oCompraN.convertCortesPorCompraToList(compra.IdCompra);
+            int index = 0;
+            foreach (var corte in cortes)
+            {
+                index++;
+                model.Lineas.Add(new StockLineaVm
+                {
+                    Index = index,
+                    IdCorte = corte.Corte != null ? (int?)corte.Corte.IdCorte : null,
+                    Codigo = corte.Corte != null ? (long?)corte.Corte.Codigo : null,
+                    Producto = corte.Corte != null ? corte.Corte.CorteDesc : "",
+                    CantKgs = corte.CantKgs,
+                    Balanza = corte.Balanza,
+                    CreadoTexto = FormatearFechaHora(corte.Creado),
+                    Pesable = corte.Corte != null && corte.Corte.Pesable
+                });
+            }
+
+            RecalcularTotales(model);
+            return model;
+        }
+
+        private void CargarViewBags(StockEditVm model)
+        {
+            ViewBag.Title = model.EsEdicion ? "Modificar Stock" : "Nuevo Stock";
+            ViewBag.Seccion = "Stock";
+            ViewBag.Sucursales = oSucursalN.findAll();
+            ViewBag.UrlBuscarPersonaModal = Url.Action("Buscar", "Personas");
+            ViewBag.UrlPersonaListar = Url.Action("Listar", "Personas");
+        }
+
+        private Dictionary<int, CompraIndexDetalleVm> ConstruirDetallesIndex(DataTable dt)
+        {
+            var detalles = new Dictionary<int, CompraIndexDetalleVm>();
+            if (dt == null)
+                return detalles;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int idCompra = Convert.ToInt32(row["idCompra"]);
+                if (detalles.ContainsKey(idCompra))
+                    continue;
+
+                Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
+                if (compra == null || compra.IdCompra == 0)
+                    continue;
+
+                detalles[idCompra] = new CompraIndexDetalleVm
+                {
+                    IdCompra = compra.IdCompra,
+                    FechaCompra = compra.FechaCompra,
+                    TipoCompra = compra.TipoCompra ?? "",
+                    Cantidad = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]),
+                    Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
+                    Observaciones = compra.Observaciones ?? "",
+                    Estado = compra.Estado ?? "",
+                    UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
+                    FechaCreacion = compra.Creado,
+                    UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
+                    FechaActualizacion = compra.Actualizado
+                };
+            }
+
+            return detalles;
+        }
+
+        private static float CalcularTotalKg(DataTable dt)
+        {
+            float total = 0f;
+            if (dt == null)
+                return total;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                total += row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]);
+            }
+
+            return total;
+        }
+
+        private string ValidarModelo(StockEditVm model, Entidades.Usuario user)
+        {
+            if (model == null)
+                return "No se recibieron datos.";
+
+            if (!EsTipoStock(model.TipoCompra))
+                return "Seleccione una acción válida de stock.";
+
+            if (model.IdSucursal <= 0)
+                return "Seleccione una sucursal.";
+
+            if (model.FechaCompra == DateTime.MinValue)
+                return "Ingrese una fecha válida.";
+
+            if (EsAjuste(model.TipoCompra) && (user == null || !user.Admin))
+                return "No tiene permisos para realizar Ajuste de Stock.";
+
+            if (model.Lineas == null || model.Lineas.Count == 0)
+                return "Debe ingresar al menos una línea.";
+
+            int index = 0;
+            foreach (var linea in model.Lineas)
+            {
+                index++;
+                if (!linea.IdCorte.HasValue || linea.IdCorte.Value <= 0)
+                    return "La línea " + index + " no tiene un producto válido.";
+
+                if (linea.CantKgs == 0)
+                    return "La línea " + index + " tiene una cantidad inválida.";
+            }
+
+            if (EsPesaje(model.TipoCompra))
+            {
+                if (model.IdProveedor <= 0)
+                    return "Seleccione un proveedor para el pesaje.";
+
+                if (!model.CantMedias.HasValue || model.CantMedias.Value <= 0)
+                    return "Ingrese la cantidad de medias para el pesaje.";
+
+                if (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0)
+                    return "Ingrese los kilos de medias para el pesaje.";
+            }
+
+            return "";
+        }
+
+        private Entidades.Persona ResolverProveedor(int idProveedor)
+        {
+            int id = idProveedor > 0 ? idProveedor : param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+            return id > 0 ? oPersonaN.findById(id) : null;
+        }
+
+        private static string BuildDraftKey(Entidades.Usuario user, int idSucursal, string tipoCompra, int idCompra)
+        {
+            int idUsuario = user != null ? user.Id : 0;
+            return "stock_draft_" + idUsuario + "_" + idSucursal + "_" + tipoCompra + "_" + idCompra;
+        }
+
+        private static string FormatearFechaHora(DateTime? fecha)
+        {
+            return fecha.HasValue ? fecha.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+        }
+
+        private static void RecalcularTotales(StockEditVm model)
+        {
+            model.CantItems = model.Lineas != null ? model.Lineas.Count : 0;
+            model.TotalKg = 0f;
+
+            foreach (var linea in model.Lineas ?? new List<StockLineaVm>())
+            {
+                model.TotalKg += linea.CantKgs;
+            }
+
+            if (EsPesaje(model.TipoCompra) && (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0))
+                model.KgsMedias = model.TotalKg;
+        }
+    }
+}

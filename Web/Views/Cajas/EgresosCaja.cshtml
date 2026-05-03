@@ -34,78 +34,86 @@
             </button>
         </div>
 
-        <form id="formFiltrosEgresos" class="egresos-filtros">
-            <div class="form-row">
-                <div class="form-group col-12 col-md-3">
-                    <label>Sucursal</label>
-                    <select name="idSucursal" id="filtroSucursalEgreso" class="form-control">
-                        <option value="0" @(idSucursal == 0 ? "selected" : "")>Todas</option>
-                        @if (sucursales != null)
-                        {
-                            foreach (var s in sucursales)
+        <form id="formFiltrosEgresos" class="egresos-filtros egresos-filtros-card">
+            <div class="egresos-filtros-stack">
+                <div class="egresos-filtros-row egresos-filtros-row-principal">
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Sucursal</label>
+                        <select name="idSucursal" id="filtroSucursalEgreso" class="form-control">
+                            <option value="0" @(idSucursal == 0 ? "selected" : "")>Todas</option>
+                            @if (sucursales != null)
                             {
-                                <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                                foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                                }
                             }
-                        }
-                    </select>
-                </div>
+                        </select>
+                    </div>
 
-                <div class="form-group col-12 col-md-3">
-                    <label>Usuario</label>
-                    <select name="idUsuario" id="filtroUsuarioEgreso" class="form-control">
-                        @if (usuarios != null)
-                        {
-                            foreach (DataRow row in usuarios.Rows)
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Usuario</label>
+                        <select name="idUsuario" id="filtroUsuarioEgreso" class="form-control">
+                            @if (usuarios != null)
                             {
-                                int id = Convert.ToInt32(row["id"]);
-                                <option value="@id" @(id == idUsuario ? "selected" : "")>@row["nombre"]</option>
+                                foreach (DataRow row in usuarios.Rows)
+                                {
+                                    int id = Convert.ToInt32(row["id"]);
+                                    <option value="@id" @(id == idUsuario ? "selected" : "")>@row["nombre"]</option>
+                                }
                             }
-                        }
-                    </select>
-                </div>
-
-                <div class="form-group col-12 col-md-3">
-                    <label>Tipo</label>
-                    <select name="idTipoEgresoCaja" id="filtroTipoEgreso" class="form-control">
-                        <option value="0">Todos</option>
-                        @if (tipos != null)
-                        {
-                            foreach (DataRow row in tipos.Rows)
-                            {
-                                int id = Convert.ToInt32(row["id"]);
-                                if (id == 0) { continue; }
-                                <option value="@id" @(id == idTipo ? "selected" : "")>@row["tipoEgresoCaja"]</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <div class="form-group col-12 col-md-3">
-                    <label>Descripcion</label>
-                    <input type="text" name="descripcion" id="filtroDescripcionEgreso" value="@descripcion" class="form-control" autocomplete="off" />
-                </div>
-
-                <div class="form-group col-6 col-md-3">
-                    <label>Desde</label>
-                    <input type="date" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
-                </div>
-
-                <div class="form-group col-6 col-md-3">
-                    <label>Hasta</label>
-                    <input type="date" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
-                </div>
-
-                <div class="form-group col-12 col-md-3 d-flex align-items-end">
-                    <div class="custom-control custom-checkbox mb-2">
-                        <input type="checkbox" class="custom-control-input" id="soloGastos" name="soloGastos" value="true" @(soloGastos ? "checked" : "")>
-                        <label class="custom-control-label" for="soloGastos">Solo gastos</label>
+                        </select>
                     </div>
                 </div>
 
-                <div class="form-group col-12 col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-search mr-1"></i> Buscar
-                    </button>
+                <div class="egresos-filtros-row egresos-filtros-row-fechas">
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Desde</label>
+                        <input type="date" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Hasta</label>
+                        <input type="date" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                    </div>
+
+                    <div class="form-group mb-0 egresos-filtro-accion">
+                        <label class="egresos-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="egresos-filtros-row egresos-filtros-row-busqueda">
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Tipo</label>
+                        <select name="idTipoEgresoCaja" id="filtroTipoEgreso" class="form-control">
+                            <option value="0">Todos</option>
+                            @if (tipos != null)
+                            {
+                                foreach (DataRow row in tipos.Rows)
+                                {
+                                    int id = Convert.ToInt32(row["id"]);
+                                    if (id == 0) { continue; }
+                                    <option value="@id" @(id == idTipo ? "selected" : "")>@row["tipoEgresoCaja"]</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Descripcion</label>
+                        <input type="text" name="descripcion" id="filtroDescripcionEgreso" value="@descripcion" class="form-control" autocomplete="off" />
+                    </div>
+
+                    <div class="form-group mb-0 egresos-filtro-check">
+                        <label class="egresos-filtro-label d-block">Opciones</label>
+                        <div class="custom-control custom-checkbox pt-2">
+                            <input type="checkbox" class="custom-control-input" id="soloGastos" name="soloGastos" value="true" @(soloGastos ? "checked" : "")>
+                            <label class="custom-control-label" for="soloGastos">Solo gastos</label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -122,6 +130,77 @@
         </div>
     }
 </div>
+
+<style>
+    .egresos-filtros-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .egresos-filtros-stack {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .egresos-filtros-row {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .egresos-filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .egresos-filtros-card .form-control {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .egresos-filtros-card .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .egresos-filtros-row-principal {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .egresos-filtros-row-fechas {
+            grid-template-columns: 1.15fr 1.15fr 140px;
+            align-items: end;
+        }
+
+        .egresos-filtros-row-busqueda {
+            grid-template-columns: 1fr 1.4fr .9fr;
+            align-items: end;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .egresos-filtros-row-principal,
+        .egresos-filtros-row-fechas,
+        .egresos-filtros-row-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .egresos-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .egresos-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 <div class="modal fade" id="modalEgresoCaja" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">

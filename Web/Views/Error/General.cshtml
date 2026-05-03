@@ -1,5 +1,6 @@
 @{
     Layout = null;
+    string requestedUrl = ViewBag.RequestedUrl as string ?? "";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -7,30 +8,92 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Error inesperado</title>
-    <link href="~/Content/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" />
-    <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f8f9fc;
+            color: #212529;
+        }
+
+        .error-wrap {
+            max-width: 760px;
+            margin: 60px auto;
+            padding: 0 16px;
+        }
+
+        .error-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+            padding: 32px 24px;
+            text-align: center;
+        }
+
+        .error-code {
+            font-size: 48px;
+            font-weight: 700;
+            color: #c92a2a;
+            margin-bottom: 8px;
+        }
+
+        .error-title {
+            margin: 0 0 12px;
+            font-size: 28px;
+        }
+
+        .error-text {
+            margin: 0 0 20px;
+            color: #495057;
+            line-height: 1.5;
+        }
+
+        .error-url {
+            margin: 0 0 24px;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            color: #6c757d;
+            word-break: break-word;
+        }
+
+        .error-actions a {
+            display: inline-block;
+            margin: 0 6px 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            border: 1px solid #ced4da;
+            color: #495057;
+            background: #fff;
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <div class="card shadow border-0">
-                    <div class="card-body p-5 text-center">
-                        <div class="display-4 text-danger mb-3">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <h1 class="h3 text-gray-900 mb-3">Ocurrió un error al procesar la solicitud</h1>
-                        <p class="text-muted mb-4">
-                            Intentá nuevamente en unos instantes. Si el problema continúa, volvé al inicio e intentá retomar la operación.
-                        </p>
-                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary mr-2">
-                            Ir al inicio
-                        </a>
-                        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-                            Volver
-                        </a>
-                    </div>
-                </div>
+<body>
+    <div class="error-wrap">
+        <div class="error-card">
+            <div class="error-code">500</div>
+            <h1 class="error-title">Ocurrio un error al procesar la solicitud</h1>
+            <p class="error-text">
+                Intenta nuevamente en unos instantes. Si el problema continua, vuelve al inicio e intenta retomar la operacion.
+            </p>
+            @if (!string.IsNullOrWhiteSpace(requestedUrl))
+            {
+                <div class="error-url">@requestedUrl</div>
+            }
+            <div class="error-actions">
+                <a href="/" class="btn-primary">Ir al inicio</a>
+                <a href="javascript:history.back()" class="btn-secondary">Volver</a>
             </div>
         </div>
     </div>

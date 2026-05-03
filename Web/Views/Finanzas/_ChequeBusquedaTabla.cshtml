@@ -5,34 +5,40 @@
     bool chequeBusquedaEnPago = ViewBag.ChequeBusquedaEnPago != null && (bool)ViewBag.ChequeBusquedaEnPago;
 }
 
-<div class="row mb-3">
-    <div class="col-md-3">
-        <label>Estado</label>
-        <select id="filtroEstado" class="form-control">
-            <option value="">-- Todos --</option>
-            <option value="PENDIENTE" @(filtroEstado == "PENDIENTE" ? "selected" : "")>Pendiente</option>
-            <option value="ENTREGADO" @(filtroEstado == "ENTREGADO" ? "selected" : "")>Entregado</option>
-            <option value="DEPOSITADO" @(filtroEstado == "DEPOSITADO" ? "selected" : "")>Depositado</option>
-            <option value="ACREDITADO" @(filtroEstado == "ACREDITADO" ? "selected" : "")>Acreditado</option>
-            <option value="RECHAZADO" @(filtroEstado == "RECHAZADO" ? "selected" : "")>Rechazado</option>
-        </select>
-    </div>
+<div class="cheques-filtros-card mb-3">
+    <div class="cheques-filtros-stack">
+        <div class="cheques-filtros-row cheques-filtros-row-fechas">
+            <div class="form-group mb-0 cheques-filtro-fecha">
+                <label class="cheques-filtro-label">Fecha desde</label>
+                <input type="date" id="filtroDesde" class="form-control" value="@filtroDesde">
+            </div>
 
-    <div class="col-md-3">
-        <label>Nro Cheque</label>
-        <input type="text" id="filtroNroCheque" class="form-control" placeholder="Buscar por numero" value="@filtroNroCheque">
-    </div>
+            <div class="form-group mb-0 cheques-filtro-accion">
+                <label class="cheques-filtro-label d-none d-lg-block">&nbsp;</label>
+                <button type="button" class="btn btn-primary btn-block" id="btnFiltrarCheques">
+                    <i class="fas fa-filter mr-1"></i> Buscar
+                </button>
+            </div>
+        </div>
 
-    <div class="col-md-3">
-        <label>Fecha desde</label>
-        <input type="date" id="filtroDesde" class="form-control" value="@filtroDesde">
-    </div>
+        <div class="cheques-filtros-row cheques-filtros-row-busqueda">
+            <div class="form-group mb-0">
+                <label class="cheques-filtro-label">Estado</label>
+                <select id="filtroEstado" class="form-control">
+                    <option value="">-- Todos --</option>
+                    <option value="PENDIENTE" @(filtroEstado == "PENDIENTE" ? "selected" : "")>Pendiente</option>
+                    <option value="ENTREGADO" @(filtroEstado == "ENTREGADO" ? "selected" : "")>Entregado</option>
+                    <option value="DEPOSITADO" @(filtroEstado == "DEPOSITADO" ? "selected" : "")>Depositado</option>
+                    <option value="ACREDITADO" @(filtroEstado == "ACREDITADO" ? "selected" : "")>Acreditado</option>
+                    <option value="RECHAZADO" @(filtroEstado == "RECHAZADO" ? "selected" : "")>Rechazado</option>
+                </select>
+            </div>
 
-    <div class="col-md-3">
-        <label>&nbsp;</label>
-        <button type="button" class="btn btn-primary btn-block" id="btnFiltrarCheques">
-            <i class="fas fa-filter mr-1"></i> Buscar
-        </button>
+            <div class="form-group mb-0">
+                <label class="cheques-filtro-label">Nro Cheque</label>
+                <input type="text" id="filtroNroCheque" class="form-control" placeholder="Buscar por numero" value="@filtroNroCheque">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -61,3 +67,67 @@
     </div>
 }
 
+<style>
+    .cheques-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+        padding: 1rem;
+        background: #fff;
+    }
+
+    .cheques-filtros-stack {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .cheques-filtros-row {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .cheques-filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .cheques-filtros-card .form-control {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .cheques-filtros-card .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .cheques-filtros-row-fechas {
+            grid-template-columns: 1.15fr 140px;
+            align-items: end;
+            max-width: 420px;
+        }
+
+        .cheques-filtros-row-busqueda {
+            grid-template-columns: .9fr 1.2fr;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .cheques-filtros-row-fechas,
+        .cheques-filtros-row-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .cheques-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .cheques-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

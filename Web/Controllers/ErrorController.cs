@@ -7,7 +7,7 @@ namespace Web.Controllers
         [AllowAnonymous]
         public ActionResult NotFound()
         {
-            Response.StatusCode = 404;
+            Response.StatusCode = 200;
             Response.TrySkipIisCustomErrors = true;
             ViewBag.RequestedUrl = Request != null ? Request.RawUrl : "";
             return View();
@@ -16,7 +16,7 @@ namespace Web.Controllers
         [AllowAnonymous]
         public ActionResult General()
         {
-            Response.StatusCode = 500;
+            Response.StatusCode = 200;
             Response.TrySkipIisCustomErrors = true;
             ViewBag.RequestedUrl = Request != null ? Request.RawUrl : "";
             return View();

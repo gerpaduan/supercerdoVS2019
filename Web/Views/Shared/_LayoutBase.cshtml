@@ -6,7 +6,8 @@
 
     if (user == null && !(controller == "Login" && action == "Index"))
     {
-        Response.Redirect("~/Login/Index");
+        Response.Redirect("~/Login/Index", false);
+        Context.ApplicationInstance.CompleteRequest();
     }
 }
 <!DOCTYPE html>
@@ -117,6 +118,14 @@
                 <a class="nav-link" href="@Url.Action("Index", "Compras")">
                     <i class="fas fa-fw fa-shopping-cart"></i>
                     <span>Compras</span>
+                </a>
+            </li>
+
+            <!-- Stock -->
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("Index", "Stock")">
+                    <i class="fas fa-fw fa-boxes"></i>
+                    <span>Stock</span>
                 </a>
             </li>
 

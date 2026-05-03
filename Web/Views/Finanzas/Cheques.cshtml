@@ -15,11 +15,8 @@
 <div class="container-fluid">
     <div class="card shadow mb-4">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div class="small text-muted mb-2 mb-md-0">
-                    La grilla replica la busqueda de cheques usada al agregar pagos y permite expandir el detalle sin salir del listado.
-                </div>
-                <button type="button" class="btn btn-success" id="btnNuevoCheque">
+            <div class="d-flex align-items-center flex-wrap cheques-acciones-header">
+                <button type="button" class="btn btn-success cheques-btn-nuevo" id="btnNuevoCheque">
                     <i class="fas fa-plus mr-1"></i> Nuevo cheque
                 </button>
             </div>
@@ -31,6 +28,26 @@
 </div>
 
 @Html.Partial("_ModalAltaCheque")
+
+<style>
+    .cheques-acciones-header {
+        justify-content: flex-start;
+    }
+
+    .cheques-btn-nuevo {
+        width: 100%;
+    }
+
+    @@media (min-width: 1200px) {
+        .cheques-acciones-header {
+            justify-content: flex-end;
+        }
+
+        .cheques-btn-nuevo {
+            width: auto;
+        }
+    }
+</style>
 
 @if (renderSinLayout)
 {

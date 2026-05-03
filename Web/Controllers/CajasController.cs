@@ -20,6 +20,7 @@ namespace Web.Controllers
             ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
 
             oCierreN = new Negocio.CierreCaja(empresa);
             oSucursalN = new Negocio.Sucursal(empresa);

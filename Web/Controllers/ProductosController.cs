@@ -23,6 +23,7 @@ namespace Web.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
 
             oSucursalN = new Negocio.Sucursal(empresa, param);
             oCorteN = new Negocio.Corte(empresa, param);

@@ -139,6 +139,7 @@
     <Compile Include="Controllers\PersonasController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
+    <Compile Include="Controllers\StockController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
     <Compile Include="EmpresaContextWeb.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
@@ -154,6 +155,7 @@
     <Compile Include="Models\CompraIndexVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
+    <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />
@@ -1867,6 +1869,7 @@
     <Content Include="Scripts\app\persona-buscar.js" />
     <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\app\scanner.js" />
+    <Content Include="Scripts\app\stock.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js.map" />
@@ -2071,6 +2074,9 @@
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
+    <Content Include="Views\Stock\_StockTabla.cshtml" />
+    <Content Include="Views\Stock\Index.cshtml" />
+    <Content Include="Views\Stock\Editar.cshtml" />
     <Content Include="Views\Ventas\_ModalPostVenta.cshtml" />
     <Content Include="Views\Ventas\_TicketHTML.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />

@@ -28,68 +28,70 @@
         </div>
     }
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">Compras</h1>
-        </div>
-        <div class="mt-2 mt-md-0">
-            <a class="btn btn-primary" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })">
-                <i class="fas fa-plus mr-1"></i> Nueva compra
-            </a>
-        </div>
+    <div class="d-flex flex-wrap align-items-center mb-3 compras-acciones-header">
+        <a class="btn btn-success mt-2 mt-md-0 compras-btn-nuevo" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })">
+            <i class="fas fa-plus mr-1"></i> Nueva compra
+        </a>
     </div>
 
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm mb-3 compras-filtros-card">
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Compras")">
-                <div class="form-row">
-                    <div class="form-group col-12 col-md-3">
-                        <label>Sucursal</label>
-                        <select name="idSucursal" class="form-control">
-                            <option value="-1" @(idSucursal == -1 ? "selected" : "")>Todas</option>
-                            @foreach (var s in sucursales)
-                            {
-                                <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
-                            }
-                        </select>
+                <div class="compras-filtros-stack">
+                    <div class="compras-filtros-row compras-filtros-row-fechas">
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Desde</label>
+                            <input type="date" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Hasta</label>
+                            <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                        </div>
+
+                        <div class="form-group mb-0 compras-filtro-accion">
+                            <label class="compras-filtro-label d-none d-lg-block">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search mr-1"></i> Buscar
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="form-group col-12 col-md-3">
-                        <label>Tipo compra</label>
-                        @if (permiteMediaRes)
-                        {
-                            <select name="tipoCompra" class="form-control">
-                                <option value="Todos" @(tipoCompra == "Todos" ? "selected" : "")>Todos</option>
-                                <option value="Media Res" @(tipoCompra == "Media Res" ? "selected" : "")>Media Res</option>
-                                <option value="Cortes" @(tipoCompra == "Cortes" ? "selected" : "")>Cortes</option>
+                    <div class="compras-filtros-row compras-filtros-row-sucursal">
+                        <div class="form-group mb-0 compras-filtro-sucursal">
+                            <label class="compras-filtro-label">Sucursal</label>
+                            <select name="idSucursal" class="form-control">
+                                <option value="-1" @(idSucursal == -1 ? "selected" : "")>Todas</option>
+                                @foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                                }
                             </select>
-                        }
-                        else
-                        {
-                            <input type="hidden" name="tipoCompra" value="Todos" />
-                            <input type="text" class="form-control" value="Productos" readonly />
-                        }
+                        </div>
                     </div>
 
-                    <div class="form-group col-12 col-md-3">
-                        <label>Desde</label>
-                        <input type="date" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
-                    </div>
+                    <div class="compras-filtros-row compras-filtros-row-busqueda">
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Tipo compra</label>
+                            @if (permiteMediaRes)
+                            {
+                                <select name="tipoCompra" class="form-control">
+                                    <option value="Todos" @(tipoCompra == "Todos" ? "selected" : "")>Todos</option>
+                                    <option value="Media Res" @(tipoCompra == "Media Res" ? "selected" : "")>Media Res</option>
+                                    <option value="Cortes" @(tipoCompra == "Cortes" ? "selected" : "")>Cortes</option>
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="tipoCompra" value="Todos" />
+                                <input type="text" class="form-control" value="Productos" readonly />
+                            }
+                        </div>
 
-                    <div class="form-group col-12 col-md-3">
-                        <label>Hasta</label>
-                        <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
-                    </div>
-
-                    <div class="form-group col-12 col-md-9">
-                        <label>Descripción</label>
-                        <input type="text" name="texto" value="@texto" class="form-control" autocomplete="off" placeholder="Proveedor, documento, observaciones..." />
-                    </div>
-
-                    <div class="form-group col-12 col-md-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-search mr-1"></i> Buscar
-                        </button>
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Descripcion</label>
+                            <input type="text" name="texto" value="@texto" class="form-control" autocomplete="off" placeholder="Proveedor, documento, observaciones..." />
+                        </div>
                     </div>
                 </div>
             </form>
@@ -136,6 +138,88 @@
         </div>
     </div>
 </div>
+
+<style>
+    .compras-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .compras-filtros-stack {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .compras-filtros-row {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .compras-filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .compras-filtros-card .form-control {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .compras-filtros-card .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .compras-acciones-header {
+        justify-content: flex-start;
+    }
+
+    .compras-btn-nuevo {
+        width: 100%;
+    }
+
+    @@media (min-width: 1200px) {
+        .compras-acciones-header {
+            justify-content: flex-end;
+        }
+
+        .compras-btn-nuevo {
+            width: auto;
+        }
+
+        .compras-filtros-row-fechas {
+            grid-template-columns: 1.15fr 1.15fr 140px;
+            align-items: end;
+        }
+
+        .compras-filtro-sucursal {
+            max-width: 420px;
+        }
+
+        .compras-filtros-row-busqueda {
+            grid-template-columns: .9fr 1.5fr;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .compras-filtros-row-fechas,
+        .compras-filtros-row-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .compras-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .compras-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 @section Scripts {
     <script>

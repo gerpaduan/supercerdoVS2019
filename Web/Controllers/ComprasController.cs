@@ -25,6 +25,7 @@ namespace Web.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
 
             oCompraN = new Negocio.Compra(empresa, param);
             oSucursalN = new Negocio.Sucursal(empresa, param);

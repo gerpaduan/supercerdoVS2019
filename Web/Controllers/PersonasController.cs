@@ -15,6 +15,7 @@ namespace Web.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
 
             oPersonaN = new Negocio.Persona(empresa);
         }
