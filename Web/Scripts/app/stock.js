@@ -35,6 +35,7 @@
             lineas: [],
             draftTimer: null,
             productoTimer: null,
+            productoRequestSeq: 0,
             loadingPersonaModal: false,
             balanzaDisponible: false,
             balanzaFaltanteDetectada: false,
@@ -417,6 +418,17 @@
         });
     }
 
+    function verificarBalanzaInicial($form) {
+        verificarBalanza($form, function (disponible) {
+            var state = getState($form);
+            if (!disponible) {
+                state.balanzaDesactivadaManual = true;
+                $form.find('#chkBalanzaLinea').prop('checked', false);
+                syncCantidadReadonly($form);
+            }
+        });
+    }
+
     function detenerLecturaBalanza($form) {
         var state = getState($form);
         if (state.balanzaPolling) {
@@ -426,7 +438,7 @@
         syncCantidadReadonly($form);
     }
 
-    function iniciarLecturaBalanza($form, silencioso) {
+    function iniciarLecturaBalanza($form, silencioso, allowFocusManual) {
         var state = getState($form);
         detenerLecturaBalanza($form);
 
@@ -437,7 +449,9 @@
                 if (!silencioso) {
                     showWarning($form, 'No existe balanza conectada.');
                 }
-                focusCantidadManual($form);
+                if (allowFocusManual) {
+                    focusCantidadManual($form);
+                }
                 return;
             }
 
@@ -462,7 +476,9 @@
                         detenerLecturaBalanza($form);
                         $form.find('#chkBalanzaLinea').prop('checked', false);
                         syncCantidadReadonly($form);
-                        focusCantidadManual($form);
+                        if (allowFocusManual) {
+                            focusCantidadManual($form);
+                        }
                         return;
                     }
 
@@ -475,7 +491,9 @@
                     detenerLecturaBalanza($form);
                     $form.find('#chkBalanzaLinea').prop('checked', false);
                     syncCantidadReadonly($form);
-                    focusCantidadManual($form);
+                    if (allowFocusManual) {
+                        focusCantidadManual($form);
+                    }
                 });
             }, 900);
         });
@@ -484,7 +502,7 @@
     function activarBalanzaManual($form) {
         var state = getState($form);
         state.balanzaDesactivadaManual = false;
-        iniciarLecturaBalanza($form, false);
+        iniciarLecturaBalanza($form, false, true);
         scheduleDraft($form);
     }
 
@@ -521,13 +539,20 @@
             return;
         }
 
-        iniciarLecturaBalanza($form, true);
+        iniciarLecturaBalanza($form, true, !!allowFocusManual);
     }
 
     function loadProductByCode($form, codigo, focusCantidad) {
         var state = getState($form);
+        state.productoRequestSeq += 1;
+        var requestSeq = state.productoRequestSeq;
+
         $.getJSON(state.config.urls.buscarCortePorCodigo, { codigo: codigo })
             .done(function (res) {
+                if (requestSeq !== state.productoRequestSeq) {
+                    return;
+                }
+
                 if (!res || res.ok !== true) {
                     clearProductoInputs($form, true);
                     return;
@@ -542,6 +567,9 @@
                 }
             })
             .fail(function () {
+                if (requestSeq !== state.productoRequestSeq) {
+                    return;
+                }
                 clearProductoInputs($form, true);
             });
     }
@@ -767,6 +795,7 @@
             var codigo = $.trim($form.find('#txtCodigoProducto').val() || '');
             window.clearTimeout(state.productoTimer);
             if (!codigo) {
+                state.productoRequestSeq += 1;
                 clearProductoInputs($form, true);
                 return;
             }
@@ -781,6 +810,7 @@
             e.preventDefault();
             var codigo = $.trim($form.find('#txtCodigoProducto').val() || '');
             if (!codigo) return;
+            window.clearTimeout(state.productoTimer);
             loadProductByCode($form, codigo, true);
         });
 
@@ -916,7 +946,7 @@
             renderLineas($form);
             bindEvents($form);
 
-            verificarBalanza($form);
+            verificarBalanzaInicial($form);
             syncCantidadReadonly($form);
             autoResizeObservaciones($form);
             if (readDraft($form)) {
