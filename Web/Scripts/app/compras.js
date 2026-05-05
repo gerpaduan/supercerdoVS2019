@@ -152,6 +152,16 @@
         return $form.find('#chkCargaContinuaMedia').is(':checked');
     }
 
+    function setCantMedias($form, value) {
+        var text = value === null || value === undefined ? '' : String(value);
+        $form.find('#CantMedias').val(text);
+        $form.find('.js-cant-medias-visible').val(text);
+    }
+
+    function getCantMedias($form) {
+        return $.trim($form.find('#CantMedias').val() || '');
+    }
+
     function syncContinuousProductState($form) {
         var enabled = isContinuousProductMode($form);
         var productName = $.trim($form.find('#txtProductoNombre').val() || '');
@@ -315,10 +325,9 @@
         $form.find('#totalImporte').text(formatNumber(totalImporte));
 
         if (permiteMediaRes($form) && esMediaRes($form)) {
-            $form.find('#CantMedias').val(state.lineas.length ? state.lineas.length : '');
+            setCantMedias($form, state.lineas.length ? state.lineas.length : '');
             $form.find('#KgsMedias').val(formatNumber(totalKg));
         } else {
-            $form.find('#CantMedias').val('');
             $form.find('#KgsMedias').val('0');
         }
     }
@@ -423,7 +432,7 @@
             enCtaCte: $form.find('#EnCtaCte').is(':checked'),
             nroRemito: $form.find('#NroRemito').val(),
             observaciones: $form.find('#Observaciones').val(),
-            cantMedias: $form.find('#CantMedias').val(),
+            cantMedias: getCantMedias($form),
             lineas: state.lineas
         };
     }
@@ -467,7 +476,7 @@
         $form.find('#EnCtaCte').prop('checked', draft.enCtaCte === true);
         $form.find('#NroRemito').val(draft.nroRemito || '');
         $form.find('#Observaciones').val(draft.observaciones || '');
-        $form.find('#CantMedias').val(draft.cantMedias || '');
+        setCantMedias($form, draft.cantMedias || '');
 
         state.lineas = $.isArray(draft.lineas) ? draft.lineas : [];
         syncTipoPanels($form);
@@ -481,6 +490,7 @@
         $form.find('#panelLineaMediaRes').toggle(mediaRes);
         $form.find('#panelLineaCorte').toggle(!mediaRes);
         $form.find('.js-mediares-only').toggle(mediaRes);
+        setCantMedias($form, getCantMedias($form));
         recalculate($form);
     }
 
@@ -792,6 +802,11 @@
             state.lineas = [];
             renderLineas($form);
             rebuildHiddenInputs($form);
+            scheduleDraft($form);
+        });
+
+        $form.on('input.compras change.compras', '.js-cant-medias-visible', function () {
+            setCantMedias($form, $(this).val());
             scheduleDraft($form);
         });
 

@@ -38,6 +38,7 @@
                 @Html.HiddenFor(m => m.Origen)
                 @Html.HiddenFor(m => m.DraftKey)
                 @Html.HiddenFor(m => m.EmpresaCuit)
+                @Html.HiddenFor(m => m.CantMedias, new { id = "CantMedias" })
                 @Html.HiddenFor(m => m.KgsMedias, new { id = "KgsMedias" })
                 <input type="hidden" id="idPersona" name="IdProveedor" value="@Model.IdProveedor" />
                 <div id="lineasHiddenContainer"></div>
@@ -125,14 +126,14 @@
                     </div>
                     <div class="col-12 col-lg-3">
                         <div class="form-group">
-                            <label for="NroRemito">Número documento</label>
+                            <label for="NroRemito">Nro.Remito/Factura</label>
                             @Html.TextBoxFor(m => m.NroRemito, new { @class = "form-control", id = "NroRemito", maxlength = 100 })
                         </div>
                     </div>
                     <div class="col-12 col-lg-3 js-mediares-only" @(mostrarMediaInicial ? null : new HtmlString("style=\"display:none;\""))>
                         <div class="form-group">
-                            <label for="CantMedias">Cantidad medias</label>
-                            <input type="number" class="form-control" id="CantMedias" name="CantMedias" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                            <label for="CantMediasMediaRes">Cantidad medias</label>
+                            <input type="number" class="form-control js-cant-medias-visible" id="CantMediasMediaRes" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
                         </div>
                     </div>
                 </div>
@@ -146,9 +147,19 @@
 
                 <div id="panelLineaCorte" class="compra-linea-panel" @(mostrarMediaInicial ? new HtmlString("style=\"display:none;\"") : null)>
                     <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar producto</h6>
-                    <div class="custom-control custom-switch mb-3">
-                        <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
-                        <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
+                    <div class="row align-items-end mb-3">
+                        <div class="col-12 col-lg-8">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
+                                <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-2">
+                            <div class="form-group mb-0">
+                                <label for="CantMediasProducto">Cant.Medias Reses</label>
+                                <input type="number" class="form-control js-cant-medias-visible" id="CantMediasProducto" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                            </div>
+                        </div>
                     </div>
                     <div id="panelCargaContinuaProducto" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
                         <div><strong>Producto en carga:</strong> <span id="lblProductoContinuo">-</span></div>

@@ -36,7 +36,7 @@
         @if (!string.IsNullOrWhiteSpace(Model.Estado))
         {
             <span class="badge badge-pill @(Model.Estado.Equals("Actualizado", StringComparison.OrdinalIgnoreCase) ? "badge-success" : "badge-warning") px-3 py-2">
-                Estado: @Model.Estado
+                Ajuste: @Model.Estado
             </span>
         }
     </div>
