@@ -12,15 +12,60 @@
         return isNaN(n) ? 0 : n;
     }
 
+    function parseDecimal(value) {
+        if (value === null || value === undefined) return { ok: false, value: 0 };
+
+        var text = String(value).trim();
+        if (!text) return { ok: false, value: 0 };
+
+        text = text.replace(/\s/g, '');
+
+        var lastComma = text.lastIndexOf(',');
+        var lastDot = text.lastIndexOf('.');
+        var decimalSep = '';
+
+        if (lastComma >= 0 && lastDot >= 0) {
+            decimalSep = lastComma > lastDot ? ',' : '.';
+        } else if (lastComma >= 0) {
+            decimalSep = ',';
+        } else if (lastDot >= 0) {
+            decimalSep = '.';
+        }
+
+        var normalized = '';
+        var decimalIndex = decimalSep ? text.lastIndexOf(decimalSep) : -1;
+
+        for (var i = 0; i < text.length; i++) {
+            var ch = text.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                normalized += ch;
+            } else if (ch === '-' && normalized.length === 0) {
+                normalized += ch;
+            } else if ((ch === ',' || ch === '.') && i === decimalIndex) {
+                normalized += '.';
+            }
+        }
+
+        if (!normalized || normalized === '-' || normalized === '.' || normalized === '-.') {
+            return { ok: false, value: 0 };
+        }
+
+        var n = parseFloat(normalized);
+        return { ok: !isNaN(n), value: isNaN(n) ? 0 : n };
+    }
+
     function toFloat(value) {
-        if (value === null || value === undefined) return 0;
-        var raw = String(value).replace(',', '.').trim();
-        var n = parseFloat(raw);
-        return isNaN(n) ? 0 : n;
+        return parseDecimal(value).value;
     }
 
     function formatKg(value) {
         return toFloat(value).toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    }
+
+    function formatDecimalForPost(value) {
+        var parsed = parseDecimal(value);
+        if (!parsed.ok) return '';
+        return String(parsed.value).replace('.', ',');
     }
 
     function formatInt(value) {
@@ -98,7 +143,9 @@
         var state = {
             lines: Array.isArray(window.movimientoLineasIniciales) ? window.movimientoLineasIniciales.slice() : [],
             draftTimer: null,
-            saving: false
+            saving: false,
+            productoTimer: null,
+            productoRequestSeq: 0
         };
 
         var config = window.movimientosConfig || {};
@@ -208,6 +255,13 @@
             scheduleDraft();
         }
 
+        function setProductoEstado(texto) {
+            $productoId.val('');
+            $productoNombre.val(texto || '');
+            $productoTipo.val('');
+            $productoPromedio.val('');
+        }
+
         function clearProducto() {
             $productoId.val('');
             $codigo.val('');
@@ -250,7 +304,12 @@
 
         function focusCodigo() {
             setTimeout(function () {
-                $codigo.focus().select();
+                $codigo.focus();
+                var input = $codigo.get(0);
+                if (input && typeof input.setSelectionRange === 'function') {
+                    var end = ($codigo.val() || '').toString().length;
+                    input.setSelectionRange(end, end);
+                }
             }, 30);
         }
 
@@ -337,9 +396,9 @@
                 hidden += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (line.Codigo || 0) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].Producto" value="' + $('<div>').text(line.Producto || '').html() + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].TipoProducto" value="' + $('<div>').text(line.TipoProducto || '').html() + '" />';
-                hidden += '<input type="hidden" name="Lineas[' + index + '].PromedioProducto" value="' + toFloat(line.PromedioProducto) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].PromedioProducto" value="' + formatDecimalForPost(line.PromedioProducto) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].CantUnidad" value="' + toInt(line.CantUnidad) + '" />';
-                hidden += '<input type="hidden" name="Lineas[' + index + '].CantKg" value="' + toFloat(line.CantKg) + '" />';
+                hidden += '<input type="hidden" name="Lineas[' + index + '].CantKg" value="' + formatDecimalForPost(line.CantKg) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].PesoBalanza" value="' + (line.PesoBalanza ? 'true' : 'false') + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].PermitirIngreso" value="' + (line.PermitirIngreso ? 'true' : 'false') + '" />';
             });
@@ -430,6 +489,8 @@
         }
 
         function validateCurrentLine() {
+            var parsedCantKg = parseDecimal($cantKgs.val());
+
             if (toInt($productoId.val()) <= 0) {
                 showAlert('warning', 'Movimiento', 'Seleccioná un producto válido.');
                 focusCodigo();
@@ -440,7 +501,17 @@
                 $cantUnidad.focus().select();
                 return false;
             }
-            if (($cantKgs.val() || '').trim() === '' || toFloat($cantKgs.val()) <= 0) {
+            if (($cantKgs.val() || '').trim() === '') {
+                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.');
+                $cantKgs.focus().select();
+                return false;
+            }
+            if (!parsedCantKg.ok) {
+                showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos válida.');
+                $cantKgs.focus().select();
+                return false;
+            }
+            if (parsedCantKg.value <= 0) {
                 showAlert('warning', 'Movimiento', 'Ingresá una cantidad de kilogramos mayor a cero.');
                 $cantKgs.focus().select();
                 return false;
@@ -463,24 +534,63 @@
             focusCodigo();
         }
 
-        function buscarPorCodigo(callback) {
+        function permitirIngresoVisible() {
+            return $permitirWrap.is(':visible') && !$permitirWrap.hasClass('d-none');
+        }
+
+        function registrarConPermitirIngreso() {
+            if (!permitirIngresoVisible()) return false;
+            $permitir.prop('checked', true);
+            addCurrentLine();
+            return true;
+        }
+
+        function buscarPorCodigo(callback, preserveFocus) {
             var codigo = toInt($codigo.val());
             if (!codigo || !config.urlBuscarProductoPorCodigo) return;
+            state.productoRequestSeq += 1;
+            var requestSeq = state.productoRequestSeq;
+            setProductoEstado('Buscando...');
 
             $.get(config.urlBuscarProductoPorCodigo, { codigo: codigo })
                 .done(function (resp) {
+                    if (requestSeq !== state.productoRequestSeq) return;
                     if (resp && resp.ok) {
                         setProducto(resp);
+                        if (preserveFocus) {
+                            focusCodigo();
+                        }
                         if (typeof callback === 'function') callback(true);
                     } else {
-                        showAlert('warning', 'Producto', (resp && resp.mensaje) || 'No se encontró el producto.');
-                        clearProducto();
-                        focusCodigo();
+                        $productoId.val('');
+                        $productoTipo.val('');
+                        $productoPromedio.val('');
+                        $productoNombre.val('No existe o sin coincidencia');
+                        $codigo.val(codigo);
+                        if (preserveFocus) {
+                            focusCodigo();
+                            if (typeof callback === 'function') callback(false);
+                            return;
+                        }
+                        if (preserveFocus) {
+                            showAlert('warning', 'Producto', (resp && resp.mensaje) || 'No se encontró el producto.');
+                            focusCodigo();
+                        }
                         if (typeof callback === 'function') callback(false);
                     }
                 })
                 .fail(function () {
-                    showAlert('error', 'Producto', 'No se pudo buscar el producto.');
+                    if (requestSeq !== state.productoRequestSeq) return;
+                    $productoId.val('');
+                    $productoTipo.val('');
+                    $productoPromedio.val('');
+                    $productoNombre.val('No existe o sin coincidencia');
+                    if (preserveFocus) {
+                        focusCodigo();
+                        if (typeof callback === 'function') callback(false);
+                        return;
+                    }
+                    focusCodigo();
                     if (typeof callback === 'function') callback(false);
                 });
         }
@@ -549,13 +659,36 @@
         $codigo.on('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                window.clearTimeout(state.productoTimer);
                 buscarPorCodigo(function (ok) {
                     if (ok) $cantUnidad.focus().select();
-                });
+                }, false);
             } else if (e.key === 'F10') {
                 e.preventDefault();
                 openProductoModal();
             }
+        });
+
+        $codigo.on('input', function () {
+            window.clearTimeout(state.productoTimer);
+
+            var raw = ($codigo.val() || '').trim();
+            if (!raw) {
+                clearProducto();
+                return;
+            }
+
+            if (!/^\d+$/.test(raw)) {
+                clearProducto();
+                $codigo.val(raw.replace(/\D/g, ''));
+                return;
+            }
+
+            setProductoEstado('Buscando...');
+
+            state.productoTimer = window.setTimeout(function () {
+                buscarPorCodigo(null, true);
+            }, 250);
         });
 
         $cantUnidad.on('keydown', function (e) {
@@ -600,6 +733,13 @@
                 e.preventDefault();
                 openProductoModal();
                 return;
+            }
+
+            if ((e.key === '+' || e.key === 'Add') && tag !== 'textarea') {
+                if (registrarConPermitirIngreso()) {
+                    e.preventDefault();
+                    return;
+                }
             }
 
             if (e.key === '*' && tag !== 'textarea') {

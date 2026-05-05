@@ -6,7 +6,7 @@
 @{
     var dt = Model != null ? Model.Compras : null;
     var detalles = Model != null ? Model.Detalles : new Dictionary<int, Web.Models.CompraIndexDetalleVm>();
-    int totalColumnas = 6;
+    int totalColumnas = 7;
 }
 
 <div class="table-responsive tabla-full">
@@ -17,6 +17,7 @@
                 <th>Sucursal</th>
                 <th>Acción</th>
                 <th class="text-right">Cantidad</th>
+                <th class="text-center" style="width: 70px;">Obs.</th>
                 <th>Estado</th>
                 <th style="width: 220px;">Acciones</th>
             </tr>
@@ -44,6 +45,12 @@
                         <td>@row["sucursal"]</td>
                         <td>@row["tipoCompra"]</td>
                         <td class="text-right">@cantKg.ToString("N2")</td>
+                        <td class="text-center">
+                            @if (detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones))
+                            {
+                                <span class="badge badge-pill badge-info" title="@detalle.Observaciones">1</span>
+                            }
+                        </td>
                         <td>
                             @if (!string.IsNullOrWhiteSpace(estado))
                             {

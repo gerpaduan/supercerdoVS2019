@@ -2,6 +2,7 @@ using Entidades;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Web.Mvc;
 using Web.Helpers;
@@ -11,6 +12,14 @@ namespace Web.Controllers
 {
     public class StockController : BaseController
     {
+        private class ProductoNoCargadoCierreVm
+        {
+            public int IdCorte { get; set; }
+            public long Codigo { get; set; }
+            public string Producto { get; set; }
+            public float StockActual { get; set; }
+        }
+
         private Negocio.Compra oCompraN;
         private Negocio.Sucursal oSucursalN;
         private Negocio.Usuario oUsuarioN;
@@ -155,10 +164,13 @@ namespace Web.Controllers
                     return RedirectToAction("Index");
                 }
 
-                tipoOperacion = compraActual.TipoCompra;
             }
 
+            if (string.IsNullOrWhiteSpace(tipoOperacion) && compraActual != null)
+                tipoOperacion = compraActual.TipoCompra;
+
             model.TipoCompra = tipoOperacion;
+            NormalizarDecimalesPosteados(model);
             string error = ValidarModelo(model, user);
             if (!string.IsNullOrWhiteSpace(error))
             {
@@ -317,6 +329,49 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpPost]
+        public JsonResult ProductosNoCargadosCierre(int idSucursal, DateTime fechaCompra, int idCompra = 0, long[] codigosCargados = null)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesión inválida." });
+
+            DateTime fechaConsulta = fechaCompra == DateTime.MinValue ? DateTime.Today : fechaCompra;
+            int idCreador = user.Id;
+            if (idCompra > 0)
+            {
+                var compraActual = oCompraN.findById_convertToCompra(idCompra);
+                if (compraActual != null && compraActual.IdCompra > 0 && compraActual.CreadoPor != null)
+                    idCreador = compraActual.CreadoPor.Id;
+            }
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaConsulta, idCreador))
+                return Json(new { ok = false, mensaje = "No tiene permisos para consultar productos pendientes." });
+
+            if (idSucursal <= 0)
+                return Json(new { ok = false, mensaje = "Seleccione una sucursal válida." });
+
+            try
+            {
+                var items = ObtenerProductosNoCargadosCierre(idSucursal, fechaConsulta, idCompra, codigosCargados ?? new long[0]);
+                return Json(new
+                {
+                    ok = true,
+                    items = items.Select(x => new
+                    {
+                        idCorte = x.IdCorte,
+                        codigo = x.Codigo,
+                        producto = x.Producto,
+                        stockActual = x.StockActual
+                    }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
         private static bool EsTipoStock(string tipoCompra)
         {
             return TiposStock.Contains(tipoCompra ?? "", StringComparer.OrdinalIgnoreCase);
@@ -340,6 +395,13 @@ namespace Web.Controllers
         {
             return string.Equals(tipoCompra,
                 Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EsCierre(string tipoCompra)
+        {
+            return string.Equals(tipoCompra,
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock),
                 StringComparison.OrdinalIgnoreCase);
         }
 
@@ -499,6 +561,71 @@ namespace Web.Controllers
             return detalles;
         }
 
+        private List<ProductoNoCargadoCierreVm> ObtenerProductosNoCargadosCierre(int idSucursal, DateTime fechaCompra, int idCompra, IEnumerable<long> codigosCargados)
+        {
+            var productos = new List<ProductoNoCargadoCierreVm>();
+            DataTable dtCortes = oCorteN.obtenerCortes() ?? new DataTable();
+            if (dtCortes.Rows.Count == 0)
+                return productos;
+
+            var codigosActuales = new HashSet<long>((codigosCargados ?? Enumerable.Empty<long>()).Where(x => x > 0));
+
+            DateTime desde = DateTime.Today.Date.AddYears(-10);
+            DataTable dtInicioStock = oCompraN.obtenerCompras(
+                idSucursal,
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock),
+                "",
+                desde,
+                fechaCompra,
+                null) ?? new DataTable();
+
+            int rowIndex = idCompra > 0 ? 1 : 0;
+            if (dtInicioStock.Rows.Count > rowIndex)
+                desde = Convert.ToDateTime(dtInicioStock.Rows[rowIndex]["fechaCompra"]);
+
+            DataTable dtStockActual = oCorteN.CierreStock(1, "", idSucursal, desde, fechaCompra, null, "", 0, 0) ?? new DataTable();
+            var stockPorCodigo = new Dictionary<long, float>();
+            if (dtStockActual.Columns.Contains("Codigo"))
+            {
+                foreach (DataRow row in dtStockActual.Rows)
+                {
+                    long codigo;
+                    if (!long.TryParse(Convert.ToString(row["Codigo"]), out codigo))
+                        continue;
+
+                    float stock = 0f;
+                    if (dtStockActual.Columns.Contains("DIF") && row["DIF"] != DBNull.Value)
+                        stock = Convert.ToSingle(row["DIF"]);
+
+                    stockPorCodigo[codigo] = stock;
+                }
+            }
+
+            foreach (DataRow corte in dtCortes.Rows)
+            {
+                bool enCierreStock = corte.Table.Columns.Contains("enCierreStock") && corte["enCierreStock"] != DBNull.Value && Convert.ToBoolean(corte["enCierreStock"]);
+                if (!enCierreStock)
+                    continue;
+
+                long codigo;
+                if (!long.TryParse(Convert.ToString(corte["codigo"]), out codigo))
+                    continue;
+
+                if (codigosActuales.Contains(codigo))
+                    continue;
+
+                productos.Add(new ProductoNoCargadoCierreVm
+                {
+                    IdCorte = Convert.ToInt32(corte["idCorte"]),
+                    Codigo = codigo,
+                    Producto = Convert.ToString(corte["corte"]) ?? "",
+                    StockActual = stockPorCodigo.ContainsKey(codigo) ? stockPorCodigo[codigo] : 0f
+                });
+            }
+
+            return productos.OrderBy(x => x.Codigo).ToList();
+        }
+
         private static float CalcularTotalKg(DataTable dt)
         {
             float total = 0f;
@@ -511,6 +638,57 @@ namespace Web.Controllers
             }
 
             return total;
+        }
+
+        private void NormalizarDecimalesPosteados(StockEditVm model)
+        {
+            if (model == null || Request == null || Request.Form == null)
+                return;
+
+            float valorFloat;
+
+            if (TryParseFloatFlexible(Request.Form["KgsMedias"], out valorFloat))
+            {
+                model.KgsMedias = valorFloat;
+                ModelState.Remove("KgsMedias");
+            }
+
+            if (model.Lineas == null)
+                return;
+
+            for (int i = 0; i < model.Lineas.Count; i++)
+            {
+                var linea = model.Lineas[i];
+                if (linea == null)
+                    continue;
+
+                string keyCantKgs = "Lineas[" + i + "].CantKgs";
+                if (TryParseFloatFlexible(Request.Form[keyCantKgs], out valorFloat))
+                {
+                    linea.CantKgs = valorFloat;
+                    ModelState.Remove(keyCantKgs);
+                }
+            }
+        }
+
+        private static bool TryParseFloatFlexible(string raw, out float value)
+        {
+            value = 0f;
+            if (string.IsNullOrWhiteSpace(raw))
+                return false;
+
+            raw = raw.Trim();
+
+            if (float.TryParse(raw, NumberStyles.Any, CultureInfo.CurrentCulture, out value))
+                return true;
+
+            if (float.TryParse(raw.Replace(".", ","), NumberStyles.Any, CultureInfo.GetCultureInfo("es-AR"), out value))
+                return true;
+
+            if (float.TryParse(raw.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out value))
+                return true;
+
+            return false;
         }
 
         private string ValidarModelo(StockEditVm model, Entidades.Usuario user)
@@ -540,7 +718,7 @@ namespace Web.Controllers
                 if (!linea.IdCorte.HasValue || linea.IdCorte.Value <= 0)
                     return "La línea " + index + " no tiene un producto válido.";
 
-                if (linea.CantKgs == 0)
+                if (!EsCierre(model.TipoCompra) && linea.CantKgs == 0)
                     return "La línea " + index + " tiene una cantidad inválida.";
             }
 

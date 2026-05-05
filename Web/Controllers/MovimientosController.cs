@@ -191,14 +191,7 @@ namespace Web.Controllers
                 if (model == null)
                     return Json(new { ok = false, mensaje = "No se recibieron datos del movimiento." });
 
-                if (model.Lineas != null)
-                {
-                    foreach (var linea in model.Lineas)
-                    {
-                        if (linea != null && linea.CantKg <= 0)
-                            linea.CantKg = 0.001f;
-                    }
-                }
+                NormalizarDecimalesPosteados(model);
 
                 string error = ValidarModelo(model);
                 if (!string.IsNullOrWhiteSpace(error))
@@ -448,6 +441,54 @@ namespace Web.Controllers
                 PesoBalanza = linea.PesoBalanza,
                 PermitirIngreso = linea.PermitirIngreso
             };
+        }
+
+        private void NormalizarDecimalesPosteados(MovimientoEditVm model)
+        {
+            if (model == null || model.Lineas == null || Request == null || Request.Form == null)
+                return;
+
+            for (int i = 0; i < model.Lineas.Count; i++)
+            {
+                var linea = model.Lineas[i];
+                if (linea == null)
+                    continue;
+
+                float valorFloat;
+                string keyCantKg = "Lineas[" + i + "].CantKg";
+                if (TryParseFloatFlexible(Request.Form[keyCantKg], out valorFloat))
+                {
+                    linea.CantKg = valorFloat;
+                    ModelState.Remove(keyCantKg);
+                }
+
+                string keyPromedio = "Lineas[" + i + "].PromedioProducto";
+                if (TryParseFloatFlexible(Request.Form[keyPromedio], out valorFloat))
+                {
+                    linea.PromedioProducto = valorFloat;
+                    ModelState.Remove(keyPromedio);
+                }
+            }
+        }
+
+        private static bool TryParseFloatFlexible(string raw, out float value)
+        {
+            value = 0f;
+            if (string.IsNullOrWhiteSpace(raw))
+                return false;
+
+            raw = raw.Trim();
+
+            if (float.TryParse(raw, NumberStyles.Any, CultureInfo.CurrentCulture, out value))
+                return true;
+
+            if (float.TryParse(raw.Replace(".", ","), NumberStyles.Any, CultureInfo.GetCultureInfo("es-AR"), out value))
+                return true;
+
+            if (float.TryParse(raw.Replace(",", "."), NumberStyles.Any, CultureInfo.InvariantCulture, out value))
+                return true;
+
+            return false;
         }
 
         private string ConstruirMensajeWhatsapp(int idMovimiento)

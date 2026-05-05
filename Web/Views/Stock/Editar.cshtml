@@ -80,11 +80,29 @@
                                    value="@Model.FechaCompra.ToString("yyyy-MM-ddTHH:mm")" />
                         </div>
                     </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="form-group">
+                            <label for="TipoCompraVisual">Acción</label>
+                            <div class="input-group">
+                                <select id="TipoCompraVisual" class="form-control" disabled>
+                                    <option value="Ingreso Stock" @(string.Equals(Model.TipoCompra, "Ingreso Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Ingreso</option>
+                                    <option value="Egreso Stock" @(string.Equals(Model.TipoCompra, "Egreso Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Egreso</option>
+                                    <option value="Cierre Stock" @(string.Equals(Model.TipoCompra, "Cierre Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Cierre</option>
+                                    <option value="Ajuste Stock" @(string.Equals(Model.TipoCompra, "Ajuste Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Ajuste</option>
+                                    <option value="Pesaje Cortes" @(string.Equals(Model.TipoCompra, "Pesaje Cortes", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Pesaje</option>
+                                </select>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" id="btnHabilitarTipoCompra" title="Habilitar cambio de acción">
+                                        <i class="fas fa-edit mr-1"></i> Cambiar
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">La acción se desbloquea sólo cuando presiona cambiar.</small>
+                        </div>
+                    </div>
                 </div>
 
-                @if (esPesaje)
-                {
-                    <div class="row">
+                <div class="row @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
                         <div class="col-12 col-lg-6">
                             <div class="form-group">
                                 <label for="razonSocial">Proveedor</label>
@@ -111,16 +129,10 @@
                         <div class="col-6 col-lg-3">
                             <div class="form-group">
                                 <label for="KgsMedias">Kgs.Medias</label>
-                                <input type="number" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" min="0.01" step="0.01" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                                <input type="text" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
                             </div>
                         </div>
-                    </div>
-                }
-                else
-                {
-                    @Html.HiddenFor(m => m.CantMedias)
-                    @Html.HiddenFor(m => m.KgsMedias)
-                }
+                </div>
 
                 <div class="row">
                     <div class="col-12 col-xl-8">
@@ -159,6 +171,9 @@
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
                                     </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados">
+                                        <i class="fas fa-list mr-1"></i> Productos no cargados
+                                    </button>
                                 </div>
                             </div>
 
@@ -189,12 +204,12 @@
                                 </div>
                                 <div class="col-8 col-md-3 col-lg-2">
                                     <div class="form-group">
-                                        <label for="txtCantKgs" id="lblCantidadStock">Kilos / Cantidad</label>
+                                        <label for="txtCantKgs" id="lblCantidadStock">Cantidad</label>
                                         <input type="text" id="txtCantKgs" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" style="min-width:8ch;" />
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-1">
-                                    <button type="button" class="btn btn-primary btn-block mb-3" id="btnAgregarLineaStock" title="Agregar">
+                                    <button type="button" class="btn btn-primary btn-block mb-3 d-flex align-items-center justify-content-center" id="btnAgregarLineaStock" title="Agregar">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
@@ -234,12 +249,12 @@
                                 </div>
                                 <hr />
                                 <div class="small text-muted">
-                                    Acción: <strong>@Model.TipoCompra</strong>
+                                    Acción: <strong id="stockAccionActual">@Model.TipoCompra</strong>
                                 </div>
                             </div>
                         </div>
                         <small class="form-text text-muted mt-2" id="txtAyudaCantidad">
-                            @(permiteNegativo ? "Puede ingresar valores positivos o negativos según el ajuste o egreso." : "Si el producto es pesable, la balanza puede completar el peso.")
+                            @(permiteNegativo ? "Puede ingresar valores positivos o negativos según el ajuste o egreso." : "")
                         </small>
                         <div class="form-group mt-3 mb-0 col-xl-12 px-0">
                             <label for="Observaciones">Observaciones</label>
@@ -257,6 +272,79 @@
                     </a>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProductosNoCargadosStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-no-cargados-stock" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Productos no cargados</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2 px-3 mb-3" id="stockNoCargadosContexto">
+                    <div><strong>Sucursal:</strong> <span id="lblSucursalNoCargadosContexto">@Model.SucursalNombre</span></div>
+                    <div><strong>Fecha:</strong> <span id="lblFechaNoCargadosContexto">@Model.FechaCompra.ToString("dd/MM/yyyy HH:mm")</span></div>
+                    <div class="mt-2 mb-0">
+                        EstÃ¡ trabajando sobre esta sucursal. Si fue seleccionada por error, el stock actual puede no coincidir y generar diferencias importantes.
+                    </div>
+                </div>
+
+                <div id="stockNoCargadosWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                <div id="stockNoCargadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
+
+                <div class="row align-items-end mb-3">
+                    <div class="col-12 col-lg-5">
+                        <label for="txtBuscarNoCargadosStock">Buscar</label>
+                        <input type="text" id="txtBuscarNoCargadosStock" class="form-control" placeholder="Código o descripción" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label for="filtroStockNoCargados">Filtro</label>
+                        <select id="filtroStockNoCargados" class="form-control">
+                            <option value="todos">Todos</option>
+                            <option value="con-stock">Con stock</option>
+                            <option value="sin-stock">Sin stock</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="small text-muted">Pendientes</div>
+                        <div class="font-weight-bold" id="lblPendientesNoCargados">0 productos</div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="small text-muted">Seleccionados</div>
+                        <div class="font-weight-bold" id="lblSeleccionadosNoCargados">0</div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
+                    <button type="button" class="btn btn-success mr-2 mb-2" id="btnAgregarNoCargadosStockActual">
+                        <i class="fas fa-plus mr-1"></i> Agregar con stock actual
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary mb-2" id="btnAgregarNoCargadosSinStock">
+                        <i class="fas fa-minus-circle mr-1"></i> Agregar como sin stock (0,000)
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0" id="tablaNoCargadosStock">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:55px;" class="text-center">
+                                    <input type="checkbox" id="chkSeleccionarTodosNoCargados" />
+                                </th>
+                                <th style="width:120px;">Código</th>
+                                <th>Producto / Descripción</th>
+                                <th class="text-right" style="width:130px;">Stock actual</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -292,7 +380,26 @@
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=5")"></script>
+    <style>
+        @@media (min-width: 992px) {
+            .modal-no-cargados-stock {
+                max-width: 50vw;
+            }
+        }
+
+        #tablaNoCargadosStock tbody tr {
+            cursor: pointer;
+        }
+
+        #tablaNoCargadosStock tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        #tablaNoCargadosStock tbody tr + tr td {
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=15")"></script>
     <script>
         (function () {
             if (!window.StockUI || typeof window.StockUI.init !== "function") {
@@ -315,6 +422,7 @@
                 urls: {
                     buscarCorte: "@Url.Action("BuscarCorte", "Stock")",
                     buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Stock")",
+                    productosNoCargadosCierre: "@Url.Action("ProductosNoCargadosCierre", "Stock")",
                     personaBuscarModal: "@ViewBag.UrlBuscarPersonaModal",
                     personaListar: "@ViewBag.UrlPersonaListar"
                 }

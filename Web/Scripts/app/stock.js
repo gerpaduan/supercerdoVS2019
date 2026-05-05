@@ -3,16 +3,50 @@
 
     if (!window || !$) return;
 
-    function toNumber(value) {
-        if (value === null || value === undefined || value === '') return 0;
-        var text = String(value).replace(/\s/g, '');
-        if (text.indexOf(',') >= 0 && text.indexOf('.') >= 0) {
-            text = text.replace(/\./g, '').replace(',', '.');
-        } else if (text.indexOf(',') >= 0) {
-            text = text.replace(',', '.');
+    function parseNumber(value) {
+        if (value === null || value === undefined) return { ok: false, value: 0 };
+
+        var text = String(value).trim();
+        if (!text) return { ok: false, value: 0 };
+
+        text = text.replace(/\s/g, '');
+
+        var lastComma = text.lastIndexOf(',');
+        var lastDot = text.lastIndexOf('.');
+        var decimalSep = '';
+
+        if (lastComma >= 0 && lastDot >= 0) {
+            decimalSep = lastComma > lastDot ? ',' : '.';
+        } else if (lastComma >= 0) {
+            decimalSep = ',';
+        } else if (lastDot >= 0) {
+            decimalSep = '.';
         }
-        var num = parseFloat(text);
-        return isNaN(num) ? 0 : num;
+
+        var normalized = '';
+        var decimalIndex = decimalSep ? text.lastIndexOf(decimalSep) : -1;
+
+        for (var i = 0; i < text.length; i++) {
+            var ch = text.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                normalized += ch;
+            } else if (ch === '-' && normalized.length === 0) {
+                normalized += ch;
+            } else if ((ch === ',' || ch === '.') && i === decimalIndex) {
+                normalized += '.';
+            }
+        }
+
+        if (!normalized || normalized === '-' || normalized === '.' || normalized === '-.') {
+            return { ok: false, value: 0 };
+        }
+
+        var num = parseFloat(normalized);
+        return { ok: !isNaN(num), value: isNaN(num) ? 0 : num };
+    }
+
+    function toNumber(value) {
+        return parseNumber(value).value;
     }
 
     function escapeHtml(value) {
@@ -29,14 +63,22 @@
         return toNumber(value).toFixed(places);
     }
 
+    function formatNumberForPost(value) {
+        var parsed = parseNumber(value);
+        if (!parsed.ok) return '';
+        return String(parsed.value).replace('.', ',');
+    }
+
     function buildState(config) {
         return {
             config: config || {},
             lineas: [],
+            noCargados: [],
             draftTimer: null,
             productoTimer: null,
             productoRequestSeq: 0,
             loadingPersonaModal: false,
+            loadingNoCargados: false,
             balanzaDisponible: false,
             balanzaFaltanteDetectada: false,
             balanzaDesactivadaManual: false,
@@ -60,6 +102,14 @@
         }, 2200);
     }
 
+    function showFeedbackHtml($form, html) {
+        var $feedback = $form.find('#stockFeedback');
+        $feedback.html(html).removeClass('d-none');
+        window.setTimeout(function () {
+            $feedback.addClass('d-none').text('');
+        }, 2200);
+    }
+
     function focusCantidadManual($form) {
         window.setTimeout(function () {
             var $input = $form.find('#txtCantKgs');
@@ -69,18 +119,43 @@
         }, 20);
     }
 
+    //function focusCodigo($form) {
+    //    window.setTimeout(function () {
+    //        var $input = $form.find('#txtCodigoProducto');
+    //        if (!$input.length) return;
+    //        $input.focus();
+    //        var input = $input.get(0);
+    //        if (input && typeof input.setSelectionRange === 'function') {
+    //            var end = ($input.val() || '').toString().length;
+    //            input.setSelectionRange(end, end);
+    //        }
+    //    }, 20);
+    //}
+
+
+    function supportsSelection(input) {
+        if (!input) return false;
+        // algunos navegadores exponen setSelectionRange pero no lo permiten en type="number"
+        return typeof input.setSelectionRange === 'function' && input.type !== 'number';
+    }
+
     function focusCodigo($form) {
         window.setTimeout(function () {
             var $input = $form.find('#txtCodigoProducto');
             if (!$input.length) return;
             $input.focus();
             var input = $input.get(0);
-            if (input && typeof input.setSelectionRange === 'function') {
+            if (supportsSelection(input)) {
                 var end = ($input.val() || '').toString().length;
-                input.setSelectionRange(end, end);
+                try {
+                    input.setSelectionRange(end, end);
+                } catch (e) {
+                    // protegemos contra navegadores/implementaciones inesperadas
+                }
             }
         }, 20);
     }
+
 
     function autoResizeObservaciones($form) {
         var $observaciones = $form.find('#Observaciones');
@@ -101,6 +176,51 @@
         $form.find('#stockWarning').addClass('d-none').text('');
     }
 
+    function showNoCargadosWarning($form, text) {
+        var $warning = $('#stockNoCargadosWarning');
+        $warning.text(text).removeClass('d-none');
+    }
+
+    function clearNoCargadosWarning() {
+        $('#stockNoCargadosWarning').addClass('d-none').text('');
+    }
+
+    function getNoCargadosModal() {
+        return $('#modalProductosNoCargadosStock');
+    }
+
+    function getNoCargadosSeleccionados() {
+        var seleccionados = getNoCargadosModal().data('selectedNoCargados');
+        return seleccionados && typeof seleccionados === 'object' ? seleccionados : {};
+    }
+
+    function setNoCargadosSeleccionados(seleccionados) {
+        getNoCargadosModal().data('selectedNoCargados', seleccionados || {});
+    }
+
+    function syncSeleccionNoCargadosDesdeTabla() {
+        var seleccionados = getNoCargadosSeleccionados();
+        getNoCargadosModal().find('.js-no-cargado-check').each(function () {
+            var itemId = parseInt($(this).data('id'), 10) || 0;
+            if (itemId <= 0) return;
+
+            if ($(this).is(':checked')) {
+                seleccionados[itemId] = true;
+            } else {
+                delete seleccionados[itemId];
+            }
+        });
+        setNoCargadosSeleccionados(seleccionados);
+    }
+
+    function showNoCargadosInfo(text) {
+        $('#stockNoCargadosInfo').text(text).removeClass('d-none');
+    }
+
+    function clearNoCargadosInfo() {
+        $('#stockNoCargadosInfo').addClass('d-none').text('');
+    }
+
     function syncCantidadReadonly($form) {
         var state = getState($form);
         var soloLectura = !!(state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && esPesableActual($form));
@@ -116,7 +236,8 @@
             cantKgs: toNumber(linea.CantKgs || linea.cantKgs),
             balanza: linea.Balanza === true || linea.balanza === true,
             creadoTexto: linea.CreadoTexto || linea.creadoTexto || '',
-            pesable: linea.Pesable === true || linea.pesable === true
+            pesable: linea.Pesable === true || linea.pesable === true,
+            noContado: linea.NoContado === true || linea.noContado === true
         };
     }
 
@@ -155,9 +276,77 @@
     }
 
     function actualizarEtiquetaCantidad($form) {
-        var esPesable = esPesableActual($form);
-        $form.find('#lblCantidadStock').text(esPesable ? 'Kilos' : 'Cantidad');
+        $form.find('#lblCantidadStock').text('Cantidad');
         syncCantidadReadonly($form);
+    }
+
+    function getTipoCompraLabel(tipoCompra) {
+        switch (String(tipoCompra || '').toLowerCase()) {
+            case 'ingreso stock': return 'Ingreso';
+            case 'egreso stock': return 'Egreso';
+            case 'cierre stock': return 'Cierre';
+            case 'ajuste stock': return 'Ajuste';
+            case 'pesaje cortes': return 'Pesaje';
+            default: return tipoCompra || '';
+        }
+    }
+
+    function actualizarContextoNoCargados($form) {
+        var sucursal = $form.find('#IdSucursal option:selected').text() || '';
+        var fechaRaw = $form.find('#FechaCompra').val() || '';
+        var fecha = fechaRaw;
+
+        if (fechaRaw) {
+            var dt = new Date(fechaRaw);
+            if (!isNaN(dt.getTime())) {
+                var dd = String(dt.getDate()).padStart(2, '0');
+                var mm = String(dt.getMonth() + 1).padStart(2, '0');
+                var yyyy = dt.getFullYear();
+                var hh = String(dt.getHours()).padStart(2, '0');
+                var mi = String(dt.getMinutes()).padStart(2, '0');
+                fecha = dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi;
+            }
+        }
+
+        $('#lblSucursalNoCargadosContexto').text($.trim(sucursal));
+        $('#lblFechaNoCargadosContexto').text($.trim(fecha));
+    }
+
+    function syncTipoCompraUi($form) {
+        var state = getState($form);
+        var tipoCompra = $form.find('#TipoCompra').val() || '';
+        var esPesaje = String(tipoCompra).toLowerCase() === 'pesaje cortes';
+        var esEgreso = String(tipoCompra).toLowerCase() === 'egreso stock';
+        var permiteCantidadNegativa = esEgreso || String(tipoCompra).toLowerCase() === 'ajuste stock';
+
+        state.config.tipoCompra = tipoCompra;
+        state.config.esPesaje = esPesaje;
+        state.config.esEgreso = esEgreso;
+        state.config.permiteCantidadNegativa = permiteCantidadNegativa;
+
+        $form.find('#TipoCompraVisual').val(tipoCompra);
+        $form.find('#stockAccionActual').text(tipoCompra);
+        $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje);
+        $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
+        actualizarContextoNoCargados($form);
+        $form.find('#txtAyudaCantidad').text(permiteCantidadNegativa ? 'Puede ingresar valores positivos o negativos según el ajuste o egreso.' : '');
+
+        if (String(tipoCompra).toLowerCase() !== 'cierre stock') {
+            $('#modalProductosNoCargadosStock').modal('hide');
+        }
+
+        if (!esPesaje) {
+            setProveedor($form, {
+                id: state.config.proveedorDefaultId || 0,
+                razon: state.config.proveedorDefaultNombre || '',
+                cuit: state.config.proveedorDefaultCuit || ''
+            });
+            $form.find('#CantMedias').val('');
+            $form.find('#KgsMedias').val('');
+        }
+
+        recalculate($form);
+        scheduleDraft($form);
     }
 
     function recalculate($form) {
@@ -185,11 +374,12 @@
         var html = '';
 
         $.each(state.lineas, function (index, linea) {
+            var cantKgsValue = formatNumberForPost(linea.cantKgs);
             html += '<input type="hidden" name="Lineas[' + index + '].Index" value="' + escapeHtml(index + 1) + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + escapeHtml(linea.idCorte || 0) + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + escapeHtml(linea.codigo || '') + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].Producto" value="' + escapeHtml(linea.producto || '') + '"/>';
-            html += '<input type="hidden" name="Lineas[' + index + '].CantKgs" value="' + escapeHtml(toNumber(linea.cantKgs)) + '"/>';
+            html += '<input type="hidden" name="Lineas[' + index + '].CantKgs" value="' + cantKgsValue + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].Balanza" value="' + (linea.balanza ? 'true' : 'false') + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].CreadoTexto" value="' + escapeHtml(linea.creadoTexto || '') + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].Pesable" value="' + (linea.pesable ? 'true' : 'false') + '"/>';
@@ -215,7 +405,7 @@
                 + '<td><strong>' + escapeHtml(linea.producto || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
                 + '<td class="text-right">' + formatNumber(linea.cantKgs, 3) + '</td>'
                 + '<td class="text-center">' + (linea.balanza ? '*' : '') + '</td>'
-                + '<td>' + escapeHtml(linea.creadoTexto || '-') + '</td>'
+                + '<td>' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + escapeHtml(linea.creadoTexto || '-') + '</td>'
                 + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
                 + '</tr>';
         });
@@ -263,6 +453,222 @@
         }
 
         $('#tbodyAcumuladosStock').html(html);
+    }
+
+    function getCodigosCargados($form) {
+        var state = getState($form);
+        var codigos = [];
+        $.each(state.lineas, function (_, linea) {
+            var codigo = parseInt(linea.codigo, 10);
+            if (!isNaN(codigo) && codigo > 0) {
+                codigos.push(codigo);
+            }
+        });
+        return codigos;
+    }
+
+    function getNoCargadosFiltrados($form) {
+        var state = getState($form);
+        var $modal = getNoCargadosModal();
+        var filtro = String($modal.find('#filtroStockNoCargados').val() || 'todos').toLowerCase();
+        var texto = String($modal.find('#txtBuscarNoCargadosStock').val() || '').toLowerCase().trim();
+
+        return $.grep(state.noCargados || [], function (item) {
+            var stock = toNumber(item.stockActual);
+            if (filtro === 'con-stock' && stock === 0) return false;
+            if (filtro === 'sin-stock' && stock !== 0) return false;
+
+            if (!texto) return true;
+
+            return String(item.codigo || '').toLowerCase().indexOf(texto) >= 0
+                || String(item.producto || '').toLowerCase().indexOf(texto) >= 0;
+        });
+    }
+
+    function renderNoCargados($form) {
+        syncSeleccionNoCargadosDesdeTabla();
+
+        var items = getNoCargadosFiltrados($form);
+        var $modal = getNoCargadosModal();
+        var $tbody = $modal.find('#tablaNoCargadosStock tbody');
+        var seleccionados = getNoCargadosSeleccionados();
+        var html = '';
+
+        if (!items.length) {
+            html = '<tr><td colspan="4" class="text-center text-muted py-4">No hay productos pendientes para mostrar.</td></tr>';
+        } else {
+            $.each(items, function (_, item) {
+                var itemId = parseInt(item.idCorte, 10) || 0;
+                var checked = !!seleccionados[itemId];
+                html += '<tr>'
+                    + '<td class="text-center"><input type="checkbox" class="js-no-cargado-check" data-id="' + escapeHtml(item.idCorte) + '"' + (checked ? ' checked="checked"' : '') + ' /></td>'
+                    + '<td>' + escapeHtml(item.codigo) + '</td>'
+                    + '<td>' + escapeHtml(item.producto) + '</td>'
+                    + '<td class="text-right">' + formatNumber(item.stockActual, 3) + '</td>'
+                    + '</tr>';
+            });
+        }
+
+        $tbody.html(html);
+        actualizarContadoresNoCargados($form);
+    }
+
+    function actualizarContadoresNoCargados($form) {
+        syncSeleccionNoCargadosDesdeTabla();
+
+        var state = getState($form);
+        var $modal = getNoCargadosModal();
+        var items = getNoCargadosFiltrados($form);
+        var seleccionadosMap = getNoCargadosSeleccionados();
+        var seleccionados = 0;
+
+        $.each(state.noCargados || [], function (_, item) {
+            var itemId = parseInt(item.idCorte, 10) || 0;
+            if (itemId > 0 && seleccionadosMap[itemId]) {
+                seleccionados++;
+            }
+        });
+
+        $modal.find('#lblPendientesNoCargados').text(items.length + ' productos');
+        $modal.find('#lblSeleccionadosNoCargados').text(seleccionados);
+
+        var visibles = $modal.find('.js-no-cargado-check').length;
+        var seleccionVisibles = $modal.find('.js-no-cargado-check:checked').length;
+        var parcial = seleccionVisibles > 0 && seleccionVisibles < visibles;
+        $modal.find('#chkSeleccionarTodosNoCargados')
+            .prop('checked', visibles > 0 && visibles === seleccionVisibles)
+            .prop('indeterminate', parcial);
+
+        if (parcial) {
+            showNoCargadosInfo('Hay una selección parcial. Si lo desea, puede seleccionar o deseleccionar todos.');
+        } else {
+            clearNoCargadosInfo();
+        }
+    }
+
+    function cargarProductosNoCargados($form) {
+        var state = getState($form);
+        if (!state.config.urls || !state.config.urls.productosNoCargadosCierre || state.loadingNoCargados) return;
+
+        state.loadingNoCargados = true;
+        clearNoCargadosWarning();
+        clearNoCargadosInfo();
+        actualizarContextoNoCargados($form);
+        getNoCargadosModal().find('#tablaNoCargadosStock tbody').html('<tr><td colspan="4" class="text-center text-muted py-4">Cargando...</td></tr>');
+
+        $.ajax({
+            url: state.config.urls.productosNoCargadosCierre,
+            method: 'POST',
+            traditional: true,
+            data: {
+                idSucursal: $form.find('#IdSucursal').val(),
+                fechaCompra: $form.find('#FechaCompra').val(),
+                idCompra: parseInt($form.find('#IdCompra').val(), 10) || 0,
+                codigosCargados: getCodigosCargados($form)
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok !== true) {
+                showWarning($form, (resp && resp.mensaje) || 'No se pudieron cargar los productos pendientes.');
+                showNoCargadosWarning($form, (resp && resp.mensaje) || 'No se pudieron cargar los productos pendientes.');
+                state.noCargados = [];
+                renderNoCargados($form);
+                return;
+            }
+
+            state.noCargados = $.map(resp.items || [], function (item) {
+                return {
+                    idCorte: item.idCorte,
+                    codigo: item.codigo,
+                    producto: item.producto,
+                    stockActual: toNumber(item.stockActual)
+                };
+            });
+            var seleccionadosPrevios = getNoCargadosSeleccionados();
+            var seleccionadosVigentes = {};
+            $.each(state.noCargados, function (_, item) {
+                var itemId = parseInt(item.idCorte, 10) || 0;
+                if (seleccionadosPrevios[itemId]) {
+                    seleccionadosVigentes[itemId] = true;
+                }
+            });
+            setNoCargadosSeleccionados(seleccionadosVigentes);
+            if (!state.noCargados.length) {
+                showNoCargadosWarning($form, 'No hay productos pendientes para esta sucursal y fecha.');
+            } else {
+                clearNoCargadosWarning();
+                clearNoCargadosInfo();
+            }
+            renderNoCargados($form);
+        }).fail(function () {
+            showWarning($form, 'No se pudieron cargar los productos pendientes.');
+            showNoCargadosWarning($form, 'No se pudieron cargar los productos pendientes.');
+            state.noCargados = [];
+            renderNoCargados($form);
+        }).always(function () {
+            state.loadingNoCargados = false;
+        });
+    }
+
+    function getSeleccionadosNoCargados($form) {
+        var state = getState($form);
+        var seleccionados = getNoCargadosSeleccionados();
+        return $.grep(state.noCargados || [], function (item) {
+            return !!seleccionados[parseInt(item.idCorte, 10) || 0];
+        });
+    }
+
+    function agregarProductosNoCargados($form, usarStockActual) {
+        var state = getState($form);
+        var seleccionados = getSeleccionadosNoCargados($form);
+        if (!seleccionados.length) {
+            showWarning($form, 'Seleccione al menos un producto.');
+            return;
+        }
+
+        if (seleccionados.length >= 80 && !window.confirm('Vas a agregar ' + seleccionados.length + ' productos, ¿confirmar?')) {
+            return;
+        }
+
+        var agregados = 0;
+        var codigosActuales = getCodigosCargados($form);
+
+        $.each(seleccionados, function (_, item) {
+            if (codigosActuales.indexOf(parseInt(item.codigo, 10) || 0) >= 0) {
+                return;
+            }
+
+            state.lineas.push({
+                idCorte: item.idCorte,
+                codigo: item.codigo,
+                producto: item.producto,
+                cantKgs: usarStockActual ? toNumber(item.stockActual) : -0.0006,
+                balanza: false,
+                creadoTexto: fechaHoraActualTexto(),
+                pesable: false,
+                noContado: true
+            });
+            codigosActuales.push(parseInt(item.codigo, 10) || 0);
+            agregados++;
+        });
+
+        if (!agregados) {
+            showWarning($form, 'No se agregaron productos nuevos.');
+            return;
+        }
+
+        state.noCargados = $.grep(state.noCargados || [], function (item) {
+            return codigosActuales.indexOf(parseInt(item.codigo, 10) || 0) < 0;
+        });
+        var seleccionadosActuales = getNoCargadosSeleccionados();
+        $.each(seleccionados, function (_, item) {
+            delete seleccionadosActuales[parseInt(item.idCorte, 10) || 0];
+        });
+        setNoCargadosSeleccionados(seleccionadosActuales);
+
+        renderLineas($form);
+        renderNoCargados($form);
+        scheduleDraft($form);
+        showFeedback($form, 'Se agregaron ' + agregados + ' productos');
     }
 
     function readDraft($form) {
@@ -692,7 +1098,8 @@
         var state = getState($form);
         var idCorte = parseInt($form.find('#txtProductoId').val(), 10) || 0;
         var cantidadTexto = $.trim($form.find('#txtCantKgs').val() || '');
-        var cantidad = toNumber(cantidadTexto);
+        var parsedCantidad = parseNumber(cantidadTexto);
+        var cantidad = parsedCantidad.value;
 
         if (idCorte <= 0) {
             showWarning($form, 'Seleccione un producto válido.');
@@ -702,6 +1109,12 @@
 
         if (cantidadTexto === '') {
             showWarning($form, 'Ingrese la cantidad.');
+            $form.find('#txtCantKgs').focus().select();
+            return null;
+        }
+
+        if (!parsedCantidad.ok) {
+            showWarning($form, 'Ingrese una cantidad válida.');
             $form.find('#txtCantKgs').focus().select();
             return null;
         }
@@ -737,7 +1150,8 @@
             cantKgs: cantidad,
             balanza: $form.find('#chkBalanzaLinea').is(':checked') && esPesableActual($form),
             creadoTexto: fechaHoraActualTexto(),
-            pesable: esPesableActual($form)
+            pesable: esPesableActual($form),
+            noContado: false
         };
     }
 
@@ -749,19 +1163,40 @@
         state.lineas.push(linea);
         renderLineas($form);
         scheduleDraft($form);
-        showFeedback($form, 'Agregado correctamente: ' + linea.producto + ' | Cantidad ' + formatNumber(linea.cantKgs, 3));
+        showFeedbackHtml(
+            $form,
+            'Agregado correctamente: <strong>' + escapeHtml(linea.producto) + '</strong> | Cantidad <strong>' + escapeHtml(formatNumber(linea.cantKgs, 3)) + '</strong>'
+        );
         clearProductoInputs($form);
         $form.find('#txtCodigoProducto').focus();
     }
 
     function bindEvents($form) {
         var state = getState($form);
+        var $modalNoCargados = getNoCargadosModal();
 
         $form.off('.stock');
         $(document).off('.stock');
+        $modalNoCargados.off('.stockModal');
 
         $form.on('input.stock change.stock', '#IdSucursal, #FechaCompra, #Observaciones, #CantMedias, #KgsMedias', function () {
+            actualizarContextoNoCargados($form);
             scheduleDraft($form);
+        });
+
+        $form.on('click.stock', '#btnHabilitarTipoCompra', function () {
+            var $select = $form.find('#TipoCompraVisual');
+            $select.prop('disabled', false).focus();
+        });
+
+        $form.on('change.stock', '#TipoCompraVisual', function () {
+            $form.find('#TipoCompra').val($(this).val() || '');
+            syncTipoCompraUi($form);
+            $(this).prop('disabled', true);
+        });
+
+        $form.on('blur.stock', '#TipoCompraVisual', function () {
+            $(this).prop('disabled', true);
         });
 
         $form.on('input.stock', '#Observaciones', function () {
@@ -789,6 +1224,64 @@
         $form.on('click.stock', '#btnVerAcumulados', function () {
             renderAcumulados($form);
             $('#modalAcumuladosStock').modal('show');
+        });
+
+        $form.on('click.stock', '#btnProductosNoCargados', function () {
+            cargarProductosNoCargados($form);
+            $('#modalProductosNoCargadosStock').modal('show');
+        });
+
+        $modalNoCargados.on('input.stockModal change.stockModal', '#txtBuscarNoCargadosStock, #filtroStockNoCargados', function () {
+            renderNoCargados($form);
+        });
+
+        $modalNoCargados.on('change.stockModal', '#chkSeleccionarTodosNoCargados', function () {
+            var checked = $(this).is(':checked');
+            var seleccionados = getNoCargadosSeleccionados();
+            $.each(getNoCargadosFiltrados($form), function (_, item) {
+                var itemId = parseInt(item.idCorte, 10) || 0;
+                if (itemId <= 0) return;
+                if (checked) {
+                    seleccionados[itemId] = true;
+                } else {
+                    delete seleccionados[itemId];
+                }
+            });
+            setNoCargadosSeleccionados(seleccionados);
+            $modalNoCargados.find('.js-no-cargado-check').prop('checked', checked);
+            actualizarContadoresNoCargados($form);
+        });
+
+        $modalNoCargados.on('change.stockModal', '.js-no-cargado-check', function () {
+            var itemId = parseInt($(this).data('id'), 10) || 0;
+            var seleccionados = getNoCargadosSeleccionados();
+            if (itemId > 0) {
+                if ($(this).is(':checked')) {
+                    seleccionados[itemId] = true;
+                } else {
+                    delete seleccionados[itemId];
+                }
+            }
+            setNoCargadosSeleccionados(seleccionados);
+            actualizarContadoresNoCargados($form);
+        });
+
+        $modalNoCargados.on('dblclick.stockModal', '#tablaNoCargadosStock tbody tr', function () {
+            var $check = $(this).find('.js-no-cargado-check');
+            if (!$check.length) return;
+            $check.prop('checked', !$check.is(':checked')).trigger('change');
+        });
+
+        $modalNoCargados.on('shown.bs.modal.stockModal', function () {
+            $(this).find('#txtBuscarNoCargadosStock').focus().select();
+        });
+
+        $modalNoCargados.on('click.stockModal', '#btnAgregarNoCargadosStockActual', function () {
+            agregarProductosNoCargados($form, true);
+        });
+
+        $modalNoCargados.on('click.stockModal', '#btnAgregarNoCargadosSinStock', function () {
+            agregarProductosNoCargados($form, false);
         });
 
         $form.on('input.stock', '#txtCodigoProducto', function () {
@@ -844,6 +1337,13 @@
         $form.on('submit.stock', function () {
             detenerLecturaBalanza($form);
             rebuildHiddenInputs($form);
+            var kgsMedias = $form.find('#KgsMedias');
+            if (kgsMedias.length) {
+                var kgsMediasRaw = $.trim(kgsMedias.val() || '');
+                if (kgsMediasRaw) {
+                    kgsMedias.val(formatNumberForPost(kgsMediasRaw));
+                }
+            }
         });
 
         $form.closest('.stock-page').on('click.stock', '[data-action="restore-draft"]', function () {
@@ -945,6 +1445,7 @@
             setState($form, state);
             renderLineas($form);
             bindEvents($form);
+            syncTipoCompraUi($form);
 
             verificarBalanzaInicial($form);
             syncCantidadReadonly($form);

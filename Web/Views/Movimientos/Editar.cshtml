@@ -124,15 +124,14 @@
                             <div id="movimientoFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                             <div id="movimientoWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
-                            <div class="row">
-                                <div class="col-12 col-md-2">
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-4 col-lg-3">
                                     <div class="form-group">
                                         <label for="txtCodigoProducto">Código</label>
-                                        <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" />
-                                        <small class="form-text text-muted">F10 abre el buscador</small>
+                                        <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" style="min-width:15ch;" />
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-5">
+                                <div class="col-12 col-md-8 col-lg-5">
                                     <div class="form-group">
                                         <label for="txtProductoNombre">Producto</label>
                                         <div class="input-group">
@@ -143,21 +142,22 @@
                                             <div class="input-group-append">
                                                 <button type="button" class="btn btn-outline-primary" id="btnBuscarProducto" title="Buscar producto (F10)">
                                                     <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F10</span>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6 col-md-2">
+                                <div class="col-6 col-md-3 col-lg-2">
                                     <div class="form-group">
                                         <label for="txtCantUnidad">Cant.Un.</label>
                                         <input type="number" id="txtCantUnidad" class="form-control" min="0" step="1" />
                                     </div>
                                 </div>
-                                <div class="col-6 col-md-2">
+                                <div class="col-6 col-md-3 col-lg-2">
                                     <div class="form-group">
                                         <label for="txtCantKgs">Kgs.</label>
-                                        <input type="number" id="txtCantKgs" class="form-control" min="0" step="0.001" />
+                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
                                     </div>
                                 </div>
                             </div>
@@ -165,6 +165,7 @@
                             <div class="custom-control custom-checkbox mb-3 d-none" id="wrapPermitirIngreso">
                                 <input type="checkbox" class="custom-control-input" id="chkPermitirIngreso" />
                                 <label class="custom-control-label" for="chkPermitirIngreso">Permitir ingreso</label>
+                                <small class="form-text text-muted">Presione <strong>+</strong> para registrar.</small>
                             </div>
 
                             <button type="button" class="btn btn-primary" id="btnAgregarProducto">
@@ -282,5 +283,5 @@
         window.movimientoLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.MovimientoLineaVm>()));
     </script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=9")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=12")"></script>
 }
