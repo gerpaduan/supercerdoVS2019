@@ -31,6 +31,10 @@ namespace Web.Models
         public string Observaciones { get; set; }
         public string Estado { get; set; }
         public bool EnCtaCte { get; set; }
+        public int? IdPesajeRelacionado { get; set; }
+        public int? IdAjusteRelacionado { get; set; }
+        public bool EsPesaje { get; set; }
+        public bool EsAjuste { get; set; }
         public string UsuarioCreacion { get; set; }
         public DateTime? FechaCreacion { get; set; }
         public string UsuarioActualizacion { get; set; }

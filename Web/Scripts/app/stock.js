@@ -79,6 +79,8 @@
             productoRequestSeq: 0,
             loadingPersonaModal: false,
             loadingNoCargados: false,
+            loadingPorcentajes: false,
+            generandoAjuste: false,
             balanzaDisponible: false,
             balanzaFaltanteDetectada: false,
             balanzaDesactivadaManual: false,
@@ -187,6 +189,18 @@
 
     function getNoCargadosModal() {
         return $('#modalProductosNoCargadosStock');
+    }
+
+    function getPorcentajesModal() {
+        return $('#modalPorcentajesPesajeStock');
+    }
+
+    function showPorcentajeWarning(text) {
+        $('#stockPorcentajeWarning').text(text).removeClass('d-none');
+    }
+
+    function clearPorcentajeWarning() {
+        $('#stockPorcentajeWarning').addClass('d-none').text('');
     }
 
     function getNoCargadosSeleccionados() {
@@ -327,12 +341,20 @@
         $form.find('#TipoCompraVisual').val(tipoCompra);
         $form.find('#stockAccionActual').text(tipoCompra);
         $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje);
+        $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
         $form.find('#txtAyudaCantidad').text(permiteCantidadNegativa ? 'Puede ingresar valores positivos o negativos según el ajuste o egreso.' : '');
 
         if (String(tipoCompra).toLowerCase() !== 'cierre stock') {
             $('#modalProductosNoCargadosStock').modal('hide');
+        }
+
+        if (!esPesaje) {
+            getPorcentajesModal().modal('hide');
+            actualizarEstadoAjustePesaje($form, '');
+        } else {
+            actualizarEstadoAjustePesaje($form, $.trim($('#stockEstadoAjusteTexto').text() || ''));
         }
 
         if (!esPesaje) {
@@ -347,6 +369,32 @@
 
         recalculate($form);
         scheduleDraft($form);
+    }
+
+    function actualizarEstadoAjustePesaje($form, estado) {
+        var texto = $.trim(estado || '');
+        var actualizado = texto.toLowerCase() === 'actualizado';
+        var $badge = $form.find('#stockEstadoAjusteBadge');
+        var $badgeTexto = $form.find('#stockEstadoAjusteTexto');
+        var $estadoModal = $('#lblEstadoAjusteModalStock');
+
+        if (!stateEsPesaje($form) || !texto) {
+            $badge.addClass('d-none');
+        } else {
+            $badge.removeClass('d-none')
+                .toggleClass('badge-success', actualizado)
+                .toggleClass('badge-warning', !actualizado);
+        }
+
+        $badgeTexto.text(texto);
+        $estadoModal.text(texto || '-')
+            .toggleClass('text-success', actualizado)
+            .toggleClass('text-danger', !actualizado);
+    }
+
+    function stateEsPesaje($form) {
+        var state = getState($form);
+        return !!(state && state.config && state.config.esPesaje);
     }
 
     function recalculate($form) {
@@ -453,6 +501,117 @@
         }
 
         $('#tbodyAcumuladosStock').html(html);
+    }
+
+    function renderTablaPorcentajes($table, tabla, emptyText) {
+        var $thead = $table.find('thead');
+        var $tbody = $table.find('tbody');
+        var columnas = tabla && $.isArray(tabla.columnas) ? tabla.columnas : [];
+        var filas = tabla && $.isArray(tabla.filas) ? tabla.filas : [];
+        var visibles = $.grep(columnas, function (col) { return !col.oculta; });
+        var headHtml = '';
+        var bodyHtml = '';
+
+        if (!visibles.length) {
+            $thead.html('');
+            $tbody.html('<tr><td class="text-center text-muted py-3">' + escapeHtml(emptyText || 'Sin datos.') + '</td></tr>');
+            return;
+        }
+
+        headHtml += '<tr>';
+        $.each(columnas, function (_, col) {
+            if (col.oculta) return;
+            headHtml += '<th' + (col.alineacionDerecha ? ' class="text-right"' : '') + '>' + escapeHtml(col.nombre || '') + '</th>';
+        });
+        headHtml += '</tr>';
+
+        if (!filas.length) {
+            bodyHtml = '<tr><td colspan="' + visibles.length + '" class="text-center text-muted py-3">' + escapeHtml(emptyText || 'Sin datos.') + '</td></tr>';
+        } else {
+            $.each(filas, function (_, fila) {
+                bodyHtml += '<tr>';
+                $.each(columnas, function (colIndex, col) {
+                    if (col.oculta) return;
+                    var valor = $.isArray(fila) ? (fila[colIndex] || '') : '';
+                    bodyHtml += '<td' + (col.alineacionDerecha ? ' class="text-right"' : '') + '>' + escapeHtml(valor) + '</td>';
+                });
+                bodyHtml += '</tr>';
+            });
+        }
+
+        $thead.html(headHtml);
+        $tbody.html(bodyHtml);
+    }
+
+    function loadPorcentajesPesaje($form) {
+        var state = getState($form);
+        if (!state.config.urls || !state.config.urls.verPorcentajesPesaje || state.loadingPorcentajes) return;
+
+        state.loadingPorcentajes = true;
+        clearPorcentajeWarning();
+        renderTablaPorcentajes($('#tablaPromMediasStock'), null, 'Cargando...');
+        renderTablaPorcentajes($('#tablaPorcCortesStock'), null, 'Cargando...');
+
+        $.ajax({
+            url: state.config.urls.verPorcentajesPesaje,
+            method: 'POST',
+            data: {
+                idCompra: parseInt($form.find('#IdCompra').val(), 10) || 0
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok !== true) {
+                showPorcentajeWarning((resp && resp.mensaje) || 'No se pudo obtener el análisis del pesaje.');
+                renderTablaPorcentajes($('#tablaPromMediasStock'), null, 'Sin datos.');
+                renderTablaPorcentajes($('#tablaPorcCortesStock'), null, 'Sin datos.');
+                return;
+            }
+
+            actualizarEstadoAjustePesaje($form, resp.estado || '');
+            $('#btnGenerarAjustePesajeStock').prop('disabled', resp.puedeGenerarAjuste !== true);
+            renderTablaPorcentajes($('#tablaPromMediasStock'), resp.promMedias, 'Sin datos de promedios.');
+            renderTablaPorcentajes($('#tablaPorcCortesStock'), resp.porcCortes, 'Sin datos de porcentajes.');
+        }).fail(function () {
+            showPorcentajeWarning('No se pudo obtener el análisis del pesaje.');
+            renderTablaPorcentajes($('#tablaPromMediasStock'), null, 'Sin datos.');
+            renderTablaPorcentajes($('#tablaPorcCortesStock'), null, 'Sin datos.');
+        }).always(function () {
+            state.loadingPorcentajes = false;
+        });
+    }
+
+    function generarAjustePesaje($form) {
+        var state = getState($form);
+        if (!state.config.urls || !state.config.urls.generarAjustePesaje || state.generandoAjuste) return;
+
+        state.generandoAjuste = true;
+        clearPorcentajeWarning();
+        $('#btnGenerarAjustePesajeStock').prop('disabled', true);
+
+        $.ajax({
+            url: state.config.urls.generarAjustePesaje,
+            method: 'POST',
+            data: {
+                __RequestVerificationToken: $form.find('input[name="__RequestVerificationToken"]').val(),
+                idCompra: parseInt($form.find('#IdCompra').val(), 10) || 0
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok !== true) {
+                showPorcentajeWarning((resp && resp.mensaje) || 'No se pudo generar el ajuste.');
+                return;
+            }
+
+            actualizarEstadoAjustePesaje($form, resp.estado || 'Actualizado');
+            getPorcentajesModal().modal('hide');
+            showFeedback($form, resp.mensaje || 'El Ajuste de Stock se realizó correctamente.');
+            loadPorcentajesPesaje($form);
+        }).fail(function () {
+            showPorcentajeWarning('No se pudo generar el ajuste.');
+        }).always(function () {
+            state.generandoAjuste = false;
+            if ($.trim($('#lblEstadoAjusteModalStock').text() || '').toLowerCase() !== 'actualizado') {
+                $('#btnGenerarAjustePesajeStock').prop('disabled', false);
+            }
+        });
     }
 
     function getCodigosCargados($form) {
@@ -1174,10 +1333,12 @@
     function bindEvents($form) {
         var state = getState($form);
         var $modalNoCargados = getNoCargadosModal();
+        var $modalPorcentajes = getPorcentajesModal();
 
         $form.off('.stock');
         $(document).off('.stock');
         $modalNoCargados.off('.stockModal');
+        $modalPorcentajes.off('.stockPorcentaje');
 
         $form.on('input.stock change.stock', '#IdSucursal, #FechaCompra, #Observaciones, #CantMedias, #KgsMedias', function () {
             actualizarContextoNoCargados($form);
@@ -1226,9 +1387,28 @@
             $('#modalAcumuladosStock').modal('show');
         });
 
+        $form.on('click.stock', '#btnVerPorcentajePesaje', function () {
+            var idCompra = parseInt($form.find('#IdCompra').val(), 10) || 0;
+            var cantMedias = $.trim($form.find('#CantMedias').val() || '');
+            var kgsMedias = $.trim($form.find('#KgsMedias').val() || '');
+
+            if (idCompra <= 0 || !cantMedias || !kgsMedias) {
+                showWarning($form, 'Ingrese KgsMedias y CantMedias, presione Guardar y vuelva a intentarlo.');
+                return;
+            }
+
+            clearPorcentajeWarning();
+            loadPorcentajesPesaje($form);
+            $modalPorcentajes.modal('show');
+        });
+
         $form.on('click.stock', '#btnProductosNoCargados', function () {
             cargarProductosNoCargados($form);
             $('#modalProductosNoCargadosStock').modal('show');
+        });
+
+        $modalPorcentajes.on('click.stockPorcentaje', '#btnGenerarAjustePesajeStock', function () {
+            generarAjustePesaje($form);
         });
 
         $modalNoCargados.on('input.stockModal change.stockModal', '#txtBuscarNoCargadosStock, #filtroStockNoCargados', function () {
@@ -1450,6 +1630,7 @@
             verificarBalanzaInicial($form);
             syncCantidadReadonly($form);
             autoResizeObservaciones($form);
+            actualizarEstadoAjustePesaje($form, $.trim($('#stockEstadoAjusteTexto').text() || ''));
             if (readDraft($form)) {
                 showDraftBanner($form);
             }

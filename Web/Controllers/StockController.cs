@@ -20,6 +20,26 @@ namespace Web.Controllers
             public float StockActual { get; set; }
         }
 
+        private class TablaModalStockVm
+        {
+            public List<ColumnaModalStockVm> columnas { get; set; }
+            public List<List<string>> filas { get; set; }
+
+            public TablaModalStockVm()
+            {
+                columnas = new List<ColumnaModalStockVm>();
+                filas = new List<List<string>>();
+            }
+        }
+
+        private class ColumnaModalStockVm
+        {
+            public string nombre { get; set; }
+            public bool oculta { get; set; }
+            public bool alineacionDerecha { get; set; }
+            public bool formatoTresDecimales { get; set; }
+        }
+
         private Negocio.Compra oCompraN;
         private Negocio.Sucursal oSucursalN;
         private Negocio.Usuario oUsuarioN;
@@ -372,6 +392,152 @@ namespace Web.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult VerPorcentajesPesaje(int idCompra)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesión inválida." });
+
+            var pesaje = oCompraN.findById_convertToCompra(idCompra);
+            if (pesaje == null || pesaje.IdCompra <= 0 || !EsPesaje(pesaje.TipoCompra))
+                return Json(new { ok = false, mensaje = "No se encontró el pesaje seleccionado." });
+
+            int idCreador = pesaje.CreadoPor != null ? pesaje.CreadoPor.Id : user.Id;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, pesaje.FechaCompra, idCreador))
+                return Json(new { ok = false, mensaje = "No tiene permisos para consultar este pesaje." });
+
+            if (!pesaje.CantMedias.HasValue || pesaje.CantMedias.Value <= 0 || !pesaje.KgsMedias.HasValue || pesaje.KgsMedias.Value <= 0)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "El pesaje no tiene registrado KgsMedias y CantMedias. Ingrese KgsMedias y CantMedias, presione Guardar y vuelva a intentarlo."
+                });
+            }
+
+            try
+            {
+                int idAjuste = oCompraN.getIdAjusteDelPesaje(idCompra);
+                var estado = oCompraN.estadoAjusteStock(idCompra, idAjuste);
+                DataTable dtPromMedias = oCompraN.getPromMedias(idCompra) ?? new DataTable();
+                DataTable dtPorcCortes = oCompraN.getPorcCortesEnMedias(idCompra) ?? new DataTable();
+
+                NormalizarTablaPorcCortes(dtPorcCortes);
+
+                return Json(new
+                {
+                    ok = true,
+                    estado = Entidades.Compra.estadoAjStockToString(estado),
+                    puedeGenerarAjuste = estado != Entidades.Compra.estadoAjusteStock.Actualizado,
+                    idAjuste = idAjuste,
+                    promMedias = ConstruirTablaModal(dtPromMedias, false, -1),
+                    porcCortes = ConstruirTablaModal(dtPorcCortes, true, 2)
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GenerarAjustePesaje(int idCompra)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesión inválida." });
+
+            var pesaje = oCompraN.findById_convertToCompra(idCompra);
+            if (pesaje == null || pesaje.IdCompra <= 0 || !EsPesaje(pesaje.TipoCompra))
+                return Json(new { ok = false, mensaje = "No se encontró el pesaje seleccionado." });
+
+            int idCreador = pesaje.CreadoPor != null ? pesaje.CreadoPor.Id : user.Id;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, pesaje.FechaCompra, idCreador))
+                return Json(new { ok = false, mensaje = "No tiene permisos para generar el ajuste de este pesaje." });
+
+            if (!pesaje.CantMedias.HasValue || pesaje.CantMedias.Value <= 0 || !pesaje.KgsMedias.HasValue || pesaje.KgsMedias.Value <= 0)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "El pesaje no tiene registrado KgsMedias y CantMedias. Ingrese KgsMedias y CantMedias, presione Guardar y vuelva a intentarlo."
+                });
+            }
+
+            try
+            {
+                int idAjuste = oCompraN.getIdAjusteDelPesaje(idCompra);
+                var ajuste = idAjuste > 0 ? oCompraN.findById_convertToCompra(idAjuste) : new Entidades.Compra();
+
+                ajuste.NroRemito = pesaje.IdCompra.ToString();
+                ajuste.Proveedor = pesaje.Proveedor;
+                ajuste.FechaCompra = pesaje.FechaCompra;
+                ajuste.Estado = "";
+                ajuste.Observaciones = "ID Pesaje: " + pesaje.IdCompra;
+                ajuste.TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock);
+                ajuste.CantMedias = pesaje.CantMedias;
+                ajuste.KgsMedias = pesaje.KgsMedias;
+                ajuste.Sucursal = pesaje.Sucursal;
+
+                if (ajuste.IdCompra <= 0)
+                {
+                    ajuste.CreadoPor = user;
+                    ajuste.IdCompra = oCompraN.agregarCompra(ajuste);
+                }
+                else
+                {
+                    ajuste.ActualizadoPor = user;
+                    oCompraN.modificarCompra(ajuste);
+                }
+
+                DataTable dtPorcCortes = oCompraN.getPorcCortesEnMedias(idCompra) ?? new DataTable();
+                NormalizarTablaPorcCortes(dtPorcCortes);
+
+                foreach (DataRow row in dtPorcCortes.Rows)
+                {
+                    if (!dtPorcCortes.Columns.Contains("idCorte") || row["idCorte"] == DBNull.Value)
+                        continue;
+
+                    int idCorte;
+                    if (!int.TryParse(Convert.ToString(row["idCorte"]), out idCorte) || idCorte <= 0)
+                        continue;
+
+                    float diferencia;
+                    if (!TryParseFloatFlexible(Convert.ToString(row["Dif."]), out diferencia))
+                        throw new Exception("No se pudo interpretar la diferencia de uno de los productos.");
+
+                    var cortePorCompra = new Entidades.CortePorCompra
+                    {
+                        Corte = new Entidades.Corte { IdCorte = idCorte },
+                        Compra = ajuste,
+                        CantKgs = diferencia,
+                        precioKg = 0f,
+                        Creado = DateTime.Now,
+                        CreadoPor = ajuste.CreadoPor ?? user,
+                        Sucursal = ajuste.Sucursal
+                    };
+
+                    oCompraN.agregarCortePorCompra(cortePorCompra);
+                }
+
+                oCompraN.actualizarEstadoPesaje(pesaje.IdCompra, Entidades.Compra.estadoAjusteStock.Actualizado);
+
+                return Json(new
+                {
+                    ok = true,
+                    mensaje = "El Ajuste de Stock se realizó correctamente.",
+                    estado = Entidades.Compra.estadoAjStockToString(Entidades.Compra.estadoAjusteStock.Actualizado),
+                    idAjuste = ajuste.IdCompra
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
         private static bool EsTipoStock(string tipoCompra)
         {
             return TiposStock.Contains(tipoCompra ?? "", StringComparer.OrdinalIgnoreCase);
@@ -542,6 +708,24 @@ namespace Web.Controllers
                 if (compra == null || compra.IdCompra == 0)
                     continue;
 
+                bool esPesaje = EsPesaje(compra.TipoCompra);
+                bool esAjuste = EsAjuste(compra.TipoCompra);
+                int? idPesajeRelacionado = null;
+                int? idAjusteRelacionado = null;
+
+                if (esPesaje)
+                {
+                    int ajusteRelacionado = oCompraN.getIdAjusteDelPesaje(compra.IdCompra);
+                    if (ajusteRelacionado > 0)
+                        idAjusteRelacionado = ajusteRelacionado;
+                }
+                else if (esAjuste)
+                {
+                    int idPesaje;
+                    if (int.TryParse(compra.NroRemito ?? "", out idPesaje) && idPesaje > 0)
+                        idPesajeRelacionado = idPesaje;
+                }
+
                 detalles[idCompra] = new CompraIndexDetalleVm
                 {
                     IdCompra = compra.IdCompra,
@@ -551,6 +735,10 @@ namespace Web.Controllers
                     Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
                     Observaciones = compra.Observaciones ?? "",
                     Estado = compra.Estado ?? "",
+                    IdPesajeRelacionado = idPesajeRelacionado,
+                    IdAjusteRelacionado = idAjusteRelacionado,
+                    EsPesaje = esPesaje,
+                    EsAjuste = esAjuste,
                     UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
                     FechaCreacion = compra.Creado,
                     UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
@@ -638,6 +826,138 @@ namespace Web.Controllers
             }
 
             return total;
+        }
+
+        private static void NormalizarTablaPorcCortes(DataTable dt)
+        {
+            if (dt == null || dt.Rows.Count == 0)
+                return;
+
+            if (!dt.Columns.Contains("Gan."))
+                return;
+
+            decimal ganancia = 0m;
+            int lastIndex = dt.Rows.Count - 1;
+
+            for (int fila = 0; fila < dt.Rows.Count; fila++)
+            {
+                if (fila == lastIndex)
+                {
+                    dt.Rows[fila]["Gan."] = ganancia;
+                    if (dt.Columns.Contains("Codigo"))
+                        dt.Rows[fila]["Codigo"] = DBNull.Value;
+                }
+                else
+                {
+                    decimal valorGanancia;
+                    if (TryConvertToDecimal(dt.Rows[fila]["Gan."], out valorGanancia))
+                        ganancia += valorGanancia;
+                }
+            }
+        }
+
+        private static TablaModalStockVm ConstruirTablaModal(DataTable dt, bool ocultarIdCorte, int formatoTresDecimalesDesdeColumna)
+        {
+            var tabla = new TablaModalStockVm();
+            if (dt == null)
+                return tabla;
+
+            for (int colIndex = 0; colIndex < dt.Columns.Count; colIndex++)
+            {
+                var column = dt.Columns[colIndex];
+                tabla.columnas.Add(new ColumnaModalStockVm
+                {
+                    nombre = column.ColumnName,
+                    oculta = ocultarIdCorte && string.Equals(column.ColumnName, "idCorte", StringComparison.OrdinalIgnoreCase),
+                    alineacionDerecha = EsNumerica(column.DataType) || (formatoTresDecimalesDesdeColumna >= 0 && colIndex >= formatoTresDecimalesDesdeColumna),
+                    formatoTresDecimales = formatoTresDecimalesDesdeColumna >= 0 && colIndex >= formatoTresDecimalesDesdeColumna
+                });
+            }
+
+            foreach (DataRow row in dt.Rows)
+            {
+                var fila = new List<string>();
+                for (int i = 0; i < dt.Columns.Count; i++)
+                {
+                    fila.Add(FormatearCeldaTabla(row[i], dt.Columns[i], tabla.columnas[i].formatoTresDecimales));
+                }
+                tabla.filas.Add(fila);
+            }
+
+            return tabla;
+        }
+
+        private static string FormatearCeldaTabla(object value, DataColumn column, bool formatoTresDecimales)
+        {
+            if (value == null || value == DBNull.Value)
+                return "";
+
+            var cultura = CultureInfo.GetCultureInfo("es-AR");
+
+            if (EsNumerica(column.DataType))
+            {
+                decimal numero = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+                return numero.ToString(formatoTresDecimales ? "F3" : "0.###", cultura);
+            }
+
+            if (formatoTresDecimales)
+            {
+                float numeroFloat;
+                if (TryParseFloatFlexible(Convert.ToString(value), out numeroFloat))
+                    return numeroFloat.ToString("F3", cultura);
+            }
+
+            if (column.DataType == typeof(DateTime))
+            {
+                DateTime fecha;
+                if (DateTime.TryParse(Convert.ToString(value), out fecha))
+                    return fecha.ToString("dd/MM/yyyy HH:mm");
+            }
+
+            return Convert.ToString(value);
+        }
+
+        private static bool EsNumerica(Type type)
+        {
+            return type == typeof(decimal) || type == typeof(double) || type == typeof(float) ||
+                type == typeof(int) || type == typeof(long) || type == typeof(short) ||
+                type == typeof(byte);
+        }
+
+        private static bool TryConvertToDecimal(object value, out decimal numero)
+        {
+            numero = 0m;
+            if (value == null || value == DBNull.Value)
+                return false;
+
+            if (value is decimal)
+            {
+                numero = (decimal)value;
+                return true;
+            }
+
+            if (value is float || value is double || value is int || value is long || value is short || value is byte)
+            {
+                numero = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+                return true;
+            }
+
+            string raw = Convert.ToString(value);
+            if (string.IsNullOrWhiteSpace(raw))
+                return false;
+
+            raw = raw.Trim();
+
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out numero))
+                return true;
+
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.GetCultureInfo("es-AR"), out numero))
+                return true;
+
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.CurrentCulture, out numero))
+                return true;
+
+            return false;
         }
 
         private void NormalizarDecimalesPosteados(StockEditVm model)

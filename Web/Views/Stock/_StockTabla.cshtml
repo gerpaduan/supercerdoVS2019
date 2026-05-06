@@ -43,7 +43,29 @@
                     <tr>
                         <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
                         <td>@row["sucursal"]</td>
-                        <td>@row["tipoCompra"]</td>
+                        <td>
+                            <div>@row["tipoCompra"]</div>
+                            @if (detalle != null)
+                            {
+                                if (detalle.EsPesaje)
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdCompra</span>
+                                        @if (detalle.IdAjusteRelacionado.HasValue)
+                                        {
+                                            <span class="badge badge-pill badge-success">Aj. #@detalle.IdAjusteRelacionado.Value</span>
+                                        }
+                                    </div>
+                                }
+                                else if (detalle.EsAjuste && detalle.IdPesajeRelacionado.HasValue)
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdCompra</span>
+                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
+                                    </div>
+                                }
+                            }
+                        </td>
                         <td class="text-right">@cantKg.ToString("N2")</td>
                         <td class="text-center">
                             @if (detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones))
@@ -87,6 +109,25 @@
                                         <div class="row">
                                             <div class="col-12 col-lg-6">
                                                 <div class="mb-2"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@detalle.IdCompra</span></div>
+                                                @if (detalle.EsPesaje)
+                                                {
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Referencia:</span>
+                                                        <span class="font-weight-bold">Pesaje #@detalle.IdCompra</span>
+                                                        @if (detalle.IdAjusteRelacionado.HasValue)
+                                                        {
+                                                            <span class="badge badge-pill badge-success ml-2">Aj. #@detalle.IdAjusteRelacionado.Value</span>
+                                                        }
+                                                    </div>
+                                                }
+                                                else if (detalle.EsAjuste && detalle.IdPesajeRelacionado.HasValue)
+                                                {
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Referencia:</span>
+                                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdCompra</span>
+                                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
+                                                    </div>
+                                                }
                                                 <div class="mb-2"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Observaciones) ? detalle.Observaciones : "-")</span></div>
                                                 <div class="mb-2"><span class="text-muted">Quién lo creó:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.UsuarioCreacion) ? detalle.UsuarioCreacion : "-")</span></div>
                                                 <div class="mb-2"><span class="text-muted">Fecha de creación:</span> <span class="font-weight-bold">@(detalle.FechaCreacion.HasValue ? detalle.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</span></div>
