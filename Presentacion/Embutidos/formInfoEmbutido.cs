@@ -93,7 +93,7 @@ namespace Presentacion.Embutidos
             txtEmbutido.Text = oEmbutidoE.corte.corte;
             txtObservaciones.Text = oEmbutidoE.observaciones;
             oFormulaE = oCorteN.findFormulaByID(0, oEmbutidoE.corte.idCorte);
-            txtReceta.Text = oFormulaE.Receta;
+            txtReceta.Text = oFormulaE != null ? oFormulaE.Receta : "";
 
             if (oEmbutidoE.estado=="Anulado")
             {

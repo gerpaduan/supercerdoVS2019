@@ -17,6 +17,7 @@
     bool soloGastos = ViewBag.SoloGastos != null && (bool)ViewBag.SoloGastos;
     bool sinPermiso = ViewBag.SinPermiso != null && (bool)ViewBag.SinPermiso;
     string mensajePermiso = ViewBag.MensajePermiso as string ?? "No tiene permisos para acceder a esta pantalla.";
+    bool puedeVerTipos = ViewBag.PuedeVerTiposEgreso != null && (bool)ViewBag.PuedeVerTiposEgreso;
 }
 
 <div class="egresos-page">
@@ -32,6 +33,12 @@
             <button type="button" class="btn btn-success" id="btnNuevoEgresoCaja">
                 <i class="fas fa-plus mr-1"></i> Nuevo Egreso
             </button>
+            @if (puedeVerTipos)
+            {
+                <button type="button" class="btn btn-outline-primary" id="btnTiposEgresoCaja">
+                    <i class="fas fa-tags mr-1"></i> Tipos Egresos
+                </button>
+            }
         </div>
 
         <form id="formFiltrosEgresos" class="egresos-filtros egresos-filtros-card">
@@ -218,18 +225,42 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalTiposEgresoCaja" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalTiposEgresoCajaTitulo">Tipos Egresos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenedorTiposEgresoCaja">
+                <div class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         window.EgresosCajaUrls = {
             listar: '@Url.Action("EgresosCaja", "Cajas")',
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
-            guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+            guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")',
+            tipos: '@Url.Action("TiposEgresoCaja", "Cajas")',
+            tiposOpciones: '@Url.Action("TiposEgresoCajaOpciones", "Cajas")',
+            tipoFormulario: '@Url.Action("AddOrEditTipoEgresoCaja", "Cajas")',
+            tipoGuardar: '@Url.Action("GuardarTipoEgresoCaja", "Cajas")',
+            tipoEliminar: '@Url.Action("EliminarTipoEgresoCaja", "Cajas")'
         };
 
         window.EgresosCajaPermisos = {
             sinPermiso: @Html.Raw((sinPermiso ? "true" : "false")),
-            mensaje: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(mensajePermiso))
+            mensaje: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(mensajePermiso)),
+            puedeVerTipos: @Html.Raw((ViewBag.PuedeVerTiposEgreso != null && (bool)ViewBag.PuedeVerTiposEgreso ? "true" : "false")),
+            puedeEditarTipos: @Html.Raw((ViewBag.PuedeEditarTiposEgreso != null && (bool)ViewBag.PuedeEditarTiposEgreso ? "true" : "false")),
+            usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))
         };
     </script>
-<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=3")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=4")"></script>
 }

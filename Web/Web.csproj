@@ -156,6 +156,7 @@
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
+    <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />
@@ -2059,9 +2060,12 @@
     <Content Include="Views\Cajas\CajasAbiertas.cshtml" />
     <Content Include="Views\Cajas\EgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_AddOrEditEgresoCaja.cshtml" />
+    <Content Include="Views\Cajas\_AddOrEditTipoEgresoCaja.cshtml" />
     <Content Include="Views\Cajas\_EgresosCajaTabla.cshtml" />
     <Content Include="Views\Cajas\_MisEgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_TablaCajasAbiertas.cshtml" />
+    <Content Include="Views\Cajas\_TiposEgresoCajaModal.cshtml" />
+    <Content Include="Views\Cajas\_TiposEgresoCajaTabla.cshtml" />
     <Content Include="Views\Ventas\DetalleVenta.cshtml" />
     <Content Include="Views\Finanzas\CtasCtes.cshtml" />
     <Content Include="Views\Ventas\POS.cshtml" />

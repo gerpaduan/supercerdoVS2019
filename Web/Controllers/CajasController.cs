@@ -7,6 +7,7 @@ using System.Globalization;
 using Web.Helpers;
 using Utilidades;
 using System.Linq;
+using Web.Models;
 
 namespace Web.Controllers
 {
@@ -254,6 +255,75 @@ namespace Web.Controllers
             return PartialView("~/Views/Cajas/_AddOrEditEgresoCaja.cshtml", egreso);
         }
 
+        public ActionResult TiposEgresoCaja(string buscar = "")
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return new HttpStatusCodeResult(401, "Sesión inválida");
+
+            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.TiposConsulta))
+                return new HttpStatusCodeResult(403, "No tiene permisos para ver tipos de egreso.");
+
+            ViewBag.BuscarTipoEgreso = buscar ?? "";
+            ViewBag.PuedeEditarTipos = PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.TiposAltaEdicion, DateTime.Today, user.Id);
+            ViewBag.UsuarioAdmin = user.Admin;
+
+            DataTable dt = oCierreN.obtenerTiposEgresoCaja(buscar ?? "", 0);
+            return PartialView("~/Views/Cajas/_TiposEgresoCajaModal.cshtml", dt);
+        }
+
+        public ActionResult AddOrEditTipoEgresoCaja(int id = 0)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return new HttpStatusCodeResult(401, "Sesión inválida");
+
+            if (!PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.TiposAltaEdicion, DateTime.Today, user.Id))
+                return new HttpStatusCodeResult(403, "No tiene permisos para administrar tipos de egreso.");
+
+            var model = new TipoEgresoCajaEditVm();
+            if (id > 0)
+            {
+                DataTable dt = oCierreN.obtenerTiposEgresoCaja("", id);
+                if (dt == null || dt.Rows.Count == 0)
+                    return HttpNotFound("No se encontró el tipo de egreso seleccionado.");
+
+                DataRow row = dt.Rows[0];
+                bool reservado = row.Table.Columns.Contains("Reservado") && row["Reservado"] != DBNull.Value && Convert.ToBoolean(row["Reservado"]);
+                if (reservado)
+                    return new HttpStatusCodeResult(403, "El tipo de egreso seleccionado es reservado por el sistema y no puede modificarse.");
+
+                model.Id = id;
+                model.TipoEgresoCaja = Convert.ToString(row["tipoEgresoCaja"]);
+                model.EsGasto = row.Table.Columns.Contains("Es_Gasto") && row["Es_Gasto"] != DBNull.Value && Convert.ToBoolean(row["Es_Gasto"]);
+                model.Reservado = reservado;
+            }
+
+            return PartialView("~/Views/Cajas/_AddOrEditTipoEgresoCaja.cshtml", model);
+        }
+
+        public JsonResult TiposEgresoCajaOpciones()
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesión inválida." }, JsonRequestBehavior.AllowGet);
+
+            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.Consulta, DateTime.Today))
+                return Json(new { ok = false, mensaje = "No tiene permisos para ver tipos de egreso." }, JsonRequestBehavior.AllowGet);
+
+            DataTable dt = oCierreN.obtenerTiposEgresoCaja("", 0);
+            var items = dt.AsEnumerable()
+                .Where(r => Convert.ToInt32(r["id"]) > 0)
+                .Select(r => new
+                {
+                    id = Convert.ToInt32(r["id"]),
+                    nombre = Convert.ToString(r["tipoEgresoCaja"])
+                })
+                .ToList();
+
+            return Json(new { ok = true, items = items }, JsonRequestBehavior.AllowGet);
+        }
+
         public ActionResult EditarPagoActividad(int id, string returnUrl = "", bool desdePos = false)
         {
             return new HttpStatusCodeResult(403, "La modificación de pagos y cobros no está disponible desde Mis actividades.");
@@ -351,6 +421,84 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 return Json(new { ok = false, mensaje = "Error al guardar egreso de caja. " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarTipoEgresoCaja(TipoEgresoCajaEditVm model)
+        {
+            try
+            {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null)
+                    return Json(new { ok = false, mensaje = "Sesión inválida." });
+
+                if (!PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.TiposAltaEdicion, DateTime.Today, user.Id))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para administrar tipos de egreso." });
+
+                string nombre = model != null ? (model.TipoEgresoCaja ?? "").Trim() : "";
+                if (string.IsNullOrWhiteSpace(nombre))
+                    return Json(new { ok = false, mensaje = "El campo Tipo no puede ser vacío." });
+
+                int id = model != null ? model.Id : 0;
+                if (id > 0)
+                {
+                    DataTable dt = oCierreN.obtenerTiposEgresoCaja("", id);
+                    if (dt == null || dt.Rows.Count == 0)
+                        return Json(new { ok = false, mensaje = "No se encontró el tipo de egreso seleccionado." });
+
+                    bool reservado = dt.Rows[0].Table.Columns.Contains("Reservado") &&
+                                     dt.Rows[0]["Reservado"] != DBNull.Value &&
+                                     Convert.ToBoolean(dt.Rows[0]["Reservado"]);
+                    if (reservado)
+                        return Json(new { ok = false, mensaje = "El tipo de egreso seleccionado es reservado por el sistema y no puede modificarse." });
+                }
+
+                oCierreN.addOrEditTipoEgreso(id > 0 ? id : -1, nombre, model != null && model.EsGasto);
+                return Json(new { ok = true, mensaje = "El Tipo Egreso se registró correctamente." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult EliminarTipoEgresoCaja(int id)
+        {
+            try
+            {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null)
+                    return Json(new { ok = false, mensaje = "Sesión inválida." });
+
+                if (!PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.TiposAltaEdicion, DateTime.Today, user.Id))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para administrar tipos de egreso." });
+
+                if (!user.Admin)
+                    return Json(new { ok = false, mensaje = "Debe tener permiso de Administrador para eliminar un Tipo Egreso." });
+
+                DataTable dt = oCierreN.obtenerTiposEgresoCaja("", id);
+                if (dt == null || dt.Rows.Count == 0)
+                    return Json(new { ok = false, mensaje = "No se encontró el tipo de egreso seleccionado." });
+
+                bool reservado = dt.Rows[0].Table.Columns.Contains("Reservado") &&
+                                 dt.Rows[0]["Reservado"] != DBNull.Value &&
+                                 Convert.ToBoolean(dt.Rows[0]["Reservado"]);
+                if (reservado)
+                    return Json(new { ok = false, mensaje = "El Tipo Egreso seleccionado es reservado por el sistema y no puede eliminarse." });
+
+                oCierreN.eliminarTipoEgreso(id);
+                return Json(new { ok = true, mensaje = "El Tipo Egreso se eliminó correctamente." });
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message != null && ex.Message.IndexOf("FK", StringComparison.OrdinalIgnoreCase) >= 0
+                    ? "No se puede eliminar porque existen egresos de caja con el Tipo Egreso seleccionado."
+                    : ex.Message;
+                return Json(new { ok = false, mensaje = msg });
             }
         }
 
@@ -507,6 +655,7 @@ namespace Web.Controllers
 
         private void CargarViewBagsEgresos(int idSucursal, int idUsuario, int idTipoEgresoCaja, string descripcion, DateTime fechaDesde, DateTime fechaHasta, bool soloGastos, bool desdePos)
         {
+            var user = Session["Usuario"] as Entidades.Usuario;
             ViewBag.Sucursales = oSucursalN.findAll();
             ViewBag.Usuarios = oUsuarioN.obtenerUsuariosConTodos(true);
             ViewBag.TiposEgresoCaja = oCierreN.obtenerTiposEgresoCaja("", 0);
@@ -518,6 +667,9 @@ namespace Web.Controllers
             ViewBag.FechaHasta = fechaHasta;
             ViewBag.SoloGastos = soloGastos;
             ViewBag.DesdePOS = desdePos;
+            ViewBag.UsuarioAdmin = user != null && user.Admin;
+            ViewBag.PuedeVerTiposEgreso = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.TiposConsulta);
+            ViewBag.PuedeEditarTiposEgreso = user != null && PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.TiposAltaEdicion, DateTime.Today, user.Id);
         }
 
         private void CargarViewBagsFormularioEgreso(bool desdePos, int idSucursal, CierreCaja cierreContexto = null)

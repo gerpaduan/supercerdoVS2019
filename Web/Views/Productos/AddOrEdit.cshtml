@@ -18,7 +18,7 @@
 <div class="container-fluid px-2 px-md-3">
 
     <div class="row">
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-7">
 
             @using (Html.BeginForm("Guardar", "Productos", FormMethod.Post, new { id = "frmCorte", autocomplete = "off" }))
             {
@@ -78,7 +78,7 @@
                                 <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código">
                                     <i class="fas fa-barcode"></i>
                                 </button>
-                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / código interno", id = "Codigo" })
+                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / código interno", id = "Codigo", maxlength = "15" })
                             </div>
 
                             <small id="scannerMsg" class="text-danger d-none"></small>
@@ -331,8 +331,8 @@
         if (!barra) return;
 
         // Busca la columna que contiene el formulario/botonera
-        const contenedor = barra.closest('.col-12.col-lg-6')
-            || document.querySelector('#frmCorte')?.closest('.col-12.col-lg-6');
+        const contenedor = barra.closest('.col-12.col-lg-7')
+            || document.querySelector('#frmCorte')?.closest('.col-12.col-lg-7');
 
         if (!contenedor) return;
 

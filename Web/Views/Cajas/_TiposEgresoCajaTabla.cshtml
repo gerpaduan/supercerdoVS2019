@@ -1,0 +1,86 @@
+@model System.Data.DataTable
+@using System
+@using System.Data
+
+@{
+    bool puedeEditar = ViewBag.PuedeEditarTipos != null && (bool)ViewBag.PuedeEditarTipos;
+    bool usuarioAdmin = ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin;
+}
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th style="width:70px;">ID</th>
+                <th>Tipo</th>
+                <th style="width:110px;">Gasto</th>
+                <th style="width:120px;">Reservado</th>
+                <th style="width:170px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No se encontraron tipos de egreso.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (DataRow row in Model.Rows)
+                {
+                    int id = Convert.ToInt32(row["id"]);
+                    bool reservado = row.Table.Columns.Contains("Reservado") && row["Reservado"] != DBNull.Value && Convert.ToBoolean(row["Reservado"]);
+                    bool esGasto = row.Table.Columns.Contains("Es_Gasto") && row["Es_Gasto"] != DBNull.Value && Convert.ToBoolean(row["Es_Gasto"]);
+                    string nombre = Convert.ToString(row["tipoEgresoCaja"]);
+
+                    <tr class="tipo-egreso-row"
+                        data-id="@id"
+                        data-nombre="@nombre"
+                        data-es-gasto="@(esGasto ? "true" : "false")"
+                        data-reservado="@(reservado ? "true" : "false")"
+                        data-puede-editar="@(puedeEditar ? "true" : "false")">
+                        <td class="font-weight-bold">@id</td>
+                        <td>@nombre</td>
+                        <td>
+                            <span class="badge badge-pill @(esGasto ? "badge-danger" : "badge-secondary")">
+                                @(esGasto ? "Sí" : "No")
+                            </span>
+                        </td>
+                        <td>
+                            @if (reservado)
+                            {
+                                <span class="badge badge-pill badge-warning">Sistema</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-pill badge-light border">Editable</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">
+                            @if (puedeEditar)
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-editar-tipo-egreso"
+                                        data-id="@id"
+                                        @(reservado ? "disabled" : "")>
+                                    Editar
+                                </button>
+                            }
+                            @if (usuarioAdmin)
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger btn-eliminar-tipo-egreso"
+                                        data-id="@id"
+                                        data-nombre="@nombre"
+                                        @(reservado ? "disabled" : "")>
+                                    Eliminar
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

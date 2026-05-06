@@ -1,5 +1,10 @@
 (function (window, $) {
     "use strict";
+    var tiposFiltroState = {
+        buscar: "",
+        origen: "todos",
+        gasto: "todos"
+    };
 
     function urls() {
         return window.EgresosCajaUrls || {};
@@ -88,6 +93,10 @@
 
     function setTituloModal(texto) {
         $("#modalEgresoCajaTitulo").text(texto || "Nuevo Egreso de Caja");
+    }
+
+    function setTituloTiposModal(texto) {
+        $("#modalTiposEgresoCajaTitulo").text(texto || "Tipos Egresos");
     }
 
     function estaEnPos() {
@@ -246,6 +255,266 @@
         window.location.href = url;
     }
 
+    function tokenTipos() {
+        return $("#formTokenTiposEgresoCaja input[name='__RequestVerificationToken']").val()
+            || $("#formTipoEgresoCaja input[name='__RequestVerificationToken']").val()
+            || $("input[name='__RequestVerificationToken']").first().val();
+    }
+
+    function syncTiposFiltroStateDesdeUI() {
+        tiposFiltroState.buscar = ($("#buscarTipoEgresoCaja").val() || "").toString();
+        tiposFiltroState.origen = ($("#filtroOrigenTipoEgreso").val() || "todos").toString();
+        tiposFiltroState.gasto = ($("#filtroGastoTipoEgreso").val() || "todos").toString();
+    }
+
+    function aplicarTiposFiltroStateAUI() {
+        $("#buscarTipoEgresoCaja").val(tiposFiltroState.buscar || "");
+        $("#filtroOrigenTipoEgreso").val(tiposFiltroState.origen || "todos");
+        $("#filtroGastoTipoEgreso").val(tiposFiltroState.gasto || "todos");
+    }
+
+    function aplicarFiltrosTiposEgreso() {
+        syncTiposFiltroStateDesdeUI();
+
+        var buscar = (tiposFiltroState.buscar || "").toLowerCase().trim();
+        var origen = tiposFiltroState.origen || "todos";
+        var gasto = tiposFiltroState.gasto || "todos";
+        var visibles = 0;
+
+        $("#tablaTiposEgresoCaja .tipo-egreso-row").each(function () {
+            var $row = $(this);
+            var nombre = ($row.data("nombre") || "").toString().toLowerCase();
+            var reservado = String($row.attr("data-reservado")).toLowerCase() === "true";
+            var esGasto = String($row.attr("data-es-gasto")).toLowerCase() === "true";
+            var visible = true;
+
+            if (buscar && nombre.indexOf(buscar) < 0 && String($row.data("id")).indexOf(buscar) < 0) {
+                visible = false;
+            }
+
+            if (visible && origen === "propios" && reservado) {
+                visible = false;
+            }
+
+            if (visible && origen === "sistema" && !reservado) {
+                visible = false;
+            }
+
+            if (visible && gasto === "gastos" && !esGasto) {
+                visible = false;
+            }
+
+            if (visible && gasto === "no-gastos" && esGasto) {
+                visible = false;
+            }
+
+            $row.toggle(visible);
+            if (visible) {
+                visibles += 1;
+            }
+        });
+
+        var $tbody = $("#tablaTiposEgresoCaja tbody");
+        $tbody.find(".tipos-egreso-empty-filter").remove();
+
+        if (visibles === 0 && $("#tablaTiposEgresoCaja .tipo-egreso-row").length > 0) {
+            $tbody.append('<tr class="tipos-egreso-empty-filter"><td colspan="5" class="text-center text-muted py-4">No hay tipos de egreso para el filtro seleccionado.</td></tr>');
+        }
+    }
+
+    function refrescarComboTiposIndex() {
+        var cfg = urls();
+        var $combo = $("#filtroTipoEgreso");
+        if (!cfg.tiposOpciones || !$combo.length) return;
+
+        var seleccionado = ($combo.val() || "0").toString();
+
+        $.ajax({
+            url: cfg.tiposOpciones,
+            type: "GET",
+            cache: false,
+            dataType: "json"
+        }).done(function (resp) {
+            if (!resp || !resp.ok || !$.isArray(resp.items)) return;
+
+            $combo.empty();
+            $combo.append('<option value="0">Todos</option>');
+
+            $.each(resp.items, function (_, item) {
+                var id = item && item.id != null ? String(item.id) : "";
+                var nombre = item && item.nombre != null ? String(item.nombre) : "";
+                if (!id) return;
+
+                var $opt = $("<option>").val(id).text(nombre);
+                if (id === seleccionado) {
+                    $opt.prop("selected", true);
+                }
+                $combo.append($opt);
+            });
+
+            if ($combo.find("option:selected").length === 0) {
+                $combo.val("0");
+            }
+        });
+    }
+
+    function cargarTipos(buscar) {
+        var cfg = urls();
+        var perms = permisos();
+        if (!cfg.tipos) return;
+
+        if (perms.puedeVerTipos === false) {
+            mostrarPermisoPopup("No tiene permisos para ver tipos de egreso.");
+            return;
+        }
+
+        setTituloTiposModal("Tipos Egresos");
+        $("#contenedorTiposEgresoCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+        $("#modalTiposEgresoCaja").modal("show");
+
+        $.ajax({
+            url: cfg.tipos,
+            type: "GET",
+            data: { buscar: buscar || "" },
+            cache: false
+        }).done(function (html) {
+            renderConScripts(html, "#contenedorTiposEgresoCaja");
+            aplicarTiposFiltroStateAUI();
+            aplicarFiltrosTiposEgreso();
+        }).fail(function (xhr) {
+            var mensaje = (xhr && (xhr.responseText || xhr.statusText)) || "No se pudieron cargar los tipos de egreso.";
+            if (xhr && xhr.status === 403) {
+                $("#modalTiposEgresoCaja").modal("hide");
+                mostrarPermisoPopup(mensaje.replace(/<[^>]+>/g, "").trim());
+                return;
+            }
+
+            $("#contenedorTiposEgresoCaja").html('<div class="alert alert-danger m-3">' + $("<div>").text(mensaje).html() + '</div>');
+        });
+    }
+
+    function abrirTipos() {
+        cargarTipos("");
+    }
+
+    function abrirFormularioTipo(id) {
+        var cfg = urls();
+        var perms = permisos();
+        if (!cfg.tipoFormulario) return;
+
+        if (perms.puedeEditarTipos === false) {
+            mostrarPermisoPopup("No tiene permisos para administrar tipos de egreso.");
+            return;
+        }
+
+        setTituloTiposModal(id && parseInt(id, 10) > 0 ? "Editar Tipo Egreso" : "Nuevo Tipo Egreso");
+        $("#contenedorTiposEgresoCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+
+        $.ajax({
+            url: cfg.tipoFormulario,
+            type: "GET",
+            data: { id: id || 0 },
+            cache: false
+        }).done(function (html) {
+            renderConScripts(html, "#contenedorTiposEgresoCaja");
+        }).fail(function (xhr) {
+            var mensaje = (xhr && (xhr.responseText || xhr.statusText)) || "No se pudo cargar el tipo de egreso.";
+            $("#contenedorTiposEgresoCaja").html('<div class="alert alert-danger m-3">' + $("<div>").text(mensaje.replace(/<[^>]+>/g, "").trim()).html() + '</div>');
+        });
+    }
+
+    function bindTipoForm(selector) {
+        $(document)
+            .off("submit.tiposEgresoForm", selector)
+            .on("submit.tiposEgresoForm", selector, function (e) {
+                e.preventDefault();
+
+                var cfg = urls();
+                var $form = $(this);
+                var $error = $form.find("#tipoEgresoCajaError");
+
+                $error.addClass("d-none").text("");
+
+                $.ajax({
+                    url: cfg.tipoGuardar,
+                    type: "POST",
+                    data: $form.serialize(),
+                    dataType: "json"
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        mostrarError($error, resp && resp.mensaje);
+                        return;
+                    }
+
+                    refrescarComboTiposIndex();
+                    cargarTipos(tiposFiltroState.buscar || "");
+                    if (window.Swal) {
+                        Swal.fire("Guardado", resp.mensaje || "El tipo de egreso se guardó correctamente.", "success");
+                    }
+                }).fail(function () {
+                    mostrarError($error, "No se pudo guardar el tipo de egreso.");
+                });
+            });
+    }
+
+    function eliminarTipo(id, nombre) {
+        var cfg = urls();
+        var perms = permisos();
+        if (!cfg.tipoEliminar) return;
+
+        if (perms.usuarioAdmin === false) {
+            mostrarPermisoPopup("Debe tener permiso de Administrador para eliminar un Tipo Egreso.");
+            return;
+        }
+
+        var ejecutar = function () {
+            $.ajax({
+                url: cfg.tipoEliminar,
+                type: "POST",
+                dataType: "json",
+                data: {
+                    __RequestVerificationToken: tokenTipos(),
+                    id: id
+                }
+            }).done(function (resp) {
+                if (!resp || !resp.ok) {
+                    if (window.Swal) {
+                        Swal.fire("Atención", resp && resp.mensaje ? resp.mensaje : "No se pudo eliminar el tipo de egreso.", "warning");
+                    }
+                    return;
+                }
+
+                refrescarComboTiposIndex();
+                cargarTipos(tiposFiltroState.buscar || "");
+                if (window.Swal) {
+                    Swal.fire("Eliminado", resp.mensaje || "El tipo de egreso se eliminó correctamente.", "success");
+                }
+            }).fail(function () {
+                if (window.Swal) {
+                    Swal.fire("Error", "No se pudo eliminar el tipo de egreso.", "error");
+                }
+            });
+        };
+
+        if (window.Swal && typeof window.Swal.fire === "function") {
+            window.Swal.fire({
+                icon: "question",
+                title: "Eliminar Tipo Egreso",
+                text: "¿Está seguro que desea eliminar el tipo egreso: " + (nombre || "").toUpperCase() + "?",
+                showCancelButton: true,
+                confirmButtonText: "Eliminar",
+                cancelButtonText: "Cancelar"
+            }).then(function (r) {
+                if (r && r.isConfirmed) ejecutar();
+            });
+            return;
+        }
+
+        if (window.confirm("¿Está seguro que desea eliminar el tipo egreso: " + (nombre || "").toUpperCase() + "?")) {
+            ejecutar();
+        }
+    }
+
     function bindForm(selector) {
         $(document)
             .off("submit.egresoCaja", selector)
@@ -323,6 +592,10 @@
             .on("click.egresosNuevo", "#btnNuevoEgresoCaja", function () {
                 abrirNuevo();
             })
+            .off("click.tiposEgresoAbrir", "#btnTiposEgresoCaja")
+            .on("click.tiposEgresoAbrir", "#btnTiposEgresoCaja", function () {
+                abrirTipos();
+            })
             .off("click.egresosModificar", ".btn-modificar-egreso")
             .on("click.egresosModificar", ".btn-modificar-egreso", function () {
                 var tipoModificacion = ($(this).data("tipo-modificacion") || "").toString().toLowerCase();
@@ -352,6 +625,40 @@
                         window.POSEgresos.abrirMis();
                     }
                 }
+            })
+            .off("submit.tiposEgresoFiltro", "#formFiltroTiposEgresoCaja")
+            .on("submit.tiposEgresoFiltro", "#formFiltroTiposEgresoCaja", function (e) {
+                e.preventDefault();
+                aplicarFiltrosTiposEgreso();
+            })
+            .off("input.tiposEgresoBuscar", "#buscarTipoEgresoCaja")
+            .on("input.tiposEgresoBuscar", "#buscarTipoEgresoCaja", function () {
+                aplicarFiltrosTiposEgreso();
+            })
+            .off("change.tiposEgresoFiltros", "#filtroOrigenTipoEgreso, #filtroGastoTipoEgreso")
+            .on("change.tiposEgresoFiltros", "#filtroOrigenTipoEgreso, #filtroGastoTipoEgreso", function () {
+                aplicarFiltrosTiposEgreso();
+            })
+            .off("click.tiposEgresoNuevo", "#btnNuevoTipoEgresoCaja")
+            .on("click.tiposEgresoNuevo", "#btnNuevoTipoEgresoCaja", function () {
+                abrirFormularioTipo(0);
+            })
+            .off("click.tiposEgresoEditar", ".btn-editar-tipo-egreso")
+            .on("click.tiposEgresoEditar", ".btn-editar-tipo-egreso", function () {
+                abrirFormularioTipo($(this).data("id"));
+            })
+            .off("dblclick.tiposEgresoFila", ".tipo-egreso-row")
+            .on("dblclick.tiposEgresoFila", ".tipo-egreso-row", function () {
+                if (String($(this).attr("data-puede-editar")).toLowerCase() !== "true" || String($(this).attr("data-reservado")).toLowerCase() === "true") return;
+                abrirFormularioTipo($(this).data("id"));
+            })
+            .off("click.tiposEgresoVolver", "#btnVolverTiposEgresoCaja")
+            .on("click.tiposEgresoVolver", "#btnVolverTiposEgresoCaja", function () {
+                cargarTipos(tiposFiltroState.buscar || "");
+            })
+            .off("click.tiposEgresoEliminar", ".btn-eliminar-tipo-egreso")
+            .on("click.tiposEgresoEliminar", ".btn-eliminar-tipo-egreso", function () {
+                eliminarTipo($(this).data("id"), $(this).data("nombre"));
             });
 
         initVistaCompleta();
@@ -373,6 +680,10 @@
         filtrar: filtrar,
         abrirNuevo: abrirNuevo,
         abrirModificar: abrirModificar,
+        abrirTipos: abrirTipos,
+        bindTipoForm: bindTipoForm,
+        aplicarFiltrosTiposEgreso: aplicarFiltrosTiposEgreso,
+        refrescarComboTiposIndex: refrescarComboTiposIndex,
         bindForm: bindForm,
         renderConScripts: renderConScripts,
         aplicarVistaCompleta: aplicarVistaCompleta,
