@@ -2079,6 +2079,8 @@
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
     <Content Include="Views\Stock\_StockTabla.cshtml" />
+    <Content Include="Views\Stock\_TablaExistenciaPorSucursales.cshtml" />
+    <Content Include="Views\Stock\ExistenciaPorSucursales.cshtml" />
     <Content Include="Views\Stock\Index.cshtml" />
     <Content Include="Views\Stock\Editar.cshtml" />
     <Content Include="Views\Ventas\_ModalPostVenta.cshtml" />

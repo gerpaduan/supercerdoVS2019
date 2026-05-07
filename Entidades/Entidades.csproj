@@ -75,6 +75,7 @@
     <Compile Include="CortePorMovimiento.cs" />
     <Compile Include="Embutido.cs" />
     <Compile Include="EgresoCaja.cs" />
+    <Compile Include="ExistenciaStockPorSucursales.cs" />
     <Compile Include="LineaVenta.cs" />
     <Compile Include="ListaCortePorCompra.cs" />
     <Compile Include="MediaRes.cs" />

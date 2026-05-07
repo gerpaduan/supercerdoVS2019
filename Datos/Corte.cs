@@ -1123,6 +1123,57 @@ namespace Datos
             return dt;
         }
 
+        public List<Entidades.ExistenciaStockPorSucursalPlanoVm> ObtenerExistenciaPorSucursalesPlano(
+            string texto,
+            int idSucursal,
+            DateTime? fechaHasta,
+            string tipo,
+            int idProveedor,
+            int idMarca,
+            bool soloConStock)
+        {
+            return Db.Reader(
+                _empresa,
+                "dbo.a_ExistenciaStockPorSucursales",
+                CommandType.StoredProcedure,
+                dr => new Entidades.ExistenciaStockPorSucursalPlanoVm
+                {
+                    IdCorte = dr["idCorte"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idCorte"]),
+                    Codigo = dr["Codigo"] == DBNull.Value ? 0L : Convert.ToInt64(dr["Codigo"]),
+                    Corte = dr["Corte"] == DBNull.Value ? "" : Convert.ToString(dr["Corte"]),
+                    IdSucursal = dr["idSucursal"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursal"]),
+                    Sucursal = dr["Sucursal"] == DBNull.Value ? "" : Convert.ToString(dr["Sucursal"]),
+                    FechaUltimoCierre = dr["FechaUltimoCierre"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["FechaUltimoCierre"]),
+                    StockInicial = dr["StockInicial"] == DBNull.Value ? 0f : Convert.ToSingle(dr["StockInicial"]),
+                    Compras = dr["Compras"] == DBNull.Value ? 0f : Convert.ToSingle(dr["Compras"]),
+                    IngresoElaborado = dr["IngresoElaborado"] == DBNull.Value ? 0f : Convert.ToSingle(dr["IngresoElaborado"]),
+                    IngresoStock = dr["IngresoStock"] == DBNull.Value ? 0f : Convert.ToSingle(dr["IngresoStock"]),
+                    IngresoMovimiento = dr["IngresoMovimiento"] == DBNull.Value ? 0f : Convert.ToSingle(dr["IngresoMovimiento"]),
+                    AjusteStock = dr["AjusteStock"] == DBNull.Value ? 0f : Convert.ToSingle(dr["AjusteStock"]),
+                    TotalIngresos = dr["TotalIngresos"] == DBNull.Value ? 0f : Convert.ToSingle(dr["TotalIngresos"]),
+                    EgresoStock = dr["EgresoStock"] == DBNull.Value ? 0f : Convert.ToSingle(dr["EgresoStock"]),
+                    EgresoMovimiento = dr["EgresoMovimiento"] == DBNull.Value ? 0f : Convert.ToSingle(dr["EgresoMovimiento"]),
+                    EgresoElaborado = dr["EgresoElaborado"] == DBNull.Value ? 0f : Convert.ToSingle(dr["EgresoElaborado"]),
+                    Ventas = dr["Ventas"] == DBNull.Value ? 0f : Convert.ToSingle(dr["Ventas"]),
+                    TotalEgresos = dr["TotalEgresos"] == DBNull.Value ? 0f : Convert.ToSingle(dr["TotalEgresos"]),
+                    StockActual = dr["StockActual"] == DBNull.Value ? 0f : Convert.ToSingle(dr["StockActual"]),
+                    Promedio = dr["promedio"] == DBNull.Value ? 0f : Convert.ToSingle(dr["promedio"]),
+                    PuntoStock = dr["PuntoStock"] == DBNull.Value ? 0f : Convert.ToSingle(dr["PuntoStock"]),
+                    EstadoStock = dr["EstadoStock"] == DBNull.Value ? "" : Convert.ToString(dr["EstadoStock"])
+                },
+                setParams: p =>
+                {
+                    p.AddWithValue("@texto", texto ?? "");
+                    p.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
+                    p.AddWithValue("@idSucursal", idSucursal);
+                    p.AddWithValue("@fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value : DBNull.Value);
+                    p.AddWithValue("@tipo", tipo ?? "");
+                    p.AddWithValue("@idProveedor", idProveedor);
+                    p.AddWithValue("@idMarca", idMarca);
+                    p.AddWithValue("@soloConStock", soloConStock);
+                });
+        }
+
         // =========================
         // TIPOS PRODUCTO
         // =========================

@@ -1,0 +1,138 @@
+@model Entidades.ExistenciaPorSucursalesVm
+@using System
+@using System.Linq
+
+@functions {
+    private string CssEstado(string estado)
+    {
+        string valor = (estado ?? "").Trim().ToUpperInvariant();
+        if (valor == "NEGATIVO") return "text-danger font-weight-bold";
+        if (valor == "BAJO") return "text-warning font-weight-bold";
+        if (valor == "SIN STOCK") return "text-muted";
+        return "";
+    }
+}
+
+@{
+    var columnas = Model != null ? Model.Columnas : new System.Collections.Generic.List<Entidades.SucursalColumnaStockVm>();
+    var productos = Model != null ? Model.Productos : new System.Collections.Generic.List<Entidades.ProductoStockPorSucursalVm>();
+    int totalColumnas = 2 + columnas.Count;
+}
+
+@if (Model == null || !Model.ConsultaRealizada)
+{
+    <div class="p-4 text-center text-muted">
+        Presioná Buscar para consultar stock.
+    </div>
+}
+else if (productos == null || productos.Count == 0)
+{
+    <div class="p-4 text-center text-muted">
+        @(string.IsNullOrWhiteSpace(Model.Mensaje) ? "No se encontraron datos para los filtros seleccionados." : Model.Mensaje)
+    </div>
+}
+else
+{
+    <div class="table-responsive tabla-full">
+        <table class="table table-bordered table-hover mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width:55px;"></th>
+                    <th>Producto</th>
+                    @foreach (var columna in columnas)
+                    {
+                        <th class="text-right text-nowrap">@columna.Sucursal</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var producto in productos)
+                {
+                    string detailId = "detalleExistencia_" + producto.IdCorte;
+                    <tr class="existencia-producto-row"
+                        data-detail-target="#@detailId"
+                        data-texto="@producto.TextoBusqueda"
+                        data-estados="@producto.EstadosFila"
+                        data-tienestock="@(producto.TieneStockPositivo ? "1" : "0")">
+                        <td class="text-center">
+                            <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
+                                <i class="far fa-plus-square"></i>
+                            </button>
+                        </td>
+                        <td class="text-nowrap">
+                            <strong>@producto.Codigo</strong>
+                            <span class="ml-2">@producto.Corte</span>
+                        </td>
+                        @foreach (var columna in columnas)
+                        {
+                            var celda = producto.Celdas.FirstOrDefault(x => x.IdSucursal == columna.IdSucursal) ?? new Entidades.StockSucursalCeldaVm
+                            {
+                                IdSucursal = columna.IdSucursal,
+                                Sucursal = columna.Sucursal,
+                                StockActual = 0f,
+                                EstadoStock = "SIN STOCK"
+                            };
+
+                            <td class="text-right text-nowrap @CssEstado(celda.EstadoStock)" title="@celda.EstadoStock">
+                                @celda.StockActual.ToString("N3")
+                            </td>
+                        }
+                    </tr>
+                    <tr id="@detailId" class="existencia-detalle-row d-none">
+                        <td colspan="@totalColumnas" class="p-0">
+                            <div class="p-3 bg-light border-top">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Sucursal</th>
+                                                <th>FechaUltimoCierre</th>
+                                                <th class="text-right">StockInicial</th>
+                                                <th class="text-right">Compras</th>
+                                                <th class="text-right">IngresoElaborado</th>
+                                                <th class="text-right">IngresoStock</th>
+                                                <th class="text-right">IngresoMovimiento</th>
+                                                <th class="text-right">AjusteStock</th>
+                                                <th class="text-right">TotalIngresos</th>
+                                                <th class="text-right">EgresoStock</th>
+                                                <th class="text-right">EgresoMovimiento</th>
+                                                <th class="text-right">EgresoElaborado</th>
+                                                <th class="text-right">Ventas</th>
+                                                <th class="text-right">TotalEgresos</th>
+                                                <th class="text-right">StockActual</th>
+                                                <th>EstadoStock</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var detalle in producto.Detalles.OrderBy(x => x.Sucursal))
+                                            {
+                                                <tr>
+                                                    <td>@detalle.Sucursal</td>
+                                                    <td>@(detalle.FechaUltimoCierre.HasValue ? detalle.FechaUltimoCierre.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                                                    <td class="text-right">@detalle.StockInicial.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.Compras.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.IngresoElaborado.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.IngresoStock.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.IngresoMovimiento.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.AjusteStock.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.TotalIngresos.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.EgresoStock.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.EgresoMovimiento.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.EgresoElaborado.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.Ventas.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.TotalEgresos.ToString("N3")</td>
+                                                    <td class="text-right @CssEstado(detalle.EstadoStock)">@detalle.StockActual.ToString("N3")</td>
+                                                    <td class="@CssEstado(detalle.EstadoStock)">@detalle.EstadoStock</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

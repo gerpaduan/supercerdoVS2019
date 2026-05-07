@@ -591,6 +591,110 @@ namespace Negocio
             
             return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
         }
+
+        public Entidades.ExistenciaPorSucursalesVm ObtenerMatrizExistenciaPorSucursales(Entidades.ExistenciaStockPorSucursalFiltroVm filtro)
+        {
+            if (filtro == null)
+                filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+
+            var resultado = new Entidades.ExistenciaPorSucursalesVm();
+            resultado.Filtro = filtro;
+            resultado.ConsultaRealizada = true;
+
+            var plano = oCorteD.ObtenerExistenciaPorSucursalesPlano(
+                filtro.Texto ?? "",
+                filtro.IdSucursal,
+                filtro.FechaHasta,
+                filtro.Tipo ?? "",
+                filtro.IdProveedor,
+                filtro.IdMarca,
+                filtro.SoloConStock) ?? new List<Entidades.ExistenciaStockPorSucursalPlanoVm>();
+
+            resultado.Columnas = plano
+                .GroupBy(x => new { x.IdSucursal, Nombre = x.Sucursal ?? "" })
+                .Select(g => new Entidades.SucursalColumnaStockVm
+                {
+                    IdSucursal = g.Key.IdSucursal,
+                    Sucursal = g.Key.Nombre
+                })
+                .OrderBy(x => x.Sucursal)
+                .ToList();
+
+            var gruposProductos = plano
+                .GroupBy(x => new { x.IdCorte, x.Codigo, Nombre = x.Corte ?? "" })
+                .OrderBy(g => g.Key.Codigo)
+                .ThenBy(g => g.Key.Nombre);
+
+            foreach (var grupo in gruposProductos)
+            {
+                var producto = new Entidades.ProductoStockPorSucursalVm
+                {
+                    IdCorte = grupo.Key.IdCorte,
+                    Codigo = grupo.Key.Codigo,
+                    Corte = grupo.Key.Nombre
+                };
+
+                producto.Detalles = grupo
+                    .OrderBy(x => x.Sucursal)
+                    .Select(x => new Entidades.DetalleStockSucursalVm
+                    {
+                        IdSucursal = x.IdSucursal,
+                        Sucursal = x.Sucursal ?? "",
+                        FechaUltimoCierre = x.FechaUltimoCierre,
+                        StockInicial = x.StockInicial,
+                        Compras = x.Compras,
+                        IngresoElaborado = x.IngresoElaborado,
+                        IngresoStock = x.IngresoStock,
+                        IngresoMovimiento = x.IngresoMovimiento,
+                        AjusteStock = x.AjusteStock,
+                        TotalIngresos = x.TotalIngresos,
+                        EgresoStock = x.EgresoStock,
+                        EgresoMovimiento = x.EgresoMovimiento,
+                        EgresoElaborado = x.EgresoElaborado,
+                        Ventas = x.Ventas,
+                        TotalEgresos = x.TotalEgresos,
+                        StockActual = x.StockActual,
+                        EstadoStock = NormalizarEstadoStock(x.EstadoStock)
+                    })
+                    .ToList();
+
+                foreach (var columna in resultado.Columnas)
+                {
+                    var filaSucursal = grupo.FirstOrDefault(x => x.IdSucursal == columna.IdSucursal);
+                    producto.Celdas.Add(new Entidades.StockSucursalCeldaVm
+                    {
+                        IdSucursal = columna.IdSucursal,
+                        Sucursal = columna.Sucursal,
+                        StockActual = filaSucursal != null ? filaSucursal.StockActual : 0f,
+                        EstadoStock = filaSucursal != null
+                            ? NormalizarEstadoStock(filaSucursal.EstadoStock)
+                            : "SIN STOCK"
+                    });
+
+                    if (filaSucursal == null)
+                    {
+                        producto.Detalles.Add(new Entidades.DetalleStockSucursalVm
+                        {
+                            IdSucursal = columna.IdSucursal,
+                            Sucursal = columna.Sucursal,
+                            StockActual = 0f,
+                            EstadoStock = "SIN STOCK"
+                        });
+                    }
+                }
+
+                producto.Detalles = producto.Detalles
+                    .OrderBy(x => x.Sucursal)
+                    .ToList();
+
+                resultado.Productos.Add(producto);
+            }
+
+            if (resultado.Productos.Count == 0)
+                resultado.Mensaje = "No se encontraron datos para los filtros seleccionados.";
+
+            return resultado;
+        }
         #endregion
 
         #region Tipos Producto/Corte
@@ -629,6 +733,12 @@ namespace Negocio
         {
             
             return oCorteD.obtenerNivelCorte(idCorteMaestro);
+        }
+
+        private static string NormalizarEstadoStock(string estadoStock)
+        {
+            string estado = (estadoStock ?? "").Trim().ToUpperInvariant();
+            return string.IsNullOrWhiteSpace(estado) ? "SIN STOCK" : estado;
         }
     }
 }

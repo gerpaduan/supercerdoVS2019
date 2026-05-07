@@ -1,0 +1,357 @@
+@model Entidades.ExistenciaPorSucursalesVm
+@using System
+@using System.Linq
+
+@{
+    ViewBag.Title = "Existencia por sucursales";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var filtro = Model != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
+    string fechaHasta = filtro.FechaHasta.HasValue ? filtro.FechaHasta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+}
+
+<div class="container-fluid existencia-sucursales-page">
+    <div class="card shadow-sm mb-3 stock-filtros-card">
+        <div class="card-body">
+            <form id="formExistenciaSucursales" autocomplete="off">
+                <div class="stock-filtros-stack">
+                    <div class="stock-filtros-row existencia-filtros-row-top">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroTextoExistencia">Producto / texto</label>
+                            <input type="text" id="filtroTextoExistencia" name="texto" class="form-control" value="@filtro.Texto" />
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroSucursalExistencia">Sucursal</label>
+                            <select id="filtroSucursalExistencia" name="idSucursal" class="form-control">
+                                @foreach (var sucursal in filtro.SucursalesDisponibles)
+                                {
+                                    <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == filtro.IdSucursal ? "selected" : "")>@sucursal.Sucursal</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroFechaHastaExistencia">Fecha hasta</label>
+                            <div class="input-group">
+                                <input type="datetime-local" id="filtroFechaHastaExistencia" name="fechaHasta" class="form-control" value="@fechaHasta" />
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" id="btnAhoraExistencia">
+                                        <i class="fas fa-clock mr-1"></i>Ahora
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stock-filtros-row existencia-filtros-row-bottom">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroTipoExistencia">Tipo</label>
+                            <select id="filtroTipoExistencia" name="tipo" class="form-control">
+                                <option value="">Todos</option>
+                                @foreach (var tipo in filtro.TiposDisponibles)
+                                {
+                                    <option value="@tipo" @(string.Equals(tipo, filtro.Tipo, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@tipo</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroProveedorExistencia">Proveedor</label>
+                            <select id="filtroProveedorExistencia" name="idProveedor" class="form-control">
+                                <option value="0">Todos</option>
+                                @foreach (var proveedor in filtro.ProveedoresDisponibles)
+                                {
+                                    <option value="@proveedor.IdPersona" @(proveedor.IdPersona == filtro.IdProveedor ? "selected" : "")>@proveedor.RazonSocial</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroMarcaExistencia">Marca</label>
+                            <select id="filtroMarcaExistencia" name="idMarca" class="form-control">
+                                <option value="0">Todas</option>
+                                @foreach (var marca in filtro.MarcasDisponibles)
+                                {
+                                    <option value="@marca.IdPersona" @(marca.IdPersona == filtro.IdMarca ? "selected" : "")>@marca.RazonSocial</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroEstadoExistencia">EstadoStock</label>
+                            <select id="filtroEstadoExistencia" name="estadoStock" class="form-control">
+                                @foreach (var estado in filtro.EstadosDisponibles)
+                                {
+                                    <option value="@estado" @(string.Equals(estado, filtro.EstadoStock, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@estado</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0 existencia-check-wrap">
+                            <div class="custom-control custom-switch existencia-check">
+                                <input type="checkbox" class="custom-control-input" id="filtroSoloConStockExistencia" name="soloConStock" @(filtro.SoloConStock ? "checked" : "")>
+                                <label class="custom-control-label" for="filtroSoloConStockExistencia">Solo con stock</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0 stock-filtro-accion">
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarExistencia">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 existencia-estado-card">
+        <div class="card-body py-3">
+            <div class="existencia-estado-grid">
+                <div class="existencia-estado-item">
+                    <span class="text-muted">Última actualización:</span>
+                    <strong id="lblUltimaActualizacionExistencia">-</strong>
+                </div>
+                <div class="existencia-estado-item">
+                    <span id="lblAvisoPendienteExistencia" class="text-warning d-none">Hay filtros sin aplicar.</span>
+                    <span id="lblEstadoConsultaExistencia" class="text-muted">Presioná Buscar para consultar stock.</span>
+                </div>
+                <div class="existencia-estado-item existencia-estado-item-right">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="switchExpandirExistencia">
+                        <label class="custom-control-label" for="switchExpandirExistencia">Expandir todos</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0" id="contenedorTablaExistenciaSucursales">
+            @Html.Partial("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<style>
+    .existencia-filtros-row-top,
+    .existencia-filtros-row-bottom,
+    .existencia-estado-grid {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .existencia-check-wrap {
+        display: flex;
+        align-items: end;
+    }
+
+    .existencia-check {
+        padding-bottom: .55rem;
+    }
+
+    .existencia-estado-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .existencia-estado-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        flex-wrap: wrap;
+    }
+
+    .existencia-estado-item-right {
+        justify-content: flex-end;
+    }
+
+    @@media (min-width: 1200px) {
+        .existencia-filtros-row-top {
+            grid-template-columns: 1.4fr 1fr 1.2fr;
+        }
+
+        .existencia-filtros-row-bottom {
+            grid-template-columns: 1fr 1fr 1fr 1fr auto 140px;
+            align-items: end;
+        }
+
+        .existencia-estado-grid {
+            grid-template-columns: 1fr 1.5fr auto;
+            align-items: center;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .existencia-filtros-row-top,
+        .existencia-filtros-row-bottom,
+        .existencia-estado-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .existencia-filtros-row-top,
+        .existencia-filtros-row-bottom,
+        .existencia-estado-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .existencia-estado-item-right {
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var buscarUrl = '@Url.Action("BuscarExistenciaPorSucursales", "Stock")';
+            var $form = $("#formExistenciaSucursales");
+            var $contenedor = $("#contenedorTablaExistenciaSucursales");
+            var $btnBuscar = $("#btnBuscarExistencia");
+            var $btnBuscarTexto = $btnBuscar.find(".btn-buscar-texto");
+            var $lblUltima = $("#lblUltimaActualizacionExistencia");
+            var $lblPendiente = $("#lblAvisoPendienteExistencia");
+            var $lblEstado = $("#lblEstadoConsultaExistencia");
+            var $switchExpandir = $("#switchExpandirExistencia");
+            var consultaAplicada = null;
+
+            function obtenerEstadoConsulta() {
+                return {
+                    texto: ($("#filtroTextoExistencia").val() || "").trim(),
+                    idSucursal: $("#filtroSucursalExistencia").val() || "0",
+                    fechaHasta: $("#filtroFechaHastaExistencia").val() || "",
+                    tipo: $("#filtroTipoExistencia").val() || "",
+                    idProveedor: $("#filtroProveedorExistencia").val() || "0",
+                    idMarca: $("#filtroMarcaExistencia").val() || "0",
+                    soloConStock: $("#filtroSoloConStockExistencia").is(":checked") ? "1" : "0"
+                };
+            }
+
+            function estadosIguales(a, b) {
+                return JSON.stringify(a) === JSON.stringify(b);
+            }
+
+            function actualizarPendiente() {
+                if (!consultaAplicada) {
+                    $lblPendiente.addClass("d-none");
+                    return;
+                }
+
+                var pendiente = !estadosIguales(consultaAplicada, obtenerEstadoConsulta());
+                $lblPendiente.toggleClass("d-none", !pendiente);
+            }
+
+            function aplicarExpandidoGlobal() {
+                var expandir = $switchExpandir.is(":checked");
+                $contenedor.find(".existencia-detalle-row").each(function () {
+                    var $fila = $(this);
+                    var visiblePadre = !$fila.prev(".existencia-producto-row").hasClass("d-none");
+                    $fila.toggleClass("d-none", !(expandir && visiblePadre));
+                });
+
+                $contenedor.find(".btn-toggle-existencia i").toggleClass("fa-minus-square", expandir).toggleClass("fa-plus-square", !expandir);
+            }
+
+            function aplicarFiltrosVisuales() {
+                var texto = ($("#filtroTextoExistencia").val() || "").trim().toUpperCase();
+                var estado = ($("#filtroEstadoExistencia").val() || "Todos").trim().toUpperCase();
+                var soloConStock = $("#filtroSoloConStockExistencia").is(":checked");
+
+                $contenedor.find(".existencia-producto-row").each(function () {
+                    var $row = $(this);
+                    var textoRow = ($row.attr("data-texto") || "").toUpperCase();
+                    var estados = ($row.attr("data-estados") || "").toUpperCase().split("|");
+                    var tieneStock = ($row.attr("data-tienestock") || "") === "1";
+                    var coincideTexto = !texto || textoRow.indexOf(texto) >= 0;
+                    var coincideEstado = estado === "TODOS" || estados.indexOf(estado) >= 0;
+                    var coincideStock = !soloConStock || tieneStock;
+                    var visible = coincideTexto && coincideEstado && coincideStock;
+                    var target = $row.attr("data-detail-target");
+                    var $detalle = target ? $(target) : $();
+
+                    $row.toggleClass("d-none", !visible);
+                    if (!visible) {
+                        $detalle.addClass("d-none");
+                    }
+                });
+
+                aplicarExpandidoGlobal();
+            }
+
+            function setBuscando(buscando) {
+                $btnBuscar.prop("disabled", buscando);
+                $btnBuscarTexto.text(buscando ? "Buscando..." : "Buscar");
+            }
+
+            function ahoraLocalInput() {
+                var ahora = new Date();
+                var off = ahora.getTimezoneOffset();
+                var local = new Date(ahora.getTime() - (off * 60000));
+                return local.toISOString().slice(0, 16);
+            }
+
+            function actualizarUltimaActualizacion() {
+                var ahora = new Date();
+                var dd = String(ahora.getDate()).padStart(2, "0");
+                var mm = String(ahora.getMonth() + 1).padStart(2, "0");
+                var yyyy = ahora.getFullYear();
+                var hh = String(ahora.getHours()).padStart(2, "0");
+                var mi = String(ahora.getMinutes()).padStart(2, "0");
+                var ss = String(ahora.getSeconds()).padStart(2, "0");
+                $lblUltima.text(dd + "/" + mm + "/" + yyyy + " " + hh + ":" + mi + ":" + ss);
+            }
+
+            $form.on("submit", function (e) {
+                e.preventDefault();
+                setBuscando(true);
+                $lblEstado.text("Consultando stock...");
+
+                $.ajax({
+                    url: buscarUrl,
+                    type: "GET",
+                    data: $form.serialize()
+                }).done(function (html) {
+                    $contenedor.html(html);
+                    consultaAplicada = obtenerEstadoConsulta();
+                    actualizarUltimaActualizacion();
+                    actualizarPendiente();
+                    aplicarFiltrosVisuales();
+                    $lblEstado.text("Consulta actualizada.");
+                }).fail(function () {
+                    $contenedor.html('<div class="alert alert-danger m-3 mb-0">No se pudo consultar la existencia por sucursales.</div>');
+                    $lblEstado.text("Ocurrió un error al consultar stock.");
+                }).always(function () {
+                    setBuscando(false);
+                });
+            });
+
+            $(document).on("click", ".btn-toggle-existencia", function () {
+                var target = $(this).attr("data-target");
+                var $detalle = target ? $(target) : $();
+                if (!$detalle.length) return;
+                var expandido = !$detalle.hasClass("d-none");
+                $detalle.toggleClass("d-none", expandido);
+                $(this).find("i").toggleClass("fa-plus-square", expandido).toggleClass("fa-minus-square", !expandido);
+            });
+
+            $("#btnAhoraExistencia").on("click", function () {
+                $("#filtroFechaHastaExistencia").val(ahoraLocalInput()).trigger("change");
+            });
+
+            $switchExpandir.on("change", aplicarExpandidoGlobal);
+
+            $("#filtroTextoExistencia, #filtroSucursalExistencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia, #filtroSoloConStockExistencia")
+                .on("input change", function () {
+                    actualizarPendiente();
+                    aplicarFiltrosVisuales();
+                });
+
+            $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
+
+            aplicarFiltrosVisuales();
+        })();
+    </script>
+}

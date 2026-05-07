@@ -123,10 +123,17 @@
 
             <!-- Stock -->
             <li class="nav-item">
-                <a class="nav-link" href="@Url.Action("Index", "Stock")">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseStock"
+                   aria-expanded="@(controller == "Stock" ? "true" : "false")" aria-controls="collapseStock">
                     <i class="fas fa-fw fa-boxes"></i>
                     <span>Stock</span>
                 </a>
+                <div id="collapseStock" class="collapse @(controller == "Stock" ? "show" : "")" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item @(action == "Index" ? "active" : "")" href="@Url.Action("Index", "Stock")">Movimientos de stock</a>
+                        <a class="collapse-item @(action == "ExistenciaPorSucursales" ? "active" : "")" href="@Url.Action("ExistenciaPorSucursales", "Stock")">Existencia por sucursales</a>
+                    </div>
+                </div>
             </li>
 
             <!-- Ventas -->

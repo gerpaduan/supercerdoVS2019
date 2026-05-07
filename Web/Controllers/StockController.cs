@@ -106,6 +106,95 @@ namespace Web.Controllers
             return View("~/Views/Stock/Index.cshtml", model);
         }
 
+        [HttpGet]
+        public ActionResult ExistenciaPorSucursales()
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            DateTime fechaPermiso = DateTime.Today;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, fechaPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                ViewBag.Seccion = "Stock";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            var model = new Entidades.ExistenciaPorSucursalesVm();
+
+            try
+            {
+                model.Filtro = CrearFiltroExistencia(user);
+                model.ConsultaRealizada = false;
+                model.Mensaje = "Presioná Buscar para consultar stock.";
+            }
+            catch (Exception ex)
+            {
+                model.Filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+                model.ConsultaRealizada = false;
+                model.Mensaje = "No se pudieron cargar todos los filtros de la pantalla. " + ex.Message;
+            }
+
+            ViewBag.Title = "Existencia por sucursales";
+            ViewBag.Seccion = "Stock";
+
+            return View("~/Views/Stock/ExistenciaPorSucursales.cshtml", model);
+        }
+
+        [HttpGet]
+        public PartialViewResult BuscarExistenciaPorSucursales(
+            string texto = "",
+            int idSucursal = 0,
+            DateTime? fechaHasta = null,
+            string tipo = "",
+            int idProveedor = 0,
+            int idMarca = 0,
+            bool soloConStock = false)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            var model = new Entidades.ExistenciaPorSucursalesVm();
+
+            if (user == null)
+            {
+                model.Filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+                model.ConsultaRealizada = true;
+                model.Mensaje = "Sesión inválida.";
+                return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+            }
+
+            DateTime fechaPermiso = fechaHasta ?? DateTime.Now;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, fechaPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                model.Filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+                model.ConsultaRealizada = true;
+                model.Mensaje = "No tiene permisos para consultar stock.";
+                return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+            }
+
+            try
+            {
+                var filtro = CrearFiltroExistencia(user);
+                filtro.Texto = (texto ?? "").Trim();
+                filtro.IdSucursal = idSucursal > 0 ? idSucursal : 0;
+                filtro.FechaHasta = fechaHasta;
+                filtro.Tipo = (tipo ?? "").Trim();
+                filtro.IdProveedor = idProveedor;
+                filtro.IdMarca = idMarca;
+                filtro.SoloConStock = soloConStock;
+
+                model = oCorteN.ObtenerMatrizExistenciaPorSucursales(filtro);
+                model.Filtro = filtro;
+            }
+            catch (Exception ex)
+            {
+                model.Filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+                model.ConsultaRealizada = true;
+                model.Mensaje = "Error al consultar la existencia por sucursales. " + ex.Message;
+            }
+
+            return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+        }
+
         public ActionResult Nuevo(string tipoCompra)
         {
             string tipoNormalizado = NormalizarTipoOperacion(tipoCompra);
@@ -635,6 +724,130 @@ namespace Web.Controllers
             }
 
             return model;
+        }
+
+        private Entidades.ExistenciaStockPorSucursalFiltroVm CrearFiltroExistencia(Entidades.Usuario user)
+        {
+            var filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
+            int idSucursalActual = user != null && user.IdSucursal > 0 ? user.IdSucursal : 0;
+            Entidades.Sucursal sucursalActual = idSucursalActual > 0 ? oSucursalN.findById(idSucursalActual) : null;
+
+            filtro.IdSucursal = idSucursalActual;
+            filtro.FechaHasta = DateTime.Now;
+            filtro.SucursalesDisponibles.Add(new Entidades.SucursalColumnaStockVm
+            {
+                IdSucursal = 0,
+                Sucursal = "Todas"
+            });
+
+            if (sucursalActual != null && sucursalActual.IdSucursal > 0)
+            {
+                filtro.SucursalesDisponibles.Add(new Entidades.SucursalColumnaStockVm
+                {
+                    IdSucursal = sucursalActual.IdSucursal,
+                    Sucursal = sucursalActual.SucursalNombre
+                });
+            }
+
+            filtro.TiposDisponibles = ObtenerTiposExistencia();
+            filtro.ProveedoresDisponibles = ObtenerProveedoresExistencia();
+            filtro.MarcasDisponibles = ObtenerMarcasExistencia();
+            return filtro;
+        }
+
+        private List<string> ObtenerTiposExistencia()
+        {
+            var tipos = new List<string>();
+            DataTable dtTipos;
+            try
+            {
+                dtTipos = oCorteN.obtenerTiposProductoGrilla("") ?? new DataTable();
+            }
+            catch
+            {
+                return tipos;
+            }
+
+            foreach (DataRow row in dtTipos.Rows)
+            {
+                string tipo = row["tipo"] == DBNull.Value ? "" : Convert.ToString(row["tipo"]);
+                if (!string.IsNullOrWhiteSpace(tipo) && !tipos.Any(x => string.Equals(x, tipo, StringComparison.OrdinalIgnoreCase)))
+                    tipos.Add(tipo);
+            }
+
+            return tipos.OrderBy(x => x).ToList();
+        }
+
+        private List<Entidades.Persona> ObtenerProveedoresExistencia()
+        {
+            var proveedores = new List<Entidades.Persona>();
+            DataTable dt;
+            try
+            {
+                dt = oPersonaN.buscarProveedor("") ?? new DataTable();
+            }
+            catch
+            {
+                return proveedores;
+            }
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int id = row.Table.Columns.Contains("idPersona") && row["idPersona"] != DBNull.Value ? Convert.ToInt32(row["idPersona"]) : 0;
+                string razonSocial = row.Table.Columns.Contains("razonSocial") && row["razonSocial"] != DBNull.Value
+                    ? Convert.ToString(row["razonSocial"])
+                    : (row.Table.Columns.Contains("Proveedor") && row["Proveedor"] != DBNull.Value ? Convert.ToString(row["Proveedor"]) : "");
+
+                if (id <= 0 || string.IsNullOrWhiteSpace(razonSocial))
+                    continue;
+
+                if (proveedores.Any(x => x.IdPersona == id))
+                    continue;
+
+                proveedores.Add(new Entidades.Persona
+                {
+                    IdPersona = id,
+                    RazonSocial = razonSocial
+                });
+            }
+
+            return proveedores.OrderBy(x => x.RazonSocial).ToList();
+        }
+
+        private List<Entidades.Persona> ObtenerMarcasExistencia()
+        {
+            var marcas = new List<Entidades.Persona>();
+            DataTable dt;
+            try
+            {
+                dt = oPersonaN.buscarPersona("", true) ?? new DataTable();
+            }
+            catch
+            {
+                return marcas;
+            }
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int id = row.Table.Columns.Contains("idPersona") && row["idPersona"] != DBNull.Value ? Convert.ToInt32(row["idPersona"]) : 0;
+                string razonSocial = row.Table.Columns.Contains("Marca") && row["Marca"] != DBNull.Value
+                    ? Convert.ToString(row["Marca"])
+                    : (row.Table.Columns.Contains("razonSocial") && row["razonSocial"] != DBNull.Value ? Convert.ToString(row["razonSocial"]) : "");
+
+                if (id <= 0 || string.IsNullOrWhiteSpace(razonSocial))
+                    continue;
+
+                if (marcas.Any(x => x.IdPersona == id))
+                    continue;
+
+                marcas.Add(new Entidades.Persona
+                {
+                    IdPersona = id,
+                    RazonSocial = razonSocial
+                });
+            }
+
+            return marcas.OrderBy(x => x.RazonSocial).ToList();
         }
 
         private StockEditVm CrearViewModelEdicion(Entidades.Compra compra, Entidades.Usuario user)
