@@ -1,0 +1,275 @@
+@model Web.Models.ElaboradoFormulasIndexVm
+@using System
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Fórmulas";
+    string successMessage = TempData["ElaboradosSuccessMessage"] as string ?? "";
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page">
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div id="formulasSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <div></div>
+        @if (Model.PuedeCrear)
+        {
+            <a class="btn btn-primary" href="@Url.Action("EditarFormula", "Elaborados", new { id = 0 })">
+                <i class="fas fa-plus mr-1"></i> Nueva fórmula
+            </a>
+        }
+    </div>
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Formulas", "Elaborados")">
+                <div class="elaborados-filtros-grid elaborados-filtros-grid-formula">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="descripcion">Elaborado</label>
+                        <input id="descripcion" name="descripcion" type="text" class="form-control" value="@Model.Descripcion" />
+                    </div>
+
+                    <div class="form-group mb-0 elaborados-filtro-accion">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex justify-content-end align-items-center mb-2">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="switchVistaCompletaFormulas">
+            <label class="custom-control-label" for="switchVistaCompletaFormulas">Ver detalles</label>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive tabla-full">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:110px;">Id</th>
+                            <th style="width:110px;">Código</th>
+                            <th>Elaborado</th>
+                            <th style="width:160px;">Creado</th>
+                            <th style="width:160px;">Actualizado</th>
+                            <th style="width:220px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No se encontraron fórmulas para los filtros seleccionados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                var detalle = Model.Detalles != null && Model.Detalles.ContainsKey(item.IdFormula)
+                                    ? Model.Detalles[item.IdFormula]
+                                    : null;
+                                var detailId = "detFormula_" + item.IdFormula;
+
+                                <tr>
+                                    <td>@item.IdFormula</td>
+                                    <td>@item.Codigo</td>
+                                    <td>@item.Elaborado</td>
+                                    <td>@item.Creado</td>
+                                    <td>@item.Actualizado</td>
+                                    <td class="text-center text-nowrap">
+                                        @if (Model.PuedeEditar)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditarFormula", "Elaborados", new { id = item.IdFormula })">Modificar</a>
+                                        }
+                                        @if (Model.PuedeEliminar)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger js-eliminar-formula" data-id="@item.IdFormula" data-nombre="@item.Elaborado">Eliminar</button>
+                                        }
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-decoration-none btn-detalles-formula"
+                                                data-target="#@detailId"
+                                                aria-expanded="false"
+                                                aria-controls="@detailId">
+                                            <i class="fas fa-chevron-down"></i> Detalles
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="p-0">
+                                        <div id="@detailId" class="collapse formula-detalle-collapse">
+                                            <div class="p-3 bg-light border-top">
+                                                @if (detalle == null)
+                                                {
+                                                    <div class="text-muted">No se pudieron cargar los detalles de la fórmula.</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="row mb-3">
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="mb-2"><span class="text-muted">Elaborado:</span> <span class="font-weight-bold">@detalle.Elaborado</span></div>
+                                                            <div class="mb-2"><span class="text-muted">Código:</span> <span class="font-weight-bold">@detalle.Codigo</span></div>
+                                                            <div class="mb-2"><span class="text-muted">Receta:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Receta) ? detalle.Receta : "-")</span></div>
+                                                        </div>
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="mb-2"><span class="text-muted">Creado:</span> <span class="font-weight-bold">@detalle.CreadoPor | @detalle.Creado</span></div>
+                                                            <div class="mb-2"><span class="text-muted">Actualizado:</span> <span class="font-weight-bold">@detalle.ActualizadoPor | @detalle.Actualizado</span></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-bordered mb-0">
+                                                            <thead class="thead-light">
+                                                                <tr>
+                                                                    <th style="width:120px;">Código</th>
+                                                                    <th>Ingrediente</th>
+                                                                    <th class="text-right" style="width:120px;">%</th>
+                                                                    <th class="text-center" style="width:90px;">Auto</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @if (detalle.Lineas == null || detalle.Lineas.Count == 0)
+                                                                {
+                                                                    <tr>
+                                                                        <td colspan="4" class="text-center text-muted">No hay ingredientes cargados.</td>
+                                                                    </tr>
+                                                                }
+                                                                else
+                                                                {
+                                                                    foreach (var linea in detalle.Lineas)
+                                                                    {
+                                                                        <tr>
+                                                                            <td>@linea.Codigo</td>
+                                                                            <td>@linea.Producto</td>
+                                                                            <td class="text-right">@linea.Porcentaje.ToString("N2")</td>
+                                                                            <td class="text-center">@(linea.AgregarAuto ? "Si" : "No")</td>
+                                                                        </tr>
+                                                                    }
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+
+@section Scripts {
+    <script>
+        (function () {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            var successAlert = document.getElementById('formulasSuccessAlert');
+            if (successAlert) {
+                window.setTimeout(function () { $(successAlert).alert('close'); }, 3000);
+            }
+
+            function syncIcon(button, expanded) {
+                if (!button) return;
+                button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                var icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-down', !expanded);
+                    icon.classList.toggle('fa-chevron-up', expanded);
+                }
+            }
+
+            document.addEventListener('click', function (e) {
+                var btnDetalle = e.target.closest('.btn-detalles-formula');
+                if (btnDetalle) {
+                    e.preventDefault();
+                    var selector = btnDetalle.getAttribute('data-target');
+                    var detalle = selector ? document.querySelector(selector) : null;
+                    if (!detalle) return;
+                    var expanded = detalle.classList.contains('show');
+                    $(detalle).collapse(expanded ? 'hide' : 'show');
+                    syncIcon(btnDetalle, !expanded);
+                    return;
+                }
+
+                var btnEliminar = e.target.closest('.js-eliminar-formula');
+                if (!btnEliminar) return;
+                e.preventDefault();
+
+                var ejecutar = function () {
+                    $.ajax({
+                        url: '@Url.Action("EliminarFormula", "Elaborados")',
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: token ? token.value : '',
+                            idFormula: btnEliminar.getAttribute('data-id')
+                        }
+                    }).done(function (resp) {
+                        if (!resp || !resp.ok) {
+                            if (window.Swal) Swal.fire('Error', (resp && resp.mensaje) || 'No se pudo eliminar la fórmula.', 'error');
+                            else alert((resp && resp.mensaje) || 'No se pudo eliminar la fórmula.');
+                            return;
+                        }
+                        window.location.href = resp.redirectUrl || '@Url.Action("Formulas", "Elaborados")';
+                    }).fail(function (xhr) {
+                        var msg = 'No se pudo eliminar la fórmula.';
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) msg = xhr.responseJSON.mensaje;
+                        if (window.Swal) Swal.fire('Error', msg, 'error');
+                        else alert(msg);
+                    });
+                };
+
+                var nombre = btnEliminar.getAttribute('data-nombre') || 'la fórmula';
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Eliminar fórmula',
+                        text: '¿Está seguro que desea eliminar la fórmula de ' + nombre + '?',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    }).then(function (result) {
+                        if (result.isConfirmed) ejecutar();
+                    });
+                } else if (window.confirm('¿Está seguro que desea eliminar la fórmula de ' + nombre + '?')) {
+                    ejecutar();
+                }
+            });
+
+            var switchVista = document.getElementById('switchVistaCompletaFormulas');
+            if (switchVista) {
+                switchVista.addEventListener('change', function () {
+                    var expandir = switchVista.checked;
+                    document.querySelectorAll('.formula-detalle-collapse').forEach(function (detalle) {
+                        $(detalle).collapse(expandir ? 'show' : 'hide');
+                        var btn = document.querySelector('.btn-detalles-formula[data-target="#' + detalle.id + '"]');
+                        syncIcon(btn, expandir);
+                    });
+                });
+            }
+        })();
+    </script>
+}

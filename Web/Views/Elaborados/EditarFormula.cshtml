@@ -1,0 +1,430 @@
+@model Web.Models.ElaboradoFormulaEditVm
+@using System.Collections.Generic
+@using System.Web.Helpers
+@using System.Web.Mvc
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = Model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
+
+    var modalElaboradoData = new ViewDataDictionary
+    {
+        { "ModalId", "modalBuscarElaboradoFormula" },
+        { "ApiUrl", Url.Action("BuscarProducto", "Elaborados") },
+        { "Titulo", "Buscar elaborado" },
+        { "MostrarPrecio", "false" }
+    };
+
+    var modalIngredienteData = new ViewDataDictionary
+    {
+        { "ModalId", "modalBuscarIngredienteFormula" },
+        { "ApiUrl", Url.Action("BuscarProducto", "Elaborados") },
+        { "Titulo", "Buscar ingrediente" },
+        { "MostrarPrecio", "false" }
+    };
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page" data-formula-page="editar">
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Formulas", "Elaborados")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            <form id="formEditarFormula" method="post" action="@Url.Action("GuardarFormula", "Elaborados")" novalidate>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IdFormula)
+                <div id="lineasFormulaHiddenContainer"></div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label>Usuario</label>
+                            <input type="text" class="form-control" value="@Model.UsuarioNombre" readonly />
+                        </div>
+                    </div>
+                    @if (Model.EsEdicion)
+                    {
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label>Creado</label>
+                                <input type="text" class="form-control" value="@Model.CreadoPor | @Model.Creado" readonly />
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label>Actualizado</label>
+                                <input type="text" class="form-control" value="@Model.ActualizadoPor | @Model.Actualizado" readonly />
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h6 class="font-weight-bold text-uppercase text-muted mb-0">Elaborado</h6>
+                        <div class="small text-muted">F9 busca elaborado</div>
+                    </div>
+
+                    <div id="formulaErrorElaboradoExistente" class="alert alert-warning py-2 px-3 mb-3 d-none">
+                        El elaborado ya posee una fórmula. Modifique la existente.
+                    </div>
+
+                    <div class="row align-items-end">
+                        <div class="col-12 col-md-3 col-lg-2">
+                            <div class="form-group">
+                                <label for="txtCodigoElaboradoFormula">Código</label>
+                                <input type="number" id="txtCodigoElaboradoFormula" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-9 col-lg-5">
+                            <div class="form-group">
+                                <label for="txtElaboradoFormulaNombre">Elaborado</label>
+                                <div class="input-group">
+                                    <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
+                                    <input type="text" id="txtElaboradoFormulaNombre" class="form-control" value="@Model.Elaborado" readonly />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarElaboradoFormula" title="Buscar elaborado (F9)">
+                                            <i class="fas fa-search"></i>
+                                            <span class="d-none d-lg-inline ml-1">F9</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-5">
+                            <div class="form-group mb-0">
+                                <label for="Receta">Receta</label>
+                                <textarea id="Receta" name="Receta" class="form-control js-auto-receta" rows="2">@Model.Receta</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0">Ingredientes de la fórmula</h6>
+                                <div class="small text-muted">F10 busca ingrediente</div>
+                            </div>
+
+                            <div id="formulaFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
+
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-3">
+                                    <div class="form-group">
+                                        <label for="txtCodigoIngredienteFormula">Código</label>
+                                        <input type="number" id="txtCodigoIngredienteFormula" class="form-control" min="0" step="1" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-5">
+                                    <div class="form-group">
+                                        <label for="txtIngredienteFormulaNombre">Ingrediente</label>
+                                        <div class="input-group">
+                                            <input type="hidden" id="txtIngredienteFormulaId" />
+                                            <input type="text" id="txtIngredienteFormulaNombre" class="form-control" readonly />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarIngredienteFormula" title="Buscar ingrediente (F10)">
+                                                    <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F10</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <div class="form-group">
+                                        <label for="txtPorcentajeFormula">%</label>
+                                        <input type="text" id="txtPorcentajeFormula" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="col-8 col-md-1">
+                                    <div class="form-group mb-3">
+                                        <div class="custom-control custom-checkbox mt-4">
+                                            <input type="checkbox" class="custom-control-input" id="chkAgregarAutoFormula" />
+                                            <label class="custom-control-label" for="chkAgregarAutoFormula">Auto</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-1">
+                                    <button type="button" class="btn btn-primary btn-block mb-3" id="btnAgregarLineaFormula" title="Agregar">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered table-sm" id="tablaLineasFormula">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width:110px;">Código</th>
+                                        <th>Ingrediente</th>
+                                        <th class="text-right" style="width:120px;">%</th>
+                                        <th class="text-center" style="width:90px;">Auto</th>
+                                        <th style="width:70px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-uppercase text-muted">Totales</h6>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total porcentaje</span>
+                                    <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("N2")</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total unidades</span>
+                                    <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion && Model.SoloLecturaInicial)
+                    {
+                        <button type="button" class="btn btn-primary mr-2 mb-2" id="btnHabilitarEdicionFormula">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
+                    <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion && Model.SoloLecturaInicial ? "d-none" : "")" id="btnGuardarFormula">
+                        <i class="fas fa-save mr-1"></i> Guardar fórmula
+                    </button>
+                    <a href="@Url.Action("Formulas", "Elaborados")" class="btn btn-outline-secondary mb-2">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalElaboradoData)
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalIngredienteData)
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+
+<style>
+    .js-auto-receta {
+        overflow: hidden;
+        resize: vertical;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var $form = $('#formEditarFormula');
+            var state = {
+                lineas: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.ElaboradoFormulaEditLineaVm>())),
+                soloLectura: @(Model.SoloLecturaInicial ? "true" : "false"),
+                idFormulaActual: @Model.IdFormula
+            };
+
+            function toNumber(value) {
+                if (value === null || value === undefined) return 0;
+                var text = String(value).trim().replace(/\./g, '').replace(',', '.');
+                var n = parseFloat(text);
+                return isNaN(n) ? 0 : n;
+            }
+
+            function autoResize($el) {
+                if (!$el || !$el.length) return;
+                $el.css('height', 'auto');
+                $el.css('height', $el.get(0).scrollHeight + 'px');
+            }
+
+            function setReadOnly(readOnly) {
+                state.soloLectura = readOnly;
+                $('#txtCodigoElaboradoFormula, #txtCodigoIngredienteFormula, #txtPorcentajeFormula, #Receta').prop('readonly', readOnly);
+                $('#btnBuscarElaboradoFormula, #btnBuscarIngredienteFormula, #btnAgregarLineaFormula, .js-remove-linea-formula').prop('disabled', readOnly);
+                $('#chkAgregarAutoFormula').prop('disabled', readOnly);
+                $('#btnGuardarFormula').toggleClass('d-none', readOnly);
+                $('#btnHabilitarEdicionFormula').toggleClass('d-none', !readOnly);
+            }
+
+            function rebuildHidden() {
+                var html = '';
+                state.lineas.forEach(function (linea, index) {
+                    html += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (linea.IdCorte || 0) + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (linea.Codigo || 0) + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].Producto" value="' + $('<div>').text(linea.Producto || '').html() + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].Porcentaje" value="' + String(toNumber(linea.Porcentaje)).replace('.', ',') + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].AgregarAuto" value="' + (linea.AgregarAuto ? 'true' : 'false') + '" />';
+                });
+                $('#lineasFormulaHiddenContainer').html(html);
+            }
+
+            function renderLineas() {
+                var html = '';
+                var total = 0;
+                state.lineas.forEach(function (linea, index) {
+                    total += toNumber(linea.Porcentaje);
+                    html += '<tr>'
+                        + '<td>' + (linea.Codigo || '') + '</td>'
+                        + '<td>' + (linea.Producto || '') + '</td>'
+                        + '<td class="text-right">' + toNumber(linea.Porcentaje).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>'
+                        + '<td class="text-center">' + (linea.AgregarAuto ? 'Si' : 'No') + '</td>'
+                        + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea-formula" data-index="' + index + '"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button></td>'
+                        + '</tr>';
+                });
+                if (!html) {
+                    html = '<tr><td colspan="5" class="text-center text-muted">Todavía no agregaste ingredientes a la fórmula.</td></tr>';
+                }
+                $('#tablaLineasFormula tbody').html(html);
+                $('#lblTotalPorcentaje').text(total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $('#lblTotalUnidades').text((total / 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                rebuildHidden();
+            }
+
+            function clearIngrediente() {
+                $('#txtIngredienteFormulaId').val('');
+                $('#txtCodigoIngredienteFormula').val('');
+                $('#txtIngredienteFormulaNombre').val('');
+                $('#txtPorcentajeFormula').val('');
+                $('#chkAgregarAutoFormula').prop('checked', false);
+            }
+
+            function setProducto($codigo, $id, $nombre, producto) {
+                $codigo.val(producto.codigo || '');
+                $id.val(producto.id || '');
+                $nombre.val(producto.nombre || '');
+            }
+
+            function buscarPorCodigo($codigo, callback) {
+                var codigo = parseInt($codigo.val(), 10) || 0;
+                if (codigo <= 0) return;
+
+                $.get('@Url.Action("BuscarProductoPorCodigo", "Elaborados")', { codigo: codigo })
+                    .done(function (resp) {
+                        if (!resp || !resp.ok) return;
+
+                        if ($codigo.is('#txtCodigoElaboradoFormula')) {
+                            setProducto($('#txtCodigoElaboradoFormula'), $('#IdElaborado'), $('#txtElaboradoFormulaNombre'), resp);
+                            validarFormulaExistente(resp.id);
+                        } else {
+                            setProducto($('#txtCodigoIngredienteFormula'), $('#txtIngredienteFormulaId'), $('#txtIngredienteFormulaNombre'), resp);
+                        }
+
+                        if (typeof callback === 'function') callback(resp);
+                    });
+            }
+
+            function validarFormulaExistente(idElaborado) {
+                if (!idElaborado) return;
+                $.get('@Url.Action("ObtenerFormula", "Elaborados")', { idCorte: idElaborado })
+                    .done(function (resp) {
+                        var visible = !!(resp && resp.ok && resp.tieneFormula && (!state.idFormulaActual || parseInt($('#IdElaborado').val(), 10) !== @Model.IdElaborado));
+                        $('#formulaErrorElaboradoExistente').toggleClass('d-none', !visible);
+                    });
+            }
+
+            function openModal(modalSelector, codigoSelector, callback) {
+                window.abrirBuscarProductoModal({
+                    modalSelector: modalSelector,
+                    mostrarPrecio: false,
+                    onSelect: function (producto) {
+                        $(codigoSelector).val(producto.codigo || '');
+                        buscarPorCodigo($(codigoSelector), callback);
+                    }
+                });
+            }
+
+            $(document).on('click', '.js-remove-linea-formula', function () {
+                if (state.soloLectura) return;
+                var index = parseInt($(this).data('index'), 10);
+                if (isNaN(index)) return;
+                state.lineas.splice(index, 1);
+                renderLineas();
+            });
+
+            $('#btnHabilitarEdicionFormula').on('click', function () {
+                setReadOnly(false);
+            });
+
+            $('#btnBuscarElaboradoFormula').on('click', function (e) {
+                e.preventDefault();
+                if (state.soloLectura) return;
+                openModal('#modalBuscarElaboradoFormula', '#txtCodigoElaboradoFormula', function (resp) {
+                    $('#txtCodigoIngredienteFormula').focus();
+                });
+            });
+
+            $('#btnBuscarIngredienteFormula').on('click', function (e) {
+                e.preventDefault();
+                if (state.soloLectura) return;
+                openModal('#modalBuscarIngredienteFormula', '#txtCodigoIngredienteFormula', function () {
+                    $('#txtPorcentajeFormula').focus().select();
+                });
+            });
+
+            $('#btnAgregarLineaFormula').on('click', function () {
+                if (state.soloLectura) return;
+                var idCorte = parseInt($('#txtIngredienteFormulaId').val(), 10) || 0;
+                var porcentaje = toNumber($('#txtPorcentajeFormula').val());
+                if (idCorte <= 0) {
+                    if (window.Swal) Swal.fire('Ingrediente', 'Seleccione un ingrediente válido.', 'warning');
+                    else alert('Seleccione un ingrediente válido.');
+                    return;
+                }
+                state.lineas.push({
+                    IdCorte: idCorte,
+                    Codigo: parseInt($('#txtCodigoIngredienteFormula').val(), 10) || 0,
+                    Producto: $('#txtIngredienteFormulaNombre').val() || '',
+                    Porcentaje: porcentaje,
+                    AgregarAuto: $('#chkAgregarAutoFormula').is(':checked')
+                });
+                renderLineas();
+                $('#formulaFeedback').html('Agregado correctamente: <strong>' + ($('#txtIngredienteFormulaNombre').val() || '') + '</strong> | % <strong>' + porcentaje.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>').removeClass('d-none');
+                setTimeout(function () { $('#formulaFeedback').addClass('d-none').text(''); }, 2200);
+                clearIngrediente();
+                $('#txtCodigoIngredienteFormula').focus();
+            });
+
+            $('#txtCodigoElaboradoFormula').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo($(this), function () { $('#txtCodigoIngredienteFormula').focus(); }); }
+                if (e.key === 'F9') { e.preventDefault(); $('#btnBuscarElaboradoFormula').trigger('click'); }
+            });
+
+            $('#txtCodigoIngredienteFormula').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo($(this), function () { $('#txtPorcentajeFormula').focus().select(); }); }
+                if (e.key === 'F10') { e.preventDefault(); $('#btnBuscarIngredienteFormula').trigger('click'); }
+            });
+
+            $('#txtPorcentajeFormula').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); $('#btnAgregarLineaFormula').trigger('click'); }
+            });
+
+            $(document).on('keydown.formula', function (e) {
+                var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+                if (tag === 'textarea') return;
+                if (state.soloLectura) return;
+                if (e.key === 'F9') { e.preventDefault(); $('#btnBuscarElaboradoFormula').trigger('click'); }
+                if (e.key === 'F10') { e.preventDefault(); $('#btnBuscarIngredienteFormula').trigger('click'); }
+            });
+
+            autoResize($('#Receta'));
+            $('#Receta').on('input', function () { autoResize($('#Receta')); });
+            renderLineas();
+            setReadOnly(state.soloLectura);
+        })();
+    </script>
+}

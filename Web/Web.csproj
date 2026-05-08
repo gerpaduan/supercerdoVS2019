@@ -132,6 +132,7 @@
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\CajasController.cs" />
     <Compile Include="Controllers\ComprasController.cs" />
+    <Compile Include="Controllers\ElaboradosController.cs" />
     <Compile Include="Controllers\FinanzasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
@@ -153,6 +154,7 @@
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
     <Compile Include="Models\CompraIndexVm.cs" />
+    <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
@@ -1871,6 +1873,8 @@
     <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\app\scanner.js" />
     <Content Include="Scripts\app\stock.js" />
+    <Content Include="Scripts\app\elaborados.js" />
+    <Content Include="Scripts\app\elaborados-carga.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js.map" />
@@ -2145,6 +2149,15 @@
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />
     <Content Include="Views\Compras\Editar.cshtml" />
+    <Content Include="Views\Elaborados\_Styles.cshtml" />
+    <Content Include="Views\Elaborados\_TablaElaborados.cshtml" />
+    <Content Include="Views\Elaborados\_Tabs.cshtml" />
+    <Content Include="Views\Elaborados\EditarFormula.cshtml" />
+    <Content Include="Views\Elaborados\Formulas.cshtml" />
+    <Content Include="Views\Elaborados\Index.cshtml" />
+    <Content Include="Views\Elaborados\Lineas.cshtml" />
+    <Content Include="Views\Elaborados\Placeholder.cshtml" />
+    <Content Include="Views\Elaborados\Carga.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />

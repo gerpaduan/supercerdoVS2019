@@ -1,0 +1,130 @@
+@model Web.Models.ElaboradoLineasIndexVm
+@using System
+@using System.Collections.Generic
+@using Entidades
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Líneas de elaborado";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="lineas">
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Lineas", "Elaborados")" id="formFiltrosLineasElaborados">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                    Cambiaste sucursal o fechas. Presioná <strong>Buscar</strong> para actualizar la búsqueda.
+                </div>
+
+                <div class="elaborados-filtros-grid">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="idSucursal">Sucursal</label>
+                        <select id="idSucursal" name="idSucursal" class="form-control js-filtro-recarga">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursal ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="descripcion">Descripción</label>
+                        <input id="descripcion" name="descripcion" type="text" class="form-control js-filtro-vivo-lineas" value="@Model.Descripcion" autocomplete="off" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
+                        <input id="fechaDesde" name="fechaDesde" type="date" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="fechaHasta">Fecha hasta</label>
+                        <input id="fechaHasta" name="fechaHasta" type="date" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <div class="form-group mb-0 elaborados-filtro-accion">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarLineasElaborados">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-3">
+                    <input type="checkbox" class="custom-control-input" id="soloIngredientes" />
+                    <label class="custom-control-label" for="soloIngredientes">Filtrar solo ingredientes</label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card border-left-primary shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg líneas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalKg.ToString("N3")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width:150px;">Fecha</th>
+                            <th>Sucursal</th>
+                            <th style="width:110px;">Cod.Elab</th>
+                            <th>Elaborado</th>
+                            <th style="width:110px;">Cod.Ingr.</th>
+                            <th>Ingrediente</th>
+                            <th class="text-right" style="width:110px;">Cant.</th>
+                            <th style="width:120px;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyLineasElaborados">
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr class="js-linea-empty-server">
+                                <td colspan="8" class="text-center text-muted py-4">No se encontraron líneas para los filtros seleccionados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr class="@(!string.IsNullOrWhiteSpace(item.Estado) ? "table-warning" : "") js-linea-row"
+                                    data-elaborado="@((item.Elaborado ?? "").ToLowerInvariant())"
+                                    data-ingrediente="@((item.Ingrediente ?? "").ToLowerInvariant())"
+                                    data-cod-elaborado="@item.CodigoElaborado"
+                                    data-cod-ingrediente="@item.CodigoIngrediente"
+                                    data-estado="@((item.Estado ?? "").ToLowerInvariant())">
+                                    <td>@(item.Fecha == DateTime.MinValue ? "" : item.Fecha.ToString("dd/MM/yyyy HH:mm"))</td>
+                                    <td>@item.Sucursal</td>
+                                    <td>@item.CodigoElaborado</td>
+                                    <td>@item.Elaborado</td>
+                                    <td>@item.CodigoIngrediente</td>
+                                    <td>@item.Ingrediente</td>
+                                    <td class="text-right">@item.Kgs.ToString("N3")</td>
+                                    <td>@item.Estado</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/elaborados.js?v=1")"></script>
+}

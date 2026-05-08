@@ -1,0 +1,111 @@
+@model Web.Models.ElaboradoIndexVm
+@using System
+@using System.Collections.Generic
+@using System.Globalization
+@using Entidades
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Elaborados";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    var cultura = CultureInfo.GetCultureInfo("es-AR");
+    string successMessage = TempData["ElaboradosSuccessMessage"] as string ?? "";
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="index">
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div id="elaboradosSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index", "Elaborados")" id="formFiltrosElaborados">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                    Cambiaste sucursal o fechas. Presioná <strong>Buscar</strong> para actualizar la búsqueda.
+                </div>
+
+                <div class="elaborados-filtros-grid">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="idSucursal">Sucursal</label>
+                        <select id="idSucursal" name="idSucursal" class="form-control js-filtro-recarga">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursal ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="elaborado">Nombre elaborado</label>
+                        <input id="elaborado" name="elaborado" type="text" class="form-control js-filtro-vivo-elaborados" value="@Model.Elaborado" autocomplete="off" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
+                        <input id="fechaDesde" name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label" for="fechaHasta">Fecha hasta</label>
+                        <input id="fechaHasta" name="fechaHasta" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+
+                    <div class="form-group mb-0 elaborados-filtro-accion">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarElaborados">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card border-left-primary shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalKg.ToString("N3", cultura)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center mb-2">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="switchVistaCompletaElaborados">
+            <label class="custom-control-label" for="switchVistaCompletaElaborados">Ver detalles</label>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @Html.Partial("~/Views/Elaborados/_TablaElaborados.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+
+@section Scripts {
+    <script>
+        (function () {
+            var successAlert = document.getElementById('elaboradosSuccessAlert');
+            if (successAlert) {
+                window.setTimeout(function () {
+                    $(successAlert).alert('close');
+                }, 3000);
+            }
+        })();
+    </script>
+    <script src="@Url.Content("~/Scripts/app/elaborados.js?v=2")"></script>
+}

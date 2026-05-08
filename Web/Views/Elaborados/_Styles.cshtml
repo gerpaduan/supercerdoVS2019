@@ -1,0 +1,79 @@
+<style>
+    .elaborados-tabs-card,
+    .elaborados-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .elaborados-tabs-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .elaborados-tabs-nav .nav-link {
+        border-radius: 999px;
+        font-weight: 600;
+        color: #4e73df;
+        background: #f8f9fc;
+    }
+
+    .elaborados-tabs-nav .nav-link.active {
+        background: #4e73df;
+        color: #fff;
+    }
+
+    .elaborados-filtros-grid {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .elaborados-filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .elaborados-filtros-card .form-control,
+    .elaborados-filtros-card .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .elaborados-filtros-card .custom-switch {
+        padding-top: .25rem;
+    }
+
+    .elaborados-filtros-card .custom-control-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    @@media (min-width: 1200px) {
+        .elaborados-filtros-grid {
+            grid-template-columns: 1fr 1.2fr 1fr 1fr 140px;
+            align-items: end;
+        }
+
+        .elaborados-filtros-grid-formula {
+            grid-template-columns: 1fr 140px;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .elaborados-filtros-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .elaborados-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .elaborados-filtros-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

@@ -1,0 +1,14 @@
+@model List<Web.Models.ElaboradoTabVm>
+
+<div class="card shadow-sm mb-3 elaborados-tabs-card">
+    <div class="card-body py-2">
+        <div class="nav nav-pills elaborados-tabs-nav">
+            @foreach (var tab in Model ?? new List<Web.Models.ElaboradoTabVm>())
+            {
+                <a class="nav-link @(tab.Activo ? "active" : "")" href="@Url.Action(tab.Action, "Elaborados")">
+                    @tab.Titulo
+                </a>
+            }
+        </div>
+    </div>
+</div>

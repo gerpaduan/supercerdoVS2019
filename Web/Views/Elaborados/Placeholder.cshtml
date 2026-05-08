@@ -1,0 +1,22 @@
+@model Web.Models.ElaboradoPlaceholderVm
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = Model.Titulo;
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page">
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h4 class="text-dark mb-3">@Model.Titulo</h4>
+            <p class="mb-2">@Model.Descripcion</p>
+            <div class="alert alert-info mb-0">
+                @Model.Nota
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
