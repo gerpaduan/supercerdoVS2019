@@ -33,16 +33,163 @@ else if (productos == null || productos.Count == 0)
 }
 else
 {
+    <style>
+        .tabla-existencia-sucursales {
+            table-layout: auto;
+            min-width: max-content;
+        }
+
+        .tabla-full {
+            overflow-x: auto;
+        }
+
+        .tabla-existencia-sucursales th,
+        .tabla-existencia-sucursales td {
+            vertical-align: top;
+        }
+
+        .existencia-col-toggle,
+        .existencia-col-toggle-cell {
+            width: 55px;
+            min-width: 55px;
+        }
+
+        .existencia-col-producto,
+        .existencia-col-producto-cell {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: #fff;
+            min-width: 22rem;
+        }
+
+        .tabla-existencia-sucursales thead .existencia-col-producto {
+            z-index: 5;
+            background: #f8f9fc;
+        }
+
+        .tabla-existencia-sucursales th.text-right.text-nowrap,
+        .tabla-existencia-sucursales td.text-right.text-nowrap {
+            min-width: 110px;
+        }
+
+        .existencia-producto-row {
+            cursor: pointer;
+        }
+
+        .existencia-producto-wrap {
+            max-width: 50ch;
+        }
+
+        .existencia-producto-desc {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+            line-height: 1.2;
+            max-width: 50ch;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .existencia-producto-codigo {
+            display: block;
+            margin-top: .2rem;
+            font-size: .78rem;
+            color: #858796;
+        }
+
+        .existencia-producto-completo {
+            font-size: .85rem;
+            color: #6c757d;
+            margin-bottom: .75rem;
+        }
+
+        .existencia-producto-completo strong {
+            color: inherit;
+        }
+
+        .existencia-detalle-box {
+            background: #f8f9fc;
+            overflow: hidden;
+        }
+
+        .existencia-detalle-scroll-sync {
+            max-width: 100%;
+            max-height: 22rem;
+            overflow: auto;
+        }
+
+        .existencia-detalle-tabla {
+            width: max-content;
+            min-width: 100%;
+        }
+
+        .existencia-detalle-tabla th,
+        .existencia-detalle-tabla td {
+            white-space: nowrap;
+        }
+
+        html.dark-mode .existencia-col-producto,
+        html.dark-mode .existencia-col-producto-cell {
+            background: #1f2533;
+        }
+
+        html.dark-mode .tabla-existencia-sucursales thead .existencia-col-producto {
+            background: #273043;
+        }
+
+        html.dark-mode .existencia-detalle-box {
+            background: #273043;
+        }
+
+        html.dark-mode .existencia-producto-codigo,
+        html.dark-mode .existencia-producto-completo {
+            color: rgba(255,255,255,.72);
+        }
+
+        @@media (max-width: 767.98px) {
+            .tabla-full .tabla-existencia-sucursales {
+                width: max-content !important;
+                min-width: 0 !important;
+            }
+
+            .existencia-col-producto,
+            .existencia-col-producto-cell {
+                min-width: 9rem;
+                width: 9rem;
+                max-width: 9rem;
+            }
+
+            .existencia-producto-wrap,
+            .existencia-producto-desc {
+                max-width: 15ch;
+            }
+
+            .tabla-existencia-sucursales th.text-right.text-nowrap,
+            .tabla-existencia-sucursales td.text-right.text-nowrap {
+                min-width: 92px;
+                width: 92px;
+            }
+
+            .existencia-detalle-scroll-sync {
+                max-height: 18rem;
+            }
+        }
+    </style>
+
     <div class="table-responsive tabla-full">
-        <table class="table table-bordered table-hover mb-0">
+        <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales">
             <thead class="thead-light">
                 <tr>
-                    <th style="width:55px;"></th>
-                    <th>Producto</th>
+                    <th class="existencia-col-producto">Producto</th>
                     @foreach (var columna in columnas)
                     {
                         <th class="text-right text-nowrap">@columna.Sucursal</th>
                     }
+                    <th class="existencia-col-toggle"></th>
                 </tr>
             </thead>
             <tbody>
@@ -54,14 +201,11 @@ else
                         data-texto="@producto.TextoBusqueda"
                         data-estados="@producto.EstadosFila"
                         data-tienestock="@(producto.TieneStockPositivo ? "1" : "0")">
-                        <td class="text-center">
-                            <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
-                                <i class="far fa-plus-square"></i>
-                            </button>
-                        </td>
-                        <td class="text-nowrap">
-                            <strong>@producto.Codigo</strong>
-                            <span class="ml-2">@producto.Corte</span>
+                        <td class="existencia-col-producto-cell">
+                            <div class="existencia-producto-wrap">
+                                <div class="existencia-producto-desc" title="@producto.Corte">@producto.Corte</div>
+                                <span class="existencia-producto-codigo">cod: @producto.Codigo</span>
+                            </div>
                         </td>
                         @foreach (var columna in columnas)
                         {
@@ -77,30 +221,36 @@ else
                                 @celda.StockActual.ToString("N3")
                             </td>
                         }
+                        <td class="text-center existencia-col-toggle-cell">
+                            <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
+                                <i class="far fa-plus-square"></i>
+                            </button>
+                        </td>
                     </tr>
                     <tr id="@detailId" class="existencia-detalle-row d-none">
                         <td colspan="@totalColumnas" class="p-0">
-                            <div class="p-3 bg-light border-top">
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered mb-0">
+                            <div class="p-3 border-top existencia-detalle-box">
+                                <div class="existencia-producto-completo">@producto.Corte</div>
+                                <div class="table-responsive existencia-detalle-scroll-sync">
+                                    <table class="table table-sm table-bordered mb-0 existencia-detalle-tabla">
                                         <thead class="thead-light">
                                             <tr>
                                                 <th>Sucursal</th>
-                                                <th>FechaUltimoCierre</th>
-                                                <th class="text-right">StockInicial</th>
+                                                <th title="FechaUltimoCierre">F. Cierre</th>
+                                                <th class="text-right" title="StockInicial">St. Ini.</th>
                                                 <th class="text-right">Compras</th>
-                                                <th class="text-right">IngresoElaborado</th>
-                                                <th class="text-right">IngresoStock</th>
-                                                <th class="text-right">IngresoMovimiento</th>
-                                                <th class="text-right">AjusteStock</th>
-                                                <th class="text-right">TotalIngresos</th>
-                                                <th class="text-right">EgresoStock</th>
-                                                <th class="text-right">EgresoMovimiento</th>
-                                                <th class="text-right">EgresoElaborado</th>
+                                                <th class="text-right" title="IngresoElaborado">Ing. Elab.</th>
+                                                <th class="text-right" title="IngresoStock">Ing. Stock</th>
+                                                <th class="text-right" title="IngresoMovimiento">Ing. Mov.</th>
+                                                <th class="text-right" title="AjusteStock">Ajuste</th>
+                                                <th class="text-right" title="TotalIngresos">Tot. Ing.</th>
+                                                <th class="text-right" title="EgresoStock">Egr. Stock</th>
+                                                <th class="text-right" title="EgresoMovimiento">Egr. Mov.</th>
+                                                <th class="text-right" title="EgresoElaborado">Egr. Elab.</th>
                                                 <th class="text-right">Ventas</th>
-                                                <th class="text-right">TotalEgresos</th>
-                                                <th class="text-right">StockActual</th>
-                                                <th>EstadoStock</th>
+                                                <th class="text-right" title="TotalEgresos">Tot. Egr.</th>
+                                                <th class="text-right" title="StockActual">Stock Act.</th>
+                                                <th title="EstadoStock">Estado</th>
                                             </tr>
                                         </thead>
                                         <tbody>

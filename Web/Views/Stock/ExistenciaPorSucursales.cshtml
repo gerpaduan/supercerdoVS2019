@@ -17,11 +17,6 @@
                 <div class="stock-filtros-stack">
                     <div class="stock-filtros-row existencia-filtros-row-top">
                         <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroTextoExistencia">Producto / texto</label>
-                            <input type="text" id="filtroTextoExistencia" name="texto" class="form-control" value="@filtro.Texto" />
-                        </div>
-
-                        <div class="form-group mb-0">
                             <label class="stock-filtro-label" for="filtroSucursalExistencia">Sucursal</label>
                             <select id="filtroSucursalExistencia" name="idSucursal" class="form-control">
                                 @foreach (var sucursal in filtro.SucursalesDisponibles)
@@ -31,20 +26,6 @@
                             </select>
                         </div>
 
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroFechaHastaExistencia">Fecha hasta</label>
-                            <div class="input-group">
-                                <input type="datetime-local" id="filtroFechaHastaExistencia" name="fechaHasta" class="form-control" value="@fechaHasta" />
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-secondary" id="btnAhoraExistencia">
-                                        <i class="fas fa-clock mr-1"></i>Ahora
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stock-filtros-row existencia-filtros-row-bottom">
                         <div class="form-group mb-0">
                             <label class="stock-filtro-label" for="filtroTipoExistencia">Tipo</label>
                             <select id="filtroTipoExistencia" name="tipo" class="form-control">
@@ -94,6 +75,26 @@
                                 <label class="custom-control-label" for="filtroSoloConStockExistencia">Solo con stock</label>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="stock-filtros-row existencia-filtros-row-bottom">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroTextoExistencia">Producto / texto</label>
+                            <input type="text" id="filtroTextoExistencia" name="texto" class="form-control" value="@filtro.Texto" />
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroFechaHastaExistencia">Fecha hasta</label>
+                            <div class="input-group">
+                                <input type="datetime-local" id="filtroFechaHastaExistencia" name="fechaHasta" class="form-control" value="@fechaHasta" />
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" id="btnAhoraExistencia">
+                                        <i class="fas fa-clock mr-1"></i>Ahora
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                         <div class="form-group mb-0 stock-filtro-accion">
                             <button type="submit" class="btn btn-primary btn-block" id="btnBuscarExistencia">
@@ -169,11 +170,11 @@
 
     @@media (min-width: 1200px) {
         .existencia-filtros-row-top {
-            grid-template-columns: 1.4fr 1fr 1.2fr;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
         }
 
         .existencia-filtros-row-bottom {
-            grid-template-columns: 1fr 1fr 1fr 1fr auto 140px;
+            grid-template-columns: 1.4fr 1.2fr 140px;
             align-items: end;
         }
 
@@ -185,9 +186,13 @@
 
     @@media (min-width: 768px) and (max-width: 1199.98px) {
         .existencia-filtros-row-top,
-        .existencia-filtros-row-bottom,
         .existencia-estado-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .existencia-filtros-row-bottom {
+            grid-template-columns: 1fr 1fr 140px;
+            align-items: end;
         }
     }
 
@@ -200,6 +205,10 @@
 
         .existencia-estado-item-right {
             justify-content: flex-start;
+        }
+
+        .stock-filtro-accion .btn {
+            min-height: 2.7rem;
         }
     }
 </style>
@@ -217,6 +226,8 @@
             var $lblEstado = $("#lblEstadoConsultaExistencia");
             var $switchExpandir = $("#switchExpandirExistencia");
             var consultaAplicada = null;
+            var sincronizandoScrollDetalle = false;
+            var ultimoToqueDetalle = { target: "", time: 0 };
 
             function obtenerEstadoConsulta() {
                 return {
@@ -253,6 +264,17 @@
                 });
 
                 $contenedor.find(".btn-toggle-existencia i").toggleClass("fa-minus-square", expandir).toggleClass("fa-plus-square", !expandir);
+            }
+
+            function toggleDetalleExistencia(target) {
+                var $detalle = target ? $(target) : $();
+                if (!$detalle.length) return;
+                var expandido = !$detalle.hasClass("d-none");
+                $detalle.toggleClass("d-none", expandido);
+                $('.btn-toggle-existencia[data-target="' + target + '"]')
+                    .find("i")
+                    .toggleClass("fa-plus-square", expandido)
+                    .toggleClass("fa-minus-square", !expandido);
             }
 
             function aplicarFiltrosVisuales() {
@@ -304,6 +326,25 @@
                 $lblUltima.text(dd + "/" + mm + "/" + yyyy + " " + hh + ":" + mi + ":" + ss);
             }
 
+            function vincularScrollDetalles() {
+                $contenedor.find(".existencia-detalle-scroll-sync")
+                    .off("scroll.syncDetalle")
+                    .on("scroll.syncDetalle", function () {
+                        if (sincronizandoScrollDetalle) {
+                            return;
+                        }
+
+                        sincronizandoScrollDetalle = true;
+                        var scrollLeft = this.scrollLeft;
+
+                        $contenedor.find(".existencia-detalle-scroll-sync").not(this).each(function () {
+                            this.scrollLeft = scrollLeft;
+                        });
+
+                        sincronizandoScrollDetalle = false;
+                    });
+            }
+
             $form.on("submit", function (e) {
                 e.preventDefault();
                 setBuscando(true);
@@ -319,6 +360,7 @@
                     actualizarUltimaActualizacion();
                     actualizarPendiente();
                     aplicarFiltrosVisuales();
+                    vincularScrollDetalles();
                     $lblEstado.text("Consulta actualizada.");
                 }).fail(function () {
                     $contenedor.html('<div class="alert alert-danger m-3 mb-0">No se pudo consultar la existencia por sucursales.</div>');
@@ -328,13 +370,34 @@
                 });
             });
 
-            $(document).on("click", ".btn-toggle-existencia", function () {
+            $(document).on("click", ".btn-toggle-existencia", function (e) {
+                e.stopPropagation();
                 var target = $(this).attr("data-target");
-                var $detalle = target ? $(target) : $();
-                if (!$detalle.length) return;
-                var expandido = !$detalle.hasClass("d-none");
-                $detalle.toggleClass("d-none", expandido);
-                $(this).find("i").toggleClass("fa-plus-square", expandido).toggleClass("fa-minus-square", !expandido);
+                toggleDetalleExistencia(target);
+            });
+
+            $(document).on("dblclick", ".existencia-producto-row", function (e) {
+                if ($(e.target).closest(".btn-toggle-existencia").length) return;
+                toggleDetalleExistencia($(this).attr("data-detail-target"));
+            });
+
+            $(document).on("touchend", ".existencia-producto-row", function (e) {
+                if ($(e.target).closest(".btn-toggle-existencia").length) return;
+
+                var ahora = new Date().getTime();
+                var target = $(this).attr("data-detail-target") || "";
+                var esDobleToque = ultimoToqueDetalle.target === target && (ahora - ultimoToqueDetalle.time) <= 350;
+
+                ultimoToqueDetalle = {
+                    target: target,
+                    time: ahora
+                };
+
+                if (!esDobleToque) return;
+
+                e.preventDefault();
+                toggleDetalleExistencia(target);
+                ultimoToqueDetalle = { target: "", time: 0 };
             });
 
             $("#btnAhoraExistencia").on("click", function () {
@@ -352,6 +415,7 @@
             $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
 
             aplicarFiltrosVisuales();
+            vincularScrollDetalles();
         })();
     </script>
 }

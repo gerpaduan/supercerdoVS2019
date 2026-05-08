@@ -730,7 +730,7 @@ namespace Web.Controllers
         {
             var filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm();
             int idSucursalActual = user != null && user.IdSucursal > 0 ? user.IdSucursal : 0;
-            Entidades.Sucursal sucursalActual = idSucursalActual > 0 ? oSucursalN.findById(idSucursalActual) : null;
+            List<Entidades.Sucursal> sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
 
             filtro.IdSucursal = idSucursalActual;
             filtro.FechaHasta = DateTime.Now;
@@ -740,12 +740,16 @@ namespace Web.Controllers
                 Sucursal = "Todas"
             });
 
-            if (sucursalActual != null && sucursalActual.IdSucursal > 0)
+            foreach (var sucursal in sucursales
+                .Where(x => x != null && x.IdSucursal > 0)
+                .GroupBy(x => x.IdSucursal)
+                .Select(g => g.First())
+                .OrderBy(x => x.SucursalNombre))
             {
                 filtro.SucursalesDisponibles.Add(new Entidades.SucursalColumnaStockVm
                 {
-                    IdSucursal = sucursalActual.IdSucursal,
-                    Sucursal = sucursalActual.SucursalNombre
+                    IdSucursal = sucursal.IdSucursal,
+                    Sucursal = sucursal.SucursalNombre
                 });
             }
 
