@@ -79,8 +79,7 @@
 
                     <div class="stock-filtros-row existencia-filtros-row-bottom">
                         <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroTextoExistencia">Producto / texto</label>
-                            <input type="text" id="filtroTextoExistencia" name="texto" class="form-control" value="@filtro.Texto" />
+                            <input type="text" id="filtroTextoExistencia" name="texto" class="form-control" value="@filtro.Texto" placeholder="Producto / texto" />
                         </div>
 
                         <div class="form-group mb-0">
@@ -91,15 +90,11 @@
                                     <button type="button" class="btn btn-outline-secondary" id="btnAhoraExistencia">
                                         <i class="fas fa-clock mr-1"></i>Ahora
                                     </button>
+                                    <button type="submit" class="btn btn-primary existencia-btn-buscar-inline" id="btnBuscarExistencia">
+                                        <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+                                    </button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                        <div class="form-group mb-0 stock-filtro-accion">
-                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarExistencia">
-                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -168,13 +163,19 @@
         justify-content: flex-end;
     }
 
+    .input-group-append .existencia-btn-buscar-inline {
+        margin-left: .45rem !important;
+        border-top-left-radius: .25rem !important;
+        border-bottom-left-radius: .25rem !important;
+    }
+
     @@media (min-width: 1200px) {
         .existencia-filtros-row-top {
             grid-template-columns: repeat(6, minmax(0, 1fr));
         }
 
         .existencia-filtros-row-bottom {
-            grid-template-columns: 1.4fr 1.2fr 140px;
+            grid-template-columns: minmax(0, 1fr) auto;
             align-items: end;
         }
 
@@ -191,7 +192,7 @@
         }
 
         .existencia-filtros-row-bottom {
-            grid-template-columns: 1fr 1fr 140px;
+            grid-template-columns: minmax(0, 1fr) auto;
             align-items: end;
         }
     }
