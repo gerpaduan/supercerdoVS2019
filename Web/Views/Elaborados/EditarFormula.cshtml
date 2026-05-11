@@ -74,11 +74,18 @@
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                         <h6 class="font-weight-bold text-uppercase text-muted mb-0">Elaborado</h6>
-                        <div class="small text-muted">F9 busca elaborado</div>
                     </div>
 
                     <div id="formulaErrorElaboradoExistente" class="alert alert-warning py-2 px-3 mb-3 d-none">
                         El elaborado ya posee una fórmula. Modifique la existente.
+                    </div>
+
+                    <div id="formulaInfoIngresoRapido" class="alert alert-info py-2 px-3 mb-3 @(Model.EsIngresoRapidoElaborado ? "" : "d-none")">
+                        Este elaborado es de Ingreso Rápido. El sistema calculará automáticamente un Ajuste de Fórmula para que el resultado final represente 1 unidad.
+                        @if (Model.CodigoProductoGenerico > 0)
+                        {
+                            <span class="d-block mt-1">Se usa el código genérico <strong>@Model.CodigoProductoGenerico</strong>@(!string.IsNullOrWhiteSpace(Model.NombreProductoGenerico) ? (" - " + Model.NombreProductoGenerico) : "") para realizar el ajuste.</span>
+                        }
                     </div>
 
                     <div class="row align-items-end">
@@ -93,6 +100,8 @@
                                 <label for="txtElaboradoFormulaNombre">Elaborado</label>
                                 <div class="input-group">
                                     <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
+                                    <input type="hidden" id="txtElaboradoEsPesableFormula" value="@(Model.EsPesableElaborado ? "true" : "false")" />
+                                    <input type="hidden" id="txtElaboradoIngresoRapidoFormula" value="@(Model.EsIngresoRapidoElaborado ? "true" : "false")" />
                                     <input type="text" id="txtElaboradoFormulaNombre" class="form-control" value="@Model.Elaborado" readonly />
                                     <div class="input-group-append">
                                         <button type="button" class="btn btn-outline-primary" id="btnBuscarElaboradoFormula" title="Buscar elaborado (F9)">
@@ -117,7 +126,6 @@
                         <div class="border rounded p-3 mb-3">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0">Ingredientes de la fórmula</h6>
-                                <div class="small text-muted">F10 busca ingrediente</div>
                             </div>
 
                             <div id="formulaFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
@@ -146,20 +154,20 @@
                                 </div>
                                 <div class="col-12 col-md-2">
                                     <div class="form-group">
-                                        <label for="txtPorcentajeFormula">%</label>
+                                        <label for="txtPorcentajeFormula" id="lblValorFormulaInput">@Model.EtiquetaValorFormula</label>
                                         <input type="text" id="txtPorcentajeFormula" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
                                     </div>
                                 </div>
-                                <div class="col-8 col-md-1">
+                                <div class="col-8 col-md-2 col-lg-1">
                                     <div class="form-group mb-3">
-                                        <div class="custom-control custom-checkbox mt-4">
-                                            <input type="checkbox" class="custom-control-input" id="chkAgregarAutoFormula" />
+                                        <div class="custom-control custom-checkbox formula-auto-wrap">
+                                            <input type="checkbox" class="custom-control-input" id="chkAgregarAutoFormula" @(Model.EsIngresoRapidoElaborado ? "checked" : "") />
                                             <label class="custom-control-label" for="chkAgregarAutoFormula">Auto</label>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-4 col-md-1">
-                                    <button type="button" class="btn btn-primary btn-block mb-3" id="btnAgregarLineaFormula" title="Agregar">
+                                <div class="col-4 col-md-2 col-lg-1">
+                                    <button type="button" class="btn btn-primary btn-block mb-3 formula-btn-add" id="btnAgregarLineaFormula" title="Agregar">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
@@ -172,7 +180,7 @@
                                     <tr>
                                         <th style="width:110px;">Código</th>
                                         <th>Ingrediente</th>
-                                        <th class="text-right" style="width:120px;">%</th>
+                                        <th class="text-right" style="width:120px;" id="lblValorFormulaColumna">@Model.EtiquetaValorFormula</th>
                                         <th class="text-center" style="width:90px;">Auto</th>
                                         <th style="width:70px;">Acción</th>
                                     </tr>
@@ -187,11 +195,11 @@
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted">Totales</h6>
                                 <div class="d-flex justify-content-between">
-                                    <span>Total porcentaje</span>
+                                    <span id="lblTotalPrincipalTexto">@((Model.EsPesableElaborado) ? "Total porcentaje" : "Total unidades")</span>
                                     <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("N2")</strong>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Total unidades</span>
+                                <div class="d-flex justify-content-between @(Model.EsPesableElaborado ? "" : "d-none")" id="filaTotalSecundario">
+                                    <span>Equivalencia en unidades</span>
                                     <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
                                 </div>
                             </div>
@@ -227,6 +235,21 @@
         overflow: hidden;
         resize: vertical;
     }
+
+    .formula-auto-wrap {
+        margin-top: 2.35rem;
+    }
+
+    .formula-btn-add {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(1.5em + .75rem + 2px);
+    }
+
+    .formula-btn-add i {
+        margin: 0;
+    }
 </style>
 
 @section Scripts {
@@ -236,7 +259,12 @@
             var state = {
                 lineas: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.ElaboradoFormulaEditLineaVm>())),
                 soloLectura: @(Model.SoloLecturaInicial ? "true" : "false"),
-                idFormulaActual: @Model.IdFormula
+                idFormulaActual: @Model.IdFormula,
+                esPesable: @(Model.EsPesableElaborado ? "true" : "false"),
+                esIngresoRapido: @(Model.EsIngresoRapidoElaborado ? "true" : "false"),
+                codigoGenerico: @Model.CodigoProductoGenerico,
+                nombreGenerico: @Html.Raw(Json.Encode(Model.NombreProductoGenerico ?? "")),
+                codigoElaboradoInicial: @Model.CodigoElaborado
             };
 
             function toNumber(value) {
@@ -246,10 +274,39 @@
                 return isNaN(n) ? 0 : n;
             }
 
+            function formatValue(value) {
+                return toNumber(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
             function autoResize($el) {
                 if (!$el || !$el.length) return;
                 $el.css('height', 'auto');
                 $el.css('height', $el.get(0).scrollHeight + 'px');
+            }
+
+            function targetValorVisible() {
+                return state.esPesable ? 100 : 1;
+            }
+
+            function valorLabel() {
+                return state.esPesable ? 'Porcentaje' : 'Unidad';
+            }
+
+            function updateModeLabels() {
+                $('#lblValorFormulaInput').text(valorLabel());
+                $('#lblValorFormulaColumna').text(valorLabel());
+                $('#lblTotalPrincipalTexto').text(state.esPesable ? 'Total porcentaje' : 'Total unidades');
+                $('#filaTotalSecundario').toggleClass('d-none', !state.esPesable);
+
+                if (state.esIngresoRapido) {
+                    var texto = 'Este elaborado es de Ingreso Rápido. El sistema calculará automáticamente un Ajuste de Fórmula para que el resultado final represente 1 unidad.';
+                    if (state.codigoGenerico > 0) {
+                        texto += ' Se usa el código genérico ' + state.codigoGenerico + (state.nombreGenerico ? (' - ' + state.nombreGenerico) : '') + ' para realizar el ajuste.';
+                    }
+                    $('#formulaInfoIngresoRapido').removeClass('d-none').text(texto);
+                } else {
+                    $('#formulaInfoIngresoRapido').addClass('d-none').text('');
+                }
             }
 
             function setReadOnly(readOnly) {
@@ -261,37 +318,74 @@
                 $('#btnHabilitarEdicionFormula').toggleClass('d-none', !readOnly);
             }
 
+            function syncAjusteFormula() {
+                state.lineas = state.lineas.filter(function (linea) { return !linea.EsAjusteFormula; });
+                if (!state.esIngresoRapido || !state.codigoGenerico) return;
+
+                var total = 0;
+                state.lineas.forEach(function (linea) {
+                    total += toNumber(linea.Porcentaje);
+                });
+
+                state.lineas.unshift({
+                    IdCorte: 0,
+                    Codigo: state.codigoGenerico,
+                    Producto: state.nombreGenerico || 'Ajuste de Fórmula',
+                    Porcentaje: targetValorVisible() - total,
+                    AgregarAuto: true,
+                    EsAjusteFormula: true
+                });
+            }
+
             function rebuildHidden() {
                 var html = '';
-                state.lineas.forEach(function (linea, index) {
+                var index = 0;
+
+                state.lineas.forEach(function (linea) {
+                    if (linea.EsAjusteFormula) return;
+
                     html += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (linea.IdCorte || 0) + '" />';
                     html += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (linea.Codigo || 0) + '" />';
                     html += '<input type="hidden" name="Lineas[' + index + '].Producto" value="' + $('<div>').text(linea.Producto || '').html() + '" />';
                     html += '<input type="hidden" name="Lineas[' + index + '].Porcentaje" value="' + String(toNumber(linea.Porcentaje)).replace('.', ',') + '" />';
                     html += '<input type="hidden" name="Lineas[' + index + '].AgregarAuto" value="' + (linea.AgregarAuto ? 'true' : 'false') + '" />';
+                    index++;
                 });
+
                 $('#lineasFormulaHiddenContainer').html(html);
             }
 
             function renderLineas() {
+                syncAjusteFormula();
+
                 var html = '';
                 var total = 0;
                 state.lineas.forEach(function (linea, index) {
-                    total += toNumber(linea.Porcentaje);
+                    if (!linea.EsAjusteFormula) total += toNumber(linea.Porcentaje);
+
                     html += '<tr>'
                         + '<td>' + (linea.Codigo || '') + '</td>'
-                        + '<td>' + (linea.Producto || '') + '</td>'
-                        + '<td class="text-right">' + toNumber(linea.Porcentaje).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>'
+                        + '<td>' + (linea.Producto || '') + (linea.EsAjusteFormula ? ' <span class="badge badge-info ml-2">Ajuste</span>' : '') + '</td>'
+                        + '<td class="text-right">' + formatValue(linea.Porcentaje) + '</td>'
                         + '<td class="text-center">' + (linea.AgregarAuto ? 'Si' : 'No') + '</td>'
-                        + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea-formula" data-index="' + index + '"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button></td>'
-                        + '</tr>';
+                        + '<td class="text-center">';
+
+                    if (!linea.EsAjusteFormula) {
+                        html += '<button type="button" class="btn btn-sm btn-outline-danger js-remove-linea-formula" data-index="' + index + '"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>';
+                    } else {
+                        html += '<span class="text-muted">Auto</span>';
+                    }
+
+                    html += '</td></tr>';
                 });
+
                 if (!html) {
                     html = '<tr><td colspan="5" class="text-center text-muted">Todavía no agregaste ingredientes a la fórmula.</td></tr>';
                 }
+
                 $('#tablaLineasFormula tbody').html(html);
-                $('#lblTotalPorcentaje').text(total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                $('#lblTotalUnidades').text((total / 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $('#lblTotalPorcentaje').text(formatValue(total));
+                $('#lblTotalUnidades').text(formatValue(state.esPesable ? (total / 100) : total));
                 rebuildHidden();
             }
 
@@ -300,13 +394,23 @@
                 $('#txtCodigoIngredienteFormula').val('');
                 $('#txtIngredienteFormulaNombre').val('');
                 $('#txtPorcentajeFormula').val('');
-                $('#chkAgregarAutoFormula').prop('checked', false);
+                $('#chkAgregarAutoFormula').prop('checked', state.esIngresoRapido);
             }
 
             function setProducto($codigo, $id, $nombre, producto) {
                 $codigo.val(producto.codigo || '');
                 $id.val(producto.id || '');
                 $nombre.val(producto.nombre || '');
+            }
+
+            function actualizarModoElaborado(resp) {
+                state.esPesable = !!resp.pesable;
+                state.esIngresoRapido = !!resp.ingresoRapido;
+                $('#txtElaboradoEsPesableFormula').val(state.esPesable ? 'true' : 'false');
+                $('#txtElaboradoIngresoRapidoFormula').val(state.esIngresoRapido ? 'true' : 'false');
+                $('#chkAgregarAutoFormula').prop('checked', state.esIngresoRapido);
+                updateModeLabels();
+                renderLineas();
             }
 
             function buscarPorCodigo($codigo, callback) {
@@ -319,6 +423,7 @@
 
                         if ($codigo.is('#txtCodigoElaboradoFormula')) {
                             setProducto($('#txtCodigoElaboradoFormula'), $('#IdElaborado'), $('#txtElaboradoFormulaNombre'), resp);
+                            actualizarModoElaborado(resp);
                             validarFormulaExistente(resp.id);
                         } else {
                             setProducto($('#txtCodigoIngredienteFormula'), $('#txtIngredienteFormulaId'), $('#txtIngredienteFormulaNombre'), resp);
@@ -352,6 +457,7 @@
                 if (state.soloLectura) return;
                 var index = parseInt($(this).data('index'), 10);
                 if (isNaN(index)) return;
+                if (state.lineas[index] && state.lineas[index].EsAjusteFormula) return;
                 state.lineas.splice(index, 1);
                 renderLineas();
             });
@@ -363,7 +469,7 @@
             $('#btnBuscarElaboradoFormula').on('click', function (e) {
                 e.preventDefault();
                 if (state.soloLectura) return;
-                openModal('#modalBuscarElaboradoFormula', '#txtCodigoElaboradoFormula', function (resp) {
+                openModal('#modalBuscarElaboradoFormula', '#txtCodigoElaboradoFormula', function () {
                     $('#txtCodigoIngredienteFormula').focus();
                 });
             });
@@ -379,21 +485,32 @@
             $('#btnAgregarLineaFormula').on('click', function () {
                 if (state.soloLectura) return;
                 var idCorte = parseInt($('#txtIngredienteFormulaId').val(), 10) || 0;
-                var porcentaje = toNumber($('#txtPorcentajeFormula').val());
+                var codigo = parseInt($('#txtCodigoIngredienteFormula').val(), 10) || 0;
+                var valor = toNumber($('#txtPorcentajeFormula').val());
+
                 if (idCorte <= 0) {
                     if (window.Swal) Swal.fire('Ingrediente', 'Seleccione un ingrediente válido.', 'warning');
                     else alert('Seleccione un ingrediente válido.');
                     return;
                 }
+
+                if (state.codigoGenerico > 0 && codigo === state.codigoGenerico) {
+                    if (window.Swal) Swal.fire('Ajuste de fórmula', 'El ajuste se calcula automáticamente y no se puede cargar manualmente.', 'info');
+                    else alert('El ajuste se calcula automáticamente y no se puede cargar manualmente.');
+                    return;
+                }
+
                 state.lineas.push({
                     IdCorte: idCorte,
-                    Codigo: parseInt($('#txtCodigoIngredienteFormula').val(), 10) || 0,
+                    Codigo: codigo,
                     Producto: $('#txtIngredienteFormulaNombre').val() || '',
-                    Porcentaje: porcentaje,
-                    AgregarAuto: $('#chkAgregarAutoFormula').is(':checked')
+                    Porcentaje: valor,
+                    AgregarAuto: $('#chkAgregarAutoFormula').is(':checked'),
+                    EsAjusteFormula: false
                 });
+
                 renderLineas();
-                $('#formulaFeedback').html('Agregado correctamente: <strong>' + ($('#txtIngredienteFormulaNombre').val() || '') + '</strong> | % <strong>' + porcentaje.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong>').removeClass('d-none');
+                $('#formulaFeedback').html('Agregado correctamente: <strong>' + ($('#txtIngredienteFormulaNombre').val() || '') + '</strong> | ' + valorLabel() + ' <strong>' + formatValue(valor) + '</strong>').removeClass('d-none');
                 setTimeout(function () { $('#formulaFeedback').addClass('d-none').text(''); }, 2200);
                 clearIngrediente();
                 $('#txtCodigoIngredienteFormula').focus();
@@ -423,6 +540,7 @@
 
             autoResize($('#Receta'));
             $('#Receta').on('input', function () { autoResize($('#Receta')); });
+            updateModeLabels();
             renderLineas();
             setReadOnly(state.soloLectura);
         })();

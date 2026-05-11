@@ -341,7 +341,7 @@ namespace Negocio
         { 
             return (oCorteD.existeFormula(idEmbutido) > 0);
         }
-            public int addOrEditFormula(Entidades.Formula oFormula, List<Entidades.CortePorFormula> listaCortesPorFormula)
+        public int addOrEditFormula(Entidades.Formula oFormula, List<Entidades.CortePorFormula> listaCortesPorFormula)
         {
             return oCorteD.addOrEditFormula(oFormula, listaCortesPorFormula);
         }
@@ -353,6 +353,73 @@ namespace Negocio
         public DataTable getFormulaEmbutido(int idEmbutido)
         {
             return oCorteD.getFormulaEmbutido(idEmbutido);
+        }
+
+        public bool FormulaUsaUnidades(Entidades.Corte elaborado)
+        {
+            return elaborado != null && !elaborado.Pesable;
+        }
+
+        public float ConvertirFormulaParaVisualizacion(Entidades.Corte elaborado, float valorGuardado)
+        {
+            return FormulaUsaUnidades(elaborado) ? (valorGuardado / 100f) : valorGuardado;
+        }
+
+        public float ConvertirFormulaParaPersistencia(Entidades.Corte elaborado, float valorVisual)
+        {
+            return FormulaUsaUnidades(elaborado) ? (valorVisual * 100f) : valorVisual;
+        }
+
+        public Entidades.Corte ObtenerProductoGenerico()
+        {
+            long codigoGenerico = _param != null ? _param.GetLong(Entidades.ParamKeys.CodProdGenerico, 0L) : 0L;
+            return codigoGenerico > 0 ? findCorteByCodigo(codigoGenerico, false) : null;
+        }
+
+        public List<Entidades.CortePorFormula> NormalizarFormulaElaborado(Entidades.Corte elaborado, List<Entidades.CortePorFormula> lineas)
+        {
+            if (elaborado == null) throw new ArgumentNullException(nameof(elaborado));
+            if (lineas == null) lineas = new List<Entidades.CortePorFormula>();
+
+            var resultado = new List<Entidades.CortePorFormula>();
+            var productoGenerico = ObtenerProductoGenerico();
+
+            foreach (var item in lineas)
+            {
+                if (item == null || item.CorteEnFormula == null || item.CorteEnFormula.IdCorte <= 0)
+                    continue;
+
+                bool esAjuste = productoGenerico != null && item.CorteEnFormula.IdCorte == productoGenerico.IdCorte;
+                if (esAjuste)
+                    continue;
+
+                resultado.Add(new Entidades.CortePorFormula
+                {
+                    Formula = item.Formula,
+                    CorteEnFormula = item.CorteEnFormula,
+                    AgregarAuto = item.AgregarAuto,
+                    Porcentaje = ConvertirFormulaParaPersistencia(elaborado, item.Porcentaje)
+                });
+            }
+
+            if (elaborado.IngresoRapidoEmbutido)
+            {
+                if (productoGenerico == null || productoGenerico.IdCorte <= 0)
+                    throw new InvalidOperationException("No existe el código genérico configurado para realizar el ajuste de fórmula.");
+
+                float total = resultado.Sum(x => x.Porcentaje);
+                float ajuste = 100f - total;
+
+                resultado.Insert(0, new Entidades.CortePorFormula
+                {
+                    Formula = lineas.FirstOrDefault(x => x != null)?.Formula,
+                    CorteEnFormula = productoGenerico,
+                    AgregarAuto = true,
+                    Porcentaje = ajuste
+                });
+            }
+
+            return resultado;
         }
             #endregion
 

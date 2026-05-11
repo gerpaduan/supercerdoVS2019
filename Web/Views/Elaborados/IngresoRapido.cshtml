@@ -1,0 +1,116 @@
+@model Web.Models.ElaboradoRapidoIndexVm
+@using System
+@using System.Globalization
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = Model.Titulo;
+    string successMessage = TempData["ElaboradosSuccessMessage"] as string ?? "";
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="ingreso-rapido-lista">
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div id="elaboradosSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+                <div class="mr-3 mb-2">
+                    <h4 class="mb-1">@Model.Titulo</h4>
+                    <p class="text-muted mb-0">@Model.Descripcion</p>
+                </div>
+                @if (Model.EsDesarme)
+                {
+                    <span class="badge badge-info px-3 py-2 text-uppercase">Modo desarme</span>
+                }
+                else
+                {
+                    <span class="badge badge-primary px-3 py-2 text-uppercase">Modo ingreso rápido</span>
+                }
+            </div>
+
+            <div class="elaborados-filtros-grid elaborados-filtros-grid-rapido">
+                <div class="form-group mb-0">
+                    <label class="elaborados-filtro-label" for="filtroRapidoTexto">Producto o código</label>
+                    <input id="filtroRapidoTexto" type="text" class="form-control" autocomplete="off" placeholder="Buscar por nombre o código" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaIngresoRapidoLista">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:120px;">Código</th>
+                            <th>Elaborado</th>
+                            <th style="width:160px;">Ingreso rápido</th>
+                            <th style="width:150px;">Fórmula</th>
+                            <th style="width:140px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="js-rapido-row"
+                                data-codigo="@item.Codigo"
+                                data-producto="@item.Producto"
+                                data-rapido="@(item.IngresoRapido ? "1" : "0")">
+                                <td>@item.Codigo</td>
+                                <td>
+                                    <div class="font-weight-bold">@item.Producto</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Receta))
+                                    {
+                                        <div class="small text-muted text-truncate">@item.Receta</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.IngresoRapido)
+                                    {
+                                        <span class="badge badge-success">Sí</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">No</span>
+                                    }
+                                </td>
+                                <td><span class="badge badge-light border">Cargada</span></td>
+                                <td>
+                                    <a class="btn btn-sm @(Model.EsDesarme ? "btn-outline-info" : "btn-outline-primary")"
+                                       href="@Url.Action("EditarIngresoRapido", "Elaborados", new { idElaborado = item.IdCorte, esDesarme = Model.EsDesarme })">
+                                        Seleccionar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div id="sinResultadosRapidos" class="text-center text-muted py-4 d-none">
+                No hay productos que coincidan con el filtro actual.
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+
+@section Scripts {
+    <script>
+        window.elaboradosRapidoListaConfig = {
+            mostrarTodosInicial: false
+        };
+    </script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=1")"></script>
+}

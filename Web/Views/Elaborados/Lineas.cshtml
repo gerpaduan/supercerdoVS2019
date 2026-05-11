@@ -37,12 +37,12 @@
 
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
-                        <input id="fechaDesde" name="fechaDesde" type="date" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-dd")" />
+                        <input id="fechaDesde" name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label" for="fechaHasta">Fecha hasta</label>
-                        <input id="fechaHasta" name="fechaHasta" type="date" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-dd")" />
+                        <input id="fechaHasta" name="fechaHasta" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
 
                     <div class="form-group mb-0 elaborados-filtro-accion">
@@ -86,19 +86,23 @@
                             <th>Ingrediente</th>
                             <th class="text-right" style="width:110px;">Cant.</th>
                             <th style="width:120px;">Estado</th>
+                            <th style="width:140px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyLineasElaborados">
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr class="js-linea-empty-server">
-                                <td colspan="8" class="text-center text-muted py-4">No se encontraron líneas para los filtros seleccionados.</td>
+                                <td colspan="9" class="text-center text-muted py-4">No se encontraron líneas para los filtros seleccionados.</td>
                             </tr>
                         }
                         else
                         {
                             foreach (var item in Model.Items)
                             {
+                                var urlSeleccion = item.EsIngresoRapido
+                                    ? Url.Action("EditarIngresoRapido", "Elaborados", new { id = item.Id, esDesarme = item.EsDesarme })
+                                    : Url.Action("Carga", "Elaborados", new { id = item.Id });
                                 <tr class="@(!string.IsNullOrWhiteSpace(item.Estado) ? "table-warning" : "") js-linea-row"
                                     data-elaborado="@((item.Elaborado ?? "").ToLowerInvariant())"
                                     data-ingrediente="@((item.Ingrediente ?? "").ToLowerInvariant())"
@@ -113,6 +117,9 @@
                                     <td>@item.Ingrediente</td>
                                     <td class="text-right">@item.Kgs.ToString("N3")</td>
                                     <td>@item.Estado</td>
+                                    <td class="text-center">
+                                        <a class="btn btn-sm btn-outline-primary" href="@urlSeleccion">Seleccionar</a>
+                                    </td>
                                 </tr>
                             }
                         }

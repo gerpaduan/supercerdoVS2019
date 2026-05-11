@@ -77,6 +77,7 @@
             balanzaDesactivadaManual: false,
             ingredienteTimer: null,
             elaboradoTimer: null,
+            draftTimer: null,
             guardando: false
         };
 
@@ -97,6 +98,113 @@
         var $balanza = $('#chkBalanzaIngrediente');
         var $feedback = $('#cargaFeedback');
         var $warning = $('#cargaWarning');
+
+        function getDraftKey() {
+            return config.draftKey || '';
+        }
+
+        function readDraft() {
+            var key = getDraftKey();
+            if (!key || !window.localStorage) return null;
+            try {
+                var raw = window.localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function hideDraftBanner() {
+            $('#elaboradoCargaDraftBanner').addClass('d-none');
+        }
+
+        function showDraftBanner() {
+            $('#elaboradoCargaDraftBanner').removeClass('d-none');
+        }
+
+        function clearDraft() {
+            var key = getDraftKey();
+            if (!key || !window.localStorage) return;
+            window.localStorage.removeItem(key);
+            hideDraftBanner();
+        }
+
+        function buildDraft() {
+            return {
+                idSucursal: $('#IdSucursal').val(),
+                fechaEmbutido: $('#FechaEmbutido').val(),
+                observaciones: $('#Observaciones').val(),
+                elaborado: {
+                    id: $elaboradoId.val(),
+                    codigo: $elaboradoCodigo.val(),
+                    nombre: $elaboradoNombre.val(),
+                    tipo: $elaboradoTipo.val(),
+                    promedio: $elaboradoPromedio.val(),
+                    receta: $receta.val()
+                },
+                ingredienteActual: {
+                    id: $ingredienteId.val(),
+                    codigo: $ingredienteCodigo.val(),
+                    nombre: $ingredienteNombre.val(),
+                    tipo: $ingredienteTipo.val(),
+                    promedio: $ingredientePromedio.val(),
+                    cantKg: $ingredienteKg.val(),
+                    pesoBalanza: $balanza.is(':checked')
+                },
+                lineas: state.lineas,
+                formula: state.formula
+            };
+        }
+
+        function saveDraft() {
+            var key = getDraftKey();
+            if (!key || !window.localStorage || state.guardando) return;
+            try {
+                window.localStorage.setItem(key, JSON.stringify(buildDraft()));
+            } catch (err) {
+            }
+        }
+
+        function scheduleDraft() {
+            window.clearTimeout(state.draftTimer);
+            state.draftTimer = window.setTimeout(function () {
+                saveDraft();
+            }, 250);
+        }
+
+        function applyDraft(draft) {
+            if (!draft) return;
+
+            $('#IdSucursal').val(draft.idSucursal || $('#IdSucursal').val());
+            $('#FechaEmbutido').val(draft.fechaEmbutido || $('#FechaEmbutido').val());
+            $('#Observaciones').val(draft.observaciones || '');
+
+            if (draft.elaborado) {
+                $elaboradoId.val(draft.elaborado.id || '');
+                $elaboradoCodigo.val(draft.elaborado.codigo || '');
+                $elaboradoNombre.val(draft.elaborado.nombre || '');
+                $elaboradoTipo.val(draft.elaborado.tipo || '');
+                $elaboradoPromedio.val(draft.elaborado.promedio || '');
+                $receta.val(draft.elaborado.receta || '');
+            }
+
+            if (draft.ingredienteActual) {
+                $ingredienteId.val(draft.ingredienteActual.id || '');
+                $ingredienteCodigo.val(draft.ingredienteActual.codigo || '');
+                $ingredienteNombre.val(draft.ingredienteActual.nombre || '');
+                $ingredienteTipo.val(draft.ingredienteActual.tipo || '');
+                $ingredientePromedio.val(draft.ingredienteActual.promedio || '');
+                $ingredienteKg.val(draft.ingredienteActual.cantKg || '');
+                $balanza.prop('checked', draft.ingredienteActual.pesoBalanza === true);
+            }
+
+            state.lineas = $.isArray(draft.lineas) ? draft.lineas : [];
+            state.formula = $.isArray(draft.formula) ? draft.formula : [];
+            renderLineas();
+            renderFormula();
+            autoResizeTextarea($receta);
+            scheduleDraft();
+        }
 
         function clearWarning() {
             $warning.addClass('d-none').text('');
@@ -178,7 +286,7 @@
                     + '<td>' + linea.Producto + '</td>'
                     + '<td class="text-right">' + formatKg(linea.CantKg) + '</td>'
                     + '<td class="text-center">' + formatBool(linea.PesoBalanza) + '</td>'
-                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
+                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-linea" data-index="' + index + '"' + (config.esAnulado ? ' disabled' : '') + '><i class="fas fa-trash"></i></button></td>'
                     + '</tr>';
 
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (linea.IdCorte || 0) + '" />';
@@ -201,10 +309,14 @@
 
         function renderFormula() {
             var html = '';
+            var totalAuto = 0;
             if (!state.formula.length) {
                 html = '<tr><td colspan="3" class="text-center text-muted">El elaborado no tiene formula cargada.</td></tr>';
             } else {
                 state.formula.forEach(function (item) {
+                    if (item.AgregarAuto) {
+                        totalAuto += toFloat(item.Kgs);
+                    }
                     html += '<tr>'
                         + '<td>' + item.Producto + '</td>'
                         + '<td class="text-right">' + formatKg(item.Kgs) + '</td>'
@@ -213,6 +325,7 @@
                 });
             }
             $('#tablaFormulaElaborado tbody').html(html);
+            $('#lblTotalProducir').text(formatKg(toFloat($('#lblTotalManual').text()) + totalAuto));
         }
 
         function recalcularFormula() {
@@ -407,7 +520,7 @@
             renderLineas();
             clearIngrediente();
             showFeedback('Agregado correctamente: <strong>' + linea.Producto + '</strong> | Cantidad <strong>' + formatKg(linea.CantKg) + '</strong>');
-            activarProteccionSalida();
+            scheduleDraft();
             focusIngredienteCodigo();
         }
 
@@ -470,23 +583,27 @@
         }
 
         $(document).on('click', '.js-remove-linea', function () {
+            if (config.esAnulado) return;
             var index = toInt($(this).data('index'));
             state.lineas.splice(index, 1);
             renderLineas();
-            activarProteccionSalida();
+            scheduleDraft();
         });
 
         $('#btnBuscarElaborado').on('click', function (e) {
+            if (config.esAnulado) return;
             e.preventDefault();
             openModalElaborado();
         });
 
         $('#btnBuscarIngrediente').on('click', function (e) {
+            if (config.esAnulado) return;
             e.preventDefault();
             openModalIngrediente();
         });
 
         $('#btnAgregarIngrediente').on('click', function () {
+            if (config.esAnulado) return;
             agregarLinea();
         });
 
@@ -511,7 +628,7 @@
                         showAlert('error', 'Elaborado', (resp && resp.mensaje) || 'No se pudo anular el elaborado.');
                         return;
                     }
-                    desactivarProteccionSalida();
+                    clearDraft();
                     window.location.href = resp.redirectUrl || config.redirectUrl || '/Elaborados';
                 }).fail(function (xhr) {
                     var mensaje = 'No se pudo anular el elaborado.';
@@ -590,6 +707,7 @@
         });
 
         $balanza.on('change', function () {
+            if (config.esAnulado) return;
             if ($balanza.is(':checked')) {
                 state.balanzaDesactivadaManual = false;
                 actualizarBalanzaSegunTipo();
@@ -600,6 +718,7 @@
         });
 
         $(document).on('keydown.elaboradosCarga', function (e) {
+            if (config.esAnulado) return;
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
             if (tag === 'textarea') return;
 
@@ -626,7 +745,7 @@
         });
 
         $form.on('input change', 'input, select, textarea', function () {
-            activarProteccionSalida();
+            scheduleDraft();
             if ($(this).is('#Receta')) autoResizeTextarea($receta);
         });
 
@@ -653,7 +772,7 @@
                     return;
                 }
 
-                desactivarProteccionSalida();
+                clearDraft();
                 window.location.href = resp.redirectUrl || config.redirectUrl || '/Elaborados';
             }).fail(function (xhr) {
                 state.guardando = false;
@@ -670,6 +789,21 @@
             $elaboradoWarning.addClass('d-none').text('');
         }
         verificarBalanzaInicial();
+        if (readDraft()) {
+            showDraftBanner();
+        }
+
+        $page.on('click.elaboradosDraft', '[data-action="restore-draft"]', function () {
+            var draft = readDraft();
+            if (!draft) return;
+            applyDraft(draft);
+            hideDraftBanner();
+        });
+
+        $page.on('click.elaboradosDraft', '[data-action="clear-draft"]', function () {
+            if (!confirm('Se eliminara el borrador local de este elaborado. ¿Continuar?')) return;
+            clearDraft();
+        });
     }
 
     $(function () {

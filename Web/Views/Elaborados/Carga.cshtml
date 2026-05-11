@@ -8,6 +8,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
     ViewBag.Title = Model.EsEdicion ? "Modificar elaborado" : "Carga / ingreso de elaborado";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    bool esAnulado = string.Equals(Model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
 
     var modalElaboradoData = new ViewDataDictionary
     {
@@ -27,12 +28,22 @@
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="carga">
+    <div id="elaboradoCargaDraftBanner" class="alert alert-warning d-none" role="alert">
+        Se encontró un borrador local de este elaborado.
+        <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
+    </div>
+
     @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Elaborados")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
         </a>
+        @if (esAnulado)
+        {
+            <span class="badge badge-danger px-3 py-2 text-uppercase mb-2">Anulado</span>
+        }
     </div>
 
     <div class="card shadow-sm">
@@ -42,11 +53,16 @@
                 <input type="hidden" id="IdEmbutido" name="IdEmbutido" value="@Model.IdEmbutido" />
                 <div id="lineasHiddenContainer"></div>
 
-                @if (Model.EsEdicion)
+                @if (Model.EsEdicion && !esAnulado)
                 {
                     <div class="alert alert-warning" role="alert">
-                        Estás viendo un elaborado existente en modo edición visual.
-                        La recuperación del registro ya funciona en Web, pero el guardado de modificaciones sobre el mismo registro quedó bloqueado para no alterar stock sin soporte explícito de capa.
+                        Al guardar esta modificación se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
+                    </div>
+                }
+                @if (Model.EsEdicion && esAnulado)
+                {
+                    <div class="alert alert-secondary" role="alert">
+                        El elaborado fue anulado y no puede ser modificado.
                     </div>
                 }
 
@@ -54,7 +70,7 @@
                     <div class="col-12 col-lg-3">
                         <div class="form-group">
                             <label for="IdSucursal">Sucursal</label>
-                            <select id="IdSucursal" name="IdSucursal" class="form-control">
+                            <select id="IdSucursal" name="IdSucursal" class="form-control" @(esAnulado ? "disabled" : "")>
                                 <option value="0">Seleccione...</option>
                                 @foreach (var sucursal in sucursales)
                                 {
@@ -71,7 +87,8 @@
                                    name="FechaEmbutido"
                                    class="form-control"
                                    value="@Model.FechaEmbutido.ToString("yyyy-MM-ddTHH:mm:ss")"
-                                   step="1" />
+                                   step="1"
+                                   @(esAnulado ? "readonly" : "") />
                         </div>
                     </div>
                     <div class="col-12 col-lg-3">
@@ -94,7 +111,6 @@
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                         <h6 class="font-weight-bold text-uppercase text-muted mb-0">Elaborado</h6>
-                        <div class="small text-muted">F9 busca elaborado</div>
                     </div>
 
                     <div id="elaboradoWarning" class="alert alert-info d-none py-2 px-3 mb-3"></div>
@@ -103,7 +119,7 @@
                         <div class="col-12 col-md-3 col-lg-2">
                             <div class="form-group">
                                 <label for="txtCodigoElaborado">Código</label>
-                                <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" />
+                                <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" @(esAnulado ? "readonly" : "") />
                             </div>
                         </div>
                         <div class="col-12 col-md-9 col-lg-5">
@@ -115,7 +131,7 @@
                                     <input type="hidden" id="txtElaboradoPromedio" />
                                     <input type="text" id="txtElaboradoNombre" class="form-control" value="@Model.Elaborado" readonly />
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarElaborado" title="Buscar elaborado (F9)">
+                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarElaborado" title="Buscar elaborado (F9)" @(esAnulado ? "disabled" : "")>
                                             <i class="fas fa-search"></i>
                                             <span class="d-none d-lg-inline ml-1">F9</span>
                                         </button>
@@ -145,13 +161,12 @@
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0">Ingredientes manuales</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
                                     <div class="custom-control custom-switch mr-2">
-                                        <input type="checkbox" class="custom-control-input" id="chkBalanzaIngrediente" checked />
+                                        <input type="checkbox" class="custom-control-input" id="chkBalanzaIngrediente" checked @(esAnulado ? "disabled" : "") />
                                         <label class="custom-control-label" for="chkBalanzaIngrediente">Balanza</label>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumuladosElaborado">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
                                     </button>
-                                    <div class="small text-muted">F10 busca ingrediente</div>
                                 </div>
                             </div>
 
@@ -162,7 +177,7 @@
                                 <div class="col-12 col-md-4 col-lg-3">
                                     <div class="form-group">
                                         <label for="txtCodigoIngrediente">Código</label>
-                                        <input type="number" id="txtCodigoIngrediente" class="form-control" min="0" step="1" autocomplete="off" />
+                                        <input type="number" id="txtCodigoIngrediente" class="form-control" min="0" step="1" autocomplete="off" @(esAnulado ? "readonly" : "") />
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-8 col-lg-5">
@@ -174,7 +189,7 @@
                                             <input type="hidden" id="txtIngredientePromedio" />
                                             <input type="text" id="txtIngredienteNombre" class="form-control" readonly />
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarIngrediente" title="Buscar ingrediente (F10)">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarIngrediente" title="Buscar ingrediente (F10)" @(esAnulado ? "disabled" : "")>
                                                     <i class="fas fa-search"></i>
                                                     <span class="d-none d-lg-inline ml-1">F10</span>
                                                 </button>
@@ -185,13 +200,16 @@
                                 <div class="col-12 col-md-4 col-lg-2">
                                     <div class="form-group">
                                         <label for="txtKgIngrediente">Cant. Kgs</label>
-                                        <input type="text" id="txtKgIngrediente" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
+                                        <input type="text" id="txtKgIngrediente" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" @(esAnulado ? "readonly" : "") />
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-4 col-lg-2">
-                                    <button type="button" class="btn btn-primary btn-block" id="btnAgregarIngrediente" title="Agregar ingrediente">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
+                                    <div class="form-group">
+                                        <label class="d-none d-md-block">&nbsp;</label>
+                                        <button type="button" class="btn btn-primary btn-block" id="btnAgregarIngrediente" title="Agregar ingrediente" @(esAnulado ? "disabled" : "")>
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -233,6 +251,10 @@
                                     <span>Total manual</span>
                                     <strong id="lblTotalManual">0.000</strong>
                                 </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <span>Total a producir</span>
+                                    <strong id="lblTotalProducir">0.000</strong>
+                                </div>
                             </div>
                         </div>
 
@@ -242,15 +264,19 @@
                                       name="Observaciones"
                                       class="form-control"
                                       rows="3"
-                                      maxlength="250">@Model.Observaciones</textarea>
+                                      maxlength="250"
+                                      @(esAnulado ? "readonly" : "")>@Model.Observaciones</textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">
-                    <button type="submit" class="btn btn-success mr-2 mb-2" id="btnGuardarElaborado" @(Model.EsEdicion && !Model.PermiteGuardarEdicion ? "disabled" : "")>
-                        <i class="fas fa-save mr-1"></i> @(Model.EsEdicion ? "Guardar cambios" : "Guardar elaborado")
-                    </button>
+                    @if (!esAnulado)
+                    {
+                        <button type="submit" class="btn btn-success mr-2 mb-2" id="btnGuardarElaborado" @(Model.EsEdicion && !Model.PermiteGuardarEdicion ? "disabled" : "")>
+                            <i class="fas fa-save mr-1"></i> @(Model.EsEdicion ? "Guardar cambios" : "Guardar elaborado")
+                        </button>
+                    }
                     @if (Model.EsEdicion && Model.PuedeAnular)
                     {
                         <button type="button" class="btn btn-outline-danger mr-2 mb-2" id="btnAnularElaborado">
@@ -313,12 +339,14 @@
             anularUrl: '@Url.Action("Anular", "Elaborados")',
             redirectUrl: '@Url.Action("Index", "Elaborados")',
             balanzaUrl: 'http://localhost:5100/peso',
+            draftKey: 'elaborados:carga:@(Model.IdEmbutido > 0 ? ("edit:" + Model.IdEmbutido) : "new")',
             esEdicion: @(Model.EsEdicion ? "true" : "false"),
+            esAnulado: @(esAnulado ? "true" : "false"),
             permiteGuardarEdicion: @(Model.PermiteGuardarEdicion ? "true" : "false"),
             puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
             initialLines: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.ElaboradoCargaLineaVm>())),
             initialFormula: @Html.Raw(Json.Encode(Model.Formula ?? new List<Web.Models.ElaboradoFormulaLineaVm>()))
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=4")"></script>
 }

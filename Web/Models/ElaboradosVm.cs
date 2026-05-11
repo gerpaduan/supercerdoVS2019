@@ -75,6 +75,11 @@ namespace Web.Models
         public int IdElaborado { get; set; }
         public long CodigoElaborado { get; set; }
         public string Elaborado { get; set; }
+        public bool EsPesableElaborado { get; set; }
+        public bool EsIngresoRapidoElaborado { get; set; }
+        public string EtiquetaValorFormula { get; set; }
+        public long CodigoProductoGenerico { get; set; }
+        public string NombreProductoGenerico { get; set; }
         public string Receta { get; set; }
         public string UsuarioNombre { get; set; }
         public string Creado { get; set; }
@@ -94,6 +99,7 @@ namespace Web.Models
         public string Producto { get; set; }
         public float Porcentaje { get; set; }
         public bool AgregarAuto { get; set; }
+        public bool EsAjusteFormula { get; set; }
     }
 
     public class ElaboradoPlaceholderVm
@@ -106,6 +112,60 @@ namespace Web.Models
         public string Titulo { get; set; }
         public string Descripcion { get; set; }
         public string Nota { get; set; }
+        public List<ElaboradoTabVm> Tabs { get; set; }
+    }
+
+    public class ElaboradoRapidoIndexVm
+    {
+        public ElaboradoRapidoIndexVm()
+        {
+            Tabs = new List<ElaboradoTabVm>();
+            Items = new List<ElaboradoRapidoItemVm>();
+        }
+
+        public bool EsDesarme { get; set; }
+        public string Titulo { get; set; }
+        public string Descripcion { get; set; }
+        public string Filtro { get; set; }
+        public bool MostrarTodos { get; set; }
+        public List<ElaboradoRapidoItemVm> Items { get; set; }
+        public List<ElaboradoTabVm> Tabs { get; set; }
+    }
+
+    public class ElaboradoRapidoItemVm
+    {
+        public int IdCorte { get; set; }
+        public long Codigo { get; set; }
+        public string Producto { get; set; }
+        public bool IngresoRapido { get; set; }
+        public bool TieneFormula { get; set; }
+        public string Receta { get; set; }
+    }
+
+    public class ElaboradoRapidoEditVm
+    {
+        public ElaboradoRapidoEditVm()
+        {
+            Tabs = new List<ElaboradoTabVm>();
+            Formula = new List<ElaboradoFormulaLineaVm>();
+            FechaEmbutido = DateTime.Now;
+        }
+
+        public int IdEmbutido { get; set; }
+        public bool EsEdicion { get; set; }
+        public bool EsDesarme { get; set; }
+        public bool PuedeAnular { get; set; }
+        public int IdSucursal { get; set; }
+        public DateTime FechaEmbutido { get; set; }
+        public string UsuarioNombre { get; set; }
+        public string Estado { get; set; }
+        public int IdElaborado { get; set; }
+        public long CodigoElaborado { get; set; }
+        public string Elaborado { get; set; }
+        public string Receta { get; set; }
+        public float Cantidad { get; set; }
+        public bool EsPesableElaborado { get; set; }
+        public List<ElaboradoFormulaLineaVm> Formula { get; set; }
         public List<ElaboradoTabVm> Tabs { get; set; }
     }
 
@@ -178,10 +238,16 @@ namespace Web.Models
         public string Creado { get; set; }
         public string Actualizado { get; set; }
         public bool EsDesarme { get; set; }
+        public bool EsIngresoRapido { get; set; }
     }
 
     public class ElaboradoDetalleVm
     {
+        public ElaboradoDetalleVm()
+        {
+            IngredientesUtilizados = new List<ElaboradoDetalleLineaVm>();
+        }
+
         public int Id { get; set; }
         public DateTime Fecha { get; set; }
         public string Sucursal { get; set; }
@@ -195,6 +261,16 @@ namespace Web.Models
         public DateTime? FechaCreacion { get; set; }
         public string UsuarioActualizacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
+        public bool EsIngresoRapido { get; set; }
+        public List<ElaboradoDetalleLineaVm> IngredientesUtilizados { get; set; }
+    }
+
+    public class ElaboradoDetalleLineaVm
+    {
+        public long Codigo { get; set; }
+        public string Producto { get; set; }
+        public float Kgs { get; set; }
+        public bool PesoBalanza { get; set; }
     }
 
     public class ElaboradoLineaResumenVm
@@ -209,6 +285,8 @@ namespace Web.Models
         public float Kgs { get; set; }
         public string Estado { get; set; }
         public string Observaciones { get; set; }
+        public bool EsDesarme { get; set; }
+        public bool EsIngresoRapido { get; set; }
     }
 
     public class ElaboradoFormulaResumenVm
@@ -225,6 +303,9 @@ namespace Web.Models
         public int IdFormula { get; set; }
         public long Codigo { get; set; }
         public string Elaborado { get; set; }
+        public bool EsPesableElaborado { get; set; }
+        public bool EsIngresoRapidoElaborado { get; set; }
+        public string EtiquetaValorFormula { get; set; }
         public string Receta { get; set; }
         public string Creado { get; set; }
         public string CreadoPor { get; set; }

@@ -165,9 +165,13 @@ namespace Web.Controllers
             }
             else
             {
+                var productoGenerico = oCorteN.ObtenerProductoGenerico();
                 model = new ElaboradoFormulaEditVm
                 {
                     UsuarioNombre = user.Nombre ?? "",
+                    EtiquetaValorFormula = "Porcentaje",
+                    CodigoProductoGenerico = productoGenerico != null ? productoGenerico.Codigo : 0,
+                    NombreProductoGenerico = productoGenerico != null ? (!string.IsNullOrWhiteSpace(productoGenerico.CorteDesc) ? productoGenerico.CorteDesc : productoGenerico.corte) : "",
                     Tabs = BuildTabs("Formulas")
                 };
             }
@@ -179,20 +183,82 @@ namespace Web.Controllers
 
         public ActionResult IngresoRapido()
         {
-            return View("~/Views/Elaborados/Placeholder.cshtml", CrearPlaceholder(
-                "Ingreso rapido",
-                "La base del modulo ya quedo preparada para esta seccion.",
-                "En la proxima fase se implementara como modal, tomando automaticamente el usuario logueado y reutilizando la logica de busqueda y balanza de Web."
-            ));
+            return VistaIngresoRapido(false);
         }
 
         public ActionResult Desarme()
         {
-            return View("~/Views/Elaborados/Placeholder.cshtml", CrearPlaceholder(
-                "Desarme de elaborado",
-                "Esta seccion quedo reservada dentro del modulo web para respetar la navegacion del WinForms.",
-                "La implementacion siguiente debe reutilizar el flujo de ingreso rapido con cantidades negativas y observacion de desarme, sin tocar la logica existente de stock."
-            ));
+            return VistaIngresoRapido(true);
+        }
+
+        public ActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false)
+        {
+            var user = Session["Usuario"] as Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
+            {
+                ViewBag.Seccion = "Elaborados";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            if (id > 0)
+            {
+                var embutido = oCorteN.findEmbutidoById(id);
+                if (embutido == null || embutido.IdEmbutido <= 0)
+                    return HttpNotFound("No se encontrÃ³ el elaborado.");
+
+                int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador))
+                {
+                    ViewBag.Seccion = "Elaborados";
+                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                }
+
+                var modelEdicion = CrearViewModelIngresoRapidoEdicion(embutido, user, esDesarme);
+                if (modelEdicion == null)
+                    return HttpNotFound("No se encontrÃ³ el elaborado.");
+
+                ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rÃ¡pido";
+                ViewBag.Seccion = "Elaborados";
+                ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
+                return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", modelEdicion);
+            }
+
+            var corte = oCorteN.findCorteById(idElaborado, false);
+            if (corte == null || corte.IdCorte <= 0)
+                return HttpNotFound("No se encontró el elaborado.");
+
+            var formula = oCorteN.findFormulaByID(0, corte.IdCorte);
+            var formulaItems = MapFormula(oCorteN.getFormulaEmbutido(corte.IdCorte) ?? new DataTable());
+            if (formulaItems.Count == 0)
+            {
+                TempData["ElaboradosSuccessMessage"] = "El producto seleccionado no tiene fórmula cargada para ingreso rápido.";
+                return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
+            }
+
+            var model = new ElaboradoRapidoEditVm
+            {
+                EsDesarme = esDesarme,
+                IdSucursal = user.IdSucursal > 0 ? user.IdSucursal : 0,
+                FechaEmbutido = DateTime.Now,
+                UsuarioNombre = user.Nombre ?? "",
+                IdElaborado = corte.IdCorte,
+                CodigoElaborado = corte.Codigo,
+                Elaborado = !string.IsNullOrWhiteSpace(corte.CorteDesc) ? corte.CorteDesc : corte.corte,
+                Receta = formula != null ? (formula.Receta ?? "") : "",
+                EsPesableElaborado = corte.Pesable,
+                Formula = formulaItems,
+                Tabs = BuildTabs(esDesarme ? "Desarme" : "IngresoRapido")
+            };
+
+            RecalcularFormulaRapida(model);
+
+            ViewBag.Title = esDesarme ? "Desarme de elaborado" : "Ingreso rápido";
+            ViewBag.Seccion = "Elaborados";
+            ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
+            return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", model);
         }
 
         public ActionResult Carga(int id = 0)
@@ -289,7 +355,8 @@ namespace Web.Controllers
                 nombre = !string.IsNullOrWhiteSpace(corte.CorteDesc) ? corte.CorteDesc : corte.corte,
                 tipo = corte.Tipo ?? "",
                 promedio = corte.Promedio,
-                ingresoRapido = corte.IngresoRapidoEmbutido
+                ingresoRapido = corte.IngresoRapidoEmbutido,
+                pesable = corte.Pesable
             }, JsonRequestBehavior.AllowGet);
         }
 
@@ -367,6 +434,7 @@ namespace Web.Controllers
                 if (model == null) model = new ElaboradoFormulaEditVm();
                 model.Tabs = BuildTabs("Formulas");
                 model.UsuarioNombre = user.Nombre ?? "";
+                PrepararMetadataFormulaModel(model);
                 RecalcularTotalesFormula(model);
                 ViewBag.Title = model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
                 ViewBag.Seccion = "Elaborados";
@@ -381,6 +449,7 @@ namespace Web.Controllers
                     ModelState.AddModelError("", "No se encontró el elaborado seleccionado.");
                     model.Tabs = BuildTabs("Formulas");
                     model.UsuarioNombre = user.Nombre ?? "";
+                    PrepararMetadataFormulaModel(model);
                     RecalcularTotalesFormula(model);
                     ViewBag.Title = model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
                     ViewBag.Seccion = "Elaborados";
@@ -393,6 +462,7 @@ namespace Web.Controllers
                     ModelState.AddModelError("", "El elaborado ya posee una fórmula. Modifique la existente.");
                     model.Tabs = BuildTabs("Formulas");
                     model.UsuarioNombre = user.Nombre ?? "";
+                    PrepararMetadataFormulaModel(model);
                     RecalcularTotalesFormula(model);
                     ViewBag.Title = model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
                     ViewBag.Seccion = "Elaborados";
@@ -406,7 +476,7 @@ namespace Web.Controllers
                 formula.CreadoPor = formulaActual != null ? formulaActual.CreadoPor : user;
                 formula.ActualizadoPor = formulaActual != null ? user : null;
 
-                var lineas = new List<Entidades.CortePorFormula>();
+                var lineasVisuales = new List<Entidades.CortePorFormula>();
                 foreach (var linea in model.Lineas ?? new List<ElaboradoFormulaEditLineaVm>())
                 {
                     var corte = oCorteN.findCorteById(linea.IdCorte, false);
@@ -415,13 +485,14 @@ namespace Web.Controllers
                         ModelState.AddModelError("", "No se encontró el ingrediente " + (linea.Producto ?? "") + ".");
                         model.Tabs = BuildTabs("Formulas");
                         model.UsuarioNombre = user.Nombre ?? "";
+                        PrepararMetadataFormulaModel(model);
                         RecalcularTotalesFormula(model);
                         ViewBag.Title = model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
                         ViewBag.Seccion = "Elaborados";
                         return View("~/Views/Elaborados/EditarFormula.cshtml", model);
                     }
 
-                    lineas.Add(new Entidades.CortePorFormula
+                    lineasVisuales.Add(new Entidades.CortePorFormula
                     {
                         Formula = formula,
                         CorteEnFormula = corte,
@@ -430,6 +501,7 @@ namespace Web.Controllers
                     });
                 }
 
+                var lineas = oCorteN.NormalizarFormulaElaborado(embutido, lineasVisuales);
                 formula.IdFormula = oCorteN.addOrEditFormula(formula, lineas);
                 TempData["ElaboradosSuccessMessage"] = model.IdFormula > 0
                     ? "La fórmula se guardó correctamente."
@@ -441,6 +513,7 @@ namespace Web.Controllers
                 ModelState.AddModelError("", "No se pudo guardar la fórmula. " + ex.Message);
                 model.Tabs = BuildTabs("Formulas");
                 model.UsuarioNombre = user.Nombre ?? "";
+                PrepararMetadataFormulaModel(model);
                 RecalcularTotalesFormula(model);
                 ViewBag.Title = model.EsEdicion ? "Modificar fórmula" : "Nueva fórmula";
                 ViewBag.Seccion = "Elaborados";
@@ -478,6 +551,99 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public JsonResult GuardarIngresoRapido(ElaboradoRapidoEditVm model)
+        {
+            try
+            {
+                var user = Session["Usuario"] as Usuario;
+                if (user == null)
+                    return Json(new { ok = false, mensaje = "Sesion invalida." });
+
+                string error = ValidarIngresoRapido(model);
+                if (!string.IsNullOrWhiteSpace(error))
+                    return Json(new { ok = false, mensaje = error });
+
+                Entidades.Embutido embutidoOriginal = null;
+                int idCreador = user.Id;
+                if (model.IdEmbutido > 0)
+                {
+                    embutidoOriginal = oCorteN.findEmbutidoById(model.IdEmbutido);
+                    if (embutidoOriginal == null || embutidoOriginal.IdEmbutido <= 0)
+                        return Json(new { ok = false, mensaje = "No se encontro el elaborado original a modificar." });
+
+                    if (embutidoOriginal.CreadoPor != null)
+                        idCreador = embutidoOriginal.CreadoPor.Id;
+                }
+
+                DateTime fechaPermisoRapido = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreador))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar este movimiento." });
+
+                var elaborado = oCorteN.findCorteById(model.IdElaborado, false);
+                if (elaborado == null || elaborado.IdCorte <= 0)
+                    return Json(new { ok = false, mensaje = "No se encontró el elaborado seleccionado." });
+
+                if (!elaborado.IngresoRapidoEmbutido)
+                    return Json(new { ok = false, mensaje = "El producto seleccionado no esta configurado para ingreso rapido." });
+
+                var formula = MapFormula(oCorteN.getFormulaEmbutido(model.IdElaborado) ?? new DataTable());
+                if (formula.Count == 0)
+                    return Json(new { ok = false, mensaje = "El elaborado no tiene fórmula cargada." });
+
+                model.Formula = formula;
+                RecalcularFormulaRapida(model);
+
+                if (embutidoOriginal != null)
+                {
+                    if (string.Equals(embutidoOriginal.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
+                        return Json(new { ok = false, mensaje = "El elaborado original ya se encuentra anulado." });
+
+                    embutidoOriginal.ActualizadoPor = user;
+                    oCorteN.anularEmbutido(embutidoOriginal);
+                }
+
+                var embutido = new Entidades.Embutido
+                {
+                    fechaEmbutido = model.FechaEmbutido,
+                    corte = elaborado,
+                    sucursal = new Sucursal { IdSucursal = model.IdSucursal },
+                    observaciones = model.EsDesarme ? "Desarme" : "",
+                    CreadoPor = user
+                };
+
+                embutido.idEmbutido = oCorteN.agregarEmbutido(embutido);
+
+                foreach (var item in model.Formula)
+                {
+                    var kg = item.Kgs;
+                    if (kg == 0f)
+                        continue;
+
+                    oCorteN.agregarCortePorEmbutido(new Entidades.CortePorEmbutido
+                    {
+                        Embutido = embutido,
+                        Corte = new Entidades.Corte { IdCorte = item.IdCorte },
+                        KgUtilizado = kg,
+                        PesoBalanza = false
+                    });
+                }
+
+                float cantidad = model.EsDesarme ? Math.Abs(model.Cantidad) : model.Cantidad;
+                string unidad = elaborado.Pesable ? "kgs" : "unidades";
+                TempData["ElaboradosSuccessMessage"] = model.EsDesarme
+                    ? "Se registró correctamente el desarme de " + FormatearCantidadMensaje(cantidad, elaborado.Pesable) + " " + unidad + " de " + (!string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte) + "."
+                    : "Se guardó correctamente " + FormatearCantidadMensaje(cantidad, elaborado.Pesable) + " " + unidad + " de " + (!string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte) + ".";
+
+                return Json(new { ok = true, redirectUrl = Url.Action("Index", "Elaborados") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult GuardarCarga(ElaboradoCargaVm model)
         {
             try
@@ -486,22 +652,41 @@ namespace Web.Controllers
                 if (user == null)
                     return Json(new { ok = false, mensaje = "Sesion invalida." });
 
-                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, model != null ? model.FechaEmbutido : DateTime.Today, user.Id))
-                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
-
                 if (model == null)
                     return Json(new { ok = false, mensaje = "No se recibieron datos del elaborado." });
-
-                if (model.IdEmbutido > 0)
-                    return Json(new { ok = false, mensaje = "La modificación del elaborado existente todavía no está habilitada en Web sin cambios adicionales de capa." });
 
                 string error = ValidarCarga(model);
                 if (!string.IsNullOrWhiteSpace(error))
                     return Json(new { ok = false, mensaje = error });
 
+                Entidades.Embutido embutidoOriginal = null;
+                int idCreador = user.Id;
+                if (model.IdEmbutido > 0)
+                {
+                    embutidoOriginal = oCorteN.findEmbutidoById(model.IdEmbutido);
+                    if (embutidoOriginal == null || embutidoOriginal.IdEmbutido <= 0)
+                        return Json(new { ok = false, mensaje = "No se encontro el elaborado original a modificar." });
+
+                    if (embutidoOriginal.CreadoPor != null)
+                        idCreador = embutidoOriginal.CreadoPor.Id;
+                }
+
+                DateTime fechaPermiso = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, fechaPermiso, idCreador))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
+
                 var corteElaborado = oCorteN.findCorteById(model.IdElaborado, false);
                 if (corteElaborado == null || corteElaborado.IdCorte <= 0)
                     return Json(new { ok = false, mensaje = "El elaborado seleccionado no es valido." });
+
+                if (embutidoOriginal != null)
+                {
+                    if (string.Equals(embutidoOriginal.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
+                        return Json(new { ok = false, mensaje = "El elaborado original ya se encuentra anulado." });
+
+                    embutidoOriginal.ActualizadoPor = user;
+                    oCorteN.anularEmbutido(embutidoOriginal);
+                }
 
                 var embutido = new Entidades.Embutido
                 {
@@ -571,7 +756,10 @@ namespace Web.Controllers
                     return Json(new { ok = false, mensaje = "No se encontró el elaborado." });
 
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
-                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador))
+                string permisoAnulacion = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
+                    ? Permisos.Elaborado.IngresoEmbutidoRapido
+                    : Permisos.Elaborado.IngresoEmbutido;
+                if (!PermisosHelper.TienePermiso(Session, permisoAnulacion, embutido.FechaEmbutido, idCreador))
                     return Json(new { ok = false, mensaje = "No tiene permisos para anular este elaborado." });
 
                 if (string.Equals(embutido.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
@@ -594,6 +782,35 @@ namespace Web.Controllers
             }
         }
 
+        private ActionResult VistaIngresoRapido(bool esDesarme)
+        {
+            var user = Session["Usuario"] as Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
+            {
+                ViewBag.Seccion = "Elaborados";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
+            var model = new ElaboradoRapidoIndexVm
+            {
+                EsDesarme = esDesarme,
+                Titulo = esDesarme ? "Desarme de elaborado" : "Ingreso rápido",
+                Descripcion = esDesarme
+                    ? "Seleccioná un elaborado con fórmula para registrar su desarme. La cantidad se descontará automáticamente junto con sus ingredientes."
+                    : "Seleccioná un elaborado con fórmula para ingresar solo la cantidad final y calcular automáticamente todos sus ingredientes.",
+                MostrarTodos = false,
+                Items = ObtenerItemsIngresoRapido(),
+                Tabs = BuildTabs(esDesarme ? "Desarme" : "IngresoRapido")
+            };
+
+            ViewBag.Title = model.Titulo;
+            ViewBag.Seccion = "Elaborados";
+            return View("~/Views/Elaborados/IngresoRapido.cshtml", model);
+        }
+
         private ElaboradoPlaceholderVm CrearPlaceholder(string titulo, string descripcion, string nota)
         {
             ViewBag.Title = titulo;
@@ -605,6 +822,71 @@ namespace Web.Controllers
                 Descripcion = descripcion,
                 Nota = nota,
                 Tabs = BuildTabs(ControllerContext.RouteData.Values["action"].ToString())
+            };
+        }
+
+        private List<ElaboradoRapidoItemVm> ObtenerItemsIngresoRapido()
+        {
+            var items = new List<ElaboradoRapidoItemVm>();
+            var ids = new HashSet<int>();
+            var dt = oCorteN.getListaElegirEmbutido() ?? new DataTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int idCorte = ToInt(row, "idCorteEmbutido", "IdCorteEmbutido", "idCorte", "IdCorte");
+                if (idCorte <= 0 || ids.Contains(idCorte))
+                    continue;
+
+                var corte = oCorteN.findCorteById(idCorte, false);
+                var item = CrearItemIngresoRapido(corte);
+                if (item == null)
+                    continue;
+
+                ids.Add(idCorte);
+                items.Add(item);
+            }
+
+            foreach (var corte in oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+            {
+                if (corte == null || corte.IdCorte <= 0 || ids.Contains(corte.IdCorte))
+                    continue;
+
+                var item = CrearItemIngresoRapido(corte);
+                if (item == null)
+                    continue;
+
+                ids.Add(corte.IdCorte);
+                items.Add(item);
+            }
+
+            return items
+                .OrderByDescending(x => x.IngresoRapido)
+                .ThenBy(x => x.Codigo)
+                .ThenBy(x => x.Producto)
+                .ToList();
+        }
+
+        private ElaboradoRapidoItemVm CrearItemIngresoRapido(Entidades.Corte corte)
+        {
+            if (corte == null || corte.IdCorte <= 0)
+                return null;
+
+            if (!corte.IngresoRapidoEmbutido)
+                return null;
+
+            var formula = oCorteN.findFormulaByID(0, corte.IdCorte);
+            var tieneFormula = formula != null && formula.IdFormula > 0;
+            if (!tieneFormula)
+                return null;
+
+            return new ElaboradoRapidoItemVm
+            {
+                IdCorte = corte.IdCorte,
+                Codigo = corte.Codigo,
+                Producto = !string.IsNullOrWhiteSpace(corte.CorteDesc) ? corte.CorteDesc : corte.corte,
+                IngresoRapido = corte.IngresoRapidoEmbutido,
+                TieneFormula = true,
+                Receta = formula.Receta ?? ""
             };
         }
 
@@ -630,12 +912,14 @@ namespace Web.Controllers
                     Estado = ToString(row, "Estado", "estado"),
                     Creado = ToDateString(row, "Creado", "creado"),
                     Actualizado = ToDateString(row, "Actualizado", "actualizado"),
+                    EsIngresoRapido = false,
                     EsDesarme = !string.IsNullOrWhiteSpace(observaciones)
                         && observaciones.ToLowerInvariant().Contains("desarme")
                         && kgs < 0
                 });
             }
 
+            MarcarTiposElaborado(lista);
             return lista.OrderByDescending(x => x.Fecha).ToList();
         }
 
@@ -657,10 +941,13 @@ namespace Web.Controllers
                     Ingrediente = ToString(row, "Corte", "Ingrediente", "corte"),
                     Kgs = ToFloat(row, "Kgs", "kgs"),
                     Estado = ToString(row, "Estado", "estado"),
-                    Observaciones = ToString(row, "Observaciones", "observaciones")
+                    Observaciones = ToString(row, "Observaciones", "observaciones"),
+                    EsDesarme = false,
+                    EsIngresoRapido = false
                 });
             }
 
+            MarcarTiposLineas(lista);
             return lista.OrderByDescending(x => x.Fecha).ToList();
         }
 
@@ -715,8 +1002,23 @@ namespace Web.Controllers
                     UsuarioCreacion = embutido.CreadoPor != null ? embutido.CreadoPor.Nombre : "",
                     FechaCreacion = embutido.Creado,
                     UsuarioActualizacion = embutido.ActualizadoPor != null ? embutido.ActualizadoPor.Nombre : "",
-                    FechaActualizacion = embutido.Actualizado
+                    FechaActualizacion = embutido.Actualizado,
+                    EsIngresoRapido = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
                 };
+
+                foreach (var linea in embutido.CortesEnEmbutido ?? new List<Entidades.CortePorEmbutido>())
+                {
+                    if (linea == null || linea.Corte == null)
+                        continue;
+
+                    detalles[idEmbutido].IngredientesUtilizados.Add(new ElaboradoDetalleLineaVm
+                    {
+                        Codigo = linea.Corte.Codigo,
+                        Producto = !string.IsNullOrWhiteSpace(linea.Corte.CorteDesc) ? linea.Corte.CorteDesc : linea.Corte.corte,
+                        Kgs = linea.KgUtilizado,
+                        PesoBalanza = linea.PesoBalanza
+                    });
+                }
             }
 
             return detalles;
@@ -743,6 +1045,9 @@ namespace Web.Controllers
                     IdFormula = formula.IdFormula,
                     Codigo = formula.Embutido != null ? formula.Embutido.Codigo : 0,
                     Elaborado = formula.Embutido != null ? formula.Embutido.CorteDesc : "",
+                    EsPesableElaborado = formula.Embutido != null && formula.Embutido.Pesable,
+                    EsIngresoRapidoElaborado = formula.Embutido != null && formula.Embutido.IngresoRapidoEmbutido,
+                    EtiquetaValorFormula = formula.Embutido != null && !formula.Embutido.Pesable ? "Unidad" : "Porcentaje",
                     Receta = formula.Receta ?? "",
                     Creado = FormatearFechaHora(formula.Creado),
                     CreadoPor = formula.CreadoPor != null ? formula.CreadoPor.Nombre : "-",
@@ -760,11 +1065,16 @@ namespace Web.Controllers
                         IdCorte = item.CorteEnFormula.IdCorte,
                         Codigo = item.CorteEnFormula.Codigo,
                         Producto = !string.IsNullOrWhiteSpace(item.CorteEnFormula.CorteDesc) ? item.CorteEnFormula.CorteDesc : item.CorteEnFormula.corte,
-                        Porcentaje = item.Porcentaje,
-                        AgregarAuto = item.AgregarAuto
+                        Porcentaje = oCorteN.ConvertirFormulaParaVisualizacion(formula.Embutido, item.Porcentaje),
+                        AgregarAuto = item.AgregarAuto,
+                        EsAjusteFormula = EsProductoGenerico(item.CorteEnFormula)
                     });
                 }
 
+                detalle.Lineas = detalle.Lineas
+                    .OrderByDescending(x => x.EsAjusteFormula)
+                    .ThenBy(x => x.Codigo)
+                    .ToList();
                 detalles[idFormula] = detalle;
             }
 
@@ -777,10 +1087,10 @@ namespace Web.Controllers
             {
                 new ElaboradoTabVm { Titulo = "Elaborados", Action = "Index", Activo = string.Equals(activeAction, "Index", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Lineas de elaborado", Action = "Lineas", Activo = string.Equals(activeAction, "Lineas", StringComparison.OrdinalIgnoreCase) },
+                new ElaboradoTabVm { Titulo = "Carga / ingreso", Action = "Carga", Activo = string.Equals(activeAction, "Carga", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Ingreso rapido", Action = "IngresoRapido", Activo = string.Equals(activeAction, "IngresoRapido", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Formulas", Action = "Formulas", Activo = string.Equals(activeAction, "Formulas", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Desarme de elaborado", Action = "Desarme", Activo = string.Equals(activeAction, "Desarme", StringComparison.OrdinalIgnoreCase) },
-                new ElaboradoTabVm { Titulo = "Carga / ingreso", Action = "Carga", Activo = string.Equals(activeAction, "Carga", StringComparison.OrdinalIgnoreCase) }
             };
         }
 
@@ -794,7 +1104,8 @@ namespace Web.Controllers
                 precio = p.precioKg,
                 tipo = p.Tipo ?? "",
                 promedio = p.Promedio,
-                ingresoRapido = p.IngresoRapidoEmbutido
+                ingresoRapido = p.IngresoRapidoEmbutido,
+                pesable = p.Pesable
             };
         }
 
@@ -808,6 +1119,9 @@ namespace Web.Controllers
                 IdElaborado = formula.Embutido != null ? formula.Embutido.IdCorte : 0,
                 CodigoElaborado = formula.Embutido != null ? formula.Embutido.Codigo : 0,
                 Elaborado = formula.Embutido != null ? formula.Embutido.CorteDesc : "",
+                EsPesableElaborado = formula.Embutido != null && formula.Embutido.Pesable,
+                EsIngresoRapidoElaborado = formula.Embutido != null && formula.Embutido.IngresoRapidoEmbutido,
+                EtiquetaValorFormula = formula.Embutido != null && !formula.Embutido.Pesable ? "Unidad" : "Porcentaje",
                 Receta = formula.Receta ?? "",
                 UsuarioNombre = user != null ? (user.Nombre ?? "") : "",
                 Creado = FormatearFechaHora(formula.Creado),
@@ -827,11 +1141,17 @@ namespace Web.Controllers
                     IdCorte = item.CorteEnFormula.IdCorte,
                     Codigo = item.CorteEnFormula.Codigo,
                     Producto = !string.IsNullOrWhiteSpace(item.CorteEnFormula.CorteDesc) ? item.CorteEnFormula.CorteDesc : item.CorteEnFormula.corte,
-                    Porcentaje = item.Porcentaje,
-                    AgregarAuto = item.AgregarAuto
+                    Porcentaje = oCorteN.ConvertirFormulaParaVisualizacion(formula.Embutido, item.Porcentaje),
+                    AgregarAuto = item.AgregarAuto,
+                    EsAjusteFormula = EsProductoGenerico(item.CorteEnFormula)
                 });
             }
 
+            AplicarProductoGenericoFormula(model);
+            model.Lineas = model.Lineas
+                .OrderByDescending(x => x.EsAjusteFormula)
+                .ThenBy(x => x.Codigo)
+                .ToList();
             RecalcularTotalesFormula(model);
             return model;
         }
@@ -842,7 +1162,7 @@ namespace Web.Controllers
             {
                 IdEmbutido = embutido.IdEmbutido,
                 EsEdicion = true,
-                PermiteGuardarEdicion = false,
+                PermiteGuardarEdicion = true,
                 PuedeAnular = !string.Equals(embutido.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase),
                 EsPesableElaborado = embutido.Corte != null && embutido.Corte.Pesable,
                 IdSucursal = embutido.Sucursal != null ? embutido.Sucursal.IdSucursal : (user != null ? user.IdSucursal : 0),
@@ -891,6 +1211,83 @@ namespace Web.Controllers
             return model;
         }
 
+        private ElaboradoRapidoEditVm CrearViewModelIngresoRapidoEdicion(Entidades.Embutido embutido, Usuario user, bool esDesarmeSolicitado)
+        {
+            if (embutido == null || embutido.IdEmbutido <= 0 || embutido.Corte == null || !embutido.Corte.IngresoRapidoEmbutido)
+                return null;
+
+            bool esDesarme = esDesarmeSolicitado || (!string.IsNullOrWhiteSpace(embutido.Observaciones) && embutido.Observaciones.IndexOf("desarme", StringComparison.OrdinalIgnoreCase) >= 0);
+            var formula = oCorteN.findFormulaByID(0, embutido.Corte.IdCorte);
+            var formulaItems = MapFormula(oCorteN.getFormulaEmbutido(embutido.Corte.IdCorte) ?? new DataTable());
+            if (formulaItems.Count == 0)
+                return null;
+
+            var model = new ElaboradoRapidoEditVm
+            {
+                IdEmbutido = embutido.IdEmbutido,
+                EsEdicion = true,
+                EsDesarme = esDesarme,
+                PuedeAnular = !string.Equals(embutido.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase),
+                IdSucursal = embutido.Sucursal != null ? embutido.Sucursal.IdSucursal : (user != null ? user.IdSucursal : 0),
+                FechaEmbutido = embutido.FechaEmbutido,
+                UsuarioNombre = user != null ? (user.Nombre ?? "") : "",
+                Estado = embutido.Estado ?? "",
+                IdElaborado = embutido.Corte.IdCorte,
+                CodigoElaborado = embutido.Corte.Codigo,
+                Elaborado = !string.IsNullOrWhiteSpace(embutido.Corte.CorteDesc) ? embutido.Corte.CorteDesc : embutido.Corte.corte,
+                Receta = formula != null ? (formula.Receta ?? "") : "",
+                EsPesableElaborado = embutido.Corte.Pesable,
+                Formula = formulaItems,
+                Tabs = BuildTabs(esDesarme ? "Desarme" : "IngresoRapido")
+            };
+
+            model.Cantidad = CalcularCantidadIngresoRapido(model.Formula, embutido.CortesEnEmbutido);
+            RecalcularFormulaRapida(model);
+            return model;
+        }
+
+        private void AplicarProductoGenericoFormula(ElaboradoFormulaEditVm model)
+        {
+            var productoGenerico = oCorteN.ObtenerProductoGenerico();
+            model.CodigoProductoGenerico = productoGenerico != null ? productoGenerico.Codigo : 0;
+            model.NombreProductoGenerico = productoGenerico != null
+                ? (!string.IsNullOrWhiteSpace(productoGenerico.CorteDesc) ? productoGenerico.CorteDesc : productoGenerico.corte)
+                : "";
+        }
+
+        private bool EsProductoGenerico(Entidades.Corte corte)
+        {
+            if (corte == null || corte.IdCorte <= 0)
+                return false;
+
+            var productoGenerico = oCorteN.ObtenerProductoGenerico();
+            return productoGenerico != null && productoGenerico.IdCorte == corte.IdCorte;
+        }
+
+        private void PrepararMetadataFormulaModel(ElaboradoFormulaEditVm model)
+        {
+            if (model == null)
+                return;
+
+            AplicarProductoGenericoFormula(model);
+
+            if (model.IdElaborado <= 0)
+            {
+                model.EtiquetaValorFormula = string.IsNullOrWhiteSpace(model.EtiquetaValorFormula) ? "Porcentaje" : model.EtiquetaValorFormula;
+                return;
+            }
+
+            var elaborado = oCorteN.findCorteById(model.IdElaborado, false);
+            if (elaborado == null || elaborado.IdCorte <= 0)
+                return;
+
+            model.CodigoElaborado = elaborado.Codigo;
+            model.Elaborado = !string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte;
+            model.EsPesableElaborado = elaborado.Pesable;
+            model.EsIngresoRapidoElaborado = elaborado.IngresoRapidoEmbutido;
+            model.EtiquetaValorFormula = elaborado.Pesable ? "Porcentaje" : "Unidad";
+        }
+
         private List<ElaboradoFormulaLineaVm> MapFormula(DataTable dtFormula)
         {
             var items = new List<ElaboradoFormulaLineaVm>();
@@ -937,6 +1334,78 @@ namespace Web.Controllers
             return "";
         }
 
+        private string ValidarIngresoRapido(ElaboradoRapidoEditVm model)
+        {
+            if (model == null)
+                return "No se recibieron datos del ingreso rápido.";
+
+            if (model.IdSucursal <= 0)
+                return "Debe seleccionar una sucursal.";
+
+            if (model.IdElaborado <= 0)
+                return "Debe seleccionar el elaborado.";
+
+            if (Math.Abs(model.Cantidad) <= 0f)
+                return "Debe ingresar una cantidad mayor a cero.";
+
+            return "";
+        }
+
+        private void MarcarTiposElaborado(List<ElaboradoResumenVm> items)
+        {
+            var cache = new Dictionary<int, Entidades.Embutido>();
+            foreach (var item in items ?? new List<ElaboradoResumenVm>())
+            {
+                var embutido = ObtenerEmbutidoCacheado(item.Id, cache);
+                item.EsIngresoRapido = embutido != null && embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido;
+            }
+        }
+
+        private void MarcarTiposLineas(List<ElaboradoLineaResumenVm> items)
+        {
+            var cache = new Dictionary<int, Entidades.Embutido>();
+            foreach (var item in items ?? new List<ElaboradoLineaResumenVm>())
+            {
+                var embutido = ObtenerEmbutidoCacheado(item.Id, cache);
+                item.EsIngresoRapido = embutido != null && embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido;
+                item.EsDesarme = !string.IsNullOrWhiteSpace(item.Observaciones)
+                    && item.Observaciones.IndexOf("desarme", StringComparison.OrdinalIgnoreCase) >= 0
+                    && item.Kgs < 0;
+            }
+        }
+
+        private Entidades.Embutido ObtenerEmbutidoCacheado(int idEmbutido, Dictionary<int, Entidades.Embutido> cache)
+        {
+            if (idEmbutido <= 0)
+                return null;
+
+            if (cache.ContainsKey(idEmbutido))
+                return cache[idEmbutido];
+
+            var embutido = oCorteN.findEmbutidoById(idEmbutido);
+            cache[idEmbutido] = embutido;
+            return embutido;
+        }
+
+        private float CalcularCantidadIngresoRapido(List<ElaboradoFormulaLineaVm> formula, List<Entidades.CortePorEmbutido> lineas)
+        {
+            foreach (var itemFormula in formula ?? new List<ElaboradoFormulaLineaVm>())
+            {
+                if (itemFormula == null || itemFormula.IdCorte <= 0 || itemFormula.Porcentaje == 0f)
+                    continue;
+
+                var linea = (lineas ?? new List<Entidades.CortePorEmbutido>())
+                    .FirstOrDefault(x => x != null && x.Corte != null && x.Corte.IdCorte == itemFormula.IdCorte && x.KgUtilizado != 0f);
+
+                if (linea == null)
+                    continue;
+
+                return (float)Math.Round(Math.Abs((linea.KgUtilizado * 100f) / itemFormula.Porcentaje), 3);
+            }
+
+            return 0f;
+        }
+
         private string ValidarFormula(ElaboradoFormulaEditVm model)
         {
             if (model == null)
@@ -959,6 +1428,21 @@ namespace Web.Controllers
             }
 
             return "";
+        }
+
+        private static void RecalcularFormulaRapida(ElaboradoRapidoEditVm model)
+        {
+            if (model == null)
+                return;
+
+            float cantidad = Math.Abs(model.Cantidad);
+            if (model.EsDesarme)
+                cantidad *= -1f;
+
+            foreach (var item in model.Formula ?? new List<ElaboradoFormulaLineaVm>())
+            {
+                item.Kgs = (float)Math.Round(0.01f * cantidad * item.Porcentaje, 3);
+            }
         }
 
         private List<Entidades.CortePorEmbutido> BuildIngredientesAutomaticos(ElaboradoCargaVm model, Entidades.Embutido embutido)
@@ -1132,10 +1616,15 @@ namespace Web.Controllers
             model.TotalPorcentaje = 0f;
             foreach (var linea in model.Lineas ?? new List<ElaboradoFormulaEditLineaVm>())
             {
+                if (linea.EsAjusteFormula)
+                    continue;
+
                 model.TotalPorcentaje += linea.Porcentaje;
             }
 
-            model.TotalUnidades = model.TotalPorcentaje / 100f;
+            model.TotalUnidades = model.EsPesableElaborado
+                ? (model.TotalPorcentaje / 100f)
+                : model.TotalPorcentaje;
         }
 
         private float CalcularCantidadRegistrada(ElaboradoCargaVm model, Entidades.Corte corteElaborado)

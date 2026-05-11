@@ -1875,6 +1875,7 @@
     <Content Include="Scripts\app\stock.js" />
     <Content Include="Scripts\app\elaborados.js" />
     <Content Include="Scripts\app\elaborados-carga.js" />
+    <Content Include="Scripts\app\elaborados-rapido.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js.map" />
@@ -2153,7 +2154,9 @@
     <Content Include="Views\Elaborados\_TablaElaborados.cshtml" />
     <Content Include="Views\Elaborados\_Tabs.cshtml" />
     <Content Include="Views\Elaborados\EditarFormula.cshtml" />
+    <Content Include="Views\Elaborados\EditarIngresoRapido.cshtml" />
     <Content Include="Views\Elaborados\Formulas.cshtml" />
+    <Content Include="Views\Elaborados\IngresoRapido.cshtml" />
     <Content Include="Views\Elaborados\Index.cshtml" />
     <Content Include="Views\Elaborados\Lineas.cshtml" />
     <Content Include="Views\Elaborados\Placeholder.cshtml" />
