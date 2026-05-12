@@ -21,7 +21,30 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>CarniSys web - Dashboard</title>
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem("carnisys-theme");
+                if (mode === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    <style>
+        html, body {
+            min-height: 100%;
+        }
+
+        html.dark-mode,
+        html.dark-mode body {
+            background: #0f1724 !important;
+            color: #ecf2ff;
+        }
+    </style>
+
+    <title>CarniSys - Dashboard</title>
 
     <!-- Custom fonts for this template-->
     <!--<link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -30,7 +53,8 @@
     <!-- Custom styles for this template-->
     <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" type="text/css" />
     <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
-    <link href="@Url.Content("~/Content/css/custom.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/css/custom.css?v=2")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/css/ui-refresh.css?v=5")" rel="stylesheet" />
     <link rel="manifest" href="@Url.Content("~/manifest.json")" />
     <meta name="theme-color" content="#0d6efd" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -73,7 +97,7 @@
 
 </head>
 
-<body id="page-top">
+<body id="page-top" class="app-shell">
 
     <!-- Page Wrapper -->
     <div id="wrapper">
@@ -84,10 +108,13 @@
             <!-- Sidebar - Brand -->
             <li class="nav-item">
                 <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
-                    <div class="sidebar-brand-icon rotate-n-15">
-                        <i class="fas fa-laugh-wink"></i>
+                    <div class="sidebar-brand-icon sidebar-brand-mark">
+                        <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                            <path d="M50 6 L93 92 H79 L50 34 L21 92 H7 Z" fill="#35479b"></path>
+                            <path d="M50 25 L78 81 H67 L50 47 L33 81 H69 L73 89 H17 L21 81 Z" fill="#e19143"></path>
+                        </svg>
                     </div>
-                    <div class="sidebar-brand-text mx-3">CarniSys <sup>web</sup></div>
+                    <div class="sidebar-brand-text mx-3">CarniSys</div>
                 </a>
             </li>
 
@@ -258,12 +285,22 @@
                     </button>
 
                     <!-- Título de la sección (IZQUIERDA) -->
-                    <span class="navbar-text text-dark h5 mr-3" style="font-weight: bold;">
+                    <span class="navbar-text text-dark h5 mr-3 page-section-title" style="font-weight: bold;">
                         @ViewBag.Title
                     </span>
 
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
+                        <li class="nav-item no-arrow d-flex align-items-center">
+                            <a class="nav-link topbar-icon-btn"
+                               href="#"
+                               id="btnToggleTheme"
+                               role="button"
+                               title="Activar modo oscuro"
+                               aria-label="Cambiar tema">
+                                <i id="icoTheme" class="fas fa-moon"></i>
+                            </a>
+                        </li>
 
                         <!-- Nav Item - Search Dropdown (Visible Only XS) -->
                         <li class="nav-item dropdown no-arrow d-sm-none">
@@ -438,6 +475,52 @@
 
 
     @RenderSection("Scripts", required: false)
+
+    <script>
+        (function () {
+            const STORAGE_KEY = "carnisys-theme";
+
+            function setTheme(mode) {
+                const isDark = mode === "dark";
+                document.documentElement.classList.toggle("dark-mode", isDark);
+                document.body.classList.toggle("dark-mode", isDark);
+
+                var btn = document.getElementById("btnToggleTheme");
+                var ico = document.getElementById("icoTheme");
+                if (btn && ico) {
+                    ico.className = isDark ? "fas fa-sun" : "fas fa-moon";
+                    btn.title = isDark ? "Activar modo claro" : "Activar modo oscuro";
+                    btn.setAttribute("aria-label", btn.title);
+                }
+
+                try {
+                    localStorage.setItem(STORAGE_KEY, mode);
+                    localStorage.setItem("darkMode", isDark ? "true" : "false");
+                } catch (e) { }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                var saved = "light";
+                try {
+                    saved = localStorage.getItem(STORAGE_KEY) || (localStorage.getItem("darkMode") === "true" ? "dark" : "light");
+                } catch (e) { }
+
+                setTheme(saved);
+
+                var btn = document.getElementById("btnToggleTheme");
+                if (btn) {
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        var current = "light";
+                        try {
+                            current = localStorage.getItem(STORAGE_KEY) || (document.body.classList.contains("dark-mode") ? "dark" : "light");
+                        } catch (err) { }
+                        setTheme(current === "dark" ? "light" : "dark");
+                    });
+                }
+            });
+        })();
+    </script>
 
     @*CARTEL ADVERTENCIA AL SALIR*@
     <script>

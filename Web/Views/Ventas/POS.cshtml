@@ -1,7 +1,7 @@
 ﻿@model Entidades.Venta
 
 @{
-    ViewBag.Title = "CarniSys web | Punto de Venta";
+    ViewBag.Title = "CarniSys | Punto de Venta";
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
@@ -178,8 +178,8 @@
                                     Venta restaurada. Debe presionar <strong>Cancelar Venta</strong> para salir.
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h3 class="m-0 pos-total-label">Total</h3>
-                                    <h1 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h1>
+                                    <h2 class="m-0 pos-total-label">Total</h2>
+                                    <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
                                 </div>
                                 <div id="posVentaResumen" class="pos-sale-summary text-muted">
                                     Sin productos
@@ -1551,9 +1551,30 @@ else
         volverDesdeSoloFormaPago();
     });
     aplicarModoSoloFormaPago();
+
+    function limpiarAutoAperturaDetallePOS() {
+        window.POSModo = window.POSModo || {};
+        window.POSModo.abrirDetalleVentaId = 0;
+
+        if (!window.history || typeof window.history.replaceState !== "function" || !window.URL) {
+            return;
+        }
+
+        try {
+            var urlActual = new URL(window.location.href);
+            urlActual.searchParams.delete("abrirDetalleVentaId");
+            urlActual.searchParams.delete("returnUrlDetalle");
+            window.history.replaceState({}, document.title, urlActual.pathname + urlActual.search + urlActual.hash);
+        } catch (e) { }
+    }
+
     if (!soloFormaPago && !esEdicionVenta && (window.POSModo?.abrirDetalleVentaId || 0) > 0) {
+        var detalleVentaAutoAbrirId = window.POSModo.abrirDetalleVentaId;
+        var detalleVentaReturnUrl = window.POSModo?.returnUrlDetalle || "";
+        limpiarAutoAperturaDetallePOS();
+
         setTimeout(function () {
-            window.POSVentas?.abrirDetalle?.(window.POSModo.abrirDetalleVentaId, window.POSModo?.returnUrlDetalle || "");
+            window.POSVentas?.abrirDetalle?.(detalleVentaAutoAbrirId, detalleVentaReturnUrl);
         }, 250);
     }
 
@@ -2231,6 +2252,86 @@ else
         min-height: 44px;
     }
 
+    .pos-cliente .form-control,
+    #razonSocial,
+    #fechaVentaEditable {
+        background: #f1f3f5 !important;
+        border: 1px solid #d6dbe1 !important;
+        color: #334155 !important;
+        box-shadow: none !important;
+    }
+
+    .pos-cliente .form-control[readonly],
+    #razonSocial[readonly] {
+        background: #eef1f4 !important;
+        color: #3f4b59 !important;
+    }
+
+    .pos-cliente .input-group-append .btn {
+        border-color: #cfd6de;
+        box-shadow: none;
+    }
+
+    #btnBuscarPersona {
+        background: #61758a;
+        border-color: #586b7e;
+        color: #fff;
+    }
+
+    #btnBuscarPersona:hover {
+        background: #55687a;
+        border-color: #4d6071;
+    }
+
+    #btnConsumidorFinal {
+        background: #e7ebf0;
+        border-color: #cfd6de;
+        color: #425466;
+    }
+
+    #btnConsumidorFinal:hover {
+        background: #dce3ea;
+        border-color: #bcc7d2;
+        color: #334155;
+    }
+
+    html.dark-mode .pos-cliente .form-control,
+    html.dark-mode #razonSocial,
+    html.dark-mode #fechaVentaEditable {
+        background: #1a2332 !important;
+        border-color: rgba(255,255,255,.12) !important;
+        color: rgba(255,255,255,.88) !important;
+    }
+
+    html.dark-mode .pos-cliente .form-control[readonly],
+    html.dark-mode #razonSocial[readonly] {
+        background: #18212f !important;
+        color: rgba(255,255,255,.82) !important;
+    }
+
+    html.dark-mode #btnBuscarPersona {
+        background: #31465f;
+        border-color: #3a526d;
+        color: #eef4fb;
+    }
+
+    html.dark-mode #btnBuscarPersona:hover {
+        background: #39526e;
+        border-color: #44607d;
+    }
+
+    html.dark-mode #btnConsumidorFinal {
+        background: #273140;
+        border-color: #374456;
+        color: #dbe5f0;
+    }
+
+    html.dark-mode #btnConsumidorFinal:hover {
+        background: #2e394a;
+        border-color: #435163;
+        color: #f2f6fa;
+    }
+
     @@media (min-width: 992px) {
         .pos-meta {
             min-width: 0;
@@ -2345,10 +2446,14 @@ else
 
     .pos-total-label {
         color: #adb5bd;
+        font-size: 3.6rem;
+        line-height: 1;
     }
 
     .pos-total-value {
         color: #4a6fa5;
+        font-size: 3.6rem;
+        line-height: 1;
     }
 
     html.dark-mode .pos-total-value {
@@ -2357,7 +2462,7 @@ else
 
     @@media (min-width: 1200px) {
         .pos-total-label {
-            font-size: 1.1rem;
+            font-size: 3.6rem;
         }
 
         .pos-total-value {
