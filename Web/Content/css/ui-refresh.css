@@ -1,0 +1,795 @@
+body.app-shell {
+    --ui-bg: #f4f5f7;
+    --ui-surface: #ffffff;
+    --ui-surface-alt: #f3f4f6;
+    --ui-surface-strong: #e9edf2;
+    --ui-text: #1f2937;
+    --ui-text-soft: #5f6772;
+    --ui-text-muted: #7a838d;
+    --ui-border: #d7dce3;
+    --ui-border-strong: #c8d0d9;
+    --ui-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    --ui-shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.06);
+    --ui-primary: #2d5b8f;
+    --ui-primary-soft: rgba(45, 91, 143, 0.12);
+    --ui-success-soft: rgba(22, 163, 74, 0.12);
+    --ui-warning-soft: rgba(245, 158, 11, 0.14);
+    --ui-danger-soft: rgba(177, 79, 54, 0.12);
+    --ui-info-soft: rgba(56, 116, 155, 0.12);
+    --ui-table-head: #eceff3;
+    --ui-table-hover: #f8fafb;
+    --ui-input-bg: #ffffff;
+    --ui-input-disabled: #eceff3;
+    --ui-topbar-bg: rgba(255, 255, 255, 0.92);
+    --ui-sidebar-start: #3a4e67;
+    --ui-sidebar-end: #243446;
+    --ui-sidebar-text: rgba(255, 255, 255, 0.88);
+    --ui-sidebar-text-strong: #ffffff;
+    --ui-sidebar-hover: rgba(255, 255, 255, 0.12);
+    --ui-alert-success-bg: #edfdf3;
+    --ui-alert-success-border: #b7efca;
+    --ui-alert-success-text: #18613a;
+    --ui-alert-warning-bg: #fff8e8;
+    --ui-alert-warning-border: #f6dd9a;
+    --ui-alert-warning-text: #8a5a08;
+    --ui-alert-danger-bg: #fbf1ee;
+    --ui-alert-danger-border: #e6c1b5;
+    --ui-alert-danger-text: #8f402d;
+    --ui-alert-info-bg: #f2f5f7;
+    --ui-alert-info-border: #c8d1da;
+    --ui-alert-info-text: #405867;
+    background: var(--ui-bg);
+    color: var(--ui-text);
+}
+
+html.dark-mode body.app-shell,
+body.app-shell.dark-mode {
+    --ui-bg: #0f1724;
+    --ui-surface: #182232;
+    --ui-surface-alt: #1d293a;
+    --ui-surface-strong: #233247;
+    --ui-text: #ecf2ff;
+    --ui-text-soft: #c5d0df;
+    --ui-text-muted: #97a7bd;
+    --ui-border: #314155;
+    --ui-border-strong: #3d5168;
+    --ui-shadow: 0 22px 46px rgba(2, 6, 23, 0.45);
+    --ui-shadow-soft: 0 10px 24px rgba(2, 6, 23, 0.32);
+    --ui-primary: #73a8ff;
+    --ui-primary-soft: rgba(115, 168, 255, 0.16);
+    --ui-success-soft: rgba(74, 222, 128, 0.12);
+    --ui-warning-soft: rgba(251, 191, 36, 0.14);
+    --ui-danger-soft: rgba(248, 113, 113, 0.14);
+    --ui-info-soft: rgba(103, 232, 249, 0.14);
+    --ui-table-head: #223144;
+    --ui-table-hover: #1f2d41;
+    --ui-input-bg: #132032;
+    --ui-input-disabled: #223044;
+    --ui-topbar-bg: rgba(24, 34, 50, 0.9);
+    --ui-sidebar-start: #0d1f44;
+    --ui-sidebar-end: #0b1730;
+    --ui-sidebar-text: rgba(236, 242, 255, 0.82);
+    --ui-sidebar-text-strong: #f8fbff;
+    --ui-sidebar-hover: rgba(115, 168, 255, 0.16);
+    --ui-alert-success-bg: #0f2f21;
+    --ui-alert-success-border: #1f6b47;
+    --ui-alert-success-text: #bcf4d1;
+    --ui-alert-warning-bg: #39290a;
+    --ui-alert-warning-border: #7d5a12;
+    --ui-alert-warning-text: #fee7a1;
+    --ui-alert-danger-bg: #3b151c;
+    --ui-alert-danger-border: #7d2a36;
+    --ui-alert-danger-text: #ffd0d6;
+    --ui-alert-info-bg: #0d2b39;
+    --ui-alert-info-border: #1d667f;
+    --ui-alert-info-text: #c4efff;
+}
+
+body.app-shell,
+body.app-shell #wrapper,
+body.app-shell #content-wrapper {
+    background: var(--ui-bg);
+}
+
+body.app-shell #content-wrapper,
+body.app-shell #content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+body.app-shell .container-fluid {
+    max-width: 98%;
+    margin: 0 auto;
+}
+
+body.app-shell #content {
+    background:
+        radial-gradient(circle at top right, rgba(124, 138, 156, 0.06), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 35%),
+        var(--ui-bg);
+}
+
+body.app-shell .topbar {
+    background: var(--ui-topbar-bg) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--ui-border);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
+}
+
+body.app-shell .navbar-text,
+body.app-shell .topbar .text-dark,
+body.app-shell .topbar .text-gray-600 {
+    color: var(--ui-text) !important;
+}
+
+body.app-shell .topbar .dropdown-menu {
+    border: 1px solid var(--ui-border);
+    box-shadow: var(--ui-shadow-soft);
+}
+
+body.app-shell .sidebar {
+    background-image: linear-gradient(180deg, var(--ui-sidebar-start) 0%, var(--ui-sidebar-end) 100%) !important;
+}
+
+body.app-shell .sidebar .nav-item .nav-link,
+body.app-shell .sidebar .sidebar-heading,
+body.app-shell .sidebar .sidebar-brand {
+    color: var(--ui-sidebar-text) !important;
+}
+
+body.app-shell .sidebar .nav-item .nav-link i,
+body.app-shell .sidebar .sidebar-brand-icon i {
+    color: var(--ui-sidebar-text) !important;
+}
+
+body.app-shell .sidebar .sidebar-brand {
+    gap: 0.7rem;
+}
+
+body.app-shell .sidebar-brand-mark {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+body.app-shell .sidebar-brand-mark svg {
+    width: 1.85rem;
+    height: 1.85rem;
+    display: block;
+}
+
+body.app-shell .sidebar .nav-item .nav-link:hover,
+body.app-shell .sidebar .nav-item .nav-link:focus,
+body.app-shell .sidebar .nav-item.active .nav-link {
+    color: var(--ui-sidebar-text-strong) !important;
+    background: var(--ui-sidebar-hover);
+    border-radius: 0.85rem;
+}
+
+body.app-shell .sidebar .nav-item.active .nav-link i,
+body.app-shell .sidebar .nav-item .nav-link:hover i {
+    color: var(--ui-sidebar-text-strong) !important;
+}
+
+body.app-shell .sidebar .collapse-inner {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: var(--ui-shadow-soft);
+}
+
+body.app-shell.dark-mode .sidebar .collapse-inner,
+html.dark-mode body.app-shell .sidebar .collapse-inner {
+    background: #172235 !important;
+    border-color: var(--ui-border);
+}
+
+body.app-shell .sidebar .collapse-item {
+    border-radius: 0.65rem;
+    color: #34475c;
+}
+
+body.app-shell.dark-mode .sidebar .collapse-item,
+html.dark-mode body.app-shell .sidebar .collapse-item {
+    color: var(--ui-text-soft);
+}
+
+body.app-shell .sidebar .collapse-item:hover,
+body.app-shell .sidebar .collapse-item.active {
+    background: var(--ui-primary-soft);
+    color: var(--ui-primary) !important;
+}
+
+html.dark-mode body.app-shell .bg-white,
+html.dark-mode body.app-shell .bg-light,
+html.dark-mode body.app-shell .table-light,
+html.dark-mode body.app-shell .alert-light,
+html.dark-mode body.app-shell .badge-light,
+body.app-shell.dark-mode .bg-white,
+body.app-shell.dark-mode .bg-light,
+body.app-shell.dark-mode .table-light,
+body.app-shell.dark-mode .alert-light,
+body.app-shell.dark-mode .badge-light {
+    background-color: var(--ui-surface-alt) !important;
+    color: var(--ui-text) !important;
+    border-color: var(--ui-border) !important;
+}
+
+html.dark-mode body.app-shell .bg-white *,
+html.dark-mode body.app-shell .bg-light *,
+html.dark-mode body.app-shell .alert-light *,
+body.app-shell.dark-mode .bg-white *,
+body.app-shell.dark-mode .bg-light *,
+body.app-shell.dark-mode .alert-light * {
+    color: inherit;
+}
+
+html.dark-mode body.app-shell .bg-white .text-muted,
+html.dark-mode body.app-shell .bg-white .text-gray-500,
+html.dark-mode body.app-shell .bg-white .text-gray-600,
+html.dark-mode body.app-shell .bg-light .text-muted,
+html.dark-mode body.app-shell .bg-light .text-gray-500,
+html.dark-mode body.app-shell .bg-light .text-gray-600,
+body.app-shell.dark-mode .bg-white .text-muted,
+body.app-shell.dark-mode .bg-white .text-gray-500,
+body.app-shell.dark-mode .bg-white .text-gray-600,
+body.app-shell.dark-mode .bg-light .text-muted,
+body.app-shell.dark-mode .bg-light .text-gray-500,
+body.app-shell.dark-mode .bg-light .text-gray-600 {
+    color: var(--ui-text-muted) !important;
+}
+
+body.app-shell .card,
+body.app-shell .modal-content,
+body.app-shell .dropdown-menu,
+body.app-shell .list-group-item,
+body.app-shell .egresos-filtros,
+body.app-shell .egresos-pos-toolbar,
+body.app-shell .egreso-form-wrap,
+body.app-shell .egreso-card,
+body.app-shell .egresos-resumen > div,
+body.app-shell .egreso-form-head {
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
+    box-shadow: var(--ui-shadow-soft);
+}
+
+body.app-shell .card {
+    border-radius: 1rem;
+}
+
+body.app-shell .card .card-body,
+body.app-shell .modal-body {
+    padding: 1.1rem 1.25rem;
+}
+
+body.app-shell .card-header,
+body.app-shell .modal-header,
+body.app-shell .modal-footer {
+    background: var(--ui-surface-alt);
+    border-color: var(--ui-border);
+}
+
+body.app-shell .shadow,
+body.app-shell .shadow-sm {
+    box-shadow: var(--ui-shadow-soft) !important;
+}
+
+body.app-shell .border-left-primary,
+body.app-shell .border-left-success,
+body.app-shell .border-left-info,
+body.app-shell .border-left-warning,
+body.app-shell .border-left-danger {
+    border-left-width: 0.35rem !important;
+}
+
+body.app-shell .border-left-danger {
+    border-left-color: #bf6a52 !important;
+}
+
+body.app-shell .table {
+    color: var(--ui-text);
+    background: transparent;
+}
+
+body.app-shell .table thead th,
+body.app-shell .thead-light th,
+body.app-shell .thead-dark th {
+    background: var(--ui-table-head) !important;
+    color: var(--ui-text) !important;
+    border-bottom: 1px solid var(--ui-border-strong);
+    border-top: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+body.app-shell .table td,
+body.app-shell .table th {
+    border-color: var(--ui-border);
+    vertical-align: middle;
+}
+
+body.app-shell .table-hover tbody tr:hover,
+body.app-shell .table tbody tr:hover {
+    background: var(--ui-table-hover);
+}
+
+body.app-shell .table-responsive {
+    border-radius: 0.95rem;
+}
+
+body.app-shell .form-group label,
+body.app-shell label,
+body.app-shell .font-weight-bold,
+body.app-shell .text-gray-800 {
+    color: var(--ui-text) !important;
+}
+
+body.app-shell .text-muted,
+body.app-shell .text-gray-600,
+body.app-shell .text-gray-500,
+body.app-shell .small.text-muted {
+    color: var(--ui-text-muted) !important;
+}
+
+body.app-shell .form-control,
+body.app-shell .custom-select,
+body.app-shell select.form-control,
+body.app-shell textarea.form-control,
+body.app-shell .input-group-text {
+    background: var(--ui-input-bg);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
+    border-radius: 0.8rem;
+    min-height: 2.75rem;
+    box-shadow: none;
+}
+
+body.app-shell textarea.form-control {
+    min-height: 5rem;
+}
+
+body.app-shell .form-control::placeholder {
+    color: var(--ui-text-muted);
+}
+
+body.app-shell .form-control:focus,
+body.app-shell .custom-select:focus {
+    border-color: var(--ui-primary);
+    box-shadow: 0 0 0 0.2rem var(--ui-primary-soft);
+    background: var(--ui-input-bg);
+    color: var(--ui-text);
+}
+
+body.app-shell .form-control[readonly],
+body.app-shell .form-control:disabled,
+body.app-shell .custom-select:disabled,
+body.app-shell select.form-control:disabled {
+    background: var(--ui-input-disabled);
+    color: var(--ui-text-muted);
+}
+
+body.app-shell .input-group > .form-control:not(:last-child),
+body.app-shell .input-group > .custom-select:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+body.app-shell .input-group-append .btn,
+body.app-shell .input-group-append .input-group-text,
+body.app-shell .input-group-prepend .btn,
+body.app-shell .input-group-prepend .input-group-text {
+    border-radius: 0 0.8rem 0.8rem 0;
+}
+
+body.app-shell .btn {
+    border-radius: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: none;
+}
+
+body.app-shell .btn:focus,
+body.app-shell .btn.focus {
+    box-shadow: 0 0 0 0.2rem var(--ui-primary-soft);
+}
+
+body.app-shell .btn-outline-secondary,
+body.app-shell .btn-outline-primary,
+body.app-shell .btn-outline-dark,
+body.app-shell .btn-outline-danger {
+    background: transparent;
+}
+
+body.app-shell .btn-outline-danger {
+    color: #9e4b35;
+    border-color: #d7b0a3;
+}
+
+body.app-shell .btn-outline-danger:hover {
+    background: #fbf1ee;
+    border-color: #c98974;
+    color: #7f3826;
+}
+
+body.app-shell .text-danger {
+    color: #9e4b35 !important;
+}
+
+body.app-shell .btn-light {
+    background: var(--ui-surface-alt);
+    border-color: var(--ui-border);
+    color: var(--ui-text);
+}
+
+body.app-shell .btn-light:hover {
+    background: var(--ui-surface-strong);
+}
+
+body.app-shell .alert {
+    border-radius: 0.95rem;
+    border-width: 1px;
+    box-shadow: none;
+}
+
+body.app-shell .alert-success {
+    background: var(--ui-alert-success-bg);
+    border-color: var(--ui-alert-success-border);
+    color: var(--ui-alert-success-text);
+}
+
+body.app-shell .alert-warning {
+    background: var(--ui-alert-warning-bg);
+    border-color: var(--ui-alert-warning-border);
+    color: var(--ui-alert-warning-text);
+}
+
+body.app-shell .alert-danger {
+    background: var(--ui-alert-danger-bg);
+    border-color: var(--ui-alert-danger-border);
+    color: var(--ui-alert-danger-text);
+}
+
+body.app-shell .alert-info {
+    background: var(--ui-alert-info-bg);
+    border-color: var(--ui-alert-info-border);
+    color: var(--ui-alert-info-text);
+}
+
+body.app-shell .badge {
+    border-radius: 999px;
+    padding: 0.45em 0.75em;
+}
+
+body.app-shell .modal .close,
+body.app-shell .alert .close {
+    color: inherit;
+    opacity: 0.72;
+}
+
+body.app-shell .modal .close:hover,
+body.app-shell .alert .close:hover {
+    opacity: 1;
+}
+
+body.app-shell .list-group-item {
+    background: var(--ui-surface);
+}
+
+body.app-shell .scroll-to-top {
+    background: var(--ui-primary);
+    box-shadow: var(--ui-shadow-soft);
+}
+
+body.app-shell .topbar-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-alt);
+    color: var(--ui-text);
+    transition: all 0.18s ease;
+}
+
+body.app-shell .topbar-icon-btn:hover {
+    background: var(--ui-primary-soft);
+    color: var(--ui-primary);
+    border-color: rgba(47, 124, 246, 0.25);
+    text-decoration: none;
+}
+
+body.app-shell .topbar-icon-btn i {
+    font-size: 1rem;
+}
+
+body.app-shell .page-section-title {
+    color: var(--ui-text);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+body.app-shell .dropdown-divider,
+body.app-shell hr.sidebar-divider,
+body.app-shell hr {
+    border-color: var(--ui-border);
+}
+
+body.app-shell .custom-control-label::before {
+    border-color: var(--ui-border-strong);
+    background: var(--ui-input-bg);
+}
+
+body.app-shell .custom-switch .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--ui-primary);
+    border-color: var(--ui-primary);
+}
+
+body.app-shell .swal2-popup-mid {
+    border-radius: 1rem !important;
+}
+
+@media (max-width: 991.98px) {
+    body.app-shell .container-fluid {
+        max-width: 100%;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    body.app-shell .topbar {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    body.app-shell .card .card-body,
+    body.app-shell .modal-body {
+        padding: 0.95rem 1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    body.app-shell .container-fluid {
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+    }
+
+    body.app-shell .btn-block-sm {
+        display: block;
+        width: 100%;
+    }
+
+    body.app-shell .table-responsive {
+        border: 1px solid var(--ui-border);
+        background: var(--ui-surface);
+    }
+}
+
+body.app-shell .compras-acciones-header,
+body.app-shell .movimientos-acciones-header,
+body.app-shell .cheques-acciones-header,
+body.app-shell .stock-acciones-grid,
+body.app-shell .egresos-actions,
+body.app-shell .d-flex.flex-wrap.align-items-center.justify-content-between.mb-3 {
+    gap: 0.75rem;
+}
+
+body.app-shell .stock-action-btn,
+body.app-shell .compras-btn-nuevo,
+body.app-shell .movimientos-btn-nuevo,
+body.app-shell .cheques-btn-nuevo {
+    border-radius: 1rem;
+    min-height: 3rem;
+    box-shadow: var(--ui-shadow-soft);
+}
+
+body.app-shell .stock-acciones-card .card-body,
+body.app-shell .stock-filtros-card .card-body,
+body.app-shell .compras-filtros-card .card-body,
+body.app-shell .movimientos-filtros-card .card-body,
+body.app-shell .elaborados-filtros-card .card-body,
+body.app-shell .existencia-estado-card .card-body,
+body.app-shell .cheques-filtros-card,
+body.app-shell .egresos-filtros-card {
+    background: linear-gradient(180deg, var(--ui-surface) 0%, var(--ui-surface-alt) 100%);
+}
+
+body.app-shell .stock-filtros-card,
+body.app-shell .compras-filtros-card,
+body.app-shell .movimientos-filtros-card,
+body.app-shell .elaborados-filtros-card,
+body.app-shell .cheques-filtros-card,
+body.app-shell .egresos-filtros-card,
+body.app-shell .existencia-estado-card,
+body.app-shell .elaborados-tabs-card {
+    border-radius: 1rem;
+}
+
+body.app-shell .stock-filtro-label,
+body.app-shell .compras-filtro-label,
+body.app-shell .movimientos-filtro-label,
+body.app-shell .elaborados-filtro-label,
+body.app-shell .cheques-filtro-label,
+body.app-shell .egresos-filtro-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--ui-text-soft) !important;
+    margin-bottom: 0.45rem;
+}
+
+body.app-shell .stock-filtros-stack,
+body.app-shell .compras-filtros-stack,
+body.app-shell .movimientos-filtros-stack,
+body.app-shell .cheques-filtros-stack,
+body.app-shell .egresos-filtros-stack {
+    gap: 0.9rem;
+}
+
+body.app-shell .stock-filtros-row,
+body.app-shell .compras-filtros-row,
+body.app-shell .movimientos-filtros-row,
+body.app-shell .cheques-filtros-row,
+body.app-shell .egresos-filtros-row,
+body.app-shell .existencia-filtros-row-top,
+body.app-shell .existencia-filtros-row-bottom,
+body.app-shell .existencia-estado-grid {
+    gap: 0.9rem;
+}
+
+body.app-shell [id$='DraftBanner'] {
+    border-radius: 0.95rem;
+    border-width: 1px;
+    box-shadow: var(--ui-shadow-soft);
+}
+
+body.app-shell .border.rounded.p-3,
+body.app-shell .border.rounded,
+body.app-shell .alert-light.border {
+    background: var(--ui-surface-alt);
+    border-color: var(--ui-border) !important;
+    border-radius: 1rem !important;
+}
+
+body.app-shell .table td .btn,
+body.app-shell .table th .btn {
+    border-radius: 0.75rem;
+}
+
+body.app-shell .table td .btn + .btn,
+body.app-shell .table td a + a,
+body.app-shell .table td a + button,
+body.app-shell .table td button + a,
+body.app-shell .table td button + button {
+    margin-left: 0.35rem;
+}
+
+body.app-shell .btn-link.text-decoration-none,
+body.app-shell .btn-detalles-compra,
+body.app-shell .btn-detalles-stock,
+body.app-shell .btn-detalles-elaborado,
+body.app-shell .btn-detalles-formula,
+body.app-shell .btn-detalles-cheque,
+body.app-shell .js-toggle-detalle,
+body.app-shell .btn-toggle-existencia {
+    color: var(--ui-primary) !important;
+    font-weight: 600;
+}
+
+body.app-shell .btn-link.text-decoration-none:hover,
+body.app-shell .js-toggle-detalle:hover,
+body.app-shell .btn-toggle-existencia:hover {
+    color: var(--ui-text) !important;
+    background: var(--ui-primary-soft);
+}
+
+body.app-shell .movimiento-page .table-bordered,
+body.app-shell .elaborados-page .table-bordered,
+body.app-shell .existencia-detalle-tabla,
+body.app-shell .table-sm.table-bordered {
+    background: var(--ui-surface);
+}
+
+body.app-shell .existencia-detalle-box {
+    background: var(--ui-surface-alt);
+    border-color: var(--ui-border) !important;
+}
+
+body.app-shell .existencia-producto-codigo,
+body.app-shell .existencia-producto-completo,
+body.app-shell .egreso-card-line,
+body.app-shell .egreso-card-foot {
+    color: var(--ui-text-muted) !important;
+}
+
+body.app-shell .egreso-card-top span,
+body.app-shell .egreso-monto,
+body.app-shell .pago-cabecera-saldo {
+    color: var(--ui-text) !important;
+}
+
+body.app-shell .elaborados-tabs-nav .nav-link {
+    border-radius: 999px;
+    border: 1px solid var(--ui-border);
+    background: var(--ui-surface-alt);
+    color: var(--ui-primary);
+}
+
+body.app-shell .elaborados-tabs-nav .nav-link.active {
+    background: var(--ui-primary);
+    border-color: var(--ui-primary);
+    color: #fff;
+}
+
+body.app-shell .pago-cabecera,
+body.app-shell .pago-operacion-resumen,
+body.app-shell .pago-modo-resumen {
+    border-radius: 1rem;
+    box-shadow: none;
+}
+
+body.app-shell .pago-operacion-opcion {
+    border-radius: 1rem;
+}
+
+body.app-shell .modal-content .table-responsive {
+    border: 1px solid var(--ui-border);
+    border-radius: 0.9rem;
+}
+
+body.app-shell .form-group {
+    margin-bottom: 1rem;
+}
+
+body.app-shell .h3,
+body.app-shell .h4,
+body.app-shell .h5,
+body.app-shell h1,
+body.app-shell h2,
+body.app-shell h3,
+body.app-shell h4,
+body.app-shell h5,
+body.app-shell h6 {
+    color: var(--ui-text);
+}
+
+@media (max-width: 991.98px) {
+    body.app-shell .stock-action-btn,
+    body.app-shell .compras-btn-nuevo,
+    body.app-shell .movimientos-btn-nuevo,
+    body.app-shell .cheques-btn-nuevo,
+    body.app-shell .egresos-actions .btn {
+        width: 100%;
+    }
+
+    body.app-shell .stock-acciones-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    body.app-shell .table td .btn,
+    body.app-shell .table th .btn {
+        margin-bottom: 0.35rem;
+    }
+
+    body.app-shell .stock-acciones-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body.app-shell .modal-dialog {
+        margin: 0.65rem;
+    }
+}

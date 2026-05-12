@@ -10,6 +10,70 @@
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
+
+/* Neutralizacion de acentos rosados / danger compartidos */
+:root {
+    --ux-danger: #b4583f;
+    --ux-danger-dark: #924632;
+    --ux-danger-soft: #f7ede9;
+    --ux-danger-soft-strong: #eed6cd;
+}
+
+code,
+a > code {
+    color: var(--ux-danger-dark);
+}
+
+.text-danger {
+    color: var(--ux-danger) !important;
+}
+
+.btn-danger {
+    background-color: var(--ux-danger);
+    border-color: var(--ux-danger);
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger.focus {
+    background-color: var(--ux-danger-dark);
+    border-color: var(--ux-danger-dark);
+}
+
+.btn-outline-danger {
+    color: var(--ux-danger);
+    border-color: #d3ac9f;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus,
+.btn-outline-danger.focus {
+    background-color: var(--ux-danger-soft);
+    border-color: #c58a79;
+    color: #7f3826;
+}
+
+.alert-danger {
+    background-color: var(--ux-danger-soft);
+    border-color: var(--ux-danger-soft-strong);
+    color: var(--ux-danger-dark);
+}
+
+.badge-danger {
+    background-color: var(--ux-danger);
+}
+
+.table-danger,
+.table-danger > td,
+.table-danger > th {
+    background-color: var(--ux-danger-soft);
+}
+
+.table-hover .table-danger:hover,
+.table-hover .table-danger:hover > td,
+.table-hover .table-danger:hover > th {
+    background-color: #f1dfd8;
+}
 /* Contenedor responsive: permite scroll horizontal si es necesario */
 .table-responsive {
     overflow-x: auto !important;

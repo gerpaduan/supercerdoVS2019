@@ -174,6 +174,7 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\css\custom.css" />
     <Content Include="Content\css\dark-mode.css" />
+    <Content Include="Content\css\ui-refresh.css" />
     <Content Include="Content\css\sb-admin-2.css" />
     <Content Include="Content\css\sb-admin-2.min.css" />
     <Content Include="Content\img\CarniSys_Login.png" />
