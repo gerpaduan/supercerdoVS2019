@@ -7,9 +7,20 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
     ViewBag.Title = "Líneas de elaborado";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    string alertaPermisoFecha = ViewBag.AlertaPermisoFecha as string ?? "";
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="lineas">
+    @if (!string.IsNullOrWhiteSpace(alertaPermisoFecha))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @alertaPermisoFecha
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
     @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
 
     <div class="card shadow-sm mb-3 elaborados-filtros-card">
@@ -38,6 +49,7 @@
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
                         <input id="fechaDesde" name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        @Html.Partial("~/Views/Shared/_AdvertenciaPermisoFecha.cshtml")
                     </div>
 
                     <div class="form-group mb-0">

@@ -1,0 +1,183 @@
+@model Web.Models.UsuarioEditVm
+
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar usuario" : "Nuevo usuario";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">@(Model.EsEdicion ? "Modificar usuario" : "Nuevo usuario")</h1>
+        </div>
+        <a class="btn btn-outline-secondary mt-2 mt-md-0" href="@Url.Action("Index", "Usuarios")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            @if (Model.SoloLectura)
+            {
+                <div class="alert alert-secondary">
+                    El usuario se muestra en modo solo lectura porque no tiene permisos para administrarlo.
+                </div>
+            }
+
+            @using (Html.BeginForm("Guardar", "Usuarios", FormMethod.Post, new { novalidate = "novalidate" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Id)
+
+                <div class="row">
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="Id">ID</label>
+                            <input type="text" class="form-control" value="@(Model.Id > 0 ? Model.Id.ToString() : "Nuevo")" readonly />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label for="Nombre">Nombre</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", autocomplete = "off", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", autocomplete = "off" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="IdEmpresa">ID Empresa</label>
+                            @Html.TextBoxFor(m => m.IdEmpresa, new { @class = "form-control", @readonly = "readonly" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Usuario">Usuario</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.Usuario, new { @class = "form-control", autocomplete = "off", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Usuario, new { @class = "form-control", autocomplete = "off" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Email">Email</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", autocomplete = "off", type = "email", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", autocomplete = "off", type = "email" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="IdSucursalUser">ID Sucursal User</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.DropDownListFor(m => m.IdSucursalUser, Model.Sucursales, "Sin sucursal por defecto", new { @class = "form-control", @disabled = "disabled" })
+                                @Html.HiddenFor(m => m.IdSucursalUser)
+                            }
+                            else
+                            {
+                                @Html.DropDownListFor(m => m.IdSucursalUser, Model.Sucursales, "Sin sucursal por defecto", new { @class = "form-control" })
+                            }
+                            @Html.ValidationMessageFor(m => m.IdSucursalUser, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Clave">Clave</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.PasswordFor(m => m.Clave, new { @class = "form-control", autocomplete = "new-password", placeholder = Model.EsEdicion ? "Dejar vacia para mantener la actual" : "", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.PasswordFor(m => m.Clave, new { @class = "form-control", autocomplete = "new-password", placeholder = Model.EsEdicion ? "Dejar vacia para mantener la actual" : "" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.Admin, new { @class = "custom-control-input", id = "Admin", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.Admin, new { @class = "custom-control-input", id = "Admin" })
+                                }
+                                <label class="custom-control-label" for="Admin">Admin</label>
+                            </div>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.Admin)
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.Activo, new { @class = "custom-control-input", id = "Activo", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.Activo, new { @class = "custom-control-input", id = "Activo" })
+                                }
+                                <label class="custom-control-label" for="Activo">Activo</label>
+                            </div>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.Activo)
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (!Model.SoloLectura)
+                    {
+                        <button type="submit" class="btn btn-success mr-2 mb-2">
+                            <i class="fas fa-save mr-1"></i> Guardar usuario
+                        </button>
+                    }
+                    <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Usuarios")">
+                        Cancelar
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

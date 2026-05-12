@@ -93,7 +93,8 @@ namespace Web.Controllers
 
                 CargarViewBagsEgresos(idSucursal ?? 0, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, soloGastos, false);
                 ViewBag.SinPermiso = true;
-                ViewBag.MensajePermiso = "No tiene permisos para ver egresos de caja.";
+                ViewBag.MensajePermiso = ConstruirMensajePermisoFecha(PermisosPantallasWeb.EgresosCaja.Consulta, desde)
+                    ?? "No tiene permisos para ver egresos de caja.";
                 return View("~/Views/Cajas/EgresosCaja.cshtml", new DataTable());
             }
 

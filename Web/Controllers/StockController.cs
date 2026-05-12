@@ -78,8 +78,10 @@ namespace Web.Controllers
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.Seccion = "Stock";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                if (AjustarFechaSiNoTienePermiso(Permisos.Stock.VerStock, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Stock", Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             }
 
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
@@ -101,6 +103,7 @@ namespace Web.Controllers
             ViewBag.TipoCompra = tipoNormalizado;
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Stock.VerStock, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             ViewBag.TotalKg = CalcularTotalKg(dt);
 
             return View("~/Views/Stock/Index.cshtml", model);
@@ -116,8 +119,10 @@ namespace Web.Controllers
             DateTime fechaPermiso = DateTime.Today;
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, fechaPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.Seccion = "Stock";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Stock.VerStock, fechaPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) ?? "No tiene permisos para consultar stock.";
+                return RedirectToAction("Index");
             }
 
             var model = new Entidades.ExistenciaPorSucursalesVm();
@@ -226,8 +231,10 @@ namespace Web.Controllers
             int idCreador = compra != null && compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador))
             {
-                ViewBag.Seccion = "Stock";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador) ?? "No tiene permisos para crear o modificar stock.";
+                return RedirectToAction("Index");
             }
 
             if (EsAjuste(tipoOperacion) && (user == null || !user.Admin))
@@ -240,6 +247,7 @@ namespace Web.Controllers
 
             var model = compra != null ? CrearViewModelEdicion(compra, user) : CrearViewModelNuevo(user, tipoOperacion);
             CargarViewBags(model);
+            ConfigurarAdvertenciaFechaEnVivo("FechaCompra", Permisos.Stock.AddOrEditStock, idCreador);
 
             return View("~/Views/Stock/Editar.cshtml", model);
         }
@@ -293,8 +301,10 @@ namespace Web.Controllers
             int idCreador = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador))
             {
-                ViewBag.Seccion = "Stock";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                ModelState.AddModelError("", ConstruirMensajePermisoFecha(Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador) ?? "No tiene permisos para guardar este movimiento.");
+                CargarViewBags(model);
+                RecalcularTotales(model);
+                return View("~/Views/Stock/Editar.cshtml", model);
             }
 
             Entidades.Sucursal sucursal = oSucursalN.findById(model.IdSucursal);

@@ -10,6 +10,7 @@
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     var cultura = CultureInfo.GetCultureInfo("es-AR");
     string successMessage = TempData["ElaboradosSuccessMessage"] as string ?? "";
+    string alertaPermisoFecha = ViewBag.AlertaPermisoFecha as string ?? "";
 }
 
 <div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="index">
@@ -17,6 +18,16 @@
     {
         <div id="elaboradosSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
             @successMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(alertaPermisoFecha))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @alertaPermisoFecha
             <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -51,6 +62,7 @@
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label" for="fechaDesde">Fecha desde</label>
                         <input id="fechaDesde" name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        @Html.Partial("~/Views/Shared/_AdvertenciaPermisoFecha.cshtml")
                     </div>
 
                     <div class="form-group mb-0">

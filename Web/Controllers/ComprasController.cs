@@ -46,8 +46,10 @@ namespace Web.Controllers
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.Seccion = "Compras";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                if (AjustarFechaSiNoTienePermiso(Permisos.Compra.VerCompras, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Compras", Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             }
 
             bool permiteMediaRes = PermiteMediaRes(user);
@@ -73,6 +75,7 @@ namespace Web.Controllers
             ViewBag.Texto = texto ?? "";
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Compra.VerCompras, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             ViewBag.PermiteMediaRes = permiteMediaRes;
             ViewBag.TotalCantMedias = CalcularTotalCantMedias(dt);
             ViewBag.TotalKg = CalcularTotalKg(dt);
@@ -110,8 +113,10 @@ namespace Web.Controllers
                 if (desdePos)
                     return new HttpStatusCodeResult(403, "No tiene permisos para operar compras.");
 
-                ViewBag.Seccion = "Compras";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(permiso, fechaPermiso, idCreador) ?? "No tiene permisos para operar compras.";
+                return RedirectToAction("Index");
             }
 
             var model = compra != null
@@ -119,6 +124,7 @@ namespace Web.Controllers
                 : CrearViewModelNuevo(user, origenNormalizado);
 
             CargarViewBags(model, user);
+            ConfigurarAdvertenciaFechaEnVivo("FechaCompra", permiso, idCreador);
 
             if (desdePos)
                 return PartialView("~/Views/Compras/Editar.cshtml", model);

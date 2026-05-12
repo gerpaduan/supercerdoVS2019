@@ -1,0 +1,52 @@
+@using System.Web
+@{
+    string inputId = ViewBag.PermisoFechaInputId as string;
+    string fechaMinimaIso = ViewBag.PermisoFechaMinimaIso as string;
+    string fechaMinimaIsoDateTime = ViewBag.PermisoFechaMinimaIsoDateTime as string;
+    string mensaje = ViewBag.PermisoFechaMensaje as string;
+    bool mostrar = !string.IsNullOrWhiteSpace(inputId)
+        && !string.IsNullOrWhiteSpace(fechaMinimaIso)
+        && !string.IsNullOrWhiteSpace(mensaje);
+}
+@if (mostrar)
+{
+    <div id="permisoFechaWarning" class="alert alert-warning py-2 px-3 mt-2 mb-0 d-none" role="alert"></div>
+    <script>
+        (function () {
+            var input = document.getElementById('@inputId');
+            var warning = document.getElementById('permisoFechaWarning');
+            if (!input || !warning) return;
+
+            var minDateIso = '@fechaMinimaIso';
+            var minDateTimeIso = '@fechaMinimaIsoDateTime';
+            var message = '@Html.Raw(HttpUtility.JavaScriptStringEncode(mensaje))';
+
+            if (input.type === 'datetime-local') {
+                input.setAttribute('min', minDateTimeIso);
+            } else if (input.type === 'date') {
+                input.setAttribute('min', minDateIso);
+            }
+
+            function parseInputDate(value) {
+                if (!value) return null;
+                var normalized = value.length === 10 ? value + 'T00:00:00' : value;
+                var date = new Date(normalized);
+                if (isNaN(date.getTime())) return null;
+                return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            }
+
+            var minDate = parseInputDate(minDateIso);
+
+            function syncWarning() {
+                var selectedDate = parseInputDate(input.value);
+                var show = !!(selectedDate && minDate && selectedDate < minDate);
+                warning.textContent = message;
+                warning.classList.toggle('d-none', !show);
+            }
+
+            input.addEventListener('input', syncWarning);
+            input.addEventListener('change', syncWarning);
+            syncWarning();
+        })();
+    </script>
+}

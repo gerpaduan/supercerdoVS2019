@@ -45,6 +45,10 @@ namespace Web.Controllers
                 oSucursalN = new Negocio.Sucursal(empresa);
 
                 user = oUsuarioN.getUsuarioById(user.Id); //user.IdSucursal == 0 ? null : oSucursalN.findById(user.IdSucursal);
+                if (user != null)
+                {
+                    user.Permisos = oUsuarioN.getPermisosUsuario(user.Id);
+                }
                 // Sucursal (igual que tenías)
                 string sucNombre = user.Sucursal == null
                     ? "Seleccione Sucursal"

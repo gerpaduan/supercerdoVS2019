@@ -26,6 +26,7 @@
                                value="@(string.IsNullOrEmpty(Request["fechaDesde"])
 ? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
 : Request["fechaDesde"])" />
+                        @Html.Partial("~/Views/Shared/_AdvertenciaPermisoFecha.cshtml")
                     </div>
 
                     <div class="form-group mb-0">

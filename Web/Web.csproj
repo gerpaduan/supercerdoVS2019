@@ -141,6 +141,7 @@
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\StockController.cs" />
+    <Compile Include="Controllers\UsuariosController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
     <Compile Include="EmpresaContextWeb.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
@@ -159,6 +160,7 @@
     <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
+    <Compile Include="Models\UsuariosVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />
@@ -2093,6 +2095,9 @@
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronicaModal.cshtml" />
     <Content Include="Views\Finanzas\_AddOrEditPagoScripts.cshtml" />
+    <Content Include="Views\Usuarios\Editar.cshtml" />
+    <Content Include="Views\Usuarios\Index.cshtml" />
+    <Content Include="Views\Usuarios\Permisos.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

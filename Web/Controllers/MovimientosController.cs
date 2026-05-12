@@ -44,8 +44,10 @@ namespace Web.Controllers
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.Seccion = "Movimientos";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                if (AjustarFechaSiNoTienePermiso(Permisos.Movimiento.VerMovimientos, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Movimientos", Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             }
 
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
@@ -67,6 +69,7 @@ namespace Web.Controllers
             ViewBag.Title = "Movimientos";
             ViewBag.Seccion = "Movimientos";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(sucursales);
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Movimiento.VerMovimientos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Movimientos/Index.cshtml", model);
         }
@@ -84,8 +87,10 @@ namespace Web.Controllers
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id))
             {
-                ViewBag.Seccion = "Movimientos";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id) ?? "No tiene permisos para crear o modificar movimientos.";
+                return RedirectToAction("Index");
             }
 
             MovimientoEditVm model = id > 0
@@ -102,6 +107,7 @@ namespace Web.Controllers
             ViewBag.UrlBuscarProductoPorCodigo = Url.Action("BuscarProductoPorCodigo", "Movimientos");
             ViewBag.UrlDetalle = Url.Action("Detalle", "Movimientos");
             ViewBag.UrlGuardar = Url.Action("Guardar", "Movimientos");
+            ConfigurarAdvertenciaFechaEnVivo("FechaMovimiento", Permisos.Movimiento.NuevoMovimiento, user.Id);
 
             return View("~/Views/Movimientos/Editar.cshtml", model);
         }

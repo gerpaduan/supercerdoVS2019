@@ -1,0 +1,134 @@
+@model Web.Models.UsuarioIndexVm
+
+@{
+    ViewBag.Title = "Usuarios";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        @if (Model.PuedeAdministrar)
+        {
+            <a class="btn btn-primary mt-2 mt-md-0" href="@Url.Action("Editar", "Usuarios")">
+                <i class="fas fa-plus mr-1"></i> Crear usuario nuevo
+            </a>
+        }
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-3">
+            <div class="row align-items-end">
+                <div class="col-12 col-lg-6">
+                    <label for="filtroUsuarios" class="font-weight-bold mb-1">Buscar usuario</label>
+                    <div class="input-group">
+                        <input type="text" id="filtroUsuarios" class="form-control" placeholder="Buscar por id, nombre, usuario o email" autocomplete="off" />
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6 mt-2 mt-lg-0 text-lg-right">
+                    <span id="contadorUsuarios" class="text-muted small"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered mb-0" id="tablaUsuarios">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:70px;">ID</th>
+                            <th>Nombre</th>
+                            <th>Usuario</th>
+                            <th style="width:90px;">Admin</th>
+                            <th style="width:90px;">Activo</th>
+                            <th>Email</th>
+                            <th style="width:130px;">ID Sucursal User</th>
+                            <th style="width:110px;">ID Empresa</th>
+                            <th style="width:220px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">No hay usuarios para mostrar.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr class="js-usuario-row"
+                                    data-search="@((item.Id + " " + (item.Nombre ?? "") + " " + (item.Usuario ?? "") + " " + (item.Email ?? "") + " " + item.IdEmpresa + " " + item.IdSucursalUser).ToLowerInvariant())">
+                                    <td>@item.Id</td>
+                                    <td>@item.Nombre</td>
+                                    <td>@item.Usuario</td>
+                                    <td class="text-center">
+                                        <span class="badge @(item.Admin ? "badge-success" : "badge-secondary")">@(item.Admin ? "SÃ­" : "No")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @(item.Activo ? "badge-primary" : "badge-dark")">@(item.Activo ? "SÃ­" : "No")</span>
+                                    </td>
+                                    <td>@item.Email</td>
+                                    <td>
+                                        @item.IdSucursalUser
+                                        @if (!string.IsNullOrWhiteSpace(item.SucursalNombre))
+                                        {
+                                            <div class="small text-muted">@item.SucursalNombre</div>
+                                        }
+                                    </td>
+                                    <td>@item.IdEmpresa</td>
+                                    <td>
+                                        @if (Model.PuedeAdministrar)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary mr-1 mb-1" href="@Url.Action("Editar", "Usuarios", new { id = item.Id })">
+                                                Modificar
+                                            </a>
+                                            <a class="btn btn-sm btn-outline-secondary mb-1" href="@Url.Action("Permisos", "Usuarios", new { id = item.Id })">
+                                                Ver permisos
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var $filtro = $('#filtroUsuarios');
+            var $rows = $('#tablaUsuarios tbody .js-usuario-row');
+            var $contador = $('#contadorUsuarios');
+
+            function aplicarFiltro() {
+                var texto = ($filtro.val() || '').toLowerCase().trim();
+                var visibles = 0;
+
+                $rows.each(function () {
+                    var $row = $(this);
+                    var search = String($row.data('search') || '');
+                    var visible = !texto || search.indexOf(texto) >= 0;
+                    $row.toggleClass('d-none', !visible);
+                    if (visible) visibles++;
+                });
+
+                $contador.text(visibles + ' usuario(s) visible(s)');
+            }
+
+            $filtro.on('input', aplicarFiltro);
+            aplicarFiltro();
+        })();
+    </script>
+}

@@ -33,11 +33,22 @@ namespace Web.Controllers
 
             DateTime desde = NormalizarFechaDesde(fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0)));
             DateTime hasta = NormalizarFechaHasta(fechaHasta ?? DateTime.Today);
+            string alertaPermisoFecha = null;
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.Seccion = "Elaborados";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+                if (fechaMinima.HasValue && desde.Date < fechaMinima.Value.Date)
+                {
+                    desde = fechaMinima.Value.Date;
+                    alertaPermisoFecha = "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+                    if (hasta < desde)
+                        hasta = desde;
+                }
+                else
+                {
+                    return VistaAccesoDenegado("Elaborados", Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+                }
             }
 
             int sucursalSeleccionada = idSucursal ?? (user.IdSucursal > 0 ? user.IdSucursal : 0);
@@ -61,6 +72,8 @@ namespace Web.Controllers
             ViewBag.Title = "Elaborados";
             ViewBag.Seccion = "Elaborados";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(oSucursalN.findAll() ?? new List<Sucursal>());
+            ViewBag.AlertaPermisoFecha = alertaPermisoFecha;
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Elaborados/Index.cshtml", model);
         }
@@ -73,11 +86,22 @@ namespace Web.Controllers
 
             DateTime desde = NormalizarFechaDesde(fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0)));
             DateTime hasta = NormalizarFechaHasta(fechaHasta ?? DateTime.Today);
+            string alertaPermisoFecha = null;
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.Seccion = "Elaborados";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+                if (fechaMinima.HasValue && desde.Date < fechaMinima.Value.Date)
+                {
+                    desde = fechaMinima.Value.Date;
+                    alertaPermisoFecha = "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+                    if (hasta < desde)
+                        hasta = desde;
+                }
+                else
+                {
+                    return VistaAccesoDenegado("Elaborados", Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+                }
             }
 
             int sucursalSeleccionada = idSucursal ?? (user.IdSucursal > 0 ? user.IdSucursal : 0);
@@ -100,6 +124,8 @@ namespace Web.Controllers
             ViewBag.Title = "Lineas de elaborado";
             ViewBag.Seccion = "Elaborados";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(oSucursalN.findAll() ?? new List<Sucursal>());
+            ViewBag.AlertaPermisoFecha = alertaPermisoFecha;
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Elaborados/Lineas.cshtml", model);
         }
@@ -143,8 +169,10 @@ namespace Web.Controllers
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoFormula, DateTime.Today, user.Id))
             {
-                ViewBag.Seccion = "Elaborados";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoFormula, DateTime.Today, user.Id) ?? "No tiene permisos para administrar fórmulas.";
+                return RedirectToAction("Formulas");
             }
 
             ElaboradoFormulaEditVm model;
@@ -157,8 +185,10 @@ namespace Web.Controllers
                 int idCreador = formula.CreadoPor != null ? formula.CreadoPor.Id : user.Id;
                 if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoFormula, DateTime.Today, idCreador))
                 {
-                    ViewBag.Seccion = "Elaborados";
-                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoFormula, DateTime.Today, idCreador) ?? "No tiene permisos para administrar fórmulas.";
+                    return RedirectToAction("Formulas");
                 }
 
                 model = CrearViewModelFormulaEdicion(formula, user);
@@ -196,11 +226,14 @@ namespace Web.Controllers
             var user = Session["Usuario"] as Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+            int idCreadorPermiso = user.Id;
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
             {
-                ViewBag.Seccion = "Elaborados";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id) ?? "No tiene permisos para ingreso rápido.";
+                return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
             }
 
             if (id > 0)
@@ -212,10 +245,13 @@ namespace Web.Controllers
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
                 if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador))
                 {
-                    ViewBag.Seccion = "Elaborados";
-                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador) ?? "No tiene permisos para ingreso rápido.";
+                    return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
                 }
 
+                idCreadorPermiso = idCreador;
                 var modelEdicion = CrearViewModelIngresoRapidoEdicion(embutido, user, esDesarme);
                 if (modelEdicion == null)
                     return HttpNotFound("No se encontrÃ³ el elaborado.");
@@ -223,6 +259,7 @@ namespace Web.Controllers
                 ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rÃ¡pido";
                 ViewBag.Seccion = "Elaborados";
                 ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
+                ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);
                 return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", modelEdicion);
             }
 
@@ -258,6 +295,7 @@ namespace Web.Controllers
             ViewBag.Title = esDesarme ? "Desarme de elaborado" : "Ingreso rápido";
             ViewBag.Seccion = "Elaborados";
             ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
+            ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);
             return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", model);
         }
 
@@ -266,6 +304,7 @@ namespace Web.Controllers
             var user = Session["Usuario"] as Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+            int idCreadorPermiso = user.Id;
 
             ElaboradoCargaVm model;
             if (id > 0)
@@ -277,18 +316,23 @@ namespace Web.Controllers
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
                 if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador))
                 {
-                    ViewBag.Seccion = "Elaborados";
-                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador) ?? "No tiene permisos para crear o modificar elaborados.";
+                    return RedirectToAction("Index");
                 }
 
+                idCreadorPermiso = idCreador;
                 model = CrearViewModelEdicion(embutido, user);
             }
             else
             {
                 if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, DateTime.Today, user.Id))
                 {
-                    ViewBag.Seccion = "Elaborados";
-                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoEmbutido, DateTime.Today, user.Id) ?? "No tiene permisos para crear o modificar elaborados.";
+                    return RedirectToAction("Index");
                 }
 
                 model = new ElaboradoCargaVm
@@ -308,6 +352,7 @@ namespace Web.Controllers
             ViewBag.UrlBuscarProductoPorCodigo = Url.Action("BuscarProductoPorCodigo", "Elaborados");
             ViewBag.UrlObtenerFormula = Url.Action("ObtenerFormula", "Elaborados");
             ViewBag.UrlGuardar = Url.Action("GuardarCarga", "Elaborados");
+            ConfigurarAdvertenciaFechaEnVivo("FechaEmbutido", Permisos.Elaborado.IngresoEmbutido, idCreadorPermiso);
 
             return View("~/Views/Elaborados/Carga.cshtml", model);
         }

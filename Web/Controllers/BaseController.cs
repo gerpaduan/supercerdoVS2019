@@ -1,6 +1,7 @@
 using System.Web;
 using System.Web.Mvc;
 using Utilidades;
+using Web.Helpers;
 
 namespace Web.Controllers
 {
@@ -42,6 +43,57 @@ namespace Web.Controllers
             }
 
             base.OnActionExecuting(filterContext);
+        }
+
+        protected ActionResult VistaAccesoDenegado(string seccion, string permiso = null, System.DateTime? fecha = null, int idCreador = -1)
+        {
+            ViewBag.Title = seccion;
+            ViewBag.Seccion = seccion;
+            ViewBag.MensajePermiso = ConstruirMensajePermisoFecha(permiso, fecha, idCreador);
+            return View("~/Views/Shared/AccesoDenegado.cshtml");
+        }
+
+        protected string ConstruirMensajePermisoFecha(string permiso, System.DateTime? fecha, int idCreador = -1)
+        {
+            if (string.IsNullOrWhiteSpace(permiso) || !fecha.HasValue)
+                return null;
+
+            var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
+            if (!fechaMinima.HasValue || fecha.Value.Date >= fechaMinima.Value.Date)
+                return null;
+
+            return idCreador >= 0
+                ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+        }
+
+        protected bool AjustarFechaSiNoTienePermiso(string permiso, ref System.DateTime fecha, int idCreador = -1)
+        {
+            var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
+            if (!fechaMinima.HasValue || fecha.Date >= fechaMinima.Value.Date)
+                return false;
+
+            fecha = fechaMinima.Value.Date;
+            TempData["AlertType"] = "warning";
+            TempData["AlertTitle"] = "Permisos";
+            TempData["AlertMsg"] = idCreador >= 0
+                ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+            return true;
+        }
+
+        protected void ConfigurarAdvertenciaFechaEnVivo(string inputId, string permiso, int idCreador = -1)
+        {
+            var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
+            if (!fechaMinima.HasValue)
+                return;
+
+            ViewBag.PermisoFechaInputId = inputId;
+            ViewBag.PermisoFechaMinimaIso = fechaMinima.Value.ToString("yyyy-MM-dd");
+            ViewBag.PermisoFechaMinimaIsoDateTime = fechaMinima.Value.ToString("yyyy-MM-ddT00:00:00");
+            ViewBag.PermisoFechaMensaje = idCreador >= 0
+                ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
         }
     }
 }

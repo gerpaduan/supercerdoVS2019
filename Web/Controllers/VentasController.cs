@@ -52,8 +52,10 @@ namespace Web.Controllers
             var user = Session["Usuario"] as Entidades.Usuario;
             if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, desde))
             {
-                ViewBag.Seccion = "Ventas";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                if (AjustarFechaSiNoTienePermiso(Permisos.Venta.VerVentas, ref desde) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde);
             }
 
 
@@ -68,6 +70,7 @@ namespace Web.Controllers
 
             ViewBag.Sucursales = sucursales;
             ViewBag.IdSucursalSeleccionada = idSucursal;
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Venta.VerVentas);
 
             // 1️⃣ Enum → lista (sin Nulo)
             var formasPago = Enum.GetValues(typeof(formaPagoEnum))

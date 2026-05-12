@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Web;
 using Utilidades;
 
@@ -52,6 +53,44 @@ namespace Web.Helpers
                 fechaDesde,
                 idCreador
             );
+        }
+
+        public static DateTime? ObtenerFechaMinimaPermitida(HttpSessionStateBase session, string permiso, int idCreador = -1)
+        {
+            return ObtenerFechaMinimaPermitida(ObtenerUsuario(session), permiso, idCreador);
+        }
+
+        public static DateTime? ObtenerFechaMinimaPermitida(Entidades.Usuario user, string permiso, int idCreador = -1)
+        {
+            if (user == null || user.Admin || user.Permisos == null || user.Permisos.Count == 0)
+                return null;
+
+            string permisoNormalizado = (permiso ?? string.Empty).Trim().ToUpperInvariant();
+            bool esEdicion = idCreador >= 0;
+
+            var permisoUsuario = user.Permisos.FirstOrDefault(p =>
+            {
+                if (p == null || p.Formulario == null)
+                    return false;
+
+                if (esEdicion)
+                {
+                    return string.Equals(p.Formulario.FormEdicion ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(p.Formulario.FormEdicionExtra1 ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(p.Formulario.FormEdicionExtra2 ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase);
+                }
+
+                return string.Equals(p.Formulario.FormConsulta ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase);
+            });
+
+            if (permisoUsuario == null)
+                return null;
+
+            int dias = esEdicion ? permisoUsuario.DiasPermitidosEditar : permisoUsuario.DiasPermitidosVer;
+            if (dias < 0)
+                return null;
+
+            return DateTime.Today.AddDays(-dias).Date;
         }
 
         public static Entidades.Usuario ObtenerUsuario(HttpSessionStateBase session)
