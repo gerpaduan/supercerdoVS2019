@@ -96,11 +96,11 @@ function pvAplicarContextoUI() {
 // =====================
 // Cierre controlado + recarga
 // =====================
-function cerrarPostVentaYRecargar() {
+function cerrarPostVentaYRecargar(delayMs) {
     const $modal = $('#modalPostVenta');
     $modal.data('permitir-cierre', true);
     $modal.modal('hide');
-    setTimeout(() => location.reload(), 400);
+    setTimeout(() => location.reload(), delayMs || 400);
 }
 
 // =====================
@@ -114,13 +114,25 @@ function imprimirTicket(mm) {
 
     const iframe = $('<iframe>', {
         id: 'iframePrint',
-        style: 'display:none;',
+        style: 'position:fixed; right:0; bottom:0; width:1px; height:1px; border:0; opacity:0; pointer-events:none;',
         src: `/Ventas/ImprimirTicket?id=${ventaId}&mm=${mm}`
     });
 
-    $('body').append(iframe);
+    iframe.on('load', function () {
+        try {
+            const frameWindow = this.contentWindow;
+            if (frameWindow) {
+                frameWindow.focus();
+                if (typeof frameWindow.print === 'function') {
+                    frameWindow.print();
+                }
+            }
+        } catch (e) { }
 
-    cerrarPostVentaYRecargar();
+        cerrarPostVentaYRecargar(1200);
+    });
+
+    $('body').append(iframe);
 }
 
 function marcarTicketSeleccionado(mm) {

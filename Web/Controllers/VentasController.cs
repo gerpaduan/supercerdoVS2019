@@ -659,6 +659,34 @@ namespace Web.Controllers
                 // Genera el ticket (ESC/POS, PDF, etc)
 
                 ViewBag.Medida = mm == 58 ? 58 : 80;
+                int idFacturaElectronica = oVentaN.existeFactuElectParaVenta(venta.IdVenta);
+                var facturaTicket = idFacturaElectronica > 0
+                    ? oVentaN.getFactuElecById(idFacturaElectronica)
+                    : null;
+                var user = Session["Usuario"] as Entidades.Usuario;
+                ViewBag.FacturaTicket = (facturaTicket != null && facturaTicket.Id > 0)
+                    ? BuildFacturaDTO(venta, facturaTicket)
+                    : null;
+                ViewBag.EmpresaSesion = (user != null ? user.Empresa : null) ?? (venta.Sucursal != null ? venta.Sucursal.Empresa : null);
+                var empresaTicket = (venta.Sucursal != null ? venta.Sucursal.Empresa : null) ?? (user != null ? user.Empresa : null);
+
+                string negocio = ConfigurationManager.AppSettings["Negocio"];
+                string negocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"];
+                string negocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"];
+                string negocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"];
+
+                ViewBag.Negocio = !string.IsNullOrWhiteSpace(negocio)
+                    ? negocio
+                    : (empresaTicket != null ? (empresaTicket.NombreFantasia ?? empresaTicket.RazonSocialAfip ?? "CarniSys") : "CarniSys");
+                ViewBag.NegocioAgregado1 = !string.IsNullOrWhiteSpace(negocioAgregado1)
+                    ? negocioAgregado1
+                    : (empresaTicket != null ? empresaTicket.Slogan1 ?? "" : "");
+                ViewBag.NegocioAgregado2 = !string.IsNullOrWhiteSpace(negocioAgregado2)
+                    ? negocioAgregado2
+                    : (empresaTicket != null ? empresaTicket.Slogan2 ?? "" : "");
+                ViewBag.NegocioAgregado3 = !string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-"
+                    ? negocioAgregado3
+                    : (empresaTicket != null ? empresaTicket.Slogan3 ?? "" : "");
 
                 return View("~/Views/Ventas/_TicketHTML.cshtml", venta);
 

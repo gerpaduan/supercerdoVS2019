@@ -139,6 +139,13 @@
                 <i class="fas fa-print mr-2"></i> Imprimir Factura
             </a>*@
 
+            <button type="button"
+                    class="btn btn-light btn-block text-left mb-2"
+                    id="btnImprimirTicketDetalleVenta"
+                    data-imprimir-url="@Url.Action("ImprimirTicket", "Ventas", new { id = Model.IdVenta })">
+                <i class="fas fa-receipt mr-2"></i> Imprimir ticket
+            </button>
+
             <a href="@Url.Action("Imprimir", "Ventas", new { id = @Model.IdVenta })"
                data-pos-descarga="true"
                class="btn btn-light btn-block text-left">
@@ -213,10 +220,55 @@
     }
 </style>
 
-@if (mostrarBotonVolver)
-{
-    <script>
-        (function () {
+<script>
+    (function () {
+            var keyTicketMm = "postventa_ticket_mm";
+
+            function getUltimoTicketMmDetalleVenta() {
+                var raw = localStorage.getItem(keyTicketMm);
+                var mm = parseInt(raw, 10);
+                return (mm === 58 || mm === 80) ? mm : 58;
+            }
+
+            function imprimirTicketDetalleVenta() {
+                var btn = document.getElementById("btnImprimirTicketDetalleVenta");
+                if (!btn) return;
+
+                var baseUrl = btn.getAttribute("data-imprimir-url");
+                if (!baseUrl) return;
+
+                var mm = getUltimoTicketMmDetalleVenta();
+                var sep = baseUrl.indexOf("?") >= 0 ? "&" : "?";
+                var iframeAnterior = document.getElementById("iframePrintDetalleVenta");
+                if (iframeAnterior && iframeAnterior.parentNode) {
+                    iframeAnterior.parentNode.removeChild(iframeAnterior);
+                }
+
+                var iframe = document.createElement("iframe");
+                iframe.id = "iframePrintDetalleVenta";
+                iframe.style.position = "fixed";
+                iframe.style.right = "0";
+                iframe.style.bottom = "0";
+                iframe.style.width = "1px";
+                iframe.style.height = "1px";
+                iframe.style.border = "0";
+                iframe.style.opacity = "0";
+                iframe.style.pointerEvents = "none";
+                iframe.src = baseUrl + sep + "mm=" + mm;
+                iframe.onload = function () {
+                    try {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.focus();
+                            if (typeof iframe.contentWindow.print === "function") {
+                                iframe.contentWindow.print();
+                            }
+                        }
+                    } catch (e) { }
+                };
+
+                document.body.appendChild(iframe);
+            }
+
             function volverDetalleVenta() {
                 var returnUrl = @Html.Raw(Json.Encode(returnUrlDetalle));
 
@@ -254,11 +306,22 @@
                 });
             }
 
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", enlazarBotonVolverDetalle);
-            } else {
-                enlazarBotonVolverDetalle();
+            function enlazarBotonImprimirTicketDetalle() {
+                var btn = document.getElementById("btnImprimirTicketDetalleVenta");
+                if (!btn || btn.dataset.imprimirDetalleBound === "true") return;
+
+                btn.dataset.imprimirDetalleBound = "true";
+                btn.addEventListener("click", function () {
+                    imprimirTicketDetalleVenta();
+                });
             }
-        })();
-    </script>
-}
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", enlazarBotonVolverDetalle);
+            document.addEventListener("DOMContentLoaded", enlazarBotonImprimirTicketDetalle);
+        } else {
+            enlazarBotonVolverDetalle();
+            enlazarBotonImprimirTicketDetalle();
+        }
+    })();
+</script>

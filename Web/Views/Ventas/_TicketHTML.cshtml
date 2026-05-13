@@ -1,18 +1,289 @@
-﻿@model Entidades.Venta
+@model Entidades.Venta
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using System.Web
+@using Web.Models.DTO
 @{
     Layout = null;
-}
 
+    int ticketMm = ViewBag.Medida != null ? (int)ViewBag.Medida : 80;
+    int cantMaxChar = ticketMm == 58 ? 32 : 48;
+    string ticketClass = ticketMm == 58 ? "ticket-58" : "ticket-80";
+
+    string negocio = Convert.ToString(ViewBag.Negocio ?? "") ?? "";
+    string negocioAgregado1 = Convert.ToString(ViewBag.NegocioAgregado1 ?? "") ?? "";
+    string negocioAgregado2 = Convert.ToString(ViewBag.NegocioAgregado2 ?? "") ?? "";
+    string negocioAgregado3 = Convert.ToString(ViewBag.NegocioAgregado3 ?? "") ?? "";
+    string formaPagoImprimir = Model.PagoMixtoEfectivo > 0
+        ? (Model.FormaPago ?? "") + "|Efvo"
+        : (Model.FormaPago ?? "");
+
+    var factura = ViewBag.FacturaTicket as FacturaElectronicaDTO;
+    var empresaSesion = ViewBag.EmpresaSesion as Entidades.Empresa;
+    bool esFacturada = factura != null && factura.IdFactura > 0 && !string.IsNullOrWhiteSpace(factura.CAE);
+    bool esFacturaA = esFacturada && factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codFacturaA_Afip;
+
+    Func<string, int, string> truncar = (texto, maximo) =>
+    {
+        texto = texto ?? "";
+        return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+    };
+
+    Func<string, int, string> alinearDerecha = (texto, ancho) =>
+    {
+        texto = truncar(texto, ancho);
+        return texto.PadLeft(ancho);
+    };
+
+    Func<string, int, string> centrar = (texto, ancho) =>
+    {
+        texto = truncar(texto, ancho);
+        int espaciosIzquierda = (ancho - texto.Length) / 2;
+        if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+        return new string(' ', espaciosIzquierda) + texto;
+    };
+
+    Func<string, string, int, string> alinearExtremos = (izquierda, derecha, ancho) =>
+    {
+        izquierda = truncar(izquierda, 18);
+        derecha = truncar(derecha, 18);
+        int espacios = ancho - (izquierda.Length + derecha.Length);
+        if (espacios < 1) espacios = 1;
+        return izquierda + new string(' ', espacios) + derecha;
+    };
+
+    Func<string, decimal, int, string> formatearTotal = (etiqueta, importe, ancho) =>
+    {
+        string derecha = importe.ToString("N2");
+        int espacios = ancho - (etiqueta.Length + derecha.Length);
+        if (espacios < 1) espacios = 1;
+        return etiqueta + new string(' ', espacios) + derecha;
+    };
+
+    Func<string, decimal, int, string> formatearArticulo = (producto, total, ancho) =>
+    {
+        string descripcion = truncar(producto, 22);
+        string importe = total.ToString("N2");
+        int espacios = ancho - (descripcion.Length + importe.Length);
+        if (espacios < 1) espacios = 1;
+        return descripcion + new string(' ', espacios) + importe;
+    };
+
+    Func<int, string> obtenerTituloComprobante = cod =>
+    {
+        switch (cod)
+        {
+            case 1: return "Factura A";
+            case 6: return "Factura B";
+            case 11: return "Factura C";
+            default: return "Factura";
+        }
+    };
+
+    Func<string, string> agregarLineaSiTiene = texto =>
+    {
+        return string.IsNullOrWhiteSpace(texto) ? null : truncar(texto, cantMaxChar);
+    };
+
+    Func<string, IHtmlString> renderLineaHtml = texto =>
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            return Html.Raw("&nbsp;");
+        }
+
+        return Html.Raw(HttpUtility.HtmlEncode(texto));
+    };
+
+    var lineasDetalle = new List<string>();
+    var lineasPie = new List<string>();
+    var lineasEmpresa = new List<string>();
+    var lineasCliente = new List<string>();
+
+    if (!esFacturada)
+    {
+        if (Model.EnCtaCte && Model.FormaPago == "Efectivo")
+        {
+            lineasDetalle.Add(centrar("A Cta. Cte.", cantMaxChar));
+        }
+
+        lineasDetalle.Add(truncar("A " + (Model.Persona != null ? Model.Persona.razonSocial : ""), cantMaxChar));
+        lineasDetalle.Add(truncar("Forma Pago: " + formaPagoImprimir, cantMaxChar));
+        lineasDetalle.Add(truncar("Nro. T. " + Model.IdVenta, cantMaxChar));
+        lineasDetalle.Add(alinearExtremos("Fecha: " + Model.FechaVenta.ToString("dd/MM/yyyy"), "Hora: " + Model.FechaVenta.ToString("HH:mm"), cantMaxChar));
+        lineasDetalle.Add(new string('-', cantMaxChar));
+    }
+    else
+    {
+        if (empresaSesion != null)
+        {
+            lineasEmpresa.Add(agregarLineaSiTiene("CUIT: " + empresaSesion.Cuit));
+            lineasEmpresa.Add(agregarLineaSiTiene("IIBB: " + empresaSesion.Iibb));
+            lineasEmpresa.Add(agregarLineaSiTiene(empresaSesion.RazonSocialAfip));
+            lineasEmpresa.Add(agregarLineaSiTiene((empresaSesion.Domicilio ?? "") + (string.IsNullOrWhiteSpace(empresaSesion.Ciudad) ? "" : " - " + empresaSesion.Ciudad)));
+            lineasEmpresa.Add(agregarLineaSiTiene("Inicio Activ.: " + empresaSesion.InicioActividad.ToString("dd/MM/yyyy")));
+            lineasEmpresa.Add(agregarLineaSiTiene(empresaSesion.CondicionIVA));
+        }
+
+        lineasEmpresa = lineasEmpresa.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+        lineasDetalle.Add(new string('-', cantMaxChar));
+        lineasDetalle.Add(truncar("Nro. " + (factura.PtoVtaAfip ?? "") + "-" + (factura.NroCbteAfip ?? ""), cantMaxChar));
+        lineasDetalle.Add(truncar("Fecha: " + (factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value.ToString("dd/MM/yyyy") : Model.FechaVenta.ToString("dd/MM/yyyy")), cantMaxChar));
+        lineasDetalle.Add(truncar("Pago: " + (factura.FormaPago ?? formaPagoImprimir), cantMaxChar));
+        lineasDetalle.Add(new string('-', cantMaxChar));
+
+        lineasCliente.Add(truncar(factura.RazonSocialAFIP ?? (Model.Persona != null ? Model.Persona.razonSocial : ""), cantMaxChar));
+        if (!string.IsNullOrWhiteSpace(factura.NroDocAfip))
+        {
+            lineasCliente.Add(truncar("CUIT: " + factura.NroDocAfip, cantMaxChar));
+        }
+        if (!string.IsNullOrWhiteSpace(factura.CondicionIvaAFIP))
+        {
+            lineasCliente.Add(truncar(factura.CondicionIvaAFIP, cantMaxChar));
+        }
+        if (!string.IsNullOrWhiteSpace(factura.DomicilioAFIP))
+        {
+            lineasCliente.Add(truncar(factura.DomicilioAFIP, cantMaxChar));
+        }
+
+        lineasDetalle.AddRange(lineasCliente);
+        lineasDetalle.Add(new string('-', cantMaxChar));
+    }
+
+    if (Model.LineasVenta != null)
+    {
+        foreach (var item in Model.LineasVenta)
+        {
+            if (item == null) { continue; }
+
+            decimal cantidad = Convert.ToDecimal(item.CantKg);
+            decimal precio = Convert.ToDecimal(item.PrecioKg);
+            decimal totalLinea = cantidad * precio;
+            string producto = ((item.Corte != null ? item.Corte.corte : "") ?? "").Trim();
+
+            if (esFacturaA)
+            {
+                decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
+                decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
+                decimal importeNeto = cantidad * precioNeto;
+                lineasDetalle.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
+                lineasDetalle.Add(formatearArticulo(producto, importeNeto, cantMaxChar));
+            }
+            else
+            {
+                lineasDetalle.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
+                lineasDetalle.Add(formatearArticulo(producto, totalLinea, cantMaxChar));
+            }
+        }
+    }
+
+    string lineaCorteTotal = alinearDerecha("-------", cantMaxChar);
+
+    if (esFacturaA)
+    {
+        lineasPie.Add(lineaCorteTotal);
+        lineasPie.Add(formatearTotal("Neto s/iva", factura.ImporteNetoGravado, cantMaxChar));
+
+        var alicuotas = Model.LineasVenta == null
+            ? new List<dynamic>()
+            : Model.LineasVenta
+                .GroupBy(x => x.AlicuotaIva)
+                .Select(g => new
+                {
+                    Alicuota = g.Key,
+                    Importe = g.Sum(x => Convert.ToDecimal(x.ImporteIva()))
+                })
+                .Where(x => x.Importe != 0m)
+                .OrderBy(x => x.Alicuota)
+                .ToList<dynamic>();
+
+        foreach (var item in alicuotas)
+        {
+            lineasPie.Add(formatearTotal("IVA " + Convert.ToDecimal(item.Alicuota).ToString("N2") + "%", Convert.ToDecimal(item.Importe), cantMaxChar));
+        }
+
+        lineasPie.Add(formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar));
+    }
+
+    if (!esFacturada && Model.Abona > 0)
+    {
+        lineasPie.Add(formatearTotal("Pago", Convert.ToDecimal(Model.Abona), cantMaxChar));
+        lineasPie.Add(formatearTotal("Vuelto", Convert.ToDecimal(Model.Cambio), cantMaxChar));
+    }
+
+    if (esFacturada)
+    {
+        lineasPie.Add("");
+        lineasPie.Add(truncar("Regimen de Transparencia Fiscal", cantMaxChar));
+        lineasPie.Add(truncar("Al Consumidor (Ley 27.743)", cantMaxChar));
+        lineasPie.Add(truncar("IVA Contenido: " + factura.Iva.ToString("N2"), cantMaxChar));
+        lineasPie.Add(truncar("CAE: " + (factura.CAE ?? ""), cantMaxChar));
+        lineasPie.Add(truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar));
+        lineasPie.Add("");
+
+        bool esTransferencia = (factura.FormaPago ?? "").Equals(Entidades.Pago.formasPago.Transferencia.ToString(), StringComparison.OrdinalIgnoreCase);
+        if (esTransferencia)
+        {
+            lineasPie.Add("Nombre:");
+            lineasPie.Add("DNI:");
+            lineasPie.Add("Telefono:");
+            lineasPie.Add("");
+            lineasPie.Add("");
+            lineasPie.Add("");
+        }
+        else
+        {
+            lineasPie.Add("Gracias por su visita");            
+            lineasPie.Add("");
+            lineasPie.Add("");
+            lineasPie.Add("");
+        }
+    }
+    else
+    {
+        if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+        {
+            lineasPie.Add("");
+            lineasPie.Add("Comentario:");
+            string observacion = Model.Observaciones ?? "";
+            for (int i = 0; i < observacion.Length; i += cantMaxChar)
+            {
+                lineasPie.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+            }
+        }
+
+        lineasPie.Add("");
+        lineasPie.Add(truncar("Articulos: " + Model.CantItems, cantMaxChar));
+        lineasPie.Add(truncar("Cajero: " + (Model.Vendedor != null ? Model.Vendedor.Id.ToString() : ""), cantMaxChar));
+        lineasPie.Add("");
+        lineasPie.Add("Gracias por su visita");
+        lineasPie.Add("");
+        lineasPie.Add("");
+        lineasPie.Add("");
+    }
+
+    string tituloComprobante = esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X";
+    string codigoComprobante = esFacturada
+        ? ("COD." + factura.CodTipoCbteAfip.ToString("00"))
+        : "-No valido como Factura-";
+}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
-
+    <title>Ticket @Model.IdVenta</title>
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+
         body {
             font-family: Consolas, "Courier New", monospace;
             color: #000;
-            margin: 0;
         }
 
         .ticket-80 {
@@ -25,159 +296,104 @@
             font-size: 11px;
         }
 
-        .center {
+        .ticket-wrap {
+            padding: 2mm;
+            box-sizing: border-box;
+        }
+
+        .ticket-line {
+            white-space: pre-wrap;
+            line-height: 1.15;
+        }
+
+        .ticket-title {
+            white-space: pre-wrap;
+            line-height: 1.1;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.7em;
+        }
+
+        .ticket-subtitle {
+            white-space: pre-wrap;
+            line-height: 1.15;
             text-align: center;
         }
 
-        .left {
-            text-align: left;
+        .ticket-business {
+            white-space: pre-wrap;
+            line-height: 1.1;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.3em;
         }
 
-        .right {
-            text-align: right;
-        }
-
-        .bold {
-            font-weight: bold;
-        }
-
-        .big {
-            font-size: 1.4em;
-            font-weight: bold;
-        }
-
-        .xbig {
-            font-size: 1.6em;
-            font-weight: bold;
-        }
-
-        .line {
-            border-top: 1px dashed #000;
-            margin: 6px 0;
-        }
-
-        .spacer {
-            height: 6px;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
+        .ticket-total {
+            white-space: pre-wrap;
+            line-height: 1.15;
+            font-weight: 700;
         }
     </style>
 </head>
+<body class="@ticketClass" onload="window.print()">
+    <div class="ticket-wrap">
+        <div class="ticket-title">@tituloComprobante</div>
+        <div class="ticket-subtitle">@codigoComprobante</div>
+        <div class="ticket-line">&nbsp;</div>
 
-<body class="@ViewBag.Medida" onload="window.print()">
+        @if (!string.IsNullOrWhiteSpace(negocio))
+        {
+            <div class="ticket-business">@negocio</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(negocioAgregado1))
+        {
+            <div class="ticket-subtitle">@negocioAgregado1</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(negocioAgregado2))
+        {
+            <div class="ticket-subtitle">@negocioAgregado2</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(negocioAgregado3) && negocioAgregado3 != "-")
+        {
+            <div class="ticket-subtitle">@negocioAgregado3</div>
+        }
 
-    <!-- X -->
-    <div class="center xbig">X</div>
+        @if (esFacturada)
+        {
+            foreach (var linea in lineasEmpresa)
+            {
+                <div class="ticket-line">@renderLineaHtml(linea)</div>
+            }
+        }
 
-    <!-- No válido -->
-    <div class="center">-No válido como Factura-</div>
+        <div class="ticket-line">&nbsp;</div>
 
-    <div class="spacer"></div>
+        @foreach (var linea in lineasDetalle)
+        {
+            <div class="ticket-line">@renderLineaHtml(linea)</div>
+        }
 
-    <!-- Negocio -->
-    <div class="center big">@ViewBag.Negocio</div>
+        @if (!esFacturaA)
+        {
+            <div class="ticket-line">@lineaCorteTotal</div>
+            <div class="ticket-total">@formatearTotal(esFacturada ? "TOTAL" : "Total", esFacturada ? factura.ImporteTotal : Convert.ToDecimal(Model.TotalImporte), cantMaxChar)</div>
+        }
 
-    @if (!string.IsNullOrWhiteSpace(ViewBag.NegocioAgregado1))
-    {
-        <div class="center">@ViewBag.NegocioAgregado1</div>
-    }
-    @if (!string.IsNullOrWhiteSpace(ViewBag.NegocioAgregado2))
-    {
-        <div class="center">@ViewBag.NegocioAgregado2</div>
-    }
-    @if (!string.IsNullOrWhiteSpace(ViewBag.NegocioAgregado3))
-    {
-        <div class="left">@ViewBag.NegocioAgregado3</div>
-    }
-
-    <div class="spacer"></div>
-
-    @if (Model.EnCtaCte && Model.FormaPago == "Efectivo")
-    {
-        <div class="center bold">A Cta. Cte.</div>
-    }
-
-    <!-- Cliente -->
-    <div class="left">A @Model.Persona.razonSocial</div>
-
-    <!-- Forma de pago -->
-    <div class="left">
-        Forma Pago:
-        @(Model.PagoMixtoEfectivo > 0
-            ? Model.FormaPago + " | Efvo"
-            : Model.FormaPago)
+        @foreach (var linea in lineasPie)
+        {
+            if (esFacturaA && linea == lineaCorteTotal)
+            {
+                <div class="ticket-line">@renderLineaHtml(linea)</div>
+            }
+            else if (esFacturaA && linea == formatearTotal("TOTAL", factura.ImporteTotal, cantMaxChar))
+            {
+                <div class="ticket-total">@renderLineaHtml(linea)</div>
+            }
+            else
+            {
+                <div class="ticket-line">@renderLineaHtml(linea)</div>
+            }
+        }
     </div>
-
-    <!-- Ticket / Fecha -->
-    <div class="left">Nro. T. @Model.IdVenta</div>
-
-    <div class="row">
-        <div>Fecha: @Model.FechaVenta.ToString("dd/MM/yyyy")</div>
-        <div>Hora: @Model.FechaVenta.ToString("HH:mm")</div>
-    </div>
-
-    <div class="line"></div>
-
-    <!-- ARTÍCULOS (CLON DE AgregaArticulo) -->
-    @foreach (var l in Model.LineasVenta)
-    {
-        <!-- cantidad x precio -->
-    <div class="left">
-        @(l.Corte.corte.Length > 22
-                        ? l.Corte.corte.Substring(0, 22)
-                        : l.Corte.corte)
-    </div>
-
-        <!-- producto + total -->
-        <div class="row">
-            <div>
-                @l.CantKg.ToString("F3") x @l.PrecioKg.ToString("N2")
-            </div>
-            <div>
-                @((l.CantKg * l.PrecioKg).ToString("N2"))
-            </div>
-        </div>
-    }
-
-    <div class="line"></div>
-
-    <!-- TOTAL -->
-    <div class="row bold">
-        <div>Total</div>
-        <div>@Model.TotalImporte.ToString("N2")</div>
-    </div>
-
-    @if (Model.Abona > 0)
-    {
-        <div class="row">
-            <div>Pago</div>
-            <div>@Model.Abona.ToString("N2")</div>
-        </div>
-        <div class="row">
-            <div>Vuelto</div>
-            <div>@Model.Cambio.ToString("N2")</div>
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
-    {
-        <div class="line"></div>
-        <div class="left bold">Comentario</div>
-        <div class="left">@Model.Observaciones</div>
-    }
-
-    <div class="spacer"></div>
-
-    <!-- Footer -->
-    <div class="left">Artículos: @Model.CantItems</div>
-    <div class="left">Cajero: @Model.Vendedor.Id</div>
-
-    <div class="spacer"></div>
-
-    <div class="center">Gracias por su visita</div>
-
 </body>
 </html>

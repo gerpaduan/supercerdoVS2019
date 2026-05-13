@@ -51,6 +51,12 @@
         }
     }
 
+    function cerrarLuegoDeImprimir(delayMs) {
+        window.setTimeout(function () {
+            cerrarYRedirigir();
+        }, delayMs || 1200);
+    }
+
     function abrirNuevaVentana(url) {
         if (!url) return;
         window.open(url, '_blank', 'noopener');
@@ -69,8 +75,32 @@
     }
 
     function imprimirTicket(mm) {
-        abrirNuevaVentana(buildTicketUrl(mm));
-        cerrarYRedirigir();
+        var url = buildTicketUrl(mm);
+        if (!url) return;
+
+        $('#iframePrintMovimiento').remove();
+
+        var $iframe = $('<iframe>', {
+            id: 'iframePrintMovimiento',
+            style: 'position:fixed; right:0; bottom:0; width:1px; height:1px; border:0; opacity:0; pointer-events:none;',
+            src: url
+        });
+
+        $iframe.on('load', function () {
+            try {
+                var frameWindow = this.contentWindow;
+                if (frameWindow) {
+                    frameWindow.focus();
+                    if (typeof frameWindow.print === 'function') {
+                        frameWindow.print();
+                    }
+                }
+            } catch (e) { }
+
+            cerrarLuegoDeImprimir(1200);
+        });
+
+        $('body').append($iframe);
     }
 
     window.PostMovimientoModal = {
