@@ -9,12 +9,14 @@ using System.Globalization;
 using System.IO;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
+using iTextSharp.text.pdf.draw;
 using Datos;
 using System.Collections.Generic;
 using System.Web;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Web.Models;
 
 namespace Web.Controllers
 {
@@ -501,6 +503,8 @@ namespace Web.Controllers
             ViewBag.Persona = oPersonasN.findById(idPersona);
             ViewBag.SaldoPersona = saldo;
             ViewBag.Bancos = oCtaCteN.getBancos();
+            ViewBag.ImprimirPagoUrl = idPago > 0 ? Url.Action("ImprimirTicketPago", "Finanzas", new { id = idPago }) : "";
+            ViewBag.ImprimirPagoPdfUrl = idPago > 0 ? Url.Action("ImprimirPdfPago", "Finanzas", new { id = idPago }) : "";
 
             Pago model;
 
@@ -645,18 +649,62 @@ namespace Web.Controllers
 
             if (modoPos)
             {
+                string pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id });
+                string pdfUrlAbsoluta = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }, Request != null && Request.Url != null ? Request.Url.Scheme : "http");
+
                 return Json(new
                 {
                     ok = true,
                     redirectUrl = urlRetornoConCache,
-                    cerrarModalPago = true
+                    cerrarModalPago = true,
+                    pagoId = oPagoE.Id,
+                    imprimirUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
+                    pdfUrl,
+                    whatsappTexto = "Recibo " + oPagoE.NroRecibo + " - " + pdfUrlAbsoluta
                 });
             }
 
             if (Request.IsAjaxRequest())
-                return Json(new { ok = true, redirectUrl = urlRetornoConCache });
+            {
+                string pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id });
+                string pdfUrlAbsoluta = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }, Request != null && Request.Url != null ? Request.Url.Scheme : "http");
+
+                return Json(new
+                {
+                    ok = true,
+                    redirectUrl = urlRetornoConCache,
+                    pagoId = oPagoE.Id,
+                    imprimirUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
+                    pdfUrl,
+                    whatsappTexto = "Recibo " + oPagoE.NroRecibo + " - " + pdfUrlAbsoluta
+                });
+            }
 
             return Redirect(urlRetornoConCache);
+        }
+
+        [HttpGet]
+        public ActionResult ImprimirTicketPago(int id, int mm = 80)
+        {
+            var model = ConstruirReciboPagoVm(id);
+            if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                return HttpNotFound();
+
+            ViewBag.TicketMm = mm == 58 ? 58 : 80;
+            return View("~/Views/Finanzas/_TicketPago.cshtml", model);
+        }
+
+        [HttpGet]
+        public ActionResult ImprimirPdfPago(int id)
+        {
+            var model = ConstruirReciboPagoVm(id);
+            if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                return HttpNotFound();
+
+            byte[] bytes = GenerarPdfPago(model);
+            string nroRecibo = string.IsNullOrWhiteSpace(model.Pago.NroRecibo) ? ("Pago_" + model.Pago.Id) : model.Pago.NroRecibo.Replace("/", "-");
+            string fileName = "Recibo_" + nroRecibo + ".pdf";
+            return File(bytes, "application/pdf", fileName);
         }
 
         private Entidades.CierreCaja ObtenerCajaAbiertaUsuario(Entidades.Usuario user)
@@ -680,6 +728,265 @@ namespace Web.Controllers
 
             bool abierta = cierre != null && cierre.UsuarioCierre != null && cierre.UsuarioCierre.Id == 0;
             return abierta ? cierre : null;
+        }
+
+        private ReciboPagoVm ConstruirReciboPagoVm(int idPago)
+        {
+            var pago = oCtaCteN.getPagoById(idPago);
+            if (pago == null || pago.Id <= 0)
+                return null;
+
+            var user = Session["Usuario"] as Entidades.Usuario;
+            var empresaActual = user != null ? user.Empresa : null;
+
+            if (empresaActual == null && pago.Sucursal != null && pago.Sucursal.IdEmpresa > 0)
+                empresaActual = oSucursalN.findEmpresaById(pago.Sucursal.IdEmpresa);
+
+            DataTable dtCtaCte = oCtaCteN.getCtaCteByIdPersona(pago.Persona.IdPersona, new DateTime(2000, 1, 1));
+            decimal saldo = 0m;
+            bool tieneSaldo = false;
+
+            if (dtCtaCte != null && dtCtaCte.Rows.Count > 0)
+            {
+                DataRow ultimaFila = dtCtaCte.Rows[dtCtaCte.Rows.Count - 1];
+                if (ultimaFila["Saldo"] != DBNull.Value)
+                {
+                    saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
+                    tieneSaldo = true;
+                }
+            }
+
+            string tipoOperacion = pago.AProveedor ? "Pago" : "Cobro";
+            string personaEtiqueta = pago.AProveedor ? "Proveedor" : "Cliente";
+            string detalleOperacion = pago.AProveedor
+                ? "Se entrego dinero a la persona."
+                : "Se recibio dinero de la persona.";
+
+            return new ReciboPagoVm
+            {
+                Pago = pago,
+                Empresa = empresaActual,
+                Saldo = saldo,
+                TieneSaldo = tieneSaldo,
+                TipoOperacion = tipoOperacion,
+                PersonaEtiqueta = personaEtiqueta,
+                DetalleOperacion = detalleOperacion,
+                UrlPdfAbsoluta = Url.Action("ImprimirPdfPago", "Finanzas", new { id = pago.Id }, Request != null && Request.Url != null ? Request.Url.Scheme : "http"),
+                ComprobantesRelacionados = new List<string>()
+            };
+        }
+
+        private byte[] GenerarPdfPago(ReciboPagoVm model)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var doc = new Document(PageSize.A4, 30, 30, 20, 20);
+                PdfWriter.GetInstance(doc, ms);
+                doc.Open();
+
+                var colorRojo = new BaseColor(174, 0, 0);
+                var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, colorRojo);
+                var fuenteRazonSocial = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+                var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
+                var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+                var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
+                var fuenteFooter = FontFactory.GetFont(FontFactory.HELVETICA, 7);
+                var fuenteMono = FontFactory.GetFont(FontFactory.COURIER, 9);
+
+                string negocio = model.Empresa != null
+                    ? (model.Empresa.NombreFantasia ?? model.Empresa.RazonSocialAfip ?? "CarniSys")
+                    : "CarniSys";
+
+                PdfPTable cabecera = new PdfPTable(3);
+                cabecera.WidthPercentage = 100;
+                cabecera.SetWidths(new float[] { 33f, 34f, 33f });
+
+                PdfPCell izquierda = new PdfPCell { Border = Rectangle.NO_BORDER };
+                izquierda.AddElement(new Paragraph(negocio + "\n", fuenteTitulo));
+                izquierda.AddElement(new Paragraph(" ", fuenteRazonSocial));
+                izquierda.AddElement(new Paragraph("Razón Social: " + (model.Empresa != null ? model.Empresa.RazonSocialAfip : "") + "\n", fuenteRazonSocial));
+                izquierda.AddElement(new Paragraph(((model.Empresa != null ? model.Empresa.Domicilio : "") ?? "") + " - " + ((model.Empresa != null ? model.Empresa.Ciudad : "") ?? "") + "\n", fuenteRazonSocial));
+                izquierda.AddElement(new Paragraph("Cond.IVA: " + (model.Empresa != null ? model.Empresa.CondicionIVA : "") + "\n", fuenteRazonSocial));
+                cabecera.AddCell(izquierda);
+
+                PdfPCell centro = new PdfPCell { Border = Rectangle.NO_BORDER, VerticalAlignment = Element.ALIGN_MIDDLE };
+                Paragraph parrafoCentro = new Paragraph { Alignment = Element.ALIGN_CENTER };
+                parrafoCentro.Add(new Chunk("X\n", fuenteX));
+                parrafoCentro.Add(new Chunk("- Documento no válido como factura -", fuenteFooter));
+                centro.AddElement(parrafoCentro);
+                cabecera.AddCell(centro);
+
+                PdfPCell derecha = new PdfPCell { Border = Rectangle.NO_BORDER, HorizontalAlignment = Element.ALIGN_RIGHT };
+                derecha.AddElement(new Paragraph("N°Recibo: " + (model.Pago.NroRecibo ?? "") + "\n", fuenteNegrita));
+                derecha.AddElement(new Paragraph("Fecha: " + model.Pago.Fecha.ToString("dd/MM/yyyy") + "\n\n", fuenteNormal));
+                derecha.AddElement(new Paragraph((model.Empresa != null ? model.Empresa.Iibb.ToString() : "") + "\n", fuenteNormal));
+                derecha.AddElement(new Paragraph("CUIT: " + (model.Empresa != null ? model.Empresa.Cuit.ToString() : "") + "\n", fuenteNormal));
+                derecha.AddElement(new Paragraph("Inicio Act.: " + (model.Empresa != null ? model.Empresa.InicioActividad.ToString("dd/MM/yyyy") : "") + "\n", fuenteNormal));
+                cabecera.AddCell(derecha);
+
+                doc.Add(cabecera);
+                LineSeparator linea = new LineSeparator(1.5f, 100f, BaseColor.GRAY, Element.ALIGN_CENTER, -6);
+                doc.Add(new Chunk(linea));
+                doc.Add(new Paragraph(" "));
+
+                PdfPTable cliente = new PdfPTable(4);
+                cliente.WidthPercentage = 100;
+                cliente.SetWidths(new float[] { 15, 45, 10, 20 });
+                cliente.AddCell(CeldaSimple(model.PersonaEtiqueta + ":", fuenteNegrita));
+                cliente.AddCell(CeldaSimple((model.Pago.Persona != null ? model.Pago.Persona.RazonSocial : "").ToUpperInvariant(), fuenteNormal));
+                cliente.AddCell(CeldaSimple("Cond. IVA:", fuenteNegrita));
+                cliente.AddCell(CeldaSimple(model.Pago.Persona != null ? model.Pago.Persona.Iva : "", fuenteNormal));
+                cliente.AddCell(CeldaSimple("Domicilio:", fuenteNegrita));
+                cliente.AddCell(CeldaSimple((model.Pago.Persona != null ? model.Pago.Persona.Domicilio : "").ToUpperInvariant(), fuenteNormal));
+                cliente.AddCell(CeldaSimple("CUIT:", fuenteNegrita));
+                cliente.AddCell(CeldaSimple(model.Pago.Persona != null ? model.Pago.Persona.Cuit : "", fuenteNormal));
+                doc.Add(cliente);
+
+                doc.Add(new Chunk(linea));
+                doc.Add(new Paragraph(" "));
+
+                string detallePago = model.Pago.Observaciones ?? "";
+                string importesDetalle = model.Pago.Importe.ToString("F2", CultureInfo.InvariantCulture);
+
+                if (!string.IsNullOrWhiteSpace(model.Pago.FormaPago) &&
+                    model.Pago.FormaPago.IndexOf(Entidades.Pago.formasPago.Cheque.ToString(), StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    int espaciosBlanco = 15;
+                    double importesCheque = 0d;
+                    var detalleBuilder = new System.Text.StringBuilder();
+                    var importesBuilder = new System.Text.StringBuilder();
+
+                    if (model.Pago.FormaPago.IndexOf("Eftvo", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        detalleBuilder.Append(AjustarString("Efectivo", espaciosBlanco, true));
+                        detalleBuilder.Append(AjustarString(" ", espaciosBlanco, true));
+                        detalleBuilder.Append(AjustarString(" ", espaciosBlanco, true));
+                        detalleBuilder.Append(AjustarString(" ", espaciosBlanco, true));
+                        detalleBuilder.Append("\n\n");
+                        importesBuilder.AppendLine(model.Pago.Efectivo.ToString("F2", CultureInfo.InvariantCulture));
+                    }
+
+                    detalleBuilder.Append(AjustarString("Nro Cheque", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("Banco", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("Fecha Pago", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("Importe", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("-------------", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("-------------", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("-------------", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("-------------", espaciosBlanco, true));
+                    importesBuilder.Append("\n\n\n");
+
+                    foreach (var cheque in model.Pago.Cheques ?? new List<Cheque>())
+                    {
+                        detalleBuilder.Append("\n");
+                        detalleBuilder.Append(AjustarString(cheque.NroCheque, espaciosBlanco, true));
+                        detalleBuilder.Append(AjustarString(cheque.Banco, espaciosBlanco, true));
+                        detalleBuilder.Append(AjustarString(cheque.FechaPago.ToShortDateString(), espaciosBlanco, true));
+                        detalleBuilder.Append(AjustarString(cheque.Importe.ToString("F2", CultureInfo.InvariantCulture), 12, false));
+                        importesBuilder.Append("\n");
+                        importesCheque += cheque.Importe;
+                    }
+
+                    detalleBuilder.Append(AjustarString("             ", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("             ", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("             ", espaciosBlanco, true));
+                    detalleBuilder.Append(AjustarString("Total Cheques", espaciosBlanco, true));
+                    importesBuilder.Append(importesCheque.ToString("F2", CultureInfo.InvariantCulture));
+
+                    if (!string.IsNullOrWhiteSpace(model.Pago.Observaciones))
+                        detalleBuilder.Append("\n\n___________________\nObs.: " + model.Pago.Observaciones);
+
+                    detallePago = detalleBuilder.ToString();
+                    importesDetalle = importesBuilder.ToString();
+                }
+
+                PdfPTable tablaValores = new PdfPTable(3);
+                tablaValores.WidthPercentage = 100;
+                tablaValores.SetWidths(new float[] { 20, 60, 20 });
+                foreach (var h in new[] { "Forma Pago", "Detalle", "Importe" })
+                {
+                    var celda = new PdfPCell(new Phrase(h, fuenteNegrita));
+                    celda.BackgroundColor = new BaseColor(255, 200, 200);
+                    celda.HorizontalAlignment = Element.ALIGN_CENTER;
+                    tablaValores.AddCell(celda);
+                }
+
+                tablaValores.AddCell(CeldaCentrada(model.Pago.FormaPago ?? "", fuenteNormal));
+                tablaValores.AddCell(new PdfPCell(new Phrase(detallePago, (model.Pago.FormaPago ?? "").IndexOf("Cheque", StringComparison.OrdinalIgnoreCase) >= 0 ? fuenteMono : fuenteNormal)) { HorizontalAlignment = Element.ALIGN_LEFT });
+                tablaValores.AddCell(CeldaDerecha(importesDetalle, fuenteNormal));
+                doc.Add(tablaValores);
+
+                PdfPTable tablaTotal = new PdfPTable(6);
+                tablaTotal.WidthPercentage = 100;
+                tablaTotal.SetWidths(new float[] { 12, 16, 10, 10, 26, 26 });
+                for (int i = 0; i < 5; i++)
+                    tablaTotal.AddCell(new PdfPCell() { Border = Rectangle.NO_BORDER });
+                PdfPCell celdaTotal = new PdfPCell(new Phrase("Total: $ " + model.Pago.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), fuenteNegrita));
+                celdaTotal.HorizontalAlignment = Element.ALIGN_RIGHT;
+                celdaTotal.Border = Rectangle.TOP_BORDER;
+                tablaTotal.AddCell(celdaTotal);
+                doc.Add(tablaTotal);
+
+                if (model.TieneSaldo)
+                {
+                    PdfPTable tablaSaldo = new PdfPTable(6);
+                    tablaSaldo.WidthPercentage = 100;
+                    tablaSaldo.SetWidths(new float[] { 12, 16, 10, 10, 26, 26 });
+                    for (int i = 0; i < 5; i++)
+                        tablaSaldo.AddCell(new PdfPCell() { Border = Rectangle.NO_BORDER });
+                    PdfPCell celdaSaldo = new PdfPCell(new Phrase("[ Saldo: $ " + model.Saldo.ToString("N2") + " ]", fuenteNormal));
+                    celdaSaldo.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    celdaSaldo.Border = Rectangle.NO_BORDER;
+                    tablaSaldo.AddCell(celdaSaldo);
+                    doc.Add(tablaSaldo);
+                }
+
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph(model.TipoOperacion.ToUpperInvariant() + " - " + model.DetalleOperacion, fuenteNegrita));
+
+                if (model.Pago.Sucursal != null)
+                    doc.Add(new Paragraph("Sucursal: " + (model.Pago.Sucursal.SucursalNombre ?? ""), fuenteNormal));
+                if (model.Pago.CreadoPor != null)
+                    doc.Add(new Paragraph("Usuario: " + (model.Pago.CreadoPor.Nombre ?? ""), fuenteNormal));
+
+                doc.Close();
+                return ms.ToArray();
+            }
+        }
+
+        private static string AjustarString(string texto, int espacios, bool izquierda)
+        {
+            texto = texto ?? "";
+            if (texto.Length > espacios)
+                texto = texto.Substring(0, espacios);
+            return izquierda ? texto.PadRight(espacios) : texto.PadLeft(espacios);
+        }
+
+        private PdfPCell CeldaSimple(string texto, iTextSharp.text.Font fuente, int alineacion = Element.ALIGN_LEFT)
+        {
+            PdfPCell celda = new PdfPCell(new Phrase(texto ?? "", fuente));
+            celda.Border = Rectangle.NO_BORDER;
+            celda.HorizontalAlignment = alineacion;
+            celda.Padding = 4f;
+            return celda;
+        }
+
+        private PdfPCell CeldaCentrada(string texto, iTextSharp.text.Font fuente)
+        {
+            return new PdfPCell(new Phrase(texto ?? "", fuente))
+            {
+                HorizontalAlignment = Element.ALIGN_CENTER,
+                Padding = 5
+            };
+        }
+
+        private PdfPCell CeldaDerecha(string texto, iTextSharp.text.Font fuente)
+        {
+            return new PdfPCell(new Phrase(texto ?? "", fuente))
+            {
+                HorizontalAlignment = Element.ALIGN_RIGHT,
+                Padding = 5
+            };
         }
 
 

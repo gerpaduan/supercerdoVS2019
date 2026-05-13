@@ -31,17 +31,36 @@
         <button type="button" class="btn btn-outline-secondary" id="btnVolverTiposEgresoCaja">
             Volver
         </button>
-        <button type="submit" class="btn btn-primary">
+        <div>
+            @if (esEdicion)
+            {
+                <button type="button"
+                        class="btn btn-secondary mr-2"
+                        id="btnHabilitarEdicionTipoEgresoCaja"
+                        data-edit-readonly-ignore="true">
+                    Modificar
+                </button>
+            }
+            <button type="submit" class="btn btn-primary @(esEdicion ? "d-none" : "")" id="btnGuardarTipoEgresoCaja">
             @(esEdicion ? "Guardar cambios" : "Guardar tipo")
-        </button>
+            </button>
+        </div>
     </div>
 }
 
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
 <script>
     (function () {
         if (window.EgresosCaja && typeof window.EgresosCaja.bindTipoForm === "function") {
             window.EgresosCaja.bindTipoForm("#formTipoEgresoCaja");
         }
+
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formTipoEgresoCaja",
+            soloLecturaInicial: @(esEdicion ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionTipoEgresoCaja",
+            saveButtonSelector: "#btnGuardarTipoEgresoCaja"
+        });
 
         setTimeout(function () {
             var input = document.getElementById("tipoEgresoCajaNombre");

@@ -158,6 +158,7 @@
     <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
+    <Compile Include="Models\ReciboPagoVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
     <Compile Include="Models\UsuariosVm.cs" />
@@ -1869,6 +1870,7 @@
     <Content Include="Scripts\app\factura-electronica.js" />
     <Content Include="Scripts\app\egresos-caja.js" />
     <Content Include="Scripts\app\modal-cheque.js" />
+    <Content Include="Scripts\app\modal-postpago.js" />
     <Content Include="Scripts\app\forma-pago.js" />
     <Content Include="Scripts\app\modal-postventa.js" />
     <Content Include="Scripts\app\modal-sucursales.js" />
@@ -2080,6 +2082,8 @@
     <Content Include="Views\Shared\_LayoutPOS.cshtml" />
     <Content Include="Views\Finanzas\CtaCtePersona.cshtml" />
     <Content Include="Views\Finanzas\AddOrEditPago.cshtml" />
+    <Content Include="Views\Finanzas\_ModalPostPago.cshtml" />
+    <Content Include="Views\Finanzas\_TicketPago.cshtml" />
     <Content Include="Views\Finanzas\_ModalAltaCheque.cshtml" />
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />

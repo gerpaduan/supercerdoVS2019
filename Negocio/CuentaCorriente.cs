@@ -435,7 +435,7 @@ namespace Negocio
                     if (!numerosCheque.Add(cheque.NroCheque.Trim()))
                         return (false, "El mismo cheque no puede asignarse más de una vez al pago actual.");
 
-                    var validacionCheque = ValidarChequeParaPago(cheque.NroCheque, oPagoE, oPagoE.AProveedor);
+                    var validacionCheque = ValidarChequeParaPago(cheque.NroCheque, oPagoE, oPagoE.AProveedor, true);
                     if (!validacionCheque.ok)
                         return (false, validacionCheque.mensaje);
                 }
@@ -451,7 +451,8 @@ namespace Negocio
         public (bool ok, string mensaje, Cheque cheque) ValidarChequeParaPago(
                                                                         string nroCheque,
                                                                         Pago pagoActual,
-                                                                        bool esAProveedor)
+                                                                        bool esAProveedor,
+                                                                        bool permitirChequeActualEnValidacion = false)
         {
             if (pagoActual == null)
                 pagoActual = new Pago();
@@ -478,12 +479,28 @@ namespace Negocio
                 "\nEntregado a: " + (oCheque.PagoA != null ? oCheque.PagoA.Persona.RazonSocial : "-");
 
             bool yaAsignadoEnPagoActual = pagoActual.Cheques.Any(c =>
-                c != null &&
-                (
+            {
+                if (c == null)
+                    return false;
+
+                bool mismoCheque =
                     (c.Id > 0 && c.Id == oCheque.Id) ||
                     (!string.IsNullOrWhiteSpace(c.NroCheque) &&
-                     c.NroCheque.Trim().Equals(oCheque.NroCheque, StringComparison.OrdinalIgnoreCase))
-                ));
+                     c.NroCheque.Trim().Equals(oCheque.NroCheque, StringComparison.OrdinalIgnoreCase));
+
+                if (!mismoCheque)
+                    return false;
+
+                if (!permitirChequeActualEnValidacion)
+                    return true;
+
+                bool esElMismoChequeEvaluado =
+                    (c.Id > 0 && oCheque.Id > 0 && c.Id == oCheque.Id) ||
+                    (!string.IsNullOrWhiteSpace(c.NroCheque) &&
+                     c.NroCheque.Trim().Equals(oCheque.NroCheque, StringComparison.OrdinalIgnoreCase));
+
+                return !esElMismoChequeEvaluado;
+            });
 
             if (yaAsignadoEnPagoActual)
                 return (false, "El cheque ya ha sido asignado al pago actual." + infoCheque, null);

@@ -260,7 +260,16 @@
                         <a class="btn btn-outline-secondary" href="@Url.Action("Index","Productos")">Volver</a>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" name="accion" value="guardar" class="btn btn-primary" id="btnGuardarProducto">
+                            @if (esEdicion)
+                            {
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        id="btnHabilitarEdicionProducto"
+                                        data-edit-readonly-ignore="true">
+                                    Modificar
+                                </button>
+                            }
+                            <button type="submit" name="accion" value="guardar" class="btn btn-primary @(esEdicion ? "d-none" : "")" id="btnGuardarProducto">
                                 @(esEdicion ? "Guardar cambios" : "Crear producto")
                             </button>
 
@@ -357,6 +366,7 @@
 </script>
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
 (function () {
     // =========================
@@ -1343,6 +1353,12 @@
         });
     }
 
+    window.EditReadOnly && window.EditReadOnly.init({
+        formSelector: "#frmCorte",
+        soloLecturaInicial: @(esEdicion ? "true" : "false"),
+        modifyButtonSelector: "#btnHabilitarEdicionProducto",
+        saveButtonSelector: "#btnGuardarProducto"
+    });
 })();
     </script>
 }

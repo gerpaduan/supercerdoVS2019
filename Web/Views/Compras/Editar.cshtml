@@ -404,13 +404,22 @@
                         </button>
                     </div>
                     <div class="mb-2">
+                        @if (Model.EsEdicion)
+                        {
+                            <button type="button"
+                                    class="btn btn-primary mr-2"
+                                    id="btnHabilitarEdicionCompra"
+                                    data-edit-readonly-ignore="true">
+                                <i class="fas fa-edit mr-1"></i> Modificar
+                            </button>
+                        }
                         @if (!Model.DesdePos)
                         {
                             <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary">
                                 Cancelar
                             </a>
                         }
-                        <button type="submit" class="btn btn-success" id="btnGuardarCompra">
+                        <button type="submit" class="btn btn-success @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarCompra">
                             <i class="fas fa-save"></i> Guardar compra
                         </button>
                     </div>
@@ -428,6 +437,7 @@
 
 @if (Model.DesdePos)
 {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/compras.js?v=10")"></script>
     <script>
         (function () {
@@ -450,15 +460,23 @@
                     personaListar: "@Url.Action("Listar", "Personas")",
                     buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
                     editarLayout: "@Url.Action("Editar", "Compras")",
-                    nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
-                }
-            });
+                        nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
+                    }
+                });
+
+                window.EditReadOnly && window.EditReadOnly.init({
+                    formSelector: "#formCompra",
+                    soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                    modifyButtonSelector: "#btnHabilitarEdicionCompra",
+                    saveButtonSelector: "#btnGuardarCompra"
+                });
         })();
     </script>
 }
 else
 {
     @section Scripts {
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
         <script src="@Url.Content("~/Scripts/app/compras.js?v=10")"></script>
         <script>
             (function () {
@@ -483,6 +501,13 @@ else
                         editarLayout: "@Url.Action("Editar", "Compras")",
                         nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
                     }
+                });
+
+                window.EditReadOnly && window.EditReadOnly.init({
+                    formSelector: "#formCompra",
+                    soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                    modifyButtonSelector: "#btnHabilitarEdicionCompra",
+                    saveButtonSelector: "#btnGuardarCompra"
                 });
             })();
         </script>

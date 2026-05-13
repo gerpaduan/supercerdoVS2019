@@ -92,11 +92,6 @@
         }
     }
 
-    linea(".");
-    linea("");
-    linea("");
-    linea("");
-
     string ticketTexto = sb.ToString();
 }
 <!DOCTYPE html>
@@ -137,5 +132,10 @@
 </head>
 <body class="@ticketClass" onload="window.print()">
     <pre class="ticket-text">@ticketTexto</pre>
+
+    @for (int i = 0; i < 10; i++)
+    {
+        <pre class="ticket-line">&nbsp;</pre>
+    }
 </body>
 </html>

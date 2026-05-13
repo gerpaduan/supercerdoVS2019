@@ -1,0 +1,166 @@
+@model Web.Models.ReciboPagoVm
+@using System
+@using System.Text
+@{
+    Layout = null;
+
+    int ticketMm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 80;
+    int cantMaxChar = ticketMm == 58 ? 32 : 48;
+    string ticketClass = ticketMm == 58 ? "ticket-58" : "ticket-80";
+    string negocio = Model.Empresa != null
+        ? (Model.Empresa.NombreFantasia ?? Model.Empresa.RazonSocialAfip ?? "CarniSys")
+        : "CarniSys";
+
+    Func<string, int, string> truncar = (texto, maximo) =>
+    {
+        texto = texto ?? "";
+        return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+    };
+
+    Func<string, int, string> centrar = (texto, ancho) =>
+    {
+        texto = truncar(texto, ancho);
+        int espaciosIzquierda = (ancho - texto.Length) / 2;
+        if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+        return new string(' ', espaciosIzquierda) + texto;
+    };
+
+    Func<string, string, int, string> alinearExtremos = (izquierda, derecha, ancho) =>
+    {
+        izquierda = truncar(izquierda, ancho);
+        derecha = truncar(derecha, ancho);
+        int espacios = ancho - (izquierda.Length + derecha.Length);
+        if (espacios < 1) espacios = 1;
+        return izquierda + new string(' ', espacios) + derecha;
+    };
+
+    Func<string, decimal, int, string> formatearTotal = (etiqueta, importe, ancho) =>
+    {
+        string derecha = importe.ToString("N2");
+        int espacios = ancho - (etiqueta.Length + derecha.Length);
+        if (espacios < 1) espacios = 1;
+        return etiqueta + new string(' ', espacios) + derecha;
+    };
+
+    var sb = new StringBuilder();
+    Action<string> linea = texto => sb.AppendLine(texto ?? "");
+
+    linea(centrar("RECIBO " + (Model.TipoOperacion ?? "").ToUpperInvariant(), cantMaxChar));
+    linea(centrar("X", cantMaxChar));
+    linea(centrar(negocio, cantMaxChar));
+    linea(truncar(Model.Empresa != null ? Model.Empresa.RazonSocialAfip : "", cantMaxChar));
+    linea(truncar("CUIT: " + (Model.Empresa != null ? Model.Empresa.Cuit.ToString() : ""), cantMaxChar));
+    linea(truncar("IIBB: " + (Model.Empresa != null ? Model.Empresa.Iibb.ToString() : ""), cantMaxChar));
+    linea(truncar((Model.Empresa != null ? Model.Empresa.Domicilio : "") + " " + (Model.Empresa != null ? Model.Empresa.Ciudad : ""), cantMaxChar));
+    linea(new string('-', cantMaxChar));
+    linea(truncar("Nro. Recibo: " + (Model.Pago.NroRecibo ?? ""), cantMaxChar));
+    linea(alinearExtremos("Fecha: " + Model.Pago.Fecha.ToString("dd/MM/yyyy"), "Hora: " + Model.Pago.Fecha.ToString("HH:mm"), cantMaxChar));
+    linea(truncar((Model.PersonaEtiqueta ?? "Persona") + ": " + (Model.Pago.Persona != null ? Model.Pago.Persona.RazonSocial : ""), cantMaxChar));
+    if (Model.Pago.Persona != null && !string.IsNullOrWhiteSpace(Model.Pago.Persona.Cuit))
+    {
+        linea(truncar("CUIT: " + Model.Pago.Persona.Cuit, cantMaxChar));
+    }
+    if (Model.Pago.Persona != null && !string.IsNullOrWhiteSpace(Model.Pago.Persona.Iva))
+    {
+        linea(truncar("Cond. IVA: " + Model.Pago.Persona.Iva, cantMaxChar));
+    }
+    if (Model.Pago.Persona != null && !string.IsNullOrWhiteSpace(Model.Pago.Persona.Domicilio))
+    {
+        linea(truncar("Domicilio: " + Model.Pago.Persona.Domicilio, cantMaxChar));
+    }
+    linea(new string('-', cantMaxChar));
+    linea(truncar("Forma Pago: " + (Model.Pago.FormaPago ?? ""), cantMaxChar));
+    linea(truncar(Model.DetalleOperacion ?? "", cantMaxChar));
+    linea(formatearTotal("Importe", Convert.ToDecimal(Model.Pago.Importe), cantMaxChar));
+
+    if (Model.Pago.Cheques != null && Model.Pago.Cheques.Count > 0)
+    {
+        linea(" ");
+        linea(truncar("Cheques:", cantMaxChar));
+        foreach (var cheque in Model.Pago.Cheques)
+        {
+            linea(truncar((cheque.NroCheque ?? "") + " " + (cheque.Banco ?? ""), cantMaxChar));
+            linea(alinearExtremos("F.Pago: " + cheque.FechaPago.ToString("dd/MM/yy"), cheque.Importe.ToString("N2"), cantMaxChar));
+        }
+        if (Convert.ToDecimal(Model.Pago.Efectivo) > 0)
+        {
+            linea("-");
+            linea(formatearTotal("Efectivo:", Convert.ToDecimal(Model.Pago.Efectivo), cantMaxChar));
+        }
+    }
+
+    if (!string.IsNullOrWhiteSpace(Model.Pago.Observaciones))
+    {
+        linea(" ");
+        linea(truncar("Observaciones:", cantMaxChar));
+        string observacion = Model.Pago.Observaciones ?? "";
+        for (int i = 0; i < observacion.Length; i += cantMaxChar)
+        {
+            linea(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+        }
+    }
+
+    if (Model.TieneSaldo)
+    {
+        linea(" ");
+        linea(formatearTotal("Saldo", Model.Saldo, cantMaxChar));
+    }
+
+    linea(" ");
+    if (Model.Pago.Sucursal != null)
+    {
+        linea(truncar("Sucursal: " + (Model.Pago.Sucursal.SucursalNombre ?? ""), cantMaxChar));
+    }
+    if (Model.Pago.CreadoPor != null)
+    {
+        linea(truncar("Usuario: " + (Model.Pago.CreadoPor.Nombre ?? ""), cantMaxChar));
+    }
+    linea(" ");
+    linea("Firma:");
+
+    string ticketTexto = sb.ToString();
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Recibo @Model.Pago.Id</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+
+        body {
+            font-family: Consolas, "Courier New", monospace;
+            color: #000;
+        }
+
+        .ticket-80 {
+            width: 80mm;
+            font-size: 12px;
+        }
+
+        .ticket-58 {
+            width: 58mm;
+            font-size: 11px;
+        }
+
+        pre.ticket-text {
+            margin: 0;
+            padding: 2mm;
+            white-space: pre-wrap;
+            line-height: 1.15;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body class="@ticketClass" onload="window.print()">
+    <pre class="ticket-text">@ticketTexto</pre>
+    @for (int i = 0; i < 10; i++)
+    {
+        <pre class="ticket-text">&nbsp;</pre>
+    }
+</body>
+</html>

@@ -235,10 +235,7 @@
         }
         else
         {
-            lineasPie.Add("Gracias por su visita");            
-            lineasPie.Add("");
-            lineasPie.Add("");
-            lineasPie.Add("");
+            lineasPie.Add("Gracias por su visita");    
         }
     }
     else
@@ -259,9 +256,6 @@
         lineasPie.Add(truncar("Cajero: " + (Model.Vendedor != null ? Model.Vendedor.Id.ToString() : ""), cantMaxChar));
         lineasPie.Add("");
         lineasPie.Add("Gracias por su visita");
-        lineasPie.Add("");
-        lineasPie.Add("");
-        lineasPie.Add("");
     }
 
     string tituloComprobante = esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X";
@@ -366,7 +360,7 @@
             }
         }
 
-        <div class="ticket-line">&nbsp;</div>
+        @* <div class="ticket-line">&nbsp;</div> *@
 
         @foreach (var linea in lineasDetalle)
         {
@@ -379,8 +373,10 @@
             <div class="ticket-total">@formatearTotal(esFacturada ? "TOTAL" : "Total", esFacturada ? factura.ImporteTotal : Convert.ToDecimal(Model.TotalImporte), cantMaxChar)</div>
         }
 
-        @foreach (var linea in lineasPie)
-        {
+        
+        <div class="ticket-line">&nbsp;</div>
+        <div class="ticket-line">&nbsp;</div>
+        <div class="ticket-line">&nbsp;</div>
             if (esFacturaA && linea == lineaCorteTotal)
             {
                 <div class="ticket-line">@renderLineaHtml(linea)</div>
@@ -393,6 +389,11 @@
             {
                 <div class="ticket-line">@renderLineaHtml(linea)</div>
             }
+        }
+
+        @for (int i = 0; i < 10; i++)
+        {            
+            <div class="ticket-line">&nbsp;</div>
         }
     </div>
 </body>

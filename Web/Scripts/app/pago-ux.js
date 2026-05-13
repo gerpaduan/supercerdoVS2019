@@ -69,6 +69,17 @@
         function resolverRedirectNoPos(resp) {
             const redirectUrl = (resp && resp.redirectUrl) || $("#urlVolverPago").val() || window.location.href;
 
+            if (window.PostPagoModal && resp && resp.imprimirUrl) {
+                window.PostPagoModal.open({
+                    redirectUrl: redirectUrl,
+                    imprimirUrl: resp.imprimirUrl,
+                    pdfUrl: resp.pdfUrl,
+                    whatsappTexto: resp.whatsappTexto,
+                    stayOnPage: false
+                });
+                return;
+            }
+
             if ($("#modalEgresoCaja").hasClass("show") &&
                 $("#contenedorActividadesCaja").length &&
                 redirectUrl &&
@@ -104,6 +115,23 @@
             if (window.POSFinanzasState && resp && resp.redirectUrl) {
                 window.POSFinanzasState.redirectDespuesDePago = resp.redirectUrl;
                 window.POSFinanzasState.tituloDespuesDePago = "Cuenta corriente";
+            }
+
+            if (window.PostPagoModal && resp && resp.imprimirUrl) {
+                if (resp && resp.cerrarModalPago && $("#modalPagoPOS").length) {
+                    $("#modalPagoPOS").modal("hide");
+                }
+
+                window.setTimeout(function () {
+                    window.PostPagoModal.open({
+                        redirectUrl: resp.redirectUrl,
+                        imprimirUrl: resp.imprimirUrl,
+                        pdfUrl: resp.pdfUrl,
+                        whatsappTexto: resp.whatsappTexto,
+                        stayOnPage: false
+                    });
+                }, 250);
+                return;
             }
 
             mostrarMensaje({
@@ -345,6 +373,28 @@
             bindSubmitGuard();
             actualizarResumenModo();
             enfocarCampoPrincipal();
+
+            $(document)
+                .off("click.pagoUXImprimir", "#btnImprimirPago")
+                .on("click.pagoUXImprimir", "#btnImprimirPago", function () {
+                    if (!window.PostPagoModal) return;
+
+                    const pdfUrl = ($(this).data("pdf-url") || "").toString();
+                    const imprimirUrl = ($(this).data("imprimir-url") || "").toString();
+                    let whatsappTexto = "Recibo";
+
+                    if (pdfUrl) {
+                        whatsappTexto = "Recibo - " + new URL(pdfUrl, window.location.origin).toString();
+                    }
+
+                    window.PostPagoModal.open({
+                        redirectUrl: "",
+                        imprimirUrl: imprimirUrl,
+                        pdfUrl: pdfUrl,
+                        whatsappTexto: whatsappTexto,
+                        stayOnPage: true
+                    });
+                });
         }
 
         return {

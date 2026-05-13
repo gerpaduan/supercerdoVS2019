@@ -31,7 +31,7 @@
                 </div>
             }
 
-            @using (Html.BeginForm("Guardar", "Usuarios", FormMethod.Post, new { novalidate = "novalidate" }))
+            @using (Html.BeginForm("Guardar", "Usuarios", FormMethod.Post, new { novalidate = "novalidate", id = "formUsuario" }))
             {
                 @Html.AntiForgeryToken()
                 @Html.HiddenFor(m => m.Id)
@@ -167,9 +167,18 @@
                 </div>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion && !Model.SoloLectura)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionUsuario"
+                                data-edit-readonly-ignore="true">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
                     @if (!Model.SoloLectura)
                     {
-                        <button type="submit" class="btn btn-success mr-2 mb-2">
+                        <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !Model.SoloLectura) ? "d-none" : "")" id="btnGuardarUsuario">
                             <i class="fas fa-save mr-1"></i> Guardar usuario
                         </button>
                     }
@@ -181,3 +190,13 @@
         </div>
     </div>
 </div>
+
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+<script>
+    window.EditReadOnly && window.EditReadOnly.init({
+        formSelector: "#formUsuario",
+        soloLecturaInicial: @((Model.EsEdicion && !Model.SoloLectura) ? "true" : "false"),
+        modifyButtonSelector: "#btnHabilitarEdicionUsuario",
+        saveButtonSelector: "#btnGuardarUsuario"
+    });
+</script>

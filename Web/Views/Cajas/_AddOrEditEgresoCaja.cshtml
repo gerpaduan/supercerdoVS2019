@@ -95,17 +95,34 @@
             <textarea class="form-control" name="detalle" rows="3">@(Model != null ? Model.Detalle : "")</textarea>
         </div>
 
-        <button type="submit" class="btn btn-success btn-block">
+        @if (esEdicion)
+        {
+            <button type="button"
+                    class="btn btn-primary btn-block mb-2"
+                    id="btnHabilitarEdicionEgresoCaja"
+                    data-edit-readonly-ignore="true">
+                <i class="fas fa-edit mr-1"></i> Modificar
+            </button>
+        }
+        <button type="submit" class="btn btn-success btn-block @(esEdicion ? "d-none" : "")" id="btnGuardarEgresoCaja">
             <i class="fas fa-save mr-1"></i> @(esEdicion ? "Guardar modificación" : "Guardar egreso")
         </button>
     </form>
 </div>
 
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
 <script>
     (function () {
         if (window.EgresosCaja && typeof window.EgresosCaja.bindForm === "function") {
             window.EgresosCaja.bindForm("#formEgresoCaja");
         }
+
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formEgresoCaja",
+            soloLecturaInicial: @(esEdicion ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionEgresoCaja",
+            saveButtonSelector: "#btnGuardarEgresoCaja"
+        });
 
         setTimeout(function () {
             var selector = @Html.Raw(desdePos ? "\"#idTipoEgresoCaja\"" : "\"#formEgresoCaja [name='fecha']\"");

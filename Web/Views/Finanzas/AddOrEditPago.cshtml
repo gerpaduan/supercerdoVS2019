@@ -26,6 +26,7 @@
             idPersona = ViewBag.Persona.IdPersona,
             fechaDesde = DateTime.Today.ToString("yyyy-MM-dd")
         });
+    bool soloLecturaInicial = Model != null && Model.Id > 0;
 }
 
 <div class="container-fluid">
@@ -59,6 +60,19 @@
                     }
                 </h5>
             </div>
+
+            @if (Model != null && Model.Id > 0)
+            {
+                <div class="d-flex justify-content-end mb-3">
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            id="btnImprimirPago"
+                            data-imprimir-url="@ViewBag.ImprimirPagoUrl"
+                            data-pdf-url="@ViewBag.ImprimirPagoPdfUrl">
+                        <i class="fas fa-print mr-1"></i> Imprimir
+                    </button>
+                </div>
+            }
 
             <div class="card shadow mb-4">
                 <div class="card-body">
@@ -237,10 +251,20 @@
 
                         <input type="hidden" id="ChequesJson" name="ChequesJson" />
 
+                        @if (soloLecturaInicial)
+                        {
+                            <button type="button"
+                                    id="btnHabilitarEdicionPago"
+                                    class="btn btn-primary btn-block mb-2"
+                                    data-edit-readonly-ignore="true">
+                                <i class="fas fa-edit mr-1"></i> Modificar
+                            </button>
+                        }
+
                         <button type="submit"
                                 id="btnGuardarPago"
                                 onclick="if (!@renderComoModal.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
-                                class="btn btn-success btn-block">
+                                class="btn btn-success btn-block @(soloLecturaInicial ? "d-none" : "")">
                             Guardar pago
                         </button>
                     }
@@ -275,6 +299,7 @@
     </div>
 </div>
 
+@Html.Partial("_ModalPostPago")
 @Html.Partial("_ModalAltaCheque")
 
 <div class="modal fade" id="modalDetalleCheque" tabindex="-1" role="dialog" aria-labelledby="modalDetalleChequeLabel" aria-hidden="true" data-backdrop="static" data-keyboard="true">
@@ -336,8 +361,10 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         window.PagoCheques && window.PagoCheques.init({
             desdePos: true,
@@ -346,6 +373,12 @@
             getCheques: window.urls.getCheques
         });
         window.PagoUX && window.PagoUX.init();
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formPago",
+            soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionPago",
+            saveButtonSelector: "#btnGuardarPago"
+        });
     </script>
 }
 else
@@ -360,8 +393,10 @@ else
             };
         </script>
         <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=4")"></script>
+        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=5")"></script>
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
         <script>
             window.PagoCheques && window.PagoCheques.init({
                 desdePos: false,
@@ -370,6 +405,12 @@ else
                 getCheques: window.urls.getCheques
             });
             window.PagoUX && window.PagoUX.init();
+            window.EditReadOnly && window.EditReadOnly.init({
+                formSelector: "#formPago",
+                soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
+                modifyButtonSelector: "#btnHabilitarEdicionPago",
+                saveButtonSelector: "#btnGuardarPago"
+            });
         </script>
     }
 }
