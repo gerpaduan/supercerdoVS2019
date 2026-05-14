@@ -1,0 +1,1022 @@
+@model Web.Models.PuntoExpendioEditVm
+@using System.Collections.Generic
+
+@{
+    Layout = "~/Views/Shared/_LayoutPOS.cshtml";
+    ViewBag.Title = "CarniSys | Punto de Expendio";
+
+    var usuario = Session["Usuario"] as Entidades.Usuario;
+    bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
+    bool permiteEditarPrecio = Model.PermiteEditarPrecio;
+
+    var vdBuscarProducto = new ViewDataDictionary();
+    vdBuscarProducto["ModalId"] = "modalBuscarProducto";
+    vdBuscarProducto["ApiUrl"] = Url.Action("BuscarProducto", "PuntosExpendio");
+    vdBuscarProducto["Titulo"] = "Buscar producto para Punto de Expendio";
+}
+
+<div class="pos-page pos-expendio-page">
+    <div class="pos-topbar pos-topbar-expendio mb-2">
+        <input type="hidden" id="idPersona" value="0" />
+        <input type="hidden" id="sectorPuntoExpendio" value="@Model.Sector" />
+        <input type="hidden" id="permiteEditarPrecioPuntoExpendio" value="@(permiteEditarPrecio ? "1" : "0")" />
+        <input type="hidden" id="fechaExpendio" value="@Model.FechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss")" />
+
+        <div class="pos-topbar-header">
+            <div class="pos-topbar-title">
+                <div class="pos-topbar-caption">CarniSYS</div>
+                <div class="pos-topbar-heading">
+                    Punto de Expendio - <span id="lblSectorSeleccionadoTop">@(string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector)</span>
+                </div>
+            </div>
+
+            <div class="pos-topbar-header-action">
+                <a class="btn btn-light btn-sm pos-btn-layout"
+                   href="@Url.Action("Index", "Home")"
+                   title="Volver al sistema">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="pos-topbar-grid">
+            <div class="pos-topbar-item pos-topbar-item-cliente">
+                <div class="pos-topbar-label">Cliente / Identificación</div>
+                <div class="input-group input-group-sm">
+                    <input type="text"
+                           id="razonSocial"
+                           class="form-control"
+                           value="@Model.IdentificacionCliente"
+                           maxlength="120"
+                           autocomplete="off"
+                           placeholder="Cliente / identificación libre" />
+
+                    <div class="input-group-append">
+                        <button type="button"
+                                class="btn btn-primary"
+                                id="btnBuscarPersona"
+                                title="Buscar cliente (F9)">
+                            <i class="fas fa-search"></i>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                id="btnConsumidorFinal"
+                                title="Consumidor Final">
+                            CF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pos-topbar-item">
+                <div class="pos-topbar-label">Empresa</div>
+                <div class="pos-topbar-value text-truncate">@(usuario != null && usuario.Empresa != null ? usuario.Empresa.NombreFantasia : "")</div>
+            </div>
+
+            <div class="pos-topbar-item">
+                <div class="pos-topbar-label">Sucursal / Punto de expendio</div>
+                <div class="pos-topbar-value text-truncate">@((usuario != null && usuario.Sucursal != null ? usuario.Sucursal.SucursalNombre : "") + " / Punto de Expendio")</div>
+            </div>
+
+            <div class="pos-topbar-item pos-topbar-item-fecha">
+                <div class="pos-topbar-label">Fecha</div>
+                <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container-fluid p-1" id="pos-app">
+        @if (!haySectores)
+        {
+            <div class="alert alert-warning mb-0">
+                No hay sectores configurados para esta empresa.
+                <a class="alert-link" href="@Url.Action("Sectores", "PuntosExpendio")">Administrar sectores</a>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-lg border-0 pos-panel">
+                <div class="card-body p-2 d-flex flex-column">
+                    <div class="row flex-grow-1 h-100 pos-expendio-main-row">
+                        <div class="col-12 col-lg-5 carrito-col">
+                            <div class="zona-tabla">
+                                <table class="table table-sm tabla-productos mb-0">
+                                    <tbody id="tablaItems">
+                                        <tr id="filaVacia">
+                                            <td class="text-muted text-center py-3">
+                                                No hay productos agregados
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="zona-total">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h2 class="m-0 pos-total-label">Total</h2>
+                                    <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
+                                </div>
+                                <div id="posVentaResumen" class="pos-sale-summary text-muted">
+                                    Sin productos
+                                </div>
+
+                                <div class="zona-botones zona-botones-carrito mt-2">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>Cancelar</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
+                                                Comentario
+                                                <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
+                                            </button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-7 d-flex flex-column pos-expendio-actions-col">
+                            <div class="row" id="scannerContainer" style="display:none;">
+                                <div class="col-12">
+                                    <div class="card shadow">
+                                        <div class="card-body text-center">
+                                            <div class="scanner-wrapper">
+                                                <video id="videoScanner" autoplay muted playsinline></video>
+                                                <div class="scanner-line"></div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">Flash</button>
+                                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cÃ¡mara</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <audio id="beep" src="/Content/sounds/focus-beep.wav" preload="auto"></audio>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-12">
+                                    <div class="input-group pos-search-group">
+                                        <span class="input-group-text scanner-btn" id="btnScanner">
+                                            <i class="fas fa-barcode"></i>
+                                        </span>
+                                        <input type="text"
+                                               id="inputCodigo"
+                                               class="form-control"
+                                               placeholder="Ingrese el cÃ³digo..."
+                                               autocomplete="off"
+                                               autofocus />
+
+                                        <button class="btn btn-outline-secondary"
+                                                id="btnAgregarManual"
+                                                type="button">
+                                            Buscar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="producto-info" class="p-2 rounded bg-light border mb-2">
+                                <div class="row">
+                                    <div class="col-6 producto-resumen">
+                                        <h4 id="prodNombre" class="fw-bold text-muted">
+                                            Info producto...
+                                        </h4>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-precio">Precio</label>
+                                                <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
+                                            </div>
+                                            @if (permiteEditarPrecio)
+                                            {
+                                                <input id="inputPrecioManualExpendio"
+                                                       class="form-control form-control-sm mt-2 text-right"
+                                                       autocomplete="off"
+                                                       inputmode="decimal"
+                                                       placeholder="Precio manual" />
+                                            }
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-cantidad">Cantidad</label>
+                                                <input id="inputCantidad"
+                                                       class="form-control"
+                                                       autocomplete="off"
+                                                       inputmode="decimal">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-subtotal">Subtotal</label>
+                                                <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
+                                            </div>
+                                        </div>
+
+                                        <button id="btnAgregarProducto"
+                                                class="btn btn-success btn-lg w-100 btn-agregar-pos d-none d-md-flex"
+                                                disabled>
+                                            <i class="fas fa-cart-plus"></i>
+                                            <span>
+                                                <strong>Agregar</strong>
+                                                <small>al expendio</small>
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <div class="keyboard-grid">
+                                            <button class="btn btn-secondary btn-key" data-key="*">*</button>
+                                            <button class="btn btn-light btn-key">7</button>
+                                            <button class="btn btn-light btn-key">8</button>
+                                            <button class="btn btn-light btn-key">9</button>
+                                            <button class="btn btn-warning btn-key" data-key="←" title="Borrar">
+                                                <i class="fas fa-backspace"></i>
+                                            </button>
+
+                                            <button class="btn btn-secondary btn-key" data-key="G">G</button>
+                                            <button class="btn btn-light btn-key">4</button>
+                                            <button class="btn btn-light btn-key">5</button>
+                                            <button class="btn btn-light btn-key">6</button>
+                                            <button class="btn btn-secondary btn-key" data-key="×" title="Multiplicación">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+
+                                            <button class="btn btn-secondary btn-key" data-key="G1">G1</button>
+                                            <button class="btn btn-light btn-key">1</button>
+                                            <button class="btn btn-light btn-key">2</button>
+                                            <button class="btn btn-light btn-key">3</button>
+
+                                            <button class="btn btn-info btn-enter btn-key">Enter</button>
+
+                                            <button class="btn btn-secondary btn-key"></button>
+                                            <button class="btn btn-light btn-key key-zero">0</button>
+                                            <button class="btn btn-light btn-key">.</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar" @(string.IsNullOrWhiteSpace(Model.Sector) ? "disabled=\"disabled\"" : "")>
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>
+                                        <strong>Finalizar</strong>
+                                        <small>registro</small>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <div id="pos-bottom-anchor"></div>
+
+                            <div class="mt-auto">
+                                <small class="text-muted">
+                                    Sector activo: <span id="estadoSectorPuntoExpendioFooter">@(string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector)</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt mr-2"></i> LÃ­nea del punto de expendio
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">Ã—</button>
+            </div>
+
+            <div class="modal-body">
+                <input id="modalProducto" class="form-control mb-2" readonly>
+
+                <div class="row mb-2">
+                    <div class="col-12 col-md-5">
+                        <label class="small">Cant.</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <button id="btnCantMenos" type="button" class="btn btn-outline-secondary d-none" tabindex="-1">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                            <input id="modalCantidad" class="form-control text-right" readonly inputmode="decimal" autocomplete="off">
+                            <div class="input-group-append">
+                                <button id="btnCantMas" type="button" class="btn btn-outline-secondary d-none" tabindex="-1">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-100 d-block d-md-none"></div>
+
+                    <div class="col-6 col-md-3">
+                        <label class="small">Precio lista</label>
+                        <input id="modalPrecio" class="form-control text-right" readonly>
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <label id="lblTotalModalLineaVenta" class="small">Total</label>
+                        <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div id="bloqueBonificar" style="display:none">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="chkPorcentaje">
+                        <label class="form-check-label" for="chkPorcentaje">Bonificar por porcentaje</label>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="small">Precio bonificado</label>
+                            <input id="txtPrecioKg" class="form-control text-right" inputmode="decimal" autocomplete="off">
+                        </div>
+
+                        <div class="col-6">
+                            <label id="lblTipoPorcentaje" class="small">% bonificaciÃ³n</label>
+                            <input id="txtPorcentaje" class="form-control text-right" inputmode="decimal" autocomplete="off" readonly>
+                        </div>
+                    </div>
+
+                    <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">Aplicar bonificaciÃ³n</button>
+                    <div class="mt-2"></div>
+                </div>
+
+                <div id="bloqueCantidad" style="display:none">
+                    <button id="btnAplicarCantidad" class="btn btn-primary btn-block mt-3">Aplicar cantidad</button>
+                    <div class="mt-2"></div>
+                </div>
+
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <button id="btnMostrarBonificar" class="btn btn-success">
+                        <i class="fas fa-percentage"></i> Bonificar
+                    </button>
+
+                    <button id="btnMostrarCantidad" class="btn btn-info">
+                        <i class="fas fa-sort-numeric-up"></i> Cantidad
+                    </button>
+
+                    <button id="btnEliminarItem" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="contenedorModalPersona"></div>
+
+<div class="modal fade" id="modalSectoresPuntoExpendio" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-store mr-2"></i>Seleccionar sector</h5>
+            </div>
+            <div class="modal-body">
+                <input type="text"
+                       id="txtBuscarSectorExpendio"
+                       class="form-control mb-3"
+                       placeholder="Buscar sector..."
+                       autocomplete="off" />
+
+                <div class="list-group" id="listaSectoresExpendio">
+                    @foreach (var sector in Model.SectoresDisponibles ?? new List<string>())
+                    {
+                        <button type="button"
+                                class="list-group-item list-group-item-action js-sector-item"
+                                data-sector="@sector">
+                            @sector
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Cancelar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarProducto)
+@Html.Partial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml")
+@Html.Partial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml")
+@Html.Partial("~/Views/PuntosExpendio/_ModalPostPuntoExpendio.cshtml")
+
+<form id="formFinalizarPuntoExpendio" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=16")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=3")"></script>
+    <script>
+        window.puntoExpendioPosConfig = {
+            sectorSeleccionado: @Html.Raw(Json.Encode(Model.Sector ?? "")),
+            permiteEditarPrecio: @(permiteEditarPrecio ? "true" : "false"),
+            urlPos: '@Url.Action("POS", "PuntosExpendio")',
+            urlFinalizar: '@Url.Action("FinalizarPOS", "PuntosExpendio")',
+            urlBuscarProductoPos: '@Url.Action("BuscarProductoPOS", "PuntosExpendio")',
+            urlPersonaBuscar: '@Url.Action("Buscar", "Personas")',
+            urlPersonaListar: '@Url.Action("Listar", "Personas")',
+            idConsumidorFinal: @(ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0),
+            puedeBonificar: @((ViewBag.PuedeBonificarPuntoExpendio != null && (bool)ViewBag.PuedeBonificarPuntoExpendio) ? "true" : "false"),
+            mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.'
+        };
+    </script>
+}
+
+<style>
+    .pos-expendio-page {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .pos-expendio-page .pos-topbar-expendio {
+        flex: 0 0 auto;
+        padding: .5rem .65rem;
+        display: flex;
+        flex-direction: column;
+        gap: .45rem;
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, .08);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    }
+
+    .pos-topbar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+
+    .pos-topbar-title {
+        display: flex;
+        flex-direction: column;
+        gap: .1rem;
+        min-width: 0;
+    }
+
+    .pos-topbar-header-action {
+        flex: 0 0 auto;
+    }
+
+    .pos-topbar-caption {
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .pos-topbar-heading {
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: #0f172a;
+    }
+
+    .pos-topbar-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 1.35fr) minmax(140px, .8fr) minmax(220px, 1.15fr) minmax(220px, 1fr);
+        gap: .4rem;
+        align-items: stretch;
+    }
+
+    .pos-topbar-item {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: .1rem;
+        padding: .45rem .6rem;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+    .pos-topbar-item-cliente {
+        background: #fff;
+    }
+
+    .pos-topbar-item-action {
+        padding: 0;
+        background: transparent;
+        border: 0;
+    }
+
+    .pos-topbar-label {
+        font-size: .66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #64748b;
+    }
+
+    .pos-topbar-value {
+        font-size: .86rem;
+        font-weight: 700;
+        line-height: 1.15;
+        color: #0f172a;
+    }
+
+    .pos-expendio-page .pos-btn-layout {
+        min-height: 42px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+    }
+
+    #pos-app {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: auto !important;
+        padding: .3rem !important;
+    }
+
+        #pos-app > .card {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+    .pos-expendio-page .pos-panel {
+        flex: 1 1 auto;
+        min-height: 0;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .pos-expendio-page .pos-panel .card-body,
+    .pos-expendio-page .row.flex-grow-1,
+    .pos-expendio-page .col-md-6 {
+        min-height: 0;
+    }
+
+    .pos-expendio-page .pos-panel .card-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .pos-expendio-page .row.flex-grow-1 {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .pos-expendio-page .row.flex-grow-1 > [class*="col-"] {
+        min-height: 0;
+    }
+
+    .carrito-col {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .pos-expendio-main-row {
+        row-gap: .5rem;
+    }
+
+    .pos-expendio-actions-col {
+        min-height: 0;
+        overflow: hidden;
+        gap: .35rem;
+    }
+
+    .pos-expendio-page .zona-tabla {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #fff;
+        margin-bottom: .35rem !important;
+    }
+
+    .pos-expendio-page .tabla-productos td {
+        padding: .55rem .65rem;
+        vertical-align: middle;
+    }
+
+    .pos-expendio-page .zona-total {
+        flex: 0 0 auto;
+        margin-top: 0;
+        padding: .7rem .9rem;
+        background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+        border: 1px solid #dbeafe;
+        border-radius: 14px;
+    }
+
+    .pos-total-label,
+    .pos-total-value {
+        font-size: 1.65rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .pos-total-value {
+        color: #0f766e;
+    }
+
+    .pos-sale-summary {
+        margin-top: .2rem;
+        font-size: .82rem;
+    }
+
+    #producto-info {
+        flex: 0 0 auto;
+        border-radius: 16px !important;
+        background: #f8fafc !important;
+        margin-bottom: .5rem !important;
+        overflow: hidden;
+    }
+
+    #prodNombre {
+        min-height: 40px;
+        margin-bottom: .45rem;
+        font-size: 1.1rem;
+    }
+
+    #inputCantidad {
+        max-width: 118px;
+        text-align: right;
+    }
+
+    .pos-search-group .form-control,
+    .pos-search-group .input-group-text,
+    .pos-search-group .btn {
+        min-height: 42px;
+        padding-top: .35rem;
+        padding-bottom: .35rem;
+        font-size: .98rem;
+    }
+
+    #producto-info .mb-3 {
+        margin-bottom: .55rem !important;
+    }
+
+    .keyboard-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: .35rem;
+    }
+
+    .keyboard-grid .btn-key {
+        min-height: 48px;
+        font-size: .96rem;
+        font-weight: 700;
+        border-radius: 10px;
+    }
+
+    .keyboard-grid .btn-key i {
+        pointer-events: none;
+    }
+
+    .keyboard-grid .btn-enter {
+        grid-column: 5;
+        grid-row: span 2;
+    }
+
+    .btn-agregar-pos,
+    #btnFinalizar {
+        min-height: 56px;
+        border-radius: 14px;
+        font-size: .94rem;
+        font-weight: 700;
+    }
+
+    .btn-agregar-pos span,
+    #btnFinalizar span {
+        display: inline-flex;
+        flex-direction: column;
+        margin-left: .45rem;
+        text-align: left;
+        line-height: 1.05;
+    }
+
+    .zona-botones .btn {
+        min-height: 42px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: .88rem;
+    }
+
+    .scanner-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px;
+        background: #111827;
+        min-height: 170px;
+    }
+
+    #videoScanner {
+        width: 100%;
+        min-height: 170px;
+        object-fit: cover;
+    }
+
+    .scanner-line {
+        position: absolute;
+        left: 8%;
+        right: 8%;
+        top: 50%;
+        height: 2px;
+        background: rgba(239, 68, 68, .9);
+        box-shadow: 0 0 10px rgba(239, 68, 68, .9);
+    }
+
+    .scanner-btn {
+        cursor: pointer;
+    }
+
+    #inputCodigo.pos-input-buscando {
+        background: #fff7ed;
+        border-color: #fdba74;
+    }
+
+    .fila-item.fila-anulada {
+        opacity: .55;
+        text-decoration: line-through;
+    }
+
+    .item-detalle {
+        gap: .75rem;
+        font-size: .84rem;
+    }
+
+    #scannerContainer .card-body {
+        padding: .6rem;
+    }
+
+    .pos-expendio-page .badge {
+        font-size: .72rem;
+    }
+
+    @@media (min-width: 1400px) {
+        .pos-expendio-page .pos-topbar-expendio {
+            display: grid;
+            grid-template-columns: minmax(250px, 1.05fr) minmax(0, 3.95fr);
+            gap: .45rem;
+            align-items: stretch;
+        }
+
+        .pos-topbar-header {
+            min-width: 0;
+            height: 100%;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: .45rem .65rem;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .pos-topbar-title {
+            justify-content: center;
+        }
+
+        .pos-topbar-grid {
+            grid-template-columns: minmax(170px, .7fr) minmax(140px, .75fr) minmax(220px, 1.05fr) minmax(220px, .95fr);
+            gap: .35rem;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .pos-topbar-item,
+        .pos-topbar-header {
+            min-height: 56px;
+        }
+
+        .pos-topbar-item {
+            padding: .4rem .55rem;
+        }
+
+        .pos-topbar-item-cliente {
+            grid-column: auto;
+            min-width: 0;
+            max-width: none;
+        }
+
+        .pos-topbar-label {
+            font-size: .62rem;
+        }
+
+        .pos-topbar-value {
+            font-size: .82rem;
+        }
+
+        .pos-topbar-heading {
+            font-size: 1.02rem;
+        }
+
+        .pos-expendio-page .pos-btn-layout {
+            min-height: 100%;
+            white-space: nowrap;
+            padding-left: .8rem;
+            padding-right: .8rem;
+        }
+
+        .input-group.input-group-sm > .form-control,
+        .input-group.input-group-sm > .input-group-append > .btn {
+            min-height: 38px;
+        }
+    }
+
+    @@media (max-width: 1399.98px) {
+        .pos-topbar-grid {
+            grid-template-columns: repeat(4, minmax(140px, 1fr));
+        }
+    }
+
+    @@media (max-width: 991.98px) {
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        #pos-app,
+        #pos-app > .card,
+        #pos-app .card-body,
+        #pos-app .row.flex-grow-1,
+        .pos-expendio-page .pos-panel {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+        }
+
+        .carrito-col {
+            display: flex;
+            flex-direction: column;
+            overflow: visible !important;
+            min-height: 0 !important;
+        }
+
+        .zona-tabla {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            flex: 1 1 auto;
+            min-height: 0 !important;
+            max-height: 55vh !important;
+        }
+
+        #producto-info {
+            overflow: visible !important;
+        }
+
+        .keyboard-grid {
+            overflow: visible !important;
+            max-height: none !important;
+            width: 100% !important;
+        }
+
+        .pos-topbar-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .pos-topbar-header-action {
+            width: 100%;
+        }
+
+        .pos-topbar-header-action .pos-btn-layout {
+            width: 100%;
+        }
+
+        .pos-topbar-grid {
+            grid-template-columns: repeat(2, minmax(160px, 1fr));
+        }
+
+        .pos-topbar-item-cliente {
+            grid-column: 1 / -1;
+        }
+
+        .pos-expendio-page .pos-panel {
+            min-height: auto;
+        }
+
+        .zona-total {
+            flex: 0 0 auto;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        #pos-app {
+            padding: .25rem !important;
+        }
+
+        #pos-app .card-body {
+            padding: .35rem !important;
+        }
+
+        #producto-info .row {
+            display: flex !important;
+            flex-direction: column !important;
+            margin: 0 !important;
+        }
+
+        #producto-info .row > [class*="col-"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .keyboard-grid {
+            gap: 10px !important;
+            grid-auto-rows: clamp(58px, 9vh, 88px) !important;
+        }
+
+        .btn-key {
+            font-size: 1.25rem !important;
+            border-radius: 10px !important;
+        }
+
+        .btn-enter {
+            font-size: 1.1rem !important;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .pos-topbar-heading {
+            font-size: 1.05rem;
+        }
+
+        .pos-topbar-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .pos-topbar-item-cliente {
+            grid-column: auto;
+        }
+
+        .pos-topbar-item {
+            padding: .4rem .55rem;
+        }
+
+        .pos-topbar-value {
+            font-size: .82rem;
+        }
+
+        .pos-total-label,
+        .pos-total-value {
+            font-size: 1.55rem;
+        }
+
+        .keyboard-grid .btn-key {
+            min-height: 46px;
+            font-size: .92rem;
+        }
+
+        .btn-agregar-pos,
+        #btnFinalizar {
+            min-height: 54px;
+        }
+    }
+</style>

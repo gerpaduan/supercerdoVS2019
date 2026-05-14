@@ -105,7 +105,7 @@
                 });
 
                 button.addEventListener('click', function () {
-                    const key = button.innerText.trim();
+                    const key = (button.getAttribute('data-key') || button.innerText || '').trim();
                     if (!inputActivo) return;
 
                     switch (key) {

@@ -66,6 +66,24 @@
             return lineaNormalizada;
         },
 
+        removeLinea: function (index) {
+            const indexBuscado = parseInt(index, 10);
+            const posicion = state.lineasVenta.findIndex(function (linea) {
+                return linea && parseInt(linea.index, 10) === indexBuscado;
+            });
+
+            if (posicion < 0)
+                return false;
+
+            state.lineasVenta.splice(posicion, 1);
+
+            if (state.lineaSeleccionada && parseInt(state.lineaSeleccionada.index, 10) === indexBuscado) {
+                state.lineaSeleccionada = null;
+            }
+
+            return true;
+        },
+
         clear: function () {
             state.lineasVenta = [];
             state.lineaSeleccionada = null;

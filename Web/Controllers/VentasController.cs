@@ -153,6 +153,7 @@ namespace Web.Controllers
             ViewBag.MotivoNoPuedeModificarVenta = ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta);
             ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
             ViewBag.MotivoNoPuedeCambiarFormaPago = ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
+            ViewBag.TieneFacturaVenta = oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
 
             // Pasar la venta a la vista
             if (modal)

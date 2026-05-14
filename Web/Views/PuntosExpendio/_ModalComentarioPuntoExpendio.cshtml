@@ -1,0 +1,61 @@
+<style>
+    .pos-comment-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.2rem;
+        height: 1.2rem;
+        margin-left: .45rem;
+        padding: 0 .35rem;
+        border-radius: 999px;
+        font-size: .72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .pos-comment-badge.d-none {
+        display: none !important;
+    }
+</style>
+
+<div class="modal fade" id="modalComentarioVenta" tabindex="-1" role="dialog" aria-labelledby="modalComentarioPuntoExpendioTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalComentarioPuntoExpendioTitle">
+                    <i class="fas fa-sticky-note mr-2"></i>Comentario del punto de expendio
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <label for="txtComentarioVenta" class="small text-muted">
+                    Este comentario acompaña la carga actual del punto de expendio.
+                </label>
+                <textarea id="txtComentarioVenta"
+                          class="form-control"
+                          rows="5"
+                          maxlength="200"
+                          placeholder="Escribí un comentario para esta carga..."></textarea>
+
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">Máximo 200 caracteres.</small>
+                    <small class="text-muted"><span id="contadorComentarioVenta">0</span>/200</small>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" id="btnBorrarComentarioVenta">
+                    Borrar comentario
+                </button>
+
+                <div>
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarComentarioVenta">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

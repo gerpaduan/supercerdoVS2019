@@ -1,0 +1,117 @@
+@model Entidades.Venta
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using System.Text
+
+@{
+    Layout = null;
+
+    int mm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 58;
+    int cantMaxChar = mm == 80 ? 48 : 32;
+    var sb = new StringBuilder();
+
+    Func<string, string> truncar = texto =>
+    {
+        string valor = texto ?? "";
+        return valor.Length <= cantMaxChar ? valor : valor.Substring(0, cantMaxChar);
+    };
+
+    Func<string, string> centrar = texto =>
+    {
+        string valor = truncar(texto ?? "");
+        int libres = Math.Max(0, cantMaxChar - valor.Length);
+        int izquierda = libres / 2;
+        return new string(' ', izquierda) + valor;
+    };
+
+    Func<string, string, string> extremos = (izquierda, derecha) =>
+    {
+        string i = izquierda ?? "";
+        string d = derecha ?? "";
+        if (i.Length > 18) i = i.Substring(0, 18);
+        if (d.Length > 18) d = d.Substring(0, 18);
+        int espacios = Math.Max(1, cantMaxChar - i.Length - d.Length);
+        return i + new string(' ', espacios) + d;
+    };
+
+    Action<string> linea = texto => sb.AppendLine(texto ?? "");
+
+    string guion = new string('-', 20);
+    linea(centrar(Model.Sector ?? ""));
+    linea("");
+    linea(truncar("Nro Expendio: " + Model.IdExpendio));
+    linea(truncar("Id.Cliente: " + (Model.IdentificacionExpendio ?? "")));
+    linea(extremos("Fecha: " + Model.FechaVenta.ToString("dd/MM/yyyy"), "Hora: " + Model.FechaVenta.ToString("HH:mm:ss")));
+    linea(guion);
+
+    foreach (var item in Model.LineasVenta ?? new List<Entidades.LineaVenta>())
+    {
+        string cantidad = item.CantKg.ToString("F3") + " x " + item.PrecioKg.ToString("N2");
+        linea(truncar(cantidad));
+
+        string producto = ((item.Corte != null ? item.Corte.codigo.ToString() + " " : "") +
+            (item.Corte != null ? (!string.IsNullOrWhiteSpace(item.Corte.corte) ? item.Corte.corte : item.Corte.CorteDesc) : "")).Trim();
+
+        if (producto.Length > 22)
+            producto = producto.Substring(0, 22);
+
+        string total = (item.CantKg * item.PrecioKg).ToString("N2");
+        int espacios = Math.Max(1, cantMaxChar - producto.Length - total.Length);
+        linea(producto + new string(' ', espacios) + total);
+    }
+
+    linea("-------".PadLeft(cantMaxChar));
+    string totalTexto = Model.TotalImporte.ToString("N2");
+    linea("Total" + new string(' ', Math.Max(1, cantMaxChar - "Total".Length - totalTexto.Length)) + totalTexto);
+    linea("");
+    linea(truncar("Articulos: " + ((Model.LineasVenta ?? new List<Entidades.LineaVenta>()).Count)));
+    linea(truncar("Cajero: " + (Model.Vendedor != null ? Model.Vendedor.Id.ToString() : "")));
+    linea(centrar("Gracias por su visita"));
+    linea(" ");
+    linea(" ");
+    linea(" ");
+
+    string ticketTexto = sb.ToString();
+    string ticketClass = mm == 80 ? "ticket-80mm" : "ticket-58mm";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Punto de expendio @Model.IdExpendio</title>
+    <style>
+        @@page {
+            margin: 0;
+            size: @(mm == 80 ? "80mm" : "58mm") auto;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+            font-family: Consolas, "Courier New", monospace;
+        }
+
+        body.ticket-58mm {
+            width: 58mm;
+        }
+
+        body.ticket-80mm {
+            width: 80mm;
+        }
+
+        .ticket-text {
+            margin: 0;
+            padding: 3mm 2.5mm;
+            white-space: pre-wrap;
+            font-size: 12px;
+            line-height: 1.22;
+        }
+    </style>
+</head>
+<body class="@ticketClass" onload="window.print()">
+    <pre class="ticket-text">@ticketTexto</pre>
+</body>
+</html>

@@ -138,6 +138,7 @@
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\MovimientosController.cs" />
     <Compile Include="Controllers\PersonasController.cs" />
+    <Compile Include="Controllers\PuntosExpendioController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\StockController.cs" />
@@ -158,11 +159,13 @@
     <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
+    <Compile Include="Models\PuntoExpendioVm.cs" />
     <Compile Include="Models\ReciboPagoVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
     <Compile Include="Models\UsuariosVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
+    <Compile Include="Models\DTO\FinalizarPuntoExpendioRequest.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />
     <Compile Include="Models\DTO\PersonaDTO.cs" />
@@ -1870,6 +1873,7 @@
     <Content Include="Scripts\app\factura-electronica.js" />
     <Content Include="Scripts\app\egresos-caja.js" />
     <Content Include="Scripts\app\modal-cheque.js" />
+    <Content Include="Scripts\app\modal-postexpendio.js" />
     <Content Include="Scripts\app\modal-postpago.js" />
     <Content Include="Scripts\app\forma-pago.js" />
     <Content Include="Scripts\app\modal-postventa.js" />
@@ -2090,6 +2094,13 @@
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
+    <Content Include="Views\PuntosExpendio\Abrir.cshtml" />
+    <Content Include="Views\PuntosExpendio\POS.cshtml" />
+    <Content Include="Views\PuntosExpendio\Sectores.cshtml" />
+    <Content Include="Views\PuntosExpendio\_ModalAyudaPuntoExpendio.cshtml" />
+    <Content Include="Views\PuntosExpendio\_ModalComentarioPuntoExpendio.cshtml" />
+    <Content Include="Views\PuntosExpendio\_ModalPostPuntoExpendio.cshtml" />
+    <Content Include="Views\PuntosExpendio\_TicketPuntoExpendio.cshtml" />
     <Content Include="Views\Stock\_StockTabla.cshtml" />
     <Content Include="Views\Stock\_TablaExistenciaPorSucursales.cshtml" />
     <Content Include="Views\Stock\ExistenciaPorSucursales.cshtml" />
@@ -2157,6 +2168,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Scripts\app\compras.js" />
+    <Content Include="Scripts\app\punto-expendio-pos.js" />
+    <Content Include="Scripts\app\puntos-expendio.js" />
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />
     <Content Include="Views\Compras\Editar.cshtml" />

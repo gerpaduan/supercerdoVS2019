@@ -30,6 +30,9 @@ function pvGetContext() {
 function pvSetContext(ctx) {
     $('#modalPostVenta').data('context', (ctx || 'venta').toString());
 }
+function pvGetOrigen() {
+    return ($('#modalPostVenta').data('origen') || 'pos').toString();
+}
 function pvGetVentaId() {
     const v = parseInt($('#modalPostVenta').data('venta-id'), 10);
     return isNaN(v) ? 0 : v;
@@ -39,6 +42,7 @@ function pvSetMeta(meta) {
     meta = meta || {};
 
     if (meta.context) $m.data('context', meta.context);
+    if (meta.origen) $m.data('origen', meta.origen);
     if (meta.ventaId != null) $m.data('venta-id', meta.ventaId);
 
     if (meta.facturaId != null) $m.data('factura-id', meta.facturaId);
@@ -52,6 +56,7 @@ function pvSetMeta(meta) {
 // Aplica textos/estados según contexto
 function pvAplicarContextoUI() {
     const ctx = pvGetContext();
+    const origen = pvGetOrigen();
     const $m = $('#modalPostVenta');
 
     const nro = ($m.data('nro') || '').toString();
@@ -59,6 +64,8 @@ function pvAplicarContextoUI() {
 
     const $title = $('#pvModalTitle');
     const $sub = $('#pvModalSubTitle');
+    const $pregunta = $('#pvPregunta');
+    const $lblNoImprimir = $('#pvLblNoImprimirBtn');
 
     if (ctx === 'factura') {
         $title.text('¡Factura registrada! ✔');
@@ -80,9 +87,20 @@ function pvAplicarContextoUI() {
         // Botones cambian texto
         $('#pvLblPdfBtn').text('Abrir PDF');
         $('#pvLblWpBtn').text('Enviar factura por WhatsApp');
+        $pregunta.text('¿Qué deseas hacer ahora?');
+        $lblNoImprimir.text('No imprimir');
 
     } else {
-        $title.text('¡Venta completada! ✔');
+        if (origen === 'detalle') {
+            $title.text('Imprimir venta');
+            $pregunta.text('¿Qué deseas hacer?');
+            $lblNoImprimir.text('Cerrar');
+        } else {
+            $title.text('¡Venta completada! ✔');
+            $pregunta.text('¿Qué deseas hacer ahora?');
+            $lblNoImprimir.text('No imprimir');
+        }
+
         $sub.hide().text('');
 
         $('#btnPostVenta3').prop('disabled', false);
@@ -255,6 +273,7 @@ window.PostModal = {
     openVenta: function (ventaId, extras = {}) {
         pvSetMeta({
             context: 'venta',
+            origen: extras.origen || 'pos',
             ventaId: ventaId,
             facturaId: 0,
             nro: '',

@@ -4,6 +4,10 @@
     function createPOSCart(options) {
         const POSState = options.POSState;
         const soloFormaPago = options.soloFormaPago === true;
+        const eliminarFisicoLineasPendientes = options.eliminarFisicoLineasPendientes === true;
+        const puedeBonificar = options.puedeBonificar !== false;
+        const mensajeSinPermisoBonificar = options.mensajeSinPermisoBonificar || "No tiene permisos para bonificar.";
+        const deshabilitarAvisoSalida = options.deshabilitarAvisoSalida === true;
 
         function fnum(v) {
             return parseFloat(
@@ -121,7 +125,7 @@
                     $resumen.text("Sin productos");
                 } else {
                     $resumen.text(activas + (activas === 1 ? " ítem activo" : " ítems activos") +
-                        (anuladas ? " | " + anuladas + (anuladas === 1 ? " anulado" : " anulados") : ""));
+                        (!eliminarFisicoLineasPendientes && anuladas ? " | " + anuladas + (anuladas === 1 ? " anulado" : " anulados") : ""));
                 }
             }
 
@@ -153,7 +157,11 @@
                 return;
             }
 
-            const subtotal = cantidad * productoSeleccionado.precioKg;
+            const precioLinea = typeof options.getPrecioParaAgregar === 'function'
+                ? options.getPrecioParaAgregar(productoSeleccionado)
+                : productoSeleccionado.precioKg;
+            const precioSeguro = Number.isFinite(precioLinea) ? precioLinea : productoSeleccionado.precioKg;
+            const subtotal = cantidad * precioSeguro;
             if (!Number.isFinite(subtotal) || subtotal <= 0) {
                 showMessage("warning", "No se puede agregar", "El producto no tiene precio cargado o el precio es 0.");
                 options.focusCodigo();
@@ -162,10 +170,12 @@
 
             const linea = {
                 index: POSState.nextIndex(),
+                idCorte: productoSeleccionado.id || productoSeleccionado.idCorte || 0,
                 producto: productoSeleccionado.nombre,
+                descripcion: productoSeleccionado.nombre,
                 codigo: productoSeleccionado.codigo,
                 cant: cantidad.toFixed(3),
-                precio: `$ ${productoSeleccionado.precioKg.toFixed(2)}`,
+                precio: `$ ${precioSeguro.toFixed(2)}`,
                 precioOriginal: `$ ${productoSeleccionado.precioOriginal.toFixed(2)}`,
                 subtotal: `$ ${(subtotal).toFixed(2)}`,
                 bonificacion: 0,
@@ -304,6 +314,8 @@
         };
 
         window.addEventListener("beforeunload", function (e) {
+            if (deshabilitarAvisoSalida) return;
+
             updateSaleState();
 
             if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso)) return;
@@ -492,6 +504,10 @@
             $("#btnMostrarBonificar").off("click").on("click", function () {
                 if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
+                if (!puedeBonificar) {
+                    showMessage("warning", "Bonificación", mensajeSinPermisoBonificar);
+                    return;
+                }
                 $("#bloqueBonificar").slideDown(120);
                 $("#btnMostrarBonificar").addClass("d-none");
                 $("#btnMostrarCantidad").removeClass("d-none");
@@ -516,6 +532,10 @@
             $("#btnAplicarBonificacion").off("click").on("click", function () {
                 if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
+                if (!puedeBonificar) {
+                    showMessage("warning", "Bonificación", mensajeSinPermisoBonificar);
+                    return;
+                }
 
                 const precioNuevo = fnum($("#txtPrecioKg").val());
                 if (!precioNuevo || precioNuevo <= 0) {
@@ -558,12 +578,19 @@
                 }).then(function (result) {
                     if (!result.isConfirmed) return;
 
-                    POSState.anularLinea(linea.index);
+                    if (eliminarFisicoLineasPendientes) {
+                        POSState.removeLinea(linea.index);
+                    } else {
+                        POSState.anularLinea(linea.index);
+                    }
                     renderTable(POSState.getLineas());
                     recalculateTotal();
+                    updateSaleState();
 
                     $("#modalLineaVenta").modal("hide");
-                    requestAnimationFrame(function () { scrollLineVisible(linea.index); });
+                    if (!eliminarFisicoLineasPendientes) {
+                        requestAnimationFrame(function () { scrollLineVisible(linea.index); });
+                    }
 
                     $("#inputCodigo").val("").focus();
                 });

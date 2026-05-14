@@ -1,0 +1,57 @@
+<div class="modal fade" id="modalPostPuntoExpendio" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">Punto de expendio guardado</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3" style="font-size:1.05rem;">¿Qué deseas hacer ahora?</p>
+
+                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnPostPuntoExpendioNoImprimir" type="button">
+                    <span class="badge badge-light mr-2">1</span>
+                    No imprimir
+                </button>
+
+                <div class="d-flex mb-2">
+                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2" id="btnPostPuntoExpendioImprimir" type="button">
+                        <span class="badge badge-primary mr-2">2</span>
+                        <span id="lblPuntoExpendioTicketAccion">Imprimir</span>
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-lg" id="btnCambiarTicketPuntoExpendio" type="button" title="Cambiar tamaño de ticket">
+                        Cambiar
+                    </button>
+                </div>
+
+                <div class="collapse mb-2" id="bloqueTicketOpcionesPuntoExpendio">
+                    <div class="card card-body p-2">
+                        <button class="btn btn-outline-primary btn-block mb-2 btnTicketPuntoExpendioOpt" type="button" data-mm="58">
+                            Ticket 58 mm
+                        </button>
+
+                        <button class="btn btn-outline-primary btn-block btnTicketPuntoExpendioOpt" type="button" data-mm="80">
+                            Ticket 80 mm
+                        </button>
+
+                        <small class="text-muted mt-2 d-block">
+                            Elegí un tamaño y se imprimirá automáticamente.
+                        </small>
+                    </div>
+                </div>
+
+                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostPuntoExpendioPdf" type="button">
+                    <span class="badge badge-light mr-2">3</span>
+                    Generar PDF
+                </button>
+
+                <button class="btn btn-success btn-lg btn-block" id="btnPostPuntoExpendioWhatsapp" type="button">
+                    <span class="badge badge-light mr-2">4</span>
+                    <i class="fab fa-whatsapp mr-2"></i>Enviar a WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

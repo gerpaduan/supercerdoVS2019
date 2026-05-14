@@ -8,7 +8,7 @@
     Layout = null;
 
     int ticketMm = ViewBag.Medida != null ? (int)ViewBag.Medida : 80;
-    int cantMaxChar = ticketMm == 58 ? 32 : 48;
+    int cantMaxChar = ticketMm == 58 ? 32 : 43;
     string ticketClass = ticketMm == 58 ? "ticket-58" : "ticket-80";
 
     string negocio = Convert.ToString(ViewBag.Negocio ?? "") ?? "";
@@ -233,12 +233,8 @@
             lineasPie.Add("");
             lineasPie.Add("");
         }
-        else
-        {
-            lineasPie.Add("Gracias por su visita");    
-        }
     }
-    else
+    @* else
     {
         if (!string.IsNullOrWhiteSpace(Model.Observaciones))
         {
@@ -250,13 +246,23 @@
                 lineasPie.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
             }
         }
+    } *@
+    if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+        {
+            lineasPie.Add("");
+            lineasPie.Add("Comentario:");
+            string observacion = Model.Observaciones ?? "";
+            for (int i = 0; i < observacion.Length; i += cantMaxChar)
+            {
+                lineasPie.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+            }
+        }
 
-        lineasPie.Add("");
-        lineasPie.Add(truncar("Articulos: " + Model.CantItems, cantMaxChar));
-        lineasPie.Add(truncar("Cajero: " + (Model.Vendedor != null ? Model.Vendedor.Id.ToString() : ""), cantMaxChar));
-        lineasPie.Add("");
-        lineasPie.Add("Gracias por su visita");
-    }
+    @* lineasPie.Add("");
+    lineasPie.Add(truncar("Articulos: " + Model.CantItems, cantMaxChar));
+    lineasPie.Add(truncar("Cajero: " + (Model.Vendedor != null ? Model.Vendedor.Id.ToString() : ""), cantMaxChar));
+    lineasPie.Add(""); *@
+    lineasPie.Add("Gracias por su visita");
 
     string tituloComprobante = esFacturada ? obtenerTituloComprobante(factura.CodTipoCbteAfip) : "X";
     string codigoComprobante = esFacturada
@@ -269,6 +275,11 @@
     <meta charset="utf-8" />
     <title>Ticket @Model.IdVenta</title>
     <style>
+        @@page {
+            margin: 0;
+            size: @(ticketMm == 58 ? "58mm" : "80mm") auto;
+        }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -293,11 +304,13 @@
         .ticket-wrap {
             padding: 2mm;
             box-sizing: border-box;
+            text-align: left;
         }
 
         .ticket-line {
             white-space: pre-wrap;
             line-height: 1.15;
+            text-align: left;
         }
 
         .ticket-title {
@@ -326,6 +339,7 @@
             white-space: pre-wrap;
             line-height: 1.15;
             font-weight: 700;
+            text-align: left;
         }
     </style>
 </head>
@@ -377,6 +391,8 @@
         <div class="ticket-line">&nbsp;</div>
         <div class="ticket-line">&nbsp;</div>
         <div class="ticket-line">&nbsp;</div>
+        @foreach (var linea in lineasPie)
+        {
             if (esFacturaA && linea == lineaCorteTotal)
             {
                 <div class="ticket-line">@renderLineaHtml(linea)</div>
