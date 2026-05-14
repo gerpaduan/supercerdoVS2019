@@ -397,7 +397,7 @@
 
                     <!-- FILA DATOS -->
                     <!-- FILA DATOS -->
-                    <div class="row mb-2">
+                    <div class="row mb-2" id="bloqueDatosLineaBonificacion">
 
                         <!-- ✅ Cantidad: en mobile ocupa toda la fila -->
                         <div class="col-12 col-md-5">
@@ -452,8 +452,21 @@
                             <label class="form-check-label" for="chkPorcentaje">Bonificar por porcentaje</label>
                         </div>
 
+                        <div class="form-check mb-2 d-none" id="bloqueAplicarBonificacionTodos">
+                            <input class="form-check-input" type="checkbox" id="chkBonificarTodos">
+                            <label class="form-check-label" for="chkBonificarTodos">Aplicar a todos los productos</label>
+                        </div>
+
+                        <div class="small text-muted mb-2 d-none" id="msgRecargoBonificacion">
+                            Si ingresa un porcentaje negativo, se aplicará como recargo.
+                        </div>
+
+                        <div class="alert alert-info py-2 px-3 small d-none" id="msgBonificarTodos">
+                            Esta bonificación se aplicará a todos los productos del carrito.
+                        </div>
+
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-6" id="bloquePrecioBonificado">
                                 <label class="small">Precio bonificado</label>
                                 <input id="txtPrecioKg"
                                        class="form-control text-right"
@@ -639,7 +652,7 @@ else
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=4")"></script>
-<script src="@Url.Content("~/Scripts/app/pos-cart.js?v=13")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=18")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>

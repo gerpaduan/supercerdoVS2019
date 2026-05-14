@@ -135,6 +135,7 @@
                     .toggleClass("btn-outline-danger", cargadas > 0)
                     .toggleClass("btn-outline-secondary", cargadas === 0);
             }
+            syncUIBonificacionTodos();
         }
 
         // Compatibilidad con scripts viejos como forma-pago.js
@@ -374,6 +375,80 @@
                 requestAnimationFrame(function () { $("#txtPrecioKg").focus().select(); });
                 syncDesdePrecio();
             }
+            syncUIBonificacionTodos();
+        }
+
+        function syncUIBonificacionTodos() {
+            const porcentajeMode = $("#chkPorcentaje").is(":checked");
+            const aplicarTodos = porcentajeMode && $("#chkBonificarTodos").is(":checked");
+
+            $("#bloqueAplicarBonificacionTodos").toggleClass("d-none", !porcentajeMode);
+            $("#msgRecargoBonificacion").toggleClass("d-none", !porcentajeMode);
+            $("#chkBonificarTodos").prop("disabled", !porcentajeMode);
+
+            if (!porcentajeMode) {
+                $("#chkBonificarTodos").prop("checked", false);
+            }
+
+            $("#msgBonificarTodos").toggleClass("d-none", !aplicarTodos);
+            $("#modalProducto").toggleClass("d-none", aplicarTodos);
+            $("#bloqueDatosLineaBonificacion").toggleClass("d-none", aplicarTodos);
+            $("#bloquePrecioBonificado").toggleClass("d-none", aplicarTodos);
+        }
+
+        function aplicarBonificacionALinea(linea, cantidad, precioNuevo, porcentaje) {
+            if (!linea) return false;
+
+            const cant = roundCant(parseCant(cantidad));
+            const precio = fnum(precioNuevo);
+            const pct = fnum(porcentaje);
+
+            if (!isFinite(cant) || cant < CANT_MINIMA) return false;
+            if (!precio || precio <= 0) return false;
+
+            linea.cant = cant;
+            linea.precio = `$ ${precio.toFixed(2)}`;
+            linea.subtotal = `$ ${(precio * cant).toFixed(2)}`;
+            linea.bonificacion = pct;
+            return true;
+        }
+
+        function aplicarBonificacionPorcentajeALinea(linea, porcentaje) {
+            if (!linea) return false;
+
+            const precioLista = fnum(linea.precioOriginal ?? linea.precio);
+            const cant = parseCant(linea.cant);
+            const pct = fnum(porcentaje);
+
+            if (!precioLista || !isFinite(cant) || cant < CANT_MINIMA) return false;
+
+            const precioNuevo = precioLista * (1 - (pct / 100.0));
+            return aplicarBonificacionALinea(linea, cant, precioNuevo, pct);
+        }
+
+        function aplicarBonificacionPorcentajeATodoElCarrito(porcentaje) {
+            const lineas = (POSState.getLineas() || []).filter(function (linea) {
+                return linea && !linea.anulado;
+            });
+
+            if (!lineas.length) {
+                showMessage("warning", "BonificaciÃ³n", "No hay productos en el carrito.");
+                return false;
+            }
+
+            let aplicadas = 0;
+            lineas.forEach(function (linea) {
+                if (aplicarBonificacionPorcentajeALinea(linea, porcentaje)) {
+                    aplicadas++;
+                }
+            });
+
+            if (!aplicadas) {
+                showMessage("warning", "BonificaciÃ³n", "No se pudo aplicar la bonificaciÃ³n a los productos del carrito.");
+                return false;
+            }
+
+            return true;
         }
 
         function syncDesdePrecio() {
@@ -447,6 +522,8 @@
             $("#txtPorcentaje").val(linea.bonificacion ?? 0);
 
             $("#chkPorcentaje").prop("checked", false);
+            $("#chkBonificarTodos").prop("checked", false);
+            $("#chkBonificarTodos").prop("disabled", true);
             $("#txtPorcentaje").prop("readonly", true);
             $("#txtPrecioKg").prop("readonly", false);
 
@@ -465,6 +542,8 @@
                 $("#bloqueBonificar").hide();
                 setModoBonificacion(false);
             }
+
+            syncUIBonificacionTodos();
 
             $("#modalLineaVenta").modal("show");
         }
@@ -519,6 +598,19 @@
                 setModoBonificacion($(this).is(":checked"));
             });
 
+            $("#chkBonificarTodos").off("change").on("change", function () {
+                if ($(this).is(":checked")) {
+                    $("#chkPorcentaje").prop("checked", true);
+                    $("#txtPorcentaje").prop("readonly", false);
+                    $("#txtPrecioKg").prop("readonly", true);
+                }
+
+                syncUIBonificacionTodos();
+                if ($(this).is(":checked")) {
+                    requestAnimationFrame(function () { $("#txtPorcentaje").focus().select(); });
+                }
+            });
+
             $("#txtPrecioKg").off("input").on("input", function () {
                 if ($("#chkPorcentaje").is(":checked")) return;
                 syncDesdePrecio();
@@ -534,6 +626,23 @@
                 if (!window.lineaSeleccionada) return;
                 if (!puedeBonificar) {
                     showMessage("warning", "Bonificación", mensajeSinPermisoBonificar);
+                    return;
+                }
+
+                if ($("#chkPorcentaje").is(":checked") && $("#chkBonificarTodos").is(":checked")) {
+                    const porcentaje = fnum($("#txtPorcentaje").val());
+                    if (!aplicarBonificacionPorcentajeATodoElCarrito(porcentaje)) {
+                        return;
+                    }
+
+                    renderTable(POSState.getLineas());
+                    recalculateTotal();
+                    updateSaleState();
+
+                    $("#modalLineaVenta").modal("hide");
+                    requestAnimationFrame(function () {
+                        if (window.lineaSeleccionada) scrollLineVisible(window.lineaSeleccionada.index);
+                    });
                     return;
                 }
 
