@@ -1,0 +1,79 @@
+<div class="modal fade" id="modalExpendiosPOS" data-backdrop="static" data-keyboard="true" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-inbox mr-2"></i>Expendios
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12 col-md-3 mb-2">
+                        <label class="small mb-1" for="expFiltroFechaDesde">Fecha desde</label>
+                        <input type="datetime-local" class="form-control" id="expFiltroFechaDesde" />
+                    </div>
+
+                    <div class="col-12 col-md-3 mb-2">
+                        <label class="small mb-1" for="expFiltroEstado">Estado</label>
+                        <select class="form-control" id="expFiltroEstado">
+                            <option value="Pendientes" selected>Pendientes</option>
+                            <option value="Asignados">Asignados</option>
+                            <option value="Todos">Todos</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4 mb-2">
+                        <label class="small mb-1" for="expFiltroTexto">Búsqueda</label>
+                        <input type="text" class="form-control" id="expFiltroTexto" placeholder="Número de expendio / identificación cliente" />
+                    </div>
+
+                    <div class="col-12 col-md-2 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary btn-block" id="btnBuscarExpendiosPOS">
+                            <i class="fas fa-search mr-1"></i>Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="small text-muted mb-2">
+                    Atajos: <strong>AvPag</strong> abre este modal, <strong>Enter</strong> en fecha busca, <strong>Enter</strong> en búsqueda carga el primer expendio visible y <strong>Esc</strong> cierra.
+                </div>
+
+                <div class="alert alert-info d-none" id="msgExpendiosPOS"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0" id="tablaExpendiosPOS">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:95px;">Fecha</th>
+                                <th style="width:70px;">Hora</th>
+                                <th style="width:95px;">Nro.Exp.</th>
+                                <th>Identificación cliente</th>
+                                <th style="width:120px;">Sector</th>
+                                <th>Producto</th>
+                                <th style="width:95px;" class="text-right">Cantidad</th>
+                                <th style="width:160px;">Vendedor</th>
+                                <th style="width:110px;" class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">No hay expendios para mostrar.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-danger" id="btnQuitarExpendiosPOS">
+                    <i class="fas fa-trash-alt mr-1"></i>Quitar expendios cargados
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

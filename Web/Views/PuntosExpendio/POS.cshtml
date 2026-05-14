@@ -9,7 +9,7 @@
     bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
     bool permiteEditarPrecio = Model.PermiteEditarPrecio;
 
-    var vdBuscarProducto = new ViewDataDictionary();
+    var vdBuscarProducto = new ViewDataDictionary(ViewData);
     vdBuscarProducto["ModalId"] = "modalBuscarProducto";
     vdBuscarProducto["ApiUrl"] = Url.Action("BuscarProducto", "PuntosExpendio");
     vdBuscarProducto["Titulo"] = "Buscar producto para Punto de Expendio";
@@ -191,22 +191,6 @@
                                         <h4 id="prodNombre" class="fw-bold text-muted">
                                             Info producto...
                                         </h4>
-
-                                        @* <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <label class="lbl-precio">Precio</label>
-                                                <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
-                                            </div>
-                                            @if (permiteEditarPrecio)
-                                            {
-                                                <input id="inputPrecioManualExpendio"
-                                                       class="form-control form-control-sm mt-2 text-right"
-                                                       autocomplete="off"
-                                                       inputmode="decimal"
-                                                       placeholder="Precio manual" />
-                                            }
-                                        </div> *@
-
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-cantidad">Cantidad</label>
@@ -430,19 +414,21 @@
     </div>
 </div>
 
-@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarProducto)
-@Html.Partial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml")
-@Html.Partial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml")
-@Html.Partial("~/Views/PuntosExpendio/_ModalPostPuntoExpendio.cshtml")
+@{
+    Html.RenderPartial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarProducto);
+    Html.RenderPartial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml");
+    Html.RenderPartial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml");
+    Html.RenderPartial("~/Views/PuntosExpendio/_ModalPostPuntoExpendio.cshtml");
+}
 
 <form id="formFinalizarPuntoExpendio" class="d-none">
     @Html.AntiForgeryToken()
 </form>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=21")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=22")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
