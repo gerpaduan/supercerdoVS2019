@@ -89,6 +89,7 @@
                     case 'F5':
                     case 'F6':
                     case 'F7':
+                    case 'AvPag':
                         runHook(key);
                         break;
                 }
@@ -152,9 +153,9 @@
                     return;
                 }
 
-                if (key === 'F2' || key === 'F3' || key === 'F5' || key === 'F6' || key === 'F7') {
+                if (key === 'F2' || key === 'F3' || key === 'F5' || key === 'F6' || key === 'F7' || key === 'PageDown') {
                     e.preventDefault();
-                    runAction(key, false);
+                    runAction(key === 'PageDown' ? 'AvPag' : key, false);
                     return;
                 }
 
@@ -165,9 +166,9 @@
                         return;
                     }
 
-                    if (key === 'Home' || key === 'End' || key === 'F9' || key === 'F10') {
+                    if (key === 'Home' || key === 'End' || key === 'F9' || key === 'F10' || key === 'PageDown') {
                         e.preventDefault();
-                        runAction(key, true);
+                        runAction(key === 'PageDown' ? 'AvPag' : key, true);
                     }
                 }
             }, true);

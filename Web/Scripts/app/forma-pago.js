@@ -332,7 +332,8 @@ function finalizarVenta(data) {
         Bonificacion: parseNumeroPOS(l.bonificacion) || 0,
         Estado: (esLineaAnuladaPOS(l) ? 1 : 0),
         IndexAnulado: Number.isFinite(parseInt(l.indexAnulado, 10)) ? parseInt(l.indexAnulado, 10) : -1,
-        Balanza: l.balanza
+        Balanza: l.balanza,
+        IdExpendio: parseInt(l.idExpendio, 10) || 0
     }));
 
     const lineaInvalida = lineasPayload.find(l =>
@@ -370,6 +371,7 @@ function finalizarVenta(data) {
         idSucursalPOS: parseInt($('#idSucursalPOS').val(), 10) || 0,
         soloFormaPago: !!window.POSModo?.soloFormaPago,
         Observaciones: window.POSState?.getObservaciones?.() || '',
+        listaExpendios: window.POSState?.getListaExpendios?.() || [],
         lineasVenta: lineasPayload
     };
 

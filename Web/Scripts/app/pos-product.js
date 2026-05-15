@@ -128,6 +128,11 @@
             $('#prodNombre').text(producto.nombre).removeClass('text-muted').addClass('fw-bold');
             $('#prodPrecio').text('$ ' + producto.precioKg.toLocaleString('es-AR')).removeClass('text-muted').addClass('fw-bold');
 
+            const $precioManual = $('#inputPrecioManualExpendio');
+            if ($precioManual.length && !$precioManual.prop('readonly')) {
+                $precioManual.val(producto.precioKg.toFixed(2).replace('.', ','));
+            }
+
             precioActual = producto.precioKg;
 
             $('#inputCantidad').prop('disabled', false);

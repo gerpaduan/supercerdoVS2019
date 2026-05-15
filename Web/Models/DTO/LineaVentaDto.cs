@@ -20,6 +20,7 @@ namespace Web.Models.DTO
         public int Estado { get; set; }
         public bool Balanza { get; set; }
         public int IndexAnulado { get; set; } = -1;
+        public int IdExpendio { get; set; }
     }
 
 }

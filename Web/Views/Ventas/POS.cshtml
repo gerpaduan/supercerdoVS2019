@@ -26,11 +26,17 @@
             .ToDictionary(g => g.Key, g => g.First())
         : new Dictionary<int, Entidades.LineaVenta>();
     var lineasEdicionPos = new List<object>();
+    var listaExpendiosEdicionPos = new List<int>();
     if (esEdicionVenta)
     {
         var indexLinea = 1;
         foreach (var linea in lineasActivas)
         {
+            if (linea.IdExpendio > 0 && !listaExpendiosEdicionPos.Contains(linea.IdExpendio))
+            {
+                listaExpendiosEdicionPos.Add(linea.IdExpendio);
+            }
+
             lineasEdicionPos.Add(new
             {
                 index = indexLinea++,
@@ -43,7 +49,8 @@
                 bonificacion = linea.Bonificacion,
                 anulado = lineasAnuladasPorLinea.ContainsKey(linea.IdLineaVenta),
                 indexAnulado = -1,
-                balanza = linea.PesoBalanza
+                balanza = linea.PesoBalanza,
+                idExpendio = linea.IdExpendio
             });
         }
     }
@@ -647,15 +654,17 @@ else
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 @Html.Partial("~/Views/Ventas/_ModalComentarioVenta.cshtml")
 @Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
+@Html.Partial("~/Views/Ventas/_ModalExpendiosPOS.cshtml")
 
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=4")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=18")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=20")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=4")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=3")"></script>
     <script>
     window.EgresosCajaUrls = {
@@ -836,6 +845,7 @@ else
     const soloFormaPago = @(soloFormaPago ? "true" : "false");
     const puedeEditarFechaVenta = @(puedeEditarFechaVenta ? "true" : "false");
     const lineasEdicionPos = @Html.Raw(Json.Encode(lineasEdicionPos));
+    const listaExpendiosEdicionPos = @Html.Raw(Json.Encode(listaExpendiosEdicionPos));
     POSState.setFechaVenta(new Date());
     POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
     window.POSFinalizandoVenta = false;
@@ -915,6 +925,7 @@ else
 
             localStorage.setItem(key, JSON.stringify({
                 lineas: lineas,
+                listaExpendios: POSState.getListaExpendios ? POSState.getListaExpendios() : [],
                 idUsuarioPOS: idUsuarioActual,
                 idSucursalPOS: idSucursalActual,
                 idPersona: $("#idPersona").val(),
@@ -973,6 +984,7 @@ else
                     draft = legacyDraft;
                     localStorage.setItem(key, JSON.stringify({
                         lineas: legacyDraft.lineas,
+                        listaExpendios: legacyDraft.listaExpendios || [],
                         idUsuarioPOS: idUsuarioActual,
                         idSucursalPOS: idSucursalActual,
                         idPersona: legacyDraft.idPersona,
@@ -990,6 +1002,7 @@ else
             }
 
             POSState.setLineas(draft.lineas);
+            POSState.setListaExpendios?.(draft.listaExpendios || []);
 
             if (draft.idPersona) $("#idPersona").val(draft.idPersona);
             if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
@@ -1049,6 +1062,7 @@ else
         window.POSGuard.bindModal('#modalBuscarPersona', 'persona');
         window.POSGuard.bindModal('#modalFinanzasPOS', 'finanzas');
         window.POSGuard.bindModal('#modalPagoPOS', 'pagoPos');
+        window.POSGuard.bindModal('#modalExpendiosPOS', 'expendios');
     }
 
     // BUSCAR PERSONA
@@ -1165,6 +1179,7 @@ else
 
     let posProduct = null;
     let posCart = null;
+    let posExpendios = null;
     const posHelp = window.POSHelp.create({
         focusCodigo: function () { return posKeyboard.focusCodigo(); },
         clickIfEnabled: function (selector) {
@@ -1209,19 +1224,34 @@ else
         setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); }
     });
 
+    posExpendios = window.POSExpendios.create({
+        POSState: POSState,
+        renderTable: function (lineas) { return posCart ? posCart.renderTable(lineas) : null; },
+        recalculateTotal: function () { return posCart ? posCart.recalculateTotal() : null; },
+        updateSaleState: function () { return posCart ? posCart.updateSaleState() : null; },
+        updateCartSummary: function () { return posCart ? posCart.updateCartSummary?.() : null; },
+        showWaiting: function () { return posProduct ? posProduct.showWaiting() : null; },
+        focusCodigo: function () { return posKeyboard.focusCodigo(); }
+    });
+    window.POSExpendiosCurrent = posExpendios;
+
     posProduct.init();
     posCart.init();
+    posExpendios.init();
     posKeyboard.init();
     posHelp.init();
     posComment.init();
+    posExpendios.syncAssignedFromCart?.();
 
     if (esEdicionVenta) {
         window.POSState.setLineas(lineasEdicionPos || []);
+        window.POSState.setListaExpendios?.(listaExpendiosEdicionPos || []);
         posCart.renderTable(window.POSState.getLineas());
         posCart.recalculateTotal();
         posCart.updateSaleState();
         posCart.updateCartSummary?.();
         posComment.updateButtonState?.();
+        posExpendios.syncAssignedFromCart?.();
 
         if (!puedeEditarFechaVenta) {
             const fechaEdicion = getFechaVentaPOS();
@@ -1239,6 +1269,7 @@ else
         posCart.renderTable(window.POSState.getLineas());
         posCart.recalculateTotal();
         posCart.updateSaleState();
+        posExpendios.syncAssignedFromCart?.();
         $("#posVentaRestaurada").removeClass("d-none");
 
         Swal.fire({
@@ -1316,6 +1347,7 @@ else
         posCart.updateSaleState();
         posCart.updateCartSummary?.();
         posComment.updateButtonState?.();
+        posExpendios.syncAssignedFromCart?.();
 
         $("#chkPagoMixto").prop("checked", false).prop("disabled", false);
         $("#montoEfectivo, #montoOtroPago").val("");
@@ -1598,6 +1630,8 @@ else
         modificar: '@Url.Action("ModificarVenta", "Ventas")',
         detalle: '@Url.Action("DetalleVenta", "Ventas")',
         imprimir: '@Url.Action("ImprimirTicket", "Ventas")',
+        buscarExpendiosPos: '@Url.Action("BuscarExpendiosPOS", "Ventas")',
+        obtenerExpendioPos: '@Url.Action("ObtenerExpendioPOS", "Ventas")',
     };
     window.api.persona = {
         listar: '@Url.Action("Listar", "Personas")',
@@ -2041,6 +2075,10 @@ else
 
         window.posHotkeysHooks.F7 = function () {
             window.POSEgresos.abrirNuevo();
+        };
+
+        window.posHotkeysHooks.AvPag = function () {
+            window.POSExpendiosCurrent?.open?.();
         };
 
         $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {

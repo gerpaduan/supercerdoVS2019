@@ -245,6 +245,10 @@ namespace Web.Controllers
                 // LINEAS DE VENTA (CLAVE)
                 // ===============================
                 venta.LineasVenta = lineasVenta;
+                venta.ListaExpendios = (request.ListaExpendios ?? new List<int>())
+                    .Where(x => x > 0)
+                    .Distinct()
+                    .ToList();
 
                 int idVenta = oVentaN.agregarVenta(venta);
 
@@ -350,6 +354,10 @@ namespace Web.Controllers
                 }
 
                 venta.LineasVenta = ConstruirLineasVentaDesdeRequest(request);
+                venta.ListaExpendios = (request.ListaExpendios ?? new List<int>())
+                    .Where(x => x > 0)
+                    .Distinct()
+                    .ToList();
                 CompletarAnulacionesVenta(venta.LineasVenta);
 
                 oVentaN.modificarVenta(venta, venta.Sucursal.idSucursal, !soloFormaPago, null);
@@ -498,6 +506,147 @@ namespace Web.Controllers
             Session["VentaActiva"] = venta;
 
             return View(venta);
+        }
+
+        [HttpGet]
+        public JsonResult BuscarExpendiosPOS(int ultimosMinutos = 300, string estado = "Pendientes", string texto = "", string idsActuales = "")
+        {
+            try
+            {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null || user.IdSucursal == 0)
+                    return Json(new { ok = false, msg = "Sesión inválida o sucursal no seleccionada." }, JsonRequestBehavior.AllowGet);
+
+                DataTable dt = oVentaN.obtenerUltimosExpendios(ultimosMinutos, user.IdSucursal);
+                List<int> idsEnVentaActual = ParseIdsExpendio(idsActuales);
+                string estadoNormalizado = (estado ?? "Pendientes").Trim().ToUpperInvariant();
+                string textoNormalizado = (texto ?? "").Trim();
+                int nroExpendio;
+                bool buscarPorNumero = int.TryParse(textoNormalizado, out nroExpendio);
+
+                var filas = dt.AsEnumerable()
+                    .Where(row =>
+                    {
+                        int idExpendio = ToInt(row["idExpendio"]);
+                        int idVenta = ToInt(row["idVenta"]);
+                        bool estaAsignadoDb = idVenta > 0 && idVenta != idExpendio;
+                        bool estaEnVentaActual = idsEnVentaActual.Contains(idExpendio);
+
+                        switch (estadoNormalizado)
+                        {
+                            case "ASIGNADOS":
+                                if (!estaAsignadoDb && !estaEnVentaActual) return false;
+                                break;
+                            case "TODOS":
+                                break;
+                            default:
+                                if (estaAsignadoDb || estaEnVentaActual) return false;
+                                break;
+                        }
+
+                        if (string.IsNullOrWhiteSpace(textoNormalizado))
+                            return true;
+
+                        string identificacion = ToStr(row["identificacionExpendio"]);
+                        if (buscarPorNumero && idExpendio == nroExpendio)
+                            return true;
+
+                        return identificacion.IndexOf(textoNormalizado, StringComparison.OrdinalIgnoreCase) >= 0;
+                    })
+                    .OrderBy(row => ToDate(row["fechaExpendio"]))
+                    .ThenBy(row => ToInt(row["idExpendio"]))
+                    .Select(row =>
+                    {
+                        int idExpendio = ToInt(row["idExpendio"]);
+                        int idVenta = ToInt(row["idVenta"]);
+                        DateTime fechaExpendio = ToDate(row["fechaExpendio"]);
+
+                        return new
+                        {
+                            fechaExpendio = fechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss"),
+                            hora = fechaExpendio.ToString("HH:mm"),
+                            idExpendio = idExpendio,
+                            identificacionExpendio = ToStr(row["identificacionExpendio"]),
+                            sector = ToStr(row["sector"]),
+                            codigo = ToInt(row["codigo"]),
+                            producto = ToStr(row["corte"]),
+                            cantKg = ToDecimal(row["cantKg"]),
+                            precioKg = ToDecimal(row["precioKg"]),
+                            total = ToDecimal(row["total"]),
+                            vendedor = ToStr(row["vendedor"]),
+                            idVenta = idVenta,
+                            asignado = idVenta > 0 && idVenta != idExpendio,
+                            cargadoEnVentaActual = idsEnVentaActual.Contains(idExpendio)
+                        };
+                    })
+                    .ToList();
+
+                return Json(new
+                {
+                    ok = true,
+                    items = filas,
+                    vacio = filas.Count == 0,
+                    debug = new
+                    {
+                        idSucursal = user.IdSucursal,
+                        totalSql = dt.Rows.Count,
+                        totalFiltrado = filas.Count,
+                        estado = estadoNormalizado,
+                        texto = textoNormalizado
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Error al consultar expendios: " + ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerExpendioPOS(int idExpendio)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null || user.IdSucursal == 0)
+                return Json(new { ok = false, msg = "Sesión inválida o sucursal no seleccionada." }, JsonRequestBehavior.AllowGet);
+
+            if (idExpendio <= 0)
+                return Json(new { ok = false, msg = "Expendio inválido." }, JsonRequestBehavior.AllowGet);
+
+            var expendio = oVentaN.getExpedioById(idExpendio);
+            if (expendio == null || expendio.IdExpendio <= 0)
+                return Json(new { ok = false, msg = "El expendio no existe." }, JsonRequestBehavior.AllowGet);
+
+            if (expendio.Sucursal == null || expendio.Sucursal.idSucursal != user.IdSucursal)
+                return Json(new { ok = false, msg = "El expendio pertenece a otra sucursal." }, JsonRequestBehavior.AllowGet);
+
+            return Json(new
+            {
+                ok = true,
+                expendio = new
+                {
+                    idExpendio = expendio.IdExpendio,
+                    fechaExpendio = expendio.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    identificacionExpendio = expendio.IdentificacionExpendio ?? "",
+                    sector = expendio.Sector ?? "",
+                    vendedor = expendio.Vendedor != null ? expendio.Vendedor.Nombre : "",
+                    idVenta = expendio.IdVenta,
+                    asignado = expendio.IdVenta > 0 && expendio.IdVenta != expendio.IdExpendio
+                },
+                lineas = (expendio.LineasVenta ?? new List<Entidades.LineaVenta>()).Select(l => new
+                {
+                    idExpendio = expendio.IdExpendio,
+                    codigo = l.Corte != null ? l.Corte.codigo : 0,
+                    producto = l.Corte != null ? l.Corte.corte : "",
+                    cantKg = l.CantKg,
+                    precioKg = l.PrecioKg,
+                    bonificacion = l.Bonificacion,
+                    balanza = l.PesoBalanza
+                }).ToList()
+            }, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -1132,11 +1281,55 @@ namespace Web.Controllers
                 linea.Estado = l.Estado;
                 linea.IndexAnulado = l.IndexAnulado;
                 linea.PesoBalanza = l.Balanza;
+                linea.IdExpendio = l.IdExpendio;
 
                 lineasVenta.Add(linea);
             }
 
             return lineasVenta;
+        }
+
+        private List<int> ParseIdsExpendio(string idsActuales)
+        {
+            return (idsActuales ?? "")
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x =>
+                {
+                    int id;
+                    return int.TryParse(x.Trim(), out id) ? id : 0;
+                })
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+        }
+
+        private int ToInt(object value)
+        {
+            if (value == null || value == DBNull.Value) return 0;
+            int result;
+            return int.TryParse(value.ToString(), out result) ? result : 0;
+        }
+
+        private decimal ToDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value) return 0m;
+            decimal result;
+            return decimal.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out result)
+                || decimal.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.GetCultureInfo("es-AR"), out result)
+                ? result
+                : 0m;
+        }
+
+        private DateTime ToDate(object value)
+        {
+            if (value == null || value == DBNull.Value) return DateTime.MinValue;
+            DateTime result;
+            return DateTime.TryParse(value.ToString(), out result) ? result : DateTime.MinValue;
+        }
+
+        private string ToStr(object value)
+        {
+            return value == null || value == DBNull.Value ? "" : value.ToString();
         }
 
         private void CompletarAnulacionesVenta(List<Entidades.LineaVenta> lineasVenta)

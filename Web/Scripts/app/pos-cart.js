@@ -692,6 +692,7 @@
                     } else {
                         POSState.anularLinea(linea.index);
                     }
+                    window.POSExpendiosCurrent?.syncAssignedFromCart?.();
                     renderTable(POSState.getLineas());
                     recalculateTotal();
                     updateSaleState();

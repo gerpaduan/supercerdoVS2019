@@ -6,7 +6,8 @@
         fechaVenta: new Date(),
         lineaSeleccionada: null,
         nextIndex: 1,
-        observaciones: ''
+        observaciones: '',
+        listaExpendios: []
     };
 
     function normalizarLinea(linea) {
@@ -89,6 +90,7 @@
             state.lineaSeleccionada = null;
             state.nextIndex = 1;
             state.observaciones = '';
+            state.listaExpendios = [];
         },
 
         nextIndex: function () {
@@ -155,6 +157,34 @@
 
         getObservaciones: function () {
             return state.observaciones;
+        },
+
+        setListaExpendios: function (lista) {
+            state.listaExpendios = Array.isArray(lista)
+                ? lista.map(function (id) { return parseInt(id, 10) || 0; }).filter(function (id) { return id > 0; })
+                : [];
+            state.listaExpendios = Array.from(new Set(state.listaExpendios));
+            return state.listaExpendios;
+        },
+
+        getListaExpendios: function () {
+            return state.listaExpendios;
+        },
+
+        addExpendio: function (idExpendio) {
+            const id = parseInt(idExpendio, 10) || 0;
+            if (id <= 0) return false;
+            if (state.listaExpendios.indexOf(id) >= 0) return false;
+            state.listaExpendios.push(id);
+            return true;
+        },
+
+        removeExpendio: function (idExpendio) {
+            const id = parseInt(idExpendio, 10) || 0;
+            const index = state.listaExpendios.indexOf(id);
+            if (index < 0) return false;
+            state.listaExpendios.splice(index, 1);
+            return true;
         }
     };
 
@@ -199,6 +229,17 @@
         },
         set: function (value) {
             state.observaciones = String(value ?? '');
+        }
+    });
+
+    Object.defineProperty(window, 'listaExpendiosVenta', {
+        configurable: true,
+        enumerable: true,
+        get: function () {
+            return state.listaExpendios;
+        },
+        set: function (value) {
+            api.setListaExpendios(value);
         }
     });
 

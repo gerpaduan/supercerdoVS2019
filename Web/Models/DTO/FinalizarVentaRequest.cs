@@ -17,6 +17,7 @@ namespace Web.Models.DTO
         public bool SoloFormaPago { get; set; }
         public string Observaciones { get; set; }
         public List<LineaVentaDto> LineasVenta { get; set; }
+        public List<int> ListaExpendios { get; set; }
     }
 
 }
