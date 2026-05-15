@@ -7,6 +7,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web.Mvc;
 using Web.Helpers;
 using Web.Models;
@@ -385,6 +386,7 @@ namespace Web.Controllers
                     idExpendio = expendio.IdExpendio,
                     redirectUrl = Url.Action("POS", "PuntosExpendio", new { sector = expendio.Sector }),
                     imprimirUrl = Url.Action("ImprimirTicket", "PuntosExpendio", new { id = expendio.IdExpendio }),
+                    imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "PuntosExpendio", new { id = expendio.IdExpendio }),
                     pdfUrl = pdfUrl,
                     whatsappTexto = "Punto de expendio " + expendio.IdExpendio + " - " + pdfUrlAbsoluta
                 });
@@ -403,6 +405,109 @@ namespace Web.Controllers
 
             ViewBag.TicketMm = mm == 80 ? 80 : 58;
             return View("~/Views/PuntosExpendio/_TicketPuntoExpendio.cshtml", expendio);
+        }
+
+        [HttpGet]
+        public JsonResult ImprimirTicketPayload(int id, int mm = 58)
+        {
+            var expendio = oVentaN.getExpedioById(id);
+            if (expendio == null)
+                return Json(new { ok = false, mensaje = "No se encontró el expendio." }, JsonRequestBehavior.AllowGet);
+
+            int ticketMm = mm == 80 ? 80 : 58;
+            var lineas = ConstruirLineasTicketPuntoExpendio(expendio, ticketMm);
+            return Json(new
+            {
+                ok = true,
+                ticketMm = ticketMm,
+                barcodeValue = "PE" + expendio.IdExpendio + "F",
+                barcodeHeader = (expendio.Sector ?? "") + "\nTOTAL $ " + expendio.TotalImporte.ToString("F2", CultureInfo.InvariantCulture),
+                ticketLines = lineas
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult DescargarAgenteImpresion()
+        {
+            string path = Server.MapPath("~/Content/downloads/CarniSys.PrintAgent.zip");
+            if (!System.IO.File.Exists(path))
+                return HttpNotFound();
+
+            return File(path, "application/zip", "CarniSys.PrintAgent.zip");
+        }
+
+        [HttpGet]
+        public JsonResult MisExpendiosPOS(int top = 100)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null || user.IdSucursal == 0)
+                return Json(new { ok = false, mensaje = "Sesión inválida o sucursal no seleccionada." }, JsonRequestBehavior.AllowGet);
+
+            AsegurarSucursalUsuario(user);
+
+            try
+            {
+                DataTable dt = oVentaN.obtenerExpendiosPorUsuario(user.IdSucursal, user.Id, top <= 0 ? 100 : top);
+
+                var items = dt.AsEnumerable()
+                    .Select(row =>
+                    {
+                        DateTime fechaExpendio = row["fechaExpendio"] != DBNull.Value
+                            ? Convert.ToDateTime(row["fechaExpendio"])
+                            : DateTime.MinValue;
+
+                        int idExpendio = row["idExpendio"] != DBNull.Value ? Convert.ToInt32(row["idExpendio"]) : 0;
+                        int idVenta = row["idVenta"] != DBNull.Value ? Convert.ToInt32(row["idVenta"]) : 0;
+                        var expendio = idExpendio > 0 ? oVentaN.getExpedioById(idExpendio) : null;
+                        var lineas = (expendio != null ? expendio.LineasVenta : null) ?? new List<Entidades.LineaVenta>();
+                        string pdfUrl = idExpendio > 0 ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }) : "";
+                        string pdfUrlAbsoluta = idExpendio > 0
+                            ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }, Request != null && Request.Url != null ? Request.Url.Scheme : "http")
+                            : "";
+
+                        return new
+                        {
+                            fechaExpendio = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss") : "",
+                            fecha = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("dd/MM/yyyy") : "",
+                            hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
+                            idExpendio = idExpendio,
+                            identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                            sector = Convert.ToString(row["sector"] ?? ""),
+                            cantItems = Convert.ToString(row["cantItems"] ?? "0"),
+                            totalKg = row["totalKg"] != DBNull.Value ? Convert.ToDecimal(row["totalKg"]) : 0m,
+                            totalImporte = row["importe"] != DBNull.Value ? Convert.ToDecimal(row["importe"]) : 0m,
+                            vendedor = Convert.ToString(row["vendedor"] ?? ""),
+                            idVenta = idVenta,
+                            estado = idVenta > 0 && idVenta != idExpendio ? "Asignado" : "Pendiente",
+                            puedeImprimir = idExpendio > 0,
+                            imprimirUrl = Url.Action("ImprimirTicket", "PuntosExpendio", new { id = idExpendio }),
+                            imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "PuntosExpendio", new { id = idExpendio }),
+                            pdfUrl = pdfUrl,
+                            whatsappTexto = idExpendio > 0 ? "Punto de expendio " + idExpendio + " - " + pdfUrlAbsoluta : "",
+                            lineas = lineas.Select(l => new
+                            {
+                                codigo = l.Corte != null ? l.Corte.Codigo : 0,
+                                producto = l.Corte != null
+                                    ? (!string.IsNullOrWhiteSpace(l.Corte.corte) ? l.Corte.corte : l.Corte.CorteDesc)
+                                    : "",
+                                cantKg = l.CantKg,
+                                precioKg = l.PrecioKg,
+                                total = l.CantKg * l.PrecioKg
+                            }).ToList()
+                        };
+                    })
+                    .ToList();
+
+                return Json(new
+                {
+                    ok = true,
+                    items = items
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "No se pudieron consultar los expendios: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
@@ -725,6 +830,76 @@ namespace Web.Controllers
 
                 return ms.ToArray();
             }
+        }
+
+        private List<string> ConstruirLineasTicketPuntoExpendio(Entidades.Venta expendio, int mm)
+        {
+            int cantMaxChar = mm == 80 ? 43 : 30;
+            var sb = new StringBuilder();
+            string Truncar(string texto)
+            {
+                string valor = texto ?? "";
+                return valor.Length <= cantMaxChar ? valor : valor.Substring(0, cantMaxChar);
+            }
+
+            string Centrar(string texto)
+            {
+                string valor = Truncar(texto ?? "");
+                int libres = Math.Max(0, cantMaxChar - valor.Length);
+                int izquierda = libres / 2;
+                return new string(' ', izquierda) + valor;
+            }
+
+            string Extremos(string izquierda, string derecha)
+            {
+                string i = izquierda ?? "";
+                string d = derecha ?? "";
+                if (i.Length > 18) i = i.Substring(0, 18);
+                if (d.Length > 18) d = d.Substring(0, 18);
+                int espacios = Math.Max(1, cantMaxChar - i.Length - d.Length);
+                return i + new string(' ', espacios) + d;
+            }
+
+            void Linea(string texto) { sb.AppendLine(texto ?? ""); }
+
+            Linea(Centrar(expendio.Sector ?? ""));
+            Linea("");
+            Linea(Truncar("Nro Expendio: " + expendio.IdExpendio));
+            Linea(Truncar("Id.Cliente: " + (expendio.IdentificacionExpendio ?? "")));
+            Linea(Extremos("Fecha: " + expendio.FechaVenta.ToString("dd/MM/yyyy"), "Hora: " + expendio.FechaVenta.ToString("HH:mm:ss")));
+            Linea(new string('-', 20));
+
+            foreach (var item in expendio.LineasVenta ?? new List<Entidades.LineaVenta>())
+            {
+                string cantidad = item.CantKg.ToString("F3") + " x " + item.PrecioKg.ToString("N2");
+                Linea(Truncar(cantidad));
+
+                string producto = ((item.Corte != null ? item.Corte.codigo.ToString() + " " : "") +
+                    (item.Corte != null ? (!string.IsNullOrWhiteSpace(item.Corte.corte) ? item.Corte.corte : item.Corte.CorteDesc) : "")).Trim();
+
+                if (producto.Length > 22)
+                    producto = producto.Substring(0, 22);
+
+                string total = (item.CantKg * item.PrecioKg).ToString("N2");
+                int espacios = Math.Max(1, cantMaxChar - producto.Length - total.Length);
+                Linea(producto + new string(' ', espacios) + total);
+            }
+
+            Linea("-------".PadLeft(cantMaxChar));
+            string totalTexto = expendio.TotalImporte.ToString("N2");
+            Linea("Total" + new string(' ', Math.Max(1, cantMaxChar - "Total".Length - totalTexto.Length)) + totalTexto);
+            Linea("");
+            Linea(Truncar("Articulos: " + ((expendio.LineasVenta ?? new List<Entidades.LineaVenta>()).Count)));
+            Linea(Truncar("Cajero: " + (expendio.Vendedor != null ? expendio.Vendedor.Id.ToString() : "")));
+            Linea(Centrar("Gracias por su visita"));
+            Linea(" ");
+            Linea(" ");
+            Linea(" ");
+
+            return sb.ToString()
+                .Replace("\r\n", "\n")
+                .Split(new[] { '\n' }, StringSplitOptions.None)
+                .ToList();
         }
 
         private void AsegurarSucursalUsuario(Entidades.Usuario user)

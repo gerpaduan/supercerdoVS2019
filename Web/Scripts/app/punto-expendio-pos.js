@@ -43,6 +43,7 @@
     $(function () {
         var config = window.puntoExpendioPosConfig || {};
         if (!document.getElementById('pos-app')) return;
+        var misExpendiosCache = [];
 
         window.buscarProductoUrl = config.urlBuscarProductoPos;
         window.api = window.api || {};
@@ -160,6 +161,152 @@
             }
         }
 
+        function formatKg(value) {
+            return Number(value || 0).toLocaleString('es-AR', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+            });
+        }
+
+        function formatMoney(value) {
+            return '$ ' + Number(value || 0).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderDetalleMisExpendios(lineas) {
+            if (!lineas || !lineas.length) {
+                return '<div class="small text-muted">Sin detalle de líneas.</div>';
+            }
+
+            var html = '<div class="table-responsive"><table class="table table-sm table-borderless mb-0"><thead><tr>'
+                + '<th style="width:90px;">Código</th>'
+                + '<th>Producto</th>'
+                + '<th style="width:95px;" class="text-right">Kgs.</th>'
+                + '<th style="width:110px;" class="text-right">Precio</th>'
+                + '<th style="width:110px;" class="text-right">Total</th>'
+                + '</tr></thead><tbody>';
+
+            lineas.forEach(function (linea) {
+                html += '<tr>'
+                    + '<td>' + escapeHtml(linea.codigo || 0) + '</td>'
+                    + '<td>' + escapeHtml(linea.producto || '') + '</td>'
+                    + '<td class="text-right">' + formatKg(linea.cantKg) + '</td>'
+                    + '<td class="text-right">' + formatMoney(linea.precioKg) + '</td>'
+                    + '<td class="text-right">' + formatMoney(linea.total) + '</td>'
+                    + '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function showMisExpendiosMessage(type, text) {
+            var $msg = $('#msgMisExpendiosPuntoExpendio');
+            if (!$msg.length) return;
+
+            if (!text) {
+                $msg.addClass('d-none')
+                    .removeClass('alert-info alert-warning alert-danger alert-success')
+                    .text('');
+                return;
+            }
+
+            var css = {
+                info: 'alert-info',
+                warning: 'alert-warning',
+                danger: 'alert-danger',
+                success: 'alert-success'
+            }[type || 'info'] || 'alert-info';
+
+            $msg.removeClass('d-none alert-info alert-warning alert-danger alert-success')
+                .addClass(css)
+                .text(text);
+        }
+
+        function renderMisExpendios(items) {
+            var $tbody = $('#tablaMisExpendiosPuntoExpendio tbody');
+            if (!$tbody.length) return;
+
+            $tbody.empty();
+
+            if (!items || !items.length) {
+                $tbody.append('<tr><td colspan="9" class="text-center text-muted py-4">No hay expendios para mostrar.</td></tr>');
+                return;
+            }
+
+            items.forEach(function (item) {
+                var estadoClass = item.estado === 'Asignado' ? 'badge-secondary' : 'badge-warning';
+
+                $tbody.append(
+                    '<tr>' +
+                    '<td>' + (item.fecha || '') + '</td>' +
+                    '<td>' + (item.hora || '') + '</td>' +
+                    '<td><strong>' + (item.idExpendio || 0) + '</strong></td>' +
+                    '<td>' + (item.identificacionExpendio || '') + '</td>' +
+                    '<td><span class="badge ' + estadoClass + '">' + (item.estado || '') + '</span></td>' +
+                    '<td class="text-right">' + (item.cantItems || '0') + '</td>' +
+                    '<td class="text-right">' + formatKg(item.totalKg) + '</td>' +
+                    '<td class="text-right">' + formatMoney(item.totalImporte) + '</td>' +
+                    '<td class="text-center">' +
+                    '<button type="button" class="btn btn-sm btn-outline-primary btnImprimirMisExpendio" data-id-expendio="' + (item.idExpendio || 0) + '">Imprimir</button>' +
+                    '</td>' +
+                    '</tr>' +
+                    '<tr class="bg-light">' +
+                    '<td colspan="9">' +
+                    '<div class="small font-weight-bold text-muted mb-1">Detalle</div>' +
+                    renderDetalleMisExpendios(item.lineas || []) +
+                    '</td>' +
+                    '</tr>'
+                );
+            });
+        }
+
+        function abrirMisExpendios() {
+            if ($('.modal.show').not('#modalAyudaPOS').length && !$('#modalAyudaPOS').hasClass('show')) return;
+
+            misExpendiosCache = [];
+            showMisExpendiosMessage(null, '');
+            renderMisExpendios([]);
+            $('#tablaMisExpendiosPuntoExpendio tbody').html('<tr><td colspan="9" class="text-center text-muted py-4">Consultando expendios...</td></tr>');
+            $('#modalMisExpendiosPuntoExpendio').modal('show');
+
+            $.ajax({
+                url: config.urlMisExpendios,
+                type: 'GET',
+                dataType: 'json',
+                cache: false
+            })
+                .done(function (resp) {
+                    if (!resp || resp.ok === false) {
+                        renderMisExpendios([]);
+                        showMisExpendiosMessage('warning', resp && resp.mensaje ? resp.mensaje : 'No se pudieron consultar los expendios.');
+                        return;
+                    }
+
+                    misExpendiosCache = resp.items || [];
+                    renderMisExpendios(misExpendiosCache);
+                    if (!misExpendiosCache.length) {
+                        showMisExpendiosMessage('info', 'No hay expendios cargados para el usuario actual.');
+                    }
+                })
+                .fail(function () {
+                    misExpendiosCache = [];
+                    renderMisExpendios([]);
+                    showMisExpendiosMessage('danger', 'No se pudieron consultar los expendios.');
+                });
+        }
+
         var posProduct = null;
         var posCart = null;
         var posKeyboard = window.POSKeyboard.create({
@@ -250,6 +397,58 @@
         $('#btnConsumidorFinal').on('click', function () {
             $('#idPersona').val(config.idConsumidorFinal || 0);
             $('#razonSocial').val('Consumidor Final');
+        });
+
+        $(document).on('click', '.btnImprimirMisExpendio', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            var idExpendio = parseInt($(this).data('id-expendio') || 0, 10) || 0;
+            if (idExpendio <= 0) return;
+
+            var item = null;
+            for (var i = 0; i < misExpendiosCache.length; i++) {
+                if ((misExpendiosCache[i].idExpendio || 0) === idExpendio) {
+                    item = misExpendiosCache[i];
+                    break;
+                }
+            }
+
+            if (!item) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Mis expendios',
+                    text: 'No se pudo recuperar la información del expendio seleccionado.'
+                });
+                return;
+            }
+
+            $('#modalMisExpendiosPuntoExpendio').modal('hide');
+
+            window.PostPuntoExpendioModal.open({
+                imprimirUrl: item.imprimirUrl || '',
+                pdfUrl: item.pdfUrl || '',
+                whatsappTexto: item.whatsappTexto || ''
+            }, {
+                returnModalSelector: '#modalMisExpendiosPuntoExpendio',
+                titulo: 'Acciones del expendio',
+                mensaje: 'Seleccione qué desea hacer con el expendio ' + idExpendio + '.'
+            });
+        });
+
+        $(document).on('click', '.btnImprimirMisExpendio', function () {
+            var idExpendio = parseInt($(this).data('id-expendio') || 0, 10) || 0;
+            if (idExpendio <= 0) return;
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Impresión pendiente',
+                text: 'La impresión específica del expendio ' + idExpendio + ' se conectará en el próximo paso.'
+            });
+        });
+
+        $('#modalMisExpendiosPuntoExpendio').on('hidden.bs.modal', function () {
+            posKeyboard.focusCodigo();
         });
 
         $('#razonSocial').on('input', function () {
@@ -422,6 +621,11 @@
                 }
             }
         });
+
+        window.posHotkeysHooks = window.posHotkeysHooks || {};
+        window.posHotkeysHooks.F6 = function () {
+            abrirMisExpendios();
+        };
 
         setTimeout(function () {
             posKeyboard.focusCodigo();

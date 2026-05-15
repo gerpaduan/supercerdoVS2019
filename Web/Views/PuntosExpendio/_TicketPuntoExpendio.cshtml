@@ -8,8 +8,10 @@
     Layout = null;
 
     int mm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 58;
-    int cantMaxChar = mm == 80 ? 48 : 32;
+    int cantMaxChar = mm == 80 ? 43 : 30;
     var sb = new StringBuilder();
+    string barcodeValue = "PE" + Model.IdExpendio + "F";
+    var barcodeBits = new List<int>();
 
     Func<string, string> truncar = texto =>
     {
@@ -54,7 +56,9 @@
             (item.Corte != null ? (!string.IsNullOrWhiteSpace(item.Corte.corte) ? item.Corte.corte : item.Corte.CorteDesc) : "")).Trim();
 
         if (producto.Length > 22)
+        {
             producto = producto.Substring(0, 22);
+        }
 
         string total = (item.CantKg * item.PrecioKg).ToString("N2");
         int espacios = Math.Max(1, cantMaxChar - producto.Length - total.Length);
@@ -71,9 +75,19 @@
     linea(" ");
     linea(" ");
     linea(" ");
-
     string ticketTexto = sb.ToString();
     string ticketClass = mm == 80 ? "ticket-80mm" : "ticket-58mm";
+
+    foreach (char ch in barcodeValue)
+    {
+        int ascii = (int)ch;
+        for (int bit = 6; bit >= 0; bit--)
+        {
+            barcodeBits.Add(((ascii >> bit) & 1) == 1 ? 2 : 1);
+        }
+
+        barcodeBits.Add(1);
+    }
 }
 <!DOCTYPE html>
 <html>
@@ -109,9 +123,67 @@
             font-size: 12px;
             line-height: 1.22;
         }
+
+        .ticket-code {
+            padding: 0 2.5mm 4mm;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .ticket-barcode-visual {
+            display: inline-flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 1px;
+            margin: 0 auto 1.5mm;
+            padding: 2mm 1.5mm 0;
+        }
+
+        .ticket-barcode-bar {
+            display: block;
+            width: 0;
+            height: 18mm;
+            border-left-style: solid;
+            border-left-color: #000;
+        }
+
+        .ticket-barcode-bar.w1 {
+            border-left-width: 1px;
+        }
+
+        .ticket-barcode-bar.w2 {
+            border-left-width: 2px;
+        }
+
+        .ticket-code-label {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 1mm;
+        }
+
+        .ticket-code-value {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
     </style>
 </head>
 <body class="@ticketClass" onload="window.print()">
     <pre class="ticket-text">@ticketTexto</pre>
+    <div class="ticket-code">
+        <div class="ticket-barcode-visual" aria-hidden="true">
+            @foreach (var bitWidth in barcodeBits)
+            {
+                <span class="ticket-barcode-bar w@(bitWidth > 1 ? 2 : 1)"></span>
+            }
+        </div>
+        <div class="ticket-code-label">Codigo expendio</div>
+        <div class="ticket-code-value">@barcodeValue</div>
+    </div>
+    
+    @for (int i = 0; i < 10; i++)
+    {
+        <pre class="ticket-text">&nbsp;</pre>
+    }
 </body>
 </html>

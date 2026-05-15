@@ -418,6 +418,7 @@
     Html.RenderPartial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarProducto);
     Html.RenderPartial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml");
     Html.RenderPartial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml");
+    Html.RenderPartial("~/Views/PuntosExpendio/_ModalMisExpendiosPuntoExpendio.cshtml");
     Html.RenderPartial("~/Views/PuntosExpendio/_ModalPostPuntoExpendio.cshtml");
 }
 
@@ -432,8 +433,9 @@
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=6")"></script>
     <script>
         window.puntoExpendioPosConfig = {
             sectorSeleccionado: @Html.Raw(Json.Encode(Model.Sector ?? "")),
@@ -441,6 +443,8 @@
             urlPos: '@Url.Action("POS", "PuntosExpendio")',
             urlFinalizar: '@Url.Action("FinalizarPOS", "PuntosExpendio")',
             urlBuscarProductoPos: '@Url.Action("BuscarProductoPOS", "PuntosExpendio")',
+            urlMisExpendios: '@Url.Action("MisExpendiosPOS", "PuntosExpendio")',
+            urlImprimirExpendio: '@Url.Action("ImprimirTicket", "PuntosExpendio")',
             urlPersonaBuscar: '@Url.Action("Buscar", "Personas")',
             urlPersonaListar: '@Url.Action("Listar", "Personas")',
             idConsumidorFinal: @(ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0),
