@@ -1,6 +1,11 @@
 @{
     Layout = null;
     string requestedUrl = ViewBag.RequestedUrl as string ?? "";
+    string errorType = ViewBag.ErrorType as string ?? "";
+    string errorMessage = ViewBag.ErrorMessage as string ?? "";
+    string innerErrorType = ViewBag.InnerErrorType as string ?? "";
+    string innerErrorMessage = ViewBag.InnerErrorMessage as string ?? "";
+    string errorStack = ViewBag.ErrorStack as string ?? "";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -67,6 +72,24 @@
             text-decoration: none;
         }
 
+        .error-detail {
+            margin: 0 0 24px;
+            padding: 12px 14px;
+            background: #fff5f5;
+            border: 1px solid #f1aeb5;
+            border-radius: 8px;
+            color: #842029;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .error-detail pre {
+            margin: 8px 0 0;
+            white-space: pre-wrap;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
         .btn-primary {
             background: #0d6efd;
             color: #fff;
@@ -90,6 +113,23 @@
             @if (!string.IsNullOrWhiteSpace(requestedUrl))
             {
                 <div class="error-url">@requestedUrl</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(errorMessage) || !string.IsNullOrWhiteSpace(innerErrorMessage))
+            {
+                <div class="error-detail">
+                    @if (!string.IsNullOrWhiteSpace(errorType) || !string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div><strong>Error:</strong> @(string.IsNullOrWhiteSpace(errorType) ? errorMessage : errorType + " - " + errorMessage)</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(innerErrorType) || !string.IsNullOrWhiteSpace(innerErrorMessage))
+                    {
+                        <div style="margin-top:8px;"><strong>Inner:</strong> @(string.IsNullOrWhiteSpace(innerErrorType) ? innerErrorMessage : innerErrorType + " - " + innerErrorMessage)</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(errorStack))
+                    {
+                        <pre>@errorStack</pre>
+                    }
+                </div>
             }
             <div class="error-actions">
                 <a href="/" class="btn-primary">Ir al inicio</a>
