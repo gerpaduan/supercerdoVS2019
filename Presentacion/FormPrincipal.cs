@@ -344,34 +344,34 @@ namespace Presentacion
                 Negocio.OtrasClases otrasClasesN = new OtrasClases(EmpresaSTATIC, ParametrosCTX);
 
                 #region validarLicenciaCuotas
-                ///se valida que la licencia no esté vencida
-                ///
-                DateTime fechaVencimiento = otrasClasesN.fechaVencimientoLicencia();
-                ///si fechaVencimiento es vacia es xq no tiene cuotas vencidas y consulta sql devuelve 1/1/0001 00:00:00
-                ///si fechaVencimiento es menor a fecha actual menos 30 años a fecha actual sumo un año para evitar este error
-                fechaVencimiento = fechaVencimiento < DateTime.Now.AddYears(-30) ? DateTime.Now.AddYears(1) : fechaVencimiento;
+                // ///se valida que la licencia no esté vencida
+                // ///
+                // DateTime fechaVencimiento = otrasClasesN.fechaVencimientoLicencia();
+                // ///si fechaVencimiento es vacia es xq no tiene cuotas vencidas y consulta sql devuelve 1/1/0001 00:00:00
+                // ///si fechaVencimiento es menor a fecha actual menos 30 años a fecha actual sumo un año para evitar este error
+                // fechaVencimiento = fechaVencimiento < DateTime.Now.AddYears(-30) ? DateTime.Now.AddYears(1) : fechaVencimiento;
 
-                // Calcular la diferencia de fechas
-                TimeSpan diferencia = fechaVencimiento - DateTime.Now;
+                // // Calcular la diferencia de fechas
+                // TimeSpan diferencia = fechaVencimiento - DateTime.Now;
 
-                // Obtener el resultado en días
-                int diasDiferencia = diferencia.Days;
+                // // Obtener el resultado en días
+                // int diasDiferencia = diferencia.Days;
 
-                if (diasDiferencia < 5 && diasDiferencia >= 0)
-                {
-                    MessageBox.Show("Su licencia vence en " + diasDiferencia + " dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else if (diasDiferencia < 0 && diasDiferencia >= -30)
-                {
-                    int caduca = 30 + diasDiferencia;
-                    MessageBox.Show("Su licencia está vencida.\nEl Sistema se bloqueará en " + caduca + " dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-                else if (diasDiferencia < -31)
-                {
-                    MessageBox.Show("Su licencia ha caducado.\nIngrese el código de pago y vuelva a abrir el sistema.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    verVencimientoCuotas();
-                    Application.Exit();
-                }
+                // if (diasDiferencia < 5 && diasDiferencia >= 0)
+                // {
+                //     MessageBox.Show("Su licencia vence en " + diasDiferencia + " dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // }
+                // else if (diasDiferencia < 0 && diasDiferencia >= -30)
+                // {
+                //     int caduca = 30 + diasDiferencia;
+                //     MessageBox.Show("Su licencia está vencida.\nEl Sistema se bloqueará en " + caduca + " dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // }
+                // else if (diasDiferencia < -31)
+                // {
+                //     MessageBox.Show("Su licencia ha caducado.\nIngrese el código de pago y vuelva a abrir el sistema.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //     verVencimientoCuotas();
+                //     Application.Exit();
+                // }
 
                 #endregion
 
