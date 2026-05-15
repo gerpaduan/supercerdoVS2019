@@ -249,6 +249,7 @@ namespace Web.Controllers
                     mensaje = model.IdMovimiento > 0 ? "El movimiento se guardó correctamente." : "El movimiento se registró correctamente.",
                     redirectUrl = Url.Action("Index", "Movimientos"),
                     imprimirUrl = Url.Action("ImprimirTicket", "Movimientos", new { id = idMovimiento }),
+                    imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "Movimientos", new { id = idMovimiento }),
                     pdfUrl = Url.Action("ImprimirPdf", "Movimientos", new { id = idMovimiento }),
                     whatsappTexto = ConstruirMensajeWhatsapp(idMovimiento)
                 });
@@ -269,6 +270,33 @@ namespace Web.Controllers
             movimiento.ListaCortesPorMov = oCorteN.cargarCortesPorMovimiento(id, true) ?? new List<Entidades.CortePorMovimiento>();
             ViewBag.TicketMm = mm == 58 ? 58 : 80;
             return View("~/Views/Movimientos/_TicketMovimiento.cshtml", movimiento);
+        }
+
+        [HttpGet]
+        public JsonResult ImprimirTicketPayload(int id, int mm = 80)
+        {
+            var movimiento = oCorteN.cargarMovimiento(id, true);
+            if (movimiento == null || movimiento.IdMovimiento <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el movimiento." }, JsonRequestBehavior.AllowGet);
+
+            movimiento.ListaCortesPorMov = oCorteN.cargarCortesPorMovimiento(id, true) ?? new List<Entidades.CortePorMovimiento>();
+            int ticketMm = mm == 58 ? 58 : 80;
+            return Json(new
+            {
+                ok = true,
+                ticketMm = ticketMm,
+                ticketLines = ConstruirLineasTicketMovimiento(movimiento, ticketMm)
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult DescargarAgenteImpresion()
+        {
+            string path = Server.MapPath("~/Content/downloads/CarniSys.PrintAgent.zip");
+            if (!System.IO.File.Exists(path))
+                return HttpNotFound();
+
+            return File(path, "application/zip", "CarniSys.PrintAgent.zip");
         }
 
         [HttpGet]
@@ -516,6 +544,83 @@ namespace Web.Controllers
                 movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"),
                 totalUnidades,
                 totalKilos);
+        }
+
+        private List<string> ConstruirLineasTicketMovimiento(Entidades.Movimiento movimiento, int ticketMm)
+        {
+            var lineas = movimiento.ListaCortesPorMov ?? new List<Entidades.CortePorMovimiento>();
+            int cantMaxChar = ticketMm == 58 ? 32 : 43;
+            int totalUnidades = 0;
+            decimal totalKilos = 0m;
+            int anchoProducto = cantMaxChar == 32 ? 15 : 22;
+            int anchoCant = cantMaxChar == 32 ? 5 : 6;
+            int anchoKgs = cantMaxChar == 32 ? 7 : 8;
+
+            Func<string, int, string> truncar = (texto, maximo) =>
+            {
+                texto = texto ?? "";
+                return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+            };
+
+            Func<string, int, string> centrar = (texto, ancho) =>
+            {
+                texto = truncar(texto, ancho);
+                int espaciosIzquierda = (ancho - texto.Length) / 2;
+                if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+                return new string(' ', espaciosIzquierda) + texto;
+            };
+
+            Func<string, int, bool, string> ajustarColumna = (texto, ancho, derecha) =>
+            {
+                texto = truncar(texto, ancho);
+                return derecha ? texto.PadLeft(ancho) : texto.PadRight(ancho);
+            };
+
+            var sb = new StringBuilder();
+            Action<string> linea = texto => sb.AppendLine(texto ?? "");
+
+            linea(centrar("Movimiento", cantMaxChar));
+            linea(truncar("ID: " + movimiento.IdMovimiento, cantMaxChar));
+            linea(truncar("Origen: " + (movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-"), cantMaxChar));
+            linea(truncar("Destino: " + (movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-"), cantMaxChar));
+            linea(truncar("Fecha: " + movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"), cantMaxChar));
+            linea(" ");
+            linea(ajustarColumna("Producto", anchoProducto, false) + " " + ajustarColumna("Cant.", anchoCant, true) + "    " + ajustarColumna("Kgs.", anchoKgs, true));
+            linea(new string('-', cantMaxChar));
+
+            foreach (var item in lineas)
+            {
+                if (item == null)
+                    continue;
+
+                string nombreProducto = item.Corte != null ? item.Corte.CorteDesc : "";
+                string codigoProducto = item.Corte != null ? item.Corte.Codigo.ToString() : "";
+                string cantidadTexto = item.CantUnidad.ToString();
+                string kilosTexto = Convert.ToDecimal(item.CantKg).ToString("N3");
+
+                totalUnidades += item.CantUnidad;
+                totalKilos += Convert.ToDecimal(item.CantKg);
+
+                linea(ajustarColumna(nombreProducto, anchoProducto, false) + " " + ajustarColumna(cantidadTexto, anchoCant, true) + "    " + ajustarColumna(kilosTexto, anchoKgs, true));
+                linea(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false));
+            }
+
+            linea(new string('-', cantMaxChar));
+            linea(ajustarColumna("Total", anchoProducto, false) + " " + ajustarColumna(totalUnidades.ToString(), anchoCant, true) + "    " + ajustarColumna(totalKilos.ToString("N3"), anchoKgs, true));
+
+            if (!string.IsNullOrWhiteSpace(movimiento.Observaciones))
+            {
+                linea("");
+                linea("Observaciones:");
+                string observacion = movimiento.Observaciones ?? "";
+                for (int i = 0; i < observacion.Length; i += cantMaxChar)
+                    linea(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+            }
+
+            return sb.ToString()
+                .Replace("\r\n", "\n")
+                .Split(new[] { '\n' }, StringSplitOptions.None)
+                .ToList();
         }
 
         private byte[] GenerarPdfMovimiento(Entidades.Movimiento movimiento, List<Entidades.CortePorMovimiento> lineas)

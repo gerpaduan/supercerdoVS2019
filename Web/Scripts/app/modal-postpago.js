@@ -4,10 +4,14 @@
     var state = {
         redirectUrl: '',
         imprimirUrl: '',
+        imprimirPayloadUrl: '',
         pdfUrl: '',
         whatsappTexto: '',
         stayOnPage: false,
-        ticketMmActual: null
+        ticketMmActual: null,
+        agentAvailable: false,
+        agentChecked: false,
+        printerName: ''
     };
 
     function getUltimoTicketMm() {
@@ -74,6 +78,101 @@
         return state.imprimirUrl + sep + 'mm=' + mm;
     }
 
+    function buildPayloadUrl(mm) {
+        if (!state.imprimirPayloadUrl) return '';
+        var sep = state.imprimirPayloadUrl.indexOf('?') >= 0 ? '&' : '?';
+        return state.imprimirPayloadUrl + sep + 'mm=' + mm;
+    }
+
+    function actualizarEstadoAgente(texto, disponible) {
+        $('#estadoAgentePago')
+            .text(texto)
+            .toggleClass('text-success', !!disponible)
+            .toggleClass('text-muted', !disponible);
+    }
+
+    function refrescarEstadoAgente() {
+        if (!state.agentChecked) {
+            actualizarEstadoAgente('Impresión local: verificando agente...', false);
+            return;
+        }
+
+        if (state.agentAvailable) {
+            var texto = 'Impresión local activa';
+            if (state.printerName) {
+                texto += ': ' + state.printerName;
+            }
+            actualizarEstadoAgente(texto + '.', true);
+            return;
+        }
+
+        actualizarEstadoAgente('Impresión local: usando navegador.', false);
+    }
+
+    function verificarAgente() {
+        var dfd = $.Deferred();
+        if (!window.CarniSysPrintAgent) {
+            state.agentChecked = true;
+            state.agentAvailable = false;
+            state.printerName = '';
+            refrescarEstadoAgente();
+            return dfd.resolve(false).promise();
+        }
+
+        window.CarniSysPrintAgent.health()
+            .done(function (resp) {
+                state.agentChecked = true;
+                state.agentAvailable = !!(resp && resp.ok);
+                state.printerName = resp && resp.printerName ? resp.printerName : '';
+                refrescarEstadoAgente();
+                dfd.resolve(state.agentAvailable);
+            })
+            .fail(function () {
+                state.agentChecked = true;
+                state.agentAvailable = false;
+                state.printerName = '';
+                refrescarEstadoAgente();
+                dfd.resolve(false);
+            });
+
+        return dfd.promise();
+    }
+
+    function cargarConfiguracionAgente() {
+        var dfd = $.Deferred();
+        if (!window.CarniSysPrintAgent) return dfd.reject().promise();
+
+        $.when(window.CarniSysPrintAgent.getPrinters(), window.CarniSysPrintAgent.getConfig())
+            .done(function (printersResp, configResp) {
+                var printersData = printersResp[0] || {};
+                var configData = configResp[0] || {};
+                var items = printersData.items || [];
+                var $cmb = $('#cmbImpresoraAgentePago');
+                $cmb.empty();
+
+                $.each(items, function (_, item) {
+                    var printerName = item.name || item.Name || '';
+                    var isDefault = !!(item.isDefault || item.IsDefault);
+                    $('<option>')
+                        .val(printerName)
+                        .text(printerName + (isDefault ? ' (predeterminada)' : ''))
+                        .appendTo($cmb);
+                });
+
+                if (configData.printerName) {
+                    $cmb.val(configData.printerName);
+                }
+
+                $('#cmbMmAgentePago').val((configData.ticketMm === 80 ? 80 : 58).toString());
+                dfd.resolve();
+            })
+            .fail(function () {
+                dfd.reject();
+            });
+
+        return dfd.promise();
+    }
+
     function imprimirTicket(mm) {
         var url = buildTicketUrl(mm);
         if (!url) return;
@@ -103,10 +202,39 @@
         $('body').append($iframe);
     }
 
+    function imprimirConAgente(mm) {
+        var payloadUrl = buildPayloadUrl(mm);
+        if (!payloadUrl || !window.CarniSysPrintAgent) {
+            imprimirTicket(mm);
+            return;
+        }
+
+        $.getJSON(payloadUrl)
+            .done(function (payload) {
+                if (!payload || payload.ok === false) {
+                    imprimirTicket(mm);
+                    return;
+                }
+
+                window.CarniSysPrintAgent.printExpendio(payload)
+                    .done(function () {
+                        verificarAgente();
+                        cerrarLuegoDeImprimir(400);
+                    })
+                    .fail(function () {
+                        imprimirTicket(mm);
+                    });
+            })
+            .fail(function () {
+                imprimirTicket(mm);
+            });
+    }
+
     window.PostPagoModal = {
         open: function (resp) {
             state.redirectUrl = resp.redirectUrl || '';
             state.imprimirUrl = resp.imprimirUrl || '';
+            state.imprimirPayloadUrl = resp.imprimirPayloadUrl || '';
             state.pdfUrl = resp.pdfUrl || '';
             state.whatsappTexto = resp.whatsappTexto || '';
             state.stayOnPage = !!resp.stayOnPage;
@@ -125,6 +253,8 @@
             $('#bloqueTicketOpcionesPago').collapse('hide');
             state.ticketMmActual = null;
             actualizarTextoTicket();
+            refrescarEstadoAgente();
+            verificarAgente();
             setTimeout(function () {
                 $('#btnPostPagoImprimir').trigger('focus');
             }, 50);
@@ -137,7 +267,11 @@
         $('#btnPostPagoImprimir').on('click', function () {
             var mm = getUltimoTicketMm();
             if (mm) {
-                imprimirTicket(mm);
+                if (state.agentAvailable) {
+                    imprimirConAgente(mm);
+                } else {
+                    imprimirTicket(mm);
+                }
             } else {
                 abrirOpcionesTicket(58);
             }
@@ -153,7 +287,58 @@
             setUltimoTicketMm(mm);
             actualizarTextoTicket();
             marcarTicketSeleccionado(mm);
-            imprimirTicket(mm);
+            if (state.agentAvailable) {
+                imprimirConAgente(mm);
+            } else {
+                imprimirTicket(mm);
+            }
+        });
+
+        $('#btnConfigurarAgentePago').on('click', function () {
+            $('#msgConfigAgentePago').addClass('d-none').text('');
+
+            verificarAgente().done(function (available) {
+                if (!available) {
+                    $('#msgConfigAgentePago')
+                        .removeClass('d-none')
+                        .text('No se detectó el agente local. Descargalo e instalalo en esta terminal.');
+                    $('#modalConfigAgentePago').modal('show');
+                    return;
+                }
+
+                cargarConfiguracionAgente()
+                    .done(function () {
+                        $('#modalConfigAgentePago').modal('show');
+                    })
+                    .fail(function () {
+                        $('#msgConfigAgentePago')
+                            .removeClass('d-none')
+                            .text('No se pudieron leer las impresoras instaladas.');
+                        $('#modalConfigAgentePago').modal('show');
+                    });
+            });
+        });
+
+        $('#btnGuardarConfigAgentePago').on('click', function () {
+            if (!window.CarniSysPrintAgent) return;
+
+            var printerName = ($('#cmbImpresoraAgentePago').val() || '').toString();
+            var ticketMm = parseInt($('#cmbMmAgentePago').val(), 10);
+            window.CarniSysPrintAgent.saveConfig({
+                printerName: printerName,
+                ticketMm: ticketMm === 80 ? 80 : 58
+            }).done(function () {
+                if (ticketMm === 58 || ticketMm === 80) {
+                    setUltimoTicketMm(ticketMm);
+                    actualizarTextoTicket();
+                }
+                $('#modalConfigAgentePago').modal('hide');
+                verificarAgente();
+            }).fail(function () {
+                $('#msgConfigAgentePago')
+                    .removeClass('d-none')
+                    .text('No se pudo guardar la configuración de impresión.');
+            });
         });
 
         $('#btnPostPagoPdf').on('click', function () {

@@ -286,13 +286,15 @@
             urlBuscarProductoPorCodigo: '@Url.Action("BuscarProductoPorCodigo", "Movimientos")',
             redirectUrl: '@Url.Action("Index", "Movimientos")',
             imprimirUrl: '@(Model.EsEdicion ? Url.Action("ImprimirTicket", "Movimientos", new { id = Model.IdMovimiento }) : "")',
+            imprimirPayloadUrl: '@(Model.EsEdicion ? Url.Action("ImprimirTicketPayload", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             whatsappTexto: '@(Model.EsEdicion ? HttpUtility.JavaScriptStringEncode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Request.Url.Scheme)) : "")',
             balanzaUrl: 'http://localhost:5100/peso'
         };
         window.movimientoLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.MovimientoLineaVm>()));
     </script>
-    <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js?v=12")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>

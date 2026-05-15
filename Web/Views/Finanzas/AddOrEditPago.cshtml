@@ -68,6 +68,7 @@
                             class="btn btn-outline-primary"
                             id="btnImprimirPago"
                             data-imprimir-url="@ViewBag.ImprimirPagoUrl"
+                            data-imprimir-payload-url="@ViewBag.ImprimirPagoPayloadUrl"
                             data-pdf-url="@ViewBag.ImprimirPagoPdfUrl">
                         <i class="fas fa-print mr-1"></i> Imprimir
                     </button>
@@ -361,7 +362,8 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
@@ -393,7 +395,8 @@ else
             };
         </script>
         <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=2")"></script>
+        <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=3")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=5")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>

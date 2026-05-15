@@ -624,6 +624,7 @@
             window.PostMovimientoModal.open({
                 redirectUrl: '',
                 imprimirUrl: config.imprimirUrl,
+                imprimirPayloadUrl: config.imprimirPayloadUrl,
                 pdfUrl: config.pdfUrl,
                 whatsappTexto: config.whatsappTexto,
                 stayOnPage: true

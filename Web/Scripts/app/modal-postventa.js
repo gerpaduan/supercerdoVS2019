@@ -1,7 +1,11 @@
-﻿// =====================
+// =====================
 // Config
 // =====================
 const KEY_TICKET_MM = "postventa_ticket_mm";
+
+let pvAgentAvailable = false;
+let pvAgentChecked = false;
+let pvAgentPrinterName = "";
 
 // =====================
 // Helpers storage ticket
@@ -51,6 +55,20 @@ function pvSetMeta(meta) {
 
     if (meta.whatsapp != null) $m.data('whatsapp', meta.whatsapp);
     if (meta.pdfUrl != null) $m.data('pdf-url', meta.pdfUrl);
+    if (meta.imprimirPayloadUrl != null) $m.data('imprimir-payload-url', meta.imprimirPayloadUrl);
+}
+
+function pvGetPayloadUrl(mm) {
+    const $m = $('#modalPostVenta');
+    const explicit = ($m.data('imprimir-payload-url') || '').toString();
+    if (explicit) {
+        const sep = explicit.indexOf('?') >= 0 ? '&' : '?';
+        return explicit + sep + 'mm=' + mm;
+    }
+
+    const ventaId = pvGetVentaId();
+    if (!ventaId) return '';
+    return `/Ventas/ImprimirTicketPayload?id=${ventaId}&mm=${mm}`;
 }
 
 // Aplica textos/estados según contexto
@@ -80,11 +98,9 @@ function pvAplicarContextoUI() {
             $sub.hide().text('');
         }
 
-        // Botón factura: deshabilitado (no duplicar facturación)
         $('#btnPostVenta3').prop('disabled', true);
         $('#pvLblFacturaBtn').text('Factura (ya emitida)');
 
-        // Botones cambian texto
         $('#pvLblPdfBtn').text('Abrir PDF');
         $('#pvLblWpBtn').text('Enviar factura por WhatsApp');
         $pregunta.text('¿Qué deseas hacer ahora?');
@@ -109,6 +125,98 @@ function pvAplicarContextoUI() {
         $('#pvLblPdfBtn').text('Generar PDF');
         $('#pvLblWpBtn').text('Enviar a WhatsApp');
     }
+}
+
+// =====================
+// Agente local
+// =====================
+function pvActualizarEstadoAgente(texto, disponible) {
+    $('#estadoAgenteVenta')
+        .text(texto)
+        .toggleClass('text-success', !!disponible)
+        .toggleClass('text-muted', !disponible);
+}
+
+function pvRefrescarEstadoAgente() {
+    if (!pvAgentChecked) {
+        pvActualizarEstadoAgente('Impresión local: verificando agente...', false);
+        return;
+    }
+
+    if (pvAgentAvailable) {
+        let texto = 'Impresión local activa';
+        if (pvAgentPrinterName) {
+            texto += ': ' + pvAgentPrinterName;
+        }
+        pvActualizarEstadoAgente(texto + '.', true);
+        return;
+    }
+
+    pvActualizarEstadoAgente('Impresión local: usando navegador.', false);
+}
+
+function pvVerificarAgente() {
+    const dfd = $.Deferred();
+    if (!window.CarniSysPrintAgent) {
+        pvAgentChecked = true;
+        pvAgentAvailable = false;
+        pvAgentPrinterName = '';
+        pvRefrescarEstadoAgente();
+        return dfd.resolve(false).promise();
+    }
+
+    window.CarniSysPrintAgent.health()
+        .done(function (resp) {
+            pvAgentChecked = true;
+            pvAgentAvailable = !!(resp && resp.ok);
+            pvAgentPrinterName = resp && resp.printerName ? resp.printerName : '';
+            pvRefrescarEstadoAgente();
+            dfd.resolve(pvAgentAvailable);
+        })
+        .fail(function () {
+            pvAgentChecked = true;
+            pvAgentAvailable = false;
+            pvAgentPrinterName = '';
+            pvRefrescarEstadoAgente();
+            dfd.resolve(false);
+        });
+
+    return dfd.promise();
+}
+
+function pvCargarConfiguracionAgente() {
+    const dfd = $.Deferred();
+    if (!window.CarniSysPrintAgent) return dfd.reject().promise();
+
+    $.when(window.CarniSysPrintAgent.getPrinters(), window.CarniSysPrintAgent.getConfig())
+        .done(function (printersResp, configResp) {
+            const printersData = printersResp[0] || {};
+            const configData = configResp[0] || {};
+            const items = printersData.items || [];
+            const $cmb = $('#cmbImpresoraAgenteVenta');
+            $cmb.empty();
+
+            $.each(items, function (_, item) {
+                const printerName = item.name || item.Name || '';
+                const isDefault = !!(item.isDefault || item.IsDefault);
+                $('<option>')
+                    .val(printerName)
+                    .text(printerName + (isDefault ? ' (predeterminada)' : ''))
+                    .appendTo($cmb);
+            });
+
+            if (configData.printerName) {
+                $cmb.val(configData.printerName);
+            }
+
+            $('#cmbMmAgenteVenta').val((configData.ticketMm === 80 ? 80 : 58).toString());
+            dfd.resolve();
+        })
+        .fail(function () {
+            dfd.reject();
+        });
+
+    return dfd.promise();
 }
 
 // =====================
@@ -151,6 +259,34 @@ function imprimirTicket(mm) {
     });
 
     $('body').append(iframe);
+}
+
+function pvImprimirConAgente(mm) {
+    const payloadUrl = pvGetPayloadUrl(mm);
+    if (!payloadUrl || !window.CarniSysPrintAgent) {
+        imprimirTicket(mm);
+        return;
+    }
+
+    $.getJSON(payloadUrl)
+        .done(function (payload) {
+            if (!payload || payload.ok === false) {
+                imprimirTicket(mm);
+                return;
+            }
+
+            window.CarniSysPrintAgent.printExpendio(payload)
+                .done(function () {
+                    pvVerificarAgente();
+                    cerrarPostVentaYRecargar(400);
+                })
+                .fail(function () {
+                    imprimirTicket(mm);
+                });
+        })
+        .fail(function () {
+            imprimirTicket(mm);
+        });
 }
 
 function marcarTicketSeleccionado(mm) {
@@ -259,8 +395,9 @@ function configurarModalPostVentaBloqueado() {
         $('#bloqueTicketOpciones').collapse('hide');
         actualizarTextoTicket();
         pvAplicarContextoUI();
+        pvRefrescarEstadoAgente();
+        pvVerificarAgente();
 
-        // ✅ foco afuera del modal anterior
         setTimeout(() => $('#btnPostVenta2').trigger('focus'), 50);
     });
 }
@@ -269,7 +406,6 @@ function configurarModalPostVentaBloqueado() {
 // API pública para abrirlo
 // =====================
 window.PostModal = {
-    // Se llama al terminar venta
     openVenta: function (ventaId, extras = {}) {
         pvSetMeta({
             context: 'venta',
@@ -279,20 +415,22 @@ window.PostModal = {
             nro: '',
             cae: '',
             pdfUrl: extras.pdfUrl || '',
-            whatsapp: extras.whatsapp || ''
+            whatsapp: extras.whatsapp || '',
+            imprimirPayloadUrl: extras.imprimirPayloadUrl || (`/Ventas/ImprimirTicketPayload?id=${ventaId}`)
         });
         $('#modalPostVenta').modal('show');
     },
 
-    // Se llama al terminar facturación (con datos de la factura)
     openFactura: function (meta = {}) {
-        // meta: { ventaId, facturaId, nro, cae, whatsapp, pdfUrl }
         meta.context = 'factura';
 
-        // Fallback de ventaId si no vino:
         if (!meta.ventaId) {
             const fromForm = $('#formFacturaElectronica input[name="IdVenta"]').val();
             meta.ventaId = parseInt(fromForm || "0", 10) || pvGetVentaId();
+        }
+
+        if (!meta.imprimirPayloadUrl && meta.ventaId) {
+            meta.imprimirPayloadUrl = `/Ventas/ImprimirTicketPayload?id=${meta.ventaId}`;
         }
 
         pvSetMeta(meta);
@@ -307,24 +445,24 @@ $(document).ready(function () {
 
     configurarModalPostVentaBloqueado();
 
-    // 1) No imprimir
     $('#btnPostVenta1').on('click', function () {
         cerrarPostVentaYRecargar();
     });
 
-    // 2) Ticket (modo rápido)
     $('#btnPostVenta2').on('click', function () {
         const mm = getUltimoTicketMm();
-        if (mm) imprimirTicket(mm);
-        else abrirOpcionesTicket(58);
+        if (mm) {
+            if (pvAgentAvailable) pvImprimirConAgente(mm);
+            else imprimirTicket(mm);
+        } else {
+            abrirOpcionesTicket(58);
+        }
     });
 
-    // Cambiar tamaño: siempre despliega opciones
     $('#btnCambiarTicket').on('click', function () {
         abrirOpcionesTicket();
     });
 
-    // Click en 58/80: selecciona + guarda + imprime
     $(document).on('click', '.btnTicketOpt', function () {
         const mm = parseInt($(this).data('mm'), 10);
         if (mm !== 58 && mm !== 80) return;
@@ -332,14 +470,61 @@ $(document).ready(function () {
         setUltimoTicketMm(mm);
         actualizarTextoTicket();
         marcarTicketSeleccionado(mm);
-        imprimirTicket(mm);
+        if (pvAgentAvailable) pvImprimirConAgente(mm);
+        else imprimirTicket(mm);
     });
 
-    // 3) Factura (solo en contexto venta)
+    $('#btnConfigurarAgenteVenta').on('click', function () {
+        $('#msgConfigAgenteVenta').addClass('d-none').text('');
+
+        pvVerificarAgente().done(function (available) {
+            if (!available) {
+                $('#msgConfigAgenteVenta')
+                    .removeClass('d-none')
+                    .text('No se detectó el agente local. Descargalo e instalalo en esta terminal.');
+                $('#modalConfigAgenteVenta').modal('show');
+                return;
+            }
+
+            pvCargarConfiguracionAgente()
+                .done(function () {
+                    $('#modalConfigAgenteVenta').modal('show');
+                })
+                .fail(function () {
+                    $('#msgConfigAgenteVenta')
+                        .removeClass('d-none')
+                        .text('No se pudieron leer las impresoras instaladas.');
+                    $('#modalConfigAgenteVenta').modal('show');
+                });
+        });
+    });
+
+    $('#btnGuardarConfigAgenteVenta').on('click', function () {
+        if (!window.CarniSysPrintAgent) return;
+
+        const printerName = ($('#cmbImpresoraAgenteVenta').val() || '').toString();
+        const ticketMm = parseInt($('#cmbMmAgenteVenta').val(), 10);
+        window.CarniSysPrintAgent.saveConfig({
+            printerName: printerName,
+            ticketMm: ticketMm === 80 ? 80 : 58
+        }).done(function () {
+            if (ticketMm === 58 || ticketMm === 80) {
+                setUltimoTicketMm(ticketMm);
+                actualizarTextoTicket();
+            }
+            $('#modalConfigAgenteVenta').modal('hide');
+            pvVerificarAgente();
+        }).fail(function () {
+            $('#msgConfigAgenteVenta')
+                .removeClass('d-none')
+                .text('No se pudo guardar la configuración de impresión.');
+        });
+    });
+
     let facturaOk = false;
 
     $('#btnPostVenta3').on('click', function () {
-        if (pvGetContext() !== 'venta') return; // en factura está deshabilitado igual
+        if (pvGetContext() !== 'venta') return;
 
         facturaOk = false;
         const ventaId = pvGetVentaId();
@@ -348,16 +533,13 @@ $(document).ready(function () {
             .done(function (html) {
                 $('#contenedorFacturaElectronica').html(html);
 
-                // Ajustes de layout: calcular altura de la tabla para que la vista no se desplace
                 const $modal = $('#modalFacturaElectronica');
-
-                // El modal parcial puede ya tener handlers; nos aseguramos que no forcemos ancho
                 $modal.find('.modal-dialog').removeClass('modal-fullscreen-dialog');
 
                 function ajustarFacturaModal() {
                     try {
                         const vh = Math.max(window.innerHeight || document.documentElement.clientHeight, 600);
-                        const maxModal = Math.round(vh * 0.92); // 92vh como el CSS
+                        const maxModal = Math.round(vh * 0.92);
                         const $header = $modal.find('.modal-header');
                         const $footer = $modal.find('.modal-footer');
                         const $top = $modal.find('.fe-top');
@@ -365,8 +547,7 @@ $(document).ready(function () {
                         const footerH = $footer.length ? $footer.outerHeight(true) : 0;
                         const topH = $top.length ? $top.outerHeight(true) : 0;
                         const summaryH = $modal.find('.fe-summary').length ? $modal.find('.fe-summary').outerHeight(true) : 0;
-                        const padding = 40; // márgenes internos / gaps
-                        // espacio disponible para la tabla
+                        const padding = 40;
                         const available = Math.max(120, maxModal - (headerH + footerH + topH + summaryH + padding));
                         $modal.find('.fe-table-scroll').css('max-height', available + 'px');
                     } catch (err) {
@@ -374,48 +555,38 @@ $(document).ready(function () {
                     }
                 }
 
-                // Ajustar cuando se muestra y en resize
                 $modal.off('shown.factura').on('shown.bs.modal.factura', function () {
                     ajustarFacturaModal();
-                    // también activar resize listener (namespaced)
                     $(window).on('resize.factura', ajustarFacturaModal);
                 });
 
                 $modal.off('hidden.factura').on('hidden.bs.modal.factura', function () {
                     $(window).off('resize.factura');
-                    // limpiar listeners si es necesario
                     $modal.off('.factura');
                 });
 
-                // abrir modal
                 $modal.modal('show');
             });
 
-        // oculto post modal mientras factura está abierta
         $('#modalPostVenta').data('permitir-cierre', true);
         $('#modalPostVenta').modal('hide');
     });
 
-    // Si cierran el modal de factura sin registrar -> volver al post modal en "venta"
     $('#modalFacturaElectronica').on('hidden.bs.modal', function () {
         if (!facturaOk) {
-            // vuelve al flujo original
             pvSetContext('venta');
             $('#modalPostVenta').modal('show');
         }
     });
 
-    // 4) PDF
     $('#btnPostVenta4').on('click', function () {
         pvAbrirPdf();
     });
 
-    // 5) WhatsApp
     $('#btnPostVenta5').on('click', function () {
         pvEnviarWhatsapp();
     });
 
-    // Cuando se registra factura: reabrir este mismo modal en contexto "factura"
     $(document).on('venta:facturada', function (e, resp) {
         facturaOk = true;
 
@@ -426,13 +597,10 @@ $(document).ready(function () {
             nro: resp.nro || resp.NroCbteAfip || '',
             cae: resp.cae || resp.CAE || '',
             whatsapp: resp.whatsapp || $('#formFacturaElectronica input[name="Whatsapp"]').val() || '',
-            pdfUrl: resp.pdfUrl || '' // si tu backend lo devuelve
+            pdfUrl: resp.pdfUrl || ''
         });
     });
 
-    // =====================
-    // Teclado 1..5 + Flechas/Enter para ticket
-    // =====================
     $(document).on('keydown', function (e) {
         const $modal = $('#modalPostVenta');
         if (!$modal.hasClass('show')) return;
@@ -440,7 +608,6 @@ $(document).ready(function () {
         const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
         if (tag === "input" || tag === "textarea") return;
 
-        // Atajos principales
         if (e.key === '1') { e.preventDefault(); $('#btnPostVenta1').click(); return; }
         if (e.key === '2') { e.preventDefault(); $('#btnPostVenta2').click(); return; }
         if (e.key === '3') { e.preventDefault(); if (pvGetContext() === 'venta') $('#btnPostVenta3').click(); return; }
@@ -467,7 +634,8 @@ $(document).ready(function () {
 
             setUltimoTicketMm(mm);
             actualizarTextoTicket();
-            imprimirTicket(mm);
+            if (pvAgentAvailable) pvImprimirConAgente(mm);
+            else imprimirTicket(mm);
             return;
         }
     });

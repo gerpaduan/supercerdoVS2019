@@ -16,6 +16,7 @@ using System.Web;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Text;
 using Web.Models;
 
 namespace Web.Controllers
@@ -505,6 +506,7 @@ namespace Web.Controllers
             ViewBag.Bancos = oCtaCteN.getBancos();
             ViewBag.ImprimirPagoUrl = idPago > 0 ? Url.Action("ImprimirTicketPago", "Finanzas", new { id = idPago }) : "";
             ViewBag.ImprimirPagoPdfUrl = idPago > 0 ? Url.Action("ImprimirPdfPago", "Finanzas", new { id = idPago }) : "";
+            ViewBag.ImprimirPagoPayloadUrl = idPago > 0 ? Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = idPago }) : "";
 
             Pago model;
 
@@ -659,6 +661,7 @@ namespace Web.Controllers
                     cerrarModalPago = true,
                     pagoId = oPagoE.Id,
                     imprimirUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
+                    imprimirPayloadUrl = Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = oPagoE.Id }),
                     pdfUrl,
                     whatsappTexto = "Recibo " + oPagoE.NroRecibo + " - " + pdfUrlAbsoluta
                 });
@@ -675,6 +678,7 @@ namespace Web.Controllers
                     redirectUrl = urlRetornoConCache,
                     pagoId = oPagoE.Id,
                     imprimirUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
+                    imprimirPayloadUrl = Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = oPagoE.Id }),
                     pdfUrl,
                     whatsappTexto = "Recibo " + oPagoE.NroRecibo + " - " + pdfUrlAbsoluta
                 });
@@ -692,6 +696,32 @@ namespace Web.Controllers
 
             ViewBag.TicketMm = mm == 58 ? 58 : 80;
             return View("~/Views/Finanzas/_TicketPago.cshtml", model);
+        }
+
+        [HttpGet]
+        public JsonResult ImprimirTicketPagoPayload(int id, int mm = 80)
+        {
+            var model = ConstruirReciboPagoVm(id);
+            if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                return Json(new { ok = false, mensaje = "No se encontró el pago." }, JsonRequestBehavior.AllowGet);
+
+            int ticketMm = mm == 58 ? 58 : 80;
+            return Json(new
+            {
+                ok = true,
+                ticketMm = ticketMm,
+                ticketLines = ConstruirLineasTicketPago(model, ticketMm)
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult DescargarAgenteImpresion()
+        {
+            string path = Server.MapPath("~/Content/downloads/CarniSys.PrintAgent.zip");
+            if (!System.IO.File.Exists(path))
+                return HttpNotFound();
+
+            return File(path, "application/zip", "CarniSys.PrintAgent.zip");
         }
 
         [HttpGet]
@@ -960,6 +990,119 @@ namespace Web.Controllers
             if (texto.Length > espacios)
                 texto = texto.Substring(0, espacios);
             return izquierda ? texto.PadRight(espacios) : texto.PadLeft(espacios);
+        }
+
+        private List<string> ConstruirLineasTicketPago(ReciboPagoVm model, int ticketMm)
+        {
+            int cantMaxChar = ticketMm == 58 ? 32 : 48;
+            string negocio = model.Empresa != null
+                ? (model.Empresa.NombreFantasia ?? model.Empresa.RazonSocialAfip ?? "CarniSys")
+                : "CarniSys";
+
+            Func<string, int, string> truncar = (texto, maximo) =>
+            {
+                texto = texto ?? "";
+                return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+            };
+
+            Func<string, int, string> centrar = (texto, ancho) =>
+            {
+                texto = truncar(texto, ancho);
+                int espaciosIzquierda = (ancho - texto.Length) / 2;
+                if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+                return new string(' ', espaciosIzquierda) + texto;
+            };
+
+            Func<string, string, int, string> alinearExtremos = (izquierda, derecha, ancho) =>
+            {
+                izquierda = truncar(izquierda, ancho);
+                derecha = truncar(derecha, ancho);
+                int espacios = ancho - (izquierda.Length + derecha.Length);
+                if (espacios < 1) espacios = 1;
+                return izquierda + new string(' ', espacios) + derecha;
+            };
+
+            Func<string, decimal, int, string> formatearTotal = (etiqueta, importe, ancho) =>
+            {
+                string derecha = importe.ToString("N2");
+                int espacios = ancho - (etiqueta.Length + derecha.Length);
+                if (espacios < 1) espacios = 1;
+                return etiqueta + new string(' ', espacios) + derecha;
+            };
+
+            var sb = new StringBuilder();
+            Action<string> linea = texto => sb.AppendLine(texto ?? "");
+
+            linea(centrar("RECIBO " + (model.TipoOperacion ?? "").ToUpperInvariant(), cantMaxChar));
+            linea(centrar("X", cantMaxChar));
+            linea(centrar(negocio, cantMaxChar));
+            linea(truncar(model.Empresa != null ? model.Empresa.RazonSocialAfip : "", cantMaxChar));
+            linea(truncar("CUIT: " + (model.Empresa != null ? model.Empresa.Cuit.ToString() : ""), cantMaxChar));
+            linea(truncar("IIBB: " + (model.Empresa != null ? model.Empresa.Iibb.ToString() : ""), cantMaxChar));
+            linea(truncar((model.Empresa != null ? model.Empresa.Domicilio : "") + " " + (model.Empresa != null ? model.Empresa.Ciudad : ""), cantMaxChar));
+            linea(new string('-', cantMaxChar));
+            linea(truncar("Nro. Recibo: " + (model.Pago.NroRecibo ?? ""), cantMaxChar));
+            linea(alinearExtremos("Fecha: " + model.Pago.Fecha.ToString("dd/MM/yyyy"), "Hora: " + model.Pago.Fecha.ToString("HH:mm"), cantMaxChar));
+            linea(truncar((model.PersonaEtiqueta ?? "Persona") + ": " + (model.Pago.Persona != null ? model.Pago.Persona.RazonSocial : ""), cantMaxChar));
+
+            if (model.Pago.Persona != null && !string.IsNullOrWhiteSpace(model.Pago.Persona.Cuit))
+                linea(truncar("CUIT: " + model.Pago.Persona.Cuit, cantMaxChar));
+
+            if (model.Pago.Persona != null && !string.IsNullOrWhiteSpace(model.Pago.Persona.Iva))
+                linea(truncar("Cond. IVA: " + model.Pago.Persona.Iva, cantMaxChar));
+
+            if (model.Pago.Persona != null && !string.IsNullOrWhiteSpace(model.Pago.Persona.Domicilio))
+                linea(truncar("Domicilio: " + model.Pago.Persona.Domicilio, cantMaxChar));
+
+            linea(new string('-', cantMaxChar));
+            linea(truncar("Forma Pago: " + (model.Pago.FormaPago ?? ""), cantMaxChar));
+            linea(truncar(model.DetalleOperacion ?? "", cantMaxChar));
+            linea(formatearTotal("Importe", Convert.ToDecimal(model.Pago.Importe), cantMaxChar));
+
+            if (model.Pago.Cheques != null && model.Pago.Cheques.Count > 0)
+            {
+                linea(" ");
+                linea(truncar("Cheques:", cantMaxChar));
+                foreach (var cheque in model.Pago.Cheques)
+                {
+                    linea(truncar((cheque.NroCheque ?? "") + " " + (cheque.Banco ?? ""), cantMaxChar));
+                    linea(alinearExtremos("F.Pago: " + cheque.FechaPago.ToString("dd/MM/yy"), cheque.Importe.ToString("N2"), cantMaxChar));
+                }
+
+                if (Convert.ToDecimal(model.Pago.Efectivo) > 0)
+                {
+                    linea("-");
+                    linea(formatearTotal("Efectivo:", Convert.ToDecimal(model.Pago.Efectivo), cantMaxChar));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.Pago.Observaciones))
+            {
+                linea(" ");
+                linea(truncar("Observaciones:", cantMaxChar));
+                string observacion = model.Pago.Observaciones ?? "";
+                for (int i = 0; i < observacion.Length; i += cantMaxChar)
+                    linea(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+            }
+
+            if (model.TieneSaldo)
+            {
+                linea(" ");
+                linea(formatearTotal("Saldo", model.Saldo, cantMaxChar));
+            }
+
+            linea(" ");
+            if (model.Pago.Sucursal != null)
+                linea(truncar("Sucursal: " + (model.Pago.Sucursal.SucursalNombre ?? ""), cantMaxChar));
+            if (model.Pago.CreadoPor != null)
+                linea(truncar("Usuario: " + (model.Pago.CreadoPor.Nombre ?? ""), cantMaxChar));
+            linea(" ");
+            linea("Firma:");
+
+            return sb.ToString()
+                .Replace("\r\n", "\n")
+                .Split(new[] { '\n' }, StringSplitOptions.None)
+                .ToList();
         }
 
         private PdfPCell CeldaSimple(string texto, iTextSharp.text.Font fuente, int alineacion = Element.ALIGN_LEFT)

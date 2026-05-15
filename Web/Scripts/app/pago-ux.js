@@ -70,12 +70,13 @@
             const redirectUrl = (resp && resp.redirectUrl) || $("#urlVolverPago").val() || window.location.href;
 
             if (window.PostPagoModal && resp && resp.imprimirUrl) {
-                window.PostPagoModal.open({
-                    redirectUrl: redirectUrl,
-                    imprimirUrl: resp.imprimirUrl,
-                    pdfUrl: resp.pdfUrl,
-                    whatsappTexto: resp.whatsappTexto,
-                    stayOnPage: false
+                    window.PostPagoModal.open({
+                        redirectUrl: redirectUrl,
+                        imprimirUrl: resp.imprimirUrl,
+                        imprimirPayloadUrl: resp.imprimirPayloadUrl,
+                        pdfUrl: resp.pdfUrl,
+                        whatsappTexto: resp.whatsappTexto,
+                        stayOnPage: false
                 });
                 return;
             }
@@ -126,6 +127,7 @@
                     window.PostPagoModal.open({
                         redirectUrl: resp.redirectUrl,
                         imprimirUrl: resp.imprimirUrl,
+                        imprimirPayloadUrl: resp.imprimirPayloadUrl,
                         pdfUrl: resp.pdfUrl,
                         whatsappTexto: resp.whatsappTexto,
                         stayOnPage: false
@@ -381,6 +383,7 @@
 
                     const pdfUrl = ($(this).data("pdf-url") || "").toString();
                     const imprimirUrl = ($(this).data("imprimir-url") || "").toString();
+                    const imprimirPayloadUrl = ($(this).data("imprimir-payload-url") || "").toString();
                     let whatsappTexto = "Recibo";
 
                     if (pdfUrl) {
@@ -390,6 +393,7 @@
                     window.PostPagoModal.open({
                         redirectUrl: "",
                         imprimirUrl: imprimirUrl,
+                        imprimirPayloadUrl: imprimirPayloadUrl,
                         pdfUrl: pdfUrl,
                         whatsappTexto: whatsappTexto,
                         stayOnPage: true
