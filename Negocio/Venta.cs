@@ -424,9 +424,38 @@ namespace Negocio
         {
             return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
         }
+        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100)
+        {
+            return oVentaD.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top);
+        }
         public DataTable obtenerSectores()
         {
             return oVentaD.obtenerSectores();
+        }
+
+        public bool existeSector(string sector, string sectorActual = "")
+        {
+            return oVentaD.existeSector(sector, sectorActual);
+        }
+
+        public void agregarSector(string sector)
+        {
+            oVentaD.agregarSector(sector);
+        }
+
+        public void modificarSector(string sectorActual, string sectorNuevo)
+        {
+            oVentaD.modificarSector(sectorActual, sectorNuevo);
+        }
+
+        public bool sectorEstaEnUso(string sector)
+        {
+            return oVentaD.sectorEstaEnUso(sector);
+        }
+
+        public void eliminarSector(string sector)
+        {
+            oVentaD.eliminarSector(sector);
         }
 
         public DataTable obtenerSectoresConTodos()

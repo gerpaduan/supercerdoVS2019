@@ -228,6 +228,20 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePuntosExpendio"
+                   aria-expanded="@(controller == "PuntosExpendio" ? "true" : "false")" aria-controls="collapsePuntosExpendio">
+                    <i class="fas fa-fw fa-store-alt"></i>
+                    <span>Punto de expendio</span>
+                </a>
+                <div id="collapsePuntosExpendio" class="collapse @(controller == "PuntosExpendio" ? "show" : "")" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item @((action == "Abrir" || action == "POS") ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")">Abrir punto de expendio</a>
+                        <a class="collapse-item @(action == "Sectores" ? "active" : "")" href="@Url.Action("Sectores", "PuntosExpendio")">Sectores</a>
+                    </div>
+                </div>
+            </li>
+
+            <li class="nav-item">
                 <a class="nav-link" href="@Url.Action("POS","Ventas")">
                     <i class="fas fa-fw fa-store"></i>
                     <span>Punto de Venta</span>

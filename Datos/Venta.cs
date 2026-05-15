@@ -734,10 +734,171 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100)
+        {
+            const string sql = @"
+                SELECT TOP (@top)
+                       e.fechaExpendio,
+                       e.idExpendio,
+                       e.identificacionExpendio,
+                       e.sector,
+                       e.cantItems,
+                       e.importe,
+                       e.idVenta,
+                       u.nombre AS vendedor,
+                       ISNULL(SUM(le.cantKg), 0) AS totalKg
+                FROM dbo.Expendios e
+                INNER JOIN dbo.Usuarios u ON e.idVendedor = u.id
+                LEFT JOIN dbo.LineaExpendio le ON e.idExpendio = le.idExpendio
+                WHERE e.idSucursal = @idSucursal
+                  AND e.idVendedor = @idVendedor
+                GROUP BY e.fechaExpendio,
+                         e.idExpendio,
+                         e.identificacionExpendio,
+                         e.sector,
+                         e.cantItems,
+                         e.importe,
+                         e.idVenta,
+                         u.nombre
+                ORDER BY e.fechaExpendio DESC, e.idExpendio DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@top", top <= 0 ? 100 : top);
+                    p.AddWithValue("@idSucursal", idSucursal);
+                    p.AddWithValue("@idVendedor", idVendedor);
+                }
+            );
+        }
+
         public DataTable obtenerSectores()
         {
             const string sql = "SELECT sector FROM Sectores;";
             return Db.DataTable(_empresa, sql, CommandType.Text);
+        }
+
+        public bool existeSector(string sector, string sectorActual = "")
+        {
+            const string sql = @"
+                SELECT COUNT(1)
+                FROM Sectores
+                WHERE UPPER(LTRIM(RTRIM(sector))) = UPPER(LTRIM(RTRIM(@sector)))
+                  AND (@sectorActual = '' OR UPPER(LTRIM(RTRIM(sector))) <> UPPER(LTRIM(RTRIM(@sectorActual))));";
+
+            object scalar = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@sector", sector ?? "");
+                    p.AddWithValue("@sectorActual", sectorActual ?? "");
+                }
+            );
+
+            return scalar != null && scalar != DBNull.Value && Convert.ToInt32(scalar) > 0;
+        }
+
+        public void agregarSector(string sector)
+        {
+            const string sql = "INSERT INTO Sectores (sector) VALUES (@sector);";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.AddWithValue("@sector", sector ?? "")
+            );
+        }
+
+        public void modificarSector(string sectorActual, string sectorNuevo)
+        {
+            using (SqlConnection con = Db.Open(_empresa))
+            using (SqlTransaction tx = con.BeginTransaction())
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand("UPDATE Sectores SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@sectorNuevo", sectorNuevo ?? "");
+                        cmd.Parameters.AddWithValue("@sectorActual", sectorActual ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("UPDATE Expendios SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@sectorNuevo", sectorNuevo ?? "");
+                        cmd.Parameters.AddWithValue("@sectorActual", sectorActual ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("UPDATE Licencias SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@sectorNuevo", sectorNuevo ?? "");
+                        cmd.Parameters.AddWithValue("@sectorActual", sectorActual ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public bool sectorEstaEnUso(string sector)
+        {
+            const string sql = "SELECT COUNT(1) FROM Expendios WHERE sector = @sector;";
+
+            object scalar = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.AddWithValue("@sector", sector ?? "")
+            );
+
+            return scalar != null && scalar != DBNull.Value && Convert.ToInt32(scalar) > 0;
+        }
+
+        public void eliminarSector(string sector)
+        {
+            using (SqlConnection con = Db.Open(_empresa))
+            using (SqlTransaction tx = con.BeginTransaction())
+            {
+                try
+                {
+                    using (SqlCommand cmd = new SqlCommand("DELETE FROM Sectores WHERE sector = @sector;", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@sector", sector ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("UPDATE Licencias SET sector = '' WHERE sector = @sector;", con, tx))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.AddWithValue("@sector", sector ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
         }
 
         public string getUltimoSectorSelect(string serialCPU)
