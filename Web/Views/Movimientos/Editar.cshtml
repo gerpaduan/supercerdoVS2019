@@ -289,7 +289,8 @@
             imprimirPayloadUrl: '@(Model.EsEdicion ? Url.Action("ImprimirTicketPayload", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             whatsappTexto: '@(Model.EsEdicion ? HttpUtility.JavaScriptStringEncode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Request.Url.Scheme)) : "")',
-            balanzaUrl: 'http://localhost:5100/peso'
+            balanzaUrl: 'http://localhost:5100/peso',
+            soloLecturaInicial: @(Model.EsEdicion ? "true" : "false")
         };
         window.movimientoLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.MovimientoLineaVm>()));
     </script>
@@ -302,7 +303,12 @@
             formSelector: "#formMovimiento",
             soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionMovimiento",
-            saveButtonSelector: "#btnGuardarMovimiento"
+            saveButtonSelector: "#btnGuardarMovimiento",
+            onStateChanged: function (readOnly) {
+                if (window.MovimientosEdit && typeof window.MovimientosEdit.setReadOnly === "function") {
+                    window.MovimientosEdit.setReadOnly(readOnly);
+                }
+            }
         });
     </script>
 }

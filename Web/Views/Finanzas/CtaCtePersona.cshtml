@@ -305,7 +305,7 @@
         }
 
         let url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
-                    + '&returnUrl=' + returnUrl
+                    + '&returnUrl=' + returnUrlEncoded
                     + '&tabla=' + encodeURIComponent(tabla)
                     + '&idTabla=' + encodeURIComponent(idTabla)
                     + '&desdePos=' + desdePos;

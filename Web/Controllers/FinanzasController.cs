@@ -421,14 +421,7 @@ namespace Web.Controllers
         {
             Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
             Entidades.MovCtaCte.tablas tablaEnum = oMovCtaCteE.getTablaEnum(tabla);
-            string decodedReturnUrl = "";
-
-            if (!string.IsNullOrEmpty(returnUrl))
-            {
-                decodedReturnUrl = System.Text.Encoding.UTF8.GetString(
-                    Convert.FromBase64String(returnUrl)
-                );
-            }
+            string decodedReturnUrl = DecodeReturnUrlIfNeeded(returnUrl);
 
             switch (tablaEnum)
             {
@@ -500,8 +493,12 @@ namespace Web.Controllers
                     saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
             }
 
+            var persona = oPersonasN.findById(idPersona);
+            if (persona == null)
+                return HttpNotFound();
+
             ViewBag.IdPersona = idPersona;
-            ViewBag.Persona = oPersonasN.findById(idPersona);
+            ViewBag.Persona = persona;
             ViewBag.SaldoPersona = saldo;
             ViewBag.Bancos = oCtaCteN.getBancos();
             ViewBag.ImprimirPagoUrl = idPago > 0 ? Url.Action("ImprimirTicketPago", "Finanzas", new { id = idPago }) : "";
@@ -518,7 +515,9 @@ namespace Web.Controllers
                 if (model.Sucursal == null)
                     model.Sucursal = oSucursalN.findById(user != null ? user.IdSucursal : 0);
 
-                model.NroRecibo = oCtaCteN.getNroReciboAutomatico(model.Sucursal.idSucursal);                
+                model.NroRecibo = model.Sucursal != null && model.Sucursal.idSucursal > 0
+                    ? oCtaCteN.getNroReciboAutomatico(model.Sucursal.idSucursal)
+                    : "";
             }
             else
             {

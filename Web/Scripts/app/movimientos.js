@@ -145,7 +145,8 @@
             draftTimer: null,
             saving: false,
             productoTimer: null,
-            productoRequestSeq: 0
+            productoRequestSeq: 0,
+            readOnly: !!config.soloLecturaInicial
         };
 
         var config = window.movimientosConfig || {};
@@ -165,6 +166,10 @@
         var $btnImprimirMovimiento = $('#btnImprimirMovimiento');
         var $observaciones = $('#Observaciones');
         var balanzaDisponible = false;
+
+        function syncReadOnlyUi() {
+            $('#tablaLineasMovimiento .js-remove-line').prop('disabled', !!state.readOnly);
+        }
 
         function getDraftKey() {
             return config.draftKey || '';
@@ -388,7 +393,7 @@
                     + '<td class="text-right">' + formatKg(line.CantKg) + '</td>'
                     + '<td class="text-center">' + (line.PesoBalanza ? 'Sí' : 'No') + '</td>'
                     + '<td class="text-center">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</td>'
-                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
+                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + index + '"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
                     + '</tr>';
 
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorteMovimiento" value="' + (line.IdCorteMovimiento || 0) + '" />';
@@ -412,6 +417,7 @@
             $('#lblTotalItems').text(formatInt(totalItems));
             $('#lblTotalUnidades').text(formatInt(totalUnidades));
             $('#lblTotalKilos').text(formatKg(totalKilos));
+            syncReadOnlyUi();
         }
 
         function buildAcumulados() {
@@ -646,6 +652,7 @@
         });
 
         $(document).on('click.movimientoLine', '.js-remove-line', function () {
+            if (state.readOnly) return;
             var index = toInt($(this).data('index'));
             state.lines.splice(index, 1);
             renderLines();
@@ -808,6 +815,12 @@
             showDraftBanner();
         }
         focusCodigo();
+
+        window.MovimientosEdit = window.MovimientosEdit || {};
+        window.MovimientosEdit.setReadOnly = function (readOnly) {
+            state.readOnly = !!readOnly;
+            syncReadOnlyUi();
+        };
     }
 
     $(function () {

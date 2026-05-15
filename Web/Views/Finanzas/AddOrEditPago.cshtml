@@ -11,19 +11,21 @@
     string estiloComboSucursales = mostrarSucursales ? "" : "display:none;";
     var chequeBusquedaPagoViewData = new ViewDataDictionary(ViewData);
     chequeBusquedaPagoViewData["ChequeBusquedaEnPago"] = true;
+    var personaView = ViewBag.Persona as Entidades.Persona;
+    int personaIdView = personaView != null ? personaView.IdPersona : 0;
+    string persona = personaView != null ? (personaView.RazonSocial ?? "") : "";
+    decimal saldo = ViewBag.SaldoPersona != null ? Convert.ToDecimal(ViewBag.SaldoPersona) : 0;
+    var sucursalesView = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
 
     ViewBag.Title = "Agregar / Editar Pago";
     Layout = renderComoModal ? null : "~/Views/Shared/_LayoutBase.cshtml";
-
-    string persona = ViewBag.Persona.RazonSocial;
-    decimal saldo = ViewBag.SaldoPersona;
 
     string returnUrlView = ViewBag.ReturnUrl as string;
     string urlVolver = !string.IsNullOrWhiteSpace(returnUrlView)
         ? returnUrlView
         : Url.Action("CtaCtePersona", "Finanzas", new
         {
-            idPersona = ViewBag.Persona.IdPersona,
+            idPersona = personaIdView,
             fechaDesde = DateTime.Today.ToString("yyyy-MM-dd")
         });
     bool soloLecturaInicial = Model != null && Model.Id > 0;
@@ -84,7 +86,7 @@
                         <input type="hidden" id="urlVolverPago" value="@urlVolver" />
                         @Html.HiddenFor(m => m.Id)
 
-                        <input type="hidden" id="idPersona" name="idPersona" value="@ViewBag.Persona.IdPersona" />
+                        <input type="hidden" id="idPersona" name="idPersona" value="@personaIdView" />
                         <input type="hidden" name="desdePos" value="@(renderComoModal.ToString().ToLower())" />
 
                         <div id="comboSucursales" class="mb-3" style="@estiloComboSucursales">
@@ -93,7 +95,7 @@
                                 <select class="form-control" id="SucursalId" name="SucursalId">
                                     <option value="">- Seleccione sucursal -</option>
 
-                                    @foreach (var s in (List<Entidades.Sucursal>)ViewBag.Sucursales)
+                                    @foreach (var s in sucursalesView)
                                     {
                                         <option value="@s.IdSucursal"
                                                 @((Model.Sucursal?.IdSucursal == s.IdSucursal || ViewBag.SucursalId == s.IdSucursal) ? "selected" : "")>
@@ -252,15 +254,12 @@
 
                         <input type="hidden" id="ChequesJson" name="ChequesJson" />
 
-                        @if (soloLecturaInicial)
-                        {
-                            <button type="button"
-                                    id="btnHabilitarEdicionPago"
-                                    class="btn btn-primary btn-block mb-2"
-                                    data-edit-readonly-ignore="true">
-                                <i class="fas fa-edit mr-1"></i> Modificar
-                            </button>
-                        }
+                        <button type="button"
+                                id="btnHabilitarEdicionPago"
+                                class="btn btn-primary btn-block mb-2 @(soloLecturaInicial ? "" : "d-none")"
+                                data-edit-readonly-ignore="true">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
 
                         <button type="submit"
                                 id="btnGuardarPago"
@@ -289,7 +288,6 @@
 
             <div class="modal-body">
                 @Html.Partial("_ChequeBusquedaTabla", null, chequeBusquedaPagoViewData)
-
             </div>
 
             <div class="modal-footer">
