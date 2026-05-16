@@ -156,6 +156,8 @@
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
     <Compile Include="Models\CompraIndexVm.cs" />
+    <Compile Include="Models\CalcularComisionesElectronicasVm.cs" />
+    <Compile Include="Models\ComisionElectronicaFormaVm.cs" />
     <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
@@ -2075,6 +2077,7 @@
     <Content Include="Views\Cajas\EgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_AddOrEditEgresoCaja.cshtml" />
     <Content Include="Views\Cajas\_AddOrEditTipoEgresoCaja.cshtml" />
+    <Content Include="Views\Cajas\_CalcularComisionesElectronicas.cshtml" />
     <Content Include="Views\Cajas\_EgresosCajaTabla.cshtml" />
     <Content Include="Views\Cajas\_MisEgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_TablaCajasAbiertas.cshtml" />

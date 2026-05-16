@@ -1,0 +1,158 @@
+@model Web.Models.CalcularComisionesElectronicasVm
+@using System.Data
+@using System.Globalization
+
+@{
+    bool desdePos = Model != null && Model.DesdePos;
+    var tipos = ViewBag.TiposEgresoCaja as DataTable;
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    bool mostrarSelectorSucursal = ViewBag.MostrarSelectorSucursal != null && (bool)ViewBag.MostrarSelectorSucursal;
+    string cultura = "es-AR";
+}
+
+<div class="egreso-form-wrap">
+    <form id="formComisionesElectronicas" data-desde-pos="@desdePos.ToString().ToLower()" data-id-cierre="@Model.IdCierre">
+        <input type="hidden" name="desdePos" value="@desdePos.ToString().ToLower()" />
+        <input type="hidden" name="idCierre" value="@Model.IdCierre" />
+        <div id="comisionesElectronicasError" class="alert alert-danger d-none"></div>
+
+        <div class="egreso-form-head">
+            <div>
+                <span class="text-muted d-block">Sucursal</span>
+                @if (mostrarSelectorSucursal)
+                {
+                    <select class="form-control mt-1" name="idSucursal" id="comisionSucursal">
+                        <option value="0" @(Model.IdSucursal == 0 ? "selected" : "")>Todas</option>
+                        @if (sucursales != null)
+                        {
+                            foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursal ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        }
+                    </select>
+                }
+                else
+                {
+                    <strong>@(string.IsNullOrWhiteSpace(Model.SucursalNombre) ? "-" : Model.SucursalNombre)</strong>
+                    <input type="hidden" name="idSucursal" value="@Model.IdSucursal" />
+                }
+            </div>
+            @if (desdePos)
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVolverMisEgresos">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            }
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-12 col-md-4">
+                <label>Fecha desde</label>
+                <input type="date" class="form-control" name="fechaDesde" id="comisionFechaDesde" value="@Model.FechaDesde.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="form-group col-12 col-md-4">
+                <label>Fecha hasta</label>
+                <input type="date" class="form-control" name="fechaHasta" id="comisionFechaHasta" value="@Model.FechaHasta.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="form-group col-12 col-md-4">
+                <label>Fecha del egreso</label>
+                <input type="datetime-local" class="form-control" name="fechaEgreso" value="@Model.FechaEgreso.ToString("yyyy-MM-ddTHH:mm")" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de egreso</label>
+            <select class="form-control" name="idTipoEgresoCaja" id="idTipoEgresoComision">
+                <option value="0">Seleccione un tipo</option>
+                @if (tipos != null)
+                {
+                    foreach (DataRow row in tipos.Rows)
+                    {
+                        int idTipo = Convert.ToInt32(row["id"]);
+                        if (idTipo == 0) { continue; }
+                        <option value="@idTipo" @(idTipo == Model.IdTipoEgresoCaja ? "selected" : "")>@row["tipoEgresoCaja"]</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body py-3">
+                <div class="form-row align-items-end">
+                    <div class="form-group col-12 col-md-5 mb-md-0">
+                        <label>Aplicar un mismo porcentaje a todas</label>
+                        <input type="text" class="form-control js-comision-porcentaje-global" inputmode="decimal" autocomplete="off" placeholder="0,00" />
+                    </div>
+                    <div class="form-group col-12 col-md-3 mb-md-0">
+                        <button type="button" class="btn btn-outline-primary btn-block" id="btnAplicarComisionGlobal">
+                            Aplicar
+                        </button>
+                    </div>
+                    <div class="form-group col-12 col-md-4 mb-0">
+                        <button type="button" class="btn btn-outline-secondary btn-block" id="btnRecalcularComisiones">
+                            Recalcular totales
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle mb-0" id="tablaComisionesElectronicas">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Forma de pago</th>
+                        <th class="text-right">Total cobrado</th>
+                        <th class="text-right" style="width: 180px;">% comisión</th>
+                        <th class="text-right">Importe comisión</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.FormasPago.Count; i++)
+                    {
+                        var item = Model.FormasPago[i];
+                        <tr data-codigo="@item.Codigo">
+                            <td>@item.Nombre</td>
+                            <td class="text-right js-total-cobrado" data-valor="@item.TotalCobrado.ToString(CultureInfo.InvariantCulture)">$@item.TotalCobrado.ToString("N2", new CultureInfo(cultura))</td>
+                            <td>
+                                <input type="text"
+                                       class="form-control text-right js-comision-porcentaje"
+                                       name="porcentaje@(item.Codigo)"
+                                       value="@item.Porcentaje.ToString("0.##", new CultureInfo(cultura))"
+                                       inputmode="decimal"
+                                       autocomplete="off" />
+                            </td>
+                            <td class="text-right js-importe-comision" data-valor="@item.ImporteComision.ToString(CultureInfo.InvariantCulture)">$@item.ImporteComision.ToString("N2", new CultureInfo(cultura))</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="font-weight-bold">
+                        <td colspan="3" class="text-right">Total egreso</td>
+                        <td class="text-right" id="totalComisionesElectronicas" data-valor="@Model.TotalEgreso.ToString(CultureInfo.InvariantCulture)">$@Model.TotalEgreso.ToString("N2", new CultureInfo(cultura))</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-block mt-3" id="btnGuardarComisionesElectronicas">
+            <i class="fas fa-save mr-1"></i> Guardar egreso por comisiones
+        </button>
+    </form>
+</div>
+
+<script>
+    (function () {
+        if (window.EgresosCaja && typeof window.EgresosCaja.bindComisionesForm === "function") {
+            window.EgresosCaja.bindComisionesForm("#formComisionesElectronicas");
+        }
+
+        setTimeout(function () {
+            var el = document.querySelector("#comisionFechaDesde");
+            if (el) {
+                el.focus();
+            }
+        }, 100);
+    })();
+</script>

@@ -4,6 +4,7 @@ using System.Web.Mvc;
 using Entidades;
 using System.Data;
 using System.Globalization;
+using System.Text;
 using Web.Helpers;
 using Utilidades;
 using System.Linq;
@@ -16,6 +17,14 @@ namespace Web.Controllers
         Negocio.CierreCaja oCierreN;
         Negocio.Sucursal oSucursalN;
         Negocio.Usuario oUsuarioN;
+        Negocio.Venta oVentaN;
+
+        private sealed class GuardarEgresoCajaResultado
+        {
+            public bool Ok { get; set; }
+            public int Id { get; set; }
+            public string Mensaje { get; set; }
+        }
 
         protected override void OnActionExecuting(
             ActionExecutingContext filterContext)
@@ -26,6 +35,7 @@ namespace Web.Controllers
             oCierreN = new Negocio.CierreCaja(empresa);
             oSucursalN = new Negocio.Sucursal(empresa);
             oUsuarioN = new Negocio.Usuario(empresa);
+            oVentaN = new Negocio.Venta(empresa, param);
         }
 
         // GET: Cajas/CajasAbiertas
@@ -256,6 +266,89 @@ namespace Web.Controllers
             return PartialView("~/Views/Cajas/_AddOrEditEgresoCaja.cshtml", egreso);
         }
 
+        public ActionResult CalcularComisionesElectronicas(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int idSucursal = 0, bool desdePos = false, int idCierre = 0)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return new HttpStatusCodeResult(401, "Sesión inválida");
+
+            bool tienePermiso = PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.AltaEdicion, DateTime.Today, user.Id);
+            if (!tienePermiso && !desdePos)
+                return new HttpStatusCodeResult(403, "No tiene permisos para registrar egresos de caja.");
+
+            CierreCaja cierreContexto = idCierre > 0
+                ? oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "")
+                : null;
+
+            if (idCierre > 0)
+            {
+                if (cierreContexto == null || cierreContexto.Id == 0)
+                    return HttpNotFound("No se encontró la caja seleccionada.");
+
+                if (!CajaSigueAbierta(cierreContexto))
+                    return new HttpStatusCodeResult(403, "La caja seleccionada ya no se encuentra abierta.");
+            }
+
+            DateTime desde = (fechaDesde ?? DateTime.Today).Date;
+            DateTime hasta = (fechaHasta ?? DateTime.Today).Date;
+            if (desde > hasta)
+                return new HttpStatusCodeResult(400, "La fecha desde no puede ser mayor que la fecha hasta.");
+
+            bool sucursalFija = desdePos || (cierreContexto != null && cierreContexto.Sucursal != null);
+            int sucursalSeleccionada = desdePos
+                ? user.IdSucursal
+                : (cierreContexto != null && cierreContexto.Sucursal != null
+                    ? cierreContexto.Sucursal.idSucursal
+                    : idSucursal);
+
+            var sucursal = sucursalSeleccionada > 0 ? oSucursalN.findById(sucursalSeleccionada) : null;
+            if (sucursalSeleccionada > 0 && sucursal == null)
+                return new HttpStatusCodeResult(400, "Sucursal inválida.");
+
+            if (desdePos && !oCierreN.validarCajaAbiertaVendedor(DateTime.Now, sucursal, user))
+                return new HttpStatusCodeResult(403, "Debe tener una caja abierta en la sucursal activa para registrar egresos desde POS.");
+
+            var model = CrearModelComisionesElectronicas(desde, hasta, DateTime.Now, sucursalSeleccionada, desdePos, idCierre);
+            ViewBag.TiposEgresoCaja = oCierreN.obtenerTiposEgresoCaja("", 0);
+            ViewBag.Sucursales = oSucursalN.findAll();
+            ViewBag.MostrarSelectorSucursal = !sucursalFija;
+            return PartialView("~/Views/Cajas/_CalcularComisionesElectronicas.cshtml", model);
+        }
+
+        public JsonResult ObtenerResumenComisionesElectronicas(DateTime fechaDesde, DateTime fechaHasta, int idSucursal)
+        {
+            try
+            {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null)
+                    return Json(new { ok = false, mensaje = "Sesión inválida." }, JsonRequestBehavior.AllowGet);
+
+                if (fechaDesde.Date > fechaHasta.Date)
+                    return Json(new { ok = false, mensaje = "La fecha desde no puede ser mayor que la fecha hasta." }, JsonRequestBehavior.AllowGet);
+
+                int? sucursalConsulta = idSucursal > 0 ? (int?)idSucursal : null;
+                if (sucursalConsulta.HasValue && oSucursalN.findById(sucursalConsulta.Value) == null)
+                    return Json(new { ok = false, mensaje = "Sucursal inválida." }, JsonRequestBehavior.AllowGet);
+
+                var formas = ObtenerFormasPagoElectronicas(fechaDesde.Date, fechaHasta.Date, sucursalConsulta, null);
+                return Json(new
+                {
+                    ok = true,
+                    items = formas.Select(f => new
+                    {
+                        codigo = f.Codigo,
+                        nombre = f.Nombre,
+                        totalCobrado = f.TotalCobrado
+                    }).ToList(),
+                    total = formas.Sum(f => f.TotalCobrado)
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "No se pudieron calcular las comisiones. " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         public ActionResult TiposEgresoCaja(string buscar = "")
         {
             var user = Session["Usuario"] as Entidades.Usuario;
@@ -335,93 +428,88 @@ namespace Web.Controllers
         {
             try
             {
-                var user = Session["Usuario"] as Entidades.Usuario;
-                if (user == null)
-                    return Json(new { ok = false, mensaje = "Sesión inválida" });
-
-                if (idTipoEgresoCaja <= 0)
-                    return Json(new { ok = false, mensaje = "Seleccione un tipo de egreso." });
-
-                if (string.IsNullOrWhiteSpace(descripcion))
-                    return Json(new { ok = false, mensaje = "Ingrese una descripción." });
-
-                float importe = ParseFloat(monto);
-                if (importe <= 0)
-                    return Json(new { ok = false, mensaje = "Ingrese un monto válido." });
-
-                CierreCaja cierreContexto = idCierre > 0
-                    ? oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "")
-                    : null;
-
-                if (idCierre > 0)
-                {
-                    if (cierreContexto == null || cierreContexto.Id == 0)
-                        return Json(new { ok = false, mensaje = "No se encontró la caja seleccionada." });
-
-                    if (!CajaSigueAbierta(cierreContexto))
-                        return Json(new { ok = false, mensaje = "La caja seleccionada ya no se encuentra abierta." });
-                }
-
-                if (desdePos)
-                    idSucursal = user.IdSucursal;
-                else if (cierreContexto != null && cierreContexto.Sucursal != null)
-                    idSucursal = cierreContexto.Sucursal.idSucursal;
-
-                EgresoCaja egresoAnterior = id > 0 ? oCierreN.getEgresoCajaById(id) : null;
-                if (id > 0 && (egresoAnterior == null || egresoAnterior.Id == 0))
-                    return Json(new { ok = false, mensaje = "No se encontró el egreso de caja a modificar." });
-
-                var sucursal = oSucursalN.findById(idSucursal);
-                if (sucursal == null)
-                    return Json(new { ok = false, mensaje = "Sucursal inválida." });
-
-                if (desdePos)
-                {
-                    bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(fecha, sucursal, user);
-                    if (!cajaAbierta)
-                        return Json(new { ok = false, mensaje = "La fecha y hora del egreso debe corresponder a una caja abierta del vendedor." });
-                }
-                else if (cierreContexto != null && !FechaDentroDeCaja(fecha, cierreContexto))
-                {
-                    return Json(new { ok = false, mensaje = "La fecha y hora del egreso debe corresponder a la caja abierta seleccionada." });
-                }
-                else if (id == 0 && !PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.AltaEdicion, fecha, user.Id))
-                {
-                    return Json(new { ok = false, mensaje = "No tiene permisos para registrar egresos de caja." });
-                }
-
-                if (egresoAnterior != null)
-                {
-                    var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egresoAnterior, desdePos, empresa, oCierreN.validarCajaAbiertaVendedor);
-                    if (!validacion.PuedeModificar)
-                        return Json(new { ok = false, mensaje = validacion.MensajeBloqueo });
-                }
-
-                var egreso = new EgresoCaja
-                {
-                    Id = id,
-                    Fecha = fecha,
-                    IdTipoEgresoCaja = idTipoEgresoCaja,
-                    Descripcion = descripcion ?? "",
-                    Detalle = detalle ?? "",
-                    Monto = importe,
-                    Sucursal = sucursal,
-                    IdCompra = egresoAnterior != null ? egresoAnterior.IdCompra : null,
-                    Tabla = egresoAnterior != null ? egresoAnterior.Tabla : null,
-                    IdTabla = egresoAnterior != null ? egresoAnterior.IdTabla : null,
-                    CreadoPor = egresoAnterior != null
-                        ? egresoAnterior.CreadoPor
-                        : (cierreContexto != null && cierreContexto.UsuarioInicio != null ? cierreContexto.UsuarioInicio.Id : user.Id),
-                    ActualizadoPor = id > 0 ? user.Id : 0
-                };
-
-                egreso = oCierreN.addOrEditEgresoCaja(egreso);
-
-                return Json(new { ok = true, id = egreso.Id, mensaje = id > 0 ? "El egreso de caja se modificó correctamente." : "El egreso de caja se guardó correctamente." });
+                var resultado = GuardarEgresoCajaCore(id, fecha, idTipoEgresoCaja, descripcion, monto, detalle, idSucursal, desdePos, idCierre);
+                return Json(new { ok = resultado.Ok, id = resultado.Id, mensaje = resultado.Mensaje });
             }
             catch (Exception ex)
             {
                 return Json(new { ok = false, mensaje = "Error al guardar egreso de caja. " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult GuardarComisionesElectronicas(DateTime fechaDesde, DateTime fechaHasta, DateTime fechaEgreso, int idTipoEgresoCaja, int idSucursal, string porcentajeDebito, string porcentajeCredito, string porcentajeQr, string porcentajeTransferencia, bool desdePos = false, int idCierre = 0)
+        {
+            try
+            {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null)
+                    return Json(new { ok = false, mensaje = "Sesión inválida." });
+
+                DateTime desde = fechaDesde.Date;
+                DateTime hasta = fechaHasta.Date;
+                if (desde > hasta)
+                    return Json(new { ok = false, mensaje = "La fecha desde no puede ser mayor que la fecha hasta." });
+
+                var porcentajes = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "Debito", ParseDecimalFlexible(porcentajeDebito) },
+                    { "Credito", ParseDecimalFlexible(porcentajeCredito) },
+                    { "Qr", ParseDecimalFlexible(porcentajeQr) },
+                    { "Transferencia", ParseDecimalFlexible(porcentajeTransferencia) }
+                };
+
+                int? sucursalFiltro = idSucursal > 0 ? (int?)idSucursal : null;
+                if (sucursalFiltro.HasValue && oSucursalN.findById(sucursalFiltro.Value) == null)
+                    return Json(new { ok = false, mensaje = "Sucursal inválida." });
+
+                var formas = ObtenerFormasPagoElectronicas(desde, hasta, sucursalFiltro, porcentajes);
+                decimal totalComisiones = formas.Sum(f => f.ImporteComision);
+                if (totalComisiones <= 0)
+                    return Json(new { ok = false, mensaje = "Debe existir al menos una comisión mayor a cero para guardar el egreso." });
+
+                string sucursalDescripcion = ObtenerDescripcionSucursal(idSucursal);
+                string descripcion = string.Format(
+                    "Periodo {0} - {1} | Sucursal: {2}",
+                    desde.ToString("dd/MM/yyyy"),
+                    hasta.ToString("dd/MM/yyyy"),
+                    sucursalDescripcion);
+
+                StringBuilder detalleBuilder = new StringBuilder();
+                detalleBuilder.AppendFormat(
+                    "Cálculo automático de comisiones por pagos electrónicos entre {0} y {1} | Sucursal: {2}.",
+                    desde.ToString("dd/MM/yyyy"),
+                    hasta.ToString("dd/MM/yyyy"),
+                    sucursalDescripcion);
+
+                foreach (var forma in formas)
+                {
+                    detalleBuilder.AppendLine();
+                    detalleBuilder.AppendFormat(
+                        "{0}: total cobrado ${1} - comisión {2}% = ${3}",
+                        forma.Nombre,
+                        FormatearImporte(forma.TotalCobrado),
+                        FormatearPorcentaje(forma.Porcentaje),
+                        FormatearImporte(forma.ImporteComision));
+                }
+
+                int idSucursalGuardar = idSucursal > 0 ? idSucursal : user.IdSucursal;
+                var resultado = GuardarEgresoCajaCore(
+                    0,
+                    fechaEgreso,
+                    idTipoEgresoCaja,
+                    descripcion,
+                    totalComisiones.ToString(CultureInfo.InvariantCulture),
+                    detalleBuilder.ToString(),
+                    idSucursalGuardar,
+                    desdePos,
+                    idCierre);
+
+                return Json(new { ok = resultado.Ok, id = resultado.Id, mensaje = resultado.Mensaje });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "Error al guardar comisiones electrónicas. " + ex.Message });
             }
         }
 
@@ -652,6 +740,41 @@ namespace Web.Controllers
                 return result;
 
             return 0;
+        }
+
+        private decimal ParseDecimalFlexible(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return 0m;
+
+            string limpio = value.Trim()
+                .Replace("$", "")
+                .Replace(" ", "");
+
+            decimal numero;
+            if (decimal.TryParse(limpio, NumberStyles.Any, new CultureInfo("es-AR"), out numero))
+                return numero;
+
+            if (decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out numero))
+                return numero;
+
+            int ultimaComa = limpio.LastIndexOf(',');
+            int ultimoPunto = limpio.LastIndexOf('.');
+            if (ultimaComa >= 0 && ultimoPunto >= 0)
+            {
+                char separadorDecimal = ultimaComa > ultimoPunto ? ',' : '.';
+                limpio = separadorDecimal == ','
+                    ? limpio.Replace(".", "").Replace(',', '.')
+                    : limpio.Replace(",", "");
+            }
+            else
+            {
+                limpio = limpio.Replace(',', '.');
+            }
+
+            return decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out numero)
+                ? numero
+                : 0m;
         }
 
         private void CargarViewBagsEgresos(int idSucursal, int idUsuario, int idTipoEgresoCaja, string descripcion, DateTime fechaDesde, DateTime fechaHasta, bool soloGastos, bool desdePos)
@@ -954,6 +1077,192 @@ namespace Web.Controllers
             DateTime inicio = cierre.FechaHoraInicio.Value;
             DateTime fin = cierre.FechaHoraCierre ?? DateTime.Now;
             return fecha >= inicio && fecha <= fin;
+        }
+
+        private GuardarEgresoCajaResultado GuardarEgresoCajaCore(int id, DateTime fecha, int idTipoEgresoCaja, string descripcion, string monto, string detalle, int idSucursal, bool desdePos, int idCierre)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "Sesión inválida" };
+
+            if (idTipoEgresoCaja <= 0)
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "Seleccione un tipo de egreso." };
+
+            if (string.IsNullOrWhiteSpace(descripcion))
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "Ingrese una descripción." };
+
+            float importe = ParseFloat(monto);
+            if (importe <= 0)
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "Ingrese un monto válido." };
+
+            CierreCaja cierreContexto = idCierre > 0
+                ? oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "")
+                : null;
+
+            if (idCierre > 0)
+            {
+                if (cierreContexto == null || cierreContexto.Id == 0)
+                    return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "No se encontró la caja seleccionada." };
+
+                if (!CajaSigueAbierta(cierreContexto))
+                    return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "La caja seleccionada ya no se encuentra abierta." };
+            }
+
+            if (desdePos)
+                idSucursal = user.IdSucursal;
+            else if (cierreContexto != null && cierreContexto.Sucursal != null)
+                idSucursal = cierreContexto.Sucursal.idSucursal;
+
+            EgresoCaja egresoAnterior = id > 0 ? oCierreN.getEgresoCajaById(id) : null;
+            if (id > 0 && (egresoAnterior == null || egresoAnterior.Id == 0))
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "No se encontró el egreso de caja a modificar." };
+
+            var sucursal = oSucursalN.findById(idSucursal);
+            if (sucursal == null)
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "Sucursal inválida." };
+
+            if (desdePos)
+            {
+                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(fecha, sucursal, user);
+                if (!cajaAbierta)
+                    return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "La fecha y hora del egreso debe corresponder a una caja abierta del vendedor." };
+            }
+            else if (cierreContexto != null && !FechaDentroDeCaja(fecha, cierreContexto))
+            {
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "La fecha y hora del egreso debe corresponder a la caja abierta seleccionada." };
+            }
+            else if (id == 0 && !PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.AltaEdicion, fecha, user.Id))
+            {
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "No tiene permisos para registrar egresos de caja." };
+            }
+
+            if (egresoAnterior != null)
+            {
+                var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egresoAnterior, desdePos, empresa, oCierreN.validarCajaAbiertaVendedor);
+                if (!validacion.PuedeModificar)
+                    return new GuardarEgresoCajaResultado { Ok = false, Mensaje = validacion.MensajeBloqueo };
+            }
+
+            var egreso = new EgresoCaja
+            {
+                Id = id,
+                Fecha = fecha,
+                IdTipoEgresoCaja = idTipoEgresoCaja,
+                Descripcion = descripcion ?? "",
+                Detalle = detalle ?? "",
+                Monto = importe,
+                Sucursal = sucursal,
+                IdCompra = egresoAnterior != null ? egresoAnterior.IdCompra : null,
+                Tabla = egresoAnterior != null ? egresoAnterior.Tabla : null,
+                IdTabla = egresoAnterior != null ? egresoAnterior.IdTabla : null,
+                CreadoPor = egresoAnterior != null
+                    ? egresoAnterior.CreadoPor
+                    : (cierreContexto != null && cierreContexto.UsuarioInicio != null ? cierreContexto.UsuarioInicio.Id : user.Id),
+                ActualizadoPor = id > 0 ? user.Id : 0
+            };
+
+            egreso = oCierreN.addOrEditEgresoCaja(egreso);
+
+            return new GuardarEgresoCajaResultado
+            {
+                Ok = true,
+                Id = egreso.Id,
+                Mensaje = id > 0 ? "El egreso de caja se modificó correctamente." : "El egreso de caja se guardó correctamente."
+            };
+        }
+
+        private CalcularComisionesElectronicasVm CrearModelComisionesElectronicas(DateTime fechaDesde, DateTime fechaHasta, DateTime fechaEgreso, int idSucursal, bool desdePos, int idCierre)
+        {
+            var sucursal = idSucursal > 0 ? oSucursalN.findById(idSucursal) : null;
+            var porcentajesDefault = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Debito", Convert.ToDecimal(param.GetFloat(ParamKeys.ComisionDebito, 0f)) },
+                { "Credito", Convert.ToDecimal(param.GetFloat(ParamKeys.ComisionCredito, 0f)) },
+                { "Qr", 0m },
+                { "Transferencia", 0m }
+            };
+
+            var formas = ObtenerFormasPagoElectronicas(fechaDesde, fechaHasta, idSucursal, porcentajesDefault);
+            return new CalcularComisionesElectronicasVm
+            {
+                FechaDesde = fechaDesde,
+                FechaHasta = fechaHasta,
+                FechaEgreso = fechaEgreso,
+                IdSucursal = idSucursal,
+                SucursalNombre = sucursal != null ? sucursal.SucursalNombre : "Todas",
+                IdTipoEgresoCaja = 0,
+                DesdePos = desdePos,
+                IdCierre = idCierre,
+                FormasPago = formas,
+                TotalEgreso = formas.Sum(f => f.ImporteComision)
+            };
+        }
+
+        private List<ComisionElectronicaFormaVm> ObtenerFormasPagoElectronicas(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal, IDictionary<string, decimal> porcentajes)
+        {
+            var items = new List<ComisionElectronicaFormaVm>
+            {
+                new ComisionElectronicaFormaVm { Codigo = "Debito", Nombre = "Débito", Porcentaje = ObtenerPorcentaje(porcentajes, "Debito") },
+                new ComisionElectronicaFormaVm { Codigo = "Credito", Nombre = "Crédito", Porcentaje = ObtenerPorcentaje(porcentajes, "Credito") },
+                new ComisionElectronicaFormaVm { Codigo = "Qr", Nombre = "QR", Porcentaje = ObtenerPorcentaje(porcentajes, "Qr") },
+                new ComisionElectronicaFormaVm { Codigo = "Transferencia", Nombre = "Transferencia", Porcentaje = ObtenerPorcentaje(porcentajes, "Transferencia") }
+            };
+
+            var ventas = oVentaN.getAllVentas(fechaDesde.Date, fechaHasta.Date, "", -1, -1, idSucursal, false, false) ?? new List<Entidades.Venta>();
+            foreach (var venta in ventas)
+            {
+                if (venta == null || string.Equals(venta.Estado ?? "", "ANULADO", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var item = items.FirstOrDefault(i => string.Equals(i.Codigo, venta.FormaPago ?? "", StringComparison.OrdinalIgnoreCase));
+                if (item == null)
+                    continue;
+
+                decimal totalVenta = Convert.ToDecimal(venta.TotalImporte);
+                decimal pagoMixtoEfectivo = Convert.ToDecimal(venta.PagoMixtoEfectivo);
+                decimal totalElectronico = pagoMixtoEfectivo > 0m ? totalVenta - pagoMixtoEfectivo : totalVenta;
+                if (totalElectronico <= 0m)
+                    continue;
+
+                item.TotalCobrado += totalElectronico;
+            }
+
+            foreach (var item in items)
+            {
+                item.ImporteComision = decimal.Round(item.TotalCobrado * item.Porcentaje / 100m, 2, MidpointRounding.AwayFromZero);
+            }
+
+            return items;
+        }
+
+        private decimal ObtenerPorcentaje(IDictionary<string, decimal> porcentajes, string codigo)
+        {
+            if (porcentajes == null || string.IsNullOrWhiteSpace(codigo))
+                return 0m;
+
+            decimal valor;
+            return porcentajes.TryGetValue(codigo, out valor) ? valor : 0m;
+        }
+
+        private string FormatearImporte(decimal valor)
+        {
+            return valor.ToString("N2", new CultureInfo("es-AR"));
+        }
+
+        private string FormatearPorcentaje(decimal valor)
+        {
+            return valor.ToString("0.##", new CultureInfo("es-AR"));
+        }
+
+        private string ObtenerDescripcionSucursal(int idSucursal)
+        {
+            if (idSucursal <= 0)
+                return "Todas";
+
+            var sucursal = oSucursalN.findById(idSucursal);
+            return sucursal != null && !string.IsNullOrWhiteSpace(sucursal.SucursalNombre)
+                ? sucursal.SucursalNombre
+                : "Todas";
         }
 
     }

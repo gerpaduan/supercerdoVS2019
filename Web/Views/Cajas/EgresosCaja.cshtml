@@ -33,6 +33,9 @@
             <button type="button" class="btn btn-success" id="btnNuevoEgresoCaja">
                 <i class="fas fa-plus mr-1"></i> Nuevo Egreso
             </button>
+            <button type="button" class="btn btn-outline-success" id="btnCalcularComisionesElectronicas">
+                <i class="fas fa-calculator mr-1"></i> Calcular comisiones electrónicas
+            </button>
             @if (puedeVerTipos)
             {
                 <button type="button" class="btn btn-outline-primary" id="btnTiposEgresoCaja">
@@ -247,6 +250,9 @@
             listar: '@Url.Action("EgresosCaja", "Cajas")',
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
             guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")',
+            comisionesFormulario: '@Url.Action("CalcularComisionesElectronicas", "Cajas")',
+            comisionesResumen: '@Url.Action("ObtenerResumenComisionesElectronicas", "Cajas")',
+            comisionesGuardar: '@Url.Action("GuardarComisionesElectronicas", "Cajas")',
             tipos: '@Url.Action("TiposEgresoCaja", "Cajas")',
             tiposOpciones: '@Url.Action("TiposEgresoCajaOpciones", "Cajas")',
             tipoFormulario: '@Url.Action("AddOrEditTipoEgresoCaja", "Cajas")',
@@ -262,5 +268,5 @@
             usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))
         };
     </script>
-<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=4")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=5")"></script>
 }

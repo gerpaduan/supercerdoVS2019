@@ -75,12 +75,18 @@
         }
     }
 
-    function formEgresoActivo() {
-        return $("#formEgresoCaja").length > 0;
+    function formActivo() {
+        return $("#formEgresoCaja, #formComisionesElectronicas").length > 0;
     }
 
-    function formEgresoDirty() {
-        var $form = $("#formEgresoCaja");
+    function formActual() {
+        var $form = $("#formComisionesElectronicas");
+        if ($form.length) return $form;
+        return $("#formEgresoCaja");
+    }
+
+    function formDirty() {
+        var $form = formActual();
         if (!$form.length || $form.data("permitir-salida") === true) return false;
         return $form.serialize() !== $form.data("estado-inicial");
     }
@@ -220,6 +226,40 @@
 
     function abrirNuevo() {
         abrirFormulario(0);
+    }
+
+    function abrirCalculoComisiones() {
+        var cfg = urls();
+        if (!cfg.comisionesFormulario) return;
+
+        var data = {
+            fechaDesde: $("#filtroDesdeEgreso").val() || "",
+            fechaHasta: $("#filtroHastaEgreso").val() || "",
+            idSucursal: $("#filtroSucursalEgreso").val() || 0
+        };
+
+        setTituloModal("Calcular comisiones electrónicas");
+        $("#contenedorEgresoCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+        $("#modalEgresoCaja").modal("show");
+
+        $.ajax({
+            url: cfg.comisionesFormulario,
+            type: "GET",
+            data: data,
+            cache: false
+        }).done(function (html) {
+            renderConScripts(html, "#contenedorEgresoCaja");
+        }).fail(function (xhr) {
+            var mensaje = (xhr && (xhr.statusText || xhr.responseText)) || "No se pudo cargar el cálculo de comisiones.";
+            if (xhr && xhr.status === 403) {
+                mensaje = (xhr.responseText || xhr.statusText || "").replace(/<[^>]+>/g, "").trim() || "No tiene permisos para realizar esta accion.";
+                $("#modalEgresoCaja").modal("hide");
+                mostrarPermisoPopup(mensaje);
+                return;
+            }
+
+            $("#contenedorEgresoCaja").html('<div class="alert alert-danger m-3">' + $("<div>").text(mensaje).html() + '</div>');
+        });
     }
 
     function abrirModificar(id) {
@@ -570,6 +610,198 @@
         prepararProteccionSalida(selector);
     }
 
+    function parseNumeroDecimal(valor) {
+        if (valor == null) return 0;
+
+        var texto = String(valor).trim().replace(/\$/g, "").replace(/\s+/g, "");
+        if (!texto) return 0;
+
+        var ultimaComa = texto.lastIndexOf(",");
+        var ultimoPunto = texto.lastIndexOf(".");
+        if (ultimaComa >= 0 && ultimoPunto >= 0) {
+            if (ultimaComa > ultimoPunto) {
+                texto = texto.replace(/\./g, "").replace(",", ".");
+            } else {
+                texto = texto.replace(/,/g, "");
+            }
+        } else {
+            texto = texto.replace(",", ".");
+        }
+
+        var numero = parseFloat(texto);
+        return isNaN(numero) ? 0 : numero;
+    }
+
+    function formatNumeroAr(valor) {
+        var numero = parseNumeroDecimal(valor);
+        return numero.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatPorcentajeAr(valor) {
+        var numero = parseNumeroDecimal(valor);
+        return numero.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function recalcularComisiones($form) {
+        var totalGeneral = 0;
+
+        $form.find("#tablaComisionesElectronicas tbody tr").each(function () {
+            var $row = $(this);
+            var totalCobrado = parseNumeroDecimal($row.find(".js-total-cobrado").data("valor"));
+            var porcentaje = parseNumeroDecimal($row.find(".js-comision-porcentaje").val());
+            var importe = Math.round((totalCobrado * porcentaje) * 100) / 10000;
+
+            totalGeneral += importe;
+            $row.find(".js-importe-comision")
+                .data("valor", importe)
+                .text("$" + formatNumeroAr(importe));
+        });
+
+        totalGeneral = Math.round(totalGeneral * 100) / 100;
+        $form.find("#totalComisionesElectronicas")
+            .data("valor", totalGeneral)
+            .text("$" + formatNumeroAr(totalGeneral));
+    }
+
+    function actualizarTotalesComisiones($form, items) {
+        if (!$.isArray(items)) return;
+
+        $.each(items, function (_, item) {
+            var codigo = item && item.codigo ? String(item.codigo) : "";
+            if (!codigo) return;
+
+            var totalCobrado = parseNumeroDecimal(item.totalCobrado);
+            var $row = $form.find('#tablaComisionesElectronicas tbody tr[data-codigo="' + codigo + '"]');
+            if (!$row.length) return;
+
+            $row.find(".js-total-cobrado")
+                .data("valor", totalCobrado)
+                .text("$" + formatNumeroAr(totalCobrado));
+        });
+
+        recalcularComisiones($form);
+    }
+
+    function refrescarResumenComisiones($form) {
+        var cfg = urls();
+        if (!cfg.comisionesResumen) return;
+
+        var fechaDesde = $form.find('[name="fechaDesde"]').val() || "";
+        var fechaHasta = $form.find('[name="fechaHasta"]').val() || "";
+        var idSucursal = $form.find('[name="idSucursal"]').val() || 0;
+        var $error = $form.find("#comisionesElectronicasError");
+
+        $error.addClass("d-none").text("");
+
+        $.ajax({
+            url: cfg.comisionesResumen,
+            type: "GET",
+            dataType: "json",
+            cache: false,
+            data: {
+                fechaDesde: fechaDesde,
+                fechaHasta: fechaHasta,
+                idSucursal: idSucursal
+            }
+        }).done(function (resp) {
+            if (!resp || !resp.ok) {
+                mostrarError($error, resp && resp.mensaje);
+                return;
+            }
+
+            actualizarTotalesComisiones($form, resp.items);
+            prepararProteccionSalida("#formComisionesElectronicas");
+        }).fail(function () {
+            mostrarError($error, "No se pudieron recalcular las comisiones.");
+        });
+    }
+
+    function bindComisionesForm(selector) {
+        $(document)
+            .off("submit.comisionesElectronicas", selector)
+            .on("submit.comisionesElectronicas", selector, function (e) {
+                e.preventDefault();
+
+                var cfg = urls();
+                var $form = $(this);
+                var $error = $form.find("#comisionesElectronicasError");
+                var desdePos = String($form.data("desde-pos")).toLowerCase() === "true";
+
+                $error.addClass("d-none").text("");
+                var idCierreActual = idCierreActividadActual();
+                recalcularComisiones($form);
+
+                $.ajax({
+                    url: cfg.comisionesGuardar,
+                    type: "POST",
+                    data: $form.serialize(),
+                    dataType: "json"
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        if (resp && resp.mensaje && resp.mensaje.toLowerCase().indexOf("permiso") >= 0) {
+                            mostrarPermisoPopup(resp.mensaje);
+                        }
+                        mostrarError($error, resp && resp.mensaje);
+                        return;
+                    }
+
+                    $form.data("permitir-salida", true);
+
+                    if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
+                        window.POSEgresos.abrirMis();
+                        return;
+                    }
+
+                    if (idCierreActual > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
+                        $("#modalEgresoCaja").modal("hide");
+                        window.CajasAbiertas.abrirActividades(idCierreActual);
+                        return;
+                    }
+
+                    $("#modalEgresoCaja").modal("hide");
+                    filtrar();
+
+                    if (window.Swal) {
+                        Swal.fire("Guardado", resp.mensaje || "El egreso se guardo correctamente.", "success");
+                    }
+                }).fail(function () {
+                    mostrarError($error, "No se pudo guardar el egreso por comisiones.");
+                });
+            })
+            .off("input.comisionesPorcentaje", selector + " .js-comision-porcentaje")
+            .on("input.comisionesPorcentaje", selector + " .js-comision-porcentaje", function () {
+                recalcularComisiones($(selector));
+            })
+            .off("click.comisionesAplicarTodas", "#btnAplicarComisionGlobal")
+            .on("click.comisionesAplicarTodas", "#btnAplicarComisionGlobal", function () {
+                var $form = $(selector);
+                var valor = $form.find(".js-comision-porcentaje-global").val() || "";
+                $form.find(".js-comision-porcentaje").val(valor);
+                recalcularComisiones($form);
+            })
+            .off("click.comisionesRecalcular", "#btnRecalcularComisiones")
+            .on("click.comisionesRecalcular", "#btnRecalcularComisiones", function () {
+                refrescarResumenComisiones($(selector));
+            })
+            .off("change.comisionesFechas", selector + ' [name="fechaDesde"], ' + selector + ' [name="fechaHasta"]')
+            .on("change.comisionesFechas", selector + ' [name="fechaDesde"], ' + selector + ' [name="fechaHasta"]', function () {
+                refrescarResumenComisiones($(selector));
+            })
+            .off("change.comisionesSucursal", selector + ' [name="idSucursal"]')
+            .on("change.comisionesSucursal", selector + ' [name="idSucursal"]', function () {
+                refrescarResumenComisiones($(selector));
+            })
+            .off("blur.comisionesFormato", selector + " .js-comision-porcentaje-global, " + selector + " .js-comision-porcentaje")
+            .on("blur.comisionesFormato", selector + " .js-comision-porcentaje-global, " + selector + " .js-comision-porcentaje", function () {
+                var valor = $(this).val();
+                if ($.trim(valor) === "") return;
+                $(this).val(formatPorcentajeAr(valor));
+            });
+
+        recalcularComisiones($(selector));
+        prepararProteccionSalida(selector);
+    }
+
     function bindGeneral() {
         $(document)
             .off("submit.egresosFiltro", "#formFiltrosEgresos")
@@ -591,6 +823,10 @@
             .off("click.egresosNuevo", "#btnNuevoEgresoCaja")
             .on("click.egresosNuevo", "#btnNuevoEgresoCaja", function () {
                 abrirNuevo();
+            })
+            .off("click.egresosComisiones", "#btnCalcularComisionesElectronicas")
+            .on("click.egresosComisiones", "#btnCalcularComisionesElectronicas", function () {
+                abrirCalculoComisiones();
             })
             .off("click.tiposEgresoAbrir", "#btnTiposEgresoCaja")
             .on("click.tiposEgresoAbrir", "#btnTiposEgresoCaja", function () {
@@ -616,9 +852,9 @@
             .on("click.egresosVolver", "#btnVolverMisEgresos", function (e) {
                 e.preventDefault();
                 if (window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
-                    if (formEgresoDirty()) {
+                    if (formDirty()) {
                         confirmarSalidaCambios(function () {
-                            $("#formEgresoCaja").data("permitir-salida", true);
+                            formActual().data("permitir-salida", true);
                             window.POSEgresos.abrirMis();
                         });
                     } else {
@@ -667,11 +903,11 @@
     $(document)
         .off("hide.bs.modal.egresoCaja", "#modalEgresoCaja, #modalFinanzasPOS")
         .on("hide.bs.modal.egresoCaja", "#modalEgresoCaja, #modalFinanzasPOS", function (e) {
-            if (!formEgresoActivo() || !formEgresoDirty()) return;
+            if (!formActivo() || !formDirty()) return;
 
             e.preventDefault();
             confirmarSalidaCambios(function () {
-                $("#formEgresoCaja").data("permitir-salida", true);
+                formActual().data("permitir-salida", true);
                 $(e.target).modal("hide");
             });
         });
@@ -680,18 +916,20 @@
         filtrar: filtrar,
         abrirNuevo: abrirNuevo,
         abrirModificar: abrirModificar,
+        abrirCalculoComisiones: abrirCalculoComisiones,
         abrirTipos: abrirTipos,
         bindTipoForm: bindTipoForm,
         aplicarFiltrosTiposEgreso: aplicarFiltrosTiposEgreso,
         refrescarComboTiposIndex: refrescarComboTiposIndex,
         bindForm: bindForm,
+        bindComisionesForm: bindComisionesForm,
         renderConScripts: renderConScripts,
         aplicarVistaCompleta: aplicarVistaCompleta,
         mostrarPermisoPopup: mostrarPermisoPopup,
-        formDirty: formEgresoDirty,
+        formDirty: formDirty,
         confirmarSalidaCambios: confirmarSalidaCambios,
         permitirSalida: function () {
-            $("#formEgresoCaja").data("permitir-salida", true);
+            formActual().data("permitir-salida", true);
         }
     };
 

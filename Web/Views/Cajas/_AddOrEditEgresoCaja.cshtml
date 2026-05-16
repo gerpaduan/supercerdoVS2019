@@ -25,7 +25,7 @@
 
         <div class="egreso-form-head">
             <div>
-                <span class="text-muted d-block">@(esEdicion ? "Modificación" : "Vendedor")</span>
+                <span class="text-muted d-block">@(esEdicion ? "Modificacion" : "Vendedor")</span>
                 <strong>@(usuario != null ? usuario.Nombre : "-")</strong>
             </div>
             @if (desdePos)
@@ -105,31 +105,82 @@
             </button>
         }
         <button type="submit" class="btn btn-success btn-block @(esEdicion ? "d-none" : "")" id="btnGuardarEgresoCaja">
-            <i class="fas fa-save mr-1"></i> @(esEdicion ? "Guardar modificación" : "Guardar egreso")
+            <i class="fas fa-save mr-1"></i> Guardar egreso
         </button>
     </form>
 </div>
 
-<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
 <script>
     (function () {
         if (window.EgresosCaja && typeof window.EgresosCaja.bindForm === "function") {
             window.EgresosCaja.bindForm("#formEgresoCaja");
         }
 
-        window.EditReadOnly && window.EditReadOnly.init({
-            formSelector: "#formEgresoCaja",
-            soloLecturaInicial: @(esEdicion ? "true" : "false"),
-            modifyButtonSelector: "#btnHabilitarEdicionEgresoCaja",
-            saveButtonSelector: "#btnGuardarEgresoCaja"
-        });
+        var soloLecturaInicial = @Html.Raw(esEdicion ? "true" : "false");
+        var form = document.getElementById("formEgresoCaja");
+        var btnModificar = document.getElementById("btnHabilitarEdicionEgresoCaja");
+        var btnGuardar = document.getElementById("btnGuardarEgresoCaja");
+
+        function setSoloLectura(readOnly) {
+            if (!form) {
+                return;
+            }
+
+            var controls = form.querySelectorAll("input, select, textarea");
+            Array.prototype.forEach.call(controls, function (control) {
+                if (!control || control.type === "hidden") {
+                    return;
+                }
+
+                if (readOnly) {
+                    if (control.tagName === "SELECT") {
+                        control.disabled = true;
+                    } else {
+                        control.readOnly = true;
+                    }
+                } else {
+                    if (control.tagName === "SELECT") {
+                        control.disabled = false;
+                    } else {
+                        control.readOnly = false;
+                    }
+                }
+            });
+
+            if (btnModificar) {
+                btnModificar.classList.toggle("d-none", !readOnly);
+            }
+
+            if (btnGuardar) {
+                btnGuardar.classList.toggle("d-none", readOnly);
+                btnGuardar.disabled = readOnly;
+            }
+        }
+
+        if (form) {
+            form.addEventListener("submit", function (evt) {
+                if (soloLecturaInicial) {
+                    evt.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        if (btnModificar) {
+            btnModificar.addEventListener("click", function () {
+                soloLecturaInicial = false;
+                setSoloLectura(false);
+            });
+        }
+
+        setSoloLectura(soloLecturaInicial);
 
         setTimeout(function () {
-            var selector = @Html.Raw(desdePos ? "\"#idTipoEgresoCaja\"" : "\"#formEgresoCaja [name='fecha']\"");
+            var selector = @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#formEgresoCaja [name='fecha']\""));
             var el = document.querySelector(selector);
             if (el) {
                 el.focus();
-                if (typeof el.select === "function") {
+                if (!@Html.Raw(esEdicion ? "true" : "false") && typeof el.select === "function") {
                     el.select();
                 }
             }
