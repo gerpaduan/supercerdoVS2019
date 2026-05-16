@@ -551,27 +551,12 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="mb-2">
-                        <div class="text-muted">Producto</div>
-                        <div class="h6 mb-0" id="lblProductoStock"></div>
-                    </div>
-
                     <div id="stockLoading" class="text-muted py-3 d-none">
                         <i class="fas fa-spinner fa-spin mr-2"></i> Cargando stock...
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Sucursal</th>
-                                    <th style="width:180px;">Stock</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyStockSucursales">
-                                <tr><td colspan="2" class="text-muted text-center">Sin datos</td></tr>
-                            </tbody>
-                        </table>
+                    <div id="contenedorStockSucursalesProducto">
+                        <div class="text-muted text-center py-4">Sin datos</div>
                     </div>
                 </div>
 
@@ -996,46 +981,23 @@
     // =========================
     function verStockSucursales(idCorte, nombre) {
 
-        $("#lblProductoStock").text(nombre);
-        $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-muted text-center">Sin datos</td></tr>`);
+        $("#contenedorStockSucursalesProducto").html(`<div class="text-muted text-center py-4">Sin datos</div>`);
         $("#stockLoading").removeClass("d-none");
 
         $("#modalStockSucursales").modal("show");
 
         $.ajax({
-            url: '@Url.Action("GetStockPorSucursales", "Productos")',
+            url: '@Url.Action("StockPorSucursalesProducto", "Stock")',
             type: 'GET',
             data: { idCorte: idCorte },
-            success: function (resp) {
+            success: function (html) {
 
                 $("#stockLoading").addClass("d-none");
-
-                if (!resp || resp.success === false) {
-                    const msg = resp?.message || "No se pudo obtener el stock.";
-                    $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-danger text-center">${msg}</td></tr>`);
-                    return;
-                }
-
-                const items = resp.items || [];
-                if (!items.length) {
-                    $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-muted text-center">Sin stock / sin datos</td></tr>`);
-                    return;
-                }
-
-                let html = "";
-                items.forEach(x => {
-                    html += `
-                        <tr>
-                            <td>${(x.sucursal ?? "")}</td>
-                            <td class="text-nowrap font-weight-bold">${(x.stockTexto ?? x.stock ?? "")}</td>
-                        </tr>`;
-                });
-
-                $("#tbodyStockSucursales").html(html);
+                $("#contenedorStockSucursalesProducto").html(html || '<div class="text-danger text-center py-4">No se pudo obtener el stock.</div>');
             },
             error: function () {
                 $("#stockLoading").addClass("d-none");
-                $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-danger text-center">Error al consultar el stock.</td></tr>`);
+                $("#contenedorStockSucursalesProducto").html(`<div class="text-danger text-center py-4">Error al consultar el stock.</div>`);
             }
         });
     }

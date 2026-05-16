@@ -1130,6 +1130,7 @@ namespace Datos
             string tipo,
             int idProveedor,
             int idMarca,
+            int idCorte,
             bool soloConStock)
         {
             return Db.Reader(
@@ -1170,6 +1171,7 @@ namespace Datos
                     p.AddWithValue("@tipo", tipo ?? "");
                     p.AddWithValue("@idProveedor", idProveedor);
                     p.AddWithValue("@idMarca", idMarca);
+                    p.AddWithValue("@idCorte", idCorte);
                     p.AddWithValue("@soloConStock", soloConStock);
                 });
         }

@@ -154,6 +154,7 @@ namespace Web.Controllers
             string tipo = "",
             int idProveedor = 0,
             int idMarca = 0,
+            int idCorte = 0,
             bool soloConStock = false)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
@@ -185,6 +186,7 @@ namespace Web.Controllers
                 filtro.Tipo = (tipo ?? "").Trim();
                 filtro.IdProveedor = idProveedor;
                 filtro.IdMarca = idMarca;
+                filtro.IdCorte = idCorte > 0 ? idCorte : 0;
                 filtro.SoloConStock = soloConStock;
 
                 model = oCorteN.ObtenerMatrizExistenciaPorSucursales(filtro);
@@ -198,6 +200,70 @@ namespace Web.Controllers
             }
 
             return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+        }
+
+        [HttpGet]
+        public PartialViewResult StockPorSucursalesProducto(int idCorte, DateTime? fechaHasta = null)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            var model = new Entidades.ExistenciaPorSucursalesVm();
+
+            if (user == null)
+            {
+                model.ConsultaRealizada = true;
+                model.Mensaje = "Sesión inválida.";
+                return PartialView("~/Views/Productos/_StockPorSucursalesProductoModal.cshtml", model);
+            }
+
+            DateTime fechaPermiso = fechaHasta ?? DateTime.Now;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, fechaPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                model.ConsultaRealizada = true;
+                model.Mensaje = "No tiene permisos para consultar stock.";
+                return PartialView("~/Views/Productos/_StockPorSucursalesProductoModal.cshtml", model);
+            }
+
+            if (idCorte <= 0)
+            {
+                model.ConsultaRealizada = true;
+                model.Mensaje = "Producto inválido.";
+                return PartialView("~/Views/Productos/_StockPorSucursalesProductoModal.cshtml", model);
+            }
+
+            try
+            {
+                var corte = oCorteN.findCorteById(idCorte, true);
+                if (corte == null || corte.IdCorte <= 0)
+                {
+                    model.ConsultaRealizada = true;
+                    model.Mensaje = "No se encontró el producto seleccionado.";
+                    return PartialView("~/Views/Productos/_StockPorSucursalesProductoModal.cshtml", model);
+                }
+
+                var filtro = CrearFiltroExistencia(user);
+                filtro.IdSucursal = 0;
+                filtro.FechaHasta = fechaHasta;
+                filtro.IdCorte = idCorte;
+                filtro.SoloConStock = false;
+
+                model = oCorteN.ObtenerMatrizExistenciaPorSucursales(filtro);
+                model.Filtro = filtro;
+
+                ViewBag.ProductoNombre = corte.CorteDesc;
+                ViewBag.ProductoCodigo = corte.Codigo;
+                ViewBag.ProductoId = corte.IdCorte;
+                ViewBag.ProductoSinStock = !model.Productos.Any() || !model.Productos.Any(x => x.TieneStockPositivo);
+            }
+            catch (Exception ex)
+            {
+                model = new Entidades.ExistenciaPorSucursalesVm
+                {
+                    ConsultaRealizada = true,
+                    Mensaje = "Error al consultar la existencia por sucursales. " + ex.Message
+                };
+            }
+
+            return PartialView("~/Views/Productos/_StockPorSucursalesProductoModal.cshtml", model);
         }
 
         public ActionResult Nuevo(string tipoCompra)

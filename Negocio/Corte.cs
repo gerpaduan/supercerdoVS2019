@@ -675,6 +675,7 @@ namespace Negocio
                 filtro.Tipo ?? "",
                 filtro.IdProveedor,
                 filtro.IdMarca,
+                filtro.IdCorte,
                 filtro.SoloConStock) ?? new List<Entidades.ExistenciaStockPorSucursalPlanoVm>();
 
             resultado.Columnas = plano

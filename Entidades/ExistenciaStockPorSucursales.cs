@@ -12,6 +12,7 @@ namespace Entidades
         public string Tipo { get; set; }
         public int IdProveedor { get; set; }
         public int IdMarca { get; set; }
+        public int IdCorte { get; set; }
         public bool SoloConStock { get; set; }
         public string EstadoStock { get; set; }
 

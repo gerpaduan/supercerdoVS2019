@@ -2068,6 +2068,7 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Productos.cshtml" />
     <Content Include="Views\Productos\Index.cshtml" />
+    <Content Include="Views\Productos\_StockPorSucursalesProductoModal.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
