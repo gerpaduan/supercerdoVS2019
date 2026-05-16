@@ -87,21 +87,38 @@
                     </div>
 
                     <div class="form-group mb-0">
-                        <label for="formaPago" class="filtro-label">Forma de pago</label>
-                        <select id="formaPago"
-                                name="formaPago"
-                                class="form-control">
-                            <option value="">Todas las formas de pago</option>
-
-                            @foreach (Entidades.Venta.FormaPagoEnum fp
-                                    in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
-                            {
-                                <option value="@fp.ToString()">
-                                    @fp.ToString()
-                                </option>
-                            }
-
-                        </select>
+                        <label for="btnFiltroFormaPago" class="filtro-label">Forma de pago</label>
+                        <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroFormaPagoDropdown">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn"
+                                    type="button"
+                                    id="btnFiltroFormaPago"
+                                    data-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                <span id="filtroFormaPagoTexto">Todas las formas de pago</span>
+                                <span id="filtroFormaPagoBadge" class="badge badge-primary d-none ml-2">0</span>
+                                <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2"
+                                 aria-labelledby="btnFiltroFormaPago">
+                                <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarFormaPago">
+                                    Todas las formas de pago
+                                </button>
+                                <div class="dropdown-divider my-2"></div>
+                                @foreach (Entidades.Venta.FormaPagoEnum fp
+                                        in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
+                                {
+                                    var formaPagoNombre = fp.ToString();
+                                    <label class="dropdown-item filtro-forma-pago-item px-2 mb-0">
+                                        <input type="checkbox"
+                                               class="mr-2 chk-forma-pago"
+                                               value="@formaPagoNombre"
+                                               data-label="@formaPagoNombre" />
+                                        <span>@formaPagoNombre</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -198,18 +215,47 @@
 
         const buscadorCliente = document.getElementById("buscadorCliente");
         const buscadorVendedor = document.getElementById("buscadorVendedor");
-        const filtroFormaPago = document.getElementById("formaPago");
+        const filtroFormaPagoChecks = Array.from(document.querySelectorAll(".chk-forma-pago"));
+        const filtroFormaPagoTexto = document.getElementById("filtroFormaPagoTexto");
+        const filtroFormaPagoBadge = document.getElementById("filtroFormaPagoBadge");
+        const btnLimpiarFormaPago = document.getElementById("btnLimpiarFormaPago");
         const ventas = document.querySelectorAll(".venta-item");
+
+        function getFormasPagoSeleccionadas() {
+            return filtroFormaPagoChecks
+                .filter(chk => chk.checked)
+                .map(chk => (chk.value || "").toLowerCase());
+        }
+
+        function actualizarResumenFormaPago() {
+            const seleccionadas = filtroFormaPagoChecks.filter(chk => chk.checked);
+            const cantidad = seleccionadas.length;
+
+            if (cantidad === 0) {
+                filtroFormaPagoTexto.textContent = "Todas las formas de pago";
+                filtroFormaPagoBadge.classList.add("d-none");
+                return;
+            }
+
+            if (cantidad === 1) {
+                filtroFormaPagoTexto.textContent = seleccionadas[0].dataset.label || seleccionadas[0].value || "Forma de pago";
+                filtroFormaPagoBadge.classList.add("d-none");
+                return;
+            }
+
+            filtroFormaPagoTexto.textContent = "Forma de pago";
+            filtroFormaPagoBadge.textContent = cantidad.toString();
+            filtroFormaPagoBadge.classList.remove("d-none");
+        }
 
         function aplicarFiltros() {
 
             const textoCliente = (buscadorCliente?.value || "").toLowerCase();
             const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
-            const formaPagoSel = (filtroFormaPago?.value || "").toLowerCase();
+            const formasPagoSeleccionadas = getFormasPagoSeleccionadas();
 
             let total = 0;
             let cant = 0;
-            let algunaVisible = false;
 
             ventas.forEach(v => {
 
@@ -228,8 +274,8 @@
                     vendedor.includes(textoVendedor);
 
                 const coincideFormaPago =
-                    !formaPagoSel ||
-                    formaPago === formaPagoSel;
+                    formasPagoSeleccionadas.length === 0 ||
+                    formasPagoSeleccionadas.includes(formaPago);
 
                 const mostrar =
                     coincideCliente &&
@@ -239,8 +285,6 @@
                 v.style.display = mostrar ? "" : "none";
 
                 if (mostrar) {
-                    algunaVisible = true;
-
                     const valor = parseFloat(
                         v.querySelector(".importe")?.dataset.valor || 0
                     );
@@ -270,7 +314,27 @@
 
         buscadorCliente?.addEventListener("input", aplicarFiltros);
         buscadorVendedor?.addEventListener("input", aplicarFiltros);
-        filtroFormaPago?.addEventListener("change", aplicarFiltros);
+        filtroFormaPagoChecks.forEach(chk => {
+            chk.addEventListener("change", function () {
+                actualizarResumenFormaPago();
+                aplicarFiltros();
+            });
+        });
+
+        btnLimpiarFormaPago?.addEventListener("click", function (e) {
+            e.preventDefault();
+            filtroFormaPagoChecks.forEach(chk => {
+                chk.checked = false;
+            });
+            actualizarResumenFormaPago();
+            aplicarFiltros();
+        });
+
+        document.querySelector(".filtro-forma-pago-menu")?.addEventListener("click", function (e) {
+            e.stopPropagation();
+        });
+
+        actualizarResumenFormaPago();
 
     </script>
 }
@@ -373,6 +437,41 @@
     .filtros-ventas-card .btn {
         min-height: 2.65rem;
         border-radius: .55rem;
+    }
+
+    .filtro-forma-pago-btn {
+        border: 1px solid #ced4da;
+        background: #fff;
+        color: #495057;
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .filtro-forma-pago-btn:focus,
+    .filtro-forma-pago-btn:hover {
+        background: #fff;
+        color: #495057;
+    }
+
+    .filtro-forma-pago-menu {
+        max-height: 320px;
+        overflow-y: auto;
+        border-radius: .7rem;
+        box-shadow: 0 .35rem 1rem rgba(0, 0, 0, .12);
+    }
+
+    .filtro-forma-pago-item {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        border-radius: .45rem;
+    }
+
+    .filtro-forma-pago-item:hover,
+    .filtro-forma-pago-clear:hover {
+        background-color: #f8f9fc;
     }
 
     /* Solo en pantallas grandes */
