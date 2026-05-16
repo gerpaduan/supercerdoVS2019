@@ -296,11 +296,12 @@
             const precio = Number(detalle.precioKg || 0);
             const cant = Number(detalle.cantKg || 0);
             const subtotal = precio * cant;
+            const idExpendio = parseInt(item.idExpendio, 10) || 0;
 
             return {
                 index: POSState.nextIndex(),
                 idCorte: 0,
-                idExpendio: parseInt(item.idExpendio, 10) || 0,
+                idExpendio: idExpendio,
                 producto: detalle.producto || ('Expendio #' + item.idExpendio),
                 descripcion: detalle.producto || '',
                 codigo: detalle.codigo || 0,
@@ -320,7 +321,7 @@
             if (id <= 0) return;
 
             if (getIdsActuales().indexOf(id) >= 0) {
-                showMessage('warning', 'Ese expendio ya está cargado en la venta actual.');
+                showMessage('warning', 'El expendio ya fue cargado en la venta actual.');
                 buscar();
                 return;
             }
@@ -333,7 +334,14 @@
                 data: { idExpendio: id },
                 success: function (resp) {
                     if (!resp || resp.ok === false) {
-                        showMessage('warning', resp?.msg || 'No se pudo cargar el expendio.');
+                        const msg = (resp && resp.msg ? String(resp.msg) : '').trim();
+                        const msgNormalizado = msg.toUpperCase();
+                        const noDisponible = msgNormalizado.indexOf('NO EXISTE') >= 0
+                            || msgNormalizado.indexOf('ASIGNAD') >= 0;
+
+                        showMessage('warning', noDisponible
+                            ? 'El expendio ya fue cargado o asignado y no está disponible para esta venta.'
+                            : (msg || 'No se pudo cargar el expendio.'));
                         return;
                     }
 
@@ -341,7 +349,7 @@
                     const lineas = resp.lineas || [];
 
                     if (expendio.asignado === true) {
-                        showMessage('warning', 'El expendio ya fue asignado a una venta.');
+                        showMessage('warning', 'El expendio ya fue cargado o asignado y no está disponible para esta venta.');
                         buscar();
                         return;
                     }
@@ -360,6 +368,9 @@
                     options.recalculateTotal();
                     options.updateSaleState();
                     options.updateCartSummary?.();
+                    options.beep?.();
+                    navigator.vibrate?.(80);
+                    $('#inputCodigo').val('');
                     options.showWaiting?.();
                     updateRemoveButton();
 
@@ -484,6 +495,7 @@
             },
             open: open,
             buscar: buscar,
+            cargarExpendio: cargarExpendio,
             syncAssignedFromCart: syncAssignedFromCart,
             quitarExpendios: quitarExpendios
         };

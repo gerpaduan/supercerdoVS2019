@@ -659,13 +659,13 @@ else
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=4")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=20")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=21")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=6")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=3")"></script>
     <script>
     window.EgresosCajaUrls = {
@@ -1231,6 +1231,7 @@ else
         recalculateTotal: function () { return posCart ? posCart.recalculateTotal() : null; },
         updateSaleState: function () { return posCart ? posCart.updateSaleState() : null; },
         updateCartSummary: function () { return posCart ? posCart.updateCartSummary?.() : null; },
+        beep: beep,
         showWaiting: function () { return posProduct ? posProduct.showWaiting() : null; },
         focusCodigo: function () { return posKeyboard.focusCodigo(); }
     });

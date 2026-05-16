@@ -49,6 +49,20 @@
             };
         }
 
+        // Detecta codigos de barra de punto de expendio en formato PE123F.
+        function parseExpendioBarcode(input) {
+            const normalized = normalizeInput(input);
+            const match = normalized.match(/^PE(\d+)F$/);
+            if (!match) return null;
+
+            const idExpendio = parseInt(match[1], 10) || 0;
+            if (idExpendio <= 0) return null;
+
+            return {
+                idExpendio: idExpendio
+            };
+        }
+
         // Devuelve el foco al input principal del POS.
         function focusCodigo(selectText) {
             if (soloFormaPago) return;
@@ -90,6 +104,17 @@
             $('#prodSubtotal').text('$ 0,00');
             $('#inputCantidad').prop('disabled', true).val('');
             $('#btnAgregarProducto').prop('disabled', true);
+        }
+
+        function abortPendingProductRequest() {
+            if (reqProducto && reqProducto.readyState !== 4) {
+                reqProducto.abort();
+            }
+
+            reqProducto = null;
+            buscandoProducto = false;
+            ultimoCodigoPedido = null;
+            setSearchingState(false);
         }
 
         // Muestra un mensaje de espera mientras el backend responde.
@@ -263,6 +288,18 @@
             return false;
         }
 
+        function processExpendioBarcode() {
+            if (soloFormaPago) return false;
+
+            const entrada = normalizeInput($('#inputCodigo').val());
+            const parsed = parseExpendioBarcode(entrada);
+            if (!parsed) return false;
+
+            abortPendingProductRequest();
+            window.POSExpendiosCurrent?.cargarExpendio?.(parsed.idExpendio);
+            return true;
+        }
+
         // Centraliza la accion Enter del bloque de producto.
         // Si el foco esta en cantidad, agrega.
         // Si el foco esta en codigo, busca o intenta auto-agregado.
@@ -278,6 +315,12 @@
             }
 
             if (enterDesdeTecladoVirtual || inputActivo.id === 'inputCodigo') {
+                const autoCargaExpendio = processExpendioBarcode();
+                if (autoCargaExpendio) {
+                    enterDesdeTecladoVirtual = false;
+                    return;
+                }
+
                 const autoAgregado = processCodeWithQuantity();
                 enterDesdeTecladoVirtual = false;
 
@@ -441,7 +484,8 @@
             openSearchModal: openSearchModal,
             normalizeInput: normalizeInput,
             parseFloatAR: parseFloatAR,
-            parseCantidadXCodigo: parseCantidadXCodigo
+            parseCantidadXCodigo: parseCantidadXCodigo,
+            parseExpendioBarcode: parseExpendioBarcode
         };
 
         // Wrappers globales para mantener compatibilidad con el codigo que todavia
@@ -452,6 +496,7 @@
         window.normalizarEntrada = normalizeInput;
         window.parseFloatAR = parseFloatAR;
         window.parseCantidadXCodigo = parseCantidadXCodigo;
+        window.parseExpendioBarcode = parseExpendioBarcode;
         window.mostrarProducto = showProduct;
         window.mostrarSinCoincidencia = showNoMatch;
         window.mostrarEsperando = showWaiting;

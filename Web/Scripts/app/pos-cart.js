@@ -229,6 +229,9 @@
                     : (l.bonificacion > 0
                         ? " | Bonif:" + l.bonificacion + "%"
                         : " | Recargo:" + (l.bonificacion * -1) + "%");
+                const detalleExpendio = (parseInt(l.idExpendio, 10) || 0) > 0
+                    ? `<div class="text-muted small">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp.Nro: ${l.idExpendio}</div>`
+                    : "";
 
                 $tbody.append(`
                     <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
@@ -236,6 +239,7 @@
                             <div class="fw-bold">
                                 #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
                             </div>
+                            ${detalleExpendio}
                             <div class="d-flex justify-content-between item-detalle">
                                 <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}</span>
                                 <span class="fw-bold">${l.subtotal}</span>
