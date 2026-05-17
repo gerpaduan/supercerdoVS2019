@@ -12,6 +12,7 @@ namespace CarniSys.PrintAgent
 
         public AgentApplicationContext()
         {
+            StartupRegistration.EnsureRegistered();
             _config = ConfigStore.Load();
 
             var menu = new ContextMenuStrip();
