@@ -161,9 +161,11 @@
     <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
+    <Compile Include="Models\MarcaEditVm.cs" />
     <Compile Include="Models\PuntoExpendioVm.cs" />
     <Compile Include="Models\ReciboPagoVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
+    <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
     <Compile Include="Models\UsuariosVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
@@ -2068,12 +2070,16 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Productos.cshtml" />
     <Content Include="Views\Productos\Index.cshtml" />
+    <Content Include="Views\Productos\Marcas.cshtml" />
+    <Content Include="Views\Productos\Tipos.cshtml" />
     <Content Include="Views\Productos\_StockPorSucursalesProductoModal.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
     <Content Include="Views\Shared\AccesoDenegado.cshtml" />
     <Content Include="Views\Productos\AddOrEdit.cshtml" />
+    <Content Include="Views\Productos\_AddOrEditMarca.cshtml" />
+    <Content Include="Views\Productos\_AddOrEditTipoProducto.cshtml" />
     <Content Include="Views\Cajas\CajasAbiertas.cshtml" />
     <Content Include="Views\Cajas\EgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_AddOrEditEgresoCaja.cshtml" />
@@ -2098,6 +2104,8 @@
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
+    <Content Include="Views\Productos\_MarcasTabla.cshtml" />
+    <Content Include="Views\Productos\_TiposProductoTabla.cshtml" />
     <Content Include="Views\PuntosExpendio\Abrir.cshtml" />
     <Content Include="Views\PuntosExpendio\POS.cshtml" />
     <Content Include="Views\PuntosExpendio\Sectores.cshtml" />

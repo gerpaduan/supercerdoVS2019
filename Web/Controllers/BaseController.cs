@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Web;
 using System.Web.Mvc;
 using Utilidades;
@@ -94,6 +96,26 @@ namespace Web.Controllers
             ViewBag.PermisoFechaMensaje = idCreador >= 0
                 ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
                 : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+        }
+
+        protected string RenderPartialViewToString(string viewName, object model)
+        {
+            if (!string.IsNullOrWhiteSpace(viewName))
+            {
+                ViewData.Model = model;
+            }
+
+            using (var sw = new StringWriter())
+            {
+                ViewEngineResult viewResult = ViewEngines.Engines.FindPartialView(ControllerContext, viewName);
+                if (viewResult.View == null)
+                    throw new InvalidOperationException("No se encontró la vista parcial '" + viewName + "'.");
+
+                var viewContext = new ViewContext(ControllerContext, viewResult.View, ViewData, TempData, sw);
+                viewResult.View.Render(viewContext, sw);
+                viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
+                return sw.GetStringBuilder().ToString();
+            }
         }
     }
 }

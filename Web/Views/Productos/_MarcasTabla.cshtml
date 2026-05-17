@@ -1,0 +1,63 @@
+@model System.Data.DataTable
+@using System
+@using System.Data
+
+@{
+    bool puedeCrear = ViewBag.PuedeCrearMarca != null && (bool)ViewBag.PuedeCrearMarca;
+    bool usuarioAdmin = ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin;
+}
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th>Marca</th>
+                <th style="width:30%;">Propietario</th>
+                <th>Otros datos</th>
+                <th style="width:150px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No se encontraron marcas.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (DataRow row in Model.Rows)
+                {
+                    int id = row["idPersona"] != DBNull.Value ? Convert.ToInt32(row["idPersona"]) : 0;
+                    string marca = Convert.ToString(row["Marca"]) ?? "";
+                    string propietario = row.Table.Columns.Contains("Propietario") ? (Convert.ToString(row["Propietario"]) ?? "") : "";
+                    string otrosDatos = row.Table.Columns.Contains("otrosDatos") ? (Convert.ToString(row["otrosDatos"]) ?? "") : "";
+
+                    <tr>
+                        <td class="font-weight-bold">@marca</td>
+                        <td>@(!string.IsNullOrWhiteSpace(propietario) ? propietario : "-")</td>
+                        <td>@(!string.IsNullOrWhiteSpace(otrosDatos) ? otrosDatos : "-")</td>
+                        <td class="text-nowrap">
+                            @if (puedeCrear)
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-editar-marca-admin"
+                                        data-id="@id">
+                                    Modificar
+                                </button>
+                            }
+                            else if (usuarioAdmin)
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-editar-marca-admin"
+                                        data-id="@id">
+                                    Modificar
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

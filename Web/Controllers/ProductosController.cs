@@ -7,7 +7,9 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
 
@@ -39,6 +41,9 @@ namespace Web.Controllers
 
             ViewBag.Sucursales = sucursales;
             ViewBag.SucursalId = SucursalId;
+            ViewBag.PuedeEditarProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null);
+            ViewBag.PuedeModificarPreciosProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.ModificarPrecios, null);
+            ViewBag.PuedeEliminarProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null);
 
             return View(productos);
         }
@@ -700,6 +705,348 @@ namespace Web.Controllers
             lista.Insert(0, new SelectListItem { Value = "", Text = "-- Seleccione --" });
 
             return lista;
+        }
+
+        public ActionResult Tipos(string buscar = "")
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.VerTiposProducto, null))
+            {
+                TempData["FlashError"] = "No tenés permisos para ver tipos de producto.";
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.BuscarTipoProducto = (buscar ?? "").Trim();
+            ViewBag.PuedeEditarTiposProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null);
+
+            DataTable dt = oCorteN.obtenerTiposProductoGrilla((buscar ?? "").Trim()) ?? new DataTable();
+            return View(dt);
+        }
+
+        [HttpGet]
+        public ActionResult TipoProductoModal(string tipo = "")
+        {
+            try
+            {
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null))
+                    return Content("<div class='alert alert-danger mb-0'>No tenés permisos para administrar tipos de producto.</div>");
+
+                bool esEdicion = !string.IsNullOrWhiteSpace(tipo);
+                var model = new Web.Models.TipoProductoEditVm
+                {
+                    TipoOriginal = "",
+                    Tipo = "",
+                    Orden = 100,
+                    Reservado = false
+                };
+
+                if (esEdicion)
+                {
+                    var row = BuscarTipoProductoRow(tipo);
+                    if (row == null)
+                        return Content("<div class='alert alert-danger mb-0'>No se encontró el tipo de producto seleccionado.</div>");
+
+                    model.TipoOriginal = Convert.ToString(row["tipo"]);
+                    model.Tipo = Convert.ToString(row["tipo"]);
+                    model.Orden = row["orden"] != DBNull.Value ? Convert.ToInt32(row["orden"]) : 100;
+                    model.Reservado = row.Table.Columns.Contains("Reservado")
+                        && row["Reservado"] != DBNull.Value
+                        && Convert.ToBoolean(row["Reservado"]);
+                }
+
+                string html = RenderPartialViewToString("_AddOrEditTipoProducto", model);
+                return Content(html);
+            }
+            catch (Exception ex)
+            {
+                string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Content("<div class='alert alert-danger mb-0'>No se pudo abrir el formulario: " + HttpUtility.HtmlEncode(detalle) + "</div>");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarTipoProducto(Web.Models.TipoProductoEditVm model)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null))
+                return Json(new { success = false, message = "No tenés permisos para administrar tipos de producto." });
+
+            string tipo = (model != null ? model.Tipo : null) ?? "";
+            string tipoOriginal = (model != null ? model.TipoOriginal : null) ?? "";
+            tipo = tipo.Trim();
+            tipoOriginal = tipoOriginal.Trim();
+            bool esInsert = string.IsNullOrWhiteSpace(tipoOriginal);
+
+            if (string.IsNullOrWhiteSpace(tipo))
+                return Json(new { success = false, message = "El campo Tipo no puede ser vacío." });
+
+            if (model == null || model.Orden <= 0)
+                return Json(new { success = false, message = "El campo Orden debe ser un número entero mayor a cero." });
+
+            if (!esInsert)
+            {
+                var row = BuscarTipoProductoRow(tipoOriginal);
+                if (row == null)
+                    return Json(new { success = false, message = "No se encontró el tipo de producto seleccionado." });
+
+                bool reservado = row.Table.Columns.Contains("Reservado")
+                    && row["Reservado"] != DBNull.Value
+                    && Convert.ToBoolean(row["Reservado"]);
+
+                if (reservado)
+                    return Json(new { success = false, message = "El tipo seleccionado es reservado por el sistema y no puede ser modificado." });
+            }
+
+            string mensaje = oCorteN.addOrEditTipoProducto(tipo, model.Orden.ToString(CultureInfo.InvariantCulture), esInsert, tipoOriginal);
+            if (!string.IsNullOrWhiteSpace(mensaje))
+                return Json(new { success = false, message = mensaje });
+
+            return Json(new
+            {
+                success = true,
+                message = esInsert ? "El tipo de producto se registró correctamente." : "El tipo de producto se actualizó correctamente."
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult EliminarTipoProducto(string tipo)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null))
+                return Json(new { success = false, message = "No tenés permisos para eliminar tipos de producto." });
+
+            tipo = (tipo ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(tipo))
+                return Json(new { success = false, message = "No se encontró el tipo de producto seleccionado." });
+
+            var row = BuscarTipoProductoRow(tipo);
+            if (row == null)
+                return Json(new { success = false, message = "No se encontró el tipo de producto seleccionado." });
+
+            bool reservado = row.Table.Columns.Contains("Reservado")
+                && row["Reservado"] != DBNull.Value
+                && Convert.ToBoolean(row["Reservado"]);
+
+            if (reservado)
+                return Json(new { success = false, message = "El tipo seleccionado es reservado por el sistema y no puede eliminarse." });
+
+            string mensaje = oCorteN.eliminarTipoProducto(tipo);
+            if (!string.IsNullOrWhiteSpace(mensaje))
+                return Json(new { success = false, message = mensaje });
+
+            return Json(new { success = true, message = "El tipo de producto se eliminó correctamente." });
+        }
+
+        public ActionResult Marcas(string buscar = "")
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.VerCortes, null))
+            {
+                TempData["FlashError"] = "No tenés permisos para ver marcas.";
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.BuscarMarcaAdmin = (buscar ?? "").Trim();
+            ViewBag.PuedeCrearMarca = PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null);
+            ViewBag.UsuarioAdmin = PermisosHelper.ObtenerUsuario(Session)?.Admin ?? false;
+
+            DataTable dt = oPersonaN.buscarPersona((buscar ?? "").Trim(), true) ?? new DataTable();
+            return View(dt);
+        }
+
+        [HttpGet]
+        public ActionResult MarcaModal(int idPersona = 0)
+        {
+            try
+            {
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                    return Content("<div class='alert alert-danger mb-0'>No tenés permisos para administrar marcas.</div>");
+
+                var usuario = PermisosHelper.ObtenerUsuario(Session);
+                bool esAdministrador = usuario != null && usuario.Admin;
+
+                var model = new Web.Models.MarcaEditVm
+                {
+                    IdPersona = 0,
+                    RazonSocial = "",
+                    OtrosDatos = "",
+                    IdPropietario = null,
+                    PropietarioNombre = "",
+                    EsAdministrador = esAdministrador,
+                    SoloLecturaNombre = false
+                };
+
+                if (idPersona > 0)
+                {
+                    var marca = oPersonaN.findById(idPersona);
+                    if (marca == null || marca.IdPersona <= 0 || !marca.Marca)
+                        return Content("<div class='alert alert-danger mb-0'>No se encontró la marca seleccionada.</div>");
+
+                    model.IdPersona = marca.IdPersona;
+                    model.RazonSocial = marca.RazonSocial ?? "";
+                    model.OtrosDatos = marca.OtrosDatos ?? "";
+                    model.IdPropietario = marca.Propietario != null && marca.Propietario.IdPersona > 0
+                        ? (int?)marca.Propietario.IdPersona
+                        : (marca.IdPropietario.HasValue && marca.IdPropietario.Value > 0 ? marca.IdPropietario : null);
+                    model.PropietarioNombre = marca.Propietario != null ? (marca.Propietario.RazonSocial ?? "") : "";
+                    model.SoloLecturaNombre = !esAdministrador;
+                }
+
+                string html = RenderPartialViewToString("_AddOrEditMarca", model);
+                return Content(html);
+            }
+            catch (Exception ex)
+            {
+                string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Content("<div class='alert alert-danger mb-0'>No se pudo abrir el formulario: " + HttpUtility.HtmlEncode(detalle) + "</div>");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarMarca(Web.Models.MarcaEditVm model)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return Json(new { success = false, message = "No tenés permisos para administrar marcas." });
+
+            var usuario = PermisosHelper.ObtenerUsuario(Session);
+            bool esAdministrador = usuario != null && usuario.Admin;
+            bool esInsert = model == null || model.IdPersona <= 0;
+
+            if (model == null)
+                return Json(new { success = false, message = "No se pudo procesar la marca." });
+
+            model.RazonSocial = (model.RazonSocial ?? "").Trim();
+            model.OtrosDatos = (model.OtrosDatos ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(model.RazonSocial))
+                return Json(new { success = false, message = "El campo Nombre Marca no puede estar vacío." });
+
+            Entidades.Persona marca = esInsert ? new Entidades.Persona() : oPersonaN.findById(model.IdPersona);
+            if (!esInsert && (marca == null || marca.IdPersona <= 0 || !marca.Marca))
+                return Json(new { success = false, message = "No se encontró la marca seleccionada." });
+
+            if (!esInsert && !esAdministrador)
+            {
+                string nombreActual = (marca.RazonSocial ?? "").Trim();
+                if (!string.Equals(nombreActual, model.RazonSocial, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Solo los administradores pueden modificar el nombre de una marca existente."
+                    });
+                }
+            }
+
+            string advertencia = ConstruirAdvertenciaMarcasParecidas(model.RazonSocial, model.IdPersona);
+            if (!string.IsNullOrWhiteSpace(advertencia) && !model.ConfirmarMarcasParecidas)
+            {
+                return Json(new
+                {
+                    success = false,
+                    requiresConfirm = true,
+                    message = advertencia
+                });
+            }
+
+            marca.RazonSocial = model.RazonSocial;
+            marca.Identificacion = model.RazonSocial;
+            marca.Marca = true;
+            marca.OtrosDatos = model.OtrosDatos;
+            marca.Propietario = null;
+            marca.IdPropietario = null;
+
+            if (model.IdPropietario.HasValue && model.IdPropietario.Value > 0)
+            {
+                var propietario = oPersonaN.findById(model.IdPropietario.Value);
+                if (propietario == null || propietario.IdPersona <= 0)
+                    return Json(new { success = false, message = "No se encontró la persona seleccionada como propietaria." });
+
+                marca.Propietario = propietario;
+                marca.IdPropietario = propietario.IdPersona;
+            }
+
+            oPersonaN.addOrEditPersona(marca);
+
+            return Json(new
+            {
+                success = true,
+                message = esInsert ? "La marca se guardó correctamente." : "La marca se actualizó correctamente."
+            });
+        }
+
+        private DataRow BuscarTipoProductoRow(string tipo)
+        {
+            tipo = (tipo ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(tipo))
+                return null;
+
+            DataTable dt = oCorteN.obtenerTiposProductoGrilla("") ?? new DataTable();
+            return dt.AsEnumerable().FirstOrDefault(row =>
+                string.Equals(Convert.ToString(row["tipo"]) ?? "", tipo, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string ConstruirAdvertenciaMarcasParecidas(string razonSocial, int idMarcaActual)
+        {
+            string texto = (razonSocial ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(texto))
+                return "";
+
+            var articulos = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "el", "la", "los", "las", "un", "una", "unos", "unas",
+                "de", "del", "en", "y", "por", "para", "con"
+            };
+
+            DataTable acumulado = null;
+            string[] palabras = Regex.Split(texto, "\\s+");
+
+            foreach (string palabraOriginal in palabras)
+            {
+                string palabra = (palabraOriginal ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(palabra) || articulos.Contains(palabra))
+                    continue;
+
+                DataTable dtTemp = oPersonaN.existenMarcasParecidas(palabra, idMarcaActual);
+                if (dtTemp == null || dtTemp.Rows.Count == 0)
+                    continue;
+
+                if (acumulado == null)
+                    acumulado = dtTemp.Clone();
+
+                foreach (DataRow row in dtTemp.Rows)
+                {
+                    string marca = Convert.ToString(row["Marca"]) ?? "";
+                    string propietario = row.Table.Columns.Contains("Propietario") ? (Convert.ToString(row["Propietario"]) ?? "") : "";
+
+                    bool existe = acumulado.AsEnumerable().Any(r =>
+                        string.Equals(Convert.ToString(r["Marca"]) ?? "", marca, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(Convert.ToString(r["Propietario"]) ?? "", propietario, StringComparison.OrdinalIgnoreCase));
+
+                    if (!existe)
+                        acumulado.ImportRow(row);
+                }
+            }
+
+            if (acumulado == null || acumulado.Rows.Count == 0)
+                return "";
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Ya existen marcas parecidas:");
+            sb.AppendLine();
+
+            foreach (DataRow row in acumulado.Rows)
+            {
+                string marca = Convert.ToString(row["Marca"]) ?? "";
+                string propietario = row.Table.Columns.Contains("Propietario") ? (Convert.ToString(row["Propietario"]) ?? "") : "";
+                sb.Append("• ").Append(marca);
+                if (!string.IsNullOrWhiteSpace(propietario))
+                    sb.Append(" | Propietario: ").Append(propietario);
+                sb.AppendLine();
+            }
+
+            sb.AppendLine();
+            sb.Append("¿Desea guardar la marca igualmente?");
+            return sb.ToString();
         }
 
 

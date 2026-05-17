@@ -1,0 +1,157 @@
+@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "Marcas";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    bool puedeCrear = ViewBag.PuedeCrearMarca != null && (bool)ViewBag.PuedeCrearMarca;
+    bool usuarioAdmin = ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin;
+    string buscar = ViewBag.BuscarMarcaAdmin as string ?? "";
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="mb-1">Marcas</h3>
+            <div class="text-muted">Administración de marcas utilizadas por Productos.</div>
+        </div>
+        <div class="d-flex flex-wrap">
+            <a href="@Url.Action("Index", "Productos")" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left mr-1"></i> Volver a Productos
+            </a>
+            @if (puedeCrear)
+            {
+                <button type="button" class="btn btn-primary" id="btnNuevaMarca">
+                    <i class="fas fa-plus mr-1"></i> Nueva marca
+                </button>
+            }
+        </div>
+    </div>
+
+    @using (Html.BeginForm("Marcas", "Productos", FormMethod.Get, new { @class = "card shadow-sm mb-3" }))
+    {
+        <div class="card-body">
+            <div class="form-row align-items-end">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Buscar marca</label>
+                    <input type="text"
+                           class="form-control"
+                           name="buscar"
+                           value="@buscar"
+                           autocomplete="off"
+                           placeholder="Escribí una marca..." />
+                </div>
+                <div class="col-12 col-md-6 col-lg-3 mb-2 d-flex">
+                    <button type="submit" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-search mr-1"></i> Buscar
+                    </button>
+                    <a href="@Url.Action("Marcas", "Productos")" class="btn btn-outline-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="alert alert-info">
+        Cualquier usuario con permiso para agregar productos puede crear nuevas marcas.
+        Solo los administradores pueden modificar el nombre de una marca existente.
+    </div>
+
+    @using (Html.BeginForm("", "", FormMethod.Post, new { id = "formTokenMarcasAdmin" }))
+    {
+        @Html.AntiForgeryToken()
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0" id="tablaMarcasWrap">
+            @Html.Partial("~/Views/Productos/_MarcasTabla.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalMarcaAdmin" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalMarcaAdminTitulo">Marca</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalMarcaAdminBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script>
+        (function () {
+            var urlModal = '@Url.Action("MarcaModal", "Productos")';
+            var urlGuardar = '@Url.Action("GuardarMarca", "Productos")';
+
+            function abrirModal(idPersona) {
+                var titulo = idPersona ? 'Modificar marca' : 'Nueva marca';
+                $('#modalMarcaAdminTitulo').text(titulo);
+                $('#modalMarcaAdminBody').html('<div class="text-center text-muted py-4">Cargando...</div>');
+                $('#modalMarcaAdmin').modal('show');
+
+                $.get(urlModal, { idPersona: idPersona || 0 })
+                    .done(function (html) {
+                        $('#modalMarcaAdminBody').html(html);
+                    })
+                    .fail(function (xhr) {
+                        var html = xhr && xhr.responseText
+                            ? xhr.responseText
+                            : '<div class="alert alert-danger mb-0">No se pudo abrir el formulario.</div>';
+                        $('#modalMarcaAdminBody').html(html);
+                    });
+            }
+
+            $(document)
+                .off('click.marcasNuevo', '#btnNuevaMarca')
+                .on('click.marcasNuevo', '#btnNuevaMarca', function () {
+                    abrirModal(0);
+                })
+                .off('click.marcasEditar', '.btn-editar-marca-admin')
+                .on('click.marcasEditar', '.btn-editar-marca-admin', function () {
+                    abrirModal($(this).data('id'));
+                })
+                .off('submit.marcasGuardar', '#formMarcaAdmin')
+                .on('submit.marcasGuardar', '#formMarcaAdmin', function (e) {
+                    e.preventDefault();
+
+                    var $form = $(this);
+
+                    $.ajax({
+                        url: urlGuardar,
+                        type: 'POST',
+                        data: $form.serialize(),
+                        success: function (resp) {
+                            if (resp && resp.requiresConfirm) {
+                                if (confirm(resp.message || 'Ya existen marcas parecidas. ¿Desea guardar igualmente?')) {
+                                    $form.find('input[name="ConfirmarMarcasParecidas"]').val('true');
+                                    $form.trigger('submit');
+                                }
+                                return;
+                            }
+
+                            if (!resp || !resp.success) {
+                                $('#marcaAdminError').removeClass('d-none').text(resp && resp.message ? resp.message : 'No se pudo guardar la marca.');
+                                return;
+                            }
+
+                            alert(resp.message || 'La marca se guardó correctamente.');
+                            window.location.reload();
+                        },
+                        error: function () {
+                            $('#marcaAdminError').removeClass('d-none').text('No se pudo guardar la marca.');
+                        }
+                    });
+                });
+        })();
+    </script>
+}

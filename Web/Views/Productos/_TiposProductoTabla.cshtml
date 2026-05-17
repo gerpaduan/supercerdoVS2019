@@ -1,0 +1,75 @@
+@model System.Data.DataTable
+@using System
+@using System.Data
+
+@{
+    bool puedeEditar = ViewBag.PuedeEditarTiposProducto != null && (bool)ViewBag.PuedeEditarTiposProducto;
+}
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th>Tipo de producto</th>
+                <th style="width:90px;">Orden</th>
+                <th style="width:160px;">Creado</th>
+                <th style="width:160px;">Actualizado</th>
+                <th style="width:150px;">Reservado</th>
+                <th style="width:190px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || Model.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No se encontraron tipos de producto.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (DataRow row in Model.Rows)
+                {
+                    string tipo = Convert.ToString(row["tipo"]) ?? "";
+                    string orden = Convert.ToString(row["orden"]) ?? "";
+                    string creado = row["Creado"] != DBNull.Value ? Convert.ToDateTime(row["Creado"]).ToString("dd/MM/yyyy HH:mm") : "-";
+                    string actualizado = row["Actualizado"] != DBNull.Value ? Convert.ToDateTime(row["Actualizado"]).ToString("dd/MM/yyyy HH:mm") : "-";
+                    bool reservado = row.Table.Columns.Contains("Reservado") && row["Reservado"] != DBNull.Value && Convert.ToBoolean(row["Reservado"]);
+
+                    <tr>
+                        <td class="font-weight-bold">@tipo</td>
+                        <td>@orden</td>
+                        <td>@creado</td>
+                        <td>@actualizado</td>
+                        <td>
+                            @if (reservado)
+                            {
+                                <span class="badge badge-warning">Sistema</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-light border">No</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">
+                            @if (puedeEditar)
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-editar-tipo-producto"
+                                        data-tipo="@tipo"
+                                        @(reservado ? "disabled" : "")>
+                                    Modificar
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger btn-eliminar-tipo-producto"
+                                        data-tipo="@tipo"
+                                        @(reservado ? "disabled" : "")>
+                                    Eliminar
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

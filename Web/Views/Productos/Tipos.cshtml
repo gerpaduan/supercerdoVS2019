@@ -1,0 +1,177 @@
+@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "Tipos de Producto";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    bool puedeEditar = ViewBag.PuedeEditarTiposProducto != null && (bool)ViewBag.PuedeEditarTiposProducto;
+    string buscar = ViewBag.BuscarTipoProducto as string ?? "";
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="mb-1">Tipos de Producto</h3>
+            <div class="text-muted">Administración de tipos disponibles para Productos.</div>
+        </div>
+        <div class="d-flex flex-wrap">
+            <a href="@Url.Action("Index", "Productos")" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left mr-1"></i> Volver a Productos
+            </a>
+            @if (puedeEditar)
+            {
+                <button type="button" class="btn btn-primary" id="btnNuevoTipoProducto">
+                    <i class="fas fa-plus mr-1"></i> Nuevo tipo de producto
+                </button>
+            }
+        </div>
+    </div>
+
+    @using (Html.BeginForm("Tipos", "Productos", FormMethod.Get, new { @class = "card shadow-sm mb-3" }))
+    {
+        <div class="card-body">
+            <div class="form-row align-items-end">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Buscar tipo de producto</label>
+                    <input type="text"
+                           class="form-control"
+                           name="buscar"
+                           value="@buscar"
+                           autocomplete="off"
+                           placeholder="Escribí un tipo..." />
+                </div>
+                <div class="col-12 col-md-6 col-lg-3 mb-2 d-flex">
+                    <button type="submit" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-search mr-1"></i> Buscar
+                    </button>
+                    <a href="@Url.Action("Tipos", "Productos")" class="btn btn-outline-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="alert alert-info">
+        Los tipos reservados por el sistema no pueden modificarse ni eliminarse.
+    </div>
+
+    @using (Html.BeginForm("", "", FormMethod.Post, new { id = "formTokenTiposProducto" }))
+    {
+        @Html.AntiForgeryToken()
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0" id="tablaTiposProductoWrap">
+            @Html.Partial("~/Views/Productos/_TiposProductoTabla.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTipoProducto" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTipoProductoTitulo">Tipo de producto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalTipoProductoBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script>
+        (function () {
+            var urlModal = '@Url.Action("TipoProductoModal", "Productos")';
+            var urlGuardar = '@Url.Action("GuardarTipoProducto", "Productos")';
+            var urlEliminar = '@Url.Action("EliminarTipoProducto", "Productos")';
+            var token = $('#formTokenTiposProducto input[name="__RequestVerificationToken"]').val();
+
+            function abrirModal(tipo) {
+                var titulo = tipo ? 'Modificar tipo de producto' : 'Nuevo tipo de producto';
+                $('#modalTipoProductoTitulo').text(titulo);
+                $('#modalTipoProductoBody').html('<div class="text-center text-muted py-4">Cargando...</div>');
+                $('#modalTipoProducto').modal('show');
+
+                $.get(urlModal, { tipo: tipo || '' })
+                    .done(function (html) {
+                        $('#modalTipoProductoBody').html(html);
+                    })
+                    .fail(function (xhr) {
+                        var html = xhr && xhr.responseText
+                            ? xhr.responseText
+                            : '<div class="alert alert-danger mb-0">No se pudo abrir el formulario.</div>';
+                        $('#modalTipoProductoBody').html(html);
+                    });
+            }
+
+            $(document)
+                .off('click.tiposProductoNuevo', '#btnNuevoTipoProducto')
+                .on('click.tiposProductoNuevo', '#btnNuevoTipoProducto', function () {
+                    abrirModal('');
+                })
+                .off('click.tiposProductoEditar', '.btn-editar-tipo-producto')
+                .on('click.tiposProductoEditar', '.btn-editar-tipo-producto', function () {
+                    abrirModal($(this).data('tipo'));
+                })
+                .off('submit.tiposProductoGuardar', '#formTipoProducto')
+                .on('submit.tiposProductoGuardar', '#formTipoProducto', function (e) {
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: urlGuardar,
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        success: function (resp) {
+                            if (!resp || !resp.success) {
+                                $('#tipoProductoError').removeClass('d-none').text(resp && resp.message ? resp.message : 'No se pudo guardar el tipo de producto.');
+                                return;
+                            }
+
+                            alert(resp.message || 'El tipo de producto se guardó correctamente.');
+                            window.location.reload();
+                        },
+                        error: function () {
+                            $('#tipoProductoError').removeClass('d-none').text('No se pudo guardar el tipo de producto.');
+                        }
+                    });
+                })
+                .off('click.tiposProductoEliminar', '.btn-eliminar-tipo-producto')
+                .on('click.tiposProductoEliminar', '.btn-eliminar-tipo-producto', function () {
+                    var tipo = ($(this).data('tipo') || '').toString();
+                    if (!tipo) return;
+
+                    if (!confirm('¿Está seguro que desea eliminar el Tipo Producto: ' + tipo.toUpperCase() + '?')) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: urlEliminar,
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: token,
+                            tipo: tipo
+                        },
+                        success: function (resp) {
+                            if (!resp || !resp.success) {
+                                alert(resp && resp.message ? resp.message : 'No se pudo eliminar el tipo de producto.');
+                                return;
+                            }
+
+                            alert(resp.message || 'El tipo de producto se eliminó correctamente.');
+                            window.location.reload();
+                        },
+                        error: function () {
+                            alert('No se pudo eliminar el tipo de producto.');
+                        }
+                    });
+                });
+        })();
+    </script>
+}

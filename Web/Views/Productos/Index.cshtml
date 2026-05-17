@@ -9,6 +9,9 @@
 
     var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
     var sucursalIdSeleccionada = (ViewBag.SucursalId != null) ? (int)ViewBag.SucursalId : 0;
+    bool puedeEditarProducto = ViewBag.PuedeEditarProducto != null && (bool)ViewBag.PuedeEditarProducto;
+    bool puedeModificarPreciosProducto = ViewBag.PuedeModificarPreciosProducto != null && (bool)ViewBag.PuedeModificarPreciosProducto;
+    bool puedeEliminarProducto = ViewBag.PuedeEliminarProducto != null && (bool)ViewBag.PuedeEliminarProducto;
 }
 
 <div class="container-fluid productos-wrap">
@@ -75,11 +78,6 @@
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzados">
                 <label class="custom-control-label" for="switchFiltrosAvanzados">Filtros avanzados</label>
-            </div>
-
-            <div class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="switchStockSucursales">
-                <label class="custom-control-label" for="switchStockSucursales">Ver stock sucursales</label>
             </div>
 
         </div>
@@ -343,7 +341,8 @@
                             <td class="text-nowrap">
                                 <button type="button" class="btn btn-sm btn-warning mr-1"
                                         title="Modificar precio"
-                                        onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg')">
+                                        onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg')"
+                                        @(puedeModificarPreciosProducto ? "" : "disabled")>
                                     <i class="fas fa-dollar-sign"></i>
                                 </button>
 
@@ -353,7 +352,7 @@
                                     <i class="fas fa-warehouse"></i>
                                 </button>
 
-                                <a class="btn btn-sm btn-primary mr-1"
+                                <a class="btn btn-sm btn-primary mr-1 @(puedeEditarProducto ? "" : "disabled")"
                                    title="Editar producto"
                                    href="@Url.Action("AddOrEdit", "Productos", new { id = item.idCorte })">
                                     <i class="fas fa-edit"></i>
@@ -361,7 +360,8 @@
 
                                 <button type="button" class="btn btn-sm btn-danger"
                                         title="Eliminar"
-                                        onclick="confirmarEliminar(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
+                                        onclick="confirmarEliminar(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')"
+                                        @(puedeEliminarProducto ? "" : "disabled")>
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -773,15 +773,22 @@
     }
 
     (function initStockSucursales() {
+        if (!switchStock) {
+            toggleStockSucursales(false);
+            return;
+        }
+
         const saved = localStorage.getItem("stockSucursalesProductos");
         const show = saved === "1";
         switchStock.checked = show;
         toggleStockSucursales(show);
     })();
 
-    switchStock.addEventListener("change", function () {
-        toggleStockSucursales(this.checked);
-    });
+    if (switchStock) {
+        switchStock.addEventListener("change", function () {
+            toggleStockSucursales(this.checked);
+        });
+    }
 
     function cargarStocksEnTabla() {
         // consulta 1 vez: devuelve { success:true, items:[{idCorte, idSucursal, stockTexto}] }
