@@ -53,7 +53,7 @@ namespace Web.Controllers
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             string sucOrigen = ObtenerNombreSucursalFiltro(sucursales, idSucursalOrigen);
             string sucDestino = ObtenerNombreSucursalFiltro(sucursales, idSucursalDestino);
-            DataTable dt = oCorteN.obtenerMovimientos(sucOrigen, sucDestino, desde.Date, hasta.Date, "") ?? new DataTable();
+            DataTable dt = oCorteN.obtenerMovimientos(sucOrigen, sucDestino, desde, hasta, "") ?? new DataTable();
 
             var model = new MovimientoIndexVm
             {
@@ -72,6 +72,95 @@ namespace Web.Controllers
             ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Movimiento.VerMovimientos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Movimientos/Index.cshtml", model);
+        }
+
+        public ActionResult Lineas(int idSucursalOrigen = 0, int idSucursalDestino = 0, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string producto = "")
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                if (AjustarFechaSiNoTienePermiso(Permisos.Movimiento.VerMovimientos, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Movimientos", Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            }
+
+            var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            string sucOrigen = ObtenerNombreSucursalFiltro(sucursales, idSucursalOrigen);
+            string sucDestino = ObtenerNombreSucursalFiltro(sucursales, idSucursalDestino);
+            DataTable dt = oCorteN.obtenerMovimientos(sucOrigen, sucDestino, desde.Date, hasta.Date, "") ?? new DataTable();
+
+            var model = new MovimientoLineasIndexPageVm
+            {
+                IdSucursalOrigen = idSucursalOrigen,
+                IdSucursalDestino = idSucursalDestino,
+                Producto = producto ?? "",
+                FechaDesde = desde,
+                FechaHasta = hasta
+            };
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int idMovimiento = ToInt(row, "Id Movimiento", "idMovimiento", "movimiento");
+                if (idMovimiento <= 0 || model.Movimientos.Any(x => x.IdMovimiento == idMovimiento))
+                    continue;
+
+                Entidades.Movimiento movimiento = oCorteN.cargarMovimiento(idMovimiento, false);
+                if (movimiento == null || movimiento.IdMovimiento <= 0)
+                    continue;
+
+                var lineas = (movimiento.ListaCortesPorMov ?? new List<Entidades.CortePorMovimiento>())
+                    .Select(linea => new MovimientoLineaDetalleItemVm
+                    {
+                        Codigo = linea.Corte != null ? linea.Corte.Codigo.ToString() : "-",
+                        Producto = linea.Corte != null ? linea.Corte.CorteDesc : "-",
+                        CantidadKgTexto = linea.CantKg.ToString("N3"),
+                        CantidadUnidadTexto = linea.CantUnidad.ToString("N0"),
+                        Observacion = ConstruirObservacionLineaMovimiento(linea),
+                        CantidadKg = Convert.ToDecimal(linea.CantKg),
+                        CantidadUnidad = Convert.ToDecimal(linea.CantUnidad)
+                    })
+                    .Where(x => CoincideProductoMovimiento(x.Codigo, x.Producto, producto))
+                    .ToList();
+
+                if (lineas.Count == 0)
+                    continue;
+
+                var grupo = new MovimientoLineasGrupoVm
+                {
+                    IdMovimiento = movimiento.IdMovimiento,
+                    CollapseId = "movLineas_" + movimiento.IdMovimiento,
+                    Titulo = "MOVIMIENTO ID: " + movimiento.IdMovimiento,
+                    Subtitulo = movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenCompacto = movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenSecundario = (movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-") + " -> " + (movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-"),
+                    EditUrl = Url.Action("Editar", "Movimientos", new { id = movimiento.IdMovimiento }),
+                    TotalKg = lineas.Sum(x => x.CantidadKg),
+                    TotalUnidades = lineas.Sum(x => x.CantidadUnidad)
+                };
+
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Fecha", Valor = movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm") });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal origen", Valor = movimiento.SucursalOrigen != null ? movimiento.SucursalOrigen.SucursalNombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal destino", Valor = movimiento.SucursalDestino != null ? movimiento.SucursalDestino.SucursalNombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Estado", Valor = ToString(row, "Estado", "estado") });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Usuario", Valor = movimiento.CreadoPor != null ? movimiento.CreadoPor.Nombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Observaciones", Valor = string.IsNullOrWhiteSpace(movimiento.Observaciones) ? "-" : movimiento.Observaciones });
+
+                grupo.Lineas.AddRange(lineas);
+                model.Movimientos.Add(grupo);
+            }
+
+            ViewBag.Title = "Lineas de movimiento";
+            ViewBag.Seccion = "Movimientos";
+            ViewBag.Sucursales = ConstruirSucursalesConTodas(sucursales);
+
+            return View("~/Views/Movimientos/Lineas.cshtml", model);
         }
 
         public ActionResult Nuevo()
@@ -458,6 +547,27 @@ namespace Web.Controllers
             }
 
             return "";
+        }
+
+        private static bool CoincideProductoMovimiento(string codigo, string descripcion, string filtro)
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+                return true;
+
+            string texto = filtro.Trim();
+            return (codigo ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0
+                || (descripcion ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static string ConstruirObservacionLineaMovimiento(Entidades.CortePorMovimiento linea)
+        {
+            var partes = new List<string>();
+            if (linea != null && linea.PesoBalanza)
+                partes.Add("Peso balanza");
+            if (linea != null && linea.PermitirIngreso)
+                partes.Add("Permite ingreso");
+
+            return partes.Count == 0 ? "-" : string.Join(" | ", partes);
         }
 
         private MovimientoLineaVm MapLinea(Entidades.CortePorMovimiento linea)

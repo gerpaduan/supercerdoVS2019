@@ -27,6 +27,12 @@
         </div>
     }
 
+    <div class="d-flex justify-content-end mb-3">
+        <a class="btn btn-outline-primary" href="@Url.Action("Lineas", "Stock", new { idSucursal = idSucursal, tipoCompra = tipoCompra, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </a>
+    </div>
+
     <div class="card shadow-sm mb-3 stock-acciones-card">
         <div class="card-body">
             <div class="stock-acciones-grid">

@@ -159,6 +159,7 @@
     <Compile Include="Models\CalcularComisionesElectronicasVm.cs" />
     <Compile Include="Models\ComisionElectronicaFormaVm.cs" />
     <Compile Include="Models\ElaboradosVm.cs" />
+    <Compile Include="Models\LineasAgrupadasVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\MarcaEditVm.cs" />
@@ -200,6 +201,7 @@
     <Content Include="Content\js\sb-admin-2.js" />
     <Content Include="Content\js\sb-admin-2.min.js" />
     <Content Include="Content\js\scripts.js" />
+    <Content Include="Scripts\app\lineas-agrupadas.js" />
     <Content Include="Content\sounds\focus-beep.wav" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.min.js" />
@@ -2074,6 +2076,7 @@
     <Content Include="Views\Productos\Tipos.cshtml" />
     <Content Include="Views\Productos\_StockPorSucursalesProductoModal.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
+    <Content Include="Views\Shared\_LineasAgrupadasStyles.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
     <Content Include="Views\Shared\AccesoDenegado.cshtml" />
@@ -2117,7 +2120,9 @@
     <Content Include="Views\Stock\_TablaExistenciaPorSucursales.cshtml" />
     <Content Include="Views\Stock\ExistenciaPorSucursales.cshtml" />
     <Content Include="Views\Stock\Index.cshtml" />
+    <Content Include="Views\Stock\Lineas.cshtml" />
     <Content Include="Views\Stock\Editar.cshtml" />
+    <Content Include="Views\Ventas\Lineas.cshtml" />
     <Content Include="Views\Ventas\_ModalPostVenta.cshtml" />
     <Content Include="Views\Ventas\_TicketHTML.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />
@@ -2185,6 +2190,8 @@
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />
     <Content Include="Views\Compras\Editar.cshtml" />
+    <Content Include="Views\Compras\Lineas.cshtml" />
+    <Content Include="Views\Movimientos\Lineas.cshtml" />
     <Content Include="Views\Elaborados\_Styles.cshtml" />
     <Content Include="Views\Elaborados\_TablaElaborados.cshtml" />
     <Content Include="Views\Elaborados\_Tabs.cshtml" />

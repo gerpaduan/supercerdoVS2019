@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
+using Web.Models;
 using Web.Models.DTO;
 using AFIP;
 using static Entidades.Venta;
@@ -98,6 +99,107 @@ namespace Web.Controllers
             ViewBag.TotalFiltrado = ventas.Sum(v => v.TotalImporte);
             //ventas.Add(oVentaE);
             return View(ventas);
+        }
+
+        public ActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
+        {
+            DateTime desde = fechaDesde ?? DateTime.Today;
+            DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, desde))
+            {
+                if (AjustarFechaSiNoTienePermiso(Permisos.Venta.VerVentas, ref desde) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde);
+            }
+
+            if (hasta < desde)
+                hasta = desde;
+
+            var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
+
+            List<Entidades.Venta> ventas = oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, true) ?? new List<Entidades.Venta>();
+            ventas = ventas.Where(v => v != null && v.FechaVenta >= desde && v.FechaVenta <= hasta).ToList();
+            ventas = ventas
+                .Where(v => CoincideTexto(v != null && v.Persona != null ? v.Persona.RazonSocial : "", cliente)
+                    || CoincideTexto(v != null && v.Persona != null ? v.Persona.Identificacion : "", cliente)
+                    || string.IsNullOrWhiteSpace(cliente))
+                .Where(v => CoincideTexto(v != null && v.Vendedor != null ? v.Vendedor.Nombre : "", vendedor) || string.IsNullOrWhiteSpace(vendedor))
+                .Where(v => formasPagoSeleccionadas.Count == 0
+                    || formasPagoSeleccionadas.Contains((v != null ? (v.FormaPago ?? "") : "").Trim(), StringComparer.OrdinalIgnoreCase))
+                .ToList();
+
+            var model = new VentaLineasIndexVm
+            {
+                FechaDesde = desde,
+                FechaHasta = hasta,
+                IdSucursal = idSucursal,
+                Cliente = cliente ?? "",
+                Vendedor = vendedor ?? "",
+                Producto = producto ?? "",
+                FormasPagoCsv = formasPago ?? "",
+                FormasPagoSeleccionadas = formasPagoSeleccionadas
+            };
+
+            foreach (var venta in ventas.OrderByDescending(x => x.FechaVenta))
+            {
+                var lineas = (venta.LineasVenta ?? new List<Entidades.LineaVenta>())
+                    .Where(x => CoincideProductoVenta(x, producto))
+                    .ToList();
+
+                if (!string.IsNullOrWhiteSpace(producto) && lineas.Count == 0)
+                    continue;
+
+                if (lineas.Count == 0)
+                    continue;
+
+                var grupo = new VentaLineasGrupoVm
+                {
+                    IdVenta = venta.IdVenta,
+                    CollapseId = "ventaLineas_" + venta.IdVenta,
+                    Titulo = "VENTA ID: " + venta.IdVenta,
+                    Subtitulo = venta.FechaVenta.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenCompacto = venta.FechaVenta.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenSecundario = "Venta ID: " + venta.IdVenta,
+                    TotalTexto = venta.TotalImporte.ToString("C"),
+                    TotalImporte = Convert.ToDecimal(venta.TotalImporte),
+                    TotalKg = lineas.Sum(x => Convert.ToDecimal(x.CantKg)),
+                    EditUrl = Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta })
+                };
+
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Fecha", Valor = venta.FechaVenta.ToString("dd/MM/yyyy HH:mm") });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Nro/comprobante", Valor = string.IsNullOrWhiteSpace(venta.NroRemito) ? "-" : venta.NroRemito });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal", Valor = venta.Sucursal != null ? venta.Sucursal.SucursalNombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Cliente", Valor = venta.Persona != null ? venta.Persona.RazonSocial : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Vendedor", Valor = venta.Vendedor != null ? venta.Vendedor.Nombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Forma de pago", Valor = string.IsNullOrWhiteSpace(venta.FormaPago) ? "-" : venta.FormaPago });
+
+                foreach (var linea in lineas)
+                {
+                    float totalLinea = linea.CantKg * linea.PrecioKg;
+                    grupo.Lineas.Add(new VentaLineaDetalleVm
+                    {
+                        Codigo = linea.Corte != null ? linea.Corte.Codigo.ToString() : "-",
+                        Producto = linea.Corte != null ? linea.Corte.CorteDesc : "-",
+                        CantidadKgTexto = linea.CantKg.ToString("N3"),
+                        PrecioTexto = linea.PrecioKg.ToString("N2"),
+                        TotalTexto = totalLinea.ToString("N2"),
+                        CantidadKg = Convert.ToDecimal(linea.CantKg),
+                        Precio = Convert.ToDecimal(linea.PrecioKg),
+                        Total = Convert.ToDecimal(totalLinea)
+                    });
+                }
+
+                model.Ventas.Add(grupo);
+            }
+
+            ViewBag.Title = "Lineas de venta";
+            ViewBag.Seccion = "Ventas";
+            ViewBag.Sucursales = sucursales;
+
+            return View("~/Views/Ventas/Lineas.cshtml", model);
         }
 
         public ActionResult MisVentas(bool desdePos = false, int idCierre = 0)
@@ -1198,6 +1300,37 @@ namespace Web.Controllers
                 return false;
 
             return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
+        }
+
+        private static List<string> SepararValoresCsv(string csv)
+        {
+            return (csv ?? "")
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static bool CoincideTexto(string valor, string filtro)
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+                return true;
+
+            return (valor ?? "").IndexOf(filtro.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool CoincideProductoVenta(Entidades.LineaVenta linea, string producto)
+        {
+            if (string.IsNullOrWhiteSpace(producto))
+                return true;
+
+            string filtro = producto.Trim();
+            string codigo = linea != null && linea.Corte != null ? linea.Corte.Codigo.ToString() : "";
+            string descripcion = linea != null && linea.Corte != null ? linea.Corte.CorteDesc : "";
+
+            return codigo.IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0
+                || descripcion.IndexOf(filtro, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private string ObtenerMotivoNoPuedeModificarUltimaVenta(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)

@@ -1,0 +1,153 @@
+@model Web.Models.MovimientoLineasIndexPageVm
+@using Entidades
+@using System.Collections.Generic
+@using System.Linq
+
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+}
+
+<div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="movimientos">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h4 class="mb-2 mb-md-0">Lineas de movimiento</h4>
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
+            <i class="fas fa-arrow-left mr-1"></i> Volver al indice
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Lineas", "Movimientos")" class="js-form-filtros-lineas">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                    Se modificaron filtros principales. Presioná <strong>Buscar</strong> para recargar los datos.
+                </div>
+
+                <div class="elaborados-filtros-grid lineas-filtros-grid cols-5">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Sucursal origen</label>
+                        <select name="idSucursalOrigen" class="form-control js-filtro-recarga">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursalOrigen ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Sucursal destino</label>
+                        <select name="idSucursalDestino" class="form-control js-filtro-recarga">
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" @(sucursal.IdSucursal == Model.IdSucursalDestino ? "selected" : "")>@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha desde</label>
+                        <input name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha hasta</label>
+                        <input name="fechaHasta" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Producto</label>
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="producto" value="@Model.Producto" placeholder="Codigo o descripcion" autocomplete="off" />
+                    </div>
+                    <div class="form-group mb-0 lineas-filtro-accion">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12 col-md-4 mb-3">
+                        <label class="elaborados-filtro-label">Estado</label>
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="estado" placeholder="Estado" autocomplete="off" />
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-1">
+                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesMovimientos" />
+                    <label class="custom-control-label" for="expandirDetallesMovimientos">Ver detalles</label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lineas-resumen-grid cols-4 mb-3">
+        <div class="card border-left-primary shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalKg">0,000</div></div></div>
+        <div class="card border-left-success shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total unidades</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalUnidades">0</div></div></div>
+        <div class="card border-left-info shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-info text-uppercase mb-1">Cantidad de lineas</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalLineas">0</div></div></div>
+        <div class="card border-left-secondary shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Cantidad de registros</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRegistros">0</div></div></div>
+    </div>
+
+    <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-server @(Model.Movimientos != null && Model.Movimientos.Count > 0 ? "d-none" : "")">No se encontraron movimientos con lineas para los filtros seleccionados.</div>
+    <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-client d-none">No hay resultados con el filtro en vivo.</div>
+
+    @if (Model.Movimientos != null)
+    {
+        foreach (var movimiento in Model.Movimientos)
+        {
+            var campoEstado = movimiento.Campos.FirstOrDefault(x => x.Etiqueta == "Estado");
+            var estado = campoEstado != null ? campoEstado.Valor : "";
+            <div class="card shadow-sm mb-3 linea-registro-card js-registro-card" data-estado="@estado">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                        <div>
+                            <div class="linea-resumen-principal">@movimiento.ResumenCompacto</div>
+                            <div class="linea-resumen-secundario">@movimiento.ResumenSecundario @(string.IsNullOrWhiteSpace(estado) ? "" : "| " + estado)</div>
+                        </div>
+                        <div class="linea-resumen-tools mt-2 mt-md-0">
+                            <span class="badge badge-primary badge-pill px-3 py-2">@movimiento.TotalKg.ToString("N3") kg</span>
+                            <a class="btn btn-sm btn-outline-primary" href="@movimiento.EditUrl">Ver registro</a>
+                        </div>
+                    </div>
+                    <div class="row mt-3 linea-registro-extra d-none">
+                        @foreach (var campo in movimiento.Campos)
+                        {
+                            <div class="col-12 col-md-4 mb-2">
+                                <div class="small text-muted text-uppercase">@campo.Etiqueta</div>
+                                <div>@campo.Valor</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Código producto</th>
+                                <th>Producto</th>
+                                <th class="text-right">Cantidad / kg</th>
+                                <th class="text-right">Total unidades</th>
+                                <th>Observación línea</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var linea in movimiento.Lineas)
+                            {
+                                <tr class="js-linea-row" data-codigo="@linea.Codigo" data-producto="@linea.Producto" data-kg="@linea.CantidadKg" data-total="0" data-unidades="@linea.CantidadUnidad">
+                                    <td>@linea.Codigo</td>
+                                    <td>@linea.Producto</td>
+                                    <td class="text-right">@linea.CantidadKgTexto</td>
+                                    <td class="text-right">@linea.CantidadUnidadTexto</td>
+                                    <td>@linea.Observacion</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js?v=1")"></script>
+}

@@ -12,6 +12,15 @@
 
 <div class="container-fluid  p-0 vista-venta">
 
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button"
+                id="btnVerLineasVentas"
+                class="btn btn-outline-primary"
+                data-base-url="@Url.Action("Lineas", "Ventas")">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </button>
+    </div>
+
     <!-- Filtro por fechas, sucursal y búsqueda rápida -->
     <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
         <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
@@ -335,6 +344,25 @@
         });
 
         actualizarResumenFormaPago();
+
+        document.getElementById("btnVerLineasVentas")?.addEventListener("click", function () {
+            const baseUrl = this.getAttribute("data-base-url") || "";
+            if (!baseUrl) return;
+
+            const fechaDesde = document.getElementById("fechaDesde");
+            const fechaHasta = document.getElementById("fechaHasta");
+            const idSucursal = document.getElementById("idSucursal");
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", fechaDesde?.value || "");
+            params.set("fechaHasta", fechaHasta?.value || "");
+            params.set("idSucursal", idSucursal?.value || "-1");
+            params.set("cliente", buscadorCliente?.value || "");
+            params.set("vendedor", buscadorVendedor?.value || "");
+            params.set("formasPago", getFormasPagoSeleccionadas().join(","));
+
+            window.location.href = baseUrl + "?" + params.toString();
+        });
 
     </script>
 }

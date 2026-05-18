@@ -13,6 +13,9 @@
         <a class="btn btn-success movimientos-btn-nuevo" href="@Url.Action("Nuevo", "Movimientos")">
             <i class="fas fa-plus mr-1"></i> Nuevo movimiento
         </a>
+        <a class="btn btn-outline-primary movimientos-btn-nuevo ml-md-2" href="@Url.Action("Lineas", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-dd") })">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </a>
     </div>
 
     <div class="card shadow-sm mb-3 movimientos-filtros-card">

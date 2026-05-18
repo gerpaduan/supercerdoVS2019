@@ -60,7 +60,7 @@ namespace Web.Controllers
                 tipoFiltrado = "Todos";
             }
 
-            DataTable dt = oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde.Date, hasta.Date, null) ?? new DataTable();
+            DataTable dt = oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde, hasta, null) ?? new DataTable();
             var model = new CompraIndexVm
             {
                 Compras = dt,
@@ -82,6 +82,95 @@ namespace Web.Controllers
             ViewBag.TotalS = CalcularTotalImporte(dt);
 
             return View("~/Views/Compras/Index.cshtml", model);
+        }
+
+        public ActionResult Lineas(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", string producto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            DateTime desde = fechaDesde ?? DateTime.Today;
+            DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                if (AjustarFechaSiNoTienePermiso(Permisos.Compra.VerCompras, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Compras", Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            }
+
+            bool permiteMediaRes = PermiteMediaRes(user);
+            string tipoFiltrado = string.IsNullOrWhiteSpace(tipoCompra) ? "Todos" : tipoCompra.Trim();
+            if (!permiteMediaRes &&
+                string.Equals(tipoFiltrado, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes), StringComparison.OrdinalIgnoreCase))
+            {
+                tipoFiltrado = "Todos";
+            }
+
+            DataTable dt = oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde.Date, hasta.Date, null) ?? new DataTable();
+            var model = new CompraLineasIndexVm
+            {
+                IdSucursal = idSucursal,
+                TipoCompra = tipoFiltrado,
+                Texto = texto ?? "",
+                Producto = producto ?? "",
+                FechaDesde = desde,
+                FechaHasta = hasta,
+                PermiteMediaRes = permiteMediaRes
+            };
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int idCompra = row["idCompra"] == DBNull.Value ? 0 : Convert.ToInt32(row["idCompra"]);
+                if (idCompra <= 0 || model.Compras.Any(x => x.IdCompra == idCompra))
+                    continue;
+
+                Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
+                if (compra == null || compra.IdCompra == 0)
+                    continue;
+
+                var lineas = ConstruirLineasCompra(compra);
+                if (!string.IsNullOrWhiteSpace(producto))
+                    lineas = lineas.Where(x => CoincideProducto(x.Codigo, x.Producto, producto)).ToList();
+
+                if (lineas.Count == 0)
+                    continue;
+
+                float total = row.Table.Columns.Contains("totalS") && row["totalS"] != DBNull.Value
+                    ? Convert.ToSingle(row["totalS"])
+                    : compra.getImporteCompra(compra, compra.LineasMediasReses, compra.LineasCortes);
+
+                var grupo = new CompraLineasGrupoVm
+                {
+                    IdCompra = compra.IdCompra,
+                    CollapseId = "compraLineas_" + compra.IdCompra,
+                    Titulo = "COMPRA ID: " + compra.IdCompra,
+                    Subtitulo = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenCompacto = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenSecundario = compra.Proveedor != null ? compra.Proveedor.RazonSocial : "-",
+                    TotalTexto = total.ToString("N2"),
+                    TotalImporte = Convert.ToDecimal(total),
+                    TotalKg = lineas.Sum(x => x.CantidadKg),
+                    EditUrl = Url.Action("Editar", "Compras", new { id = compra.IdCompra, origen = "layout" })
+                };
+
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Fecha", Valor = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm") });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Proveedor", Valor = compra.Proveedor != null ? compra.Proveedor.RazonSocial : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal", Valor = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Tipo de compra", Valor = string.IsNullOrWhiteSpace(compra.TipoCompra) ? "-" : compra.TipoCompra });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Nro/comprobante", Valor = string.IsNullOrWhiteSpace(compra.NroRemito) ? "-" : compra.NroRemito });
+
+                grupo.Lineas.AddRange(lineas);
+                model.Compras.Add(grupo);
+            }
+
+            ViewBag.Title = "Lineas de compra";
+            ViewBag.Seccion = "Compras";
+            ViewBag.Sucursales = oSucursalN.findAll();
+
+            return View("~/Views/Compras/Lineas.cshtml", model);
         }
 
         public ActionResult Editar(int id = 0, string origen = "layout")
@@ -609,6 +698,65 @@ namespace Web.Controllers
             }
 
             return detalles;
+        }
+
+        private List<CompraLineaDetalleVm> ConstruirLineasCompra(Entidades.Compra compra)
+        {
+            var lineas = new List<CompraLineaDetalleVm>();
+            if (compra == null)
+                return lineas;
+
+            var cortes = oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>();
+            foreach (var corte in cortes)
+            {
+                float totalLinea = corte.CantKgs * corte.precioKgs;
+                lineas.Add(new CompraLineaDetalleVm
+                {
+                    Codigo = corte.Corte != null ? corte.Corte.Codigo.ToString() : "-",
+                    Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
+                    CantidadKgTexto = corte.CantKgs.ToString("N3"),
+                    PrecioTexto = corte.precioKgs.ToString("N2"),
+                    TotalTexto = totalLinea.ToString("N2"),
+                    CantidadKg = Convert.ToDecimal(corte.CantKgs),
+                    Precio = Convert.ToDecimal(corte.precioKgs),
+                    Total = Convert.ToDecimal(totalLinea)
+                });
+            }
+
+            if (lineas.Count > 0)
+                return lineas;
+
+            DataTable dtMedias = oCompraN.obtenerMediasPorCompra(compra.IdCompra) ?? new DataTable();
+            foreach (DataRow row in dtMedias.Rows)
+            {
+                float kg = row.Table.Columns.Contains("kgMedia") && row["kgMedia"] != DBNull.Value ? Convert.ToSingle(row["kgMedia"]) : 0f;
+                float precio = row.Table.Columns.Contains("precioMedia") && row["precioMedia"] != DBNull.Value ? Convert.ToSingle(row["precioMedia"]) : 0f;
+                string nroTropa = row.Table.Columns.Contains("nroTropa") && row["nroTropa"] != DBNull.Value ? Convert.ToString(row["nroTropa"]) : "";
+
+                lineas.Add(new CompraLineaDetalleVm
+                {
+                    Codigo = string.IsNullOrWhiteSpace(nroTropa) ? "-" : nroTropa,
+                    Producto = "Media Res",
+                    CantidadKgTexto = kg.ToString("N3"),
+                    PrecioTexto = precio.ToString("N2"),
+                    TotalTexto = (kg * precio).ToString("N2"),
+                    CantidadKg = Convert.ToDecimal(kg),
+                    Precio = Convert.ToDecimal(precio),
+                    Total = Convert.ToDecimal(kg * precio)
+                });
+            }
+
+            return lineas;
+        }
+
+        private static bool CoincideProducto(string codigo, string descripcion, string filtro)
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+                return true;
+
+            string texto = filtro.Trim();
+            return (codigo ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0
+                || (descripcion ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private string ValidarModelo(CompraEditVm model, Entidades.Usuario user, bool desdePos)

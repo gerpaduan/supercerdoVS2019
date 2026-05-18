@@ -87,7 +87,7 @@ namespace Web.Controllers
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
             string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
 
-            DataTable dt = oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde.Date, hasta.Date, null) ?? new DataTable();
+            DataTable dt = oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde, hasta, null) ?? new DataTable();
             dt = FiltrarSoloStock(dt);
 
             var model = new CompraIndexVm
@@ -107,6 +107,93 @@ namespace Web.Controllers
             ViewBag.TotalKg = CalcularTotalKg(dt);
 
             return View("~/Views/Stock/Index.cshtml", model);
+        }
+
+        public ActionResult Lineas(int? idSucursal = null, string tipoCompra = "Ver Todos", string producto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                if (AjustarFechaSiNoTienePermiso(Permisos.Stock.VerStock, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Stock", Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            }
+
+            int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
+            string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
+
+            DataTable dt = oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde.Date, hasta.Date, null) ?? new DataTable();
+            dt = FiltrarSoloStock(dt);
+
+            var model = new StockLineasIndexVm
+            {
+                IdSucursal = sucursalSeleccionada,
+                TipoCompra = tipoNormalizado,
+                Producto = producto ?? "",
+                FechaDesde = desde,
+                FechaHasta = hasta
+            };
+
+            foreach (DataRow row in dt.Rows)
+            {
+                int idCompra = row["idCompra"] == DBNull.Value ? 0 : Convert.ToInt32(row["idCompra"]);
+                if (idCompra <= 0 || model.Registros.Any(x => x.IdCompra == idCompra))
+                    continue;
+
+                Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
+                if (compra == null || compra.IdCompra == 0)
+                    continue;
+
+                var lineas = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
+                    .Select(corte => new StockLineaDetalleVm
+                    {
+                        Codigo = corte.Corte != null ? corte.Corte.Codigo.ToString() : "-",
+                        Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
+                        CantidadKgTexto = corte.CantKgs.ToString("N3"),
+                        Signo = ObtenerSignoStock(compra.TipoCompra),
+                        Observacion = corte.Balanza ? "Peso balanza" : "-",
+                        CantidadKg = Convert.ToDecimal(corte.CantKgs)
+                    })
+                    .Where(x => CoincideProductoStock(x.Codigo, x.Producto, producto))
+                    .ToList();
+
+                if (lineas.Count == 0)
+                    continue;
+
+                var grupo = new StockLineasGrupoVm
+                {
+                    IdCompra = compra.IdCompra,
+                    CollapseId = "stockLineas_" + compra.IdCompra,
+                    Titulo = "REGISTRO ID: " + compra.IdCompra,
+                    Subtitulo = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenCompacto = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm"),
+                    ResumenSecundario = string.IsNullOrWhiteSpace(compra.TipoCompra) ? "-" : compra.TipoCompra,
+                    EditUrl = Url.Action("Editar", "Stock", new { id = compra.IdCompra, tipoCompra = compra.TipoCompra }),
+                    TotalKg = lineas.Sum(x => x.CantidadKg)
+                };
+
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Fecha", Valor = compra.FechaCompra.ToString("dd/MM/yyyy HH:mm") });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Tipo de operacion", Valor = string.IsNullOrWhiteSpace(compra.TipoCompra) ? "-" : compra.TipoCompra });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Sucursal", Valor = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Usuario", Valor = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "-" });
+                grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Observacion", Valor = string.IsNullOrWhiteSpace(compra.Observaciones) ? "-" : compra.Observaciones });
+
+                grupo.Lineas.AddRange(lineas);
+                model.Registros.Add(grupo);
+            }
+
+            ViewBag.Title = "Lineas de stock";
+            ViewBag.Seccion = "Stock";
+            ViewBag.Sucursales = oSucursalN.findAll();
+
+            return View("~/Views/Stock/Lineas.cshtml", model);
         }
 
         [HttpGet]
@@ -754,6 +841,32 @@ namespace Web.Controllers
 
             string tipo = tipoCompra.Trim();
             return EsTipoStock(tipo) ? tipo : "";
+        }
+
+        private static string ObtenerSignoStock(string tipoCompra)
+        {
+            if (string.Equals(tipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock), StringComparison.OrdinalIgnoreCase))
+                return "+";
+            if (string.Equals(tipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock), StringComparison.OrdinalIgnoreCase))
+                return "-";
+            if (string.Equals(tipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock), StringComparison.OrdinalIgnoreCase))
+                return "+/-";
+            if (string.Equals(tipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase))
+                return "=";
+            if (string.Equals(tipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes), StringComparison.OrdinalIgnoreCase))
+                return "P";
+
+            return "-";
+        }
+
+        private static bool CoincideProductoStock(string codigo, string descripcion, string filtro)
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+                return true;
+
+            string texto = filtro.Trim();
+            return (codigo ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0
+                || (descripcion ?? "").IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private DataTable FiltrarSoloStock(DataTable origen)
