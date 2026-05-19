@@ -133,6 +133,8 @@ namespace Entidades
         public float Ventas { get; set; }
         public float TotalEgresos { get; set; }
         public float StockActual { get; set; }
+        public float Promedio { get; set; }
+        public float PuntoStock { get; set; }
         public string EstadoStock { get; set; }
     }
 

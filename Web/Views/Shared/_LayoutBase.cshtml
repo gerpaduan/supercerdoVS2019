@@ -42,6 +42,73 @@
             background: #0f1724 !important;
             color: #ecf2ff;
         }
+
+        .sync-scroll-host {
+            position: relative;
+        }
+
+        .sync-scroll-floating {
+            position: sticky;
+            top: 0;
+            z-index: 25;
+            display: none;
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 14px;
+            margin-bottom: .35rem;
+            background: rgba(248, 249, 252, .92);
+            border: 1px solid rgba(222, 226, 230, .9);
+            border-radius: .55rem;
+            backdrop-filter: blur(6px);
+        }
+
+        .sync-scroll-floating-inner {
+            height: 1px;
+        }
+
+        .sync-scroll-floating::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .sync-scroll-floating::-webkit-scrollbar-thumb {
+            background: rgba(108, 117, 125, .45);
+            border-radius: 999px;
+        }
+
+        .sync-scroll-floating::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .js-sticky-first-col thead th:first-child,
+        .js-sticky-first-col tbody td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: #fff;
+        }
+
+        .js-sticky-first-col thead th:first-child {
+            z-index: 4;
+            background: #f8f9fc;
+        }
+
+        html.dark-mode .sync-scroll-floating {
+            background: rgba(39, 48, 67, .92);
+            border-color: rgba(74, 85, 104, .8);
+        }
+
+        html.dark-mode .sync-scroll-floating::-webkit-scrollbar-thumb {
+            background: rgba(236, 242, 255, .28);
+        }
+
+        html.dark-mode .js-sticky-first-col thead th:first-child,
+        html.dark-mode .js-sticky-first-col tbody td:first-child {
+            background: #1f2533;
+        }
+
+        html.dark-mode .js-sticky-first-col thead th:first-child {
+            background: #273043;
+        }
     </style>
 
     <title>CarniSys - Dashboard</title>
@@ -181,6 +248,13 @@
                             <a class="collapse-item" href="cards.html">Cards</a>
                         </div>
                     </div>*@
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Reportes" ? "active" : "")" href="@Url.Action("Index", "Reportes")">
+                    <i class="fas fa-fw fa-chart-bar"></i>
+                    <span>Reportes</span>
+                </a>
             </li>
 
             <!-- Productos -->
@@ -486,6 +560,7 @@
 
     <script src="@Url.Content("~/Scripts/app/modal-sucursales.js")"></script>
     <script src="@Url.Content("~/Content/js/scripts.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/table-scroll-sync.js?v=20260518-1")"></script>
 
 
     @RenderSection("Scripts", required: false)

@@ -180,8 +180,8 @@ else
         }
     </style>
 
-    <div class="table-responsive tabla-full">
-        <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales">
+    <div class="table-responsive tabla-full js-sync-scroll-body">
+        <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales js-sticky-first-col">
             <thead class="thead-light">
                 <tr>
                     <th class="existencia-col-producto">Producto</th>
@@ -231,7 +231,7 @@ else
                         <td colspan="@totalColumnas" class="p-0">
                             <div class="p-3 border-top existencia-detalle-box">
                                 <div class="existencia-producto-completo">@producto.Corte</div>
-                                <div class="table-responsive existencia-detalle-scroll-sync">
+                                <div class="table-responsive existencia-detalle-scroll-sync js-sync-scroll-body">
                                     <table class="table table-sm table-bordered mb-0 existencia-detalle-tabla">
                                         <thead class="thead-light">
                                             <tr>

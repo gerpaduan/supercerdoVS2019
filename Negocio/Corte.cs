@@ -722,6 +722,8 @@ namespace Negocio
                         Ventas = x.Ventas,
                         TotalEgresos = x.TotalEgresos,
                         StockActual = x.StockActual,
+                        Promedio = x.Promedio,
+                        PuntoStock = x.PuntoStock,
                         EstadoStock = NormalizarEstadoStock(x.EstadoStock)
                     })
                     .ToList();
@@ -746,6 +748,8 @@ namespace Negocio
                             IdSucursal = columna.IdSucursal,
                             Sucursal = columna.Sucursal,
                             StockActual = 0f,
+                            Promedio = 0f,
+                            PuntoStock = 0f,
                             EstadoStock = "SIN STOCK"
                         });
                     }

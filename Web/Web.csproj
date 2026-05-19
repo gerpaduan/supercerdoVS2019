@@ -140,6 +140,7 @@
     <Compile Include="Controllers\PersonasController.cs" />
     <Compile Include="Controllers\PuntosExpendioController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
+    <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\StockController.cs" />
     <Compile Include="Controllers\UsuariosController.cs" />
@@ -165,6 +166,7 @@
     <Compile Include="Models\MarcaEditVm.cs" />
     <Compile Include="Models\PuntoExpendioVm.cs" />
     <Compile Include="Models\ReciboPagoVm.cs" />
+    <Compile Include="Models\ReportesViewModel.cs" />
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
@@ -202,6 +204,7 @@
     <Content Include="Content\js\sb-admin-2.min.js" />
     <Content Include="Content\js\scripts.js" />
     <Content Include="Scripts\app\lineas-agrupadas.js" />
+    <Content Include="Scripts\app\table-scroll-sync.js" />
     <Content Include="Content\sounds\focus-beep.wav" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.min.js" />
@@ -2075,6 +2078,7 @@
     <Content Include="Views\Productos\Marcas.cshtml" />
     <Content Include="Views\Productos\Tipos.cshtml" />
     <Content Include="Views\Productos\_StockPorSucursalesProductoModal.cshtml" />
+    <Content Include="Views\Reportes\Index.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Shared\_LineasAgrupadasStyles.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
@@ -2187,6 +2191,7 @@
     <Content Include="Scripts\app\compras.js" />
     <Content Include="Scripts\app\punto-expendio-pos.js" />
     <Content Include="Scripts\app\puntos-expendio.js" />
+    <Content Include="Scripts\app\reportes.js" />
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />
     <Content Include="Views\Compras\Editar.cshtml" />

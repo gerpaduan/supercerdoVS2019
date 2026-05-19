@@ -1,0 +1,377 @@
+@model Web.Models.ReportesViewModel
+@using System
+@using System.Globalization
+@using System.Linq
+@using System.Web.Helpers
+
+@{
+    ViewBag.Title = "Reportes";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    var esReporteStockDetalle =
+        string.Equals(Model.TipoReporteSeleccionado, "Stock Actual", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(Model.TipoReporteSeleccionado, "Cierre Stock", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(Model.TipoReporteSeleccionado, "Stock Retroactivo", StringComparison.OrdinalIgnoreCase);
+    var cierresJson = Json.Encode((Model.CierresDisponibles ?? new System.Collections.Generic.List<Web.Models.ReporteCierreOptionVm>())
+        .Select(x => new
+        {
+            idCompra = x.IdCompra,
+            idSucursal = x.IdSucursal,
+            sucursal = x.Sucursal,
+            fechaIso = x.ValorIso,
+            texto = x.Texto
+        }));
+}
+
+<div class="container-fluid reportes-page">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Reportes</h1>
+            <p class="text-muted mb-0">Vista unificada para ir incorporando los reportes del sistema de escritorio sin tocar lo que ya funciona.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 reportes-filtros-card">
+        <div class="card-body">
+            <form id="formReportes" method="get" action="@Url.Action("Index", "Reportes")" autocomplete="off">
+                <input type="hidden" name="buscar" id="buscarReportes" value="true" />
+
+                <div class="reportes-filtros-grid">
+                    <div class="form-group mb-0">
+                        <label class="stock-filtro-label" for="tipoReporte">Tipo de reporte</label>
+                        @Html.DropDownList("tipoReporte", Model.TiposReporte, new { @class = "form-control filtro-principal", id = "tipoReporte" })
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="stock-filtro-label" for="fechaDesdeReporte">Fecha desde</label>
+                        <input type="datetime-local" id="fechaDesdeReporte" name="fechaDesde" class="form-control filtro-principal @(Model.UsaCierreEnFechaDesde ? "d-none" : "")" value="@Model.FechaDesdeValor" />
+                        <select id="fechaDesdeCierreReporte" class="form-control filtro-principal @(!Model.UsaCierreEnFechaDesde ? "d-none" : "")"></select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="stock-filtro-label" for="fechaHastaReporte">Fecha hasta</label>
+                        <div class="input-group @(!Model.UsaCierreEnFechaHasta ? "" : "d-none")" id="fechaHastaDateWrap">
+                            <input type="datetime-local" id="fechaHastaReporte" name="fechaHasta" class="form-control filtro-principal" value="@Model.FechaHastaValor" />
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary" id="btnAhoraReporte">
+                                    <i class="fas fa-clock"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <select id="fechaHastaCierreReporte" class="form-control filtro-principal @(Model.UsaCierreEnFechaHasta ? "" : "d-none")"></select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="stock-filtro-label" for="sucursalReporte">Sucursal</label>
+                        @Html.DropDownList("idSucursal", Model.Sucursales, new { @class = "form-control filtro-principal", id = "sucursalReporte" })
+                    </div>
+                </div>
+
+                <div class="reportes-filtros-grid reportes-filtros-secundarios mt-3">
+                    @if (Model.MostrarFiltroBusquedaProducto)
+                    {
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="busquedaProductoReporte">Producto</label>
+                            <input type="text" id="busquedaProductoReporte" name="busquedaProducto" class="form-control filtro-vivo" value="@Model.BusquedaProducto" placeholder="Codigo o descripcion" />
+                        </div>
+                    }
+
+                    @if (Model.MostrarFiltroTipoProducto)
+                    {
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="tipoProductoReporte">Tipo de producto</label>
+                            @Html.DropDownList("tipoProducto", Model.TiposProducto, new { @class = "form-control filtro-vivo", id = "tipoProductoReporte" })
+                        </div>
+                    }
+
+                    @if (Model.MostrarFiltroMarca)
+                    {
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="marcaReporte">Marca</label>
+                            @Html.DropDownList("marcaId", Model.Marcas, new { @class = "form-control filtro-vivo", id = "marcaReporte" })
+                        </div>
+                    }
+
+                    @if (Model.MostrarFiltroEstadoStock)
+                    {
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="estadoStockReporte">Estado stock</label>
+                            @Html.DropDownList("estadoStock", Model.EstadosStock, new { @class = "form-control filtro-vivo", id = "estadoStockReporte" })
+                        </div>
+                    }
+
+                    <div class="form-group mb-0 reportes-filtro-accion">
+                        <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarReporte">
+                            <i class="fas fa-search mr-1"></i>Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 d-none" id="cardAvisoPendienteReporte">
+        <div class="card-body py-3">
+            <span class="text-warning font-weight-semibold">Se modificaron filtros principales. Presiona Buscar para actualizar el reporte.</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.NotaReporte))
+    {
+        <div class="alert alert-light border shadow-sm mb-3">
+            @Model.NotaReporte
+        </div>
+    }
+
+    <div class="reportes-totales-grid mb-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total kg visibles</div>
+                <div class="h4 mb-0 font-weight-bold" id="totalKgReporte">@Model.Totales.TotalKg.ToString("N3")</div>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total ingresos visibles</div>
+                <div class="h4 mb-0 font-weight-bold" id="totalIngresosReporte">@Model.Totales.TotalIngresos.ToString("N3")</div>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total egresos visibles</div>
+                <div class="h4 mb-0 font-weight-bold" id="totalEgresosReporte">@Model.Totales.TotalEgresos.ToString("N3")</div>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Productos visibles</div>
+                <div class="h4 mb-0 font-weight-bold" id="cantidadProductosReporte">@Model.Totales.CantidadProductos</div>
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Registros visibles</div>
+                <div class="h4 mb-0 font-weight-bold" id="cantidadRegistrosReporte">@Model.Totales.CantidadRegistros</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-3">
+            <span class="text-muted">Estado:</span>
+            <strong id="estadoReporteTexto">@(!string.IsNullOrWhiteSpace(Model.Mensaje) ? Model.Mensaje : "Presiona Buscar para cargar datos.")</strong>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body p-0">
+            @if (!Model.ConsultaRealizada)
+            {
+                <div class="p-4 text-center text-muted">Presiona Buscar para cargar el reporte.</div>
+            }
+            else if (esReporteStockDetalle)
+            {
+                if (!Model.HayResultados)
+                {
+                    <div class="p-4 text-center text-muted">@Model.Mensaje</div>
+                }
+                else
+                {
+                    <div class="reportes-floating-zone" id="reportesFloatingZone">
+                        <div class="reportes-sticky-stack js-sync-scroll-anchor" id="reportesStickyStack">
+                            <div class="border-bottom px-3 py-2 bg-light reportes-detalle-toolbar">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="switchMostrarDetallesReporte" />
+                                    <label class="custom-control-label" for="switchMostrarDetallesReporte">Mostrar detalles</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive js-sync-scroll-body">
+                            <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteStockActual">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-right reporte-detalle-col d-none">St. inicial</th>
+                                        <th class="text-right reporte-detalle-col d-none">Ingr. compra</th>
+                                        <th class="text-right reporte-detalle-col d-none">Ingr. elab.</th>
+                                        <th class="text-right reporte-detalle-col d-none">Ingr. stock</th>
+                                        <th class="text-right reporte-detalle-col d-none">Ingr. mov.</th>
+                                        <th class="text-right reporte-detalle-col d-none">Ajustes</th>
+                                        <th class="text-right reporte-detalle-col d-none">Tot. ingresos</th>
+                                        <th class="text-right reporte-detalle-col d-none">Egr. stock</th>
+                                        <th class="text-right reporte-detalle-col d-none">Egr. mov.</th>
+                                        <th class="text-right reporte-detalle-col d-none">Egr. elab.</th>
+                                        <th class="text-right reporte-detalle-col d-none">Egr. venta</th>
+                                        <th class="text-right reporte-detalle-col d-none">Tot. egresos</th>
+                                        <th class="text-right">Stock actual</th>
+                                        <th class="text-right">Punto stock</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.FilasStockActual)
+                                    {
+                                        var textoBusqueda = ((item.Codigo > 0 ? item.Codigo.ToString() + " " : "") + (item.Producto ?? "")).Trim().ToUpperInvariant();
+                                        <tr class="reporte-stock-row"
+                                            data-search="@textoBusqueda"
+                                            data-tipo="@((item.TipoProducto ?? "").Trim().ToUpperInvariant())"
+                                            data-marcaid="@item.MarcaId"
+                                            data-estado="@((item.EstadoStock ?? "").Trim().ToUpperInvariant())"
+                                            data-idcorte="@item.IdCorte"
+                                            data-producto="@item.Producto"
+                                            data-codigo="@(item.Codigo > 0 ? item.Codigo.ToString() : "")"
+                                            data-stockactual="@item.StockActual.ToString(CultureInfo.InvariantCulture)"
+                                            data-totalingresos="@item.TotalIngresos.ToString(CultureInfo.InvariantCulture)"
+                                            data-totalegresos="@item.TotalEgresos.ToString(CultureInfo.InvariantCulture)">
+                                            <td>
+                                                <div class="font-weight-semibold">@item.Producto</div>
+                                                <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                            </td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.StockInicial.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.Compras.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.IngresoElaborado.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.IngresoStock.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.IngresoMovimiento.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.AjusteStock.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.TotalIngresos.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.EgresoStock.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.EgresoMovimiento.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.EgresoElaborado.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.Ventas.ToString("N3")</td>
+                                            <td class="text-right reporte-detalle-col d-none">@item.TotalEgresos.ToString("N3")</td>
+                                            <td class="text-right font-weight-bold">@item.StockActual.ToString("N3")</td>
+                                            <td class="text-right">@item.PuntoStock.ToString("N3")</td>
+                                            <td>@item.EstadoStock</td>
+                                        </tr>
+                                    }
+                                    <tr id="filaSinResultadosReporte" class="d-none">
+                                        <td colspan="16" class="text-center text-muted py-4">No hay filas visibles para los filtros en vivo actuales.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="p-4 text-center text-muted">@Model.Mensaje</div>
+            }
+        </div>
+    </div>
+
+    @if (!esReporteStockDetalle)
+    {
+        <div class="card shadow-sm @(Model.MostrarGrafico && Model.HayResultados ? "" : "d-none")" id="cardGraficoReporte">
+            <div class="card-header bg-white">
+                <strong>Grafico</strong>
+                <span class="text-muted small ml-2">Top productos visibles por stock actual</span>
+            </div>
+            <div class="card-body">
+                <canvas id="graficoReporteStockActual" height="120"></canvas>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .reportes-filtros-grid,
+    .reportes-totales-grid {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .reportes-filtro-accion {
+        display: flex;
+        align-items: end;
+    }
+
+    .reportes-tabla th,
+    .reportes-tabla td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .reportes-tabla td:first-child {
+        min-width: 240px;
+        white-space: normal;
+    }
+
+    .reportes-floating-zone {
+        position: relative;
+    }
+
+    .reportes-sticky-stack {
+        position: relative;
+        z-index: 8;
+        background: #f8f9fc;
+    }
+
+    .reportes-detalle-toolbar {
+        position: static;
+    }
+
+    .reportes-sticky-stack.is-floating {
+        box-shadow: 0 0.35rem 1rem rgba(31, 41, 55, 0.12);
+        border-radius: .5rem;
+        overflow: hidden;
+    }
+
+    .reportes-page .reportes-sticky-stack > .sync-scroll-floating {
+        position: static;
+        top: auto;
+        z-index: 7;
+        margin: 0 .75rem .5rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .reportes-filtros-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .reportes-filtros-secundarios {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .reportes-totales-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .reportes-filtros-grid,
+        .reportes-filtros-secundarios {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .reportes-totales-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .reportes-filtros-grid,
+        .reportes-filtros-secundarios,
+        .reportes-totales-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@section Scripts {
+    @if (!esReporteStockDetalle)
+    {
+        <script src="@Url.Content("~/Content/vendor/chart.js/Chart.bundle.min.js")"></script>
+    }
+    <script>
+        window.reportesConfig = {
+            cierres: @Html.Raw(cierresJson),
+            fechaDesdeActual: "@Model.FechaDesdeValor",
+            fechaHastaActual: "@Model.FechaHastaValor",
+            usaCierreDesde: @Model.UsaCierreEnFechaDesde.ToString().ToLowerInvariant(),
+            usaCierreHasta: @Model.UsaCierreEnFechaHasta.ToString().ToLowerInvariant(),
+            sucursalActual: "@Model.SucursalId"
+        };
+    </script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260518-3")"></script>
+}
