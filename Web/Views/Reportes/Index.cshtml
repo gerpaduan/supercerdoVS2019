@@ -11,6 +11,16 @@
         string.Equals(Model.TipoReporteSeleccionado, "Stock Actual", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(Model.TipoReporteSeleccionado, "Cierre Stock", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(Model.TipoReporteSeleccionado, "Stock Retroactivo", StringComparison.OrdinalIgnoreCase);
+    var esReporteVentasProducto =
+        string.Equals(Model.TipoReporteSeleccionado, "Ventas por Producto", StringComparison.OrdinalIgnoreCase);
+    var esReporteProyeccion =
+        string.Equals(Model.TipoReporteSeleccionado, "Proyeccion Ventas vs Stock", StringComparison.OrdinalIgnoreCase);
+    var esReporteBalance =
+        string.Equals(Model.TipoReporteSeleccionado, "Balance Economico", StringComparison.OrdinalIgnoreCase);
+    var proyeccionMultiplesSucursales = esReporteProyeccion && Model.SucursalId <= 0;
+    var balancePrincipal = (Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>())
+        .FirstOrDefault(x => x.EsPrincipal)
+        ?? (Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>()).FirstOrDefault();
     var cierresJson = Json.Encode((Model.CierresDisponibles ?? new System.Collections.Generic.List<Web.Models.ReporteCierreOptionVm>())
         .Select(x => new
         {
@@ -20,6 +30,38 @@
             fechaIso = x.ValorIso,
             texto = x.Texto
         }));
+    var periodosComparativosJson = Json.Encode((Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>())
+        .Where(x => !x.EsPrincipal)
+        .Select(x => new
+        {
+            id = x.Id,
+            fechaDesde = x.FechaDesdeValor,
+            fechaHasta = x.FechaHastaValor,
+            titulo = x.Titulo
+        }));
+    var balanceChartsJson = Json.Encode(new
+    {
+        periodos = (Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>())
+            .Select(x => new
+            {
+                titulo = x.Titulo,
+                rango = x.FechaDesde.ToString("dd/MM/yyyy") + " - " + x.FechaHasta.ToString("dd/MM/yyyy"),
+                ventas = x.TotalVentas,
+                compras = x.Compras,
+                gastos = x.Gastos,
+                balance = x.BalanceEconomico,
+                cobros = x.Cobros,
+                pagos = x.Pagos,
+                diferencia = x.DiferenciaCobrosPagos
+            }),
+        gastos = (Model.GastosBalanceCategorias ?? new System.Collections.Generic.List<Web.Models.ReporteBalanceGastoCategoriaVm>())
+            .Where(x => balancePrincipal != null && string.Equals(x.PeriodoId, balancePrincipal.PeriodoId, StringComparison.OrdinalIgnoreCase))
+            .Select(x => new
+            {
+                categoria = x.Categoria,
+                total = x.Total
+            })
+    });
 }
 
 <div class="container-fluid reportes-page">
@@ -99,6 +141,14 @@
                         </div>
                     }
 
+                    @if (Model.MostrarFiltroAgrupacionTemporal)
+                    {
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="agrupacionTemporalReporte">Agrupacion grafico</label>
+                            @Html.DropDownList("agrupacionTemporal", Model.AgrupacionesTemporales, new { @class = "form-control filtro-principal", id = "agrupacionTemporalReporte" })
+                        </div>
+                    }
+
                     <div class="form-group mb-0 reportes-filtro-accion">
                         <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
                         <button type="submit" class="btn btn-primary btn-block" id="btnBuscarReporte">
@@ -106,6 +156,69 @@
                         </button>
                     </div>
                 </div>
+
+                @if (esReporteBalance)
+                {
+                    <div class="border-top mt-3 pt-3">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox"
+                                   class="custom-control-input filtro-principal"
+                                   id="incluirVentasCuentaCorrienteBalance"
+                                   name="incluirVentasCuentaCorrienteBalance"
+                                   value="true"
+                                   @(Model.IncluirVentasCuentaCorrienteBalance ? "checked=\"checked\"" : "") />
+                            <label class="custom-control-label" for="incluirVentasCuentaCorrienteBalance">
+                                Incluir ventas en cuenta corriente en el balance
+                            </label>
+                        </div>
+                    </div>
+                }
+
+                @if (esReporteVentasProducto || esReporteProyeccion || esReporteBalance)
+                {
+                    <div class="border-top mt-3 pt-3">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                            <div>
+                                <div class="font-weight-semibold">Periodos comparativos</div>
+                                <div class="text-muted small">Cada periodo agregado toma exactamente la misma duracion que el periodo principal.</div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarPeriodoComparativo">
+                                <i class="fas fa-plus mr-1"></i>Agregar periodo
+                            </button>
+                        </div>
+
+                        <div id="listaPeriodosComparativos">
+                            @foreach (var periodo in (Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>()).Where(x => !x.EsPrincipal))
+                            {
+                                <div class="reportes-periodo-comparativo card border-0 bg-light mb-2">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="reportes-periodo-grid">
+                                            <div>
+                                                <label class="stock-filtro-label mb-1">Fecha comparativa</label>
+                                                <div class="input-group input-group-sm reportes-periodo-fecha-group">
+                                                    <input type="date" class="form-control filtro-principal periodo-comparativo-fecha" value="@periodo.FechaDesde.ToString("yyyy-MM-dd")" />
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text periodo-comparativo-hora">@periodo.FechaDesde.ToString("HH:mm")</span>
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" name="periodoComparativoDesde" class="periodo-comparativo-desde" value="@periodo.FechaDesdeValor" />
+                                            </div>
+                                            <div>
+                                                <label class="stock-filtro-label mb-1">Rango calculado</label>
+                                                <input type="text" class="form-control form-control-sm periodo-comparativo-hasta" value="@periodo.FechaHasta.ToString("dd/MM/yyyy HH:mm")" readonly="readonly" />
+                                            </div>
+                                            <div class="reportes-periodo-accion">
+                                                <button type="button" class="btn btn-outline-danger btn-sm btn-quitar-periodo">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </form>
         </div>
     </div>
@@ -123,38 +236,88 @@
         </div>
     }
 
-    <div class="reportes-totales-grid mb-3">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">Total kg visibles</div>
-                <div class="h4 mb-0 font-weight-bold" id="totalKgReporte">@Model.Totales.TotalKg.ToString("N3")</div>
+    @if (esReporteBalance)
+    {
+        <div class="reportes-totales-grid reportes-totales-grid-balance mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Total ventas periodo principal</div>
+                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.TotalVentas : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Total compras periodo principal</div>
+                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Compras : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Total gastos periodo principal</div>
+                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Gastos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Balance economico periodo principal</div>
+                    <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.BalanceEconomico < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.BalanceEconomico : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Total cobros periodo principal</div>
+                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Cobros : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Total pagos periodo principal</div>
+                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Pagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Dif. cobros/pagos principal</div>
+                    <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.DiferenciaCobrosPagos < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.DiferenciaCobrosPagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                </div>
             </div>
         </div>
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">Total ingresos visibles</div>
-                <div class="h4 mb-0 font-weight-bold" id="totalIngresosReporte">@Model.Totales.TotalIngresos.ToString("N3")</div>
+    }
+    else
+    {
+        <div class="reportes-totales-grid mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">@(esReporteVentasProducto ? "Total kg periodos visibles" : esReporteProyeccion ? "Stock actual visible" : "Total kg visibles")</div>
+                    <div class="h4 mb-0 font-weight-bold" id="totalKgReporte">@Model.Totales.TotalKg.ToString("N3")</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">@(esReporteVentasProducto ? "Total pesos periodos visibles" : esReporteProyeccion ? "Ventas periodos visibles" : "Total ingresos visibles")</div>
+                    <div class="h4 mb-0 font-weight-bold" id="totalIngresosReporte">@((esReporteVentasProducto) ? Model.Totales.TotalIngresos.ToString("C2", CultureInfo.GetCultureInfo("es-AR")) : Model.Totales.TotalIngresos.ToString("N3"))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">@(esReporteVentasProducto ? "Periodos comparados" : esReporteProyeccion ? "Diferencia acumulada" : "Total egresos visibles")</div>
+                    <div class="h4 mb-0 font-weight-bold" id="totalEgresosReporte">@((esReporteVentasProducto) ? Model.Totales.CantidadRegistros.ToString() : Model.Totales.TotalEgresos.ToString("N3"))</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Productos visibles</div>
+                    <div class="h4 mb-0 font-weight-bold" id="cantidadProductosReporte">@Model.Totales.CantidadProductos</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">@((esReporteVentasProducto || esReporteProyeccion) ? "Filas visibles" : "Registros visibles")</div>
+                    <div class="h4 mb-0 font-weight-bold" id="cantidadRegistrosReporte">@((esReporteVentasProducto ? Model.FilasVentasProducto.Count : esReporteProyeccion ? Model.FilasProyeccionVentasStock.Count : Model.Totales.CantidadRegistros).ToString())</div>
+                </div>
             </div>
         </div>
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">Total egresos visibles</div>
-                <div class="h4 mb-0 font-weight-bold" id="totalEgresosReporte">@Model.Totales.TotalEgresos.ToString("N3")</div>
-            </div>
-        </div>
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">Productos visibles</div>
-                <div class="h4 mb-0 font-weight-bold" id="cantidadProductosReporte">@Model.Totales.CantidadProductos</div>
-            </div>
-        </div>
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="text-muted small">Registros visibles</div>
-                <div class="h4 mb-0 font-weight-bold" id="cantidadRegistrosReporte">@Model.Totales.CantidadRegistros</div>
-            </div>
-        </div>
-    </div>
+    }
 
     <div class="card shadow-sm mb-3">
         <div class="card-body py-3">
@@ -253,6 +416,370 @@
                     </div>
                 }
             }
+            else if (esReporteVentasProducto)
+            {
+                if (!Model.HayResultados)
+                {
+                    <div class="p-4 text-center text-muted">@Model.Mensaje</div>
+                }
+                else
+                {
+                    var periodosVentas = Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>();
+                    <div class="table-responsive js-sync-scroll-body">
+                        <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteVentasProducto">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    @foreach (var periodo in periodosVentas)
+                                    {
+                                        <th class="text-right">@periodo.Titulo Kg</th>
+                                        <th class="text-right">@periodo.Titulo $</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.FilasVentasProducto)
+                                {
+                                    var textoBusqueda = ((item.Codigo > 0 ? item.Codigo.ToString() + " " : "") + (item.Producto ?? "")).Trim().ToUpperInvariant();
+                                    <tr class="reporte-ventas-row"
+                                        data-search="@textoBusqueda"
+                                        data-tipo="@((item.TipoProducto ?? "").Trim().ToUpperInvariant())"
+                                        data-marcaid="@item.MarcaId"
+                                        data-idcorte="@item.IdCorte">
+                                        <td>
+                                            <div class="d-flex align-items-start justify-content-between">
+                                                <div>
+                                                    <div class="font-weight-semibold">@item.Producto</div>
+                                                    <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                                </div>
+                                                @if (item.IdCorte > 0)
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary btn-toggle-grafico-ventas ml-2"
+                                                            data-idcorte="@item.IdCorte"
+                                                            data-producto="@item.Producto">
+                                                        Mostrar grafico
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                        @foreach (var periodo in periodosVentas)
+                                        {
+                                            var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new Web.Models.ReporteVentasProductoValorVm();
+                                            <td class="text-right">@valorPeriodo.Kg.ToString("N3")</td>
+                                            <td class="text-right">@valorPeriodo.Importe.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                        }
+                                    </tr>
+                                    if (item.IdCorte > 0)
+                                    {
+                                        <tr class="reporte-ventas-grafico-row d-none" data-idcorte="@item.IdCorte">
+                                            <td colspan="@(1 + (periodosVentas.Count * 2))" class="p-0">
+                                                <div class="p-3 bg-light border-top">
+                                                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                                                        <div class="small text-muted">Evolucion comparativa por tiempo relativo.</div>
+                                                        <div class="btn-group btn-group-sm" role="group" aria-label="Metrica grafico">
+                                                            <button type="button"
+                                                                    class="btn btn-outline-secondary btn-metrica-ventas active"
+                                                                    data-idcorte="@item.IdCorte"
+                                                                    data-metrica="kg">
+                                                                Kg
+                                                            </button>
+                                                            <button type="button"
+                                                                    class="btn btn-outline-secondary btn-metrica-ventas"
+                                                                    data-idcorte="@item.IdCorte"
+                                                                    data-metrica="importe">
+                                                                $
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="reporte-ventas-resumen-grid mb-3" id="resumenVentasProducto_@item.IdCorte"></div>
+                                                    <div class="reporte-ventas-chart-wrap">
+                                                        <canvas id="graficoVentasProducto_@item.IdCorte"></canvas>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                <tr id="filaSinResultadosVentasReporte" class="d-none">
+                                    <td colspan="@(1 + ((Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>()).Count * 2))" class="text-center text-muted py-4">No hay filas visibles para los filtros en vivo actuales.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else if (esReporteProyeccion)
+            {
+                if (!Model.HayResultados)
+                {
+                    <div class="p-4 text-center text-muted">@Model.Mensaje</div>
+                }
+                else
+                {
+                    var periodosProyeccion = Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>();
+                    var sucursalesProyeccion = Model.SucursalesProyeccion ?? new System.Collections.Generic.List<Web.Models.ReporteProyeccionSucursalVm>();
+                    <div class="table-responsive js-sync-scroll-body">
+                        <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col @(proyeccionMultiplesSucursales ? "reportes-tabla-proyeccion-multi" : "")" id="tablaReporteProyeccionVentasStock">
+                            <thead class="thead-light">
+                                @if (proyeccionMultiplesSucursales)
+                                {
+                                    <tr class="reportes-proyeccion-head-group">
+                                        <th rowspan="2">Producto</th>
+                                        @foreach (var sucursal in sucursalesProyeccion)
+                                        {
+                                            <th colspan="@(1 + (periodosProyeccion.Count * 2))" class="text-center reportes-proyeccion-sucursal-head">@sucursal.Sucursal</th>
+                                        }
+                                        @foreach (var periodo in periodosProyeccion)
+                                        {
+                                            <th rowspan="2" class="text-right reportes-proyeccion-total-periodo-head">@periodo.Titulo<br /><span class="small font-weight-normal">Dif. total</span></th>
+                                        }
+                                    </tr>
+                                    <tr class="reportes-proyeccion-head-metrics">
+                                        @foreach (var sucursal in sucursalesProyeccion)
+                                        {
+                                            <th class="text-right">Stock actual</th>
+                                            foreach (var periodo in periodosProyeccion)
+                                            {
+                                                <th class="text-right">@periodo.Titulo<br /><span class="small font-weight-normal">Ventas</span></th>
+                                                <th class="text-right">@periodo.Titulo<br /><span class="small font-weight-normal">Dif.</span></th>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-right">Stock Actual</th>
+                                        @foreach (var periodo in periodosProyeccion)
+                                        {
+                                            <th class="text-right">@periodo.Titulo Ventas</th>
+                                            <th class="text-right">@periodo.Titulo Dif.</th>
+                                        }
+                                    </tr>
+                                }
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.FilasProyeccionVentasStock)
+                                {
+                                    var textoBusqueda = ((item.Codigo > 0 ? item.Codigo.ToString() + " " : "") + (item.Producto ?? "")).Trim().ToUpperInvariant();
+                                    var totalVentasFila = (item.ValoresPeriodo ?? new System.Collections.Generic.List<Web.Models.ReporteProyeccionVentasStockValorVm>()).Sum(x => x.Ventas);
+                                    var totalDiferenciaFila = (item.ValoresPeriodo ?? new System.Collections.Generic.List<Web.Models.ReporteProyeccionVentasStockValorVm>()).Sum(x => x.Diferencia);
+                                    <tr class="reporte-proyeccion-row"
+                                        data-search="@textoBusqueda"
+                                        data-tipo="@((item.TipoProducto ?? "").Trim().ToUpperInvariant())"
+                                        data-marcaid="@item.MarcaId"
+                                        data-stockactual="@item.StockActual.ToString(CultureInfo.InvariantCulture)"
+                                        data-totalventas="@totalVentasFila.ToString(CultureInfo.InvariantCulture)"
+                                        data-totaldiferencia="@totalDiferenciaFila.ToString(CultureInfo.InvariantCulture)">
+                                        <td>
+                                            <div class="font-weight-semibold">@item.Producto</div>
+                                            <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                        </td>
+                                        @if (proyeccionMultiplesSucursales)
+                                        {
+                                            foreach (var sucursal in sucursalesProyeccion)
+                                            {
+                                                var stockSucursal = item.StocksPorSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal) ?? new Web.Models.ReporteProyeccionSucursalStockVm();
+                                                <td class="text-right font-weight-bold reportes-proyeccion-stock-cell">@stockSucursal.StockActual.ToString("N3")</td>
+                                                foreach (var periodo in periodosProyeccion)
+                                                {
+                                                    var valorSucursal = item.ValoresPeriodoSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal && x.PeriodoId == periodo.Id) ?? new Web.Models.ReporteProyeccionVentasStockSucursalValorVm();
+                                                    var claseDifSucursal = valorSucursal.Diferencia < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
+                                                    <td class="text-right reportes-proyeccion-ventas-cell">@valorSucursal.Ventas.ToString("N3")</td>
+                                                    <td class="text-right @claseDifSucursal reportes-proyeccion-dif-cell">@((valorSucursal.Diferencia > 0 ? "+" : "") + valorSucursal.Diferencia.ToString("N3"))</td>
+                                                }
+                                            }
+
+                                            foreach (var periodo in periodosProyeccion)
+                                            {
+                                                var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new Web.Models.ReporteProyeccionVentasStockValorVm();
+                                                var claseDifTotalPeriodo = valorPeriodo.Diferencia < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
+                                                <td class="text-right @claseDifTotalPeriodo reportes-proyeccion-dif-total-cell">@((valorPeriodo.Diferencia > 0 ? "+" : "") + valorPeriodo.Diferencia.ToString("N3"))</td>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <td class="text-right font-weight-bold">@item.StockActual.ToString("N3")</td>
+                                            foreach (var periodo in periodosProyeccion)
+                                            {
+                                                var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new Web.Models.ReporteProyeccionVentasStockValorVm();
+                                                var claseDif = valorPeriodo.Diferencia < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
+                                                <td class="text-right">@valorPeriodo.Ventas.ToString("N3")</td>
+                                                <td class="text-right @claseDif">@((valorPeriodo.Diferencia > 0 ? "+" : "") + valorPeriodo.Diferencia.ToString("N3"))</td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                                <tr id="filaSinResultadosProyeccionReporte" class="d-none">
+                                    <td colspan="@(proyeccionMultiplesSucursales
+                                        ? 1
+                                            + ((sucursalesProyeccion.Count) * (1 + (periodosProyeccion.Count * 2)))
+                                            + periodosProyeccion.Count
+                                        : 2 + ((Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>()).Count * 2))" class="text-center text-muted py-4">No hay filas visibles para los filtros en vivo actuales.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else if (esReporteBalance)
+            {
+                if (!Model.HayResultados)
+                {
+                    <div class="p-4 text-center text-muted">@Model.Mensaje</div>
+                }
+                else
+                {
+                    var periodosBalance = Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>();
+                    <div class="p-3 border-bottom bg-light">
+                        <div class="font-weight-semibold">Comparacion por periodos</div>
+                        <div class="text-muted small">
+                            Balance economico = @(Model.IncluirVentasCuentaCorrienteBalance ? "ventas totales" : "ventas consumidor final") - compras - gastos.
+                        </div>
+                    </div>
+                    <div class="p-3 border-bottom">
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Resultado economico por periodo</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceEconomico"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Evolucion del balance</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceLinea"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Liquidez por periodo</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceLiquidez"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Gastos por categoria del periodo principal</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceGastos"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive js-sync-scroll-body">
+                        <table class="table table-bordered table-hover mb-0 reportes-tabla" id="tablaReporteBalanceEconomico">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Concepto</th>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <th class="text-right">
+                                            @periodo.Titulo
+                                            <div class="small text-muted font-weight-normal">@periodo.FechaDesde.ToString("dd/MM/yyyy") - @periodo.FechaHasta.ToString("dd/MM/yyyy")</div>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Ventas consumidor final</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.VentasConsumidorFinal.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Ventas cuenta corriente</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.VentasCuentaCorriente.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Ventas efectivo</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.VentasEfectivo.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Ventas bancarizadas</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.VentasBancarizadas.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr class="table-active">
+                                    <td>Total ventas</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right font-weight-bold">@periodo.TotalVentas.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Total compras</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.Compras.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Total gastos</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.Gastos.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr class="table-active">
+                                    <td>Balance economico</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right font-weight-bold @(periodo.BalanceEconomico < 0 ? "text-danger" : "text-success")">@periodo.BalanceEconomico.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Total cobros</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.Cobros.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td>Total pagos</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right">@periodo.Pagos.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                                <tr class="table-active">
+                                    <td>Dif. cobros/pagos</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right font-weight-bold @(periodo.DiferenciaCobrosPagos < 0 ? "text-danger" : "text-success")">@periodo.DiferenciaCobrosPagos.ToString("C2", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
             else
             {
                 <div class="p-4 text-center text-muted">@Model.Mensaje</div>
@@ -260,7 +787,7 @@
         </div>
     </div>
 
-    @if (!esReporteStockDetalle)
+    @if (!esReporteStockDetalle && !esReporteVentasProducto && !esReporteBalance)
     {
         <div class="card shadow-sm @(Model.MostrarGrafico && Model.HayResultados ? "" : "d-none")" id="cardGraficoReporte">
             <div class="card-header bg-white">
@@ -295,6 +822,139 @@
     .reportes-tabla td:first-child {
         min-width: 240px;
         white-space: normal;
+    }
+
+    .reportes-tabla-proyeccion-multi thead th {
+        white-space: normal;
+        min-width: 110px;
+    }
+
+    .reportes-proyeccion-head-group th {
+        background: #eef3f8;
+        border-bottom-width: 1px;
+    }
+
+    .reportes-proyeccion-sucursal-head {
+        font-size: .95rem;
+        letter-spacing: .01em;
+    }
+
+    .reportes-proyeccion-head-metrics th {
+        font-size: .82rem;
+        line-height: 1.25;
+        background: #f8fafc;
+    }
+
+    .reportes-tabla-proyeccion-multi tbody td {
+        font-size: .92rem;
+    }
+
+    .reportes-proyeccion-stock-cell {
+        background: #f8fafc;
+    }
+
+    .reportes-proyeccion-ventas-cell {
+        background: #ffffff;
+    }
+
+    .reportes-proyeccion-dif-cell {
+        background: #fbfdff;
+    }
+
+    .reportes-proyeccion-dif-total-cell {
+        background: #eef6ff;
+        border-right-width: 2px;
+    }
+
+    .reportes-periodo-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+        gap: .75rem;
+        align-items: end;
+    }
+
+    .reportes-periodo-fecha-group .input-group-text {
+        min-width: 4.5rem;
+        justify-content: center;
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .reportes-periodo-accion {
+        display: flex;
+        align-items: end;
+    }
+
+    .reporte-ventas-chart-wrap {
+        position: relative;
+        min-height: 260px;
+    }
+
+    .reporte-ventas-bar-wrap {
+        position: relative;
+        min-height: 240px;
+    }
+
+    .reporte-ventas-resumen-grid {
+        display: grid;
+        gap: .75rem;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+
+    .reportes-totales-grid-balance {
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+
+    .reporte-ventas-resumen-card {
+        background: #fff;
+        border: 1px solid #dde3ea;
+        border-radius: .5rem;
+        padding: .85rem 1rem;
+        box-shadow: 0 0.15rem 0.45rem rgba(15, 23, 42, 0.05);
+    }
+
+    .reporte-ventas-resumen-card.is-principal {
+        border-color: #93c5fd;
+        background: #eff6ff;
+    }
+
+    .reporte-ventas-resumen-title {
+        font-weight: 600;
+        margin-bottom: .5rem;
+    }
+
+    .reporte-ventas-resumen-title small {
+        display: block;
+        font-size: .78rem;
+        font-weight: 400;
+        color: #6c757d;
+        margin-top: .15rem;
+    }
+
+    .reporte-ventas-resumen-line {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        font-size: .9rem;
+        margin-bottom: .2rem;
+    }
+
+    .reporte-ventas-detalle-tabla th,
+    .reporte-ventas-detalle-tabla td {
+        white-space: nowrap;
+        vertical-align: top;
+    }
+
+    .reporte-ventas-detalle-fecha {
+        display: block;
+        color: #6c757d;
+        font-size: .8rem;
+        margin-top: .15rem;
+    }
+
+    .reporte-balance-chart-wrap {
+        position: relative;
+        min-height: 280px;
     }
 
     .reportes-floating-zone {
@@ -355,6 +1015,10 @@
         .reportes-totales-grid {
             grid-template-columns: 1fr;
         }
+
+        .reportes-periodo-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -370,8 +1034,14 @@
             fechaHastaActual: "@Model.FechaHastaValor",
             usaCierreDesde: @Model.UsaCierreEnFechaDesde.ToString().ToLowerInvariant(),
             usaCierreHasta: @Model.UsaCierreEnFechaHasta.ToString().ToLowerInvariant(),
-            sucursalActual: "@Model.SucursalId"
+            sucursalActual: "@Model.SucursalId",
+            tipoReporteActual: "@Model.TipoReporteSeleccionado",
+            agrupacionTemporalActual: "@Model.AgrupacionTemporal",
+            periodosComparativos: @Html.Raw(periodosComparativosJson),
+            incluirVentasCuentaCorrienteBalance: @Model.IncluirVentasCuentaCorrienteBalance.ToString().ToLowerInvariant(),
+            balanceCharts: @Html.Raw(balanceChartsJson),
+            ventasPorProductoSerieUrl: "@Url.Action("VentasPorProductoSerie", "Reportes")"
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260518-3")"></script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260519-8")"></script>
 }

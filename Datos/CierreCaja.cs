@@ -286,6 +286,38 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerEgresosCajaGastosBalance(int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql =
+                "SELECT " +
+                "   dbo.EgresosCaja.id, " +
+                "   dbo.EgresosCaja.fechaHora AS Fecha, " +
+                "   dbo.EgresosCaja.idTipoEgresoCaja, " +
+                "   dbo.TiposEgresoCaja.tipoEgresoCaja AS TipoEgresoCaja, " +
+                "   dbo.EgresosCaja.descripcion AS Descripcion, " +
+                "   dbo.EgresosCaja.detalle AS Detalle, " +
+                "   ROUND(dbo.EgresosCaja.monto, 2) AS Monto, " +
+                "   dbo.TiposEgresoCaja.esGasto AS Gasto " +
+                "FROM dbo.EgresosCaja " +
+                "INNER JOIN dbo.TiposEgresoCaja ON dbo.EgresosCaja.idTipoEgresoCaja = dbo.TiposEgresoCaja.id " +
+                "WHERE dbo.EgresosCaja.fechaHora BETWEEN @fechaDesde AND @fechaHasta " +
+                "  AND dbo.EgresosCaja.idSucursal = @idSucursal " +
+                "  AND dbo.TiposEgresoCaja.esGasto = 1 " +
+                "ORDER BY dbo.EgresosCaja.fechaHora DESC";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHasta", SqlDbType.DateTime).Value = fechaHasta;
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal;
+                }
+            );
+        }
+
         public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
             if (oEgresoCaja == null) throw new ArgumentNullException(nameof(oEgresoCaja));

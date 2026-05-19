@@ -635,6 +635,11 @@ namespace Negocio
              return oCorteD.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
+         public DataTable ObtenerSerieVentasPorCorte(int idCorte, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idMarca, string agrupacionTemporal)
+         {
+             return oCorteD.ObtenerSerieVentasPorCorte(idCorte, idSucursal, fechaDesde, fechaHasta, tipo, idMarca, agrupacionTemporal);
+         }
+
         public DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             

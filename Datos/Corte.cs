@@ -1034,6 +1034,54 @@ namespace Datos
             );
         }
 
+        public DataTable ObtenerSerieVentasPorCorte(int idCorte, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idMarca, string agrupacionTemporal)
+        {
+            const string sql = @"
+                SELECT
+                    CASE
+                        WHEN @agrupacionTemporal = 'dia'
+                            THEN DATEADD(day, DATEDIFF(day, 0, v.fechaVenta), 0)
+                        ELSE DATEADD(hour, DATEDIFF(hour, 0, v.fechaVenta), 0)
+                    END AS BucketFecha,
+                    SUM(ISNULL(lv.cantKg, 0) - ISNULL(lv.kgsAjusteTarj, 0)) AS TotalKg,
+                    SUM((ISNULL(lv.cantKg, 0) - ISNULL(lv.kgsAjusteTarj, 0)) * ISNULL(lv.precioKg, 0)) AS TotalImporte
+                FROM dbo.Ventas v
+                INNER JOIN dbo.LineaVenta lv
+                    ON lv.idVenta = v.idVenta
+                INNER JOIN dbo.Corte c
+                    ON c.idCorte = lv.idCorte
+                WHERE
+                    lv.idCorte = @idCorte
+                    AND v.fechaVenta >= @fechaDesde
+                    AND v.fechaVenta <= @fechaHasta
+                    AND (@idSucursal <= 0 OR v.idSucursal = @idSucursal)
+                    AND (@tipo = '' OR c.tipo = @tipo)
+                    AND (@idMarca <= 0 OR c.idMarca = @idMarca)
+                GROUP BY
+                    CASE
+                        WHEN @agrupacionTemporal = 'dia'
+                            THEN DATEADD(day, DATEDIFF(day, 0, v.fechaVenta), 0)
+                        ELSE DATEADD(hour, DATEDIFF(hour, 0, v.fechaVenta), 0)
+                    END
+                ORDER BY BucketFecha;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@idCorte", SqlDbType.Int).Value = idCorte;
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal;
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHasta", SqlDbType.DateTime).Value = fechaHasta;
+                    p.Add("@tipo", SqlDbType.NVarChar, 50).Value = (tipo ?? "").Trim();
+                    p.Add("@idMarca", SqlDbType.Int).Value = idMarca;
+                    p.Add("@agrupacionTemporal", SqlDbType.NVarChar, 10).Value = (agrupacionTemporal ?? "hora").Trim().ToLowerInvariant();
+                }
+            );
+        }
+
         public DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             if (dtTeoricoReal == null) dtTeoricoReal = new DataTable();

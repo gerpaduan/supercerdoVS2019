@@ -149,6 +149,11 @@ namespace Negocio
             return oCierreD.obtenerEgresosCaja(idSucursal, idUsuario, idTipoEgresoCaja, texto, fechaDesde, fechaHasta);
         }
 
+        public DataTable obtenerEgresosCajaGastosBalance(int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            return oCierreD.obtenerEgresosCajaGastosBalance(idSucursal, fechaDesde, fechaHasta);
+        }
+
         public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
             return oCierreD.addOrEditEgresoCaja(oEgresoCaja);
