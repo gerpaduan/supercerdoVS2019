@@ -265,6 +265,13 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Personas" ? "active" : "")" href="@Url.Action("Index", "Personas")">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Personas</span>
+                </a>
+            </li>
+
             <!-- Movimientos -->
             <li class="nav-item">
                 <a class="nav-link" href="@Url.Action("Index", "Movimientos")">

@@ -170,6 +170,7 @@
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
+    <Compile Include="Models\PersonasVm.cs" />
     <Compile Include="Models\UsuariosVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarPuntoExpendioRequest.cs" />
@@ -2106,6 +2107,8 @@
     <Content Include="Views\Finanzas\_ModalPostPago.cshtml" />
     <Content Include="Views\Finanzas\_TicketPago.cshtml" />
     <Content Include="Views\Finanzas\_ModalAltaCheque.cshtml" />
+    <Content Include="Views\Personas\Editar.cshtml" />
+    <Content Include="Views\Personas\Index.cshtml" />
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />

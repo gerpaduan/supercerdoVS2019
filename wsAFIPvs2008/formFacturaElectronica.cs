@@ -170,6 +170,12 @@ namespace wsAFIPvs2008
         }
 
         private void formFacturaElectronica_Load(object sender, EventArgs e)
+        {           
+
+            loadForm();    
+        }
+
+        public void loadForm()
         {
             oEmpresa = new Entidades.Empresa();
             IEmpresaContext empresa = new EmpresaContextNulo();
@@ -194,11 +200,6 @@ namespace wsAFIPvs2008
 
             certificado = Directory.GetCurrentDirectory() + @"\Templates\" + oEmpresa.NombreCertificado_pfx;
 
-            loadForm();    
-    }
-
-        public void loadForm()
-        {
 
             cargarDatosAfip = true;
 
@@ -2320,6 +2321,16 @@ namespace wsAFIPvs2008
 
                 var response = servicePerson.getPersona(authRequestPerson.Token, authRequestPerson.Sign, authRequestPerson.Cuit, long.Parse(cuitPerson));
 
+                if (response == null || response.persona == null)
+                {
+                    MessageBox.Show("No se encontraron datos para el CUIT especificado.");
+                    return;
+                }
+
+                var domicilio = response.persona.domicilio != null && response.persona.domicilio.Length > 0
+                    ? response.persona.domicilio[0]
+                    : null;
+
                 if (response.persona != null)
                 {
                     //establece el combo tipo Doc en CUIT - 80 es el ID de AFIP
@@ -2327,32 +2338,31 @@ namespace wsAFIPvs2008
 
                     razonSocialAfip = response.persona.tipoPersona.Equals("FISICA") ?
                         Convert.ToString(response.persona.apellido + " " + response.persona.nombre) : Convert.ToString(response.persona.razonSocial);
-                    domicilioFiscalAfip = response.persona.domicilio[0].direccion;
-                    localidadAfip = response.persona.domicilio[0].localidad;
-                    provinciaAfip = response.persona.domicilio[0].descripcionProvincia;
+                    domicilioFiscalAfip = domicilio != null ? Convert.ToString(domicilio.direccion) : "";
+                    localidadAfip = domicilio != null ? Convert.ToString(domicilio.localidad) : "";
+                    provinciaAfip = domicilio != null ? Convert.ToString(domicilio.descripcionProvincia) : "";
 
                     txtRazonSocial.Text = razonSocialAfip;
-                    txtDomicilio.Text = Convert.ToString(response.persona.domicilio[0].direccion + " - " +
-                        response.persona.domicilio[0].localidad + ", " + response.persona.domicilio[0].descripcionProvincia);
+                    txtDomicilio.Text = domicilio != null
+                        ? Convert.ToString(domicilio.direccion + " - " + domicilio.localidad + ", " + domicilio.descripcionProvincia)
+                        : "";
 
                     //cargo el objete Persona para agregarlo a clientes si no existe tal cuit al Facturar
                     personaPadron.Cuit = cuitPerson;
                     personaPadron.razonSocial = personaPadron.Identificacion = razonSocialAfip;
                     personaPadron.Domicilio = domicilioFiscalAfip;
-                    personaPadron.Ciudad = response.persona.domicilio[0].localidad + ", " + response.persona.domicilio[0].descripcionProvincia;
+                    personaPadron.Ciudad = string.IsNullOrWhiteSpace(localidadAfip) && string.IsNullOrWhiteSpace(provinciaAfip)
+                        ? ""
+                        : (localidadAfip + ", " + provinciaAfip).Trim().Trim(',');
 
                     //Establece combos Comprobante y Cond.Iva en nulo para que el usuario seleccione el correspondiente
                     comboIva.SelectedIndex = -1;
                     TiposComprobantesCMB.SelectedIndex = -1;
                 }
-                else
-                {
-                    MessageBox.Show("No se encontraron datos para el CUIT especificado.");
-                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("No se pudo obtener los datos desde AFIP. " + ex.Message);
             }
         }
 
