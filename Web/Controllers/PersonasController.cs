@@ -33,7 +33,8 @@ namespace Web.Controllers
             DataTable dt = oPersonaN.buscarPersona(model.Filtro, false) ?? new DataTable();
             model.Items = dt.AsEnumerable()
                 .Select(MapResumen)
-                .OrderBy(x => x.RazonSocial ?? "")
+                .OrderBy(x => x.IdEmpresa)
+                .ThenBy(x => x.RazonSocial ?? "")
                 .ThenBy(x => x.Identificacion ?? "")
                 .ToList();
 
@@ -65,6 +66,14 @@ namespace Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            if (!PuedeModificarPersona(persona))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Personas";
+                TempData["AlertMsg"] = "No tiene permisos para modificar personas globales.";
+                return RedirectToAction("Index");
+            }
+
             var model = CrearViewModel(persona, true);
             CargarIvas(model);
 
@@ -88,6 +97,14 @@ namespace Web.Controllers
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Personas";
                 TempData["AlertMsg"] = "No se encontró la persona a modificar.";
+                return RedirectToAction("Index");
+            }
+
+            if (esEdicion && !PuedeModificarPersona(personaOriginal))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Personas";
+                TempData["AlertMsg"] = "No tiene permisos para modificar personas globales.";
                 return RedirectToAction("Index");
             }
 
@@ -157,6 +174,7 @@ namespace Web.Controllers
                 .Select(row => new
                 {
                     idPersona = LeerInt(row, "idPersona"),
+                    idEmpresa = LeerInt(row, "idEmpresa"),
                     iva = LeerString(row, "iva"),
                     razonSocial = LeerString(row, "razonSocial"),
                     cuit = LeerString(row, "cuit"),
@@ -164,9 +182,11 @@ namespace Web.Controllers
                     telefono = LeerString(row, "telefono"),
                     domicilio = LeerString(row, "domicilio"),
                     ciudad = LeerString(row, "ciudad"),
-                    otrosDatos = LeerString(row, "otrosDatos")
+                    otrosDatos = LeerString(row, "otrosDatos"),
+                    puedeModificar = PuedeModificarPersona(LeerInt(row, "idEmpresa"))
                 })
-                .OrderBy(x => x.razonSocial ?? "")
+                .OrderBy(x => x.idEmpresa)
+                .ThenBy(x => x.razonSocial ?? "")
                 .ThenBy(x => x.identificacion ?? "")
                 .ToList();
 
@@ -349,6 +369,7 @@ namespace Web.Controllers
             return new PersonaResumenVm
             {
                 IdPersona = LeerInt(row, "idPersona"),
+                IdEmpresa = LeerInt(row, "idEmpresa"),
                 Identificacion = LeerString(row, "nombreIdentif"),
                 RazonSocial = LeerString(row, "razonSocial"),
                 Iva = LeerString(row, "iva"),
@@ -358,8 +379,21 @@ namespace Web.Controllers
                 Ciudad = LeerString(row, "ciudad"),
                 OtrosDatos = LeerString(row, "otrosDatos"),
                 CtaCte = LeerBool(row, "ctaCte"),
-                Bonificacion = LeerFloat(row, "bonificacion")
+                Bonificacion = LeerFloat(row, "bonificacion"),
+                PuedeModificar = PuedeModificarPersona(LeerInt(row, "idEmpresa"))
             };
+        }
+
+        private bool PuedeModificarPersona(Entidades.Persona persona)
+        {
+            return persona != null && PuedeModificarPersona(persona.IdEmpresa);
+        }
+
+        private bool PuedeModificarPersona(int idEmpresaPersona)
+        {
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            int idEmpresaUsuario = usuario != null ? usuario.IdEmpresa : 0;
+            return !(idEmpresaUsuario > 0 && idEmpresaPersona == 0);
         }
 
         private PersonaEditVm CrearViewModel(Entidades.Persona persona, bool esEdicion)

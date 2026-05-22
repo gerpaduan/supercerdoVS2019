@@ -17,6 +17,7 @@ namespace Web.Models
     public class PersonaResumenVm
     {
         public int IdPersona { get; set; }
+        public int IdEmpresa { get; set; }
         public string Identificacion { get; set; }
         public string RazonSocial { get; set; }
         public string Iva { get; set; }
@@ -27,6 +28,7 @@ namespace Web.Models
         public string OtrosDatos { get; set; }
         public bool CtaCte { get; set; }
         public float Bonificacion { get; set; }
+        public bool PuedeModificar { get; set; }
     }
 
     public class PersonaEditVm

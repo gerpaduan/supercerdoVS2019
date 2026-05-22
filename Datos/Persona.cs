@@ -109,6 +109,7 @@ namespace Datos
                     p.domicilio,
                     p.ciudad,
                     p.marca,
+                    p.idEmpresa,
                     p.idPropietario,
                     p.creado,
                     p.idIva,
@@ -135,6 +136,7 @@ namespace Datos
                         Telefono = Convert.ToString(dr["telefono"]),
                         Domicilio = Convert.ToString(dr["domicilio"]),
                         Ciudad = Convert.ToString(dr["ciudad"]),
+                        IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
                         CtaCte = dr["ctaCte"] != DBNull.Value && Convert.ToBoolean(dr["ctaCte"]),
                         Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
                         OtrosDatos = Convert.ToString(dr["otrosDatos"]),
@@ -172,6 +174,7 @@ namespace Datos
                 sql = @"
                     SELECT 
                         p.idPersona,
+                        p.idEmpresa,
                         p.razonSocial AS Marca,
                         p.otrosDatos AS otrosDatos,
                         prop.razonSocial AS Propietario,
@@ -189,6 +192,7 @@ namespace Datos
                 sql = @"
                     SELECT  
                         p.idPersona,
+                        p.idEmpresa,
                         p.identificacion AS nombreIdentif,
                         p.razonSocial,
                         i.abrev AS iva,

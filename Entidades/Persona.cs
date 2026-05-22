@@ -14,6 +14,7 @@ namespace Entidades
         private bool ctaCte;
 
         private int idIva;
+        private int idEmpresa;
         private bool marca;
         private int? idPropietario;
 
@@ -29,6 +30,12 @@ namespace Entidades
         {
             get { return iva; }
             set { iva = value; }
+        }
+
+        public int IdEmpresa
+        {
+            get { return idEmpresa; }
+            set { idEmpresa = value; }
         }
 
         private string identificacion;

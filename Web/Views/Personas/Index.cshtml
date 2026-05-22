@@ -7,6 +7,16 @@
 }
 
 <div class="container-fluid">
+    <style>
+        .persona-global {
+            opacity: 0.68;
+        }
+
+        .persona-global td {
+            background-color: #f8f9fc;
+        }
+    </style>
+
     @if (!string.IsNullOrWhiteSpace(successMessage))
     {
         <div id="personasSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -83,7 +93,7 @@
                         {
                             foreach (var item in Model.Items)
                             {
-                                <tr>
+                                <tr class="@(item.IdEmpresa == 0 ? "persona-global" : "")">
                                     <td>@item.IdPersona</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Identificacion) ? item.Identificacion : "-")</td>
                                     <td class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.RazonSocial) ? item.RazonSocial : "-")</td>
@@ -94,9 +104,18 @@
                                     <td>@(!string.IsNullOrWhiteSpace(item.Ciudad) ? item.Ciudad : "-")</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.OtrosDatos) ? item.OtrosDatos : "-")</td>
                                     <td class="text-nowrap">
-                                        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Personas", new { id = item.IdPersona })">
-                                            Modificar
-                                        </a>
+                                        @if (item.PuedeModificar)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Personas", new { id = item.IdPersona })">
+                                                Modificar
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no pueden modificarse desde una empresa.">
+                                                Modificar
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -141,7 +160,8 @@
 
             var html = "";
             items.forEach(function (item) {
-                html += "<tr>";
+                var esGlobal = Number(item.idEmpresa || 0) === 0;
+                html += '<tr' + (esGlobal ? ' class="persona-global"' : '') + ">";
                 html += "<td>" + escapeHtml(item.idPersona) + "</td>";
                 html += valorCelda(item.identificacion, false);
                 html += valorCelda(item.razonSocial, true);
@@ -151,7 +171,11 @@
                 html += valorCelda(item.domicilio, false);
                 html += valorCelda(item.ciudad, false);
                 html += valorCelda(item.otrosDatos, false);
-                html += '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="' + baseEditarUrl + '?id=' + encodeURIComponent(item.idPersona) + '">Modificar</a></td>';
+                if (item.puedeModificar) {
+                    html += '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="' + baseEditarUrl + '?id=' + encodeURIComponent(item.idPersona) + '">Modificar</a></td>';
+                } else {
+                    html += '<td class="text-nowrap"><button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no pueden modificarse desde una empresa.">Modificar</button></td>';
+                }
                 html += "</tr>";
             });
 

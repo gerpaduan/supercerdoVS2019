@@ -236,6 +236,16 @@
                 return (valor || "").replace(/\D/g, "");
             }
 
+            function ivaSeleccionadoValido() {
+                var $iva = $("#IdIva");
+                if (!$iva.length || $iva.prop("disabled")) {
+                    return true;
+                }
+
+                var valor = $.trim($iva.val() || "");
+                return valor !== "" && Number(valor) > 0;
+            }
+
             function mostrarMensaje(tipo, titulo, texto) {
                 if (window.Swal && typeof window.Swal.fire === "function") {
                     Swal.fire({ icon: tipo, title: titulo, text: texto });
@@ -348,6 +358,13 @@
 
                 if (bloquearSiguienteSubmitAfip || idActivo === "Cuit" || idActivo === "btnBuscarAfipPersona" || submitter === "btnBuscarAfipPersona") {
                     evt.preventDefault();
+                    return false;
+                }
+
+                if (!ivaSeleccionadoValido()) {
+                    evt.preventDefault();
+                    mostrarMensaje("warning", "Falta información", "Seleccione una condición frente al IVA antes de guardar.");
+                    $("#IdIva").trigger("focus");
                     return false;
                 }
             });
