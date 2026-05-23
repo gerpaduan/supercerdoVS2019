@@ -104,6 +104,9 @@
             $('#prodSubtotal').text('$ 0,00');
             $('#inputCantidad').prop('disabled', true).val('');
             $('#btnAgregarProducto').prop('disabled', true);
+            if (typeof options.onProductoChanged === 'function') {
+                options.onProductoChanged(null);
+            }
         }
 
         function abortPendingProductRequest() {
@@ -143,6 +146,9 @@
             $('#prodSubtotal').text('$ 0,00');
             $('#inputCantidad').prop('disabled', true).val('');
             $('#btnAgregarProducto').prop('disabled', true);
+            if (typeof options.onProductoChanged === 'function') {
+                options.onProductoChanged(null);
+            }
 
             focusCodigo(false);
         }
@@ -164,6 +170,9 @@
             $('#prodSubtotal').text('$ 0,00');
             options.calculateSubtotal();
             $('#btnAgregarProducto').prop('disabled', false);
+            if (typeof options.onProductoChanged === 'function') {
+                options.onProductoChanged(producto);
+            }
         }
 
         // Hace la consulta real al backend. Mantiene varias defensas del flujo
@@ -345,6 +354,10 @@
                         return;
                     }
 
+                    if (typeof options.onProductoConfirmed === 'function') {
+                        options.onProductoConfirmed(productoSeleccionado);
+                    }
+
                     focusCantidad();
                 });
             }
@@ -388,6 +401,10 @@
                             productoSeleccionado = null;
                             focusCodigo();
                             return;
+                        }
+
+                        if (typeof options.onProductoConfirmed === 'function') {
+                            options.onProductoConfirmed(productoSeleccionado);
                         }
 
                         if (typeof window.esEANValido === 'function' && window.esEANValido(codigoActual)) {

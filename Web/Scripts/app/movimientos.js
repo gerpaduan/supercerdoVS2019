@@ -140,6 +140,7 @@
         var $page = $('[data-movimiento-page="1"]');
         if (!$page.length) return;
 
+        var config = window.movimientosConfig || {};
         var state = {
             lines: Array.isArray(window.movimientoLineasIniciales) ? window.movimientoLineasIniciales.slice() : [],
             draftTimer: null,
@@ -149,11 +150,10 @@
             readOnly: !!config.soloLecturaInicial
         };
 
-        var config = window.movimientosConfig || {};
-
         var $codigo = $('#txtCodigoProducto');
         var $productoId = $('#txtProductoId');
         var $productoNombre = $('#txtProductoNombre');
+        var $productoPesable = $('#txtProductoPesable');
         var $productoTipo = $('#txtProductoTipo');
         var $productoPromedio = $('#txtProductoPromedio');
         var $cantUnidad = $('#txtCantUnidad');
@@ -166,9 +166,18 @@
         var $btnImprimirMovimiento = $('#btnImprimirMovimiento');
         var $observaciones = $('#Observaciones');
         var balanzaDisponible = false;
+        var balanzaManualDesactivada = false;
+        var balanzaClientStarted = false;
+        var balanzaUltimaLectura = null;
+
+        function productoEsPesable() {
+            return String($productoPesable.val() || '').toLowerCase() === 'true';
+        }
 
         function syncReadOnlyUi() {
+            var hayProducto = toInt($productoId.val()) > 0;
             $('#tablaLineasMovimiento .js-remove-line').prop('disabled', !!state.readOnly);
+            $cantKgs.prop('readonly', !!($balanza.is(':checked') && balanzaDisponible && !balanzaManualDesactivada && (!hayProducto || productoEsPesable())));
         }
 
         function getDraftKey() {
@@ -255,8 +264,15 @@
             $productoId.val(producto.id || '');
             $codigo.val(producto.codigo || '');
             $productoNombre.val(producto.nombre || '');
+            $productoPesable.val(producto.pesable === true ? 'true' : 'false');
             $productoTipo.val(producto.tipo || '');
             $productoPromedio.val(producto.promedio || 0);
+            if (!productoEsPesable()) {
+                $cantKgs.val('');
+            } else if ($balanza.is(':checked') && balanzaDisponible && balanzaUltimaLectura) {
+                $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
+            }
+            syncReadOnlyUi();
             scheduleDraft();
         }
 
@@ -271,10 +287,15 @@
             $productoId.val('');
             $codigo.val('');
             $productoNombre.val('');
+            $productoPesable.val('');
             $productoTipo.val('');
             $productoPromedio.val('');
             $cantUnidad.val('');
-            $cantKgs.val('');
+            if ($balanza.is(':checked') && balanzaDisponible && balanzaUltimaLectura && !balanzaManualDesactivada) {
+                $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
+            } else {
+                $cantKgs.val('');
+            }
             $permitir.prop('checked', false);
             $permitirWrap.addClass('d-none');
             clearWarning();
@@ -326,39 +347,86 @@
 
         function setBalanzaDisponible(disponible) {
             balanzaDisponible = !!disponible;
-            if (!balanzaDisponible) {
-                $balanza.prop('checked', false);
+            syncReadOnlyUi();
+        }
+
+        function normalizarBalanzaPayload(data) {
+            if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.normalize === 'function') {
+                return window.CarnisysBalanzaUtils.normalize(data);
+            }
+
+            return {
+                ok: !!(data && data.ok),
+                conectada: !!(data && data.conectada),
+                peso: 0,
+                pesoTexto: '0.000',
+                pesoDisplay: '0.000',
+                raw: data || null
+            };
+        }
+
+        function renderBalanzaStatus(payload) {
+            if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.renderStatus === 'function') {
+                window.CarnisysBalanzaUtils.renderStatus('#estadoBalanzaMovimiento', '#barraBalanzaMovimiento', payload);
             }
         }
 
-        function balanzaConectadaDesdePayload(data) {
-            if (!data) return false;
-            var estado = String(data.estado || data.status || '').toLowerCase();
-            var pesoRaw = data.peso;
-            if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.valor;
-            if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.weight;
-            var peso = Number(pesoRaw);
-            return estado === 'ok' || estado === 'connected' || (!isNaN(peso) && peso !== 0);
+        function aplicarLecturaBalanza(payload) {
+            var normalized = normalizarBalanzaPayload(payload);
+            balanzaUltimaLectura = normalized;
+            setBalanzaDisponible(normalized.conectada === true);
+            renderBalanzaStatus(payload);
+
+            var hayProducto = toInt($productoId.val()) > 0;
+            if (!normalized.conectada || !$balanza.is(':checked') || balanzaManualDesactivada || (hayProducto && !productoEsPesable())) {
+                return;
+            }
+
+            $cantKgs.val(normalized.pesoDisplay || normalized.pesoTexto || '');
+            syncReadOnlyUi();
+            validarRelacionCantidadKilos();
+        }
+
+        function aplicarStatusBalanza(payload) {
+            var normalized = normalizarBalanzaPayload(payload);
+            setBalanzaDisponible(normalized.conectada === true);
+            renderBalanzaStatus(payload);
         }
 
         function verificarBalanza(callback) {
-            if (!config.balanzaUrl) {
+            if (!window.CarnisysBalanza) {
                 setBalanzaDisponible(false);
+                renderBalanzaStatus(null);
                 if (typeof callback === 'function') callback(false);
                 return;
             }
 
-            $.ajax({
-                url: config.balanzaUrl,
-                method: 'GET',
-                cache: false,
-                timeout: 1200
-            }).done(function (data) {
-                var disponible = balanzaConectadaDesdePayload(data);
-                setBalanzaDisponible(disponible);
+            if (!balanzaClientStarted) {
+                balanzaClientStarted = true;
+                window.CarnisysBalanza.start({
+                    baseUrl: 'http://127.0.0.1:5100',
+                    statusIntervalMs: 3000,
+                    pesoIntervalMs: 250,
+                    onStatus: function (data) {
+                        aplicarStatusBalanza(data);
+                    },
+                    onPeso: function (data) {
+                        aplicarLecturaBalanza(data);
+                    },
+                    onError: function () {
+                        setBalanzaDisponible(false);
+                        renderBalanzaStatus(null);
+                    }
+                });
+            }
+
+            window.CarnisysBalanza.leerAhora().then(function (data) {
+                var disponible = normalizarBalanzaPayload(data).conectada === true;
+                aplicarLecturaBalanza(data);
                 if (typeof callback === 'function') callback(disponible);
-            }).fail(function () {
+            }).catch(function () {
                 setBalanzaDisponible(false);
+                renderBalanzaStatus(null);
                 if (typeof callback === 'function') callback(false);
             });
         }
@@ -371,7 +439,13 @@
                     return;
                 }
 
+                balanzaManualDesactivada = false;
                 $balanza.prop('checked', true);
+                window.CarnisysBalanza.activar();
+                if (balanzaUltimaLectura && balanzaUltimaLectura.conectada) {
+                    $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
+                }
+                syncReadOnlyUi();
             });
         }
 
@@ -489,7 +563,7 @@
                 PromedioProducto: toFloat($productoPromedio.val()),
                 CantUnidad: toInt($cantUnidad.val()),
                 CantKg: toFloat($cantKgs.val()),
-                PesoBalanza: $balanza.is(':checked'),
+                PesoBalanza: $balanza.is(':checked') && productoEsPesable(),
                 PermitirIngreso: $permitir.is(':checked')
             };
         }
@@ -720,17 +794,45 @@
             }
         });
 
-        $('#txtCantUnidad, #txtCantKgs, #chkPermitirIngreso').on('input change', function () {
+        $('#txtCantUnidad').on('input change', function () {
+            if (!productoEsPesable()) {
+                $cantKgs.val($cantUnidad.val() || '');
+            }
+            validarRelacionCantidadKilos();
+        });
+
+        $('#txtCantKgs, #chkPermitirIngreso').on('input change', function () {
             validarRelacionCantidadKilos();
         });
 
         $observaciones.on('input', autoResizeObservaciones);
 
         $balanza.on('change', function () {
-            if ($balanza.is(':checked') && !balanzaDisponible) {
-                intentarActivarBalanza();
+            if ($balanza.is(':checked')) {
+                if (!productoEsPesable()) {
+                    syncReadOnlyUi();
+                    return;
+                }
+                balanzaManualDesactivada = false;
+                if (!balanzaDisponible) {
+                    intentarActivarBalanza();
+                    return;
+                }
+
+                if (window.CarnisysBalanza) {
+                    window.CarnisysBalanza.activar();
+                }
+                if (balanzaUltimaLectura && balanzaUltimaLectura.conectada) {
+                    $cantKgs.val(balanzaUltimaLectura.pesoDisplay || balanzaUltimaLectura.pesoTexto || '');
+                }
+            } else {
+                balanzaManualDesactivada = true;
+                if (window.CarnisysBalanza) {
+                    window.CarnisysBalanza.desactivar();
+                }
             }
 
+            syncReadOnlyUi();
             scheduleDraft();
         });
 
@@ -809,6 +911,7 @@
         });
 
         renderLines();
+        renderBalanzaStatus(null);
         verificarBalanza();
         autoResizeObservaciones();
         if (readDraft()) {

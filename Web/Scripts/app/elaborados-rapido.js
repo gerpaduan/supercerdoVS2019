@@ -53,14 +53,23 @@
         $textarea.css('height', $textarea.get(0).scrollHeight + 'px');
     }
 
+    function normalizarBalanzaPayload(data) {
+        if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.normalize === 'function') {
+            return window.CarnisysBalanzaUtils.normalize(data);
+        }
+
+        return {
+            ok: !!(data && data.ok),
+            conectada: !!(data && data.conectada),
+            peso: 0,
+            pesoTexto: '0.000',
+            pesoDisplay: '0.000',
+            raw: data || null
+        };
+    }
+
     function balanzaConectadaDesdePayload(data) {
-        if (!data) return false;
-        var estado = String(data.estado || data.status || '').toLowerCase();
-        var pesoRaw = data.peso;
-        if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.valor;
-        if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.weight;
-        var peso = Number(pesoRaw);
-        return estado === 'ok' || estado === 'connected' || (!isNaN(peso) && peso !== 0);
+        return normalizarBalanzaPayload(data).conectada === true;
     }
 
     function initLista() {
@@ -108,7 +117,10 @@
         var state = {
             formula: $.isArray(config.initialFormula) ? config.initialFormula.slice() : [],
             guardando: false,
-            balanzaDisponible: false
+            balanzaDisponible: false,
+            balanzaClientStarted: false,
+            balanzaUltimaLectura: null,
+            balanzaDesactivadaManual: false
         };
 
         var $form = $('#formIngresoRapidoElaborado');
@@ -118,6 +130,43 @@
         var $balanza = $('#chkBalanzaRapido');
         var $alertaBalanza = $('#alertaBalanzaRapido');
         var $receta = $('#RecetaRapido');
+
+        function esPesable() {
+            return config.esPesable === true || config.esPesable === 'true';
+        }
+
+        function syncCantidadReadonly() {
+            $cantidad.prop('readonly', !!(esPesable() && $balanza.is(':checked') && state.balanzaDisponible && !state.balanzaDesactivadaManual) || !!config.esAnulado);
+        }
+
+        function renderBalanzaStatus(payload) {
+            if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.renderStatus === 'function') {
+                window.CarnisysBalanzaUtils.renderStatus('#estadoBalanzaRapido', '#barraBalanzaRapido', payload);
+            }
+        }
+
+        function aplicarLecturaBalanza(payload) {
+            var normalized = normalizarBalanzaPayload(payload);
+            state.balanzaDisponible = normalized.conectada === true;
+            state.balanzaUltimaLectura = normalized;
+            renderBalanzaStatus(payload);
+            syncCantidadReadonly();
+
+            if (!esPesable() || !normalized.conectada || !$balanza.is(':checked') || state.balanzaDesactivadaManual) {
+                return;
+            }
+
+            $alertaBalanza.addClass('d-none').text('');
+            $cantidad.val(normalized.pesoDisplay || normalized.pesoTexto || formatKg(normalized.peso));
+            recalcularFormula();
+        }
+
+        function aplicarStatusBalanza(payload) {
+            var normalized = normalizarBalanzaPayload(payload);
+            state.balanzaDisponible = normalized.conectada === true;
+            renderBalanzaStatus(payload);
+            syncCantidadReadonly();
+        }
 
         function renderFormula() {
             var html = '';
@@ -155,27 +204,58 @@
         }
 
         function verificarBalanza(callback) {
-            if (!config.balanzaUrl) {
+            if (!window.CarnisysBalanza) {
                 state.balanzaDisponible = false;
+                renderBalanzaStatus(null);
+                syncCantidadReadonly();
                 if (typeof callback === 'function') callback(false);
                 return;
             }
 
-            $.ajax({
-                url: config.balanzaUrl,
-                method: 'GET',
-                cache: false,
-                timeout: 1200
-            }).done(function (data) {
+            if (!state.balanzaClientStarted) {
+                state.balanzaClientStarted = true;
+                window.CarnisysBalanza.start({
+                    baseUrl: 'http://127.0.0.1:5100',
+                    statusIntervalMs: 3000,
+                    pesoIntervalMs: 250,
+                    onStatus: function (data) {
+                        aplicarStatusBalanza(data);
+                    },
+                    onPeso: function (data) {
+                        aplicarLecturaBalanza(data);
+                    },
+                    onError: function () {
+                        state.balanzaDisponible = false;
+                        renderBalanzaStatus(null);
+                        syncCantidadReadonly();
+                    }
+                });
+            }
+
+            window.CarnisysBalanza.leerAhora().then(function (data) {
                 state.balanzaDisponible = balanzaConectadaDesdePayload(data);
+                aplicarLecturaBalanza(data);
                 if (typeof callback === 'function') callback(state.balanzaDisponible, data);
-            }).fail(function () {
+            }).catch(function () {
                 state.balanzaDisponible = false;
+                renderBalanzaStatus(null);
+                syncCantidadReadonly();
                 if (typeof callback === 'function') callback(false);
             });
         }
 
         function verificarBalanzaInicial() {
+            if (!esPesable()) {
+                state.balanzaDesactivadaManual = true;
+                $balanza.prop('checked', false);
+                $cantidad.val('');
+                syncCantidadReadonly();
+                window.setTimeout(function () {
+                    $cantidad.focus().select();
+                }, 30);
+                return;
+            }
+
             verificarBalanza(function (disponible) {
                 if (!disponible) {
                     $balanza.prop('checked', false);
@@ -183,10 +263,22 @@
                 } else {
                     $alertaBalanza.addClass('d-none').text('');
                 }
+                syncCantidadReadonly();
             });
         }
 
         function intentarLeerBalanza() {
+            if (!esPesable()) {
+                $balanza.prop('checked', false);
+                state.balanzaDesactivadaManual = true;
+                $cantidad.val('');
+                syncCantidadReadonly();
+                window.setTimeout(function () {
+                    $cantidad.focus().select();
+                }, 30);
+                return;
+            }
+
             verificarBalanza(function (disponible, data) {
                 if (!disponible) {
                     $balanza.prop('checked', false);
@@ -194,12 +286,11 @@
                     return;
                 }
 
-                $alertaBalanza.addClass('d-none').text('');
-                var pesoRaw = data && (data.peso !== undefined ? data.peso : (data.valor !== undefined ? data.valor : data.weight));
-                if (pesoRaw !== undefined && pesoRaw !== null) {
-                    $cantidad.val(formatKg(pesoRaw));
-                    recalcularFormula();
+                state.balanzaDesactivadaManual = false;
+                if (window.CarnisysBalanza) {
+                    window.CarnisysBalanza.activar();
                 }
+                aplicarLecturaBalanza(data);
             });
         }
 
@@ -224,10 +315,22 @@
         $balanza.on('change', function () {
             if (config.esAnulado) return;
             if ($balanza.is(':checked')) {
+                state.balanzaDesactivadaManual = false;
                 intentarLeerBalanza();
             } else {
+                state.balanzaDesactivadaManual = true;
+                if (window.CarnisysBalanza) {
+                    window.CarnisysBalanza.desactivar();
+                }
                 $alertaBalanza.addClass('d-none').text('');
+                if (!esPesable()) {
+                    $cantidad.val('');
+                    window.setTimeout(function () {
+                        $cantidad.focus().select();
+                    }, 30);
+                }
             }
+            syncCantidadReadonly();
         });
 
         $('#btnAnularIngresoRapido').on('click', function () {
@@ -313,7 +416,9 @@
         autoResizeTextarea($receta);
         renderFormula();
         recalcularFormula();
+        renderBalanzaStatus(null);
         verificarBalanzaInicial();
+        syncCantidadReadonly();
     }
 
     $(function () {

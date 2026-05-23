@@ -84,7 +84,10 @@
             balanzaDisponible: false,
             balanzaFaltanteDetectada: false,
             balanzaDesactivadaManual: false,
-            balanzaPolling: null
+            balanzaPolling: null,
+            balanzaClientStarted: false,
+            balanzaUltimaLectura: null,
+            focusAgregarPendiente: false
         };
     }
 
@@ -118,6 +121,12 @@
             if (!$input.prop('readonly')) {
                 $input.focus().select();
             }
+        }, 20);
+    }
+
+    function focusAgregarLinea($form) {
+        window.setTimeout(function () {
+            $form.find('#btnAgregarLineaStock').focus();
         }, 20);
     }
 
@@ -237,7 +246,8 @@
 
     function syncCantidadReadonly($form) {
         var state = getState($form);
-        var soloLectura = !!(state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && esPesableActual($form));
+        var hayProducto = !!$.trim($form.find('#txtProductoId').val() || '');
+        var soloLectura = !!(state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && (!hayProducto || esPesableActual($form)));
         $form.find('#txtCantKgs').prop('readonly', soloLectura);
     }
 
@@ -272,6 +282,7 @@
     }
 
     function clearProductoInputs($form, preserveCode) {
+        var state = getState($form);
         var codigo = preserveCode ? ($form.find('#txtCodigoProducto').val() || '') : '';
         $form.find('#txtProductoId').val('');
         $form.find('#txtCodigoProducto').val(codigo);
@@ -279,9 +290,15 @@
         $form.find('#txtProductoPesable').val('');
         $form.find('#txtProductoTipo').val('');
         $form.find('#txtProductoPromedio').val('');
-        $form.find('#txtCantKgs').val('');
+        if (state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && !state.balanzaDesactivadaManual && state.balanzaUltimaLectura) {
+            $form.find('#txtCantKgs').val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
+            if (window.CarnisysBalanza) {
+                window.CarnisysBalanza.activar();
+            }
+        } else {
+            $form.find('#txtCantKgs').val('');
+        }
         actualizarEtiquetaCantidad($form);
-        detenerLecturaBalanza($form);
         syncCantidadReadonly($form);
     }
 
@@ -942,43 +959,105 @@
         syncCantidadReadonly($form);
     }
 
+    function normalizarBalanzaPayload(data) {
+        if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.normalize === 'function') {
+            return window.CarnisysBalanzaUtils.normalize(data);
+        }
+
+        return {
+            ok: !!(data && data.ok),
+            conectada: !!(data && data.conectada),
+            peso: 0,
+            pesoTexto: '0.000',
+            pesoDisplay: '0.000',
+            inestable: false,
+            raw: data || null
+        };
+    }
+
+    function renderBalanzaStatus($form, payload) {
+        if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.renderStatus === 'function') {
+            window.CarnisysBalanzaUtils.renderStatus('#estadoBalanzaStock', '#barraBalanzaStock', payload);
+        }
+    }
+
     function balanzaConectadaDesdePayload(data) {
-        if (!data) return false;
-        var estado = String(data.estado || data.status || '').toLowerCase();
-        var pesoRaw = data.peso;
-        if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.valor;
-        if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.weight;
-        var peso = Number(pesoRaw);
-        return estado === 'ok' || estado === 'connected' || (!isNaN(peso) && peso !== 0);
+        return normalizarBalanzaPayload(data).conectada === true;
     }
 
     function extraerPeso(data) {
-        if (!data) return 0;
-        var pesoRaw = data.peso;
-        if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.valor;
-        if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.weight;
-        return toNumber(pesoRaw);
+        return normalizarBalanzaPayload(data).peso || 0;
+    }
+
+    function aplicarLecturaBalanza($form, payload) {
+        var state = getState($form);
+        var normalized = normalizarBalanzaPayload(payload);
+        state.balanzaUltimaLectura = normalized;
+        setBalanzaDisponible($form, normalized.conectada === true);
+        renderBalanzaStatus($form, payload);
+
+        if (!normalized.conectada) {
+            return;
+        }
+
+        var hayProducto = !!$.trim($form.find('#txtProductoId').val() || '');
+        if (!$form.find('#chkBalanzaLinea').is(':checked') || state.balanzaDesactivadaManual || (hayProducto && !esPesableActual($form))) {
+            return;
+        }
+
+        $form.find('#txtCantKgs').val(normalized.pesoDisplay || normalized.pesoTexto || formatNumber(normalized.peso, 3));
+        if (state.focusAgregarPendiente) {
+            state.focusAgregarPendiente = false;
+            focusAgregarLinea($form);
+        }
+    }
+
+    function aplicarStatusBalanza($form, payload) {
+        var normalized = normalizarBalanzaPayload(payload);
+        setBalanzaDisponible($form, normalized.conectada === true);
+        renderBalanzaStatus($form, payload);
+    }
+
+    function ensureBalanzaClient($form) {
+        var state = getState($form);
+        if (state.balanzaClientStarted || !window.CarnisysBalanza) {
+            return;
+        }
+
+        state.balanzaClientStarted = true;
+        window.CarnisysBalanza.start({
+            baseUrl: 'http://127.0.0.1:5100',
+            statusIntervalMs: 3000,
+            pesoIntervalMs: 250,
+            onStatus: function (data) {
+                aplicarStatusBalanza($form, data);
+            },
+            onPeso: function (data) {
+                aplicarLecturaBalanza($form, data);
+            },
+            onError: function () {
+                setBalanzaDisponible($form, false);
+                renderBalanzaStatus($form, null);
+            }
+        });
     }
 
     function verificarBalanza($form, callback) {
-        var state = getState($form);
-        if (!state.config.balanzaUrl) {
+        if (!window.CarnisysBalanza) {
             setBalanzaDisponible($form, false);
+            renderBalanzaStatus($form, null);
             if (typeof callback === 'function') callback(false, null);
             return;
         }
 
-        $.ajax({
-            url: state.config.balanzaUrl,
-            method: 'GET',
-            cache: false,
-            timeout: 1200
-        }).done(function (data) {
+        ensureBalanzaClient($form);
+        window.CarnisysBalanza.leerAhora().then(function (data) {
             var disponible = balanzaConectadaDesdePayload(data);
-            setBalanzaDisponible($form, disponible);
+            aplicarLecturaBalanza($form, data);
             if (typeof callback === 'function') callback(disponible, data);
-        }).fail(function () {
+        }).catch(function () {
             setBalanzaDisponible($form, false);
+            renderBalanzaStatus($form, null);
             if (typeof callback === 'function') callback(false, null);
         });
     }
@@ -995,10 +1074,8 @@
     }
 
     function detenerLecturaBalanza($form) {
-        var state = getState($form);
-        if (state.balanzaPolling) {
-            window.clearInterval(state.balanzaPolling);
-            state.balanzaPolling = null;
+        if (window.CarnisysBalanza) {
+            window.CarnisysBalanza.desactivar();
         }
         syncCantidadReadonly($form);
     }
@@ -1023,44 +1100,10 @@
             clearWarning($form);
             $form.find('#chkBalanzaLinea').prop('checked', true);
             syncCantidadReadonly($form);
-            var pesoInicial = extraerPeso(data);
-            if (pesoInicial > 0) {
-                $form.find('#txtCantKgs').val(formatNumber(pesoInicial, 3));
+            if (window.CarnisysBalanza) {
+                window.CarnisysBalanza.activar();
             }
-
-            state.balanzaPolling = window.setInterval(function () {
-                $.ajax({
-                    url: state.config.balanzaUrl,
-                    method: 'GET',
-                    cache: false,
-                    timeout: 1200
-                }).done(function (payload) {
-                    var disponibleActual = balanzaConectadaDesdePayload(payload);
-                    setBalanzaDisponible($form, disponibleActual);
-                    if (!disponibleActual) {
-                        detenerLecturaBalanza($form);
-                        $form.find('#chkBalanzaLinea').prop('checked', false);
-                        syncCantidadReadonly($form);
-                        if (allowFocusManual) {
-                            focusCantidadManual($form);
-                        }
-                        return;
-                    }
-
-                    var peso = extraerPeso(payload);
-                    if (peso >= 0) {
-                        $form.find('#txtCantKgs').val(formatNumber(peso, 3));
-                    }
-                }).fail(function () {
-                    setBalanzaDisponible($form, false);
-                    detenerLecturaBalanza($form);
-                    $form.find('#chkBalanzaLinea').prop('checked', false);
-                    syncCantidadReadonly($form);
-                    if (allowFocusManual) {
-                        focusCantidadManual($form);
-                    }
-                });
-            }, 900);
+            aplicarLecturaBalanza($form, data);
         });
     }
 
@@ -1086,8 +1129,8 @@
         var pesable = esPesableActual($form);
 
         if (!pesable) {
-            detenerLecturaBalanza($form);
-            $form.find('#chkBalanzaLinea').prop('checked', false);
+            state.focusAgregarPendiente = false;
+            $form.find('#txtCantKgs').val('');
             syncCantidadReadonly($form);
             if (allowFocusManual) {
                 focusCantidadManual($form);
@@ -1096,6 +1139,7 @@
         }
 
         if (state.balanzaDesactivadaManual) {
+            state.focusAgregarPendiente = false;
             $form.find('#chkBalanzaLinea').prop('checked', false);
             syncCantidadReadonly($form);
             if (allowFocusManual) {
@@ -1104,6 +1148,7 @@
             return;
         }
 
+        state.focusAgregarPendiente = !!allowFocusManual;
         iniciarLecturaBalanza($form, true, !!allowFocusManual);
     }
 
@@ -1627,6 +1672,7 @@
             bindEvents($form);
             syncTipoCompraUi($form);
 
+            renderBalanzaStatus($form, null);
             verificarBalanzaInicial($form);
             syncCantidadReadonly($form);
             autoResizeObservaciones($form);

@@ -82,7 +82,7 @@
         // agregarlo al carrito.
         function calculateSubtotal() {
             const precioActual = options.getPrecioActual();
-            let cant = parseFloat($("#inputCantidad").val().replace(",", "."));
+            let cant = parseCant($("#inputCantidad").val());
 
             if (isNaN(cant) || cant <= 0 || precioActual <= 0) {
                 $("#prodSubtotal").text("$ 0,00");
@@ -152,10 +152,18 @@
                 return;
             }
 
-            let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
+            let cantidad = parseCant($("#inputCantidad").val());
             if (isNaN(cantidad) || cantidad < CANT_MINIMA) {
                 showMessage("warning", "Cantidad inválida", "La cantidad mínima es 0,010 kg.");
                 return;
+            }
+
+            if (typeof options.beforeAddProduct === 'function') {
+                const validation = options.beforeAddProduct(productoSeleccionado, cantidad);
+                if (validation && validation.ok === false) {
+                    showMessage("warning", "No se puede agregar", validation.message || "La línea no cumple las validaciones requeridas.");
+                    return;
+                }
             }
 
             const precioLinea = typeof options.getPrecioParaAgregar === 'function'

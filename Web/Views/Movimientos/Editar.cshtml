@@ -122,6 +122,13 @@
                                 </div>
                             </div>
 
+                            <div class="small text-muted mb-2">
+                                Conexión balanza: <span id="estadoBalanzaMovimiento">Desconocida</span>
+                            </div>
+                            <div class="progress mb-3" style="height:4px;">
+                                <div id="barraBalanzaMovimiento" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
+
                             <div id="movimientoFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                             <div id="movimientoWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
@@ -137,6 +144,7 @@
                                         <label for="txtProductoNombre">Producto</label>
                                         <div class="input-group">
                                             <input type="hidden" id="txtProductoId" />
+                                            <input type="hidden" id="txtProductoPesable" />
                                             <input type="hidden" id="txtProductoTipo" />
                                             <input type="hidden" id="txtProductoPromedio" />
                                             <input type="text" id="txtProductoNombre" class="form-control" readonly />
@@ -294,9 +302,10 @@
         };
         window.movimientoLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.MovimientoLineaVm>()));
     </script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=12")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=18")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

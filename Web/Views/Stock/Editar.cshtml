@@ -179,6 +179,13 @@
                                 </div>
                             </div>
 
+                            <div class="small text-muted mb-2">
+                                Conexión balanza: <span id="estadoBalanzaStock">Desconocida</span>
+                            </div>
+                            <div class="progress mb-3" style="height:4px;">
+                                <div id="barraBalanzaStock" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
+
                             <div class="row align-items-end">
                                 <div class="col-12 col-md-3 col-lg-3">
                                     <div class="form-group">
@@ -455,7 +462,8 @@
             background-color: #f8f9fa;
         }
     </style>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=16")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=21")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {

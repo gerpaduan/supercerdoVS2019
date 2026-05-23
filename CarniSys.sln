@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "Web\Web.csproj", "{9
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AFIP", "AFIP\AFIP.csproj", "{452C0751-CFA1-4BF5-9E0E-371B6CC6136D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carnisys.Balanza.Agent", "Carnisys.Balanza.Agent\Carnisys.Balanza.Agent.csproj", "{B6A47E0A-4430-4EF1-A8EC-B754013F5FA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +64,10 @@ Global
 		{452C0751-CFA1-4BF5-9E0E-371B6CC6136D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{452C0751-CFA1-4BF5-9E0E-371B6CC6136D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{452C0751-CFA1-4BF5-9E0E-371B6CC6136D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6A47E0A-4430-4EF1-A8EC-B754013F5FA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6A47E0A-4430-4EF1-A8EC-B754013F5FA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6A47E0A-4430-4EF1-A8EC-B754013F5FA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6A47E0A-4430-4EF1-A8EC-B754013F5FA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -112,6 +112,11 @@
                         case '←':
                             backspace();
                             break;
+                        case '*':
+                            if (typeof options.onManualModeRequested === 'function') {
+                                options.onManualModeRequested(inputActivo ? inputActivo.id : '');
+                            }
+                            break;
                         case 'Enter':
                             options.setEnterDesdeTecladoVirtual(true);
                             options.handleEnter();

@@ -75,6 +75,8 @@
             formula: $.isArray(config.initialFormula) ? config.initialFormula.slice() : [],
             balanzaDisponible: false,
             balanzaDesactivadaManual: false,
+            balanzaClientStarted: false,
+            balanzaUltimaLectura: null,
             ingredienteTimer: null,
             elaboradoTimer: null,
             draftTimer: null,
@@ -92,12 +94,23 @@
         var $ingredienteId = $('#txtIngredienteId');
         var $ingredienteCodigo = $('#txtCodigoIngrediente');
         var $ingredienteNombre = $('#txtIngredienteNombre');
+        var $ingredientePesable = $('#txtIngredientePesable');
         var $ingredienteTipo = $('#txtIngredienteTipo');
         var $ingredientePromedio = $('#txtIngredientePromedio');
         var $ingredienteKg = $('#txtKgIngrediente');
         var $balanza = $('#chkBalanzaIngrediente');
         var $feedback = $('#cargaFeedback');
         var $warning = $('#cargaWarning');
+
+        function ingredienteEsPesable() {
+            return String($ingredientePesable.val() || '').toLowerCase() === 'true';
+        }
+
+        function syncIngredienteReadonly() {
+            var hayIngrediente = toInt($ingredienteId.val()) > 0;
+            var soloLectura = !!($balanza.is(':checked') && state.balanzaDisponible && !state.balanzaDesactivadaManual && (!hayIngrediente || ingredienteEsPesable()));
+            $ingredienteKg.prop('readonly', soloLectura || !!config.esAnulado);
+        }
 
         function getDraftKey() {
             return config.draftKey || '';
@@ -225,18 +238,31 @@
             $ingredienteId.val('');
             $ingredienteCodigo.val('');
             $ingredienteNombre.val('');
+            $ingredientePesable.val('');
             $ingredienteTipo.val('');
             $ingredientePromedio.val('');
-            $ingredienteKg.val('');
+            if ($balanza.is(':checked') && state.balanzaDisponible && state.balanzaUltimaLectura && !state.balanzaDesactivadaManual) {
+                $ingredienteKg.val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
+            } else {
+                $ingredienteKg.val('');
+            }
+            syncIngredienteReadonly();
         }
 
         function setIngrediente(producto) {
             $ingredienteId.val(producto.id || '');
             $ingredienteCodigo.val(producto.codigo || '');
             $ingredienteNombre.val(producto.nombre || '');
+            $ingredientePesable.val(producto.pesable === true ? 'true' : 'false');
             $ingredienteTipo.val(producto.tipo || '');
             $ingredientePromedio.val(producto.promedio || 0);
             actualizarBalanzaSegunTipo();
+            if (!ingredienteEsPesable()) {
+                $ingredienteKg.val('');
+            } else if ($balanza.is(':checked') && state.balanzaDisponible && state.balanzaUltimaLectura && !state.balanzaDesactivadaManual) {
+                $ingredienteKg.val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
+            }
+            syncIngredienteReadonly();
         }
 
         function clearElaborado() {
@@ -387,33 +413,93 @@
                 });
         }
 
+        function normalizarBalanzaPayload(data) {
+            if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.normalize === 'function') {
+                return window.CarnisysBalanzaUtils.normalize(data);
+            }
+
+            return {
+                ok: !!(data && data.ok),
+                conectada: !!(data && data.conectada),
+                peso: 0,
+                pesoTexto: '0.000',
+                pesoDisplay: '0.000',
+                raw: data || null
+            };
+        }
+
+        function renderBalanzaStatus(payload) {
+            if (window.CarnisysBalanzaUtils && typeof window.CarnisysBalanzaUtils.renderStatus === 'function') {
+                window.CarnisysBalanzaUtils.renderStatus('#estadoBalanzaElaborado', '#barraBalanzaElaborado', payload);
+            }
+        }
+
+        function aplicarLecturaBalanza(payload) {
+            var normalized = normalizarBalanzaPayload(payload);
+            state.balanzaDisponible = normalized.conectada === true;
+            state.balanzaUltimaLectura = normalized;
+            renderBalanzaStatus(payload);
+            syncIngredienteReadonly();
+
+            if (!normalized.conectada || !$balanza.is(':checked') || state.balanzaDesactivadaManual) {
+                return;
+            }
+
+            var hayIngrediente = toInt($ingredienteId.val()) > 0;
+            if (hayIngrediente && !ingredienteEsPesable()) {
+                return;
+            }
+
+            $ingredienteKg.val(normalized.pesoDisplay || normalized.pesoTexto || formatKg(normalized.peso));
+        }
+
+        function aplicarStatusBalanza(payload) {
+            var normalized = normalizarBalanzaPayload(payload);
+            state.balanzaDisponible = normalized.conectada === true;
+            renderBalanzaStatus(payload);
+            syncIngredienteReadonly();
+        }
+
         function balanzaConectadaDesdePayload(data) {
-            if (!data) return false;
-            var estado = String(data.estado || data.status || '').toLowerCase();
-            var pesoRaw = data.peso;
-            if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.valor;
-            if (pesoRaw === undefined || pesoRaw === null) pesoRaw = data.weight;
-            var peso = Number(pesoRaw);
-            return estado === 'ok' || estado === 'connected' || (!isNaN(peso) && peso !== 0);
+            return normalizarBalanzaPayload(data).conectada === true;
         }
 
         function verificarBalanza(callback) {
-            if (!config.balanzaUrl) {
+            if (!window.CarnisysBalanza) {
                 state.balanzaDisponible = false;
+                renderBalanzaStatus(null);
                 if (typeof callback === 'function') callback(false);
                 return;
             }
 
-            $.ajax({
-                url: config.balanzaUrl,
-                method: 'GET',
-                cache: false,
-                timeout: 1200
-            }).done(function (data) {
+            if (!state.balanzaClientStarted) {
+                state.balanzaClientStarted = true;
+                window.CarnisysBalanza.start({
+                    baseUrl: 'http://127.0.0.1:5100',
+                    statusIntervalMs: 3000,
+                    pesoIntervalMs: 250,
+                    onStatus: function (data) {
+                        aplicarStatusBalanza(data);
+                    },
+                    onPeso: function (data) {
+                        aplicarLecturaBalanza(data);
+                    },
+                    onError: function () {
+                        state.balanzaDisponible = false;
+                        renderBalanzaStatus(null);
+                        syncIngredienteReadonly();
+                    }
+                });
+            }
+
+            window.CarnisysBalanza.leerAhora().then(function (data) {
                 state.balanzaDisponible = balanzaConectadaDesdePayload(data);
+                aplicarLecturaBalanza(data);
                 if (typeof callback === 'function') callback(state.balanzaDisponible, data);
-            }).fail(function () {
+            }).catch(function () {
                 state.balanzaDisponible = false;
+                renderBalanzaStatus(null);
+                syncIngredienteReadonly();
                 if (typeof callback === 'function') callback(false);
             });
         }
@@ -424,14 +510,15 @@
                     state.balanzaDesactivadaManual = true;
                     $balanza.prop('checked', false);
                 }
+                syncIngredienteReadonly();
             });
         }
 
         function actualizarBalanzaSegunTipo() {
-            var tipo = ($ingredienteTipo.val() || '').toLowerCase();
-            if (tipo === 'unidad') {
-                $balanza.prop('checked', false);
+            if (!ingredienteEsPesable()) {
+                $ingredienteKg.val('');
             }
+            syncIngredienteReadonly();
         }
 
         function intentarLeerBalanza() {
@@ -442,10 +529,10 @@
                     return;
                 }
 
-                var pesoRaw = data && (data.peso !== undefined ? data.peso : (data.valor !== undefined ? data.valor : data.weight));
-                if (pesoRaw !== undefined && pesoRaw !== null) {
-                    $ingredienteKg.val(formatKg(pesoRaw));
+                if (window.CarnisysBalanza) {
+                    window.CarnisysBalanza.activar();
                 }
+                aplicarLecturaBalanza(data);
             });
         }
 
@@ -714,7 +801,11 @@
                 if ($balanza.is(':checked')) intentarLeerBalanza();
             } else {
                 state.balanzaDesactivadaManual = true;
+                if (window.CarnisysBalanza) {
+                    window.CarnisysBalanza.desactivar();
+                }
             }
+            syncIngredienteReadonly();
         });
 
         $(document).on('keydown.elaboradosCarga', function (e) {
@@ -788,7 +879,9 @@
         if (toInt($elaboradoId.val()) > 0 && $.trim($receta.val())) {
             $elaboradoWarning.addClass('d-none').text('');
         }
+        renderBalanzaStatus(null);
         verificarBalanzaInicial();
+        syncIngredienteReadonly();
         if (readDraft()) {
             showDraftBanner();
         }

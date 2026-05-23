@@ -366,6 +366,7 @@
                                 <small class="text-muted">
                                     Conexión balanza: <span id="estadoBalanza">Desconocida</span>
                                 </small>
+                                <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
                                 <div class="progress mt-1" style="height:8px;">
                                     <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
                                 </div>
@@ -658,10 +659,12 @@ else
 
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=21")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=22")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
@@ -1178,9 +1181,16 @@ else
         anchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    function mostrarAvisoBalanzaDiscreto(msg) {
+        var $msg = $('#msgBalanzaPOS');
+        if (!$msg.length) return;
+        $msg.text(msg || '');
+    }
+
     let posProduct = null;
     let posCart = null;
     let posExpendios = null;
+    let posBalanza = null;
     const posHelp = window.POSHelp.create({
         focusCodigo: function () { return posKeyboard.focusCodigo(); },
         clickIfEnabled: function (selector) {
@@ -1198,7 +1208,8 @@ else
         handleEnter: function () { return posProduct ? posProduct.handleEnter() : null; },
         calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
         finishTyping: function (value) { return posProduct ? posProduct.finishTyping(value) : null; },
-        setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; }
+        setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; },
+        onManualModeRequested: function (inputId) { return posBalanza ? posBalanza.alternarDesdeAsterisco(inputId) : null; }
     });
 
     posProduct = window.POSProduct.create({
@@ -1207,7 +1218,9 @@ else
         addProduct: function () { return posCart ? posCart.addProduct() : null; },
         getInputActivo: function () { return posKeyboard.getInputActivo(); },
         clearInputActivo: function () { return posKeyboard.clearInputActivo(); },
-        showConnectionError: mostrarErrorConexion
+        showConnectionError: mostrarErrorConexion,
+        onProductoChanged: function (producto) { return posBalanza ? posBalanza.onProductoChanged(producto) : null; },
+        onProductoConfirmed: function (producto) { return posBalanza ? posBalanza.onProductoConfirmed(producto) : null; }
     });
 
     posCart = window.POSCart.create({
@@ -1222,7 +1235,18 @@ else
         scrollPantallaMobile: scrollPantallaMobile,
         handleEnter: function () { return posProduct.handleEnter(); },
         getTypingTimer: function () { return posProduct.getTypingTimer(); },
-        setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); }
+        setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); },
+        beforeAddProduct: function (producto, cantidad) { return posBalanza ? posBalanza.beforeAddProduct(producto, cantidad) : { ok: true }; }
+    });
+
+    posBalanza = window.POSBalanza.create({
+        baseUrl: 'http://127.0.0.1:5100',
+        statusIntervalMs: 2500,
+        pesoIntervalMs: 250,
+        calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+        focusCantidad: function () { return posKeyboard.focusCantidad(); },
+        focusCodigo: function () { return posKeyboard.focusCodigo(); },
+        showNotice: mostrarAvisoBalanzaDiscreto
     });
 
     posExpendios = window.POSExpendios.create({
@@ -1239,6 +1263,7 @@ else
 
     posProduct.init();
     posCart.init();
+    posBalanza.init();
     posExpendios.init();
     posKeyboard.init();
     posHelp.init();

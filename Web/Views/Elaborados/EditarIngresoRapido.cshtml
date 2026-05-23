@@ -137,6 +137,12 @@
                                        value="@(Model.Cantidad > 0 ? Model.Cantidad.ToString("0.###", System.Globalization.CultureInfo.GetCultureInfo("es-AR")) : "")"
                                        @(esAnulado ? "readonly" : "") />
 
+                                <div class="small text-muted mt-3">
+                                    Conexión balanza: <span id="estadoBalanzaRapido">Desconocida</span>
+                                </div>
+                                <div class="progress mt-2" style="height:4px;">
+                                    <div id="barraBalanzaRapido" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
                                 <div id="alertaBalanzaRapido" class="alert alert-warning py-2 px-3 mt-3 mb-0 d-none"></div>
                             </div>
                         </div>
@@ -232,7 +238,8 @@
             initialFormula: @Html.Raw(Json.Encode(Model.Formula ?? new List<Web.Models.ElaboradoFormulaLineaVm>()))
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

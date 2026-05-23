@@ -250,7 +250,8 @@ namespace Web.Controllers
                 codigo = corte.Codigo,
                 nombre = corte.CorteDesc,
                 tipo = corte.Tipo ?? "",
-                promedio = corte.Promedio
+                promedio = corte.Promedio,
+                pesable = corte.Pesable
             }, JsonRequestBehavior.AllowGet);
         }
 

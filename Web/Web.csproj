@@ -170,6 +170,8 @@
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
+    <Compile Include="Models\UtilitiesIndexVm.cs" />
+    <Compile Include="Models\UtilityItemVm.cs" />
     <Compile Include="Models\PersonasVm.cs" />
     <Compile Include="Models\UsuariosVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
@@ -186,6 +188,8 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\css\custom.css" />
     <Content Include="Content\css\dark-mode.css" />
+    <Content Include="Content\downloads\Carnisys.Balanza.Agent.zip" />
+    <Content Include="Content\downloads\CarniSys.PrintAgent.zip" />
     <Content Include="Content\css\ui-refresh.css" />
     <Content Include="Content\css\sb-admin-2.css" />
     <Content Include="Content\css\sb-admin-2.min.css" />
@@ -1891,6 +1895,7 @@
     <Content Include="Scripts\app\persona-buscar.js" />
     <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\app\scanner.js" />
+    <Content Include="Scripts\app\pos-balanza.js" />
     <Content Include="Scripts\app\stock.js" />
     <Content Include="Scripts\app\elaborados.js" />
     <Content Include="Scripts\app\elaborados-carga.js" />
@@ -2195,6 +2200,7 @@
     <Content Include="Scripts\app\punto-expendio-pos.js" />
     <Content Include="Scripts\app\puntos-expendio.js" />
     <Content Include="Scripts\app\reportes.js" />
+    <Content Include="Scripts\carnisys.balanza.js" />
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />
     <Content Include="Views\Compras\Editar.cshtml" />
