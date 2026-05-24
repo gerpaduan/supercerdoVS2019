@@ -981,6 +981,10 @@
         }
     }
 
+    function syncBalanzaStatusVisibility($form) {
+        $form.find('#balanzaStatusWrapStock').toggle(!!$form.find('#chkBalanzaLinea').is(':checked'));
+    }
+
     function balanzaConectadaDesdePayload(data) {
         return normalizarBalanzaPayload(data).conectada === true;
     }
@@ -1556,6 +1560,7 @@
             } else {
                 desactivarBalanzaManual($form);
             }
+            syncBalanzaStatusVisibility($form);
             syncCantidadReadonly($form);
         });
 
@@ -1673,6 +1678,7 @@
             syncTipoCompraUi($form);
 
             renderBalanzaStatus($form, null);
+            syncBalanzaStatusVisibility($form);
             verificarBalanzaInicial($form);
             syncCantidadReadonly($form);
             autoResizeObservaciones($form);

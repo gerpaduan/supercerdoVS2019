@@ -171,11 +171,13 @@
                                 </div>
                             </div>
 
-                            <div class="small text-muted mb-2">
-                                Conexión balanza: <span id="estadoBalanzaElaborado">Desconocida</span>
-                            </div>
-                            <div class="progress mb-3" style="height:4px;">
-                                <div id="barraBalanzaElaborado" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            <div id="balanzaStatusWrapElaborado">
+                                <div class="small text-muted mb-2">
+                                    Conexión balanza: <span id="estadoBalanzaElaborado">Desconocida</span>
+                                </div>
+                                <div class="progress mb-3" style="height:4px;">
+                                    <div id="barraBalanzaElaborado" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
                             </div>
 
                             <div id="cargaFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
@@ -367,7 +369,7 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=10")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=11")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

@@ -179,11 +179,13 @@
                                 </div>
                             </div>
 
-                            <div class="small text-muted mb-2">
-                                Conexión balanza: <span id="estadoBalanzaStock">Desconocida</span>
-                            </div>
-                            <div class="progress mb-3" style="height:4px;">
-                                <div id="barraBalanzaStock" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            <div id="balanzaStatusWrapStock">
+                                <div class="small text-muted mb-2">
+                                    Conexión balanza: <span id="estadoBalanzaStock">Desconocida</span>
+                                </div>
+                                <div class="progress mb-3" style="height:4px;">
+                                    <div id="barraBalanzaStock" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
                             </div>
 
                             <div class="row align-items-end">
@@ -463,7 +465,7 @@
         }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=21")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=22")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {

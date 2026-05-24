@@ -145,6 +145,10 @@
             }
         }
 
+        function syncBalanzaStatusVisibility() {
+            $('#balanzaStatusWrapRapido').toggle(!!$balanza.is(':checked'));
+        }
+
         function aplicarLecturaBalanza(payload) {
             var normalized = normalizarBalanzaPayload(payload);
             state.balanzaDisponible = normalized.conectada === true;
@@ -330,6 +334,7 @@
                     }, 30);
                 }
             }
+            syncBalanzaStatusVisibility();
             syncCantidadReadonly();
         });
 
@@ -418,6 +423,7 @@
         recalcularFormula();
         renderBalanzaStatus(null);
         verificarBalanzaInicial();
+        syncBalanzaStatusVisibility();
         syncCantidadReadonly();
     }
 

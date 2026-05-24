@@ -122,11 +122,13 @@
                                 </div>
                             </div>
 
-                            <div class="small text-muted mb-2">
-                                Conexión balanza: <span id="estadoBalanzaMovimiento">Desconocida</span>
-                            </div>
-                            <div class="progress mb-3" style="height:4px;">
-                                <div id="barraBalanzaMovimiento" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            <div id="balanzaStatusWrapMovimiento">
+                                <div class="small text-muted mb-2">
+                                    Conexión balanza: <span id="estadoBalanzaMovimiento">Desconocida</span>
+                                </div>
+                                <div class="progress mb-3" style="height:4px;">
+                                    <div id="barraBalanzaMovimiento" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
                             </div>
 
                             <div id="movimientoFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
@@ -305,7 +307,7 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=18")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=19")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

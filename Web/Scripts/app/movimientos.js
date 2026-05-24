@@ -371,6 +371,10 @@
             }
         }
 
+        function syncBalanzaStatusVisibility() {
+            $('#balanzaStatusWrapMovimiento').toggle(!!$balanza.is(':checked'));
+        }
+
         function aplicarLecturaBalanza(payload) {
             var normalized = normalizarBalanzaPayload(payload);
             balanzaUltimaLectura = normalized;
@@ -810,6 +814,7 @@
         $balanza.on('change', function () {
             if ($balanza.is(':checked')) {
                 if (!productoEsPesable()) {
+                    syncBalanzaStatusVisibility();
                     syncReadOnlyUi();
                     return;
                 }
@@ -832,6 +837,7 @@
                 }
             }
 
+            syncBalanzaStatusVisibility();
             syncReadOnlyUi();
             scheduleDraft();
         });
@@ -913,6 +919,7 @@
         renderLines();
         renderBalanzaStatus(null);
         verificarBalanza();
+        syncBalanzaStatusVisibility();
         autoResizeObservaciones();
         if (readDraft()) {
             showDraftBanner();

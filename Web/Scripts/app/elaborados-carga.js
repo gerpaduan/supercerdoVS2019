@@ -434,6 +434,10 @@
             }
         }
 
+        function syncBalanzaStatusVisibility() {
+            $('#balanzaStatusWrapElaborado').toggle(!!$balanza.is(':checked'));
+        }
+
         function aplicarLecturaBalanza(payload) {
             var normalized = normalizarBalanzaPayload(payload);
             state.balanzaDisponible = normalized.conectada === true;
@@ -805,6 +809,7 @@
                     window.CarnisysBalanza.desactivar();
                 }
             }
+            syncBalanzaStatusVisibility();
             syncIngredienteReadonly();
         });
 
@@ -881,6 +886,7 @@
         }
         renderBalanzaStatus(null);
         verificarBalanzaInicial();
+        syncBalanzaStatusVisibility();
         syncIngredienteReadonly();
         if (readDraft()) {
             showDraftBanner();
