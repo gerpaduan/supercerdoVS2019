@@ -1,0 +1,307 @@
+@{
+    var denominaciones = new[] { 20000, 10000, 2000, 1000, 500, 200, 100, 50, 20, 10 };
+}
+
+<div class="modal fade" id="modalCalculadoraBilletes" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered calculadora-billetes-dialog" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title mb-0" id="calculadoraBilletesTitulo">
+                    <i class="fas fa-money-bill-wave mr-2"></i>Calculadora Billetes
+                </h5>
+                <button type="button" class="close" id="btnCerrarCalculadoraBilletes" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row calculadora-billetes-grid">
+                    @for (var i = 0; i < denominaciones.Length; i++)
+                    {
+                        var denominacion = denominaciones[i];
+                        <div class="col-12 mb-2">
+                            <div class="card h-100 border-light calculadora-billetes-card">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                        <div class="font-weight-bold calculadora-billetes-denominacion">$ @denominacion.ToString("N0")</div>
+                                        <div class="d-flex align-items-center calculadora-billetes-inputs">
+                                            <input type="text"
+                                                   class="form-control form-control-lg text-right js-calculadora-billetes-cantidad"
+                                                   data-denominacion="@denominacion"
+                                                   data-order="@i"
+                                                   inputmode="numeric"
+                                                   autocomplete="off" />
+                                            <span class="ml-3 text-success font-weight-bold js-calculadora-billetes-subtotal"
+                                                  data-denominacion="@denominacion">$ 0,00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="col-12">
+                        <div class="card border-info calculadora-billetes-card">
+                            <div class="card-body py-2 px-3">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <div class="font-weight-bold calculadora-billetes-denominacion">Total monedas</div>
+                                    <div class="d-flex align-items-center calculadora-billetes-inputs">
+                                        <input type="text"
+                                               class="form-control form-control-lg text-right"
+                                               id="txtCalculadoraBilletesMonedas"
+                                               data-order="@denominaciones.Length"
+                                               inputmode="decimal"
+                                               autocomplete="off" />
+                                        <span class="ml-3 text-info font-weight-bold" id="lblCalculadoraBilletesMonedasSubtotal">$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-warning mt-3 calculadora-billetes-total-card">
+                    <div class="card-body py-3 d-flex justify-content-between align-items-center flex-wrap">
+                        <span class="h5 mb-0">Total general</span>
+                        <strong class="h2 mb-0 text-success" id="lblCalculadoraBilletesTotal">$ 0,00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" id="btnCancelarCalculadoraBilletes">Cerrar</button>
+                <button type="button" class="btn btn-success" id="btnAceptarCalculadoraBilletes">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPostCalculadoraBilletes" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <div class="w-100">
+                    <h5 class="modal-title mb-0" id="cbPostTitle">Detalle de billetes</h5>
+                    <small class="d-block" id="cbPostSubTitle" style="opacity:.9; display:none;"></small>
+                </div>
+            </div>
+
+            <div class="modal-body text-center">
+                <p class="mb-3" style="font-size:1.1rem;" id="cbPregunta">
+                    ¿Qué deseas hacer ahora?
+                </p>
+
+                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnCbNoImprimir" type="button">
+                    <span class="badge badge-light mr-2">1</span>
+                    No imprimir
+                </button>
+
+                <div class="d-flex mb-2">
+                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2" id="btnCbTicket" type="button">
+                        <span class="badge badge-primary mr-2">2</span>
+                        <span id="lblCbTicketAccion">Ticket</span>
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-lg" id="btnCbCambiarTicket" type="button" title="Cambiar tamaño de ticket">
+                        Cambiar
+                    </button>
+                </div>
+
+                <div class="collapse mb-2" id="bloqueCbTicketOpciones">
+                    <div class="card card-body p-2">
+                        <button class="btn btn-outline-primary btn-block mb-2 btnCbTicketOpt" type="button" data-mm="58">
+                            Ticket 58 mm
+                        </button>
+
+                        <button class="btn btn-outline-primary btn-block btnCbTicketOpt" type="button" data-mm="80">
+                            Ticket 80 mm
+                        </button>
+
+                        <small class="text-muted mt-2 d-block">
+                            Elegí un tamaño y se imprimirá automáticamente.
+                        </small>
+                    </div>
+                </div>
+
+                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnCbPdf" type="button">
+                    <span class="badge badge-light mr-2">3</span>
+                    Generar PDF
+                </button>
+
+                <button class="btn btn-success btn-lg btn-block" id="btnCbWhatsapp" type="button">
+                    <span class="badge badge-light mr-2">4</span>
+                    <i class="fab fa-whatsapp mr-2"></i>Enviar por WhatsApp
+                </button>
+
+                <div class="mt-3 pt-2 border-top text-left">
+                    <div class="small text-muted mb-2" id="estadoAgenteCalculadoraBilletes">
+                        Impresión local: usando navegador.
+                    </div>
+
+                    <div class="d-flex">
+                        <button class="btn btn-outline-info btn-sm flex-grow-1 mr-2" id="btnConfigurarAgenteCalculadoraBilletes" type="button">
+                            Configurar impresora
+                        </button>
+                        <a class="btn btn-outline-secondary btn-sm" id="btnDescargarAgenteCalculadoraBilletes" href="@Url.Action("DescargarAgenteImpresion", "Home")">
+                            Descargar agente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfigAgenteCalculadoraBilletes" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configurar impresora local</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning d-none" id="msgConfigAgenteCalculadoraBilletes"></div>
+
+                <div class="form-group">
+                    <label for="cmbImpresoraAgenteCalculadoraBilletes">Impresora</label>
+                    <select class="form-control" id="cmbImpresoraAgenteCalculadoraBilletes"></select>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label for="cmbMmAgenteCalculadoraBilletes">Tamaño ticket</label>
+                    <select class="form-control" id="cmbMmAgenteCalculadoraBilletes">
+                        <option value="58">58 mm</option>
+                        <option value="80">80 mm</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="button" id="btnGuardarConfigAgenteCalculadoraBilletes">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.CalculadoraBilletesConfig = {
+        payloadUrl: '@Url.Action("ImprimirCalculadoraBilletesPayload", "Home")',
+        pdfUrl: '@Url.Action("DescargarCalculadoraBilletesPdf", "Home")'
+    };
+</script>
+
+<style>
+    .calculadora-billetes-dialog {
+        max-width: 35vw;
+        width: 35vw;
+    }
+
+    #modalCalculadoraBilletes .modal-content {
+        max-height: min(92vh, 940px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    #modalCalculadoraBilletes .modal-body {
+        overflow: hidden;
+        padding-top: .75rem;
+        padding-bottom: .75rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .calculadora-billetes-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: calc(92vh - 250px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: .2rem;
+    }
+
+    .calculadora-billetes-total-card {
+        flex: 0 0 auto;
+    }
+
+    .calculadora-billetes-card {
+        border-radius: 10px;
+    }
+
+    .calculadora-billetes-card .card-body {
+        padding: clamp(.35rem, 1vh, .65rem) .9rem !important;
+    }
+
+    .calculadora-billetes-denominacion {
+        font-size: clamp(.95rem, 1.4vh, 1.08rem);
+        line-height: 1.05;
+    }
+
+    .calculadora-billetes-inputs {
+        gap: .25rem;
+    }
+
+    .calculadora-billetes-inputs .form-control-lg {
+        width: clamp(82px, 12vw, 110px);
+        height: clamp(32px, 4.6vh, 42px);
+        min-height: 32px;
+        font-size: clamp(.95rem, 1.5vh, 1.05rem);
+        padding-top: .15rem;
+        padding-bottom: .15rem;
+    }
+
+    .js-calculadora-billetes-subtotal,
+    #lblCalculadoraBilletesMonedasSubtotal {
+        min-width: 110px;
+        text-align: right;
+        display: inline-block;
+        font-size: clamp(.95rem, 1.45vh, 1.02rem);
+    }
+
+    #lblCalculadoraBilletesTotal {
+        font-size: clamp(1.4rem, 2.8vh, 2rem);
+    }
+
+    @@media (max-width: 767.98px) {
+        .calculadora-billetes-dialog {
+            max-width: calc(100vw - 1rem);
+            width: calc(100vw - 1rem);
+        }
+
+        #modalCalculadoraBilletes .modal-content {
+            max-height: none;
+        }
+
+        #modalCalculadoraBilletes .modal-body,
+        .calculadora-billetes-grid {
+            overflow: visible;
+            max-height: none;
+        }
+
+        .calculadora-billetes-denominacion {
+            width: 100%;
+            margin-bottom: .5rem;
+        }
+
+        .calculadora-billetes-inputs {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .calculadora-billetes-inputs .form-control-lg {
+            width: 100px;
+        }
+
+        #lblCalculadoraBilletesTotal {
+            font-size: 1.55rem;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .calculadora-billetes-dialog {
+            max-width: 82vw;
+            width: 82vw;
+        }
+    }
+</style>

@@ -982,6 +982,29 @@ namespace Web.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult ImprimirIngresoBilletesPayload(IngresoBilletesPrintVm request)
+        {
+            try
+            {
+                if (request == null)
+                    return Json(new { ok = false, mensaje = "No se recibieron datos para imprimir." });
+
+                int ticketMm = request.TicketMm == 58 ? 58 : 80;
+
+                return Json(new
+                {
+                    ok = true,
+                    ticketMm = ticketMm,
+                    ticketLines = ConstruirLineasIngresoBilletes(request, ticketMm)
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
         [HttpGet]
         public ActionResult DescargarAgenteImpresion()
         {
@@ -1834,6 +1857,67 @@ namespace Web.Controllers
 
             lineas.Add("");
             lineas.Add("Gracias por su visita");
+            return lineas;
+        }
+
+        private List<string> ConstruirLineasIngresoBilletes(IngresoBilletesPrintVm request, int ticketMm)
+        {
+            int cantMaxChar = ticketMm == 58 ? 32 : 43;
+            var user = Session["Usuario"] as Entidades.Usuario;
+            string empresaNombre = user != null && user.Empresa != null
+                ? (user.Empresa.NombreFantasia ?? user.Empresa.RazonSocialAfip ?? "CarniSys")
+                : "CarniSys";
+
+            Func<string, int, string> truncar = (texto, maximo) =>
+            {
+                texto = texto ?? "";
+                return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+            };
+
+            Func<string, int, string> centrar = (texto, ancho) =>
+            {
+                texto = truncar(texto, ancho);
+                int espaciosIzquierda = (ancho - texto.Length) / 2;
+                if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+                return new string(' ', espaciosIzquierda) + texto;
+            };
+
+            Func<string, string, int, string> alinearExtremos = (izquierda, derecha, ancho) =>
+            {
+                izquierda = truncar(izquierda, ancho - 8);
+                derecha = truncar(derecha, ancho - 8);
+                int espacios = ancho - (izquierda.Length + derecha.Length);
+                if (espacios < 1) espacios = 1;
+                return izquierda + new string(' ', espacios) + derecha;
+            };
+
+            var lineas = new List<string>();
+            lineas.Add(centrar("Detalle billetes", cantMaxChar));
+            lineas.Add(centrar(empresaNombre, cantMaxChar));
+            lineas.Add(truncar("Fecha: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"), cantMaxChar));
+            lineas.Add(new string('-', cantMaxChar));
+
+            foreach (var item in (request.Denominaciones ?? new List<IngresoBilletesDenominacionVm>())
+                .Where(x => x != null && x.Denominacion > 0 && x.Cantidad > 0)
+                .OrderByDescending(x => x.Denominacion))
+            {
+                decimal subtotal = item.Denominacion * item.Cantidad;
+                lineas.Add(alinearExtremos(
+                    "$ " + item.Denominacion.ToString("N0") + " x " + item.Cantidad,
+                    subtotal.ToString("N2"),
+                    cantMaxChar));
+            }
+
+            if (request.Monedas > 0)
+            {
+                lineas.Add(alinearExtremos("Monedas", request.Monedas.ToString("N2"), cantMaxChar));
+            }
+
+            lineas.Add(new string('-', cantMaxChar));
+            lineas.Add(alinearExtremos("TOTAL", request.Total.ToString("N2"), cantMaxChar));
+            lineas.Add("");
+            lineas.Add("Gracias por su visita");
+
             return lineas;
         }
 

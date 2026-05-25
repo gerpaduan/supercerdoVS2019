@@ -1,0 +1,729 @@
+@{
+    var denominaciones = new[] { 20000, 10000, 2000, 1000, 500, 200, 100, 50, 20, 10 };
+    var descargarAgenteUrl = Url.Action("DescargarAgenteImpresion", "Ventas");
+    var imprimirPayloadUrl = Url.Action("ImprimirIngresoBilletesPayload", "Ventas");
+}
+
+<div class="modal fade" id="modalIngresoBilletesPOS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-money-bill-wave mr-2"></i>Ingreso de billetes
+                </h5>
+                <button type="button" class="close" id="btnCerrarIngresoBilletesPOS" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-3 ingreso-billetes-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Denominacion</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-right">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < denominaciones.Length; i++)
+                            {
+                                var denominacion = denominaciones[i];
+                                <tr>
+                                    <td class="font-weight-bold">$ @denominacion.ToString("N0")</td>
+                                    <td class="text-center">
+                                        <input type="text"
+                                               class="form-control form-control-lg text-right js-billete-cantidad"
+                                               data-denominacion="@denominacion"
+                                               data-order="@i"
+                                               inputmode="numeric"
+                                               autocomplete="off" />
+                                    </td>
+                                    <td class="text-right align-middle">
+                                        <span class="js-billete-subtotal" data-denominacion="@denominacion">$ 0,00</span>
+                                    </td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="font-weight-bold">Total monedas</td>
+                                <td class="text-center">
+                                    <input type="text"
+                                           class="form-control form-control-lg text-right"
+                                           id="txtIngresoBilletesMonedas"
+                                           data-order="@denominaciones.Length"
+                                           inputmode="decimal"
+                                           autocomplete="off" />
+                                </td>
+                                <td class="text-right align-middle">
+                                    <span id="lblIngresoBilletesMonedasSubtotal">$ 0,00</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card border-warning">
+                    <div class="card-body py-3 d-flex justify-content-between align-items-center">
+                        <span class="h5 mb-0">Total general</span>
+                        <strong class="h3 mb-0 text-success" id="lblIngresoBilletesTotal">$ 0,00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelarIngresoBilletesPOS">Cerrar</button>
+                <button type="button" class="btn btn-success" id="btnAceptarIngresoBilletesPOS">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfirmarIngresoBilletesPOS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">Detalle de billetes</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3" style="font-size:1.05rem;">Desea imprimir el detalle antes de cerrar?</p>
+
+                <button class="btn btn-outline-primary btn-lg btn-block mb-2" id="btnIngresoBilletesImprimir" type="button">
+                    <span class="badge badge-primary mr-2">1</span>
+                    Si, imprimir
+                </button>
+
+                <button class="btn btn-secondary btn-lg btn-block" id="btnIngresoBilletesCerrar" type="button">
+                    <span class="badge badge-light mr-2">2</span>
+                    No, cerrar
+                </button>
+
+                <div class="mt-3 pt-2 border-top text-left">
+                    <div class="small text-muted mb-2" id="estadoAgenteIngresoBilletes">
+                        Impresion local: usando navegador.
+                    </div>
+
+                    <div class="d-flex">
+                        <button class="btn btn-outline-info btn-sm flex-grow-1 mr-2" id="btnConfigurarAgenteIngresoBilletes" type="button">
+                            Configurar impresora
+                        </button>
+                        <a class="btn btn-outline-secondary btn-sm" href="@descargarAgenteUrl">
+                            Descargar agente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfigAgenteIngresoBilletes" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configurar impresora local</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning d-none" id="msgConfigAgenteIngresoBilletes"></div>
+
+                <div class="form-group">
+                    <label for="cmbImpresoraAgenteIngresoBilletes">Impresora</label>
+                    <select class="form-control" id="cmbImpresoraAgenteIngresoBilletes"></select>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label for="cmbMmAgenteIngresoBilletes">Tamano ticket</label>
+                    <select class="form-control" id="cmbMmAgenteIngresoBilletes">
+                        <option value="58">58 mm</option>
+                        <option value="80">80 mm</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="button" id="btnGuardarConfigAgenteIngresoBilletes">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ingreso-billetes-table td,
+    .ingreso-billetes-table th {
+        vertical-align: middle;
+    }
+
+    .ingreso-billetes-table .form-control-lg {
+        max-width: 140px;
+        margin: 0 auto;
+    }
+
+    @@media (max-width: 576px) {
+        .ingreso-billetes-table .form-control-lg {
+            max-width: 110px;
+            font-size: 1rem;
+        }
+
+        #lblIngresoBilletesTotal {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+    (function (window) {
+        function initPOSIngresoBilletes($) {
+            if (!$) return false;
+            if (window.POSIngresoBilletes && window.POSIngresoBilletes.initDone) return true;
+
+            const KEY_DENOMINACIONES = [20000, 10000, 2000, 1000, 500, 200, 100, 50, 20, 10];
+            const URL_IMPRIMIR_PAYLOAD = '@imprimirPayloadUrl';
+
+            let agenteDisponible = false;
+            let agenteVerificado = false;
+            let agenteNombre = '';
+            let permitirCerrarModal = false;
+            let confirmandoCierre = false;
+
+        function formatMoney(value) {
+            return '$ ' + Number(value || 0).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function toInt(value) {
+            const limpio = String(value || '').replace(/\D/g, '');
+            return limpio ? parseInt(limpio, 10) : 0;
+        }
+
+        function toDecimal(value) {
+            const normalizado = String(value || '')
+                .replace(/[^0-9,.\-]/g, '')
+                .replace(/\./g, '')
+                .replace(',', '.');
+            const numero = parseFloat(normalizado);
+            return isNaN(numero) || numero < 0 ? 0 : numero;
+        }
+
+        function sanitizeIntegerInput($input) {
+            const limpio = ($input.val() || '').replace(/\D/g, '');
+            if (($input.val() || '') !== limpio) {
+                $input.val(limpio);
+            }
+        }
+
+        function sanitizeDecimalInput($input) {
+            let value = ($input.val() || '').replace(/[^0-9,.\-]/g, '');
+            value = value.replace(/-/g, '');
+
+            const parts = value.split(/[,.]/);
+            if (parts.length > 1) {
+                value = parts[0] + ',' + parts.slice(1).join('');
+            }
+
+            if (($input.val() || '') !== value) {
+                $input.val(value);
+            }
+        }
+
+        function recalculate() {
+            let total = 0;
+
+            $('.js-billete-cantidad').each(function () {
+                const $input = $(this);
+                const denominacion = parseInt($input.data('denominacion'), 10) || 0;
+                const cantidad = toInt($input.val());
+                const subtotal = cantidad * denominacion;
+                total += subtotal;
+
+                $('.js-billete-subtotal[data-denominacion="' + denominacion + '"]').text(formatMoney(subtotal));
+            });
+
+            const monedas = toDecimal($('#txtIngresoBilletesMonedas').val());
+            total += monedas;
+            $('#lblIngresoBilletesMonedasSubtotal').text(formatMoney(monedas));
+            $('#lblIngresoBilletesTotal').text(formatMoney(total));
+        }
+
+        function resetModal() {
+            $('.js-billete-cantidad').val('');
+            $('#txtIngresoBilletesMonedas').val('');
+            $('#lblIngresoBilletesMonedasSubtotal').text(formatMoney(0));
+            $('.js-billete-subtotal').text(formatMoney(0));
+            $('#lblIngresoBilletesTotal').text(formatMoney(0));
+            permitirCerrarModal = false;
+            confirmandoCierre = false;
+        }
+
+        function focusPrimerCampo() {
+            const input = $('.js-billete-cantidad[data-denominacion="20000"]').get(0);
+            if (input) {
+                input.focus();
+                try { input.select(); } catch (err) { }
+            }
+        }
+
+        function focusCodigoPos() {
+            const input = document.getElementById('inputCodigo');
+            if (input) {
+                input.focus();
+                try { input.select(); } catch (err) { }
+            }
+        }
+
+        function focusNextByOrder(order) {
+            const nextOrder = order + 1;
+            const $next = $('[data-order="' + nextOrder + '"]');
+            if ($next.length) {
+                $next.focus();
+                try { $next.select(); } catch (err) { }
+                return;
+            }
+
+            $('#btnAceptarIngresoBilletesPOS').trigger('focus');
+        }
+
+        function collectData() {
+            const items = [];
+            let total = 0;
+
+            KEY_DENOMINACIONES.forEach(function (denominacion) {
+                const cantidad = toInt($('.js-billete-cantidad[data-denominacion="' + denominacion + '"]').val());
+                const subtotal = cantidad * denominacion;
+                total += subtotal;
+                items.push({
+                    denominacion: denominacion,
+                    cantidad: cantidad,
+                    subtotal: subtotal
+                });
+            });
+
+            const monedas = toDecimal($('#txtIngresoBilletesMonedas').val());
+            total += monedas;
+
+            return {
+                items: items,
+                monedas: monedas,
+                total: total
+            };
+        }
+
+        function actualizarEstadoAgente(texto, disponible) {
+            $('#estadoAgenteIngresoBilletes')
+                .text(texto)
+                .toggleClass('text-success', !!disponible)
+                .toggleClass('text-muted', !disponible);
+        }
+
+        function refrescarEstadoAgente() {
+            if (!agenteVerificado) {
+                actualizarEstadoAgente('Impresion local: verificando agente...', false);
+                return;
+            }
+
+            if (agenteDisponible) {
+                let texto = 'Impresion local activa';
+                if (agenteNombre) {
+                    texto += ': ' + agenteNombre;
+                }
+                actualizarEstadoAgente(texto + '.', true);
+                return;
+            }
+
+            actualizarEstadoAgente('Impresion local: usando navegador.', false);
+        }
+
+        function verificarAgente() {
+            const dfd = $.Deferred();
+
+            if (!window.CarniSysPrintAgent) {
+                agenteVerificado = true;
+                agenteDisponible = false;
+                agenteNombre = '';
+                refrescarEstadoAgente();
+                return dfd.resolve(false).promise();
+            }
+
+            window.CarniSysPrintAgent.health()
+                .done(function (resp) {
+                    agenteVerificado = true;
+                    agenteDisponible = !!(resp && resp.ok);
+                    agenteNombre = resp && resp.printerName ? resp.printerName : '';
+                    refrescarEstadoAgente();
+                    dfd.resolve(agenteDisponible);
+                })
+                .fail(function () {
+                    agenteVerificado = true;
+                    agenteDisponible = false;
+                    agenteNombre = '';
+                    refrescarEstadoAgente();
+                    dfd.resolve(false);
+                });
+
+            return dfd.promise();
+        }
+
+        function cargarConfiguracionAgente() {
+            const dfd = $.Deferred();
+
+            if (!window.CarniSysPrintAgent) {
+                return dfd.reject().promise();
+            }
+
+            $.when(window.CarniSysPrintAgent.getPrinters(), window.CarniSysPrintAgent.getConfig())
+                .done(function (printersResp, configResp) {
+                    const printersData = printersResp[0] || {};
+                    const configData = configResp[0] || {};
+                    const items = printersData.items || [];
+                    const $cmb = $('#cmbImpresoraAgenteIngresoBilletes');
+                    $cmb.empty();
+
+                    $.each(items, function (_, item) {
+                        const printerName = item.name || item.Name || '';
+                        const isDefault = !!(item.isDefault || item.IsDefault);
+                        $('<option>')
+                            .val(printerName)
+                            .text(printerName + (isDefault ? ' (predeterminada)' : ''))
+                            .appendTo($cmb);
+                    });
+
+                    if (configData.printerName) {
+                        $cmb.val(configData.printerName);
+                    }
+
+                    $('#cmbMmAgenteIngresoBilletes').val((configData.ticketMm === 80 ? 80 : 58).toString());
+                    dfd.resolve(configData.ticketMm === 80 ? 80 : 58);
+                })
+                .fail(function () {
+                    dfd.reject();
+                });
+
+            return dfd.promise();
+        }
+
+        function obtenerTicketMm() {
+            const dfd = $.Deferred();
+
+            if (!window.CarniSysPrintAgent) {
+                return dfd.resolve(80).promise();
+            }
+
+            window.CarniSysPrintAgent.getConfig()
+                .done(function (resp) {
+                    const data = resp || {};
+                    dfd.resolve(data.ticketMm === 58 ? 58 : 80);
+                })
+                .fail(function () {
+                    dfd.resolve(80);
+                });
+
+            return dfd.promise();
+        }
+
+        function imprimirEnNavegador(payload) {
+            const lineas = (payload && payload.ticketLines) ? payload.ticketLines : [];
+            const popup = window.open('', '_blank', 'width=420,height=640');
+
+            if (!popup) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Impresion',
+                    text: 'No se pudo abrir la ventana de impresion del navegador.'
+                });
+                cerrarDefinitivo();
+                return;
+            }
+
+            const html = '<!DOCTYPE html><html><head><meta charset="utf-8" />'
+                + '<title>Detalle billetes</title>'
+                + '<style>body{font-family:Consolas,monospace;padding:12px;}pre{font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap;}</style>'
+                + '</head><body><pre>' + $('<div/>').text(lineas.join('\n')).html() + '</pre></body></html>';
+
+            popup.document.open();
+            popup.document.write(html);
+            popup.document.close();
+            popup.focus();
+            popup.print();
+            popup.close();
+
+            cerrarDefinitivo();
+        }
+
+        function construirPayloadServidor(ticketMm) {
+            const data = collectData();
+            return {
+                TicketMm: ticketMm,
+                Monedas: data.monedas,
+                Total: data.total,
+                Denominaciones: data.items.map(function (item) {
+                    return {
+                        Denominacion: item.denominacion,
+                        Cantidad: item.cantidad
+                    };
+                })
+            };
+        }
+
+        function cerrarDefinitivo() {
+            confirmandoCierre = false;
+            $('#modalConfirmarIngresoBilletesPOS').modal('hide');
+            permitirCerrarModal = true;
+            $('#modalIngresoBilletesPOS').modal('hide');
+        }
+
+        function imprimirDetalle() {
+            obtenerTicketMm().done(function (ticketMm) {
+                $.ajax({
+                    url: URL_IMPRIMIR_PAYLOAD,
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(construirPayloadServidor(ticketMm))
+                })
+                    .done(function (payload) {
+                        if (!payload || payload.ok === false) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Impresion',
+                                text: payload && payload.mensaje ? payload.mensaje : 'No se pudo preparar el detalle de impresion.'
+                            });
+                            return;
+                        }
+
+                        if (agenteDisponible && window.CarniSysPrintAgent) {
+                            window.CarniSysPrintAgent.printExpendio(payload)
+                                .done(function () {
+                                    verificarAgente();
+                                    cerrarDefinitivo();
+                                })
+                                .fail(function () {
+                                    imprimirEnNavegador(payload);
+                                });
+                            return;
+                        }
+
+                        imprimirEnNavegador(payload);
+                    })
+                    .fail(function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Impresion',
+                            text: 'No se pudo generar el detalle para imprimir.'
+                        });
+                    });
+            });
+        }
+
+        function abrirConfirmacion() {
+            confirmandoCierre = true;
+            $('#modalConfirmarIngresoBilletesPOS').modal({
+                backdrop: 'static',
+                keyboard: false,
+                show: true
+            });
+            verificarAgente();
+        }
+
+        function abrir() {
+            if ($('.modal.show').length) return;
+
+            resetModal();
+            $('#modalIngresoBilletesPOS').modal({
+                backdrop: 'static',
+                keyboard: false,
+                show: true
+            });
+        }
+
+        function bindEvents() {
+            $(document)
+                .off('input.posIngresoBilletes', '.js-billete-cantidad')
+                .on('input.posIngresoBilletes', '.js-billete-cantidad', function () {
+                    sanitizeIntegerInput($(this));
+                    recalculate();
+                });
+
+            $(document)
+                .off('keydown.posIngresoBilletes', '.js-billete-cantidad')
+                .on('keydown.posIngresoBilletes', '.js-billete-cantidad', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        focusNextByOrder(parseInt($(this).data('order'), 10) || 0);
+                    }
+                });
+
+            $('#txtIngresoBilletesMonedas')
+                .off('.posIngresoBilletes')
+                .on('input.posIngresoBilletes', function () {
+                    sanitizeDecimalInput($(this));
+                    recalculate();
+                })
+                .on('keydown.posIngresoBilletes', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        $('#btnAceptarIngresoBilletesPOS').trigger('focus');
+                    }
+                });
+
+            $('#btnAceptarIngresoBilletesPOS').off('.posIngresoBilletes').on('click.posIngresoBilletes', function () {
+                abrirConfirmacion();
+            });
+
+            $('#btnCancelarIngresoBilletesPOS, #btnCerrarIngresoBilletesPOS')
+                .off('.posIngresoBilletes')
+                .on('click.posIngresoBilletes', function () {
+                    abrirConfirmacion();
+                });
+
+            $('#btnIngresoBilletesImprimir')
+                .off('.posIngresoBilletes')
+                .on('click.posIngresoBilletes', function () {
+                    imprimirDetalle();
+                });
+
+            $('#btnIngresoBilletesCerrar')
+                .off('.posIngresoBilletes')
+                .on('click.posIngresoBilletes', function () {
+                    cerrarDefinitivo();
+                });
+
+            $('#btnConfigurarAgenteIngresoBilletes')
+                .off('.posIngresoBilletes')
+                .on('click.posIngresoBilletes', function () {
+                    $('#msgConfigAgenteIngresoBilletes').addClass('d-none').text('');
+
+                    verificarAgente().done(function (available) {
+                        if (!available) {
+                            $('#msgConfigAgenteIngresoBilletes')
+                                .removeClass('d-none')
+                                .text('No se detecto el agente local. Descargalo e instalalo en esta terminal.');
+                            $('#modalConfigAgenteIngresoBilletes').modal('show');
+                            return;
+                        }
+
+                        cargarConfiguracionAgente()
+                            .done(function () {
+                                $('#modalConfigAgenteIngresoBilletes').modal('show');
+                            })
+                            .fail(function () {
+                                $('#msgConfigAgenteIngresoBilletes')
+                                    .removeClass('d-none')
+                                    .text('No se pudieron leer las impresoras instaladas.');
+                                $('#modalConfigAgenteIngresoBilletes').modal('show');
+                            });
+                    });
+                });
+
+            $('#btnGuardarConfigAgenteIngresoBilletes')
+                .off('.posIngresoBilletes')
+                .on('click.posIngresoBilletes', function () {
+                    if (!window.CarniSysPrintAgent) return;
+
+                    const printerName = ($('#cmbImpresoraAgenteIngresoBilletes').val() || '').toString();
+                    const ticketMm = parseInt($('#cmbMmAgenteIngresoBilletes').val(), 10);
+
+                    window.CarniSysPrintAgent.saveConfig({
+                        printerName: printerName,
+                        ticketMm: ticketMm === 80 ? 80 : 58
+                    }).done(function () {
+                        $('#modalConfigAgenteIngresoBilletes').modal('hide');
+                        verificarAgente();
+                    }).fail(function () {
+                        $('#msgConfigAgenteIngresoBilletes')
+                            .removeClass('d-none')
+                            .text('No se pudo guardar la configuracion de impresion.');
+                    });
+                });
+
+            $('#modalIngresoBilletesPOS')
+                .off('.posIngresoBilletes')
+                .on('shown.bs.modal.posIngresoBilletes', function () {
+                    setTimeout(focusPrimerCampo, 60);
+                })
+                .on('hide.bs.modal.posIngresoBilletes', function (e) {
+                    if (!permitirCerrarModal) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+
+                        if (!confirmandoCierre) {
+                            abrirConfirmacion();
+                        }
+                        return false;
+                    }
+                })
+                .on('hidden.bs.modal.posIngresoBilletes', function () {
+                    $('#modalConfirmarIngresoBilletesPOS').modal('hide');
+                    resetModal();
+                    focusCodigoPos();
+                });
+
+            $('#modalConfirmarIngresoBilletesPOS')
+                .off('.posIngresoBilletes')
+                .on('shown.bs.modal.posIngresoBilletes', function () {
+                    setTimeout(function () {
+                        $('#btnIngresoBilletesCerrar').trigger('focus');
+                    }, 50);
+                })
+                .on('hidden.bs.modal.posIngresoBilletes', function () {
+                    if (!permitirCerrarModal && $('#modalIngresoBilletesPOS').hasClass('show')) {
+                        confirmandoCierre = false;
+                        setTimeout(function () {
+                            $('#btnAceptarIngresoBilletesPOS').trigger('focus');
+                        }, 30);
+                    }
+                });
+
+            $(document)
+                .off('keydown.posIngresoBilletesConfirm')
+                .on('keydown.posIngresoBilletesConfirm', function (e) {
+                    if (!$('#modalConfirmarIngresoBilletesPOS').hasClass('show')) return;
+
+                    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+                    if (tag === 'input' || tag === 'textarea') return;
+
+                    if (e.key === '1') {
+                        e.preventDefault();
+                        $('#btnIngresoBilletesImprimir').trigger('click');
+                        return;
+                    }
+
+                    if (e.key === '2') {
+                        e.preventDefault();
+                        $('#btnIngresoBilletesCerrar').trigger('click');
+                        return;
+                    }
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        $('#btnIngresoBilletesCerrar').trigger('click');
+                    }
+                });
+        }
+
+            bindEvents();
+
+            window.POSIngresoBilletes = {
+                initDone: true,
+                open: abrir
+            };
+
+            return true;
+        }
+
+        function bootPOSIngresoBilletes() {
+            if (initPOSIngresoBilletes(window.jQuery)) return;
+
+            window.setTimeout(bootPOSIngresoBilletes, 60);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPOSIngresoBilletes);
+        } else {
+            bootPOSIngresoBilletes();
+        }
+    })(window);
+</script>

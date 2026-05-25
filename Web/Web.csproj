@@ -137,6 +137,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\MovimientosController.cs" />
+    <Compile Include="Controllers\ParametrosController.cs" />
     <Compile Include="Controllers\PersonasController.cs" />
     <Compile Include="Controllers\PuntosExpendioController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
@@ -159,11 +160,14 @@
     <Compile Include="Models\CompraIndexVm.cs" />
     <Compile Include="Models\CalcularComisionesElectronicasVm.cs" />
     <Compile Include="Models\ComisionElectronicaFormaVm.cs" />
+    <Compile Include="Models\CalculadoraBilletesPrintVm.cs" />
     <Compile Include="Models\ElaboradosVm.cs" />
+    <Compile Include="Models\IngresoBilletesPrintVm.cs" />
     <Compile Include="Models\LineasAgrupadasVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\MarcaEditVm.cs" />
+    <Compile Include="Models\ParametrosVm.cs" />
     <Compile Include="Models\PuntoExpendioVm.cs" />
     <Compile Include="Models\ReciboPagoVm.cs" />
     <Compile Include="Models\ReportesViewModel.cs" />
@@ -209,6 +213,7 @@
     <Content Include="Content\js\sb-admin-2.min.js" />
     <Content Include="Content\js\scripts.js" />
     <Content Include="Scripts\app\lineas-agrupadas.js" />
+    <Content Include="Scripts\app\calculadora-billetes.js" />
     <Content Include="Scripts\app\table-scroll-sync.js" />
     <Content Include="Content\sounds\focus-beep.wav" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js" />
@@ -2086,6 +2091,7 @@
     <Content Include="Views\Productos\_StockPorSucursalesProductoModal.cshtml" />
     <Content Include="Views\Reportes\Index.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
+    <Content Include="Views\Shared\_CalculadoraBilletesModal.cshtml" />
     <Content Include="Views\Shared\_LineasAgrupadasStyles.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
@@ -2115,6 +2121,7 @@
     <Content Include="Views\Personas\Editar.cshtml" />
     <Content Include="Views\Personas\Index.cshtml" />
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
+    <Content Include="Views\Parametros\Index.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
@@ -2139,6 +2146,7 @@
     <Content Include="Views\Ventas\_TicketHTML.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronicaModal.cshtml" />
+    <Content Include="Views\Ventas\_ModalIngresoBilletesPOS.cshtml" />
     <Content Include="Views\Finanzas\_AddOrEditPagoScripts.cshtml" />
     <Content Include="Views\Usuarios\Editar.cshtml" />
     <Content Include="Views\Usuarios\Index.cshtml" />
