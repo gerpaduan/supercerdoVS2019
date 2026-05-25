@@ -7,12 +7,16 @@
 
     var KEY_TICKET_MM = 'calculadora_billetes_ticket_mm';
     var DENOMINACIONES = [20000, 10000, 2000, 1000, 500, 200, 100, 50, 20, 10];
+    var DETALLE_START = '[INICIO_DETALLE_BILLETES]';
+    var DETALLE_END = '[FIN_DETALLE_BILLETES]';
+    var DETALLE_REGEX = /\[INICIO_DETALLE_BILLETES\][\s\S]*?\[FIN_DETALLE_BILLETES\]/g;
     var agenteDisponible = false;
     var agenteVerificado = false;
     var agenteNombre = '';
     var permitiendoCerrar = false;
     var mostrandoPost = false;
     var opcionesActuales = {};
+    var resultadoAplicado = false;
 
     function getConfig() {
         return window.CalculadoraBilletesConfig || {};
@@ -159,9 +163,70 @@
         permitiendoCerrar = false;
         mostrandoPost = false;
         opcionesActuales = {};
+        resultadoAplicado = false;
         $('#calculadoraBilletesTitulo').text('Calculadora Billetes');
         $('#cbPostSubTitle').hide().text('');
         $('#bloqueCbTicketOpciones').collapse('hide');
+    }
+
+    function resolveFieldTarget(target) {
+        if (!target) {
+            return $();
+        }
+
+        if (target.jquery) {
+            return target.first();
+        }
+
+        if (typeof target === 'string') {
+            var selectors = target.split(',');
+            for (var i = 0; i < selectors.length; i++) {
+                var selector = $.trim(selectors[i]);
+                if (!selector) continue;
+
+                var $field = $(selector).first();
+                if ($field.length) {
+                    return $field;
+                }
+            }
+
+            return $();
+        }
+
+        return $(target).first();
+    }
+
+    function normalizeEventList(events, defaults) {
+        if ($.isArray(events) && events.length) {
+            return events;
+        }
+
+        if (typeof events === 'string' && $.trim(events)) {
+            return events.split(/[,\s]+/).filter(function (item) { return !!item; });
+        }
+
+        return defaults || [];
+    }
+
+    function setFieldValue($field, value, events) {
+        if (!$field || !$field.length) return;
+
+        $field.val(value);
+        normalizeEventList(events, ['input', 'change', 'keyup']).forEach(function (eventName) {
+            $field.trigger(eventName);
+        });
+    }
+
+    function focusField(target) {
+        var $field = resolveFieldTarget(target);
+        if (!$field.length) return;
+
+        window.setTimeout(function () {
+            $field.trigger('focus');
+            if ($field.is('input[type="text"], input:not([type]), textarea')) {
+                $field.trigger('select');
+            }
+        }, 60);
     }
 
     function buildDetalleTexto(denominaciones, monedas) {
@@ -177,6 +242,57 @@
         }
 
         return partes.join(' + ');
+    }
+
+    function buildDetalleLineas(denominaciones, monedas, total) {
+        var lineas = [];
+
+        (denominaciones || []).forEach(function (item) {
+            var cantidad = Number(item && item.cantidad ? item.cantidad : 0);
+            var denominacion = Number(item && item.denominacion ? item.denominacion : 0);
+            var subtotal = cantidad * denominacion;
+
+            lineas.push(
+                cantidad + ' x $' + denominacion.toLocaleString('es-AR')
+                + ' = $' + subtotal.toLocaleString('es-AR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+            );
+        });
+
+        if ((monedas || 0) > 0) {
+            lineas.push('Monedas = ' + formatMoney(monedas));
+        }
+
+        lineas.push('Total = ' + formatMoney(total));
+        return lineas;
+    }
+
+    function buildResultado(data) {
+        var denominaciones = data && data.denominaciones ? data.denominaciones : [];
+        var monedas = Number(data && data.monedas ? data.monedas : 0);
+        var total = Number(data && data.total ? data.total : 0);
+        var detalleLineas = buildDetalleLineas(denominaciones, monedas, total);
+
+        return $.extend({}, data || {}, {
+            detalleLineas: detalleLineas,
+            detalleMultilinea: detalleLineas.join('\n'),
+            detalle: detalleLineas.join('\n')
+        });
+    }
+
+    function limpiarDetalleExistente(texto) {
+        return String(texto || '')
+            .replace(DETALLE_REGEX, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
+    function mergeDetalle(textoActual, resultado) {
+        var base = limpiarDetalleExistente(textoActual);
+        var bloque = window.CalculadoraBilletes.buildDetalleBlock(resultado);
+        return base ? (base + '\n\n' + bloque) : bloque;
     }
 
     function collectDataFromInputs() {
@@ -220,6 +336,58 @@
         }
 
         return collectDataFromInputs();
+    }
+
+    function devolverResultado() {
+        if (resultadoAplicado) {
+            return null;
+        }
+
+        var resultado = buildResultado(getPrintData());
+        var selectorInputTotal = opcionesActuales.selectorInputTotal || opcionesActuales.targetTotalSelector;
+        var selectorInputDetalle = opcionesActuales.selectorInputDetalle || opcionesActuales.targetDetailSelector;
+        var selectorFocus = opcionesActuales.selectorFocus || opcionesActuales.targetFocusSelector || selectorInputTotal;
+        var callback = opcionesActuales.callbackOnAceptar || opcionesActuales.onAccept;
+
+        if (selectorInputTotal) {
+            setFieldValue(
+                resolveFieldTarget(selectorInputTotal),
+                window.CalculadoraBilletes.formatInputValue(resultado.total),
+                opcionesActuales.eventosInputTotal
+            );
+        }
+
+        if (selectorInputDetalle) {
+            var $detalle = resolveFieldTarget(selectorInputDetalle);
+            if ($detalle.length) {
+                setFieldValue(
+                    $detalle,
+                    opcionesActuales.reemplazarDetalle
+                        ? window.CalculadoraBilletes.buildDetalleBlock(resultado)
+                        : mergeDetalle($detalle.val(), resultado),
+                    opcionesActuales.eventosInputDetalle || ['input', 'change']
+                );
+            }
+        }
+
+        if (typeof callback === 'function') {
+            try {
+                callback(resultado);
+            } catch (err) { }
+        }
+
+        if (selectorFocus) {
+            focusField(selectorFocus);
+        }
+
+        resultadoAplicado = true;
+        return resultado;
+    }
+
+    function aplicarCapturaYCerrar() {
+        devolverResultado();
+        permitiendoCerrar = true;
+        $('#modalCalculadoraBilletes').modal('hide');
     }
 
     function buildTicketPayload(data, mm, lineas) {
@@ -378,6 +546,7 @@
     }
 
     function cerrarPostYCalculadora() {
+        devolverResultado();
         $('#modalPostCalculadoraBilletes').data('permitir-cierre', true).modal('hide');
         permitiendoCerrar = true;
         $('#modalCalculadoraBilletes').modal('hide');
@@ -531,6 +700,7 @@
         });
 
         $(document).on('click', '#btnAceptarCalculadoraBilletes', function () {
+            devolverResultado();
             abrirPostModal();
         });
 
@@ -644,6 +814,16 @@
                 backdrop: 'static',
                 keyboard: false
             });
+        },
+        formatInputValue: function (value) {
+            return Number(value || 0).toFixed(2);
+        },
+        buildDetalleBlock: function (resultado) {
+            var data = buildResultado(resultado || {});
+            return DETALLE_START + '\nDetalle de efectivo:\n' + data.detalleMultilinea + '\n' + DETALLE_END;
+        },
+        mergeDetalleBlock: function (textoActual, resultado) {
+            return mergeDetalle(textoActual, resultado);
         }
     };
 

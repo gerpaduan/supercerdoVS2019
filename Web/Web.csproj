@@ -214,6 +214,7 @@
     <Content Include="Content\js\scripts.js" />
     <Content Include="Scripts\app\lineas-agrupadas.js" />
     <Content Include="Scripts\app\calculadora-billetes.js" />
+    <Content Include="Scripts\app\calculadora-billetes-targets.js" />
     <Content Include="Scripts\app\table-scroll-sync.js" />
     <Content Include="Content\sounds\focus-beep.wav" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js" />

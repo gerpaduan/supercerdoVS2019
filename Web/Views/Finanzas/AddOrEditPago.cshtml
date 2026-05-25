@@ -182,29 +182,53 @@
 
                         <div class="form-group importe-destacado">
                             <label>Importe</label>
-                            @Html.TextBoxFor(m => m.Importe, new
-                            {
-                                @class = "form-control solo-decimal",
-                                id = "importe",
-                                type = "text",
-                                autocomplete = "off"
-                            })
+                            <div class="input-group">
+                                @Html.TextBoxFor(m => m.Importe, new
+                                {
+                                    @class = "form-control solo-decimal",
+                                    id = "importe",
+                                    type = "text",
+                                    autocomplete = "off"
+                                })
+                                <div class="input-group-append">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-pago js-calculadora-billetes-pago-importe d-none"
+                                            data-cb-context="pago"
+                                            data-cb-input="#importe"
+                                            data-cb-detail="#Observaciones, #Detalle, #descripcion"
+                                            title="Calcular efectivo">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
                             <div class="form-group">
                                 <h5 class="text-primary">Efectivo</h5>
 
-                                @Html.TextBox(
-                                    "Efectivo",
-                                    Model.Efectivo.ToString("0.00", CultureInfo.InvariantCulture),
-                                    new
-                                    {
-                                        @class = "form-control solo-decimal",
-                                        id = "Efectivo",
-                                        type = "text"
-                                    }
-                                )
+                                <div class="input-group">
+                                    @Html.TextBox(
+                                        "Efectivo",
+                                        Model.Efectivo.ToString("0.00", CultureInfo.InvariantCulture),
+                                        new
+                                        {
+                                            @class = "form-control solo-decimal",
+                                            id = "Efectivo",
+                                            type = "text"
+                                        }
+                                    )
+                                    <div class="input-group-append">
+                                        <button type="button"
+                                                class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-pago js-calculadora-billetes-pago-efectivo d-none"
+                                                data-cb-context="pago"
+                                                data-cb-input="#Efectivo"
+                                                data-cb-detail="#Observaciones, #Detalle, #descripcion"
+                                                title="Calcular efectivo">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -353,6 +377,73 @@
 {
     @Html.Partial("_AddOrEditPagoScripts")
     <script>
+        (function (window, $) {
+            if (!window || !$) return;
+
+            function parseMontoCalculadoraPago(texto) {
+                var valor = (texto || "").toString().replace(/\$/g, "").replace(/\s+/g, "").trim();
+                if (!valor) {
+                    return "0.00";
+                }
+
+                var ultimaComa = valor.lastIndexOf(",");
+                var ultimoPunto = valor.lastIndexOf(".");
+                if (ultimaComa >= 0 && ultimoPunto >= 0) {
+                    if (ultimaComa > ultimoPunto) {
+                        valor = valor.replace(/\./g, "").replace(",", ".");
+                    } else {
+                        valor = valor.replace(/,/g, "");
+                    }
+                } else {
+                    valor = valor.replace(",", ".");
+                }
+
+                var numero = parseFloat(valor);
+                return isNaN(numero) ? "0.00" : numero.toFixed(2);
+            }
+
+            function dispararEventosPago(control, eventos) {
+                if (!control || !eventos || !eventos.length) {
+                    return;
+                }
+
+                eventos.forEach(function (nombre) {
+                    var evt;
+                    try {
+                        evt = new Event(nombre, { bubbles: true });
+                    } catch (e) {
+                        evt = document.createEvent("Event");
+                        evt.initEvent(nombre, true, true);
+                    }
+
+                    control.dispatchEvent(evt);
+                });
+            }
+
+            function esModoMixtoPago() {
+                var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
+                var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
+                return valor === "eftvocheque" || valor === "efvtocheque" || texto === "eftvocheque" || texto === "efvtocheque";
+            }
+
+            $(document)
+                .off("click.pagoMontoCalculadora", "#btnAceptarCalculadoraBilletes")
+                .on("click.pagoMontoCalculadora", "#btnAceptarCalculadoraBilletes", function () {
+                    var lblTotal = document.getElementById("lblCalculadoraBilletesTotal");
+                    var valor = parseMontoCalculadoraPago(lblTotal ? lblTotal.textContent : "");
+                    var input = esModoMixtoPago()
+                        ? document.getElementById("Efectivo")
+                        : document.getElementById("importe");
+
+                    if (!input) {
+                        return;
+                    }
+
+                    input.value = valor;
+                    dispararEventosPago(input, ["input", "change", "keyup"]);
+                });
+        })(window, window.jQuery);
+
         window.urls = {
             guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")',
             buscarChequePorNro: '@Url.Action("BuscarChequePorNro", "Finanzas")',
@@ -373,6 +464,7 @@
             getCheques: window.urls.getCheques
         });
         window.PagoUX && window.PagoUX.init();
+        window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formPago",
             soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
@@ -386,6 +478,73 @@ else
     @section Scripts{
         @Html.Partial("_AddOrEditPagoScripts")
         <script>
+            (function (window, $) {
+                if (!window || !$) return;
+
+                function parseMontoCalculadoraPago(texto) {
+                    var valor = (texto || "").toString().replace(/\$/g, "").replace(/\s+/g, "").trim();
+                    if (!valor) {
+                        return "0.00";
+                    }
+
+                    var ultimaComa = valor.lastIndexOf(",");
+                    var ultimoPunto = valor.lastIndexOf(".");
+                    if (ultimaComa >= 0 && ultimoPunto >= 0) {
+                        if (ultimaComa > ultimoPunto) {
+                            valor = valor.replace(/\./g, "").replace(",", ".");
+                        } else {
+                            valor = valor.replace(/,/g, "");
+                        }
+                    } else {
+                        valor = valor.replace(",", ".");
+                    }
+
+                    var numero = parseFloat(valor);
+                    return isNaN(numero) ? "0.00" : numero.toFixed(2);
+                }
+
+                function dispararEventosPago(control, eventos) {
+                    if (!control || !eventos || !eventos.length) {
+                        return;
+                    }
+
+                    eventos.forEach(function (nombre) {
+                        var evt;
+                        try {
+                            evt = new Event(nombre, { bubbles: true });
+                        } catch (e) {
+                            evt = document.createEvent("Event");
+                            evt.initEvent(nombre, true, true);
+                        }
+
+                        control.dispatchEvent(evt);
+                    });
+                }
+
+                function esModoMixtoPago() {
+                    var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
+                    var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
+                    return valor === "eftvocheque" || valor === "efvtocheque" || texto === "eftvocheque" || texto === "efvtocheque";
+                }
+
+                $(document)
+                    .off("click.pagoMontoCalculadora", "#btnAceptarCalculadoraBilletes")
+                    .on("click.pagoMontoCalculadora", "#btnAceptarCalculadoraBilletes", function () {
+                        var lblTotal = document.getElementById("lblCalculadoraBilletesTotal");
+                        var valor = parseMontoCalculadoraPago(lblTotal ? lblTotal.textContent : "");
+                        var input = esModoMixtoPago()
+                            ? document.getElementById("Efectivo")
+                            : document.getElementById("importe");
+
+                        if (!input) {
+                            return;
+                        }
+
+                        input.value = valor;
+                        dispararEventosPago(input, ["input", "change", "keyup"]);
+                    });
+            })(window, window.jQuery);
+
             window.urls = {
                 guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")',
                 buscarChequePorNro: '@Url.Action("BuscarChequePorNro", "Finanzas")',
@@ -406,6 +565,7 @@ else
                 getCheques: window.urls.getCheques
             });
             window.PagoUX && window.PagoUX.init();
+            window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
             window.EditReadOnly && window.EditReadOnly.init({
                 formSelector: "#formPago",
                 soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),

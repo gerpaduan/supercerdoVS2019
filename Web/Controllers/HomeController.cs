@@ -218,14 +218,15 @@ namespace Web.Controllers
             lineas.Add(truncar("Fecha: " + System.DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"), cantMaxChar));
             lineas.Add(new string('-', cantMaxChar));
             lineas.Add("Total $: " + request.Total.ToString("N2"));
+            lineas.Add("\u00A0");
+            lineas.Add("\u00A0");
             lineas.Add("Detalles:");
             lineas.Add(NormalizarDetalleCalculadoraBilletes(request));
             lineas.Add("\u00A0");
+            lineas.Add("\u00A0");
+            lineas.Add("\u00A0");
             lineas.Add(".");
-            lineas.Add("&nbsp;");
-            lineas.Add("br");
-            lineas.Add("<br>");
-            lineas.Add("<br>");
+            lineas.Add("\u00A0");
 
             return lineas;
         }
