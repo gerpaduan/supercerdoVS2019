@@ -12,6 +12,8 @@ namespace Utilidades
     /// </summary>
     public sealed class Conexion
     {
+        private const string BaseDatosSinSessionContext = "SuperCerdo";
+
         public enum tipoConexion
         {
             local,
@@ -54,7 +56,8 @@ namespace Utilidades
             var cn = new SqlConnection(cs);
             cn.Open();
 
-            SetEmpresaSession(cn, empresa.IdEmpresa);
+            if (!EsBaseSinSessionContext(cn))
+                SetEmpresaSession(cn, empresa.IdEmpresa);
 
             return cn;
         }
@@ -73,6 +76,19 @@ namespace Utilidades
                 cmd.ExecuteNonQuery();
             }
 
+        }
+
+        private static bool EsBaseSinSessionContext(SqlConnection cn)
+        {
+            string databaseName = cn.Database;
+
+            if (string.IsNullOrWhiteSpace(databaseName))
+            {
+                var csb = new SqlConnectionStringBuilder(cn.ConnectionString);
+                databaseName = csb.InitialCatalog;
+            }
+
+            return string.Equals(databaseName, BaseDatosSinSessionContext, StringComparison.OrdinalIgnoreCase);
         }
 
         // ---------------------------

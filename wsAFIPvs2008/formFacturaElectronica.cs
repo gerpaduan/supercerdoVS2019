@@ -1158,6 +1158,7 @@ namespace wsAFIPvs2008
                     oFactuElec.PorcentajeFacturacion = Util_Form.convertFloat(txtPorcentajeFacturacion.Text, false, false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
                     oFactuElec.DescItemUnitario = checkItemUnitario.Checked ? txtDescItemUnitario.Text : "";
+                    oFactuElec.Venta = oVentaE;
 
                     oVentaN.addOrEditFactuElec(oFactuElec);
 
@@ -2589,6 +2590,7 @@ namespace wsAFIPvs2008
                     oNotaCredito.IdVenta = oVentaE.IdVenta;
                     oNotaCredito.PorcentajeFacturacion = oFactuElec.PorcentajeFacturacion;
                     oNotaCredito.DescItemUnitario = oFactuElec.DescItemUnitario;
+                    oNotaCredito.Venta = oVentaE;
 
                     oVentaN.addOrEditFactuElec(oNotaCredito);
 

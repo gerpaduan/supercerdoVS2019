@@ -52,7 +52,9 @@
     <Compile Include="BalanzaConfig.cs" />
     <Compile Include="BalanzaDriverRegistry.cs" />
     <Compile Include="BalanzaReaderService.cs" />
-    <Compile Include="ConfigForm.cs" />
+    <Compile Include="ConfigForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="ConfigStore.cs" />
     <Compile Include="IBalanzaDriver.cs" />
     <Compile Include="KretzDriver.cs" />
