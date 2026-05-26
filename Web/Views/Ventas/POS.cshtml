@@ -608,6 +608,10 @@ else
         background-color: #f8f9fc;
     }
 
+    html.dark-mode #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
+        background-color: #182232;
+    }
+
     @@media (max-width: 767.98px) {
         #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
             width: calc(100% - .75rem);
@@ -2386,39 +2390,41 @@ else
     html.dark-mode .pos-cliente .form-control,
     html.dark-mode #razonSocial,
     html.dark-mode #fechaVentaEditable {
-        background: #1a2332 !important;
-        border-color: rgba(255,255,255,.12) !important;
-        color: rgba(255,255,255,.88) !important;
+        background: #132032 !important;
+        border-color: #314155 !important;
+        color: #ecf2ff !important;
     }
 
     html.dark-mode .pos-cliente .form-control[readonly],
     html.dark-mode #razonSocial[readonly] {
-        background: #18212f !important;
-        color: rgba(255,255,255,.82) !important;
+        background: #132032 !important;
+        border-color: #314155 !important;
+        color: #ecf2ff !important;
     }
 
     html.dark-mode #btnBuscarPersona {
-        background: #31465f;
-        border-color: #3a526d;
+        background: #274761;
+        border-color: #365775;
         color: #eef4fb;
     }
 
     html.dark-mode #btnBuscarPersona:hover {
-        background: #39526e;
-        border-color: #44607d;
+        background: #315473;
+        border-color: #436886;
     }
 
     html.dark-mode #btnConsumidorFinal {
-        background: #273140;
-        border-color: #374456;
+        background: #223449;
+        border-color: #314b64;
         color: #dbe5f0;
     }
 
     html.dark-mode #btnConsumidorFinal:hover {
-        background: #2e394a;
-        border-color: #435163;
+        background: #294058;
+        border-color: #3a5a77;
         color: #f2f6fa;
     }
+
 
     @@media (min-width: 992px) {
         .pos-meta {
@@ -2534,13 +2540,13 @@ else
 
     .pos-total-label {
         color: #adb5bd;
-        font-size: 3.6rem;
+        font-size: 3.15rem;
         line-height: 1;
     }
 
     .pos-total-value {
         color: #4a6fa5;
-        font-size: 3.6rem;
+        font-size: 3.15rem;
         line-height: 1;
     }
 
@@ -2550,11 +2556,11 @@ else
 
     @@media (min-width: 1200px) {
         .pos-total-label {
-            font-size: 3.6rem;
+            font-size: 3.15rem;
         }
 
         .pos-total-value {
-            font-size: 3.6rem;
+            font-size: 3.15rem;
         }
     }
 
@@ -3304,5 +3310,327 @@ else
     #inputCantidad {
         text-align: right !important;
         direction: ltr;
+    }
+
+    /* =========================================================
+     PALETA DARK ALINEADA CON PUNTOS EXPENDIO / POS
+     ========================================================= */
+    html.dark-mode .pos-page .pos-topbar {
+        background: #162538;
+        border-color: #2f4d69;
+        box-shadow: 0 12px 28px rgba(2, 6, 23, .34);
+    }
+
+    html.dark-mode .pos-page #pos-app > .card,
+    html.dark-mode .pos-page .pos-panel,
+    html.dark-mode .pos-page .zona-tabla,
+    html.dark-mode .pos-page #producto-info,
+    html.dark-mode .pos-page #scannerContainer .card {
+        background: #1a2b40 !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-page .pos-empresa,
+    html.dark-mode .pos-page .pos-total-label,
+    html.dark-mode .pos-page #prodNombre,
+    html.dark-mode .pos-page #prodPrecio,
+    html.dark-mode .pos-page #prodSubtotal,
+    html.dark-mode .pos-page #fechaHoraPOS {
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-page .pos-fecha,
+    html.dark-mode .pos-page .pos-sale-summary,
+    html.dark-mode .pos-page .text-muted,
+    html.dark-mode .pos-page .small.text-muted,
+    html.dark-mode .pos-page #msgBalanzaPOS,
+    html.dark-mode .pos-page #msgRecargoBonificacion,
+    html.dark-mode .pos-page .lbl-precio,
+    html.dark-mode .pos-page .lbl-cantidad,
+    html.dark-mode .pos-page .lbl-subtotal {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .pos-page .pos-top-actions .btn.btn-light {
+        background: #1f334b !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-page .pos-top-actions .btn.btn-light:hover,
+    html.dark-mode .pos-page .pos-top-actions .btn.btn-light:focus {
+        background: #29425f !important;
+        border-color: #4f79a6 !important;
+    }
+
+    html.dark-mode .pos-page .zona-total {
+        background: linear-gradient(135deg, #162538 0%, #1a2b40 100%);
+        border-top-color: #2f4d69;
+    }
+
+    html.dark-mode .pos-page .pos-total-value {
+        color: #73e0c2;
+    }
+
+    html.dark-mode .pos-page .input-group-lg > .form-control,
+    html.dark-mode .pos-page .input-group-lg > .input-group-prepend > .input-group-text,
+    html.dark-mode .pos-page .input-group-lg > .input-group-append > .input-group-text,
+    html.dark-mode .pos-page .input-group-lg > .input-group-append > .btn,
+    html.dark-mode .pos-page .input-group-lg > .input-group-prepend > .btn,
+    html.dark-mode .pos-page #inputCodigo,
+    html.dark-mode .pos-page #inputCantidad,
+    html.dark-mode .pos-page #inputCantidad[readonly] {
+        background: #132032 !important;
+        background-color: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+        -webkit-text-fill-color: #ecf2ff !important;
+        caret-color: #ecf2ff !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode .pos-page #inputCantidad:disabled,
+    html.dark-mode .pos-page #inputCantidad[readonly] {
+        background: #132032 !important;
+        background-color: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+        -webkit-text-fill-color: #ecf2ff !important;
+        opacity: 1 !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode .pos-page #inputCodigo:focus,
+    html.dark-mode .pos-page #inputCantidad:focus,
+    html.dark-mode .pos-page #razonSocial:focus,
+    html.dark-mode .pos-page #fechaVentaEditable:focus,
+    html.dark-mode .pos-page .pos-cliente .form-control:focus,
+    html.dark-mode .pos-page .input-group-lg > .form-control:focus {
+        background: #132032 !important;
+        background-color: #132032 !important;
+        background-image: none !important;
+        border-color: #4f79a6 !important;
+        color: #ecf2ff !important;
+        -webkit-text-fill-color: #ecf2ff !important;
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
+        outline: none !important;
+    }
+
+    html.dark-mode .pos-page #inputCantidad:-webkit-autofill,
+    html.dark-mode .pos-page #inputCantidad:-webkit-autofill:hover,
+    html.dark-mode .pos-page #inputCantidad:-webkit-autofill:focus {
+        -webkit-text-fill-color: #ecf2ff !important;
+        -webkit-box-shadow: 0 0 0 1000px #132032 inset !important;
+        box-shadow: 0 0 0 1000px #132032 inset !important;
+        transition: background-color 9999s ease-out 0s;
+    }
+
+    html.dark-mode .pos-page #btnBuscarPersona:focus,
+    html.dark-mode .pos-page #btnConsumidorFinal:focus,
+    html.dark-mode .pos-page .pos-top-actions .btn:focus {
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
+        outline: none !important;
+    }
+
+    html.dark-mode .pos-page #inputCodigo.pos-input-buscando {
+        background: linear-gradient(90deg, rgba(115, 168, 255, .10), rgba(115, 168, 255, .22), rgba(115, 168, 255, .10));
+        border-color: #5e88c7 !important;
+    }
+
+    html.dark-mode .pos-page .fila-item:hover,
+    html.dark-mode #tablaItems tr.fila-item:hover {
+        background: #223144 !important;
+    }
+
+    html.dark-mode .pos-page .item-detalle {
+        color: #c5d0df !important;
+    }
+
+    html.dark-mode .pos-page .fila-ultimo {
+        background: rgba(115, 224, 194, .10);
+    }
+
+    html.dark-mode .pos-page .btn-agregar-pos {
+        background: rgba(32, 201, 151, .14);
+        border-color: rgba(32, 201, 151, .34);
+        color: #8ee0bf;
+        box-shadow: none;
+    }
+
+    html.dark-mode .pos-page .btn-agregar-pos:not(:disabled):hover {
+        background: rgba(32, 201, 151, .20);
+        border-color: rgba(32, 201, 151, .46);
+        color: #a7ebd0;
+    }
+
+    html.dark-mode .pos-page .btn-agregar-pos:disabled,
+    html.dark-mode .pos-page #btnFinalizar:disabled {
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.12);
+        color: rgba(255,255,255,.55);
+    }
+
+    html.dark-mode .pos-page #btnFinalizar {
+        background: rgba(32, 201, 151, .22);
+        border-color: rgba(32, 201, 151, .48);
+        color: #d8fff1;
+        box-shadow: none;
+    }
+
+    html.dark-mode .pos-page #btnFinalizar:not(:disabled):hover {
+        background: rgba(32, 201, 151, .28);
+        border-color: rgba(32, 201, 151, .62);
+    }
+
+    /* =========================================================
+     MODALES DARK - POS
+     ========================================================= */
+    html.dark-mode body .modal .modal-content {
+        background: #1a2b40 !important;
+        border: 1px solid #2f4d69 !important;
+        color: #ecf2ff !important;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .42) !important;
+    }
+
+    html.dark-mode body .modal .modal-header,
+    html.dark-mode body .modal .modal-header.bg-light,
+    html.dark-mode body .modal .modal-header.bg-dark,
+    html.dark-mode body .modal .modal-header.bg-primary,
+    html.dark-mode body .modal .modal-header.bg-success,
+    html.dark-mode body .modal .modal-header.bg-warning {
+        background: #162538 !important;
+        color: #ecf2ff !important;
+        border-bottom: 1px solid #2f4d69 !important;
+    }
+
+    html.dark-mode body .modal .modal-body,
+    html.dark-mode body .modal .modal-footer {
+        background: #1a2b40 !important;
+        color: #ecf2ff !important;
+        border-color: #2f4d69 !important;
+    }
+
+    html.dark-mode body .modal .close,
+    html.dark-mode body .modal .text-dark,
+    html.dark-mode body .modal .modal-title,
+    html.dark-mode body .modal .modal-title small {
+        color: #ecf2ff !important;
+        text-shadow: none !important;
+    }
+
+    html.dark-mode body .modal .text-muted,
+    html.dark-mode body .modal .small.text-muted,
+    html.dark-mode body .modal small.text-muted {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode body .modal .form-control,
+    html.dark-mode body .modal .custom-select,
+    html.dark-mode body .modal textarea.form-control,
+    html.dark-mode body .modal select.form-control,
+    html.dark-mode body .modal .input-group-text {
+        background: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode body .modal .form-control:focus,
+    html.dark-mode body .modal .custom-select:focus,
+    html.dark-mode body .modal textarea.form-control:focus,
+    html.dark-mode body .modal select.form-control:focus {
+        background: #132032 !important;
+        background-image: none !important;
+        border-color: #4f79a6 !important;
+        color: #ecf2ff !important;
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
+    }
+
+    html.dark-mode body .modal .form-control[readonly],
+    html.dark-mode body .modal .form-control:disabled,
+    html.dark-mode body .modal .custom-select:disabled {
+        background: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #d7e4f3 !important;
+        -webkit-text-fill-color: #d7e4f3 !important;
+        opacity: 1 !important;
+    }
+
+    html.dark-mode body .modal .card,
+    html.dark-mode body .modal .card-body,
+    html.dark-mode body .modal .thead-light th,
+    html.dark-mode body .modal .table thead th {
+        background: #162538 !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body .modal .table,
+    html.dark-mode body .modal .table td,
+    html.dark-mode body .modal .table th,
+    html.dark-mode body .modal .table-bordered td,
+    html.dark-mode body .modal .table-bordered th {
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body .modal .table-hover tbody tr:hover {
+        background: rgba(79, 121, 166, .10) !important;
+    }
+
+    html.dark-mode body .modal .alert-info {
+        background: rgba(41, 84, 115, .22) !important;
+        border-color: rgba(79, 121, 166, .32) !important;
+        color: #dcecff !important;
+    }
+
+    html.dark-mode body .modal .alert-warning {
+        background: rgba(118, 92, 37, .22) !important;
+        border-color: rgba(186, 146, 57, .30) !important;
+        color: #f7e6b5 !important;
+    }
+
+    html.dark-mode body .modal .btn-light {
+        background: #1f334b !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body .modal .btn-light:hover,
+    html.dark-mode body .modal .btn-light:focus,
+    html.dark-mode body .modal .btn-secondary:hover,
+    html.dark-mode body .modal .btn-secondary:focus,
+    html.dark-mode body .modal .btn-outline-secondary:hover,
+    html.dark-mode body .modal .btn-outline-secondary:focus {
+        background: #29425f !important;
+        border-color: #4f79a6 !important;
+        color: #f4f9ff !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode body .modal .btn-secondary,
+    html.dark-mode body .modal .btn-outline-secondary {
+        background: #223449 !important;
+        border-color: #314b64 !important;
+        color: #dbe5f0 !important;
+    }
+
+    html.dark-mode body .modal .border-top,
+    html.dark-mode body .modal .border-light,
+    html.dark-mode body .modal .border-warning,
+    html.dark-mode body .modal .border-info {
+        border-color: #2f4d69 !important;
+    }
+
+    html.dark-mode body .modal .badge-light {
+        background: #d8e7f7 !important;
+        color: #1b2d41 !important;
     }
 </style>

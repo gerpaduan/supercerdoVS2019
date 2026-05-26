@@ -682,9 +682,19 @@
         font-size: 1.1rem;
     }
 
-    #inputCantidad {
+    #inputCantidad,
+    #inputCantidad:focus,
+    #inputCantidad:disabled,
+    #inputCantidad[readonly] {
         max-width: 118px;
         text-align: right;
+        background-color: #fff !important;
+        background-image: none !important;
+        border-color: #bac8f3 !important;
+        color: #6e707e !important;
+        -webkit-text-fill-color: #6e707e !important;
+        opacity: 1 !important;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25) !important;
     }
 
     .pos-search-group .form-control,
@@ -1021,5 +1031,283 @@
         #btnFinalizar {
             min-height: 54px;
         }
+    }
+
+    html.dark-mode .pos-expendio-page .pos-topbar-expendio {
+        background: #162538;
+        border-color: #2f4d69;
+        box-shadow: 0 12px 28px rgba(2, 6, 23, .34);
+    }
+
+    html.dark-mode .pos-expendio-page .pos-topbar-header,
+    html.dark-mode .pos-expendio-page .pos-topbar-item,
+    html.dark-mode .pos-expendio-page .zona-tabla,
+    html.dark-mode .pos-expendio-page .pos-panel,
+    html.dark-mode .pos-expendio-page #producto-info,
+    html.dark-mode .pos-expendio-page #scannerContainer .card {
+        background: #1a2b40 !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-topbar-item-cliente {
+        background: #162538 !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-topbar-caption,
+    html.dark-mode .pos-expendio-page .pos-topbar-label,
+    html.dark-mode .pos-expendio-page .pos-sale-summary,
+    html.dark-mode .pos-expendio-page .lbl-cantidad,
+    html.dark-mode .pos-expendio-page .lbl-subtotal {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-topbar-heading,
+    html.dark-mode .pos-expendio-page .pos-topbar-value,
+    html.dark-mode .pos-expendio-page .pos-total-label,
+    html.dark-mode .pos-expendio-page #prodNombre,
+    html.dark-mode .pos-expendio-page #prodSubtotal {
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-btn-layout.btn-light {
+        background: #1f334b !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-btn-layout.btn-light:hover,
+    html.dark-mode .pos-expendio-page .pos-btn-layout.btn-light:focus {
+        background: #29425f !important;
+        border-color: #4f79a6 !important;
+    }
+
+    html.dark-mode .pos-expendio-page .zona-total {
+        background: linear-gradient(135deg, #162538 0%, #1a2b40 100%);
+        border-color: #2f4d69;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-total-value {
+        color: #73e0c2;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-search-group .form-control,
+    html.dark-mode .pos-expendio-page .pos-search-group .input-group-text,
+    html.dark-mode .pos-expendio-page .pos-search-group .btn,
+    html.dark-mode .pos-expendio-page .pos-topbar-item-cliente .form-control,
+    html.dark-mode .pos-expendio-page #inputCodigo,
+    html.dark-mode .pos-expendio-page #inputCantidad,
+    html.dark-mode .pos-expendio-page #inputCantidad[readonly] {
+        background: #132032 !important;
+        background-color: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+        -webkit-text-fill-color: #ecf2ff !important;
+        caret-color: #ecf2ff !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode .pos-expendio-page #inputCantidad:disabled,
+    html.dark-mode .pos-expendio-page #inputCantidad[readonly] {
+        background: #132032 !important;
+        background-color: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+        -webkit-text-fill-color: #ecf2ff !important;
+        opacity: 1 !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode .pos-expendio-page #inputCodigo:focus,
+    html.dark-mode .pos-expendio-page #inputCantidad:focus,
+    html.dark-mode .pos-expendio-page #razonSocial:focus,
+    html.dark-mode .pos-expendio-page .pos-search-group .form-control:focus,
+    html.dark-mode .pos-expendio-page .pos-topbar-item-cliente .form-control:focus {
+        background: #132032 !important;
+        background-color: #132032 !important;
+        background-image: none !important;
+        border-color: #4f79a6 !important;
+        color: #ecf2ff !important;
+        -webkit-text-fill-color: #ecf2ff !important;
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
+        outline: none !important;
+    }
+
+    html.dark-mode .pos-expendio-page #inputCantidad:-webkit-autofill,
+    html.dark-mode .pos-expendio-page #inputCantidad:-webkit-autofill:hover,
+    html.dark-mode .pos-expendio-page #inputCantidad:-webkit-autofill:focus {
+        -webkit-text-fill-color: #ecf2ff !important;
+        -webkit-box-shadow: 0 0 0 1000px #132032 inset !important;
+        box-shadow: 0 0 0 1000px #132032 inset !important;
+        transition: background-color 9999s ease-out 0s;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-search-group .btn:focus,
+    html.dark-mode .pos-expendio-page .pos-btn-layout:focus {
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
+        outline: none !important;
+    }
+
+    html.dark-mode .pos-expendio-page #inputCodigo.pos-input-buscando {
+        background: linear-gradient(90deg, rgba(115, 168, 255, .10), rgba(115, 168, 255, .22), rgba(115, 168, 255, .10));
+        border-color: #5e88c7 !important;
+    }
+
+    html.dark-mode .pos-expendio-page .zona-tabla .text-muted,
+    html.dark-mode .pos-expendio-page .mt-auto .text-muted,
+    html.dark-mode .pos-expendio-page #msgRecargoBonificacion,
+    html.dark-mode .pos-expendio-page .small.text-muted {
+        color: #97a7bd !important;
+    }
+
+    /* =========================================================
+     MODALES DARK - PUNTO DE EXPENDIO
+     ========================================================= */
+    html.dark-mode body .modal .modal-content {
+        background: #1a2b40 !important;
+        border: 1px solid #2f4d69 !important;
+        color: #ecf2ff !important;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .42) !important;
+    }
+
+    html.dark-mode body .modal .modal-header,
+    html.dark-mode body .modal .modal-header.bg-light,
+    html.dark-mode body .modal .modal-header.bg-dark,
+    html.dark-mode body .modal .modal-header.bg-primary,
+    html.dark-mode body .modal .modal-header.bg-success,
+    html.dark-mode body .modal .modal-header.bg-warning {
+        background: #162538 !important;
+        color: #ecf2ff !important;
+        border-bottom: 1px solid #2f4d69 !important;
+    }
+
+    html.dark-mode body .modal .modal-body,
+    html.dark-mode body .modal .modal-footer {
+        background: #1a2b40 !important;
+        color: #ecf2ff !important;
+        border-color: #2f4d69 !important;
+    }
+
+    html.dark-mode body .modal .close,
+    html.dark-mode body .modal .text-dark,
+    html.dark-mode body .modal .modal-title,
+    html.dark-mode body .modal .modal-title small {
+        color: #ecf2ff !important;
+        text-shadow: none !important;
+    }
+
+    html.dark-mode body .modal .text-muted,
+    html.dark-mode body .modal .small.text-muted,
+    html.dark-mode body .modal small.text-muted {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode body .modal .form-control,
+    html.dark-mode body .modal .custom-select,
+    html.dark-mode body .modal textarea.form-control,
+    html.dark-mode body .modal select.form-control,
+    html.dark-mode body .modal .input-group-text {
+        background: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode body .modal .form-control:focus,
+    html.dark-mode body .modal .custom-select:focus,
+    html.dark-mode body .modal textarea.form-control:focus,
+    html.dark-mode body .modal select.form-control:focus {
+        background: #132032 !important;
+        background-image: none !important;
+        border-color: #4f79a6 !important;
+        color: #ecf2ff !important;
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
+    }
+
+    html.dark-mode body .modal .form-control[readonly],
+    html.dark-mode body .modal .form-control:disabled,
+    html.dark-mode body .modal .custom-select:disabled {
+        background: #132032 !important;
+        background-image: none !important;
+        border-color: #2f4d69 !important;
+        color: #d7e4f3 !important;
+        -webkit-text-fill-color: #d7e4f3 !important;
+        opacity: 1 !important;
+    }
+
+    html.dark-mode body .modal .card,
+    html.dark-mode body .modal .card-body,
+    html.dark-mode body .modal .thead-light th,
+    html.dark-mode body .modal .table thead th {
+        background: #162538 !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body .modal .table,
+    html.dark-mode body .modal .table td,
+    html.dark-mode body .modal .table th,
+    html.dark-mode body .modal .table-bordered td,
+    html.dark-mode body .modal .table-bordered th {
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body .modal .table-hover tbody tr:hover {
+        background: rgba(79, 121, 166, .10) !important;
+    }
+
+    html.dark-mode body .modal .alert-info {
+        background: rgba(41, 84, 115, .22) !important;
+        border-color: rgba(79, 121, 166, .32) !important;
+        color: #dcecff !important;
+    }
+
+    html.dark-mode body .modal .alert-warning {
+        background: rgba(118, 92, 37, .22) !important;
+        border-color: rgba(186, 146, 57, .30) !important;
+        color: #f7e6b5 !important;
+    }
+
+    html.dark-mode body .modal .btn-light {
+        background: #1f334b !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body .modal .btn-light:hover,
+    html.dark-mode body .modal .btn-light:focus,
+    html.dark-mode body .modal .btn-secondary:hover,
+    html.dark-mode body .modal .btn-secondary:focus,
+    html.dark-mode body .modal .btn-outline-secondary:hover,
+    html.dark-mode body .modal .btn-outline-secondary:focus {
+        background: #29425f !important;
+        border-color: #4f79a6 !important;
+        color: #f4f9ff !important;
+        box-shadow: none !important;
+    }
+
+    html.dark-mode body .modal .btn-secondary,
+    html.dark-mode body .modal .btn-outline-secondary {
+        background: #223449 !important;
+        border-color: #314b64 !important;
+        color: #dbe5f0 !important;
+    }
+
+    html.dark-mode body .modal .border-top,
+    html.dark-mode body .modal .border-light,
+    html.dark-mode body .modal .border-warning,
+    html.dark-mode body .modal .border-info {
+        border-color: #2f4d69 !important;
+    }
+
+    html.dark-mode body .modal .badge-light {
+        background: #d8e7f7 !important;
+        color: #1b2d41 !important;
     }
 </style>

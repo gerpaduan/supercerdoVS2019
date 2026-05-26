@@ -6,6 +6,13 @@
 body.dark-mode {
     background-color: #2b2d31 !important; /* gris base */
     color: #d6d6d6 !important;
+    --pos-surface: #2f3136;
+    --pos-surface-alt: #34373d;
+    --pos-surface-soft: #3a3d43;
+    --pos-text: #e6e6e6;
+    --pos-text-soft: #c9d1db;
+    --pos-text-muted: #aeb6c2;
+    --pos-border: #3c3f45;
 }
 
     /* Topbar */
@@ -17,15 +24,21 @@ body.dark-mode {
 
     /* Textos */
     body.dark-mode .text-dark,
-    body.dark-mode .text-gray-900 {
+    body.dark-mode .text-gray-900,
+    body.dark-mode .text-body {
         color: #d6d6d6 !important;
+    }
+
+    body.dark-mode .text-muted,
+    body.dark-mode .text-secondary {
+        color: var(--pos-text-muted) !important;
     }
 
     /* Cards */
     body.dark-mode .card {
-        background-color: #2f3136 !important;
-        color: #d6d6d6;
-        border: 1px solid #3c3f45;
+        background-color: var(--pos-surface) !important;
+        color: var(--pos-text);
+        border: 1px solid var(--pos-border);
         border-radius: 6px;
     }
 
@@ -53,8 +66,8 @@ body.dark-mode {
     body.dark-mode .form-control,
     body.dark-mode .custom-select {
         background-color: #24262b !important;
-        color: #e6e6e6 !important;
-        border: 1px solid #3c3f45;
+        color: var(--pos-text) !important;
+        border: 1px solid var(--pos-border);
         box-shadow: none;
     }
 
@@ -97,10 +110,36 @@ body.dark-mode {
         color: #d6d6d6;
     }
 
+    body.dark-mode .btn-light {
+        background-color: var(--pos-surface-alt) !important;
+        border-color: #4a4d53;
+        color: var(--pos-text) !important;
+    }
+
+    body.dark-mode .btn-light:hover,
+    body.dark-mode .btn-light:focus {
+        background-color: var(--pos-surface-soft) !important;
+        border-color: #5a6068;
+        color: #fff !important;
+    }
+
+    body.dark-mode .btn-dark {
+        background-color: #202a38;
+        border-color: #314155;
+        color: #eef4fb;
+    }
+
+    body.dark-mode .btn-dark:hover,
+    body.dark-mode .btn-dark:focus {
+        background-color: #273446;
+        border-color: #40546d;
+        color: #fff;
+    }
+
     /* Dropdowns */
     body.dark-mode .dropdown-menu {
-        background-color: #2f3136;
-        border: 1px solid #3c3f45;
+        background-color: var(--pos-surface);
+        border: 1px solid var(--pos-border);
     }
 
     body.dark-mode .dropdown-item {
@@ -113,14 +152,67 @@ body.dark-mode {
 
     /* Modales */
     body.dark-mode .modal-content {
-        background-color: #2f3136;
-        color: #d6d6d6;
-        border: 1px solid #3c3f45;
+        background-color: var(--pos-surface);
+        color: var(--pos-text);
+        border: 1px solid var(--pos-border);
     }
 
     body.dark-mode .modal-header,
     body.dark-mode .modal-footer {
-        border-color: #3c3f45;
+        border-color: var(--pos-border);
+    }
+
+    body.dark-mode .modal-header.bg-light,
+    body.dark-mode .modal-header.bg-white,
+    body.dark-mode .modal-footer.bg-light,
+    body.dark-mode .modal-footer.bg-white,
+    body.dark-mode .modal-body.bg-light,
+    body.dark-mode .modal-body.bg-white {
+        background-color: var(--pos-surface-alt) !important;
+        color: var(--pos-text) !important;
+        border-color: var(--pos-border) !important;
+    }
+
+    body.dark-mode .input-group-text {
+        background-color: var(--pos-surface-alt) !important;
+        border-color: #4a4d53;
+        color: var(--pos-text);
+    }
+
+    body.dark-mode .badge-light {
+        background-color: var(--pos-surface-soft) !important;
+        color: var(--pos-text) !important;
+        border: 1px solid #555b65;
+    }
+
+    body.dark-mode .badge-info {
+        background-color: rgba(86, 174, 214, 0.16) !important;
+        color: #d6f3ff !important;
+        border: 1px solid rgba(86, 174, 214, 0.3);
+    }
+
+    body.dark-mode .badge-primary {
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    body.dark-mode .list-group-item {
+        background-color: var(--pos-surface) !important;
+        border-color: var(--pos-border);
+        color: var(--pos-text);
+    }
+
+    body.dark-mode .list-group-item-action:hover,
+    body.dark-mode .list-group-item-action:focus {
+        background-color: var(--pos-surface-alt) !important;
+        color: #fff;
+    }
+
+    body.dark-mode .border-top,
+    body.dark-mode .border-bottom,
+    body.dark-mode .border-left,
+    body.dark-mode .border-right,
+    body.dark-mode .border-light {
+        border-color: var(--pos-border) !important;
     }
 
     /* Scrollbar */
