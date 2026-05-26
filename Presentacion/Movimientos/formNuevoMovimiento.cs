@@ -221,7 +221,9 @@ namespace Presentacion
                         tipoTicket.movimientoAcumulado(oMovimiento.IdMovimiento);
                     }
 
-                    frmMovimiento.cargarGrilla();
+                    if (frmMovimiento != null)
+                        frmMovimiento.cargarGrilla();
+
                     huboModificaciones = false;
                     this.Close();
                 }
