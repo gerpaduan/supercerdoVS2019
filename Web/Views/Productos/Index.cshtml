@@ -12,6 +12,13 @@
     bool puedeEditarProducto = ViewBag.PuedeEditarProducto != null && (bool)ViewBag.PuedeEditarProducto;
     bool puedeModificarPreciosProducto = ViewBag.PuedeModificarPreciosProducto != null && (bool)ViewBag.PuedeModificarPreciosProducto;
     bool puedeEliminarProducto = ViewBag.PuedeEliminarProducto != null && (bool)ViewBag.PuedeEliminarProducto;
+    var filtroTipoActual = (Request["tipo"] ?? "").ToString();
+    int filtroMarcaActual = 0;
+    int.TryParse((Request["marcaId"] ?? "0").ToString(), out filtroMarcaActual);
+    int filtroProveedorActual = 0;
+    int.TryParse((Request["proveedorId"] ?? "0").ToString(), out filtroProveedorActual);
+    var filtroCodigoDesdeActual = (Request["codigoDesde"] ?? "").ToString();
+    var filtroCodigoHastaActual = (Request["codigoHasta"] ?? "").ToString();
 }
 
 <div class="container-fluid productos-wrap">
@@ -140,7 +147,7 @@
                         {
                             foreach (var t in (IEnumerable<SelectListItem>)ViewBag.Tipos)
                             {
-                                <option value="@t.Value">@t.Text</option>
+                                <option value="@t.Value" @(string.Equals(t.Value, filtroTipoActual, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@t.Text</option>
                             }
                         }
                     </select>
@@ -154,7 +161,7 @@
                         {
                             foreach (var m in (IEnumerable<SelectListItem>)ViewBag.Marcas)
                             {
-                                <option value="@m.Value">@m.Text</option>
+                                <option value="@m.Value" @(m.Value == filtroMarcaActual.ToString() ? "selected" : "")>@m.Text</option>
                             }
                         }
                     </select>
@@ -168,25 +175,32 @@
                         {
                             foreach (var p in (IEnumerable<SelectListItem>)ViewBag.Proveedores)
                             {
-                                <option value="@p.Value">@p.Text</option>
+                                <option value="@p.Value" @(p.Value == filtroProveedorActual.ToString() ? "selected" : "")>@p.Text</option>
                             }
                         }
                     </select>
                 </div>
 
                 <div class="col-lg-3 col-md-6 mb-2">
-                    <label class="mb-1 font-weight-bold">Código desde / hasta</label>
-                    <div class="d-flex gap-2">
-                        <input class="form-control" id="fCodigoDesde" placeholder="Desde" inputmode="numeric">
-                        <input class="form-control" id="fCodigoHasta" placeholder="Hasta" inputmode="numeric">
+                    <label class="mb-1 font-weight-bold">Código</label>
+                    <div class="d-flex align-items-center">
+                        <input class="form-control" id="fCodigoDesde" placeholder="Desde" inputmode="numeric" value="@filtroCodigoDesdeActual">
+                        <span class="px-2 text-muted font-weight-bold">/</span>
+                        <input class="form-control" id="fCodigoHasta" placeholder="Hasta" inputmode="numeric" value="@filtroCodigoHastaActual">
                     </div>
                 </div>
 
-                <div class="col-12 mt-2 d-flex flex-wrap gap-2">
+                <div class="col-12 mt-2">
+                    <div id="mensajeFiltrosPendientes" class="alert alert-warning py-2 px-3 mb-2 d-none">
+                        Se modificaron filtros. Presione Aplicar para actualizar los datos.
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex flex-wrap align-items-center">
                     <button type="button" class="btn btn-sm btn-primary" onclick="aplicarFiltrosAvanzados()">
                         <i class="fas fa-filter mr-1"></i> Aplicar
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosAvanzados()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="limpiarFiltrosAvanzados()">
                         <i class="fas fa-undo mr-1"></i> Limpiar
                     </button>
 
@@ -287,7 +301,7 @@
                             data-codigo="@item.Codigo"
                             data-nombre="@item.CorteDesc"
                             data-tipo="@item.Tipo"
-                            data-marca="@item.Marca">
+                            data-marca-id="@(item.Marca != null ? item.Marca.IdPersona.ToString() : "")">
                             @if (modoEtiquetas)
                             {
                                 <td class="text-center">
@@ -675,6 +689,20 @@
     // ============================
     const switchFiltros = document.getElementById("switchFiltrosAvanzados");
     const panelFiltros = document.getElementById("panelFiltrosAvanzados");
+    const mensajeFiltrosPendientes = document.getElementById("mensajeFiltrosPendientes");
+    const filtroTipo = document.getElementById("fTipo");
+    const filtroMarca = document.getElementById("fMarca");
+    const filtroProveedor = document.getElementById("fProveedor");
+    const filtroCodigoDesde = document.getElementById("fCodigoDesde");
+    const filtroCodigoHasta = document.getElementById("fCodigoHasta");
+    let filtrosPendientesServidor = false;
+
+    function setMensajeFiltrosPendientes(show) {
+        filtrosPendientesServidor = show;
+        if (mensajeFiltrosPendientes) {
+            mensajeFiltrosPendientes.classList.toggle("d-none", !show);
+        }
+    }
 
     function toggleFiltrosAvanzados(show) {
         panelFiltros.classList.toggle("d-none", !show);
@@ -692,13 +720,11 @@
         toggleFiltrosAvanzados(this.checked);
     });
 
-    function aplicarFiltrosAvanzados() {
-        const tipo = (document.getElementById("fTipo")?.value || "").toLowerCase();
-        const marca = (document.getElementById("fMarca")?.value || "").toLowerCase();
-        const proveedor = (document.getElementById("fProveedor")?.value || "").toLowerCase();
-
-        const cd = (document.getElementById("fCodigoDesde")?.value || "").trim();
-        const ch = (document.getElementById("fCodigoHasta")?.value || "").trim();
+    function aplicarFiltrosCliente() {
+        const tipo = (filtroTipo?.value || "").toLowerCase();
+        const marcaId = (filtroMarca?.value || "").trim();
+        const cd = (filtroCodigoDesde?.value || "").trim();
+        const ch = (filtroCodigoHasta?.value || "").trim();
 
         const codigoDesde = cd === "" ? null : parseInt(cd, 10);
         const codigoHasta = ch === "" ? null : parseInt(ch, 10);
@@ -707,8 +733,7 @@
 
         getFilasProductos().forEach(fila => {
             const fTipo = (fila.dataset.tipo || "").toLowerCase();
-            const fMarca = (fila.dataset.marca || "").toLowerCase();
-            const fProv = (fila.dataset.proveedor || "").toLowerCase();
+            const fMarcaId = (fila.dataset.marcaId || "").trim();
 
             const codStr = (fila.dataset.codigo || "").toString().trim();
             const codNum = parseInt(codStr, 10);
@@ -716,8 +741,7 @@
             let ok = true;
 
             if (tipo && fTipo !== tipo) ok = false;
-            if (marca && fMarca !== marca) ok = false;
-            if (proveedor && fProv !== proveedor) ok = false;
+            if (marcaId && fMarcaId !== marcaId) ok = false;
 
             if (codigoDesde !== null && !isNaN(codNum) && codNum < codigoDesde) ok = false;
             if (codigoHasta !== null && !isNaN(codNum) && codNum > codigoHasta) ok = false;
@@ -736,11 +760,65 @@
         if (switchVista.checked) setVistaCompleta(true);
     }
 
+    function recargarConFiltros() {
+        const url = new URL(window.location.href);
+        const params = url.searchParams;
+        const modo = params.get("modo");
+        const sucursalId = params.get("SucursalId");
+
+        const nuevaUrl = new URL('@Url.Action("Index", "Productos")', window.location.origin);
+
+        if (modo) nuevaUrl.searchParams.set("modo", modo);
+        if (sucursalId) nuevaUrl.searchParams.set("SucursalId", sucursalId);
+
+        const tipo = (filtroTipo?.value || "").trim();
+        const marcaId = (filtroMarca?.value || "").trim();
+        const proveedorId = (filtroProveedor?.value || "").trim();
+        const codigoDesde = (filtroCodigoDesde?.value || "").trim();
+        const codigoHasta = (filtroCodigoHasta?.value || "").trim();
+
+        if (tipo) nuevaUrl.searchParams.set("tipo", tipo);
+        if (marcaId) nuevaUrl.searchParams.set("marcaId", marcaId);
+        if (proveedorId) nuevaUrl.searchParams.set("proveedorId", proveedorId);
+        if (codigoDesde) nuevaUrl.searchParams.set("codigoDesde", codigoDesde);
+        if (codigoHasta) nuevaUrl.searchParams.set("codigoHasta", codigoHasta);
+
+        window.location.href = nuevaUrl.toString();
+    }
+
+    function aplicarFiltrosAvanzados() {
+        if (filtrosPendientesServidor) {
+            recargarConFiltros();
+            return;
+        }
+
+        aplicarFiltrosCliente();
+    }
+
     function limpiarFiltrosAvanzados() {
         ["fTipo","fMarca","fProveedor","fCodigoDesde","fCodigoHasta"].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = "";
         });
+
+        const url = new URL(window.location.href);
+        const tieneFiltrosServidorAplicados = !!(url.searchParams.get("proveedorId")
+            || url.searchParams.get("tipo")
+            || url.searchParams.get("marcaId")
+            || url.searchParams.get("codigoDesde")
+            || url.searchParams.get("codigoHasta"));
+
+        setMensajeFiltrosPendientes(false);
+
+        if (tieneFiltrosServidorAplicados) {
+            const nuevaUrl = new URL('@Url.Action("Index", "Productos")', window.location.origin);
+            const modo = url.searchParams.get("modo");
+            const sucursalId = url.searchParams.get("SucursalId");
+            if (modo) nuevaUrl.searchParams.set("modo", modo);
+            if (sucursalId) nuevaUrl.searchParams.set("SucursalId", sucursalId);
+            window.location.href = nuevaUrl.toString();
+            return;
+        }
 
         // mostrar todos
         getFilasProductos().forEach(fila => {
@@ -754,6 +832,24 @@
 
         if (switchVista.checked) setVistaCompleta(true);
     }
+
+    [filtroTipo, filtroMarca].forEach(el => {
+        el?.addEventListener("change", function () {
+            aplicarFiltrosCliente();
+        });
+    });
+
+    [filtroCodigoDesde, filtroCodigoHasta].forEach(el => {
+        el?.addEventListener("input", function () {
+            aplicarFiltrosCliente();
+        });
+    });
+
+    filtroProveedor?.addEventListener("change", function () {
+        setMensajeFiltrosPendientes(true);
+    });
+
+    aplicarFiltrosCliente();
 
     // ============================
     // STOCK SUCURSALES EN COLUMNAS (toggle + AJAX)

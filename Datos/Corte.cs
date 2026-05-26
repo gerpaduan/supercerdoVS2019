@@ -295,6 +295,23 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerCortesPorProveedor(int idProveedor)
+        {
+            const string sql = @"
+                SELECT DISTINCT cpc.idCorte
+                FROM dbo.Compras c
+                INNER JOIN dbo.CortePorCompra cpc ON cpc.idCompra = c.idCompra
+                WHERE c.idProveedor = @idProveedor
+                  AND ISNULL(c.estado, '') = '';";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.AddWithValue("@idProveedor", idProveedor)
+            );
+        }
+
         // =========================
         // FORMULAS
         // =========================

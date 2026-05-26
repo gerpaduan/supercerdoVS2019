@@ -281,6 +281,24 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerProveedoresConCompras()
+        {
+            const string sql = @"
+                SELECT DISTINCT
+                    p.idPersona,
+                    p.razonSocial
+                FROM dbo.Compras c
+                INNER JOIN dbo.Personas p ON p.idPersona = c.idProveedor
+                WHERE ISNULL(c.estado, '') = ''
+                ORDER BY p.razonSocial;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text
+            );
+        }
+
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
         {
             const string sql = @"

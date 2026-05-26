@@ -33,14 +33,60 @@ namespace Web.Controllers
             oPersonaN = new Negocio.Persona(empresa, param);
         }
 
-        public ActionResult Index(int SucursalId = 0)
+        public ActionResult Index(
+            int SucursalId = 0,
+            string tipo = "",
+            int marcaId = 0,
+            int proveedorId = 0,
+            long? codigoDesde = null,
+            long? codigoHasta = null)
         {
             var productos = oCorteN.findAllCortes(true, SucursalId);
+
+            if (!string.IsNullOrWhiteSpace(tipo))
+            {
+                string tipoFiltro = tipo.Trim();
+                productos = productos
+                    .Where(x => string.Equals(x.Tipo ?? "", tipoFiltro, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (marcaId > 0)
+            {
+                productos = productos
+                    .Where(x => x.Marca != null && x.Marca.IdPersona == marcaId)
+                    .ToList();
+            }
+
+            if (codigoDesde.HasValue)
+            {
+                productos = productos
+                    .Where(x => x.Codigo >= codigoDesde.Value)
+                    .ToList();
+            }
+
+            if (codigoHasta.HasValue)
+            {
+                productos = productos
+                    .Where(x => x.Codigo <= codigoHasta.Value)
+                    .ToList();
+            }
+
+            if (proveedorId > 0)
+            {
+                var idsCortesProveedor = ObtenerIdsCortesPorProveedor(proveedorId);
+                productos = productos
+                    .Where(x => idsCortesProveedor.Contains(x.IdCorte))
+                    .ToList();
+            }
 
             var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
 
             ViewBag.Sucursales = sucursales;
             ViewBag.SucursalId = SucursalId;
+            ViewBag.Tipos = ObtenerListaTipos();
+            ViewBag.Marcas = ObtenerListaMarcas();
+            ViewBag.Proveedores = ObtenerListaProveedores();
             ViewBag.PuedeEditarProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null);
             ViewBag.PuedeModificarPreciosProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.ModificarPrecios, null);
             ViewBag.PuedeEliminarProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null);
@@ -685,11 +731,19 @@ namespace Web.Controllers
 
         private IEnumerable<SelectListItem> ObtenerListaMarcas()
         {
-            return new List<SelectListItem>
-            {
-                new SelectListItem { Value = "1", Text = "Marca A" },
-                new SelectListItem { Value = "2", Text = "Marca B" }
-            };
+            DataTable dt = oPersonaN.buscarPersona("", true);
+            if (dt == null || dt.Rows.Count == 0)
+                return new List<SelectListItem>();
+
+            return dt.AsEnumerable()
+                .Where(row => row["idPersona"] != DBNull.Value)
+                .Select(row => new SelectListItem
+                {
+                    Value = row["idPersona"].ToString(),
+                    Text = row["Marca"].ToString()
+                })
+                .OrderBy(x => x.Text)
+                .ToList();
         }
 
         private IEnumerable<SelectListItem> ObtenerListaTipos()
@@ -698,13 +752,41 @@ namespace Web.Controllers
             var lista = dt.AsEnumerable()
                .Select(row => new SelectListItem
                {
-                   Value = row["Tipo"].ToString(),
-                   Text = row["Tipo"].ToString()
+                   Value = row["tipo"].ToString(),
+                   Text = row["tipo"].ToString()
                }).ToList();
 
-            lista.Insert(0, new SelectListItem { Value = "", Text = "-- Seleccione --" });
-
             return lista;
+        }
+
+        private IEnumerable<SelectListItem> ObtenerListaProveedores()
+        {
+            DataTable dt = oPersonaN.obtenerProveedoresConCompras();
+            if (dt == null || dt.Rows.Count == 0)
+                return new List<SelectListItem>();
+
+            return dt.AsEnumerable()
+                .Where(row => row["idPersona"] != DBNull.Value)
+                .Select(row => new SelectListItem
+                {
+                    Value = row["idPersona"].ToString(),
+                    Text = row["razonSocial"].ToString()
+                })
+                .OrderBy(x => x.Text)
+                .ToList();
+        }
+
+        private HashSet<int> ObtenerIdsCortesPorProveedor(int proveedorId)
+        {
+            if (proveedorId <= 0)
+                return new HashSet<int>();
+
+            DataTable dtCortes = oCorteN.obtenerCortesPorProveedor(proveedorId);
+            return dtCortes
+                .AsEnumerable()
+                .Where(row => row["idCorte"] != DBNull.Value)
+                .Select(row => Convert.ToInt32(row["idCorte"]))
+                .ToHashSet();
         }
 
         public ActionResult Tipos(string buscar = "")

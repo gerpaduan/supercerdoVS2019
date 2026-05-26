@@ -90,6 +90,10 @@ namespace Negocio
             return oPersonaD.buscarProveedor(buscarTexto);
 
         }
+        public DataTable obtenerProveedoresConCompras()
+        {
+            return oPersonaD.obtenerProveedoresConCompras();
+        }
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
         {
             
