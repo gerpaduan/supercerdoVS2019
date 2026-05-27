@@ -300,6 +300,7 @@
                             data-id="@item.idCorte"
                             data-codigo="@item.Codigo"
                             data-nombre="@item.CorteDesc"
+                            data-precio="@item.PrecioKg.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                             data-tipo="@item.Tipo"
                             data-marca-id="@(item.Marca != null ? item.Marca.IdPersona.ToString() : "")">
                             @if (modoEtiquetas)
@@ -355,7 +356,7 @@
                             <td class="text-nowrap">
                                 <button type="button" class="btn btn-sm btn-warning mr-1"
                                         title="Modificar precio"
-                                        onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg')"
+                                        onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg', this)"
                                         @(puedeModificarPreciosProducto ? "" : "disabled")>
                                     <i class="fas fa-dollar-sign"></i>
                                 </button>
@@ -509,7 +510,7 @@
         @Html.AntiForgeryToken()
 
         <div class="modal fade" id="modalPrecio" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-dialog" role="document">
                 <div class="modal-content">
 
                     <div class="modal-header">
@@ -522,21 +523,52 @@
                     <div class="modal-body">
                         <input type="hidden" id="IdCorte" name="IdCorte" />
 
-                        <div class="form-group">
+                        <div class="form-group js-precio-individual-block">
                             <label>Producto</label>
                             <input type="text" id="CorteDesc" class="form-control" readonly>
                         </div>
 
-                        <div class="form-group mt-2">
+                        <div class="form-group js-precio-individual-block">
+                            <label>Precio actual</label>
+                            <input type="text" id="PrecioActual" class="form-control" readonly>
+                        </div>
+
+                        <div class="form-group mt-2 js-precio-individual-block">
                             <label>Nuevo precio</label>
                             <input type="text" id="PrecioKg" name="PrecioKg" class="form-control" autocomplete="off">
+                            <small id="precioVariacion" class="form-text text-muted">Sin variación</small>
                             <small id="errorPrecio" class="text-danger d-none">El precio ingresado es inválido.</small>
+                        </div>
+
+                        <div class="border rounded p-3 mt-3">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchModificarLote">
+                                <label class="custom-control-label" for="switchModificarLote">Modificar en lote</label>
+                            </div>
+
+                            <div id="bloqueModificarLote" class="d-none mt-3">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="switchAplicarPorcentajeTodos">
+                                    <label class="custom-control-label" for="switchAplicarPorcentajeTodos">Aplicar porcentaje a todos</label>
+                                </div>
+
+                                <div id="bloqueAplicarPorcentajeTodos" class="d-none mt-3">
+                                    <div class="form-group mb-2">
+                                        <label>Porcentaje</label>
+                                        <input type="text" id="PorcentajeLote" class="form-control" autocomplete="off" inputmode="decimal" placeholder="+10 o -5">
+                                    </div>
+                                    <small class="form-text text-muted mb-0">
+                                        Se aplicará el porcentaje a todos los productos visibles actualmente.
+                                    </small>
+                                    <small id="errorPorcentajeLote" class="text-danger d-none">Ingrese un porcentaje válido distinto de 0.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-success" onclick="guardarPrecio()">
-                            <i class="fas fa-save mr-1"></i> Guardar
+                        <button type="button" class="btn btn-success" id="btnGuardarPrecio" onclick="guardarPrecio()">
+                            <i class="fas fa-save mr-1"></i> <span id="btnGuardarPrecioTexto">Guardar</span>
                         </button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             Cancelar
@@ -547,6 +579,59 @@
             </div>
         </div>
     </form>
+
+    <div class="modal fade" id="modalVerificarPrecios" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-verificar-precios" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Verificar cambios de precios</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                        <div>
+                            <p class="text-muted mb-1">Se listan los productos visibles actualmente con el nuevo precio propuesto.</p>
+                            <small id="infoPorcentajePreview" class="text-muted d-none"></small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnQuitarPreciosCero">
+                            Quitar precios 0
+                        </button>
+                    </div>
+                    <small id="errorPreviewMasivo" class="text-danger d-none mb-2 d-block">
+                        Revise las filas marcadas antes de guardar.
+                    </small>
+
+                    <div class="table-responsive tabla-verificar-precios">
+                        <table class="table table-sm table-bordered mb-0" id="tablaVerificarPrecios">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-right" style="width:150px;">Precio anterior</th>
+                                    <th class="text-right" style="width:170px;">Precio nuevo</th>
+                                    <th style="width:90px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="js-empty">
+                                    <td colspan="4" class="text-center text-muted py-4">Sin cambios para verificar.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="btnGuardarCambiosMasivos">
+                        <i class="fas fa-save mr-1"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- =========================
          MODAL VER STOCK (por sucursales)
@@ -973,110 +1058,606 @@
     }
 
     // =========================
-    // MODAL PRECIO (igual que venías)
+    // MODAL PRECIO
     // =========================
-    function abrirPopupPrecio(id, nombreTabla, precioTabla) {
+    const precioModalState = {
+        currentRow: null,
+        currentId: 0,
+        currentPrecioActual: 0,
+        batchPreviewItems: [],
+        batchPreviewPercent: null,
+        isOpeningVerification: false
+    };
 
-        $("#errorPrecio").addClass("d-none");
+    function normalizarTextoDecimal(valor, permitirSigno) {
+        let v = (valor || "").toString();
+        v = v.replace(/\./g, ",");
+        v = v.replace(permitirSigno ? /[^\d,+-]/g : /[^\d,]/g, "");
 
-        $("#IdCorte").val(id);
-        $("#CorteDesc").val(nombreTabla);
-        $("#PrecioKg").val(precioTabla);
+        if (permitirSigno) {
+            const signo = v.startsWith("-") ? "-" : (v.startsWith("+") ? "+" : "");
+            v = signo + v.substring(signo ? 1 : 0).replace(/[+-]/g, "");
+        }
 
+        const partes = v.split(",");
+        if (partes.length > 2) v = partes[0] + "," + partes.slice(1).join("");
+
+        return v;
+    }
+
+    function parseDecimalEs(valor) {
+        const texto = (valor || "").toString().trim();
+        if (!texto) return NaN;
+
+        const normalizado = texto.replace(/\./g, "").replace(",", ".");
+        return parseFloat(normalizado);
+    }
+
+    function round2(valor) {
+        return Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
+    }
+
+    function formatNumberEs(valor, decimales) {
+        const numero = Number(valor);
+        if (!isFinite(numero)) return "";
+        return numero.toLocaleString("es-AR", {
+            minimumFractionDigits: decimales,
+            maximumFractionDigits: decimales
+        });
+    }
+
+    function formatCurrencyEs(valor) {
+        return "$ " + formatNumberEs(valor, 2);
+    }
+
+    function formatPercentEs(valor) {
+        const numero = Number(valor);
+        if (!isFinite(numero)) return "";
+        return formatNumberEs(numero, 2) + "%";
+    }
+
+    function getVisiblePriceRows() {
+        return getFilasProductos().filter(fila => {
+            if (fila.style.display === "none") return false;
+            const boton = fila.querySelector('button[title="Modificar precio"]');
+            return !!(boton && !boton.disabled);
+        });
+    }
+
+    function getProductRowById(id) {
+        return getFilasProductos().find(fila => Number(fila.dataset.id) === Number(id)) || null;
+    }
+
+    function getPrecioActualFila(fila) {
+        if (!fila) return NaN;
+
+        const datasetPrecio = parseFloat(fila.dataset.precio || "");
+        if (isFinite(datasetPrecio)) return datasetPrecio;
+
+        const tdPrecio = fila.querySelector('[id^="precio_"]');
+        if (!tdPrecio) return NaN;
+        return parseDecimalEs(tdPrecio.textContent || "");
+    }
+
+    function actualizarPrecioFila(id, precio, precioFormateado) {
+        const fila = getProductRowById(id);
+        if (!fila) return;
+
+        fila.dataset.precio = String(round2(precio)).replace(",", ".");
+
+        const tdPrecio = fila.querySelector('[id^="precio_"]');
+        if (tdPrecio) {
+            tdPrecio.textContent = precioFormateado || formatCurrencyEs(precio);
+        }
+    }
+
+    function actualizarVariacionPrecio() {
+        const $texto = $("#precioVariacion");
+        const precioActual = Number(precioModalState.currentPrecioActual);
+        const precioNuevo = parseDecimalEs($("#PrecioKg").val());
+
+        if (!isFinite(precioNuevo) || precioNuevo <= 0) {
+            $texto.text("Sin variación");
+            return;
+        }
+
+        if (!isFinite(precioActual) || precioActual <= 0) {
+            $texto.text("Sin variación");
+            return;
+        }
+
+        const variacion = ((precioNuevo - precioActual) / precioActual) * 100;
+        if (Math.abs(variacion) < 0.0001) {
+            $texto.text("Sin variación");
+        } else if (variacion > 0) {
+            $texto.text("Recargo: " + formatPercentEs(variacion));
+        } else {
+            $texto.text("Descuento: " + formatPercentEs(Math.abs(variacion)));
+        }
+    }
+
+    function syncPrecioModalVisualState() {
+        const modificarLote = $("#switchModificarLote").is(":checked");
+        const aplicarPorcentaje = modificarLote && $("#switchAplicarPorcentajeTodos").is(":checked");
+
+        $("#bloqueModificarLote").toggleClass("d-none", !modificarLote);
+        $("#bloqueAplicarPorcentajeTodos").toggleClass("d-none", !aplicarPorcentaje);
+        $(".js-precio-individual-block").toggleClass("d-none", aplicarPorcentaje);
+
+        $("#btnGuardarPrecioTexto").text(aplicarPorcentaje ? "Verificar cambios" : "Guardar");
+        $("#btnGuardarPrecio i")
+            .toggleClass("fa-save", !aplicarPorcentaje)
+            .toggleClass("fa-clipboard-check", aplicarPorcentaje);
+    }
+
+    function limpiarErroresPrecioModal() {
+        $("#errorPrecio, #errorPorcentajeLote").addClass("d-none");
+    }
+
+    function aplicarDatosPrecioModal(resp, fallbackNombre, fallbackPrecio) {
+        const descripcion = (resp && resp.descripcion) ? resp.descripcion : fallbackNombre;
+        const precioActual = resp && isFinite(Number(resp.precio)) ? Number(resp.precio) : Number(fallbackPrecio);
+        const precioNormalizado = isFinite(precioActual) ? round2(precioActual) : 0;
+
+        precioModalState.currentPrecioActual = precioNormalizado;
+
+        $("#CorteDesc").val(descripcion || "");
+        $("#PrecioActual").val(formatCurrencyEs(precioNormalizado));
+        $("#PrecioKg").val(formatNumberEs(precioNormalizado, 2));
+        actualizarVariacionPrecio();
+    }
+
+    function focusNuevoPrecio() {
+        const inp = document.getElementById("PrecioKg");
+        if (!inp || $("#PrecioKg").closest(".js-precio-individual-block").hasClass("d-none")) return;
+        inp.focus();
+        inp.select();
+    }
+
+    function focusPorcentajeLote() {
+        const inp = document.getElementById("PorcentajeLote");
+        if (!inp || $("#bloqueAplicarPorcentajeTodos").hasClass("d-none")) return;
+        inp.focus();
+        inp.select();
+    }
+
+    function abrirModalPrecioParaFila(fila, opciones) {
+        const opts = opciones || {};
+        if (!fila) return;
+
+        precioModalState.currentRow = fila;
+        precioModalState.currentId = Number(fila.dataset.id || 0);
+
+        limpiarErroresPrecioModal();
+
+        if (!opts.preserveBatchState) {
+            $("#switchModificarLote").prop("checked", false);
+            $("#switchAplicarPorcentajeTodos").prop("checked", false);
+            $("#PorcentajeLote").val("");
+        }
+
+        syncPrecioModalVisualState();
+        $("#IdCorte").val(precioModalState.currentId);
         $("#modalPrecio").modal("show");
+
+        const fallbackNombre = fila.dataset.nombre || "";
+        const fallbackPrecio = getPrecioActualFila(fila) || 0;
+        aplicarDatosPrecioModal(null, fallbackNombre, fallbackPrecio);
 
         $.ajax({
             url: '@Url.Action("findCorteById", "Productos")',
             type: 'GET',
-            data: { id: id },
+            data: { id: precioModalState.currentId },
             success: function (resp) {
-                if (resp) {
-                    $("#CorteDesc").val(resp.descripcion ?? nombreTabla);
-                    $("#PrecioKg").val(resp.precio ?? precioTabla);
-                }
-                setTimeout(() => {
-                    const inp = document.getElementById("PrecioKg");
-                    inp.focus();
-                    inp.select();
+                aplicarDatosPrecioModal(resp, fallbackNombre, fallbackPrecio);
+                setTimeout(function () {
+                    if ($("#switchModificarLote").is(":checked") && $("#switchAplicarPorcentajeTodos").is(":checked")) {
+                        focusPorcentajeLote();
+                    } else {
+                        focusNuevoPrecio();
+                    }
                 }, 80);
             },
             error: function () {
-                setTimeout(() => {
-                    const inp = document.getElementById("PrecioKg");
-                    inp.focus();
-                    inp.select();
+                setTimeout(function () {
+                    focusNuevoPrecio();
                 }, 80);
             }
         });
+    }
+
+    function abrirPopupPrecio(id, nombreTabla, precioTabla, button) {
+        const fila = button ? button.closest("tr") : getProductRowById(id);
+        if (!fila) return;
+        abrirModalPrecioParaFila(fila, { preserveBatchState: false });
+    }
+
+    function getPrecioFormPayload(id, precioRaw) {
+        return {
+            __RequestVerificationToken: $("#formPrecio input[name='__RequestVerificationToken']").val(),
+            IdCorte: id,
+            PrecioKg: precioRaw
+        };
+    }
+
+    function postEditarPrecio(id, precioRaw) {
+        return $.ajax({
+            url: '@Url.Action("EditPrecioCorte", "Productos")',
+            type: 'POST',
+            data: getPrecioFormPayload(id, precioRaw)
+        });
+    }
+
+    function getPrecioValidoDesdeInput() {
+        let precioRaw = ($("#PrecioKg").val() || "").trim();
+        if (precioRaw === "") return null;
+
+        precioRaw = normalizarTextoDecimal(precioRaw, false);
+        const numero = parseDecimalEs(precioRaw);
+        if (!isFinite(numero) || numero <= 0) return null;
+
+        const normalizado = formatNumberEs(round2(numero), 2);
+        $("#PrecioKg").val(normalizado);
+        return {
+            raw: normalizado,
+            numero: round2(numero)
+        };
+    }
+
+    function getPorcentajeLoteValido() {
+        let valor = ($("#PorcentajeLote").val() || "").trim();
+        if (!valor) return null;
+
+        valor = normalizarTextoDecimal(valor, true);
+        $("#PorcentajeLote").val(valor);
+
+        const numero = parseDecimalEs(valor);
+        if (!isFinite(numero) || numero === 0) return null;
+
+        return numero;
+    }
+
+    function avanzarSiguienteProductoLote() {
+        const filas = getVisiblePriceRows();
+        const idActual = Number(precioModalState.currentId);
+        const indexActual = filas.findIndex(fila => Number(fila.dataset.id) === idActual);
+        const siguiente = indexActual >= 0 ? filas[indexActual + 1] : null;
+
+        if (!siguiente) {
+            $("#modalPrecio").modal("hide");
+            Swal.fire("Sin más productos", "No hay más productos para modificar con los filtros actuales", "info");
+            return;
+        }
+
+        abrirModalPrecioParaFila(siguiente, { preserveBatchState: true });
+    }
+
+    function construirItemsPreviewPorcentaje(porcentaje) {
+        return getVisiblePriceRows().map(fila => {
+            const precioAnterior = getPrecioActualFila(fila);
+            const nuevoPrecio = isFinite(precioAnterior)
+                ? round2(precioAnterior * (1 + (porcentaje / 100)))
+                : 0;
+
+            return {
+                id: Number(fila.dataset.id),
+                nombre: fila.dataset.nombre || "",
+                precioAnterior: isFinite(precioAnterior) ? round2(precioAnterior) : 0,
+                precioNuevo: nuevoPrecio
+            };
+        });
+    }
+
+    function renderPreviewMasivo() {
+        const $tbody = $("#tablaVerificarPrecios tbody");
+        $tbody.empty();
+        $("#errorPreviewMasivo").addClass("d-none");
+
+        if (precioModalState.batchPreviewPercent === null || !isFinite(precioModalState.batchPreviewPercent)) {
+            $("#infoPorcentajePreview").addClass("d-none").text("");
+        } else {
+            const porcentajeTexto = (precioModalState.batchPreviewPercent > 0 ? "+" : "") + formatPercentEs(precioModalState.batchPreviewPercent);
+            $("#infoPorcentajePreview").removeClass("d-none").text("Porcentaje aplicado: " + porcentajeTexto);
+        }
+
+        if (!precioModalState.batchPreviewItems.length) {
+            $tbody.append('<tr class="js-empty"><td colspan="4" class="text-center text-muted py-4">Sin cambios para verificar.</td></tr>');
+            return;
+        }
+
+        precioModalState.batchPreviewItems.forEach(function (item) {
+            const fila = [
+                '<tr data-id="', item.id, '">',
+                '<td>', $('<div>').text(item.nombre).html(), '</td>',
+                '<td class="text-right js-precio-anterior">', formatCurrencyEs(item.precioAnterior), '</td>',
+                '<td><input type="text" class="form-control form-control-sm js-precio-nuevo text-right" value="', formatNumberEs(item.precioNuevo, 2), '" autocomplete="off" inputmode="decimal"></td>',
+                '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger js-remove-preview" title="Quitar"><i class="fas fa-trash"></i></button></td>',
+                '</tr>'
+            ].join('');
+            $tbody.append(fila);
+        });
+    }
+
+    function abrirModalVerificacionPorcentaje() {
+        const porcentaje = getPorcentajeLoteValido();
+        if (porcentaje === null) {
+            $("#errorPorcentajeLote").removeClass("d-none");
+            return;
+        }
+
+        limpiarErroresPrecioModal();
+        precioModalState.batchPreviewPercent = porcentaje;
+        precioModalState.batchPreviewItems = construirItemsPreviewPorcentaje(porcentaje);
+        if (!precioModalState.batchPreviewItems.length) {
+            Swal.fire("Atención", "No hay productos visibles para modificar con los filtros actuales.", "info");
+            return;
+        }
+        renderPreviewMasivo();
+        precioModalState.isOpeningVerification = true;
+
+        $("#modalPrecio").one("hidden.bs.modal.batchVerify", function () {
+            $("#modalVerificarPrecios").modal("show");
+            precioModalState.isOpeningVerification = false;
+        });
+
+        $("#modalPrecio").modal("hide");
+    }
+
+    function guardarPrecio() {
+        const modificarLote = $("#switchModificarLote").is(":checked");
+        const aplicarPorcentaje = modificarLote && $("#switchAplicarPorcentajeTodos").is(":checked");
+
+        if (aplicarPorcentaje) {
+            abrirModalVerificacionPorcentaje();
+            return;
+        }
+
+        const precioValido = getPrecioValidoDesdeInput();
+        if (!precioValido) {
+            $("#errorPrecio").removeClass("d-none");
+            return;
+        }
+
+        limpiarErroresPrecioModal();
+
+        postEditarPrecio(precioModalState.currentId, precioValido.raw)
+            .done(function (resp) {
+                if (!manejarPermiso(resp)) return;
+                actualizarPrecioFila(resp.id, resp.precio, resp.precioFormateado);
+
+                if (modificarLote) {
+                    avanzarSiguienteProductoLote();
+                } else {
+                    $("#modalPrecio").modal("hide");
+                }
+            })
+            .fail(function () {
+                Swal.fire("Error", "Error al actualizar el precio.", "error");
+            });
+    }
+
+    function obtenerPreviewDesdeTabla() {
+        return $("#tablaVerificarPrecios tbody tr").not(".js-empty").map(function () {
+            const $tr = $(this);
+            const id = Number($tr.data("id"));
+            const nombre = ($tr.children().eq(0).text() || "").trim();
+            const precioAnterior = parseDecimalEs($tr.find(".js-precio-anterior").text());
+            const precioNuevoRaw = ($tr.find(".js-precio-nuevo").val() || "").trim();
+            const precioNuevo = parseDecimalEs(precioNuevoRaw);
+
+            return {
+                id: id,
+                nombre: nombre,
+                precioAnterior: precioAnterior,
+                precioNuevoRaw: normalizarTextoDecimal(precioNuevoRaw, false),
+                precioNuevo: precioNuevo
+            };
+        }).get();
+    }
+
+    function clearPreviewValidation() {
+        $("#errorPreviewMasivo").addClass("d-none");
+        $("#tablaVerificarPrecios tbody tr").removeClass("table-warning");
+        $("#tablaVerificarPrecios .js-precio-nuevo").removeClass("is-invalid");
+    }
+
+    function markPreviewInvalidRows(items) {
+        clearPreviewValidation();
+
+        const invalidos = items.filter(item => !isFinite(item.precioNuevo) || item.precioNuevo <= 0);
+        if (!invalidos.length) return [];
+
+        invalidos.forEach(function (item) {
+            const $tr = $('#tablaVerificarPrecios tbody tr[data-id="' + item.id + '"]');
+            $tr.addClass("table-warning");
+            $tr.find(".js-precio-nuevo").addClass("is-invalid");
+        });
+
+        $("#errorPreviewMasivo").removeClass("d-none");
+        return invalidos;
+    }
+
+    function quitarPreviewInvalidos() {
+        const items = obtenerPreviewDesdeTabla();
+        const invalidos = items.filter(item => !isFinite(item.precioNuevo) || item.precioNuevo <= 0);
+
+        if (!invalidos.length) {
+            Swal.fire("Sin cambios", "No hay cortes con precio 0 o inválido para quitar.", "info");
+            return;
+        }
+
+        invalidos.forEach(function (item) {
+            $('#tablaVerificarPrecios tbody tr[data-id="' + item.id + '"]').remove();
+        });
+
+        clearPreviewValidation();
+
+        if (!$("#tablaVerificarPrecios tbody tr").not(".js-empty").length) {
+            precioModalState.batchPreviewItems = [];
+            renderPreviewMasivo();
+            return;
+        }
+
+        const primerInput = $("#tablaVerificarPrecios tbody .js-precio-nuevo").get(0);
+        focusPrecioPreviewInput(primerInput);
+    }
+
+    function guardarCambiosMasivos() {
+        const items = obtenerPreviewDesdeTabla();
+
+        if (!items.length) {
+            Swal.fire("Atención", "No hay productos para guardar.", "info");
+            return;
+        }
+
+        const invalidos = markPreviewInvalidRows(items);
+        if (invalidos.length) {
+            const primerInvalido = $('#tablaVerificarPrecios tbody tr[data-id="' + invalidos[0].id + '"] .js-precio-nuevo').get(0);
+            focusPrecioPreviewInput(primerInvalido);
+            return;
+        }
+
+        const $btn = $("#btnGuardarCambiosMasivos");
+        $btn.prop("disabled", true);
+
+        let cadena = Promise.resolve();
+        items.forEach(function (item) {
+            cadena = cadena.then(function () {
+                return postEditarPrecio(item.id, formatNumberEs(round2(item.precioNuevo), 2)).then(function (resp) {
+                    if (!manejarPermiso(resp)) {
+                        throw new Error("permiso");
+                    }
+                    actualizarPrecioFila(resp.id, resp.precio, resp.precioFormateado);
+                });
+            });
+        });
+
+        cadena.then(function () {
+            $("#modalVerificarPrecios").modal("hide");
+            Swal.fire("Guardado", "Se actualizaron los precios seleccionados.", "success");
+        }, function (err) {
+            if (err && err.message === "permiso") return;
+            Swal.fire("Error", "Ocurrió un problema al guardar los cambios masivos.", "error");
+        }).then(function () {
+            $btn.prop("disabled", false);
+        });
+    }
+
+    function focusPrecioPreviewInput(input) {
+        if (!input) return;
+        input.focus();
+        input.select();
+    }
+
+    function focusNextPrecioPreviewInput(currentInput) {
+        const inputs = $("#tablaVerificarPrecios tbody .js-precio-nuevo").toArray();
+        if (!inputs.length) return;
+
+        const indexActual = inputs.indexOf(currentInput);
+        const nextInput = indexActual >= 0 && indexActual < inputs.length - 1
+            ? inputs[indexActual + 1]
+            : inputs[0];
+
+        focusPrecioPreviewInput(nextInput);
     }
 
     $('#modalPrecio').on('shown.bs.modal', function () {
-        const inp = document.getElementById("PrecioKg");
-        inp.focus();
-        inp.select();
+        if ($("#switchModificarLote").is(":checked") && $("#switchAplicarPorcentajeTodos").is(":checked")) {
+            focusPorcentajeLote();
+            return;
+        }
+        focusNuevoPrecio();
     });
 
     $('#modalPrecio').on('hidden.bs.modal', function () {
-        $("#PrecioKg").val("");
+        $("#PrecioKg, #PrecioActual, #CorteDesc, #PorcentajeLote").val("");
+        limpiarErroresPrecioModal();
+        if (!precioModalState.isOpeningVerification) {
+            $("#switchModificarLote").prop("checked", false);
+            $("#switchAplicarPorcentajeTodos").prop("checked", false);
+            syncPrecioModalVisualState();
+        }
     });
 
-    function guardarPrecio() {
-
-        let precioRaw = ($("#PrecioKg").val() || "").trim();
-
-        if (precioRaw === "") {
-            $("#errorPrecio").removeClass("d-none");
-            return;
-        }
-
-        precioRaw = precioRaw.replace(".", ",");
-        let numero = parseFloat(precioRaw.replace(",", "."));
-
-        if (isNaN(numero) || numero <= 0) {
-            $("#errorPrecio").removeClass("d-none");
-            return;
-        }
-
-        $("#PrecioKg").val(precioRaw);
-
-        $.ajax({
-            url: '@Url.Action("EditPrecioCorte", "Productos")',
-            type: 'POST',
-            data: $("#formPrecio").serialize(),
-            success: function (resp) {
-
-                if (!manejarPermiso(resp)) return;
-
-                $("#precio_" + resp.id).text(resp.precioFormateado);
-                $("#modalPrecio").modal("hide");
-            },
-            error: function () {
-                Swal.fire("Error", "Error al actualizar el precio.", "error");
-            }
-        });
-    }
+    $('#modalVerificarPrecios').on('hidden.bs.modal', function () {
+        precioModalState.batchPreviewItems = [];
+        precioModalState.batchPreviewPercent = null;
+        renderPreviewMasivo();
+    });
 
     document.addEventListener("DOMContentLoaded", function () {
-        const input = document.getElementById("PrecioKg");
-        if (!input) return;
+        const inputPrecio = document.getElementById("PrecioKg");
+        const inputPorcentaje = document.getElementById("PorcentajeLote");
+        if (!inputPrecio) return;
 
-        input.addEventListener("keydown", function (e) {
+        inputPrecio.addEventListener("keydown", function (e) {
             if (e.key === "Enter") {
                 e.preventDefault();
                 guardarPrecio();
             }
         });
 
-        input.addEventListener("input", function () {
-            let v = this.value || "";
-            v = v.replace(/\./g, ",");
-            v = v.replace(/[^\d,]/g, "");
-
-            let partes = v.split(",");
-            if (partes.length > 2) v = partes[0] + "," + partes[1];
-
-            this.value = v;
+        inputPrecio.addEventListener("input", function () {
+            this.value = normalizarTextoDecimal(this.value, false);
+            actualizarVariacionPrecio();
+            $("#errorPrecio").addClass("d-none");
         });
+
+        if (inputPorcentaje) {
+            inputPorcentaje.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    guardarPrecio();
+                }
+            });
+
+            inputPorcentaje.addEventListener("input", function () {
+                this.value = normalizarTextoDecimal(this.value, true);
+                $("#errorPorcentajeLote").addClass("d-none");
+            });
+        }
+
+        $("#switchModificarLote, #switchAplicarPorcentajeTodos").on("change", function () {
+            if (!$("#switchModificarLote").is(":checked")) {
+                $("#switchAplicarPorcentajeTodos").prop("checked", false);
+                $("#PorcentajeLote").val("");
+            }
+
+            syncPrecioModalVisualState();
+
+            if ($("#switchModificarLote").is(":checked") && $("#switchAplicarPorcentajeTodos").is(":checked")) {
+                setTimeout(focusPorcentajeLote, 40);
+            } else {
+                setTimeout(focusNuevoPrecio, 40);
+            }
+        });
+
+        $("#tablaVerificarPrecios").on("input", ".js-precio-nuevo", function () {
+            this.value = normalizarTextoDecimal(this.value, false);
+            $(this).removeClass("is-invalid");
+            $(this).closest("tr").removeClass("table-warning");
+            if (!$("#tablaVerificarPrecios .js-precio-nuevo.is-invalid").length) {
+                $("#errorPreviewMasivo").addClass("d-none");
+            }
+        });
+
+        $("#tablaVerificarPrecios").on("keydown", ".js-precio-nuevo", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                focusNextPrecioPreviewInput(this);
+            }
+        });
+
+        $("#tablaVerificarPrecios").on("click", ".js-remove-preview", function () {
+            $(this).closest("tr").remove();
+            if (!$("#tablaVerificarPrecios tbody tr").not(".js-empty").length) {
+                precioModalState.batchPreviewItems = [];
+                renderPreviewMasivo();
+            }
+        });
+
+        $("#btnGuardarCambiosMasivos").on("click", guardarCambiosMasivos);
+        $("#btnQuitarPreciosCero").on("click", quitarPreviewInvalidos);
     });
 
     // =========================
@@ -1295,5 +1876,46 @@
         text-decoration: underline;
         text-underline-offset: 2px;
         text-decoration-thickness: 1px;
+    }
+
+    #modalPrecio .modal-dialog {
+        max-width: 560px;
+    }
+
+    #modalPrecio .form-text,
+    #modalVerificarPrecios .form-text {
+        line-height: 1.25;
+    }
+
+    #modalVerificarPrecios .modal-dialog {
+        max-width: 760px;
+    }
+
+    .tabla-verificar-precios {
+        max-height: 56vh;
+        overflow: auto;
+    }
+
+    .tabla-verificar-precios table {
+        min-width: 620px;
+    }
+
+    #tablaVerificarPrecios .js-precio-nuevo {
+        min-width: 120px;
+    }
+
+    #tablaVerificarPrecios tr.table-warning td {
+        background: rgba(246, 194, 62, 0.16);
+    }
+
+    @@media (max-width: 768px) {
+        #modalPrecio .modal-dialog,
+        #modalVerificarPrecios .modal-dialog {
+            margin: .5rem;
+        }
+
+        .tabla-verificar-precios {
+            max-height: 50vh;
+        }
     }
 </style>
