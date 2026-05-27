@@ -1,0 +1,50 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Web.Models
+{
+    public class LoginIndexVm
+    {
+        [Required(ErrorMessage = "Ingresá tu usuario o email.")]
+        [Display(Name = "Usuario o email")]
+        public string Usuario { get; set; }
+
+        [Required(ErrorMessage = "Ingresá tu contraseña.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Contraseña")]
+        public string Clave { get; set; }
+
+        public string ReturnUrl { get; set; }
+        public string Error { get; set; }
+        public string Success { get; set; }
+    }
+
+    public class PasswordRecoveryRequestVm
+    {
+        [Required(ErrorMessage = "Ingresá tu usuario o email.")]
+        [Display(Name = "Usuario o email")]
+        public string UsuarioOEmail { get; set; }
+
+        public string Mensaje { get; set; }
+    }
+
+    public class PasswordResetVm
+    {
+        [Required]
+        public string Token { get; set; }
+
+        [Required(ErrorMessage = "Ingresá la nueva contraseña.")]
+        [StringLength(128, MinimumLength = 1, ErrorMessage = "La contraseña debe tener entre 1 y 128 caracteres.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Nueva contraseña")]
+        public string NuevaClave { get; set; }
+
+        [Required(ErrorMessage = "Confirmá la nueva contraseña.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirmar contraseña")]
+        [Compare("NuevaClave", ErrorMessage = "La confirmación no coincide con la nueva contraseña.")]
+        public string ConfirmarClave { get; set; }
+
+        public bool TokenValido { get; set; }
+        public string Mensaje { get; set; }
+    }
+}

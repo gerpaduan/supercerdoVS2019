@@ -155,6 +155,7 @@
     <Compile Include="Helpers\EgresosCajaPolicy.cs" />
     <Compile Include="Helpers\PermisosHelper.cs" />
     <Compile Include="Helpers\PermisosPantallasWeb.cs" />
+    <Compile Include="Helpers\SmtpMailHelper.cs" />
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
     <Compile Include="Models\CompraIndexVm.cs" />
@@ -171,6 +172,7 @@
     <Compile Include="Models\PuntoExpendioVm.cs" />
     <Compile Include="Models\ReciboPagoVm.cs" />
     <Compile Include="Models\ReportesViewModel.cs" />
+    <Compile Include="Models\LoginVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
@@ -2095,7 +2097,9 @@
     <Content Include="Views\Shared\_CalculadoraBilletesModal.cshtml" />
     <Content Include="Views\Shared\_LineasAgrupadasStyles.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
+    <Content Include="Views\Login\ForgotPassword.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
+    <Content Include="Views\Login\ResetPassword.cshtml" />
     <Content Include="Views\Shared\AccesoDenegado.cshtml" />
     <Content Include="Views\Productos\AddOrEdit.cshtml" />
     <Content Include="Views\Productos\_AddOrEditMarca.cshtml" />

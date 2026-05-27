@@ -124,6 +124,7 @@
     <Compile Include="Conexion.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="EmpresaContextNulo .cs" />
+    <Compile Include="PasswordSecurity.cs" />
     <Compile Include="formAppConfigTerminal.cs">
       <SubType>Form</SubType>
     </Compile>

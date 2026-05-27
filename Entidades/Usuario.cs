@@ -77,6 +77,11 @@ namespace Entidades
 
         string email;
 
+        public string PasswordHash { get; set; }
+        public string PasswordSalt { get; set; }
+        public int PasswordHashIterations { get; set; }
+        public DateTime? PasswordUpdatedAtUtc { get; set; }
+
         public int IdSucursal { get; set; }
 
         public Entidades.Sucursal Sucursal { get; set; }

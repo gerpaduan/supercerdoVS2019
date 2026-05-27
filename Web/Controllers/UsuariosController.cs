@@ -161,9 +161,9 @@ namespace Web.Controllers
                 return View("~/Views/Usuarios/Editar.cshtml", model);
             }
 
-            string claveFinal = !string.IsNullOrWhiteSpace(model.Clave)
-                ? model.Clave.Trim()
-                : (usuarioOriginal != null ? (usuarioOriginal.Clave ?? "") : "");
+            string claveFinal = usuarioOriginal != null
+                ? (usuarioOriginal.Clave ?? "")
+                : (!string.IsNullOrWhiteSpace(model.Clave) ? model.Clave.Trim() : "");
 
             var usuarioGuardar = new Entidades.Usuario
             {
@@ -199,6 +199,11 @@ namespace Web.Controllers
 
                 if (idUsuarioPersistido > 0)
                 {
+                    if (!string.IsNullOrWhiteSpace(model.Clave))
+                    {
+                        oUsuarioN.ActualizarPasswordWebSeguro(idUsuarioPersistido, model.Clave.Trim());
+                    }
+
                     oUsuarioN.setSucursalUsuario(new Entidades.Usuario
                     {
                         Id = idUsuarioPersistido,
@@ -458,6 +463,12 @@ namespace Web.Controllers
 
             if (model.Clave.Contains(" "))
                 ModelState.AddModelError("Clave", "La clave no puede contener espacios en blanco.");
+
+            if (!string.IsNullOrWhiteSpace(model.Clave))
+            {
+                if (model.Clave.Length < 1)
+                    ModelState.AddModelError("Clave", "La clave debe tener al menos 1 caracter.");
+            }
 
             if (!string.IsNullOrWhiteSpace(model.Email))
             {

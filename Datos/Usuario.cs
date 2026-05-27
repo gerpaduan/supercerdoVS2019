@@ -1,4 +1,4 @@
-﻿using Entidades;
+using Entidades;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +9,7 @@ namespace Datos
 {
     public class Usuario
     {
-        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
+        private readonly IEmpresaContext _empresa; private readonly IParametrosContext _param;
 
         public Usuario(IEmpresaContext empresa, IParametrosContext param = null)
         {
@@ -44,7 +44,7 @@ namespace Datos
             sql = "SELECT * FROM Usuarios"
                 + (where.Count > 0 ? " WHERE " + string.Join(" AND ", where) : "");
 
-            return Db.DataTable(_empresa, sql, CommandType.Text, setParams: p =>  p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
+            return Db.DataTable(_empresa, sql, CommandType.Text, setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
         }
 
         public DataTable getUsuarioActivos()
@@ -53,20 +53,11 @@ namespace Datos
             return Db.DataTable(_empresa, sql, CommandType.Text, setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
         }
 
-        /// <summary>
-        /// Obtiene usuario por ID.
-        /// Nota: si querés conservar el "externalConn" para reutilizar una conexión abierta,
-        /// conviene agregar overloads en Db que acepten (SqlConnection/SqlTransaction).
-        /// Por ahora lo dejo simple con Db.Reader.
-        /// </summary>
-        /// modificado el 13/04/2026 xq tiraba error del reader
-
         public Entidades.Usuario getUsuarioById(int idUsuario)
         {
             const string sql = "SELECT * FROM Usuarios WHERE id = @id";
 
             Entidades.Usuario usuario = null;
-
             int idSucursal = 0;
             int idEmpresa = 0;
 
@@ -82,28 +73,13 @@ namespace Datos
                     if (!dr.Read())
                         return null;
 
-                    usuario = new Entidades.Usuario
-                    {
-                        Id = Convert.ToInt32(dr["id"]),
-                        Nombre = dr["nombre"] == DBNull.Value ? "" : Convert.ToString(dr["nombre"]),
-                        User = dr["usuario"] == DBNull.Value ? "" : Convert.ToString(dr["usuario"]),
-                        Clave = dr["clave"] == DBNull.Value ? "" : Convert.ToString(dr["clave"]),
-                        Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
-                        Admin = dr["admin"] != DBNull.Value && Convert.ToBoolean(dr["admin"]),
-                        Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
-                        ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
-                        IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
-                        IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"])
-                    };
-
+                    usuario = MapUsuario(dr);
                     idSucursal = usuario.IdSucursal;
                     idEmpresa = usuario.IdEmpresa;
                 }
             }
 
-            // Relaciones fuera del reader
             var oSucursalD = new Datos.Sucursal(_empresa);
-
             usuario.Sucursal = idSucursal > 0 ? oSucursalD.findById(idSucursal) : null;
             usuario.Empresa = idEmpresa > 0 ? oSucursalD.findEmpresaById(idEmpresa) : null;
 
@@ -224,32 +200,317 @@ namespace Datos
                     VALUES (@idUsuario, @idForm, @diasVer, @diasEditar, @soloPropios)
                 END";
 
-            // Una conexión, muchos updates (como tu código original)
             using (var con = Db.Open(_empresa))
+            using (var cmd = new SqlCommand(query, con))
             {
-                using (var cmd = new SqlCommand(query, con))
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = Conexion.timeOut;
+
+                var pIdUsuario = cmd.Parameters.Add("@idUsuario", SqlDbType.Int);
+                var pIdForm = cmd.Parameters.Add("@idForm", SqlDbType.Int);
+                var pDiasVer = cmd.Parameters.Add("@diasVer", SqlDbType.Int);
+                var pDiasEditar = cmd.Parameters.Add("@diasEditar", SqlDbType.Int);
+                var pSoloPropios = cmd.Parameters.Add("@soloPropios", SqlDbType.Bit);
+
+                foreach (var permiso in permisos)
                 {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandTimeout = Conexion.timeOut;
+                    pIdUsuario.Value = permiso.IdUsuario;
+                    pIdForm.Value = permiso.IdForm;
+                    pDiasVer.Value = permiso.DiasPermitidosVer;
+                    pDiasEditar.Value = permiso.DiasPermitidosEditar;
+                    pSoloPropios.Value = permiso.SoloRegistrosPropios;
 
-                    var pIdUsuario = cmd.Parameters.Add("@idUsuario", SqlDbType.Int);
-                    var pIdForm = cmd.Parameters.Add("@idForm", SqlDbType.Int);
-                    var pDiasVer = cmd.Parameters.Add("@diasVer", SqlDbType.Int);
-                    var pDiasEditar = cmd.Parameters.Add("@diasEditar", SqlDbType.Int);
-                    var pSoloPropios = cmd.Parameters.Add("@soloPropios", SqlDbType.Bit);
-
-                    foreach (var permiso in permisos)
-                    {
-                        pIdUsuario.Value = permiso.IdUsuario;
-                        pIdForm.Value = permiso.IdForm;
-                        pDiasVer.Value = permiso.DiasPermitidosVer;
-                        pDiasEditar.Value = permiso.DiasPermitidosEditar;
-                        pSoloPropios.Value = permiso.SoloRegistrosPropios;
-
-                        cmd.ExecuteNonQuery();
-                    }
+                    cmd.ExecuteNonQuery();
                 }
             }
+        }
+
+        public List<Entidades.Usuario> BuscarUsuariosPorIdentificador(string identificador, bool soloActivos)
+        {
+            identificador = (identificador ?? string.Empty).Trim();
+            if (identificador.Length == 0)
+                return new List<Entidades.Usuario>();
+
+            const string sql = @"
+                SELECT *
+                FROM Usuarios
+                WHERE (@soloActivos = 0 OR activo = 1)
+                  AND (
+                    LOWER(ISNULL(usuario, '')) = LOWER(@identificador)
+                    OR LOWER(ISNULL(email, '')) = LOWER(@identificador)
+                  )
+                ORDER BY activo DESC, id ASC";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => MapUsuario(dr),
+                setParams: p =>
+                {
+                    p.Add("@identificador", SqlDbType.NVarChar, 120).Value = identificador;
+                    p.Add("@soloActivos", SqlDbType.Bit).Value = soloActivos;
+                }
+            );
+        }
+
+        public void ActualizarPasswordSeguro(int idUsuario, string claveLegacy, string passwordHash, string passwordSalt, int passwordHashIterations)
+        {
+            var setClauses = new List<string> { "clave = @clave" };
+
+            if (ExisteColumnaUsuarios("passwordHash"))
+                setClauses.Add("passwordHash = @passwordHash");
+
+            if (ExisteColumnaUsuarios("passwordSalt"))
+                setClauses.Add("passwordSalt = @passwordSalt");
+
+            if (ExisteColumnaUsuarios("passwordHashIterations"))
+                setClauses.Add("passwordHashIterations = @passwordHashIterations");
+
+            if (ExisteColumnaUsuarios("passwordUpdatedAtUtc"))
+                setClauses.Add("passwordUpdatedAtUtc = SYSUTCDATETIME()");
+
+            string sql = "UPDATE Usuarios SET " + string.Join(", ", setClauses) + " WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+                    p.Add("@clave", SqlDbType.NVarChar, 200).Value = claveLegacy ?? string.Empty;
+                    p.Add("@passwordHash", SqlDbType.NVarChar, 256).Value = passwordHash ?? string.Empty;
+                    p.Add("@passwordSalt", SqlDbType.NVarChar, 256).Value = passwordSalt ?? string.Empty;
+                    p.Add("@passwordHashIterations", SqlDbType.Int).Value = passwordHashIterations;
+                }
+            );
+        }
+
+        public void ActualizarPasswordWebSeguro(int idUsuario, string passwordHash, string passwordSalt, int passwordHashIterations)
+        {
+            var setClauses = new List<string>();
+
+            if (ExisteColumnaUsuarios("passwordHash"))
+                setClauses.Add("passwordHash = @passwordHash");
+
+            if (ExisteColumnaUsuarios("passwordSalt"))
+                setClauses.Add("passwordSalt = @passwordSalt");
+
+            if (ExisteColumnaUsuarios("passwordHashIterations"))
+                setClauses.Add("passwordHashIterations = @passwordHashIterations");
+
+            if (ExisteColumnaUsuarios("passwordUpdatedAtUtc"))
+                setClauses.Add("passwordUpdatedAtUtc = SYSUTCDATETIME()");
+
+            if (setClauses.Count == 0)
+                throw new InvalidOperationException("La base de datos no tiene configuradas las columnas de password seguro para Web.");
+
+            string sql = "UPDATE Usuarios SET " + string.Join(", ", setClauses) + " WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+                    p.Add("@passwordHash", SqlDbType.NVarChar, 256).Value = passwordHash ?? string.Empty;
+                    p.Add("@passwordSalt", SqlDbType.NVarChar, 256).Value = passwordSalt ?? string.Empty;
+                    p.Add("@passwordHashIterations", SqlDbType.Int).Value = passwordHashIterations;
+                }
+            );
+        }
+
+        public void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token)
+        {
+            if (token == null) throw new ArgumentNullException(nameof(token));
+
+            const string sql = @"
+                INSERT INTO UsuarioPasswordResetTokens
+                (
+                    idUsuario,
+                    idEmpresa,
+                    tokenHash,
+                    fechaCreacionUtc,
+                    fechaExpiracionUtc,
+                    usado,
+                    fechaUsoUtc,
+                    identificadorSolicitado,
+                    emailDestino
+                )
+                VALUES
+                (
+                    @idUsuario,
+                    @idEmpresa,
+                    @tokenHash,
+                    @fechaCreacionUtc,
+                    @fechaExpiracionUtc,
+                    @usado,
+                    @fechaUsoUtc,
+                    @identificadorSolicitado,
+                    @emailDestino
+                );";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = token.IdUsuario;
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = token.IdEmpresa;
+                    p.Add("@tokenHash", SqlDbType.NVarChar, 128).Value = token.TokenHash ?? string.Empty;
+                    p.Add("@fechaCreacionUtc", SqlDbType.DateTime2).Value = token.FechaCreacionUtc;
+                    p.Add("@fechaExpiracionUtc", SqlDbType.DateTime2).Value = token.FechaExpiracionUtc;
+                    p.Add("@usado", SqlDbType.Bit).Value = token.Usado;
+                    p.Add("@fechaUsoUtc", SqlDbType.DateTime2).Value = (object)token.FechaUsoUtc ?? DBNull.Value;
+                    p.Add("@identificadorSolicitado", SqlDbType.NVarChar, 120).Value = token.IdentificadorSolicitado ?? string.Empty;
+                    p.Add("@emailDestino", SqlDbType.NVarChar, 120).Value = token.EmailDestino ?? string.Empty;
+                }
+            );
+        }
+
+        public Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash)
+        {
+            const string sql = @"
+                SELECT TOP 1 *
+                FROM UsuarioPasswordResetTokens
+                WHERE tokenHash = @tokenHash
+                ORDER BY id DESC";
+
+            var list = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => new Entidades.UsuarioPasswordResetToken
+                {
+                    Id = Convert.ToInt32(dr["id"]),
+                    IdUsuario = Convert.ToInt32(dr["idUsuario"]),
+                    IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
+                    TokenHash = Convert.ToString(dr["tokenHash"]),
+                    FechaCreacionUtc = Convert.ToDateTime(dr["fechaCreacionUtc"]),
+                    FechaExpiracionUtc = Convert.ToDateTime(dr["fechaExpiracionUtc"]),
+                    Usado = dr["usado"] != DBNull.Value && Convert.ToBoolean(dr["usado"]),
+                    FechaUsoUtc = dr["fechaUsoUtc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaUsoUtc"]),
+                    IdentificadorSolicitado = dr["identificadorSolicitado"] == DBNull.Value ? "" : Convert.ToString(dr["identificadorSolicitado"]),
+                    EmailDestino = dr["emailDestino"] == DBNull.Value ? "" : Convert.ToString(dr["emailDestino"])
+                },
+                setParams: p => p.Add("@tokenHash", SqlDbType.NVarChar, 128).Value = tokenHash ?? string.Empty
+            );
+
+            return list.Count > 0 ? list[0] : null;
+        }
+
+        public void MarcarTokenRecuperacionComoUsado(int idToken)
+        {
+            const string sql = @"
+                UPDATE UsuarioPasswordResetTokens
+                SET usado = 1,
+                    fechaUsoUtc = SYSUTCDATETIME()
+                WHERE id = @idToken;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@idToken", SqlDbType.Int).Value = idToken
+            );
+        }
+
+        public void InvalidarTokensPendientesUsuario(int idUsuario)
+        {
+            const string sql = @"
+                UPDATE UsuarioPasswordResetTokens
+                SET usado = 1,
+                    fechaUsoUtc = ISNULL(fechaUsoUtc, SYSUTCDATETIME())
+                WHERE idUsuario = @idUsuario
+                  AND usado = 0
+                  AND fechaExpiracionUtc >= SYSUTCDATETIME();";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario
+            );
+        }
+
+        private Entidades.Usuario MapUsuario(SqlDataReader dr)
+        {
+            return new Entidades.Usuario
+            {
+                Id = Convert.ToInt32(dr["id"]),
+                Nombre = dr["nombre"] == DBNull.Value ? "" : Convert.ToString(dr["nombre"]),
+                User = dr["usuario"] == DBNull.Value ? "" : Convert.ToString(dr["usuario"]),
+                Clave = dr["clave"] == DBNull.Value ? "" : Convert.ToString(dr["clave"]),
+                Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
+                PasswordHash = GetOptionalString(dr, "passwordHash"),
+                PasswordSalt = GetOptionalString(dr, "passwordSalt"),
+                PasswordHashIterations = GetOptionalInt(dr, "passwordHashIterations"),
+                PasswordUpdatedAtUtc = GetOptionalDateTime(dr, "passwordUpdatedAtUtc"),
+                Admin = dr["admin"] != DBNull.Value && Convert.ToBoolean(dr["admin"]),
+                Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
+                ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
+                IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
+                IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"])
+            };
+        }
+
+        private static bool HasColumn(IDataRecord dr, string columnName)
+        {
+            for (var i = 0; i < dr.FieldCount; i++)
+            {
+                if (string.Equals(dr.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string GetOptionalString(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return string.Empty;
+
+            object value = dr[columnName];
+            return value == DBNull.Value ? string.Empty : Convert.ToString(value);
+        }
+
+        private static int GetOptionalInt(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return 0;
+
+            object value = dr[columnName];
+            return value == DBNull.Value ? 0 : Convert.ToInt32(value);
+        }
+
+        private static DateTime? GetOptionalDateTime(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return null;
+
+            object value = dr[columnName];
+            return value == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(value);
+        }
+
+        private bool ExisteColumnaUsuarios(string columnName)
+        {
+            const string sql = @"
+                SELECT COUNT(1)
+                FROM sys.columns
+                WHERE object_id = OBJECT_ID('dbo.Usuarios')
+                  AND name = @columnName;";
+
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@columnName", SqlDbType.NVarChar, 128).Value = columnName ?? string.Empty
+            );
+
+            return result != null && result != DBNull.Value && Convert.ToInt32(result) > 0;
         }
     }
 }

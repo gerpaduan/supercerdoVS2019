@@ -72,6 +72,10 @@ namespace Negocio
                     user.User = Convert.ToString(drUsuario["usuario"]);
                     user.Clave = Convert.ToString(drUsuario["clave"]);
                     user.Email = Convert.ToString(drUsuario["email"]);
+                    user.PasswordHash = GetOptionalString(drUsuario, "passwordHash");
+                    user.PasswordSalt = GetOptionalString(drUsuario, "passwordSalt");
+                    user.PasswordHashIterations = GetOptionalInt(drUsuario, "passwordHashIterations");
+                    user.PasswordUpdatedAtUtc = GetOptionalDateTime(drUsuario, "passwordUpdatedAtUtc");
                     user.Admin = Convert.ToBoolean(drUsuario["admin"]);
                     user.Activo = Convert.ToBoolean(drUsuario["activo"]);
                     user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
@@ -105,8 +109,8 @@ namespace Negocio
         /// <returns></returns>
         public Entidades.Usuario validarUsuario(string usuario, string clave, bool soloNombreUsuario)
         {
-            usuario = usuario.ToLower();
-            clave = clave.ToLower();
+            usuario = (usuario ?? "").Trim().ToLowerInvariant();
+            clave = clave ?? "";
 
             Entidades.Usuario userEncontrado = null;
             if (listUsuarios == null)
@@ -124,7 +128,7 @@ namespace Negocio
             {
                 if (soloNombreUsuario)
                 {
-                    if (user.User.ToLower().Equals(usuario) || user.Email.ToLower().Equals(usuario))
+                    if (CoincideIdentificador(user, usuario))
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
@@ -139,8 +143,8 @@ namespace Negocio
                 }
                 else
                 {
-                    if ((user.User.ToLower().Equals(usuario) || user.Email.ToLower().Equals(usuario)) 
-                        && user.Clave.ToLower().Equals(clave))
+                    if (CoincideIdentificador(user, usuario)
+                        && PasswordMatches(user, clave))
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
@@ -154,6 +158,44 @@ namespace Negocio
                     }
                 }
             }
+            return userEncontrado;
+        }
+
+        public Entidades.Usuario ValidarUsuarioWeb(string usuario, string clave)
+        {
+            usuario = (usuario ?? "").Trim().ToLowerInvariant();
+            clave = clave ?? "";
+
+            Entidades.Usuario userEncontrado = null;
+            if (listUsuarios == null)
+            {
+                listUsuarios = convertDatatableToList();
+
+                if (listUsuarios == null)
+                    return userEncontrado;
+            }
+
+            Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
+
+            foreach (Entidades.Usuario user in listUsuarios)
+            {
+                if (!CoincideIdentificador(user, usuario))
+                    continue;
+
+                if (!PasswordMatchesForWeb(user, clave))
+                    continue;
+
+                userEncontrado = new Entidades.Usuario();
+                userEncontrado = user;
+                userEncontrado.Sucursal = userEncontrado.IdSucursal > 0
+                    ? oSucursalD.findById(userEncontrado.IdSucursal)
+                    : null;
+                userEncontrado.Empresa = userEncontrado.IdEmpresa > 0
+                    ? oSucursalD.findEmpresaById(userEncontrado.IdEmpresa)
+                    : null;
+                break;
+            }
+
             return userEncontrado;
         }
 
@@ -198,6 +240,55 @@ namespace Negocio
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
             oUsuarioD.addOrEditUser(oUsuarioE);
+        }
+
+        public List<Entidades.Usuario> BuscarUsuariosPorIdentificador(string identificador, bool soloActivos)
+        {
+            return oUsuarioD.BuscarUsuariosPorIdentificador(identificador, soloActivos);
+        }
+
+        public void ActualizarPasswordSeguro(int idUsuario, string nuevaClave)
+        {
+            if (idUsuario <= 0)
+                throw new ArgumentException("Usuario inválido.", nameof(idUsuario));
+
+            if (string.IsNullOrWhiteSpace(nuevaClave))
+                throw new ArgumentException("La nueva clave es obligatoria.", nameof(nuevaClave));
+
+            var hashResult = PasswordSecurity.HashPassword(nuevaClave.Trim());
+            oUsuarioD.ActualizarPasswordSeguro(idUsuario, nuevaClave.Trim(), hashResult.Hash, hashResult.Salt, hashResult.Iterations);
+        }
+
+        public void ActualizarPasswordWebSeguro(int idUsuario, string nuevaClave)
+        {
+            if (idUsuario <= 0)
+                throw new ArgumentException("Usuario inválido.", nameof(idUsuario));
+
+            if (string.IsNullOrWhiteSpace(nuevaClave))
+                throw new ArgumentException("La nueva clave es obligatoria.", nameof(nuevaClave));
+
+            var hashResult = PasswordSecurity.HashPassword(nuevaClave.Trim());
+            oUsuarioD.ActualizarPasswordWebSeguro(idUsuario, hashResult.Hash, hashResult.Salt, hashResult.Iterations);
+        }
+
+        public void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token)
+        {
+            oUsuarioD.CrearTokenRecuperacion(token);
+        }
+
+        public Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash)
+        {
+            return oUsuarioD.ObtenerTokenRecuperacion(tokenHash);
+        }
+
+        public void MarcarTokenRecuperacionComoUsado(int idToken)
+        {
+            oUsuarioD.MarcarTokenRecuperacionComoUsado(idToken);
+        }
+
+        public void InvalidarTokensPendientesUsuario(int idUsuario)
+        {
+            oUsuarioD.InvalidarTokensPendientesUsuario(idUsuario);
         }
 
 
@@ -285,6 +376,89 @@ namespace Negocio
                     break;
             }
             return permisoVer || permisoEditar;
+        }
+
+        private bool CoincideIdentificador(Entidades.Usuario user, string usuario)
+        {
+            return string.Equals((user.User ?? "").Trim(), usuario, StringComparison.OrdinalIgnoreCase)
+                || string.Equals((user.Email ?? "").Trim(), usuario, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool PasswordMatches(Entidades.Usuario user, string claveTexto)
+        {
+            bool coincideHash = !string.IsNullOrWhiteSpace(user.PasswordHash)
+                && !string.IsNullOrWhiteSpace(user.PasswordSalt)
+                && PasswordSecurity.VerifyPassword(claveTexto, user.PasswordHash, user.PasswordSalt, user.PasswordHashIterations);
+
+            if (coincideHash)
+                return true;
+
+            bool coincideLegacy = string.Equals(user.Clave ?? "", claveTexto, StringComparison.OrdinalIgnoreCase);
+            if (coincideLegacy && string.IsNullOrWhiteSpace(user.PasswordHash))
+            {
+                try
+                {
+                    ActualizarPasswordSeguro(user.Id, user.Clave ?? claveTexto);
+                }
+                catch
+                {
+                    // La migración puede no estar aplicada todavía en algunas bases.
+                }
+            }
+
+            return coincideLegacy;
+        }
+
+        private bool PasswordMatchesForWeb(Entidades.Usuario user, string claveTexto)
+        {
+            bool coincideHash = !string.IsNullOrWhiteSpace(user.PasswordHash)
+                && !string.IsNullOrWhiteSpace(user.PasswordSalt)
+                && PasswordSecurity.VerifyPassword(claveTexto, user.PasswordHash, user.PasswordSalt, user.PasswordHashIterations);
+
+            if (coincideHash)
+                return true;
+
+            bool coincideLegacy = string.Equals(user.Clave ?? "", claveTexto, StringComparison.OrdinalIgnoreCase);
+            if (coincideLegacy && string.IsNullOrWhiteSpace(user.PasswordHash))
+            {
+                try
+                {
+                    ActualizarPasswordWebSeguro(user.Id, claveTexto);
+                }
+                catch
+                {
+                    // La base puede no tener todavía aplicada la migración web segura.
+                }
+            }
+
+            return coincideLegacy;
+        }
+
+        private static string GetOptionalString(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName))
+                return "";
+
+            object value = row[columnName];
+            return value == DBNull.Value ? "" : Convert.ToString(value);
+        }
+
+        private static int GetOptionalInt(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName))
+                return 0;
+
+            object value = row[columnName];
+            return value == DBNull.Value ? 0 : Convert.ToInt32(value);
+        }
+
+        private static DateTime? GetOptionalDateTime(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName))
+                return null;
+
+            object value = row[columnName];
+            return value == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(value);
         }
     }
 }
