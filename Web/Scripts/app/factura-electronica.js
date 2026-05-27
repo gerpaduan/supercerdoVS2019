@@ -446,7 +446,7 @@
         const $btn = $form.find('#btnRegistrarFactura').prop('disabled', true);
         const datos = $form.serialize();
 
-        $.post('/Ventas/GenerarFactura', datos)
+        $.post((window.AppUrls && window.AppUrls.ventasGenerarFactura) || '/Ventas/GenerarFactura', datos)
             .done(function (resp) {
                 if (resp && resp.ok) {
                     Swal.fire({

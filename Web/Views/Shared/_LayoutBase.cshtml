@@ -172,6 +172,13 @@
     <!-- Variable global para AJAX -->
     <script>
         var baseUrl = '@Url.Content("~/")';
+        window.AppUrls = window.AppUrls || {};
+        window.AppUrls.homeIndex = '@Url.Action("Index", "Home")';
+        window.AppUrls.cajasAbiertas = '@Url.Action("CajasAbiertas", "Cajas")';
+        window.AppUrls.ventasPos = '@Url.Action("POS", "Ventas")';
+        window.AppUrls.ventasImprimir = '@Url.Action("ImprimirTicket", "Ventas")';
+        window.AppUrls.ventasImprimirPayload = '@Url.Action("ImprimirTicketPayload", "Ventas")';
+        window.AppUrls.ventasGenerarFactura = '@Url.Action("GenerarFactura", "Ventas")';
 
         function manejarPermiso(resp) {
             if (resp && resp.error) {
@@ -753,7 +760,13 @@
                     return;
                 }
 
-                navigator.serviceWorker.register("/sw.js")
+                var appRootUrl = new URL(baseUrl, window.location.origin);
+                var appRootPath = appRootUrl.pathname;
+                if (!appRootPath.endsWith("/")) {
+                    appRootPath += "/";
+                }
+
+                navigator.serviceWorker.register(baseUrl + "sw.js", { scope: baseUrl })
                     .then(function (registration) {
                         console.log("Service Worker registrado con éxito.");
 
@@ -765,7 +778,7 @@
                         // Escuchar la respuesta con la URL
                         navigator.serviceWorker.addEventListener("message", (event) => {
                             if (event.data.type === "LAST_URL") {
-                                if (window.location.pathname === "/") {
+                                if (window.location.pathname === appRootPath) {
                                     window.location.href = event.data.url;
                                 }
                             }

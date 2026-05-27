@@ -419,7 +419,7 @@ function finalizarVenta(data) {
                     window.resetPOSDespuesDeFinalizar();
                 } else {
                     window.POSState?.clear?.();
-                    window.location.href = '/Ventas/POS';
+                    window.location.href = (window.AppUrls && window.AppUrls.ventasPos) || (window.api && window.api.venta && window.api.venta.pos) || baseUrl;
                 }
                 return;
             }

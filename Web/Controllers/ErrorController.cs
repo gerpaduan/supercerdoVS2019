@@ -1,3 +1,5 @@
+using System;
+using System.Configuration;
 using System.Web.Mvc;
 
 namespace Web.Controllers
@@ -20,7 +22,10 @@ namespace Web.Controllers
             Response.TrySkipIisCustomErrors = true;
             ViewBag.RequestedUrl = Request != null ? Request.RawUrl : "";
             var ex = Server != null ? Server.GetLastError() : null;
-            if (ex != null)
+            bool mostrarDetalles = DebeMostrarDetallesError();
+            ViewBag.MostrarDetallesError = mostrarDetalles;
+
+            if (mostrarDetalles && ex != null)
             {
                 ViewBag.ErrorMessage = ex.Message;
                 ViewBag.ErrorType = ex.GetType().FullName;
@@ -29,6 +34,24 @@ namespace Web.Controllers
                 ViewBag.InnerErrorType = ex.InnerException != null ? ex.InnerException.GetType().FullName : "";
             }
             return View();
+        }
+
+        private bool DebeMostrarDetallesError()
+        {
+            try
+            {
+                if (Request != null && Request.IsLocal)
+                    return true;
+
+                return string.Equals(
+                    ConfigurationManager.AppSettings["MostrarDetallesError"],
+                    "true",
+                    StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

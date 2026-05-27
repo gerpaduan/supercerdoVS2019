@@ -156,7 +156,7 @@
     $('#modalFacturaElectronica').modal('show');
 
     // almacenar print url override en el botón
-    var printUrl = opts.printUrl || (window.api && window.api.venta && window.api.venta.imprimir) || '/Ventas/ImprimirFactura';
+    var printUrl = opts.printUrl || (window.api && window.api.venta && window.api.venta.imprimir) || '@Url.Action("ImprimirTicket", "Ventas")';
     $('#fe-imprimir').off('click').on('click', function () {
       // si hay Id o NroCbte, abrir la URL con parámetros
       var id = data.Id || data.IdVenta || '';

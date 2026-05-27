@@ -1,4 +1,4 @@
-ï»¿@model CorteUpsertVM
+@model CorteUpsertVM
 @using System.Collections.Generic
 @using System.Web.Mvc
 
@@ -52,7 +52,7 @@
                     </div>
 
                     <div class="row g-3">
-                        <!-- ðŸ” SCANNER (arriba del CÃ³digo) -->
+                        <!-- ?? SCANNER (arriba del Código) -->
                         <div class="col-12" id="scannerContainer" style="display:none;">
                             <div class="card shadow-sm">
                                 <div class="card-body p-2">
@@ -63,8 +63,8 @@
                                     </div>
 
                                     <div class="d-flex justify-content-between mt-2">
-                                        <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">ðŸ”¦ Flash</button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cÃ¡mara</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">?? Flash</button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cámara</button>
                                     </div>
 
                                 </div>
@@ -72,13 +72,13 @@
                         </div>
 
                         <div class="col-12 col-md-4">
-                            <label class="form-label">CÃ³digo</label>
+                            <label class="form-label">Código</label>
 
                             <div class="input-group">
-                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear cÃ³digo">
+                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código">
                                     <i class="fas fa-barcode"></i>
                                 </button>
-                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / cÃ³digo interno", id = "Codigo", maxlength = "15" })
+                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / código interno", id = "Codigo", maxlength = "15" })
                             </div>
 
                             <small id="scannerMsg" class="text-danger d-none"></small>
@@ -118,8 +118,8 @@
                             <div class="input-group">
                                 <input type="text" class="form-control" id="txtMarcaNombre"
                                        value="@(Model?.MarcaNombre ?? "")" readonly placeholder="Sin marca" />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca">ðŸ”Ž</button>
-                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca">âœ–</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca">??</button>
+                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca">?</button>
                             </div>
                         </div>
                     </div>
@@ -147,7 +147,7 @@
 
                             <div class="form-check form-switch mb-2">
                                 @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
-                                <label class="form-check-label" for="swRapido">Ingreso rÃ¡pido elaborado</label>
+                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
                             </div>
 
                             <div class="form-check form-switch mb-2">
@@ -157,7 +157,7 @@
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label class="form-label">Punto Stock (nÃºmero entero)</label>
+                            <label class="form-label">Punto Stock (número entero)</label>
                             @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
                         </div>
 
@@ -169,7 +169,7 @@
                         @if (esEdicion)
                         {
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Nivel (solo ediciÃ³n)</label>
+                                <label class="form-label">Nivel (solo edición)</label>
                                 <input class="form-control" value="@Model.Nivel" readonly />
                             </div>
                         }
@@ -179,10 +179,10 @@
                 </div>
 
                 <!-- =========================
-                 3) CORTE MAESTRO / PRESENTACIÃ“N (debajo)
+                 3) CORTE MAESTRO / PRESENTACIÓN (debajo)
                  ========================= -->
                 <div class="p-3 rounded bg-light border mb-3">
-                    <h5 class="mb-3">Corte maestro / PresentaciÃ³n</h5>
+                    <h5 class="mb-3">Corte maestro / Presentación</h5>
 
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-md-4">
@@ -191,7 +191,7 @@
                                 new List<SelectListItem> {
                                     new SelectListItem{ Text="Ninguno", Value="Ninguno" },
                                     new SelectListItem{ Text="Corte maestro", Value="CorteMaestro" },
-                                    new SelectListItem{ Text="PresentaciÃ³n", Value="Presentacion" },
+                                    new SelectListItem{ Text="Presentación", Value="Presentacion" },
                                 },
                                 new { @class = "form-control", id = "ddlModo" })
                         </div>
@@ -202,8 +202,8 @@
                                 <input type="text" class="form-control" id="txtCorteMaestroNombre"
                                        value="@(Model?.CorteMaestroNombre ?? "")"
                                        readonly placeholder="Seleccione un corte maestro..." />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro">ðŸ”Ž</button>
-                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarCorteMaestro">âœ–</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro">??</button>
+                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarCorteMaestro">?</button>
                             </div>
                         </div>
 
@@ -229,7 +229,7 @@
                         <div class="col-12" id="boxPresentacionCampos">
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
-                                    <label class="form-label">PresentaciÃ³n (unidades)</label>
+                                    <label class="form-label">Presentación (unidades)</label>
 
                                     <input type="text" class="form-control" id="txtPresentacionUnidades"
                                            name="PresentacionUnidades"
@@ -285,7 +285,7 @@
     </div>
 </div>
 
-<audio id="beep" src="/Content/sounds/focus-beep.wav" preload="auto"></audio>
+<audio id="beep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
 
 <!-- MODAL MARCAS -->
 <div class="modal fade" id="modalMarcas" tabindex="-1" aria-hidden="true">
@@ -297,7 +297,7 @@
             </div>
             <div class="modal-body">
                 <div class="input-group mb-2">
-                    <input type="text" class="form-control" id="qMarca" placeholder="EscribÃ­ para buscar..." />
+                    <input type="text" class="form-control" id="qMarca" placeholder="Escribí para buscar..." />
                     <button class="btn btn-primary" type="button" id="btnDoBuscarMarca">Buscar</button>
                 </div>
 
@@ -329,7 +329,7 @@
     vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
     vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
     vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
-    vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/ediciÃ³n
+    vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
@@ -357,7 +357,7 @@
         window.addEventListener('resize', ajustarBarra);
         window.addEventListener('scroll', ajustarBarra, { passive: true });
 
-        // Por si cambia el layout dinÃ¡micamente (responsive / contenido)
+        // Por si cambia el layout dinámicamente (responsive / contenido)
         if (window.ResizeObserver) {
             const ro = new ResizeObserver(ajustarBarra);
             ro.observe(contenedor);
@@ -429,7 +429,7 @@
         // coma -> punto
         v = v.replace(/,/g, ".");
 
-        // dejar solo dÃ­gitos y punto
+        // dejar solo dígitos y punto
         v = v.replace(/[^\d.]/g, "");
 
         // dejar un solo punto decimal
@@ -497,7 +497,7 @@
             return;
         }
 
-        // Para CorteMaestro y PresentaciÃ³n: mostrar selector de corte maestro + independiente
+        // Para CorteMaestro y Presentación: mostrar selector de corte maestro + independiente
         $boxCorteMaestro.show();
         $boxIndep.show();
 
@@ -515,14 +515,14 @@
     // =========================
     // MODAL MARCAS
     // - abre y carga todas las marcas
-    // - foco automÃ¡tico en input
+    // - foco automático en input
     // - Enter selecciona primera fila
     // - Doble click selecciona
-    // - sin botÃ³n "Seleccionar"
+    // - sin botón "Seleccionar"
     // =========================
     let debounceMarcaTimer = null;
 
-    // ðŸ‘‡ guardar el botÃ³n que abriÃ³ el modal
+    // ?? guardar el botón que abrió el modal
     let $triggerModalMarcas = null;
 
     function seleccionarMarcaDesdeFila($row) {
@@ -537,7 +537,7 @@
     }
 
     $("#btnBuscarMarca").on("click", function () {
-        // ðŸ‘‡ GUARDO el botÃ³n que abriÃ³
+        // ?? GUARDO el botón que abrió
         $triggerModalMarcas = $(this);
         $("#modalMarcas").modal("show");
     });
@@ -587,17 +587,17 @@
             });
     }
 
-    // Al abrir: foco + cargar todas automÃ¡ticamente
+    // Al abrir: foco + cargar todas automáticamente
     $("#modalMarcas").on("shown.bs.modal", function () {
         setTimeout(function () {
             $("#qMarca").focus().select();
         }, 80);
 
-        buscarMarcas(); // q vacÃ­o => traer todas
+        buscarMarcas(); // q vacío => traer todas
     });
 
 
-    // al cerrar, devolver foco al botÃ³n que lo abriÃ³
+    // al cerrar, devolver foco al botón que lo abrió
     $("#modalMarcas").on("hidden.bs.modal", function () {
         setTimeout(function () {
             if ($triggerModalMarcas && $triggerModalMarcas.length) {
@@ -608,10 +608,10 @@
         }, 0);
     });
 
-    // BotÃ³n Buscar manual
+    // Botón Buscar manual
     $("#btnDoBuscarMarca").on("click", buscarMarcas);
 
-    // BÃºsqueda en vivo (debounce)
+    // Búsqueda en vivo (debounce)
     $("#qMarca").on("input", function () {
         clearTimeout(debounceMarcaTimer);
         debounceMarcaTimer = setTimeout(function () {
@@ -656,19 +656,19 @@
     // reutiliza _BuscarProductoModal + script global
     // =========================
 
-    // ðŸ‘‡ guardar el botÃ³n que abriÃ³ el modal
+    // ?? guardar el botón que abrió el modal
     let $triggerModalCorteMaestro= null;
 
     $("#btnBuscarCorteMaestro").on("click", function () {
         if (typeof window.abrirBuscarProductoModal !== "function") {
-            alert("No se pudo abrir el buscador de productos. VerificÃ¡ que el script del modal estÃ© cargado.");
+            alert("No se pudo abrir el buscador de productos. Verificá que el script del modal esté cargado.");
             return;
         }
 
         $triggerModalCorteMaestro = $(this);
 
         window.abrirBuscarProductoModal({
-            modalSelector: "#modalBuscarProducto", // <-- explÃ­cito
+            modalSelector: "#modalBuscarProducto", // <-- explícito
             mostrarPrecio: false,
             onSelect: function (producto) {
                 $("input[name='IdCorteMaestro']").val(producto.id || "");
@@ -682,7 +682,7 @@
         $("#txtCorteMaestroNombre").val("");
     });
 
-    // ðŸ‘‡ NUEVO: al cerrar, devolver foco al botÃ³n que lo abriÃ³
+    // ?? NUEVO: al cerrar, devolver foco al botón que lo abrió
     $("#modalBuscarProducto").on("hidden.bs.modal", function () {
         setTimeout(function () {
             if ($triggerModalCorteMaestro && $triggerModalCorteMaestro.length) {
@@ -725,7 +725,7 @@
     aplicarModo();
 
     // =========================
-    // ALTA: iniciar cÃ³digo y precio vacÃ­os
+    // ALTA: iniciar código y precio vacíos
     // =========================
     if (!esEdicion) {
         $codigo.val("");
@@ -733,7 +733,7 @@
     }
 
     // =========================
-    // Recordar Ãºltimos Tipo e IVA (solo alta)
+    // Recordar últimos Tipo e IVA (solo alta)
     // =========================
     const LS_TIPO = "producto_alta_ultimo_tipo";
     const LS_IVA = "producto_alta_ultimo_iva";
@@ -787,7 +787,7 @@
     function validarCodigo() {
         const v = (($codigo.val() || "") + "").trim();
 
-        // obligatorio + numÃ©rico entero
+        // obligatorio + numérico entero
         const ok = esEnteroNoNegativoTexto(v) && v !== "";
         $msgCodigoReq.toggleClass("d-none", ok);
         $codigo.toggleClass("is-invalid", !ok);
@@ -811,7 +811,7 @@
             return false;
         }
 
-        // numÃ©rico (float) y >= 0
+        // numérico (float) y >= 0
         const n = parseFloatFlexible(raw);
         const ok = (n !== null && n >= 0);
 
@@ -836,7 +836,7 @@
     function validarPuntoStock() {
         const raw = (($puntoStock.val() || "") + "").trim();
 
-        // SegÃºn lo que pediste: entero, no vacÃ­o, >= 0
+        // Según lo que pediste: entero, no vacío, >= 0
         if (raw === "") {
             marcarValidez($puntoStock, false);
             return false;
@@ -850,14 +850,14 @@
     function validarPromedio() {
         const raw = (($promedio.val() || "") + "").trim();
 
-        // si querÃ©s obligatorio, cambiÃ¡ este return por validaciÃ³n como precio
+        // si querés obligatorio, cambiá este return por validación como precio
         if (raw === "") {
             marcarValidez($promedio, true);
             return true; // opcional
         }
 
         const n = parseFloatFlexible(raw);
-        const ok = (n !== null); // si querÃ©s >=0: (n !== null && n >= 0)
+        const ok = (n !== null); // si querés >=0: (n !== null && n >= 0)
         marcarValidez($promedio, ok);
         return ok;
     }
@@ -909,14 +909,14 @@
         const modo = ($ddlModo.val() || "Ninguno");
         let ok = true;
 
-        // valida selecciÃ³n de corte maestro si aplica
+        // valida selección de corte maestro si aplica
         if (!validarCorteMaestroSeleccionadoSiAplica()) ok = false;
 
         if (modo === "CorteMaestro") {
             if (!validarPorcentajeCorteMaestro()) ok = false;
             if (!validarDesperdicioCorteMaestro()) ok = false;
 
-            // limpiar visualmente presentaciÃ³n (sin tocar valor)
+            // limpiar visualmente presentación (sin tocar valor)
             marcarValidez($presentacionUnidades, true);
         }
         else if (modo === "Presentacion") {
@@ -937,7 +937,7 @@
         return ok;
     }
 
-    // Eventos de validaciÃ³n
+    // Eventos de validación
     $nombre.on("blur input", validarNombre);
     $codigo.on("blur input", validarCodigo);
     $precioKg.on("blur input", validarPrecio);
@@ -958,28 +958,28 @@
         validarModoDependientes();
     });
     // =========================
-    // ValidaciÃ³n cÃ³digo duplicado UI
+    // Validación código duplicado UI
     // =========================
     function setCodigoDuplicadoUI(existe, nombreProducto) {
         codigoDuplicado = !!existe;
 
         if (codigoDuplicado) {
             const texto = nombreProducto
-                ? `El cÃ³digo ya existe para el producto: ${nombreProducto}`
-                : "El cÃ³digo ya existe para otro producto.";
+                ? `El código ya existe para el producto: ${nombreProducto}`
+                : "El código ya existe para otro producto.";
             $alertCodigoExiste.removeClass("d-none").text(texto);
         } else {
             $alertCodigoExiste.addClass("d-none").text("");
         }
 
-        // Deshabilitar/habilitar botÃ³n crear producto (solo alta)
+        // Deshabilitar/habilitar botón crear producto (solo alta)
         if (!esEdicion) {
             $btnGuardar.prop("disabled", codigoDuplicado);
         }
     }
 
     // =========================
-    // ValidaciÃ³n cÃ³digo duplicado (PROMISE)
+    // Validación código duplicado (PROMISE)
     // - Sirve para blur y para submit
     // =========================
     function validarCodigoExistente() {
@@ -1016,7 +1016,7 @@
                     nombre = data.nombre || data.Nombre || data.descripcion || data.Descripcion || "";
                 }
 
-                // Si estÃ¡s en ediciÃ³n y el cÃ³digo pertenece al mismo producto, no marcar duplicado
+                // Si estás en edición y el código pertenece al mismo producto, no marcar duplicado
                 if (esEdicion && data && (data.id || data.Id)) {
                     const idEncontrado = parseInt(data.id || data.Id || 0, 10);
                     const idActual = parseInt($("input[name='IdCorte']").val() || "0", 10);
@@ -1056,7 +1056,7 @@
         validarCodigoExistente();
     });
 
-    // Si cambia el cÃ³digo, limpiar alerta y re-habilitar hasta revalidar
+    // Si cambia el código, limpiar alerta y re-habilitar hasta revalidar
     $codigo.on("input", function () {
         setCodigoDuplicadoUI(false, "");
     });
@@ -1068,11 +1068,11 @@
         if (!$input || !$input.length) return true;
 
         const raw = ($input.val() || "").toString().trim();
-        if (raw === "") return true; // opcional, se deja vacÃ­o
+        if (raw === "") return true; // opcional, se deja vacío
 
         const n = parseFloatFlexible(raw);
         if (n === null) {
-            alert(`${etiqueta} invÃ¡lido. UsÃ¡ nÃºmeros y decimal con coma o punto.`);
+            alert(`${etiqueta} inválido. Usá números y decimal con coma o punto.`);
             return false;
         }
 
@@ -1081,7 +1081,7 @@
     }
 
     // =========================
-    // Submit: SIEMPRE validar cÃ³digo duplicado + luego validar resto
+    // Submit: SIEMPRE validar código duplicado + luego validar resto
     // =========================
     $("#frmCorte").on("submit", function (e) {
 
@@ -1095,24 +1095,24 @@
             }
         }
 
-        // Paso 1: siempre validar cÃ³digo duplicado (aunque no haya salido del input)
+        // Paso 1: siempre validar código duplicado (aunque no haya salido del input)
         if (!reenviandoSubmit) {
             e.preventDefault();
 
             validarCodigoExistente().done(function () {
                 if (codigoDuplicado) {
                     $codigo.focus().select();
-                    return; // NO reenvÃ­a
+                    return; // NO reenvía
                 }
 
                 reenviandoSubmit = true;
-                $frm.trigger("submit"); // reingresa y sigue con lÃ³gica normal
+                $frm.trigger("submit"); // reingresa y sigue con lógica normal
             });
 
             return false;
         }
 
-        // Paso 2: submit real (reenvÃ­o controlado)
+        // Paso 2: submit real (reenvío controlado)
         reenviandoSubmit = false;
 
         let ok = true;
@@ -1127,7 +1127,7 @@
         if (!validarPromedio()) ok = false;
         if (!validarModoDependientes()) ok = false;
 
-        // Duplicado (por si quedÃ³ marcado)
+        // Duplicado (por si quedó marcado)
         if (codigoDuplicado) {
             ok = false;
             $codigo.addClass("is-invalid");
@@ -1140,7 +1140,7 @@
         }
 
         // =========================
-        // NormalizaciÃ³n de numÃ©ricos para POST (.NET es-AR)
+        // Normalización de numéricos para POST (.NET es-AR)
         // =========================
 
         // Precio Kg (obligatorio en cliente, pero reutilizamos helper)
@@ -1151,7 +1151,7 @@
             return false;
         }
 
-        // Promedio (opcional o float vÃ¡lido)
+        // Promedio (opcional o float válido)
         if (!normalizarFloatOpcionalParaPost($promedio, "Promedio")) {
             e.preventDefault();
             marcarValidez($promedio, false);
@@ -1297,7 +1297,7 @@
                 if (clean === lastOkCode && (now - lastOkAt) < TIEMPO_RELECTURA) return;
 
                 if (!isValidEAN(clean)) {
-                    setScannerMsg("CÃ³digo invÃ¡lido (solo EAN-8 o EAN-13). VolvÃ© a enfocar.");
+                    setScannerMsg("Código inválido (solo EAN-8 o EAN-13). Volvé a enfocar.");
                     return;
                 }
 
@@ -1344,11 +1344,11 @@
             if (estado) {
                 btn.classList.remove("btn-secondary");
                 btn.classList.add("btn-warning");
-                btn.textContent = "ðŸ”¦ Flash ON";
+                btn.textContent = "?? Flash ON";
             } else {
                 btn.classList.remove("btn-warning");
                 btn.classList.add("btn-secondary");
-                btn.textContent = "ðŸ”¦ Flash";
+                btn.textContent = "?? Flash";
             }
         });
     }
@@ -1451,7 +1451,7 @@
     bottom: 0;
     z-index: 1030;
 
-    /* ðŸ‘‡ ya NO ancho completo */
+    /* ?? ya NO ancho completo */
     left: auto;
     right: auto;
     width: auto;
@@ -1464,7 +1464,7 @@
 }
 
 .barra-acciones-inner {
-    /* ðŸ‘‡ usa todo el ancho de la barra (que ya coincide con la columna) */
+    /* ?? usa todo el ancho de la barra (que ya coincide con la columna) */
     max-width: none;
     margin: 0;
 }

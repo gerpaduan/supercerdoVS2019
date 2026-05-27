@@ -98,6 +98,13 @@
     <!-- Variable global para AJAX -->
     <script>
         var baseUrl = '@Url.Content("~/")';
+        window.AppUrls = window.AppUrls || {};
+        window.AppUrls.homeIndex = '@Url.Action("Index", "Home")';
+        window.AppUrls.cajasAbiertas = '@Url.Action("CajasAbiertas", "Cajas")';
+        window.AppUrls.ventasPos = '@Url.Action("POS", "Ventas")';
+        window.AppUrls.ventasImprimir = '@Url.Action("ImprimirTicket", "Ventas")';
+        window.AppUrls.ventasImprimirPayload = '@Url.Action("ImprimirTicketPayload", "Ventas")';
+        window.AppUrls.ventasGenerarFactura = '@Url.Action("GenerarFactura", "Ventas")';
 
         function manejarPermiso(resp) {
             if (resp && resp.error) {

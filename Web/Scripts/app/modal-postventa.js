@@ -68,7 +68,11 @@ function pvGetPayloadUrl(mm) {
 
     const ventaId = pvGetVentaId();
     if (!ventaId) return '';
-    return `/Ventas/ImprimirTicketPayload?id=${ventaId}&mm=${mm}`;
+    const basePayloadUrl = (window.AppUrls && window.AppUrls.ventasImprimirPayload)
+        || (window.api && window.api.venta && window.api.venta.imprimirPayload)
+        || '';
+    if (!basePayloadUrl) return '';
+    return `${basePayloadUrl}?id=${ventaId}&mm=${mm}`;
 }
 
 // Aplica textos/estados según contexto
@@ -241,7 +245,7 @@ function imprimirTicket(mm) {
     const iframe = $('<iframe>', {
         id: 'iframePrint',
         style: 'position:fixed; right:0; bottom:0; width:1px; height:1px; border:0; opacity:0; pointer-events:none;',
-        src: `/Ventas/ImprimirTicket?id=${ventaId}&mm=${mm}`
+        src: `${((window.AppUrls && window.AppUrls.ventasImprimir) || (window.api && window.api.venta && window.api.venta.imprimir) || '')}?id=${ventaId}&mm=${mm}`
     });
 
     iframe.on('load', function () {
@@ -416,7 +420,7 @@ window.PostModal = {
             cae: '',
             pdfUrl: extras.pdfUrl || '',
             whatsapp: extras.whatsapp || '',
-            imprimirPayloadUrl: extras.imprimirPayloadUrl || (`/Ventas/ImprimirTicketPayload?id=${ventaId}`)
+            imprimirPayloadUrl: extras.imprimirPayloadUrl || ((((window.AppUrls && window.AppUrls.ventasImprimirPayload) || (window.api && window.api.venta && window.api.venta.imprimirPayload) || '')) + `?id=${ventaId}`)
         });
         $('#modalPostVenta').modal('show');
     },
@@ -430,7 +434,7 @@ window.PostModal = {
         }
 
         if (!meta.imprimirPayloadUrl && meta.ventaId) {
-            meta.imprimirPayloadUrl = `/Ventas/ImprimirTicketPayload?id=${meta.ventaId}`;
+            meta.imprimirPayloadUrl = (((window.AppUrls && window.AppUrls.ventasImprimirPayload) || (window.api && window.api.venta && window.api.venta.imprimirPayload) || '')) + `?id=${meta.ventaId}`;
         }
 
         pvSetMeta(meta);
@@ -529,7 +533,7 @@ $(document).ready(function () {
         facturaOk = false;
         const ventaId = pvGetVentaId();
 
-        $.get('/Ventas/ImprimirTicket', { id: ventaId, mm: 0 })
+        $.get((window.AppUrls && window.AppUrls.ventasImprimir) || (window.api && window.api.venta && window.api.venta.imprimir) || '', { id: ventaId, mm: 0 })
             .done(function (html) {
                 $('#contenedorFacturaElectronica').html(html);
 

@@ -415,7 +415,7 @@
                         confirmButtonColor: '#4e73df'
                     }).then(() => {
                         let idSucursal = $("#idSucursal").val() || "";
-                        window.location.href = '/Cajas/CajasAbiertas?idSucursal=' + idSucursal + '&buscar=';
+                        window.location.href = '@Url.Action("CajasAbiertas", "Cajas")' + '?idSucursal=' + encodeURIComponent(idSucursal) + '&buscar=';
                     });
                 }
             });
