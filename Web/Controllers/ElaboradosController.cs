@@ -240,7 +240,7 @@ namespace Web.Controllers
             {
                 var embutido = oCorteN.findEmbutidoById(id);
                 if (embutido == null || embutido.IdEmbutido <= 0)
-                    return HttpNotFound("No se encontrÃ³ el elaborado.");
+                    return HttpNotFound("No se encontró el elaborado.");
 
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
                 if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador))
@@ -254,9 +254,9 @@ namespace Web.Controllers
                 idCreadorPermiso = idCreador;
                 var modelEdicion = CrearViewModelIngresoRapidoEdicion(embutido, user, esDesarme);
                 if (modelEdicion == null)
-                    return HttpNotFound("No se encontrÃ³ el elaborado.");
+                    return HttpNotFound("No se encontró el elaborado.");
 
-                ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rÃ¡pido";
+                ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rápido";
                 ViewBag.Seccion = "Elaborados";
                 ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
                 ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);

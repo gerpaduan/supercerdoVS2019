@@ -41,7 +41,7 @@
         }
 
             html.dark-mode, html.dark-mode body {
-                background: #0b1320 !important;
+                background: #0f1724 !important;
                 color: rgba(255,255,255,.92);
             }
 
@@ -93,7 +93,14 @@
             .topbar-icon-btn i {
                 font-size: 1.2rem;
             }
-    </style>
+
+        /* ===== TOPBAR: Dark Mode ===== */
+        body.dark-mode .card-header {
+            background-color: #1d293a !important;
+            color: #e6e6e6 !important;
+            border-bottom: 1px solid #3c3f45;
+        }
+    </style>    
 
     <!-- Variable global para AJAX -->
     <script>
@@ -353,6 +360,12 @@
             min-height: 0;
             overflow: hidden; /* desktop */
             padding: 0;
+            background-color: #f8f9fc; /* light mode default */
+        }
+
+        /* Dark mode override */
+        body.dark-mode #pos-container {
+            background-color: #1d293a !important;
         }
 
         /* Desktop: NO scroll del navegador */

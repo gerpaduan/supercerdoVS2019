@@ -114,6 +114,9 @@ body.app-shell .topbar {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--ui-border);
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
+    position: relative;
+    z-index: 1100;
+    overflow: visible;
 }
 
 body.app-shell .navbar-text,
@@ -125,6 +128,7 @@ body.app-shell .topbar .text-gray-600 {
 body.app-shell .topbar .dropdown-menu {
     border: 1px solid var(--ui-border);
     box-shadow: var(--ui-shadow-soft);
+    z-index: 1200;
 }
 
 body.app-shell .sidebar {
@@ -198,12 +202,39 @@ body.app-shell .sidebar .collapse-item {
 body.app-shell.dark-mode .sidebar .collapse-item,
 html.dark-mode body.app-shell .sidebar .collapse-item {
     color: var(--ui-text-soft);
+    background: transparent;
 }
 
 body.app-shell .sidebar .collapse-item:hover,
 body.app-shell .sidebar .collapse-item.active {
     background: var(--ui-primary-soft);
     color: var(--ui-primary) !important;
+}
+
+body.app-shell.dark-mode .sidebar .collapse.show .collapse-inner,
+body.app-shell.dark-mode .sidebar .collapsing .collapse-inner,
+html.dark-mode body.app-shell .sidebar .collapse.show .collapse-inner,
+html.dark-mode body.app-shell .sidebar .collapsing .collapse-inner {
+    background: #162133 !important;
+    border-color: rgba(116, 145, 185, 0.18) !important;
+    box-shadow: 0 0.9rem 1.8rem rgba(2, 6, 23, 0.26);
+}
+
+body.app-shell.dark-mode .sidebar .collapse-item,
+body.app-shell.dark-mode .sidebar .collapse-item:visited,
+html.dark-mode body.app-shell .sidebar .collapse-item,
+html.dark-mode body.app-shell .sidebar .collapse-item:visited {
+    color: #d8e6f7 !important;
+}
+
+body.app-shell.dark-mode .sidebar .collapse-item:hover,
+body.app-shell.dark-mode .sidebar .collapse-item:focus,
+body.app-shell.dark-mode .sidebar .collapse-item.active,
+html.dark-mode body.app-shell .sidebar .collapse-item:hover,
+html.dark-mode body.app-shell .sidebar .collapse-item:focus,
+html.dark-mode body.app-shell .sidebar .collapse-item.active {
+    background: rgba(94, 136, 199, 0.18) !important;
+    color: #f8fbff !important;
 }
 
 html.dark-mode body.app-shell .bg-white,

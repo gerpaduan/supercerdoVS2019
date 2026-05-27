@@ -444,7 +444,7 @@
             });
 
             if (!lineas.length) {
-                showMessage("warning", "BonificaciÃ³n", "No hay productos en el carrito.");
+                showMessage("warning", "Bonificación", "No hay productos en el carrito.");
                 return false;
             }
 
@@ -456,7 +456,7 @@
             });
 
             if (!aplicadas) {
-                showMessage("warning", "BonificaciÃ³n", "No se pudo aplicar la bonificaciÃ³n a los productos del carrito.");
+                showMessage("warning", "Bonificación", "No se pudo aplicar la bonificación a los productos del carrito.");
                 return false;
             }
 

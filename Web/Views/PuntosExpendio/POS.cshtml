@@ -154,7 +154,7 @@
 
                                             <div class="d-flex justify-content-between mt-2">
                                                 <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">Flash</button>
-                                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cÃ¡mara</button>
+                                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cámara</button>
                                             </div>
                                         </div>
                                     </div>
@@ -172,7 +172,7 @@
                                         <input type="text"
                                                id="inputCodigo"
                                                class="form-control"
-                                               placeholder="Ingrese el cÃ³digo..."
+                                               placeholder="Ingrese el código..."
                                                autocomplete="off"
                                                autofocus />
 
@@ -282,9 +282,9 @@
         <div class="modal-content shadow">
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-receipt mr-2"></i> LÃ­nea del punto de expendio
+                    <i class="fas fa-receipt mr-2"></i> Línea del punto de expendio
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">Ã—</button>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">×</button>
             </div>
 
             <div class="modal-body">
@@ -349,12 +349,12 @@
                         </div>
 
                         <div class="col-6">
-                            <label id="lblTipoPorcentaje" class="small">% bonificaciÃ³n</label>
+                            <label id="lblTipoPorcentaje" class="small">% bonificación</label>
                             <input id="txtPorcentaje" class="form-control text-right" inputmode="decimal" autocomplete="off" readonly>
                         </div>
                     </div>
 
-                    <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">Aplicar bonificaciÃ³n</button>
+                    <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">Aplicar bonificación</button>
                     <div class="mt-2"></div>
                 </div>
 
@@ -1309,5 +1309,23 @@
     html.dark-mode body .modal .badge-light {
         background: #d8e7f7 !important;
         color: #1b2d41 !important;
+    }
+
+    html.dark-mode body #modalSectoresPuntoExpendio .list-group,
+    html.dark-mode body #modalSectoresPuntoExpendio .list-group-item {
+        background: transparent !important;
+    }
+
+    html.dark-mode body #modalSectoresPuntoExpendio .js-sector-item {
+        background: #162538 !important;
+        border-color: #2f4d69 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode body #modalSectoresPuntoExpendio .js-sector-item:hover,
+    html.dark-mode body #modalSectoresPuntoExpendio .js-sector-item:focus {
+        background: #223449 !important;
+        border-color: #4f79a6 !important;
+        color: #f8fbff !important;
     }
 </style>

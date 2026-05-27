@@ -299,11 +299,11 @@ namespace Web.Controllers
                 string cuitNormalizado = NormalizarCuit(cuit);
                 long cuitPersona;
                 if (string.IsNullOrWhiteSpace(cuitNormalizado) || cuitNormalizado.Length != 11 || !long.TryParse(cuitNormalizado, out cuitPersona))
-                    return Json(new { ok = false, msg = "Ingrese un CUIT vÃ¡lido de 11 dÃ­gitos.", tipo = "warning" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { ok = false, msg = "Ingrese un CUIT válido de 11 dígitos.", tipo = "warning" }, JsonRequestBehavior.AllowGet);
 
                 var empresaAfip = ObtenerEmpresaAfipActual();
                 if (empresaAfip == null || empresaAfip.Cuit <= 0)
-                    return Json(new { ok = false, msg = "No se encontrÃ³ la configuraciÃ³n AFIP de la empresa actual.", tipo = "error" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { ok = false, msg = "No se encontró la configuración AFIP de la empresa actual.", tipo = "error" }, JsonRequestBehavior.AllowGet);
 
                 var servicioPadron = new ConsultarPadronService(empresaAfip);
                 var resultado = servicioPadron.ConsultarDatosContribuyente(cuitNormalizado);

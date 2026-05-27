@@ -17,7 +17,7 @@ body.dark-mode {
 
     /* Topbar */
     body.dark-mode .card-header {
-        background-color: #31343a !important;
+        background-color: #1d293a !important;
         color: #e6e6e6 !important;
         border-bottom: 1px solid #3c3f45;
     }
@@ -235,7 +235,7 @@ body.dark-mode {
 
     /* POS container */
     body.dark-mode #pos-container {
-        background-color: #2b2d31;
+        background-color: #7dd3a7 !important;
     }
     /* ===============================
    PRODUCTO INFO – DARK MODE
