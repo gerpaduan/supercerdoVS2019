@@ -523,6 +523,42 @@
                     <div class="modal-body">
                         <input type="hidden" id="IdCorte" name="IdCorte" />
 
+                        <div class="border rounded p-3 mb-3">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchEscanerPrecio">
+                                <label class="custom-control-label" for="switchEscanerPrecio">Mediante escáner de código de barras</label>
+                            </div>
+
+                            <div id="bloqueEscanerPrecio" class="d-none mt-3">
+                                <div class="form-group mb-2">
+                                    <label>Código</label>
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnScannerPrecio" title="Escanear código">
+                                            <i class="fas fa-barcode"></i>
+                                        </button>
+                                        <input type="text" id="CodigoPrecio" class="form-control" inputmode="numeric" autocomplete="off" placeholder="Escanee o ingrese el código">
+                                    </div>
+                                    <small id="scannerPrecioMsg" class="text-danger d-none"></small>
+                                </div>
+
+                                <div id="scannerPrecioContainer" class="d-none">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body p-2">
+                                            <div class="scanner-wrapper">
+                                                <video id="videoScannerPrecio" autoplay muted playsinline></video>
+                                                <div class="scanner-line"></div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <button type="button" class="btn btn-secondary btn-sm" id="btnFlashScannerPrecio">🔦 Flash</button>
+                                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScannerPrecio">Cerrar cámara</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group js-precio-individual-block">
                             <label>Producto</label>
                             <input type="text" id="CorteDesc" class="form-control" readonly>
@@ -1066,8 +1102,11 @@
         currentPrecioActual: 0,
         batchPreviewItems: [],
         batchPreviewPercent: null,
+        scannerMode: false,
+        scannerLocked: false,
         isOpeningVerification: false
     };
+    let scannerPrecio = null;
 
     function normalizarTextoDecimal(valor, permitirSigno) {
         let v = (valor || "").toString();
@@ -1177,9 +1216,14 @@
     }
 
     function syncPrecioModalVisualState() {
-        const modificarLote = $("#switchModificarLote").is(":checked");
+        const escanerActivo = $("#switchEscanerPrecio").is(":checked");
+        const modificarLote = !escanerActivo && $("#switchModificarLote").is(":checked");
         const aplicarPorcentaje = modificarLote && $("#switchAplicarPorcentajeTodos").is(":checked");
 
+        precioModalState.scannerMode = escanerActivo;
+
+        $("#bloqueEscanerPrecio").toggleClass("d-none", !escanerActivo);
+        $("#switchModificarLote").prop("disabled", escanerActivo);
         $("#bloqueModificarLote").toggleClass("d-none", !modificarLote);
         $("#bloqueAplicarPorcentajeTodos").toggleClass("d-none", !aplicarPorcentaje);
         $(".js-precio-individual-block").toggleClass("d-none", aplicarPorcentaje);
@@ -1191,7 +1235,31 @@
     }
 
     function limpiarErroresPrecioModal() {
-        $("#errorPrecio, #errorPorcentajeLote").addClass("d-none");
+        $("#errorPrecio, #errorPorcentajeLote, #scannerPrecioMsg").addClass("d-none");
+    }
+
+    function setScannerPrecioMsg(texto) {
+        const $msg = $("#scannerPrecioMsg");
+        if (!texto) {
+            $msg.addClass("d-none").text("");
+        } else {
+            $msg.removeClass("d-none").text(texto);
+        }
+    }
+
+    function resetScannerPrecioFields() {
+        precioModalState.currentRow = null;
+        precioModalState.currentId = 0;
+        precioModalState.currentPrecioActual = 0;
+        precioModalState.scannerLocked = false;
+        $("#IdCorte").val("");
+        $("#CorteDesc").val("");
+        $("#PrecioActual").val("");
+        $("#PrecioKg").val("");
+        $("#CodigoPrecio").val("");
+        $("#precioVariacion").text("Sin variación");
+        $("#errorPrecio").addClass("d-none");
+        setScannerPrecioMsg("");
     }
 
     function aplicarDatosPrecioModal(resp, fallbackNombre, fallbackPrecio) {
@@ -1207,9 +1275,70 @@
         actualizarVariacionPrecio();
     }
 
+    function cargarProductoPrecioDesdeCodigo(codigoRaw) {
+        const codigo = (codigoRaw || "").toString().replace(/\D/g, "");
+        if (!codigo) {
+            setScannerPrecioMsg("Ingrese un código válido.");
+            $("#CodigoPrecio").focus().select();
+            return;
+        }
+
+        if (precioModalState.scannerLocked) return;
+
+        setScannerPrecioMsg("");
+
+        $.ajax({
+            url: '@Url.Action("FindCorteByCodigo", "Productos")',
+            type: 'GET',
+            data: { codigo: codigo },
+            success: function (resp) {
+                if (!resp || !resp.existe || !resp.id) {
+                    precioModalState.scannerLocked = false;
+                    $("#IdCorte").val("");
+                    $("#CorteDesc").val("");
+                    $("#PrecioActual").val("");
+                    $("#PrecioKg").val("");
+                    $("#precioVariacion").text("Sin variación");
+                    setScannerPrecioMsg("Producto no encontrado");
+                    $("#CodigoPrecio").focus().select();
+                    return;
+                }
+
+                precioModalState.scannerLocked = true;
+                precioModalState.currentId = Number(resp.id);
+                precioModalState.currentPrecioActual = round2(Number(resp.precio) || 0);
+                precioModalState.currentRow = getProductRowById(resp.id);
+
+                $("#IdCorte").val(resp.id);
+                $("#CodigoPrecio").val(codigo);
+                $("#CorteDesc").val(resp.descripcion || resp.nombre || "");
+                $("#PrecioActual").val(formatCurrencyEs(precioModalState.currentPrecioActual));
+                $("#PrecioKg").val(formatNumberEs(precioModalState.currentPrecioActual, 2));
+                actualizarVariacionPrecio();
+                setScannerPrecioMsg("");
+
+                setTimeout(function () {
+                    focusNuevoPrecio();
+                }, 40);
+            },
+            error: function () {
+                precioModalState.scannerLocked = false;
+                setScannerPrecioMsg("Producto no encontrado");
+                $("#CodigoPrecio").focus().select();
+            }
+        });
+    }
+
     function focusNuevoPrecio() {
         const inp = document.getElementById("PrecioKg");
         if (!inp || $("#PrecioKg").closest(".js-precio-individual-block").hasClass("d-none")) return;
+        inp.focus();
+        inp.select();
+    }
+
+    function focusCodigoPrecio() {
+        const inp = document.getElementById("CodigoPrecio");
+        if (!inp || $("#bloqueEscanerPrecio").hasClass("d-none")) return;
         inp.focus();
         inp.select();
     }
@@ -1231,9 +1360,11 @@
         limpiarErroresPrecioModal();
 
         if (!opts.preserveBatchState) {
+            $("#switchEscanerPrecio").prop("checked", false);
             $("#switchModificarLote").prop("checked", false);
             $("#switchAplicarPorcentajeTodos").prop("checked", false);
             $("#PorcentajeLote").val("");
+            resetScannerPrecioFields();
         }
 
         syncPrecioModalVisualState();
@@ -1404,11 +1535,18 @@
     }
 
     function guardarPrecio() {
+        const escanerActivo = $("#switchEscanerPrecio").is(":checked");
         const modificarLote = $("#switchModificarLote").is(":checked");
         const aplicarPorcentaje = modificarLote && $("#switchAplicarPorcentajeTodos").is(":checked");
 
-        if (aplicarPorcentaje) {
+        if (!escanerActivo && aplicarPorcentaje) {
             abrirModalVerificacionPorcentaje();
+            return;
+        }
+
+        if (escanerActivo && !precioModalState.currentId) {
+            setScannerPrecioMsg("Primero escanee o ingrese un código válido.");
+            focusCodigoPrecio();
             return;
         }
 
@@ -1425,7 +1563,10 @@
                 if (!manejarPermiso(resp)) return;
                 actualizarPrecioFila(resp.id, resp.precio, resp.precioFormateado);
 
-                if (modificarLote) {
+                if (escanerActivo) {
+                    resetScannerPrecioFields();
+                    focusCodigoPrecio();
+                } else if (modificarLote) {
                     avanzarSiguienteProductoLote();
                 } else {
                     $("#modalPrecio").modal("hide");
@@ -1562,6 +1703,10 @@
     }
 
     $('#modalPrecio').on('shown.bs.modal', function () {
+        if ($("#switchEscanerPrecio").is(":checked")) {
+            focusCodigoPrecio();
+            return;
+        }
         if ($("#switchModificarLote").is(":checked") && $("#switchAplicarPorcentajeTodos").is(":checked")) {
             focusPorcentajeLote();
             return;
@@ -1572,7 +1717,12 @@
     $('#modalPrecio').on('hidden.bs.modal', function () {
         $("#PrecioKg, #PrecioActual, #CorteDesc, #PorcentajeLote").val("");
         limpiarErroresPrecioModal();
+        resetScannerPrecioFields();
+        if (scannerPrecio) {
+            try { scannerPrecio.cerrar(); } catch (e) { }
+        }
         if (!precioModalState.isOpeningVerification) {
+            $("#switchEscanerPrecio").prop("checked", false);
             $("#switchModificarLote").prop("checked", false);
             $("#switchAplicarPorcentajeTodos").prop("checked", false);
             syncPrecioModalVisualState();
@@ -1588,6 +1738,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         const inputPrecio = document.getElementById("PrecioKg");
         const inputPorcentaje = document.getElementById("PorcentajeLote");
+        const inputCodigoPrecio = document.getElementById("CodigoPrecio");
         if (!inputPrecio) return;
 
         inputPrecio.addEventListener("keydown", function (e) {
@@ -1617,7 +1768,28 @@
             });
         }
 
-        $("#switchModificarLote, #switchAplicarPorcentajeTodos").on("change", function () {
+        if (inputCodigoPrecio) {
+            inputCodigoPrecio.addEventListener("input", function () {
+                this.value = (this.value || "").replace(/\D/g, "");
+                setScannerPrecioMsg("");
+            });
+
+            inputCodigoPrecio.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    cargarProductoPrecioDesdeCodigo(this.value);
+                }
+            });
+        }
+
+        $("#switchEscanerPrecio, #switchModificarLote, #switchAplicarPorcentajeTodos").on("change", function () {
+            if ($("#switchEscanerPrecio").is(":checked")) {
+                $("#switchModificarLote").prop("checked", false);
+                $("#switchAplicarPorcentajeTodos").prop("checked", false);
+                $("#PorcentajeLote").val("");
+                resetScannerPrecioFields();
+            }
+
             if (!$("#switchModificarLote").is(":checked")) {
                 $("#switchAplicarPorcentajeTodos").prop("checked", false);
                 $("#PorcentajeLote").val("");
@@ -1625,7 +1797,9 @@
 
             syncPrecioModalVisualState();
 
-            if ($("#switchModificarLote").is(":checked") && $("#switchAplicarPorcentajeTodos").is(":checked")) {
+            if ($("#switchEscanerPrecio").is(":checked")) {
+                setTimeout(focusCodigoPrecio, 40);
+            } else if ($("#switchModificarLote").is(":checked") && $("#switchAplicarPorcentajeTodos").is(":checked")) {
                 setTimeout(focusPorcentajeLote, 40);
             } else {
                 setTimeout(focusNuevoPrecio, 40);
@@ -1658,6 +1832,47 @@
 
         $("#btnGuardarCambiosMasivos").on("click", guardarCambiosMasivos);
         $("#btnQuitarPreciosCero").on("click", quitarPreviewInvalidos);
+
+        if (typeof BarcodeScanner !== "undefined") {
+            scannerPrecio = new BarcodeScanner({
+                videoSelector: "#videoScannerPrecio",
+                containerSelector: "#scannerPrecioContainer",
+                onCodeDetected: function (codigoLeido) {
+                    if (!$("#switchEscanerPrecio").is(":checked")) return;
+                    if (precioModalState.scannerLocked) return;
+                    const codigo = String(codigoLeido || "").replace(/\D/g, "");
+                    if (!codigo) return;
+                    $("#CodigoPrecio").val(codigo);
+                    cargarProductoPrecioDesdeCodigo(codigo);
+                }
+            });
+        }
+
+        $("#btnScannerPrecio").on("click", function () {
+            if (!scannerPrecio) {
+                setScannerPrecioMsg("Este navegador no soporta escaneo por cámara.");
+                focusCodigoPrecio();
+                return;
+            }
+            setScannerPrecioMsg("");
+            scannerPrecio.iniciar().catch(function () {
+                setScannerPrecioMsg("No se pudo iniciar la cámara.");
+            });
+        });
+
+        $("#btnCerrarScannerPrecio").on("click", function () {
+            if (scannerPrecio) scannerPrecio.cerrar();
+        });
+
+        $("#btnFlashScannerPrecio").on("click", async function () {
+            if (!scannerPrecio) return;
+            try {
+                const estado = await scannerPrecio.toggleFlash();
+                this.classList.toggle("btn-warning", !!estado);
+                this.classList.toggle("btn-secondary", !estado);
+                this.textContent = estado ? "🔦 Flash ON" : "🔦 Flash";
+            } catch (e) { }
+        });
     });
 
     // =========================
@@ -1887,6 +2102,35 @@
         line-height: 1.25;
     }
 
+    #scannerPrecioContainer .card {
+        border: 1px solid #d7dce3;
+    }
+
+    .scanner-wrapper {
+        position: relative;
+        width: 100%;
+        height: 96px;
+        overflow: hidden;
+        background: #000;
+        border-radius: 8px;
+    }
+
+    #videoScannerPrecio {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .scanner-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #dc3545;
+        box-shadow: 0 0 6px #dc3545;
+    }
+
     #modalVerificarPrecios .modal-dialog {
         max-width: 760px;
     }
@@ -1906,6 +2150,11 @@
 
     #tablaVerificarPrecios tr.table-warning td {
         background: rgba(246, 194, 62, 0.16);
+    }
+
+    html.dark-mode #scannerPrecioContainer .card {
+        background: #182232;
+        border-color: #314155;
     }
 
     @@media (max-width: 768px) {
