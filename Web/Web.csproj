@@ -176,6 +176,7 @@
     <Compile Include="Models\StockEditVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
+    <Compile Include="Models\HomeDashboardVm.cs" />
     <Compile Include="Models\UtilitiesIndexVm.cs" />
     <Compile Include="Models\UtilityItemVm.cs" />
     <Compile Include="Models\PersonasVm.cs" />
@@ -217,6 +218,7 @@
     <Content Include="Scripts\app\lineas-agrupadas.js" />
     <Content Include="Scripts\app\calculadora-billetes.js" />
     <Content Include="Scripts\app\calculadora-billetes-targets.js" />
+    <Content Include="Scripts\app\home-dashboard.js" />
     <Content Include="Scripts\app\table-scroll-sync.js" />
     <Content Include="Content\sounds\focus-beep.wav" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js" />

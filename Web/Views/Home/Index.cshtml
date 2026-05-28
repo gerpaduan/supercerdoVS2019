@@ -1,142 +1,472 @@
-﻿@{
-    Layout = "~/Views/Shared/_LayoutBase.cshtml";
-}
-
+@model Web.Models.HomeDashboardIndexVm
 
 @{
-    // Puedes pasar la URL del servicio desde el servidor si querés:
-    // var balanzaUrl = Url.Content("http://localhost:5100/peso");
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Dashboard";
 }
 
-<div id="balanza-container" style="max-width:420px;">
-    <label for="txtPeso" style="display:block; font-weight:600; margin-bottom:6px;">
-        Peso leído (balanza)
-    </label>
+<style>
+    .dashboard-shell {
+        --dash-ink: #16324f;
+        --dash-muted: #6c7c8f;
+        --dash-line: #dbe4ec;
+        --dash-warm: #cb6d32;
+        --dash-cool: #2d6a8a;
+        --dash-soft: #f4f7fa;
+        --dash-good: #2f9e67;
+        --dash-bad: #b94a48;
+    }
 
-    <div style="display:flex; gap:10px; align-items:center;">
-        <!-- Input grande y de sólo lectura -->
-        <input id="txtPeso" type="text" readonly
-               class="form-control"
-               style="font-size:22px; font-weight:700; padding:10px; width:220px; text-align:right;"
-               value="0.000" />
+    .dashboard-hero {
+        background: linear-gradient(135deg, rgba(22, 50, 79, 0.96), rgba(45, 106, 138, 0.92));
+        border-radius: 1.25rem;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+    }
 
-        <!-- Estado de conexión -->
-        <div id="estadoBalanza" style="font-weight:600; min-width:110px;">
-            <span id="estadoIcon" style="display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:#ccc; vertical-align:middle;"></span>
-            <span id="estadoText">Sin conexión</span>
+    .dashboard-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -10% -45% auto;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+
+    .dashboard-filters .form-control,
+    .dashboard-filters .custom-select {
+        border-radius: .85rem;
+        min-height: 44px;
+    }
+
+    .dashboard-card {
+        border: 1px solid var(--dash-line);
+        border-radius: 1rem;
+        box-shadow: 0 14px 28px rgba(26, 46, 69, 0.06);
+    }
+
+    .dashboard-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid rgba(219, 228, 236, 0.9);
+    }
+
+    .dashboard-kpi {
+        height: 100%;
+        background: #fff;
+    }
+
+    .dashboard-kpi .kpi-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: .9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(45, 106, 138, 0.1);
+        color: var(--dash-cool);
+        font-size: 1rem;
+    }
+
+    .dashboard-kpi .kpi-label {
+        color: var(--dash-muted);
+        font-size: .82rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .dashboard-kpi .kpi-value {
+        color: var(--dash-ink);
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .dashboard-kpi .kpi-meta {
+        color: var(--dash-muted);
+        font-size: .85rem;
+    }
+
+    .balance-scale-card {
+        background: linear-gradient(180deg, #ffffff, #f7fafc);
+    }
+
+    .status-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        display: inline-block;
+        background: #adb5bd;
+        box-shadow: 0 0 0 4px rgba(173, 181, 189, 0.18);
+    }
+
+    .status-dot.is-online {
+        background: var(--dash-good);
+        box-shadow: 0 0 0 4px rgba(47, 158, 103, 0.18);
+    }
+
+    .status-dot.is-offline {
+        background: var(--dash-bad);
+        box-shadow: 0 0 0 4px rgba(185, 74, 72, 0.16);
+    }
+
+    .scale-weight {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: var(--dash-ink);
+        letter-spacing: .04em;
+    }
+
+    .dash-chart-wrap {
+        position: relative;
+        min-height: 290px;
+    }
+
+    .dash-chart-wrap.is-compact {
+        min-height: 330px;
+    }
+
+    .mini-table th,
+    .mini-table td {
+        vertical-align: middle;
+        font-size: .92rem;
+    }
+
+    .mini-table thead th {
+        border-top: 0;
+        color: var(--dash-muted);
+        font-size: .76rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .dashboard-empty,
+    .dashboard-loading {
+        color: var(--dash-muted);
+        font-size: .95rem;
+        padding: 1rem 0;
+    }
+
+    .dashboard-subtle {
+        color: var(--dash-muted);
+        font-size: .85rem;
+    }
+
+    @@media (max-width: 767.98px) {
+        .scale-weight {
+            font-size: 1.9rem;
+        }
+
+        .dash-chart-wrap,
+        .dash-chart-wrap.is-compact {
+            min-height: 240px;
+        }
+    }
+</style>
+
+<div class="container-fluid dashboard-shell"
+     id="dashboardHome"
+     data-puede-ver-dashboard="@(Model.PuedeVerDashboardDatos ? "true" : "false")"
+     data-url-resumen="@Url.Action("ObtenerResumenDashboard", "Home")"
+     data-url-ventas-hora="@Url.Action("ObtenerVentasPorHora", "Home")"
+     data-url-top-productos="@Url.Action("ObtenerTopProductosVendidos", "Home")"
+     data-url-top-deudores="@Url.Action("ObtenerTopDeudores", "Home")"
+     data-url-top-acreedores="@Url.Action("ObtenerTopAcreedores", "Home")"
+     data-url-ultimas-ventas="@Url.Action("ObtenerUltimasVentas", "Home")"
+     data-url-ultimos-elaborados="@Url.Action("ObtenerUltimosElaborados", "Home")">
+
+    <div class="dashboard-hero px-4 px-lg-5 py-4 mb-4">
+        <div class="row align-items-end">
+            <div class="col-lg-7 mb-3 mb-lg-0">
+                <div class="text-uppercase small font-weight-bold" style="letter-spacing:.08em; opacity:.78;">Tablero diario</div>
+                <h1 class="h3 mb-2 font-weight-bold">Resumen del negocio en una sola pantalla</h1>
+                <p class="mb-0" style="max-width:760px; opacity:.88;">
+                    Ventas, cuentas corrientes, elaborados y estado de balanza con carga progresiva para no frenar el inicio.
+                </p>
+            </div>
+            <div class="col-lg-5">
+                <div class="row dashboard-filters">
+                    <div class="col-sm-6 mb-2">
+                        <label class="small text-white-50 mb-1" for="dashboardPeriodo">Periodo</label>
+                        <select id="dashboardPeriodo" class="custom-select">
+                            <option value="hoy" @(Model.PeriodoDefault == "hoy" ? "selected" : "")>Hoy</option>
+                            <option value="7dias" @(Model.PeriodoDefault == "7dias" ? "selected" : "")>Ultimos 7 dias</option>
+                            <option value="mes" @(Model.PeriodoDefault == "mes" ? "selected" : "")>Este mes</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 mb-2">
+                        <label class="small text-white-50 mb-1" for="dashboardSucursal">Sucursal</label>
+                        <select id="dashboardSucursal" class="custom-select">
+                            @foreach (var sucursal in Model.Sucursales)
+                            {
+                                <option value="@sucursal.Value" @(sucursal.Value == Model.IdSucursalSeleccionada.ToString() ? "selected" : "")>@sucursal.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="small text-white-50 mt-2">El tablero abre en “Hoy” y refresca cada bloque al cambiar filtros.</div>
+            </div>
         </div>
     </div>
 
-    <!-- Información adicional -->
-    <div style="margin-top:8px; font-size:12px; color:#666;">
-        <span>Última actualización: <span id="ultimaActualizacion">--</span></span>
-        &nbsp;•&nbsp;
-        <span>Intervalo: <span id="intervaloTxt">200ms</span></span>
+    @if (!Model.PuedeVerDashboardDatos)
+    {
+        <div class="card dashboard-card mb-4">
+            <div class="card-body">
+                <div class="alert alert-light border mb-0">
+                    <strong>Vista limitada.</strong> Los datos comerciales del dashboard estan disponibles solo para usuarios administradores.
+                    El estado de balanza sigue visible en esta pantalla.
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row" id="dashboardKpis">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Ventas</span>
+                        <span class="kpi-icon"><i class="fas fa-dollar-sign"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="ventasTotales">$ 0,00</div>
+                    <div class="kpi-meta" data-kpi-meta="periodo">Hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Ventas del dia</span>
+                        <span class="kpi-icon"><i class="fas fa-receipt"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="cantidadVentas">0</div>
+                    <div class="kpi-meta">Operaciones registradas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Clientes</span>
+                        <span class="kpi-icon"><i class="fas fa-user-friends"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="cantidadClientes">0</div>
+                    <div class="kpi-meta">Atendidos en el periodo</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Ticket promedio</span>
+                        <span class="kpi-icon"><i class="fas fa-chart-line"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="promedioPorVenta">$ 0,00</div>
+                    <div class="kpi-meta">Promedio por venta</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Cta. cte. a cobrar</span>
+                        <span class="kpi-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="saldoACobrar">$ 0,00</div>
+                    <div class="kpi-meta">Saldo actual global</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Cta. cte. a pagar</span>
+                        <span class="kpi-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="saldoAPagar">$ 0,00</div>
+                    <div class="kpi-meta">Saldo actual global</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 font-weight-bold text-primary">Ventas por hora</h6>
+                        <div class="dashboard-subtle">Importe vendido distribuido por franja horaria del periodo elegido.</div>
+                    </div>
+                    <span class="badge badge-light" id="ventasHoraScope">Hoy</span>
+                </div>
+                <div class="card-body">
+                    <div class="dash-chart-wrap">
+                        <canvas id="dashboardVentasHoraChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <div class="card dashboard-card balance-scale-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Balanza</h6>
+                    <div class="dashboard-subtle">Lectura local reutilizando el agente actual.</div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <span class="status-dot mr-2" id="balanzaEstadoDot"></span>
+                            <div>
+                                <div class="font-weight-bold" id="balanzaEstadoTexto">Sin conexion</div>
+                                <div class="dashboard-subtle" id="balanzaPuertoTexto">Puerto sin detectar</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-light" id="balanzaBadge">Esperando agente</span>
+                    </div>
+                    <div class="scale-weight mb-1" id="balanzaPesoActual">0.000 kg</div>
+                    <div class="dashboard-subtle mb-4">Lectura actual de la balanza conectada en esta terminal.</div>
+                    <div class="row no-gutters mt-auto">
+                        <div class="col-6 pr-2">
+                            <div class="small text-uppercase text-muted mb-1">Ultima lectura</div>
+                            <div class="font-weight-bold" id="balanzaUltimaLectura">--:--:--</div>
+                        </div>
+                        <div class="col-6 pl-2">
+                            <div class="small text-uppercase text-muted mb-1">Estado</div>
+                            <div class="font-weight-bold" id="balanzaEstadoSecundario">Agente no detectado</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-subtle mt-3">Si la balanza no aparece, verifique que el agente local este abierto en la PC actual.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-7 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 10 productos mas vendidos</h6>
+                    <div class="dashboard-subtle">Ordenado por kilos vendidos, mostrando tambien el importe.</div>
+                </div>
+                <div class="card-body">
+                    <div class="dash-chart-wrap is-compact">
+                        <canvas id="dashboardTopProductosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Cuentas corrientes</h6>
+                    <div class="dashboard-subtle">Saldo actual global del sistema. No se filtra por sucursal para mantener compatibilidad.</div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-3 mb-lg-0">
+                            <div class="font-weight-bold mb-2">Top 10 deudores</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm mini-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Persona</th>
+                                            <th class="text-right">Saldo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaTopDeudores">
+                                        <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="font-weight-bold mb-2">Top 10 acreedores</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm mini-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Persona</th>
+                                            <th class="text-right">Saldo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaTopAcreedores">
+                                        <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ultimas 10 ventas</h6>
+                    <div class="dashboard-subtle">Las operaciones mas recientes del periodo filtrado.</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mini-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th class="text-right">Total</th>
+                                    <th>Usuario</th>
+                                    <th>Sucursal</th>
+                                    <th class="text-center">Accion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUltimasVentas">
+                                <tr><td colspan="6" class="dashboard-loading">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ultimos 5 elaborados</h6>
+                    <div class="dashboard-subtle">Producciones recientes del periodo filtrado.</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mini-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th class="text-right">Kg</th>
+                                    <th>Sucursal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUltimosElaborados">
+                                <tr><td colspan="4" class="dashboard-loading">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-(function(){
-    // Config
-    const BALANZA_URL = "http://localhost:5100/peso"; // cambiar si tu servicio usa otro puerto
-    const POLL_INTERVAL_MS = 200;                       // intervalo de sondeo
-    const FETCH_TIMEOUT_MS = 1200;                      // timeout por petición
-
-    // Elementos
-    const $peso = document.getElementById("txtPeso");
-    const $estadoIcon = document.getElementById("estadoIcon");
-    const $estadoText = document.getElementById("estadoText");
-    const $ultima = document.getElementById("ultimaActualizacion");
-    const $intervaloTxt = document.getElementById("intervaloTxt");
-
-    $intervaloTxt.textContent = POLL_INTERVAL_MS + "ms";
-
-    // Formatea número a "0.000"
-    function formatearPeso(valor) {
-        if (valor === null || valor === undefined) return "0.000";
-        const n = Number(valor);
-        if (isNaN(n)) return "0.000";
-        return n.toFixed(3);
-    }
-
-    // Actualiza estado visual
-    function setEstado(conectado, mensaje) {
-        if (conectado) {
-            $estadoIcon.style.background = "#2ecc71"; // verde
-            $estadoText.textContent = mensaje || "Conectada";
-        } else {
-            $estadoIcon.style.background = "#e74c3c"; // rojo
-            $estadoText.textContent = mensaje || "Sin conexión";
-        }
-    }
-
-    // Petición fetch con timeout
-    async function fetchWithTimeout(url, timeoutMs) {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-            const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
-            clearTimeout(id);
-            return res;
-        } catch (err) {
-            clearTimeout(id);
-            throw err;
-        }
-    }
-
-    // Función principal de lectura
-    async function leerPesoUnaVez() {
-        try {
-            const resp = await fetchWithTimeout(BALANZA_URL, FETCH_TIMEOUT_MS);
-            if (!resp.ok) throw new Error("HTTP " + resp.status);
-
-            const data = await resp.json();
-
-            // Esperamos el JSON { "peso": "1.234", "estado": "ok" } (típico)
-            const pesoRaw = data.peso ?? data.valor ?? data.weight ?? null;
-            const estado = (data.estado ?? data.status ?? "").toString().toLowerCase();
-
-            // Normalizamos y mostramos
-            const pesoFormateado = formatearPeso(pesoRaw);
-            $peso.value = pesoFormateado;
-
-            // Estado: consideramos ok si dice "ok" o "connected" o existe peso numérico
-            const conectado = (estado === "ok" || estado === "connected") || (Number(pesoRaw) !== 0 && !isNaN(Number(pesoRaw)));
-
-            setEstado(conectado, conectado ? "Conectada" : "Lectura intermitente");
-
-            const now = new Date();
-            $ultima.textContent = now.toLocaleTimeString();
-
-        } catch (err) {
-            // Error al leer: API no disponible o timeout
-            setEstado(false, "Sin conexión");
-            // no sobreescribimos el valor inmediatamente para evitar parpadeos; opcional:
-            // $peso.value = "0.000";
-            $ultima.textContent = "--";
-            // console.log("Error leyendo balanza:", err);
-        }
-    }
-
-    // Inicia sondeo periódico
-    let pollingHandle = null;
-    function startPolling() {
-        if (pollingHandle) clearInterval(pollingHandle);
-        // leer inmediatamente y después programar
-        leerPesoUnaVez();
-        pollingHandle = setInterval(leerPesoUnaVez, POLL_INTERVAL_MS);
-    }
-
-    // Start
-    startPolling();
-
-    // Opcional: Exponer funciones globales para debugging desde consola
-    window._balanza = {
-        start: startPolling,
-        stop: () => { if (pollingHandle) clearInterval(pollingHandle); pollingHandle = null; },
-        readNow: leerPesoUnaVez
-    };
-
-})();
-</script>
+@section Scripts {
+    <script src="@Url.Content("~/Content/vendor/chart.js/Chart.bundle.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/home-dashboard.js?v=1")"></script>
+}

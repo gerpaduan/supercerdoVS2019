@@ -20,6 +20,9 @@ namespace Web.Controllers
     {
         private Negocio.Usuario oUsuarioN;
         private Negocio.Sucursal oSucursalN;
+        private Negocio.Venta oVentaN;
+        private Negocio.CuentaCorriente oCuentaCorrienteN;
+        private Negocio.Corte oCorteN;
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
@@ -28,6 +31,9 @@ namespace Web.Controllers
 
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oSucursalN = new Negocio.Sucursal(empresa, param);
+            oVentaN = new Negocio.Venta(empresa, param);
+            oCuentaCorrienteN = new Negocio.CuentaCorriente(empresa, param);
+            oCorteN = new Negocio.Corte(empresa, param);
         }
 
         public ActionResult Index()
@@ -35,10 +41,299 @@ namespace Web.Controllers
             var user = Session["Usuario"] as Entidades.Usuario;
             ViewBag.PuedeVerCierreCaja = oUsuarioN.tienePermiso(user, Permisos.Caja.CierresDeCaja, DateTime.Today, -1);
 
-            var sucursales = oSucursalN.findAll();
+            var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.Sucursales = sucursales;
 
-            return View();
+            var model = new HomeDashboardIndexVm
+            {
+                PuedeVerDashboardDatos = user != null && user.Admin,
+                IdSucursalSeleccionada = 0,
+                PeriodoDefault = "hoy",
+                Sucursales = ConstruirSucursalesDashboard(sucursales)
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerResumenDashboard(string periodo = "hoy", int? idSucursal = null)
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var filtro = CrearFiltroDashboard(periodo, idSucursal);
+                var ventas = ObtenerVentasDashboard(filtro);
+                var saldos = ObtenerSaldosCuentaCorriente();
+
+                var data = new DashboardResumenVm
+                {
+                    VentasTotales = ventas.Sum(x => ToDecimal(x != null ? x.TotalImporte : 0f)),
+                    CantidadVentas = ventas.Count,
+                    CantidadClientes = CalcularClientesAtendidos(ventas),
+                    PromedioPorVenta = ventas.Count == 0 ? 0m : ventas.Average(x => ToDecimal(x != null ? x.TotalImporte : 0f)),
+                    SaldoACobrar = saldos.Where(x => x.Saldo > 0m).Sum(x => x.Saldo),
+                    SaldoAPagar = saldos.Where(x => x.Saldo < 0m).Sum(x => Math.Abs(x.Saldo)),
+                    PeriodoEtiqueta = filtro.PeriodoEtiqueta,
+                    SucursalEtiqueta = filtro.SucursalEtiqueta
+                };
+
+                return Json(new { ok = true, data = data }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerVentasPorHora(string periodo = "hoy", int? idSucursal = null)
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var filtro = CrearFiltroDashboard(periodo, idSucursal);
+                var ventas = ObtenerVentasDashboard(filtro);
+                var puntos = new List<DashboardSerieHoraVm>();
+
+                for (int hora = 0; hora < 24; hora++)
+                {
+                    int horaActual = hora;
+                    var ventasHora = ventas.Where(x => x != null && x.FechaVenta.Hour == horaActual).ToList();
+                    puntos.Add(new DashboardSerieHoraVm
+                    {
+                        Hora = horaActual.ToString("00") + ":00",
+                        Total = ventasHora.Sum(x => ToDecimal(x.TotalImporte)),
+                        CantidadVentas = ventasHora.Count
+                    });
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    data = new
+                    {
+                        periodo = filtro.PeriodoEtiqueta,
+                        sucursal = filtro.SucursalEtiqueta,
+                        labels = puntos.Select(x => x.Hora).ToList(),
+                        series = puntos
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerTopProductosVendidos(string periodo = "hoy", int? idSucursal = null)
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var filtro = CrearFiltroDashboard(periodo, idSucursal);
+                int sucursalReporte = filtro.IdSucursalSeleccionada > 0 ? filtro.IdSucursalSeleccionada : 0;
+                var dt = oCorteN.TotalPorCortesVendidos("", sucursalReporte, filtro.FechaDesde, filtro.FechaHasta, "", 0, 0)
+                    ?? new System.Data.DataTable();
+
+                var cortes = (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+                    .Where(x => x != null)
+                    .GroupBy(x => x.IdCorte)
+                    .ToDictionary(g => g.Key, g => g.First());
+                var cortesPorCodigo = cortes.Values
+                    .Where(x => x.codigo > 0)
+                    .GroupBy(x => x.codigo)
+                    .ToDictionary(g => g.Key, g => g.First());
+                var cortesPorNombre = cortes.Values
+                    .Where(x => !string.IsNullOrWhiteSpace(x.corte))
+                    .GroupBy(x => NormalizarClaveProducto(x.corte))
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                var items = new List<DashboardTopProductoVm>();
+                foreach (System.Data.DataRow row in dt.Rows)
+                {
+                    long codigo = LeerLong(row, "Codigo", "codigo");
+                    string producto = LeerString(row, "Corte", "Producto", "corte");
+                    int idCorte = LeerInt(row, "idCorte");
+                    Entidades.Corte corteMeta = null;
+
+                    if (idCorte > 0)
+                        cortes.TryGetValue(idCorte, out corteMeta);
+
+                    if (corteMeta == null && codigo > 0)
+                    {
+                        cortesPorCodigo.TryGetValue(codigo, out corteMeta);
+                        if (corteMeta != null)
+                            idCorte = corteMeta.IdCorte;
+                    }
+
+                    if (corteMeta == null && !string.IsNullOrWhiteSpace(producto))
+                    {
+                        cortesPorNombre.TryGetValue(NormalizarClaveProducto(producto), out corteMeta);
+                        if (corteMeta != null)
+                            idCorte = corteMeta.IdCorte;
+                    }
+
+                    string productoNormalizado = !string.IsNullOrWhiteSpace(producto)
+                        ? producto
+                        : corteMeta != null
+                            ? (!string.IsNullOrWhiteSpace(corteMeta.CorteDesc) ? corteMeta.CorteDesc : (corteMeta.corte ?? ""))
+                            : "";
+
+                    items.Add(new DashboardTopProductoVm
+                    {
+                        IdCorte = idCorte,
+                        Codigo = codigo,
+                        Producto = productoNormalizado,
+                        Kg = LeerDecimalPrimeraCoincidencia(row, "Total Kgs", "Total Kg", "Kgs", "Kg", "cantKg", "CantKg"),
+                        Importe = LeerDecimalPrimeraCoincidencia(row, "totalS", "Total $", "Total", "Importe", "Total Importe")
+                    });
+                }
+
+                items = items
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Producto))
+                    .OrderByDescending(x => x.Kg)
+                    .ThenByDescending(x => x.Importe)
+                    .Take(10)
+                    .ToList();
+
+                return Json(new { ok = true, data = items }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerTopDeudores()
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var items = ObtenerSaldosCuentaCorriente()
+                    .Where(x => x.Saldo > 0m)
+                    .OrderByDescending(x => x.Saldo)
+                    .Take(10)
+                    .ToList();
+
+                return Json(new { ok = true, data = items, alcance = "global" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerTopAcreedores()
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var items = ObtenerSaldosCuentaCorriente()
+                    .Where(x => x.Saldo < 0m)
+                    .Select(x => new DashboardSaldoPersonaVm
+                    {
+                        IdPersona = x.IdPersona,
+                        Persona = x.Persona,
+                        Identificacion = x.Identificacion,
+                        Saldo = Math.Abs(x.Saldo)
+                    })
+                    .OrderByDescending(x => x.Saldo)
+                    .Take(10)
+                    .ToList();
+
+                return Json(new { ok = true, data = items, alcance = "global" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerUltimasVentas(string periodo = "hoy", int? idSucursal = null)
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var filtro = CrearFiltroDashboard(periodo, idSucursal);
+                var items = ObtenerVentasDashboard(filtro)
+                    .OrderByDescending(x => x.FechaVenta)
+                    .Take(10)
+                    .Select(x => new DashboardUltimaVentaVm
+                    {
+                        IdVenta = x.IdVenta,
+                        FechaHora = x.FechaVenta.ToString("dd/MM HH:mm"),
+                        Cliente = ObtenerNombreCliente(x),
+                        Total = ToDecimal(x.TotalImporte),
+                        Usuario = x.Vendedor != null ? (x.Vendedor.Nombre ?? "") : "-",
+                        Sucursal = x.Sucursal != null ? (x.Sucursal.SucursalNombre ?? "") : "-",
+                        DetalleUrl = Url.Action("DetalleVenta", "Ventas", new { id = x.IdVenta })
+                    })
+                    .ToList();
+
+                return Json(new { ok = true, data = items }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerUltimosElaborados(string periodo = "hoy", int? idSucursal = null)
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var filtro = CrearFiltroDashboard(periodo, idSucursal);
+                var dt = oCorteN.buscarEmbutido(filtro.IdSucursalConsulta, "", filtro.FechaDesde, filtro.FechaHasta)
+                    ?? new System.Data.DataTable();
+
+                var items = new List<Tuple<DateTime, DashboardUltimoElaboradoVm>>();
+                foreach (System.Data.DataRow row in dt.Rows)
+                {
+                    DateTime fecha = LeerDate(row, "Fecha", "fechaEmbutido", "fecha");
+                    items.Add(Tuple.Create(fecha, new DashboardUltimoElaboradoVm
+                    {
+                        Id = LeerInt(row, "Id", "idEmbutido"),
+                        Fecha = fecha == DateTime.MinValue ? "-" : fecha.ToString("dd/MM HH:mm"),
+                        Producto = LeerString(row, "Embutido", "Elaborado", "corte"),
+                        Cantidad = LeerDecimalPrimeraCoincidencia(row, "Kgs", "kgs"),
+                        Sucursal = LeerString(row, "Sucursal", "sucursal"),
+                        Usuario = LeerString(row, "Usuario", "usuario", "CreadoPor")
+                    }));
+                }
+
+                var resultado = items
+                    .Where(x => x.Item2 != null && !string.IsNullOrWhiteSpace(x.Item2.Producto))
+                    .OrderByDescending(x => x.Item1)
+                    .Take(5)
+                    .Select(x => x.Item2)
+                    .ToList();
+
+                return Json(new { ok = true, data = resultado }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         public ActionResult About()
@@ -186,6 +481,269 @@ namespace Web.Controllers
 
             double mb = kb / 1024d;
             return mb.ToString("0.##", CultureInfo.InvariantCulture) + " MB";
+        }
+
+        private HomeDashboardFiltro CrearFiltroDashboard(string periodo, int? idSucursal)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            DateTime hoy = DateTime.Today;
+            DateTime desde = hoy;
+            string periodoNormalizado = (periodo ?? "hoy").Trim().ToLowerInvariant();
+            string periodoEtiqueta = "Hoy";
+
+            switch (periodoNormalizado)
+            {
+                case "7dias":
+                    desde = hoy.AddDays(-6);
+                    periodoEtiqueta = "Ultimos 7 dias";
+                    break;
+                case "mes":
+                    desde = new DateTime(hoy.Year, hoy.Month, 1);
+                    periodoEtiqueta = "Este mes";
+                    break;
+                default:
+                    periodoNormalizado = "hoy";
+                    desde = hoy;
+                    periodoEtiqueta = "Hoy";
+                    break;
+            }
+
+            int sucursalSeleccionada = idSucursal ?? (user != null && user.IdSucursal > 0 ? user.IdSucursal : 0);
+            string sucursalEtiqueta = "Todas las sucursales";
+            if (sucursalSeleccionada > 0)
+            {
+                var sucursal = oSucursalN.findById(sucursalSeleccionada);
+                sucursalEtiqueta = sucursal != null && !string.IsNullOrWhiteSpace(sucursal.SucursalNombre)
+                    ? sucursal.SucursalNombre
+                    : "Sucursal " + sucursalSeleccionada.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return new HomeDashboardFiltro
+            {
+                FechaDesde = desde.Date,
+                FechaHasta = hoy.Date.AddDays(1).AddTicks(-1),
+                IdSucursalSeleccionada = sucursalSeleccionada,
+                IdSucursalConsulta = sucursalSeleccionada > 0 ? sucursalSeleccionada : -1,
+                Periodo = periodoNormalizado,
+                PeriodoEtiqueta = periodoEtiqueta,
+                SucursalEtiqueta = sucursalEtiqueta
+            };
+        }
+
+        private JsonResult ValidarAccesoDashboardAdmin()
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesion vencida." }, JsonRequestBehavior.AllowGet);
+
+            if (!user.Admin)
+                return Json(new { ok = false, mensaje = "El dashboard de datos esta disponible solo para administradores." }, JsonRequestBehavior.AllowGet);
+
+            return null;
+        }
+
+        private List<SelectListItem> ConstruirSucursalesDashboard(List<Entidades.Sucursal> sucursales)
+        {
+            var items = new List<SelectListItem>
+            {
+                new SelectListItem { Text = "Todas las sucursales", Value = "0" }
+            };
+
+            foreach (var sucursal in (sucursales ?? new List<Entidades.Sucursal>())
+                .Where(x => x != null)
+                .OrderBy(x => x.SucursalNombre ?? ""))
+            {
+                items.Add(new SelectListItem
+                {
+                    Text = sucursal.SucursalNombre ?? ("Sucursal " + sucursal.IdSucursal.ToString(CultureInfo.InvariantCulture)),
+                    Value = sucursal.IdSucursal.ToString(CultureInfo.InvariantCulture)
+                });
+            }
+
+            return items;
+        }
+
+        private List<Entidades.Venta> ObtenerVentasDashboard(HomeDashboardFiltro filtro)
+        {
+            var ventas = oVentaN.getAllVentas(
+                filtro.FechaDesde,
+                filtro.FechaHasta,
+                "",
+                -1,
+                -1,
+                filtro.IdSucursalConsulta,
+                false,
+                false) ?? new List<Entidades.Venta>();
+
+            return ventas
+                .Where(x => x != null)
+                .Where(x => x.FechaVenta >= filtro.FechaDesde && x.FechaVenta <= filtro.FechaHasta)
+                .Where(x => !string.Equals((x.Estado ?? "").Trim(), "ANULADO", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        private List<DashboardSaldoPersonaVm> ObtenerSaldosCuentaCorriente()
+        {
+            var dt = oCuentaCorrienteN.obtenerCtasCtes("", null, "DESC") ?? new System.Data.DataTable();
+            var items = new List<DashboardSaldoPersonaVm>();
+
+            foreach (System.Data.DataRow row in dt.Rows)
+            {
+                decimal saldo = LeerDecimalPrimeraCoincidencia(row, "Saldo", "saldo");
+                if (saldo == 0m)
+                    continue;
+
+                items.Add(new DashboardSaldoPersonaVm
+                {
+                    IdPersona = LeerInt(row, "idPersona", "IdPersona", "ID"),
+                    Persona = LeerString(row, "Razon Social", "razonSocial", "RazonSocial", "Persona"),
+                    Identificacion = LeerString(row, "Identificacion", "identificacion", "CUIT", "Cuit"),
+                    Saldo = saldo
+                });
+            }
+
+            return items;
+        }
+
+        private static int CalcularClientesAtendidos(IEnumerable<Entidades.Venta> ventas)
+        {
+            var clientes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            int anonimos = 0;
+
+            foreach (var venta in ventas ?? Enumerable.Empty<Entidades.Venta>())
+            {
+                if (venta == null)
+                    continue;
+
+                var persona = venta.Persona;
+                if (persona != null && persona.IdPersona > 0 && !Entidades.Persona.esConsumidorFinal(persona))
+                {
+                    clientes.Add("ID:" + persona.IdPersona.ToString(CultureInfo.InvariantCulture));
+                    continue;
+                }
+
+                if (persona != null && !string.IsNullOrWhiteSpace(persona.RazonSocial) &&
+                    !string.Equals(persona.RazonSocial.Trim(), "Consumidor Final", StringComparison.OrdinalIgnoreCase))
+                {
+                    clientes.Add("TXT:" + persona.RazonSocial.Trim());
+                    continue;
+                }
+
+                anonimos++;
+            }
+
+            return clientes.Count + anonimos;
+        }
+
+        private static decimal ToDecimal(float value)
+        {
+            return Convert.ToDecimal(value);
+        }
+
+        private static string ObtenerNombreCliente(Entidades.Venta venta)
+        {
+            if (venta == null || venta.Persona == null)
+                return "Mostrador";
+
+            if (!string.IsNullOrWhiteSpace(venta.Persona.RazonSocial))
+                return venta.Persona.RazonSocial;
+
+            if (!string.IsNullOrWhiteSpace(venta.Persona.Identificacion))
+                return venta.Persona.Identificacion;
+
+            return "Mostrador";
+        }
+
+        private static string NormalizarClaveProducto(string valor)
+        {
+            return string.IsNullOrWhiteSpace(valor)
+                ? ""
+                : valor.Trim().ToUpperInvariant();
+        }
+
+        private static string LeerString(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas)
+            {
+                if (row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                    return Convert.ToString(row[columna]) ?? "";
+            }
+
+            return "";
+        }
+
+        private static int LeerInt(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas)
+            {
+                if (row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                {
+                    int valor;
+                    if (int.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return 0;
+        }
+
+        private static long LeerLong(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas)
+            {
+                if (row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                {
+                    long valor;
+                    if (long.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return 0;
+        }
+
+        private static decimal LeerDecimalPrimeraCoincidencia(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas)
+            {
+                if (!row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                    continue;
+
+                decimal valor;
+                if (decimal.TryParse(Convert.ToString(row[columna]), NumberStyles.Any, CultureInfo.CurrentCulture, out valor))
+                    return valor;
+
+                if (decimal.TryParse(Convert.ToString(row[columna]), NumberStyles.Any, CultureInfo.InvariantCulture, out valor))
+                    return valor;
+            }
+
+            return 0m;
+        }
+
+        private static DateTime LeerDate(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas)
+            {
+                if (row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                {
+                    DateTime valor;
+                    if (DateTime.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return DateTime.MinValue;
+        }
+
+        private class HomeDashboardFiltro
+        {
+            public DateTime FechaDesde { get; set; }
+            public DateTime FechaHasta { get; set; }
+            public int IdSucursalSeleccionada { get; set; }
+            public int IdSucursalConsulta { get; set; }
+            public string Periodo { get; set; }
+            public string PeriodoEtiqueta { get; set; }
+            public string SucursalEtiqueta { get; set; }
         }
 
         private List<string> ConstruirLineasCalculadoraBilletes(CalculadoraBilletesPrintVm request, int ticketMm)
