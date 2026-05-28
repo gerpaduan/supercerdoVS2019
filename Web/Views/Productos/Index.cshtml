@@ -530,18 +530,7 @@
                             </div>
 
                             <div id="bloqueEscanerPrecio" class="d-none mt-3">
-                                <div class="form-group mb-2">
-                                    <label>Código</label>
-                                    <div class="input-group">
-                                        <button type="button" class="btn btn-outline-secondary" id="btnScannerPrecio" title="Escanear código">
-                                            <i class="fas fa-barcode"></i>
-                                        </button>
-                                        <input type="text" id="CodigoPrecio" class="form-control" inputmode="numeric" autocomplete="off" placeholder="Escanee o ingrese el código">
-                                    </div>
-                                    <small id="scannerPrecioMsg" class="text-danger d-none"></small>
-                                </div>
-
-                                <div id="scannerPrecioContainer" class="d-none">
+                                <div id="scannerPrecioContainer" class="d-none mb-3">
                                     <div class="card shadow-sm">
                                         <div class="card-body p-2">
                                             <div class="scanner-wrapper">
@@ -555,6 +544,17 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="form-group mb-2">
+                                    <label>Código</label>
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnScannerPrecio" title="Escanear código">
+                                            <i class="fas fa-barcode"></i>
+                                        </button>
+                                        <input type="text" id="CodigoPrecio" class="form-control" inputmode="numeric" autocomplete="off" placeholder="Escanee o ingrese el código">
+                                    </div>
+                                    <small id="scannerPrecioMsg" class="text-danger d-none"></small>
                                 </div>
                             </div>
                         </div>
@@ -1223,6 +1223,7 @@
         precioModalState.scannerMode = escanerActivo;
 
         $("#bloqueEscanerPrecio").toggleClass("d-none", !escanerActivo);
+        $("#scannerPrecioContainer").toggleClass("d-none", !escanerActivo);
         $("#switchModificarLote").prop("disabled", escanerActivo);
         $("#bloqueModificarLote").toggleClass("d-none", !modificarLote);
         $("#bloqueAplicarPorcentajeTodos").toggleClass("d-none", !aplicarPorcentaje);

@@ -265,6 +265,16 @@
                             <div id="pos-bottom-anchor"></div>
 
                             <div class="mt-auto">
+                                <small class="text-muted d-block">
+                                    Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                </small>
+                                <div class="small text-muted mt-1">
+                                    Presione <strong>*</strong> para activar o desactivar la balanza.
+                                </div>
+                                <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
+                                <div class="progress mt-1 mb-2" style="height:8px;">
+                                    <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
                                 <small class="text-muted">
                                     Sector activo: <span id="estadoSectorPuntoExpendioFooter">@(string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector)</span>
                                 </small>
@@ -427,15 +437,17 @@
 </form>
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=22")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=7")"></script>
     <script>
         window.puntoExpendioPosConfig = {
             sectorSeleccionado: @Html.Raw(Json.Encode(Model.Sector ?? "")),
@@ -627,6 +639,24 @@
         gap: .35rem;
     }
 
+    .pos-expendio-actions-col .mt-auto {
+        line-height: 1.1;
+    }
+
+    .pos-expendio-actions-col .mt-auto small,
+    .pos-expendio-actions-col .mt-auto .small {
+        font-size: .74rem;
+    }
+
+    .pos-expendio-actions-col .mt-auto .small.mt-1 {
+        margin-top: .15rem !important;
+    }
+
+    .pos-expendio-actions-col .mt-auto .progress {
+        margin-top: .2rem !important;
+        margin-bottom: .35rem !important;
+    }
+
     .pos-expendio-page .zona-tabla {
         flex: 1 1 auto;
         min-height: 0;
@@ -758,26 +788,27 @@
 
     .scanner-wrapper {
         position: relative;
+        width: 100%;
+        max-width: 100%;
+        height: 80px;
         overflow: hidden;
         border-radius: 14px;
         background: #111827;
-        min-height: 170px;
     }
 
     #videoScanner {
         width: 100%;
-        min-height: 170px;
-        object-fit: cover;
+        height: auto;
     }
 
     .scanner-line {
         position: absolute;
-        left: 8%;
-        right: 8%;
         top: 50%;
+        left: 0;
+        width: 100%;
         height: 2px;
-        background: rgba(239, 68, 68, .9);
-        box-shadow: 0 0 10px rgba(239, 68, 68, .9);
+        background: red;
+        box-shadow: 0 0 8px rgba(255, 0, 0, .85);
     }
 
     .scanner-btn {

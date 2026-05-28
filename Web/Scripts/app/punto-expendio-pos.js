@@ -154,6 +154,21 @@
             });
         }
 
+        function mostrarAvisoBalanzaDiscreto(msg) {
+            var $msg = $('#msgBalanzaPOS');
+            if (!$msg.length) return;
+            $msg.text(msg || '');
+        }
+
+        function normalizarProductoParaBalanza(producto) {
+            if (!producto) return null;
+
+            var normalized = $.extend({}, producto);
+            normalized.pesable = producto.pesable === true || producto.balanza === true;
+            normalized.balanza = producto.balanza === true || normalized.pesable === true;
+            return normalized;
+        }
+
         function clickIfEnabled(selector) {
             var button = document.querySelector(selector);
             if (button && !button.disabled) {
@@ -309,11 +324,13 @@
 
         var posProduct = null;
         var posCart = null;
+        var posBalanza = null;
         var posKeyboard = window.POSKeyboard.create({
             handleEnter: function () { return posProduct ? posProduct.handleEnter() : null; },
             calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
             finishTyping: function (value) { return posProduct ? posProduct.finishTyping(value) : null; },
-            setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; }
+            setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; },
+            onManualModeRequested: function (inputId) { return posBalanza ? posBalanza.alternarDesdeAsterisco(inputId) : null; }
         });
         var posHelp = window.POSHelp.create({
             focusCodigo: function () { return posKeyboard.focusCodigo(); },
@@ -330,7 +347,9 @@
             addProduct: function () { return posCart ? posCart.addProduct() : null; },
             getInputActivo: function () { return posKeyboard.getInputActivo(); },
             clearInputActivo: function () { return posKeyboard.clearInputActivo(); },
-            showConnectionError: showConnectionError
+            showConnectionError: showConnectionError,
+            onProductoChanged: function (producto) { return posBalanza ? posBalanza.onProductoChanged(normalizarProductoParaBalanza(producto)) : null; },
+            onProductoConfirmed: function (producto) { return posBalanza ? posBalanza.onProductoConfirmed(normalizarProductoParaBalanza(producto)) : null; }
         });
 
         posCart = window.POSCart.create({
@@ -350,11 +369,27 @@
             scrollPantallaMobile: scrollPantallaMobile,
             handleEnter: function () { return posProduct.handleEnter(); },
             getTypingTimer: function () { return posProduct.getTypingTimer(); },
-            setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); }
+            setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); },
+            beforeAddProduct: function (producto, cantidad) {
+                return posBalanza
+                    ? posBalanza.beforeAddProduct(normalizarProductoParaBalanza(producto), cantidad)
+                    : { ok: true };
+            }
+        });
+
+        posBalanza = window.POSBalanza.create({
+            baseUrl: 'http://127.0.0.1:5100',
+            statusIntervalMs: 2500,
+            pesoIntervalMs: 250,
+            calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+            focusCantidad: function () { return posKeyboard.focusCantidad(); },
+            focusCodigo: function () { return posKeyboard.focusCodigo(); },
+            showNotice: mostrarAvisoBalanzaDiscreto
         });
 
         posProduct.init();
         posCart.init();
+        posBalanza.init();
         posKeyboard.init();
         posHelp.init();
         posComment.init();
