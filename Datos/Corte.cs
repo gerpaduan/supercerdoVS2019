@@ -1006,6 +1006,7 @@ namespace Datos
                 p =>
                 {
                     p.AddWithValue("@texto", texto ?? "");
+                    p.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
                     p.AddWithValue("@idSucursal", idSucursal);
                     p.AddWithValue("@fechaDesde", fechaDesde);
                     p.AddWithValue("@fechaHasta", fechaHasta);

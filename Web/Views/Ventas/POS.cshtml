@@ -1,4 +1,4 @@
-@model Entidades.Venta
+ï»¿@model Entidades.Venta
 
 @{
     ViewBag.Title = "CarniSys | Punto de Venta";
@@ -215,7 +215,7 @@
                                                 </button>
 
                                                 <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">
-                                                    Cerrar cámara
+                                                    Cerrar cï¿½mara
                                                 </button>
                                             </div>
 
@@ -237,7 +237,7 @@
                                         <input type="text"
                                                id="inputCodigo"
                                                class="form-control"
-                                               placeholder="Ingrese el código..."
+                                               placeholder="Ingrese el cÃ³digo..."
                                                autocomplete="off"
                                                autofocus />
 
@@ -313,7 +313,7 @@
                                             <button class="btn btn-light btn-key">4</button>
                                             <button class="btn btn-light btn-key">5</button>
                                             <button class="btn btn-light btn-key">6</button>
-                                            <button class="btn btn-secondary btn-key">×</button>
+                                            <button class="btn btn-secondary btn-key">ï¿½</button>
 
                                             <button class="btn btn-secondary btn-key">G1</button>
                                             <button class="btn btn-light btn-key">1</button>
@@ -349,7 +349,7 @@
                                 <div class="zona-botones">
                                     <div class="row g-2">
                                         <div class="col-4">
-                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>@(esEdicionVenta ? "Salir edición" : "Cancelar Venta")</button>
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>@(esEdicionVenta ? "Salir ediciï¿½n" : "Cancelar Venta")</button>
                                         </div>
                                         <div class="col-4">
                                             <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
@@ -364,7 +364,7 @@
                                 </div>
 
                                 <small class="text-muted">
-                                    Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                    ConexiÃ³n balanza: <span id="estadoBalanza">Desconocida</span>
                                 </small>
                                 <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
                                 <div class="progress mt-1" style="height:8px;">
@@ -392,9 +392,9 @@
                 <!-- HEADER -->
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-receipt mr-2"></i> Línea de venta
+                        <i class="fas fa-receipt mr-2"></i> Lï¿½nea de venta
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">×</button>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">ï¿½</button>
                 </div>
 
                 <!-- BODY -->
@@ -434,7 +434,7 @@
                             </div>
                         </div>
 
-                        <!-- ? salto de línea SOLO en pantallas chicas -->
+                        <!-- ? salto de lï¿½nea SOLO en pantallas chicas -->
                         <div class="w-100 d-block d-md-none"></div>
 
                         <!-- ? Precio y Total: abajo en mobile -->
@@ -466,11 +466,11 @@
                         </div>
 
                         <div class="small text-muted mb-2 d-none" id="msgRecargoBonificacion">
-                            Si ingresa un porcentaje negativo, se aplicará como recargo.
+                            Si ingresa un porcentaje negativo, se aplicarï¿½ como recargo.
                         </div>
 
                         <div class="alert alert-info py-2 px-3 small d-none" id="msgBonificarTodos">
-                            Esta bonificación se aplicará a todos los productos del carrito.
+                            Esta bonificaciï¿½n se aplicarï¿½ a todos los productos del carrito.
                         </div>
 
                         <div class="row">
@@ -483,7 +483,7 @@
                             </div>
 
                             <div class="col-6">
-                                <label id="lblTipoPorcentaje" class="small">% bonificación</label>
+                                <label id="lblTipoPorcentaje" class="small">% bonificaciï¿½n</label>
                                 <input id="txtPorcentaje"
                                        class="form-control text-right"
                                        inputmode="decimal"
@@ -492,16 +492,16 @@
                             </div>
                         </div>
 
-                        <!-- Aplicar bonificación (cuando se muestra bonificar) -->
+                        <!-- Aplicar bonificaciï¿½n (cuando se muestra bonificar) -->
                         <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">
-                            Aplicar bonificación
+                            Aplicar bonificaciï¿½n
                         </button>
 
                         <!-- espacio -->
                         <div class="mt-2"></div>
                     </div>
 
-                    <!-- BLOQUE CANTIDAD (solo para el botón Aplicar cantidad) -->
+                    <!-- BLOQUE CANTIDAD (solo para el botï¿½n Aplicar cantidad) -->
                     <div id="bloqueCantidad" style="display:none">
                         <button id="btnAplicarCantidad" class="btn btn-primary btn-block mt-3">
                             Aplicar cantidad
@@ -511,11 +511,11 @@
                         <div class="mt-2"></div>
                     </div>
 
-                    <!-- BOTONES PRINCIPALES / DE ACCIÓN -->
-                    <!-- Siempre visibles en columna, y el JS los oculta/activa según modo -->
+                    <!-- BOTONES PRINCIPALES / DE ACCIï¿½N -->
+                    <!-- Siempre visibles en columna, y el JS los oculta/activa segï¿½n modo -->
                     <div class="d-flex flex-column" style="gap:.5rem;">
 
-                        <!-- (Opcional) si querés seguir mostrando el botón "Bonificar" como antes -->
+                        <!-- (Opcional) si querï¿½s seguir mostrando el botï¿½n "Bonificar" como antes -->
                         <button id="btnMostrarBonificar" class="btn btn-success">
                             <i class="fas fa-percentage"></i> Bonificar
                         </button>
@@ -564,7 +564,7 @@ else
     @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 
 }
-<!-- Contenedor dinámico del modal -->
+<!-- Contenedor dinï¿½mico del modal -->
 <div id="contenedorModalPersona"></div>
 
 <div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
@@ -651,7 +651,7 @@ else
     vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
     vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
                                                                                  //vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
-                                                                                 //vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
+                                                                                 //vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/ediciï¿½n
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
@@ -709,7 +709,7 @@ else
     }
 
     // -----------------------
-    // Acción Abrir Caja (llama al controller)
+    // Acciï¿½n Abrir Caja (llama al controller)
     // -----------------------
     window.abrirCaja = function () {
         var cajaInicio = $("#montoInicial").val();
@@ -722,13 +722,13 @@ else
             data: { cajaInicio: cajaInicio, fechaHora: fechaHora },
             success: function (r) {
                 if (r && r.ok) {
-                    // ? Ya se abrió: recargo el POS (ahora el controller debería dejarte entrar)
+                    // ? Ya se abriï¿½: recargo el POS (ahora el controller deberï¿½a dejarte entrar)
                     $("#modalAbrirCaja").modal('hide');
                     location.reload();
                     return;
                 }
 
-                // ? No abrió: muestro error y me quedo en el modal
+                // ? No abriï¿½: muestro error y me quedo en el modal
                 mostrarError((r && r.mensaje) ? r.mensaje : "Error al abrir caja.");
             },
             error: function () {
@@ -776,9 +776,9 @@ else
     });
 
 
-        // ? Guard: si NO está el POS renderizado, NO ejecuto el script del POS
+        // ? Guard: si NO estï¿½ el POS renderizado, NO ejecuto el script del POS
         if (!document.getElementById("pos-app") || !document.getElementById("inputCodigo")) {
-            console.warn("POS script: no está el HTML del POS (caja cerrada o vista distinta).");
+            console.warn("POS script: no estï¿½ el HTML del POS (caja cerrada o vista distinta).");
             return;
         }
 
@@ -812,7 +812,7 @@ else
                 document.querySelector("#inputCodigo").value = codigo;
                 document.querySelector("#inputCodigo").focus();
                 manejarEnter();
-                // si querés cerrar al detectar:
+                // si querï¿½s cerrar al detectar:
                 // scanner.cerrar();
             }
         });
@@ -1040,7 +1040,7 @@ else
     const ventaRestauradaPOS = esEdicionVenta ? false : window.POSDraft.restore();
 
     (function () {
-        const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const dias = ['Dom', 'Lun', 'Mar', 'Miï¿½', 'Jue', 'Vie', 'Sï¿½b'];
         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         function actualizarFechaHora() {
@@ -1059,7 +1059,7 @@ else
             const hora = String(ahora.getHours()).padStart(2, '0');
             const minutos = String(ahora.getMinutes()).padStart(2, '0');
 
-            const formato = `${diaSemana} ${dia} de ${mes}, ${anio} · ${hora}:${minutos}`;
+            const formato = `${diaSemana} ${dia} de ${mes}, ${anio} ï¿½ ${hora}:${minutos}`;
 
             const span = document.getElementById('fechaHoraPOS');
             if (span) span.innerText = formato;
@@ -1170,7 +1170,7 @@ else
     function mostrarErrorConexion(msg) {
         Swal.fire({
             icon: 'error',
-            title: 'Sin conexión',
+            title: 'Sin conexiï¿½n',
             text: msg,
             allowOutsideClick: false
         });
@@ -1292,9 +1292,9 @@ else
             if (fechaEdicion) {
                 const fecha = new Date(fechaEdicion);
                 if (!isNaN(fecha.getTime())) {
-                    const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                    const dias = ['Dom', 'Lun', 'Mar', 'Miï¿½', 'Jue', 'Vie', 'Sï¿½b'];
                     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                    const formato = `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}, ${fecha.getFullYear()} · ${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
+                    const formato = `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}, ${fecha.getFullYear()} ï¿½ ${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
                     $("#fechaHoraPOS").text(formato);
                 }
             }
@@ -1472,7 +1472,7 @@ else
         if (!lineas.length) {
             Swal.fire({
                 icon: "info",
-                title: "Venta vacía",
+                title: "Venta vacï¿½a",
                 text: "No hay una venta en curso para cancelar."
             });
             return;
@@ -1511,10 +1511,10 @@ else
         if (esEdicionVenta) {
             Swal.fire({
                 icon: "warning",
-                title: "¿Salir de la edición?",
-                text: "Se descartarán los cambios no guardados.",
+                title: "ï¿½Salir de la ediciï¿½n?",
+                text: "Se descartarï¿½n los cambios no guardados.",
                 showCancelButton: true,
-                confirmButtonText: "Sí",
+                confirmButtonText: "Sï¿½",
                 cancelButtonText: "No"
             }).then(function (result) {
                 if (!result.isConfirmed) return;
@@ -1526,9 +1526,9 @@ else
 
         Swal.fire({
             icon: "warning",
-            title: "¿Realmente desea cancelar la venta?",
+            title: "ï¿½Realmente desea cancelar la venta?",
             showCancelButton: true,
-            confirmButtonText: "Sí",
+            confirmButtonText: "Sï¿½",
             cancelButtonText: "No"
         }).then(function (result) {
             if (!result.isConfirmed) return;
@@ -1551,7 +1551,7 @@ else
         posCart.updateSaleState();
     });
 
-    // Helper: scroll a una línea (desktop scroll interno / responsive scroll página)
+    // Helper: scroll a una lï¿½nea (desktop scroll interno / responsive scroll pï¿½gina)
     function scrollTablaAItem(idLinea) {
         const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
         if (!fila) return;
@@ -1559,7 +1559,7 @@ else
         const isDesktop = window.matchMedia('(min-width: 992px)').matches;
         const zonaTabla = document.querySelector('.carrito-col .zona-tabla');
 
-        // foco real para que el usuario “sienta” que quedó ahí
+        // foco real para que el usuario ï¿½sientaï¿½ que quedï¿½ ahï¿½
         fila.tabIndex = -1;
         try { fila.focus({ preventScroll: true }); } catch { }
 
@@ -1584,7 +1584,7 @@ else
         if (lineasActuales.length === 0) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Venta vacía',
+                title: 'Venta vacï¿½a',
                 text: 'Debe agregar al menos un producto'
             });
             return;
@@ -1758,14 +1758,14 @@ else
         })();
 
         // ================================
-        // MODO COMPACTO AUTOMÁTICO (por alto)
+        // MODO COMPACTO AUTOMï¿½TICO (por alto)
         // - ayuda en 1366x768 / zoom 125%
         // ================================
         (function () {
             function aplicarCompacto() {
                 const h = window.innerHeight || document.documentElement.clientHeight;
 
-                // Ajustá umbrales si querés
+                // Ajustï¿½ umbrales si querï¿½s
                 document.documentElement.classList.toggle("pos-compact", h < 820);
                 document.documentElement.classList.toggle("pos-tiny", h < 740);
             }
@@ -2220,8 +2220,8 @@ else
                 const $modalFinanzas = $('#modalFinanzasPOS');
                 const $modalActivo = $('.modal.show').last();
 
-                // Verificamos si el modal de Finanzas POS está abierto
-                // y además es el modal activo
+                // Verificamos si el modal de Finanzas POS estï¿½ abierto
+                // y ademï¿½s es el modal activo
                 if ($modalFinanzas.hasClass('show') && $modalActivo.is($modalFinanzas)) {
                     $modalFinanzas.modal('hide');
                 }
@@ -2603,7 +2603,7 @@ else
         background: transparent;
     }
 
-    /* ? highlight último item */
+    /* ? highlight ï¿½ltimo item */
     .fila-ultimo {
         background: rgba(25,135,84,.08);
     }
@@ -2790,7 +2790,7 @@ else
         .zona-botones {
             margin-bottom: .25rem;
         }
-        /* fija el alto del nombre para que no “baila” */
+        /* fija el alto del nombre para que no ï¿½bailaï¿½ */
         #prodNombre {
             white-space: nowrap;
             overflow: hidden;
@@ -2852,7 +2852,7 @@ else
         }
     }
 
-    /* Teclas numéricas */
+    /* Teclas numï¿½ricas */
     .keyboard-grid .btn-light {
         background-color: #fff;
         border: 1px solid #d0d0d0;
@@ -2871,7 +2871,7 @@ else
     }
 
     /* =========================================================
-      8) FULLSCREEN botón activo
+      8) FULLSCREEN botï¿½n activo
       ========================================================= */
     #btn-toggle-fullscreen.is-fullscreen {
         background: #198754;
@@ -3009,13 +3009,13 @@ else
             margin-bottom: .22rem !important;
         }
 
-    /* Total un poquito más chico cuando no entra cómodo */
+    /* Total un poquito mï¿½s chico cuando no entra cï¿½modo */
     html.pos-compact .pos-total-value {
         font-size: 2.2rem !important;
         line-height: 1.05 !important;
     }
 
-    /* Teclado: baja gaps y fuente para que no “explote” en 768 */
+    /* Teclado: baja gaps y fuente para que no ï¿½exploteï¿½ en 768 */
     html.pos-compact .keyboard-grid {
         gap: 5px !important;
         grid-auto-rows: minmax(30px, 1fr) !important;
@@ -3084,7 +3084,7 @@ else
      BLOQUE INFO PRODUCTO: estirar alto y alinear columnas
      ========================================================= */
     #producto-info {
-        /* hace más alto el bloque sin romper en pantallas chicas */
+        /* hace mï¿½s alto el bloque sin romper en pantallas chicas */
         min-height: clamp(260px, 38vh, 460px);
     }
 
@@ -3099,7 +3099,7 @@ else
             flex-direction: column;
             min-height: 0;
         }
-        /* Teclas grandes pero con mínimo garantizado */
+        /* Teclas grandes pero con mï¿½nimo garantizado */
         .keyboard-grid {
             --key-h: clamp(46px, 6.2vh, 78px);
             gap: 8px;
@@ -3122,8 +3122,8 @@ else
     }
 
     /* =========================================================
-     Si usás pos-compact / pos-tiny: NO lo dejes bajar demasiado
-     (si no, el teclado se “aplasta”)
+     Si usï¿½s pos-compact / pos-tiny: NO lo dejes bajar demasiado
+     (si no, el teclado se ï¿½aplastaï¿½)
      ========================================================= */
     html.pos-compact .keyboard-grid {
         --key-h: max(44px, clamp(44px, 5.6vh, 64px));
@@ -3158,24 +3158,24 @@ else
         }
     }
 
-    /* opcional: highlight del último */
+    /* opcional: highlight del ï¿½ltimo */
     #tablaItems tr.pos-last-added {
         outline: 2px solid rgba(25,135,84,.35);
         background: rgba(25,135,84,.08);
     }
 
     /* =========================================================
-     RESPONSIVE: asegurar scroll de página (si algo lo bloqueó)
+     RESPONSIVE: asegurar scroll de pï¿½gina (si algo lo bloqueï¿½)
      ========================================================= */
     @@media (max-width: 991.98px) {
-        /* 1) Asegurar que la página pueda scrollear */
+        /* 1) Asegurar que la pï¿½gina pueda scrollear */
         html, body {
             height: auto !important;
             min-height: 100% !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
         }
-        /* 2) Evitar que el “panel POS” quede clavado con alto fijo/overflow hidden */
+        /* 2) Evitar que el ï¿½panel POSï¿½ quede clavado con alto fijo/overflow hidden */
         #pos-app,
         #pos-app > .card,
         #pos-app .card-body,
@@ -3185,8 +3185,8 @@ else
             min-height: 0 !important;
             overflow: visible !important;
         }
-        /* 3) Si querés que el carrito también pueda scrollear internamente en tablet,
-          activalo acá (recomendado para no perder zona-total dentro del panel) */
+        /* 3) Si querï¿½s que el carrito tambiï¿½n pueda scrollear internamente en tablet,
+          activalo acï¿½ (recomendado para no perder zona-total dentro del panel) */
         .carrito-col {
             display: flex;
             flex-direction: column;
@@ -3198,7 +3198,7 @@ else
             -webkit-overflow-scrolling: touch;
             flex: 1 1 auto;
             min-height: 0;
-            /* Ajustá este valor si querés más/menos alto de tabla en responsive */
+            /* Ajustï¿½ este valor si querï¿½s mï¿½s/menos alto de tabla en responsive */
             max-height: 55vh;
         }
 
@@ -3241,7 +3241,7 @@ else
             .producto-resumen .lbl-subtotal {
                 display: none !important;
             }
-            /* “aplastar” contenedores para que #prodPrecio / #inputCantidad / #prodSubtotal
+            /* ï¿½aplastarï¿½ contenedores para que #prodPrecio / #inputCantidad / #prodSubtotal
          participen directamente en la grilla */
             .producto-resumen > .mb-3 {
                 display: contents;
@@ -3251,7 +3251,7 @@ else
                 .producto-resumen > .mb-3 > .d-flex {
                     display: contents !important;
                 }
-            /* ubicar cada pieza en su área */
+            /* ubicar cada pieza en su ï¿½rea */
             .producto-resumen #prodNombre {
                 grid-area: nombre;
                 margin: 0 !important;
@@ -3274,7 +3274,7 @@ else
                 grid-area: cantidad;
                 justify-self: start;
                 width: 100%;
-                max-width: 180px; /* ajustalo si querés más chico/grande */
+                max-width: 180px; /* ajustalo si querï¿½s mï¿½s chico/grande */
             }
 
             .producto-resumen #prodSubtotal {
@@ -3290,7 +3290,7 @@ else
                 font-weight: 100 !important;
                 line-height: 1.15 !important;
             }
-        /* 2) Más aire vertical entre filas (evita que quede pegado al teclado) */
+        /* 2) Mï¿½s aire vertical entre filas (evita que quede pegado al teclado) */
         .producto-resumen {
             row-gap: .45rem !important; /* antes .25rem */
             padding-bottom: .35rem; /* aire extra abajo */
@@ -3306,7 +3306,7 @@ else
             margin-top: .10rem;
         }
     }
-    /* Forzar alineación del texto dentro del input SIEMPRE a la izquierda */
+    /* Forzar alineaciï¿½n del texto dentro del input SIEMPRE a la izquierda */
     #inputCantidad {
         text-align: right !important;
         direction: ltr;

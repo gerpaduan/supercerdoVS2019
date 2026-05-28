@@ -73,6 +73,12 @@ namespace Web.Controllers
                 ? idSucursal.Value
                 : (user.IdSucursal > 0 ? user.IdSucursal : 0);
 
+            if (!idSucursal.HasValue &&
+                string.Equals(tipoReporte, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase))
+            {
+                sucursalSeleccionada = 0;
+            }
+
             sucursalSeleccionada = AjustarSucursalSegunReporte(tipoReporte, sucursalSeleccionada, user);
 
             var model = CrearModeloBase(
@@ -579,9 +585,9 @@ namespace Web.Controllers
 
                 foreach (System.Data.DataRow row in dt.Rows)
                 {
-                    long codigo = LeerLong(row, "Codigo");
-                    string producto = LeerString(row, "Corte");
-                    int idCorte = LeerInt(row, "idCorte");
+                    long codigo = LeerLongPrimeraCoincidencia(row, "Codigo", "codigo");
+                    string producto = LeerStringPrimeraCoincidencia(row, "Corte", "Producto", "corte");
+                    int idCorte = LeerIntPrimeraCoincidencia(row, "idCorte", "IdCorte");
                     Entidades.Corte corteMeta = null;
 
                     if (idCorte > 0)
@@ -601,11 +607,17 @@ namespace Web.Controllers
                             idCorte = corteMeta.IdCorte;
                     }
 
+                    string productoNormalizado = !string.IsNullOrWhiteSpace(producto)
+                        ? producto
+                        : corteMeta != null
+                            ? (!string.IsNullOrWhiteSpace(corteMeta.CorteDesc) ? corteMeta.CorteDesc : (corteMeta.corte ?? ""))
+                            : "";
+
                     var filaKey = idCorte > 0
                         ? "ID:" + idCorte.ToString(CultureInfo.InvariantCulture)
                         : codigo > 0
                             ? "COD:" + codigo.ToString(CultureInfo.InvariantCulture)
-                            : "NOM:" + NormalizarClaveProducto(producto);
+                            : "NOM:" + NormalizarClaveProducto(productoNormalizado);
 
                     if (string.Equals(filaKey, "NOM:", StringComparison.OrdinalIgnoreCase))
                         continue;
@@ -617,13 +629,16 @@ namespace Web.Controllers
                         {
                             IdCorte = idCorte,
                             Codigo = codigo,
-                            Producto = producto,
+                            Producto = productoNormalizado,
                             TipoProducto = corteMeta != null ? (corteMeta.Tipo ?? "") : "",
                             MarcaId = corteMeta != null && corteMeta.Marca != null ? corteMeta.Marca.IdPersona : 0,
                             Marca = corteMeta != null ? (corteMeta.MarcaNombre ?? "") : ""
                         };
                         filas[filaKey] = fila;
                     }
+
+                    if (string.IsNullOrWhiteSpace(fila.Producto))
+                        fila.Producto = productoNormalizado;
 
                     fila.ValoresPeriodo.Add(new ReporteVentasProductoValorVm
                     {
@@ -1286,6 +1301,17 @@ namespace Web.Controllers
             return 0m;
         }
 
+        private int LeerIntPrimeraCoincidencia(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas ?? new string[0])
+            {
+                if (row != null && row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                    return Convert.ToInt32(row[columna], CultureInfo.InvariantCulture);
+            }
+
+            return 0;
+        }
+
         private int LeerInt(System.Data.DataRow row, string columna)
         {
             return row != null && row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value
@@ -1293,11 +1319,33 @@ namespace Web.Controllers
                 : 0;
         }
 
+        private long LeerLongPrimeraCoincidencia(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas ?? new string[0])
+            {
+                if (row != null && row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                    return Convert.ToInt64(row[columna], CultureInfo.InvariantCulture);
+            }
+
+            return 0L;
+        }
+
         private long LeerLong(System.Data.DataRow row, string columna)
         {
             return row != null && row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value
                 ? Convert.ToInt64(row[columna], CultureInfo.InvariantCulture)
                 : 0L;
+        }
+
+        private string LeerStringPrimeraCoincidencia(System.Data.DataRow row, params string[] columnas)
+        {
+            foreach (var columna in columnas ?? new string[0])
+            {
+                if (row != null && row.Table.Columns.Contains(columna) && row[columna] != DBNull.Value)
+                    return Convert.ToString(row[columna]);
+            }
+
+            return "";
         }
 
         private string LeerString(System.Data.DataRow row, string columna)
