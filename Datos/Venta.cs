@@ -501,6 +501,10 @@ namespace Datos
                         IndexAnulado = dr["idLineaVentaAnulado"] == DBNull.Value ? -1 : Convert.ToInt32(dr["idLineaVentaAnulado"])
                     };
 
+                    // Al editar una venta existente, WinForms reconstruye las líneas usando
+                    // KgsTotalCalculado como cantidad efectiva a regrabar.
+                    // Si no viene seteado desde BD, queda en 0 y la modificación pisa todos los kg.
+                    oLinea.KgsTotalCalculado = oLinea.CantKg;
                     oLinea.PrecioKgOriginal = oLinea.PrecioKg;
                     oLinea.PesoBalanza = (dr["pesoBalanza"] != DBNull.Value) && Convert.ToBoolean(dr["pesoBalanza"]);
                     oLinea.Estado = string.IsNullOrEmpty(dr["estado"]?.ToString()) ? 0 : 1;
