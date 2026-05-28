@@ -70,13 +70,31 @@
             <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex align-items-stretch justify-content-between">
 
                 <div class="pos-meta flex-grow-1 text-left text-lg-right pr-2">
-                    <div class="pos-empresa text-truncate">
-                        @(Session["Usuario"] != null
-                            ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia + " | SUC: " + ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre
-                            : "")
+                    <div class="pos-meta-main">
+                        <div class="pos-brand-shell">
+                            <div class="pos-brand-mark">
+                                <i class="fas fa-store-alt"></i>
+                            </div>
+                            <div class="pos-brand-copy">
+                                <div class="pos-brand-label">Punto de venta</div>
+                                <div class="pos-empresa text-truncate">
+                                    @(Session["Usuario"] != null
+                                        ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia
+                                        : "")
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pos-sucursal-chip text-truncate">
+                            <span class="pos-sucursal-chip-label">Sucursal</span>
+                            <span class="pos-sucursal">
+                                @(Session["Usuario"] != null
+                                    ? ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre
+                                    : "")
+                            </span>
+                        </div>
                     </div>
 
-                    <div class="pos-fecha">
+                    <div class="pos-fecha pos-meta-time">
                         @if (puedeEditarFechaVenta)
                         {
                             <label for="fechaVentaEditable" class="small d-block mb-1">Fecha y hora</label>
@@ -87,8 +105,14 @@
                         }
                         else
                         {
-                            <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                            <span class="pos-time-chip">
+                                <i class="far fa-clock"></i>
+                                <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                            </span>
                         }
+                    </div>
+
+                    <div class="pos-meta-hidden">
                         <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
                         <input type="hidden" id="idVentaEditar" value="@idVentaEditar" />
                         <input type="hidden" id="idSucursalPOS" value="@idSucursalPOS" />
@@ -2292,15 +2316,113 @@ else
         opacity: .9;
     }
 
+    .pos-meta-main {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .55rem;
+        min-width: 0;
+    }
+
+    .pos-brand-shell {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        min-width: 0;
+    }
+
+    .pos-brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #fff3e8 0%, #ffe0c1 100%);
+        color: #b45309;
+        border: 1px solid rgba(180, 83, 9, .16);
+        flex: 0 0 auto;
+    }
+
+    .pos-brand-copy {
+        min-width: 0;
+    }
+
+    .pos-brand-label {
+        font-size: .68rem;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--posbar-muted);
+        margin-bottom: .15rem;
+    }
+
     .pos-empresa {
         font-weight: 700;
         color: var(--posbar-text);
+        min-width: 0;
+        font-size: .98rem;
+    }
+
+    .pos-sucursal-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        max-width: 210px;
+        padding: .34rem .55rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, .05);
+        border: 1px solid rgba(15, 23, 42, .07);
+        color: var(--posbar-text);
+    }
+
+    .pos-sucursal-chip-label {
+        font-size: .68rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--posbar-muted);
+        white-space: nowrap;
+    }
+
+    .pos-sucursal {
+        color: var(--posbar-text);
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .pos-fecha {
         color: var(--posbar-muted);
-        font-size: .95rem;
+        font-size: .88rem;
         line-height: 1.15;
+    }
+
+    .pos-meta-time {
+        margin-top: .2rem;
+    }
+
+    .pos-time-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .22rem .55rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, .04);
+        border: 1px solid rgba(15, 23, 42, .06);
+        color: var(--posbar-text);
+    }
+
+    .pos-time-chip i {
+        font-size: .78rem;
+        color: #cb6d32;
+    }
+
+    .pos-meta-hidden {
+        display: none;
     }
 
     .pos-btn-fullscreen {
@@ -2342,6 +2464,14 @@ else
         gap: .35rem;
         white-space: nowrap;
         min-height: 44px;
+        border-radius: 10px;
+        border-color: #d9dee5;
+        background: linear-gradient(180deg, #ffffff 0%, #f3f6f8 100%);
+    }
+
+    .pos-btn-layout:hover,
+    .pos-btn-fullscreen:hover {
+        transform: translateY(-1px);
     }
 
     .pos-cliente .form-control,
@@ -2362,6 +2492,24 @@ else
     .pos-cliente .input-group-append .btn {
         border-color: #cfd6de;
         box-shadow: none;
+    }
+
+    .pos-cliente .input-group {
+        border: 1px solid #d8dee6;
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #fbfcfd 0%, #f1f4f7 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+    }
+
+    .pos-cliente .input-group > .form-control {
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    .pos-cliente .input-group-append .btn {
+        border-top: 0;
+        border-bottom: 0;
     }
 
     #btnBuscarPersona {
@@ -2425,10 +2573,45 @@ else
         color: #f2f6fa;
     }
 
+    html.dark-mode .pos-brand-mark {
+        background: linear-gradient(135deg, rgba(203,109,50,.18) 0%, rgba(203,109,50,.30) 100%);
+        border-color: rgba(255,255,255,.08);
+        color: #ffd7be;
+    }
+
+    html.dark-mode .pos-sucursal-chip,
+    html.dark-mode .pos-time-chip {
+        background: rgba(255,255,255,.05);
+        border-color: rgba(255,255,255,.08);
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .pos-sucursal-chip-label,
+    html.dark-mode .pos-brand-label {
+        color: #97a7bd;
+    }
+
+    html.dark-mode .pos-btn-layout,
+    html.dark-mode .pos-btn-fullscreen {
+        background: linear-gradient(180deg, #18283b 0%, #132032 100%);
+        border-color: #314155;
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .pos-cliente .input-group {
+        background: linear-gradient(180deg, #162437 0%, #132032 100%);
+        border-color: #314155;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
 
     @@media (min-width: 992px) {
         .pos-meta {
             min-width: 0;
+        }
+
+        .pos-meta-main {
+            justify-content: flex-end;
         }
 
         .pos-btn-fullscreen,
@@ -2441,6 +2624,16 @@ else
     @@media (max-width: 991.98px) {
         .pos-meta {
             text-align: left !important;
+        }
+
+        .pos-meta-main {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .pos-sucursal-chip {
+            max-width: 100%;
         }
 
         .pos-btn-layout span {
@@ -3332,6 +3525,7 @@ else
     }
 
     html.dark-mode .pos-page .pos-empresa,
+    html.dark-mode .pos-page .pos-sucursal,
     html.dark-mode .pos-page .pos-total-label,
     html.dark-mode .pos-page #prodNombre,
     html.dark-mode .pos-page #prodPrecio,

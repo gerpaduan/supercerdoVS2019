@@ -7,8 +7,8 @@ body.dark-mode {
     background-color: #2b2d31 !important; /* gris base */
     color: #d6d6d6 !important;
     --pos-surface: #2f3136;
-    --pos-surface-alt: #34373d;
-    --pos-surface-soft: #3a3d43;
+    --pos-surface-alt: #243447;
+    --pos-surface-soft: #2d4158;
     --pos-text: #e6e6e6;
     --pos-text-soft: #c9d1db;
     --pos-text-muted: #aeb6c2;
@@ -205,6 +205,65 @@ body.dark-mode {
     body.dark-mode .list-group-item-action:focus {
         background-color: var(--pos-surface-alt) !important;
         color: #fff;
+    }
+
+    body.dark-mode .egresos-pos-toolbar,
+    body.dark-mode .egresos-resumen > div {
+        border-color: var(--pos-border) !important;
+        color: var(--pos-text) !important;
+        background-color: #182232 !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .bg-light,
+    body.dark-mode #modalFinanzasPOS .fecha-grupo {
+        background-color: #1d293a !important;
+        color: var(--pos-text) !important;
+        border-color: var(--pos-border) !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .btn-outline-secondary {
+        color: var(--pos-text) !important;
+        border-color: var(--pos-border) !important;
+        background-color: transparent !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .btn-outline-secondary:hover,
+    body.dark-mode #modalFinanzasPOS .btn-outline-secondary:focus {
+        background-color: var(--pos-surface-soft) !important;
+        border-color: #5a6068 !important;
+        color: #fff !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .venta-item:hover {
+        background-color: #1f2d41 !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .venta-item,
+    body.dark-mode #modalFinanzasPOS .venta-item-modal {
+        background-color: #182232 !important;
+        color: var(--pos-text) !important;
+        border-color: var(--pos-border) !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .venta-tipo-persona,
+    body.dark-mode #modalFinanzasPOS .venta-total,
+    body.dark-mode #modalFinanzasPOS .venta-total .importe {
+        color: var(--pos-text) !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .venta-id {
+        color: var(--pos-text-muted) !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .venta-obs {
+        color: var(--pos-text-muted) !important;
+    }
+
+    body.dark-mode #modalFinanzasPOS .card-body.bg-white,
+    body.dark-mode #modalFinanzasPOS .venta-lineas,
+    body.dark-mode #modalFinanzasPOS .venta-lineas.bg-white {
+        background-color: #1d293a !important;
+        color: var(--pos-text) !important;
     }
 
     body.dark-mode .border-top,
