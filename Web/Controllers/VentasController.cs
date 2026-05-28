@@ -531,6 +531,7 @@ namespace Web.Controllers
             // Paso info a la vista
             ViewBag.CajaAbierta = cajaAbierta;
             ViewBag.SucursalNombre = user.SucursalNombre;
+            ViewBag.Sucursales = oSucursalN.findAll();
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.SoloFormaPago = soloFormaPago;
             ViewBag.ReturnUrlPOS = DecodeReturnUrlIfNeeded(returnUrl);

@@ -16,6 +16,9 @@
     string returnUrlPOS = ViewBag.ReturnUrlPOS as string ?? "";
     int abrirDetalleVentaId = ViewBag.AbrirDetalleVentaId != null ? (int)ViewBag.AbrirDetalleVentaId : 0;
     string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
+    string sucursalNombrePOS = Session["Usuario"] != null && ((Entidades.Usuario)Session["Usuario"]).Sucursal != null
+        ? ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre
+        : "";
     var lineasActivas = (Model != null && Model.LineasVenta != null)
         ? Model.LineasVenta.Where(l => !Entidades.LineaVenta.esAnulado(l.Estado)).ToList()
         : new List<Entidades.LineaVenta>();
@@ -747,6 +750,9 @@ else
             success: function (r) {
                 if (r && r.ok) {
                     // ? Ya se abri�: recargo el POS (ahora el controller deber�a dejarte entrar)
+                    try {
+                        sessionStorage.setItem("pos-mostrar-recordatorio-sucursal", "1");
+                    } catch (e) { }
                     $("#modalAbrirCaja").modal('hide');
                     location.reload();
                     return;
@@ -896,6 +902,106 @@ else
         pagoMixtoEfectivo: @Html.Raw(Json.Encode(Model != null ? Model.PagoMixtoEfectivo : 0f)),
         total: @Html.Raw(Json.Encode(Model != null ? Model.TotalImporte : 0f))
     };
+    const sucursalNombrePOS = @Html.Raw(Json.Encode(sucursalNombrePOS));
+    const POS_INACTIVIDAD_RECORDATORIO_MS = 3 * 60 * 60 * 1000;
+    const POS_RECORDATORIO_SUCURSAL_KEY = "pos-mostrar-recordatorio-sucursal";
+    let posInactividadTimer = null;
+    let posRecordatorioSucursalAbierto = false;
+    let posAbrioSucursalDesdeRecordatorio = false;
+
+    function htmlRecordatorioSucursalPOS() {
+        const sucursalSegura = $('<div>').text(sucursalNombrePOS || '').html();
+        return ''
+            + '<div class="mb-2">Usted esta operando en la sucursal:</div>'
+            + '<div style="font-size:1.75rem; font-weight:700; line-height:1.2;">' + sucursalSegura + '</div>'
+            + '<div class="mt-3">'
+            + '  <button type="button" id="btnCambiarSucursalDesdeRecordatorio" class="btn btn-outline-secondary btn-sm">Cambiar sucursal</button>'
+            + '</div>';
+    }
+
+    function abrirModalCambioSucursalDesdeRecordatorio() {
+        posAbrioSucursalDesdeRecordatorio = true;
+        if (window.Swal) {
+            Swal.close();
+        }
+
+        setTimeout(function () {
+            $("#modalSucursales").modal("show");
+        }, 150);
+    }
+
+    function mostrarRecordatorioSucursalPOS(reiniciarDespues) {
+        if (!sucursalNombrePOS || !window.Swal || posRecordatorioSucursalAbierto) {
+            return;
+        }
+
+        posRecordatorioSucursalAbierto = true;
+        posAbrioSucursalDesdeRecordatorio = false;
+        Swal.fire({
+            icon: 'info',
+            html: htmlRecordatorioSucursalPOS(),
+            confirmButtonText: 'Continuar',
+            confirmButtonColor: '#4e73df',
+            allowOutsideClick: false,
+            didOpen: function () {
+                const btnCambiarSucursal = document.getElementById('btnCambiarSucursalDesdeRecordatorio');
+                if (btnCambiarSucursal) {
+                    btnCambiarSucursal.addEventListener('click', abrirModalCambioSucursalDesdeRecordatorio);
+                }
+            }
+        }).then(function () {
+            posRecordatorioSucursalAbierto = false;
+            if (!posAbrioSucursalDesdeRecordatorio && reiniciarDespues !== false) {
+                reiniciarTemporizadorInactividadPOS();
+            }
+        });
+    }
+
+    function reiniciarTemporizadorInactividadPOS() {
+        if (posInactividadTimer) {
+            clearTimeout(posInactividadTimer);
+        }
+
+        posInactividadTimer = setTimeout(function () {
+            mostrarRecordatorioSucursalPOS();
+        }, POS_INACTIVIDAD_RECORDATORIO_MS);
+    }
+
+    function registrarActividadPOS() {
+        if (posRecordatorioSucursalAbierto) {
+            return;
+        }
+
+        reiniciarTemporizadorInactividadPOS();
+    }
+
+    if (sucursalNombrePOS) {
+        let mostrarAlAbrirCaja = false;
+        try {
+            mostrarAlAbrirCaja = sessionStorage.getItem(POS_RECORDATORIO_SUCURSAL_KEY) === "1";
+            sessionStorage.removeItem(POS_RECORDATORIO_SUCURSAL_KEY);
+        } catch (e) { }
+
+        if (mostrarAlAbrirCaja) {
+            setTimeout(function () {
+                if (window.Swal) {
+                    mostrarRecordatorioSucursalPOS(true);
+                }
+            }, 250);
+        }
+
+        ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(function (eventName) {
+            window.addEventListener(eventName, registrarActividadPOS, { passive: true });
+        });
+
+        reiniciarTemporizadorInactividadPOS();
+    }
+
+    $(document).on("sucursal:cambiada", function () {
+        window.desactivarAvisoSalidaPOS?.();
+        window.POSDraft?.clear?.();
+        window.location.href = '@Url.Action("POS", "Ventas")';
+    });
 
     function getFechaVentaPOS() {
         return $("#fechaVentaEditable").length ? $("#fechaVentaEditable").val() : $("#fechaVenta").val();

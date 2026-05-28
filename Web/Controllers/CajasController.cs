@@ -26,6 +26,12 @@ namespace Web.Controllers
             public string Mensaje { get; set; }
         }
 
+        public sealed class CambioSucursalCajaPostVm
+        {
+            public int IdCierre { get; set; }
+            public int IdSucursalNueva { get; set; }
+        }
+
         protected override void OnActionExecuting(
             ActionExecutingContext filterContext)
         {
@@ -51,6 +57,7 @@ namespace Web.Controllers
             // --- Sucursales para el combo ---
             var sucursales = oSucursalN.findAll();
             ViewBag.Sucursales = sucursales;
+            ViewBag.PuedeCambiarSucursalCaja = PuedeCambiarSucursalCaja(user, sucursales);
             ViewBag.IdSucursal = idSucursal;
             ViewBag.Buscar = buscar;
 
@@ -620,6 +627,69 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        public JsonResult PreviewCambioSucursalCaja(int idCierre, int idSucursalNueva)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesion invalida." }, JsonRequestBehavior.AllowGet);
+
+            var sucursales = oSucursalN.findAll();
+            if (!PuedeCambiarSucursalCaja(user, sucursales))
+                return Json(new { ok = false, mensaje = "No tiene permisos para cambiar la sucursal de una caja." }, JsonRequestBehavior.AllowGet);
+
+            var cierre = oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0)
+                return Json(new { ok = false, mensaje = "No se encontro la caja seleccionada." }, JsonRequestBehavior.AllowGet);
+            if (!CajaSigueAbierta(cierre))
+                return Json(new { ok = false, mensaje = "La caja seleccionada ya no se encuentra abierta." }, JsonRequestBehavior.AllowGet);
+
+            var preview = oCierreN.obtenerPreviewCambioSucursalCaja(cierre, idSucursalNueva);
+            return Json(new
+            {
+                ok = true,
+                puedeEjecutar = preview.PuedeEjecutar,
+                mensaje = preview.Mensaje,
+                tieneCajaAbiertaEnDestino = preview.TieneCajaAbiertaEnDestino,
+                idCierreCaja = preview.IdCierreCaja,
+                sucursalActual = preview.SucursalActual,
+                sucursalNueva = preview.SucursalNueva,
+                usuarioCaja = preview.UsuarioCaja,
+                fechaDesde = preview.FechaDesde.ToString("dd/MM/yyyy HH:mm"),
+                fechaHasta = preview.FechaHasta.ToString("dd/MM/yyyy HH:mm"),
+                tablas = preview.Tablas.Select(t => new { tabla = t.Tabla, cantidad = t.Cantidad }).ToList()
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult CambiarSucursalCaja(CambioSucursalCajaPostVm model)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesion invalida." });
+
+            var sucursales = oSucursalN.findAll();
+            if (!PuedeCambiarSucursalCaja(user, sucursales))
+                return Json(new { ok = false, mensaje = "No tiene permisos para cambiar la sucursal de una caja." });
+
+            if (model == null || model.IdCierre <= 0 || model.IdSucursalNueva <= 0)
+                return Json(new { ok = false, mensaje = "Datos invalidos para cambiar la sucursal." });
+
+            var cierre = oCierreN.findByIdOrLast(new CierreCaja { Id = model.IdCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0)
+                return Json(new { ok = false, mensaje = "No se encontro la caja seleccionada." });
+            if (!CajaSigueAbierta(cierre))
+                return Json(new { ok = false, mensaje = "La caja seleccionada ya no se encuentra abierta." });
+
+            var resultado = oCierreN.cambiarSucursalCaja(cierre, model.IdSucursalNueva, user.Id, user.Nombre);
+            return Json(new
+            {
+                ok = resultado.Ok,
+                mensaje = resultado.Mensaje,
+                tablas = resultado.Tablas.Select(t => new { tabla = t.Tabla, cantidad = t.Cantidad }).ToList()
+            });
+        }
+
         public ActionResult CerrarCaja(
                 int Id,
                 string CajaCierre,
@@ -1005,6 +1075,16 @@ namespace Web.Controllers
             }
 
             return total;
+        }
+
+        private bool PuedeCambiarSucursalCaja(Entidades.Usuario user, List<Entidades.Sucursal> sucursales = null)
+        {
+            if (user == null)
+                return false;
+
+            bool tienePermiso = user.Admin || PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja);
+            int cantidadSucursales = sucursales != null ? sucursales.Count : oSucursalN.findAll().Count;
+            return tienePermiso && cantidadSucursales > 1;
         }
 
         private int ValorInt(DataRow row, string columna)

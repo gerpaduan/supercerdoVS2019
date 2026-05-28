@@ -4,6 +4,8 @@ using System.Web;
 using System.Web.Mvc;
 using Utilidades;
 using Web.Helpers;
+using System.Collections.Generic;
+using Entidades;
 
 namespace Web.Controllers
 {
@@ -42,6 +44,27 @@ namespace Web.Controllers
                 param = new Negocio.Parametros(empresa);
                 param.Reload();
                 Session["PARAM_CTX"] = param;
+            }
+
+            var usuario = Session["Usuario"] as Usuario;
+            if (usuario != null)
+            {
+                var sucursalN = new Negocio.Sucursal(empresa, param);
+                var sucursales = sucursalN.findAll() ?? new List<Sucursal>();
+                ViewBag.Sucursales = sucursales;
+
+                if (usuario.IdSucursal > 0)
+                {
+                    var sucursalActual = sucursales.Find(s => s != null && s.IdSucursal == usuario.IdSucursal)
+                        ?? sucursalN.findById(usuario.IdSucursal);
+
+                    if (sucursalActual != null)
+                    {
+                        usuario.Sucursal = sucursalActual;
+                        usuario.SucursalNombre = sucursalActual.SucursalNombre;
+                        Session["Usuario"] = usuario;
+                    }
+                }
             }
 
             base.OnActionExecuting(filterContext);

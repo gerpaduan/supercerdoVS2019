@@ -3,12 +3,14 @@
 @{
     ViewBag.Title = "Cajas Abiertas";
     var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    bool puedeCambiarSucursalCaja = ViewBag.PuedeCambiarSucursalCaja != null && (bool)ViewBag.PuedeCambiarSucursalCaja;
     int? idSucursal = ViewBag.IdSucursal;
     string buscar = ViewBag.Buscar ?? "";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
 <div class="container-fluid">
+    @Html.AntiForgeryToken()
 
     <form id="formFiltros">
         <div class="row mb-3">
@@ -52,6 +54,71 @@
     </div>
 
 </div>
+
+@if (puedeCambiarSucursalCaja)
+{
+    <div class="modal fade" id="modalCambioSucursalCaja" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Cambiar sucursal de caja abierta</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="CambioSucursalIdCierre" />
+                    <input type="hidden" id="CambioSucursalIdActual" />
+
+                    <div class="alert alert-warning mb-3">
+                        Esta accion corregira la sucursal de la caja y de todas las operaciones asociadas. Usar solo cuando el cajero trabajo por error en una sucursal incorrecta.
+                    </div>
+
+                    <div id="cambioSucursalCajaError" class="alert alert-danger d-none"></div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Cajero</label>
+                            <input type="text" id="CambioSucursalUsuarioCaja" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label>Apertura</label>
+                            <input type="text" id="CambioSucursalFechaInicio" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label>Sucursal actual</label>
+                            <input type="text" id="CambioSucursalActualNombre" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label>Nueva sucursal</label>
+                            <select id="CambioSucursalNueva" class="form-control">
+                                <option value="">Seleccionar sucursal...</option>
+                                @foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal">@s.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label>Vista previa</label>
+                        <div id="cambioSucursalCajaPreview" class="border rounded p-3 bg-light text-muted">
+                            Selecciona la nueva sucursal para calcular los registros que se van a corregir.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnConfirmarCambioSucursalCaja" class="btn btn-warning" onclick="confirmarCambioSucursalCaja()" disabled>Cambiar sucursal</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="modal fade" id="modalEgresoCaja" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
@@ -204,6 +271,10 @@
             mis: '@Url.Action("MisVentas", "Ventas")',
             detalle: '@Url.Action("DetalleVenta", "Ventas")'
         };
+        window.CambioSucursalCajaUrls = {
+            preview: '@Url.Action("PreviewCambioSucursalCaja", "Cajas")',
+            guardar: '@Url.Action("CambiarSucursalCaja", "Cajas")'
+        };
 
         function filtrar() {
             const idSucursal = $("#idSucursal").val() || "";
@@ -248,8 +319,8 @@
         });
 
         $(document)
-            .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja')
-            .on('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja', function () {
+            .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
+            .on('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja', function () {
                 var zIndex = 1040 + (10 * $('.modal.show').length);
                 $(this).css('z-index', zIndex);
 
@@ -355,6 +426,148 @@
         window.CajasAbiertas.abrirVentas = abrirModalVentas;
         window.CajasAbiertas.abrirDetalleVenta = abrirDetalleVenta;
 
+        function abrirModalCambioSucursal(idCierre, idSucursalActual, sucursalActual, vendedor, fechaInicio) {
+            $("#CambioSucursalIdCierre").val(idCierre);
+            $("#CambioSucursalIdActual").val(idSucursalActual);
+            $("#CambioSucursalUsuarioCaja").val(vendedor || "");
+            $("#CambioSucursalFechaInicio").val(fechaInicio || "");
+            $("#CambioSucursalActualNombre").val(sucursalActual || "");
+            $("#CambioSucursalNueva").val("");
+            $("#CambioSucursalNueva option").prop("disabled", false);
+            if (idSucursalActual) {
+                $("#CambioSucursalNueva option[value='" + idSucursalActual + "']").prop("disabled", true);
+            }
+            $("#cambioSucursalCajaError").addClass("d-none").text("");
+            $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Selecciona la nueva sucursal para calcular los registros que se van a corregir.");
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+            $("#modalCambioSucursalCaja").modal("show");
+        }
+
+        function renderPreviewCambioSucursalCaja(resp) {
+            if (!resp || !resp.ok) {
+                $("#cambioSucursalCajaPreview").removeClass("text-muted").addClass("text-danger").text((resp && resp.mensaje) || "No se pudo generar la vista previa.");
+                $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+                return;
+            }
+
+            const mensaje = $('<div>').text(resp.mensaje || "").html();
+            let html = '<div class="mb-2"><strong>Rango:</strong> ' + $('<div>').text(resp.fechaDesde + ' - ' + resp.fechaHasta).html() + '</div>';
+            html += '<div class="mb-2"><strong>Origen:</strong> ' + $('<div>').text(resp.sucursalActual || "").html() + '</div>';
+            html += '<div class="mb-3"><strong>Destino:</strong> ' + $('<div>').text(resp.sucursalNueva || "").html() + '</div>';
+
+            if (resp.tablas && resp.tablas.length) {
+                html += '<div class="table-responsive"><table class="table table-sm table-bordered mb-2"><thead><tr><th>Tabla</th><th class="text-right">Registros</th></tr></thead><tbody>';
+                resp.tablas.forEach(function (item) {
+                    html += '<tr><td>' + $('<div>').text(item.tabla).html() + '</td><td class="text-right">' + item.cantidad + '</td></tr>';
+                });
+                html += '</tbody></table></div>';
+            }
+
+            html += '<div class="small ' + (resp.puedeEjecutar ? 'text-muted' : 'text-danger') + '">' + mensaje + '</div>';
+            $("#cambioSucursalCajaPreview").removeClass("text-muted text-danger").html(html);
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", !resp.puedeEjecutar);
+        }
+
+        function cargarPreviewCambioSucursalCaja() {
+            const idCierre = $("#CambioSucursalIdCierre").val();
+            const idSucursalNueva = $("#CambioSucursalNueva").val();
+
+            if (!idCierre || !idSucursalNueva) {
+                $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Selecciona la nueva sucursal para calcular los registros que se van a corregir.");
+                $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+                return;
+            }
+
+            $("#cambioSucursalCajaError").addClass("d-none").text("");
+            $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Calculando vista previa...");
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+
+            $.ajax({
+                url: window.CambioSucursalCajaUrls.preview,
+                type: 'GET',
+                data: {
+                    idCierre: idCierre,
+                    idSucursalNueva: idSucursalNueva
+                },
+                cache: false,
+                success: function (resp) {
+                    renderPreviewCambioSucursalCaja(resp);
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudo generar la vista previa.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    renderPreviewCambioSucursalCaja({ ok: false, mensaje: mensaje });
+                }
+            });
+        }
+
+        function confirmarCambioSucursalCaja() {
+            const idCierre = $("#CambioSucursalIdCierre").val();
+            const idSucursalNueva = $("#CambioSucursalNueva").val();
+
+            if (!idCierre || !idSucursalNueva) {
+                $("#cambioSucursalCajaError").removeClass("d-none").text("Selecciona la nueva sucursal antes de continuar.");
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Confirmar cambio de sucursal',
+                text: 'Esta accion corregira la sucursal de la caja y de todas las operaciones asociadas. Usar solo cuando el cajero trabajo por error en una sucursal incorrecta.',
+                showCancelButton: true,
+                confirmButtonText: 'Cambiar sucursal',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f0ad4e'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+                $.ajax({
+                    url: window.CambioSucursalCajaUrls.guardar,
+                    type: 'POST',
+                    data: {
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val(),
+                        IdCierre: idCierre,
+                        IdSucursalNueva: idSucursalNueva
+                    },
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            $("#cambioSucursalCajaError").removeClass("d-none").text((resp && resp.mensaje) || "No se pudo cambiar la sucursal.");
+                            $("#btnConfirmarCambioSucursalCaja").prop("disabled", false);
+                            return;
+                        }
+
+                        $("#modalCambioSucursalCaja").modal("hide");
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucursal corregida',
+                            text: resp.mensaje || 'La sucursal de la caja se actualizo correctamente.',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#4e73df'
+                        }).then(() => {
+                            filtrar();
+                        });
+                    },
+                    error: function (xhr) {
+                        let mensaje = "No se pudo cambiar la sucursal.";
+                        if (xhr && xhr.responseText) {
+                            mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                        }
+                        $("#cambioSucursalCajaError").removeClass("d-none").text(mensaje);
+                        $("#btnConfirmarCambioSucursalCaja").prop("disabled", false);
+                    }
+                });
+            });
+        }
+
+        $(document).on('change', '#CambioSucursalNueva', function () {
+            cargarPreviewCambioSucursalCaja();
+        });
+
         function abrirModalCerrarCaja(Id) {
             $("#cerrarCajaError").addClass("d-none").text("");
 
@@ -382,6 +595,19 @@
             $(this).find('textarea').val('');
             $(this).find('select').prop('selectedIndex', 0);
             $('.text-danger').addClass('d-none').text('');
+        });
+
+        $('#modalCambioSucursalCaja').on('hidden.bs.modal', function () {
+            $("#CambioSucursalIdCierre").val('');
+            $("#CambioSucursalIdActual").val('');
+            $("#CambioSucursalUsuarioCaja").val('');
+            $("#CambioSucursalFechaInicio").val('');
+            $("#CambioSucursalActualNombre").val('');
+            $("#CambioSucursalNueva").val('');
+            $("#CambioSucursalNueva option").prop("disabled", false);
+            $("#cambioSucursalCajaError").addClass("d-none").text('');
+            $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html('Selecciona la nueva sucursal para calcular los registros que se van a corregir.');
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
         });
 
         function esNumeroValido(v) {

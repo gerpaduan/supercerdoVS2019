@@ -189,6 +189,16 @@ namespace Negocio
             return oCierreD.getEgresosCajaVendedor(oCierreE);
         }
 
+        public Datos.CierreCaja.CambioSucursalCajaPreview obtenerPreviewCambioSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva)
+        {
+            return oCierreD.obtenerPreviewCambioSucursalCaja(cierreCaja, idSucursalNueva);
+        }
+
+        public Datos.CierreCaja.CambioSucursalCajaResultado cambiarSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva, int idUsuarioEjecutor, string usuarioEjecutor)
+        {
+            return oCierreD.cambiarSucursalCaja(cierreCaja, idSucursalNueva, idUsuarioEjecutor, usuarioEjecutor);
+        }
+
         public bool validarCajaAbiertaVendedor(DateTime fechaHoraRegistro, Entidades.Sucursal oSucursalE, Entidades.Usuario oUsuario)
         {
             bool resp = true;

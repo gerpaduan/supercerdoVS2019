@@ -10,6 +10,51 @@ namespace Datos
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        public sealed class CambioSucursalCajaTabla
+        {
+            public string Tabla { get; set; }
+            public int Cantidad { get; set; }
+        }
+
+        public sealed class CambioSucursalCajaPreview
+        {
+            public bool PuedeEjecutar { get; set; }
+            public string Mensaje { get; set; }
+            public int IdCierreCaja { get; set; }
+            public int IdCierreCajaNuevo { get; set; }
+            public int IdSucursalActual { get; set; }
+            public string SucursalActual { get; set; }
+            public int IdSucursalNueva { get; set; }
+            public string SucursalNueva { get; set; }
+            public int IdUsuarioCaja { get; set; }
+            public string UsuarioCaja { get; set; }
+            public DateTime FechaDesde { get; set; }
+            public DateTime FechaHasta { get; set; }
+            public bool TieneCajaAbiertaEnDestino { get; set; }
+            public List<CambioSucursalCajaTabla> Tablas { get; set; } = new List<CambioSucursalCajaTabla>();
+        }
+
+        public sealed class CambioSucursalCajaResultado
+        {
+            public bool Ok { get; set; }
+            public string Mensaje { get; set; }
+            public List<CambioSucursalCajaTabla> Tablas { get; set; } = new List<CambioSucursalCajaTabla>();
+        }
+
+        private sealed class CambioSucursalCajaPlan
+        {
+            public CambioSucursalCajaPreview Preview { get; set; }
+            public List<int> VentasIds { get; set; } = new List<int>();
+            public List<int> ComprasIds { get; set; } = new List<int>();
+            public List<int> PagosIds { get; set; } = new List<int>();
+            public List<int> EgresosIds { get; set; } = new List<int>();
+            public List<int> MovimientosIds { get; set; } = new List<int>();
+            public List<int> ExpendiosIds { get; set; } = new List<int>();
+            public List<int> TemporalesIds { get; set; } = new List<int>();
+            public int CortePorCompraCantidad { get; set; }
+            public int MediaResCantidad { get; set; }
+        }
+
         private static bool ColumnaExiste(SqlDataReader dr, string columna)
         {
             try
@@ -56,7 +101,7 @@ namespace Datos
 
                 case Entidades.CierreCaja.tipoBusqueda.FindOpen:
                     selectText =
-                        "select CierreCaja.id, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, " +
+                        "select CierreCaja.id, CierreCaja.idSucursal, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, " +
                         "Sucursal.sucursal, fechaHoraInicio, " +
                         "round(cajaInicio, 2) as cajaInicio " +
                         "from CierreCaja " +
@@ -447,6 +492,507 @@ namespace Datos
                     p.AddWithValue("@verEgresoCaja", true);
                 }
             );
+        }
+
+        public CambioSucursalCajaPreview obtenerPreviewCambioSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva)
+        {
+            if (cierreCaja == null) throw new ArgumentNullException(nameof(cierreCaja));
+
+            using (SqlConnection cn = Db.Open(_empresa))
+            {
+                return ConstruirPlanCambioSucursalCaja(cierreCaja, idSucursalNueva, cn, null).Preview;
+            }
+        }
+
+        public CambioSucursalCajaResultado cambiarSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva, int idUsuarioEjecutor, string usuarioEjecutor)
+        {
+            if (cierreCaja == null) throw new ArgumentNullException(nameof(cierreCaja));
+
+            using (SqlConnection cn = Db.Open(_empresa))
+            using (SqlTransaction tx = cn.BeginTransaction())
+            {
+                try
+                {
+                    var plan = ConstruirPlanCambioSucursalCaja(cierreCaja, idSucursalNueva, cn, tx);
+                    if (!plan.Preview.PuedeEjecutar)
+                    {
+                        tx.Rollback();
+                        return new CambioSucursalCajaResultado
+                        {
+                            Ok = false,
+                            Mensaje = plan.Preview.Mensaje,
+                            Tablas = plan.Preview.Tablas
+                        };
+                    }
+
+                    var counts = new List<CambioSucursalCajaTabla>();
+                    counts.Add(new CambioSucursalCajaTabla
+                    {
+                        Tabla = "CierreCaja",
+                        Cantidad = EjecutarNonQuery(cn, tx,
+                            "UPDATE CierreCaja SET id = @nuevoIdCierre, idSucursal = @nuevaSucursal WHERE idEmpresa = @idEmpresa AND id = @idCierre AND idSucursal = @sucursalActual",
+                            cmd =>
+                            {
+                                cmd.Parameters.Add("@nuevoIdCierre", SqlDbType.Int).Value = plan.Preview.IdCierreCajaNuevo;
+                                cmd.Parameters.Add("@nuevaSucursal", SqlDbType.Int).Value = plan.Preview.IdSucursalNueva;
+                                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                                cmd.Parameters.Add("@idCierre", SqlDbType.Int).Value = plan.Preview.IdCierreCaja;
+                                cmd.Parameters.Add("@sucursalActual", SqlDbType.Int).Value = plan.Preview.IdSucursalActual;
+                            })
+                    });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "Ventas", Cantidad = ActualizarIds(cn, tx, "Ventas", "idVenta", plan.VentasIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "Compras", Cantidad = ActualizarIds(cn, tx, "Compras", "idCompra", plan.ComprasIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "CortePorCompra", Cantidad = ActualizarPorCompras(cn, tx, "CortePorCompra", plan.ComprasIds, plan.Preview.IdSucursalNueva, plan.Preview.IdSucursalActual) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "MediaRes", Cantidad = ActualizarPorCompras(cn, tx, "MediaRes", plan.ComprasIds, plan.Preview.IdSucursalNueva, plan.Preview.IdSucursalActual) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "Pagos", Cantidad = ActualizarIds(cn, tx, "Pagos", "id", plan.PagosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "EgresosCaja", Cantidad = ActualizarIds(cn, tx, "EgresosCaja", "id", plan.EgresosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "MovCtaCte", Cantidad = ActualizarIds(cn, tx, "MovCtaCte", "id", plan.MovimientosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "Expendios", Cantidad = ActualizarIds(cn, tx, "Expendios", "idExpendio", plan.ExpendiosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new CambioSucursalCajaTabla { Tabla = "TemporalLineaVenta", Cantidad = ActualizarIds(cn, tx, "TemporalLineaVenta", "id", plan.TemporalesIds, plan.Preview.IdSucursalNueva) });
+
+                    AsegurarTablaAuditoriaCambioSucursalCaja(cn, tx);
+                    InsertarAuditoriaCambioSucursalCaja(cn, tx, plan, counts, idUsuarioEjecutor, usuarioEjecutor);
+
+                    tx.Commit();
+
+                    return new CambioSucursalCajaResultado
+                    {
+                        Ok = true,
+                        Mensaje = "La sucursal de la caja y sus operaciones asociadas se actualizó correctamente.",
+                        Tablas = counts
+                    };
+                }
+                catch (Exception ex)
+                {
+                    tx.Rollback();
+                    return new CambioSucursalCajaResultado
+                    {
+                        Ok = false,
+                        Mensaje = ex.Message
+                    };
+                }
+            }
+        }
+
+        private CambioSucursalCajaPlan ConstruirPlanCambioSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva, SqlConnection cn, SqlTransaction tx)
+        {
+            var preview = new CambioSucursalCajaPreview
+            {
+                PuedeEjecutar = false,
+                Mensaje = "",
+                IdCierreCaja = cierreCaja.Id,
+                IdSucursalActual = cierreCaja.Sucursal != null ? cierreCaja.Sucursal.IdSucursal : 0,
+                SucursalActual = cierreCaja.Sucursal != null ? cierreCaja.Sucursal.SucursalNombre : "",
+                IdSucursalNueva = idSucursalNueva,
+                IdUsuarioCaja = cierreCaja.UsuarioInicio != null ? cierreCaja.UsuarioInicio.Id : 0,
+                UsuarioCaja = cierreCaja.UsuarioInicio != null ? cierreCaja.UsuarioInicio.Nombre : "",
+                FechaDesde = cierreCaja.FechaHoraInicio ?? DateTime.Now,
+                FechaHasta = cierreCaja.FechaHoraCierre ?? DateTime.Now
+            };
+
+            var plan = new CambioSucursalCajaPlan { Preview = preview };
+
+            if (preview.IdCierreCaja <= 0 || preview.IdSucursalActual <= 0 || preview.IdUsuarioCaja <= 0)
+            {
+                preview.Mensaje = "No se pudo determinar la caja seleccionada.";
+                return plan;
+            }
+
+            if (preview.IdSucursalNueva <= 0)
+            {
+                preview.Mensaje = "Seleccione la nueva sucursal.";
+                return plan;
+            }
+
+            if (preview.IdSucursalNueva == preview.IdSucursalActual)
+            {
+                preview.Mensaje = "La sucursal nueva debe ser distinta de la sucursal actual.";
+                return plan;
+            }
+
+            preview.IdCierreCajaNuevo = CalcularNuevoIdCierreCaja(cn, tx, preview.IdCierreCaja, preview.IdSucursalNueva);
+            if (preview.IdCierreCajaNuevo <= 0)
+            {
+                preview.Mensaje = "No se pudo calcular el nuevo identificador de la caja.";
+                return plan;
+            }
+
+            preview.SucursalNueva = ObtenerTexto(
+                cn,
+                tx,
+                "SELECT TOP 1 sucursal FROM Sucursal WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = preview.IdSucursalNueva;
+                });
+
+            if (string.IsNullOrWhiteSpace(preview.SucursalNueva))
+            {
+                preview.Mensaje = "La sucursal destino no existe.";
+                return plan;
+            }
+
+            int idCajaAbiertaDestino = ObtenerEntero(
+                cn,
+                tx,
+                "SELECT TOP 1 id FROM CierreCaja WHERE idEmpresa = @idEmpresa AND usuarioInicio = @usuarioInicio AND idSucursal = @idSucursal AND usuarioCierre = 0 AND id <> @idCierre ORDER BY id DESC",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@usuarioInicio", SqlDbType.Int).Value = preview.IdUsuarioCaja;
+                    cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = preview.IdSucursalNueva;
+                    cmd.Parameters.Add("@idCierre", SqlDbType.Int).Value = preview.IdCierreCaja;
+                });
+
+            if (idCajaAbiertaDestino > 0)
+            {
+                preview.TieneCajaAbiertaEnDestino = true;
+                preview.Mensaje = "El usuario ya tiene una caja abierta en la sucursal seleccionada. Debe cerrarla antes de mover los datos de la caja cargada en la sucursal incorrecta.";
+                return plan;
+            }
+
+            plan.VentasIds = ObtenerIds(
+                cn,
+                tx,
+                "SELECT idVenta FROM Ventas WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND idVendedor = @idUsuario AND fechaVenta BETWEEN @fechaDesde AND @fechaHasta",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.ComprasIds = ObtenerIds(
+                cn,
+                tx,
+                "SELECT idCompra FROM Compras WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND creadoPor = @idUsuario AND fechaCompra BETWEEN @fechaDesde AND @fechaHasta",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.PagosIds = ObtenerIds(
+                cn,
+                tx,
+                "SELECT id FROM Pagos WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND creadoPor = @idUsuario AND fecha BETWEEN @fechaDesde AND @fechaHasta",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.ExpendiosIds = ObtenerIds(
+                cn,
+                tx,
+                "SELECT idExpendio FROM Expendios WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND idVendedor = @idUsuario AND fechaExpendio BETWEEN @fechaDesde AND @fechaHasta",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.TemporalesIds = ObtenerIds(
+                cn,
+                tx,
+                "SELECT id FROM TemporalLineaVenta WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND idVendedor = @idUsuario AND fechaInicioPesada BETWEEN @fechaDesde AND @fechaHasta",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.EgresosIds = ObtenerIdsEgresosCaja(cn, tx, preview, plan.ComprasIds, plan.VentasIds, plan.PagosIds);
+            plan.MovimientosIds = ObtenerIdsMovimientosCaja(cn, tx, preview, plan.ComprasIds, plan.VentasIds, plan.PagosIds);
+            plan.CortePorCompraCantidad = ObtenerCantidadPorCompras(cn, tx, "CortePorCompra", plan.ComprasIds, preview.IdSucursalActual);
+            plan.MediaResCantidad = ObtenerCantidadPorCompras(cn, tx, "MediaRes", plan.ComprasIds, preview.IdSucursalActual);
+
+            preview.Tablas = new List<CambioSucursalCajaTabla>
+            {
+                new CambioSucursalCajaTabla { Tabla = "CierreCaja", Cantidad = 1 },
+                new CambioSucursalCajaTabla { Tabla = "Ventas", Cantidad = plan.VentasIds.Count },
+                new CambioSucursalCajaTabla { Tabla = "Compras", Cantidad = plan.ComprasIds.Count },
+                new CambioSucursalCajaTabla { Tabla = "CortePorCompra", Cantidad = plan.CortePorCompraCantidad },
+                new CambioSucursalCajaTabla { Tabla = "MediaRes", Cantidad = plan.MediaResCantidad },
+                new CambioSucursalCajaTabla { Tabla = "Pagos", Cantidad = plan.PagosIds.Count },
+                new CambioSucursalCajaTabla { Tabla = "EgresosCaja", Cantidad = plan.EgresosIds.Count },
+                new CambioSucursalCajaTabla { Tabla = "MovCtaCte", Cantidad = plan.MovimientosIds.Count },
+                new CambioSucursalCajaTabla { Tabla = "Expendios", Cantidad = plan.ExpendiosIds.Count },
+                new CambioSucursalCajaTabla { Tabla = "TemporalLineaVenta", Cantidad = plan.TemporalesIds.Count }
+            };
+
+            preview.PuedeEjecutar = true;
+            preview.Mensaje = "Vista previa generada correctamente.";
+            return plan;
+        }
+
+        private void AgregarParametrosBaseCambioSucursal(SqlCommand cmd, CambioSucursalCajaPreview preview)
+        {
+            cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+            cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = preview.IdSucursalActual;
+            cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = preview.IdUsuarioCaja;
+            cmd.Parameters.Add("@fechaDesde", SqlDbType.DateTime).Value = preview.FechaDesde;
+            cmd.Parameters.Add("@fechaHasta", SqlDbType.DateTime).Value = preview.FechaHasta;
+        }
+
+        private List<int> ObtenerIdsEgresosCaja(SqlConnection cn, SqlTransaction tx, CambioSucursalCajaPreview preview, List<int> comprasIds, List<int> ventasIds, List<int> pagosIds)
+        {
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+
+                string sql = "SELECT DISTINCT id FROM EgresosCaja WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND fechaHora BETWEEN @fechaDesde AND @fechaHasta AND (creadoPor = @idUsuario";
+                AgregarParametrosBaseCambioSucursal(cmd, preview);
+
+                if (comprasIds.Count > 0)
+                    sql += " OR idCompra IN (" + AgregarParametrosLista(cmd, "compra", comprasIds) + ")";
+                if (ventasIds.Count > 0)
+                    sql += " OR (tabla = 'Ventas' AND idTabla IN (" + AgregarParametrosLista(cmd, "venta", ventasIds) + "))";
+                if (comprasIds.Count > 0)
+                    sql += " OR (tabla = 'Compras' AND idTabla IN (" + AgregarParametrosLista(cmd, "compraTabla", comprasIds) + "))";
+                if (pagosIds.Count > 0)
+                    sql += " OR (tabla = 'Pagos' AND idTabla IN (" + AgregarParametrosLista(cmd, "pago", pagosIds) + "))";
+
+                sql += ")";
+                cmd.CommandText = sql;
+
+                return LeerIds(cmd);
+            }
+        }
+
+        private List<int> ObtenerIdsMovimientosCaja(SqlConnection cn, SqlTransaction tx, CambioSucursalCajaPreview preview, List<int> comprasIds, List<int> ventasIds, List<int> pagosIds)
+        {
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+
+                string sql = "SELECT DISTINCT id FROM MovCtaCte WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND fecha BETWEEN @fechaDesde AND @fechaHasta AND (creadoPor = @idUsuario";
+                AgregarParametrosBaseCambioSucursal(cmd, preview);
+
+                if (ventasIds.Count > 0)
+                    sql += " OR (tabla = 'Ventas' AND idTabla IN (" + AgregarParametrosLista(cmd, "venta", ventasIds) + "))";
+                if (comprasIds.Count > 0)
+                    sql += " OR (tabla = 'Compras' AND idTabla IN (" + AgregarParametrosLista(cmd, "compra", comprasIds) + "))";
+                if (pagosIds.Count > 0)
+                    sql += " OR (tabla = 'Pagos' AND idTabla IN (" + AgregarParametrosLista(cmd, "pago", pagosIds) + "))";
+
+                sql += ")";
+                cmd.CommandText = sql;
+
+                return LeerIds(cmd);
+            }
+        }
+
+        private List<int> ObtenerIds(SqlConnection cn, SqlTransaction tx, string sql, Action<SqlCommand> setParams)
+        {
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+                setParams?.Invoke(cmd);
+                return LeerIds(cmd);
+            }
+        }
+
+        private List<int> LeerIds(SqlCommand cmd)
+        {
+            var ids = new List<int>();
+            using (SqlDataReader dr = cmd.ExecuteReader())
+            {
+                while (dr.Read())
+                {
+                    if (dr[0] != DBNull.Value)
+                        ids.Add(Convert.ToInt32(dr[0]));
+                }
+            }
+
+            return ids;
+        }
+
+        private string AgregarParametrosLista(SqlCommand cmd, string prefijo, List<int> ids)
+        {
+            var nombres = new List<string>();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                string nombre = "@" + prefijo + i;
+                nombres.Add(nombre);
+                cmd.Parameters.Add(nombre, SqlDbType.Int).Value = ids[i];
+            }
+
+            return string.Join(",", nombres);
+        }
+
+        private int ObtenerCantidadPorCompras(SqlConnection cn, SqlTransaction tx, string tabla, List<int> comprasIds, int idSucursalActual)
+        {
+            if (comprasIds == null || comprasIds.Count == 0)
+                return 0;
+
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "SELECT COUNT(1) FROM " + tabla + " WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND idCompra IN (" + AgregarParametrosLista(cmd, "compra", comprasIds) + ")";
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = idSucursalActual;
+                object obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? 0 : Convert.ToInt32(obj);
+            }
+        }
+
+        private int CalcularNuevoIdCierreCaja(SqlConnection cn, SqlTransaction tx, int idCierreActual, int idSucursalNueva)
+        {
+            int baseSucursalNueva = idSucursalNueva * 100000000;
+            int sufijoActual = idCierreActual % 100000000;
+            if (sufijoActual <= 0)
+                sufijoActual = 1;
+
+            int candidato = baseSucursalNueva + sufijoActual;
+            int existe = ObtenerEntero(
+                cn,
+                tx,
+                "SELECT COUNT(1) FROM CierreCaja WHERE idEmpresa = @idEmpresa AND id = @id",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@id", SqlDbType.Int).Value = candidato;
+                });
+
+            if (existe == 0)
+                return candidato;
+
+            int maxIdDestino = ObtenerEntero(
+                cn,
+                tx,
+                "SELECT ISNULL(MAX(id), 0) FROM CierreCaja WHERE idEmpresa = @idEmpresa AND id >= @desde AND id < @hasta",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@desde", SqlDbType.Int).Value = baseSucursalNueva;
+                    cmd.Parameters.Add("@hasta", SqlDbType.Int).Value = baseSucursalNueva + 100000000;
+                });
+
+            if (maxIdDestino < baseSucursalNueva)
+                return baseSucursalNueva + 1;
+
+            return maxIdDestino + 1;
+        }
+
+        private int ActualizarIds(SqlConnection cn, SqlTransaction tx, string tabla, string campoId, List<int> ids, int idSucursalNueva)
+        {
+            if (ids == null || ids.Count == 0)
+                return 0;
+
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "UPDATE " + tabla + " SET idSucursal = @idSucursalNueva WHERE idEmpresa = @idEmpresa AND " + campoId + " IN (" + AgregarParametrosLista(cmd, "id", ids) + ")";
+                cmd.Parameters.Add("@idSucursalNueva", SqlDbType.Int).Value = idSucursalNueva;
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private int ActualizarPorCompras(SqlConnection cn, SqlTransaction tx, string tabla, List<int> comprasIds, int idSucursalNueva, int idSucursalActual)
+        {
+            if (comprasIds == null || comprasIds.Count == 0)
+                return 0;
+
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "UPDATE " + tabla + " SET idSucursal = @idSucursalNueva WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursalActual AND idCompra IN (" + AgregarParametrosLista(cmd, "idCompra", comprasIds) + ")";
+                cmd.Parameters.Add("@idSucursalNueva", SqlDbType.Int).Value = idSucursalNueva;
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                cmd.Parameters.Add("@idSucursalActual", SqlDbType.Int).Value = idSucursalActual;
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private int EjecutarNonQuery(SqlConnection cn, SqlTransaction tx, string sql, Action<SqlCommand> setParams)
+        {
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+                setParams?.Invoke(cmd);
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private string ObtenerTexto(SqlConnection cn, SqlTransaction tx, string sql, Action<SqlCommand> setParams)
+        {
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+                setParams?.Invoke(cmd);
+                object obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? "" : Convert.ToString(obj);
+            }
+        }
+
+        private int ObtenerEntero(SqlConnection cn, SqlTransaction tx, string sql, Action<SqlCommand> setParams)
+        {
+            using (SqlCommand cmd = cn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = sql;
+                setParams?.Invoke(cmd);
+                object obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? 0 : Convert.ToInt32(obj);
+            }
+        }
+
+        private void AsegurarTablaAuditoriaCambioSucursalCaja(SqlConnection cn, SqlTransaction tx)
+        {
+            const string sql = @"
+IF OBJECT_ID('dbo.AuditoriaCambioSucursalCaja', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.AuditoriaCambioSucursalCaja
+    (
+        id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        idEmpresa INT NOT NULL,
+        idCierreCaja INT NOT NULL,
+        idUsuarioEjecutor INT NOT NULL,
+        usuarioEjecutor NVARCHAR(150) NULL,
+        idUsuarioCaja INT NOT NULL,
+        usuarioCaja NVARCHAR(150) NULL,
+        idSucursalAnterior INT NOT NULL,
+        sucursalAnterior NVARCHAR(150) NULL,
+        idSucursalNueva INT NOT NULL,
+        sucursalNueva NVARCHAR(150) NULL,
+        fechaDesde DATETIME NOT NULL,
+        fechaHasta DATETIME NOT NULL,
+        fechaCambio DATETIME NOT NULL,
+        detalle NVARCHAR(MAX) NULL
+    );
+END";
+
+            EjecutarNonQuery(cn, tx, sql, null);
+        }
+
+        private void InsertarAuditoriaCambioSucursalCaja(SqlConnection cn, SqlTransaction tx, CambioSucursalCajaPlan plan, List<CambioSucursalCajaTabla> counts, int idUsuarioEjecutor, string usuarioEjecutor)
+        {
+            string detalle = "Esta accion corrigio la sucursal de la caja y de las operaciones asociadas." + Environment.NewLine +
+                             "Caja anterior: " + plan.Preview.IdCierreCaja + Environment.NewLine +
+                             "Caja nueva: " + plan.Preview.IdCierreCajaNuevo + Environment.NewLine +
+                             "Sucursal anterior: " + plan.Preview.SucursalActual + " (" + plan.Preview.IdSucursalActual + ")" + Environment.NewLine +
+                             "Sucursal nueva: " + plan.Preview.SucursalNueva + " (" + plan.Preview.IdSucursalNueva + ")" + Environment.NewLine +
+                             "Usuario caja: " + plan.Preview.UsuarioCaja + " (" + plan.Preview.IdUsuarioCaja + ")" + Environment.NewLine +
+                             "Rango: " + plan.Preview.FechaDesde.ToString("dd/MM/yyyy HH:mm:ss") + " - " + plan.Preview.FechaHasta.ToString("dd/MM/yyyy HH:mm:ss");
+
+            foreach (var item in counts)
+                detalle += Environment.NewLine + item.Tabla + ": " + item.Cantidad;
+
+            EjecutarNonQuery(
+                cn,
+                tx,
+                "INSERT INTO AuditoriaCambioSucursalCaja (idEmpresa, idCierreCaja, idUsuarioEjecutor, usuarioEjecutor, idUsuarioCaja, usuarioCaja, idSucursalAnterior, sucursalAnterior, idSucursalNueva, sucursalNueva, fechaDesde, fechaHasta, fechaCambio, detalle) VALUES (@idEmpresa, @idCierreCaja, @idUsuarioEjecutor, @usuarioEjecutor, @idUsuarioCaja, @usuarioCaja, @idSucursalAnterior, @sucursalAnterior, @idSucursalNueva, @sucursalNueva, @fechaDesde, @fechaHasta, @fechaCambio, @detalle)",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@idCierreCaja", SqlDbType.Int).Value = plan.Preview.IdCierreCaja;
+                    cmd.Parameters.Add("@idUsuarioEjecutor", SqlDbType.Int).Value = idUsuarioEjecutor;
+                    cmd.Parameters.Add("@usuarioEjecutor", SqlDbType.NVarChar, 150).Value = (object)(usuarioEjecutor ?? "");
+                    cmd.Parameters.Add("@idUsuarioCaja", SqlDbType.Int).Value = plan.Preview.IdUsuarioCaja;
+                    cmd.Parameters.Add("@usuarioCaja", SqlDbType.NVarChar, 150).Value = (object)(plan.Preview.UsuarioCaja ?? "");
+                    cmd.Parameters.Add("@idSucursalAnterior", SqlDbType.Int).Value = plan.Preview.IdSucursalActual;
+                    cmd.Parameters.Add("@sucursalAnterior", SqlDbType.NVarChar, 150).Value = (object)(plan.Preview.SucursalActual ?? "");
+                    cmd.Parameters.Add("@idSucursalNueva", SqlDbType.Int).Value = plan.Preview.IdSucursalNueva;
+                    cmd.Parameters.Add("@sucursalNueva", SqlDbType.NVarChar, 150).Value = (object)(plan.Preview.SucursalNueva ?? "");
+                    cmd.Parameters.Add("@fechaDesde", SqlDbType.DateTime).Value = plan.Preview.FechaDesde;
+                    cmd.Parameters.Add("@fechaHasta", SqlDbType.DateTime).Value = plan.Preview.FechaHasta;
+                    cmd.Parameters.Add("@fechaCambio", SqlDbType.DateTime).Value = DateTime.Now;
+                    cmd.Parameters.Add("@detalle", SqlDbType.NVarChar).Value = detalle;
+                });
         }
 
         #endregion
