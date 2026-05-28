@@ -103,6 +103,54 @@ namespace Web.Controllers
             return View("~/Views/Login/ForgotPassword.cshtml", new PasswordRecoveryRequestVm());
         }
 
+        [HttpGet]
+        public ActionResult ChangePassword()
+        {
+            var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
+            if (usuarioSesion == null)
+                return RedirectToAction("Index", "Login");
+
+            var model = new ChangePasswordVm
+            {
+                Error = TempData["Error"] as string,
+                Success = TempData["Success"] as string
+            };
+
+            return View("~/Views/Login/ChangePassword.cshtml", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ChangePassword(ChangePasswordVm model)
+        {
+            var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
+            if (usuarioSesion == null)
+                return RedirectToAction("Index", "Login");
+
+            model = model ?? new ChangePasswordVm();
+
+            IEmpresaContext empresa = new EmpresaContextWin(usuarioSesion.IdEmpresa);
+            oUsuarioN = new Negocio.Usuario(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+
+            ValidarNuevaClave(model.NuevaClave);
+
+            var usuarioActual = oUsuarioN.getUsuarioById(usuarioSesion.Id);
+            if (usuarioActual == null || !usuarioActual.Activo)
+                ModelState.AddModelError("", "No fue posible actualizar la contraseÃ±a.");
+            else if (oUsuarioN.ValidarUsuarioWeb(usuarioActual.User, model.ClaveActual) == null)
+                ModelState.AddModelError("ClaveActual", "La contraseÃ±a actual es incorrecta.");
+
+            if (!ModelState.IsValid)
+                return View("~/Views/Login/ChangePassword.cshtml", model);
+
+            oUsuarioN.ActualizarPasswordWebSeguro(usuarioActual.Id, model.NuevaClave);
+            oUsuarioN.InvalidarTokensPendientesUsuario(usuarioActual.Id);
+
+            TempData["Success"] = "Tu contraseÃ±a fue actualizada correctamente.";
+            return RedirectToAction("ChangePassword", "Login");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult ForgotPassword(PasswordRecoveryRequestVm model)
@@ -291,6 +339,15 @@ namespace Web.Controllers
                 return minutes;
 
             return 60;
+        }
+
+        private void ValidarNuevaClave(string nuevaClave)
+        {
+            if (string.IsNullOrWhiteSpace(nuevaClave))
+                return;
+
+            if (nuevaClave.Contains(" "))
+                ModelState.AddModelError("NuevaClave", "La contraseÃ±a no puede contener espacios en blanco.");
         }
 
         private void ValidarNuevaClave(PasswordResetVm model)

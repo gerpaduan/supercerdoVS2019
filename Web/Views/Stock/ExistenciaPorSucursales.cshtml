@@ -8,6 +8,9 @@
 
     var filtro = Model != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
     string fechaHasta = filtro.FechaHasta.HasValue ? filtro.FechaHasta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
+    long empresaCuit = usuarioSesion != null && usuarioSesion.Empresa != null ? usuarioSesion.Empresa.Cuit : 0;
+    int intervaloAutoMinutos = empresaCuit == 20306210786 ? 15 : 30;
 }
 
 <div class="container-fluid existencia-sucursales-page">
@@ -109,6 +112,13 @@
                     <span class="text-muted">Última actualización:</span>
                     <strong id="lblUltimaActualizacionExistencia">-</strong>
                 </div>
+                <div class="existencia-estado-item existencia-estado-item-full">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="switchAutoActualizarExistencia">
+                        <label class="custom-control-label" for="switchAutoActualizarExistencia">Autoactualizar stock</label>
+                    </div>
+                    <span id="lblAutoActualizarExistencia" class="small text-muted">Cada @intervaloAutoMinutos minutos, hasta 6 veces.</span>
+                </div>
                 <div class="existencia-estado-item">
                     <span id="lblAvisoPendienteExistencia" class="text-warning d-none">Hay filtros sin aplicar.</span>
                     <span id="lblEstadoConsultaExistencia" class="text-muted">Presioná Buscar para consultar stock.</span>
@@ -159,6 +169,12 @@
         flex-wrap: wrap;
     }
 
+    .existencia-estado-item-full {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        order: 4;
+    }
+
     .existencia-estado-item-right {
         justify-content: flex-end;
     }
@@ -188,7 +204,7 @@
     @@media (min-width: 768px) and (max-width: 1199.98px) {
         .existencia-filtros-row-top,
         .existencia-estado-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: 1fr 1.5fr auto;
         }
 
         .existencia-filtros-row-bottom {
@@ -226,9 +242,18 @@
             var $lblPendiente = $("#lblAvisoPendienteExistencia");
             var $lblEstado = $("#lblEstadoConsultaExistencia");
             var $switchExpandir = $("#switchExpandirExistencia");
+            var $switchAuto = $("#switchAutoActualizarExistencia");
+            var $lblAuto = $("#lblAutoActualizarExistencia");
             var consultaAplicada = null;
             var sincronizandoScrollDetalle = false;
             var ultimoToqueDetalle = { target: "", time: 0 };
+            var intervaloAutoMinutos = @intervaloAutoMinutos;
+            var maxAutoActualizaciones = 6;
+            var autoActualizacionesEjecutadas = 0;
+            var autoActualizacionTimer = null;
+            var autoActualizacionCountdownTimer = null;
+            var autoActualizacionProximaEjecucion = null;
+            var autoActualizacionDisparadaPorTimer = false;
 
             function obtenerEstadoConsulta() {
                 return {
@@ -309,6 +334,108 @@
                 $btnBuscarTexto.text(buscando ? "Buscando..." : "Buscar");
             }
 
+            function limpiarTimerAutoActualizacion() {
+                if (autoActualizacionTimer) {
+                    window.clearTimeout(autoActualizacionTimer);
+                    autoActualizacionTimer = null;
+                }
+
+                if (autoActualizacionCountdownTimer) {
+                    window.clearInterval(autoActualizacionCountdownTimer);
+                    autoActualizacionCountdownTimer = null;
+                }
+
+                autoActualizacionProximaEjecucion = null;
+            }
+
+            function actualizarTextoAutoActualizacion() {
+                if (!$switchAuto.is(":checked")) {
+                    $lblAuto
+                        .removeClass("text-success text-warning")
+                        .addClass("text-muted")
+                        .text("Cada " + intervaloAutoMinutos + " minutos, hasta 6 veces.");
+                    return;
+                }
+
+                var restantes = Math.max(0, maxAutoActualizaciones - autoActualizacionesEjecutadas);
+                if (!autoActualizacionProximaEjecucion) {
+                    $lblAuto
+                        .removeClass("text-muted text-warning")
+                        .addClass("text-success")
+                        .text("Autoactualización activa. Restan " + restantes + " ejecuciones.");
+                    return;
+                }
+
+                var msRestantes = Math.max(0, autoActualizacionProximaEjecucion - new Date().getTime());
+                var totalSegundos = Math.ceil(msRestantes / 1000);
+                var minutos = Math.floor(totalSegundos / 60);
+                var segundos = totalSegundos % 60;
+
+                $lblAuto
+                    .removeClass("text-muted text-warning")
+                    .addClass("text-success")
+                    .text("Autoactualización activa. Próxima en " + minutos + ":" + String(segundos).padStart(2, "0") + ". Restan " + restantes + " ejecuciones.");
+            }
+
+            function notificarAutoActualizacionDesactivada() {
+                var mensaje = "La actualización automática de stock fue desactivada. Volvé a activarla si la necesitás.";
+                $lblEstado.text(mensaje);
+                $lblAuto
+                    .removeClass("text-muted text-success")
+                    .addClass("text-warning")
+                    .text(mensaje);
+
+                if (window.Swal && typeof window.Swal.fire === "function") {
+                    window.Swal.fire({
+                        icon: "info",
+                        title: "Autoactualización desactivada",
+                        text: mensaje
+                    });
+                }
+            }
+
+            function desactivarAutoActualizacion(informarUsuario) {
+                limpiarTimerAutoActualizacion();
+                autoActualizacionesEjecutadas = 0;
+                $switchAuto.prop("checked", false);
+                actualizarTextoAutoActualizacion();
+
+                if (informarUsuario) {
+                    notificarAutoActualizacionDesactivada();
+                }
+            }
+
+            function programarProximaAutoActualizacion() {
+                limpiarTimerAutoActualizacion();
+
+                if (!$switchAuto.is(":checked")) {
+                    actualizarTextoAutoActualizacion();
+                    return;
+                }
+
+                if (autoActualizacionesEjecutadas >= maxAutoActualizaciones) {
+                    desactivarAutoActualizacion(true);
+                    return;
+                }
+
+                autoActualizacionProximaEjecucion = new Date().getTime() + (intervaloAutoMinutos * 60 * 1000);
+                autoActualizacionTimer = window.setTimeout(function () {
+                    autoActualizacionTimer = null;
+
+                    if (!$switchAuto.is(":checked")) {
+                        actualizarTextoAutoActualizacion();
+                        return;
+                    }
+
+                    autoActualizacionDisparadaPorTimer = true;
+                    $("#filtroFechaHastaExistencia").val(ahoraLocalInput()).trigger("change");
+                    $form.trigger("submit");
+                }, intervaloAutoMinutos * 60 * 1000);
+
+                autoActualizacionCountdownTimer = window.setInterval(actualizarTextoAutoActualizacion, 1000);
+                actualizarTextoAutoActualizacion();
+            }
+
             function ahoraLocalInput() {
                 var ahora = new Date();
                 var off = ahora.getTimezoneOffset();
@@ -362,12 +489,28 @@
                     actualizarPendiente();
                     aplicarFiltrosVisuales();
                     vincularScrollDetalles();
-                    $lblEstado.text("Consulta actualizada.");
+                    if ($switchAuto.is(":checked") && autoActualizacionDisparadaPorTimer) {
+                        autoActualizacionesEjecutadas += 1;
+                        $lblEstado.text("Consulta actualizada. Autoactualización " + autoActualizacionesEjecutadas + " de " + maxAutoActualizaciones + ".");
+                    } else {
+                        $lblEstado.text("Consulta actualizada.");
+                    }
                 }).fail(function () {
                     $contenedor.html('<div class="alert alert-danger m-3 mb-0">No se pudo consultar la existencia por sucursales.</div>');
                     $lblEstado.text("Ocurrió un error al consultar stock.");
                 }).always(function () {
+                    var ejecucionAutomatica = autoActualizacionDisparadaPorTimer;
+                    autoActualizacionDisparadaPorTimer = false;
                     setBuscando(false);
+                    if ($switchAuto.is(":checked")) {
+                        if (ejecucionAutomatica && autoActualizacionesEjecutadas >= maxAutoActualizaciones) {
+                            desactivarAutoActualizacion(true);
+                        } else {
+                            programarProximaAutoActualizacion();
+                        }
+                    } else {
+                        actualizarTextoAutoActualizacion();
+                    }
                 });
             });
 
@@ -406,6 +549,20 @@
             });
 
             $switchExpandir.on("change", aplicarExpandidoGlobal);
+            $switchAuto.on("change", function () {
+                if ($(this).is(":checked")) {
+                    autoActualizacionesEjecutadas = 0;
+                    $lblEstado.text("Autoactualización activada. Se actualizará cada " + intervaloAutoMinutos + " minutos hasta 6 veces.");
+                    programarProximaAutoActualizacion();
+                } else {
+                    limpiarTimerAutoActualizacion();
+                    autoActualizacionesEjecutadas = 0;
+                    actualizarTextoAutoActualizacion();
+                    if (consultaAplicada) {
+                        $lblEstado.text("Autoactualización desactivada.");
+                    }
+                }
+            });
 
             $("#filtroTextoExistencia, #filtroSucursalExistencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia, #filtroSoloConStockExistencia")
                 .on("input change", function () {
@@ -417,6 +574,7 @@
 
             aplicarFiltrosVisuales();
             vincularScrollDetalles();
+            actualizarTextoAutoActualizacion();
         })();
     </script>
 }

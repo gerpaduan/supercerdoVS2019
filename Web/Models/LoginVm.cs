@@ -47,4 +47,27 @@ namespace Web.Models
         public bool TokenValido { get; set; }
         public string Mensaje { get; set; }
     }
+
+    public class ChangePasswordVm
+    {
+        [Required(ErrorMessage = "IngresÃ¡ tu contraseÃ±a actual.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "ContraseÃ±a actual")]
+        public string ClaveActual { get; set; }
+
+        [Required(ErrorMessage = "IngresÃ¡ la nueva contraseÃ±a.")]
+        [StringLength(128, MinimumLength = 1, ErrorMessage = "La contraseÃ±a debe tener entre 1 y 128 caracteres.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Nueva contraseÃ±a")]
+        public string NuevaClave { get; set; }
+
+        [Required(ErrorMessage = "ConfirmÃ¡ la nueva contraseÃ±a.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirmar contraseÃ±a")]
+        [Compare("NuevaClave", ErrorMessage = "La confirmaciÃ³n no coincide con la nueva contraseÃ±a.")]
+        public string ConfirmarClave { get; set; }
+
+        public string Error { get; set; }
+        public string Success { get; set; }
+    }
 }
