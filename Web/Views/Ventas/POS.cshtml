@@ -185,7 +185,7 @@
 
                         <!-- ===================== -->
                         <!-- COLUMNA IZQUIERDA - CARRITO -->
-                        <div class="col-12 col-md-6 carrito-col">
+                        <div class="col-12 col-md-6 carrito-col pos-ventas-cart-col">
 
                             <div class="zona-tabla">
                                 <table class="table table-sm tabla-productos mb-0">
@@ -224,7 +224,7 @@
 
                         <!-- ===================== -->
                         <!-- COLUMNA DERECHA -->
-                        <div class="col-12 col-md-6 d-flex flex-column">
+                        <div class="col-12 col-md-6 d-flex flex-column pos-workbench pos-ventas-workbench-col">
                             <!-- ?? BLOQUE SCANNER -->
                             <div class="row" id="scannerContainer" style="display:none;">
                                 <div class="col-12">
@@ -242,7 +242,7 @@
                                                 </button>
 
                                                 <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">
-                                                    Cerrar c�mara
+                                                    Cerrar cámara
                                                 </button>
                                             </div>
 
@@ -255,9 +255,9 @@
 
 
                             <!-- BUSCADOR -->
-                            <div class="row g-2 mb-3">
+                            <div class="row g-2 mb-3 pos-search-row">
                                 <div class="col-12">
-                                    <div class="input-group input-group-lg">
+                                    <div class="input-group input-group-lg pos-search-group">
                                         <span class="input-group-text scanner-btn" id="btnScanner">
                                             <i class="fas fa-barcode"></i>
                                         </span>
@@ -289,14 +289,14 @@
                                             Info producto...
                                         </h4>
 
-                                        <div class="mb-3">
+                                        <div class="mb-3 pos-product-metric">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-precio">Precio</label>
                                                 <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
+                                        <div class="mb-3 pos-product-metric pos-product-metric-cantidad">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                                 <input id="inputCantidad"
@@ -306,7 +306,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
+                                        <div class="mb-3 pos-product-metric">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-subtotal">Subtotal</label>
                                                 <h4 id="prodSubtotal" class="fw-bold text-muted m-0">
@@ -340,7 +340,7 @@
                                             <button class="btn btn-light btn-key">4</button>
                                             <button class="btn btn-light btn-key">5</button>
                                             <button class="btn btn-light btn-key">6</button>
-                                            <button class="btn btn-secondary btn-key">�</button>
+                                            <button class="btn btn-secondary btn-key">x</button>
 
                                             <button class="btn btn-secondary btn-key">G1</button>
                                             <button class="btn btn-light btn-key">1</button>
@@ -371,7 +371,7 @@
                             <div id="pos-bottom-anchor"></div>
 
                             <!-- ESTADO BALANZA -->
-                            <div class="mt-auto">
+                            <div class="mt-auto pos-footer-panel">
 
                                 <div class="zona-botones">
                                     <div class="row g-2">
@@ -390,10 +390,10 @@
                                     </div>
                                 </div>
 
-                                <small class="text-muted">
+                                <small class="text-muted pos-balanza-caption">
                                     Conexión balanza: <span id="estadoBalanza">Desconocida</span>
                                 </small>
-                                <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
+                                <div id="msgBalanzaPOS" class="small text-muted mt-1 pos-balanza-lectura"></div>
                                 <div class="progress mt-1" style="height:8px;">
                                     <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
                                 </div>
@@ -1189,7 +1189,7 @@ else
             const hora = String(ahora.getHours()).padStart(2, '0');
             const minutos = String(ahora.getMinutes()).padStart(2, '0');
 
-            const formato = `${diaSemana} ${dia} de ${mes}, ${anio} � ${hora}:${minutos}`;
+            const formato = `${diaSemana} ${dia} de ${mes}, ${anio}. ${hora}:${minutos}`;
 
             const span = document.getElementById('fechaHoraPOS');
             if (span) span.innerText = formato;
@@ -1896,8 +1896,8 @@ else
                 const h = window.innerHeight || document.documentElement.clientHeight;
 
                 // Ajust� umbrales si quer�s
-                document.documentElement.classList.toggle("pos-compact", h < 820);
-                document.documentElement.classList.toggle("pos-tiny", h < 740);
+                document.documentElement.classList.toggle("pos-compact", h < 920);
+                document.documentElement.classList.toggle("pos-tiny", h < 820);
             }
 
             window.addEventListener("resize", aplicarCompacto);
@@ -2618,6 +2618,53 @@ else
         border-bottom: 0;
     }
 
+    .pos-workbench {
+        gap: .15rem;
+    }
+
+    .pos-search-row {
+        margin-bottom: .55rem !important;
+    }
+
+    .pos-search-group {
+        border: 1px solid #d7e0ea;
+        border-radius: 14px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    }
+
+    .pos-search-group > .input-group-text,
+    .pos-search-group > .form-control,
+    .pos-search-group > .btn {
+        border-top: 0 !important;
+        border-bottom: 0 !important;
+    }
+
+    .pos-search-group > .input-group-text {
+        background: transparent;
+        border-left: 0;
+        color: #4a617b;
+    }
+
+    .pos-search-group > .form-control {
+        background: transparent !important;
+        border-left: 1px solid #e2e8f0 !important;
+        border-right: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+        color: #223449 !important;
+        font-weight: 600;
+    }
+
+    .pos-search-group > .form-control::placeholder {
+        color: #7b8ba0;
+        font-weight: 500;
+    }
+
+    .pos-search-group > .btn {
+        border-right: 0;
+    }
+
     #btnBuscarPersona {
         background: #61758a;
         border-color: #586b7e;
@@ -2708,6 +2755,28 @@ else
         background: linear-gradient(180deg, #162437 0%, #132032 100%);
         border-color: #314155;
         box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    html.dark-mode .pos-search-group {
+        background: linear-gradient(180deg, #162437 0%, #132032 100%);
+        border-color: #314155;
+        box-shadow: 0 14px 28px rgba(2, 6, 23, .24);
+    }
+
+    html.dark-mode .pos-search-group > .input-group-text {
+        background: transparent;
+        color: #97a7bd;
+    }
+
+    html.dark-mode .pos-search-group > .form-control {
+        background: transparent !important;
+        border-left: 1px solid #273b52 !important;
+        border-right: 1px solid #273b52 !important;
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-search-group > .form-control::placeholder {
+        color: #8ea2ba;
     }
 
 
@@ -2839,13 +2908,13 @@ else
 
     .pos-total-label {
         color: #adb5bd;
-        font-size: 2.55rem;
+        font-size: 2.8rem;
         line-height: 1;
     }
 
     .pos-total-value {
         color: #4a6fa5;
-        font-size: 3.15rem;
+        font-size: 2.8rem;
         line-height: 1;
     }
 
@@ -2855,11 +2924,11 @@ else
 
     @@media (min-width: 1200px) {
         .pos-total-label {
-            font-size: 3.15rem;
+            font-size: 2.8rem;
         }
 
         .pos-total-value {
-            font-size: 3.15rem;
+            font-size: 2.8rem;
         }
     }
 
@@ -3050,7 +3119,9 @@ else
     @@media (min-width: 992px) {
         #pos-app .col-md-6.d-flex.flex-column {
             min-height: 0;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 2px;
         }
 
             #pos-app .col-md-6.d-flex.flex-column .row.g-2.mb-3 {
@@ -3089,6 +3160,16 @@ else
         .zona-botones {
             margin-bottom: .25rem;
         }
+
+        .pos-footer-panel {
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            padding-top: .22rem;
+            margin-top: .25rem !important;
+            background: linear-gradient(180deg, rgba(242, 246, 251, .72) 0%, rgba(242, 246, 251, .96) 18%, rgba(242, 246, 251, 1) 100%);
+            backdrop-filter: blur(2px);
+        }
         /* fija el alto del nombre para que no �baila� */
         #prodNombre {
             white-space: nowrap;
@@ -3100,11 +3181,23 @@ else
         }
 
         #producto-info .mb-3 {
-            margin-bottom: .35rem !important;
+            margin-bottom: .28rem !important;
         }
 
         #producto-info .fs-5 {
             font-size: 1.05rem !important;
+        }
+    }
+
+    @@media (min-width: 1200px) {
+        .pos-ventas-cart-col {
+            flex: 0 0 41.666667%;
+            max-width: 41.666667%;
+        }
+
+        .pos-ventas-workbench-col {
+            flex: 0 0 58.333333%;
+            max-width: 58.333333%;
         }
     }
 
@@ -3308,9 +3401,30 @@ else
             margin-bottom: .22rem !important;
         }
 
+    html.pos-compact .pos-footer-panel {
+        padding-top: .12rem !important;
+        margin-top: .12rem !important;
+    }
+
+    html.pos-compact .zona-botones {
+        padding: .42rem .48rem !important;
+        margin-bottom: .16rem !important;
+    }
+
+    html.pos-compact .pos-balanza-caption {
+        font-size: .82rem !important;
+        line-height: 1.15 !important;
+    }
+
+    html.pos-compact #msgBalanzaPOS {
+        min-height: 1rem !important;
+        font-size: .92rem !important;
+        margin-top: .18rem !important;
+    }
+
     /* Total un poquito m�s chico cuando no entra c�modo */
     html.pos-compact .pos-total-value {
-        font-size: 2.2rem !important;
+        font-size: 2.8rem !important;
         line-height: 1.05 !important;
     }
 
@@ -3341,6 +3455,23 @@ else
     html.pos-tiny #btnFinalizar {
         padding-top: .45rem !important;
         padding-bottom: .45rem !important;
+    }
+
+    html.pos-tiny #producto-info {
+        min-height: clamp(185px, 24vh, 280px) !important;
+    }
+
+    html.pos-tiny .zona-botones {
+        padding: .34rem .4rem !important;
+    }
+
+    html.pos-tiny .pos-balanza-caption {
+        font-size: .76rem !important;
+    }
+
+    html.pos-tiny #msgBalanzaPOS {
+        min-height: .9rem !important;
+        font-size: .86rem !important;
     }
 
     /* =========================================================
@@ -3389,6 +3520,10 @@ else
 
     /* En desktop, que ambas columnas se estiren igual */
     @@media (min-width: 992px) {
+        #producto-info {
+            min-height: clamp(220px, 31vh, 360px);
+        }
+
         #producto-info .row {
             align-items: stretch;
         }
@@ -3400,8 +3535,26 @@ else
         }
         /* Teclas grandes pero con m�nimo garantizado */
         .keyboard-grid {
-            --key-h: clamp(46px, 6.2vh, 78px);
-            gap: 8px;
+            --key-h: clamp(42px, 5.2vh, 64px);
+            gap: 6px;
+        }
+
+        .btn-key {
+            padding: .28rem .16rem;
+            font-size: clamp(.9rem, .94vw, 1.08rem);
+        }
+
+        .zona-botones {
+            padding: .48rem .55rem;
+        }
+
+        .pos-balanza-caption {
+            font-size: .88rem;
+        }
+
+        #msgBalanzaPOS {
+            min-height: 1.25rem;
+            font-size: 1rem;
         }
     }
 
@@ -3609,6 +3762,145 @@ else
     #inputCantidad {
         text-align: right !important;
         direction: ltr;
+        max-width: 190px;
+        min-height: 52px;
+        padding: .35rem .85rem;
+        border-radius: .8rem;
+        border: 1px solid #b8c6d8;
+        background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 8px 18px rgba(30, 41, 59, .08);
+        color: #18324d;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        line-height: 1.1;
+    }
+
+    #inputCantidad:focus {
+        border-color: #4f79a6;
+        box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .18), 0 12px 24px rgba(79, 121, 166, .16);
+    }
+
+    #inputCantidad:disabled,
+    #inputCantidad[readonly] {
+        background: linear-gradient(180deg, #f2f5f9 0%, #e8eef5 100%);
+        color: #5f6f83;
+        opacity: 1;
+    }
+
+    #producto-info {
+        background: linear-gradient(180deg, #fbfdff 0%, #f2f6fb 100%) !important;
+        border-color: #d6e0eb !important;
+        border-radius: 16px !important;
+        box-shadow: 0 16px 34px rgba(15, 23, 42, .07);
+    }
+
+    #prodNombre {
+        color: #203449 !important;
+        font-size: 1.32rem;
+        font-weight: 800;
+        letter-spacing: -.01em;
+        margin-bottom: .5rem !important;
+    }
+
+    .pos-product-metric {
+        padding: .52rem .65rem;
+        border: 1px solid rgba(148, 163, 184, .20);
+        border-radius: 12px;
+        background: rgba(255,255,255,.72);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+    }
+
+    .pos-product-metric-cantidad {
+        background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(241,246,252,.98) 100%);
+        border-color: rgba(79, 121, 166, .24);
+        box-shadow: 0 10px 20px rgba(79, 121, 166, .10);
+    }
+
+    .lbl-precio,
+    .lbl-subtotal {
+        font-weight: 600;
+        color: #627489;
+    }
+
+    #prodPrecio,
+    #prodSubtotal {
+        color: #203449 !important;
+    }
+
+    #prodSubtotal {
+        font-size: 1.35rem;
+    }
+
+    .lbl-cantidad {
+        font-weight: 600;
+        color: #4b5d73;
+    }
+
+    .pos-balanza-caption {
+        display: block;
+        font-size: .95rem;
+        line-height: 1.25;
+    }
+
+    #estadoBalanza {
+        font-weight: 700;
+        color: #315473;
+    }
+
+    #msgBalanzaPOS {
+        min-height: 1.55rem;
+        font-size: 1.18rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: #18324d;
+    }
+
+    .pos-footer-panel {
+        padding-top: .35rem;
+        border-top: 1px solid rgba(148, 163, 184, .18);
+    }
+
+    .zona-botones {
+        padding: .65rem .7rem;
+        border: 1px solid rgba(148, 163, 184, .18);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(244,247,251,.94) 100%);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, .05);
+    }
+
+    .pos-footer-panel .progress {
+        border-radius: 999px;
+        background: rgba(148, 163, 184, .18);
+        overflow: hidden;
+    }
+
+    @@media (max-width: 991.98px) {
+        .pos-search-row {
+            margin-bottom: .45rem !important;
+        }
+
+        #producto-info {
+            border-radius: 14px !important;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, .06);
+        }
+
+        .pos-product-metric {
+            padding: .4rem .5rem;
+        }
+
+        #inputCantidad {
+            min-height: 48px;
+            font-size: 1.45rem;
+        }
+
+        #msgBalanzaPOS {
+            font-size: 1.08rem;
+        }
+
+        .zona-botones {
+            padding: .55rem;
+        }
     }
 
     /* =========================================================
@@ -3681,7 +3973,7 @@ else
     html.dark-mode .pos-page #inputCodigo,
     html.dark-mode .pos-page #inputCantidad,
     html.dark-mode .pos-page #inputCantidad[readonly] {
-        background: #132032 !important;
+        background: linear-gradient(180deg, #132032 0%, #16263a 100%) !important;
         background-color: #132032 !important;
         background-image: none !important;
         border-color: #2f4d69 !important;
@@ -3695,14 +3987,14 @@ else
 
     html.dark-mode .pos-page #inputCantidad:disabled,
     html.dark-mode .pos-page #inputCantidad[readonly] {
-        background: #132032 !important;
+        background: linear-gradient(180deg, #112033 0%, #15273d 100%) !important;
         background-color: #132032 !important;
         background-image: none !important;
         border-color: #2f4d69 !important;
         color: #ecf2ff !important;
         -webkit-text-fill-color: #ecf2ff !important;
         opacity: 1 !important;
-        box-shadow: none !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
     }
 
     html.dark-mode .pos-page #inputCodigo:focus,
@@ -3719,6 +4011,56 @@ else
         -webkit-text-fill-color: #ecf2ff !important;
         box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
         outline: none !important;
+    }
+
+    html.dark-mode .lbl-cantidad,
+    html.dark-mode .pos-balanza-caption {
+        color: #aebcd0 !important;
+    }
+
+    html.dark-mode .pos-page #estadoBalanza {
+        color: #8fc7ff !important;
+    }
+
+    html.dark-mode .pos-page #msgBalanzaPOS {
+        color: #d8eefc !important;
+    }
+
+    html.dark-mode .pos-page #producto-info {
+        box-shadow: 0 18px 34px rgba(2, 6, 23, .22);
+    }
+
+    html.dark-mode .pos-page #prodNombre,
+    html.dark-mode .pos-page #prodPrecio,
+    html.dark-mode .pos-page #prodSubtotal {
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-page .pos-product-metric {
+        background: rgba(255,255,255,.035);
+        border-color: rgba(151, 167, 189, .18);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+    }
+
+    html.dark-mode .pos-page .pos-product-metric-cantidad {
+        background: linear-gradient(180deg, rgba(34, 63, 92, .68) 0%, rgba(24, 41, 61, .82) 100%);
+        border-color: rgba(111, 168, 254, .26);
+        box-shadow: 0 12px 24px rgba(2, 6, 23, .24);
+    }
+
+    html.dark-mode .pos-page .zona-botones {
+        background: linear-gradient(180deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.02) 100%);
+        border-color: rgba(151, 167, 189, .16);
+        box-shadow: 0 12px 24px rgba(2, 6, 23, .20);
+    }
+
+    html.dark-mode .pos-page .pos-footer-panel {
+        border-top-color: rgba(151, 167, 189, .16);
+        background: linear-gradient(180deg, rgba(26, 43, 64, .72) 0%, rgba(26, 43, 64, .95) 18%, rgba(26, 43, 64, 1) 100%);
+    }
+
+    html.dark-mode .pos-page .progress {
+        background: rgba(151, 167, 189, .18);
     }
 
     html.dark-mode .pos-page #inputCantidad:-webkit-autofill,
