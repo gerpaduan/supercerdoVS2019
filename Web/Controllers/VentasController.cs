@@ -537,6 +537,9 @@ namespace Web.Controllers
             ViewBag.ReturnUrlPOS = DecodeReturnUrlIfNeeded(returnUrl);
             ViewBag.AbrirDetalleVentaId = abrirDetalleVentaId;
             ViewBag.ReturnUrlDetalle = DecodeReturnUrlIfNeeded(returnUrlDetalle);
+            var formasPagoConfig = ObtenerConfiguracionFormaPagoPOS();
+            ViewBag.FormasPagoConfig = formasPagoConfig;
+            ViewBag.RequierePreseleccionFormaPago = RequierePreseleccionFormaPagoPOS(formasPagoConfig);
 
             // 🚨 Si NO hay caja abierta, NO inicializo venta
             if (!cajaAbierta)
@@ -609,6 +612,28 @@ namespace Web.Controllers
             Session["VentaActiva"] = venta;
 
             return View(venta);
+        }
+
+        private Dictionary<string, decimal> ObtenerConfiguracionFormaPagoPOS()
+        {
+            return new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            {
+                { formaPagoEnum.Efectivo.ToString(), param.GetDecimal(Entidades.ParamKeys.PorcAjEfectivo, 1m) },
+                { formaPagoEnum.Debito.ToString(), param.GetDecimal(Entidades.ParamKeys.PorcAjDebito, 1m) },
+                { formaPagoEnum.Credito.ToString(), param.GetDecimal(Entidades.ParamKeys.PorcAjCredito, 1m) },
+                { formaPagoEnum.CtaCte.ToString(), 1m },
+                { formaPagoEnum.Qr.ToString(), param.GetDecimal(Entidades.ParamKeys.PorcAjQr, 1m) },
+                { formaPagoEnum.Transferencia.ToString(), param.GetDecimal(Entidades.ParamKeys.PorcAjTranf, 1m) }
+            };
+        }
+
+        private bool RequierePreseleccionFormaPagoPOS(Dictionary<string, decimal> config)
+        {
+            if (config == null || config.Count == 0)
+                return false;
+
+            decimal referencia = config.Values.FirstOrDefault();
+            return config.Values.Any(x => x != 1m) || config.Values.Any(x => x != referencia);
         }
 
         [HttpGet]

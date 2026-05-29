@@ -93,6 +93,15 @@
             alert(text || title);
         }
 
+        function debeAbrirPreseleccionFormaPago(codigo) {
+            if (soloFormaPago) return false;
+            if (!codigo) return false;
+            if (window.POSState?.getRequierePreseleccionFormaPago?.() !== true) return false;
+            if (window.POSState?.getFormaPagoPreseleccionada?.()?.tipo) return false;
+            if ($('#modalFormaPago').hasClass('show')) return false;
+            return typeof window.abrirModalFormaPagoPreseleccion === 'function';
+        }
+
         // Restablece el panel de producto al estado neutro.
         function showWaiting() {
             setSearchingState(false);
@@ -156,15 +165,24 @@
         // Carga en pantalla el producto elegido y delega el subtotal al modulo
         // del carrito, que es quien conoce la logica de cantidades/subtotales.
         function showProduct(producto) {
+            const formaPagoSeleccionada = window.POSState?.getFormaPagoPreseleccionada?.();
+            const precioBase = Number(producto.precioOriginal || producto.precioKg || 0);
+            const precioMostrado = formaPagoSeleccionada && window.POSFormaPagoPrecios
+                ? window.POSFormaPagoPrecios.calcularPrecioFormaPago(precioBase, formaPagoSeleccionada.tipo)
+                : precioBase;
+
+            producto.precioOriginal = precioBase;
+            producto.precioKg = precioMostrado;
+
             $('#prodNombre').text(producto.nombre).removeClass('text-muted').addClass('fw-bold');
-            $('#prodPrecio').text('$ ' + producto.precioKg.toLocaleString('es-AR')).removeClass('text-muted').addClass('fw-bold');
+            $('#prodPrecio').text('$ ' + precioMostrado.toLocaleString('es-AR')).removeClass('text-muted').addClass('fw-bold');
 
             const $precioManual = $('#inputPrecioManualExpendio');
             if ($precioManual.length && !$precioManual.prop('readonly')) {
-                $precioManual.val(producto.precioKg.toFixed(2).replace('.', ','));
+                $precioManual.val(precioMostrado.toFixed(2).replace('.', ','));
             }
 
-            precioActual = producto.precioKg;
+            precioActual = precioMostrado;
 
             $('#inputCantidad').prop('disabled', false);
             $('#prodSubtotal').text('$ 0,00');
@@ -438,6 +456,12 @@
                 }
 
                 clearTimeout(typingTimer);
+
+                if (debeAbrirPreseleccionFormaPago(codigo)) {
+                    window.abrirModalFormaPagoPreseleccion();
+                    return;
+                }
+
                 typingTimer = setTimeout(function () {
                     finishTyping(codigo);
                 }, 250);

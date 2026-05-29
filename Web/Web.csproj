@@ -1900,6 +1900,7 @@
     <Content Include="Scripts\app\modal-postexpendio.js" />
     <Content Include="Scripts\app\modal-postpago.js" />
     <Content Include="Scripts\app\forma-pago.js" />
+    <Content Include="Scripts\app\pos-forma-pago-precios.js" />
     <Content Include="Scripts\app\modal-postventa.js" />
     <Content Include="Scripts\app\modal-sucursales.js" />
     <Content Include="Scripts\app\persona-buscar.js" />

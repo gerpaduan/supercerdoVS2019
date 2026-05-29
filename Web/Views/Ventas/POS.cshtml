@@ -53,7 +53,8 @@
                 anulado = lineasAnuladasPorLinea.ContainsKey(linea.IdLineaVenta),
                 indexAnulado = -1,
                 balanza = linea.PesoBalanza,
-                idExpendio = linea.IdExpendio
+                idExpendio = linea.IdExpendio,
+                esHistorica = true
             });
         }
     }
@@ -206,7 +207,20 @@
                                         <i class="fas fa-pen mr-1"></i>
                                         @(soloFormaPago ? "Cambiando forma de pago" : "Modificando venta") <strong>#@idVentaEditar</strong>
                                     </div>
+                                    <div id="posAvisoPreciosHistoricos" class="pos-restore-banner pos-restore-banner-info">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Los productos ya cargados mantienen su precio original. Los nuevos productos se calcularán según la forma de pago seleccionada.
+                                    </div>
                                 }
+                                <div id="posFormaPagoActual" class="pos-forma-pago-banner d-none">
+                                    <div class="pos-forma-pago-copy">
+                                        <span class="pos-forma-pago-label">Forma de pago:</span>
+                                        <strong id="posFormaPagoNombre">-</strong>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnCambiarFormaPago">
+                                        Cambiar forma de pago
+                                    </button>
+                                </div>
                                 <div id="posVentaRestaurada" class="pos-restore-banner d-none">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
                                     Venta restaurada. Debe presionar <strong>Cancelar Venta</strong> para salir.
@@ -692,9 +706,10 @@ else
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=22")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-state.js?v=7")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-forma-pago-precios.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=8")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=23")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=4")"></script>
@@ -887,11 +902,18 @@ else
     const puedeEditarFechaVenta = @(puedeEditarFechaVenta ? "true" : "false");
     const lineasEdicionPos = @Html.Raw(Json.Encode(lineasEdicionPos));
     const listaExpendiosEdicionPos = @Html.Raw(Json.Encode(listaExpendiosEdicionPos));
+    const requierePreseleccionFormaPago = @(ViewBag.RequierePreseleccionFormaPago != null && (bool)ViewBag.RequierePreseleccionFormaPago ? "true" : "false");
+    const formasPagoConfigPOS = @Html.Raw(Json.Encode(ViewBag.FormasPagoConfig ?? new System.Collections.Generic.Dictionary<string, decimal>()));
     POSState.setFechaVenta(new Date());
     POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
+    if (typeof POSState.setRequierePreseleccionFormaPago === 'function') {
+        POSState.setRequierePreseleccionFormaPago(requierePreseleccionFormaPago);
+    }
     window.POSFinalizandoVenta = false;
     window.POSVentaFinalizada = false;
     window.POSSoloFormaPagoGuardado = false;
+    window.esEdicionVenta = esEdicionVenta;
+    window.POSFormaPagoConfig = formasPagoConfigPOS || {};
     window.POSModo = window.POSModo || {};
     window.POSModo.soloFormaPago = soloFormaPago;
     window.POSModo.returnUrl = @Html.Raw(Json.Encode(returnUrlPOS));
@@ -902,6 +924,13 @@ else
         pagoMixtoEfectivo: @Html.Raw(Json.Encode(Model != null ? Model.PagoMixtoEfectivo : 0f)),
         total: @Html.Raw(Json.Encode(Model != null ? Model.TotalImporte : 0f))
     };
+    if (window.POSFormaPagoActual.formaPago && typeof POSState.setFormaPagoPreseleccionada === 'function') {
+        POSState.setFormaPagoPreseleccionada({
+            id: window.POSFormaPagoActual.formaPago,
+            nombre: window.POSFormaPagoActual.formaPago,
+            tipo: window.POSFormaPagoActual.formaPago
+        });
+    }
     const sucursalNombrePOS = @Html.Raw(Json.Encode(sucursalNombrePOS));
     const POS_INACTIVIDAD_RECORDATORIO_MS = 3 * 60 * 60 * 1000;
     const POS_RECORDATORIO_SUCURSAL_KEY = "pos-mostrar-recordatorio-sucursal";
@@ -1067,6 +1096,7 @@ else
             localStorage.setItem(key, JSON.stringify({
                 lineas: lineas,
                 listaExpendios: POSState.getListaExpendios ? POSState.getListaExpendios() : [],
+                formaPagoPreseleccionada: POSState.getFormaPagoPreseleccionada ? POSState.getFormaPagoPreseleccionada() : null,
                 idUsuarioPOS: idUsuarioActual,
                 idSucursalPOS: idSucursalActual,
                 idPersona: $("#idPersona").val(),
@@ -1144,6 +1174,7 @@ else
 
             POSState.setLineas(draft.lineas);
             POSState.setListaExpendios?.(draft.listaExpendios || []);
+            POSState.setFormaPagoPreseleccionada?.(draft.formaPagoPreseleccionada || null);
 
             if (draft.idPersona) $("#idPersona").val(draft.idPersona);
             if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
@@ -1443,6 +1474,8 @@ else
         });
     }
 
+    window.actualizarResumenFormaPagoPOS?.();
+
     window.setInterval(function () {
         window.POSDraft?.save?.();
     }, 1000);
@@ -1471,12 +1504,11 @@ else
         setTimeout(function () {
             const abierto = window.POSGuard
                 ? window.POSGuard.requestModalOpen('formaPago', function () {
-                    $('#modalFormaPago').modal('show');
+                    window.abrirModalFormaPagoFinalizacion?.();
                 })
                 : true;
 
             if (!abierto) return;
-            window.preCargarFormaPagoActual?.();
         }, 250);
     }
 
@@ -1497,6 +1529,13 @@ else
         const ahora = new Date();
         POSState.setFechaVenta(ahora);
         setFechaVentaPOS(ahora.toISOString().slice(0, 19));
+        POSState.setModoFormaPago?.('finalizacion');
+        POSState.clearFormaPagoPreseleccionada?.();
+        if (window.POSFormaPagoActual) {
+            window.POSFormaPagoActual.formaPago = '';
+            window.POSFormaPagoActual.pagoMixtoEfectivo = 0;
+            window.POSFormaPagoActual.total = 0;
+        }
         $("#idPersona").val('@idConsumidorFinal');
         $("#razonSocial").val('Consumidor Final');
         $("#inputCodigo").val("");
@@ -1520,6 +1559,7 @@ else
         $(".btn-forma-pago, #btnFinalizarPagoMixto, #btnFinalizar").prop("disabled", false);
         $("#modalFormaPago, #modalLineaVenta").modal("hide");
 
+        window.actualizarResumenFormaPagoPOS?.();
         window.activarAvisoSalidaPOS?.();
         setTimeout(function () { posKeyboard.focusCodigo(); }, 50);
     };
@@ -1727,7 +1767,7 @@ else
 
         const abierto = window.POSGuard
             ? window.POSGuard.requestModalOpen('formaPago', function () {
-                $('#modalFormaPago').modal('show');
+                window.abrirModalFormaPagoFinalizacion?.();
             })
             : true;
 
@@ -1766,6 +1806,10 @@ else
         if (!soloFormaPago) return;
         if (window.POSSoloFormaPagoGuardado) return;
         volverDesdeSoloFormaPago();
+    });
+    $('#btnCambiarFormaPago').off('click.posFormaPagoPreseleccion').on('click.posFormaPagoPreseleccion', function () {
+        if (soloFormaPago) return;
+        window.abrirModalFormaPagoPreseleccion?.();
     });
     aplicarModoSoloFormaPago();
 
@@ -2912,6 +2956,53 @@ else
         background: rgba(255, 193, 7, .12);
         border-color: rgba(255, 193, 7, .35);
         color: #ffd77a;
+    }
+
+    .pos-restore-banner-info {
+        border-color: #9fc0e4;
+        background: #edf5ff;
+        color: #22476d;
+    }
+
+    html.dark-mode .pos-restore-banner-info {
+        background: rgba(78, 115, 223, .16);
+        border-color: rgba(110, 168, 254, .28);
+        color: #d7e9ff;
+    }
+
+    .pos-forma-pago-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+        border: 1px solid #b9d4f5;
+        background: #eef6ff;
+        color: #234769;
+        border-radius: 8px;
+        padding: .45rem .55rem;
+        margin-bottom: .35rem;
+    }
+
+    .pos-forma-pago-copy {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        min-width: 0;
+    }
+
+    .pos-forma-pago-label {
+        font-size: .84rem;
+        color: #56728f;
+    }
+
+    html.dark-mode .pos-forma-pago-banner {
+        background: rgba(78, 115, 223, .18);
+        border-color: rgba(110, 168, 254, .32);
+        color: #dcecff;
+    }
+
+    html.dark-mode .pos-forma-pago-label {
+        color: #b7d1ef;
     }
 
     .pos-total-label {

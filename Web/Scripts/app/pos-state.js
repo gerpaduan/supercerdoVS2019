@@ -7,7 +7,10 @@
         lineaSeleccionada: null,
         nextIndex: 1,
         observaciones: '',
-        listaExpendios: []
+        listaExpendios: [],
+        formaPagoPreseleccionada: null,
+        modoFormaPago: 'finalizacion',
+        requierePreseleccionFormaPago: false
     };
 
     function normalizarLinea(linea) {
@@ -91,6 +94,8 @@
             state.nextIndex = 1;
             state.observaciones = '';
             state.listaExpendios = [];
+            state.formaPagoPreseleccionada = null;
+            state.modoFormaPago = 'finalizacion';
         },
 
         nextIndex: function () {
@@ -165,6 +170,38 @@
                 : [];
             state.listaExpendios = Array.from(new Set(state.listaExpendios));
             return state.listaExpendios;
+        },
+
+        setFormaPagoPreseleccionada: function (value) {
+            state.formaPagoPreseleccionada = value || null;
+            return state.formaPagoPreseleccionada;
+        },
+
+        getFormaPagoPreseleccionada: function () {
+            return state.formaPagoPreseleccionada;
+        },
+
+        clearFormaPagoPreseleccionada: function () {
+            state.formaPagoPreseleccionada = null;
+            return state.formaPagoPreseleccionada;
+        },
+
+        setModoFormaPago: function (modo) {
+            state.modoFormaPago = modo || 'finalizacion';
+            return state.modoFormaPago;
+        },
+
+        getModoFormaPago: function () {
+            return state.modoFormaPago || 'finalizacion';
+        },
+
+        setRequierePreseleccionFormaPago: function (flag) {
+            state.requierePreseleccionFormaPago = flag === true;
+            return state.requierePreseleccionFormaPago;
+        },
+
+        getRequierePreseleccionFormaPago: function () {
+            return state.requierePreseleccionFormaPago === true;
         },
 
         getListaExpendios: function () {

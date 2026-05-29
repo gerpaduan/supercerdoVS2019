@@ -138,6 +138,25 @@
             syncUIBonificacionTodos();
         }
 
+        function requiereFormaPagoAntesDeAgregar() {
+            if (soloFormaPago) return false;
+            if (window.esEdicionVenta === true) return false;
+            return POSState.getRequierePreseleccionFormaPago && POSState.getRequierePreseleccionFormaPago();
+        }
+
+        function asegurarFormaPagoAntesDeAgregar() {
+            if (!requiereFormaPagoAntesDeAgregar()) return true;
+
+            const formaPago = POSState.getFormaPagoPreseleccionada ? POSState.getFormaPagoPreseleccionada() : null;
+            if (formaPago && formaPago.tipo) return true;
+
+            if (typeof window.abrirModalFormaPagoPreseleccion === 'function') {
+                window.abrirModalFormaPagoPreseleccion();
+            }
+
+            return false;
+        }
+
         // Compatibilidad con scripts viejos como forma-pago.js
         window.obtenerTotalVenta = function obtenerTotalVenta() {
             return POSState.getTotal();
@@ -145,6 +164,7 @@
 
         function addProduct() {
             if (soloFormaPago) return;
+            if (!asegurarFormaPagoAntesDeAgregar()) return;
             const productoSeleccionado = options.getProductoSeleccionado();
 
             if (!productoSeleccionado) {
@@ -166,9 +186,13 @@
                 }
             }
 
+            const formaPagoPreseleccionada = POSState.getFormaPagoPreseleccionada ? POSState.getFormaPagoPreseleccionada() : null;
+            const precioBase = Number(productoSeleccionado.precioOriginal || productoSeleccionado.precioKg || 0);
             const precioLinea = typeof options.getPrecioParaAgregar === 'function'
                 ? options.getPrecioParaAgregar(productoSeleccionado)
-                : productoSeleccionado.precioKg;
+                : (formaPagoPreseleccionada && window.POSFormaPagoPrecios
+                    ? window.POSFormaPagoPrecios.calcularPrecioFormaPago(precioBase, formaPagoPreseleccionada.tipo)
+                    : productoSeleccionado.precioKg);
             const precioSeguro = Number.isFinite(precioLinea) ? precioLinea : productoSeleccionado.precioKg;
             const subtotal = cantidad * precioSeguro;
             if (!Number.isFinite(subtotal) || subtotal <= 0) {
@@ -185,12 +209,14 @@
                 codigo: productoSeleccionado.codigo,
                 cant: cantidad.toFixed(3),
                 precio: `$ ${precioSeguro.toFixed(2)}`,
-                precioOriginal: `$ ${productoSeleccionado.precioOriginal.toFixed(2)}`,
+                precioOriginal: `$ ${precioBase.toFixed(2)}`,
                 subtotal: `$ ${(subtotal).toFixed(2)}`,
                 bonificacion: 0,
                 anulado: false,
                 indexAnulado: -1,
-                balanza: productoSeleccionado.balanza
+                balanza: productoSeleccionado.balanza,
+                esHistorica: false,
+                formaPagoAplicada: formaPagoPreseleccionada ? formaPagoPreseleccionada.tipo : ''
             };
 
             POSState.addLinea(linea);
