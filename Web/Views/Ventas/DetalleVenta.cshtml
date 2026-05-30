@@ -133,6 +133,11 @@
                     No se habilita "Cambiar Forma de Pago": @ViewBag.MotivoNoPuedeCambiarFormaPago
                 </div>
             }
+            <button type="button"
+                    class="btn btn-light btn-block text-left mb-2"
+                    id="btnFacturaDetalleVenta">
+                <i class="fas fa-file-invoice-dollar mr-2"></i> Factura
+            </button>
             @*<a class="btn btn-light btn-block text-left"
                asp-controller="Ventas"
                asp-action="Imprimir"
@@ -143,8 +148,7 @@
             <button type="button"
                     class="btn btn-light btn-block text-left"
                     id="btnImprimirDetalleVenta"
-                    @((tieneFacturaVenta && !modoModal) ? "disabled=\"disabled\"" : "")
-                    title="@((tieneFacturaVenta && !modoModal) ? "La venta ya tiene factura generada." : "Imprimir")">
+                    title="Imprimir">
                 <i class="fas fa-print mr-2"></i> Imprimir
             </button>
 
@@ -284,12 +288,31 @@
                 });
             }
 
+            function enlazarBotonFacturaDetalle() {
+                var btn = document.getElementById("btnFacturaDetalleVenta");
+                if (!btn || btn.dataset.facturaDetalleBound === "true") return;
+
+                btn.dataset.facturaDetalleBound = "true";
+                btn.addEventListener("click", function () {
+                    if (!window.VentasFacturaModal || typeof window.VentasFacturaModal.abrir !== "function") {
+                        if (window.Swal) {
+                            Swal.fire("Factura", "No se pudo abrir el visor de factura.", "error");
+                        }
+                        return;
+                    }
+
+                    window.VentasFacturaModal.abrir(@Model.IdVenta, { volverAPostVenta: false });
+                });
+            }
+
         if (document.readyState === "loading") {
             document.addEventListener("DOMContentLoaded", enlazarBotonVolverDetalle);
             document.addEventListener("DOMContentLoaded", enlazarBotonImprimirTicketDetalle);
+            document.addEventListener("DOMContentLoaded", enlazarBotonFacturaDetalle);
         } else {
             enlazarBotonVolverDetalle();
             enlazarBotonImprimirTicketDetalle();
+            enlazarBotonFacturaDetalle();
         }
     })();
 </script>
@@ -298,6 +321,7 @@
 {
     @section Scripts {
         <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=11")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=15")"></script>
+        <script src="@Url.Content("~/Scripts/app/factura-electronica.js?v=4")"></script>
     }
 }

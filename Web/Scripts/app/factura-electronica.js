@@ -123,6 +123,18 @@
         return $('#feModoTotal').is(':checked') ? 'total' : 'porcentaje';
     }
 
+    function syncAgruparItemUnitario() {
+        const activo = $('#feAgruparItemUnitario').is(':checked');
+        $('#feAgruparItemUnitarioHidden').val(activo ? 'true' : 'false');
+        $('#feAgruparItemWrap').toggle(activo);
+
+        if (!activo) {
+            $('#feDescItemUnitario').val('');
+        } else if (!$('#feDescItemUnitario').val()) {
+            $('#feDescItemUnitario').attr('placeholder', 'Productos varios');
+        }
+    }
+
     function habilitarInputsEdicion(on) {
         const editable = !!on;
 
@@ -340,6 +352,9 @@
         // Recalcular o restaurar sin pisar con cero
         aplicarPorcentaje(100);
 
+        $('#feAgruparItemUnitario').prop('checked', $f.data('agrupar-item') === 1 || $f.data('agrupar-item') === "1");
+        syncAgruparItemUnitario();
+
         setTimeout(() => {
             ajustarAlturasModal();
 
@@ -392,6 +407,11 @@
     $(document).on('change', '#feModoPorcentaje, #feModoTotal', function () {
         if (isYaEmitida()) return;
         habilitarInputsEdicion(modoEdicion());
+        ajustarAlturasModal();
+    });
+
+    $(document).on('change', '#feAgruparItemUnitario', function () {
+        syncAgruparItemUnitario();
         ajustarAlturasModal();
     });
 
@@ -449,14 +469,19 @@
         $.post((window.AppUrls && window.AppUrls.ventasGenerarFactura) || '/Ventas/GenerarFactura', datos)
             .done(function (resp) {
                 if (resp && resp.ok) {
+                    const esActualizacion = isYaEmitida() || resp.updated === true;
                     Swal.fire({
                         icon: 'success',
-                        title: 'Factura registrada',
-                        text: 'Nro: ' + (resp.nro || '')
+                        title: esActualizacion ? 'Factura actualizada' : 'Factura registrada',
+                        text: esActualizacion ? (resp.msg || 'Los cambios se guardaron correctamente.') : ('Nro: ' + (resp.nro || ''))
                     });
 
                     $('#modalFacturaElectronica').modal('hide');
-                    $(document).trigger('venta:facturada', [resp]);
+                    if (esActualizacion) {
+                        $(document).trigger('factura:actualizada', [resp]);
+                    } else {
+                        $(document).trigger('venta:facturada', [resp]);
+                    }
                 } else {
                     Swal.fire({
                         icon: 'error',

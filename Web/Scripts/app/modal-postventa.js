@@ -233,6 +233,18 @@ function cerrarPostVentaYRecargar(delayMs) {
     setTimeout(() => location.reload(), delayMs || 400);
 }
 
+function cerrarPostVentaSegunOrigen(delayMs) {
+    const $modal = $('#modalPostVenta');
+    $modal.data('permitir-cierre', true);
+    $modal.modal('hide');
+
+    if (pvGetOrigen() === 'detalle') {
+        return;
+    }
+
+    setTimeout(() => location.reload(), delayMs || 400);
+}
+
 // =====================
 // Ticket
 // =====================
@@ -259,7 +271,7 @@ function imprimirTicket(mm) {
             }
         } catch (e) { }
 
-        cerrarPostVentaYRecargar(1200);
+        cerrarPostVentaSegunOrigen(1200);
     });
 
     $('body').append(iframe);
@@ -282,7 +294,7 @@ function pvImprimirConAgente(mm) {
             window.CarniSysPrintAgent.printExpendio(payload)
                 .done(function () {
                     pvVerificarAgente();
-                    cerrarPostVentaYRecargar(400);
+                    cerrarPostVentaSegunOrigen(400);
                 })
                 .fail(function () {
                     imprimirTicket(mm);
@@ -322,9 +334,26 @@ function pvNormalizarTelefono(raw) {
     return (digits.length >= 8) ? digits : null;
 }
 
+function pvAbrirNuevaPestanaConSesion(url) {
+    if (!url) return;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function pvAbrirPdf() {
+    const $modal = $('#modalPostVenta');
     const $btn = $('#btnPostVenta4');
-    const baseUrl = ($btn.data('venta-pdf-url') || '').toString().trim();
+    const modalPdfUrl = (($modal.data('pdf-url') || '').toString().trim());
+    const buttonPdfUrl = (($btn.data('venta-pdf-url') || '').toString().trim());
+    const baseUrl = modalPdfUrl || buttonPdfUrl;
     const ventaId = pvGetVentaId();
 
     if (!ventaId) {
@@ -338,10 +367,12 @@ function pvAbrirPdf() {
     }
 
     const url = new URL(baseUrl, window.location.origin);
-    url.searchParams.set('id', ventaId);
+    if (!modalPdfUrl && !url.searchParams.has('id')) {
+        url.searchParams.set('id', ventaId);
+    }
 
-    window.open(url.toString(), '_blank', 'noopener');
-    cerrarPostVentaYRecargar();
+    pvAbrirNuevaPestanaConSesion(url.toString());
+    cerrarPostVentaSegunOrigen();
 }
 
 function pvEnviarWhatsapp() {
@@ -370,7 +401,7 @@ function pvEnviarWhatsapp() {
     const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank', 'noopener');
 
-    cerrarPostVentaYRecargar();
+    cerrarPostVentaSegunOrigen();
 }
 
 // =====================
@@ -527,17 +558,20 @@ $(document).ready(function () {
 
     let facturaOk = false;
 
-    $('#btnPostVenta3').on('click', function () {
-        if (pvGetContext() !== 'venta') return;
+    function abrirFacturaVentaModal(ventaId, opciones) {
+        const opts = opciones || {};
+        const volverAPostVenta = opts.volverAPostVenta === true;
+
+        if (!ventaId) return;
 
         facturaOk = false;
-        const ventaId = pvGetVentaId();
 
         $.get((window.AppUrls && window.AppUrls.ventasImprimir) || (window.api && window.api.venta && window.api.venta.imprimir) || '', { id: ventaId, mm: 0 })
             .done(function (html) {
                 $('#contenedorFacturaElectronica').html(html);
 
                 const $modal = $('#modalFacturaElectronica');
+                $modal.data('volver-postventa', volverAPostVenta);
                 $modal.find('.modal-dialog').removeClass('modal-fullscreen-dialog');
 
                 function ajustarFacturaModal() {
@@ -571,13 +605,23 @@ $(document).ready(function () {
 
                 $modal.modal('show');
             });
+    }
+
+    $('#btnPostVenta3').on('click', function () {
+        if (pvGetContext() !== 'venta') return;
+
+        const ventaId = pvGetVentaId();
+        abrirFacturaVentaModal(ventaId, { volverAPostVenta: true });
 
         $('#modalPostVenta').data('permitir-cierre', true);
         $('#modalPostVenta').modal('hide');
     });
 
     $('#modalFacturaElectronica').on('hidden.bs.modal', function () {
-        if (!facturaOk) {
+        const volverAPostVenta = $(this).data('volver-postventa') === true;
+        $(this).removeData('volver-postventa');
+
+        if (!facturaOk && volverAPostVenta) {
             pvSetContext('venta');
             $('#modalPostVenta').modal('show');
         }
@@ -604,6 +648,10 @@ $(document).ready(function () {
             pdfUrl: resp.pdfUrl || ''
         });
     });
+
+    window.VentasFacturaModal = window.VentasFacturaModal || {
+        abrir: abrirFacturaVentaModal
+    };
 
     $(document).on('keydown', function (e) {
         const $modal = $('#modalPostVenta');

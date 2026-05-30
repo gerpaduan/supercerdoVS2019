@@ -207,6 +207,13 @@
                                         <i class="fas fa-pen mr-1"></i>
                                         @(soloFormaPago ? "Cambiando forma de pago" : "Modificando venta") <strong>#@idVentaEditar</strong>
                                     </div>
+                                    if (ViewBag.VentaFacturadaNoEditableImporte != null && (bool)ViewBag.VentaFacturadaNoEditableImporte)
+                                    {
+                                        <div class="pos-restore-banner pos-restore-banner-warning">
+                                            <i class="fas fa-file-invoice-dollar mr-1"></i>
+                                            La venta ya está facturada. Puede guardar cambios, pero cualquier modificación puede afectar la consistencia de los datos facturados.
+                                        </div>
+                                    }
                                     <div id="posAvisoPreciosHistoricos" class="pos-restore-banner pos-restore-banner-info">
                                         <i class="fas fa-info-circle mr-1"></i>
                                         Los productos ya cargados mantienen su precio original. Los nuevos productos se calcularán según la forma de pago seleccionada.
@@ -2964,10 +2971,22 @@ else
         color: #22476d;
     }
 
+    .pos-restore-banner-warning {
+        border-color: #f0c36d;
+        background: #fff6df;
+        color: #7a5614;
+    }
+
     html.dark-mode .pos-restore-banner-info {
         background: rgba(78, 115, 223, .16);
         border-color: rgba(110, 168, 254, .28);
         color: #d7e9ff;
+    }
+
+    html.dark-mode .pos-restore-banner-warning {
+        background: rgba(255, 193, 7, .14);
+        border-color: rgba(255, 193, 7, .28);
+        color: #ffe7a3;
     }
 
     .pos-forma-pago-banner {

@@ -23,6 +23,7 @@
     var empresaSesion = ViewBag.EmpresaSesion as Entidades.Empresa;
     bool esFacturada = factura != null && factura.IdFactura > 0 && !string.IsNullOrWhiteSpace(factura.CAE);
     bool esFacturaA = esFacturada && factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codFacturaA_Afip;
+    bool agruparItemUnitario = esFacturada && !string.IsNullOrWhiteSpace(factura.DescItemUnitario);
 
     Func<string, int, string> truncar = (texto, maximo) =>
     {
@@ -154,27 +155,36 @@
 
     if (Model.LineasVenta != null)
     {
-        foreach (var item in Model.LineasVenta)
+        if (agruparItemUnitario)
         {
-            if (item == null) { continue; }
-
-            decimal cantidad = Convert.ToDecimal(item.CantKg);
-            decimal precio = Convert.ToDecimal(item.PrecioKg);
-            decimal totalLinea = cantidad * precio;
-            string producto = ((item.Corte != null ? item.Corte.corte : "") ?? "").Trim();
-
-            if (esFacturaA)
+            decimal totalAgrupado = esFacturaA ? factura.ImporteNetoGravado : factura.ImporteTotal;
+            lineasDetalle.Add("1,000 x " + totalAgrupado.ToString("N2"));
+            lineasDetalle.Add(formatearArticulo(factura.DescItemUnitario, totalAgrupado, cantMaxChar));
+        }
+        else
+        {
+            foreach (var item in Model.LineasVenta)
             {
-                decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
-                decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
-                decimal importeNeto = cantidad * precioNeto;
-                lineasDetalle.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
-                lineasDetalle.Add(formatearArticulo(producto, importeNeto, cantMaxChar));
-            }
-            else
-            {
-                lineasDetalle.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
-                lineasDetalle.Add(formatearArticulo(producto, totalLinea, cantMaxChar));
+                if (item == null) { continue; }
+
+                decimal cantidad = Convert.ToDecimal(item.CantKg);
+                decimal precio = Convert.ToDecimal(item.PrecioKg);
+                decimal totalLinea = cantidad * precio;
+                string producto = ((item.Corte != null ? item.Corte.corte : "") ?? "").Trim();
+
+                if (esFacturaA)
+                {
+                    decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
+                    decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
+                    decimal importeNeto = cantidad * precioNeto;
+                    lineasDetalle.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
+                    lineasDetalle.Add(formatearArticulo(producto, importeNeto, cantMaxChar));
+                }
+                else
+                {
+                    lineasDetalle.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
+                    lineasDetalle.Add(formatearArticulo(producto, totalLinea, cantMaxChar));
+                }
             }
         }
     }

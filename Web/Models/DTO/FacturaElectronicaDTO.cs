@@ -39,6 +39,8 @@ namespace Web.Models.DTO
         // ===== Venta =====
         public string CondicionVenta { get; set; }
         public string FormaPago { get; set; }
+        public string DescItemUnitario { get; set; }
+        public bool AgruparItemUnitario { get; set; }
 
         // ===== Importes =====
 

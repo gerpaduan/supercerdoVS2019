@@ -608,6 +608,7 @@ namespace Web.Controllers
             ViewBag.EsEdicionVenta = esEdicionVenta;
             ViewBag.IdVentaEditar = idVentaEditar;
             ViewBag.PuedeEditarFechaVenta = esEdicionVenta && PuedeModificarUltimaVenta(venta, user, cierre) && PuedeEditarFechaVenta(venta);
+            ViewBag.VentaFacturadaNoEditableImporte = esEdicionVenta && EsVentaFacturadaConComprobante(venta);
 
             Session["VentaActiva"] = venta;
 
@@ -634,6 +635,51 @@ namespace Web.Controllers
 
             decimal referencia = config.Values.FirstOrDefault();
             return config.Values.Any(x => x != 1m) || config.Values.Any(x => x != referencia);
+        }
+
+        private bool EsVentaFacturadaConComprobante(Venta venta)
+        {
+            return venta != null
+                && char.ToUpperInvariant(venta.TipoComprobante) != 'X'
+                && oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
+        }
+
+        private decimal CalcularTotalVenta(List<Entidades.LineaVenta> lineasVenta)
+        {
+            if (lineasVenta == null || !lineasVenta.Any())
+                return 0m;
+
+            return Math.Round(
+                lineasVenta.Sum(x => Convert.ToDecimal(x.CantKg) * Convert.ToDecimal(x.PrecioKg)),
+                2,
+                MidpointRounding.AwayFromZero);
+        }
+
+        private bool DebeBloquearModificacionPorMontoFacturado(Venta venta, out string mensaje)
+        {
+            mensaje = null;
+
+            if (!EsVentaFacturadaConComprobante(venta))
+                return false;
+
+            int idFacturaElectronica = oVentaN.existeFactuElectParaVenta(venta.IdVenta);
+            if (idFacturaElectronica <= 0)
+                return false;
+
+            Entidades.FacturaElectronica factura = oVentaN.getFactuElecById(idFacturaElectronica);
+            if (factura == null || factura.Id <= 0)
+                return false;
+
+            decimal totalFacturado = Math.Round(Convert.ToDecimal(factura.ImporteTotal), 2, MidpointRounding.AwayFromZero);
+            decimal totalModificado = CalcularTotalVenta(venta.LineasVenta);
+
+            if (Math.Abs(totalFacturado - totalModificado) <= 0.009m)
+                return false;
+
+            mensaje = "La venta ya fue facturada y no puede cambiar su importe total. " +
+                "El monto facturado es $" + totalFacturado.ToString("N2") +
+                " y la venta modificada quedó en $" + totalModificado.ToString("N2") + ".";
+            return true;
         }
 
         [HttpGet]
@@ -1110,6 +1156,23 @@ namespace Web.Controllers
                 }
 
                 var factura = MapDtoToFactura(dto);
+
+                if (dto.IdFactura > 0)
+                {
+                    if (factura.Venta == null)
+                        return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                    oVentaN.addOrEditFactuElec(factura);
+
+                    return Json(new
+                    {
+                        ok = true,
+                        updated = true,
+                        facturaId = dto.IdFactura,
+                        ventaId = dto.IdVenta,
+                        msg = "Factura actualizada correctamente"
+                    }, JsonRequestBehavior.AllowGet);
+                }
                 
                 bool esNotaCredito = dto.CodTipoCbteAfip == 3 || dto.CodTipoCbteAfip == 8 || dto.CodTipoCbteAfip == 13; // CodTipoCbteAfip 3=NC B, 8=NC A
 
@@ -1597,6 +1660,7 @@ namespace Web.Controllers
                     )
         {
             var dto = new FacturaElectronicaDTO();
+            bool facturaYaGenerada = factuElec != null && factuElec.Id > 0;
 
             dto.IdVenta = venta.IdVenta;
             dto.IdFactura = factuElec.Id;
@@ -1621,16 +1685,33 @@ namespace Web.Controllers
             dto.EmisorInicioActividad = venta.Sucursal.Empresa.InicioActividad.ToString("dd/MM/yyyy");
 
             // ===== Cliente =====
-            dto.TipoDocAfip = (venta.Persona.IdIva == Entidades.FacturaElectronica.codCF_IvaAfip ?
-                Entidades.FacturaElectronica.codTipoDoc_SinIdentif : Entidades.FacturaElectronica.codTipoDoc_CUIT).ToString();// factuElec.MapearCondicionIVAReceptorIdAfip(venta.Persona.IdIva).ToString();
-            dto.NroDocAfip = venta.Persona.Cuit?.Replace("-", "");
-            dto.RazonSocialAFIP = venta.Persona.razonSocial;
-            dto.CondicionIvaAFIP = venta.Persona.Iva;
-            dto.DomicilioAFIP = $"{venta.Persona.Domicilio} - {venta.Persona.Ciudad}";
+            dto.TipoDocAfip = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.TipoDocAfip)
+                ? factuElec.TipoDocAfip
+                : (venta.Persona.IdIva == Entidades.FacturaElectronica.codCF_IvaAfip ?
+                    Entidades.FacturaElectronica.codTipoDoc_SinIdentif : Entidades.FacturaElectronica.codTipoDoc_CUIT).ToString();
+            dto.NroDocAfip = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.NroDocAfip)
+                ? factuElec.NroDocAfip
+                : venta.Persona.Cuit?.Replace("-", "");
+            dto.RazonSocialAFIP = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.RazonSocialAFIP)
+                ? factuElec.RazonSocialAFIP
+                : venta.Persona.razonSocial;
+            dto.CondicionIvaAFIP = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.CondicionIvaAFIP)
+                ? factuElec.CondicionIvaAFIP
+                : venta.Persona.Iva;
+            dto.DomicilioAFIP = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.DomicilioAFIP)
+                ? factuElec.DomicilioAFIP
+                : $"{venta.Persona.Domicilio} - {venta.Persona.Ciudad}";
             dto.Whatsapp = venta.Persona.Telefono;
 
             // ===== Venta =====
-            dto.FormaPago = venta.FormaPago + (venta.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
+            dto.CondicionVenta = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.CondicionVenta)
+                ? factuElec.CondicionVenta
+                : dto.CondicionVenta;
+            dto.FormaPago = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.FormaPago)
+                ? factuElec.FormaPago
+                : venta.FormaPago + (venta.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
+            dto.DescItemUnitario = facturaYaGenerada ? (factuElec.DescItemUnitario ?? "") : "";
+            dto.AgruparItemUnitario = !string.IsNullOrWhiteSpace(dto.DescItemUnitario);
 
 
             List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
@@ -1683,10 +1764,15 @@ namespace Web.Controllers
             }
 
             // ===== Importes =====
-            // 
-            dto.ImporteTotal = (decimal)venta.LineasVenta.Sum(l => l.ImporteConIva());
-            dto.ImporteNetoGravado = (decimal)venta.LineasVenta.Sum(l => l.ImporteNeto());
-            dto.Iva = (decimal)venta.LineasVenta.Sum(l => l.ImporteIva());
+            dto.ImporteTotal = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.ImporteTotal)
+                : (decimal)venta.LineasVenta.Sum(l => l.ImporteConIva());
+            dto.ImporteNetoGravado = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.ImporteNetoGravado)
+                : (decimal)venta.LineasVenta.Sum(l => l.ImporteNeto());
+            dto.Iva = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.Iva)
+                : (decimal)venta.LineasVenta.Sum(l => l.ImporteIva());
 
             // ===== CAE =====
             dto.CAE = factuElec.CAE1;
@@ -1700,6 +1786,7 @@ namespace Web.Controllers
             int cantMaxChar = ticketMm == 58 ? 32 : 43;
             bool esFacturada = factura != null && factura.IdFactura > 0 && !string.IsNullOrWhiteSpace(factura.CAE);
             bool esFacturaA = esFacturada && factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codFacturaA_Afip;
+            bool agruparItemUnitario = esFacturada && !string.IsNullOrWhiteSpace(factura.DescItemUnitario);
 
             Func<string, int, string> truncar = (texto, maximo) =>
             {
@@ -1804,27 +1891,36 @@ namespace Web.Controllers
                 lineas.Add(new string('-', cantMaxChar));
             }
 
-            foreach (var item in venta.LineasVenta ?? new List<Entidades.LineaVenta>())
+            if (agruparItemUnitario)
             {
-                if (item == null) continue;
-
-                decimal cantidad = Convert.ToDecimal(item.CantKg);
-                decimal precio = Convert.ToDecimal(item.PrecioKg);
-                decimal totalLinea = cantidad * precio;
-                string producto = ((item.Corte != null ? item.Corte.corte : "") ?? "").Trim();
-
-                if (esFacturaA)
+                decimal totalAgrupado = esFacturaA ? factura.ImporteNetoGravado : factura.ImporteTotal;
+                lineas.Add("1,000 x " + totalAgrupado.ToString("N2"));
+                lineas.Add(formatearArticulo(factura.DescItemUnitario, totalAgrupado, cantMaxChar));
+            }
+            else
+            {
+                foreach (var item in venta.LineasVenta ?? new List<Entidades.LineaVenta>())
                 {
-                    decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
-                    decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
-                    decimal importeNeto = cantidad * precioNeto;
-                    lineas.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
-                    lineas.Add(formatearArticulo(producto, importeNeto, cantMaxChar));
-                }
-                else
-                {
-                    lineas.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
-                    lineas.Add(formatearArticulo(producto, totalLinea, cantMaxChar));
+                    if (item == null) continue;
+
+                    decimal cantidad = Convert.ToDecimal(item.CantKg);
+                    decimal precio = Convert.ToDecimal(item.PrecioKg);
+                    decimal totalLinea = cantidad * precio;
+                    string producto = ((item.Corte != null ? item.Corte.corte : "") ?? "").Trim();
+
+                    if (esFacturaA)
+                    {
+                        decimal divisorIva = 1m + (Convert.ToDecimal(item.AlicuotaIva) / 100m);
+                        decimal precioNeto = divisorIva != 0 ? (precio / divisorIva) : precio;
+                        decimal importeNeto = cantidad * precioNeto;
+                        lineas.Add(cantidad.ToString("F3") + " x " + precioNeto.ToString("N2"));
+                        lineas.Add(formatearArticulo(producto, importeNeto, cantMaxChar));
+                    }
+                    else
+                    {
+                        lineas.Add(cantidad.ToString("F3") + " x " + precio.ToString("N2"));
+                        lineas.Add(formatearArticulo(producto, totalLinea, cantMaxChar));
+                    }
                 }
             }
 
@@ -1951,6 +2047,7 @@ namespace Web.Controllers
         {
             return new FacturaElectronica
             {
+                Id = dto.IdFactura,
                 IdVenta = dto.IdVenta,
                 Venta = oVentaN.getVentaById(dto.IdVenta),
                 PtoVtaAfip = dto.PtoVtaAfip,
@@ -1967,6 +2064,7 @@ namespace Web.Controllers
 
                 CondicionVenta = dto.CondicionVenta,
                 FormaPago = dto.FormaPago,
+                DescItemUnitario = dto.AgruparItemUnitario ? (dto.DescItemUnitario ?? "") : "",
 
                 PorcentajeFacturacion = (float)dto.PorcentajeFacturacion,
                 ImporteNetoGravado = (float)dto.ImporteNetoGravado,
