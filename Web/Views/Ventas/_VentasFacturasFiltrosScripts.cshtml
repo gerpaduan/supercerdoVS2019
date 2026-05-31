@@ -1,0 +1,399 @@
+@model string
+
+@{
+    var modo = (Model ?? "ventas").ToLowerInvariant();
+    var tituloFormaPagoVacio = "Todas las formas de pago";
+    var tituloTipoVacio = "Todos los comprobantes";
+    var textoSingularTipo = "Tipo comprobante";
+    var esVentas = modo == "ventas";
+}
+
+<script>
+        (function () {
+            const form = document.getElementById('@(esVentas ? "formFiltroFechas" : "formFiltroFacturas")');
+
+            if (!form) {
+                return;
+            }
+
+            const fechaDesde = document.getElementById('fechaDesde');
+            const fechaHasta = document.getElementById('fechaHasta');
+            const btnFiltrar = document.getElementById('btnFiltrarFechas');
+
+            const fechaDesdeInicial = fechaDesde ? fechaDesde.value : "";
+            const fechaHastaInicial = fechaHasta ? fechaHasta.value : "";
+
+            function fechasValidas() {
+                if (!fechaDesde || !fechaHasta || !fechaDesde.value || !fechaHasta.value) return false;
+                return new Date(fechaDesde.value) <= new Date(fechaHasta.value);
+            }
+
+            function verificarCambios() {
+                const cambio = (fechaDesde ? fechaDesde.value : "") !== fechaDesdeInicial || (fechaHasta ? fechaHasta.value : "") !== fechaHastaInicial;
+                const valido = fechasValidas();
+
+                if (fechaDesde) {
+                    fechaDesde.classList.toggle('is-invalid', !valido);
+                }
+
+                if (fechaHasta) {
+                    fechaHasta.classList.toggle('is-invalid', !valido);
+                }
+
+                if (btnFiltrar) {
+                    btnFiltrar.disabled = !(cambio && valido);
+                }
+            }
+
+            if (fechaDesde) {
+                fechaDesde.addEventListener('change', verificarCambios);
+                fechaDesde.addEventListener('input', verificarCambios);
+            }
+
+            if (fechaHasta) {
+                fechaHasta.addEventListener('change', verificarCambios);
+                fechaHasta.addEventListener('input', verificarCambios);
+            }
+
+            form.addEventListener('submit', function (e) {
+                if (!fechasValidas()) {
+                    e.preventDefault();
+                }
+            });
+        })();
+
+        const buscadorCliente = document.getElementById("buscadorCliente");
+        const buscadorVendedor = document.getElementById("buscadorVendedor");
+        const items = Array.from(document.querySelectorAll(".venta-item"));
+
+        const filtroFormaPagoChecks = Array.from(document.querySelectorAll(".chk-forma-pago"));
+        const filtroFormaPagoTexto = document.getElementById("filtroFormaPagoTexto");
+        const filtroFormaPagoBadge = document.getElementById("filtroFormaPagoBadge");
+        const btnLimpiarFormaPago = document.getElementById("btnLimpiarFormaPago");
+
+        const filtroTipoComprobanteChecks = Array.from(document.querySelectorAll(".chk-tipo-comprobante"));
+        const filtroTipoComprobanteTexto = document.getElementById("filtroTipoComprobanteTexto");
+        const filtroTipoComprobanteBadge = document.getElementById("filtroTipoComprobanteBadge");
+        const btnLimpiarTipoComprobante = document.getElementById("btnLimpiarTipoComprobante");
+
+        function getSeleccionados(checks) {
+            return checks.filter(chk => chk.checked).map(chk => (chk.value || "").toLowerCase());
+        }
+
+        function actualizarResumenDropdown(checks, texto, badge, tituloVacio, tituloUno, tituloVarios) {
+            if (!texto || !badge) return;
+
+            const seleccionadas = checks.filter(chk => chk.checked);
+            const cantidad = seleccionadas.length;
+
+            if (cantidad === 0) {
+                texto.textContent = tituloVacio;
+                badge.classList.add("d-none");
+                return;
+            }
+
+            if (cantidad === 1) {
+                texto.textContent = seleccionadas[0].dataset.label || seleccionadas[0].value || tituloUno;
+                badge.classList.add("d-none");
+                return;
+            }
+
+            texto.textContent = tituloVarios;
+            badge.textContent = cantidad.toString();
+            badge.classList.remove("d-none");
+        }
+
+        function aplicarFiltros() {
+            const textoCliente = (buscadorCliente?.value || "").toLowerCase();
+            const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
+            const formasPagoSeleccionadas = getSeleccionados(filtroFormaPagoChecks);
+            const tiposSeleccionados = getSeleccionados(filtroTipoComprobanteChecks);
+
+            let total = 0;
+            let cant = 0;
+
+            items.forEach(function (item) {
+                const cliente = (item.dataset.cliente || "").toLowerCase();
+                const identificacion = (item.dataset.identificacion || "").toLowerCase();
+                const vendedor = (item.dataset.vendedor || "").toLowerCase();
+                const formaPago = (item.dataset.formaPago || "").toLowerCase();
+                const tipoComprobante = (item.dataset.tipoComprobante || "").toLowerCase();
+
+                const coincideCliente = !textoCliente || cliente.includes(textoCliente) || identificacion.includes(textoCliente);
+                const coincideVendedor = !textoVendedor || vendedor.includes(textoVendedor);
+                const coincideFormaPago = formasPagoSeleccionadas.length === 0 || formasPagoSeleccionadas.includes(formaPago);
+                const coincideTipo = tiposSeleccionados.length === 0 || tiposSeleccionados.includes(tipoComprobante);
+                const mostrar = coincideCliente && coincideVendedor && coincideFormaPago && coincideTipo;
+
+                item.style.display = mostrar ? "" : "none";
+
+                if (mostrar) {
+                    total += parseFloat(item.querySelector(".importe")?.dataset.valor || 0);
+                    cant++;
+                }
+            });
+
+            const totalNode = document.getElementById("totalFiltrado");
+            const cantNode = document.getElementById("cantFiltrado");
+
+            if (totalNode) {
+                totalNode.textContent = "Total: " + total.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+            }
+
+            if (cantNode) {
+                cantNode.textContent = "Cant.: " + cant.toString();
+            }
+
+            document.querySelectorAll(".fecha-grupo").forEach(function (grupo) {
+                const tieneItems = Array.from(grupo.parentNode.children || []).some(function (li) {
+                    return li.classList && li.classList.contains("venta-item") && li.style.display !== "none";
+                });
+
+                grupo.style.display = tieneItems ? "" : "none";
+            });
+        }
+
+        buscadorCliente?.addEventListener("input", aplicarFiltros);
+        buscadorVendedor?.addEventListener("input", aplicarFiltros);
+
+        filtroFormaPagoChecks.forEach(function (chk) {
+            chk.addEventListener("change", function () {
+                actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+                aplicarFiltros();
+            });
+        });
+
+        filtroTipoComprobanteChecks.forEach(function (chk) {
+            chk.addEventListener("change", function () {
+                actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+                aplicarFiltros();
+            });
+        });
+
+        btnLimpiarFormaPago?.addEventListener("click", function (e) {
+            e.preventDefault();
+            filtroFormaPagoChecks.forEach(function (chk) { chk.checked = false; });
+            actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+            aplicarFiltros();
+        });
+
+        btnLimpiarTipoComprobante?.addEventListener("click", function (e) {
+            e.preventDefault();
+            filtroTipoComprobanteChecks.forEach(function (chk) { chk.checked = false; });
+            actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+            aplicarFiltros();
+        });
+
+        document.querySelectorAll(".filtro-forma-pago-menu").forEach(function (menu) {
+            menu.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+        });
+
+        actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+        actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+
+        document.getElementById("btnVerLineasVentas")?.addEventListener("click", function () {
+            const baseUrl = this.getAttribute("data-base-url") || "";
+            if (!baseUrl) return;
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", document.getElementById("fechaDesde")?.value || "");
+            params.set("fechaHasta", document.getElementById("fechaHasta")?.value || "");
+            params.set("idSucursal", document.getElementById("idSucursal")?.value || "-1");
+            params.set("cliente", buscadorCliente?.value || "");
+            params.set("vendedor", buscadorVendedor?.value || "");
+            params.set("formasPago", getSeleccionados(filtroFormaPagoChecks).join(","));
+
+            window.location.href = baseUrl + "?" + params.toString();
+        });
+
+        document.getElementById("btnVerFacturasVentas")?.addEventListener("click", function () {
+            const baseUrl = this.getAttribute("data-base-url") || "";
+            if (!baseUrl) return;
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", document.getElementById("fechaDesde")?.value || "");
+            params.set("fechaHasta", document.getElementById("fechaHasta")?.value || "");
+            params.set("idSucursal", document.getElementById("idSucursal")?.value || "-1");
+
+            window.location.href = baseUrl + "?" + params.toString();
+        });
+</script>
+
+<style>
+    .venta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+
+    .venta-icono {
+        flex: 0 0 auto;
+        margin-right: 10px;
+    }
+
+    .venta-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .venta-tipo-persona {
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    @@media (max-width: 576px) {
+        .venta-tipo-persona {
+            max-width: 17ch;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+    }
+
+    .venta-id {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .venta-obs {
+        font-size: 0.8rem;
+        color: #4f5d75;
+        margin-top: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 30rem;
+    }
+
+    .venta-total {
+        text-align: right;
+        flex: 0 0 auto;
+    }
+
+    .venta-total .importe {
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .venta-item:hover {
+        background-color: #f8f9fc;
+    }
+
+    .filtros-ventas-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .filtros-ventas-stack {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .filtros-fila {
+        display: grid;
+        gap: .85rem;
+    }
+
+    .filtro-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .35rem;
+    }
+
+    .filtros-ventas-card .form-control {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .filtros-ventas-card .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .filtro-forma-pago-btn {
+        border: 1px solid #ced4da;
+        background: #fff;
+        color: #495057;
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .filtro-forma-pago-btn:focus,
+    .filtro-forma-pago-btn:hover {
+        background: #fff;
+        color: #495057;
+    }
+
+    .filtro-forma-pago-menu {
+        max-height: 320px;
+        overflow-y: auto;
+        border-radius: .7rem;
+        box-shadow: 0 .35rem 1rem rgba(0, 0, 0, .12);
+    }
+
+    .filtro-forma-pago-item {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        border-radius: .45rem;
+    }
+
+    .filtro-forma-pago-item:hover,
+    .filtro-forma-pago-clear:hover {
+        background-color: #f8f9fc;
+    }
+
+    @@media (min-width: 992px) {
+        .vista-venta {
+            width: 60%;
+            max-width: none;
+            margin: 0 !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+
+    @@media (min-width: 1200px) {
+        .filtros-fila-fechas {
+            grid-template-columns: 1.15fr 1.15fr 140px;
+            align-items: end;
+        }
+
+        .filtro-sucursal {
+            max-width: 420px;
+        }
+
+        .filtros-fila-busqueda {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .filtros-fila-fechas,
+        .filtros-fila-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .filtro-accion {
+            grid-column: 2;
+        }
+
+        .filtros-fila-sucursal {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .filtros-fila {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

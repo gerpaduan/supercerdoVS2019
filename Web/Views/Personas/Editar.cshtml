@@ -124,6 +124,13 @@
                             @Html.ValidationMessageFor(m => m.Telefono, "", new { @class = "text-danger small" })
                         </div>
                     </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Email">Email</label>
+                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control js-persona-control", autocomplete = "off", maxlength = "200", type = "email" })
+                            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">

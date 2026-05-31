@@ -35,6 +35,7 @@
 
                     <li class="list-group-item venta-item @(modoModal ? "venta-item-modal" : "")"
                         data-forma-pago="@venta.FormaPago.ToString()"
+                        data-tipo-comprobante="@venta.TipoComprobante.ToString()"
                         data-cliente="@venta.Persona.razonSocial"
                         data-identificacion="@venta.Persona.Identificacion"
                         data-vendedor="@venta.Vendedor.Nombre.ToLower()"

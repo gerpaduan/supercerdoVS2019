@@ -1147,6 +1147,122 @@ namespace Datos
             return fact;
         }
 
+        public List<Entidades.FacturaElectronica> getFacturasRealizadas(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        {
+            const string sql = @"
+                SELECT
+                    f.*,
+                    v.idVenta,
+                    v.fechaVenta,
+                    v.turno,
+                    v.diaFestivo,
+                    v.observaciones,
+                    v.nroRemito,
+                    v.estado,
+                    v.enCtaCte,
+                    v.cuit,
+                    v.email,
+                    v.formaPago AS ventaFormaPago,
+                    v.tipoComprobante,
+                    v.creado AS ventaCreado,
+                    v.actualizado AS ventaActualizado,
+                    v.pagoMixtoEfectivo,
+                    v.idVendedor,
+                    v.idSucursal,
+                    v.idPersona,
+                    ISNULL(lv.totalImporteCalculado, 0) AS totalImporteCalculado,
+                    ISNULL(lv.cantItemsCalculado, 0) AS cantItemsCalculado,
+                    u.nombre AS vendedorNombre,
+                    u.usuario AS vendedorUsuario,
+                    u.email AS vendedorEmail,
+                    u.idEmpresa AS vendedorIdEmpresa,
+                    s.sucursal AS sucursalNombre,
+                    s.idEmpresa AS sucursalIdEmpresa,
+                    s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
+                    s.direccion AS sucursalDireccion,
+                    s.localidad AS sucursalLocalidad,
+                    s.provincia AS sucursalProvincia,
+                    s.pais AS sucursalPais,
+                    p.razonSocial AS personaRazonSocial,
+                    p.identificacion AS personaIdentificacion,
+                    p.idIva AS personaIdIva,
+                    i.iva AS personaIva,
+                    p.cuit AS personaCuit,
+                    p.telefono AS personaTelefono,
+                    p.domicilio AS personaDomicilio,
+                    p.ciudad AS personaCiudad,
+                    p.ctaCte AS personaCtaCte,
+                    p.bonificacion AS personaBonificacion
+                FROM FacturaElectronica f
+                INNER JOIN Ventas v ON v.idVenta = f.idVenta
+                LEFT JOIN Usuarios u ON u.id = v.idVendedor
+                LEFT JOIN Sucursal s ON s.idSucursal = v.idSucursal
+                LEFT JOIN Personas p ON p.idPersona = v.idPersona
+                LEFT JOIN Iva i ON i.id = p.idIva
+                LEFT JOIN (
+                    SELECT
+                        idVenta,
+                        SUM(cantKg * precioKg) AS totalImporteCalculado,
+                        COUNT(*) AS cantItemsCalculado
+                    FROM dbo.LineaVenta
+                    GROUP BY idVenta
+                ) lv ON lv.idVenta = v.idVenta
+                WHERE ISNULL(f.CAE, '') <> ''
+                  AND f.fechaEmisionAfip >= @fechaDesde
+                  AND f.fechaEmisionAfip < @fechaHastaMas1
+                  AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
+                ORDER BY f.fechaEmisionAfip DESC, f.id DESC;";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr =>
+                {
+                    var factura = new Entidades.FacturaElectronica
+                    {
+                        Id = Convert.ToInt32(dr["id"]),
+                        PtoVtaAfip = Convert.ToString(dr["ptoVtaAfip"]),
+                        FechaEmisionAfip = dr["fechaEmisionAfip"] == DBNull.Value ? null : (DateTime?)dr["fechaEmisionAfip"],
+                        DescTipoCbteAfip = Convert.ToString(dr["descTipoCbteAfip"]),
+                        CodTipoCbteAfip = dr["codTipoCbteAfip"] == DBNull.Value ? 0 : Convert.ToInt32(dr["codTipoCbteAfip"]),
+                        NroCbteAfip = Convert.ToString(dr["nroCbteAfip"]),
+                        TipoDocAfip = Convert.ToString(dr["tipoDocAfip"]),
+                        NroDocAfip = Convert.ToString(dr["nroDocAfip"]),
+                        RazonSocialAFIP = Convert.ToString(dr["razonSocialAFIP"]),
+                        CondicionIvaAFIP = Convert.ToString(dr["condicionIvaAFIP"]),
+                        DomicilioAFIP = Convert.ToString(dr["domicilioAFIP"]),
+                        CondicionVenta = Convert.ToString(dr["condicionVenta"]),
+                        FormaPago = Convert.ToString(dr["formaPago"]),
+                        CAE1 = Convert.ToString(dr["CAE"]),
+                        FecVtoCAE = Convert.ToString(dr["fecVtoCAE"]),
+                        ImporteNetoGravado = string.IsNullOrEmpty(dr["importeNetoGravado"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeNetoGravado"]),
+                        Iva = string.IsNullOrEmpty(dr["iva"]?.ToString()) ? 0 : Convert.ToSingle(dr["iva"]),
+                        ImporteTotal = string.IsNullOrEmpty(dr["importeTotal"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeTotal"]),
+                        PorcentajeFacturacion = string.IsNullOrEmpty(dr["porcentajeFacturacion"]?.ToString()) ? 100 : Convert.ToSingle(dr["porcentajeFacturacion"]),
+                        DescItemUnitario = Convert.ToString(dr["descItemUnitario"]),
+                        IdVenta = dr["idVenta"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idVenta"]),
+                        Error = dr["error"] != DBNull.Value && Convert.ToBoolean(dr["error"]),
+                        MensajeError = Convert.ToString(dr["mensajeError"]),
+                        FechaError = dr["fechaError"] == DBNull.Value ? null : (DateTime?)dr["fechaError"]
+                    };
+
+                    var venta = MapVenta(dr, false);
+                    if (string.IsNullOrWhiteSpace(factura.FormaPago))
+                        factura.FormaPago = venta.FormaPago;
+
+                    factura.Venta = venta;
+                    return factura;
+                },
+                p =>
+                {
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHastaMas1", SqlDbType.DateTime).Value = fechaHasta.AddDays(1);
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
+                }
+            );
+        }
+
         public List<Entidades.AlicuotaIva> getAlicuotaIvaFactura(int idFacturaElectronica)
         {
             const string sql = @"

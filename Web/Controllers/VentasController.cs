@@ -101,6 +101,51 @@ namespace Web.Controllers
             return View(ventas);
         }
 
+        public ActionResult Facturas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
+        {
+            DateTime desde = fechaDesde ?? DateTime.Today;
+            DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, desde))
+            {
+                if (AjustarFechaSiNoTienePermiso(Permisos.Venta.VerVentas, ref desde) && hasta < desde)
+                    hasta = desde;
+                else
+                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde);
+            }
+
+            if (desde == hasta && desde.Hour == 0)
+            {
+                hasta = hasta.AddDays(1);
+            }
+
+            var sucursales = oSucursalN.findAll();
+            ViewBag.Sucursales = sucursales;
+            ViewBag.IdSucursalSeleccionada = idSucursal;
+            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Venta.VerVentas);
+
+            var facturas = oVentaN.getFacturasRealizadas(desde, hasta, idSucursal) ?? new List<Entidades.FacturaElectronica>();
+            var model = new FacturasIndexVm
+            {
+                FechaDesde = desde,
+                FechaHasta = hasta,
+                IdSucursal = idSucursal,
+                TotalFacturado = facturas.Sum(x => Convert.ToDecimal(x != null ? x.ImporteTotal : 0f))
+            };
+
+            foreach (var factura in facturas.Where(x => x != null && x.Venta != null))
+            {
+                model.Facturas.Add(new FacturaListadoItemVm
+                {
+                    Factura = factura,
+                    Venta = factura.Venta
+                });
+            }
+
+            return View("~/Views/Ventas/Facturas.cshtml", model);
+        }
+
         public ActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
         {
             DateTime desde = fechaDesde ?? DateTime.Today;
@@ -262,6 +307,26 @@ namespace Web.Controllers
                 return PartialView(venta);
 
             return View(venta);
+        }
+
+        public ActionResult DetalleFactura(int id, string returnUrl = "")
+        {
+            var factura = oVentaN.getFactuElecById(id);
+            if (factura == null || factura.Id <= 0)
+                return HttpNotFound();
+
+            var venta = factura.Venta ?? oVentaN.getVentaById(factura.IdVenta);
+            if (venta == null)
+                return HttpNotFound();
+
+            var model = new FacturaDetalleVm
+            {
+                Factura = factura,
+                Venta = venta,
+                ReturnUrl = DecodeReturnUrlIfNeeded(returnUrl)
+            };
+
+            return View("~/Views/Ventas/DetalleFactura.cshtml", model);
         }
 
         [HttpPost]
@@ -1088,14 +1153,191 @@ namespace Web.Controllers
         }
 
 
+        [HttpGet]
+        public JsonResult ObtenerDatosEmailComprobante(int id)
+        {
+            try
+            {
+                var venta = oVentaN.getVentaById(id);
+                if (venta == null || venta.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta no encontrada." }, JsonRequestBehavior.AllowGet);
+
+                var empresaVenta = ObtenerEmpresaVenta(venta);
+                var factuElec = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(venta.IdVenta));
+                string nombreEmpresa = ObtenerNombreEmpresaVenta(venta);
+                string emailDestino = venta.Persona != null ? (venta.Persona.Email ?? "").Trim() : "";
+                bool adjuntarDetalleDisponible = factuElec != null
+                    && factuElec.Id > 0
+                    && (Math.Abs(factuElec.PorcentajeFacturacion - 100f) > 0.0001f
+                        || !string.IsNullOrWhiteSpace(factuElec.DescItemUnitario));
+                string asunto = "Comprobante de " + nombreEmpresa;
+                string cuerpo =
+                    "Estimado/a cliente:\n\n" +
+                    "Adjuntamos la factura correspondiente.\n\n" +
+                    "Este correo fue enviado automáticamente. Por favor, no responda a este mensaje.\n\n" +
+                    "Atentamente,\n" +
+                    nombreEmpresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = emailDestino,
+                    asunto = asunto,
+                    mensaje = cuerpo,
+                    adjuntarDetalleDisponible = adjuntarDetalleDisponible,
+                    empresa = nombreEmpresa,
+                    replyTo = empresaVenta != null ? (empresaVenta.Email ?? "") : ""
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult EnviarComprobanteEmail(int idVenta, string emailDestino, string asunto, string mensaje, bool adjuntarDetalle = false)
+        {
+            try
+            {
+                var venta = oVentaN.getVentaById(idVenta);
+                if (venta == null || venta.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta no encontrada." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                var empresaVenta = ObtenerEmpresaVenta(venta);
+                string nombreEmpresa = ObtenerNombreEmpresaVenta(venta);
+                byte[] pdfBytes = GenerarPdfVentaBytes(venta);
+                byte[] pdfDetalleBytes = null;
+                string bodyHtml = ConvertirTextoAHtml(mensaje);
+                string nombreAdjunto = "Comprobante_" + venta.IdVenta + ".pdf";
+                string nombreAdjuntoDetalle = "Detalle_" + venta.IdVenta + ".pdf";
+                string fromName = "CarniSys - " + nombreEmpresa;
+                string replyToEmail = empresaVenta != null ? (empresaVenta.Email ?? "").Trim() : "";
+                if (adjuntarDetalle)
+                {
+                    var factura = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(venta.IdVenta));
+                    bool puedeAdjuntarDetalle = factura != null
+                        && factura.Id > 0
+                        && (Math.Abs(factura.PorcentajeFacturacion - 100f) > 0.0001f
+                            || !string.IsNullOrWhiteSpace(factura.DescItemUnitario));
+
+                    if (puedeAdjuntarDetalle)
+                        pdfDetalleBytes = GenerarPdfDetalleVentaBytes(venta);
+                }
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: venta.Persona != null ? venta.Persona.RazonSocial : "",
+                    subject: asunto,
+                    bodyHtml: bodyHtml,
+                    attachmentFileName: nombreAdjunto,
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    attachmentFileName2: pdfDetalleBytes != null ? nombreAdjuntoDetalle : null,
+                    attachmentBytes2: pdfDetalleBytes,
+                    attachmentContentType2: "application/pdf",
+                    fromNameOverride: fromName,
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: nombreEmpresa
+                );
+
+                return Json(new { ok = true, msg = "El comprobante se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
+        }
+
         public ActionResult Imprimir(int id)
         {
             Entidades.Venta venta = oVentaN.getVentaById(id);
-            Entidades.FacturaElectronica factuElec = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(id));
-
-            var generador = new Utilidades.GenerarDocs();
-            byte[] pdfBytes = generador.GenerarFacturaPDF(venta, factuElec);
+            byte[] pdfBytes = GenerarPdfVentaBytes(venta);
             return File(pdfBytes, "application/pdf", $"Factura_{id}.pdf");
+        }
+
+        private byte[] GenerarPdfVentaBytes(Entidades.Venta venta)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            Entidades.FacturaElectronica factuElec = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(venta.IdVenta));
+            var generador = new Utilidades.GenerarDocs();
+            return generador.GenerarFacturaPDF(venta, factuElec);
+        }
+
+        private byte[] GenerarPdfDetalleVentaBytes(Entidades.Venta venta)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            var ventaDetalle = CrearVentaDetalleTipoX(venta);
+            var generador = new Utilidades.GenerarDocs();
+            return generador.GenerarFacturaPDF(ventaDetalle, null);
+        }
+
+        private Entidades.Venta CrearVentaDetalleTipoX(Entidades.Venta venta)
+        {
+            return new Entidades.Venta
+            {
+                IdVenta = venta.IdVenta,
+                FechaVenta = venta.FechaVenta,
+                Observaciones = venta.Observaciones,
+                Sucursal = venta.Sucursal,
+                Persona = venta.Persona,
+                NroRemito = venta.NroRemito,
+                FormaPago = venta.FormaPago,
+                TipoComprobante = 'X',
+                Vendedor = venta.Vendedor,
+                LineasVenta = venta.LineasVenta,
+                TotalImporte = venta.LineasVenta != null ? venta.LineasVenta.Sum(l => l != null ? l.ImporteConIva() : 0f) : 0f,
+                TotalImporteOriginal = venta.TotalImporteOriginal
+            };
+        }
+
+        private Entidades.Empresa ObtenerEmpresaVenta(Entidades.Venta venta)
+        {
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            return (venta != null && venta.Sucursal != null ? venta.Sucursal.Empresa : null)
+                ?? (usuario != null ? usuario.Empresa : null);
+        }
+
+        private string ObtenerNombreEmpresaVenta(Entidades.Venta venta)
+        {
+            var empresaVenta = ObtenerEmpresaVenta(venta);
+            string nombre = empresaVenta != null
+                ? (!string.IsNullOrWhiteSpace(empresaVenta.NombreFantasia) ? empresaVenta.NombreFantasia : empresaVenta.RazonSocialAfip)
+                : "";
+            return !string.IsNullOrWhiteSpace(nombre)
+                ? nombre.Trim()
+                : "CarniSys";
+        }
+
+        private string ConvertirTextoAHtml(string texto)
+        {
+            string safe = HttpUtility.HtmlEncode(texto ?? "");
+            safe = safe.Replace("\r\n", "\n").Replace("\r", "\n");
+            string cuerpoHtml = "<p>" + safe.Replace("\n\n", "</p><p>").Replace("\n", "<br />") + "</p>";
+            string pieHtml =
+                "<div style=\"margin-top:24px; padding-top:12px; border-top:1px solid #ddd; font-size:11px; color:#777; line-height:1.4;\">" +
+                "<p>CarniSys es un software de gestión comercial para pequeños y medianos comercios, diseñado para administrar ventas, stock y facturación, con integración a balanzas para agilizar la atención en productos pesables.</p>" +
+                "</div>";
+
+            return cuerpoHtml + pieHtml;
         }
 
         #endregion

@@ -23,6 +23,7 @@ namespace Web.Models
         public string Iva { get; set; }
         public string Cuit { get; set; }
         public string Telefono { get; set; }
+        public string Email { get; set; }
         public string Domicilio { get; set; }
         public string Ciudad { get; set; }
         public string OtrosDatos { get; set; }
@@ -51,6 +52,7 @@ namespace Web.Models
         public int? IdIva { get; set; }
         public string Cuit { get; set; }
         public string Telefono { get; set; }
+        public string Email { get; set; }
         public string Domicilio { get; set; }
         public string Ciudad { get; set; }
         public string OtrosDatos { get; set; }

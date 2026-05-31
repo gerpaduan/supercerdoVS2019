@@ -60,6 +60,7 @@ namespace Datos
                     p.AddWithValue("@idIva", oPersonaE.IdIva);
                     p.AddWithValue("@cuit", oPersonaE.Cuit ?? "");
                     p.AddWithValue("@telefono", oPersonaE.Telefono ?? "");
+                    p.AddWithValue("@email", DbNullIfNull(string.IsNullOrWhiteSpace(oPersonaE.Email) ? null : oPersonaE.Email.Trim()));
                     p.AddWithValue("@domicilio", oPersonaE.Domicilio ?? "");
                     p.AddWithValue("@ciudad", oPersonaE.Ciudad ?? "");
                     p.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
@@ -106,6 +107,7 @@ namespace Datos
                     p.bonificacion,
                     p.cuit,
                     p.telefono,
+                    p.email,
                     p.domicilio,
                     p.ciudad,
                     p.marca,
@@ -134,6 +136,7 @@ namespace Datos
                         IdIva = dr["idIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idIva"]),
                         Cuit = Convert.ToString(dr["cuit"]),
                         Telefono = Convert.ToString(dr["telefono"]),
+                        Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
                         Domicilio = Convert.ToString(dr["domicilio"]),
                         Ciudad = Convert.ToString(dr["ciudad"]),
                         IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),

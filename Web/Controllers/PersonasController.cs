@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+using System.Net.Mail;
 using System.Web.Mvc;
 using Web.Models;
 using AFIP;
@@ -136,6 +137,7 @@ namespace Web.Controllers
             personaGuardar.IdIva = model.IdIva ?? 0;
             personaGuardar.Cuit = NormalizarCuit(model.Cuit);
             personaGuardar.Telefono = (model.Telefono ?? "").Trim();
+            personaGuardar.Email = (model.Email ?? "").Trim();
             personaGuardar.Domicilio = NormalizarTexto(model.Domicilio, true);
             personaGuardar.Ciudad = NormalizarTexto(model.Ciudad, true);
             personaGuardar.otrosDatos = (model.OtrosDatos ?? "").Trim();
@@ -416,6 +418,7 @@ namespace Web.Controllers
                 IdIva = persona != null ? (int?)persona.IdIva : null,
                 Cuit = persona != null ? persona.Cuit : "",
                 Telefono = persona != null ? persona.Telefono : "",
+                Email = persona != null ? persona.Email : "",
                 Domicilio = persona != null ? persona.Domicilio : "",
                 Ciudad = persona != null ? persona.Ciudad : "",
                 OtrosDatos = persona != null ? persona.OtrosDatos : "",

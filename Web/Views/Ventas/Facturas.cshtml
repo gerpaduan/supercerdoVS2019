@@ -1,35 +1,21 @@
-﻿@model List<Entidades.Venta>
-
+@model Web.Models.FacturasIndexVm
 
 @{
-    ViewBag.Title = "Ventas";
+    ViewBag.Title = "Facturas";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
-
-    // Valores por defecto si el modelo viene vacío
-    var fechaHoy = DateTime.Now.ToString("yyyy-MM-dd");
 }
 
+<div class="container-fluid p-0 vista-venta">
 
-<div class="container-fluid  p-0 vista-venta">
-
-    <div class="d-flex justify-content-end mb-3">
-        <button type="button"
-                id="btnVerFacturasVentas"
-                class="btn btn-outline-secondary mr-2"
-                data-base-url="@Url.Action("Facturas", "Ventas")">
-            <i class="fas fa-file-invoice-dollar mr-1"></i> Facturas
-        </button>
-        <button type="button"
-                id="btnVerLineasVentas"
-                class="btn btn-outline-primary"
-                data-base-url="@Url.Action("Lineas", "Ventas")">
-            <i class="fas fa-stream mr-1"></i> Ver lineas
-        </button>
+    <div class="d-flex justify-content-between mb-3">
+        <a class="btn btn-outline-secondary"
+           href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
+            <i class="fas fa-arrow-left mr-1"></i> Ventas
+        </a>
     </div>
 
-    <!-- Filtro por fechas, sucursal y búsqueda rápida -->
     <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
-        <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
+        <form id="formFiltroFacturas" method="get" action="@Url.Action("Facturas", "Ventas")" class="w-100">
             <div class="filtros-ventas-stack">
                 <div class="filtros-fila filtros-fila-fechas">
                     <div class="form-group mb-0">
@@ -38,9 +24,7 @@
                                id="fechaDesde"
                                name="fechaDesde"
                                class="form-control"
-                               value="@(string.IsNullOrEmpty(Request["fechaDesde"])
-? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
-: Request["fechaDesde"])" />
+                               value="@(string.IsNullOrEmpty(Request["fechaDesde"]) ? DateTime.Today.ToString("yyyy-MM-ddTHH:mm") : Request["fechaDesde"])" />
                         @Html.Partial("~/Views/Shared/_AdvertenciaPermisoFecha.cshtml")
                     </div>
 
@@ -50,9 +34,7 @@
                                id="fechaHasta"
                                name="fechaHasta"
                                class="form-control"
-                               value="@(string.IsNullOrEmpty(Request["fechaHasta"])
-? DateTime.Today.ToString("yyyy-MM-ddT23:59")
-: Request["fechaHasta"])" />
+                               value="@(string.IsNullOrEmpty(Request["fechaHasta"]) ? DateTime.Today.ToString("yyyy-MM-ddT23:59") : Request["fechaHasta"])" />
                     </div>
 
                     <div class="form-group mb-0 filtro-accion">
@@ -69,14 +51,11 @@
                 <div class="filtros-fila filtros-fila-sucursal">
                     <div class="form-group mb-0 filtro-sucursal">
                         <label for="idSucursal" class="filtro-label">Sucursal</label>
-                        <select id="idSucursal" name="idSucursal" class="form-control"
-                                onchange="this.form.submit()">
+                        <select id="idSucursal" name="idSucursal" class="form-control" onchange="this.form.submit()">
                             <option value="">Todas las sucursales</option>
-
                             @foreach (var s in ViewBag.Sucursales)
                             {
-                                <option value="@s.IdSucursal"
-                                        @(ViewBag.IdSucursalSeleccionada == s.IdSucursal ? "selected" : "")>
+                                <option value="@s.IdSucursal" @(ViewBag.IdSucursalSeleccionada == s.IdSucursal ? "selected" : "")>
                                     @s.SucursalNombre
                                 </option>
                             }
@@ -87,48 +66,32 @@
                 <div class="filtros-fila filtros-fila-busqueda">
                     <div class="form-group mb-0">
                         <label for="buscadorVendedor" class="filtro-label">Vendedor</label>
-                        <input type="text"
-                               id="buscadorVendedor"
-                               class="form-control"
-                               placeholder="Nombre del vendedor" />
+                        <input type="text" id="buscadorVendedor" class="form-control" placeholder="Nombre del vendedor" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label for="buscadorCliente" class="filtro-label">Cliente</label>
-                        <input type="text"
-                               id="buscadorCliente"
-                               class="form-control"
-                               placeholder="Nombre o identificación" />
+                        <input type="text" id="buscadorCliente" class="form-control" placeholder="Nombre o identificación" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label for="btnFiltroFormaPago" class="filtro-label">Forma de pago</label>
                         <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroFormaPagoDropdown">
-                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn"
-                                    type="button"
-                                    id="btnFiltroFormaPago"
-                                    data-toggle="dropdown"
-                                    aria-haspopup="true"
-                                    aria-expanded="false">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroFormaPago" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span id="filtroFormaPagoTexto">Todas las formas de pago</span>
                                 <span id="filtroFormaPagoBadge" class="badge badge-primary d-none ml-2">0</span>
                                 <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2"
-                                 aria-labelledby="btnFiltroFormaPago">
+                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2" aria-labelledby="btnFiltroFormaPago">
                                 <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarFormaPago">
                                     Todas las formas de pago
                                 </button>
                                 <div class="dropdown-divider my-2"></div>
-                                @foreach (Entidades.Venta.FormaPagoEnum fp
-                                        in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
+                                @foreach (Entidades.Venta.FormaPagoEnum fp in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
                                 {
                                     var formaPagoNombre = fp.ToString();
                                     <label class="dropdown-item filtro-forma-pago-item px-2 mb-0">
-                                        <input type="checkbox"
-                                               class="mr-2 chk-forma-pago"
-                                               value="@formaPagoNombre"
-                                               data-label="@formaPagoNombre" />
+                                        <input type="checkbox" class="mr-2 chk-forma-pago" value="@formaPagoNombre" data-label="@formaPagoNombre" />
                                         <span>@formaPagoNombre</span>
                                     </label>
                                 }
@@ -139,29 +102,20 @@
                     <div class="form-group mb-0">
                         <label for="btnFiltroTipoComprobante" class="filtro-label">Tipo comprobante</label>
                         <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroTipoComprobanteDropdown">
-                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn"
-                                    type="button"
-                                    id="btnFiltroTipoComprobante"
-                                    data-toggle="dropdown"
-                                    aria-haspopup="true"
-                                    aria-expanded="false">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroTipoComprobante" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span id="filtroTipoComprobanteTexto">Todos los comprobantes</span>
                                 <span id="filtroTipoComprobanteBadge" class="badge badge-primary d-none ml-2">0</span>
                                 <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2"
-                                 aria-labelledby="btnFiltroTipoComprobante">
+                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2" aria-labelledby="btnFiltroTipoComprobante">
                                 <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarTipoComprobante">
                                     Todos los comprobantes
                                 </button>
                                 <div class="dropdown-divider my-2"></div>
-                                @foreach (var tipo in new[] { "X", "A", "B", "C" })
+                                @foreach (var tipo in new[] { "Factura A", "Factura B", "Factura C", "NC A", "NC B", "NC C" })
                                 {
                                     <label class="dropdown-item filtro-forma-pago-item px-2 mb-0">
-                                        <input type="checkbox"
-                                               class="mr-2 chk-tipo-comprobante"
-                                               value="@tipo"
-                                               data-label="@tipo" />
+                                        <input type="checkbox" class="mr-2 chk-tipo-comprobante" value="@tipo" data-label="@tipo" />
                                         <span>@tipo</span>
                                     </label>
                                 }
@@ -173,39 +127,22 @@
         </form>
     </div>
 
-
-
-    <!-- 🧮 Total del período -->
-
-    @if (ViewBag.TotalFiltrado != null)
-    {
-        <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
-            <div class="d-flex justify-content-between">
-                <h5 id="cantFiltrado" class="text-muted m-0" style="font-weight: 500;">
-                    Cant.: @Model.Count
-                </h5>
-
-                @*<h5 class="text-muted m-0" style="font-weight: 500;">
-                        Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
-                    </h5>*@
-                <h5 id="totalFiltrado" class="text-muted m-0" style="font-weight: 500;">
-                    Total: @(((decimal)ViewBag.TotalFiltrado).ToString("C"))
-                </h5>
-
-            </div>
+    <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
+        <div class="d-flex justify-content-between">
+            <h5 id="cantFiltrado" class="text-muted m-0" style="font-weight: 500;">
+                Cant.: @(Model.Facturas != null ? Model.Facturas.Count : 0)
+            </h5>
+            <h5 id="totalFiltrado" class="text-muted m-0" style="font-weight: 500;">
+                Total: @Model.TotalFacturado.ToString("C")
+            </h5>
         </div>
-    }
+    </div>
 
-    <!-- 🧾 Listado de ventas -->
     <div class="card shadow-sm ventas-card w-100">
         <div class="card-body p-0">
-            @{
-                ViewBag.ModoModalVentas = false;
-                ViewBag.DetalleVentaBaseUrl = Url.Action("DetalleVenta", "Ventas");
-            }
-            @Html.Partial("~/Views/Ventas/_TablaVentas.cshtml", Model)
+            @Html.Partial("~/Views/Ventas/_TablaFacturas.cshtml", Model.Facturas)
         </div>
     </div>
 </div>
 
-@Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "ventas")
+@Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "facturas")

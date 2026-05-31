@@ -73,6 +73,7 @@
     <Compile Include="Sucursal.cs" />
     <Compile Include="Usuario.cs" />
     <Compile Include="Venta.cs" />
+    <Compile Include="WhatsApp.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagramNegocio.cd" />

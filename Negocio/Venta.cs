@@ -545,6 +545,11 @@ namespace Negocio
             return oVentaD.getFactuElecById(idFactuElec);
         }
 
+        public List<Entidades.FacturaElectronica> getFacturasRealizadas(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        {
+            return oVentaD.getFacturasRealizadas(fechaDesde, fechaHasta, idSucursal);
+        }
+
         #endregion
 
     }

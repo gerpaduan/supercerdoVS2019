@@ -1,0 +1,123 @@
+@model Web.Models.FacturaDetalleVm
+
+@{
+    ViewBag.Title = "Detalle Factura";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var factura = Model.Factura;
+    var venta = Model.Venta;
+    var porcentajeFacturacion = factura != null ? Convert.ToDecimal(factura.PorcentajeFacturacion) : 0m;
+    var importeFacturado = factura != null ? Convert.ToDecimal(factura.ImporteTotal) : 0m;
+    var fechaFactura = factura != null && factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value : DateTime.MinValue;
+    var tipoComprobante = "";
+    if (factura != null)
+    {
+        switch (factura.CodTipoCbteAfip)
+        {
+            case Entidades.FacturaElectronica.codFacturaA_Afip:
+                tipoComprobante = "Factura A";
+                break;
+            case Entidades.FacturaElectronica.codNotaCreditoA_Afip:
+                tipoComprobante = "NC A";
+                break;
+            case Entidades.FacturaElectronica.codFacturaB_Afip:
+                tipoComprobante = "Factura B";
+                break;
+            case Entidades.FacturaElectronica.codNotaCreditoB_Afip:
+                tipoComprobante = "NC B";
+                break;
+            case Entidades.FacturaElectronica.codFacturaC_Afip:
+                tipoComprobante = "Factura C";
+                break;
+            case Entidades.FacturaElectronica.codNotaCreditoC_Afip:
+                tipoComprobante = "NC C";
+                break;
+            default:
+                tipoComprobante = factura.getLetraId_TipoCbte(factura.CodTipoCbteAfip).ToString();
+                break;
+        }
+    }
+    var returnUrl = Model.ReturnUrl ?? "";
+    var numeroFactura = factura != null ? string.Format("{0}-{1}", factura.PtoVtaAfip ?? "", factura.NroCbteAfip ?? "") : "";
+}
+
+<div class="card shadow mb-4 w-100 mx-auto vista-venta">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <a href="@(string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Facturas", "Ventas") : returnUrl)"
+               class="btn btn-sm btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h6 class="m-0 font-weight-bold text-primary">Detalle de Factura</h6>
+        </div>
+        <span class="badge badge-info">#@(factura != null ? factura.Id : 0)</span>
+    </div>
+
+    <div class="card-body bg-white">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h5 class="font-weight-bold text-dark">
+                    Cliente: <span class="text-muted">@(venta != null && venta.Persona != null ? venta.Persona.razonSocial : factura.RazonSocialAFIP)</span>
+                </h5>
+            </div>
+            <div class="col-md-6 text-md-right">
+                <h5 class="font-weight-bold text-dark">
+                    <span class="text-muted">@(fechaFactura == DateTime.MinValue ? "-" : fechaFactura.ToString("dd/MM/yyyy HH:mm"))</span>
+                </h5>
+            </div>
+            <div class="col-md-6">
+                <h5 class="font-weight-bold text-dark">
+                    Tipo Comprobante: <span class="text-muted">@tipoComprobante</span>
+                </h5>
+            </div>
+            <div class="col-md-6 text-md-right">
+                <h5 class="font-weight-bold text-dark">
+                    Nro Factura: <span class="text-muted">@numeroFactura</span>
+                </h5>
+            </div>
+            <div class="col-md-6">
+                <h5 class="font-weight-bold text-dark">
+                    Forma de pago: <span class="text-muted">@(!string.IsNullOrWhiteSpace(factura.FormaPago) ? factura.FormaPago : (venta != null ? venta.FormaPago : ""))</span>
+                </h5>
+            </div>
+            <div class="col-md-6 text-md-right">
+                <h5 class="font-weight-bold text-dark">
+                    Venta asociada: <span class="text-muted">#@(venta != null ? venta.IdVenta : factura.IdVenta)</span>
+                </h5>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted text-uppercase small mb-2">Monto facturado</div>
+                    <div class="h4 font-weight-bold text-success mb-0">@importeFacturado.ToString("C")</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted text-uppercase small mb-2">Porcentaje de facturación</div>
+                    <div class="h4 font-weight-bold text-primary mb-0">@porcentajeFacturacion.ToString("N2")%</div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(factura.CAE1))
+        {
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div><strong>CAE:</strong> @factura.CAE1</div>
+                </div>
+                <div class="col-md-6 text-md-right">
+                    <div><strong>Vto CAE:</strong> @(!string.IsNullOrWhiteSpace(factura.FecVtoCAE) ? factura.FecVtoCAE : "-")</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="mb-2">
+    <h5 class="font-weight-bold text-primary">Detalle de la venta asociada</h5>
+</div>
+
+@Html.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, modal = true, returnUrl = string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Facturas", "Ventas") : returnUrl })

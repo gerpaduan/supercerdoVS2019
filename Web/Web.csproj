@@ -146,6 +146,7 @@
     <Compile Include="Controllers\StockController.cs" />
     <Compile Include="Controllers\UsuariosController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
+    <Compile Include="Controllers\WhatsAppController.cs" />
     <Compile Include="EmpresaContextWeb.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
     <Compile Include="Filters\RequirePermissionAttribute.cs" />
@@ -163,6 +164,7 @@
     <Compile Include="Models\ComisionElectronicaFormaVm.cs" />
     <Compile Include="Models\CalculadoraBilletesPrintVm.cs" />
     <Compile Include="Models\ElaboradosVm.cs" />
+    <Compile Include="Models\FacturasVm.cs" />
     <Compile Include="Models\IngresoBilletesPrintVm.cs" />
     <Compile Include="Models\LineasAgrupadasVm.cs" />
     <Compile Include="Models\MovimientoEditVm.cs" />
@@ -181,6 +183,7 @@
     <Compile Include="Models\UtilityItemVm.cs" />
     <Compile Include="Models\PersonasVm.cs" />
     <Compile Include="Models\UsuariosVm.cs" />
+    <Compile Include="Models\WhatsAppVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarPuntoExpendioRequest.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
@@ -2130,6 +2133,7 @@
     <Content Include="Views\Personas\Index.cshtml" />
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
     <Content Include="Views\Parametros\Index.cshtml" />
+    <Content Include="Views\WhatsApp\Index.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
@@ -2155,6 +2159,10 @@
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronicaModal.cshtml" />
     <Content Include="Views\Ventas\_ModalIngresoBilletesPOS.cshtml" />
+    <Content Include="Views\Ventas\_TablaFacturas.cshtml" />
+    <Content Include="Views\Ventas\_VentasFacturasFiltrosScripts.cshtml" />
+    <Content Include="Views\Ventas\DetalleFactura.cshtml" />
+    <Content Include="Views\Ventas\Facturas.cshtml" />
     <Content Include="Views\Finanzas\_AddOrEditPagoScripts.cshtml" />
     <Content Include="Views\Usuarios\Editar.cshtml" />
     <Content Include="Views\Usuarios\Index.cshtml" />

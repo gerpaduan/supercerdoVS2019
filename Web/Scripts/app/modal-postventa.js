@@ -75,6 +75,14 @@ function pvGetPayloadUrl(mm) {
     return `${basePayloadUrl}?id=${ventaId}&mm=${mm}`;
 }
 
+function pvGetEmailConfigUrl() {
+    return ($('#modalPostVenta').data('email-config-url') || '').toString();
+}
+
+function pvGetEmailSendUrl() {
+    return ($('#modalPostVenta').data('email-send-url') || '').toString();
+}
+
 // Aplica textos/estados según contexto
 function pvAplicarContextoUI() {
     const ctx = pvGetContext();
@@ -106,7 +114,7 @@ function pvAplicarContextoUI() {
         $('#pvLblFacturaBtn').text('Factura (ya emitida)');
 
         $('#pvLblPdfBtn').text('Abrir PDF');
-        $('#pvLblWpBtn').text('Enviar factura por WhatsApp');
+        $('#pvLblWpBtn').text('Enviar factura por email');
         $pregunta.text('¿Qué deseas hacer ahora?');
         $lblNoImprimir.text('No imprimir');
 
@@ -127,7 +135,7 @@ function pvAplicarContextoUI() {
         $('#pvLblFacturaBtn').text('Factura');
 
         $('#pvLblPdfBtn').text('Generar PDF');
-        $('#pvLblWpBtn').text('Enviar a WhatsApp');
+        $('#pvLblWpBtn').text('Enviar por email');
     }
 }
 
@@ -334,6 +342,57 @@ function pvNormalizarTelefono(raw) {
     return (digits.length >= 8) ? digits : null;
 }
 
+function pvSoloDigitos(raw) {
+    return String(raw || '').replace(/\D/g, '');
+}
+
+function pvQuitarPrefijosArgentina(digits) {
+    let body = pvSoloDigitos(digits);
+
+    if (body.startsWith('549')) body = body.substring(3);
+    else if (body.startsWith('54')) body = body.substring(2);
+
+    if (body.startsWith('0')) body = body.substring(1);
+    if (body.startsWith('9')) body = body.substring(1);
+
+    return body;
+}
+
+function pvSepararTelefonoArgentina(raw) {
+    const body = pvQuitarPrefijosArgentina(raw);
+    if (!body) return { area: '', numero: '' };
+
+    if (body.startsWith('11') && body.length >= 10) {
+        return { area: '11', numero: body.substring(2) };
+    }
+
+    if (body.length >= 11) {
+        return { area: body.substring(0, 4), numero: body.substring(4) };
+    }
+
+    if (body.length === 10 || body.length === 9) {
+        return { area: body.substring(0, 3), numero: body.substring(3) };
+    }
+
+    if (body.length > 6) {
+        return { area: body.substring(0, body.length - 6), numero: body.substring(body.length - 6) };
+    }
+
+    return { area: '', numero: body };
+}
+
+function pvArmarTelefonoWhatsapp(area, numero) {
+    const areaDigits = pvSoloDigitos(area);
+    const numeroDigits = pvSoloDigitos(numero);
+    if (!areaDigits || !numeroDigits) return '';
+    return `549${areaDigits}${numeroDigits}`;
+}
+
+function pvActualizarPreviewWhatsapp() {
+    const numeroFinal = pvArmarTelefonoWhatsapp($('#pvWhatsappArea').val(), $('#pvWhatsappNumero').val()) || '549';
+    $('#pvWhatsappNumeroFinal').text(numeroFinal);
+}
+
 function pvAbrirNuevaPestanaConSesion(url) {
     if (!url) return;
 
@@ -346,6 +405,24 @@ function pvAbrirNuevaPestanaConSesion(url) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+function pvBuildPdfUrl() {
+    const $modal = $('#modalPostVenta');
+    const $btn = $('#btnPostVenta4');
+    const modalPdfUrl = (($modal.data('pdf-url') || '').toString().trim());
+    const buttonPdfUrl = (($btn.data('venta-pdf-url') || '').toString().trim());
+    const baseUrl = modalPdfUrl || buttonPdfUrl;
+    const ventaId = pvGetVentaId();
+
+    if (!ventaId || !baseUrl) return '';
+
+    const url = new URL(baseUrl, window.location.origin);
+    if (!modalPdfUrl && !url.searchParams.has('id')) {
+        url.searchParams.set('id', ventaId);
+    }
+
+    return url.toString();
 }
 
 function pvAbrirPdf() {
@@ -402,6 +479,175 @@ function pvEnviarWhatsapp() {
     window.open(url, '_blank', 'noopener');
 
     cerrarPostVentaSegunOrigen();
+}
+
+function pvGetMensajeWhatsapp() {
+    const ctx = pvGetContext();
+    const $m = $('#modalPostVenta');
+    const nro = ($m.data('nro') || '').toString();
+    const cae = ($m.data('cae') || '').toString();
+
+    let msg = 'Hola!';
+    if (ctx === 'factura') {
+        const parts = ['Te envío tu factura.'];
+        if (nro) parts.push(`Nro ${nro}.`);
+        if (cae) parts.push(`CAE ${cae}.`);
+        msg = parts.join(' ');
+    } else {
+        msg = 'Hola, te envío el comprobante de tu compra.';
+    }
+
+    return msg;
+}
+
+function pvAbrirPdf() {
+    const ventaId = pvGetVentaId();
+    const pdfUrl = pvBuildPdfUrl();
+
+    if (!ventaId) {
+        alert('No se encontró el id de la venta.');
+        return;
+    }
+
+    if (!pdfUrl) {
+        alert('No se configuró la URL del PDF.');
+        return;
+    }
+
+    pvAbrirNuevaPestanaConSesion(pdfUrl);
+    cerrarPostVentaSegunOrigen();
+}
+
+function pvAbrirModalWhatsapp() {
+    const tel = $('#modalPostVenta').data('whatsapp');
+    const partes = pvSepararTelefonoArgentina(tel);
+
+    $('#pvWhatsappArea').val(partes.area);
+    $('#pvWhatsappNumero').val(partes.numero);
+    $('#pvWhatsappMensaje').val(pvGetMensajeWhatsapp());
+    $('#pvWhatsappError').addClass('d-none').text('');
+    pvActualizarPreviewWhatsapp();
+
+    $('#modalWhatsappVenta').modal('show');
+}
+
+function pvConfirmarWhatsapp() {
+    const area = $('#pvWhatsappArea').val();
+    const numero = $('#pvWhatsappNumero').val();
+    const mensaje = ($('#pvWhatsappMensaje').val() || '').trim();
+    const telefonoFinal = pvArmarTelefonoWhatsapp(area, numero);
+
+    if (!telefonoFinal) {
+        $('#pvWhatsappError')
+            .removeClass('d-none')
+            .text('Ingresá la característica y el número de celular.');
+        return;
+    }
+
+    $('#pvWhatsappError').addClass('d-none').text('');
+
+    const pdfUrl = pvBuildPdfUrl();
+    if (pdfUrl) {
+        pvAbrirNuevaPestanaConSesion(pdfUrl);
+    }
+
+    const url = `https://wa.me/${telefonoFinal}?text=${encodeURIComponent(mensaje || pvGetMensajeWhatsapp())}`;
+    window.open(url, '_blank', 'noopener');
+
+    $('#modalWhatsappVenta').modal('hide');
+    cerrarPostVentaSegunOrigen();
+}
+
+function pvEsEmailValido(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+function pvAbrirModalEmail() {
+    const ventaId = pvGetVentaId();
+    const configUrl = pvGetEmailConfigUrl();
+
+    if (!ventaId || !configUrl) {
+        Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudo preparar el envio por email.' });
+        return;
+    }
+
+    $('#pvEmailError').addClass('d-none').text('');
+    $('#pvEmailDestino').val('');
+    $('#pvEmailAsunto').val('');
+    $('#pvEmailMensaje').val('');
+    $('#pvEmailAdjuntarDetalle').prop('checked', false);
+    $('#pvEmailAdjuntarDetalleWrap').addClass('d-none');
+    $('#btnConfirmarEmailVenta').prop('disabled', true);
+
+    $.getJSON(configUrl, { id: ventaId })
+        .done(function (resp) {
+            if (!resp || !resp.ok) {
+                Swal.fire({ icon: 'error', title: 'Email', text: (resp && resp.msg) || 'No se pudieron recuperar los datos del email.' });
+                return;
+            }
+
+            $('#pvEmailDestino').val(resp.email || '');
+            $('#pvEmailAsunto').val(resp.asunto || '');
+            $('#pvEmailMensaje').val(resp.mensaje || '');
+            if (resp.adjuntarDetalleDisponible === true) {
+                $('#pvEmailAdjuntarDetalleWrap').removeClass('d-none');
+            }
+            $('#btnConfirmarEmailVenta').prop('disabled', false);
+            $('#modalEmailVenta').modal('show');
+        })
+        .fail(function () {
+            Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudieron recuperar los datos del email.' });
+        });
+}
+
+function pvConfirmarEmail() {
+    const sendUrl = pvGetEmailSendUrl();
+    const payload = {
+        idVenta: pvGetVentaId(),
+        emailDestino: ($('#pvEmailDestino').val() || '').trim(),
+        asunto: ($('#pvEmailAsunto').val() || '').trim(),
+        mensaje: ($('#pvEmailMensaje').val() || '').trim(),
+        adjuntarDetalle: $('#pvEmailAdjuntarDetalle').is(':checked')
+    };
+
+    if (!payload.emailDestino) {
+        $('#pvEmailError').removeClass('d-none').text('Ingresa el email destino.');
+        return;
+    }
+
+    if (!pvEsEmailValido(payload.emailDestino)) {
+        $('#pvEmailError').removeClass('d-none').text('Ingresa un email valido.');
+        return;
+    }
+
+    if (!payload.asunto) {
+        $('#pvEmailError').removeClass('d-none').text('Ingresa el asunto del email.');
+        return;
+    }
+
+    $('#pvEmailError').addClass('d-none').text('');
+    $('#btnConfirmarEmailVenta').prop('disabled', true);
+
+    $.ajax({
+        url: sendUrl,
+        type: 'POST',
+        dataType: 'json',
+        data: payload
+    }).done(function (resp) {
+        if (!resp || !resp.ok) {
+            $('#btnConfirmarEmailVenta').prop('disabled', false);
+            $('#pvEmailError').removeClass('d-none').text((resp && resp.msg) || 'No se pudo enviar el email.');
+            return;
+        }
+
+        $('#modalEmailVenta').modal('hide');
+        Swal.fire({ icon: 'success', title: 'Email', text: resp.msg || 'El comprobante se envio correctamente.' });
+        cerrarPostVentaSegunOrigen();
+    }).fail(function (xhr) {
+        const msg = (xhr.responseJSON && xhr.responseJSON.msg) || 'No se pudo enviar el email.';
+        $('#btnConfirmarEmailVenta').prop('disabled', false);
+        $('#pvEmailError').removeClass('d-none').text(msg);
+    });
 }
 
 // =====================
@@ -632,7 +878,19 @@ $(document).ready(function () {
     });
 
     $('#btnPostVenta5').on('click', function () {
-        pvEnviarWhatsapp();
+        pvAbrirModalEmail();
+    });
+
+    $('#btnConfirmarEmailVenta').on('click', function () {
+        pvConfirmarEmail();
+    });
+
+    $('#pvEmailDestino, #pvEmailAsunto, #pvEmailMensaje').on('input', function () {
+        $('#pvEmailError').addClass('d-none').text('');
+    });
+
+    $('#modalEmailVenta').on('shown.bs.modal', function () {
+        $('#pvEmailDestino').trigger('focus');
     });
 
     $(document).on('venta:facturada', function (e, resp) {

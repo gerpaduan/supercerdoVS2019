@@ -54,11 +54,18 @@ namespace Entidades
             set { cuit = value; }
         }
         private string telefono;
+        private string email;
 
         public string Telefono
         {
             get { return telefono; }
             set { telefono = value; }
+        }
+
+        public string Email
+        {
+            get { return email; }
+            set { email = value; }
         }
         private string domicilio;
 
