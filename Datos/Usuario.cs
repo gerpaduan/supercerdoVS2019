@@ -129,6 +129,29 @@ namespace Datos
             );
         }
 
+        public void setPermitirLoginFueraSucursal(Entidades.Usuario oUsuario)
+        {
+            if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
+            if (!ExisteColumnaUsuarios("PermitirLoginFueraSucursal"))
+                return;
+
+            const string sql = @"
+                UPDATE Usuarios
+                SET PermitirLoginFueraSucursal = @permitir
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@permitir", SqlDbType.Bit).Value = oUsuario.PermitirLoginFueraSucursal;
+                }
+            );
+        }
+
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {
             const string query = @"
@@ -436,6 +459,67 @@ namespace Datos
             );
         }
 
+        public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
+        {
+            if (log == null) throw new ArgumentNullException(nameof(log));
+
+            const string sql = @"
+                INSERT INTO LoginUbicacionLog
+                (
+                    IdUsuario,
+                    IdSucursal,
+                    FechaHora,
+                    Latitud,
+                    Longitud,
+                    PrecisionMetros,
+                    DistanciaMetros,
+                    Permitido,
+                    Motivo,
+                    Ip
+                )
+                VALUES
+                (
+                    @IdUsuario,
+                    @IdSucursal,
+                    @FechaHora,
+                    @Latitud,
+                    @Longitud,
+                    @PrecisionMetros,
+                    @DistanciaMetros,
+                    @Permitido,
+                    @Motivo,
+                    @Ip
+                );";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@IdUsuario", SqlDbType.Int).Value = log.IdUsuario;
+                    p.Add("@IdSucursal", SqlDbType.Int).Value = log.IdSucursal;
+                    p.Add("@FechaHora", SqlDbType.DateTime).Value = log.FechaHora;
+                    p.Add("@Latitud", SqlDbType.Decimal).Value = (object)log.Latitud ?? DBNull.Value;
+                    p.Add("@Longitud", SqlDbType.Decimal).Value = (object)log.Longitud ?? DBNull.Value;
+                    p.Add("@PrecisionMetros", SqlDbType.Decimal).Value = (object)log.PrecisionMetros ?? DBNull.Value;
+                    p.Add("@DistanciaMetros", SqlDbType.Decimal).Value = (object)log.DistanciaMetros ?? DBNull.Value;
+                    p.Add("@Permitido", SqlDbType.Bit).Value = log.Permitido;
+                    p.Add("@Motivo", SqlDbType.NVarChar, 300).Value = log.Motivo ?? string.Empty;
+                    p.Add("@Ip", SqlDbType.NVarChar, 100).Value = log.Ip ?? string.Empty;
+
+                    p["@Latitud"].Precision = 10;
+                    p["@Latitud"].Scale = 7;
+                    p["@Longitud"].Precision = 10;
+                    p["@Longitud"].Scale = 7;
+                    p["@PrecisionMetros"].Precision = 10;
+                    p["@PrecisionMetros"].Scale = 2;
+                    p["@DistanciaMetros"].Precision = 10;
+                    p["@DistanciaMetros"].Scale = 2;
+                }
+            );
+        }
+
         private Entidades.Usuario MapUsuario(SqlDataReader dr)
         {
             return new Entidades.Usuario
@@ -453,7 +537,8 @@ namespace Datos
                 Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
                 ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
                 IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
-                IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"])
+                IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
+                PermitirLoginFueraSucursal = GetOptionalBool(dr, "PermitirLoginFueraSucursal")
             };
         }
 
@@ -493,6 +578,15 @@ namespace Datos
 
             object value = dr[columnName];
             return value == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(value);
+        }
+
+        private static bool GetOptionalBool(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return false;
+
+            object value = dr[columnName];
+            return value != DBNull.Value && Convert.ToBoolean(value);
         }
 
         private bool ExisteColumnaUsuarios(string columnName)

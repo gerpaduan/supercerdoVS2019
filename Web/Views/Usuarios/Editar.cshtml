@@ -164,6 +164,25 @@
                             }
                         </div>
                     </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.PermitirLoginFueraSucursal, new { @class = "custom-control-input", id = "PermitirLoginFueraSucursal", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.PermitirLoginFueraSucursal, new { @class = "custom-control-input", id = "PermitirLoginFueraSucursal" })
+                                }
+                                <label class="custom-control-label" for="PermitirLoginFueraSucursal">Permitir login fuera de sucursal</label>
+                            </div>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.PermitirLoginFueraSucursal)
+                            }
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">

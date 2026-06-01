@@ -83,6 +83,7 @@ namespace Entidades
         public DateTime? PasswordUpdatedAtUtc { get; set; }
 
         public int IdSucursal { get; set; }
+        public bool PermitirLoginFueraSucursal { get; set; }
 
         public Entidades.Sucursal Sucursal { get; set; }
         public string SucursalNombre { get; set; }

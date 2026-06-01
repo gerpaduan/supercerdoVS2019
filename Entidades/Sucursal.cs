@@ -17,6 +17,10 @@ namespace Entidades
         public string Localidad { get; set; }
         public string Provincia { get; set; }
         public string Pais { get; set; }
+        public decimal? Latitud { get; set; }
+        public decimal? Longitud { get; set; }
+        public int RadioLoginMetros { get; set; }
+        public bool ValidarUbicacionLogin { get; set; }
 
         public Entidades.Empresa Empresa { get; set; }
 

@@ -32,6 +32,34 @@
         .login-links a {
             font-size: .9rem;
         }
+
+        .location-status {
+            border-radius: 12px;
+            padding: .85rem 1rem;
+            margin-bottom: 1rem;
+            font-size: .9rem;
+            border: 1px solid #d1d3e2;
+            background: #f8f9fc;
+            color: #5a5c69;
+        }
+
+        .location-status.ok {
+            background: #edfdf3;
+            border-color: #b7ebc6;
+            color: #1e7e34;
+        }
+
+        .location-status.warn {
+            background: #fff8e1;
+            border-color: #ffe08a;
+            color: #8a6d1d;
+        }
+
+        .location-status.error {
+            background: #fff0f0;
+            border-color: #f5b5b5;
+            color: #a61e1e;
+        }
     </style>
 </head>
 <body class="bg-gradient-primary">
@@ -68,6 +96,13 @@
                         {
                             @Html.AntiForgeryToken()
                             @Html.HiddenFor(m => m.ReturnUrl)
+                            @Html.HiddenFor(m => m.Latitud, new { id = "Latitud" })
+                            @Html.HiddenFor(m => m.Longitud, new { id = "Longitud" })
+                            @Html.HiddenFor(m => m.PrecisionMetros, new { id = "PrecisionMetros" })
+
+                            <div id="locationStatus" class="location-status warn">
+                                Detectando ubicaciÃ³n del dispositivo. Si tu sucursal exige validaciÃ³n, vas a necesitar permitir el acceso a la ubicaciÃ³n.
+                            </div>
 
                             <div class="form-group">
                                 @Html.TextBoxFor(
@@ -111,5 +146,78 @@
     <script src="@Url.Content("~/Scripts/jquery-3.4.1.min.js")"></script>
     <script src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
     <script src="@Url.Content("~/Scripts/jquery.validate.unobtrusive.min.js")"></script>
+    <script>
+        (function () {
+            var status = document.getElementById("locationStatus");
+            var latitud = document.getElementById("Latitud");
+            var longitud = document.getElementById("Longitud");
+            var precision = document.getElementById("PrecisionMetros");
+
+            function setStatus(css, message) {
+                if (!status) {
+                    return;
+                }
+
+                status.className = "location-status " + css;
+                status.textContent = message;
+            }
+
+            function setCoordinates(position) {
+                if (!position || !position.coords) {
+                    setStatus("error", "No fue posible obtener la ubicaciÃ³n del dispositivo. Si tu sucursal la requiere, habilitala e intentÃ¡ nuevamente.");
+                    return;
+                }
+
+                latitud.value = typeof position.coords.latitude === "number"
+                    ? position.coords.latitude.toFixed(7)
+                    : "";
+                longitud.value = typeof position.coords.longitude === "number"
+                    ? position.coords.longitude.toFixed(7)
+                    : "";
+                precision.value = typeof position.coords.accuracy === "number"
+                    ? position.coords.accuracy.toFixed(2)
+                    : "";
+
+                var mensaje = "UbicaciÃ³n detectada correctamente.";
+                if (precision.value) {
+                    mensaje += " PrecisiÃ³n aproximada: " + precision.value + " metros.";
+                }
+
+                setStatus("ok", mensaje);
+            }
+
+            function onError(error) {
+                var mensaje = "No fue posible obtener la ubicaciÃ³n del dispositivo.";
+
+                if (error && error.code === 1) {
+                    mensaje = "La ubicaciÃ³n fue bloqueada. Si tu sucursal exige validaciÃ³n, debÃ©s permitir la ubicaciÃ³n para iniciar sesiÃ³n.";
+                } else if (error && error.code === 2) {
+                    mensaje = "La ubicaciÃ³n no estÃ¡ disponible en este momento. IntentÃ¡ nuevamente.";
+                } else if (error && error.code === 3) {
+                    mensaje = "La detecciÃ³n de ubicaciÃ³n demorÃ³ demasiado. IntentÃ¡ nuevamente.";
+                }
+
+                setStatus("error", mensaje);
+            }
+
+            if (!window.isSecureContext) {
+                setStatus("warn", "La geolocalizaciÃ³n del navegador puede requerir HTTPS. Si tu sucursal exige validaciÃ³n, usÃ¡ el sitio en un contexto seguro.");
+            }
+
+            if (!navigator.geolocation) {
+                setStatus("error", "Este navegador no soporta geolocalizaciÃ³n. Si tu sucursal exige validaciÃ³n, necesitÃ¡s usar un navegador compatible.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                setCoordinates,
+                onError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                });
+        })();
+    </script>
 </body>
 </html>

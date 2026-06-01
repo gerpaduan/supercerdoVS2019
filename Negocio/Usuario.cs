@@ -85,6 +85,7 @@ namespace Negocio
                     user.IdEmpresa = drUsuario["idEmpresa"] == DBNull.Value
                                                         ? 0
                                                         : Convert.ToInt32(drUsuario["idEmpresa"]);
+                    user.PermitirLoginFueraSucursal = GetOptionalBool(drUsuario, "PermitirLoginFueraSucursal");
 
                     user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
 
@@ -298,6 +299,16 @@ namespace Negocio
             oUsuarioD.setSucursalUsuario(oUsuario);
         }
 
+        public void setPermitirLoginFueraSucursal(Entidades.Usuario oUsuario)
+        {
+            oUsuarioD.setPermitirLoginFueraSucursal(oUsuario);
+        }
+
+        public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
+        {
+            oUsuarioD.RegistrarLoginUbicacion(log);
+        }
+
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {
             return oUsuarioD.getPermisosUsuario(idUsuario);
@@ -459,6 +470,15 @@ namespace Negocio
 
             object value = row[columnName];
             return value == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(value);
+        }
+
+        private static bool GetOptionalBool(DataRow row, string columnName)
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName))
+                return false;
+
+            object value = row[columnName];
+            return value != DBNull.Value && Convert.ToBoolean(value);
         }
     }
 }

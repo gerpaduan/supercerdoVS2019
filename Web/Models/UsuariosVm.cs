@@ -51,6 +51,7 @@ namespace Web.Models
         public bool Activo { get; set; }
         public string Email { get; set; }
         public int IdSucursalUser { get; set; }
+        public bool PermitirLoginFueraSucursal { get; set; }
         public int IdEmpresa { get; set; }
         public List<SelectListItem> Sucursales { get; set; }
     }

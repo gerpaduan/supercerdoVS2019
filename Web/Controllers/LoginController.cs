@@ -2,6 +2,7 @@ using Entidades;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web.Mvc;
@@ -16,6 +17,7 @@ namespace Web.Controllers
     {
         private const string GenericRecoveryMessage = "Si los datos ingresados corresponden a un usuario registrado, recibirás instrucciones para recuperar tu contraseña.";
 
+        private const decimal PrecisionMaximaLoginMetros = 150m;
         private Negocio.Usuario oUsuarioN;
         private Negocio.Sucursal oSucursalN;
 
@@ -74,6 +76,14 @@ namespace Web.Controllers
 
                 if (user != null)
                     user.SucursalNombre = sucNombre ?? "";
+
+                string errorUbicacion = null;
+                if (!ValidarUbicacionLoginEmpresa(user, model, out errorUbicacion))
+                {
+                    model.Clave = "";
+                    model.Error = errorUbicacion;
+                    return View("~/Views/Login/Index.cshtml", model);
+                }
 
                 Session["Usuario"] = user;
                 Session["IdEmpresa"] = user != null ? user.IdEmpresa : 0;
@@ -357,6 +367,301 @@ namespace Web.Controllers
 
             if (model.NuevaClave.Contains(" "))
                 ModelState.AddModelError("NuevaClave", "La contraseña no puede contener espacios en blanco.");
+        }
+        private bool ValidarUbicacionLogin(Entidades.Usuario user, LoginIndexVm model, out string mensajeError)
+        {
+            mensajeError = null;
+            if (user == null)
+                return false;
+
+            var sucursal = user.Sucursal;
+            var sucursalLog = sucursal;
+            var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            var sucursalesConValidacion = sucursalesEmpresa
+                .Where(s => s != null && s.ValidarUbicacionLogin)
+                .ToList();
+            decimal? latitud = ParseNullableDecimal(model != null ? model.Latitud : null);
+            decimal? longitud = ParseNullableDecimal(model != null ? model.Longitud : null);
+            decimal? precisionMetros = ParseNullableDecimal(model != null ? model.PrecisionMetros : null);
+            decimal? distanciaMetros = null;
+            string ip = ObtenerDireccionIp();
+            string motivo;
+            bool permitido;
+
+            if (sucursal == null)
+            {
+                permitido = true;
+                motivo = "Usuario sin sucursal asignada.";
+            }
+            else if (sucursalesConValidacion.Count == 0)
+            {
+                permitido = true;
+                motivo = "Sucursal sin validaciÃ³n de ubicaciÃ³n.";
+            }
+            else if (user.Admin || user.PermitirLoginFueraSucursal)
+            {
+                permitido = true;
+                motivo = "Usuario exceptuado de validaciÃ³n de ubicaciÃ³n.";
+            }
+            else if (sucursalesConValidacion.Any(s => !s.Latitud.HasValue || !s.Longitud.HasValue))
+            {
+                permitido = true;
+                motivo = "Sucursal sin coordenadas configuradas.";
+                mensajeError = "No fue posible validar la ubicaciÃ³n de la sucursal asignada. Contacte a un administrador.";
+            }
+            else if (!latitud.HasValue || !longitud.HasValue)
+            {
+                permitido = false;
+                motivo = "El navegador no enviÃ³ coordenadas.";
+                mensajeError = "Debe permitir la ubicaciÃ³n del navegador para iniciar sesiÃ³n en esta sucursal.";
+            }
+            else if (!precisionMetros.HasValue)
+            {
+                permitido = false;
+                motivo = "El navegador no informÃ³ la precisiÃ³n de la ubicaciÃ³n.";
+                mensajeError = "No fue posible validar la precisiÃ³n de tu ubicaciÃ³n. IntentÃ¡ nuevamente.";
+            }
+            else if (precisionMetros.Value > PrecisionMaximaLoginMetros)
+            {
+                permitido = false;
+                motivo = "PrecisiÃ³n insuficiente de ubicaciÃ³n.";
+                mensajeError = "La precisiÃ³n de la ubicaciÃ³n es insuficiente. IntentÃ¡ nuevamente desde una zona con mejor seÃ±al.";
+            }
+            else
+            {
+                distanciaMetros = CalcularDistanciaHaversineMetros(
+                    sucursal.Latitud.Value,
+                    sucursal.Longitud.Value,
+                    latitud.Value,
+                    longitud.Value);
+
+                if (distanciaMetros.Value > sucursal.RadioLoginMetros)
+                {
+                    permitido = false;
+                    motivo = "UbicaciÃ³n fuera del radio permitido.";
+                    mensajeError = "No fue posible iniciar sesiÃ³n porque estÃ¡s fuera del radio permitido para la sucursal asignada.";
+                }
+                else
+                {
+                    permitido = true;
+                    motivo = "UbicaciÃ³n validada correctamente.";
+                }
+            }
+
+            RegistrarLoginUbicacion(user, sucursal, latitud, longitud, precisionMetros, distanciaMetros, permitido, motivo, ip);
+            return permitido;
+        }
+
+        private bool ValidarUbicacionLoginEmpresa(Entidades.Usuario user, LoginIndexVm model, out string mensajeError)
+        {
+            mensajeError = null;
+            if (user == null)
+                return false;
+
+            decimal? latitud = ParseNullableDecimal(model != null ? model.Latitud : null);
+            decimal? longitud = ParseNullableDecimal(model != null ? model.Longitud : null);
+            decimal? precisionMetros = ParseNullableDecimal(model != null ? model.PrecisionMetros : null);
+            decimal? distanciaMetros = null;
+            string ip = ObtenerDireccionIp();
+            string motivo;
+            bool permitido;
+            var sucursalLog = user.Sucursal;
+
+            if (user.Sucursal == null)
+            {
+                permitido = true;
+                motivo = "Usuario sin sucursal asignada.";
+            }
+            else
+            {
+                var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+                var sucursalesConValidacion = sucursalesEmpresa
+                    .Where(s => s != null && s.ValidarUbicacionLogin)
+                    .ToList();
+
+                if (sucursalesConValidacion.Count == 0)
+                {
+                    permitido = true;
+                    motivo = "Empresa sin sucursales con validacion de ubicacion.";
+                }
+                else if (user.Admin || user.PermitirLoginFueraSucursal)
+                {
+                    permitido = true;
+                    motivo = "Usuario exceptuado de validacion de ubicacion.";
+                }
+                else if (sucursalesConValidacion.Any(s => !s.Latitud.HasValue || !s.Longitud.HasValue))
+                {
+                    permitido = true;
+                    sucursalLog = sucursalesConValidacion.FirstOrDefault(s => !s.Latitud.HasValue || !s.Longitud.HasValue) ?? user.Sucursal;
+                    motivo = "Existe al menos una sucursal con validacion sin coordenadas configuradas.";
+                }
+                else if (!latitud.HasValue || !longitud.HasValue)
+                {
+                    permitido = false;
+                    motivo = "El navegador no envio coordenadas.";
+                    mensajeError = "Debe permitir la ubicacion del navegador para iniciar sesion.";
+                }
+                else if (!precisionMetros.HasValue)
+                {
+                    permitido = false;
+                    motivo = "El navegador no informo la precision de la ubicacion.";
+                    mensajeError = "No fue posible validar la precision de tu ubicacion. Intenta nuevamente.";
+                }
+                else if (precisionMetros.Value > PrecisionMaximaLoginMetros)
+                {
+                    permitido = false;
+                    motivo = "Precision insuficiente de ubicacion.";
+                    mensajeError = "La precision de la ubicacion es insuficiente. Intenta nuevamente desde una zona con mejor senal.";
+                }
+                else
+                {
+                    Entidades.Sucursal sucursalPermitida = null;
+                    Entidades.Sucursal sucursalMasCercana = null;
+                    decimal? distanciaMinima = null;
+
+                    foreach (var sucursalEmpresa in sucursalesConValidacion)
+                    {
+                        decimal distanciaSucursal = CalcularDistanciaHaversineMetros(
+                            sucursalEmpresa.Latitud.Value,
+                            sucursalEmpresa.Longitud.Value,
+                            latitud.Value,
+                            longitud.Value);
+
+                        if (!distanciaMinima.HasValue || distanciaSucursal < distanciaMinima.Value)
+                        {
+                            distanciaMinima = distanciaSucursal;
+                            sucursalMasCercana = sucursalEmpresa;
+                        }
+
+                        if (distanciaSucursal <= sucursalEmpresa.RadioLoginMetros)
+                        {
+                            sucursalPermitida = sucursalEmpresa;
+                            distanciaMetros = distanciaSucursal;
+                            break;
+                        }
+                    }
+
+                    if (sucursalPermitida != null)
+                    {
+                        permitido = true;
+                        sucursalLog = sucursalPermitida;
+                        motivo = "Ubicacion validada correctamente contra una sucursal de la empresa.";
+                    }
+                    else
+                    {
+                        permitido = false;
+                        sucursalLog = sucursalMasCercana ?? user.Sucursal;
+                        distanciaMetros = distanciaMinima;
+                        motivo = "Ubicacion fuera del radio permitido en todas las sucursales validadas.";
+                        mensajeError = "No fue posible iniciar sesion porque no estas dentro del radio permitido de ninguna sucursal habilitada.";
+                    }
+                }
+            }
+
+            RegistrarLoginUbicacion(user, sucursalLog, latitud, longitud, precisionMetros, distanciaMetros, permitido, motivo, ip);
+            return permitido;
+        }
+
+        private void RegistrarLoginUbicacion(
+            Entidades.Usuario user,
+            Entidades.Sucursal sucursal,
+            decimal? latitud,
+            decimal? longitud,
+            decimal? precisionMetros,
+            decimal? distanciaMetros,
+            bool permitido,
+            string motivo,
+            string ip)
+        {
+            if (user == null)
+                return;
+
+            try
+            {
+                oUsuarioN.RegistrarLoginUbicacion(new LoginUbicacionLog
+                {
+                    IdUsuario = user.Id,
+                    IdSucursal = sucursal != null ? sucursal.IdSucursal : user.IdSucursal,
+                    FechaHora = DateTime.Now,
+                    Latitud = latitud,
+                    Longitud = longitud,
+                    PrecisionMetros = precisionMetros,
+                    DistanciaMetros = distanciaMetros,
+                    Permitido = permitido,
+                    Motivo = motivo ?? string.Empty,
+                    Ip = ip ?? string.Empty
+                });
+            }
+            catch
+            {
+                // La auditoría no debe impedir el login ni ocultar el motivo real del bloqueo.
+            }
+        }
+
+        private static decimal CalcularDistanciaHaversineMetros(decimal lat1, decimal lon1, decimal lat2, decimal lon2)
+        {
+            const double radioTierraMetros = 6371000d;
+
+            double dLat = GradosARadianes((double)(lat2 - lat1));
+            double dLon = GradosARadianes((double)(lon2 - lon1));
+            double origenLat = GradosARadianes((double)lat1);
+            double destinoLat = GradosARadianes((double)lat2);
+
+            double a = Math.Sin(dLat / 2d) * Math.Sin(dLat / 2d)
+                + Math.Cos(origenLat) * Math.Cos(destinoLat) * Math.Sin(dLon / 2d) * Math.Sin(dLon / 2d);
+
+            double c = 2d * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1d - a));
+            return Convert.ToDecimal(radioTierraMetros * c);
+        }
+
+        private static double GradosARadianes(double grados)
+        {
+            return grados * Math.PI / 180d;
+        }
+
+        private static decimal? ParseNullableDecimal(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            decimal parsed;
+            if (decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed))
+                return parsed;
+
+            if (decimal.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out parsed))
+                return parsed;
+
+            string normalizado = value.Replace(",", ".");
+            if (decimal.TryParse(normalizado, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed))
+                return parsed;
+
+            return null;
+        }
+
+        private string ObtenerDireccionIp()
+        {
+            try
+            {
+                string forwarded = Request != null ? Request.ServerVariables["HTTP_X_FORWARDED_FOR"] : null;
+                if (!string.IsNullOrWhiteSpace(forwarded))
+                {
+                    string ipForwarded = forwarded
+                        .Split(',')
+                        .Select(x => (x ?? "").Trim())
+                        .FirstOrDefault(x => x.Length > 0);
+
+                    if (!string.IsNullOrWhiteSpace(ipForwarded))
+                        return ipForwarded;
+                }
+
+                if (Request != null && !string.IsNullOrWhiteSpace(Request.UserHostAddress))
+                    return Request.UserHostAddress;
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
         }
     }
 }

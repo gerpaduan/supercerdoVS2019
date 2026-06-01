@@ -159,7 +159,11 @@ namespace Datos
                 Direccion = dr["direccion"] != DBNull.Value ? dr["direccion"].ToString() : string.Empty,
                 Localidad = dr["localidad"] != DBNull.Value ? dr["localidad"].ToString() : string.Empty,
                 Provincia = dr["provincia"] != DBNull.Value ? dr["provincia"].ToString() : string.Empty,
-                Pais = dr["pais"] != DBNull.Value ? dr["pais"].ToString() : string.Empty
+                Pais = dr["pais"] != DBNull.Value ? dr["pais"].ToString() : string.Empty,
+                Latitud = GetOptionalDecimal(dr, "Latitud"),
+                Longitud = GetOptionalDecimal(dr, "Longitud"),
+                RadioLoginMetros = GetOptionalInt(dr, "RadioLoginMetros", 200),
+                ValidarUbicacionLogin = GetOptionalBool(dr, "ValidarUbicacionLogin")
             };
         }
 
@@ -190,6 +194,44 @@ namespace Datos
                 BaseDatosNombre = dr["baseDatosNombre"]?.ToString(),
                 Activa = dr["activa"] != DBNull.Value ? Convert.ToByte(dr["activa"]) : (byte)0
             };
+        }
+
+        private static bool HasColumn(IDataRecord dr, string columnName)
+        {
+            for (var i = 0; i < dr.FieldCount; i++)
+            {
+                if (string.Equals(dr.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static decimal? GetOptionalDecimal(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return null;
+
+            object value = dr[columnName];
+            return value == DBNull.Value ? (decimal?)null : Convert.ToDecimal(value);
+        }
+
+        private static int GetOptionalInt(IDataRecord dr, string columnName, int defaultValue)
+        {
+            if (!HasColumn(dr, columnName))
+                return defaultValue;
+
+            object value = dr[columnName];
+            return value == DBNull.Value ? defaultValue : Convert.ToInt32(value);
+        }
+
+        private static bool GetOptionalBool(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return false;
+
+            object value = dr[columnName];
+            return value != DBNull.Value && Convert.ToBoolean(value);
         }
     }
 }

@@ -113,6 +113,7 @@ namespace Web.Controllers
                 model.Activo = usuario.Activo;
                 model.Email = usuario.Email ?? "";
                 model.IdSucursalUser = usuario.IdSucursal;
+                model.PermitirLoginFueraSucursal = usuario.PermitirLoginFueraSucursal;
                 model.IdEmpresa = usuario.IdEmpresa;
             }
 
@@ -178,6 +179,7 @@ namespace Web.Controllers
                     ? usuarioOriginal.ColorForm
                     : "SteelBlue",
                 IdSucursal = model.IdSucursalUser,
+                PermitirLoginFueraSucursal = model.PermitirLoginFueraSucursal,
                 IdEmpresa = empresa.IdEmpresa
             };
 
@@ -208,6 +210,12 @@ namespace Web.Controllers
                     {
                         Id = idUsuarioPersistido,
                         IdSucursal = model.IdSucursalUser
+                    });
+
+                    oUsuarioN.setPermitirLoginFueraSucursal(new Entidades.Usuario
+                    {
+                        Id = idUsuarioPersistido,
+                        PermitirLoginFueraSucursal = model.PermitirLoginFueraSucursal
                     });
 
                     if (usuarioActual != null && usuarioActual.Id == idUsuarioPersistido)
