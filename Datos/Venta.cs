@@ -123,6 +123,9 @@ namespace Datos
 
         private Entidades.Venta MapVenta(SqlDataReader drVenta, bool cargarLineas = true)
         {
+            string columnaCreado = ColumnaExiste(drVenta, "creado") ? "creado" : "ventaCreado";
+            string columnaActualizado = ColumnaExiste(drVenta, "actualizado") ? "actualizado" : "ventaActualizado";
+
             var oVentaE = new Entidades.Venta
             {
                 IdVenta = Convert.ToInt32(drVenta["idVenta"]),
@@ -137,8 +140,8 @@ namespace Datos
                 Email = ColumnaExiste(drVenta, "email") && drVenta["email"] != DBNull.Value ? Convert.ToString(drVenta["email"]) : "",
                 FormaPago = Convert.ToString(drVenta["formaPago"]),
                 TipoComprobante = drVenta["tipoComprobante"] == DBNull.Value ? 'X' : Convert.ToChar(drVenta["tipoComprobante"]),
-                Creado = drVenta["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(drVenta["creado"]),
-                Actualizado = drVenta["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(drVenta["actualizado"]),
+                Creado = !string.IsNullOrEmpty(columnaCreado) && drVenta[columnaCreado] != DBNull.Value ? Convert.ToDateTime(drVenta[columnaCreado]) : DateTime.MinValue,
+                Actualizado = !string.IsNullOrEmpty(columnaActualizado) && drVenta[columnaActualizado] != DBNull.Value ? (DateTime?)Convert.ToDateTime(drVenta[columnaActualizado]) : null,
                 PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["pagoMixtoEfectivo"]),
                 IdVendedor = drVenta["idVendedor"] == DBNull.Value ? 0 : Convert.ToInt32(drVenta["idVendedor"]),
                 IdSucursal = drVenta["idSucursal"] == DBNull.Value ? 0 : Convert.ToInt32(drVenta["idSucursal"]),

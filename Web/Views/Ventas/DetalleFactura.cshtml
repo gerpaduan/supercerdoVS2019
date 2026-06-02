@@ -120,4 +120,18 @@
     <h5 class="font-weight-bold text-primary">Detalle de la venta asociada</h5>
 </div>
 
-@Html.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, modal = true, returnUrl = string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Facturas", "Ventas") : returnUrl })
+<div class="detalle-factura-venta vista-venta">
+    @Html.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, modal = true, returnUrl = string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Facturas", "Ventas") : returnUrl })
+</div>
+
+<style>
+    .detalle-factura-venta {
+        width: 100%;
+    }
+
+    .detalle-factura-venta .vista-venta-modal {
+        width: 100% !important;
+        max-width: none;
+        margin: 0 0 1rem 0 !important;
+    }
+</style>

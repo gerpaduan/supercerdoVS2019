@@ -123,15 +123,44 @@
         return $('#feModoTotal').is(':checked') ? 'total' : 'porcentaje';
     }
 
+    function porcentajeActual() {
+        return toNum($('#fePorcentajeFacturacion').val());
+    }
+
+    function esFacturacionParcial() {
+        return porcentajeActual() < 99.9999;
+    }
+
+    function asegurarDescripcionAgrupada() {
+        const $desc = $('#feDescItemUnitario');
+        if (!$desc.val().trim()) {
+            $desc.val('Productos varios');
+        }
+    }
+
+    function actualizarEstadoAgruparItemUnitario() {
+        const forzarAgrupacion = esFacturacionParcial();
+        const $check = $('#feAgruparItemUnitario');
+
+        if (forzarAgrupacion) {
+            $check.prop('checked', true);
+            asegurarDescripcionAgrupada();
+        }
+
+        $check.prop('disabled', forzarAgrupacion);
+        syncAgruparItemUnitario();
+    }
+
     function syncAgruparItemUnitario() {
         const activo = $('#feAgruparItemUnitario').is(':checked');
+        const $desc = $('#feDescItemUnitario');
+
         $('#feAgruparItemUnitarioHidden').val(activo ? 'true' : 'false');
         $('#feAgruparItemWrap').toggle(activo);
+        $desc.prop('disabled', !activo);
 
-        if (!activo) {
-            $('#feDescItemUnitario').val('');
-        } else if (!$('#feDescItemUnitario').val()) {
-            $('#feDescItemUnitario').attr('placeholder', 'Productos varios');
+        if (activo && !$desc.val()) {
+            asegurarDescripcionAgrupada();
         }
     }
 
@@ -273,6 +302,7 @@
             const r = recalcularDesdePorcentaje(p);
             setPorcentaje(r.porcentaje);
             setTotalFacturar(r.total);
+            actualizarEstadoAgruparItemUnitario();
         } finally {
             updating = false;
         }
@@ -353,7 +383,7 @@
         aplicarPorcentaje(100);
 
         $('#feAgruparItemUnitario').prop('checked', $f.data('agrupar-item') === 1 || $f.data('agrupar-item') === "1");
-        syncAgruparItemUnitario();
+        actualizarEstadoAgruparItemUnitario();
 
         setTimeout(() => {
             ajustarAlturasModal();
@@ -411,6 +441,11 @@
     });
 
     $(document).on('change', '#feAgruparItemUnitario', function () {
+        if (esFacturacionParcial()) {
+            $(this).prop('checked', true);
+            asegurarDescripcionAgrupada();
+        }
+
         syncAgruparItemUnitario();
         ajustarAlturasModal();
     });
@@ -463,6 +498,11 @@
         e.preventDefault();
 
         const $form = $(this);
+        if (!$('#feAgruparItemUnitario').is(':checked') || $('#feDescItemUnitario').is(':disabled')) {
+            $('#feAgruparItemUnitarioHidden').val('false');
+            $('#feDescItemUnitario').val('');
+        }
+
         const $btn = $form.find('#btnRegistrarFactura').prop('disabled', true);
         const datos = $form.serialize();
 
