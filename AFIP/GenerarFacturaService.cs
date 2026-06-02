@@ -258,11 +258,55 @@ namespace AFIP
             factura.ListaAlicuota = alicuotasLocal;
         }
 
+        private static CbteAsoc[] ArmarCbtesAsociados(Entidades.FacturaElectronica facturaAsociada)
+        {
+            if (facturaAsociada == null ||
+                facturaAsociada.CodTipoCbteAfip <= 0 ||
+                string.IsNullOrWhiteSpace(facturaAsociada.PtoVtaAfip) ||
+                string.IsNullOrWhiteSpace(facturaAsociada.NroCbteAfip))
+            {
+                return null;
+            }
+
+            int ptoVta;
+            long nroCbte;
+
+            if (!int.TryParse(OnlyDigits(facturaAsociada.PtoVtaAfip), out ptoVta) ||
+                !long.TryParse(OnlyDigits(facturaAsociada.NroCbteAfip), out nroCbte))
+            {
+                return null;
+            }
+
+            return new[]
+            {
+                new CbteAsoc
+                {
+                    Tipo = facturaAsociada.CodTipoCbteAfip,
+                    PtoVta = ptoVta,
+                    Nro = nroCbte,
+                    Cuit = OnlyDigits(facturaAsociada.NroDocAfip)
+                }
+            };
+        }
+
         /// <summary>
         /// Genera factura en AFIP a partir de la factura suministrada (debe tener Venta cargada o se usa la Venta del ctor).
         /// Aplica factura.PorcentajeFacturacion SIN MODIFICAR la Venta: solo escala los importes calculados.
         /// </summary>
         public AfipResult GenerarFactura(Entidades.FacturaElectronica factura, bool esNotaCredito = false)
+        {
+            return GenerarComprobante(factura, esNotaCredito, null);
+        }
+
+        public AfipResult GenerarNotaCredito(Entidades.FacturaElectronica factura, Entidades.FacturaElectronica facturaAsociada)
+        {
+            if (facturaAsociada == null)
+                throw new ArgumentNullException(nameof(facturaAsociada));
+
+            return GenerarComprobante(factura, true, facturaAsociada);
+        }
+
+        private AfipResult GenerarComprobante(Entidades.FacturaElectronica factura, bool esNotaCredito, Entidades.FacturaElectronica facturaAsociada)
         {
             var result = new AfipResult() { Ok = false };
 
@@ -339,6 +383,13 @@ namespace AFIP
                 // Fecha comprobante AAAAMMDD
                 var fch = factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value : DateTime.Now;
                 det.CbteFch = fch.ToString("yyyyMMdd");
+
+                if (esNotaCredito)
+                {
+                    var cbtesAsociados = ArmarCbtesAsociados(facturaAsociada);
+                    if (cbtesAsociados != null && cbtesAsociados.Length > 0)
+                        det.CbtesAsoc = cbtesAsociados;
+                }
 
                 // ===============================
                 // CALCULO FISCAL AFIP + PORCENTAJE

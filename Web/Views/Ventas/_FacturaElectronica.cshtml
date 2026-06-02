@@ -3,6 +3,12 @@
 
 @{
     bool yaEmitida = (Model?.IdFactura ?? 0) > 0 && !string.IsNullOrWhiteSpace(Model?.CAE);
+    int idNotaCreditoAsociada = ViewBag.NotaCreditoAsociadaId != null ? (int)ViewBag.NotaCreditoAsociadaId : 0;
+    bool permiteNotaCredito = yaEmitida
+        && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoA_Afip
+        && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoB_Afip
+        && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoC_Afip
+        && idNotaCreditoAsociada <= 0;
 
     var empresaNombre = !string.IsNullOrWhiteSpace(Model?.EmisorRazonSocial)
         ? Model.EmisorRazonSocial
@@ -440,6 +446,21 @@
 
     <!-- FOOTER -->
     <div class="modal-footer">
+        @if (permiteNotaCredito)
+        {
+            <button type="button" class="btn btn-outline-danger btn-sm mr-auto" id="btnGenerarNotaCredito">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Nota de Cr&eacute;dito
+            </button>
+        }
+        else if (yaEmitida && idNotaCreditoAsociada > 0)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm mr-auto" disabled="disabled">
+                <i class="fas fa-file-invoice-dollar"></i>
+                NC ya generada
+            </button>
+        }
+
         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
             Cancelar
         </button>

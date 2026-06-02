@@ -10,6 +10,8 @@
     var importeFacturado = factura != null ? Convert.ToDecimal(factura.ImporteTotal) : 0m;
     var fechaFactura = factura != null && factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value : DateTime.MinValue;
     var tipoComprobante = "";
+    var facturaAsociada = Model.FacturaAsociada;
+    var notaCreditoAsociada = Model.NotaCreditoAsociada;
     if (factura != null)
     {
         switch (factura.CodTipoCbteAfip)
@@ -87,6 +89,30 @@
             </div>
         </div>
 
+        @if (facturaAsociada != null || notaCreditoAsociada != null)
+        {
+            <div class="alert alert-light border mb-3">
+                @if (facturaAsociada != null)
+                {
+                    <div>
+                        <strong>Factura asociada:</strong>
+                        <a href="@Url.Action("DetalleFactura", "Ventas", new { id = facturaAsociada.Id, returnUrl = returnUrl })">
+                            @(string.Format("{0}-{1}", facturaAsociada.PtoVtaAfip ?? "", facturaAsociada.NroCbteAfip ?? ""))
+                        </a>
+                    </div>
+                }
+                @if (notaCreditoAsociada != null)
+                {
+                    <div>
+                        <strong>Nota de crédito asociada:</strong>
+                        <a href="@Url.Action("DetalleFactura", "Ventas", new { id = notaCreditoAsociada.Id, returnUrl = returnUrl })">
+                            @(string.Format("{0}-{1}", notaCreditoAsociada.PtoVtaAfip ?? "", notaCreditoAsociada.NroCbteAfip ?? ""))
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+
         <div class="row mt-3">
             <div class="col-md-6 mb-3 mb-md-0">
                 <div class="border rounded p-3 h-100">
@@ -135,3 +161,17 @@
         margin: 0 0 1rem 0 !important;
     }
 </style>
+
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="contenedorFacturaElectronica">
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=18")"></script>
+    <script src="@Url.Content("~/Scripts/app/factura-electronica.js?v=6")"></script>
+}

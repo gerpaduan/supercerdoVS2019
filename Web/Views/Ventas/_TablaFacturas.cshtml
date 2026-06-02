@@ -58,6 +58,15 @@
                     var vendedor = venta != null && venta.Vendedor != null ? venta.Vendedor.Nombre : "";
                     var fechaFactura = factura != null && factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value : DateTime.MinValue;
                     var numeroFactura = factura != null ? ((factura.PtoVtaAfip ?? "") + "-" + (factura.NroCbteAfip ?? "")) : "";
+                    var esNotaCredito = factura != null && (
+                        factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoA_Afip ||
+                        factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoB_Afip ||
+                        factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoC_Afip);
+                    var importeVisual = factura != null
+                        ? (esNotaCredito ? -factura.ImporteTotal : factura.ImporteTotal)
+                        : 0f;
+                    var facturaAsociada = item.FacturaAsociada;
+                    var notaCreditoAsociada = item.NotaCreditoAsociada;
 
                     <li class="list-group-item venta-item"
                         data-forma-pago="@formaPago"
@@ -82,12 +91,20 @@
                             }
                             <div class="venta-id">Nro: @numeroFactura</div>
                             <div class="venta-id">Venta asociada: @factura.IdVenta</div>
+                            @if (facturaAsociada != null)
+                            {
+                                <div class="venta-id">Factura asociada: @(string.Format("{0}-{1}", facturaAsociada.PtoVtaAfip ?? "", facturaAsociada.NroCbteAfip ?? ""))</div>
+                            }
+                            @if (notaCreditoAsociada != null)
+                            {
+                                <div class="venta-id text-danger">NC asociada: @(string.Format("{0}-{1}", notaCreditoAsociada.PtoVtaAfip ?? "", notaCreditoAsociada.NroCbteAfip ?? ""))</div>
+                            }
                         </div>
 
                         <div class="venta-total">
-                            <div class="importe @(factura.ImporteTotal <= 0 ? "text-danger font-weight-bold" : "")"
-                                 data-valor="@factura.ImporteTotal">
-                                @((factura.ImporteTotal > 0 ? "+ " : "") + factura.ImporteTotal.ToString("C"))
+                            <div class="importe @(importeVisual < 0 ? "text-danger font-weight-bold" : "")"
+                                 data-valor="@importeVisual">
+                                @((importeVisual > 0 ? "+ " : "") + importeVisual.ToString("C"))
                             </div>
 
                             <div class="text-muted small">

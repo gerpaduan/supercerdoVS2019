@@ -1015,7 +1015,41 @@ namespace Datos
 
         public int existeFacturaElect(int idVenta)
         {
-            const string sql = "SELECT TOP 1 id FROM FacturaElectronica WHERE CAE <> '' AND idVenta = @idVenta ORDER BY id DESC;";
+            string sql = $@"
+                SELECT TOP 1 id
+                FROM FacturaElectronica
+                WHERE CAE <> ''
+                  AND idVenta = @idVenta
+                  AND (
+                        codTipoCbteAfip = {Entidades.FacturaElectronica.codFacturaA_Afip}
+                     OR codTipoCbteAfip = {Entidades.FacturaElectronica.codFacturaB_Afip}
+                     OR codTipoCbteAfip = {Entidades.FacturaElectronica.codFacturaC_Afip}
+                  )
+                ORDER BY id DESC;";
+
+            object scalar = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.AddWithValue("@idVenta", idVenta)
+            );
+
+            return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
+        }
+
+        public int existeNotaCreditoElect(int idVenta)
+        {
+            string sql = $@"
+                SELECT TOP 1 id
+                FROM FacturaElectronica
+                WHERE CAE <> ''
+                  AND idVenta = @idVenta
+                  AND (
+                        codTipoCbteAfip = {Entidades.FacturaElectronica.codNotaCreditoA_Afip}
+                     OR codTipoCbteAfip = {Entidades.FacturaElectronica.codNotaCreditoB_Afip}
+                     OR codTipoCbteAfip = {Entidades.FacturaElectronica.codNotaCreditoC_Afip}
+                  )
+                ORDER BY id DESC;";
 
             object scalar = Db.Scalar(
                 _empresa,

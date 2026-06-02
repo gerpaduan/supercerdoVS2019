@@ -22,6 +22,8 @@ namespace Web.Models
     {
         public FacturaElectronica Factura { get; set; }
         public Venta Venta { get; set; }
+        public FacturaElectronica FacturaAsociada { get; set; }
+        public FacturaElectronica NotaCreditoAsociada { get; set; }
     }
 
     public class FacturaDetalleVm
@@ -29,5 +31,7 @@ namespace Web.Models
         public FacturaElectronica Factura { get; set; }
         public Venta Venta { get; set; }
         public string ReturnUrl { get; set; }
+        public FacturaElectronica FacturaAsociada { get; set; }
+        public FacturaElectronica NotaCreditoAsociada { get; set; }
     }
 }

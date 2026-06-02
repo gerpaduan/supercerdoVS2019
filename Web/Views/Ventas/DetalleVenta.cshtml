@@ -12,6 +12,8 @@
     string hrefBotonVolver = (!modoModal && !string.IsNullOrWhiteSpace(returnUrlDetalle)) ? returnUrlDetalle : "#";
     string returnUrlPosDetalle = Url.Action("POS", "Ventas", new { abrirDetalleVentaId = Model.IdVenta, returnUrlDetalle = returnUrlDetalle });
     bool tieneFacturaVenta = ViewBag.TieneFacturaVenta != null && (bool)ViewBag.TieneFacturaVenta;
+    bool tieneNotaCreditoVenta = ViewBag.TieneNotaCreditoVenta != null && (bool)ViewBag.TieneNotaCreditoVenta;
+    int idNotaCreditoVenta = ViewBag.IdNotaCreditoVenta != null ? (int)ViewBag.IdNotaCreditoVenta : 0;
 }
 
 <div class="card shadow mb-4 w-100 w-md-50 @(modoModal ? "" : "mx-auto") vista-venta @(modoModal ? "vista-venta-modal" : "")">
@@ -53,6 +55,23 @@
                 </h5>
             </div>
         </div>
+
+        @if (tieneFacturaVenta || tieneNotaCreditoVenta)
+        {
+            <div class="alert alert-light border mb-3">
+                @if (tieneFacturaVenta)
+                {
+                    <div><strong>Factura asociada:</strong> sí</div>
+                }
+                @if (tieneNotaCreditoVenta && idNotaCreditoVenta > 0)
+                {
+                    <div>
+                        <strong>Nota de crédito asociada:</strong>
+                        <a href="@Url.Action("DetalleFactura", "Ventas", new { id = idNotaCreditoVenta, returnUrl = returnUrlDetalle })">ver detalle</a>
+                    </div>
+                }
+            </div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
         {
@@ -104,9 +123,6 @@
     <!-- Botones -->
     <div class="row mt-4">
         <div class="col">
-            <button class="btn btn-light btn-block text-left mb-2">
-                <i class="fas fa-ban mr-2"></i> Anular Venta
-            </button>
             @if (ViewBag.PuedeModificarVenta != null && (bool)ViewBag.PuedeModificarVenta)
             {
                 <a href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, returnUrl = (modoModal && desdePos ? returnUrlPosDetalle : ""), returnUrlDetalle = returnUrlDetalle })"
@@ -321,7 +337,7 @@
 {
     @section Scripts {
         <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=17")"></script>
-        <script src="@Url.Content("~/Scripts/app/factura-electronica.js?v=5")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=18")"></script>
+        <script src="@Url.Content("~/Scripts/app/factura-electronica.js?v=6")"></script>
     }
 }

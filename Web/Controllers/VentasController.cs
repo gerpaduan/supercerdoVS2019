@@ -131,7 +131,12 @@ namespace Web.Controllers
                 FechaDesde = desde,
                 FechaHasta = hasta,
                 IdSucursal = idSucursal,
-                TotalFacturado = facturas.Sum(x => Convert.ToDecimal(x != null ? x.ImporteTotal : 0f))
+                TotalFacturado = facturas.Sum(x =>
+                    x == null
+                        ? 0m
+                        : (EsNotaCreditoAfip(x.CodTipoCbteAfip)
+                            ? -Convert.ToDecimal(x.ImporteTotal)
+                            : Convert.ToDecimal(x.ImporteTotal)))
             };
 
             foreach (var factura in facturas.Where(x => x != null && x.Venta != null))
@@ -139,7 +144,9 @@ namespace Web.Controllers
                 model.Facturas.Add(new FacturaListadoItemVm
                 {
                     Factura = factura,
-                    Venta = factura.Venta
+                    Venta = factura.Venta,
+                    FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(factura.IdVenta) : null,
+                    NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(factura.IdVenta)
                 });
             }
 
@@ -301,6 +308,8 @@ namespace Web.Controllers
             ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
             ViewBag.MotivoNoPuedeCambiarFormaPago = ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
             ViewBag.TieneFacturaVenta = oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
+            ViewBag.IdNotaCreditoVenta = oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
+            ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
 
             // Pasar la venta a la vista
             if (modal)
@@ -323,7 +332,9 @@ namespace Web.Controllers
             {
                 Factura = factura,
                 Venta = venta,
-                ReturnUrl = DecodeReturnUrlIfNeeded(returnUrl)
+                ReturnUrl = DecodeReturnUrlIfNeeded(returnUrl),
+                FacturaAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? ObtenerFacturaAsociadaVenta(venta.IdVenta) : null,
+                NotaCreditoAsociada = EsNotaCreditoAfip(factura.CodTipoCbteAfip) ? null : ObtenerNotaCreditoAsociadaVenta(venta.IdVenta)
             };
 
             return View("~/Views/Ventas/DetalleFactura.cshtml", model);
@@ -1034,8 +1045,9 @@ namespace Web.Controllers
                 
                 if (mm == 0)
                 {
-                    int idFactuElec = oVentaN.esVentaSinFacturar(venta.IdVenta, false);
-                    var factuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
+                    var factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta) ?? new Entidades.FacturaElectronica();
+                    var notaCreditoAsociada = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                    ViewBag.NotaCreditoAsociadaId = notaCreditoAsociada != null ? notaCreditoAsociada.Id : 0;
 
                     var dto = BuildFacturaDTO(
                                         venta,
@@ -1048,10 +1060,7 @@ namespace Web.Controllers
                 // Genera el ticket (ESC/POS, PDF, etc)
 
                 ViewBag.Medida = mm == 58 ? 58 : 80;
-                int idFacturaElectronica = oVentaN.existeFactuElectParaVenta(venta.IdVenta);
-                var facturaTicket = idFacturaElectronica > 0
-                    ? oVentaN.getFactuElecById(idFacturaElectronica)
-                    : null;
+                var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
                 var user = Session["Usuario"] as Entidades.Usuario;
                 ViewBag.FacturaTicket = (facturaTicket != null && facturaTicket.Id > 0)
                     ? BuildFacturaDTO(venta, facturaTicket)
@@ -1096,10 +1105,8 @@ namespace Web.Controllers
                     return Json(new { ok = false, mensaje = "Venta no encontrada." }, JsonRequestBehavior.AllowGet);
 
                 int ticketMm = mm == 58 ? 58 : 80;
-                int idFacturaElectronica = oVentaN.existeFactuElectParaVenta(venta.IdVenta);
-                var facturaTicket = idFacturaElectronica > 0
-                    ? oVentaN.getFactuElecById(idFacturaElectronica)
-                    : null;
+                var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                var notaCreditoTicket = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
                 var user = Session["Usuario"] as Entidades.Usuario;
                 var empresaSesion = (user != null ? user.Empresa : null) ?? (venta.Sucursal != null ? venta.Sucursal.Empresa : null);
                 var facturaDto = (facturaTicket != null && facturaTicket.Id > 0)
@@ -1110,7 +1117,10 @@ namespace Web.Controllers
                 {
                     ok = true,
                     ticketMm = ticketMm,
-                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, empresaSesion)
+                    ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, empresaSesion),
+                    tieneFactura = facturaTicket != null && facturaTicket.Id > 0,
+                    tieneNotaCredito = notaCreditoTicket != null && notaCreditoTicket.Id > 0,
+                    facturaAgrupaItems = facturaTicket != null && !string.IsNullOrWhiteSpace(facturaTicket.DescItemUnitario)
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
@@ -1163,7 +1173,8 @@ namespace Web.Controllers
                     return Json(new { ok = false, msg = "Venta no encontrada." }, JsonRequestBehavior.AllowGet);
 
                 var empresaVenta = ObtenerEmpresaVenta(venta);
-                var factuElec = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(venta.IdVenta));
+                var factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
                 string nombreEmpresa = ObtenerNombreEmpresaVenta(venta);
                 string emailDestino = venta.Persona != null ? (venta.Persona.Email ?? "").Trim() : "";
                 bool adjuntarDetalleDisponible = factuElec != null
@@ -1185,6 +1196,9 @@ namespace Web.Controllers
                     asunto = asunto,
                     mensaje = cuerpo,
                     adjuntarDetalleDisponible = adjuntarDetalleDisponible,
+                    tieneFactura = factuElec != null && factuElec.Id > 0,
+                    tieneNotaCredito = notaCredito != null && notaCredito.Id > 0,
+                    facturaAgrupaItems = factuElec != null && !string.IsNullOrWhiteSpace(factuElec.DescItemUnitario),
                     empresa = nombreEmpresa,
                     replyTo = empresaVenta != null ? (empresaVenta.Email ?? "") : ""
                 }, JsonRequestBehavior.AllowGet);
@@ -1196,7 +1210,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public JsonResult EnviarComprobanteEmail(int idVenta, string emailDestino, string asunto, string mensaje, bool adjuntarDetalle = false)
+        public JsonResult EnviarComprobanteEmail(int idVenta, string emailDestino, string asunto, string mensaje, bool adjuntarDetalle = false, string documento = "")
         {
             try
             {
@@ -1219,16 +1233,46 @@ namespace Web.Controllers
 
                 var empresaVenta = ObtenerEmpresaVenta(venta);
                 string nombreEmpresa = ObtenerNombreEmpresaVenta(venta);
-                byte[] pdfBytes = GenerarPdfVentaBytes(venta);
+                var factura = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                byte[] pdfBytes = null;
                 byte[] pdfDetalleBytes = null;
+                byte[] pdfNotaCreditoBytes = null;
                 string bodyHtml = ConvertirTextoAHtml(mensaje);
                 string nombreAdjunto = "Comprobante_" + venta.IdVenta + ".pdf";
                 string nombreAdjuntoDetalle = "Detalle_" + venta.IdVenta + ".pdf";
+                string nombreAdjuntoNotaCredito = "NotaCredito_" + venta.IdVenta + ".pdf";
                 string fromName = "CarniSys - " + nombreEmpresa;
                 string replyToEmail = empresaVenta != null ? (empresaVenta.Email ?? "").Trim() : "";
-                if (adjuntarDetalle)
+                string documentoSolicitado = (documento ?? "").Trim().ToLowerInvariant();
+
+                if (string.IsNullOrWhiteSpace(documentoSolicitado))
+                    documentoSolicitado = adjuntarDetalle ? "todos" : "factura";
+
+                bool incluirDetalle = documentoSolicitado == "todos" || documentoSolicitado == "detalle";
+                bool incluirFactura = documentoSolicitado == "todos" || documentoSolicitado == "factura";
+                bool incluirNc = documentoSolicitado == "todos" || documentoSolicitado == "nc";
+
+                if (incluirDetalle)
+                    pdfDetalleBytes = GenerarPdfDetalleVentaBytes(venta);
+
+                if (incluirFactura && factura != null && factura.Id > 0)
+                    pdfBytes = GenerarPdfComprobanteBytes(venta, factura, false);
+
+                if (incluirNc && notaCredito != null && notaCredito.Id > 0)
+                    pdfNotaCreditoBytes = GenerarPdfComprobanteBytes(venta, notaCredito, true);
+
+                if (!incluirFactura && !incluirNc && !incluirDetalle)
+                    return Json(new { ok = false, msg = "Seleccione al menos un comprobante para enviar." });
+
+                if (incluirFactura && pdfBytes == null)
+                    return Json(new { ok = false, msg = "La venta no tiene factura asociada." });
+
+                if (incluirNc && pdfNotaCreditoBytes == null)
+                    return Json(new { ok = false, msg = "La venta no tiene nota de crédito asociada." });
+
+                if (adjuntarDetalle && documentoSolicitado == "factura")
                 {
-                    var factura = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(venta.IdVenta));
                     bool puedeAdjuntarDetalle = factura != null
                         && factura.Id > 0
                         && (Math.Abs(factura.PorcentajeFacturacion - 100f) > 0.0001f
@@ -1249,6 +1293,9 @@ namespace Web.Controllers
                     attachmentFileName2: pdfDetalleBytes != null ? nombreAdjuntoDetalle : null,
                     attachmentBytes2: pdfDetalleBytes,
                     attachmentContentType2: "application/pdf",
+                    attachmentFileName3: pdfNotaCreditoBytes != null ? nombreAdjuntoNotaCredito : null,
+                    attachmentBytes3: pdfNotaCreditoBytes,
+                    attachmentContentType3: "application/pdf",
                     fromNameOverride: fromName,
                     replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
                     replyToName: nombreEmpresa
@@ -1263,11 +1310,31 @@ namespace Web.Controllers
             }
         }
 
-        public ActionResult Imprimir(int id)
+        public ActionResult Imprimir(int id, string documento = "")
         {
             Entidades.Venta venta = oVentaN.getVentaById(id);
-            byte[] pdfBytes = GenerarPdfVentaBytes(venta);
-            return File(pdfBytes, "application/pdf", $"Factura_{id}.pdf");
+            string documentoSolicitado = (documento ?? "").Trim().ToLowerInvariant();
+            byte[] pdfBytes;
+            string nombreArchivo;
+
+            switch (documentoSolicitado)
+            {
+                case "detalle":
+                    pdfBytes = GenerarPdfDetalleVentaBytes(venta);
+                    nombreArchivo = "Detalle_" + id + ".pdf";
+                    break;
+                case "nc":
+                    pdfBytes = GenerarPdfNotaCreditoBytes(venta);
+                    nombreArchivo = "NotaCredito_" + id + ".pdf";
+                    break;
+                case "factura":
+                default:
+                    pdfBytes = GenerarPdfVentaBytes(venta);
+                    nombreArchivo = "Factura_" + id + ".pdf";
+                    break;
+            }
+
+            return File(pdfBytes, "application/pdf", nombreArchivo);
         }
 
         private byte[] GenerarPdfVentaBytes(Entidades.Venta venta)
@@ -1275,9 +1342,35 @@ namespace Web.Controllers
             if (venta == null || venta.IdVenta <= 0)
                 throw new InvalidOperationException("Venta no encontrada.");
 
-            Entidades.FacturaElectronica factuElec = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(venta.IdVenta));
+            Entidades.FacturaElectronica factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+            if (factuElec == null || factuElec.Id <= 0)
+                return GenerarPdfDetalleVentaBytes(venta);
+
+            return GenerarPdfComprobanteBytes(venta, factuElec, false);
+        }
+
+        private byte[] GenerarPdfNotaCreditoBytes(Entidades.Venta venta)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+            if (notaCredito == null || notaCredito.Id <= 0)
+                throw new InvalidOperationException("La venta no tiene nota de crédito asociada.");
+
+            return GenerarPdfComprobanteBytes(venta, notaCredito, true);
+        }
+
+        private byte[] GenerarPdfComprobanteBytes(Entidades.Venta venta, Entidades.FacturaElectronica comprobante, bool esNotaCredito)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            if (comprobante == null || comprobante.Id <= 0)
+                throw new InvalidOperationException("Comprobante no encontrado.");
+
             var generador = new Utilidades.GenerarDocs();
-            return generador.GenerarFacturaPDF(venta, factuElec);
+            return generador.GenerarFacturaPDF(CrearVentaDocumento(venta, esNotaCredito ? 'N' : comprobante.getLetraId_TipoCbte(comprobante.CodTipoCbteAfip)), comprobante);
         }
 
         private byte[] GenerarPdfDetalleVentaBytes(Entidades.Venta venta)
@@ -1292,6 +1385,11 @@ namespace Web.Controllers
 
         private Entidades.Venta CrearVentaDetalleTipoX(Entidades.Venta venta)
         {
+            return CrearVentaDocumento(venta, 'X');
+        }
+
+        private Entidades.Venta CrearVentaDocumento(Entidades.Venta venta, char tipoComprobante)
+        {
             return new Entidades.Venta
             {
                 IdVenta = venta.IdVenta,
@@ -1301,7 +1399,7 @@ namespace Web.Controllers
                 Persona = venta.Persona,
                 NroRemito = venta.NroRemito,
                 FormaPago = venta.FormaPago,
-                TipoComprobante = 'X',
+                TipoComprobante = tipoComprobante,
                 Vendedor = venta.Vendedor,
                 LineasVenta = venta.LineasVenta,
                 TotalImporte = venta.LineasVenta != null ? venta.LineasVenta.Sum(l => l != null ? l.ImporteConIva() : 0f) : 0f,
@@ -1501,6 +1599,88 @@ namespace Web.Controllers
                 {
                     ok = false,
                     msg = "Error generando factura",
+                    error = ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult GenerarNotaCredito(Web.Models.DTO.NotaCreditoRequest request)
+        {
+            try
+            {
+                if (request == null || request.IdFactura <= 0)
+                    return Json(new { ok = false, msg = "Factura origen inválida" });
+
+                var facturaOrigen = oVentaN.getFactuElecById(request.IdFactura);
+                if (facturaOrigen == null || facturaOrigen.Id <= 0)
+                    return Json(new { ok = false, msg = "No se encontró la factura origen" });
+
+                if (EsNotaCreditoAfip(facturaOrigen.CodTipoCbteAfip))
+                    return Json(new { ok = false, msg = "La nota de crédito debe generarse desde una factura emitida" });
+
+                if (string.IsNullOrWhiteSpace(facturaOrigen.CAE1))
+                    return Json(new { ok = false, msg = "La factura origen no tiene CAE válido" });
+
+                var venta = facturaOrigen.Venta ?? oVentaN.getVentaById(facturaOrigen.IdVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "No se encontró la venta asociada" });
+
+                int idNotaExistente = oVentaN.esVentaSinFacturar(venta.IdVenta, true);
+                if (idNotaExistente > 0)
+                {
+                    var ncExistente = oVentaN.getFactuElecById(idNotaExistente);
+                    return Json(new
+                    {
+                        ok = true,
+                        already = true,
+                        facturaId = idNotaExistente,
+                        nro = ncExistente != null ? ncExistente.NroCbteAfip : "",
+                        cae = ncExistente != null ? ncExistente.CAE1 : "",
+                        detalleUrl = Url.Action("DetalleFactura", "Ventas", new { id = idNotaExistente }),
+                        mensaje = "Ya existe una nota de crédito asociada a esta venta"
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                facturaOrigen.Venta = venta;
+
+                var notaCredito = CrearNotaCreditoDesdeFactura(facturaOrigen, venta);
+
+                var afipSvc = new AFIP.GenerarFacturaService(venta);
+                var afipRes = afipSvc.GenerarNotaCredito(notaCredito, facturaOrigen);
+
+                if (!afipRes.Ok)
+                    return Json(new { ok = false, msg = "AFIP: " + afipRes.Mensaje });
+
+                oVentaN.addOrEditFactuElec(afipRes.Factura);
+
+                int idNotaGenerada = oVentaN.esVentaSinFacturar(venta.IdVenta, true);
+                if (request.AnularVenta)
+                {
+                    var ventaNotaCredito = ClonarVentaParaNotaCredito(venta);
+                    oVentaN.agregarVenta(ventaNotaCredito, true);
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    facturaId = idNotaGenerada,
+                    nro = afipRes.Factura != null ? afipRes.Factura.NroCbteAfip : "",
+                    cae = afipRes.Factura != null ? afipRes.Factura.CAE1 : "",
+                    detalleUrl = idNotaGenerada > 0 ? Url.Action("DetalleFactura", "Ventas", new { id = idNotaGenerada }) : "",
+                    anuloVenta = request.AnularVenta,
+                    mensaje = request.AnularVenta
+                        ? "Nota de crédito generada y venta anulada correctamente"
+                        : "Nota de crédito generada correctamente"
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Error generando nota de crédito",
                     error = ex.Message
                 }, JsonRequestBehavior.AllowGet);
             }
@@ -1952,6 +2132,9 @@ namespace Web.Controllers
             dto.FormaPago = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.FormaPago)
                 ? factuElec.FormaPago
                 : venta.FormaPago + (venta.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
+            dto.PorcentajeFacturacion = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.PorcentajeFacturacion)
+                : 100m;
             dto.DescItemUnitario = facturaYaGenerada ? (factuElec.DescItemUnitario ?? "") : "";
             dto.AgruparItemUnitario = !string.IsNullOrWhiteSpace(dto.DescItemUnitario);
 
@@ -2319,6 +2502,131 @@ namespace Web.Controllers
                 // Otros campos que podés asignar si son necesarios:
                 Creado = DateTime.Now,
                 Error = false
+            };
+        }
+
+        private static bool EsNotaCreditoAfip(int codTipoCbteAfip)
+        {
+            return codTipoCbteAfip == FacturaElectronica.codNotaCreditoA_Afip
+                || codTipoCbteAfip == FacturaElectronica.codNotaCreditoB_Afip
+                || codTipoCbteAfip == FacturaElectronica.codNotaCreditoC_Afip;
+        }
+
+        private Entidades.FacturaElectronica ObtenerFacturaAsociadaVenta(int idVenta)
+        {
+            int idFactura = oVentaN.existeFactuElectParaVenta(idVenta);
+            return idFactura > 0 ? oVentaN.getFactuElecById(idFactura) : null;
+        }
+
+        private Entidades.FacturaElectronica ObtenerNotaCreditoAsociadaVenta(int idVenta)
+        {
+            int idNotaCredito = oVentaN.existeNotaCreditoParaVenta(idVenta);
+            return idNotaCredito > 0 ? oVentaN.getFactuElecById(idNotaCredito) : null;
+        }
+
+        private static int MapearTipoNotaCreditoDesdeFactura(int codTipoCbteAfip)
+        {
+            switch (codTipoCbteAfip)
+            {
+                case FacturaElectronica.codFacturaA_Afip:
+                    return FacturaElectronica.codNotaCreditoA_Afip;
+                case FacturaElectronica.codFacturaB_Afip:
+                    return FacturaElectronica.codNotaCreditoB_Afip;
+                case FacturaElectronica.codFacturaC_Afip:
+                    return FacturaElectronica.codNotaCreditoC_Afip;
+                default:
+                    throw new InvalidOperationException("Tipo de factura no soportado para generar nota de crédito");
+            }
+        }
+
+        private FacturaElectronica CrearNotaCreditoDesdeFactura(FacturaElectronica facturaOrigen, Entidades.Venta venta)
+        {
+            return new FacturaElectronica
+            {
+                Venta = venta,
+                IdVenta = venta.IdVenta,
+                CodTipoCbteAfip = MapearTipoNotaCreditoDesdeFactura(facturaOrigen.CodTipoCbteAfip),
+                FechaEmisionAfip = DateTime.Now,
+                TipoDocAfip = facturaOrigen.TipoDocAfip,
+                NroDocAfip = facturaOrigen.NroDocAfip,
+                RazonSocialAFIP = facturaOrigen.RazonSocialAFIP,
+                CondicionIvaAFIP = facturaOrigen.CondicionIvaAFIP,
+                DomicilioAFIP = facturaOrigen.DomicilioAFIP,
+                CondicionVenta = facturaOrigen.CondicionVenta,
+                FormaPago = facturaOrigen.FormaPago,
+                PorcentajeFacturacion = Convert.ToSingle(facturaOrigen.PorcentajeFacturacion),
+                DescItemUnitario = facturaOrigen.DescItemUnitario ?? ""
+            };
+        }
+
+        private Entidades.Venta ClonarVentaParaNotaCredito(Entidades.Venta venta)
+        {
+            var clon = new Entidades.Venta
+            {
+                IdVenta = 0,
+                FechaVenta = venta.FechaVenta,
+                Creado = venta.Creado,
+                Actualizado = venta.Actualizado,
+                Turno = venta.Turno,
+                DiaFestivo = venta.DiaFestivo,
+                Observaciones = (venta.Observaciones ?? "") + "**Venta anulada por Nota de Credito**",
+                Sucursal = venta.Sucursal,
+                Persona = venta.Persona,
+                NroRemito = (venta.NroRemito ?? "") + " Nota Credito",
+                Estado = venta.Estado,
+                Vendedor = venta.Vendedor,
+                TipoVenta = venta.TipoVenta,
+                EnCtaCte = venta.EnCtaCte,
+                FormaPago = venta.FormaPago,
+                Cuit = venta.Cuit,
+                Email = venta.Email,
+                TipoComprobante = 'N',
+                AcumRedondeoKgs = venta.AcumRedondeoKgs,
+                AcumRedondeoImporte = venta.AcumRedondeoImporte,
+                ComisionTarjeta = venta.ComisionTarjeta,
+                PagoMixtoEfectivo = venta.PagoMixtoEfectivo,
+                ImprimirTipoCbte = venta.ImprimirTipoCbte,
+                TotalImporte = venta.TotalImporte,
+                TotalImporteOriginal = venta.TotalImporteOriginal,
+                IdExpendio = venta.IdExpendio,
+                IdentificacionExpendio = venta.IdentificacionExpendio,
+                Sector = venta.Sector,
+                CantItems = venta.CantItems,
+                SerialCPU = venta.SerialCPU,
+                ListaExpendios = venta.ListaExpendios != null ? new List<int>(venta.ListaExpendios) : new List<int>(),
+                Abona = venta.Abona,
+                Cambio = venta.Cambio,
+                LineasVenta = (venta.LineasVenta ?? new List<Entidades.LineaVenta>())
+                    .Select(ClonarLineaVentaParaNotaCredito)
+                    .ToList()
+            };
+
+            return clon;
+        }
+
+        private Entidades.LineaVenta ClonarLineaVentaParaNotaCredito(Entidades.LineaVenta linea)
+        {
+            return new Entidades.LineaVenta
+            {
+                IdLineaVenta = 0,
+                CantKg = linea.CantKg,
+                PrecioKg = linea.PrecioKg,
+                PrecioKgOriginal = linea.PrecioKgOriginal,
+                Bonificacion = linea.Bonificacion,
+                PrecioReal = linea.PrecioReal,
+                IdAlicuotaIva = linea.IdAlicuotaIva,
+                AlicuotaIva = linea.AlicuotaIva,
+                Corte = linea.Corte,
+                Estado = linea.Estado,
+                IndexAnulado = linea.IndexAnulado,
+                PesoBalanza = linea.PesoBalanza,
+                Random = linea.Random,
+                KgsAjusteTarj = linea.KgsAjusteTarj,
+                KgsRedondeo = linea.KgsRedondeo,
+                KgsTotalCalculado = linea.KgsTotalCalculado,
+                AjustePrecio = linea.AjustePrecio,
+                IdExpendio = linea.IdExpendio,
+                Codigo = linea.Codigo
             };
         }
 

@@ -185,6 +185,7 @@
     <Compile Include="Models\UsuariosVm.cs" />
     <Compile Include="Models\WhatsAppVm.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
+    <Compile Include="Models\DTO\NotaCreditoRequest.cs" />
     <Compile Include="Models\DTO\FinalizarPuntoExpendioRequest.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />

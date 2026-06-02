@@ -90,6 +90,9 @@ namespace Web.Helpers
             string attachmentFileName2 = null,
             byte[] attachmentBytes2 = null,
             string attachmentContentType2 = "application/pdf",
+            string attachmentFileName3 = null,
+            byte[] attachmentBytes3 = null,
+            string attachmentContentType3 = "application/pdf",
             string fromNameOverride = null,
             string replyToEmail = null,
             string replyToName = null)
@@ -137,6 +140,13 @@ namespace Web.Helpers
                     var stream2 = new MemoryStream(attachmentBytes2);
                     var attachment2 = new Attachment(stream2, attachmentFileName2 ?? "adjunto-2.pdf", attachmentContentType2 ?? "application/octet-stream");
                     message.Attachments.Add(attachment2);
+                }
+
+                if (attachmentBytes3 != null && attachmentBytes3.Length > 0)
+                {
+                    var stream3 = new MemoryStream(attachmentBytes3);
+                    var attachment3 = new Attachment(stream3, attachmentFileName3 ?? "adjunto-3.pdf", attachmentContentType3 ?? "application/octet-stream");
+                    message.Attachments.Add(attachment3);
                 }
 
                 using (var client = new SmtpClient(host, port))

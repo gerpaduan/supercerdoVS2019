@@ -83,6 +83,17 @@ function pvGetEmailSendUrl() {
     return ($('#modalPostVenta').data('email-send-url') || '').toString();
 }
 
+function pvObtenerConfigComprobantes() {
+    const ventaId = pvGetVentaId();
+    const configUrl = pvGetEmailConfigUrl();
+
+    if (!ventaId || !configUrl) {
+        return $.Deferred().reject().promise();
+    }
+
+    return $.getJSON(configUrl, { id: ventaId });
+}
+
 // Aplica textos/estados según contexto
 function pvAplicarContextoUI() {
     const ctx = pvGetContext();
@@ -425,6 +436,41 @@ function pvBuildPdfUrl() {
     return url.toString();
 }
 
+function pvBuildPdfUrlDocumento(documento) {
+    const pdfUrl = pvBuildPdfUrl();
+    if (!pdfUrl) return '';
+
+    const url = new URL(pdfUrl, window.location.origin);
+    if (documento) {
+        url.searchParams.set('documento', documento);
+    }
+
+    return url.toString();
+}
+
+function pvSeleccionarOpcionSimple(title, options) {
+    const inputOptions = {};
+
+    $.each(options || [], function (_, item) {
+        if (item && item.value) {
+            inputOptions[item.value] = item.label;
+        }
+    });
+
+    return Swal.fire({
+        title: title,
+        input: 'select',
+        inputOptions: inputOptions,
+        inputPlaceholder: 'Seleccioná una opción',
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        inputValidator: function (value) {
+            if (!value) return 'Seleccioná una opción.';
+        }
+    });
+}
+
 function pvAbrirPdf() {
     const $modal = $('#modalPostVenta');
     const $btn = $('#btnPostVenta4');
@@ -502,7 +548,25 @@ function pvGetMensajeWhatsapp() {
 
 function pvAbrirPdf() {
     const ventaId = pvGetVentaId();
-    const pdfUrl = pvBuildPdfUrl();
+    const pdfUrl = pvBuildPdfUrlDocumento('factura');
+
+    if (!ventaId) {
+        alert('No se encontró el id de la venta.');
+        return;
+    }
+
+    if (!pdfUrl) {
+        alert('No se configuró la URL del PDF.');
+        return;
+    }
+
+    pvAbrirNuevaPestanaConSesion(pdfUrl);
+    cerrarPostVentaSegunOrigen();
+}
+
+function pvAbrirPdfDocumento(documento) {
+    const ventaId = pvGetVentaId();
+    const pdfUrl = pvBuildPdfUrlDocumento(documento);
 
     if (!ventaId) {
         alert('No se encontró el id de la venta.');
@@ -563,10 +627,7 @@ function pvEsEmailValido(email) {
 }
 
 function pvAbrirModalEmail() {
-    const ventaId = pvGetVentaId();
-    const configUrl = pvGetEmailConfigUrl();
-
-    if (!ventaId || !configUrl) {
+    if (!pvGetVentaId() || !pvGetEmailConfigUrl()) {
         Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudo preparar el envio por email.' });
         return;
     }
@@ -577,9 +638,12 @@ function pvAbrirModalEmail() {
     $('#pvEmailMensaje').val('');
     $('#pvEmailAdjuntarDetalle').prop('checked', false);
     $('#pvEmailAdjuntarDetalleWrap').addClass('d-none');
+    if (!$('#modalEmailVenta').data('documento')) {
+        $('#modalEmailVenta').data('documento', 'factura');
+    }
     $('#btnConfirmarEmailVenta').prop('disabled', true);
 
-    $.getJSON(configUrl, { id: ventaId })
+    pvObtenerConfigComprobantes()
         .done(function (resp) {
             if (!resp || !resp.ok) {
                 Swal.fire({ icon: 'error', title: 'Email', text: (resp && resp.msg) || 'No se pudieron recuperar los datos del email.' });
@@ -607,7 +671,8 @@ function pvConfirmarEmail() {
         emailDestino: ($('#pvEmailDestino').val() || '').trim(),
         asunto: ($('#pvEmailAsunto').val() || '').trim(),
         mensaje: ($('#pvEmailMensaje').val() || '').trim(),
-        adjuntarDetalle: $('#pvEmailAdjuntarDetalle').is(':checked')
+        adjuntarDetalle: $('#pvEmailAdjuntarDetalle').is(':checked'),
+        documento: ($('#modalEmailVenta').data('documento') || 'factura').toString()
     };
 
     if (!payload.emailDestino) {
@@ -874,11 +939,89 @@ $(document).ready(function () {
     });
 
     $('#btnPostVenta4').on('click', function () {
-        pvAbrirPdf();
+        pvObtenerConfigComprobantes()
+            .done(function (resp) {
+                const tieneFactura = !!(resp && resp.tieneFactura);
+                const tieneNotaCredito = !!(resp && resp.tieneNotaCredito);
+                const facturaAgrupaItems = !!(resp && resp.facturaAgrupaItems);
+
+                if (!tieneFactura) {
+                    pvAbrirPdfDocumento('detalle');
+                    return;
+                }
+
+                if (tieneNotaCredito) {
+                    pvSeleccionarOpcionSimple('Generar PDF', [
+                        { value: 'detalle', label: 'Detalle venta' },
+                        { value: 'factura', label: 'Factura' },
+                        { value: 'nc', label: 'Nota de crédito' }
+                    ]).then(function (result) {
+                        if (result.isConfirmed && result.value) {
+                            pvAbrirPdfDocumento(result.value);
+                        }
+                    });
+                    return;
+                }
+
+                if (facturaAgrupaItems) {
+                    pvSeleccionarOpcionSimple('Generar PDF', [
+                        { value: 'detalle', label: 'Detalle venta' },
+                        { value: 'factura', label: 'Factura' }
+                    ]).then(function (result) {
+                        if (result.isConfirmed && result.value) {
+                            pvAbrirPdfDocumento(result.value);
+                        }
+                    });
+                    return;
+                }
+
+                pvAbrirPdfDocumento('factura');
+            })
+            .fail(function () {
+                pvAbrirPdfDocumento('factura');
+            });
     });
 
     $('#btnPostVenta5').on('click', function () {
-        pvAbrirModalEmail();
+        pvObtenerConfigComprobantes()
+            .done(function (resp) {
+                const tieneFactura = !!(resp && resp.tieneFactura);
+                const tieneNotaCredito = !!(resp && resp.tieneNotaCredito);
+                let opciones = [];
+
+                if (!tieneFactura) {
+                    $('#modalEmailVenta').data('documento', 'detalle');
+                    pvAbrirModalEmail();
+                    return;
+                }
+
+                if (tieneNotaCredito) {
+                    opciones = [
+                        { value: 'todos', label: 'Enviar todos los comprobantes' },
+                        { value: 'detalle', label: 'Detalle venta' },
+                        { value: 'factura', label: 'Factura' },
+                        { value: 'nc', label: 'Nota de crédito' }
+                    ];
+                } else {
+                    opciones = [
+                        { value: 'todos', label: 'Enviar ambos comprobantes' },
+                        { value: 'detalle', label: 'Detalle venta' },
+                        { value: 'factura', label: 'Factura' }
+                    ];
+                }
+
+                pvSeleccionarOpcionSimple('Enviar por email', opciones)
+                    .then(function (result) {
+                        if (result.isConfirmed && result.value) {
+                            $('#modalEmailVenta').data('documento', result.value);
+                            pvAbrirModalEmail();
+                        }
+                    });
+            })
+            .fail(function () {
+                $('#modalEmailVenta').data('documento', 'factura');
+                pvAbrirModalEmail();
+            });
     });
 
     $('#btnConfirmarEmailVenta').on('click', function () {

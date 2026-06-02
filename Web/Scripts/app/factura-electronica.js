@@ -164,6 +164,62 @@
         }
     }
 
+    function generarNotaCredito(anularVenta) {
+        const idFactura = parseInt($root().find('input[name="IdFactura"]').val(), 10) || 0;
+        if (!idFactura) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Nota de crédito',
+                text: 'No se encontró la factura origen.'
+            });
+            return;
+        }
+
+        const $btn = $('#btnGenerarNotaCredito').prop('disabled', true);
+
+        $.post((window.AppUrls && window.AppUrls.ventasGenerarNotaCredito) || '/Ventas/GenerarNotaCredito', {
+            idFactura: idFactura,
+            anularVenta: !!anularVenta
+        })
+            .done(function (resp) {
+                if (resp && resp.ok) {
+                    const titulo = resp.already ? 'Nota de crédito existente' : 'Nota de crédito generada';
+                    const texto = resp.mensaje || (resp.already
+                        ? 'Ya existe una nota de crédito para esta venta.'
+                        : 'La nota de crédito se generó correctamente.');
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: titulo,
+                        text: texto
+                    }).then(function () {
+                        if (resp.detalleUrl) {
+                            window.location.href = resp.detalleUrl;
+                            return;
+                        }
+
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: (resp && resp.msg) ? resp.msg : 'No se pudo generar la nota de crédito.'
+                    });
+                }
+            })
+            .fail(function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error en la petición'
+                });
+            })
+            .always(function () {
+                $btn.prop('disabled', false);
+            });
+    }
+
     function habilitarInputsEdicion(on) {
         const editable = !!on;
 
@@ -364,23 +420,31 @@
     function initFacturaModal() {
         const $f = $root();
         if (!$f.length) return;
-
-        $('#feAjusteBlock').toggleClass('d-none', !$('#feSwitchAjuste').is(':checked'));
+        const porcentajeInicial = clamp(porcentajeActual() || 100, 0, 100);
+        const ajusteInicialActivo = porcentajeInicial < 99.9999;
 
         // Estado inicial consistente
         $('#feModoPorcentaje').prop('checked', true);
         $('#feModoTotal').prop('checked', false);
+        $('#feSwitchAjuste').prop('checked', ajusteInicialActivo);
 
-        setPorcentaje(100);
+        setPorcentaje(porcentajeInicial);
         setTotalFacturar(totalOriginal());
 
         showPctWarning(false);
         $('#feInputPorcentajeUI').removeClass('is-invalid');
+        $('#feAjusteBlock').toggleClass('d-none', !ajusteInicialActivo);
 
-        habilitarInputsEdicion($('#feSwitchAjuste').is(':checked'));
+        if (isYaEmitida()) {
+            $('#feInputPorcentajeUI').prop('readonly', true);
+            $('#feInputTotalFacturar').prop('readonly', true);
+            $('#feModoPorcentaje, #feModoTotal').prop('disabled', true);
+        } else {
+            habilitarInputsEdicion(ajusteInicialActivo);
+        }
 
-        // Recalcular o restaurar sin pisar con cero
-        aplicarPorcentaje(100);
+        // Recalcular o restaurar respetando el porcentaje guardado
+        aplicarPorcentaje(porcentajeInicial);
 
         $('#feAgruparItemUnitario').prop('checked', $f.data('agrupar-item') === 1 || $f.data('agrupar-item') === "1");
         actualizarEstadoAgruparItemUnitario();
@@ -540,6 +604,27 @@
             .always(function () {
                 $btn.prop('disabled', false);
             });
+    });
+
+    $(document).on('click', '#btnGenerarNotaCredito', function () {
+        if (!window.Swal) return;
+
+        Swal.fire({
+            icon: 'question',
+            title: 'Generar nota de crédito',
+            text: 'Elegí si además querés anular la venta asociada.',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Generar y anular venta',
+            denyButtonText: 'Generar sin anular',
+            cancelButtonText: 'Cancelar'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                generarNotaCredito(true);
+            } else if (result.isDenied) {
+                generarNotaCredito(false);
+            }
+        });
     });
 
 })();

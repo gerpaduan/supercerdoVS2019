@@ -511,6 +511,11 @@ namespace Negocio
             return idFactuElec;
         }
 
+        public int existeNotaCreditoParaVenta(int idVenta)
+        {
+            return oVentaD.existeNotaCreditoElect(idVenta);
+        }
+
         public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
         {
             oVentaD.addOrEditFactuElec(oFacturaElectronicaE);
