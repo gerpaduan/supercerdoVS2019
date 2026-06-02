@@ -457,6 +457,7 @@ namespace AFIP
                         CondicionVenta = factura.Venta.EnCtaCte ? "Cuenta Corriente" : "Contado",
                         FormaPago = factura.FormaPago, //factura.Venta.FormaPago ?? "",
                         DescItemUnitario = factura.DescItemUnitario ?? "",
+                        Observaciones = factura.Observaciones ?? "",
 
                         CAE1 = detResp.CAE,
                         FecVtoCAE = detResp.CAEFchVto,

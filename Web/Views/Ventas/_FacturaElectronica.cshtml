@@ -126,6 +126,10 @@
      #feAgruparItemWrap {
          display: none;
      }
+
+     #feObservacionesWrap {
+         display: none;
+     }
 </style>
 
 <!-- HEADER -->
@@ -320,6 +324,23 @@
                     </small>
                 </div>
                 <input type="hidden" name="AgruparItemUnitario" id="feAgruparItemUnitarioHidden" value="@(Model.AgruparItemUnitario ? "true" : "false")" />
+            </div>
+
+            <div class="border rounded p-2 mb-2">
+                <div class="custom-control custom-switch mb-2">
+                    <input type="checkbox" class="custom-control-input" id="feUsarObservaciones" @(!string.IsNullOrWhiteSpace(Model.Observaciones) ? "checked" : "")>
+                    <label class="custom-control-label" for="feUsarObservaciones">Observación del comprobante</label>
+                </div>
+                <div id="feObservacionesWrap">
+                    <textarea id="feObservaciones"
+                              name="Observaciones"
+                              class="form-control form-control-sm"
+                              rows="3"
+                              placeholder="Comentario interno para la factura o nota de crédito">@Model.Observaciones</textarea>
+                    <small class="fe-muted d-block mt-1">
+                        En facturas nuevas se precarga desde la observación de la venta. Podés modificarla o borrarla.
+                    </small>
+                </div>
             </div>
 
         </div><!-- /fe-top -->

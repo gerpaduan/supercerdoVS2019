@@ -340,8 +340,12 @@ namespace Entidades
         float porcentajeFacturacion;
 
         string descItemUnitario;
+        string observaciones;
+        string comprobanteAsociadoInfo;
         public float PorcentajeFacturacion { get => porcentajeFacturacion; set => porcentajeFacturacion = value; }
         public string DescItemUnitario { get => descItemUnitario; set => descItemUnitario = value; }
+        public string Observaciones { get => observaciones; set => observaciones = value; }
+        public string ComprobanteAsociadoInfo { get => comprobanteAsociadoInfo; set => comprobanteAsociadoInfo = value; }
 
         private List<Entidades.AlicuotaIva> listaAlicuota = new List<Entidades.AlicuotaIva>();
 

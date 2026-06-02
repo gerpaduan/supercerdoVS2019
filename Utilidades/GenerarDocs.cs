@@ -487,8 +487,14 @@ namespace Utilidades
 
             cliente.AddCell(Celda("Forma pago:", negrita));
             cliente.AddCell(Celda(factura != null ? factura.FormaPago : venta.FormaPago, normal));
-            cliente.AddCell(Celda("", negrita));
-            cliente.AddCell(Celda("", normal));
+            cliente.AddCell(Celda(
+                factura != null && !string.IsNullOrWhiteSpace(factura.ComprobanteAsociadoInfo) ? "Cbte Asoc:" : "",
+                negrita,
+                Element.ALIGN_RIGHT));
+            cliente.AddCell(Celda(
+                factura != null ? (factura.ComprobanteAsociadoInfo ?? "") : "",
+                normal,
+                Element.ALIGN_RIGHT));
 
             return cliente;
         }
@@ -578,9 +584,10 @@ namespace Utilidades
             total.SetWidths(new float[] { 5, 1, 1 });
 
             string importeTexto = ConvertirMontoEnTexto(venta, factura);
+            string observacionesComprobante = ObtenerObservacionesComprobante(venta, factura);
 
-            string importe_obs = string.IsNullOrEmpty(venta.Observaciones) ? importeTexto :
-                importeTexto + "\n-------\n" + venta.Observaciones;
+            string importe_obs = string.IsNullOrEmpty(observacionesComprobante) ? importeTexto :
+                importeTexto + "\n-------\n" + observacionesComprobante;
 
             total.AddCell(Celda(importe_obs, fuenteNormal, Element.ALIGN_LEFT));
             total.AddCell(Celda("TOTAL:", negrita, Element.ALIGN_RIGHT));
@@ -605,6 +612,7 @@ namespace Utilidades
             bool esFacturaA = venta.TipoComprobante == 'A';
 
             string importeTexto = ConvertirMontoEnTexto(venta, factura);
+            string observacionesComprobante = ObtenerObservacionesComprobante(venta, factura);
             total.AddCell(Celda(importeTexto, fuenteNormal, Element.ALIGN_LEFT));
 
             //total.AddCell(Celda(venta.Observaciones, fuenteNormal, Element.ALIGN_LEFT));
@@ -639,8 +647,8 @@ namespace Utilidades
                     Element.ALIGN_RIGHT));
             }
 
-            string obs = string.IsNullOrEmpty(venta.Observaciones) ? "" :
-                "Obs: " + venta.Observaciones;
+            string obs = string.IsNullOrEmpty(observacionesComprobante) ? "" :
+                "Obs: " + observacionesComprobante;
             total.AddCell(Celda(obs, fuenteNormal, Element.ALIGN_LEFT));
             total.AddCell(Celda("Total: $", negrita, Element.ALIGN_RIGHT));
             total.AddCell(Celda(
@@ -649,6 +657,14 @@ namespace Utilidades
                 Element.ALIGN_RIGHT));
 
             return total;
+        }
+
+        private static string ObtenerObservacionesComprobante(Entidades.Venta venta, Entidades.FacturaElectronica factura)
+        {
+            if (factura != null)
+                return factura.Observaciones ?? "";
+
+            return venta != null ? (venta.Observaciones ?? "") : "";
         }
 
         #endregion

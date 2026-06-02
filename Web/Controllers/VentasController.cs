@@ -1369,8 +1369,48 @@ namespace Web.Controllers
             if (comprobante == null || comprobante.Id <= 0)
                 throw new InvalidOperationException("Comprobante no encontrado.");
 
+            if (esNotaCredito)
+            {
+                var facturaAsociada = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                if (facturaAsociada != null && facturaAsociada.Id > 0)
+                {
+                    string numeroComprobanteAsociado =
+                        string.Format(
+                            "{0}-{1}",
+                            facturaAsociada.PtoVtaAfip ?? "",
+                            facturaAsociada.NroCbteAfip ?? ""
+                        ).Trim().Trim('-');
+
+                    string nombreComprobanteAsociado = (facturaAsociada.DescTipoCbteAfip ?? "").Trim();
+
+                    if (!string.IsNullOrWhiteSpace(numeroComprobanteAsociado) &&
+                        !string.IsNullOrWhiteSpace(nombreComprobanteAsociado))
+                    {
+                        comprobante.ComprobanteAsociadoInfo =
+                            numeroComprobanteAsociado + " " + nombreComprobanteAsociado;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(numeroComprobanteAsociado))
+                    {
+                        comprobante.ComprobanteAsociadoInfo = numeroComprobanteAsociado;
+                    }
+                    else
+                    {
+                        comprobante.ComprobanteAsociadoInfo = nombreComprobanteAsociado;
+                    }
+                }
+                else
+                {
+                    comprobante.ComprobanteAsociadoInfo = "";
+                }
+            }
+            else
+            {
+                comprobante.ComprobanteAsociadoInfo = "";
+            }
+
             var generador = new Utilidades.GenerarDocs();
-            return generador.GenerarFacturaPDF(CrearVentaDocumento(venta, esNotaCredito ? 'N' : comprobante.getLetraId_TipoCbte(comprobante.CodTipoCbteAfip)), comprobante);
+            char letraComprobante = comprobante.getLetraId_TipoCbte(comprobante.CodTipoCbteAfip);
+            return generador.GenerarFacturaPDF(CrearVentaDocumento(venta, letraComprobante), comprobante);
         }
 
         private byte[] GenerarPdfDetalleVentaBytes(Entidades.Venta venta)
@@ -2137,6 +2177,9 @@ namespace Web.Controllers
                 : 100m;
             dto.DescItemUnitario = facturaYaGenerada ? (factuElec.DescItemUnitario ?? "") : "";
             dto.AgruparItemUnitario = !string.IsNullOrWhiteSpace(dto.DescItemUnitario);
+            dto.Observaciones = facturaYaGenerada
+                ? (factuElec.Observaciones ?? "")
+                : (venta.Observaciones ?? "");
 
 
             List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
@@ -2393,11 +2436,15 @@ namespace Web.Controllers
                 lineas.Add(truncar("Vto: " + (factura.FecVtoCAE ?? ""), cantMaxChar));
             }
 
-            if (!string.IsNullOrWhiteSpace(venta.Observaciones))
+            string observacionComprobante = esFacturada
+                ? (factura.Observaciones ?? "")
+                : (venta.Observaciones ?? "");
+
+            if (!string.IsNullOrWhiteSpace(observacionComprobante))
             {
                 lineas.Add("");
                 lineas.Add("Comentario:");
-                string observacion = venta.Observaciones ?? "";
+                string observacion = observacionComprobante;
                 for (int i = 0; i < observacion.Length; i += cantMaxChar)
                     lineas.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
             }
@@ -2490,6 +2537,7 @@ namespace Web.Controllers
                 CondicionVenta = dto.CondicionVenta,
                 FormaPago = dto.FormaPago,
                 DescItemUnitario = dto.AgruparItemUnitario ? (dto.DescItemUnitario ?? "") : "",
+                Observaciones = dto.Observaciones ?? "",
 
                 PorcentajeFacturacion = (float)dto.PorcentajeFacturacion,
                 ImporteNetoGravado = (float)dto.ImporteNetoGravado,
@@ -2555,7 +2603,8 @@ namespace Web.Controllers
                 CondicionVenta = facturaOrigen.CondicionVenta,
                 FormaPago = facturaOrigen.FormaPago,
                 PorcentajeFacturacion = Convert.ToSingle(facturaOrigen.PorcentajeFacturacion),
-                DescItemUnitario = facturaOrigen.DescItemUnitario ?? ""
+                DescItemUnitario = facturaOrigen.DescItemUnitario ?? "",
+                Observaciones = ""
             };
         }
 

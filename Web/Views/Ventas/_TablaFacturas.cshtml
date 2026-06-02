@@ -99,6 +99,13 @@
                             {
                                 <div class="venta-id text-danger">NC asociada: @(string.Format("{0}-{1}", notaCreditoAsociada.PtoVtaAfip ?? "", notaCreditoAsociada.NroCbteAfip ?? ""))</div>
                             }
+                            @if (!string.IsNullOrWhiteSpace(factura.Observaciones))
+                            {
+                                <div class="venta-id">
+                                    <span class="badge badge-pill badge-info" title="@factura.Observaciones">1</span>
+                                    Observación del comprobante
+                                </div>
+                            }
                         </div>
 
                         <div class="venta-total">

@@ -1093,6 +1093,7 @@ namespace Datos
                     cmd.Parameters.AddWithValue("@importeTotal", oFacturaElectronicaE.ImporteTotal);
                     cmd.Parameters.AddWithValue("@PorcentajeFacturacion", oFacturaElectronicaE.PorcentajeFacturacion);
                     cmd.Parameters.AddWithValue("@descItemUnitario", oFacturaElectronicaE.DescItemUnitario ?? "");
+                    cmd.Parameters.AddWithValue("@observaciones", oFacturaElectronicaE.Observaciones ?? "");
                     cmd.Parameters.AddWithValue("@idVenta", oFacturaElectronicaE.IdVenta);
                     cmd.Parameters.AddWithValue("@error", oFacturaElectronicaE.Error);
                     cmd.Parameters.AddWithValue("@mensajeError", oFacturaElectronicaE.MensajeError ?? "");
@@ -1164,6 +1165,7 @@ namespace Datos
                         ImporteTotal = string.IsNullOrEmpty(dr["importeTotal"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeTotal"]),
                         PorcentajeFacturacion = string.IsNullOrEmpty(dr["porcentajeFacturacion"]?.ToString()) ? 100 : Convert.ToSingle(dr["porcentajeFacturacion"]),
                         DescItemUnitario = Convert.ToString(dr["descItemUnitario"]),
+                        Observaciones = ColumnaExiste(dr, "observaciones") ? Convert.ToString(dr["observaciones"]) : "",
                         IdVenta = dr["idVenta"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idVenta"]),
                         Error = dr["error"] != DBNull.Value && Convert.ToBoolean(dr["error"]),
                         MensajeError = Convert.ToString(dr["mensajeError"]),
@@ -1278,6 +1280,7 @@ namespace Datos
                         ImporteTotal = string.IsNullOrEmpty(dr["importeTotal"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeTotal"]),
                         PorcentajeFacturacion = string.IsNullOrEmpty(dr["porcentajeFacturacion"]?.ToString()) ? 100 : Convert.ToSingle(dr["porcentajeFacturacion"]),
                         DescItemUnitario = Convert.ToString(dr["descItemUnitario"]),
+                        Observaciones = ColumnaExiste(dr, "observaciones") ? Convert.ToString(dr["observaciones"]) : "",
                         IdVenta = dr["idVenta"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idVenta"]),
                         Error = dr["error"] != DBNull.Value && Convert.ToBoolean(dr["error"]),
                         MensajeError = Convert.ToString(dr["mensajeError"]),

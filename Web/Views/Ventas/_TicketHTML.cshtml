@@ -244,24 +244,15 @@
             lineasPie.Add("");
         }
     }
-    @* else
-    {
-        if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    string observacionComprobante = esFacturada
+        ? (factura.Observaciones ?? "")
+        : (Model.Observaciones ?? "");
+
+    if (!string.IsNullOrWhiteSpace(observacionComprobante))
         {
             lineasPie.Add("");
             lineasPie.Add("Comentario:");
-            string observacion = Model.Observaciones ?? "";
-            for (int i = 0; i < observacion.Length; i += cantMaxChar)
-            {
-                lineasPie.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
-            }
-        }
-    } *@
-    if (!string.IsNullOrWhiteSpace(Model.Observaciones))
-        {
-            lineasPie.Add("");
-            lineasPie.Add("Comentario:");
-            string observacion = Model.Observaciones ?? "";
+            string observacion = observacionComprobante;
             for (int i = 0; i < observacion.Length; i += cantMaxChar)
             {
                 lineasPie.Add(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));

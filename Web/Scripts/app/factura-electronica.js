@@ -164,6 +164,14 @@
         }
     }
 
+    function syncObservacionesComprobante() {
+        const activo = $('#feUsarObservaciones').is(':checked');
+        const $obs = $('#feObservaciones');
+
+        $('#feObservacionesWrap').toggle(activo);
+        $obs.prop('disabled', !activo);
+    }
+
     function generarNotaCredito(anularVenta) {
         const idFactura = parseInt($root().find('input[name="IdFactura"]').val(), 10) || 0;
         if (!idFactura) {
@@ -448,6 +456,7 @@
 
         $('#feAgruparItemUnitario').prop('checked', $f.data('agrupar-item') === 1 || $f.data('agrupar-item') === "1");
         actualizarEstadoAgruparItemUnitario();
+        syncObservacionesComprobante();
 
         setTimeout(() => {
             ajustarAlturasModal();
@@ -514,6 +523,11 @@
         ajustarAlturasModal();
     });
 
+    $(document).on('change', '#feUsarObservaciones', function () {
+        syncObservacionesComprobante();
+        ajustarAlturasModal();
+    });
+
     $(document).on('input', '#feInputPorcentajeUI', function () {
         if (isYaEmitida()) return;
         if (!modoEdicion() || modo() !== 'porcentaje') return;
@@ -565,6 +579,9 @@
         if (!$('#feAgruparItemUnitario').is(':checked') || $('#feDescItemUnitario').is(':disabled')) {
             $('#feAgruparItemUnitarioHidden').val('false');
             $('#feDescItemUnitario').val('');
+        }
+        if (!$('#feUsarObservaciones').is(':checked') || $('#feObservaciones').is(':disabled')) {
+            $('#feObservaciones').val('');
         }
 
         const $btn = $form.find('#btnRegistrarFactura').prop('disabled', true);

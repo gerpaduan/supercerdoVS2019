@@ -41,6 +41,7 @@ namespace Web.Models.DTO
         public string FormaPago { get; set; }
         public string DescItemUnitario { get; set; }
         public bool AgruparItemUnitario { get; set; }
+        public string Observaciones { get; set; }
 
         // ===== Importes =====
 
