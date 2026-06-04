@@ -7,6 +7,26 @@ let pvAgentAvailable = false;
 let pvAgentChecked = false;
 let pvAgentPrinterName = "";
 
+function pvEmpresaTieneCertificadoFacturaElectronica() {
+    const cfg = window.POSFacturaElectronicaConfig || null;
+    if (!cfg || typeof cfg.empresaTieneCertificado === 'undefined') {
+        return true;
+    }
+
+    return cfg.empresaTieneCertificado === true;
+}
+
+function pvFacturaElectronicaRequeridaPorFormaPago(formaPago) {
+    const normalizada = typeof window.normalizarTipoFormaPago === 'function'
+        ? window.normalizarTipoFormaPago(formaPago)
+        : (formaPago || '');
+
+    return pvEmpresaTieneCertificadoFacturaElectronica()
+        && !!normalizada
+        && normalizada !== 'Efectivo'
+        && normalizada !== 'CtaCte';
+}
+
 // =====================
 // Helpers storage ticket
 // =====================
@@ -142,8 +162,9 @@ function pvAplicarContextoUI() {
 
         $sub.hide().text('');
 
-        $('#btnPostVenta3').prop('disabled', false);
-        $('#pvLblFacturaBtn').text('Factura');
+        const habilitarFactura = pvEmpresaTieneCertificadoFacturaElectronica();
+        $('#btnPostVenta3').prop('disabled', !habilitarFactura);
+        $('#pvLblFacturaBtn').text(habilitarFactura ? 'Factura' : 'Factura no disponible');
 
         $('#pvLblPdfBtn').text('Generar PDF');
         $('#pvLblWpBtn').text('Enviar por email');
@@ -872,6 +893,7 @@ $(document).ready(function () {
     function abrirFacturaVentaModal(ventaId, opciones) {
         const opts = opciones || {};
         const volverAPostVenta = opts.volverAPostVenta === true;
+        const facturaObligatoria = opts.facturaObligatoria === true;
 
         if (!ventaId) return;
 
@@ -883,6 +905,7 @@ $(document).ready(function () {
 
                 const $modal = $('#modalFacturaElectronica');
                 $modal.data('volver-postventa', volverAPostVenta);
+                $modal.data('factura-obligatoria', facturaObligatoria);
                 $modal.find('.modal-dialog').removeClass('modal-fullscreen-dialog');
 
                 function ajustarFacturaModal() {
@@ -909,12 +932,27 @@ $(document).ready(function () {
                     $(window).on('resize.factura', ajustarFacturaModal);
                 });
 
+                $modal.off('click.facturaVolverPostventa', '[data-dismiss="modal"], .modal-header .close')
+                    .on('click.facturaVolverPostventa', '[data-dismiss="modal"], .modal-header .close', function () {
+                        if (!volverAPostVenta || facturaOk) return;
+
+                        $modal.data('volver-postventa', false);
+                        $modal.one('hidden.bs.modal.volverPostVentaManual', function () {
+                            pvSetContext('venta');
+                            $('#modalPostVenta').modal('show');
+                        });
+                    });
+
                 $modal.off('hidden.factura').on('hidden.bs.modal.factura', function () {
                     $(window).off('resize.factura');
                     $modal.off('.factura');
                 });
 
-                $modal.modal('show');
+                $modal.modal({
+                    backdrop: facturaObligatoria ? 'static' : true,
+                    keyboard: !facturaObligatoria,
+                    show: true
+                });
             });
     }
 
@@ -930,7 +968,9 @@ $(document).ready(function () {
 
     $('#modalFacturaElectronica').on('hidden.bs.modal', function () {
         const volverAPostVenta = $(this).data('volver-postventa') === true;
+        const facturaObligatoria = $(this).data('factura-obligatoria') === true;
         $(this).removeData('volver-postventa');
+        $(this).removeData('factura-obligatoria');
 
         if (!facturaOk && volverAPostVenta) {
             pvSetContext('venta');
@@ -1050,8 +1090,15 @@ $(document).ready(function () {
         });
     });
 
+    $(document).on('venta:cerradaSinFacturar', function () {
+        facturaOk = true;
+        cerrarPostVentaSegunOrigen();
+    });
+
     window.VentasFacturaModal = window.VentasFacturaModal || {
-        abrir: abrirFacturaVentaModal
+        abrir: abrirFacturaVentaModal,
+        empresaPuedeFacturar: pvEmpresaTieneCertificadoFacturaElectronica,
+        requiereFacturaAutomatica: pvFacturaElectronicaRequeridaPorFormaPago
     };
 
     $(document).on('keydown', function (e) {

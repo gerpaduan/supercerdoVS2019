@@ -56,6 +56,44 @@
         return $root().data('ya-emitida') === 1 || $root().data('ya-emitida') === "1";
     }
 
+    function normalizarFormaPagoFactura(valor) {
+        const texto = String(valor || '').trim().toLowerCase();
+        if (!texto) return '';
+
+        if (texto.indexOf('ctacte') >= 0 || texto.indexOf('cta cte') >= 0 || texto.indexOf('cta. cte') >= 0) {
+            return 'ctacte';
+        }
+
+        if (texto.indexOf('efectivo') >= 0 || texto.indexOf('efvo') >= 0) {
+            return 'efectivo';
+        }
+
+        if (texto.indexOf('debito') >= 0 || texto.indexOf('débito') >= 0) {
+            return 'debito';
+        }
+
+        if (texto.indexOf('credito') >= 0 || texto.indexOf('crédito') >= 0) {
+            return 'credito';
+        }
+
+        if (texto.indexOf('transferencia') >= 0) {
+            return 'transferencia';
+        }
+
+        if (texto === 'qr' || texto.indexOf('qr') >= 0) {
+            return 'qr';
+        }
+
+        return texto;
+    }
+
+    function requiereConfirmacionCancelarSinFacturar() {
+        if (isYaEmitida()) return false;
+
+        const formaPago = normalizarFormaPagoFactura($root().find('input[name="FormaPago"]').val());
+        return formaPago && formaPago !== 'efectivo' && formaPago !== 'ctacte';
+    }
+
     function dataNum(name, fallback) {
         const v = $root().data(name);
         const n = parseFloat(String(v));
@@ -483,6 +521,21 @@
         $(window).off('resize.factura');
     });
 
+    $(document).on('keydown', function (e) {
+        const $modal = $('#modalFacturaElectronica');
+        if (!$modal.hasClass('show')) return;
+        if (window.Swal && Swal.isVisible && Swal.isVisible()) return;
+
+        const esAsterisco = e.key === '*' || e.code === 'NumpadMultiply';
+        if (!esAsterisco) return;
+
+        const $btnCerrarSinFacturar = $('#btnCerrarVentaSinFacturar');
+        if (!$btnCerrarSinFacturar.length || $btnCerrarSinFacturar.prop('disabled')) return;
+
+        e.preventDefault();
+        $btnCerrarSinFacturar.trigger('click');
+    });
+
     $(document).on('change', '#feSwitchAjuste', function () {
         if (isYaEmitida()) return;
 
@@ -621,6 +674,81 @@
             .always(function () {
                 $btn.prop('disabled', false);
             });
+    });
+
+    $(document).on('click', '#btnCerrarVentaSinFacturar', function () {
+        const $btn = $(this);
+        const $form = $('#formFacturaElectronica');
+        const idVenta = parseInt($form.find('input[name="IdVenta"]').val() || '0', 10) || 0;
+
+        if (!idVenta) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se encontró la venta a cerrar.'
+            });
+            return;
+        }
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cerrar venta sin facturar',
+            text: 'Se cerrará la venta sin emitir factura electrónica y se continuará con una nueva venta.',
+            showCancelButton: true,
+            focusConfirm: true,
+            confirmButtonText: 'Sí, cerrar venta',
+            cancelButtonText: 'Cancelar',
+            didOpen: function () {
+                setTimeout(function () {
+                    var confirmButton = Swal.getConfirmButton ? Swal.getConfirmButton() : null;
+                    if (confirmButton && confirmButton.focus) {
+                        confirmButton.focus();
+                    }
+                }, 0);
+            }
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+
+            $btn.prop('disabled', true);
+            $('#btnRegistrarFactura').prop('disabled', true);
+
+            $.post((window.AppUrls && window.AppUrls.ventasCerrarSinFacturar) || '/Ventas/CerrarVentaSinFacturar', { idVenta: idVenta })
+                .done(function (resp) {
+                    if (resp && resp.ok) {
+                        $('#modalFacturaElectronica').modal('hide');
+                        $(document).trigger('venta:cerradaSinFacturar', [resp]);
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: (resp && resp.msg) ? resp.msg : 'No se pudo cerrar la venta sin facturar.'
+                    });
+                })
+                .fail(function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error en la petición'
+                    });
+                })
+                .always(function () {
+                    $btn.prop('disabled', false);
+                    $('#btnRegistrarFactura').prop('disabled', false);
+                });
+        });
+    });
+
+    $(document).on('click', '#btnCancelarFacturaElectronica', function (e) {
+        if (!requiereConfirmacionCancelarSinFacturar()) return;
+
+        const $btnCerrarSinFacturar = $('#btnCerrarVentaSinFacturar');
+        if (!$btnCerrarSinFacturar.length || $btnCerrarSinFacturar.prop('disabled')) return;
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        $btnCerrarSinFacturar.trigger('click');
     });
 
     $(document).on('click', '#btnGenerarNotaCredito', function () {

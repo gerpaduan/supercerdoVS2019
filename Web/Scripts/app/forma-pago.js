@@ -55,6 +55,26 @@ function normalizarNombreFormaPago(tipo) {
     return mapa[tipo] || tipo || '';
 }
 
+function obtenerAtajoFormaPago(tipo) {
+    const mapa = {
+        Efectivo: '1',
+        Debito: '2',
+        Credito: '3',
+        CtaCte: '4',
+        QR: '5',
+        Qr: '5',
+        Transferencia: '6'
+    };
+
+    return mapa[tipo] || '';
+}
+
+function formatearNombreFormaPagoConAtajo(tipo) {
+    const nombre = normalizarNombreFormaPago(tipo);
+    const atajo = obtenerAtajoFormaPago(tipo);
+    return atajo ? (nombre + ' ' + atajo) : nombre;
+}
+
 function actualizarLeyendaFormaPagoActual() {
     const $info = $('#formaPagoActualInfo');
     if (!$info.length) return;
@@ -69,12 +89,12 @@ function actualizarLeyendaFormaPagoActual() {
         return;
     }
 
-    let texto = '<strong>Forma de pago actual:</strong> ' + normalizarNombreFormaPago(formaPago);
+    let texto = '<strong>Forma de pago actual:</strong> ' + formatearNombreFormaPagoConAtajo(formaPago);
 
     if (efectivo > 0) {
         const otroMonto = total - efectivo;
         texto = '<strong>Forma de pago actual:</strong> Mixto - Efectivo $' + formatearImporteFormaPago(efectivo) +
-            ' + ' + normalizarNombreFormaPago(formaPago) + ' $' + formatearImporteFormaPago(otroMonto > 0 ? otroMonto : 0);
+            ' + ' + formatearNombreFormaPagoConAtajo(formaPago) + ' $' + formatearImporteFormaPago(otroMonto > 0 ? otroMonto : 0);
     }
 
     $info.html(texto).show();
@@ -628,6 +648,9 @@ function finalizarVenta(data) {
             }
 
             const $fp = $('#modalFormaPago');
+            const requiereFacturaAutomatica = window.VentasFacturaModal
+                && typeof window.VentasFacturaModal.requiereFacturaAutomatica === 'function'
+                && window.VentasFacturaModal.requiereFacturaAutomatica(payload.formaPago);
 
             // 1) Sacar el foco de adentro ANTES de ocultar (evita el warning)
             $fp.find(':focus').trigger('blur');
@@ -635,6 +658,11 @@ function finalizarVenta(data) {
 
             // 2) Cuando el modal terminó de ocultarse, recién ahí abrimos PostVenta
             $fp.one('hidden.bs.modal', function () {
+                if (requiereFacturaAutomatica && window.VentasFacturaModal && typeof window.VentasFacturaModal.abrir === 'function') {
+                    window.VentasFacturaModal.abrir(ventaId, { facturaObligatoria: true });
+                    return;
+                }
+
                 window.mostrarModalPostVenta(ventaId, tel);
             });
 

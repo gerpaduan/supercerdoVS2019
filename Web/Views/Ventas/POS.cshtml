@@ -911,6 +911,7 @@ else
     const listaExpendiosEdicionPos = @Html.Raw(Json.Encode(listaExpendiosEdicionPos));
     const requierePreseleccionFormaPago = @(ViewBag.RequierePreseleccionFormaPago != null && (bool)ViewBag.RequierePreseleccionFormaPago ? "true" : "false");
     const formasPagoConfigPOS = @Html.Raw(Json.Encode(ViewBag.FormasPagoConfig ?? new System.Collections.Generic.Dictionary<string, decimal>()));
+    const empresaTieneCertificadoFacturaElectronica = @(Session["Usuario"] != null && !string.IsNullOrWhiteSpace(((Entidades.Usuario)Session["Usuario"]).Empresa != null ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreCertificado_pfx : "") ? "true" : "false");
     POSState.setFechaVenta(new Date());
     POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
     if (typeof POSState.setRequierePreseleccionFormaPago === 'function') {
@@ -926,6 +927,9 @@ else
     window.POSModo.returnUrl = @Html.Raw(Json.Encode(returnUrlPOS));
     window.POSModo.abrirDetalleVentaId = @abrirDetalleVentaId;
     window.POSModo.returnUrlDetalle = @Html.Raw(Json.Encode(returnUrlDetalle));
+    window.POSFacturaElectronicaConfig = {
+        empresaTieneCertificado: empresaTieneCertificadoFacturaElectronica
+    };
     window.POSFormaPagoActual = {
         formaPago: @Html.Raw(Json.Encode(Model != null ? Model.FormaPago ?? "" : "")),
         pagoMixtoEfectivo: @Html.Raw(Json.Encode(Model != null ? Model.PagoMixtoEfectivo : 0f)),
@@ -1819,6 +1823,21 @@ else
         window.abrirModalFormaPagoPreseleccion?.();
     });
     aplicarModoSoloFormaPago();
+
+    if (requierePreseleccionFormaPago && !soloFormaPago) {
+        const formaPagoPreseleccionada = window.POSState?.getFormaPagoPreseleccionada?.();
+        if (!formaPagoPreseleccionada || !formaPagoPreseleccionada.tipo) {
+            setTimeout(function () {
+                const abierto = window.POSGuard
+                    ? window.POSGuard.requestModalOpen('formaPago', function () {
+                        window.abrirModalFormaPagoPreseleccion?.();
+                    })
+                    : true;
+
+                if (!abierto) return;
+            }, 250);
+        }
+    }
 
     function limpiarAutoAperturaDetallePOS() {
         window.POSModo = window.POSModo || {};

@@ -1645,6 +1645,58 @@ namespace Web.Controllers
         }
 
         [HttpPost]
+        public JsonResult CerrarVentaSinFacturar(int idVenta)
+        {
+            try
+            {
+                if (idVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta inválida" }, JsonRequestBehavior.AllowGet);
+
+                var venta = oVentaN.getVentaById(idVenta);
+                if (venta == null || venta.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta no encontrada" }, JsonRequestBehavior.AllowGet);
+
+                int idFacturaExistente = oVentaN.esVentaSinFacturar(idVenta, false);
+                if (idFacturaExistente > 0)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = "La venta ya tiene una factura electrónica registrada."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                var factErr = new Entidades.FacturaElectronica
+                {
+                    IdVenta = idVenta,
+                    Venta = venta,
+                    Error = true,
+                    MensajeError = "se forzo el cierre de la ventana sin facturar.",
+                    FechaError = DateTime.Now
+                };
+
+                oVentaN.addOrEditFactuElec(factErr);
+
+                return Json(new
+                {
+                    ok = true,
+                    ventaId = idVenta,
+                    forcedClose = true
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Error cerrando la venta sin facturar",
+                    error = ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
         public JsonResult GenerarNotaCredito(Web.Models.DTO.NotaCreditoRequest request)
         {
             try
