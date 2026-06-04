@@ -157,6 +157,64 @@
         font-size: .85rem;
     }
 
+    .dashboard-finanzas-resumen {
+        border: 1px solid rgba(219, 228, 236, 0.85);
+        border-radius: .9rem;
+        padding: .9rem 1rem;
+        background: #f9fbfd;
+        height: 100%;
+    }
+
+    html.dark-mode .dashboard-finanzas-resumen {
+        background: #162131;
+        border-color: rgba(116, 145, 185, 0.2);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .dashboard-finanzas-resumen .summary-label {
+        color: var(--dash-muted);
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .dashboard-finanzas-resumen .summary-value {
+        color: var(--dash-ink);
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .dashboard-cheque-obs {
+        display: inline-block;
+        padding: .18rem .55rem;
+        border-radius: 999px;
+        background: rgba(45, 106, 138, 0.12);
+        color: var(--dash-cool);
+        font-size: .76rem;
+        font-weight: 700;
+    }
+
+    .dashboard-cheque-obs.is-danger {
+        background: rgba(185, 74, 72, 0.14);
+        color: #b94a48;
+    }
+
+    .dashboard-cheque-obs.is-warning {
+        background: rgba(203, 109, 50, 0.16);
+        color: #cb6d32;
+    }
+
+    html.dark-mode .dashboard-cheque-obs.is-danger {
+        background: rgba(248, 113, 113, 0.18);
+        color: #ff9a9a;
+    }
+
+    html.dark-mode .dashboard-cheque-obs.is-warning {
+        background: rgba(251, 146, 60, 0.18);
+        color: #ffbf7a;
+    }
+
     @@media (max-width: 767.98px) {
         .scale-weight {
             font-size: 1.9rem;
@@ -178,7 +236,9 @@
      data-url-top-deudores="@Url.Action("ObtenerTopDeudores", "Home")"
      data-url-top-acreedores="@Url.Action("ObtenerTopAcreedores", "Home")"
      data-url-ultimas-ventas="@Url.Action("ObtenerUltimasVentas", "Home")"
-     data-url-ultimos-elaborados="@Url.Action("ObtenerUltimosElaborados", "Home")">
+     data-url-ultimos-elaborados="@Url.Action("ObtenerUltimosElaborados", "Home")"
+     data-url-movimientos-dashboard="@Url.Action("ObtenerUltimosMovimientosDashboard", "Home")"
+     data-url-finanzas="@Url.Action("ObtenerFinanzasDashboard", "Home")">
 
     <div class="dashboard-hero px-4 px-lg-5 py-4 mb-4">
         <div class="row align-items-end">
@@ -354,7 +414,7 @@
     </div>
 
     <div class="row">
-        <div class="col-xl-7 mb-4">
+        <div class="col-12 mb-4">
             <div class="card dashboard-card h-100">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Top 10 productos mas vendidos</h6>
@@ -367,45 +427,119 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-5 mb-4">
-            <div class="card dashboard-card h-100">
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Cuentas corrientes</h6>
-                    <div class="dashboard-subtle">Saldo actual global del sistema. No se filtra por sucursal para mantener compatibilidad.</div>
+                    <h6 class="m-0 font-weight-bold text-primary">Finanzas</h6>
+                    <div class="dashboard-subtle">Cuentas corrientes, ultimos pagos y cobros, y cheques vencidos del sistema.</div>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-lg-6 mb-3 mb-lg-0">
-                            <div class="font-weight-bold mb-2">Top 10 deudores</div>
+                        <div class="col-xl-6 mb-4 mb-xl-0">
+                            <div class="font-weight-bold mb-3">Cuentas corrientes</div>
+                            <div class="row" id="resumenFinanzasCtaCte">
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">Cuentas con saldo</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">A cobrar</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">Total a cobrar</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">Total a pagar</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6 mb-3 mb-lg-0">
+                                    <div class="font-weight-bold mb-2">Top 10 deudores</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mini-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Persona</th>
+                                                    <th class="text-right">Saldo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablaTopDeudores">
+                                                <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="font-weight-bold mb-2">Top 10 acreedores</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mini-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Persona</th>
+                                                    <th class="text-right">Saldo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablaTopAcreedores">
+                                                <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-6">
+                            <div class="font-weight-bold mb-3">Ultimos pagos y cobros</div>
                             <div class="table-responsive">
                                 <table class="table table-sm mini-table mb-0">
                                     <thead>
                                         <tr>
+                                            <th>Fecha</th>
                                             <th>Persona</th>
-                                            <th class="text-right">Saldo</th>
+                                            <th>Tipo</th>
+                                            <th class="text-right">Monto</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="tablaTopDeudores">
-                                        <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                    <tbody id="tablaFinanzasMovimientos">
+                                        <tr><td colspan="4" class="dashboard-loading">Cargando...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <div class="col-lg-6">
-                            <div class="font-weight-bold mb-2">Top 10 acreedores</div>
-                            <div class="table-responsive">
-                                <table class="table table-sm mini-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Persona</th>
-                                            <th class="text-right">Saldo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tablaTopAcreedores">
-                                        <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="font-weight-bold mb-3">Cheques</div>
+                        <div class="table-responsive">
+                            <table class="table table-sm mini-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>NroCheque</th>
+                                        <th>Banco</th>
+                                        <th>Titular</th>
+                                        <th>FechaPago</th>
+                                        <th class="text-right">Importe</th>
+                                        <th>Estado</th>
+                                        <th>Observacion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaFinanzasCheques">
+                                    <tr><td colspan="7" class="dashboard-loading">Cargando...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -442,7 +576,7 @@
             </div>
         </div>
         <div class="col-xl-4 mb-4">
-            <div class="card dashboard-card h-100">
+            <div class="card dashboard-card mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Ultimos 5 elaborados</h6>
                     <div class="dashboard-subtle">Producciones recientes del periodo filtrado.</div>
@@ -465,6 +599,28 @@
                     </div>
                 </div>
             </div>
+            <div class="card dashboard-card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ultimos 5 movimientos</h6>
+                    <div class="dashboard-subtle">Movimientos recientes entre sucursales.</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mini-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha movimiento</th>
+                                    <th>Origen</th>
+                                    <th>Destino</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUltimosMovimientosDashboard">
+                                <tr><td colspan="3" class="dashboard-loading">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -472,5 +628,5 @@
 @section Scripts {
     <script src="@Url.Content("~/Content/vendor/chart.js/Chart.bundle.min.js")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js")"></script>
-    <script src="@Url.Content("~/Scripts/app/home-dashboard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/home-dashboard.js?v=3")"></script>
 }

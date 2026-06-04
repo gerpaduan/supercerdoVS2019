@@ -17,7 +17,9 @@
         topDeudores: $root.data('url-top-deudores'),
         topAcreedores: $root.data('url-top-acreedores'),
         ultimasVentas: $root.data('url-ultimas-ventas'),
-        ultimosElaborados: $root.data('url-ultimos-elaborados')
+        ultimosElaborados: $root.data('url-ultimos-elaborados'),
+        movimientosDashboard: $root.data('url-movimientos-dashboard'),
+        finanzas: $root.data('url-finanzas')
     };
     var puedeVerDashboard = String($root.data('puede-ver-dashboard') || '').toLowerCase() === 'true';
 
@@ -336,6 +338,143 @@
             });
     }
 
+    function cargarUltimosMovimientosDashboard() {
+        if (!puedeVerDashboard) {
+            return;
+        }
+
+        setLoadingTable('#tablaUltimosMovimientosDashboard', 3);
+
+        $.getJSON(urls.movimientosDashboard)
+            .done(function (response) {
+                if (!response || !response.ok || !response.data || !response.data.length) {
+                    setEmptyTable('#tablaUltimosMovimientosDashboard', 3, 'No hay movimientos recientes.');
+                    return;
+                }
+
+                var rows = $.map(response.data, function (item) {
+                    return '' +
+                        '<tr>' +
+                        '<td>' + escapeHtml(item.Fecha || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.Origen || '-') + '</td>' +
+                        '<td>' + escapeHtml(item.Destino || '-') + '</td>' +
+                        '</tr>';
+                }).join('');
+
+                $('#tablaUltimosMovimientosDashboard').html(rows);
+            })
+            .fail(function () {
+                setEmptyTable('#tablaUltimosMovimientosDashboard', 3, 'No hay movimientos recientes.');
+            });
+    }
+
+    function renderResumenFinanzas(resumen) {
+        var rows = [
+            {
+                label: 'Cuentas con saldo',
+                value: Number(resumen && resumen.CantidadConSaldo || 0).toLocaleString('es-AR'),
+                meta: (Number(resumen && resumen.CantidadAcreedores || 0).toLocaleString('es-AR')) + ' acreedores'
+            },
+            {
+                label: 'A cobrar',
+                value: Number(resumen && resumen.CantidadDeudores || 0).toLocaleString('es-AR'),
+                meta: 'Personas con saldo a cobrar'
+            },
+            {
+                label: 'Total a cobrar',
+                value: formatMoney(resumen && resumen.TotalACobrar || 0),
+                meta: 'Saldo pendiente de cobro'
+            },
+            {
+                label: 'Total a pagar',
+                value: formatMoney(resumen && resumen.TotalAPagar || 0),
+                meta: 'Saldo pendiente de pago'
+            }
+        ];
+
+        var html = $.map(rows, function (item) {
+            return '' +
+                '<div class="col-sm-6 mb-3">' +
+                '<div class="dashboard-finanzas-resumen">' +
+                '<div class="summary-label">' + escapeHtml(item.label) + '</div>' +
+                '<div class="summary-value">' + escapeHtml(item.value) + '</div>' +
+                '<div class="dashboard-subtle mt-2">' + escapeHtml(item.meta) + '</div>' +
+                '</div>' +
+                '</div>';
+        }).join('');
+
+        $('#resumenFinanzasCtaCte').html(html);
+    }
+
+    function cargarFinanzas() {
+        if (!puedeVerDashboard) {
+            return;
+        }
+
+        setLoadingTable('#tablaFinanzasMovimientos', 4);
+        setLoadingTable('#tablaFinanzasCheques', 7);
+
+        $.getJSON(urls.finanzas)
+            .done(function (response) {
+                if (!response || !response.ok || !response.data) {
+                    setEmptyTable('#tablaFinanzasMovimientos', 4, 'No hay movimientos recientes.');
+                    setEmptyTable('#tablaFinanzasCheques', 7, 'No hay cheques vencidos.');
+                    return;
+                }
+
+                var data = response.data || {};
+                renderResumenFinanzas(data.Resumen || {});
+
+                if (!data.Movimientos || !data.Movimientos.length) {
+                    setEmptyTable('#tablaFinanzasMovimientos', 4, 'No hay movimientos recientes.');
+                } else {
+                    var rowsMovimientos = $.map(data.Movimientos, function (item) {
+                        return '' +
+                            '<tr>' +
+                            '<td>' + escapeHtml(item.Fecha || '-') + '</td>' +
+                            '<td>' + escapeHtml(item.Persona || '-') + '</td>' +
+                            '<td>' + escapeHtml(item.Tipo || '-') + '</td>' +
+                            '<td class="text-right font-weight-bold">' + formatMoney(item.Monto || 0) + '</td>' +
+                            '</tr>';
+                    }).join('');
+                    $('#tablaFinanzasMovimientos').html(rowsMovimientos);
+                }
+
+                if (!data.Cheques || !data.Cheques.length) {
+                    setEmptyTable('#tablaFinanzasCheques', 7, 'No hay cheques vencidos.');
+                } else {
+                    var rowsCheques = $.map(data.Cheques, function (item) {
+                        var obsClass = '';
+                        if ((item.ObservacionCalculada || '') === 'Cheque vencido') {
+                            obsClass = ' is-danger';
+                        } else if ((item.ObservacionCalculada || '') === 'Listo para cobrar') {
+                            obsClass = ' is-warning';
+                        }
+
+                        var observacion = item.ObservacionCalculada
+                            ? '<span class="dashboard-cheque-obs' + obsClass + '">' + escapeHtml(item.ObservacionCalculada) + '</span>'
+                            : '<span class="text-muted">-</span>';
+
+                        return '' +
+                            '<tr>' +
+                            '<td>' + escapeHtml(item.NroCheque || '-') + '</td>' +
+                            '<td>' + escapeHtml(item.Banco || '-') + '</td>' +
+                            '<td>' + escapeHtml(item.Titular || '-') + '</td>' +
+                            '<td>' + escapeHtml(item.FechaPago || '-') + '</td>' +
+                            '<td class="text-right font-weight-bold">' + formatMoney(item.Importe || 0) + '</td>' +
+                            '<td>' + escapeHtml(item.Estado || '-') + '</td>' +
+                            '<td>' + observacion + '</td>' +
+                            '</tr>';
+                    }).join('');
+                    $('#tablaFinanzasCheques').html(rowsCheques);
+                }
+            })
+            .fail(function () {
+                setEmptyTable('#tablaFinanzasMovimientos', 4, 'No hay movimientos recientes.');
+                setEmptyTable('#tablaFinanzasCheques', 7, 'No hay cheques vencidos.');
+            });
+    }
+
     function renderEstadoBalanza(status, peso) {
         var dot = $('#balanzaEstadoDot');
         var estadoTexto = $('#balanzaEstadoTexto');
@@ -416,19 +555,27 @@
         cargarVentasPorHora();
         cargarTopProductos();
         cargarCuentasCorrientes();
+        cargarFinanzas();
         cargarUltimasVentas();
         cargarUltimosElaborados();
+        cargarUltimosMovimientosDashboard();
     }
 
     $(function () {
         if (puedeVerDashboard) {
             setLoadingTable('#tablaTopDeudores', 2);
             setLoadingTable('#tablaTopAcreedores', 2);
+            setLoadingTable('#tablaFinanzasMovimientos', 4);
+            setLoadingTable('#tablaFinanzasCheques', 7);
+            setLoadingTable('#tablaUltimosMovimientosDashboard', 3);
         } else {
             setEmptyTable('#tablaTopDeudores', 2, 'Disponible solo para administradores.');
             setEmptyTable('#tablaTopAcreedores', 2, 'Disponible solo para administradores.');
+            setEmptyTable('#tablaFinanzasMovimientos', 4, 'Disponible solo para administradores.');
+            setEmptyTable('#tablaFinanzasCheques', 7, 'Disponible solo para administradores.');
             setEmptyTable('#tablaUltimasVentas', 6, 'Disponible solo para administradores.');
             setEmptyTable('#tablaUltimosElaborados', 4, 'Disponible solo para administradores.');
+            setEmptyTable('#tablaUltimosMovimientosDashboard', 3, 'Disponible solo para administradores.');
         }
         initBalanza();
         recargarDashboard();

@@ -796,6 +796,60 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerUltimosPagosDashboard(int cantidad)
+        {
+            const string sql = @"
+                SELECT TOP (@cantidad)
+                    p.id, p.fecha, per.razonSocial,
+                    p.nroRecibo, p.importe, p.aProveedor,
+                    CASE p.aProveedor WHEN 0 THEN 'Cobro' WHEN 1 THEN 'Pago' END AS Operacion,
+                    p.formaPago, p.efectivo, p.observaciones,
+                    s.sucursal AS Sucursal
+                FROM dbo.Pagos p
+                INNER JOIN dbo.Personas per ON p.idPersona = per.idPersona
+                LEFT JOIN dbo.Sucursal s ON s.idSucursal = p.idSucursal
+                ORDER BY p.fecha DESC, p.id DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@cantidad", SqlDbType.Int).Value = cantidad;
+                }
+            );
+        }
+
+        public DataTable obtenerChequesPendientesDashboard(int cantidad, DateTime fechaActual)
+        {
+            const string sql = @"
+                SELECT TOP (@cantidad)
+                    c.nroCheque,
+                    c.banco,
+                    c.titular,
+                    c.fechaPago,
+                    c.importe,
+                    c.estado,
+                    c.observaciones
+                FROM dbo.Cheques c
+                WHERE c.estado = @estado
+                  AND DATEADD(DAY, 40, c.fechaPago) <= @fechaActual
+                ORDER BY c.fechaPago ASC, c.id ASC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@cantidad", SqlDbType.Int).Value = cantidad;
+                    p.Add("@estado", SqlDbType.NVarChar, 30).Value = Entidades.Cheque.EstadoEnum.PENDIENTE.ToString();
+                    p.Add("@fechaActual", SqlDbType.DateTime).Value = fechaActual.Date;
+                }
+            );
+        }
+
         public Entidades.Pago getPagoById(int idPago, bool conCheques = true)
         {
             Entidades.Pago oPagoE = null;

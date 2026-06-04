@@ -9,12 +9,14 @@ namespace Web.Models
         {
             Sucursales = new List<SelectListItem>();
             PeriodoDefault = "hoy";
+            Finanzas = new DashboardFinanzasViewModel();
         }
 
         public bool PuedeVerDashboardDatos { get; set; }
         public int IdSucursalSeleccionada { get; set; }
         public string PeriodoDefault { get; set; }
         public List<SelectListItem> Sucursales { get; set; }
+        public DashboardFinanzasViewModel Finanzas { get; set; }
     }
 
     public class DashboardResumenVm
@@ -72,5 +74,54 @@ namespace Web.Models
         public decimal Cantidad { get; set; }
         public string Sucursal { get; set; }
         public string Usuario { get; set; }
+    }
+
+    public class DashboardFinanzasViewModel
+    {
+        public DashboardFinanzasViewModel()
+        {
+            Resumen = new DashboardFinanzasResumenVm();
+            Movimientos = new List<DashboardFinanzasMovimientoVm>();
+            Cheques = new List<DashboardFinanzasChequeVm>();
+        }
+
+        public DashboardFinanzasResumenVm Resumen { get; set; }
+        public List<DashboardFinanzasMovimientoVm> Movimientos { get; set; }
+        public List<DashboardFinanzasChequeVm> Cheques { get; set; }
+    }
+
+    public class DashboardFinanzasResumenVm
+    {
+        public int CantidadConSaldo { get; set; }
+        public int CantidadDeudores { get; set; }
+        public int CantidadAcreedores { get; set; }
+        public decimal TotalACobrar { get; set; }
+        public decimal TotalAPagar { get; set; }
+    }
+
+    public class DashboardFinanzasMovimientoVm
+    {
+        public string Fecha { get; set; }
+        public string Persona { get; set; }
+        public string Tipo { get; set; }
+        public decimal Monto { get; set; }
+    }
+
+    public class DashboardMovimientoResumenVm
+    {
+        public string Fecha { get; set; }
+        public string Origen { get; set; }
+        public string Destino { get; set; }
+    }
+
+    public class DashboardFinanzasChequeVm
+    {
+        public string NroCheque { get; set; }
+        public string Banco { get; set; }
+        public string Titular { get; set; }
+        public string FechaPago { get; set; }
+        public decimal Importe { get; set; }
+        public string Estado { get; set; }
+        public string ObservacionCalculada { get; set; }
     }
 }

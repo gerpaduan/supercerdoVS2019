@@ -226,6 +226,16 @@ namespace Negocio
             return oCtaCteD.obtenerPagos(texto, fechaDesde, fechaHasta);
         }
 
+        public DataTable obtenerUltimosPagosDashboard(int cantidad)
+        {
+            return oCtaCteD.obtenerUltimosPagosDashboard(cantidad);
+        }
+
+        public DataTable obtenerChequesPendientesDashboard(int cantidad, DateTime fechaActual)
+        {
+            return oCtaCteD.obtenerChequesPendientesDashboard(cantidad, fechaActual);
+        }
+
         public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoAnterior)
         {
             //oPagoE = oCtaCteD.getPagoById(oPagoE.Id); COMENTADO XQ YA ENVIO EL OBJETO POR PARAMETRO

@@ -336,6 +336,40 @@ namespace Web.Controllers
             }
         }
 
+        [HttpGet]
+        public JsonResult ObtenerFinanzasDashboard()
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var data = ConstruirDashboardFinanzas();
+                return Json(new { ok = true, data = data }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerUltimosMovimientosDashboard()
+        {
+            try
+            {
+                var acceso = ValidarAccesoDashboardAdmin();
+                if (acceso != null) return acceso;
+
+                var data = ObtenerUltimosMovimientosDashboardData(5);
+                return Json(new { ok = true, data = data }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";
@@ -603,6 +637,108 @@ namespace Web.Controllers
             }
 
             return items;
+        }
+
+        private DashboardFinanzasViewModel ConstruirDashboardFinanzas()
+        {
+            var saldos = ObtenerSaldosCuentaCorriente();
+            var model = new DashboardFinanzasViewModel
+            {
+                Resumen = new DashboardFinanzasResumenVm
+                {
+                    CantidadConSaldo = saldos.Count,
+                    CantidadDeudores = saldos.Count(x => x.Saldo > 0m),
+                    CantidadAcreedores = saldos.Count(x => x.Saldo < 0m),
+                    TotalACobrar = saldos.Where(x => x.Saldo > 0m).Sum(x => x.Saldo),
+                    TotalAPagar = saldos.Where(x => x.Saldo < 0m).Sum(x => Math.Abs(x.Saldo))
+                }
+            };
+
+            var dtMovimientos = oCuentaCorrienteN.obtenerUltimosPagosDashboard(5) ?? new System.Data.DataTable();
+            foreach (System.Data.DataRow row in dtMovimientos.Rows)
+            {
+                DateTime fecha = LeerDate(row, "fecha", "Fecha");
+                string persona = LeerString(row, "razonSocial", "Razon Social", "Persona");
+                string tipo = LeerString(row, "Operacion", "operacion");
+
+                model.Movimientos.Add(new DashboardFinanzasMovimientoVm
+                {
+                    Fecha = fecha == DateTime.MinValue ? "-" : fecha.ToString("dd/MM/yyyy HH:mm"),
+                    Persona = string.IsNullOrWhiteSpace(persona) ? "-" : persona,
+                    Tipo = string.IsNullOrWhiteSpace(tipo) ? "-" : tipo,
+                    Monto = LeerDecimalPrimeraCoincidencia(row, "importe", "Importe")
+                });
+            }
+
+            DateTime hoy = DateTime.Today;
+            var dtCheques = oCuentaCorrienteN.obtenerChequesPendientesDashboard(10, hoy) ?? new System.Data.DataTable();
+            foreach (System.Data.DataRow row in dtCheques.Rows)
+            {
+                DateTime fechaPago = LeerDate(row, "fechaPago", "FechaPago");
+                string estado = LeerString(row, "estado", "Estado");
+                if (!string.Equals((estado ?? "").Trim(), Entidades.Cheque.EstadoEnum.PENDIENTE.ToString(), StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (fechaPago == DateTime.MinValue || fechaPago.AddDays(40) > hoy)
+                    continue;
+
+                model.Cheques.Add(new DashboardFinanzasChequeVm
+                {
+                    NroCheque = LeerString(row, "nroCheque", "NroCheque"),
+                    Banco = LeerString(row, "banco", "Banco"),
+                    Titular = LeerString(row, "titular", "Titular"),
+                    FechaPago = fechaPago == DateTime.MinValue ? "-" : fechaPago.ToString("dd/MM/yyyy"),
+                    Importe = LeerDecimalPrimeraCoincidencia(row, "importe", "Importe"),
+                    Estado = estado,
+                    ObservacionCalculada = CalcularObservacionChequeDashboard(fechaPago, hoy)
+                });
+            }
+
+            return model;
+        }
+
+        private static string CalcularObservacionChequeDashboard(DateTime fechaPago, DateTime fechaActual)
+        {
+            if (fechaPago == DateTime.MinValue)
+                return "";
+
+            DateTime hoy = fechaActual.Date;
+            DateTime fecha = fechaPago.Date;
+
+            if (fecha.AddDays(40) <= hoy)
+                return "Cheque vencido";
+
+            if (fecha <= hoy)
+                return "Listo para cobrar";
+
+            return "";
+        }
+
+        private List<DashboardMovimientoResumenVm> ObtenerUltimosMovimientosDashboardData(int cantidad)
+        {
+            var items = new List<Tuple<DateTime, DashboardMovimientoResumenVm>>();
+            var dtMovimientos = oCorteN.obtenerMovimientos("", "", DateTime.Today.AddYears(-5), DateTime.Today, "")
+                ?? new System.Data.DataTable();
+
+            foreach (System.Data.DataRow row in dtMovimientos.Rows)
+            {
+                DateTime fecha = LeerDate(row, "Fecha Movimiento", "fechaMovimiento");
+                string origen = LeerString(row, "Origen", "sucursalOrigen", "origen");
+                string destino = LeerString(row, "Destino", "sucursalDestino", "destino");
+
+                items.Add(Tuple.Create(fecha, new DashboardMovimientoResumenVm
+                {
+                    Fecha = fecha == DateTime.MinValue ? "-" : fecha.ToString("dd/MM/yyyy HH:mm"),
+                    Origen = string.IsNullOrWhiteSpace(origen) ? "-" : origen,
+                    Destino = string.IsNullOrWhiteSpace(destino) ? "-" : destino
+                }));
+            }
+
+            return items
+                .OrderByDescending(x => x.Item1)
+                .Take(cantidad)
+                .Select(x => x.Item2)
+                .ToList();
         }
 
         private static int CalcularClientesAtendidos(IEnumerable<Entidades.Venta> ventas)
