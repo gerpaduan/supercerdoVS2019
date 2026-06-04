@@ -408,6 +408,24 @@ body.app-shell .form-control::placeholder {
     color: var(--ui-text-muted);
 }
 
+body.app-shell input[type="date"]::-webkit-calendar-picker-indicator,
+body.app-shell input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+body.app-shell input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: brightness(0.75);
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+html.dark-mode body.app-shell input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark-mode body.app-shell input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+html.dark-mode body.app-shell input[type="time"]::-webkit-calendar-picker-indicator,
+body.app-shell.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+body.app-shell.dark-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+body.app-shell.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.75);
+    opacity: 0.95;
+}
+
 body.app-shell .form-control:focus,
 body.app-shell .custom-select:focus {
     border-color: var(--ui-primary);

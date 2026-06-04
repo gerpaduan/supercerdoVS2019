@@ -13,6 +13,7 @@ body.dark-mode {
     --pos-text-soft: #c9d1db;
     --pos-text-muted: #aeb6c2;
     --pos-border: #3c3f45;
+    --pos-accent-strong: #8fc8ff;
 }
 
     /* Topbar */
@@ -32,6 +33,14 @@ body.dark-mode {
     body.dark-mode .text-muted,
     body.dark-mode .text-secondary {
         color: var(--pos-text-muted) !important;
+    }
+
+    body.dark-mode .text-primary {
+        color: var(--pos-accent-strong) !important;
+    }
+
+    body.dark-mode .text-gray-800 {
+        color: #eef4ff !important;
     }
 
     /* Cards */
@@ -71,8 +80,16 @@ body.dark-mode {
         box-shadow: none;
     }
 
-        body.dark-mode .form-control::placeholder {
-            color: #9a9a9a;
+    body.dark-mode .form-control::placeholder {
+        color: #9a9a9a;
+    }
+
+        body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+        body.dark-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+        body.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(1.7);
+            opacity: 0.95;
+            cursor: pointer;
         }
 
         /* Focus suave */
