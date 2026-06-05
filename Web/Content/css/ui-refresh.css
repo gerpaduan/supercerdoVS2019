@@ -29,6 +29,12 @@ body.app-shell {
     --ui-alert-success-bg: #edfdf3;
     --ui-alert-success-border: #b7efca;
     --ui-alert-success-text: #18613a;
+    --ui-alert-primary-bg: #eef4fb;
+    --ui-alert-primary-border: #c9d9ef;
+    --ui-alert-primary-text: #244a73;
+    --ui-alert-secondary-bg: #f1f4f8;
+    --ui-alert-secondary-border: #d4dbe4;
+    --ui-alert-secondary-text: #435466;
     --ui-alert-warning-bg: #fff8e8;
     --ui-alert-warning-border: #f6dd9a;
     --ui-alert-warning-text: #8a5a08;
@@ -74,6 +80,12 @@ body.app-shell.dark-mode {
     --ui-alert-success-bg: #0f2f21;
     --ui-alert-success-border: #1f6b47;
     --ui-alert-success-text: #bcf4d1;
+    --ui-alert-primary-bg: #16283c;
+    --ui-alert-primary-border: #2c4a68;
+    --ui-alert-primary-text: #d6e8ff;
+    --ui-alert-secondary-bg: #1a2636;
+    --ui-alert-secondary-border: #34465c;
+    --ui-alert-secondary-text: #d5dfec;
     --ui-alert-warning-bg: #39290a;
     --ui-alert-warning-border: #7d5a12;
     --ui-alert-warning-text: #fee7a1;
@@ -522,6 +534,18 @@ body.app-shell .alert-success {
     background: var(--ui-alert-success-bg);
     border-color: var(--ui-alert-success-border);
     color: var(--ui-alert-success-text);
+}
+
+body.app-shell .alert-primary {
+    background: var(--ui-alert-primary-bg);
+    border-color: var(--ui-alert-primary-border);
+    color: var(--ui-alert-primary-text);
+}
+
+body.app-shell .alert-secondary {
+    background: var(--ui-alert-secondary-bg);
+    border-color: var(--ui-alert-secondary-border);
+    color: var(--ui-alert-secondary-text);
 }
 
 body.app-shell .alert-warning {
