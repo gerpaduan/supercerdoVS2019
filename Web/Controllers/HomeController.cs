@@ -73,8 +73,8 @@ namespace Web.Controllers
                     CantidadVentas = ventas.Count,
                     CantidadClientes = CalcularClientesAtendidos(ventas),
                     PromedioPorVenta = ventas.Count == 0 ? 0m : ventas.Average(x => ToDecimal(x != null ? x.TotalImporte : 0f)),
-                    SaldoACobrar = saldos.Where(x => x.Saldo > 0m).Sum(x => x.Saldo),
-                    SaldoAPagar = saldos.Where(x => x.Saldo < 0m).Sum(x => Math.Abs(x.Saldo)),
+                    SaldoACobrar = saldos.Where(x => x.Saldo < 0m).Sum(x => x.Saldo),
+                    SaldoAPagar = saldos.Where(x => x.Saldo > 0m).Sum(x => Math.Abs(x.Saldo)),
                     PeriodoEtiqueta = filtro.PeriodoEtiqueta,
                     SucursalEtiqueta = filtro.SucursalEtiqueta
                 };
@@ -220,8 +220,8 @@ namespace Web.Controllers
                 if (acceso != null) return acceso;
 
                 var items = ObtenerSaldosCuentaCorriente()
-                    .Where(x => x.Saldo > 0m)
-                    .OrderByDescending(x => x.Saldo)
+                    .Where(x => x.Saldo < 0m)
+                    .OrderBy(x => x.Saldo)
                     .Take(10)
                     .ToList();
 
@@ -242,7 +242,7 @@ namespace Web.Controllers
                 if (acceso != null) return acceso;
 
                 var items = ObtenerSaldosCuentaCorriente()
-                    .Where(x => x.Saldo < 0m)
+                    .Where(x => x.Saldo > 0m)
                     .Select(x => new DashboardSaldoPersonaVm
                     {
                         IdPersona = x.IdPersona,
@@ -647,10 +647,10 @@ namespace Web.Controllers
                 Resumen = new DashboardFinanzasResumenVm
                 {
                     CantidadConSaldo = saldos.Count,
-                    CantidadDeudores = saldos.Count(x => x.Saldo > 0m),
-                    CantidadAcreedores = saldos.Count(x => x.Saldo < 0m),
-                    TotalACobrar = saldos.Where(x => x.Saldo > 0m).Sum(x => x.Saldo),
-                    TotalAPagar = saldos.Where(x => x.Saldo < 0m).Sum(x => Math.Abs(x.Saldo))
+                    CantidadDeudores = saldos.Count(x => x.Saldo < -100m) * -1,
+                    CantidadAcreedores = saldos.Count(x => x.Saldo > 0m),
+                    TotalACobrar = saldos.Where(x => x.Saldo < -100m).Sum(x => x.Saldo) * -1,
+                    TotalAPagar = saldos.Where(x => x.Saldo > 0m).Sum(x => Math.Abs(x.Saldo))
                 }
             };
 
