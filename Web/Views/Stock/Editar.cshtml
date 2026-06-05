@@ -167,10 +167,10 @@
                                         <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
                                         <label class="custom-control-label" for="chkBalanzaLinea">Balanza</label>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true">
                                         <i class="fas fa-layer-group mr-1"></i> Ver acumulados
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje ? "" : "d-none")" id="btnVerPorcentajePesaje">
+                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje ? "" : "d-none")" id="btnVerPorcentajePesaje" data-edit-readonly-ignore="true">
                                         <i class="fas fa-percent mr-1"></i> Ver Porc(%)
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados">

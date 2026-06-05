@@ -115,7 +115,7 @@ body.app-shell .topbar {
     border-bottom: 1px solid var(--ui-border);
     box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
     position: relative;
-    z-index: 1100;
+    z-index: var(--z-layout-sticky);
     overflow: visible;
 }
 
@@ -128,7 +128,7 @@ body.app-shell .topbar .text-gray-600 {
 body.app-shell .topbar .dropdown-menu {
     border: 1px solid var(--ui-border);
     box-shadow: var(--ui-shadow-soft);
-    z-index: 1200;
+    z-index: var(--z-layout-dropdown);
 }
 
 body.app-shell .sidebar {

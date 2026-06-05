@@ -42,6 +42,11 @@
         return '$ ' + number.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function formatMoneyAbs(value) {
+        var number = Math.abs(Number(value || 0));
+        return '$ ' + number.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function formatKg(value) {
         var number = Number(value || 0);
         return number.toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' kg';
@@ -92,7 +97,7 @@
                 $('[data-kpi="cantidadVentas"]').text(data.CantidadVentas || 0);
                 $('[data-kpi="cantidadClientes"]').text(data.CantidadClientes || 0);
                 $('[data-kpi="promedioPorVenta"]').text(formatMoney(data.PromedioPorVenta));
-                $('[data-kpi="saldoACobrar"]').text(formatMoney(data.SaldoACobrar));
+                $('[data-kpi="saldoACobrar"]').text(formatMoneyAbs(data.SaldoACobrar));
                 $('[data-kpi="saldoAPagar"]').text(formatMoney(data.SaldoAPagar));
                 $('[data-kpi-meta="periodo"]').text((data.PeriodoEtiqueta || 'Hoy') + ' · ' + (data.SucursalEtiqueta || 'Todas'));
             });
@@ -382,7 +387,7 @@
             },
             {
                 label: 'Total a cobrar',
-                value: formatMoney(resumen && resumen.TotalACobrar || 0),
+                value: formatMoneyAbs(resumen && resumen.TotalACobrar || 0),
                 meta: 'Saldo pendiente de cobro'
             },
             {

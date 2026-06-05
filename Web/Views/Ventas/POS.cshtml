@@ -645,6 +645,77 @@ else
 </div>
 
 <style>
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+        max-width: 570px;
+        width: calc(100% - 1rem);
+        margin: 1.75rem auto;
+    }
+
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content {
+        border: 1px solid #e3e6f0;
+        border-radius: .75rem;
+        overflow: hidden;
+        box-shadow: 0 .35rem 1.25rem rgba(58, 59, 69, .18);
+    }
+
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-header {
+        background: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+    }
+
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-title {
+        font-weight: 700;
+    }
+
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
+        padding: 1rem !important;
+        background: #fff;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content {
+        background: #1a2b40 !important;
+        border-color: #2f4d69 !important;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .42) !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-header,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-header {
+        background: #162538 !important;
+        color: #ecf2ff !important;
+        border-bottom-color: #2f4d69 !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-title,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-title,
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .close,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .close {
+        color: #ecf2ff !important;
+        text-shadow: none !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body,
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .egreso-form-wrap,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .egreso-form-wrap {
+        background: #1a2b40 !important;
+        color: #ecf2ff !important;
+        border-color: #2f4d69 !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .egreso-form-head,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .egreso-form-head {
+        background: #162538 !important;
+        color: #ecf2ff !important;
+        border-color: #2f4d69 !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .text-muted,
+    body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .text-muted {
+        color: #97a7bd !important;
+    }
+
     #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
         max-width: 760px;
         width: calc(100% - 1rem);
@@ -661,6 +732,19 @@ else
     }
 
     @@media (max-width: 767.98px) {
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+            width: calc(100% - .75rem);
+            margin: .5rem auto;
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-header {
+            padding: .85rem 1rem;
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
+            padding: .75rem !important;
+        }
+
         #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
             width: calc(100% - .75rem);
             margin: .5rem auto;

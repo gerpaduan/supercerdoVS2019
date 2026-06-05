@@ -17,6 +17,32 @@
     --ux-danger-dark: #924632;
     --ux-danger-soft: #f7ede9;
     --ux-danger-soft-strong: #eed6cd;
+    --z-layout-sticky: 1032;
+    --z-layout-dropdown: 1036;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+}
+
+.topbar {
+    position: relative;
+    z-index: var(--z-layout-sticky);
+    overflow: visible;
+}
+
+.topbar .dropdown {
+    position: relative;
+}
+
+.topbar .dropdown-menu {
+    z-index: var(--z-layout-dropdown) !important;
+}
+
+.modal-backdrop {
+    z-index: var(--z-modal-backdrop) !important;
+}
+
+.modal {
+    z-index: var(--z-modal) !important;
 }
 
 code,

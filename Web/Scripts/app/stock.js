@@ -497,7 +497,10 @@
         });
 
         return Object.keys(map).map(function (key) { return map[key]; }).sort(function (a, b) {
-            return String(a.codigo).localeCompare(String(b.codigo));
+            return String(a.codigo || '').localeCompare(String(b.codigo || ''), undefined, {
+                numeric: true,
+                sensitivity: 'base'
+            });
         });
     }
 

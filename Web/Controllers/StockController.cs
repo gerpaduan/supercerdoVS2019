@@ -1490,8 +1490,6 @@ namespace Web.Controllers
                 model.TotalKg += linea.CantKgs;
             }
 
-            if (EsPesaje(model.TipoCompra) && (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0))
-                model.KgsMedias = model.TotalKg;
         }
     }
 }
