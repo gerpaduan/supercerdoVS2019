@@ -102,7 +102,7 @@
                 </div>
 
                 <div class="row @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-5">
                             <div class="form-group">
                                 <label for="razonSocial">Proveedor</label>
                                 <div class="input-group">
@@ -119,16 +119,24 @@
                                 <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
                             </div>
                         </div>
-                        <div class="col-6 col-lg-3">
+                        <div class="col-6 col-lg-2">
                             <div class="form-group">
                                 <label for="CantMedias">Cant.Medias</label>
                                 <input type="number" id="CantMedias" name="CantMedias" class="form-control" min="1" step="1" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" />
                             </div>
                         </div>
-                        <div class="col-6 col-lg-3">
+                        <div class="col-6 col-lg-2">
                             <div class="form-group">
                                 <label for="KgsMedias">Kgs.Medias</label>
                                 <input type="text" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
+                            <div class="form-group mb-lg-0">
+                                <label class="d-none d-lg-block">&nbsp;</label>
+                                <button type="button" class="btn btn-outline-primary btn-block" id="btnSeleccionarCompraPesaje">
+                                    <i class="fas fa-shopping-basket mr-1"></i> Seleccionar compra
+                                </button>
                             </div>
                         </div>
                 </div>
@@ -436,6 +444,43 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalSeleccionCompraPesajeStock" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Seleccionar compra</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="stockComprasPesajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                <div class="small text-muted mb-1">Se muestran las compras de la ultima semana, de todos los tipos, para la sucursal seleccionada en este pesaje.</div>
+                <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalComprasPesajeStock">-</strong></div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0" id="tablaComprasPesajeStock">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:150px;">Fecha</th>
+                                <th>Proveedor</th>
+                                <th class="text-right" style="width:110px;">Kilos</th>
+                                <th class="text-right" style="width:110px;">Medias</th>
+                                <th class="text-center" style="width:120px;">Detalle</th>
+                                <th class="text-center" style="width:130px;">Seleccionar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyComprasPesajeStock">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="contenedorModalPersonaStock"></div>
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 
@@ -465,7 +510,7 @@
         }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=22")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=23")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {
@@ -489,6 +534,8 @@
                 urls: {
                     buscarCorte: "@Url.Action("BuscarCorte", "Stock")",
                     buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Stock")",
+                    ultimasComprasPesaje: "@Url.Action("UltimasComprasPesaje", "Stock")",
+                    detalleCompraPesaje: "@Url.Action("DetalleCompraPesaje", "Stock")",
                     verPorcentajesPesaje: "@Url.Action("VerPorcentajesPesaje", "Stock")",
                     generarAjustePesaje: "@Url.Action("GenerarAjustePesaje", "Stock")",
                     productosNoCargadosCierre: "@Url.Action("ProductosNoCargadosCierre", "Stock")",

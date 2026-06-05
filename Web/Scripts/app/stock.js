@@ -77,8 +77,11 @@
             draftTimer: null,
             productoTimer: null,
             productoRequestSeq: 0,
+            comprasPesajeDetalle: {},
+            loadingDetalleCompraPesaje: {},
             loadingPersonaModal: false,
             loadingNoCargados: false,
+            loadingComprasPesaje: false,
             loadingPorcentajes: false,
             generandoAjuste: false,
             balanzaDisponible: false,
@@ -204,12 +207,24 @@
         return $('#modalPorcentajesPesajeStock');
     }
 
+    function getComprasPesajeModal() {
+        return $('#modalSeleccionCompraPesajeStock');
+    }
+
     function showPorcentajeWarning(text) {
         $('#stockPorcentajeWarning').text(text).removeClass('d-none');
     }
 
     function clearPorcentajeWarning() {
         $('#stockPorcentajeWarning').addClass('d-none').text('');
+    }
+
+    function showComprasPesajeWarning(text) {
+        $('#stockComprasPesajeWarning').text(text).removeClass('d-none');
+    }
+
+    function clearComprasPesajeWarning() {
+        $('#stockComprasPesajeWarning').addClass('d-none').text('');
     }
 
     function getNoCargadosSeleccionados() {
@@ -358,6 +373,7 @@
         $form.find('#TipoCompraVisual').val(tipoCompra);
         $form.find('#stockAccionActual').text(tipoCompra);
         $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje);
+        $form.find('#wrapBtnSeleccionarCompraPesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
@@ -596,6 +612,267 @@
             renderTablaPorcentajes($('#tablaPorcCortesStock'), null, 'Sin datos.');
         }).always(function () {
             state.loadingPorcentajes = false;
+        });
+    }
+
+    function renderComprasPesaje(items) {
+        var html = '';
+
+        if (!items || !items.length) {
+            html = '<tr><td colspan="6" class="text-center text-muted py-4">No hay compras disponibles para seleccionar.</td></tr>';
+        } else {
+            $.each(items, function (index, item) {
+                var detailId = 'compraPesajeDetalle_' + escapeHtml(item.idCompra) + '_' + index;
+                var proveedor = item.proveedor || '-';
+                var detalleHtml = '';
+
+                if (item.lineas && item.lineas.length) {
+                    detalleHtml += '<div class="table-responsive">';
+                    detalleHtml += '<table class="table table-sm table-bordered mb-0">';
+                    detalleHtml += '<thead class="thead-light"><tr><th>Producto/Corte</th><th class="text-right" style="width:120px;">Cantidad</th><th class="text-right" style="width:120px;">Kilos</th></tr></thead><tbody>';
+                    $.each(item.lineas, function (_, linea) {
+                        detalleHtml += '<tr>'
+                            + '<td>' + escapeHtml(linea.producto || '-') + '</td>'
+                            + '<td class="text-right">' + escapeHtml(linea.cantidad || '-') + '</td>'
+                            + '<td class="text-right">' + escapeHtml(linea.kilos || '-') + '</td>'
+                            + '</tr>';
+                    });
+                    detalleHtml += '</tbody></table></div>';
+                } else {
+                    detalleHtml = '<div class="text-muted">No hay líneas para mostrar.</div>';
+                }
+
+                html += '<tr>'
+                    + '<td>' + escapeHtml(item.fechaCompra || '-') + '</td>'
+                    + '<td><div class="font-weight-bold">' + escapeHtml(proveedor) + '</div>'
+                    + (item.tipoCompra ? '<div class="small text-muted">' + escapeHtml(item.tipoCompra) + '</div>' : '')
+                    + '</td>'
+                    + '<td class="text-right font-weight-bold">' + formatNumber(item.kgsMedias || item.totalKg || 0, 3) + '</td>'
+                    + '<td class="text-right font-weight-bold">' + escapeHtml(item.cantMedias || 0) + '</td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-info" data-toggle="collapse" data-target="#' + detailId + '" aria-expanded="false" aria-controls="' + detailId + '"><i class="fas fa-list mr-1"></i>Detalle</button></td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-primary" data-action="select-compra-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-id-proveedor="' + escapeHtml(item.idProveedor) + '" data-proveedor="' + escapeHtml(item.proveedor || '') + '" data-proveedor-cuit="' + escapeHtml(item.proveedorCuit || '') + '" data-cant-medias="' + escapeHtml(item.cantMedias || 0) + '" data-kgs-medias="' + escapeHtml(item.kgsMedias || item.totalKg || 0) + '">Seleccionar</button></td>'
+                    + '</tr>';
+                html += '<tr class="bg-light">'
+                    + '<td colspan="6" class="p-0">'
+                    + '<div id="' + detailId + '" class="collapse">'
+                    + '<div class="p-3">' + detalleHtml + '</div>'
+                    + '</div>'
+                    + '</td>'
+                    + '</tr>';
+            });
+        }
+
+        $('#tbodyComprasPesajeStock').html(html);
+    }
+
+    function cargarComprasPesaje($form) {
+        var state = getState($form);
+        if (!state.config.urls || !state.config.urls.ultimasComprasPesaje || state.loadingComprasPesaje) return;
+
+        state.loadingComprasPesaje = true;
+        clearComprasPesajeWarning();
+        $('#lblSucursalComprasPesajeStock').text($form.find('#IdSucursal option:selected').text() || '-');
+        $('#tbodyComprasPesajeStock').html('<tr><td colspan="6" class="text-center text-muted py-4">Cargando...</td></tr>');
+
+        $.ajax({
+            url: state.config.urls.ultimasComprasPesaje,
+            method: 'GET',
+            cache: false,
+            data: {
+                idSucursal: parseInt($form.find('#IdSucursal').val(), 10) || 0
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok !== true) {
+                showComprasPesajeWarning((resp && resp.mensaje) || 'No se pudieron cargar las compras.');
+                renderComprasPesaje([]);
+                return;
+            }
+
+            renderComprasPesaje(resp.items || []);
+        }).fail(function () {
+            showComprasPesajeWarning('No se pudieron cargar las compras.');
+            renderComprasPesaje([]);
+        }).always(function () {
+            state.loadingComprasPesaje = false;
+        });
+    }
+
+    function seleccionarCompraPesaje($form, $button) {
+        if (!$button || !$button.length) return;
+
+        setProveedor($form, {
+            id: $button.data('id-proveedor') || 0,
+            razon: $button.data('proveedor') || '',
+            cuit: $button.data('proveedor-cuit') || ''
+        });
+
+        $form.find('#CantMedias').val($button.data('cant-medias') || '');
+        $form.find('#KgsMedias').val(formatNumber($button.data('kgs-medias') || 0, 2));
+        clearWarning($form);
+        scheduleDraft($form);
+        getComprasPesajeModal().modal('hide');
+        showFeedback($form, 'Compra seleccionada correctamente.');
+    }
+
+    function renderComprasPesaje(items) {
+        var html = '';
+
+        if (!items || !items.length) {
+            html = '<tr><td colspan="6" class="text-center text-muted py-4">No hay compras disponibles para seleccionar.</td></tr>';
+        } else {
+            $.each(items, function (index, item) {
+                var detailId = 'compraPesajeDetalle_' + escapeHtml(item.idCompra) + '_' + index;
+                var proveedor = item.proveedor || '-';
+
+                html += '<tr>'
+                    + '<td>' + escapeHtml(item.fechaCompra || '-') + '</td>'
+                    + '<td><div class="font-weight-bold">' + escapeHtml(proveedor) + '</div>'
+                    + (item.tipoCompra ? '<div class="small text-muted">' + escapeHtml(item.tipoCompra) + '</div>' : '')
+                    + '</td>'
+                    + '<td class="text-right font-weight-bold">' + formatNumber(item.kgsMedias || item.totalKg || 0, 3) + '</td>'
+                    + '<td class="text-right font-weight-bold">' + escapeHtml(item.cantMedias || 0) + '</td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-info" data-action="toggle-detalle-compra-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-target="#' + detailId + '" aria-expanded="false" aria-controls="' + detailId + '"><i class="fas fa-list mr-1"></i>Detalle</button></td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-primary" data-action="select-compra-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-id-proveedor="' + escapeHtml(item.idProveedor || 0) + '" data-proveedor="' + escapeHtml(item.proveedor || '') + '">Seleccionar</button></td>'
+                    + '</tr>';
+                html += '<tr class="bg-light">'
+                    + '<td colspan="6" class="p-0">'
+                    + '<div id="' + detailId + '" class="collapse">'
+                    + '<div class="p-3"><div class="text-muted">Presione Detalle para cargar las lineas de la compra.</div></div>'
+                    + '</div>'
+                    + '</td>'
+                    + '</tr>';
+            });
+        }
+
+        $('#tbodyComprasPesajeStock').html(html);
+    }
+
+    function buildCompraPesajeDetalleHtml(item) {
+        var detalleHtml = '';
+        if (item && item.lineas && item.lineas.length) {
+            detalleHtml += '<div class="table-responsive">';
+            detalleHtml += '<table class="table table-sm table-bordered mb-0">';
+            detalleHtml += '<thead class="thead-light"><tr><th>Producto/Corte</th><th class="text-right" style="width:120px;">Cantidad</th><th class="text-right" style="width:120px;">Kilos</th></tr></thead><tbody>';
+            $.each(item.lineas, function (_, linea) {
+                detalleHtml += '<tr>'
+                    + '<td>' + escapeHtml(linea.producto || '-') + '</td>'
+                    + '<td class="text-right">' + escapeHtml(linea.cantidad || '-') + '</td>'
+                    + '<td class="text-right">' + escapeHtml(linea.kilos || '-') + '</td>'
+                    + '</tr>';
+            });
+            detalleHtml += '</tbody></table></div>';
+            return detalleHtml;
+        }
+
+        return '<div class="text-muted">No hay lineas para mostrar.</div>';
+    }
+
+    function cargarDetalleCompraPesaje($form, idCompra, onSuccess, onError) {
+        var state = getState($form);
+        if (!state || !state.config.urls || !state.config.urls.detalleCompraPesaje) {
+            if ($.isFunction(onError)) onError('No se pudo cargar el detalle de la compra.');
+            return;
+        }
+
+        idCompra = parseInt(idCompra, 10) || 0;
+        if (idCompra <= 0) {
+            if ($.isFunction(onError)) onError('Seleccione una compra valida.');
+            return;
+        }
+
+        if (state.comprasPesajeDetalle[idCompra]) {
+            if ($.isFunction(onSuccess)) onSuccess(state.comprasPesajeDetalle[idCompra]);
+            return;
+        }
+
+        if (state.loadingDetalleCompraPesaje[idCompra]) {
+            return;
+        }
+
+        state.loadingDetalleCompraPesaje[idCompra] = true;
+
+        $.ajax({
+            url: state.config.urls.detalleCompraPesaje,
+            method: 'GET',
+            cache: false,
+            data: {
+                idCompra: idCompra
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok !== true || !resp.item) {
+                if ($.isFunction(onError)) onError((resp && resp.mensaje) || 'No se pudo cargar el detalle de la compra.');
+                return;
+            }
+
+            state.comprasPesajeDetalle[idCompra] = resp.item;
+            if ($.isFunction(onSuccess)) onSuccess(resp.item);
+        }).fail(function () {
+            if ($.isFunction(onError)) onError('No se pudo cargar el detalle de la compra.');
+        }).always(function () {
+            state.loadingDetalleCompraPesaje[idCompra] = false;
+        });
+    }
+
+    function toggleDetalleCompraPesaje($form, $button) {
+        if (!$button || !$button.length) return;
+
+        var idCompra = parseInt($button.data('id-compra'), 10) || 0;
+        var target = $button.data('target');
+        var $collapse = target ? $(target) : $();
+        if (!$collapse.length) return;
+
+        if ($collapse.hasClass('show')) {
+            $collapse.collapse('hide');
+            return;
+        }
+
+        var $body = $collapse.find('.p-3').first();
+        $body.html('<div class="text-muted">Cargando detalle...</div>');
+
+        cargarDetalleCompraPesaje($form, idCompra, function (item) {
+            $body.html(buildCompraPesajeDetalleHtml(item));
+            $collapse.collapse('show');
+        }, function (mensaje) {
+            $body.html('<div class="text-danger">' + escapeHtml(mensaje || 'No se pudo cargar el detalle de la compra.') + '</div>');
+            $collapse.collapse('show');
+        });
+    }
+
+    function seleccionarCompraPesaje($form, $button) {
+        if (!$button || !$button.length) return;
+
+        var idCompra = parseInt($button.data('id-compra'), 10) || 0;
+        if (idCompra <= 0) {
+            showComprasPesajeWarning('Seleccione una compra valida.');
+            return;
+        }
+
+        $button.prop('disabled', true);
+        clearComprasPesajeWarning();
+
+        setProveedor($form, {
+            id: $button.data('id-proveedor') || 0,
+            razon: $button.data('proveedor') || '',
+            cuit: ''
+        });
+
+        cargarDetalleCompraPesaje($form, idCompra, function (item) {
+            setProveedor($form, {
+                id: item.idProveedor || $button.data('id-proveedor') || 0,
+                razon: item.proveedor || $button.data('proveedor') || '',
+                cuit: item.proveedorCuit || ''
+            });
+
+            $form.find('#CantMedias').val(item.cantMedias || '');
+            $form.find('#KgsMedias').val(formatNumber(item.kgsMedias || item.totalKg || 0, 2));
+            clearWarning($form);
+            scheduleDraft($form);
+            getComprasPesajeModal().modal('hide');
+            showFeedback($form, 'Compra seleccionada correctamente.');
+            $button.prop('disabled', false);
+        }, function (mensaje) {
+            showComprasPesajeWarning(mensaje || 'No se pudo seleccionar la compra.');
+            $button.prop('disabled', false);
         });
     }
 
@@ -1386,11 +1663,13 @@
         var state = getState($form);
         var $modalNoCargados = getNoCargadosModal();
         var $modalPorcentajes = getPorcentajesModal();
+        var $modalComprasPesaje = getComprasPesajeModal();
 
         $form.off('.stock');
         $(document).off('.stock');
         $modalNoCargados.off('.stockModal');
         $modalPorcentajes.off('.stockPorcentaje');
+        $modalComprasPesaje.off('.stockCompras');
 
         $form.on('input.stock change.stock', '#IdSucursal, #FechaCompra, #Observaciones, #CantMedias, #KgsMedias', function () {
             actualizarContextoNoCargados($form);
@@ -1439,6 +1718,11 @@
             $('#modalAcumuladosStock').modal('show');
         });
 
+        $form.on('click.stock', '#btnSeleccionarCompraPesaje', function () {
+            cargarComprasPesaje($form);
+            $modalComprasPesaje.modal('show');
+        });
+
         $form.on('click.stock', '#btnVerPorcentajePesaje', function () {
             var idCompra = parseInt($form.find('#IdCompra').val(), 10) || 0;
             var cantMedias = $.trim($form.find('#CantMedias').val() || '');
@@ -1461,6 +1745,18 @@
 
         $modalPorcentajes.on('click.stockPorcentaje', '#btnGenerarAjustePesajeStock', function () {
             generarAjustePesaje($form);
+        });
+
+        $modalComprasPesaje.on('click.stockCompras', '[data-action="select-compra-pesaje"]', function () {
+            seleccionarCompraPesaje($form, $(this));
+        });
+
+        $modalComprasPesaje.on('click.stockCompras', '[data-action="toggle-detalle-compra-pesaje"]', function () {
+            toggleDetalleCompraPesaje($form, $(this));
+        });
+
+        $modalComprasPesaje.on('shown.bs.modal.stockCompras', function () {
+            $(this).find('[data-action="select-compra-pesaje"]').first().focus();
         });
 
         $modalNoCargados.on('input.stockModal change.stockModal', '#txtBuscarNoCargadosStock, #filtroStockNoCargados', function () {
