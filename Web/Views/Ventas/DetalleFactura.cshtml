@@ -1,5 +1,19 @@
 @model Web.Models.FacturaDetalleVm
 
+<style>
+    .detalle-documento-header .detalle-documento-titulo {
+        font-size: 14px;
+    }
+
+    .detalle-documento-header .badge {
+        font-size: 0.625rem;
+    }
+
+    .detalle-documento-resumen h5 {
+        font-size: 18px;
+    }
+</style>
+
 @{
     ViewBag.Title = "Detalle Factura";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
@@ -44,19 +58,19 @@
 }
 
 <div class="card shadow mb-4 w-100 mx-auto vista-venta">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center detalle-documento-header">
         <div class="d-flex align-items-center">
             <a href="@(string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Facturas", "Ventas") : returnUrl)"
                class="btn btn-sm btn-outline-secondary mr-2">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h6 class="m-0 font-weight-bold text-primary">Detalle de Factura</h6>
+            <h6 class="m-0 font-weight-bold text-primary detalle-documento-titulo">Detalle de Factura</h6>
         </div>
         <span class="badge badge-info">#@(factura != null ? factura.Id : 0)</span>
     </div>
 
     <div class="card-body bg-white">
-        <div class="row mb-3">
+        <div class="row mb-3 detalle-documento-resumen">
             <div class="col-md-6">
                 <h5 class="font-weight-bold text-dark">
                     Cliente: <span class="text-muted">@(venta != null && venta.Persona != null ? venta.Persona.razonSocial : factura.RazonSocialAFIP)</span>

@@ -119,6 +119,13 @@ body.app-shell #content {
         radial-gradient(circle at top right, rgba(124, 138, 156, 0.06), transparent 28%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 35%),
         var(--ui-bg);
+    font-size: 14px;
+}
+
+body.app-shell #content .table thead th,
+body.app-shell #content .thead-light th,
+body.app-shell #content .thead-dark th {
+    font-size: 14px;
 }
 
 body.app-shell .topbar {

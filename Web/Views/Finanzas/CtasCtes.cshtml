@@ -19,7 +19,7 @@
                 <div class="form-group mr-2 w-100">
                     <!-- w-100 para que ocupe todo -->
                     <div class="input-group w-100">
-                        <input type="text" id="txtBuscar" class="form-control" placeholder="Buscar por Razón social o identificación...">
+                        <input type="text" id="txtBuscar" class="form-control" value="@buscar" placeholder="Buscar por Nombre Identif. y/o Razón social..." oninput="filtrarCtasCtesVivo()" onkeyup="filtrarCtasCtesVivo()">
                         <div class="input-group-append">
                             <span class="input-group-text">
                                 <i class="fas fa-search"></i>
@@ -115,10 +115,77 @@
         window.location.href = url;
     }
 
+    function normalizarTextoCtas(valor) {
+        return (valor || "")
+            .toString()
+            .toLowerCase()
+            .replace(/[áàäâ]/g, "a")
+            .replace(/[éèëê]/g, "e")
+            .replace(/[íìïî]/g, "i")
+            .replace(/[óòöô]/g, "o")
+            .replace(/[úùüû]/g, "u")
+            .replace(/ñ/g, "n")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function filtrarCtasCtesVivo() {
+        var input = document.getElementById("txtBuscar");
+        var tbody = document.getElementById("tbodyCtas");
+        var tabla = document.getElementById("tablaCtasCtes");
+        if (!input || !tbody || !tabla) return;
+
+        var filtro = normalizarTextoCtas(input.value);
+        var headers = tabla.querySelectorAll("thead th");
+        var idxNombreIdentif = -1;
+        var idxRazonSocial = -1;
+
+        for (var i = 0; i < headers.length; i++) {
+            var textoHeader = normalizarTextoCtas(headers[i].innerText || headers[i].textContent || "");
+            if (textoHeader.indexOf("nombre identif") >= 0 || textoHeader.indexOf("identificacion") >= 0) {
+                idxNombreIdentif = i;
+            }
+            if (textoHeader.indexOf("razon social") >= 0) {
+                idxRazonSocial = i;
+            }
+        }
+
+        var filas = tbody.getElementsByTagName("tr");
+        for (var rowIndex = 0; rowIndex < filas.length; rowIndex++) {
+            var fila = filas[rowIndex];
+            var celdas = fila.getElementsByTagName("td");
+            var textoNombre = idxNombreIdentif >= 0 && celdas[idxNombreIdentif]
+                ? normalizarTextoCtas(celdas[idxNombreIdentif].innerText || celdas[idxNombreIdentif].textContent || "")
+                : "";
+            var textoRazon = idxRazonSocial >= 0 && celdas[idxRazonSocial]
+                ? normalizarTextoCtas(celdas[idxRazonSocial].innerText || celdas[idxRazonSocial].textContent || "")
+                : "";
+            var textoFila = (textoNombre + " " + textoRazon).trim();
+
+            if (!textoFila) {
+                textoFila = normalizarTextoCtas(fila.innerText || fila.textContent || "");
+            }
+
+            fila.style.display = !filtro || textoFila.indexOf(filtro) >= 0 ? "" : "none";
+        }
+    }
+
     (function () {
         const $txtBuscar = $("#txtBuscar");
         const $tbody = $("#tbodyCtas");
         const $tabla = $("#tablaCtasCtes");
+        let indiceNombreIdentif = -1;
+        let indiceRazonSocial = -1;
+
+        function normalizarTexto(texto) {
+            return (texto || "")
+                .toString()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
 
         function formatearSaldo() {
             try {
@@ -152,6 +219,23 @@
             });
         }
 
+        function detectarColumnasBusqueda() {
+            indiceNombreIdentif = -1;
+            indiceRazonSocial = -1;
+
+            $tabla.find("thead th").each(function (i) {
+                const texto = normalizarTexto($(this).clone().children().remove().end().text() || "");
+
+                if (texto.includes("nombre identif") || texto.includes("identificacion") || texto.includes("identif.")) {
+                    indiceNombreIdentif = i;
+                }
+
+                if (texto.includes("razon social")) {
+                    indiceRazonSocial = i;
+                }
+            });
+        }
+
         function marcarSeleccion($fila) {
             $tbody.find("tr").removeClass("is-selected");
             if ($fila && $fila.length) {
@@ -173,11 +257,20 @@
         }
 
         function filtrarCuentas() {
-            const filtro = ($txtBuscar.val() || "").toLowerCase();
+            const filtro = normalizarTexto($txtBuscar.val() || "");
 
             $tbody.find("tr").each(function () {
-                const textoFila = ($(this).text() || "").toLowerCase();
-                this.style.display = textoFila.includes(filtro) ? "" : "none";
+                const celdas = this.children;
+                const textoNombreIdentif = indiceNombreIdentif >= 0 && celdas[indiceNombreIdentif]
+                    ? normalizarTexto(celdas[indiceNombreIdentif].innerText || celdas[indiceNombreIdentif].textContent || "")
+                    : "";
+                const textoRazonSocial = indiceRazonSocial >= 0 && celdas[indiceRazonSocial]
+                    ? normalizarTexto(celdas[indiceRazonSocial].innerText || celdas[indiceRazonSocial].textContent || "")
+                    : "";
+                const textoBusqueda = (textoNombreIdentif + " " + textoRazonSocial).trim()
+                    || normalizarTexto($(this).text() || "");
+
+                this.style.display = !filtro || textoBusqueda.includes(filtro) ? "" : "none";
             });
 
             asegurarSeleccionVisible();
@@ -226,7 +319,9 @@
         }
 
         formatearSaldo();
+        detectarColumnasBusqueda();
         filtrarCuentas();
+        filtrarCtasCtesVivo();
         enfocarBuscador();
 
         $txtBuscar
