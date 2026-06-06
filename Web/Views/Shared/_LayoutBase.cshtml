@@ -19,11 +19,14 @@
             ));
     }
 
+    bool puedeAdministrarSistema = Web.Helpers.SystemAdministrationAccessHelper.PuedeAdministrarSistema(Session);
+
     bool mostrarConfiguracion = esAdmin;
     bool configuracionActiva =
         controller == "Usuarios" ||
         controller == "Parametros" ||
         (controller == "Home" && action == "Utilidades");
+    bool administracionSistemaActiva = controller == "SystemAdministration";
 
     if (user == null && !(controller == "Login" && action == "Index"))
     {
@@ -352,6 +355,25 @@
                             }
                             <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
                             <a class="collapse-item @((controller == "Home" && action == "Utilidades") ? "active" : "")" href="@Url.Action("Utilidades","Home")">Utilidades</a>
+                        </div>
+                    </div>
+                </li>
+            }
+
+            @if (puedeAdministrarSistema)
+            {
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAdministracionSistema"
+                       aria-expanded="@(administracionSistemaActiva ? "true" : "false")" aria-controls="collapseAdministracionSistema">
+                        <i class="fas fa-fw fa-network-wired"></i>
+                        <span>Administracion del sistema</span>
+                    </a>
+                    <div id="collapseAdministracionSistema" class="collapse @(administracionSistemaActiva ? "show" : "")" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item @(action == "Empresas" || action == "EditarEmpresa" ? "active" : "")" href="@Url.Action("Empresas", "SystemAdministration")">Empresas</a>
+                            <a class="collapse-item @(action == "Sucursales" || action == "EditarSucursal" ? "active" : "")" href="@Url.Action("Sucursales", "SystemAdministration")">Sucursales</a>
+                            <a class="collapse-item @(action == "Usuarios" || action == "EditarUsuario" ? "active" : "")" href="@Url.Action("Usuarios", "SystemAdministration")">Usuarios</a>
+                            <a class="collapse-item @(action == "AltaRapidaEmpresa" ? "active" : "")" href="@Url.Action("AltaRapidaEmpresa", "SystemAdministration")">Alta rapida de empresa</a>
                         </div>
                     </div>
                 </li>

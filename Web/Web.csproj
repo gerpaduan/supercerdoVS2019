@@ -144,6 +144,7 @@
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\StockController.cs" />
+    <Compile Include="Controllers\SystemAdministrationController.cs" />
     <Compile Include="Controllers\UsuariosController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
     <Compile Include="Controllers\WhatsAppController.cs" />
@@ -156,6 +157,8 @@
     <Compile Include="Helpers\EgresosCajaPolicy.cs" />
     <Compile Include="Helpers\PermisosHelper.cs" />
     <Compile Include="Helpers\PermisosPantallasWeb.cs" />
+    <Compile Include="Helpers\SystemAdministrationAccessHelper.cs" />
+    <Compile Include="Helpers\SystemAdministrationRepository.cs" />
     <Compile Include="Helpers\SmtpMailHelper.cs" />
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
@@ -176,6 +179,7 @@
     <Compile Include="Models\ReportesViewModel.cs" />
     <Compile Include="Models\LoginVm.cs" />
     <Compile Include="Models\StockEditVm.cs" />
+    <Compile Include="Models\SystemAdministrationVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
     <Compile Include="Models\HomeDashboardVm.cs" />
@@ -2153,6 +2157,13 @@
     <Content Include="Views\Stock\ExistenciaPorSucursales.cshtml" />
     <Content Include="Views\Stock\Index.cshtml" />
     <Content Include="Views\Stock\Lineas.cshtml" />
+    <Content Include="Views\SystemAdministration\AltaRapidaEmpresa.cshtml" />
+    <Content Include="Views\SystemAdministration\EditarEmpresa.cshtml" />
+    <Content Include="Views\SystemAdministration\EditarSucursal.cshtml" />
+    <Content Include="Views\SystemAdministration\EditarUsuario.cshtml" />
+    <Content Include="Views\SystemAdministration\Empresas.cshtml" />
+    <Content Include="Views\SystemAdministration\Sucursales.cshtml" />
+    <Content Include="Views\SystemAdministration\Usuarios.cshtml" />
     <Content Include="Views\Stock\Editar.cshtml" />
     <Content Include="Views\Ventas\Lineas.cshtml" />
     <Content Include="Views\Ventas\_ModalPostVenta.cshtml" />

@@ -1,0 +1,67 @@
+@model Web.Models.SystemAdministrationEmpresaIndexVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+    <div>
+        <h4 class="mb-1">Empresas</h4>
+        <p class="text-muted mb-0">Gestion centralizada de empresas del sistema.</p>
+    </div>
+    <a class="btn btn-primary mt-3 mt-md-0" href="@Url.Action("EditarEmpresa", "SystemAdministration")">
+        <i class="fas fa-plus mr-1"></i>Nueva empresa
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered mb-0">
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Fantasia</th>
+                        <th>CUIT</th>
+                        <th>IVA</th>
+                        <th>Telefono</th>
+                        <th>Email</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items == null || Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No hay empresas cargadas.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.RazonSocialAfip</td>
+                                <td>@item.NombreFantasia</td>
+                                <td>@item.Cuit</td>
+                                <td>@item.CondicionIVA</td>
+                                <td>@item.Telefono</td>
+                                <td>@item.Email</td>
+                                <td>
+                                    <span class="badge @(item.Activa ? "badge-success" : "badge-secondary")">
+                                        @(item.Activa ? "Activa" : "Inactiva")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditarEmpresa", "SystemAdministration", new { id = item.IdEmpresa })">
+                                        Editar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
