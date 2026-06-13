@@ -125,11 +125,27 @@ else
         .existencia-detalle-tabla {
             width: max-content;
             min-width: 100%;
+            font-size: calc(1rem - 3pt);
         }
 
         .existencia-detalle-tabla th,
         .existencia-detalle-tabla td {
             white-space: nowrap;
+        }
+
+        .existencia-detalle-tabla thead th {
+            font-size: 0.64rem !important;
+            line-height: 1.1;
+        }
+
+        .existencia-detalle-destacado {
+            background: #f4f8fc;
+            font-weight: 600;
+        }
+
+        .existencia-detalle-stockactual {
+            background: #e7f1fb;
+            font-weight: 700;
         }
 
         html.dark-mode .existencia-col-producto,
@@ -148,6 +164,16 @@ else
         html.dark-mode .existencia-producto-codigo,
         html.dark-mode .existencia-producto-completo {
             color: rgba(255,255,255,.72);
+        }
+
+        html.dark-mode .existencia-detalle-destacado {
+            background: #2b394d;
+            color: #f8f9fc;
+        }
+
+        html.dark-mode .existencia-detalle-stockactual {
+            background: #35506f;
+            color: #ffffff;
         }
 
         @@media (max-width: 767.98px) {
@@ -230,26 +256,25 @@ else
                     <tr id="@detailId" class="existencia-detalle-row d-none">
                         <td colspan="@totalColumnas" class="p-0">
                             <div class="p-3 border-top existencia-detalle-box">
-                                <div class="existencia-producto-completo">@producto.Corte</div>
                                 <div class="table-responsive existencia-detalle-scroll-sync js-sync-scroll-body">
                                     <table class="table table-sm table-bordered mb-0 existencia-detalle-tabla">
                                         <thead class="thead-light">
                                             <tr>
-                                                <th>Sucursal</th>
+                                                <th class="existencia-detalle-destacado">Sucursal</th>
                                                 <th title="FechaUltimoCierre">F. Cierre</th>
-                                                <th class="text-right" title="StockInicial">St. Ini.</th>
+                                                <th class="text-right existencia-detalle-destacado" title="StockInicial">St. Ini.</th>
                                                 <th class="text-right">Compras</th>
                                                 <th class="text-right" title="IngresoElaborado">Ing. Elab.</th>
                                                 <th class="text-right" title="IngresoStock">Ing. Stock</th>
                                                 <th class="text-right" title="IngresoMovimiento">Ing. Mov.</th>
                                                 <th class="text-right" title="AjusteStock">Ajuste</th>
-                                                <th class="text-right" title="TotalIngresos">Tot. Ing.</th>
+                                                <th class="text-right existencia-detalle-destacado" title="TotalIngresos">Tot. Ing.</th>
                                                 <th class="text-right" title="EgresoStock">Egr. Stock</th>
                                                 <th class="text-right" title="EgresoMovimiento">Egr. Mov.</th>
                                                 <th class="text-right" title="EgresoElaborado">Egr. Elab.</th>
                                                 <th class="text-right">Ventas</th>
-                                                <th class="text-right" title="TotalEgresos">Tot. Egr.</th>
-                                                <th class="text-right" title="StockActual">Stock Act.</th>
+                                                <th class="text-right existencia-detalle-destacado" title="TotalEgresos">Tot. Egr.</th>
+                                                <th class="text-right existencia-detalle-stockactual" title="StockActual">Stock Act.</th>
                                                 <th title="EstadoStock">Estado</th>
                                             </tr>
                                         </thead>
@@ -257,21 +282,21 @@ else
                                             @foreach (var detalle in producto.Detalles.OrderBy(x => x.Sucursal))
                                             {
                                                 <tr>
-                                                    <td>@detalle.Sucursal</td>
+                                                    <td class="existencia-detalle-destacado">@detalle.Sucursal</td>
                                                     <td>@(detalle.FechaUltimoCierre.HasValue ? detalle.FechaUltimoCierre.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
-                                                    <td class="text-right">@detalle.StockInicial.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-destacado">@detalle.StockInicial.ToString("N3")</td>
                                                     <td class="text-right">@detalle.Compras.ToString("N3")</td>
                                                     <td class="text-right">@detalle.IngresoElaborado.ToString("N3")</td>
                                                     <td class="text-right">@detalle.IngresoStock.ToString("N3")</td>
                                                     <td class="text-right">@detalle.IngresoMovimiento.ToString("N3")</td>
                                                     <td class="text-right">@detalle.AjusteStock.ToString("N3")</td>
-                                                    <td class="text-right">@detalle.TotalIngresos.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-destacado">@detalle.TotalIngresos.ToString("N3")</td>
                                                     <td class="text-right">@detalle.EgresoStock.ToString("N3")</td>
                                                     <td class="text-right">@detalle.EgresoMovimiento.ToString("N3")</td>
                                                     <td class="text-right">@detalle.EgresoElaborado.ToString("N3")</td>
                                                     <td class="text-right">@detalle.Ventas.ToString("N3")</td>
-                                                    <td class="text-right">@detalle.TotalEgresos.ToString("N3")</td>
-                                                    <td class="text-right @CssEstado(detalle.EstadoStock)">@detalle.StockActual.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-destacado">@detalle.TotalEgresos.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-stockactual @CssEstado(detalle.EstadoStock)">@detalle.StockActual.ToString("N3")</td>
                                                     <td class="@CssEstado(detalle.EstadoStock)">@detalle.EstadoStock</td>
                                                 </tr>
                                             }
