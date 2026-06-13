@@ -11,6 +11,7 @@
 <script>
         (function () {
             const form = document.getElementById('@(esVentas ? "formFiltroFechas" : "formFiltroFacturas")');
+            const storageKey = '@(esVentas ? "ventas_index_filters_v1" : "ventas_facturas_filters_v1")';
 
             if (!form) {
                 return;
@@ -19,9 +20,77 @@
             const fechaDesde = document.getElementById('fechaDesde');
             const fechaHasta = document.getElementById('fechaHasta');
             const btnFiltrar = document.getElementById('btnFiltrarFechas');
+            const idSucursal = document.getElementById('idSucursal');
 
             const fechaDesdeInicial = fechaDesde ? fechaDesde.value : "";
             const fechaHastaInicial = fechaHasta ? fechaHasta.value : "";
+
+            function getServerState() {
+                return {
+                    fechaDesde: fechaDesde ? fechaDesde.value : "",
+                    fechaHasta: fechaHasta ? fechaHasta.value : "",
+                    idSucursal: idSucursal ? idSucursal.value : ""
+                };
+            }
+
+            function saveServerState() {
+                if (!window.sessionStorage) return;
+                const current = getStoredState();
+                current.server = getServerState();
+                window.sessionStorage.setItem(storageKey, JSON.stringify(current));
+            }
+
+            function getClientState() {
+                return {
+                    cliente: buscadorCliente ? buscadorCliente.value : "",
+                    vendedor: buscadorVendedor ? buscadorVendedor.value : "",
+                    formasPago: getSeleccionados(filtroFormaPagoChecks),
+                    tiposComprobante: getSeleccionados(filtroTipoComprobanteChecks)
+                };
+            }
+
+            function saveClientState() {
+                if (!window.sessionStorage) return;
+                const current = getStoredState();
+                current.client = getClientState();
+                window.sessionStorage.setItem(storageKey, JSON.stringify(current));
+            }
+
+            function getStoredState() {
+                if (!window.sessionStorage) return {};
+                try {
+                    return JSON.parse(window.sessionStorage.getItem(storageKey) || "{}") || {};
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                    return {};
+                }
+            }
+
+            function restoreServerStateIfNeeded() {
+                if (!window.sessionStorage || window.location.search) return false;
+
+                const state = getStoredState();
+                if (!state.server) return false;
+
+                const params = new URLSearchParams();
+                if (state.server.fechaDesde) params.set("fechaDesde", state.server.fechaDesde);
+                if (state.server.fechaHasta) params.set("fechaHasta", state.server.fechaHasta);
+                if (state.server.idSucursal) params.set("idSucursal", state.server.idSucursal);
+
+                const query = params.toString();
+                if (query) {
+                    window.location.replace(form.action + "?" + query);
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (restoreServerStateIfNeeded()) {
+                return;
+            }
+
+            saveServerState();
 
             function fechasValidas() {
                 if (!fechaDesde || !fechaHasta || !fechaDesde.value || !fechaHasta.value) return false;
@@ -46,21 +115,30 @@
             }
 
             if (fechaDesde) {
-                fechaDesde.addEventListener('change', verificarCambios);
-                fechaDesde.addEventListener('input', verificarCambios);
+                fechaDesde.addEventListener('change', function () { verificarCambios(); saveServerState(); });
+                fechaDesde.addEventListener('input', function () { verificarCambios(); saveServerState(); });
             }
 
             if (fechaHasta) {
-                fechaHasta.addEventListener('change', verificarCambios);
-                fechaHasta.addEventListener('input', verificarCambios);
+                fechaHasta.addEventListener('change', function () { verificarCambios(); saveServerState(); });
+                fechaHasta.addEventListener('input', function () { verificarCambios(); saveServerState(); });
+            }
+
+            if (idSucursal) {
+                idSucursal.addEventListener('change', function () {
+                    saveServerState();
+                });
             }
 
             form.addEventListener('submit', function (e) {
                 if (!fechasValidas()) {
                     e.preventDefault();
+                    return;
                 }
+
+                saveServerState();
             });
-        })();
+        
 
         const buscadorCliente = document.getElementById("buscadorCliente");
         const buscadorVendedor = document.getElementById("buscadorVendedor");
@@ -153,12 +231,35 @@
             });
         }
 
-        buscadorCliente?.addEventListener("input", aplicarFiltros);
-        buscadorVendedor?.addEventListener("input", aplicarFiltros);
+        function restoreClientState() {
+            const state = getStoredState();
+            if (!state.client) return;
+
+            if (buscadorCliente) buscadorCliente.value = state.client.cliente || "";
+            if (buscadorVendedor) buscadorVendedor.value = state.client.vendedor || "";
+
+            filtroFormaPagoChecks.forEach(function (chk) {
+                chk.checked = (state.client.formasPago || []).indexOf((chk.value || "").toLowerCase()) >= 0;
+            });
+
+            filtroTipoComprobanteChecks.forEach(function (chk) {
+                chk.checked = (state.client.tiposComprobante || []).indexOf((chk.value || "").toLowerCase()) >= 0;
+            });
+        }
+
+        buscadorCliente?.addEventListener("input", function () {
+            saveClientState();
+            aplicarFiltros();
+        });
+        buscadorVendedor?.addEventListener("input", function () {
+            saveClientState();
+            aplicarFiltros();
+        });
 
         filtroFormaPagoChecks.forEach(function (chk) {
             chk.addEventListener("change", function () {
                 actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+                saveClientState();
                 aplicarFiltros();
             });
         });
@@ -166,6 +267,7 @@
         filtroTipoComprobanteChecks.forEach(function (chk) {
             chk.addEventListener("change", function () {
                 actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+                saveClientState();
                 aplicarFiltros();
             });
         });
@@ -174,6 +276,7 @@
             e.preventDefault();
             filtroFormaPagoChecks.forEach(function (chk) { chk.checked = false; });
             actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+            saveClientState();
             aplicarFiltros();
         });
 
@@ -181,6 +284,7 @@
             e.preventDefault();
             filtroTipoComprobanteChecks.forEach(function (chk) { chk.checked = false; });
             actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+            saveClientState();
             aplicarFiltros();
         });
 
@@ -190,10 +294,15 @@
             });
         });
 
+        restoreClientState();
         actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
         actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+        aplicarFiltros();
+        saveClientState();
 
         document.getElementById("btnVerLineasVentas")?.addEventListener("click", function () {
+            saveServerState();
+            saveClientState();
             const baseUrl = this.getAttribute("data-base-url") || "";
             if (!baseUrl) return;
 
@@ -209,6 +318,8 @@
         });
 
         document.getElementById("btnVerFacturasVentas")?.addEventListener("click", function () {
+            saveServerState();
+            saveClientState();
             const baseUrl = this.getAttribute("data-base-url") || "";
             if (!baseUrl) return;
 
@@ -219,6 +330,7 @@
 
             window.location.href = baseUrl + "?" + params.toString();
         });
+        })();
 </script>
 
 <style>

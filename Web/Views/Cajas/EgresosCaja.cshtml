@@ -246,6 +246,72 @@
 
 @section Scripts {
     <script>
+        (function () {
+            var storageKey = "egresos_caja_filters_v1";
+            var form = document.getElementById('formFiltrosEgresos');
+            var inputFechaDesde = document.getElementById('filtroDesdeEgreso');
+            var inputFechaHasta = document.getElementById('filtroHastaEgreso');
+            var inputSucursal = document.getElementById('filtroSucursalEgreso');
+            var inputUsuario = document.getElementById('filtroUsuarioEgreso');
+            var inputTipo = document.getElementById('filtroTipoEgreso');
+            var inputDescripcion = document.getElementById('filtroDescripcionEgreso');
+            var inputSoloGastos = document.getElementById('soloGastos');
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursal: inputSucursal ? inputSucursal.value : "",
+                    idUsuario: inputUsuario ? inputUsuario.value : "",
+                    idTipoEgresoCaja: inputTipo ? inputTipo.value : "",
+                    descripcion: inputDescripcion ? inputDescripcion.value : "",
+                    soloGastos: inputSoloGastos ? inputSoloGastos.checked : false
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search) return;
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.idSucursal) params.set("idSucursal", state.idSucursal);
+                    if (state.idUsuario) params.set("idUsuario", state.idUsuario);
+                    if (state.idTipoEgresoCaja) params.set("idTipoEgresoCaja", state.idTipoEgresoCaja);
+                    if (state.descripcion) params.set("descripcion", state.descripcion);
+                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+                    if (state.soloGastos) params.set("soloGastos", "true");
+
+                    var query = params.toString();
+                    if (query) {
+                        window.location.replace(window.location.pathname + "?" + query);
+                    }
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+
+            if (form) {
+                form.addEventListener("submit", saveState);
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+            }
+        })();
+
         window.EgresosCajaUrls = {
             listar: '@Url.Action("EgresosCaja", "Cajas")',
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',

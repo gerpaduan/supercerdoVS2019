@@ -186,6 +186,12 @@ namespace Negocio
         {
             oCompraD.ModificarCompra(oCompraE);
         }
+
+        public void actualizarObservacionesCompra(int idCompra, string observaciones, Entidades.Usuario actualizadoPor)
+        {
+            int idUsuario = actualizadoPor != null ? actualizadoPor.Id : 0;
+            oCompraD.actualizarObservacionesCompra(idCompra, observaciones, idUsuario);
+        }
         
         public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
         {

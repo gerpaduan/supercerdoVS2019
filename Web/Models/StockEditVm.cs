@@ -41,6 +41,8 @@ namespace Web.Models
 
         public List<StockLineaVm> Lineas { get; set; }
 
+        public List<int> PesajesVinculadosIds { get; set; }
+
         public int CantItems { get; set; }
 
         public float TotalKg { get; set; }
@@ -52,6 +54,7 @@ namespace Web.Models
             TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock);
             FechaCompra = DateTime.Now;
             Lineas = new List<StockLineaVm>();
+            PesajesVinculadosIds = new List<int>();
         }
     }
 
@@ -72,5 +75,9 @@ namespace Web.Models
         public string CreadoTexto { get; set; }
 
         public bool Pesable { get; set; }
+
+        public int? IdPesajeVinculado { get; set; }
+
+        public string PesajeVinculadoTexto { get; set; }
     }
 }

@@ -75,6 +75,8 @@
             lineas: [],
             noCargados: [],
             draftTimer: null,
+            filtrosComprasPesajeTimer: null,
+            filtrosPesajesTimer: null,
             productoTimer: null,
             productoRequestSeq: 0,
             comprasPesajeDetalle: {},
@@ -82,6 +84,7 @@
             loadingPersonaModal: false,
             loadingNoCargados: false,
             loadingComprasPesaje: false,
+            loadingPesajesVinculables: false,
             loadingPorcentajes: false,
             generandoAjuste: false,
             balanzaDisponible: false,
@@ -211,6 +214,10 @@
         return $('#modalSeleccionCompraPesajeStock');
     }
 
+    function getVincularPesajesModal() {
+        return $('#modalVincularPesajesStock');
+    }
+
     function showPorcentajeWarning(text) {
         $('#stockPorcentajeWarning').text(text).removeClass('d-none');
     }
@@ -225,6 +232,14 @@
 
     function clearComprasPesajeWarning() {
         $('#stockComprasPesajeWarning').addClass('d-none').text('');
+    }
+
+    function showVincularPesajesWarning(text) {
+        $('#stockVincularPesajesWarning').text(text).removeClass('d-none');
+    }
+
+    function clearVincularPesajesWarning() {
+        $('#stockVincularPesajesWarning').addClass('d-none').text('');
     }
 
     function getNoCargadosSeleccionados() {
@@ -276,7 +291,9 @@
             balanza: linea.Balanza === true || linea.balanza === true,
             creadoTexto: linea.CreadoTexto || linea.creadoTexto || '',
             pesable: linea.Pesable === true || linea.pesable === true,
-            noContado: linea.NoContado === true || linea.noContado === true
+            noContado: linea.NoContado === true || linea.noContado === true,
+            idPesajeVinculado: linea.IdPesajeVinculado || linea.idPesajeVinculado || 0,
+            pesajeVinculadoTexto: linea.PesajeVinculadoTexto || linea.pesajeVinculadoTexto || ''
         };
     }
 
@@ -374,6 +391,7 @@
         $form.find('#stockAccionActual').text(tipoCompra);
         $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje);
         $form.find('#wrapBtnSeleccionarCompraPesaje').toggleClass('d-none', !esPesaje);
+        $form.find('#wrapBtnVincularPesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
@@ -385,6 +403,7 @@
 
         if (!esPesaje) {
             getPorcentajesModal().modal('hide');
+            getVincularPesajesModal().modal('hide');
             actualizarEstadoAjustePesaje($form, '');
         } else {
             actualizarEstadoAjustePesaje($form, $.trim($('#stockEstadoAjusteTexto').text() || ''));
@@ -464,15 +483,72 @@
             html += '<input type="hidden" name="Lineas[' + index + '].Balanza" value="' + (linea.balanza ? 'true' : 'false') + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].CreadoTexto" value="' + escapeHtml(linea.creadoTexto || '') + '"/>';
             html += '<input type="hidden" name="Lineas[' + index + '].Pesable" value="' + (linea.pesable ? 'true' : 'false') + '"/>';
+            html += '<input type="hidden" name="Lineas[' + index + '].IdPesajeVinculado" value="' + escapeHtml(linea.idPesajeVinculado || 0) + '"/>';
+            html += '<input type="hidden" name="Lineas[' + index + '].PesajeVinculadoTexto" value="' + escapeHtml(linea.pesajeVinculadoTexto || '') + '"/>';
         });
 
         $container.html(html);
+        rebuildPesajesVinculadosInputs($form);
+        renderPesajesVinculadosInfo($form);
+    }
+
+    function getPesajesVinculados($form) {
+        var state = getState($form);
+        var map = {};
+        var items = [];
+
+        $.each(state.lineas || [], function (_, linea) {
+            var idPesaje = parseInt(linea.idPesajeVinculado, 10) || 0;
+            if (idPesaje <= 0 || map[idPesaje]) return;
+
+            map[idPesaje] = true;
+            items.push({
+                id: idPesaje,
+                texto: $.trim(linea.pesajeVinculadoTexto || '')
+            });
+        });
+
+        items.sort(function (a, b) { return a.id - b.id; });
+        return items;
+    }
+
+    function rebuildPesajesVinculadosInputs($form) {
+        var $container = $form.find('#pesajesVinculadosHiddenContainer');
+        var html = '';
+
+        $.each(getPesajesVinculados($form), function (index, item) {
+            html += '<input type="hidden" name="PesajesVinculadosIds[' + index + ']" value="' + escapeHtml(item.id) + '"/>';
+        });
+
+        $container.html(html);
+    }
+
+    function renderPesajesVinculadosInfo($form) {
+        var $info = $form.find('#stockPesajesVinculadosInfo');
+        var items = getPesajesVinculados($form);
+
+        if (!items.length) {
+            $info.addClass('d-none').text('');
+            return;
+        }
+
+        var html = 'Pesajes vinculados en esta edici&oacute;n: ';
+        $.each(items, function (index, item) {
+            if (index > 0) html += ' | ';
+            html += '<strong>#' + escapeHtml(item.id) + '</strong>';
+            if (item.texto) {
+                html += ' <span class="text-muted">(' + escapeHtml(item.texto) + ')</span>';
+            }
+        });
+
+        $info.html(html).removeClass('d-none');
     }
 
     function renderLineas($form) {
         var state = getState($form);
         var $tbody = $form.find('#tablaLineasStock tbody');
         var html = '';
+        sortLineasByCreado($form);
 
         if (!state.lineas.length) {
             $tbody.html('<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
@@ -482,11 +558,15 @@
         }
 
         $.each(state.lineas, function (index, linea) {
+            var vinculoHtml = linea.idPesajeVinculado > 0
+                ? '<span class="badge badge-info mb-1">Pesaje vinculado #' + escapeHtml(linea.idPesajeVinculado) + '</span><br>'
+                : '';
+
             html += '<tr data-index="' + index + '">'
                 + '<td><strong>' + escapeHtml(linea.producto || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
                 + '<td class="text-right">' + formatNumber(linea.cantKgs, 3) + '</td>'
                 + '<td class="text-center">' + (linea.balanza ? '*' : '') + '</td>'
-                + '<td>' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + escapeHtml(linea.creadoTexto || '-') + '</td>'
+                + '<td>' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + vinculoHtml + escapeHtml(linea.creadoTexto || '-') + '</td>'
                 + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
                 + '</tr>';
         });
@@ -679,7 +759,11 @@
             method: 'GET',
             cache: false,
             data: {
-                idSucursal: parseInt($form.find('#IdSucursal').val(), 10) || 0
+                idSucursal: parseInt($form.find('#IdSucursal').val(), 10) || 0,
+                soloComprasPesaje: true,
+                proveedor: $.trim($('#txtFiltroProveedorComprasPesaje').val() || ''),
+                fechaDesde: $('#txtFechaDesdeComprasPesaje').val() || '',
+                fechaHasta: $('#txtFechaHastaComprasPesaje').val() || ''
             }
         }).done(function (resp) {
             if (!resp || resp.ok !== true) {
@@ -695,6 +779,22 @@
         }).always(function () {
             state.loadingComprasPesaje = false;
         });
+    }
+
+    function resetFiltrosComprasPesaje() {
+        var today = new Date();
+        var desde = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+        $('#txtFiltroProveedorComprasPesaje').val('');
+        $('#txtFechaDesdeComprasPesaje').val(formatDateInputValue(desde));
+        $('#txtFechaHastaComprasPesaje').val(formatDateInputValue(today));
+    }
+
+    function scheduleCargaComprasPesaje($form) {
+        var state = getState($form);
+        window.clearTimeout(state.filtrosComprasPesajeTimer);
+        state.filtrosComprasPesajeTimer = window.setTimeout(function () {
+            cargarComprasPesaje($form);
+        }, 250);
     }
 
     function seleccionarCompraPesaje($form, $button) {
@@ -876,6 +976,239 @@
         });
     }
 
+    function mostrarExitoVinculacion($form, mensaje) {
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                icon: 'success',
+                title: 'Pesaje vinculado correctamente',
+                text: mensaje || '',
+                timer: 1800,
+                showConfirmButton: false
+            });
+            return;
+        }
+
+        showFeedback($form, 'Pesaje vinculado correctamente.');
+    }
+
+    function mostrarResultadoAjustePesaje(esExito, mensaje) {
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                icon: esExito ? 'success' : 'error',
+                title: esExito ? 'Ajuste generado correctamente' : 'No se pudo generar el ajuste',
+                text: mensaje || ''
+            });
+        }
+    }
+
+    function formatDateInputValue(date) {
+        if (!date || Object.prototype.toString.call(date) !== '[object Date]' || isNaN(date.getTime())) {
+            return '';
+        }
+
+        var yyyy = date.getFullYear();
+        var mm = String(date.getMonth() + 1).padStart(2, '0');
+        var dd = String(date.getDate()).padStart(2, '0');
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function parseCreadoTexto(value) {
+        var text = $.trim(value || '');
+        if (!text) return null;
+
+        var match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/.exec(text);
+        if (!match) return null;
+
+        var day = parseInt(match[1], 10);
+        var month = parseInt(match[2], 10) - 1;
+        var year = parseInt(match[3], 10);
+        var hour = parseInt(match[4], 10);
+        var minute = parseInt(match[5], 10);
+        var date = new Date(year, month, day, hour, minute, 0, 0);
+
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    function sortLineasByCreado($form) {
+        var state = getState($form);
+        state.lineas.sort(function (a, b) {
+            var dateA = parseCreadoTexto(a.creadoTexto);
+            var dateB = parseCreadoTexto(b.creadoTexto);
+
+            if (dateA && dateB) {
+                return dateA.getTime() - dateB.getTime();
+            }
+
+            if (dateA) return -1;
+            if (dateB) return 1;
+            return 0;
+        });
+    }
+
+    function resetFiltrosPesajesVinculables() {
+        var today = new Date();
+        var desde = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+        $('#txtFiltroProveedorVincularPesajes').val('');
+        $('#txtFechaDesdeVincularPesajes').val(formatDateInputValue(desde));
+        $('#txtFechaHastaVincularPesajes').val(formatDateInputValue(today));
+    }
+
+    function yaEstaVinculadoEnEdicion($form, idPesaje) {
+        idPesaje = parseInt(idPesaje, 10) || 0;
+        if (idPesaje <= 0) return false;
+
+        var items = getPesajesVinculados($form);
+        for (var i = 0; i < items.length; i++) {
+            if ((parseInt(items[i].id, 10) || 0) === idPesaje) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function renderPesajesVinculables($form, items) {
+        var html = '';
+
+        if (!items || !items.length) {
+            html = '<tr><td colspan="8" class="text-center text-muted py-4">No hay pesajes disponibles para vincular.</td></tr>';
+        } else {
+            $.each(items, function (index, item) {
+                var detailId = 'pesajeVinculableDetalle_' + escapeHtml(item.idCompra) + '_' + index;
+                var proveedor = item.proveedor || '-';
+                var yaVinculado = yaEstaVinculadoEnEdicion($form, item.idCompra);
+                var esActual = item.esActual === true;
+                var textoBoton = esActual ? 'Pesaje actual' : (yaVinculado ? 'Ya vinculado' : 'Vincular');
+                var disabled = esActual || yaVinculado;
+
+                html += '<tr>'
+                    + '<td>' + escapeHtml(item.idCompra || 0) + '</td>'
+                    + '<td>' + escapeHtml(item.fechaCompra || '-') + '</td>'
+                    + '<td><div class="font-weight-bold">' + escapeHtml(proveedor) + '</div>'
+                    + (item.tipoCompra ? '<div class="small text-muted">' + escapeHtml(item.tipoCompra) + '</div>' : '')
+                    + '</td>'
+                    + '<td class="text-right font-weight-bold">' + escapeHtml(item.cantMedias || 0) + '</td>'
+                    + '<td class="text-right font-weight-bold">' + formatNumber(item.kgsMedias || item.totalKg || 0, 3) + '</td>'
+                    + '<td>' + escapeHtml(item.sucursal || '-') + '</td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-info" data-action="toggle-detalle-vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-target="#' + detailId + '" aria-expanded="false" aria-controls="' + detailId + '"><i class="fas fa-list mr-1"></i>Detalle</button></td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm ' + (disabled ? 'btn-outline-secondary' : 'btn-info') + '" data-action="vincular-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '"' + (disabled ? ' disabled="disabled"' : '') + '>' + textoBoton + '</button></td>'
+                    + '</tr>';
+                html += '<tr class="bg-light">'
+                    + '<td colspan="8" class="p-0">'
+                    + '<div id="' + detailId + '" class="collapse">'
+                    + '<div class="p-3"><div class="text-muted">Presione Detalle para cargar las líneas del pesaje.</div></div>'
+                    + '</div>'
+                    + '</td>'
+                    + '</tr>';
+            });
+        }
+
+        $('#tbodyVincularPesajesStock').html(html);
+    }
+
+    function cargarPesajesVinculables($form) {
+        var state = getState($form);
+        if (!state.config.urls || !state.config.urls.ultimosPesajesVinculables || state.loadingPesajesVinculables) return;
+
+        state.loadingPesajesVinculables = true;
+        clearVincularPesajesWarning();
+        $('#lblSucursalVincularPesajesStock').text($form.find('#IdSucursal option:selected').text() || '-');
+        $('#tbodyVincularPesajesStock').html('<tr><td colspan="8" class="text-center text-muted py-4">Cargando...</td></tr>');
+
+        $.ajax({
+            url: state.config.urls.ultimosPesajesVinculables,
+            method: 'GET',
+            cache: false,
+            data: {
+                idSucursal: parseInt($form.find('#IdSucursal').val(), 10) || 0,
+                idCompraActual: parseInt($form.find('#IdCompra').val(), 10) || 0,
+                soloPesajes: true,
+                proveedor: $.trim($('#txtFiltroProveedorVincularPesajes').val() || ''),
+                fechaDesde: $('#txtFechaDesdeVincularPesajes').val() || '',
+                fechaHasta: $('#txtFechaHastaVincularPesajes').val() || ''
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok !== true) {
+                showVincularPesajesWarning((resp && resp.mensaje) || 'No se pudieron cargar los pesajes.');
+                renderPesajesVinculables($form, []);
+                return;
+            }
+
+            renderPesajesVinculables($form, resp.items || []);
+        }).fail(function () {
+            showVincularPesajesWarning('No se pudieron cargar los pesajes.');
+            renderPesajesVinculables($form, []);
+        }).always(function () {
+            state.loadingPesajesVinculables = false;
+        });
+    }
+
+    function scheduleCargaPesajesVinculables($form) {
+        var state = getState($form);
+        window.clearTimeout(state.filtrosPesajesTimer);
+        state.filtrosPesajesTimer = window.setTimeout(function () {
+            cargarPesajesVinculables($form);
+        }, 250);
+    }
+
+    function vincularPesaje($form, $button) {
+        if (!$button || !$button.length) return;
+
+        var idCompra = parseInt($button.data('id-compra'), 10) || 0;
+        if (idCompra <= 0) {
+            showVincularPesajesWarning('Seleccione un pesaje válido.');
+            return;
+        }
+
+        if (yaEstaVinculadoEnEdicion($form, idCompra)) {
+            showVincularPesajesWarning('Ese pesaje ya fue vinculado en esta edición.');
+            return;
+        }
+
+        $button.prop('disabled', true);
+        clearVincularPesajesWarning();
+
+        cargarDetalleCompraPesaje($form, idCompra, function (item) {
+            var state = getState($form);
+            var lineasAgregadas = 0;
+            var textoPesaje = (item.fechaCompra || '-') + ' | ' + (item.proveedor || '-');
+
+            $.each(item.lineas || [], function (_, linea) {
+                var idCorte = parseInt(linea.idCorte, 10) || 0;
+                if (idCorte <= 0) return;
+
+                state.lineas.push(normalizeLinea({
+                    idCorte: idCorte,
+                    codigo: linea.codigo || '',
+                    producto: linea.producto || '',
+                    cantKgs: toNumber(linea.kilos),
+                    balanza: false,
+                    creadoTexto: fechaHoraActualTexto(),
+                    pesable: linea.pesable === true,
+                    noContado: false,
+                    idPesajeVinculado: idCompra,
+                    pesajeVinculadoTexto: textoPesaje
+                }));
+                lineasAgregadas++;
+            });
+
+            if (!lineasAgregadas) {
+                showVincularPesajesWarning('El pesaje seleccionado no tiene líneas de cortes para vincular.');
+                $button.prop('disabled', false);
+                return;
+            }
+
+            renderLineas($form);
+            scheduleDraft($form);
+            getVincularPesajesModal().modal('hide');
+            mostrarExitoVinculacion($form, '');
+            $button.prop('disabled', false);
+        }, function (mensaje) {
+            showVincularPesajesWarning(mensaje || 'No se pudo vincular el pesaje.');
+            $button.prop('disabled', false);
+        });
+    }
+
     function generarAjustePesaje($form) {
         var state = getState($form);
         if (!state.config.urls || !state.config.urls.generarAjustePesaje || state.generandoAjuste) return;
@@ -893,16 +1226,20 @@
             }
         }).done(function (resp) {
             if (!resp || resp.ok !== true) {
-                showPorcentajeWarning((resp && resp.mensaje) || 'No se pudo generar el ajuste.');
+                var mensajeError = (resp && resp.mensaje) || 'No se pudo generar el ajuste.';
+                showPorcentajeWarning(mensajeError);
+                mostrarResultadoAjustePesaje(false, mensajeError);
                 return;
             }
 
             actualizarEstadoAjustePesaje($form, resp.estado || 'Actualizado');
             getPorcentajesModal().modal('hide');
             showFeedback($form, resp.mensaje || 'El Ajuste de Stock se realizó correctamente.');
+            mostrarResultadoAjustePesaje(true, resp.mensaje || 'El Ajuste de Stock se realizÃ³ correctamente.');
             loadPorcentajesPesaje($form);
         }).fail(function () {
             showPorcentajeWarning('No se pudo generar el ajuste.');
+            mostrarResultadoAjustePesaje(false, 'No se pudo generar el ajuste.');
         }).always(function () {
             state.generandoAjuste = false;
             if ($.trim($('#lblEstadoAjusteModalStock').text() || '').toLowerCase() !== 'actualizado') {
@@ -1639,7 +1976,9 @@
             balanza: $form.find('#chkBalanzaLinea').is(':checked') && esPesableActual($form),
             creadoTexto: fechaHoraActualTexto(),
             pesable: esPesableActual($form),
-            noContado: false
+            noContado: false,
+            idPesajeVinculado: 0,
+            pesajeVinculadoTexto: ''
         };
     }
 
@@ -1664,12 +2003,14 @@
         var $modalNoCargados = getNoCargadosModal();
         var $modalPorcentajes = getPorcentajesModal();
         var $modalComprasPesaje = getComprasPesajeModal();
+        var $modalVincularPesajes = getVincularPesajesModal();
 
         $form.off('.stock');
         $(document).off('.stock');
         $modalNoCargados.off('.stockModal');
         $modalPorcentajes.off('.stockPorcentaje');
         $modalComprasPesaje.off('.stockCompras');
+        $modalVincularPesajes.off('.stockVincular');
 
         $form.on('input.stock change.stock', '#IdSucursal, #FechaCompra, #Observaciones, #CantMedias, #KgsMedias', function () {
             actualizarContextoNoCargados($form);
@@ -1719,8 +2060,15 @@
         });
 
         $form.on('click.stock', '#btnSeleccionarCompraPesaje', function () {
+            resetFiltrosComprasPesaje();
             cargarComprasPesaje($form);
             $modalComprasPesaje.modal('show');
+        });
+
+        $form.on('click.stock', '#btnVincularPesajes', function () {
+            resetFiltrosPesajesVinculables();
+            cargarPesajesVinculables($form);
+            $modalVincularPesajes.modal('show');
         });
 
         $form.on('click.stock', '#btnVerPorcentajePesaje', function () {
@@ -1756,7 +2104,37 @@
         });
 
         $modalComprasPesaje.on('shown.bs.modal.stockCompras', function () {
-            $(this).find('[data-action="select-compra-pesaje"]').first().focus();
+            $(this).find('#txtFiltroProveedorComprasPesaje').focus().select();
+        });
+
+        $modalComprasPesaje.on('input.stockCompras change.stockCompras', '#txtFiltroProveedorComprasPesaje, #txtFechaDesdeComprasPesaje, #txtFechaHastaComprasPesaje', function () {
+            scheduleCargaComprasPesaje($form);
+        });
+
+        $modalComprasPesaje.on('click.stockCompras', '#btnLimpiarFiltrosComprasPesaje', function () {
+            resetFiltrosComprasPesaje();
+            cargarComprasPesaje($form);
+        });
+
+        $modalVincularPesajes.on('click.stockVincular', '[data-action="toggle-detalle-vincular-pesaje"]', function () {
+            toggleDetalleCompraPesaje($form, $(this));
+        });
+
+        $modalVincularPesajes.on('click.stockVincular', '[data-action="vincular-pesaje"]', function () {
+            vincularPesaje($form, $(this));
+        });
+
+        $modalVincularPesajes.on('shown.bs.modal.stockVincular', function () {
+            $(this).find('#txtFiltroProveedorVincularPesajes').focus().select();
+        });
+
+        $modalVincularPesajes.on('input.stockVincular change.stockVincular', '#txtFiltroProveedorVincularPesajes, #txtFechaDesdeVincularPesajes, #txtFechaHastaVincularPesajes', function () {
+            scheduleCargaPesajesVinculables($form);
+        });
+
+        $modalVincularPesajes.on('click.stockVincular', '#btnLimpiarFiltrosVincularPesajes', function () {
+            resetFiltrosPesajesVinculables();
+            cargarPesajesVinculables($form);
         });
 
         $modalNoCargados.on('input.stockModal change.stockModal', '#txtBuscarNoCargadosStock, #filtroStockNoCargados', function () {

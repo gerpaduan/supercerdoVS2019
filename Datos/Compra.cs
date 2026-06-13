@@ -159,6 +159,26 @@ namespace Datos
             );
         }
 
+        public void actualizarObservacionesCompra(int idCompra, string observaciones, int actualizadoPor)
+        {
+            const string sql =
+                "UPDATE Compras " +
+                "SET observaciones = @observaciones, actualizado = GETDATE(), actualizadoPor = @actualizadoPor " +
+                "WHERE idCompra = @idCompra;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@idCompra", SqlDbType.Int).Value = idCompra;
+                    p.Add("@observaciones", SqlDbType.NVarChar).Value = observaciones ?? "";
+                    p.Add("@actualizadoPor", SqlDbType.Int).Value = actualizadoPor;
+                }
+            );
+        }
+
         public float getTotalCompra(int idCompra, string tipoCompra)
         {
             string consulta = "";

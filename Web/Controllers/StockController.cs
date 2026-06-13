@@ -69,13 +69,18 @@ namespace Web.Controllers
             public int CantMedias { get; set; }
             public float KgsMedias { get; set; }
             public float TotalKg { get; set; }
+            public string Sucursal { get; set; }
+            public bool EsActual { get; set; }
         }
 
         private class CompraPesajeSeleccionLineaVm
         {
+            public int IdCorte { get; set; }
+            public long Codigo { get; set; }
             public string Producto { get; set; }
             public string CantidadTexto { get; set; }
             public string KilosTexto { get; set; }
+            public bool Pesable { get; set; }
         }
 
         private Negocio.Compra oCompraN;
@@ -550,6 +555,8 @@ namespace Web.Controllers
                 if (EsEgreso(tipoOperacion) && cantidad > 0)
                     cantidad = cantidad * -1;
 
+                DateTime creadoLinea = ParseFechaHoraStockLinea(linea.CreadoTexto) ?? DateTime.Now;
+
                 lineas.Add(new Entidades.CortePorCompra
                 {
                     Compra = compra,
@@ -562,7 +569,7 @@ namespace Web.Controllers
                     Iva_compra = 0,
                     Balanza = linea.Balanza,
                     Sucursal = sucursal,
-                    Creado = DateTime.Now,
+                    Creado = creadoLinea,
                     CreadoPor = user
                 });
             }
@@ -570,6 +577,7 @@ namespace Web.Controllers
             try
             {
                 oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
+                RegistrarObservacionesPesajesVinculados(compra, model.PesajesVinculadosIds, user);
                 TempData["StockSuccessMessage"] = model.IdCompra > 0
                     ? "El movimiento de stock se guardó correctamente."
                     : "El movimiento de stock se registró correctamente.";
@@ -640,7 +648,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public JsonResult UltimasComprasPesaje(int idSucursal = 0)
+        public JsonResult UltimasComprasPesaje(int idSucursal = 0, int idCompraActual = 0, bool soloPesajes = false, bool soloComprasPesaje = false, string proveedor = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
@@ -655,9 +663,12 @@ namespace Web.Controllers
                 if (sucursal <= 0)
                     return Json(new { ok = false, mensaje = "Seleccione una sucursal valida." }, JsonRequestBehavior.AllowGet);
 
-                DateTime desde = DateTime.Today.AddDays(-7);
-                DateTime hasta = DateTime.Today.AddDays(1);
-                DataTable dt = oCompraN.obtenerCompras(sucursal, "Todos", "", desde, hasta, null) ?? new DataTable();
+                DateTime desde = fechaDesde.HasValue ? fechaDesde.Value.Date : DateTime.Today.AddDays(-7);
+                DateTime hasta = fechaHasta.HasValue ? fechaHasta.Value.Date.AddDays(1) : DateTime.Today.AddDays(1);
+                string proveedorFiltro = (proveedor ?? "").Trim();
+                DataTable dt = soloComprasPesaje
+                    ? UnirComprasParaPesajeSeleccion(sucursal, desde, hasta)
+                    : oCompraN.obtenerCompras(sucursal, NormalizarTipoFiltro("Todos"), "", desde, hasta, null) ?? new DataTable();
                 var items = new List<CompraPesajeListadoVm>();
 
                 var idsProcesados = new HashSet<int>();
@@ -678,13 +689,25 @@ namespace Web.Controllers
                     if (row.Table.Columns.Contains("tipoCompra") && row["tipoCompra"] != DBNull.Value)
                     {
                         string tipoCompra = Convert.ToString(row["tipoCompra"]);
-                        if (TiposStock.Any(x => string.Equals(x, tipoCompra, StringComparison.OrdinalIgnoreCase)))
+                        if (soloPesajes)
+                        {
+                            if (!EsPesaje(tipoCompra))
+                                continue;
+                        }
+                        else if (soloComprasPesaje && !EsCompraSeleccionableParaPesaje(tipoCompra))
+                        {
                             continue;
+                        }
                     }
 
                     DateTime fechaCompra = row.Table.Columns.Contains("fechaCompra") && row["fechaCompra"] != DBNull.Value
                         ? Convert.ToDateTime(row["fechaCompra"])
                         : DateTime.MinValue;
+                    string proveedorNombre = row.Table.Columns.Contains("razonSocial") && row["razonSocial"] != DBNull.Value ? Convert.ToString(row["razonSocial"]) : "";
+                    if (!string.IsNullOrWhiteSpace(proveedorFiltro)
+                        && proveedorNombre.IndexOf(proveedorFiltro, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+
                     int cantMedias = row.Table.Columns.Contains("cantMedias") && row["cantMedias"] != DBNull.Value
                         ? Convert.ToInt32(row["cantMedias"])
                         : 0;
@@ -700,15 +723,16 @@ namespace Web.Controllers
                         IdCompra = idCompra,
                         IdProveedor = row.Table.Columns.Contains("idProveedor") && row["idProveedor"] != DBNull.Value ? Convert.ToInt32(row["idProveedor"]) : 0,
                         FechaCompraTexto = fechaCompra != DateTime.MinValue ? fechaCompra.ToString("dd/MM/yyyy HH:mm") : "-",
-                        Proveedor = row.Table.Columns.Contains("razonSocial") && row["razonSocial"] != DBNull.Value ? Convert.ToString(row["razonSocial"]) : "",
+                        Proveedor = proveedorNombre,
                         TipoCompra = row.Table.Columns.Contains("tipoCompra") && row["tipoCompra"] != DBNull.Value ? Convert.ToString(row["tipoCompra"]) : "",
                         CantMedias = cantMedias,
                         KgsMedias = kgsMedias,
-                        TotalKg = totalKg
+                        TotalKg = totalKg,
+                        Sucursal = row.Table.Columns.Contains("Sucursal") && row["Sucursal"] != DBNull.Value
+                            ? Convert.ToString(row["Sucursal"])
+                            : (row.Table.Columns.Contains("sucursal") && row["sucursal"] != DBNull.Value ? Convert.ToString(row["sucursal"]) : ""),
+                        EsActual = idCompraActual > 0 && idCompra == idCompraActual
                     });
-
-                    if (items.Count >= 5)
-                        break;
                 }
 
                 return Json(new
@@ -723,7 +747,9 @@ namespace Web.Controllers
                         tipoCompra = c.TipoCompra,
                         cantMedias = c.CantMedias,
                         kgsMedias = c.KgsMedias,
-                        totalKg = c.TotalKg
+                        totalKg = c.TotalKg,
+                        sucursal = c.Sucursal,
+                        esActual = c.EsActual
                     }).ToList()
                 }, JsonRequestBehavior.AllowGet);
             }
@@ -752,7 +778,8 @@ namespace Web.Controllers
                 if (compra == null || compra.IdCompra <= 0)
                     return Json(new { ok = false, mensaje = "No se encontro la compra seleccionada." }, JsonRequestBehavior.AllowGet);
 
-                if (TiposStock.Any(x => string.Equals(x, compra.TipoCompra, StringComparison.OrdinalIgnoreCase)))
+                if (TiposStock.Any(x => string.Equals(x, compra.TipoCompra, StringComparison.OrdinalIgnoreCase))
+                    && !EsPesaje(compra.TipoCompra))
                     return Json(new { ok = false, mensaje = "La compra seleccionada no aplica para pesaje." }, JsonRequestBehavior.AllowGet);
 
                 var lineas = ConstruirLineasCompraParaSeleccion(compra);
@@ -775,9 +802,12 @@ namespace Web.Controllers
                         totalKg = totalKg,
                         lineas = lineas.Select(l => new
                         {
+                            idCorte = l.IdCorte,
+                            codigo = l.Codigo,
                             producto = l.Producto,
                             cantidad = l.CantidadTexto,
-                            kilos = l.KilosTexto
+                            kilos = l.KilosTexto,
+                            pesable = l.Pesable
                         }).ToList()
                     }
                 }, JsonRequestBehavior.AllowGet);
@@ -984,9 +1014,55 @@ namespace Web.Controllers
 
         private static bool EsPesaje(string tipoCompra)
         {
-            return string.Equals(tipoCompra,
-                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes),
-                StringComparison.OrdinalIgnoreCase);
+            string tipo = (tipoCompra ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(tipo))
+                return false;
+
+            return string.Equals(tipo,
+                    Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes),
+                    StringComparison.OrdinalIgnoreCase)
+                || string.Equals(tipo, "Pesaje", StringComparison.OrdinalIgnoreCase)
+                || tipo.IndexOf("Pesaje", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool EsCompraSeleccionableParaPesaje(string tipoCompra)
+        {
+            string tipo = (tipoCompra ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(tipo))
+                return false;
+
+            return string.Equals(tipo,
+                    Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes),
+                    StringComparison.OrdinalIgnoreCase)
+                || string.Equals(tipo,
+                    Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes),
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private DataTable UnirComprasParaPesajeSeleccion(int sucursal, DateTime desde, DateTime hasta)
+        {
+            var tipos = new[]
+            {
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes),
+                Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)
+            };
+
+            DataTable resultado = null;
+            foreach (string tipo in tipos)
+            {
+                DataTable dtTipo = oCompraN.obtenerCompras(sucursal, tipo, "", desde, hasta, null) ?? new DataTable();
+                if (resultado == null)
+                {
+                    resultado = dtTipo.Clone();
+                }
+
+                foreach (DataRow row in dtTipo.Rows)
+                {
+                    resultado.ImportRow(row);
+                }
+            }
+
+            return resultado ?? new DataTable();
         }
 
         private static bool EsAjuste(string tipoCompra)
@@ -1254,7 +1330,10 @@ namespace Web.Controllers
                 DraftKey = BuildDraftKey(user, compra.Sucursal != null ? compra.Sucursal.IdSucursal : (user != null ? user.IdSucursal : 0), compra.TipoCompra, compra.IdCompra)
             };
 
-            var cortes = oCompraN.convertCortesPorCompraToList(compra.IdCompra);
+            var cortes = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
+                .OrderBy(c => c.Creado ?? DateTime.MinValue)
+                .ThenBy(c => c.IdCortePorCompra)
+                .ToList();
             int index = 0;
             foreach (var corte in cortes)
             {
@@ -1268,7 +1347,9 @@ namespace Web.Controllers
                     CantKgs = corte.CantKgs,
                     Balanza = corte.Balanza,
                     CreadoTexto = FormatearFechaHora(corte.Creado),
-                    Pesable = corte.Corte != null && corte.Corte.Pesable
+                    Pesable = corte.Corte != null && corte.Corte.Pesable,
+                    IdPesajeVinculado = null,
+                    PesajeVinculadoTexto = ""
                 });
             }
 
@@ -1684,9 +1765,12 @@ namespace Web.Controllers
                 float kilos = corte.CantKgs;
                 lineas.Add(new CompraPesajeSeleccionLineaVm
                 {
+                    IdCorte = corte.Corte != null ? corte.Corte.IdCorte : 0,
+                    Codigo = corte.Corte != null ? corte.Corte.Codigo : 0,
                     Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
                     CantidadTexto = kilos.ToString("N3"),
-                    KilosTexto = kilos.ToString("N3")
+                    KilosTexto = kilos.ToString("N3"),
+                    Pesable = corte.Corte != null && corte.Corte.Pesable
                 });
             }
 
@@ -1708,6 +1792,68 @@ namespace Web.Controllers
             return lineas;
         }
 
+        private void RegistrarObservacionesPesajesVinculados(Entidades.Compra compraDestino, List<int> pesajesVinculadosIds, Entidades.Usuario user)
+        {
+            if (compraDestino == null || compraDestino.IdCompra <= 0 || pesajesVinculadosIds == null || pesajesVinculadosIds.Count == 0)
+                return;
+
+            var ids = pesajesVinculadosIds
+                .Where(id => id > 0 && id != compraDestino.IdCompra)
+                .Distinct()
+                .ToList();
+
+            if (ids.Count == 0)
+                return;
+
+            string observacionesDestino = compraDestino.Observaciones ?? "";
+            foreach (int idPesaje in ids)
+            {
+                var compraOrigen = oCompraN.findById_convertToCompra(idPesaje);
+                if (compraOrigen == null || compraOrigen.IdCompra <= 0)
+                    continue;
+
+                string proveedor = compraOrigen.Proveedor != null ? compraOrigen.Proveedor.RazonSocial : "-";
+                string fecha = compraOrigen.FechaCompra.ToString("dd/MM/yyyy HH:mm");
+                string kilos = (compraOrigen.KgsMedias ?? 0f).ToString("N3");
+
+                string marcaDestino = "Pesaje vinculado ID: " + compraOrigen.IdCompra;
+                string textoDestino = marcaDestino + " | Fecha: " + fecha + " | Proveedor: " + proveedor + " | Kilos: " + kilos;
+                observacionesDestino = AgregarObservacionSiNoExiste(observacionesDestino, marcaDestino, textoDestino);
+
+                string marcaOrigen = "Pesaje vinculado a Pesaje ID: " + compraDestino.IdCompra;
+                string textoOrigen = marcaOrigen;
+                string nuevasObsOrigen = AgregarObservacionSiNoExiste(compraOrigen.Observaciones, marcaOrigen, textoOrigen);
+                if (!string.Equals(nuevasObsOrigen, compraOrigen.Observaciones ?? "", StringComparison.Ordinal))
+                {
+                    oCompraN.actualizarObservacionesCompra(compraOrigen.IdCompra, nuevasObsOrigen, user);
+                }
+            }
+
+            if (!string.Equals(observacionesDestino, compraDestino.Observaciones ?? "", StringComparison.Ordinal))
+            {
+                oCompraN.actualizarObservacionesCompra(compraDestino.IdCompra, observacionesDestino, user);
+            }
+        }
+
+        private static string AgregarObservacionSiNoExiste(string observacionesActuales, string marcaBusqueda, string textoAgregar)
+        {
+            string actuales = (observacionesActuales ?? "").Trim();
+            string marca = (marcaBusqueda ?? "").Trim();
+            string texto = (textoAgregar ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(texto))
+                return actuales;
+
+            if (!string.IsNullOrWhiteSpace(marca)
+                && actuales.IndexOf(marca, StringComparison.OrdinalIgnoreCase) >= 0)
+                return actuales;
+
+            if (string.IsNullOrWhiteSpace(actuales))
+                return texto;
+
+            return actuales + Environment.NewLine + texto;
+        }
+
         private static float ParseFloatFlexibleLocal(string text)
         {
             float value;
@@ -1715,6 +1861,31 @@ namespace Web.Controllers
                 || float.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out value)
                 ? value
                 : 0f;
+        }
+
+        private static DateTime? ParseFechaHoraStockLinea(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            DateTime value;
+            string[] formatos =
+            {
+                "dd/MM/yyyy HH:mm",
+                "d/M/yyyy HH:mm",
+                "dd/MM/yyyy H:mm",
+                "d/M/yyyy H:mm"
+            };
+
+            if (DateTime.TryParseExact(text.Trim(), formatos, CultureInfo.CurrentCulture, DateTimeStyles.None, out value)
+                || DateTime.TryParseExact(text.Trim(), formatos, CultureInfo.InvariantCulture, DateTimeStyles.None, out value)
+                || DateTime.TryParse(text.Trim(), CultureInfo.CurrentCulture, DateTimeStyles.None, out value)
+                || DateTime.TryParse(text.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.None, out value))
+            {
+                return value;
+            }
+
+            return null;
         }
 
         private static string BuildDraftKey(Entidades.Usuario user, int idSucursal, string tipoCompra, int idCompra)

@@ -111,6 +111,61 @@
 @section Scripts {
     <script>
         (function () {
+            var storageKey = "elaborados_index_filters_v1";
+            var form = document.getElementById('formFiltrosElaborados');
+            var inputFechaDesde = document.getElementById('fechaDesde');
+            var inputFechaHasta = document.getElementById('fechaHasta');
+            var inputSucursal = document.getElementById('idSucursal');
+            var inputElaborado = document.getElementById('elaborado');
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursal: inputSucursal ? inputSucursal.value : "",
+                    elaborado: inputElaborado ? inputElaborado.value : ""
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search) return;
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.idSucursal) params.set("idSucursal", state.idSucursal);
+                    if (state.elaborado) params.set("elaborado", state.elaborado);
+                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+
+                    var query = params.toString();
+                    if (query) {
+                        window.location.replace(form.action + "?" + query);
+                    }
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+
+            if (form) {
+                form.addEventListener("submit", saveState);
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+            }
+
             var successAlert = document.getElementById('elaboradosSuccessAlert');
             if (successAlert) {
                 window.setTimeout(function () {

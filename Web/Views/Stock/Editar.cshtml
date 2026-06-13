@@ -55,6 +55,7 @@
                 @Html.HiddenFor(m => m.IdProveedor)
                 @Html.HiddenFor(m => m.DraftKey)
                 <div id="lineasHiddenContainer"></div>
+                <div id="pesajesVinculadosHiddenContainer"></div>
 
                 <div class="row">
                     <div class="col-12 col-lg-3">
@@ -102,7 +103,7 @@
                 </div>
 
                 <div class="row @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
-                        <div class="col-12 col-lg-5">
+                        <div class="col-12 col-lg-4">
                             <div class="form-group">
                                 <label for="razonSocial">Proveedor</label>
                                 <div class="input-group">
@@ -131,11 +132,19 @@
                                 <input type="text" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
                             </div>
                         </div>
-                        <div class="col-12 col-lg-3 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
+                        <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
                             <div class="form-group mb-lg-0">
                                 <label class="d-none d-lg-block">&nbsp;</label>
                                 <button type="button" class="btn btn-outline-primary btn-block" id="btnSeleccionarCompraPesaje">
                                     <i class="fas fa-shopping-basket mr-1"></i> Seleccionar compra
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnVincularPesaje">
+                            <div class="form-group mb-lg-0">
+                                <label class="d-none d-lg-block">&nbsp;</label>
+                                <button type="button" class="btn btn-outline-info btn-block" id="btnVincularPesajes">
+                                    <i class="fas fa-link mr-1"></i> Vincular pesajes
                                 </button>
                             </div>
                         </div>
@@ -237,6 +246,7 @@
 
                         <div id="stockFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                         <div id="stockWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                        <div id="stockPesajesVinculadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
 
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm" id="tablaLineasStock">
@@ -304,11 +314,69 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalVincularPesajesStock" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Vincular pesajes</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="stockVincularPesajesWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                <div class="small text-muted mb-1">Se muestran solo pesajes de la misma sucursal, ordenados del m&aacute;s reciente al m&aacute;s antiguo.</div>
+                <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalVincularPesajesStock">-</strong></div>
+                <div class="row align-items-end mb-3">
+                    <div class="col-12 col-lg-4">
+                        <label for="txtFiltroProveedorVincularPesajes">Proveedor</label>
+                        <input type="text" id="txtFiltroProveedorVincularPesajes" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaDesdeVincularPesajes">Fecha desde</label>
+                        <input type="date" id="txtFechaDesdeVincularPesajes" class="form-control" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaHastaVincularPesajes">Fecha hasta</label>
+                        <input type="date" id="txtFechaHastaVincularPesajes" class="form-control" />
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <button type="button" class="btn btn-outline-secondary btn-block" id="btnLimpiarFiltrosVincularPesajes">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0" id="tablaVincularPesajesStock">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:70px;">ID</th>
+                                <th style="width:150px;">Fecha</th>
+                                <th>Proveedor</th>
+                                <th class="text-right" style="width:110px;">Medias</th>
+                                <th class="text-right" style="width:110px;">Kilos</th>
+                                <th style="width:150px;">Sucursal</th>
+                                <th class="text-center" style="width:120px;">Detalle</th>
+                                <th class="text-center" style="width:140px;">Acci&oacute;n</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVincularPesajesStock">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalPorcentajesPesajeStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title">Ver Porcentaje Prods.</h5>
+                <h5 class="modal-title">Ver Porcentaje Cortes</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -455,8 +523,27 @@
             </div>
             <div class="modal-body">
                 <div id="stockComprasPesajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
-                <div class="small text-muted mb-1">Se muestran las compras de la ultima semana, de todos los tipos, para la sucursal seleccionada en este pesaje.</div>
+                <div class="small text-muted mb-1">Se muestran compras de Cortes y Media Res de la misma sucursal, ordenadas de la m&aacute;s reciente a la m&aacute;s antigua.</div>
                 <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalComprasPesajeStock">-</strong></div>
+                <div class="row align-items-end mb-3">
+                    <div class="col-12 col-lg-4">
+                        <label for="txtFiltroProveedorComprasPesaje">Proveedor</label>
+                        <input type="text" id="txtFiltroProveedorComprasPesaje" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaDesdeComprasPesaje">Fecha desde</label>
+                        <input type="date" id="txtFechaDesdeComprasPesaje" class="form-control" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaHastaComprasPesaje">Fecha hasta</label>
+                        <input type="date" id="txtFechaHastaComprasPesaje" class="form-control" />
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <button type="button" class="btn btn-outline-secondary btn-block" id="btnLimpiarFiltrosComprasPesaje">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered mb-0" id="tablaComprasPesajeStock">
                         <thead class="thead-light">
@@ -510,7 +597,7 @@
         }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=23")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=25")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {
@@ -535,6 +622,7 @@
                     buscarCorte: "@Url.Action("BuscarCorte", "Stock")",
                     buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Stock")",
                     ultimasComprasPesaje: "@Url.Action("UltimasComprasPesaje", "Stock")",
+                    ultimosPesajesVinculables: "@Url.Action("UltimasComprasPesaje", "Stock")",
                     detalleCompraPesaje: "@Url.Action("DetalleCompraPesaje", "Stock")",
                     verPorcentajesPesaje: "@Url.Action("VerPorcentajesPesaje", "Stock")",
                     generarAjustePesaje: "@Url.Action("GenerarAjustePesaje", "Stock")",

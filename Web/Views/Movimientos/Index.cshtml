@@ -234,5 +234,66 @@
 </style>
 
 @section Scripts {
+    <script>
+        (function () {
+            var storageKey = "movimientos_index_filters_v1";
+            var form = document.querySelector('.movimientos-filtros-card form');
+            var inputFechaDesde = document.getElementById('fechaDesde');
+            var inputFechaHasta = document.getElementById('fechaHasta');
+            var inputSucursalOrigen = document.getElementById('idSucursalOrigen');
+            var inputSucursalDestino = document.getElementById('idSucursalDestino');
+            var inputVerDetalles = document.getElementById('verDetalles');
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursalOrigen: inputSucursalOrigen ? inputSucursalOrigen.value : "",
+                    idSucursalDestino: inputSucursalDestino ? inputSucursalDestino.value : "",
+                    verDetalles: inputVerDetalles ? inputVerDetalles.checked : false
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search) return;
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+                    if (state.idSucursalOrigen) params.set("idSucursalOrigen", state.idSucursalOrigen);
+                    if (state.idSucursalDestino) params.set("idSucursalDestino", state.idSucursalDestino);
+                    if (state.verDetalles) params.set("verDetalles", "true");
+
+                    var query = params.toString();
+                    if (query) {
+                        window.location.replace((form.action || window.location.pathname) + "?" + query);
+                    }
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+
+            if (form) {
+                form.addEventListener("submit", saveState);
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+            }
+        })();
+    </script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js?v=8")"></script>
 }
