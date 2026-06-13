@@ -27,12 +27,6 @@
         controller == "Parametros" ||
         (controller == "Home" && action == "Utilidades");
     bool administracionSistemaActiva = controller == "SystemAdministration";
-
-    if (user == null && !(controller == "Login" && action == "Index"))
-    {
-        Response.Redirect("~/Login/Index", false);
-        Context.ApplicationInstance.CompleteRequest();
-    }
 }
 <!DOCTYPE html>
 <html>
@@ -76,7 +70,7 @@
             top: 0;
             z-index: 25;
             display: none;
-            overflow-x: auto;
+            overflow-x: auto;   
             overflow-y: hidden;
             height: 14px;
             margin-bottom: .35rem;
@@ -650,6 +644,48 @@
                         setTheme(current === "dark" ? "light" : "dark");
                     });
                 }
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const SIDEBAR_STORAGE_KEY = "carnisys-sidebar-collapsed";
+
+            function applySidebarState(collapsed) {
+                var $body = $("body");
+                var $sidebar = $(".sidebar");
+
+                $body.toggleClass("sidebar-toggled", collapsed);
+                $sidebar.toggleClass("toggled", collapsed);
+
+                if (collapsed) {
+                    $sidebar.find(".collapse").collapse("hide");
+                }
+            }
+
+            function readSidebarState() {
+                try {
+                    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "1";
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function saveSidebarState(collapsed) {
+                try {
+                    localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? "1" : "0");
+                } catch (e) { }
+            }
+
+            $(function () {
+                applySidebarState(readSidebarState());
+
+                $(document).on("click", "#sidebarToggle, #sidebarToggleTop", function () {
+                    window.setTimeout(function () {
+                        saveSidebarState($(".sidebar").hasClass("toggled"));
+                    }, 0);
+                });
             });
         })();
     </script>

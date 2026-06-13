@@ -471,6 +471,32 @@ namespace Web.Controllers
                 0,
                 0);
 
+            // Obtener Stock Cierre (stock en la fecha hasta)
+            var dtStockCierre = oCorteN.CierreStock(
+                1,
+                "",
+                model.SucursalId > 0 ? model.SucursalId : 0,
+                model.FechaHasta,
+                model.FechaHasta,
+                null,
+                "",
+                0,
+                0);
+
+            var stockCierrePorCorte = new Dictionary<long, decimal>();
+            if (dtStockCierre != null)
+            {
+                foreach (System.Data.DataRow row in dtStockCierre.Rows)
+                {
+                    long codigo = LeerLong(row, "Codigo");
+                    if (codigo > 0)
+                    {
+                        decimal stockCierre = LeerDecimal(row, "Faltante");
+                        stockCierrePorCorte[codigo] = stockCierre;
+                    }
+                }
+            }
+
             model.ConsultaRealizada = true;
             model.FilasStockActual.Clear();
 
@@ -486,6 +512,8 @@ namespace Web.Controllers
                 return;
             }
 
+            bool tieneColumnaStockCierre = dt.Columns.Contains("Stock.Cierre");
+
             foreach (System.Data.DataRow row in dt.Rows)
             {
                 int idCorte = LeerInt(row, "idCorte");
@@ -496,10 +524,20 @@ namespace Web.Controllers
                 decimal puntoStock = LeerDecimal(row, "Pto.Stock");
                 string estado = CalcularEstadoStock(stockActual, puntoStock);
 
+                long codigo = LeerLong(row, "Codigo");
+                decimal stockCierre = tieneColumnaStockCierre
+                    ? LeerDecimal(row, "Stock.Cierre")
+                    : 0m;
+
+                if (stockCierre == 0m && codigo > 0 && stockCierrePorCorte.TryGetValue(codigo, out var sc))
+                {
+                    stockCierre = sc;
+                }
+
                 model.FilasStockActual.Add(new ReporteStockFilaVm
                 {
                     IdCorte = idCorte,
-                    Codigo = LeerLong(row, "Codigo"),
+                    Codigo = codigo,
                     Producto = LeerString(row, "Corte"),
                     IdSucursal = model.SucursalId,
                     Sucursal = LeerString(row, "Sucursal"),
@@ -520,6 +558,7 @@ namespace Web.Controllers
                     Ventas = LeerDecimal(row, "Ventas"),
                     TotalEgresos = LeerDecimal(row, "Tot.EGR"),
                     StockActual = stockActual,
+                    StockCierre = stockCierre,
                     Promedio = LeerDecimal(row, "promedio"),
                     PuntoStock = puntoStock,
                     EstadoStock = estado

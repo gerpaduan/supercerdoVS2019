@@ -11,6 +11,8 @@
         string.Equals(Model.TipoReporteSeleccionado, "Stock Actual", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(Model.TipoReporteSeleccionado, "Cierre Stock", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(Model.TipoReporteSeleccionado, "Stock Retroactivo", StringComparison.OrdinalIgnoreCase);
+    var esCierreStock =
+        string.Equals(Model.TipoReporteSeleccionado, "Cierre Stock", StringComparison.OrdinalIgnoreCase);
     var esReporteVentasProducto =
         string.Equals(Model.TipoReporteSeleccionado, "Ventas por Producto", StringComparison.OrdinalIgnoreCase);
     var esReporteProyeccion =
@@ -65,12 +67,6 @@
 }
 
 <div class="container-fluid reportes-page">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h1 class="h3 mb-1 text-gray-800">Reportes</h1>
-            <p class="text-muted mb-0">Vista unificada para ir incorporando los reportes del sistema de escritorio sin tocar lo que ya funciona.</p>
-        </div>
-    </div>
 
     <div class="card shadow-sm mb-3 reportes-filtros-card">
         <div class="card-body">
@@ -229,12 +225,12 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.NotaReporte))
+    @*@if (!string.IsNullOrWhiteSpace(Model.NotaReporte))
     {
         <div class="alert alert-light border shadow-sm mb-3">
             @Model.NotaReporte
         </div>
-    }
+    }*@
 
     @if (esReporteBalance)
     {
@@ -360,15 +356,24 @@
                                         <th class="text-right reporte-detalle-col d-none">Ingr. stock</th>
                                         <th class="text-right reporte-detalle-col d-none">Ingr. mov.</th>
                                         <th class="text-right reporte-detalle-col d-none">Ajustes</th>
-                                        <th class="text-right reporte-detalle-col d-none">Tot. ingresos</th>
+                                        <th class="text-right reporte-detalle-col d-none" title="Incluye St. inicial">Tot. ingresos*</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. stock</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. mov.</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. elab.</th>
                                         <th class="text-right reporte-detalle-col d-none">Egr. venta</th>
                                         <th class="text-right reporte-detalle-col d-none">Tot. egresos</th>
-                                        <th class="text-right">Stock actual</th>
-                                        <th class="text-right">Punto stock</th>
-                                        <th>Estado</th>
+                                        @if (esCierreStock)
+                                        {
+                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">St. inicial</th>
+                                            <th class="text-right reporte-stock-resumen-col">Stock Cierre</th>
+                                            <th class="text-right reporte-stock-resumen-col">Faltante</th>
+                                        }
+                                        else
+                                        {
+                                            <th class="text-right reporte-stock-resumen-col">Stock actual</th>
+                                        }
+                                        <th class="text-right reporte-stock-resumen-col">Punto stock</th>
+                                        <th class="reporte-stock-resumen-col">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -383,12 +388,30 @@
                                             data-idcorte="@item.IdCorte"
                                             data-producto="@item.Producto"
                                             data-codigo="@(item.Codigo > 0 ? item.Codigo.ToString() : "")"
+                                            data-stockinicial="@item.StockInicial.ToString(CultureInfo.InvariantCulture)"
+                                            data-compras="@item.Compras.ToString(CultureInfo.InvariantCulture)"
+                                            data-ingresoelaborado="@item.IngresoElaborado.ToString(CultureInfo.InvariantCulture)"
+                                            data-ingresostock="@item.IngresoStock.ToString(CultureInfo.InvariantCulture)"
+                                            data-ingresomovimiento="@item.IngresoMovimiento.ToString(CultureInfo.InvariantCulture)"
+                                            data-ajustestock="@item.AjusteStock.ToString(CultureInfo.InvariantCulture)"
                                             data-stockactual="@item.StockActual.ToString(CultureInfo.InvariantCulture)"
+                                            data-stockcierre="@item.StockCierre.ToString(CultureInfo.InvariantCulture)"
+                                            data-puntostock="@item.PuntoStock.ToString(CultureInfo.InvariantCulture)"
                                             data-totalingresos="@item.TotalIngresos.ToString(CultureInfo.InvariantCulture)"
+                                            data-egresostock="@item.EgresoStock.ToString(CultureInfo.InvariantCulture)"
+                                            data-egresomovimiento="@item.EgresoMovimiento.ToString(CultureInfo.InvariantCulture)"
+                                            data-egresoelaborado="@item.EgresoElaborado.ToString(CultureInfo.InvariantCulture)"
+                                            data-ventas="@item.Ventas.ToString(CultureInfo.InvariantCulture)"
                                             data-totalegresos="@item.TotalEgresos.ToString(CultureInfo.InvariantCulture)">
                                             <td>
-                                                <div class="font-weight-semibold">@item.Producto</div>
-                                                <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                                <div class="reporte-stock-producto-wrap">
+                                                    <div class="font-weight-semibold reporte-stock-producto-texto" title="@item.Producto">@item.Producto</div>
+                                                    <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                                    <button type="button"
+                                                            class="btn btn-link btn-sm p-0 d-md-none reporte-stock-producto-toggle">
+                                                        Ver mas
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td class="text-right reporte-detalle-col d-none">@item.StockInicial.ToString("N3")</td>
                                             <td class="text-right reporte-detalle-col d-none">@item.Compras.ToString("N3")</td>
@@ -402,9 +425,18 @@
                                             <td class="text-right reporte-detalle-col d-none">@item.EgresoElaborado.ToString("N3")</td>
                                             <td class="text-right reporte-detalle-col d-none">@item.Ventas.ToString("N3")</td>
                                             <td class="text-right reporte-detalle-col d-none">@item.TotalEgresos.ToString("N3")</td>
-                                            <td class="text-right font-weight-bold">@item.StockActual.ToString("N3")</td>
-                                            <td class="text-right">@item.PuntoStock.ToString("N3")</td>
-                                            <td>@item.EstadoStock</td>
+                                            @if (esCierreStock)
+                                            {
+                                                <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">@item.StockInicial.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col font-weight-bold">@item.StockCierre.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col">@item.StockActual.ToString("N3")</td>
+                                            }
+                                            else
+                                            {
+                                                <td class="text-right reporte-stock-resumen-col font-weight-bold">@item.StockActual.ToString("N3")</td>
+                                            }
+                                            <td class="text-right reporte-stock-resumen-col">@item.PuntoStock.ToString("N3")</td>
+                                            <td class="reporte-stock-resumen-col">@item.EstadoStock</td>
                                         </tr>
                                     }
                                     <tr id="filaSinResultadosReporte" class="d-none">
@@ -412,6 +444,9 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="reportes-tabla-nota text-muted small px-3 py-2">
+                            * Tot. ingresos incluye St. inicial.
                         </div>
                     </div>
                 }
@@ -799,6 +834,79 @@
             </div>
         </div>
     }
+
+    @if (esReporteStockDetalle)
+    {
+        <div class="modal fade" id="modalDetalleStockReporte" tabindex="-1" role="dialog" aria-labelledby="modalDetalleStockReporteLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+                <div class="modal-content reporte-stock-modal">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title" id="modalDetalleStockReporteLabel">Detalle de producto</h5>
+                            <div class="small text-muted" id="modalDetalleStockReporteCodigo">Codigo: -</div>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="reporte-stock-modal-top">
+                            <div class="reporte-stock-modal-producto">
+                                <div class="text-muted small">Producto</div>
+                                <div class="h5 mb-0" id="modalDetalleStockReporteProducto">-</div>
+                            </div>
+                            <div class="reporte-stock-modal-badges">
+                                <div class="reporte-stock-modal-kpi">
+                                    <span class="text-muted small d-block">St. inicial</span>
+                                    <strong id="modalDetalleStockReporteStockInicial">0,000</strong>
+                                </div>
+                                <div class="reporte-stock-modal-kpi">
+                                    <span class="text-muted small d-block">Stock Cierre</span>
+                                    <strong id="modalDetalleStockReporteStockCierre">0,000</strong>
+                                </div>
+                                <div class="reporte-stock-modal-kpi">
+                                    <span class="text-muted small d-block">Faltante</span>
+                                    <strong id="modalDetalleStockReporteStockActual">0,000</strong>
+                                </div>
+                                <div class="reporte-stock-modal-kpi">
+                                    <span class="text-muted small d-block">Punto stock</span>
+                                    <strong id="modalDetalleStockReportePuntoStock">0,000</strong>
+                                </div>
+                                <div class="reporte-stock-modal-kpi">
+                                    <span class="text-muted small d-block">Estado</span>
+                                    <strong id="modalDetalleStockReporteEstado">-</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reporte-stock-modal-grid">
+                            <div class="reporte-stock-modal-card reporte-stock-modal-card-ingresos">
+                                <div class="reporte-stock-modal-card-title">Solo ingresos</div>
+                                <div class="reporte-stock-modal-line"><span>Compra</span><strong id="modalDetalleStockReporteCompras">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Elaborado</span><strong id="modalDetalleStockReporteIngresoElaborado">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Stock</span><strong id="modalDetalleStockReporteIngresoStock">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Movimiento</span><strong id="modalDetalleStockReporteIngresoMovimiento">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Ajustes</span><strong id="modalDetalleStockReporteAjusteStock">0,000</strong></div>
+                                <div class="reporte-stock-modal-line reporte-stock-modal-line-total">
+                                    <span>Tot. ingresos<small class="reporte-stock-modal-line-note">Incluye St. inicial</small></span>
+                                    <strong id="modalDetalleStockReporteTotalIngresos">0,000</strong>
+                                </div>
+                            </div>
+
+                            <div class="reporte-stock-modal-card reporte-stock-modal-card-egresos">
+                                <div class="reporte-stock-modal-card-title">Egresos</div>
+                                <div class="reporte-stock-modal-line"><span>Stock</span><strong id="modalDetalleStockReporteEgresoStock">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Movimiento</span><strong id="modalDetalleStockReporteEgresoMovimiento">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Elaborado</span><strong id="modalDetalleStockReporteEgresoElaborado">0,000</strong></div>
+                                <div class="reporte-stock-modal-line"><span>Ventas</span><strong id="modalDetalleStockReporteVentas">0,000</strong></div>
+                                <div class="reporte-stock-modal-line reporte-stock-modal-line-total"><span>Tot. egresos</span><strong id="modalDetalleStockReporteTotalEgresos">0,000</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 <style>
@@ -817,11 +925,84 @@
     .reportes-tabla td {
         vertical-align: middle;
         white-space: nowrap;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+    }
+
+    .reportes-tabla th.reporte-detalle-col,
+    .reportes-tabla td.reporte-detalle-col {
+        font-size: calc(1rem - 2pt);
+        padding: .3rem .4rem;
+    }
+
+    .reportes-tabla thead th.reporte-detalle-col {
+        font-size: 0.72rem !important;
+        line-height: 1.1;
+    }
+
+    #tablaReporteStockActual thead th {
+        font-size: 0.72rem !important;
+        line-height: 1.1;
     }
 
     .reportes-tabla td:first-child {
         min-width: 240px;
         white-space: normal;
+    }
+
+    #tablaReporteStockActual th:first-child,
+    #tablaReporteStockActual td:first-child {
+        width: 30ch;
+        min-width: 30ch;
+        max-width: 30ch;
+    }
+
+    @@media (min-width: 992px) {
+        #tablaReporteStockActual.reportes-stock-detalles-activos th:first-child,
+        #tablaReporteStockActual.reportes-stock-detalles-activos td:first-child {
+            width: 23ch;
+            min-width: 23ch;
+            max-width: 23ch;
+        }
+    }
+
+    .reporte-stock-producto-wrap {
+        max-width: 100%;
+    }
+
+    .reporte-stock-producto-texto {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .reporte-stock-row {
+        cursor: default;
+    }
+
+    @@media (min-width: 768px) {
+        .reporte-stock-row {
+            cursor: pointer;
+        }
+    }
+
+    #tablaReporteStockActual tbody td {
+        line-height: 1.1;
+    }
+
+    #tablaReporteStockActual .reporte-stock-resumen-col {
+        font-size: calc(1rem - 2pt);
+    }
+
+    #tablaReporteStockActual thead .reporte-stock-resumen-col {
+        font-size: 0.72rem !important;
+        line-height: 1.1;
+    }
+
+    #tablaReporteStockActual.reportes-stock-detalles-activos .reporte-stock-resumen-inicial {
+        display: none;
     }
 
     .reportes-tabla-proyeccion-multi thead th {
@@ -1009,6 +1190,174 @@
         margin: 0 .75rem .5rem;
     }
 
+    .reporte-stock-modal .modal-header,
+    .reporte-stock-modal .modal-body {
+        background: #f8fafc;
+    }
+
+    .reporte-stock-modal-top {
+        display: grid;
+        grid-template-columns: minmax(260px, 1.2fr) minmax(0, 1.8fr);
+        align-items: start;
+        gap: 1.1rem 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .reporte-stock-modal-producto {
+        min-width: 0;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: .8rem;
+        padding: .95rem 1rem;
+    }
+
+    .reporte-stock-modal-producto .h5 {
+        word-break: break-word;
+    }
+
+    .reporte-stock-modal-badges {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        gap: .75rem;
+        width: 100%;
+    }
+
+    .reporte-stock-modal-kpi {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: .6rem;
+        padding: .75rem .9rem;
+    }
+
+    .reporte-stock-modal-kpi strong {
+        font-size: 1rem;
+        color: #1f2937;
+    }
+
+    .reporte-stock-modal-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .reporte-stock-modal-card {
+        border-radius: .75rem;
+        padding: 1rem;
+        border: 1px solid #dbe4ee;
+        min-height: 100%;
+    }
+
+    .reporte-stock-modal-card-title {
+        font-weight: 700;
+        margin-bottom: .8rem;
+    }
+
+    .reporte-stock-modal-card-neutral {
+        background: #ffffff;
+    }
+
+    .reporte-stock-modal-card-ingresos {
+        background: #eefbf3;
+        border-color: #cbead6;
+    }
+
+    .reporte-stock-modal-card-egresos {
+        background: #fff3ec;
+        border-color: #f3d4c4;
+    }
+
+    .reporte-stock-modal-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: .75rem;
+        padding: .28rem 0;
+        border-bottom: 1px dashed rgba(100, 116, 139, .18);
+    }
+
+    .reporte-stock-modal-line:last-child {
+        border-bottom: 0;
+    }
+
+    .reporte-stock-modal-line span {
+        color: #4b5563;
+    }
+
+    .reporte-stock-modal-line-note {
+        display: block;
+        margin-top: .1rem;
+        font-size: .72rem;
+        line-height: 1.2;
+        color: #64748b;
+        font-weight: 400;
+    }
+
+    .reporte-stock-modal-line strong {
+        color: #111827;
+    }
+
+    @@media (min-width: 1200px) {
+        .reporte-stock-modal .modal-dialog {
+            max-width: 1180px;
+        }
+    }
+
+    .reporte-stock-modal-line-total {
+        margin-top: .35rem;
+        padding-top: .55rem;
+        border-top: 2px solid rgba(15, 23, 42, .12);
+        border-bottom: 0;
+    }
+
+    .reporte-stock-modal-line-total strong {
+        font-size: 1.02rem;
+    }
+
+    html.dark-mode .reporte-stock-modal .modal-header,
+    html.dark-mode .reporte-stock-modal .modal-body {
+        background: #172131;
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .reporte-stock-modal .text-muted,
+    html.dark-mode .reporte-stock-modal .small.text-muted {
+        color: #9fb0c7 !important;
+    }
+
+    html.dark-mode .reporte-stock-modal-kpi {
+        background: #223047;
+        border-color: #31445f;
+    }
+
+    html.dark-mode .reporte-stock-modal-kpi strong,
+    html.dark-mode .reporte-stock-modal-line strong,
+    html.dark-mode .reporte-stock-modal-card-title {
+        color: #f8fbff;
+    }
+
+    html.dark-mode .reporte-stock-modal-card-neutral {
+        background: #223047;
+        border-color: #31445f;
+    }
+
+    html.dark-mode .reporte-stock-modal-card-ingresos {
+        background: #173329;
+        border-color: #255140;
+    }
+
+    html.dark-mode .reporte-stock-modal-card-egresos {
+        background: #3a241d;
+        border-color: #6a4033;
+    }
+
+    html.dark-mode .reporte-stock-modal-line {
+        border-bottom-color: rgba(159, 176, 199, .18);
+    }
+
+    html.dark-mode .reporte-stock-modal-line span {
+        color: #c7d2e3;
+    }
+
     @@media (min-width: 1200px) {
         .reportes-filtros-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1044,6 +1393,24 @@
         .reportes-periodo-grid {
             grid-template-columns: 1fr;
         }
+
+        #tablaReporteStockActual th:first-child,
+        #tablaReporteStockActual td:first-child {
+            width: 15ch;
+            min-width: 15ch;
+            max-width: 15ch;
+        }
+
+        .reporte-stock-modal-top,
+        .reporte-stock-modal-grid {
+            grid-template-columns: 1fr;
+            display: grid;
+        }
+
+        .reporte-stock-modal-badges {
+            grid-template-columns: 1fr;
+            width: 100%;
+        }
     }
 </style>
 
@@ -1068,5 +1435,5 @@
             ventasPorProductoSerieUrl: "@Url.Action("VentasPorProductoSerie", "Reportes")"
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260519-8")"></script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260613-1")"></script>
 }

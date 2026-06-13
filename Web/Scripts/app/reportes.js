@@ -130,6 +130,7 @@
         var $stickyPlaceholder = $();
         var $tablaStock = $("#tablaReporteStockActual");
         var $rowsStock = $tablaStock.find(".reporte-stock-row");
+        var $modalDetalleStock = $("#modalDetalleStockReporte");
         var $tablaVentas = $("#tablaReporteVentasProducto");
         var $rowsVentas = $tablaVentas.find(".reporte-ventas-row");
         var $tablaProyeccion = $("#tablaReporteProyeccionVentasStock");
@@ -242,6 +243,7 @@
         function applyDetailsMode() {
             var showDetails = $switchDetalles.length && $switchDetalles.is(":checked");
             $(".reporte-detalle-col").toggleClass("d-none", !showDetails);
+            $tablaStock.toggleClass("reportes-stock-detalles-activos", showDetails);
         }
 
         function applyReportMode(resetValues) {
@@ -414,8 +416,7 @@
                 return;
             }
 
-            var topbarHeight = $(".topbar").outerHeight() || 0;
-            var topOffset = topbarHeight + 12;
+            var topOffset = 0;
             var scrollTop = $(window).scrollTop() || 0;
             var zoneTop = zoneOffset.top;
             var zoneHeight = $floatingZone.outerHeight() || 0;
@@ -645,6 +646,33 @@
             var n = toNumber(value);
             var sign = n > 0 ? "+" : "";
             return sign + formatNumber(n, decimals) + (suffix || "");
+        }
+
+        function openStockDetailModal($row) {
+            if (!$modalDetalleStock.length || !$row || !$row.length) {
+                return;
+            }
+
+            $("#modalDetalleStockReporteProducto").text($row.attr("data-producto") || "-");
+            $("#modalDetalleStockReporteCodigo").text("Codigo: " + ($row.attr("data-codigo") || "-"));
+            $("#modalDetalleStockReporteStockActual").text(formatNumber($row.attr("data-stockactual"), 3));
+            $("#modalDetalleStockReportePuntoStock").text(formatNumber($row.attr("data-puntostock"), 3));
+            $("#modalDetalleStockReporteEstado").text($row.children("td").last().text() || "-");
+            $("#modalDetalleStockReporteStockInicial").text(formatNumber($row.attr("data-stockinicial"), 3));
+            $("#modalDetalleStockReporteCompras").text(formatNumber($row.attr("data-compras"), 3));
+            $("#modalDetalleStockReporteIngresoElaborado").text(formatNumber($row.attr("data-ingresoelaborado"), 3));
+            $("#modalDetalleStockReporteIngresoStock").text(formatNumber($row.attr("data-ingresostock"), 3));
+            $("#modalDetalleStockReporteIngresoMovimiento").text(formatNumber($row.attr("data-ingresomovimiento"), 3));
+            $("#modalDetalleStockReporteAjusteStock").text(formatNumber($row.attr("data-ajustestock"), 3));
+            $("#modalDetalleStockReporteTotalIngresos").text(formatNumber($row.attr("data-totalingresos"), 3));
+            $("#modalDetalleStockReporteEgresoStock").text(formatNumber($row.attr("data-egresostock"), 3));
+            $("#modalDetalleStockReporteEgresoMovimiento").text(formatNumber($row.attr("data-egresomovimiento"), 3));
+            $("#modalDetalleStockReporteEgresoElaborado").text(formatNumber($row.attr("data-egresoelaborado"), 3));
+            $("#modalDetalleStockReporteVentas").text(formatNumber($row.attr("data-ventas"), 3));
+            $("#modalDetalleStockReporteTotalEgresos").text(formatNumber($row.attr("data-totalegresos"), 3));
+            $("#modalDetalleStockReporteStockCierre").text(formatNumber($row.attr("data-stockcierre"), 3));
+
+            $modalDetalleStock.modal("show");
         }
 
         function applyVentasMetricToChart(idCorte, metric) {
@@ -1049,6 +1077,20 @@
 
         $(document).on("click", ".btn-toggle-grafico-ventas", function () {
             toggleVentasChart($(this));
+        });
+
+        $(document).on("dblclick", "#tablaReporteStockActual .reporte-stock-row", function () {
+            if (window.innerWidth < 768) {
+                return;
+            }
+
+            openStockDetailModal($(this));
+        });
+
+        $(document).on("click", ".reporte-stock-producto-toggle", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openStockDetailModal($(this).closest(".reporte-stock-row"));
         });
 
         $(document).on("click", ".btn-metrica-ventas", function () {

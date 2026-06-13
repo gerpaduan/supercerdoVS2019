@@ -119,6 +119,7 @@ namespace Web.Models
         public decimal Ventas { get; set; }
         public decimal TotalEgresos { get; set; }
         public decimal StockActual { get; set; }
+        public decimal StockCierre { get; set; }
         public decimal Promedio { get; set; }
         public decimal PuntoStock { get; set; }
         public string EstadoStock { get; set; }
