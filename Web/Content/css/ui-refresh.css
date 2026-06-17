@@ -773,6 +773,28 @@ body.app-shell .swal2-popup-mid {
     border-radius: 1rem !important;
 }
 
+html.dark-mode body.app-shell .swal2-popup,
+body.app-shell.dark-mode .swal2-popup {
+    background: var(--ui-surface) !important;
+    color: var(--ui-text) !important;
+    border: 1px solid var(--ui-border) !important;
+    box-shadow: var(--ui-shadow) !important;
+}
+
+html.dark-mode body.app-shell .swal2-title,
+html.dark-mode body.app-shell .swal2-html-container,
+html.dark-mode body.app-shell .swal2-content,
+body.app-shell.dark-mode .swal2-title,
+body.app-shell.dark-mode .swal2-html-container,
+body.app-shell.dark-mode .swal2-content {
+    color: var(--ui-text) !important;
+}
+
+html.dark-mode body.app-shell .swal2-styled.swal2-confirm,
+body.app-shell.dark-mode .swal2-styled.swal2-confirm {
+    box-shadow: none !important;
+}
+
 @media (max-width: 991.98px) {
     body.app-shell .container-fluid {
         max-width: 100%;

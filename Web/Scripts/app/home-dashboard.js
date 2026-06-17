@@ -382,7 +382,7 @@
             },
             {
                 label: 'A cobrar',
-                value: Number(resumen && resumen.CantidadDeudores || 0).toLocaleString('es-AR'),
+                value: Math.abs(Number(resumen && resumen.CantidadDeudores || 0)).toLocaleString('es-AR'),
                 meta: 'Personas con saldo a cobrar'
             },
             {
