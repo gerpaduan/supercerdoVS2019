@@ -87,3 +87,6 @@ bld/
 **/[Rr]eleasePublic/
 **/tools/Resharper/**/*.DotSettings.user
 **/Tools/Resharper/**/*.DotSettings.user
+
+# Ignorar proyecto AFIP local
+/AFIP/
