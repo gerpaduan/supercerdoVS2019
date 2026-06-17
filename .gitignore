@@ -88,5 +88,5 @@ bld/
 **/tools/Resharper/**/*.DotSettings.user
 **/Tools/Resharper/**/*.DotSettings.user
 
-# Ignorar proyecto AFIP local
-/AFIP/
+# Ignorar carpeta AFIP dentro de Web
+/Web/AFIP/
