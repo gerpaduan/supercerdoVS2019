@@ -17,6 +17,7 @@ namespace Web.Controllers
     {
         private const string GenericRecoveryMessage = "Si los datos ingresados corresponden a un usuario registrado, recibirás instrucciones para recuperar tu contraseña.";
 
+        private const string SessionKeyUbicacionLoginValidada = "UbicacionLoginValidada";
         private const decimal PrecisionMaximaLoginMetros = 150m;
         private Negocio.Usuario oUsuarioN;
         private Negocio.Sucursal oSucursalN;
@@ -77,14 +78,6 @@ namespace Web.Controllers
                 if (user != null)
                     user.SucursalNombre = sucNombre ?? "";
 
-                string errorUbicacion = null;
-                if (!ValidarUbicacionLoginEmpresa(user, model, out errorUbicacion))
-                {
-                    model.Clave = "";
-                    model.Error = errorUbicacion;
-                    return View("~/Views/Login/Index.cshtml", model);
-                }
-
                 Session["Usuario"] = user;
                 Session["IdEmpresa"] = user != null ? user.IdEmpresa : 0;
                 Session.Remove("PARAM_CTX");
@@ -93,10 +86,13 @@ namespace Web.Controllers
                 paramCtx.Reload();
                 Session["PARAM_CTX"] = paramCtx;
 
-                if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-                    return Redirect(model.ReturnUrl);
+                bool requiereValidacionUbicacion = RequiereValidacionUbicacionPostLogin(user);
+                Session[SessionKeyUbicacionLoginValidada] = !requiereValidacionUbicacion;
 
-                return RedirectToAction("Index", "Home");
+                if (requiereValidacionUbicacion)
+                    return RedirectToAction("ValidarUbicacion", "Login", new { returnUrl = model.ReturnUrl });
+
+                return RedirigirPostLogin(model.ReturnUrl);
             }
 
             model.Clave = "";
@@ -111,6 +107,78 @@ namespace Web.Controllers
         public ActionResult ForgotPassword()
         {
             return View("~/Views/Login/ForgotPassword.cshtml", new PasswordRecoveryRequestVm());
+        }
+
+        [HttpGet]
+        public ActionResult ValidarUbicacion(string returnUrl = "")
+        {
+            var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
+            if (usuarioSesion == null)
+                return RedirectToAction("Index", "Login", new { returnUrl = returnUrl ?? "" });
+
+            if (UbicacionLoginYaValidadaEnSesion())
+                return RedirigirPostLogin(returnUrl);
+
+            var model = new LoginUbicacionVm
+            {
+                ReturnUrl = returnUrl ?? "",
+                Error = ViewBag.Error as string,
+                Success = TempData["Success"] as string
+            };
+
+            if (TempData["Error"] != null && string.IsNullOrWhiteSpace(model.Error))
+                model.Error = Convert.ToString(TempData["Error"]);
+
+            return View("~/Views/Login/ValidarUbicacion.cshtml", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ValidarUbicacion(LoginUbicacionVm model)
+        {
+            var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
+            model = model ?? new LoginUbicacionVm();
+            model.ReturnUrl = model.ReturnUrl ?? "";
+
+            if (usuarioSesion == null)
+                return RedirectToAction("Index", "Login", new { returnUrl = model.ReturnUrl });
+
+            IEmpresaContext empresa = new EmpresaContextWin(usuarioSesion.IdEmpresa);
+            oUsuarioN = new Negocio.Usuario(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+
+            var user = oUsuarioN.getUsuarioById(usuarioSesion.Id);
+            if (user != null)
+            {
+                user.Permisos = oUsuarioN.getPermisosUsuario(user.Id);
+                string sucNombre = user.Sucursal == null
+                    ? "Seleccione Sucursal"
+                    : (user.Sucursal != null ? user.Sucursal.SucursalNombre : "");
+                user.SucursalNombre = sucNombre ?? "";
+                Session["Usuario"] = user;
+            }
+
+            if (user == null || !user.Activo)
+            {
+                TempData["Error"] = "La sesion ya no es valida. Inicia sesion nuevamente.";
+                return RedirectToAction("Logout");
+            }
+
+            if (!RequiereValidacionUbicacionPostLogin(user))
+            {
+                Session[SessionKeyUbicacionLoginValidada] = true;
+                return RedirigirPostLogin(model.ReturnUrl);
+            }
+
+            string errorUbicacion = null;
+            if (!ValidarUbicacionLoginEmpresa(user, model, out errorUbicacion))
+            {
+                model.Error = errorUbicacion;
+                return View("~/Views/Login/ValidarUbicacion.cshtml", model);
+            }
+
+            Session[SessionKeyUbicacionLoginValidada] = true;
+            return RedirigirPostLogin(model.ReturnUrl);
         }
 
         [HttpGet]
@@ -276,6 +344,7 @@ namespace Web.Controllers
         {
             Session.Remove("PARAM_CTX");
             Session.Remove("IdEmpresa");
+            Session.Remove(SessionKeyUbicacionLoginValidada);
             Session.Clear();
 
             if (Request.Cookies["ASP.NET_SessionId"] != null)
@@ -284,6 +353,32 @@ namespace Web.Controllers
             Session.Abandon();
 
             return RedirectToAction("Index", "Login");
+        }
+
+        private ActionResult RedirigirPostLogin(string returnUrl)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        private bool UbicacionLoginYaValidadaEnSesion()
+        {
+            object valor = Session[SessionKeyUbicacionLoginValidada];
+            return valor is bool && (bool)valor;
+        }
+
+        private bool RequiereValidacionUbicacionPostLogin(Entidades.Usuario user)
+        {
+            if (user == null || user.Sucursal == null)
+                return false;
+
+            if (user.Admin || user.PermitirLoginFueraSucursal)
+                return false;
+
+            var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            return sucursalesEmpresa.Any(s => s != null && s.ValidarUbicacionLogin);
         }
 
         [HttpPost]
@@ -554,6 +649,131 @@ namespace Web.Controllers
                         distanciaMetros = distanciaMinima;
                         motivo = "Ubicacion fuera del radio permitido en todas las sucursales validadas.";
                         mensajeError = "No fue posible iniciar sesion porque no estas dentro del radio permitido de ninguna sucursal habilitada.";
+                    }
+                }
+            }
+
+            RegistrarLoginUbicacion(user, sucursalLog, latitud, longitud, precisionMetros, distanciaMetros, permitido, motivo, ip);
+            return permitido;
+        }
+
+        private bool ValidarUbicacionLoginEmpresa(Entidades.Usuario user, LoginUbicacionVm model, out string mensajeError)
+        {
+            return ValidarUbicacionLoginEmpresa(
+                user,
+                model != null ? model.Latitud : null,
+                model != null ? model.Longitud : null,
+                model != null ? model.PrecisionMetros : null,
+                out mensajeError);
+        }
+
+        private bool ValidarUbicacionLoginEmpresa(
+            Entidades.Usuario user,
+            string latitudTexto,
+            string longitudTexto,
+            string precisionMetrosTexto,
+            out string mensajeError)
+        {
+            mensajeError = null;
+            if (user == null)
+                return false;
+
+            decimal? latitud = ParseNullableDecimal(latitudTexto);
+            decimal? longitud = ParseNullableDecimal(longitudTexto);
+            decimal? precisionMetros = ParseNullableDecimal(precisionMetrosTexto);
+            decimal? distanciaMetros = null;
+            string ip = ObtenerDireccionIp();
+            string motivo;
+            bool permitido;
+            var sucursalLog = user.Sucursal;
+
+            if (user.Sucursal == null)
+            {
+                permitido = true;
+                motivo = "Usuario sin sucursal asignada.";
+            }
+            else
+            {
+                var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+                var sucursalesConValidacion = sucursalesEmpresa
+                    .Where(s => s != null && s.ValidarUbicacionLogin)
+                    .ToList();
+
+                if (sucursalesConValidacion.Count == 0)
+                {
+                    permitido = true;
+                    motivo = "Empresa sin sucursales con validacion de ubicacion.";
+                }
+                else if (user.Admin || user.PermitirLoginFueraSucursal)
+                {
+                    permitido = true;
+                    motivo = "Usuario exceptuado de validacion de ubicacion.";
+                }
+                else if (sucursalesConValidacion.Any(s => !s.Latitud.HasValue || !s.Longitud.HasValue))
+                {
+                    permitido = true;
+                    sucursalLog = sucursalesConValidacion.FirstOrDefault(s => !s.Latitud.HasValue || !s.Longitud.HasValue) ?? user.Sucursal;
+                    motivo = "Existe al menos una sucursal con validacion sin coordenadas configuradas.";
+                }
+                else if (!latitud.HasValue || !longitud.HasValue)
+                {
+                    permitido = false;
+                    motivo = "El navegador no envio coordenadas.";
+                    mensajeError = "Debe permitir la ubicacion del navegador para continuar.";
+                }
+                else if (!precisionMetros.HasValue)
+                {
+                    permitido = false;
+                    motivo = "El navegador no informo la precision de la ubicacion.";
+                    mensajeError = "No fue posible validar la precision de tu ubicacion. Intenta nuevamente.";
+                }
+                else if (precisionMetros.Value > PrecisionMaximaLoginMetros)
+                {
+                    permitido = false;
+                    motivo = "Precision insuficiente de ubicacion.";
+                    mensajeError = "La precision de la ubicacion es insuficiente. Intenta nuevamente desde una zona con mejor senal.";
+                }
+                else
+                {
+                    Entidades.Sucursal sucursalPermitida = null;
+                    Entidades.Sucursal sucursalMasCercana = null;
+                    decimal? distanciaMinima = null;
+
+                    foreach (var sucursalEmpresa in sucursalesConValidacion)
+                    {
+                        decimal distanciaSucursal = CalcularDistanciaHaversineMetros(
+                            sucursalEmpresa.Latitud.Value,
+                            sucursalEmpresa.Longitud.Value,
+                            latitud.Value,
+                            longitud.Value);
+
+                        if (!distanciaMinima.HasValue || distanciaSucursal < distanciaMinima.Value)
+                        {
+                            distanciaMinima = distanciaSucursal;
+                            sucursalMasCercana = sucursalEmpresa;
+                        }
+
+                        if (distanciaSucursal <= sucursalEmpresa.RadioLoginMetros)
+                        {
+                            sucursalPermitida = sucursalEmpresa;
+                            distanciaMetros = distanciaSucursal;
+                            break;
+                        }
+                    }
+
+                    if (sucursalPermitida != null)
+                    {
+                        permitido = true;
+                        sucursalLog = sucursalPermitida;
+                        motivo = "Ubicacion validada correctamente contra una sucursal de la empresa.";
+                    }
+                    else
+                    {
+                        permitido = false;
+                        sucursalLog = sucursalMasCercana ?? user.Sucursal;
+                        distanciaMetros = distanciaMinima;
+                        motivo = "Ubicacion fuera del radio permitido en todas las sucursales validadas.";
+                        mensajeError = "No fue posible continuar porque no estas dentro del radio permitido de ninguna sucursal habilitada.";
                     }
                 }
             }

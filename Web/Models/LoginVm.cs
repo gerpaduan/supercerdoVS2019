@@ -21,6 +21,16 @@ namespace Web.Models
         public string PrecisionMetros { get; set; }
     }
 
+    public class LoginUbicacionVm
+    {
+        public string ReturnUrl { get; set; }
+        public string Error { get; set; }
+        public string Success { get; set; }
+        public string Latitud { get; set; }
+        public string Longitud { get; set; }
+        public string PrecisionMetros { get; set; }
+    }
+
     public class PasswordRecoveryRequestVm
     {
         [Required(ErrorMessage = "Ingresá tu usuario o email.")]

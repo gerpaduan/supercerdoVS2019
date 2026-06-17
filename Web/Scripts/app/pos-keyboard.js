@@ -81,7 +81,12 @@
         function backspace() {
             if (!inputActivo) return;
             inputActivo.value = inputActivo.value.slice(0, -1);
-            options.finishTyping(inputActivo.value);
+
+            if (inputActivo.id === 'inputCantidad') {
+                options.calculateSubtotal();
+            } else {
+                options.finishTyping(inputActivo.value);
+            }
         }
 
         // Cuando cambia el foco en el DOM, solo aceptamos los inputs centrales
@@ -107,6 +112,16 @@
                 button.addEventListener('click', function () {
                     const key = (button.getAttribute('data-key') || button.innerText || '').trim();
                     if (!inputActivo) return;
+
+                    if (key === 'BACKSPACE') {
+                        backspace();
+                        return;
+                    }
+
+                    if (key === 'MULTIPLY' || key === 'X') {
+                        writeX();
+                        return;
+                    }
 
                     switch (key) {
                         case '←':

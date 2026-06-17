@@ -36,6 +36,14 @@ namespace Web.Controllers
                 return;
             }
 
+            object ubicacionValidada = session["UbicacionLoginValidada"];
+            if (ubicacionValidada is bool && !(bool)ubicacionValidada)
+            {
+                string returnUrl = filterContext.HttpContext.Request.RawUrl ?? "";
+                filterContext.Result = RedirectToAction("ValidarUbicacion", "Login", new { returnUrl = returnUrl });
+                return;
+            }
+
             empresa = new EmpresaContextWeb();
 
             param = Session["PARAM_CTX"] as IParametrosContext;

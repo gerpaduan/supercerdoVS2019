@@ -33,33 +33,6 @@
             font-size: .9rem;
         }
 
-        .location-status {
-            border-radius: 12px;
-            padding: .85rem 1rem;
-            margin-bottom: 1rem;
-            font-size: .9rem;
-            border: 1px solid #d1d3e2;
-            background: #f8f9fc;
-            color: #5a5c69;
-        }
-
-        .location-status.ok {
-            background: #edfdf3;
-            border-color: #b7ebc6;
-            color: #1e7e34;
-        }
-
-        .location-status.warn {
-            background: #fff8e1;
-            border-color: #ffe08a;
-            color: #8a6d1d;
-        }
-
-        .location-status.error {
-            background: #fff0f0;
-            border-color: #f5b5b5;
-            color: #a61e1e;
-        }
     </style>
 </head>
 <body class="bg-gradient-primary">
@@ -96,11 +69,8 @@
                         {
                             @Html.AntiForgeryToken()
                             @Html.HiddenFor(m => m.ReturnUrl)
-                            @Html.HiddenFor(m => m.Latitud, new { id = "Latitud" })
-                            @Html.HiddenFor(m => m.Longitud, new { id = "Longitud" })
-                            @Html.HiddenFor(m => m.PrecisionMetros, new { id = "PrecisionMetros" })
 
-                            <div id="locationStatus" class="location-status warn">
+                            <div id="locationStatus" class="location-status warn" style="display:none;">
                                 Detectando ubicaciÃ³n del dispositivo. Si tu sucursal exige validaciÃ³n, vas a necesitar permitir el acceso a la ubicaciÃ³n.
                             </div>
 
@@ -152,6 +122,10 @@
             var latitud = document.getElementById("Latitud");
             var longitud = document.getElementById("Longitud");
             var precision = document.getElementById("PrecisionMetros");
+
+            if (!status || !latitud || !longitud || !precision) {
+                return;
+            }
 
             function setStatus(css, message) {
                 if (!status) {

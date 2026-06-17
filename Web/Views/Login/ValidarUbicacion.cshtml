@@ -1,0 +1,196 @@
+@model Web.Models.LoginUbicacionVm
+@{
+    Layout = null;
+    var autoStart = string.IsNullOrWhiteSpace(Model != null ? Model.Error : null);
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>CarniSysWeb - Validar ubicacion</title>
+    <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
+    <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
+    <style>
+        .login-logo {
+            width: 100%;
+            max-width: 100%;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .location-status {
+            border-radius: 12px;
+            padding: .9rem 1rem;
+            margin-bottom: 1rem;
+            font-size: .95rem;
+            border: 1px solid #d1d3e2;
+            background: #f8f9fc;
+            color: #5a5c69;
+        }
+
+        .location-status.ok {
+            background: #edfdf3;
+            border-color: #b7ebc6;
+            color: #1e7e34;
+        }
+
+        .location-status.warn {
+            background: #fff8e1;
+            border-color: #ffe08a;
+            color: #8a6d1d;
+        }
+
+        .location-status.error {
+            background: #fff0f0;
+            border-color: #f5b5b5;
+            color: #a61e1e;
+        }
+
+        .location-actions {
+            display: flex;
+            gap: .75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gradient-primary">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-6 col-lg-7 col-md-9">
+                <div class="card o-hidden border-0 shadow-lg my-5">
+                    <div class="card-body p-5">
+                        <img src="@Url.Content("~/Content/img/CarniSys_Login.png")" alt="Logo" class="login-logo" />
+                        <h1 class="h4 text-gray-900 mb-3">Validar ubicacion</h1>
+                        <p class="text-muted mb-4">
+                            Tu empresa requiere validar la ubicacion del dispositivo antes de continuar.
+                        </p>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Success))
+                        {
+                            <div class="alert alert-success">
+                                @Model.Success
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Error))
+                        {
+                            <div class="alert alert-danger">
+                                @Model.Error
+                            </div>
+                        }
+
+                        <div id="locationStatus" class="location-status warn">
+                            Preparando validacion de ubicacion.
+                        </div>
+
+                        @using (Html.BeginForm("ValidarUbicacion", "Login", FormMethod.Post, new { id = "formValidarUbicacion", novalidate = "novalidate" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(m => m.ReturnUrl)
+                            @Html.HiddenFor(m => m.Latitud, new { id = "Latitud" })
+                            @Html.HiddenFor(m => m.Longitud, new { id = "Longitud" })
+                            @Html.HiddenFor(m => m.PrecisionMetros, new { id = "PrecisionMetros" })
+
+                            <div class="location-actions">
+                                <button type="button" id="btnValidarUbicacion" class="btn btn-primary">
+                                    Validar ubicacion y continuar
+                                </button>
+                                <a href="@Url.Action("Logout", "Login")" class="btn btn-outline-secondary">
+                                    Cerrar sesion
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var status = document.getElementById("locationStatus");
+            var latitud = document.getElementById("Latitud");
+            var longitud = document.getElementById("Longitud");
+            var precision = document.getElementById("PrecisionMetros");
+            var form = document.getElementById("formValidarUbicacion");
+            var btn = document.getElementById("btnValidarUbicacion");
+            var autoStart = @(autoStart.ToString().ToLowerInvariant());
+
+            function setStatus(css, message) {
+                status.className = "location-status " + css;
+                status.textContent = message;
+            }
+
+            function solicitarUbicacion() {
+                if (!navigator.geolocation) {
+                    setStatus("error", "Este navegador no soporta geolocalizacion. Necesitas usar un navegador compatible.");
+                    return;
+                }
+
+                btn.disabled = true;
+                setStatus("warn", "Solicitando ubicacion del dispositivo...");
+
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        if (!position || !position.coords) {
+                            btn.disabled = false;
+                            setStatus("error", "No fue posible obtener la ubicacion del dispositivo.");
+                            return;
+                        }
+
+                        latitud.value = typeof position.coords.latitude === "number"
+                            ? position.coords.latitude.toFixed(7)
+                            : "";
+                        longitud.value = typeof position.coords.longitude === "number"
+                            ? position.coords.longitude.toFixed(7)
+                            : "";
+                        precision.value = typeof position.coords.accuracy === "number"
+                            ? position.coords.accuracy.toFixed(2)
+                            : "";
+
+                        var mensaje = "Ubicacion detectada correctamente.";
+                        if (precision.value) {
+                            mensaje += " Precision aproximada: " + precision.value + " metros.";
+                        }
+
+                        setStatus("ok", mensaje);
+                        form.submit();
+                    },
+                    function (error) {
+                        btn.disabled = false;
+
+                        var mensaje = "No fue posible obtener la ubicacion del dispositivo.";
+                        if (error && error.code === 1) {
+                            mensaje = "La ubicacion fue bloqueada. Permiti el acceso para continuar.";
+                        } else if (error && error.code === 2) {
+                            mensaje = "La ubicacion no esta disponible en este momento. Intenta nuevamente.";
+                        } else if (error && error.code === 3) {
+                            mensaje = "La deteccion de ubicacion demoro demasiado. Intenta nuevamente.";
+                        }
+
+                        setStatus("error", mensaje);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    });
+            }
+
+            btn.addEventListener("click", solicitarUbicacion);
+
+            if (!window.isSecureContext) {
+                setStatus("warn", "La geolocalizacion puede requerir HTTPS. Si falla, reintenta en un contexto seguro.");
+            }
+
+            if (autoStart) {
+                solicitarUbicacion();
+            }
+        })();
+    </script>
+</body>
+</html>

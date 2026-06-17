@@ -351,17 +351,19 @@
                                     <!-- COLUMNA DERECHA - TECLADO -->
                                     <div class="col-6">
                                         <div class="keyboard-grid">
-                                            <button class="btn btn-secondary btn-key">*</button>
+                                            <button class="btn btn-secondary btn-key" data-key="*">*</button>
                                             <button class="btn btn-light btn-key">7</button>
                                             <button class="btn btn-light btn-key">8</button>
                                             <button class="btn btn-light btn-key">9</button>
-                                            <button class="btn btn-warning btn-key">?</button>
+                                            <button class="btn btn-warning btn-key" data-key="BACKSPACE" title="Borrar">
+                                                <i class="fas fa-backspace"></i>
+                                            </button>
 
-                                            <button class="btn btn-secondary btn-key">G</button>
+                                            <button class="btn btn-secondary btn-key" data-key="G">G</button>
                                             <button class="btn btn-light btn-key">4</button>
                                             <button class="btn btn-light btn-key">5</button>
                                             <button class="btn btn-light btn-key">6</button>
-                                            <button class="btn btn-secondary btn-key">x</button>
+                                            <button class="btn btn-secondary btn-key" data-key="X" title="Multiplicación">X</button>
 
                                             <button class="btn btn-secondary btn-key">G1</button>
                                             <button class="btn btn-light btn-key">1</button>
@@ -801,7 +803,7 @@ else
     <script src="@Url.Content("~/Scripts/app/pos-forma-pago-precios.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=8")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=23")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
