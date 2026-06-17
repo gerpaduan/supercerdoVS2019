@@ -1,0 +1,9 @@
+﻿root = true
+
+[*]
+charset = utf-8-bom
+end_of_line = crlf
+insert_final_newline = true
+
+[*.{cs,cshtml,js,css,config,xml,json,sql,txt}]
+charset = utf-8-bom

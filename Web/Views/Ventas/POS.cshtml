@@ -399,7 +399,7 @@
                                 <div class="zona-botones">
                                     <div class="row g-2">
                                         <div class="col-4">
-                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>@(esEdicionVenta ? "Salir edici�n" : "Cancelar Venta")</button>
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>@(esEdicionVenta ? "Salir edición" : "Cancelar Venta")</button>
                                         </div>
                                         <div class="col-4">
                                             <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
@@ -442,9 +442,9 @@
                 <!-- HEADER -->
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-receipt mr-2"></i> L�nea de venta
+                        <i class="fas fa-receipt mr-2"></i> Línea de venta
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">�</button>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">&times;</button>
                 </div>
 
                 <!-- BODY -->
@@ -484,7 +484,7 @@
                             </div>
                         </div>
 
-                        <!-- ? salto de l�nea SOLO en pantallas chicas -->
+
                         <div class="w-100 d-block d-md-none"></div>
 
                         <!-- ? Precio y Total: abajo en mobile -->
@@ -516,11 +516,11 @@
                         </div>
 
                         <div class="small text-muted mb-2 d-none" id="msgRecargoBonificacion">
-                            Si ingresa un porcentaje negativo, se aplicar� como recargo.
+                            Si ingresa un porcentaje negativo, se aplicará como recargo.
                         </div>
 
                         <div class="alert alert-info py-2 px-3 small d-none" id="msgBonificarTodos">
-                            Esta bonificaci�n se aplicar� a todos los productos del carrito.
+                            Esta bonificación se aplicará a todos los productos del carrito.
                         </div>
 
                         <div class="row">
@@ -533,7 +533,7 @@
                             </div>
 
                             <div class="col-6">
-                                <label id="lblTipoPorcentaje" class="small">% bonificaci�n</label>
+                                <label id="lblTipoPorcentaje" class="small">% bonificación</label>
                                 <input id="txtPorcentaje"
                                        class="form-control text-right"
                                        inputmode="decimal"
@@ -542,16 +542,16 @@
                             </div>
                         </div>
 
-                        <!-- Aplicar bonificaci�n (cuando se muestra bonificar) -->
+
                         <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">
-                            Aplicar bonificaci�n
+                            Aplicar bonificación
                         </button>
 
                         <!-- espacio -->
                         <div class="mt-2"></div>
                     </div>
 
-                    <!-- BLOQUE CANTIDAD (solo para el bot�n Aplicar cantidad) -->
+
                     <div id="bloqueCantidad" style="display:none">
                         <button id="btnAplicarCantidad" class="btn btn-primary btn-block mt-3">
                             Aplicar cantidad
@@ -561,11 +561,11 @@
                         <div class="mt-2"></div>
                     </div>
 
-                    <!-- BOTONES PRINCIPALES / DE ACCI�N -->
-                    <!-- Siempre visibles en columna, y el JS los oculta/activa seg�n modo -->
+
+
                     <div class="d-flex flex-column" style="gap:.5rem;">
 
-                        <!-- (Opcional) si quer�s seguir mostrando el bot�n "Bonificar" como antes -->
+
                         <button id="btnMostrarBonificar" class="btn btn-success">
                             <i class="fas fa-percentage"></i> Bonificar
                         </button>
@@ -614,7 +614,7 @@ else
     @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 
 }
-<!-- Contenedor din�mico del modal -->
+
 <div id="contenedorModalPersona"></div>
 
 <div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
@@ -785,7 +785,7 @@ else
     vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
     vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
                                                                                  //vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
-                                                                                 //vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edici�n
+
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
@@ -844,7 +844,7 @@ else
     }
 
     // -----------------------
-    // Acci�n Abrir Caja (llama al controller)
+
     // -----------------------
     window.abrirCaja = function () {
         var cajaInicio = $("#montoInicial").val();
@@ -857,7 +857,7 @@ else
             data: { cajaInicio: cajaInicio, fechaHora: fechaHora },
             success: function (r) {
                 if (r && r.ok) {
-                    // ? Ya se abri�: recargo el POS (ahora el controller deber�a dejarte entrar)
+
                     try {
                         sessionStorage.setItem("pos-mostrar-recordatorio-sucursal", "1");
                     } catch (e) { }
@@ -866,7 +866,7 @@ else
                     return;
                 }
 
-                // ? No abri�: muestro error y me quedo en el modal
+
                 mostrarError((r && r.mensaje) ? r.mensaje : "Error al abrir caja.");
             },
             error: function () {
@@ -914,9 +914,9 @@ else
     });
 
 
-        // ? Guard: si NO est� el POS renderizado, NO ejecuto el script del POS
+
         if (!document.getElementById("pos-app") || !document.getElementById("inputCodigo")) {
-            console.warn("POS script: no est� el HTML del POS (caja cerrada o vista distinta).");
+
             return;
         }
 
@@ -950,7 +950,7 @@ else
                 document.querySelector("#inputCodigo").value = codigo;
                 document.querySelector("#inputCodigo").focus();
                 manejarEnter();
-                // si quer�s cerrar al detectar:
+
                 // scanner.cerrar();
             }
         });
@@ -1298,7 +1298,7 @@ else
     const ventaRestauradaPOS = esEdicionVenta ? false : window.POSDraft.restore();
 
     (function () {
-        const dias = ['Dom', 'Lun', 'Mar', 'Mi�', 'Jue', 'Vie', 'S�b'];
+        const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
         function actualizarFechaHora() {
@@ -1428,7 +1428,7 @@ else
     function mostrarErrorConexion(msg) {
         Swal.fire({
             icon: 'error',
-            title: 'Sin conexi�n',
+            title: 'Sin conexión',
             text: msg,
             allowOutsideClick: false
         });
@@ -1550,9 +1550,9 @@ else
             if (fechaEdicion) {
                 const fecha = new Date(fechaEdicion);
                 if (!isNaN(fecha.getTime())) {
-                    const dias = ['Dom', 'Lun', 'Mar', 'Mi�', 'Jue', 'Vie', 'S�b'];
+                    const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
                     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                    const formato = `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}, ${fecha.getFullYear()} � ${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
+                    const formato = `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}, ${fecha.getFullYear()} - ${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
                     $("#fechaHoraPOS").text(formato);
                 }
             }
@@ -1739,7 +1739,7 @@ else
         if (!lineas.length) {
             Swal.fire({
                 icon: "info",
-                title: "Venta vac�a",
+                title: "Venta vacía",
                 text: "No hay una venta en curso para cancelar."
             });
             return;
@@ -1778,10 +1778,10 @@ else
         if (esEdicionVenta) {
             Swal.fire({
                 icon: "warning",
-                title: "�Salir de la edici�n?",
-                text: "Se descartar�n los cambios no guardados.",
+                title: "¿Salir de la edición?",
+                text: "Se descartarán los cambios no guardados.",
                 showCancelButton: true,
-                confirmButtonText: "S�",
+                confirmButtonText: "Sí",
                 cancelButtonText: "No"
             }).then(function (result) {
                 if (!result.isConfirmed) return;
@@ -1793,9 +1793,9 @@ else
 
         Swal.fire({
             icon: "warning",
-            title: "�Realmente desea cancelar la venta?",
+            title: "¿Realmente desea cancelar la venta?",
             showCancelButton: true,
-            confirmButtonText: "S�",
+            confirmButtonText: "Sí",
             cancelButtonText: "No"
         }).then(function (result) {
             if (!result.isConfirmed) return;
@@ -1818,7 +1818,7 @@ else
         posCart.updateSaleState();
     });
 
-    // Helper: scroll a una l�nea (desktop scroll interno / responsive scroll p�gina)
+
     function scrollTablaAItem(idLinea) {
         const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
         if (!fila) return;
@@ -1826,7 +1826,7 @@ else
         const isDesktop = window.matchMedia('(min-width: 992px)').matches;
         const zonaTabla = document.querySelector('.carrito-col .zona-tabla');
 
-        // foco real para que el usuario �sienta� que qued� ah�
+
         fila.tabIndex = -1;
         try { fila.focus({ preventScroll: true }); } catch { }
 
@@ -1851,7 +1851,7 @@ else
         if (lineasActuales.length === 0) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Venta vac�a',
+                title: 'Venta vacía',
                 text: 'Debe agregar al menos un producto'
             });
             return;
@@ -2052,14 +2052,14 @@ else
         })();
 
         // ================================
-        // MODO COMPACTO AUTOM�TICO (por alto)
+
         // - ayuda en 1366x768 / zoom 125%
         // ================================
         (function () {
             function aplicarCompacto() {
                 const h = window.innerHeight || document.documentElement.clientHeight;
 
-                // Ajust� umbrales si quer�s
+
                 document.documentElement.classList.toggle("pos-compact", h < 920);
                 document.documentElement.classList.toggle("pos-tiny", h < 820);
             }
@@ -2514,8 +2514,8 @@ else
                 const $modalFinanzas = $('#modalFinanzasPOS');
                 const $modalActivo = $('.modal.show').last();
 
-                // Verificamos si el modal de Finanzas POS est� abierto
-                // y adem�s es el modal activo
+
+
                 if ($modalFinanzas.hasClass('show') && $modalActivo.is($modalFinanzas)) {
                     $modalFinanzas.modal('hide');
                 }
@@ -3194,7 +3194,7 @@ else
         background: transparent;
     }
 
-    /* ? highlight �ltimo item */
+
     .fila-ultimo {
         background: rgba(25,135,84,.08);
     }
@@ -3393,7 +3393,7 @@ else
             background: linear-gradient(180deg, rgba(242, 246, 251, .72) 0%, rgba(242, 246, 251, .96) 18%, rgba(242, 246, 251, 1) 100%);
             backdrop-filter: blur(2px);
         }
-        /* fija el alto del nombre para que no �baila� */
+
         #prodNombre {
             white-space: nowrap;
             overflow: hidden;
@@ -3467,7 +3467,7 @@ else
         }
     }
 
-    /* Teclas num�ricas */
+
     .keyboard-grid .btn-light {
         background-color: #fff;
         border: 1px solid #d0d0d0;
@@ -3486,7 +3486,7 @@ else
     }
 
     /* =========================================================
-      8) FULLSCREEN bot�n activo
+
       ========================================================= */
     #btn-toggle-fullscreen.is-fullscreen {
         background: #198754;
@@ -3645,13 +3645,13 @@ else
         margin-top: .18rem !important;
     }
 
-    /* Total un poquito m�s chico cuando no entra c�modo */
+
     html.pos-compact .pos-total-value {
         font-size: 2.8rem !important;
         line-height: 1.05 !important;
     }
 
-    /* Teclado: baja gaps y fuente para que no �explote� en 768 */
+
     html.pos-compact .keyboard-grid {
         gap: 5px !important;
         grid-auto-rows: minmax(30px, 1fr) !important;
@@ -3737,7 +3737,7 @@ else
      BLOQUE INFO PRODUCTO: estirar alto y alinear columnas
      ========================================================= */
     #producto-info {
-        /* hace m�s alto el bloque sin romper en pantallas chicas */
+
         min-height: clamp(260px, 38vh, 460px);
     }
 
@@ -3756,7 +3756,7 @@ else
             flex-direction: column;
             min-height: 0;
         }
-        /* Teclas grandes pero con m�nimo garantizado */
+
         .keyboard-grid {
             --key-h: clamp(42px, 5.2vh, 64px);
             gap: 6px;
@@ -3797,8 +3797,8 @@ else
     }
 
     /* =========================================================
-     Si us�s pos-compact / pos-tiny: NO lo dejes bajar demasiado
-     (si no, el teclado se �aplasta�)
+
+
      ========================================================= */
     html.pos-compact .keyboard-grid {
         --key-h: max(44px, clamp(44px, 5.6vh, 64px));
@@ -3833,24 +3833,24 @@ else
         }
     }
 
-    /* opcional: highlight del �ltimo */
+
     #tablaItems tr.pos-last-added {
         outline: 2px solid rgba(25,135,84,.35);
         background: rgba(25,135,84,.08);
     }
 
     /* =========================================================
-     RESPONSIVE: asegurar scroll de p�gina (si algo lo bloque�)
+
      ========================================================= */
     @@media (max-width: 991.98px) {
-        /* 1) Asegurar que la p�gina pueda scrollear */
+
         html, body {
             height: auto !important;
             min-height: 100% !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
         }
-        /* 2) Evitar que el �panel POS� quede clavado con alto fijo/overflow hidden */
+
         #pos-app,
         #pos-app > .card,
         #pos-app .card-body,
@@ -3860,8 +3860,8 @@ else
             min-height: 0 !important;
             overflow: visible !important;
         }
-        /* 3) Si quer�s que el carrito tambi�n pueda scrollear internamente en tablet,
-          activalo ac� (recomendado para no perder zona-total dentro del panel) */
+
+
         .carrito-col {
             display: flex;
             flex-direction: column;
@@ -3873,7 +3873,7 @@ else
             -webkit-overflow-scrolling: touch;
             flex: 1 1 auto;
             min-height: 0;
-            /* Ajust� este valor si quer�s m�s/menos alto de tabla en responsive */
+
             max-height: 55vh;
         }
 
@@ -3916,7 +3916,7 @@ else
             .producto-resumen .lbl-subtotal {
                 display: none !important;
             }
-            /* �aplastar� contenedores para que #prodPrecio / #inputCantidad / #prodSubtotal
+
          participen directamente en la grilla */
             .producto-resumen > .mb-3 {
                 display: contents;
@@ -3926,7 +3926,7 @@ else
                 .producto-resumen > .mb-3 > .d-flex {
                     display: contents !important;
                 }
-            /* ubicar cada pieza en su �rea */
+
             .producto-resumen #prodNombre {
                 grid-area: nombre;
                 margin: 0 !important;
@@ -3949,7 +3949,7 @@ else
                 grid-area: cantidad;
                 justify-self: start;
                 width: 100%;
-                max-width: 180px; /* ajustalo si quer�s m�s chico/grande */
+
             }
 
             .producto-resumen #prodSubtotal {
@@ -3965,7 +3965,7 @@ else
                 font-weight: 100 !important;
                 line-height: 1.15 !important;
             }
-        /* 2) M�s aire vertical entre filas (evita que quede pegado al teclado) */
+
         .producto-resumen {
             row-gap: .45rem !important; /* antes .25rem */
             padding-bottom: .35rem; /* aire extra abajo */
@@ -3981,7 +3981,7 @@ else
             margin-top: .10rem;
         }
     }
-    /* Forzar alineaci�n del texto dentro del input SIEMPRE a la izquierda */
+
     #inputCantidad {
         text-align: right !important;
         direction: ltr;

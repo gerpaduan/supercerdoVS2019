@@ -1,4 +1,4 @@
-body.app-shell {
+﻿body.app-shell {
     --ui-bg: #f4f5f7;
     --ui-surface: #ffffff;
     --ui-surface-alt: #f3f4f6;
@@ -773,6 +773,8 @@ body.app-shell .swal2-popup-mid {
     border-radius: 1rem !important;
 }
 
+html.dark-mode body .swal2-popup,
+body.dark-mode .swal2-popup,
 html.dark-mode body.app-shell .swal2-popup,
 body.app-shell.dark-mode .swal2-popup {
     background: var(--ui-surface) !important;
@@ -781,6 +783,12 @@ body.app-shell.dark-mode .swal2-popup {
     box-shadow: var(--ui-shadow) !important;
 }
 
+html.dark-mode body .swal2-title,
+html.dark-mode body .swal2-html-container,
+html.dark-mode body .swal2-content,
+body.dark-mode .swal2-title,
+body.dark-mode .swal2-html-container,
+body.dark-mode .swal2-content,
 html.dark-mode body.app-shell .swal2-title,
 html.dark-mode body.app-shell .swal2-html-container,
 html.dark-mode body.app-shell .swal2-content,
@@ -790,6 +798,8 @@ body.app-shell.dark-mode .swal2-content {
     color: var(--ui-text) !important;
 }
 
+html.dark-mode body .swal2-styled.swal2-confirm,
+body.dark-mode .swal2-styled.swal2-confirm,
 html.dark-mode body.app-shell .swal2-styled.swal2-confirm,
 body.app-shell.dark-mode .swal2-styled.swal2-confirm {
     box-shadow: none !important;
