@@ -52,7 +52,7 @@
                     </div>
 
                     <div class="row g-3">
-                        <!-- ?? SCANNER (arriba del Código) -->
+                        <!-- ?? SCANNER (arriba del Cï¿½digo) -->
                         <div class="col-12" id="scannerContainer" style="display:none;">
                             <div class="card shadow-sm">
                                 <div class="card-body p-2">
@@ -64,7 +64,7 @@
 
                                     <div class="d-flex justify-content-between mt-2">
                                         <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">?? Flash</button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cámara</button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cÃ¡mara</button>
                                     </div>
 
                                 </div>
@@ -72,13 +72,13 @@
                         </div>
 
                         <div class="col-12 col-md-4">
-                            <label class="form-label">Código</label>
+                            <label class="form-label">CÃ³digo</label>
 
                             <div class="input-group">
-                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código">
+                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear cÃ³digo">
                                     <i class="fas fa-barcode"></i>
                                 </button>
-                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / código interno", id = "Codigo", maxlength = "15" })
+                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / cÃ³digo interno", id = "Codigo", maxlength = "15" })
                             </div>
 
                             <small id="scannerMsg" class="text-danger d-none"></small>
@@ -118,8 +118,8 @@
                             <div class="input-group">
                                 <input type="text" class="form-control" id="txtMarcaNombre"
                                        value="@(Model?.MarcaNombre ?? "")" readonly placeholder="Sin marca" />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca">??</button>
-                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca">?</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca"><i class="fas fa-search"></i></button>
+                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
                     </div>
@@ -147,7 +147,7 @@
 
                             <div class="form-check form-switch mb-2">
                                 @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
-                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
+                                <label class="form-check-label" for="swRapido">Ingreso rÃ¡pido elaborado</label>
                             </div>
 
                             <div class="form-check form-switch mb-2">
@@ -157,7 +157,7 @@
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label class="form-label">Punto Stock (número entero)</label>
+                            <label class="form-label">Punto Stock (nÃºmero entero)</label>
                             @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
                         </div>
 
@@ -169,7 +169,7 @@
                         @if (esEdicion)
                         {
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Nivel (solo edición)</label>
+                                <label class="form-label">Nivel (solo ediciÃ³n)</label>
                                 <input class="form-control" value="@Model.Nivel" readonly />
                             </div>
                         }
@@ -179,10 +179,10 @@
                 </div>
 
                 <!-- =========================
-                 3) CORTE MAESTRO / PRESENTACIÓN (debajo)
+                 3) CORTE MAESTRO / PRESENTACIÃ“N (debajo)
                  ========================= -->
                 <div class="p-3 rounded bg-light border mb-3">
-                    <h5 class="mb-3">Corte maestro / Presentación</h5>
+                    <h5 class="mb-3">Corte maestro / PresentaciÃ³n</h5>
 
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-md-4">
@@ -191,7 +191,7 @@
                                 new List<SelectListItem> {
                                     new SelectListItem{ Text="Ninguno", Value="Ninguno" },
                                     new SelectListItem{ Text="Corte maestro", Value="CorteMaestro" },
-                                    new SelectListItem{ Text="Presentación", Value="Presentacion" },
+                                    new SelectListItem{ Text="PresentaciÃ³n", Value="Presentacion" },
                                 },
                                 new { @class = "form-control", id = "ddlModo" })
                         </div>
@@ -202,8 +202,8 @@
                                 <input type="text" class="form-control" id="txtCorteMaestroNombre"
                                        value="@(Model?.CorteMaestroNombre ?? "")"
                                        readonly placeholder="Seleccione un corte maestro..." />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro">??</button>
-                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarCorteMaestro">?</button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro"><i class="fas fa-search"></i></button>
+                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarCorteMaestro"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
 
@@ -229,8 +229,7 @@
                         <div class="col-12" id="boxPresentacionCampos">
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
-                                    <label class="form-label">Presentación (unidades)</label>
-
+                                    <label class="form-label">PresentaciÃ³n (unidades)</label>
                                     <input type="text" class="form-control" id="txtPresentacionUnidades"
                                            name="PresentacionUnidades"
                                            value="@(Model?.PresentacionUnidades != null ? Model.PresentacionUnidades.ToString() : "")"
@@ -297,7 +296,7 @@
             </div>
             <div class="modal-body">
                 <div class="input-group mb-2">
-                    <input type="text" class="form-control" id="qMarca" placeholder="Escribí para buscar..." />
+                    <input type="text" class="form-control" id="qMarca" placeholder="EscribÃ­ para buscar..." />
                     <button class="btn btn-primary" type="button" id="btnDoBuscarMarca">Buscar</button>
                 </div>
 
@@ -329,7 +328,7 @@
     vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
     vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
     vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
-    vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
+    vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/ediciï¿½n
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
@@ -357,7 +356,7 @@
         window.addEventListener('resize', ajustarBarra);
         window.addEventListener('scroll', ajustarBarra, { passive: true });
 
-        // Por si cambia el layout dinámicamente (responsive / contenido)
+        // Por si cambia el layout dinï¿½micamente (responsive / contenido)
         if (window.ResizeObserver) {
             const ro = new ResizeObserver(ajustarBarra);
             ro.observe(contenedor);
@@ -429,7 +428,7 @@
         // coma -> punto
         v = v.replace(/,/g, ".");
 
-        // dejar solo dígitos y punto
+        // dejar solo dï¿½gitos y punto
         v = v.replace(/[^\d.]/g, "");
 
         // dejar un solo punto decimal
@@ -497,7 +496,7 @@
             return;
         }
 
-        // Para CorteMaestro y Presentación: mostrar selector de corte maestro + independiente
+        // Para CorteMaestro y Presentaciï¿½n: mostrar selector de corte maestro + independiente
         $boxCorteMaestro.show();
         $boxIndep.show();
 
@@ -515,14 +514,14 @@
     // =========================
     // MODAL MARCAS
     // - abre y carga todas las marcas
-    // - foco automático en input
+    // - foco automï¿½tico en input
     // - Enter selecciona primera fila
     // - Doble click selecciona
-    // - sin botón "Seleccionar"
+    // - sin botï¿½n "Seleccionar"
     // =========================
     let debounceMarcaTimer = null;
 
-    // ?? guardar el botón que abrió el modal
+    // ?? guardar el botï¿½n que abriï¿½ el modal
     let $triggerModalMarcas = null;
 
     function seleccionarMarcaDesdeFila($row) {
@@ -537,7 +536,7 @@
     }
 
     $("#btnBuscarMarca").on("click", function () {
-        // ?? GUARDO el botón que abrió
+        // ?? GUARDO el botï¿½n que abriï¿½
         $triggerModalMarcas = $(this);
         $("#modalMarcas").modal("show");
     });
@@ -587,17 +586,17 @@
             });
     }
 
-    // Al abrir: foco + cargar todas automáticamente
+    // Al abrir: foco + cargar todas automï¿½ticamente
     $("#modalMarcas").on("shown.bs.modal", function () {
         setTimeout(function () {
             $("#qMarca").focus().select();
         }, 80);
 
-        buscarMarcas(); // q vacío => traer todas
+        buscarMarcas(); // q vacï¿½o => traer todas
     });
 
 
-    // al cerrar, devolver foco al botón que lo abrió
+    // al cerrar, devolver foco al botï¿½n que lo abriï¿½
     $("#modalMarcas").on("hidden.bs.modal", function () {
         setTimeout(function () {
             if ($triggerModalMarcas && $triggerModalMarcas.length) {
@@ -608,10 +607,10 @@
         }, 0);
     });
 
-    // Botón Buscar manual
+    // Botï¿½n Buscar manual
     $("#btnDoBuscarMarca").on("click", buscarMarcas);
 
-    // Búsqueda en vivo (debounce)
+    // Bï¿½squeda en vivo (debounce)
     $("#qMarca").on("input", function () {
         clearTimeout(debounceMarcaTimer);
         debounceMarcaTimer = setTimeout(function () {
@@ -656,20 +655,19 @@
     // reutiliza _BuscarProductoModal + script global
     // =========================
 
-    // ?? guardar el botón que abrió el modal
+    // ?? guardar el botï¿½n que abriï¿½ el modal
     let $triggerModalCorteMaestro= null;
 
     $("#btnBuscarCorteMaestro").on("click", function () {
         if (typeof window.abrirBuscarProductoModal !== "function") {
-            alert("No se pudo abrir el buscador de productos. Verificá que el script del modal esté cargado.");
+            alert("No se pudo abrir el buscador de productos. VerificÃ¡ que el script del modal estÃ© cargado.");
             return;
         }
 
         $triggerModalCorteMaestro = $(this);
 
         window.abrirBuscarProductoModal({
-            modalSelector: "#modalBuscarProducto", // <-- explícito
-            mostrarPrecio: false,
+            modalSelector: "#modalBuscarProducto", // <-- explÃ­cito
             onSelect: function (producto) {
                 $("input[name='IdCorteMaestro']").val(producto.id || "");
                 $("#txtCorteMaestroNombre").val(producto.nombre || "");
@@ -682,7 +680,7 @@
         $("#txtCorteMaestroNombre").val("");
     });
 
-    // ?? NUEVO: al cerrar, devolver foco al botón que lo abrió
+    // ?? NUEVO: al cerrar, devolver foco al botï¿½n que lo abriï¿½
     $("#modalBuscarProducto").on("hidden.bs.modal", function () {
         setTimeout(function () {
             if ($triggerModalCorteMaestro && $triggerModalCorteMaestro.length) {
@@ -725,7 +723,7 @@
     aplicarModo();
 
     // =========================
-    // ALTA: iniciar código y precio vacíos
+    // ALTA: iniciar cï¿½digo y precio vacï¿½os
     // =========================
     if (!esEdicion) {
         $codigo.val("");
@@ -733,7 +731,7 @@
     }
 
     // =========================
-    // Recordar últimos Tipo e IVA (solo alta)
+    // Recordar ï¿½ltimos Tipo e IVA (solo alta)
     // =========================
     const LS_TIPO = "producto_alta_ultimo_tipo";
     const LS_IVA = "producto_alta_ultimo_iva";
@@ -787,7 +785,7 @@
     function validarCodigo() {
         const v = (($codigo.val() || "") + "").trim();
 
-        // obligatorio + numérico entero
+        // obligatorio + numï¿½rico entero
         const ok = esEnteroNoNegativoTexto(v) && v !== "";
         $msgCodigoReq.toggleClass("d-none", ok);
         $codigo.toggleClass("is-invalid", !ok);
@@ -811,7 +809,7 @@
             return false;
         }
 
-        // numérico (float) y >= 0
+        // numï¿½rico (float) y >= 0
         const n = parseFloatFlexible(raw);
         const ok = (n !== null && n >= 0);
 
@@ -836,7 +834,7 @@
     function validarPuntoStock() {
         const raw = (($puntoStock.val() || "") + "").trim();
 
-        // Según lo que pediste: entero, no vacío, >= 0
+        // Segï¿½n lo que pediste: entero, no vacï¿½o, >= 0
         if (raw === "") {
             marcarValidez($puntoStock, false);
             return false;
@@ -850,14 +848,14 @@
     function validarPromedio() {
         const raw = (($promedio.val() || "") + "").trim();
 
-        // si querés obligatorio, cambiá este return por validación como precio
+        // si querï¿½s obligatorio, cambiï¿½ este return por validaciï¿½n como precio
         if (raw === "") {
             marcarValidez($promedio, true);
             return true; // opcional
         }
 
         const n = parseFloatFlexible(raw);
-        const ok = (n !== null); // si querés >=0: (n !== null && n >= 0)
+        const ok = (n !== null); // si querï¿½s >=0: (n !== null && n >= 0)
         marcarValidez($promedio, ok);
         return ok;
     }
@@ -909,14 +907,14 @@
         const modo = ($ddlModo.val() || "Ninguno");
         let ok = true;
 
-        // valida selección de corte maestro si aplica
+        // valida selecciï¿½n de corte maestro si aplica
         if (!validarCorteMaestroSeleccionadoSiAplica()) ok = false;
 
         if (modo === "CorteMaestro") {
             if (!validarPorcentajeCorteMaestro()) ok = false;
             if (!validarDesperdicioCorteMaestro()) ok = false;
 
-            // limpiar visualmente presentación (sin tocar valor)
+            // limpiar visualmente presentaciï¿½n (sin tocar valor)
             marcarValidez($presentacionUnidades, true);
         }
         else if (modo === "Presentacion") {
@@ -937,7 +935,7 @@
         return ok;
     }
 
-    // Eventos de validación
+    // Eventos de validaciï¿½n
     $nombre.on("blur input", validarNombre);
     $codigo.on("blur input", validarCodigo);
     $precioKg.on("blur input", validarPrecio);
@@ -958,28 +956,28 @@
         validarModoDependientes();
     });
     // =========================
-    // Validación código duplicado UI
+    // Validaciï¿½n cï¿½digo duplicado UI
     // =========================
     function setCodigoDuplicadoUI(existe, nombreProducto) {
         codigoDuplicado = !!existe;
 
         if (codigoDuplicado) {
             const texto = nombreProducto
-                ? `El código ya existe para el producto: ${nombreProducto}`
-                : "El código ya existe para otro producto.";
+                ? `El cÃ³digo ya existe para el producto: ${nombreProducto}`
+                : "El cÃ³digo ya existe para otro producto.";
             $alertCodigoExiste.removeClass("d-none").text(texto);
         } else {
             $alertCodigoExiste.addClass("d-none").text("");
         }
 
-        // Deshabilitar/habilitar botón crear producto (solo alta)
+        // Deshabilitar/habilitar botï¿½n crear producto (solo alta)
         if (!esEdicion) {
             $btnGuardar.prop("disabled", codigoDuplicado);
         }
     }
 
     // =========================
-    // Validación código duplicado (PROMISE)
+    // Validaciï¿½n cï¿½digo duplicado (PROMISE)
     // - Sirve para blur y para submit
     // =========================
     function validarCodigoExistente() {
@@ -1016,7 +1014,7 @@
                     nombre = data.nombre || data.Nombre || data.descripcion || data.Descripcion || "";
                 }
 
-                // Si estás en edición y el código pertenece al mismo producto, no marcar duplicado
+                // Si estï¿½s en ediciï¿½n y el cï¿½digo pertenece al mismo producto, no marcar duplicado
                 if (esEdicion && data && (data.id || data.Id)) {
                     const idEncontrado = parseInt(data.id || data.Id || 0, 10);
                     const idActual = parseInt($("input[name='IdCorte']").val() || "0", 10);
@@ -1056,7 +1054,7 @@
         validarCodigoExistente();
     });
 
-    // Si cambia el código, limpiar alerta y re-habilitar hasta revalidar
+    // Si cambia el cï¿½digo, limpiar alerta y re-habilitar hasta revalidar
     $codigo.on("input", function () {
         setCodigoDuplicadoUI(false, "");
     });
@@ -1068,11 +1066,11 @@
         if (!$input || !$input.length) return true;
 
         const raw = ($input.val() || "").toString().trim();
-        if (raw === "") return true; // opcional, se deja vacío
+        if (raw === "") return true; // opcional, se deja vacï¿½o
 
         const n = parseFloatFlexible(raw);
         if (n === null) {
-            alert(`${etiqueta} inválido. Usá números y decimal con coma o punto.`);
+            alert(`${etiqueta} invÃ¡lido. UsÃ¡ nÃºmeros y decimal con coma o punto.`);
             return false;
         }
 
@@ -1081,7 +1079,7 @@
     }
 
     // =========================
-    // Submit: SIEMPRE validar código duplicado + luego validar resto
+    // Submit: SIEMPRE validar cï¿½digo duplicado + luego validar resto
     // =========================
     $("#frmCorte").on("submit", function (e) {
 
@@ -1095,24 +1093,24 @@
             }
         }
 
-        // Paso 1: siempre validar código duplicado (aunque no haya salido del input)
+        // Paso 1: siempre validar cï¿½digo duplicado (aunque no haya salido del input)
         if (!reenviandoSubmit) {
             e.preventDefault();
 
             validarCodigoExistente().done(function () {
                 if (codigoDuplicado) {
                     $codigo.focus().select();
-                    return; // NO reenvía
+                    return; // NO reenvï¿½a
                 }
 
                 reenviandoSubmit = true;
-                $frm.trigger("submit"); // reingresa y sigue con lógica normal
+                $frm.trigger("submit"); // reingresa y sigue con lï¿½gica normal
             });
 
             return false;
         }
 
-        // Paso 2: submit real (reenvío controlado)
+        // Paso 2: submit real (reenvï¿½o controlado)
         reenviandoSubmit = false;
 
         let ok = true;
@@ -1127,7 +1125,7 @@
         if (!validarPromedio()) ok = false;
         if (!validarModoDependientes()) ok = false;
 
-        // Duplicado (por si quedó marcado)
+        // Duplicado (por si quedï¿½ marcado)
         if (codigoDuplicado) {
             ok = false;
             $codigo.addClass("is-invalid");
@@ -1140,7 +1138,7 @@
         }
 
         // =========================
-        // Normalización de numéricos para POST (.NET es-AR)
+        // Normalizaciï¿½n de numï¿½ricos para POST (.NET es-AR)
         // =========================
 
         // Precio Kg (obligatorio en cliente, pero reutilizamos helper)
@@ -1151,7 +1149,7 @@
             return false;
         }
 
-        // Promedio (opcional o float válido)
+        // Promedio (opcional o float vï¿½lido)
         if (!normalizarFloatOpcionalParaPost($promedio, "Promedio")) {
             e.preventDefault();
             marcarValidez($promedio, false);
@@ -1297,7 +1295,7 @@
                 if (clean === lastOkCode && (now - lastOkAt) < TIEMPO_RELECTURA) return;
 
                 if (!isValidEAN(clean)) {
-                    setScannerMsg("Código inválido (solo EAN-8 o EAN-13). Volvé a enfocar.");
+                    setScannerMsg("CÃ³digo invÃ¡lido (solo EAN-8 o EAN-13). VolvÃ© a enfocar.");
                     return;
                 }
 

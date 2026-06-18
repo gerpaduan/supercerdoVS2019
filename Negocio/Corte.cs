@@ -33,6 +33,26 @@ namespace Negocio
             return oCorteD.findCorteByCodigo(codigo, buscarMaestro);
         }
 
+        public List<Entidades.Corte> ObtenerCatalogoGlobal(string busqueda)
+        {
+            return oCorteD.ObtenerCatalogoGlobal(busqueda);
+        }
+
+        public void AsegurarTablaImportacionCatalogoGlobal()
+        {
+            oCorteD.AsegurarTablaImportacionCatalogoGlobal();
+        }
+
+        public List<Entidades.CatalogoGlobalImportacionProducto> ObtenerImportacionesCatalogoGlobal(IEnumerable<int> idsProductosGlobales = null)
+        {
+            return oCorteD.ObtenerImportacionesCatalogoGlobal(idsProductosGlobales);
+        }
+
+        public void GuardarImportacionCatalogoGlobal(int idProductoGlobal, int idProductoEmpresa, int? idUsuarioAlta)
+        {
+            oCorteD.GuardarImportacionCatalogoGlobal(idProductoGlobal, idProductoEmpresa, idUsuarioAlta);
+        }
+
         /// <summary>
         /// Listado Productos desde WEB
         /// </summary>

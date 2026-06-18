@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
 using Entidades;
 using Utilidades;
 
@@ -40,6 +42,7 @@ namespace Datos
             oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
             oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
             oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
+            oCorteE.IdEmpresa = drCorte["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(drCorte["idEmpresa"]);
 
             if (cargarMaestro)
             {
@@ -52,7 +55,7 @@ namespace Datos
             oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
             oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
             oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
-            oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
+            oCorteE.EnCierreStock = drCorte["enCierreStock"] == DBNull.Value ? true : Convert.ToBoolean(drCorte["enCierreStock"]);
             oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
             oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
             oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
@@ -111,6 +114,205 @@ namespace Datos
             );
 
             return lista.Count > 0 ? lista[0] : null;
+        }
+
+        public List<Entidades.Corte> ObtenerCatalogoGlobal(string busqueda)
+        {
+            const string sql = @"
+                SELECT
+                    c.idCorte,
+                    c.codigo,
+                    c.corte,
+                    c.tipo,
+                    c.promedio,
+                    c.puntoStock,
+                    c.nivel,
+                    c.idCorteMaestro,
+                    cm.corte AS corteMaestro,
+                    c.porcentaje,
+                    c.precioKg,
+                    c.ingresoRapidoEmbutido,
+                    c.habilitado,
+                    c.enCierreStock,
+                    c.porcentajeHueso,
+                    c.independiente,
+                    c.desvioEstandar,
+                    c.creado,
+                    c.actualizado,
+                    c.idAlicuotaIva,
+                    c.alicuotaIva,
+                    c.pesable
+                FROM dbo.Corte c
+                LEFT JOIN dbo.Corte cm ON cm.idCorte = c.idCorteMaestro
+                WHERE (@texto = '' OR c.corte LIKE @buscar OR CAST(c.codigo AS NVARCHAR(50)) LIKE @buscar)
+                ORDER BY c.codigo ASC;";
+
+            string texto = (busqueda ?? "").Trim();
+            string buscar = "%" + texto + "%";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr =>
+                {
+                    var corte = new Entidades.Corte
+                    {
+                        IdCorte = Convert.ToInt32(dr["idCorte"]),
+                        Codigo = Convert.ToInt64(dr["codigo"]),
+                        CorteDesc = Convert.ToString(dr["corte"]),
+                        Tipo = Convert.ToString(dr["tipo"]),
+                        Promedio = dr["promedio"] == DBNull.Value ? 0f : Convert.ToSingle(dr["promedio"]),
+                        PuntoStock = dr["puntoStock"] == DBNull.Value ? 0 : Convert.ToInt32(dr["puntoStock"]),
+                        Nivel = dr["nivel"] == DBNull.Value ? 0 : Convert.ToInt32(dr["nivel"]),
+                        Porcentaje = dr["porcentaje"] == DBNull.Value ? 0f : Convert.ToSingle(dr["porcentaje"]),
+                        PrecioKg = dr["precioKg"] == DBNull.Value ? 0f : Convert.ToSingle(dr["precioKg"]),
+                        PrecioKgReferencia = dr["precioKg"] == DBNull.Value ? 0f : Convert.ToSingle(dr["precioKg"]),
+                        IngresoRapidoEmbutido = dr["ingresoRapidoEmbutido"] != DBNull.Value && Convert.ToBoolean(dr["ingresoRapidoEmbutido"]),
+                        Habilitado = dr["habilitado"] != DBNull.Value && Convert.ToBoolean(dr["habilitado"]),
+                        EnCierreStock = dr["enCierreStock"] != DBNull.Value && Convert.ToBoolean(dr["enCierreStock"]),
+                        PorcentajeHueso = dr["porcentajeHueso"] == DBNull.Value ? 0f : Convert.ToSingle(dr["porcentajeHueso"]),
+                        Independiente = dr["independiente"] == DBNull.Value ? 0 : Convert.ToInt32(dr["independiente"]),
+                        DesvioEstandar = dr["desvioEstandar"] == DBNull.Value ? 0f : Convert.ToSingle(dr["desvioEstandar"]),
+                        Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
+                        Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
+                        IdAlicuotaIva = dr["idAlicuotaIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idAlicuotaIva"]),
+                        AlicuotaIva = dr["alicuotaIva"] == DBNull.Value ? 0f : Convert.ToSingle(dr["alicuotaIva"]),
+                        Pesable = dr["pesable"] != DBNull.Value && Convert.ToBoolean(dr["pesable"])
+                    };
+
+                    int idMaestro = dr["idCorteMaestro"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idCorteMaestro"]);
+                    if (idMaestro > 0)
+                    {
+                        corte.CorteMaestro = new Entidades.Corte
+                        {
+                            IdCorte = idMaestro,
+                            CorteDesc = dr["corteMaestro"] == DBNull.Value ? "" : Convert.ToString(dr["corteMaestro"])
+                        };
+                    }
+
+                    corte.Presentacion = corte.EsPresentacion(corte.PorcentajeHueso);
+                    if (corte.Presentacion)
+                    {
+                        corte.Porcentaje = corte.getCantPresentacion(corte.PorcentajeHueso);
+                    }
+
+                    return corte;
+                },
+                p =>
+                {
+                    p.Add("@texto", SqlDbType.NVarChar, 100).Value = texto;
+                    p.Add("@buscar", SqlDbType.NVarChar, 110).Value = buscar;
+                });
+        }
+
+        public void AsegurarTablaImportacionCatalogoGlobal()
+        {
+            const string sql = @"
+                IF OBJECT_ID('dbo.CatalogoGlobalImportacionProductos', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.CatalogoGlobalImportacionProductos
+                    (
+                        IdCatalogoGlobalImportacionProducto INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                        IdEmpresa INT NOT NULL,
+                        IdProductoGlobal INT NOT NULL,
+                        IdProductoEmpresa INT NOT NULL,
+                        FechaAlta DATETIME NOT NULL CONSTRAINT DF_CatalogoGlobalImportacionProductos_FechaAlta DEFAULT (GETDATE()),
+                        IdUsuarioAlta INT NULL
+                    );
+
+                    CREATE UNIQUE INDEX UX_CatalogoGlobalImportacionProductos_Empresa_Global
+                        ON dbo.CatalogoGlobalImportacionProductos(IdEmpresa, IdProductoGlobal);
+
+                    CREATE UNIQUE INDEX UX_CatalogoGlobalImportacionProductos_Empresa_EmpresaProducto
+                        ON dbo.CatalogoGlobalImportacionProductos(IdEmpresa, IdProductoEmpresa);
+                END;";
+
+            Db.NonQuery(_empresa, sql, CommandType.Text);
+        }
+
+        public List<Entidades.CatalogoGlobalImportacionProducto> ObtenerImportacionesCatalogoGlobal(IEnumerable<int> idsProductosGlobales = null)
+        {
+            var ids = (idsProductosGlobales ?? new int[0]).Distinct().Where(x => x > 0).ToList();
+            var sql = new StringBuilder(@"
+                SELECT
+                    IdCatalogoGlobalImportacionProducto,
+                    IdEmpresa,
+                    IdProductoGlobal,
+                    IdProductoEmpresa,
+                    FechaAlta,
+                    IdUsuarioAlta
+                FROM dbo.CatalogoGlobalImportacionProductos
+                WHERE IdEmpresa = @idEmpresa");
+
+            if (ids.Count > 0)
+            {
+                sql.Append(" AND IdProductoGlobal IN (");
+                for (int i = 0; i < ids.Count; i++)
+                {
+                    if (i > 0) sql.Append(", ");
+                    sql.Append("@idGlobal").Append(i);
+                }
+                sql.Append(")");
+            }
+
+            sql.Append(" ORDER BY IdProductoGlobal;");
+
+            return Db.Reader(
+                _empresa,
+                sql.ToString(),
+                CommandType.Text,
+                dr => new Entidades.CatalogoGlobalImportacionProducto
+                {
+                    IdCatalogoGlobalImportacionProducto = Convert.ToInt32(dr["IdCatalogoGlobalImportacionProducto"]),
+                    IdEmpresa = Convert.ToInt32(dr["IdEmpresa"]),
+                    IdProductoGlobal = Convert.ToInt32(dr["IdProductoGlobal"]),
+                    IdProductoEmpresa = Convert.ToInt32(dr["IdProductoEmpresa"]),
+                    FechaAlta = Convert.ToDateTime(dr["FechaAlta"]),
+                    IdUsuarioAlta = dr["IdUsuarioAlta"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["IdUsuarioAlta"])
+                },
+                p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    for (int i = 0; i < ids.Count; i++)
+                    {
+                        p.Add("@idGlobal" + i, SqlDbType.Int).Value = ids[i];
+                    }
+                });
+        }
+
+        public void GuardarImportacionCatalogoGlobal(int idProductoGlobal, int idProductoEmpresa, int? idUsuarioAlta)
+        {
+            const string sql = @"
+                MERGE dbo.CatalogoGlobalImportacionProductos AS T
+                USING (
+                    SELECT
+                        @idEmpresa AS IdEmpresa,
+                        @idProductoGlobal AS IdProductoGlobal,
+                        @idProductoEmpresa AS IdProductoEmpresa,
+                        @idUsuarioAlta AS IdUsuarioAlta
+                ) AS S
+                ON T.IdEmpresa = S.IdEmpresa AND T.IdProductoGlobal = S.IdProductoGlobal
+                WHEN MATCHED THEN
+                    UPDATE SET
+                        T.IdProductoEmpresa = S.IdProductoEmpresa,
+                        T.IdUsuarioAlta = S.IdUsuarioAlta,
+                        T.FechaAlta = GETDATE()
+                WHEN NOT MATCHED THEN
+                    INSERT (IdEmpresa, IdProductoGlobal, IdProductoEmpresa, FechaAlta, IdUsuarioAlta)
+                    VALUES (S.IdEmpresa, S.IdProductoGlobal, S.IdProductoEmpresa, GETDATE(), S.IdUsuarioAlta);";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    p.Add("@idProductoGlobal", SqlDbType.Int).Value = idProductoGlobal;
+                    p.Add("@idProductoEmpresa", SqlDbType.Int).Value = idProductoEmpresa;
+                    p.Add("@idUsuarioAlta", SqlDbType.Int).Value = (object)idUsuarioAlta ?? DBNull.Value;
+                });
         }
 
         public void editPrecioCorte(Entidades.Corte oCorteE)

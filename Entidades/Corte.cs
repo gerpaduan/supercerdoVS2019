@@ -31,6 +31,7 @@ namespace Entidades
         private bool pesable;
         private int nivel;
         private int puntoStock;
+        private int idEmpresa;
         private bool codBarraValidadoEnPos = false;
         private string stock_EnString;
         private string stockUnidades;
@@ -208,6 +209,7 @@ namespace Entidades
         public bool Pesable { get => pesable; set => pesable = value; }
         public int Nivel { get => nivel; set => nivel = value; }
         public int PuntoStock { get => puntoStock; set => puntoStock = value; }
+        public int IdEmpresa { get => idEmpresa; set => idEmpresa = value; }
         public Persona Marca { get; set; }
 
         public string MarcaNombre => Marca?.RazonSocial ?? "";

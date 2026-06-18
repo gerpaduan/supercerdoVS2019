@@ -166,6 +166,7 @@
     <Compile Include="Models\CalcularComisionesElectronicasVm.cs" />
     <Compile Include="Models\ComisionElectronicaFormaVm.cs" />
     <Compile Include="Models\CalculadoraBilletesPrintVm.cs" />
+    <Compile Include="Models\AgregarProductoDesdeCodigoBarraVm.cs" />
     <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\FacturasVm.cs" />
     <Compile Include="Models\IngresoBilletesPrintVm.cs" />
@@ -173,6 +174,8 @@
     <Compile Include="Models\MovimientoEditVm.cs" />
     <Compile Include="Models\MovimientoIndexVm.cs" />
     <Compile Include="Models\MarcaEditVm.cs" />
+    <Compile Include="Models\CatalogoGlobalProductosVm.cs" />
+    <Compile Include="Models\ImportarProductosGlobalesRequest.cs" />
     <Compile Include="Models\ParametrosVm.cs" />
     <Compile Include="Models\PuntoExpendioVm.cs" />
     <Compile Include="Models\ReciboPagoVm.cs" />
@@ -182,6 +185,8 @@
     <Compile Include="Models\SystemAdministrationVm.cs" />
     <Compile Include="Models\TipoProductoEditVm.cs" />
     <Compile Include="Models\TipoEgresoCajaEditVm.cs" />
+    <Compile Include="Models\ProductoGlobalImportItemVm.cs" />
+    <Compile Include="Models\ProductoGlobalSeleccionVm.cs" />
     <Compile Include="Models\HomeDashboardVm.cs" />
     <Compile Include="Models\UtilitiesIndexVm.cs" />
     <Compile Include="Models\UtilityItemVm.cs" />
@@ -2143,6 +2148,8 @@
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
+    <Content Include="Views\Productos\_CatalogoGlobalModal.cshtml" />
+    <Content Include="Views\Productos\_CatalogoGlobalRows.cshtml" />
     <Content Include="Views\Productos\_MarcasTabla.cshtml" />
     <Content Include="Views\Productos\_TiposProductoTabla.cshtml" />
     <Content Include="Views\PuntosExpendio\Abrir.cshtml" />

@@ -11,7 +11,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
+using Utilidades;
 using Web.Helpers;
+using Web.Models;
 
 namespace Web.Controllers
 {
@@ -41,7 +43,10 @@ namespace Web.Controllers
             long? codigoDesde = null,
             long? codigoHasta = null)
         {
-            var productos = oCorteN.findAllCortes(true, SucursalId);
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+            var productos = (oCorteN.findAllCortes(true, SucursalId) ?? new List<Entidades.Corte>())
+                .Where(x => x != null && x.IdEmpresa == idEmpresaSesion)
+                .ToList();
 
             if (!string.IsNullOrWhiteSpace(tipo))
             {
@@ -94,6 +99,340 @@ namespace Web.Controllers
             return View(productos);
         }
 
+        [HttpGet]
+        public ActionResult VerGlobales()
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return new HttpStatusCodeResult(403);
+
+            var model = ConstruirCatalogoGlobalVm("");
+            return PartialView("~/Views/Productos/_CatalogoGlobalModal.cshtml", model);
+        }
+
+        [HttpGet]
+        public JsonResult BuscarGlobales(string q = "")
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar productos." }, JsonRequestBehavior.AllowGet);
+
+            var model = ConstruirCatalogoGlobalVm(q);
+            string html = RenderPartialViewToString("~/Views/Productos/_CatalogoGlobalRows.cshtml", model.Productos);
+
+            return Json(new
+            {
+                ok = true,
+                html,
+                cantidad = model.Productos.Count
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ImportarSeleccionados(ImportarProductosGlobalesRequest request)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar productos." });
+
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            oCorteN.AsegurarTablaImportacionCatalogoGlobal();
+
+            var seleccionados = (request?.Productos ?? new List<ProductoGlobalSeleccionVm>())
+                .Where(x => x != null && x.IdProductoGlobal > 0)
+                .GroupBy(x => x.IdProductoGlobal)
+                .Select(x => x.First())
+                .ToList();
+
+            if (!seleccionados.Any())
+                return Json(new { ok = false, mensaje = "Seleccione al menos un producto del catálogo global." });
+
+            var catalogoGlobal = ObtenerGestorCatalogoGlobal();
+            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobal("")
+                .Where(x => seleccionados.Any(s => s.IdProductoGlobal == x.IdCorte))
+                .ToList();
+
+            if (productosGlobales.Count != seleccionados.Count)
+                return Json(new { ok = false, mensaje = "No se pudieron resolver todos los productos seleccionados del catálogo global." });
+
+            var importacionesExistentes = oCorteN.ObtenerImportacionesCatalogoGlobal(productosGlobales.Select(x => x.IdCorte))
+                .ToDictionary(x => x.IdProductoGlobal, x => x);
+
+            var productosEmpresaActual = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+            var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
+            var codigosEmpresa = new HashSet<long>(productosEmpresaActual.Select(x => x.Codigo));
+
+            foreach (var producto in productosGlobales)
+            {
+                Entidades.CatalogoGlobalImportacionProducto importacion;
+                if (importacionesExistentes.TryGetValue(producto.IdCorte, out importacion))
+                {
+                    if (productosEmpresaPorId.ContainsKey(importacion.IdProductoEmpresa))
+                    {
+                        return Json(new
+                        {
+                            ok = false,
+                            mensaje = "El producto \"" + producto.CorteDesc + "\" ya fue importado previamente en esta empresa."
+                        });
+                    }
+                }
+            }
+
+            var seleccionPorId = seleccionados.ToDictionary(x => x.IdProductoGlobal, x => x);
+            var importacionesMaestros = oCorteN.ObtenerImportacionesCatalogoGlobal(
+                productosGlobales
+                    .Where(x => x.CorteMaestro != null && x.CorteMaestro.IdCorte > 0)
+                    .Select(x => x.CorteMaestro.IdCorte));
+
+            var importacionesMaestrosPorGlobal = importacionesMaestros
+                .GroupBy(x => x.IdProductoGlobal)
+                .ToDictionary(x => x.Key, x => x.First());
+
+            foreach (var producto in productosGlobales)
+            {
+                if (producto.CorteMaestro == null || producto.CorteMaestro.IdCorte <= 0)
+                    continue;
+
+                if (seleccionPorId.ContainsKey(producto.CorteMaestro.IdCorte))
+                    continue;
+
+                Entidades.CatalogoGlobalImportacionProducto importacionMaestro;
+                if (importacionesMaestrosPorGlobal.TryGetValue(producto.CorteMaestro.IdCorte, out importacionMaestro)
+                    && productosEmpresaPorId.ContainsKey(importacionMaestro.IdProductoEmpresa))
+                {
+                    continue;
+                }
+
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "Para importar " + producto.CorteDesc + " también debe importar " + producto.CorteMaestro.CorteDesc + "."
+                });
+            }
+
+            var conflictos = new List<string>();
+            var codigosSeleccionados = new HashSet<long>();
+
+            foreach (var item in seleccionados)
+            {
+                if (item.CodigoDestino <= 0)
+                {
+                    conflictos.Add("El código de destino para el producto global ID " + item.IdProductoGlobal + " debe ser mayor a 0.");
+                    continue;
+                }
+
+                if (!codigosSeleccionados.Add(item.CodigoDestino))
+                {
+                    conflictos.Add("El código " + item.CodigoDestino + " está repetido dentro de la importación.");
+                    continue;
+                }
+
+                if (codigosEmpresa.Contains(item.CodigoDestino))
+                {
+                    var sugerido = SugerirCodigoLibre(new HashSet<long>(codigosEmpresa.Concat(codigosSeleccionados)), item.CodigoDestino);
+                    var producto = productosGlobales.FirstOrDefault(x => x.IdCorte == item.IdProductoGlobal);
+                    conflictos.Add("El código " + item.CodigoDestino + " ya existe para la empresa actual en \"" + (producto != null ? producto.CorteDesc : "producto") + "\". Sugerido: " + sugerido + ".");
+                }
+            }
+
+            if (conflictos.Any())
+                return Json(new { ok = false, mensaje = string.Join("<br/>", conflictos) });
+
+            var productosGlobalesPorId = productosGlobales.ToDictionary(x => x.IdCorte, x => x);
+            var idsEmpresaPorGlobal = new Dictionary<int, int>();
+
+            foreach (var importacion in importacionesMaestros)
+            {
+                if (productosEmpresaPorId.ContainsKey(importacion.IdProductoEmpresa))
+                    idsEmpresaPorGlobal[importacion.IdProductoGlobal] = importacion.IdProductoEmpresa;
+            }
+
+            foreach (var producto in OrdenarProductosParaImportacion(productosGlobales))
+            {
+                var seleccion = seleccionPorId[producto.IdCorte];
+                var nuevoProducto = ClonarProductoGlobal(producto, seleccion.CodigoDestino, 0f);
+
+                if (producto.CorteMaestro != null && producto.CorteMaestro.IdCorte > 0)
+                {
+                    int idMaestroEmpresa;
+                    if (!idsEmpresaPorGlobal.TryGetValue(producto.CorteMaestro.IdCorte, out idMaestroEmpresa) || idMaestroEmpresa <= 0)
+                    {
+                        return Json(new
+                        {
+                            ok = false,
+                            mensaje = "No se pudo resolver el corte maestro para \"" + producto.CorteDesc + "\"."
+                        });
+                    }
+
+                    nuevoProducto.CorteMaestro = new Entidades.Corte { IdCorte = idMaestroEmpresa };
+                }
+
+                oCorteN.addOrEditCorte(nuevoProducto);
+
+                var insertado = oCorteN.findCorteByCodigo(seleccion.CodigoDestino, false);
+                if (insertado == null || insertado.IdCorte <= 0)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "Se importó \"" + producto.CorteDesc + "\" pero no se pudo recuperar el identificador generado."
+                    });
+                }
+
+                idsEmpresaPorGlobal[producto.IdCorte] = insertado.IdCorte;
+                oCorteN.GuardarImportacionCatalogoGlobal(producto.IdCorte, insertado.IdCorte, usuario != null ? (int?)usuario.Id : null);
+                codigosEmpresa.Add(seleccion.CodigoDestino);
+            }
+
+            return Json(new
+            {
+                ok = true,
+                mensaje = "Se importaron " + seleccionados.Count + " productos correctamente."
+            });
+        }
+
+        [HttpGet]
+        public JsonResult BuscarPorCodigoBarraGlobal(string codigoBarra)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para agregar productos." }, JsonRequestBehavior.AllowGet);
+
+            oCorteN.AsegurarTablaImportacionCatalogoGlobal();
+
+            long codigo = NormalizarCodigoBarra(codigoBarra);
+            if (codigo <= 0)
+                return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." }, JsonRequestBehavior.AllowGet);
+
+            var existenteEmpresa = oCorteN.findCorteByCodigo(codigo, false);
+            if (existenteEmpresa != null)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "El código ya existe en la empresa actual para \"" + existenteEmpresa.CorteDesc + "\"."
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            var catalogoGlobal = ObtenerGestorCatalogoGlobal();
+            var global = catalogoGlobal.findCorteByCodigo(codigo, true);
+            if (global == null)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = "No existe el producto en el catálogo global."
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            var importacionExistente = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.IdCorte }).FirstOrDefault();
+            if (importacionExistente != null)
+            {
+                var productoImportado = oCorteN.findCorteById(importacionExistente.IdProductoEmpresa, false);
+                if (productoImportado != null)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "Ese producto global ya fue importado como \"" + productoImportado.CorteDesc + "\" (código " + productoImportado.Codigo + ")."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+            }
+
+            string mensajeBloqueo = null;
+            if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
+            {
+                var maestroImportado = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.CorteMaestro.IdCorte }).FirstOrDefault();
+                bool maestroValido = maestroImportado != null && oCorteN.findCorteById(maestroImportado.IdProductoEmpresa, false) != null;
+                if (!maestroValido)
+                {
+                    mensajeBloqueo = "Para agregar " + global.CorteDesc + " primero debe importar " + global.CorteMaestro.CorteDesc + " desde el catálogo global.";
+                }
+            }
+
+            return Json(new
+            {
+                ok = true,
+                producto = new
+                {
+                    id = global.IdCorte,
+                    codigo = global.Codigo,
+                    descripcion = global.CorteDesc,
+                    mensajeBloqueo = mensajeBloqueo
+                }
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AgregarDesdeCodigoBarra(AgregarProductoDesdeCodigoBarraVm model)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para agregar productos." });
+
+            oCorteN.AsegurarTablaImportacionCatalogoGlobal();
+
+            long codigo = NormalizarCodigoBarra(model != null ? model.CodigoBarra : null);
+            if (codigo <= 0)
+                return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." });
+
+            if (oCorteN.findCorteByCodigo(codigo, false) != null)
+                return Json(new { ok = false, mensaje = "El código ya existe en la empresa actual." });
+
+            string descripcion = (model != null ? model.Descripcion : null) ?? "";
+            descripcion = descripcion.Trim();
+            if (string.IsNullOrWhiteSpace(descripcion))
+                return Json(new { ok = false, mensaje = "La descripción no puede estar vacía." });
+
+            float precio;
+            if (!TryParseFloatFlexible(model != null ? model.Precio : null, out precio) || precio < 0)
+                return Json(new { ok = false, mensaje = "El precio debe ser mayor o igual a 0." });
+
+            var catalogoGlobal = ObtenerGestorCatalogoGlobal();
+            var global = catalogoGlobal.findCorteByCodigo(codigo, true);
+            if (global == null)
+                return Json(new { ok = false, mensaje = "No existe el producto en el catálogo global." });
+
+            var importacionExistente = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.IdCorte }).FirstOrDefault();
+            if (importacionExistente != null)
+            {
+                var productoImportado = oCorteN.findCorteById(importacionExistente.IdProductoEmpresa, false);
+                if (productoImportado != null)
+                    return Json(new { ok = false, mensaje = "Ese producto global ya fue importado previamente en esta empresa." });
+            }
+
+            int? idMaestroEmpresa = null;
+            if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
+            {
+                var maestroImportado = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.CorteMaestro.IdCorte }).FirstOrDefault();
+                if (maestroImportado == null)
+                    return Json(new { ok = false, mensaje = "Para agregar " + global.CorteDesc + " primero debe importar " + global.CorteMaestro.CorteDesc + " desde el catálogo global." });
+
+                var maestroEmpresa = oCorteN.findCorteById(maestroImportado.IdProductoEmpresa, false);
+                if (maestroEmpresa == null)
+                    return Json(new { ok = false, mensaje = "No se encontró el producto maestro ya importado para completar la relación." });
+
+                idMaestroEmpresa = maestroEmpresa.IdCorte;
+            }
+
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            var nuevoProducto = ClonarProductoGlobal(global, codigo, precio);
+            nuevoProducto.CorteDesc = descripcion;
+            if (idMaestroEmpresa.HasValue)
+                nuevoProducto.CorteMaestro = new Entidades.Corte { IdCorte = idMaestroEmpresa.Value };
+
+            oCorteN.addOrEditCorte(nuevoProducto);
+
+            var insertado = oCorteN.findCorteByCodigo(codigo, false);
+            if (insertado == null || insertado.IdCorte <= 0)
+                return Json(new { ok = false, mensaje = "El producto se guardó pero no se pudo recuperar el identificador generado." });
+
+            oCorteN.GuardarImportacionCatalogoGlobal(global.IdCorte, insertado.IdCorte, usuario != null ? (int?)usuario.Id : null);
+
+            return Json(new
+            {
+                ok = true,
+                mensaje = "Producto guardado correctamente"
+            });
+        }
+
         // Acción para búsqueda en vivo usada por el modal POS
         [HttpGet]
         public JsonResult ListarProductos(string q = "")
@@ -131,6 +470,181 @@ namespace Web.Controllers
                 // Opcional: loguear ex
                 return Json(new List<object>(), JsonRequestBehavior.AllowGet);
             }
+        }
+
+        private Negocio.Corte ObtenerGestorCatalogoGlobal()
+        {
+            return new Negocio.Corte(new EmpresaContextNulo(), null);
+        }
+
+        private CatalogoGlobalProductosVm ConstruirCatalogoGlobalVm(string busqueda)
+        {
+            oCorteN.AsegurarTablaImportacionCatalogoGlobal();
+
+            var catalogoGlobal = ObtenerGestorCatalogoGlobal();
+            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobal(busqueda) ?? new List<Entidades.Corte>();
+            var productosEmpresaActual = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+            var codigosEmpresa = new HashSet<long>(productosEmpresaActual.Select(x => x.Codigo));
+            var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
+            var importaciones = oCorteN.ObtenerImportacionesCatalogoGlobal(productosGlobales.Select(x => x.IdCorte))
+                .ToDictionary(x => x.IdProductoGlobal, x => x);
+
+            var model = new CatalogoGlobalProductosVm
+            {
+                Busqueda = busqueda ?? ""
+            };
+
+            foreach (var producto in productosGlobales)
+            {
+                Entidades.CatalogoGlobalImportacionProducto importacion;
+                Entidades.Corte productoEmpresaImportado = null;
+                bool yaImportado = false;
+
+                if (importaciones.TryGetValue(producto.IdCorte, out importacion))
+                {
+                    productosEmpresaPorId.TryGetValue(importacion.IdProductoEmpresa, out productoEmpresaImportado);
+                    yaImportado = productoEmpresaImportado != null;
+                }
+
+                bool codigoDuplicado = codigosEmpresa.Contains(producto.Codigo);
+                long codigoSugerido = codigoDuplicado
+                    ? SugerirCodigoLibre(new HashSet<long>(codigosEmpresa), producto.Codigo)
+                    : producto.Codigo;
+
+                string mensajeEstado = "";
+                if (yaImportado)
+                {
+                    mensajeEstado = "Ya importado";
+                }
+                else if (codigoDuplicado)
+                {
+                    mensajeEstado = "Código existente. Sugerido: " + codigoSugerido;
+                }
+                else
+                {
+                    mensajeEstado = "Listo para importar";
+                }
+
+                model.Productos.Add(new ProductoGlobalImportItemVm
+                {
+                    IdProductoGlobal = producto.IdCorte,
+                    CodigoOriginal = producto.Codigo,
+                    CodigoDestino = codigoSugerido,
+                    Descripcion = producto.CorteDesc,
+                    Tipo = producto.Tipo ?? "",
+                    IdProductoGlobalMaestro = producto.CorteMaestro != null && producto.CorteMaestro.IdCorte > 0
+                        ? (int?)producto.CorteMaestro.IdCorte
+                        : null,
+                    ProductoGlobalMaestroNombre = producto.CorteMaestro != null ? producto.CorteMaestro.CorteDesc : "",
+                    EsPresentacion = producto.Presentacion,
+                    Porcentaje = producto.Porcentaje,
+                    YaImportado = yaImportado,
+                    IdProductoEmpresaImportado = productoEmpresaImportado != null ? (int?)productoEmpresaImportado.IdCorte : null,
+                    CodigoEmpresaImportado = productoEmpresaImportado != null ? (long?)productoEmpresaImportado.Codigo : null,
+                    CodigoDuplicadoEnEmpresa = codigoDuplicado,
+                    CodigoSugerido = codigoSugerido,
+                    MensajeEstado = mensajeEstado
+                });
+            }
+
+            return model;
+        }
+
+        private static long SugerirCodigoLibre(HashSet<long> codigosUsados, long codigoBase)
+        {
+            long sugerido = codigoBase > 0 ? codigoBase : 1;
+            while (codigosUsados.Contains(sugerido))
+            {
+                sugerido++;
+            }
+
+            return sugerido;
+        }
+
+        private static long NormalizarCodigoBarra(string codigoBarra)
+        {
+            var limpio = Regex.Replace(codigoBarra ?? "", @"[^\d]", "");
+            long codigo;
+            return long.TryParse(limpio, out codigo) ? codigo : 0L;
+        }
+
+        private static bool TryParseFloatFlexible(string texto, out float valor)
+        {
+            valor = 0f;
+            if (string.IsNullOrWhiteSpace(texto))
+                return false;
+
+            string normalizado = texto.Trim().Replace(".", "").Replace(",", ".");
+            return float.TryParse(normalizado, NumberStyles.Any, CultureInfo.InvariantCulture, out valor);
+        }
+
+        private static List<Entidades.Corte> OrdenarProductosParaImportacion(IEnumerable<Entidades.Corte> productos)
+        {
+            var lista = (productos ?? new List<Entidades.Corte>()).ToList();
+            var dict = lista.ToDictionary(x => x.IdCorte, x => x);
+            var resultado = new List<Entidades.Corte>();
+            var visitados = new HashSet<int>();
+
+            Action<Entidades.Corte> visitar = null;
+            visitar = producto =>
+            {
+                if (producto == null || !visitados.Add(producto.IdCorte))
+                    return;
+
+                if (producto.CorteMaestro != null && producto.CorteMaestro.IdCorte > 0)
+                {
+                    Entidades.Corte maestro;
+                    if (dict.TryGetValue(producto.CorteMaestro.IdCorte, out maestro))
+                        visitar(maestro);
+                }
+
+                resultado.Add(producto);
+            };
+
+            foreach (var producto in lista.OrderBy(x => x.Codigo))
+            {
+                visitar(producto);
+            }
+
+            return resultado;
+        }
+
+        private static Entidades.Corte ClonarProductoGlobal(Entidades.Corte global, long codigoDestino, float precioDestino)
+        {
+            var nuevo = new Entidades.Corte
+            {
+                IdCorte = 0,
+                Codigo = codigoDestino,
+                CorteDesc = global.CorteDesc,
+                Tipo = global.Tipo,
+                Pesable = global.Pesable,
+                Promedio = global.Promedio,
+                IdAlicuotaIva = global.IdAlicuotaIva,
+                AlicuotaIva = global.AlicuotaIva,
+                PuntoStock = global.PuntoStock,
+                EnCierreStock = global.EnCierreStock,
+                Habilitado = global.Habilitado,
+                IngresoRapidoEmbutido = global.IngresoRapidoEmbutido,
+                Independiente = global.Independiente,
+                Porcentaje = global.Porcentaje,
+                PorcentajeHueso = global.PorcentajeHueso,
+                DesvioEstandar = global.DesvioEstandar,
+                PrecioKg = precioDestino,
+                PrecioKgReferencia = precioDestino,
+                Presentacion = global.Presentacion,
+                Nivel = global.Nivel
+            };
+
+            if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
+            {
+                nuevo.CorteMaestro = new Entidades.Corte
+                {
+                    IdCorte = global.CorteMaestro.IdCorte,
+                    CorteDesc = global.CorteMaestro.CorteDesc
+                };
+            }
+
+            return nuevo;
         }
 
         // ===============================

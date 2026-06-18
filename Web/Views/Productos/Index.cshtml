@@ -62,6 +62,22 @@
                     <i class="fas fa-barcode mr-1"></i> <span class="atajo-letra">E</span>tiquetas (PDF)
                 </a>
 
+                <button type="button"
+                        id="btnCatalogoGlobal"
+                        class="btn btn-outline-info"
+                        onclick="abrirCatalogoGlobal()"
+                        @(puedeEditarProducto ? "" : "disabled")>
+                    <i class="fas fa-globe-americas mr-1"></i> Ver catálogo global
+                </button>
+
+                <button type="button"
+                        id="btnAgregarCodigoGlobal"
+                        class="btn btn-outline-success"
+                        onclick="abrirModalCodigoGlobal()"
+                        @(puedeEditarProducto ? "" : "disabled")>
+                    <i class="fas fa-barcode mr-1"></i> Agregar por código de barra
+                </button>
+
                 @if (modoEtiquetas)
                 {
                     <a id="lnkVolver"
@@ -703,6 +719,71 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalCatalogoGlobal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content" id="modalCatalogoGlobalContent">
+                <div class="modal-body text-center text-muted py-5">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> Cargando catálogo global...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="formAgregarCodigoGlobal">
+        @Html.AntiForgeryToken()
+        <div class="modal fade" id="modalAgregarCodigoGlobal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-barcode mr-1"></i> Agregar por código de barra
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="alertCodigoGlobal" class="alert alert-danger d-none py-2 px-3"></div>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">Código de barra</label>
+                            <input type="text"
+                                   id="codigoBarraGlobal"
+                                   class="form-control"
+                                   autocomplete="off"
+                                   inputmode="numeric"
+                                   placeholder="Escanee o escriba el código">
+                            <small class="form-text text-muted">
+                                La búsqueda se realiza al completar 13 dígitos o al presionar Enter.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">Descripción</label>
+                            <input type="text" id="descripcionCodigoGlobal" class="form-control" autocomplete="off">
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold">Precio</label>
+                            <input type="text"
+                                   id="precioCodigoGlobal"
+                                   class="form-control"
+                                   autocomplete="off"
+                                   inputmode="decimal"
+                                   placeholder="Ingrese el precio">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" id="btnGuardarCodigoGlobal">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
     <!-- =========================
          FORM ELIMINAR (POST)
          ========================= -->
@@ -719,7 +800,17 @@
     // ============================
     // Helpers
     // ============================
+    const urlVerGlobalesProductos = '@Url.Action("VerGlobales", "Productos")';
+    const urlBuscarGlobalesProductos = '@Url.Action("BuscarGlobales", "Productos")';
+    const urlImportarGlobalesProductos = '@Url.Action("ImportarSeleccionados", "Productos")';
+    const urlBuscarPorCodigoBarraGlobal = '@Url.Action("BuscarPorCodigoBarraGlobal", "Productos")';
+    const urlAgregarDesdeCodigoBarra = '@Url.Action("AgregarDesdeCodigoBarra", "Productos")';
     const tabla = document.getElementById("tablaProductos");
+    const codigoGlobalState = {
+        ultimoCodigoBuscado: "",
+        codigoActualValido: "",
+        bloqueoActual: ""
+    };
 
     function getFilasProductos() {
         return Array.from(tabla.querySelectorAll("tbody tr"))
@@ -731,6 +822,303 @@
         if (next && next.classList.contains("tr-detalles")) return next;
         return null;
     }
+
+    function setAlertCatalogoGlobal(mensaje) {
+        const $alert = $("#alertCatalogoGlobal");
+        if (!$alert.length) return;
+
+        if (!mensaje) {
+            $alert.addClass("d-none").html("");
+            return;
+        }
+
+        $alert.removeClass("d-none").html(mensaje);
+    }
+
+    function getCatalogoGlobalLoadingHtml() {
+        return '' +
+            '<div class="modal-header">' +
+                '<h5 class="modal-title"><i class="fas fa-globe-americas mr-1"></i> Catálogo global</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">' +
+                    '<span aria-hidden="true">&times;</span>' +
+                '</button>' +
+            '</div>' +
+            '<div class="modal-body text-center text-muted py-5">' +
+                '<i class="fas fa-spinner fa-spin mr-2"></i> Cargando catálogo global...' +
+            '</div>' +
+            '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>' +
+            '</div>';
+    }
+
+    function getCatalogoGlobalErrorHtml() {
+        return '' +
+            '<div class="modal-header">' +
+                '<h5 class="modal-title"><i class="fas fa-globe-americas mr-1"></i> Catálogo global</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">' +
+                    '<span aria-hidden="true">&times;</span>' +
+                '</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+                '<div class="alert alert-danger mb-0">No se pudo cargar el catálogo global.</div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>' +
+            '</div>';
+    }
+
+    function actualizarResumenCatalogoGlobal() {
+        const $rows = $("#tbodyCatalogoGlobal tr[data-id]");
+        const $seleccionados = $rows.find(".chk-global-producto:checked");
+        $("#lblResumenCatalogoGlobal").text($rows.length + " producto(s) visible(s) - " + $seleccionados.length + " seleccionado(s)");
+    }
+
+    function bindCatalogoGlobalEvents() {
+        let searchTimer = null;
+
+        $("#txtBuscarCatalogoGlobal").off("input").on("input", function () {
+            const valor = this.value || "";
+            clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(function () {
+                $.get(urlBuscarGlobalesProductos, { q: valor })
+                    .done(function (resp) {
+                        if (!resp || resp.ok === false) {
+                            setAlertCatalogoGlobal(resp && resp.mensaje ? resp.mensaje : "No se pudo buscar en el catálogo global.");
+                            return;
+                        }
+
+                        $("#tbodyCatalogoGlobal").html(resp.html || "");
+                        $("#chkSeleccionarTodosGlobales").prop("checked", false);
+                        setAlertCatalogoGlobal("");
+                        actualizarResumenCatalogoGlobal();
+                    })
+                    .fail(function () {
+                        setAlertCatalogoGlobal("No se pudo buscar en el catálogo global.");
+                    });
+            }, 250);
+        });
+
+        $("#chkSeleccionarTodosGlobales").off("change").on("change", function () {
+            const checked = $(this).is(":checked");
+            $("#tbodyCatalogoGlobal .chk-global-producto:not(:disabled)").prop("checked", checked);
+            actualizarResumenCatalogoGlobal();
+        });
+
+        $("#modalCatalogoGlobal").off("change", ".chk-global-producto").on("change", ".chk-global-producto", function () {
+            actualizarResumenCatalogoGlobal();
+        });
+
+        $("#btnImportarCatalogoGlobal").off("click").on("click", function () {
+            const token = $("#formCatalogoGlobalImportacion input[name='__RequestVerificationToken']").val();
+            const filas = $("#tbodyCatalogoGlobal tr[data-id]");
+            const seleccionados = [];
+
+            filas.each(function (index, row) {
+                const $row = $(row);
+                const $chk = $row.find(".chk-global-producto");
+                if (!$chk.is(":checked") || $chk.is(":disabled")) return;
+
+                const id = parseInt($row.data("id"), 10);
+                const codigoDestino = ($row.find(".js-codigo-destino").val() || "").toString().trim();
+
+                seleccionados.push({
+                    id,
+                    codigoDestino
+                });
+            });
+
+            if (!seleccionados.length) {
+                setAlertCatalogoGlobal("Seleccione al menos un producto para importar.");
+                return;
+            }
+
+            const postData = {
+                __RequestVerificationToken: token
+            };
+
+            seleccionados.forEach(function (item, index) {
+                postData["Productos[" + index + "].IdProductoGlobal"] = item.id;
+                postData["Productos[" + index + "].CodigoDestino"] = item.codigoDestino;
+            });
+
+            setAlertCatalogoGlobal("");
+
+            $.ajax({
+                url: urlImportarGlobalesProductos,
+                type: "POST",
+                data: postData
+            }).done(function (resp) {
+                if (!resp || resp.ok === false) {
+                    setAlertCatalogoGlobal(resp && resp.mensaje ? resp.mensaje : "No se pudo importar la selección.");
+                    return;
+                }
+
+                $("#modalCatalogoGlobal").modal("hide");
+                Swal.fire("Catálogo global", resp.mensaje || "Importación realizada correctamente.", "success")
+                    .then(function () {
+                        window.location.reload();
+                    });
+            }).fail(function () {
+                setAlertCatalogoGlobal("No se pudo importar la selección.");
+            });
+        });
+
+        actualizarResumenCatalogoGlobal();
+    }
+
+    function abrirCatalogoGlobal() {
+        $("#modalCatalogoGlobalContent").html(getCatalogoGlobalLoadingHtml());
+        $("#modalCatalogoGlobal").modal("show");
+
+        $.get(urlVerGlobalesProductos)
+            .done(function (html) {
+                $("#modalCatalogoGlobalContent").html(html);
+                bindCatalogoGlobalEvents();
+                window.setTimeout(function () {
+                    $("#txtBuscarCatalogoGlobal").trigger("focus");
+                }, 150);
+            })
+            .fail(function () {
+                $("#modalCatalogoGlobalContent").html(getCatalogoGlobalErrorHtml());
+            });
+    }
+
+    function setAlertCodigoGlobal(mensaje, tipo) {
+        const $alert = $("#alertCodigoGlobal");
+        if (!$alert.length) return;
+
+        if (!mensaje) {
+            $alert.removeClass("alert-danger alert-warning alert-success").addClass("d-none").text("");
+            return;
+        }
+
+        const clase = tipo === "success" ? "alert-success" : (tipo === "warning" ? "alert-warning" : "alert-danger");
+        $alert.removeClass("d-none alert-danger alert-warning alert-success").addClass(clase).text(mensaje);
+    }
+
+    function limpiarFormularioCodigoGlobal() {
+        codigoGlobalState.ultimoCodigoBuscado = "";
+        codigoGlobalState.codigoActualValido = "";
+        codigoGlobalState.bloqueoActual = "";
+
+        $("#codigoBarraGlobal").val("");
+        $("#descripcionCodigoGlobal").val("");
+        $("#precioCodigoGlobal").val("");
+        $("#btnGuardarCodigoGlobal").prop("disabled", true);
+        setAlertCodigoGlobal("");
+    }
+
+    function abrirModalCodigoGlobal() {
+        limpiarFormularioCodigoGlobal();
+        $("#modalAgregarCodigoGlobal").modal("show");
+        window.setTimeout(function () {
+            $("#codigoBarraGlobal").trigger("focus");
+        }, 150);
+    }
+
+    function buscarCodigoGlobal(force) {
+        const codigo = ($("#codigoBarraGlobal").val() || "").replace(/\D/g, "");
+        if (!force && codigo.length < 13) return;
+        if (!force && codigo === codigoGlobalState.ultimoCodigoBuscado) return;
+
+        codigoGlobalState.ultimoCodigoBuscado = codigo;
+        codigoGlobalState.codigoActualValido = "";
+        codigoGlobalState.bloqueoActual = "";
+        $("#btnGuardarCodigoGlobal").prop("disabled", true);
+        $("#descripcionCodigoGlobal").val("");
+        $("#precioCodigoGlobal").val("");
+        setAlertCodigoGlobal("");
+
+        $.get(urlBuscarPorCodigoBarraGlobal, { codigoBarra: codigo })
+            .done(function (resp) {
+                if (!resp || resp.ok === false || !resp.producto) {
+                    setAlertCodigoGlobal(resp && resp.mensaje ? resp.mensaje : "No existe el producto en el catálogo global.");
+                    return;
+                }
+
+                codigoGlobalState.codigoActualValido = codigo;
+                codigoGlobalState.bloqueoActual = resp.producto.mensajeBloqueo || "";
+
+                $("#descripcionCodigoGlobal").val(resp.producto.descripcion || "");
+                $("#precioCodigoGlobal").val("");
+
+                if (codigoGlobalState.bloqueoActual) {
+                    setAlertCodigoGlobal(codigoGlobalState.bloqueoActual, "warning");
+                    $("#btnGuardarCodigoGlobal").prop("disabled", true);
+                    return;
+                }
+
+                $("#btnGuardarCodigoGlobal").prop("disabled", false);
+                setAlertCodigoGlobal("Producto encontrado. Ingrese el precio para guardar.", "success");
+                $("#precioCodigoGlobal").trigger("focus");
+            })
+            .fail(function () {
+                setAlertCodigoGlobal("No se pudo consultar el catálogo global.");
+            });
+    }
+
+    function guardarCodigoGlobal() {
+        const token = $("#formAgregarCodigoGlobal input[name='__RequestVerificationToken']").val();
+        const codigo = ($("#codigoBarraGlobal").val() || "").replace(/\D/g, "");
+
+        if (!codigoGlobalState.codigoActualValido || codigoGlobalState.codigoActualValido !== codigo) {
+            setAlertCodigoGlobal("Busque primero un producto válido del catálogo global.");
+            return;
+        }
+
+        if (codigoGlobalState.bloqueoActual) {
+            setAlertCodigoGlobal(codigoGlobalState.bloqueoActual, "warning");
+            return;
+        }
+
+        $.ajax({
+            url: urlAgregarDesdeCodigoBarra,
+            type: "POST",
+            data: {
+                __RequestVerificationToken: token,
+                CodigoBarra: codigo,
+                Descripcion: $("#descripcionCodigoGlobal").val(),
+                Precio: $("#precioCodigoGlobal").val()
+            }
+        }).done(function (resp) {
+            if (!resp || resp.ok === false) {
+                setAlertCodigoGlobal(resp && resp.mensaje ? resp.mensaje : "No se pudo guardar el producto.");
+                return;
+            }
+
+            Swal.fire("Productos", resp.mensaje || "Producto guardado correctamente", "success");
+            limpiarFormularioCodigoGlobal();
+            $("#codigoBarraGlobal").trigger("focus");
+        }).fail(function () {
+            setAlertCodigoGlobal("No se pudo guardar el producto.");
+        });
+    }
+
+    $("#codigoBarraGlobal").on("input", function () {
+        const codigo = (this.value || "").replace(/\D/g, "");
+        this.value = codigo;
+        if (codigo.length >= 13) {
+            buscarCodigoGlobal(false);
+        }
+    });
+
+    $("#codigoBarraGlobal").on("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            buscarCodigoGlobal(true);
+        }
+    });
+
+    $("#precioCodigoGlobal").on("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            guardarCodigoGlobal();
+        }
+    });
+
+    $("#btnGuardarCodigoGlobal").on("click", function () {
+        guardarCodigoGlobal();
+    });
 
     // ============================
     // BUSCADOR + CONTADOR
@@ -1355,9 +1743,6 @@
         const opts = opciones || {};
         if (!fila) return;
 
-        precioModalState.currentRow = fila;
-        precioModalState.currentId = Number(fila.dataset.id || 0);
-
         limpiarErroresPrecioModal();
 
         if (!opts.preserveBatchState) {
@@ -1367,6 +1752,9 @@
             $("#PorcentajeLote").val("");
             resetScannerPrecioFields();
         }
+
+        precioModalState.currentRow = fila;
+        precioModalState.currentId = Number(fila.dataset.id || 0);
 
         syncPrecioModalVisualState();
         $("#IdCorte").val(precioModalState.currentId);
