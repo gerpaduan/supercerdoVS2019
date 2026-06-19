@@ -20,6 +20,9 @@
             </a>
             @if (puedeEditar)
             {
+                <button type="button" class="btn btn-outline-info mr-2" id="btnCatalogoGlobalTiposProducto">
+                    <i class="fas fa-globe-americas mr-1"></i> Catálogo Global
+                </button>
                 <button type="button" class="btn btn-primary" id="btnNuevoTipoProducto">
                     <i class="fas fa-plus mr-1"></i> Nuevo tipo de producto
                 </button>
@@ -84,6 +87,16 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalCatalogoGlobalTiposProducto" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-catalogo-global-tipos-dialog" role="document">
+        <div class="modal-content" id="modalCatalogoGlobalTiposProductoContent">
+            <div class="modal-body">
+                <div class="text-center text-muted py-5">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
@@ -91,7 +104,13 @@
             var urlModal = '@Url.Action("TipoProductoModal", "Productos")';
             var urlGuardar = '@Url.Action("GuardarTipoProducto", "Productos")';
             var urlEliminar = '@Url.Action("EliminarTipoProducto", "Productos")';
+            var urlVerGlobales = '@Url.Action("VerGlobalesTiposProducto", "Productos")';
+            var urlBuscarGlobales = '@Url.Action("BuscarGlobalesTiposProducto", "Productos")';
+            var urlImportarGlobales = '@Url.Action("ImportarTiposProductoSeleccionados", "Productos")';
             var token = $('#formTokenTiposProducto input[name="__RequestVerificationToken"]').val();
+            var catalogoGlobalTiposState = {
+                selectedTipos: {}
+            };
 
             function abrirModal(tipo) {
                 var titulo = tipo ? 'Modificar tipo de producto' : 'Nuevo tipo de producto';
@@ -111,7 +130,174 @@
                     });
             }
 
+            function normalizarTipo(tipo) {
+                return (tipo || '').toString().trim().toLowerCase();
+            }
+
+            function setAlertCatalogoGlobalTipos(mensaje) {
+                var $alert = $('#alertCatalogoGlobalTiposProducto');
+                if (!$alert.length) return;
+
+                if (!mensaje) {
+                    $alert.addClass('d-none').html('');
+                    return;
+                }
+
+                $alert.removeClass('d-none').html(mensaje);
+            }
+
+            function actualizarResumenCatalogoGlobalTipos() {
+                var visibles = $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').length;
+                var seleccionados = Object.keys(catalogoGlobalTiposState.selectedTipos).length;
+                $('#lblResumenCatalogoGlobalTiposProducto').text(visibles + ' tipo(s) visible(s) - ' + seleccionados + ' seleccionado(s)');
+            }
+
+            function snapshotCatalogoGlobalTiposState() {
+                catalogoGlobalTiposState.selectedTipos = {};
+
+                $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').each(function () {
+                    var $row = $(this);
+                    var $chk = $row.find('.chk-global-tipo-producto');
+                    if ($chk.length && !$chk.is(':disabled') && $chk.is(':checked')) {
+                        catalogoGlobalTiposState.selectedTipos[normalizarTipo($row.data('tipo'))] = true;
+                    }
+                });
+            }
+
+            function restoreCatalogoGlobalTiposState() {
+                $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').each(function () {
+                    var $row = $(this);
+                    var key = normalizarTipo($row.data('tipo'));
+                    var checked = !!catalogoGlobalTiposState.selectedTipos[key];
+                    var $chk = $row.find('.chk-global-tipo-producto');
+                    if ($chk.length && !$chk.is(':disabled')) {
+                        $chk.prop('checked', checked);
+                    }
+                });
+
+                var $checksDisponibles = $('#tbodyCatalogoGlobalTiposProducto .chk-global-tipo-producto:not(:disabled)');
+                $('#chkSeleccionarTodosTiposGlobales').prop('checked', $checksDisponibles.length > 0 && $checksDisponibles.filter(':checked').length === $checksDisponibles.length);
+                actualizarResumenCatalogoGlobalTipos();
+            }
+
+            function bindCatalogoGlobalTiposEvents() {
+                $('#txtBuscarCatalogoGlobalTiposProducto').off('input').on('input', function () {
+                    snapshotCatalogoGlobalTiposState();
+
+                    $.get(urlBuscarGlobales, { q: ($(this).val() || '').toString() })
+                        .done(function (resp) {
+                            if (!resp || resp.ok === false) {
+                                setAlertCatalogoGlobalTipos(resp && resp.mensaje ? resp.mensaje : 'No se pudo buscar en el catálogo global.');
+                                return;
+                            }
+
+                            $('#tbodyCatalogoGlobalTiposProducto').html(resp.html || '');
+                            restoreCatalogoGlobalTiposState();
+                            setAlertCatalogoGlobalTipos('');
+                        })
+                        .fail(function () {
+                            setAlertCatalogoGlobalTipos('No se pudo buscar en el catálogo global.');
+                        });
+                });
+
+                $('#chkSeleccionarTodosTiposGlobales').off('change').on('change', function () {
+                    var checked = $(this).is(':checked');
+                    $('#tbodyCatalogoGlobalTiposProducto .chk-global-tipo-producto:not(:disabled)').prop('checked', checked);
+                    snapshotCatalogoGlobalTiposState();
+                    actualizarResumenCatalogoGlobalTipos();
+                });
+
+                $('#modalCatalogoGlobalTiposProducto')
+                    .off('change', '.chk-global-tipo-producto')
+                    .on('change', '.chk-global-tipo-producto', function () {
+                        snapshotCatalogoGlobalTiposState();
+                        var $checksDisponibles = $('#tbodyCatalogoGlobalTiposProducto .chk-global-tipo-producto:not(:disabled)');
+                        $('#chkSeleccionarTodosTiposGlobales').prop('checked', $checksDisponibles.length > 0 && $checksDisponibles.filter(':checked').length === $checksDisponibles.length);
+                        actualizarResumenCatalogoGlobalTipos();
+                    })
+                    .off('dblclick', '#tbodyCatalogoGlobalTiposProducto tr[data-tipo]')
+                    .on('dblclick', '#tbodyCatalogoGlobalTiposProducto tr[data-tipo]', function (e) {
+                        if ($(e.target).is('input, button, label')) return;
+
+                        var $chk = $(this).find('.chk-global-tipo-producto');
+                        if (!$chk.length || $chk.is(':disabled')) return;
+
+                        $chk.prop('checked', !$chk.is(':checked')).trigger('change');
+                    });
+
+                $('#btnImportarTiposProductoGlobales').off('click').on('click', function () {
+                    snapshotCatalogoGlobalTiposState();
+
+                    var seleccionados = [];
+                    $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').each(function () {
+                        var $row = $(this);
+                        var $chk = $row.find('.chk-global-tipo-producto');
+                        if ($chk.length && !$chk.is(':disabled') && $chk.is(':checked')) {
+                            seleccionados.push(($row.data('tipo') || '').toString());
+                        }
+                    });
+
+                    if (!seleccionados.length) {
+                        setAlertCatalogoGlobalTipos('Seleccione al menos un tipo de producto para agregar.');
+                        return;
+                    }
+
+                    var postData = {
+                        __RequestVerificationToken: $('#formCatalogoGlobalTiposProducto input[name="__RequestVerificationToken"]').val()
+                    };
+
+                    $.each(seleccionados, function (index, tipo) {
+                        postData['Tipos[' + index + '].Tipo'] = tipo;
+                    });
+
+                    setAlertCatalogoGlobalTipos('');
+
+                    $.ajax({
+                        url: urlImportarGlobales,
+                        type: 'POST',
+                        data: postData
+                    }).done(function (resp) {
+                        if (!resp || resp.ok === false) {
+                            setAlertCatalogoGlobalTipos(resp && resp.mensaje ? resp.mensaje : 'No se pudieron agregar los tipos seleccionados.');
+                            return;
+                        }
+
+                        $('#modalCatalogoGlobalTiposProducto').modal('hide');
+                        Swal.fire('Catálogo global', resp.mensaje || 'Se agregaron correctamente los tipos de producto seleccionados.', 'success')
+                            .then(function () {
+                                window.location.reload();
+                            });
+                    }).fail(function () {
+                        setAlertCatalogoGlobalTipos('No se pudieron agregar los tipos seleccionados.');
+                    });
+                });
+
+                actualizarResumenCatalogoGlobalTipos();
+            }
+
+            function abrirCatalogoGlobalTiposProducto() {
+                catalogoGlobalTiposState.selectedTipos = {};
+                $('#modalCatalogoGlobalTiposProductoContent').html('<div class="modal-body"><div class="text-center text-muted py-5">Cargando...</div></div>');
+                $('#modalCatalogoGlobalTiposProducto').modal('show');
+
+                $.get(urlVerGlobales)
+                    .done(function (html) {
+                        $('#modalCatalogoGlobalTiposProductoContent').html(html);
+                        bindCatalogoGlobalTiposEvents();
+                        setTimeout(function () {
+                            $('#txtBuscarCatalogoGlobalTiposProducto').trigger('focus');
+                        }, 150);
+                    })
+                    .fail(function () {
+                        $('#modalCatalogoGlobalTiposProductoContent').html('<div class="modal-body"><div class="alert alert-danger mb-0">No se pudo cargar el catálogo global de tipos de producto.</div></div>');
+                    });
+            }
+
             $(document)
+                .off('click.tiposProductoCatalogoGlobal', '#btnCatalogoGlobalTiposProducto')
+                .on('click.tiposProductoCatalogoGlobal', '#btnCatalogoGlobalTiposProducto', function () {
+                    abrirCatalogoGlobalTiposProducto();
+                })
                 .off('click.tiposProductoNuevo', '#btnNuevoTipoProducto')
                 .on('click.tiposProductoNuevo', '#btnNuevoTipoProducto', function () {
                     abrirModal('');
@@ -174,4 +360,85 @@
                 });
         })();
     </script>
+
+    <style>
+        .modal-catalogo-global-tipos-dialog {
+            max-width: 960px;
+            margin: 1rem auto;
+        }
+
+        #modalCatalogoGlobalTiposProducto .modal-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+            max-height: calc(100vh - 2rem);
+        }
+
+        .form-catalogo-global-tipos {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .modal-catalogo-global-tipos-body {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .tabla-catalogo-global-tipos {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        #tablaCatalogoGlobalTiposProducto thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8f9fa;
+        }
+
+        #tbodyCatalogoGlobalTiposProducto tr[data-tipo] {
+            cursor: default;
+        }
+
+        html.dark-mode #modalCatalogoGlobalTiposProducto .modal-content {
+            background: #182232;
+            color: #e6edf5;
+        }
+
+        html.dark-mode #tablaCatalogoGlobalTiposProducto thead th {
+            background: #243447;
+            color: #e6edf5;
+        }
+
+        html.dark-mode #tbodyCatalogoGlobalTiposProducto tr[data-bloqueado="1"] {
+            background-color: rgba(255, 255, 255, 0.06);
+            color: #9fb0c3;
+        }
+
+        html.dark-mode #tbodyCatalogoGlobalTiposProducto tr[data-bloqueado="1"] td {
+            background-color: transparent;
+        }
+
+        html.dark-mode #tbodyCatalogoGlobalTiposProducto tr[data-bloqueado="1"] .badge.badge-secondary {
+            background-color: #495a6d;
+            color: #e6edf5;
+        }
+
+        @@media (max-width: 768px) {
+            .modal-catalogo-global-tipos-dialog {
+                margin: .5rem;
+            }
+
+            #modalCatalogoGlobalTiposProducto .modal-content {
+                min-height: calc(100vh - 1rem);
+                max-height: calc(100vh - 1rem);
+            }
+        }
+    </style>
 }

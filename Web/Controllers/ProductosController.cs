@@ -1382,8 +1382,74 @@ namespace Web.Controllers
             ViewBag.BuscarTipoProducto = (buscar ?? "").Trim();
             ViewBag.PuedeEditarTiposProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null);
 
-            DataTable dt = oCorteN.obtenerTiposProductoGrilla((buscar ?? "").Trim()) ?? new DataTable();
+            DataTable dt = oCorteN.obtenerTiposProductoGrillaEmpresa((buscar ?? "").Trim()) ?? new DataTable();
             return View(dt);
+        }
+
+        [HttpGet]
+        public ActionResult VerGlobalesTiposProducto()
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null))
+                return new HttpStatusCodeResult(403);
+
+            var model = ConstruirCatalogoGlobalTiposProductoVm("");
+            return PartialView("~/Views/Productos/_CatalogoGlobalTiposProductoModal.cshtml", model);
+        }
+
+        [HttpGet]
+        public JsonResult BuscarGlobalesTiposProducto(string q = "")
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar tipos de producto." }, JsonRequestBehavior.AllowGet);
+
+            var model = ConstruirCatalogoGlobalTiposProductoVm(q);
+            string html = RenderPartialViewToString("~/Views/Productos/_CatalogoGlobalTiposProductoRows.cshtml", model.Tipos);
+
+            return Json(new
+            {
+                ok = true,
+                html,
+                cantidad = model.Tipos.Count
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ImportarTiposProductoSeleccionados(ImportarTiposProductoGlobalesRequest request)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.AddOrEditTipoProducto, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar tipos de producto." });
+
+            var seleccionados = (request?.Tipos ?? new List<TipoProductoGlobalSeleccionVm>())
+                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.Tipo))
+                .Select(x => x.Tipo.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!seleccionados.Any())
+                return Json(new { ok = false, mensaje = "Seleccione al menos un tipo de producto del catálogo global." });
+
+            var model = ConstruirCatalogoGlobalTiposProductoVm("");
+            var disponibles = model.Tipos
+                .Where(x => !x.YaExisteEnEmpresa)
+                .ToDictionary(x => x.Tipo, x => x, StringComparer.OrdinalIgnoreCase);
+
+            var tiposAImportar = seleccionados
+                .Where(x => disponibles.ContainsKey(x))
+                .ToList();
+
+            if (!tiposAImportar.Any())
+                return Json(new { ok = false, mensaje = "Los tipos seleccionados ya existen en el sistema o no están disponibles para importar." });
+
+            string mensaje = oCorteN.importarTiposProductoGlobales(tiposAImportar, PermisosHelper.ObtenerUsuario(Session)?.Id);
+            if (!string.IsNullOrWhiteSpace(mensaje))
+                return Json(new { ok = false, mensaje = mensaje });
+
+            return Json(new
+            {
+                ok = true,
+                mensaje = "Se agregaron correctamente los tipos de producto seleccionados."
+            });
         }
 
         [HttpGet]
@@ -1644,9 +1710,41 @@ namespace Web.Controllers
             if (string.IsNullOrWhiteSpace(tipo))
                 return null;
 
-            DataTable dt = oCorteN.obtenerTiposProductoGrilla("") ?? new DataTable();
+            DataTable dt = oCorteN.obtenerTiposProductoGrillaEmpresa("") ?? new DataTable();
             return dt.AsEnumerable().FirstOrDefault(row =>
                 string.Equals(Convert.ToString(row["tipo"]) ?? "", tipo, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private CatalogoGlobalTiposProductoVm ConstruirCatalogoGlobalTiposProductoVm(string busqueda)
+        {
+            var tiposGlobales = oCorteN.obtenerTiposProductoCatalogoGlobal(busqueda ?? "") ?? new DataTable();
+            var tiposEmpresaActual = oCorteN.obtenerTiposProductoGrillaEmpresa("") ?? new DataTable();
+            var nombresEmpresa = new HashSet<string>(
+                tiposEmpresaActual.AsEnumerable()
+                    .Select(x => (Convert.ToString(x["tipo"]) ?? "").Trim())
+                    .Where(x => !string.IsNullOrWhiteSpace(x)),
+                StringComparer.OrdinalIgnoreCase);
+
+            var model = new CatalogoGlobalTiposProductoVm
+            {
+                Busqueda = busqueda ?? ""
+            };
+
+            foreach (DataRow row in tiposGlobales.Rows)
+            {
+                string tipo = (Convert.ToString(row["tipo"]) ?? "").Trim();
+                bool yaExiste = nombresEmpresa.Contains(tipo);
+
+                model.Tipos.Add(new TipoProductoGlobalImportItemVm
+                {
+                    Tipo = tipo,
+                    Orden = row["orden"] != DBNull.Value ? Convert.ToInt32(row["orden"]) : 0,
+                    YaExisteEnEmpresa = yaExiste,
+                    MensajeEstado = yaExiste ? "Ya existe en el sistema" : "Disponible"
+                });
+            }
+
+            return model;
         }
 
         private string ConstruirAdvertenciaMarcasParecidas(string razonSocial, int idMarcaActual)

@@ -285,7 +285,7 @@
                             <th style="width:42px;" class="text-center">✓</th>
                         }
 
-                        <th style="width:110px;">Código</th>
+                        <th class="th-codigo-producto">Código</th>
                         <th class="th-producto">Producto</th>
 
                         @if (sucursalIdSeleccionada != 0)
@@ -329,7 +329,7 @@
                                 </td>
                             }
 
-                            <td class="text-nowrap">@item.Codigo</td>
+                            <td class="text-nowrap td-codigo-producto">@item.Codigo</td>
 
                             <td class="td-producto">
                                 <div class="d-flex align-items-center justify-content-between">
@@ -747,12 +747,35 @@
 
                         <div class="form-group">
                             <label class="font-weight-bold">Código de barra</label>
-                            <input type="text"
-                                   id="codigoBarraGlobal"
-                                   class="form-control"
-                                   autocomplete="off"
-                                   inputmode="numeric"
-                                   placeholder="Escanee o escriba el código">
+                            <div id="scannerCodigoGlobalContainer" class="mb-2" style="display:none;">
+                                <div class="card shadow-sm">
+                                    <div class="card-body p-2">
+                                        <div class="scanner-wrapper">
+                                            <video id="videoScannerCodigoGlobal" autoplay muted playsinline></video>
+                                            <div class="scanner-line"></div>
+                                        </div>
+
+                                        <div class="d-flex flex-wrap justify-content-between mt-2">
+                                            <button type="button" class="btn btn-secondary btn-sm" id="btnFlashScannerCodigoGlobal">Flash</button>
+                                            <button type="button" class="btn btn-warning btn-sm" id="btnLimpiarScannerCodigoGlobal">Limpiar</button>
+                                            <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScannerCodigoGlobal">Cerrar cámara</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-secondary" id="btnScannerCodigoGlobal" title="Escanear código">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                                <input type="text"
+                                       id="codigoBarraGlobal"
+                                       class="form-control"
+                                       autocomplete="off"
+                                       inputmode="numeric"
+                                       placeholder="Escanee o escriba el código">
+                            </div>
+                            <small id="scannerCodigoGlobalMsg" class="text-danger d-none"></small>
                             <small class="form-text text-muted">
                                 La búsqueda se realiza al completar 13 dígitos o al presionar Enter.
                             </small>
@@ -808,7 +831,8 @@
     const catalogoGlobalState = {
         selectedIds: {},
         codigoDestinoPorId: {},
-        precioPorId: {}
+        precioPorId: {},
+        verSoloSeleccionados: false
     };
     const tabla = document.getElementById("tablaProductos");
     const codigoGlobalState = {
@@ -816,6 +840,113 @@
         codigoActualValido: "",
         bloqueoActual: ""
     };
+    const TIEMPO_PAUSA_LECTURA_SCANNER = 2000;
+    let scannerCatalogoGlobal = null;
+    let scannerCodigoGlobal = null;
+    const scannerCatalogoGlobalState = {
+        ultimoCodigoLeido: "",
+        tiempoUltimaLectura: 0,
+        pausaLecturaActiva: false,
+        pausaTimer: null,
+        camaraCerradaAutomaticamente: false
+    };
+    const scannerCodigoGlobalState = {
+        ultimoCodigoLeido: "",
+        tiempoUltimaLectura: 0,
+        pausaLecturaActiva: false,
+        pausaTimer: null,
+        camaraCerradaAutomaticamente: false
+    };
+
+    function onlyDigits(value) {
+        return (value || "").toString().replace(/\D/g, "");
+    }
+
+    function isValidEAN(code) {
+        code = onlyDigits(code);
+        if (code.length === 13) return isValidEAN13(code);
+        if (code.length === 8) return isValidEAN8(code);
+        return false;
+    }
+
+    function isValidEAN13(code13) {
+        if (!/^\d{13}$/.test(code13)) return false;
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            const digit = parseInt(code13[i], 10);
+            sum += (i % 2 === 0) ? digit : digit * 3;
+        }
+        const check = (10 - (sum % 10)) % 10;
+        return check === parseInt(code13[12], 10);
+    }
+
+    function isValidEAN8(code8) {
+        if (!/^\d{8}$/.test(code8)) return false;
+        let sum = 0;
+        for (let i = 0; i < 7; i++) {
+            const digit = parseInt(code8[i], 10);
+            sum += (i % 2 === 0) ? digit * 3 : digit;
+        }
+        const check = (10 - (sum % 10)) % 10;
+        return check === parseInt(code8[7], 10);
+    }
+
+    function resetScannerDoubleReadState(state, preserveAutoClose) {
+        state.ultimoCodigoLeido = "";
+        state.tiempoUltimaLectura = 0;
+        state.pausaLecturaActiva = false;
+        if (state.pausaTimer) {
+            clearTimeout(state.pausaTimer);
+            state.pausaTimer = null;
+        }
+        if (!preserveAutoClose) {
+            state.camaraCerradaAutomaticamente = false;
+        }
+    }
+
+    function startScannerPause(state, preserveAutoClose, onPauseEnd) {
+        state.pausaLecturaActiva = true;
+        if (state.pausaTimer) {
+            clearTimeout(state.pausaTimer);
+        }
+        state.pausaTimer = setTimeout(function () {
+            resetScannerDoubleReadState(state, preserveAutoClose);
+            if (typeof onPauseEnd === "function") {
+                onPauseEnd();
+            }
+        }, TIEMPO_PAUSA_LECTURA_SCANNER);
+    }
+
+    function processDoubleReadCode(state, codigoLeido, callbacks) {
+        if (state.pausaLecturaActiva) return;
+
+        const codigo = onlyDigits(codigoLeido);
+        if (!codigo) return;
+
+        if (!state.ultimoCodigoLeido) {
+            state.ultimoCodigoLeido = codigo;
+            state.tiempoUltimaLectura = Date.now();
+            callbacks.onFirstRead && callbacks.onFirstRead(codigo);
+            return;
+        }
+
+        if (codigo !== state.ultimoCodigoLeido) {
+            state.ultimoCodigoLeido = codigo;
+            state.tiempoUltimaLectura = Date.now();
+            callbacks.onDifferentRead && callbacks.onDifferentRead(codigo);
+            return;
+        }
+
+        if (!isValidEAN(codigo)) {
+            resetScannerDoubleReadState(state, false);
+            callbacks.onInvalidRead && callbacks.onInvalidRead(codigo);
+            return;
+        }
+
+        state.tiempoUltimaLectura = Date.now();
+        callbacks.onAcceptedRead && callbacks.onAcceptedRead(codigo);
+        startScannerPause(state, !!callbacks.preserveAutoCloseOnPause, callbacks.onPauseEnd);
+    }
 
     function getFilasProductos() {
         return Array.from(tabla.querySelectorAll("tbody tr"))
@@ -873,9 +1004,20 @@
     }
 
     function actualizarResumenCatalogoGlobal() {
-        const $rows = $("#tbodyCatalogoGlobal tr[data-id]");
+        const $rows = $("#tbodyCatalogoGlobal tr[data-id]:visible");
         const totalSeleccionados = Object.keys(catalogoGlobalState.selectedIds).length;
         $("#lblResumenCatalogoGlobal").text($rows.length + " producto(s) visible(s) - " + totalSeleccionados + " seleccionado(s)");
+    }
+
+    function aplicarFiltroSeleccionadosCatalogoGlobal() {
+        const soloSeleccionados = !!catalogoGlobalState.verSoloSeleccionados;
+
+        $("#tbodyCatalogoGlobal tr[data-id]").each(function () {
+            const $row = $(this);
+            const id = parseInt($row.data("id"), 10);
+            const visible = !soloSeleccionados || !!catalogoGlobalState.selectedIds[id];
+            $row.toggle(visible);
+        });
     }
 
     function togglePrecioCatalogoGlobalFila(row, focusPrecio) {
@@ -995,6 +1137,8 @@
         const todosMarcados = $checksDisponibles.length > 0 && $checksDisponibles.filter(":checked").length === $checksDisponibles.length;
         $("#chkSeleccionarTodosGlobales").prop("checked", todosMarcados);
         renderEstadoCatalogoGlobalTabla();
+        $("#chkVerSoloSeleccionadosGlobales").prop("checked", !!catalogoGlobalState.verSoloSeleccionados);
+        aplicarFiltroSeleccionadosCatalogoGlobal();
     }
 
     function bindCatalogoGlobalEvents() {
@@ -1002,6 +1146,7 @@
 
         $("#txtBuscarCatalogoGlobal").off("input").on("input", function () {
             const valor = this.value || "";
+            setScannerCatalogoGlobalMsg("");
             clearTimeout(searchTimer);
             searchTimer = window.setTimeout(function () {
                 snapshotCatalogoGlobalState();
@@ -1028,6 +1173,13 @@
             $("#tbodyCatalogoGlobal .chk-global-producto:not(:disabled)").prop("checked", checked);
             snapshotCatalogoGlobalState();
             renderEstadoCatalogoGlobalTabla();
+            aplicarFiltroSeleccionadosCatalogoGlobal();
+            actualizarResumenCatalogoGlobal();
+        });
+
+        $("#chkVerSoloSeleccionadosGlobales").off("change").on("change", function () {
+            catalogoGlobalState.verSoloSeleccionados = $(this).is(":checked");
+            aplicarFiltroSeleccionadosCatalogoGlobal();
             actualizarResumenCatalogoGlobal();
         });
 
@@ -1038,6 +1190,7 @@
             const todosMarcados = $checksDisponibles.length > 0 && $checksDisponibles.filter(":checked").length === $checksDisponibles.length;
             $("#chkSeleccionarTodosGlobales").prop("checked", todosMarcados);
             renderEstadoCatalogoGlobalFila($(this).closest("tr"));
+            aplicarFiltroSeleccionadosCatalogoGlobal();
             actualizarResumenCatalogoGlobal();
         });
 
@@ -1046,9 +1199,9 @@
 
             const $row = $(this);
             const $chk = $row.find(".chk-global-producto");
-            if (!$chk.length || $chk.is(":disabled") || $chk.is(":checked")) return;
+            if (!$chk.length || $chk.is(":disabled")) return;
 
-            $chk.prop("checked", true).trigger("change");
+            $chk.prop("checked", !$chk.is(":checked")).trigger("change");
         });
 
         $("#modalCatalogoGlobal").off("input", ".js-codigo-destino").on("input", ".js-codigo-destino", function () {
@@ -1136,6 +1289,37 @@
             });
         });
 
+        $("#btnScannerCatalogoGlobal").off("click").on("click", function () {
+            if (!scannerCatalogoGlobal) {
+                setScannerCatalogoGlobalMsg("Este navegador no soporta escaneo por cámara.");
+                return;
+            }
+            resetScannerDoubleReadState(scannerCatalogoGlobalState, false);
+            setScannerCatalogoGlobalMsg("");
+            scannerCatalogoGlobal.iniciar().catch(function () {
+                setScannerCatalogoGlobalMsg("No se pudo iniciar la cámara.");
+            });
+        });
+
+        $("#btnCerrarScannerCatalogoGlobal").off("click").on("click", function () {
+            setScannerCatalogoGlobalMsg("");
+            cerrarScannerCatalogoGlobal(true);
+        });
+
+        $("#btnLimpiarScannerCatalogoGlobal").off("click").on("click", function () {
+            limpiarScannerCatalogoGlobal();
+        });
+
+        $("#btnFlashCatalogoGlobal").off("click").on("click", async function () {
+            if (!scannerCatalogoGlobal) return;
+            try {
+                const estado = await scannerCatalogoGlobal.toggleFlash();
+                syncFlashButton("#btnFlashCatalogoGlobal", estado);
+            } catch (e) { }
+        });
+
+        inicializarScannerCatalogoGlobal();
+
         renderEstadoCatalogoGlobalTabla();
         actualizarResumenCatalogoGlobal();
     }
@@ -1144,6 +1328,10 @@
         catalogoGlobalState.selectedIds = {};
         catalogoGlobalState.codigoDestinoPorId = {};
         catalogoGlobalState.precioPorId = {};
+        catalogoGlobalState.verSoloSeleccionados = false;
+        cerrarScannerCatalogoGlobal(false);
+        scannerCatalogoGlobal = null;
+        resetScannerDoubleReadState(scannerCatalogoGlobalState, false);
         $("#modalCatalogoGlobalContent").html(getCatalogoGlobalLoadingHtml());
         $("#modalCatalogoGlobal").modal("show");
 
@@ -1173,6 +1361,143 @@
         $alert.removeClass("d-none alert-danger alert-warning alert-success").addClass(clase).text(mensaje);
     }
 
+    function setScannerCatalogoGlobalMsg(mensaje, tipo) {
+        const $msg = $("#scannerCatalogoGlobalMsg");
+        if (!$msg.length) return;
+
+        if (!mensaje) {
+            $msg.addClass("d-none").removeClass("text-danger text-success").text("");
+            return;
+        }
+
+        $msg.removeClass("d-none text-danger text-success")
+            .addClass(tipo === "success" ? "text-success" : "text-danger")
+            .text(mensaje);
+    }
+
+    function setScannerCodigoGlobalMsg(mensaje, tipo) {
+        const $msg = $("#scannerCodigoGlobalMsg");
+        if (!$msg.length) return;
+
+        if (!mensaje) {
+            $msg.addClass("d-none").removeClass("text-danger text-success").text("");
+            return;
+        }
+
+        $msg.removeClass("d-none text-danger text-success")
+            .addClass(tipo === "success" ? "text-success" : "text-danger")
+            .text(mensaje);
+    }
+
+    function syncFlashButton(selector, estado) {
+        const $btn = $(selector);
+        if (!$btn.length) return;
+        $btn.toggleClass("btn-warning", !!estado);
+        $btn.toggleClass("btn-secondary", !estado);
+        $btn.text(estado ? "Flash ON" : "Flash");
+    }
+
+    function cerrarScannerCatalogoGlobal(manual) {
+        if (manual) {
+            resetScannerDoubleReadState(scannerCatalogoGlobalState, false);
+        }
+        if (scannerCatalogoGlobal) {
+            try { scannerCatalogoGlobal.cerrar(); } catch (e) { }
+        }
+        syncFlashButton("#btnFlashCatalogoGlobal", false);
+    }
+
+    function cerrarScannerCodigoGlobal(manual) {
+        if (manual) {
+            resetScannerDoubleReadState(scannerCodigoGlobalState, false);
+        }
+        if (scannerCodigoGlobal) {
+            try { scannerCodigoGlobal.cerrar(); } catch (e) { }
+        }
+        syncFlashButton("#btnFlashScannerCodigoGlobal", false);
+    }
+
+    function limpiarScannerCatalogoGlobal() {
+        resetScannerDoubleReadState(scannerCatalogoGlobalState, false);
+        $("#txtBuscarCatalogoGlobal").val("").trigger("input");
+        setScannerCatalogoGlobalMsg("");
+        setAlertCatalogoGlobal("");
+    }
+
+    function limpiarScannerCodigoGlobal() {
+        resetScannerDoubleReadState(scannerCodigoGlobalState, false);
+        scannerCodigoGlobalState.camaraCerradaAutomaticamente = false;
+        limpiarFormularioCodigoGlobal();
+        setScannerCodigoGlobalMsg("");
+    }
+
+    function inicializarScannerCatalogoGlobal() {
+        if (typeof BarcodeScanner === "undefined") {
+            scannerCatalogoGlobal = null;
+            return;
+        }
+
+        scannerCatalogoGlobal = new BarcodeScanner({
+            videoSelector: "#videoScannerCatalogoGlobal",
+            containerSelector: "#scannerCatalogoGlobalContainer",
+            onCodeDetected: function (codigoLeido) {
+                processDoubleReadCode(scannerCatalogoGlobalState, codigoLeido, {
+                    onFirstRead: function () {
+                        setScannerCatalogoGlobalMsg("Código detectado. Acerque nuevamente para confirmar.");
+                    },
+                    onDifferentRead: function () {
+                        setScannerCatalogoGlobalMsg("La segunda lectura no coincidió. Se reinició la validación.");
+                    },
+                    onInvalidRead: function () {
+                        setScannerCatalogoGlobalMsg("Código inválido (solo EAN-8 o EAN-13).");
+                    },
+                    onAcceptedRead: function (codigo) {
+                        $("#txtBuscarCatalogoGlobal").val(codigo).trigger("input");
+                        setScannerCatalogoGlobalMsg("Código leído correctamente.", "success");
+                    },
+                    onPauseEnd: function () {
+                        setScannerCatalogoGlobalMsg("");
+                    }
+                });
+            }
+        });
+    }
+
+    function inicializarScannerCodigoGlobal() {
+        if (typeof BarcodeScanner === "undefined") {
+            scannerCodigoGlobal = null;
+            return;
+        }
+
+        scannerCodigoGlobal = new BarcodeScanner({
+            videoSelector: "#videoScannerCodigoGlobal",
+            containerSelector: "#scannerCodigoGlobalContainer",
+            onCodeDetected: function (codigoLeido) {
+                processDoubleReadCode(scannerCodigoGlobalState, codigoLeido, {
+                    preserveAutoCloseOnPause: true,
+                    onFirstRead: function () {
+                        setScannerCodigoGlobalMsg("Código detectado. Acerque nuevamente para confirmar.");
+                    },
+                    onDifferentRead: function () {
+                        setScannerCodigoGlobalMsg("La segunda lectura no coincidió. Se reinició la validación.");
+                    },
+                    onInvalidRead: function () {
+                        setScannerCodigoGlobalMsg("Código inválido (solo EAN-8 o EAN-13).");
+                    },
+                    onAcceptedRead: function (codigo) {
+                        $("#codigoBarraGlobal").val(codigo).trigger("input");
+                        setScannerCodigoGlobalMsg("Código leído correctamente.", "success");
+                        scannerCodigoGlobalState.camaraCerradaAutomaticamente = true;
+                        cerrarScannerCodigoGlobal(false);
+                    },
+                    onPauseEnd: function () {
+                        setScannerCodigoGlobalMsg("");
+                    }
+                });
+            }
+        });
+    }
+
     function limpiarFormularioCodigoGlobal() {
         codigoGlobalState.ultimoCodigoBuscado = "";
         codigoGlobalState.codigoActualValido = "";
@@ -1187,6 +1512,8 @@
 
     function abrirModalCodigoGlobal() {
         limpiarFormularioCodigoGlobal();
+        resetScannerDoubleReadState(scannerCodigoGlobalState, false);
+        setScannerCodigoGlobalMsg("");
         $("#modalAgregarCodigoGlobal").modal("show");
         window.setTimeout(function () {
             $("#codigoBarraGlobal").trigger("focus");
@@ -1263,9 +1590,19 @@
                 return;
             }
 
-            Swal.fire("Productos", resp.mensaje || "Producto guardado correctamente", "success");
+            const reabrirScanner = scannerCodigoGlobalState.camaraCerradaAutomaticamente;
             limpiarFormularioCodigoGlobal();
-            $("#codigoBarraGlobal").trigger("focus");
+            resetScannerDoubleReadState(scannerCodigoGlobalState, false);
+            setScannerCodigoGlobalMsg("");
+            Swal.fire("Productos", resp.mensaje || "Producto guardado correctamente", "success")
+                .then(function () {
+                    $("#codigoBarraGlobal").trigger("focus");
+                    if (reabrirScanner && scannerCodigoGlobal) {
+                        scannerCodigoGlobal.iniciar().catch(function () {
+                            setScannerCodigoGlobalMsg("No se pudo iniciar la cámara.");
+                        });
+                    }
+                });
         }).fail(function () {
             setAlertCodigoGlobal("No se pudo guardar el producto.");
         });
@@ -1274,6 +1611,7 @@
     $("#codigoBarraGlobal").on("input", function () {
         const codigo = (this.value || "").replace(/\D/g, "");
         this.value = codigo;
+        setScannerCodigoGlobalMsg("");
         if (codigo.length >= 13) {
             buscarCodigoGlobal(false);
         }
@@ -1295,6 +1633,51 @@
 
     $("#btnGuardarCodigoGlobal").on("click", function () {
         guardarCodigoGlobal();
+    });
+
+    if (typeof BarcodeScanner !== "undefined") {
+        inicializarScannerCodigoGlobal();
+    }
+
+    $("#btnScannerCodigoGlobal").on("click", function () {
+        if (!scannerCodigoGlobal) {
+            setScannerCodigoGlobalMsg("Este navegador no soporta escaneo por cámara.");
+            return;
+        }
+        resetScannerDoubleReadState(scannerCodigoGlobalState, false);
+        setScannerCodigoGlobalMsg("");
+        scannerCodigoGlobal.iniciar().catch(function () {
+            setScannerCodigoGlobalMsg("No se pudo iniciar la cámara.");
+        });
+    });
+
+    $("#btnCerrarScannerCodigoGlobal").on("click", function () {
+        setScannerCodigoGlobalMsg("");
+        cerrarScannerCodigoGlobal(true);
+    });
+
+    $("#btnLimpiarScannerCodigoGlobal").on("click", function () {
+        limpiarScannerCodigoGlobal();
+    });
+
+    $("#btnFlashScannerCodigoGlobal").on("click", async function () {
+        if (!scannerCodigoGlobal) return;
+        try {
+            const estado = await scannerCodigoGlobal.toggleFlash();
+            syncFlashButton("#btnFlashScannerCodigoGlobal", estado);
+        } catch (e) { }
+    });
+
+    $("#modalAgregarCodigoGlobal").on("hidden.bs.modal", function () {
+        cerrarScannerCodigoGlobal(true);
+        limpiarFormularioCodigoGlobal();
+        setScannerCodigoGlobalMsg("");
+    });
+
+    $("#modalCatalogoGlobal").on("hidden.bs.modal", function () {
+        cerrarScannerCatalogoGlobal(true);
+        scannerCatalogoGlobal = null;
+        setScannerCatalogoGlobalMsg("");
     });
 
     // ============================
@@ -2607,6 +2990,12 @@
         vertical-align: middle;
     }
 
+    .th-codigo-producto,
+    .td-codigo-producto {
+        width: 15ch;
+        min-width: 15ch;
+    }
+
     /* Columna producto más chica (aprox 60%) y truncado */
     .th-producto {
         width: 60%;
@@ -2640,6 +3029,12 @@
             max-width: 100%;
         }
 
+        .th-codigo-producto,
+        .td-codigo-producto {
+            width: auto;
+            min-width: 0;
+        }
+
         .producto-text {
             max-width: 170px;
         }
@@ -2668,7 +3063,9 @@
         line-height: 1.25;
     }
 
-    #scannerPrecioContainer .card {
+    #scannerPrecioContainer .card,
+    #scannerCatalogoGlobalContainer .card,
+    #scannerCodigoGlobalContainer .card {
         border: 1px solid #d7dce3;
     }
 
@@ -2681,7 +3078,9 @@
         border-radius: 8px;
     }
 
-    #videoScannerPrecio {
+    #videoScannerPrecio,
+    #videoScannerCatalogoGlobal,
+    #videoScannerCodigoGlobal {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -2792,7 +3191,9 @@
         cursor: default;
     }
 
-    html.dark-mode #scannerPrecioContainer .card {
+    html.dark-mode #scannerPrecioContainer .card,
+    html.dark-mode #scannerCatalogoGlobalContainer .card,
+    html.dark-mode #scannerCodigoGlobalContainer .card {
         background: #182232;
         border-color: #314155;
     }

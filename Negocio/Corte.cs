@@ -825,6 +825,21 @@ namespace Negocio
             return oCorteD.obtenerTiposProductoGrilla(buscarText);
         }
 
+        public DataTable obtenerTiposProductoGrillaEmpresa(string buscarText)
+        {
+            return oCorteD.obtenerTiposProductoGrillaEmpresa(buscarText);
+        }
+
+        public DataTable obtenerTiposProductoCatalogoGlobal(string buscarText)
+        {
+            return oCorteD.obtenerTiposProductoCatalogoGlobal(buscarText);
+        }
+
+        public string importarTiposProductoGlobales(IEnumerable<string> tiposProducto, int? idUsuarioAlta)
+        {
+            return oCorteD.importarTiposProductoGlobales(tiposProducto, idUsuarioAlta);
+        }
+
         public string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate)
         {
             

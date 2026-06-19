@@ -16,12 +16,35 @@
         <div class="row align-items-end mb-3 flex-shrink-0">
             <div class="col-lg-7 mb-2 mb-lg-0">
                 <label class="font-weight-bold mb-1">Buscar por codigo o descripcion</label>
-                <input type="text"
-                       class="form-control"
-                       id="txtBuscarCatalogoGlobal"
-                       value="@Model.Busqueda"
-                       autocomplete="off"
-                       placeholder="Escriba para filtrar el catalogo global">
+                <div id="scannerCatalogoGlobalContainer" class="mb-2" style="display:none;">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-2">
+                            <div class="scanner-wrapper">
+                                <video id="videoScannerCatalogoGlobal" autoplay muted playsinline></video>
+                                <div class="scanner-line"></div>
+                            </div>
+
+                            <div class="d-flex flex-wrap justify-content-between mt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnFlashCatalogoGlobal">Flash</button>
+                                <button type="button" class="btn btn-warning btn-sm" id="btnLimpiarScannerCatalogoGlobal">Limpiar</button>
+                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScannerCatalogoGlobal">Cerrar cámara</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <button type="button" class="btn btn-outline-secondary" id="btnScannerCatalogoGlobal" title="Escanear código">
+                        <i class="fas fa-barcode"></i>
+                    </button>
+                    <input type="text"
+                           class="form-control"
+                           id="txtBuscarCatalogoGlobal"
+                           value="@Model.Busqueda"
+                           autocomplete="off"
+                           placeholder="Escriba para filtrar el catalogo global">
+                </div>
+                <small id="scannerCatalogoGlobalMsg" class="text-danger d-none"></small>
             </div>
             <div class="col-lg-5">
                 <div class="alert alert-info mb-0 py-2 px-3">
@@ -33,9 +56,16 @@
         <div id="alertCatalogoGlobal" class="alert alert-danger d-none py-2 px-3 flex-shrink-0"></div>
 
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 flex-shrink-0">
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="chkSeleccionarTodosGlobales">
-                <label class="custom-control-label" for="chkSeleccionarTodosGlobales">Seleccionar todos</label>
+            <div class="d-flex flex-wrap align-items-center">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" class="custom-control-input" id="chkSeleccionarTodosGlobales">
+                    <label class="custom-control-label" for="chkSeleccionarTodosGlobales">Seleccionar todos</label>
+                </div>
+
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="chkVerSoloSeleccionadosGlobales">
+                    <label class="custom-control-label" for="chkVerSoloSeleccionadosGlobales">Ver seleccionados</label>
+                </div>
             </div>
 
             <small class="text-muted" id="lblResumenCatalogoGlobal">

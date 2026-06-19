@@ -825,10 +825,17 @@ namespace Datos
 
         public DataTable obtenerTiposProducto(bool mostrarTodos)
         {
-            string sql = "SELECT tipo FROM TiposProducto";
-            sql += mostrarTodos ? " ORDER BY orden, tipo" : " WHERE orden > 0 ORDER BY orden, tipo";
+            string sql = @"
+                SELECT tipo
+                FROM TiposProducto
+                WHERE (reservadoSistema = 1 OR idEmpresa = @idEmpresa)";
+            sql += mostrarTodos ? " ORDER BY orden, tipo" : " AND orden > 0 ORDER BY orden, tipo";
 
-            return Db.DataTable(_empresa, sql, CommandType.Text);
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
         }
 
         // =========================
@@ -1598,6 +1605,119 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerTiposProductoGrillaEmpresa(string buscarText)
+        {
+            string sql = @"
+                    SELECT tipo, orden, creado AS Creado, actualizado AS Actualizado, reservadoSistema AS Reservado
+                    FROM dbo.TiposProducto
+                    WHERE (reservadoSistema = 1 OR idEmpresa = @idEmpresa)
+                      AND (@buscar IS NULL OR tipo LIKE @buscar)
+                    ORDER BY orden, tipo;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                (Action<SqlParameterCollection>)(p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+
+                    if (string.IsNullOrWhiteSpace(buscarText))
+                        p.Add("@buscar", SqlDbType.NVarChar, 200).Value = DBNull.Value;
+                    else
+                        p.Add("@buscar", SqlDbType.NVarChar, 200).Value = "%" + buscarText.Trim() + "%";
+                })
+            );
+        }
+
+        public DataTable obtenerTiposProductoCatalogoGlobal(string buscarText)
+        {
+            string sql = @"
+                    SELECT tipo, orden
+                    FROM dbo.TiposProducto
+                    WHERE idEmpresa = 0
+                      AND reservadoSistema = 0
+                      AND (@buscar IS NULL OR tipo LIKE @buscar)
+                    ORDER BY orden, tipo;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                (Action<SqlParameterCollection>)(p =>
+                {
+                    if (string.IsNullOrWhiteSpace(buscarText))
+                        p.Add("@buscar", SqlDbType.NVarChar, 200).Value = DBNull.Value;
+                    else
+                        p.Add("@buscar", SqlDbType.NVarChar, 200).Value = "%" + buscarText.Trim() + "%";
+                })
+            );
+        }
+
+        public string importarTiposProductoGlobales(IEnumerable<string> tiposProducto, int? idUsuarioAlta)
+        {
+            var tiposNormalizados = (tiposProducto ?? Enumerable.Empty<string>())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!tiposNormalizados.Any())
+                return "";
+
+            using (SqlConnection cn = Db.Open(_empresa))
+            using (SqlTransaction tx = cn.BeginTransaction())
+            {
+                try
+                {
+                    foreach (string tipo in tiposNormalizados)
+                    {
+                        using (SqlCommand cmdExiste = new SqlCommand(@"
+                            SELECT COUNT(*)
+                            FROM dbo.TiposProducto
+                            WHERE idEmpresa = @idEmpresa
+                              AND LTRIM(RTRIM(tipo)) = LTRIM(RTRIM(@tipo));", cn, tx))
+                        {
+                            cmdExiste.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                            cmdExiste.Parameters.Add("@tipo", SqlDbType.NVarChar, 100).Value = tipo;
+
+                            int existe = Convert.ToInt32(cmdExiste.ExecuteScalar());
+                            if (existe > 0)
+                                continue;
+                        }
+
+                        using (SqlCommand cmdInsert = new SqlCommand(@"
+                            INSERT INTO dbo.TiposProducto (tipo, orden, reservadoSistema, creado, idEmpresa)
+                            SELECT TOP 1 tipo, orden, 0, @creado, @idEmpresa
+                            FROM dbo.TiposProducto
+                            WHERE idEmpresa = 0
+                              AND reservadoSistema = 0
+                              AND LTRIM(RTRIM(tipo)) = LTRIM(RTRIM(@tipo));", cn, tx))
+                        {
+                            cmdInsert.Parameters.Add("@tipo", SqlDbType.NVarChar, 100).Value = tipo;
+                            cmdInsert.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                            cmdInsert.Parameters.Add("@creado", SqlDbType.DateTime).Value = DateTime.Now;
+
+                            int insertados = cmdInsert.ExecuteNonQuery();
+                            if (insertados <= 0)
+                            {
+                                tx.Rollback();
+                                return "No se pudo importar el tipo de producto \"" + tipo + "\" desde el catálogo global.";
+                            }
+                        }
+                    }
+
+                    tx.Commit();
+                    return "";
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
         public string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate)
         {
             // Mantengo tu mensaje
@@ -1607,10 +1727,15 @@ namespace Datos
             {
                 if (esInsert)
                 {
-                    using (SqlCommand cmdDup = new SqlCommand("SELECT COUNT(*) FROM TiposProducto WHERE tipo = @tipo", cn))
+                    using (SqlCommand cmdDup = new SqlCommand(@"
+                        SELECT COUNT(*)
+                        FROM TiposProducto
+                        WHERE LTRIM(RTRIM(tipo)) = LTRIM(RTRIM(@tipo))
+                          AND (reservadoSistema = 1 OR idEmpresa = @idEmpresa)", cn))
                     {
                         cmdDup.CommandType = CommandType.Text;
                         cmdDup.Parameters.AddWithValue("@tipo", tiposProducto);
+                        cmdDup.Parameters.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
 
                         int existe = Convert.ToInt32(cmdDup.ExecuteScalar());
                         if (existe != 0)
@@ -1619,9 +1744,9 @@ namespace Datos
                 }
 
                 string query = esInsert
-                    ? "INSERT INTO TiposProducto (tipo, orden, reservadoSistema, creado) VALUES (@tipo, @orden, @reservadoSistema, @creado)"
-                    : "UPDATE TiposProducto SET tipo = @tipo, orden = @orden, actualizado = @actualizado WHERE tipo LIKE @tipoToUpdate; " +
-                      "UPDATE Corte SET tipo = @tipo WHERE tipo LIKE @tipoToUpdate;";
+                    ? "INSERT INTO TiposProducto (tipo, orden, reservadoSistema, creado, idEmpresa) VALUES (@tipo, @orden, @reservadoSistema, @creado, @idEmpresa)"
+                    : "UPDATE TiposProducto SET tipo = @tipo, orden = @orden, actualizado = @actualizado WHERE tipo LIKE @tipoToUpdate AND reservadoSistema = 0 AND idEmpresa = @idEmpresa; " +
+                      "UPDATE Corte SET tipo = @tipo WHERE tipo LIKE @tipoToUpdate AND idEmpresa = @idEmpresa;";
 
                 using (SqlCommand cmd = new SqlCommand(query, cn))
                 {
@@ -1633,6 +1758,7 @@ namespace Datos
                     cmd.Parameters.AddWithValue("@reservadoSistema", false);
                     cmd.Parameters.AddWithValue("@creado", DateTime.Now);
                     cmd.Parameters.AddWithValue("@actualizado", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -1645,20 +1771,22 @@ namespace Datos
         {
             using (SqlConnection cn = Db.Open(_empresa))
             {
-                using (SqlCommand cmdCheck = new SqlCommand("SELECT COUNT(*) FROM Corte WHERE tipo = @tipo", cn))
+                using (SqlCommand cmdCheck = new SqlCommand("SELECT COUNT(*) FROM Corte WHERE tipo = @tipo AND idEmpresa = @idEmpresa", cn))
                 {
                     cmdCheck.CommandType = CommandType.Text;
                     cmdCheck.Parameters.AddWithValue("@tipo", tiposProducto);
+                    cmdCheck.Parameters.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
 
                     int existe = Convert.ToInt32(cmdCheck.ExecuteScalar());
                     if (existe != 0)
                         return "Existen Productos/Cortes con el Tipo que quiere eliminar.\n\nPara poder eliminar el Tipo debe cambiar todo los Productos/Cortes asociados a éste.";
                 }
 
-                using (SqlCommand cmd = new SqlCommand("DELETE FROM TiposProducto WHERE tipo = @tipo", cn))
+                using (SqlCommand cmd = new SqlCommand("DELETE FROM TiposProducto WHERE tipo = @tipo AND reservadoSistema = 0 AND idEmpresa = @idEmpresa", cn))
                 {
                     cmd.CommandType = CommandType.Text;
                     cmd.Parameters.AddWithValue("@tipo", tiposProducto);
+                    cmd.Parameters.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
                     cmd.ExecuteNonQuery();
                 }
             }
