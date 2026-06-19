@@ -4,8 +4,8 @@
 @if (Model == null || !Model.Any())
 {
     <tr>
-        <td colspan="6" class="text-center text-muted py-4">
-            No se encontraron productos en el catálogo global.
+        <td colspan="7" class="text-center text-muted py-4">
+            No se encontraron productos en el catalogo global.
         </td>
     </tr>
 }
@@ -17,11 +17,15 @@ else
         if (!string.IsNullOrWhiteSpace(item.ProductoGlobalMaestroNombre))
         {
             relacion = item.EsPresentacion
-                ? "Presentación de " + item.ProductoGlobalMaestroNombre
+                ? "Presentacion de " + item.ProductoGlobalMaestroNombre
                 : "Deriva de " + item.ProductoGlobalMaestroNombre;
         }
 
-        <tr data-id="@item.IdProductoGlobal" data-importado="@(item.YaImportado ? "1" : "0")">
+        <tr data-id="@item.IdProductoGlobal"
+            data-importado="@(item.YaImportado ? "1" : "0")"
+            data-codigo-original="@item.CodigoOriginal"
+            data-codigo-sugerido="@item.CodigoSugerido"
+            data-codigo-duplicado="@(item.CodigoDuplicadoEnEmpresa ? "1" : "0")">
             <td class="text-center align-middle">
                 <input type="checkbox"
                        class="chk-global-producto"
@@ -50,24 +54,37 @@ else
             <td class="align-middle">
                 @if (item.YaImportado)
                 {
+                    <small class="text-muted">No editable</small>
+                }
+                else
+                {
+                    <div class="js-precio-wrapper d-none">
+                        <input type="text"
+                               class="form-control form-control-sm js-precio-destino"
+                               value=""
+                               inputmode="decimal"
+                               autocomplete="off"
+                               placeholder="Precio">
+                    </div>
+                }
+            </td>
+            <td class="align-middle">
+                @if (item.YaImportado)
+                {
                     <span class="badge badge-success">Ya importado</span>
                     if (item.CodigoEmpresaImportado.HasValue)
                     {
                         <br />
-                        <small class="text-muted">Código empresa: @item.CodigoEmpresaImportado</small>
+                        <small class="text-muted">Codigo empresa: @item.CodigoEmpresaImportado</small>
                     }
-                }
-                else if (item.CodigoDuplicadoEnEmpresa)
-                {
-                    <span class="badge badge-warning text-dark">Código ocupado</span>
-                    <br />
-                    <small class="text-muted">@item.MensajeEstado</small>
                 }
                 else
                 {
-                    <span class="badge badge-secondary">Disponible</span>
-                    <br />
-                    <small class="text-muted">@item.MensajeEstado</small>
+                    <div class="js-estado-global">
+                        <span class="badge badge-secondary">Disponible</span>
+                        <br />
+                        <small class="text-muted">@item.MensajeEstado</small>
+                    </div>
                 }
             </td>
         </tr>

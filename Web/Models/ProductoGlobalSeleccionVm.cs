@@ -4,5 +4,6 @@ namespace Web.Models
     {
         public int IdProductoGlobal { get; set; }
         public long CodigoDestino { get; set; }
+        public string Precio { get; set; }
     }
 }

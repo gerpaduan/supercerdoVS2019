@@ -156,7 +156,7 @@ namespace Web.Controllers
             var importacionesExistentes = oCorteN.ObtenerImportacionesCatalogoGlobal(productosGlobales.Select(x => x.IdCorte))
                 .ToDictionary(x => x.IdProductoGlobal, x => x);
 
-            var productosEmpresaActual = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+            var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
             var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
             var codigosEmpresa = new HashSet<long>(productosEmpresaActual.Select(x => x.Codigo));
 
@@ -219,6 +219,21 @@ namespace Web.Controllers
                     continue;
                 }
 
+                if (string.IsNullOrWhiteSpace(item.Precio))
+                {
+                    var productoPrecio = productosGlobales.FirstOrDefault(x => x.IdCorte == item.IdProductoGlobal);
+                    conflictos.Add("Debe ingresar el precio para \"" + (productoPrecio != null ? productoPrecio.CorteDesc : ("producto global ID " + item.IdProductoGlobal)) + "\".");
+                    continue;
+                }
+
+                float precioDestino;
+                if (!TryParseFloatFlexible(item.Precio, out precioDestino) || precioDestino < 0)
+                {
+                    var productoPrecio = productosGlobales.FirstOrDefault(x => x.IdCorte == item.IdProductoGlobal);
+                    conflictos.Add("El precio ingresado para \"" + (productoPrecio != null ? productoPrecio.CorteDesc : ("producto global ID " + item.IdProductoGlobal)) + "\" es inválido.");
+                    continue;
+                }
+
                 if (!codigosSeleccionados.Add(item.CodigoDestino))
                 {
                     conflictos.Add("El código " + item.CodigoDestino + " está repetido dentro de la importación.");
@@ -248,7 +263,18 @@ namespace Web.Controllers
             foreach (var producto in OrdenarProductosParaImportacion(productosGlobales))
             {
                 var seleccion = seleccionPorId[producto.IdCorte];
-                var nuevoProducto = ClonarProductoGlobal(producto, seleccion.CodigoDestino, 0f);
+                float precioDestino;
+                if (!TryParseFloatFlexible(seleccion.Precio, out precioDestino) || precioDestino < 0)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "El precio ingresado para \"" + producto.CorteDesc + "\" es inválido."
+                    });
+                }
+
+                var nuevoProducto = ClonarProductoGlobal(producto, seleccion.CodigoDestino, precioDestino);
+                nuevoProducto.CorteMaestro = null;
 
                 if (producto.CorteMaestro != null && producto.CorteMaestro.IdCorte > 0)
                 {
@@ -265,9 +291,17 @@ namespace Web.Controllers
                     nuevoProducto.CorteMaestro = new Entidades.Corte { IdCorte = idMaestroEmpresa };
                 }
 
-                oCorteN.addOrEditCorte(nuevoProducto);
+                int idInsertado = oCorteN.InsertarCorteEnEmpresa(nuevoProducto);
+                if (idInsertado <= 0)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "No se pudo guardar \"" + producto.CorteDesc + "\" en la empresa actual."
+                    });
+                }
 
-                var insertado = oCorteN.findCorteByCodigo(seleccion.CodigoDestino, false);
+                var insertado = ObtenerProductoEmpresaSesionPorCodigo(seleccion.CodigoDestino);
                 if (insertado == null || insertado.IdCorte <= 0)
                 {
                     return Json(new
@@ -301,7 +335,10 @@ namespace Web.Controllers
             if (codigo <= 0)
                 return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." }, JsonRequestBehavior.AllowGet);
 
-            var existenteEmpresa = oCorteN.findCorteByCodigo(codigo, false);
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+            var existenteEmpresa = idEmpresaSesion > 0
+                ? oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false)
+                : null;
             if (existenteEmpresa != null)
             {
                 return Json(new
@@ -312,7 +349,7 @@ namespace Web.Controllers
             }
 
             var catalogoGlobal = ObtenerGestorCatalogoGlobal();
-            var global = catalogoGlobal.findCorteByCodigo(codigo, true);
+            var global = catalogoGlobal.findCorteGlobalByCodigo(codigo, true);
             if (global == null)
             {
                 return Json(new
@@ -322,10 +359,13 @@ namespace Web.Controllers
                 }, JsonRequestBehavior.AllowGet);
             }
 
+            var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
+            var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
             var importacionExistente = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.IdCorte }).FirstOrDefault();
             if (importacionExistente != null)
             {
-                var productoImportado = oCorteN.findCorteById(importacionExistente.IdProductoEmpresa, false);
+                Entidades.Corte productoImportado;
+                productosEmpresaPorId.TryGetValue(importacionExistente.IdProductoEmpresa, out productoImportado);
                 if (productoImportado != null)
                 {
                     return Json(new
@@ -340,7 +380,7 @@ namespace Web.Controllers
             if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
             {
                 var maestroImportado = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.CorteMaestro.IdCorte }).FirstOrDefault();
-                bool maestroValido = maestroImportado != null && oCorteN.findCorteById(maestroImportado.IdProductoEmpresa, false) != null;
+                bool maestroValido = maestroImportado != null && productosEmpresaPorId.ContainsKey(maestroImportado.IdProductoEmpresa);
                 if (!maestroValido)
                 {
                     mensajeBloqueo = "Para agregar " + global.CorteDesc + " primero debe importar " + global.CorteMaestro.CorteDesc + " desde el catálogo global.";
@@ -373,7 +413,8 @@ namespace Web.Controllers
             if (codigo <= 0)
                 return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." });
 
-            if (oCorteN.findCorteByCodigo(codigo, false) != null)
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+            if (idEmpresaSesion > 0 && oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false) != null)
                 return Json(new { ok = false, mensaje = "El código ya existe en la empresa actual." });
 
             string descripcion = (model != null ? model.Descripcion : null) ?? "";
@@ -386,14 +427,17 @@ namespace Web.Controllers
                 return Json(new { ok = false, mensaje = "El precio debe ser mayor o igual a 0." });
 
             var catalogoGlobal = ObtenerGestorCatalogoGlobal();
-            var global = catalogoGlobal.findCorteByCodigo(codigo, true);
+            var global = catalogoGlobal.findCorteGlobalByCodigo(codigo, true);
             if (global == null)
                 return Json(new { ok = false, mensaje = "No existe el producto en el catálogo global." });
 
+            var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
+            var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
             var importacionExistente = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.IdCorte }).FirstOrDefault();
             if (importacionExistente != null)
             {
-                var productoImportado = oCorteN.findCorteById(importacionExistente.IdProductoEmpresa, false);
+                Entidades.Corte productoImportado;
+                productosEmpresaPorId.TryGetValue(importacionExistente.IdProductoEmpresa, out productoImportado);
                 if (productoImportado != null)
                     return Json(new { ok = false, mensaje = "Ese producto global ya fue importado previamente en esta empresa." });
             }
@@ -405,7 +449,8 @@ namespace Web.Controllers
                 if (maestroImportado == null)
                     return Json(new { ok = false, mensaje = "Para agregar " + global.CorteDesc + " primero debe importar " + global.CorteMaestro.CorteDesc + " desde el catálogo global." });
 
-                var maestroEmpresa = oCorteN.findCorteById(maestroImportado.IdProductoEmpresa, false);
+                Entidades.Corte maestroEmpresa;
+                productosEmpresaPorId.TryGetValue(maestroImportado.IdProductoEmpresa, out maestroEmpresa);
                 if (maestroEmpresa == null)
                     return Json(new { ok = false, mensaje = "No se encontró el producto maestro ya importado para completar la relación." });
 
@@ -415,12 +460,17 @@ namespace Web.Controllers
             var usuario = Session["Usuario"] as Entidades.Usuario;
             var nuevoProducto = ClonarProductoGlobal(global, codigo, precio);
             nuevoProducto.CorteDesc = descripcion;
+            nuevoProducto.CorteMaestro = null;
             if (idMaestroEmpresa.HasValue)
                 nuevoProducto.CorteMaestro = new Entidades.Corte { IdCorte = idMaestroEmpresa.Value };
 
-            oCorteN.addOrEditCorte(nuevoProducto);
+            int idInsertado = oCorteN.InsertarCorteEnEmpresa(nuevoProducto);
+            if (idInsertado <= 0)
+                return Json(new { ok = false, mensaje = "No se pudo guardar el producto en la empresa actual." });
 
-            var insertado = oCorteN.findCorteByCodigo(codigo, false);
+            var insertado = idEmpresaSesion > 0
+                ? oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false)
+                : null;
             if (insertado == null || insertado.IdCorte <= 0)
                 return Json(new { ok = false, mensaje = "El producto se guardó pero no se pudo recuperar el identificador generado." });
 
@@ -483,7 +533,7 @@ namespace Web.Controllers
 
             var catalogoGlobal = ObtenerGestorCatalogoGlobal();
             var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobal(busqueda) ?? new List<Entidades.Corte>();
-            var productosEmpresaActual = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+            var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
             var codigosEmpresa = new HashSet<long>(productosEmpresaActual.Select(x => x.Codigo));
             var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
             var importaciones = oCorteN.ObtenerImportacionesCatalogoGlobal(productosGlobales.Select(x => x.IdCorte))
@@ -518,7 +568,7 @@ namespace Web.Controllers
                 }
                 else if (codigoDuplicado)
                 {
-                    mensajeEstado = "Código existente. Sugerido: " + codigoSugerido;
+                    mensajeEstado = "Código ocupado. Sugerido: " + codigoSugerido;
                 }
                 else
                 {
@@ -529,7 +579,7 @@ namespace Web.Controllers
                 {
                     IdProductoGlobal = producto.IdCorte,
                     CodigoOriginal = producto.Codigo,
-                    CodigoDestino = codigoSugerido,
+                    CodigoDestino = producto.Codigo,
                     Descripcion = producto.CorteDesc,
                     Tipo = producto.Tipo ?? "",
                     IdProductoGlobalMaestro = producto.CorteMaestro != null && producto.CorteMaestro.IdCorte > 0
@@ -559,6 +609,24 @@ namespace Web.Controllers
             }
 
             return sugerido;
+        }
+
+        private List<Entidades.Corte> ObtenerProductosEmpresaSesionActual()
+        {
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+            if (idEmpresaSesion <= 0)
+                return new List<Entidades.Corte>();
+
+            return oCorteN.ObtenerCortesPorEmpresa(idEmpresaSesion, false) ?? new List<Entidades.Corte>();
+        }
+
+        private Entidades.Corte ObtenerProductoEmpresaSesionPorCodigo(long codigo)
+        {
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+            if (idEmpresaSesion <= 0)
+                return null;
+
+            return oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false);
         }
 
         private static long NormalizarCodigoBarra(string codigoBarra)
@@ -632,7 +700,7 @@ namespace Web.Controllers
                 PrecioKg = precioDestino,
                 PrecioKgReferencia = precioDestino,
                 Presentacion = global.Presentacion,
-                Nivel = global.Nivel
+                Nivel = 0
             };
 
             if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)

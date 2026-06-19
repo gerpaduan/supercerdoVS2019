@@ -33,6 +33,21 @@ namespace Negocio
             return oCorteD.findCorteByCodigo(codigo, buscarMaestro);
         }
 
+        public Entidades.Corte findCorteGlobalByCodigo(long codigo, bool buscarMaestro)
+        {
+            return oCorteD.findCorteGlobalByCodigo(codigo, buscarMaestro);
+        }
+
+        public List<Entidades.Corte> ObtenerCortesPorEmpresa(int idEmpresa, bool buscarMaestro)
+        {
+            return oCorteD.ObtenerCortesPorEmpresa(idEmpresa, buscarMaestro);
+        }
+
+        public Entidades.Corte findCorteByCodigoEmpresa(long codigo, int idEmpresa, bool buscarMaestro)
+        {
+            return oCorteD.findCorteByCodigoEmpresa(codigo, idEmpresa, buscarMaestro);
+        }
+
         public List<Entidades.Corte> ObtenerCatalogoGlobal(string busqueda)
         {
             return oCorteD.ObtenerCatalogoGlobal(busqueda);
@@ -137,6 +152,11 @@ namespace Negocio
             }
 
             oCorteD.addOrEditCorte(oCorteE);
+        }
+
+        public int InsertarCorteEnEmpresa(Entidades.Corte oCorteE)
+        {
+            return oCorteD.InsertarCorteEnEmpresa(oCorteE);
         }
 
         public DataTable lista_precios()

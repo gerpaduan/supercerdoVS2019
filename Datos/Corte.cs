@@ -116,6 +116,47 @@ namespace Datos
             return lista.Count > 0 ? lista[0] : null;
         }
 
+        public Entidades.Corte findCorteGlobalByCodigo(long codigo, bool buscarMaestro)
+        {
+            var lista = Db.Reader(
+                _empresa,
+                "SELECT * FROM Corte WHERE codigo = @codigo AND idEmpresa = 0",
+                CommandType.Text,
+                dr => MapCorte(dr, buscarMaestro),
+                p => p.Add("@codigo", SqlDbType.BigInt).Value = codigo
+            );
+
+            return lista.Count > 0 ? lista[0] : null;
+        }
+
+        public List<Entidades.Corte> ObtenerCortesPorEmpresa(int idEmpresa, bool buscarMaestro)
+        {
+            return Db.Reader(
+                _empresa,
+                "SELECT * FROM Corte WHERE idEmpresa = @idEmpresa ORDER BY codigo ASC",
+                CommandType.Text,
+                dr => MapCorte(dr, buscarMaestro),
+                p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa
+            );
+        }
+
+        public Entidades.Corte findCorteByCodigoEmpresa(long codigo, int idEmpresa, bool buscarMaestro)
+        {
+            var lista = Db.Reader(
+                _empresa,
+                "SELECT * FROM Corte WHERE codigo = @codigo AND idEmpresa = @idEmpresa",
+                CommandType.Text,
+                dr => MapCorte(dr, buscarMaestro),
+                p =>
+                {
+                    p.Add("@codigo", SqlDbType.BigInt).Value = codigo;
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                }
+            );
+
+            return lista.Count > 0 ? lista[0] : null;
+        }
+
         public List<Entidades.Corte> ObtenerCatalogoGlobal(string busqueda)
         {
             const string sql = @"
@@ -144,7 +185,8 @@ namespace Datos
                     c.pesable
                 FROM dbo.Corte c
                 LEFT JOIN dbo.Corte cm ON cm.idCorte = c.idCorteMaestro
-                WHERE (@texto = '' OR c.corte LIKE @buscar OR CAST(c.codigo AS NVARCHAR(50)) LIKE @buscar)
+                WHERE c.idEmpresa = 0
+                  AND (@texto = '' OR c.corte LIKE @buscar OR CAST(c.codigo AS NVARCHAR(50)) LIKE @buscar)
                 ORDER BY c.codigo ASC;";
 
             string texto = (busqueda ?? "").Trim();
@@ -362,6 +404,93 @@ namespace Datos
                     p.AddWithValue("@pesable", oCorteE.Pesable);
                 }
             );
+        }
+
+        public int InsertarCorteEnEmpresa(Entidades.Corte oCorteE)
+        {
+            if (oCorteE == null) throw new ArgumentNullException(nameof(oCorteE));
+
+            const string sql = @"
+                INSERT INTO dbo.Corte
+                (
+                    idEmpresa,
+                    codigo,
+                    corte,
+                    tipo,
+                    idMarca,
+                    puntoStock,
+                    promedio,
+                    independiente,
+                    precioKg,
+                    ingresoRapidoEmbutido,
+                    habilitado,
+                    enCierreStock,
+                    idCorteMaestro,
+                    porcentaje,
+                    porcentajeHueso,
+                    desvioEstandar,
+                    creado,
+                    idAlicuotaIva,
+                    alicuotaIva,
+                    pesable
+                )
+                OUTPUT INSERTED.idCorte
+                VALUES
+                (
+                    @idEmpresa,
+                    @codigo,
+                    @corte,
+                    @tipo,
+                    @idMarca,
+                    @puntoStock,
+                    @promedio,
+                    @independiente,
+                    @precioKg,
+                    @ingresoRapidoEmbutido,
+                    @habilitado,
+                    @enCierreStock,
+                    @idCorteMaestro,
+                    @porcentaje,
+                    @porcentajeHueso,
+                    @desvioEstandar,
+                    GETDATE(),
+                    @idAlicuotaIva,
+                    @alicuotaIva,
+                    @pesable
+                );";
+
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    p.Add("@codigo", SqlDbType.BigInt).Value = oCorteE.codigo;
+                    p.Add("@corte", SqlDbType.NVarChar, 200).Value = oCorteE.corte ?? "";
+                    p.Add("@tipo", SqlDbType.NVarChar, 100).Value = oCorteE.tipo ?? "";
+                    p.Add("@idMarca", SqlDbType.Int).Value = oCorteE.Marca != null && oCorteE.Marca.IdPersona > 0
+                        ? (object)oCorteE.Marca.IdPersona
+                        : DBNull.Value;
+                    p.Add("@puntoStock", SqlDbType.Int).Value = oCorteE.PuntoStock;
+                    p.Add("@promedio", SqlDbType.Float).Value = oCorteE.Promedio;
+                    p.Add("@independiente", SqlDbType.Int).Value = oCorteE.independiente;
+                    p.Add("@precioKg", SqlDbType.Float).Value = oCorteE.precioKg;
+                    p.Add("@ingresoRapidoEmbutido", SqlDbType.Bit).Value = oCorteE.IngresoRapidoEmbutido;
+                    p.Add("@habilitado", SqlDbType.Bit).Value = oCorteE.Habilitado;
+                    p.Add("@enCierreStock", SqlDbType.Bit).Value = oCorteE.EnCierreStock;
+                    p.Add("@idCorteMaestro", SqlDbType.Int).Value = oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0
+                        ? (object)oCorteE.corteMaestro.idCorte
+                        : DBNull.Value;
+                    p.Add("@porcentaje", SqlDbType.Float).Value = oCorteE.porcentaje;
+                    p.Add("@porcentajeHueso", SqlDbType.Float).Value = oCorteE.porcentajeHueso;
+                    p.Add("@desvioEstandar", SqlDbType.Float).Value = oCorteE.desvioEstandar;
+                    p.Add("@idAlicuotaIva", SqlDbType.Int).Value = oCorteE.IdAlicuotaIva;
+                    p.Add("@alicuotaIva", SqlDbType.Float).Value = oCorteE.AlicuotaIva;
+                    p.Add("@pesable", SqlDbType.Bit).Value = oCorteE.Pesable;
+                });
+
+            return (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
         }
 
         public DataTable buscarCorte(string txtBusqueda)

@@ -720,7 +720,7 @@
     </div>
 
     <div class="modal fade" id="modalCatalogoGlobal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-dialog modal-xl modal-catalogo-global-dialog" role="document">
             <div class="modal-content" id="modalCatalogoGlobalContent">
                 <div class="modal-body text-center text-muted py-5">
                     <i class="fas fa-spinner fa-spin mr-2"></i> Cargando catálogo global...
@@ -805,6 +805,11 @@
     const urlImportarGlobalesProductos = '@Url.Action("ImportarSeleccionados", "Productos")';
     const urlBuscarPorCodigoBarraGlobal = '@Url.Action("BuscarPorCodigoBarraGlobal", "Productos")';
     const urlAgregarDesdeCodigoBarra = '@Url.Action("AgregarDesdeCodigoBarra", "Productos")';
+    const catalogoGlobalState = {
+        selectedIds: {},
+        codigoDestinoPorId: {},
+        precioPorId: {}
+    };
     const tabla = document.getElementById("tablaProductos");
     const codigoGlobalState = {
         ultimoCodigoBuscado: "",
@@ -869,8 +874,127 @@
 
     function actualizarResumenCatalogoGlobal() {
         const $rows = $("#tbodyCatalogoGlobal tr[data-id]");
-        const $seleccionados = $rows.find(".chk-global-producto:checked");
-        $("#lblResumenCatalogoGlobal").text($rows.length + " producto(s) visible(s) - " + $seleccionados.length + " seleccionado(s)");
+        const totalSeleccionados = Object.keys(catalogoGlobalState.selectedIds).length;
+        $("#lblResumenCatalogoGlobal").text($rows.length + " producto(s) visible(s) - " + totalSeleccionados + " seleccionado(s)");
+    }
+
+    function togglePrecioCatalogoGlobalFila(row, focusPrecio) {
+        const $row = $(row);
+        const $chk = $row.find(".chk-global-producto");
+        const $wrapper = $row.find(".js-precio-wrapper");
+        const $precio = $row.find(".js-precio-destino");
+        const mostrar = $chk.is(":checked") && !$chk.is(":disabled");
+
+        $wrapper.toggleClass("d-none", !mostrar);
+
+        if (mostrar && focusPrecio && $precio.length) {
+            window.setTimeout(function () {
+                $precio.trigger("focus").trigger("select");
+            }, 0);
+        }
+    }
+
+    function renderEstadoCatalogoGlobalFila(row) {
+        const $row = $(row);
+        const $estado = $row.find(".js-estado-global");
+        if (!$estado.length) return;
+
+        const $chk = $row.find(".chk-global-producto");
+        const $codigo = $row.find(".js-codigo-destino");
+        const seleccionado = $chk.is(":checked") && !$chk.is(":disabled");
+        const codigoDuplicadoOriginal = String($row.data("codigo-duplicado")) === "1";
+        const codigoOriginal = ($row.data("codigo-original") || "").toString();
+        const codigoSugerido = ($row.data("codigo-sugerido") || "").toString();
+        const codigoActual = ($codigo.val() || "").toString().trim();
+        const $precio = $row.find(".js-precio-destino");
+        const precioActual = ($precio.val() || "").toString().trim();
+
+        togglePrecioCatalogoGlobalFila(row, false);
+
+        if (seleccionado && precioActual === "") {
+            $estado.html(
+                '<span class="badge badge-warning text-dark">Falta precio</span><br />' +
+                '<small class="text-muted">Ingrese el precio antes de importar</small>'
+            );
+            return;
+        }
+
+        if (seleccionado && codigoDuplicadoOriginal && codigoActual === codigoOriginal) {
+            $estado.html(
+                '<span class="badge badge-warning text-dark">Codigo ocupado</span><br />' +
+                '<small class="text-muted">Pertenece a la empresa actual. Sugerido: ' + codigoSugerido + '</small><br />' +
+                '<button type="button" class="btn btn-link btn-sm p-0 mt-1 js-usar-codigo-sugerido">Usar sugerido</button>'
+            );
+            return;
+        }
+
+        $estado.html(
+            '<span class="badge badge-secondary">Disponible</span><br />' +
+            '<small class="text-muted">Listo para importar</small>'
+        );
+    }
+
+    function renderEstadoCatalogoGlobalTabla() {
+        $("#tbodyCatalogoGlobal tr[data-id]").each(function () {
+            renderEstadoCatalogoGlobalFila(this);
+        });
+    }
+
+    function snapshotCatalogoGlobalState() {
+        $("#tbodyCatalogoGlobal tr[data-id]").each(function () {
+            const $row = $(this);
+            const id = parseInt($row.data("id"), 10);
+            if (!id) return;
+
+            const $chk = $row.find(".chk-global-producto");
+            const $codigo = $row.find(".js-codigo-destino");
+            const $precio = $row.find(".js-precio-destino");
+
+            if ($codigo.length) {
+                catalogoGlobalState.codigoDestinoPorId[id] = ($codigo.val() || "").toString().trim();
+            }
+
+            if ($precio.length) {
+                catalogoGlobalState.precioPorId[id] = ($precio.val() || "").toString().trim();
+            }
+
+            if ($chk.is(":checked") && !$chk.is(":disabled")) {
+                catalogoGlobalState.selectedIds[id] = true;
+            } else {
+                delete catalogoGlobalState.selectedIds[id];
+            }
+        });
+    }
+
+    function restoreCatalogoGlobalState() {
+        $("#tbodyCatalogoGlobal tr[data-id]").each(function () {
+            const $row = $(this);
+            const id = parseInt($row.data("id"), 10);
+            if (!id) return;
+
+            const $chk = $row.find(".chk-global-producto");
+            const $codigo = $row.find(".js-codigo-destino");
+            const $precio = $row.find(".js-precio-destino");
+
+            if ($codigo.length && Object.prototype.hasOwnProperty.call(catalogoGlobalState.codigoDestinoPorId, id)) {
+                $codigo.val(catalogoGlobalState.codigoDestinoPorId[id]);
+            }
+
+            if ($precio.length && Object.prototype.hasOwnProperty.call(catalogoGlobalState.precioPorId, id)) {
+                $precio.val(catalogoGlobalState.precioPorId[id]);
+            }
+
+            if ($chk.length && !$chk.is(":disabled")) {
+                $chk.prop("checked", !!catalogoGlobalState.selectedIds[id]);
+            }
+
+            togglePrecioCatalogoGlobalFila(this, false);
+        });
+
+        const $checksDisponibles = $("#tbodyCatalogoGlobal .chk-global-producto:not(:disabled)");
+        const todosMarcados = $checksDisponibles.length > 0 && $checksDisponibles.filter(":checked").length === $checksDisponibles.length;
+        $("#chkSeleccionarTodosGlobales").prop("checked", todosMarcados);
+        renderEstadoCatalogoGlobalTabla();
     }
 
     function bindCatalogoGlobalEvents() {
@@ -880,6 +1004,7 @@
             const valor = this.value || "";
             clearTimeout(searchTimer);
             searchTimer = window.setTimeout(function () {
+                snapshotCatalogoGlobalState();
                 $.get(urlBuscarGlobalesProductos, { q: valor })
                     .done(function (resp) {
                         if (!resp || resp.ok === false) {
@@ -888,7 +1013,7 @@
                         }
 
                         $("#tbodyCatalogoGlobal").html(resp.html || "");
-                        $("#chkSeleccionarTodosGlobales").prop("checked", false);
+                        restoreCatalogoGlobalState();
                         setAlertCatalogoGlobal("");
                         actualizarResumenCatalogoGlobal();
                     })
@@ -901,34 +1026,81 @@
         $("#chkSeleccionarTodosGlobales").off("change").on("change", function () {
             const checked = $(this).is(":checked");
             $("#tbodyCatalogoGlobal .chk-global-producto:not(:disabled)").prop("checked", checked);
+            snapshotCatalogoGlobalState();
+            renderEstadoCatalogoGlobalTabla();
             actualizarResumenCatalogoGlobal();
         });
 
         $("#modalCatalogoGlobal").off("change", ".chk-global-producto").on("change", ".chk-global-producto", function () {
+            togglePrecioCatalogoGlobalFila($(this).closest("tr"), $(this).is(":checked"));
+            snapshotCatalogoGlobalState();
+            const $checksDisponibles = $("#tbodyCatalogoGlobal .chk-global-producto:not(:disabled)");
+            const todosMarcados = $checksDisponibles.length > 0 && $checksDisponibles.filter(":checked").length === $checksDisponibles.length;
+            $("#chkSeleccionarTodosGlobales").prop("checked", todosMarcados);
+            renderEstadoCatalogoGlobalFila($(this).closest("tr"));
             actualizarResumenCatalogoGlobal();
         });
 
+        $("#modalCatalogoGlobal").off("dblclick", "#tbodyCatalogoGlobal tr[data-id]").on("dblclick", "#tbodyCatalogoGlobal tr[data-id]", function (e) {
+            if ($(e.target).is("input, button, label, a")) return;
+
+            const $row = $(this);
+            const $chk = $row.find(".chk-global-producto");
+            if (!$chk.length || $chk.is(":disabled") || $chk.is(":checked")) return;
+
+            $chk.prop("checked", true).trigger("change");
+        });
+
+        $("#modalCatalogoGlobal").off("input", ".js-codigo-destino").on("input", ".js-codigo-destino", function () {
+            snapshotCatalogoGlobalState();
+            renderEstadoCatalogoGlobalFila($(this).closest("tr"));
+        });
+
+        $("#modalCatalogoGlobal").off("input", ".js-precio-destino").on("input", ".js-precio-destino", function () {
+            snapshotCatalogoGlobalState();
+            renderEstadoCatalogoGlobalFila($(this).closest("tr"));
+        });
+
+        $("#modalCatalogoGlobal").off("click", ".js-usar-codigo-sugerido").on("click", ".js-usar-codigo-sugerido", function () {
+            const $row = $(this).closest("tr");
+            const sugerido = ($row.data("codigo-sugerido") || "").toString();
+            const $codigo = $row.find(".js-codigo-destino");
+            if ($codigo.length) {
+                $codigo.val(sugerido);
+                snapshotCatalogoGlobalState();
+                renderEstadoCatalogoGlobalFila($row);
+            }
+        });
+
         $("#btnImportarCatalogoGlobal").off("click").on("click", function () {
+            snapshotCatalogoGlobalState();
             const token = $("#formCatalogoGlobalImportacion input[name='__RequestVerificationToken']").val();
-            const filas = $("#tbodyCatalogoGlobal tr[data-id]");
             const seleccionados = [];
 
-            filas.each(function (index, row) {
-                const $row = $(row);
-                const $chk = $row.find(".chk-global-producto");
-                if (!$chk.is(":checked") || $chk.is(":disabled")) return;
-
-                const id = parseInt($row.data("id"), 10);
-                const codigoDestino = ($row.find(".js-codigo-destino").val() || "").toString().trim();
+            Object.keys(catalogoGlobalState.selectedIds).forEach(function (idRaw) {
+                const id = parseInt(idRaw, 10);
+                if (!id) return;
 
                 seleccionados.push({
-                    id,
-                    codigoDestino
+                    id: id,
+                    codigoDestino: (catalogoGlobalState.codigoDestinoPorId[id] || "").toString().trim(),
+                    precio: (catalogoGlobalState.precioPorId[id] || "").toString().trim()
                 });
             });
 
             if (!seleccionados.length) {
                 setAlertCatalogoGlobal("Seleccione al menos un producto para importar.");
+                return;
+            }
+
+            const sinPrecio = seleccionados.filter(function (item) { return item.precio === ""; });
+            if (sinPrecio.length) {
+                setAlertCatalogoGlobal("Complete el precio de todos los productos seleccionados antes de importar.");
+                const idFaltante = sinPrecio[0].id;
+                const $inputFaltante = $('#tbodyCatalogoGlobal tr[data-id="' + idFaltante + '"] .js-precio-destino');
+                if ($inputFaltante.length) {
+                    togglePrecioCatalogoGlobalFila($inputFaltante.closest("tr"), true);
+                }
                 return;
             }
 
@@ -939,6 +1111,7 @@
             seleccionados.forEach(function (item, index) {
                 postData["Productos[" + index + "].IdProductoGlobal"] = item.id;
                 postData["Productos[" + index + "].CodigoDestino"] = item.codigoDestino;
+                postData["Productos[" + index + "].Precio"] = item.precio;
             });
 
             setAlertCatalogoGlobal("");
@@ -963,10 +1136,14 @@
             });
         });
 
+        renderEstadoCatalogoGlobalTabla();
         actualizarResumenCatalogoGlobal();
     }
 
     function abrirCatalogoGlobal() {
+        catalogoGlobalState.selectedIds = {};
+        catalogoGlobalState.codigoDestinoPorId = {};
+        catalogoGlobalState.precioPorId = {};
         $("#modalCatalogoGlobalContent").html(getCatalogoGlobalLoadingHtml());
         $("#modalCatalogoGlobal").modal("show");
 
@@ -2541,6 +2718,80 @@
         background: rgba(246, 194, 62, 0.16);
     }
 
+    #modalCatalogoGlobal .modal-dialog {
+        height: calc(100vh - 2rem);
+    }
+
+    #modalCatalogoGlobal .modal-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .modal-catalogo-global-dialog {
+        max-width: 96vw;
+        margin: 1rem auto;
+    }
+
+    #formCatalogoGlobalImportacion.form-catalogo-global {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .modal-catalogo-global-body {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .tabla-catalogo-global {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    #tablaCatalogoGlobal {
+        min-width: 1100px;
+    }
+
+    #tablaCatalogoGlobal thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8f9fa;
+    }
+
+    #modalCatalogoGlobal .modal-footer {
+        border-top: 1px solid #dee2e6;
+        background: #fff;
+        flex-shrink: 0;
+    }
+
+    html.dark-mode #modalCatalogoGlobal .modal-content {
+        background: #182232;
+        color: #e6edf5;
+    }
+
+    html.dark-mode #tablaCatalogoGlobal thead th {
+        background: #243447;
+    }
+
+    html.dark-mode #modalCatalogoGlobal .modal-footer {
+        background: #182232;
+        border-top-color: #314155;
+    }
+
+    #tbodyCatalogoGlobal tr[data-id] {
+        cursor: default;
+    }
+
     html.dark-mode #scannerPrecioContainer .card {
         background: #182232;
         border-color: #314155;
@@ -2548,8 +2799,17 @@
 
     @@media (max-width: 768px) {
         #modalPrecio .modal-dialog,
-        #modalVerificarPrecios .modal-dialog {
+        #modalVerificarPrecios .modal-dialog,
+        .modal-catalogo-global-dialog {
             margin: .5rem;
+        }
+
+        #modalCatalogoGlobal .modal-content {
+            height: 100%;
+        }
+
+        #modalCatalogoGlobal .modal-dialog {
+            height: calc(100vh - 1rem);
         }
 
         .tabla-verificar-precios {

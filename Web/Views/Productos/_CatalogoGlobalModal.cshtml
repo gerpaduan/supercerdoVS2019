@@ -1,38 +1,38 @@
 @model Web.Models.CatalogoGlobalProductosVm
 
-<form id="formCatalogoGlobalImportacion">
+<form id="formCatalogoGlobalImportacion" class="form-catalogo-global h-100">
     @Html.AntiForgeryToken()
 
     <div class="modal-header">
         <h5 class="modal-title">
-            <i class="fas fa-globe-americas mr-1"></i> Catálogo global
+            <i class="fas fa-globe-americas mr-1"></i> Catalogo global
         </h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
 
-    <div class="modal-body">
-        <div class="row align-items-end mb-3">
+    <div class="modal-body modal-catalogo-global-body">
+        <div class="row align-items-end mb-3 flex-shrink-0">
             <div class="col-lg-7 mb-2 mb-lg-0">
-                <label class="font-weight-bold mb-1">Buscar por código o descripción</label>
+                <label class="font-weight-bold mb-1">Buscar por codigo o descripcion</label>
                 <input type="text"
                        class="form-control"
                        id="txtBuscarCatalogoGlobal"
                        value="@Model.Busqueda"
                        autocomplete="off"
-                       placeholder="Escriba para filtrar el catálogo global">
+                       placeholder="Escriba para filtrar el catalogo global">
             </div>
             <div class="col-lg-5">
                 <div class="alert alert-info mb-0 py-2 px-3">
-                    Todos los productos importados por lote se crearán con precio 0.
+                    Seleccione los productos y cargue un precio para cada uno antes de importar.
                 </div>
             </div>
         </div>
 
-        <div id="alertCatalogoGlobal" class="alert alert-danger d-none py-2 px-3"></div>
+        <div id="alertCatalogoGlobal" class="alert alert-danger d-none py-2 px-3 flex-shrink-0"></div>
 
-        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 flex-shrink-0">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" class="custom-control-input" id="chkSeleccionarTodosGlobales">
                 <label class="custom-control-label" for="chkSeleccionarTodosGlobales">Seleccionar todos</label>
@@ -43,15 +43,16 @@
             </small>
         </div>
 
-        <div class="table-responsive border rounded">
+        <div class="table-responsive border rounded tabla-catalogo-global">
             <table class="table table-sm table-hover mb-0" id="tablaCatalogoGlobal">
                 <thead class="thead-light">
                     <tr>
-                        <th style="width:42px;" class="text-center">✓</th>
-                        <th style="width:130px;">Código global</th>
-                        <th>Descripción</th>
-                        <th style="width:180px;">Relación</th>
-                        <th style="width:170px;">Código destino</th>
+                        <th style="width:42px;" class="text-center">Sel.</th>
+                        <th style="width:130px;">Codigo global</th>
+                        <th>Descripcion</th>
+                        <th style="width:180px;">Relacion</th>
+                        <th style="width:170px;">Codigo destino</th>
+                        <th style="width:170px;">Precio</th>
                         <th style="width:220px;">Estado</th>
                     </tr>
                 </thead>
