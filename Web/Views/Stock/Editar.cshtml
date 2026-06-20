@@ -6,7 +6,8 @@
 @using Entidades
 
 @{
-    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    bool renderInlineScripts = Request != null && Request.IsAjaxRequest();
+    Layout = renderInlineScripts ? null : "~/Views/Shared/_LayoutBase.cshtml";
     ViewBag.Title = Model.EsEdicion ? "Modificar Stock" : "Nuevo Stock";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     bool esPesaje = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes), StringComparison.OrdinalIgnoreCase);
@@ -571,7 +572,8 @@
 <div id="contenedorModalPersonaStock"></div>
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 
-@section Scripts {
+@if (renderInlineScripts)
+{
     <style>
         @@media (min-width: 992px) {
             .modal-no-cargados-stock {
@@ -597,7 +599,7 @@
         }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=25")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=28")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {
@@ -605,6 +607,7 @@
                 return;
             }
 
+            // La vista puede entrar por AJAX; por eso la inicialización queda inline, igual que en otras pantallas modales.
             window.StockUI.init({
                 formSelector: "#formStock",
                 modalProductoSelector: "#modalBuscarProductoStock",
@@ -640,4 +643,78 @@
             });
         })();
     </script>
+}
+else
+{
+    @section Scripts {
+        <style>
+            @@media (min-width: 992px) {
+                .modal-no-cargados-stock {
+                    max-width: 50vw;
+                }
+            }
+
+            #tablaNoCargadosStock tbody tr {
+                cursor: pointer;
+            }
+
+            #tablaNoCargadosStock tbody tr:nth-child(even) {
+                background-color: #fafafa;
+            }
+
+            #tablaNoCargadosStock tbody tr + tr td {
+                border-top: 1px solid #e9ecef;
+            }
+
+            #tablaPorcCortesStock tbody tr:last-child {
+                font-weight: 700;
+                background-color: #f8f9fa;
+            }
+        </style>
+        <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=28")"></script>
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+        <script>
+            (function () {
+                if (!window.StockUI || typeof window.StockUI.init !== "function") {
+                    return;
+                }
+
+                // Mantiene el mismo punto de entrada cuando la vista se abre con layout completo.
+                window.StockUI.init({
+                    formSelector: "#formStock",
+                    modalProductoSelector: "#modalBuscarProductoStock",
+                    initialLines: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.StockLineaVm>())),
+                    tipoCompra: "@Model.TipoCompra",
+                    draftKey: "@Model.DraftKey",
+                    permiteCantidadNegativa: @(permiteNegativo ? "true" : "false"),
+                    esEgreso: @(esEgreso ? "true" : "false"),
+                    esPesaje: @(esPesaje ? "true" : "false"),
+                    balanzaUrl: "http://localhost:5100/peso",
+                    proveedorDefaultId: @Model.IdProveedor,
+                    proveedorDefaultNombre: "@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.ProveedorNombre ?? ""))",
+                    proveedorDefaultCuit: "@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.ProveedorCuit ?? ""))",
+                    urls: {
+                        buscarCorte: "@Url.Action("BuscarCorte", "Stock")",
+                        buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Stock")",
+                        ultimasComprasPesaje: "@Url.Action("UltimasComprasPesaje", "Stock")",
+                        ultimosPesajesVinculables: "@Url.Action("UltimasComprasPesaje", "Stock")",
+                        detalleCompraPesaje: "@Url.Action("DetalleCompraPesaje", "Stock")",
+                        verPorcentajesPesaje: "@Url.Action("VerPorcentajesPesaje", "Stock")",
+                        generarAjustePesaje: "@Url.Action("GenerarAjustePesaje", "Stock")",
+                        productosNoCargadosCierre: "@Url.Action("ProductosNoCargadosCierre", "Stock")",
+                        personaBuscarModal: "@ViewBag.UrlBuscarPersonaModal",
+                        personaListar: "@ViewBag.UrlPersonaListar"
+                    }
+                });
+
+                window.EditReadOnly && window.EditReadOnly.init({
+                    formSelector: "#formStock",
+                    soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                    modifyButtonSelector: "#btnHabilitarEdicionStock",
+                    saveButtonSelector: "#btnGuardarStock"
+                });
+            })();
+        </script>
+    }
 }

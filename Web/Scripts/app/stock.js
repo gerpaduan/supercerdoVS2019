@@ -395,7 +395,7 @@
         $form.find('#btnVerPorcentajePesaje').toggleClass('d-none', !esPesaje);
         $form.find('#btnProductosNoCargados').toggleClass('d-none', String(tipoCompra).toLowerCase() !== 'cierre stock');
         actualizarContextoNoCargados($form);
-
+        $form.find('#txtAyudaCantidad').text(permiteCantidadNegativa ? 'Puede ingresar valores positivos o negativos según el ajuste o egreso.' : '');
 
         if (String(tipoCompra).toLowerCase() !== 'cierre stock') {
             $('#modalProductosNoCargadosStock').modal('hide');
@@ -550,8 +550,11 @@
         var html = '';
         sortLineasByCreado($form);
 
-        if (!state.lineas.length) {
+        // El detalle se vuelve a dibujar completo en cada cambio para mantener sincronizados grilla, totales e inputs hidden.
+        if (!$tbody.length) return;
 
+        if (!state.lineas.length) {
+            $tbody.html('<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
             recalculate($form);
             rebuildHiddenInputs($form);
             return;
@@ -563,7 +566,7 @@
                 : '';
 
             html += '<tr data-index="' + index + '">'
-
+                + '<td><strong>' + escapeHtml(linea.producto || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
                 + '<td class="text-right">' + formatNumber(linea.cantKgs, 3) + '</td>'
                 + '<td class="text-center">' + (linea.balanza ? '*' : '') + '</td>'
                 + '<td>' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + vinculoHtml + escapeHtml(linea.creadoTexto || '-') + '</td>'
@@ -676,7 +679,7 @@
             }
         }).done(function (resp) {
             if (!resp || resp.ok !== true) {
-
+                showPorcentajeWarning((resp && resp.mensaje) || 'No se pudo obtener el análisis del pesaje.');
                 renderTablaPorcentajes($('#tablaPromMediasStock'), null, 'Sin datos.');
                 renderTablaPorcentajes($('#tablaPorcCortesStock'), null, 'Sin datos.');
                 return;
@@ -687,7 +690,7 @@
             renderTablaPorcentajes($('#tablaPromMediasStock'), resp.promMedias, 'Sin datos de promedios.');
             renderTablaPorcentajes($('#tablaPorcCortesStock'), resp.porcCortes, 'Sin datos de porcentajes.');
         }).fail(function () {
-
+            showPorcentajeWarning('No se pudo obtener el análisis del pesaje.');
             renderTablaPorcentajes($('#tablaPromMediasStock'), null, 'Sin datos.');
             renderTablaPorcentajes($('#tablaPorcCortesStock'), null, 'Sin datos.');
         }).always(function () {
@@ -719,7 +722,7 @@
                     });
                     detalleHtml += '</tbody></table></div>';
                 } else {
-
+                    detalleHtml = '<div class="text-muted">No hay líneas para mostrar.</div>';
                 }
 
                 html += '<tr>'
@@ -1096,7 +1099,7 @@
                 html += '<tr class="bg-light">'
                     + '<td colspan="8" class="p-0">'
                     + '<div id="' + detailId + '" class="collapse">'
-
+                    + '<div class="p-3"><div class="text-muted">Presione Detalle para cargar las líneas del pesaje.</div></div>'
                     + '</div>'
                     + '</td>'
                     + '</tr>';
@@ -1156,12 +1159,12 @@
 
         var idCompra = parseInt($button.data('id-compra'), 10) || 0;
         if (idCompra <= 0) {
-
+            showVincularPesajesWarning('Seleccione un pesaje válido.');
             return;
         }
 
         if (yaEstaVinculadoEnEdicion($form, idCompra)) {
-
+            showVincularPesajesWarning('Ese pesaje ya fue vinculado en esta edición.');
             return;
         }
 
@@ -1193,7 +1196,7 @@
             });
 
             if (!lineasAgregadas) {
-
+                showVincularPesajesWarning('El pesaje seleccionado no tiene líneas de cortes para vincular.');
                 $button.prop('disabled', false);
                 return;
             }
@@ -1234,8 +1237,8 @@
 
             actualizarEstadoAjustePesaje($form, resp.estado || 'Actualizado');
             getPorcentajesModal().modal('hide');
-
-
+            showFeedback($form, resp.mensaje || 'El Ajuste de Stock se realizó correctamente.');
+            mostrarResultadoAjustePesaje(true, resp.mensaje || 'El Ajuste de Stock se realizÃ³ correctamente.');
             loadPorcentajesPesaje($form);
         }).fail(function () {
             showPorcentajeWarning('No se pudo generar el ajuste.');
@@ -1333,7 +1336,7 @@
             .prop('indeterminate', parcial);
 
         if (parcial) {
-
+            showNoCargadosInfo('Hay una selección parcial. Si lo desea, puede seleccionar o deseleccionar todos.');
         } else {
             clearNoCargadosInfo();
         }
@@ -1417,8 +1420,7 @@
             showWarning($form, 'Seleccione al menos un producto.');
             return;
         }
-
-
+        if (seleccionados.length >= 80 && !window.confirm('Vas a agregar ' + seleccionados.length + ' productos, ¿confirmar?')) {
             return;
         }
 
@@ -1927,7 +1929,7 @@
         var cantidad = parsedCantidad.value;
 
         if (idCorte <= 0) {
-
+            showWarning($form, 'Seleccione un producto válido.');
             $form.find('#txtCodigoProducto').focus().select();
             return null;
         }
@@ -1939,7 +1941,7 @@
         }
 
         if (!parsedCantidad.ok) {
-
+            showWarning($form, 'Ingrese una cantidad válida.');
             $form.find('#txtCantKgs').focus().select();
             return null;
         }
@@ -2005,6 +2007,7 @@
         var $modalComprasPesaje = getComprasPesajeModal();
         var $modalVincularPesajes = getVincularPesajesModal();
 
+        // Los handlers se registran por delegación sobre el form/modal para que sigan funcionando si la vista se carga dinámicamente.
         $form.off('.stock');
         $(document).off('.stock');
         $modalNoCargados.off('.stockModal');
@@ -2261,7 +2264,7 @@
         });
 
         $form.closest('.stock-page').on('click.stock', '[data-action="clear-draft"]', function () {
-
+            if (!window.confirm('Se eliminará el borrador local de este movimiento. ¿Continuar?')) return;
             clearDraft($form);
         });
 
