@@ -426,6 +426,7 @@ namespace Datos
                     habilitado,
                     enCierreStock,
                     idCorteMaestro,
+                    nivel,
                     porcentaje,
                     porcentajeHueso,
                     desvioEstandar,
@@ -450,6 +451,7 @@ namespace Datos
                     @habilitado,
                     @enCierreStock,
                     @idCorteMaestro,
+                    @nivel,
                     @porcentaje,
                     @porcentajeHueso,
                     @desvioEstandar,
@@ -482,6 +484,7 @@ namespace Datos
                     p.Add("@idCorteMaestro", SqlDbType.Int).Value = oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0
                         ? (object)oCorteE.corteMaestro.idCorte
                         : DBNull.Value;
+                    p.Add("@nivel", SqlDbType.Int).Value = oCorteE.Nivel;
                     p.Add("@porcentaje", SqlDbType.Float).Value = oCorteE.porcentaje;
                     p.Add("@porcentajeHueso", SqlDbType.Float).Value = oCorteE.porcentajeHueso;
                     p.Add("@desvioEstandar", SqlDbType.Float).Value = oCorteE.desvioEstandar;

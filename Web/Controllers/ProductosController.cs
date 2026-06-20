@@ -4,6 +4,7 @@ using Negocio;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -215,7 +216,8 @@ namespace Web.Controllers
             {
                 if (item.CodigoDestino <= 0)
                 {
-                    conflictos.Add("El código de destino para el producto global ID " + item.IdProductoGlobal + " debe ser mayor a 0.");
+                    var productoCodigo = productosGlobales.FirstOrDefault(x => x.IdCorte == item.IdProductoGlobal);
+                    conflictos.Add("El código de destino para \"" + (productoCodigo != null ? productoCodigo.CorteDesc : ("producto global ID " + item.IdProductoGlobal)) + "\" debe ser mayor a 0.");
                     continue;
                 }
 
@@ -700,7 +702,7 @@ namespace Web.Controllers
                 PrecioKg = precioDestino,
                 PrecioKgReferencia = precioDestino,
                 Presentacion = global.Presentacion,
-                Nivel = 0
+                Nivel = global != null ? global.Nivel : 0
             };
 
             if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
@@ -1845,7 +1847,20 @@ namespace Web.Controllers
             var nombre = entity.CorteDesc ?? entity.corte ?? "(sin nombre)";
 
             // 5) Eliminar
-            oCorteN.eliminarCorte(entity);
+            try
+            {
+                oCorteN.eliminarCorte(entity);
+            }
+            catch (SqlException ex) when (ex.Number == 547)
+            {
+                TempData["FlashError"] = "No se puede eliminar el producto porque está asociado a otros registros del sistema, por ejemplo ventas, movimientos u otras relaciones.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception)
+            {
+                TempData["FlashError"] = "No se pudo eliminar el producto por un error inesperado.";
+                return RedirectToAction("Index");
+            }
 
             // 6) Mensaje OK
             TempData["FlashSuccess"] = $"El producto \"{nombre}\" se eliminó correctamente.";
