@@ -31,6 +31,8 @@ namespace Web.Models
 
         public float? KgsMedias { get; set; }
 
+        public bool GuardarSinPesaje { get; set; }
+
         public string Creado { get; set; }
 
         public string CreadoPor { get; set; }

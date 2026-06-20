@@ -14,6 +14,10 @@
     bool esAjuste = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock), StringComparison.OrdinalIgnoreCase);
     bool esEgreso = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock), StringComparison.OrdinalIgnoreCase);
     bool permiteNegativo = esAjuste || esEgreso;
+    bool mostrarGuardarSinPesaje = Model.GuardarSinPesaje
+        || ViewData.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Any(e => string.Equals(e.ErrorMessage, "Ingrese los kilos de medias para el pesaje.", StringComparison.OrdinalIgnoreCase));
     var modalProductoData = new ViewDataDictionary
     {
         { "ModalId", "modalBuscarProductoStock" },
@@ -131,6 +135,13 @@
                             <div class="form-group">
                                 <label for="KgsMedias">Kgs.Medias</label>
                                 <input type="text" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                                <div class="mt-2 @(mostrarGuardarSinPesaje ? "" : "d-none")" id="wrapGuardarSinPesaje">
+                                    <div class="custom-control custom-switch">
+                                        @Html.CheckBoxFor(m => m.GuardarSinPesaje, new { @class = "custom-control-input", id = "GuardarSinPesaje" })
+                                        <label class="custom-control-label" for="GuardarSinPesaje">Guardar sin pesaje</label>
+                                    </div>
+                                    <small class="form-text text-muted">Guardar Kgs.Medias en 0</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
@@ -597,9 +608,15 @@
             font-weight: 700;
             background-color: #f8f9fa;
         }
+
+        html.dark-mode #tablaPorcCortesStock tbody tr:last-child td,
+        body.dark-mode #tablaPorcCortesStock tbody tr:last-child td {
+            background-color: #2f3541;
+            color: #f8f9fc;
+        }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=28")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=29")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {
@@ -670,9 +687,15 @@ else
                 font-weight: 700;
                 background-color: #f8f9fa;
             }
+
+            html.dark-mode #tablaPorcCortesStock tbody tr:last-child td,
+            body.dark-mode #tablaPorcCortesStock tbody tr:last-child td {
+                background-color: #2f3541;
+                color: #f8f9fc;
+            }
         </style>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-        <script src="@Url.Content("~/Scripts/app/stock.js?v=28")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=29")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
         <script>
             (function () {

@@ -994,13 +994,22 @@
         showFeedback($form, 'Pesaje vinculado correctamente.');
     }
 
-    function mostrarResultadoAjustePesaje(esExito, mensaje) {
+    function mostrarResultadoAjustePesaje(esExito, mensaje, onClose) {
         if (window.Swal && typeof window.Swal.fire === 'function') {
             window.Swal.fire({
                 icon: esExito ? 'success' : 'error',
                 title: esExito ? 'Ajuste generado correctamente' : 'No se pudo generar el ajuste',
                 text: mensaje || ''
+            }).then(function () {
+                if (typeof onClose === 'function') onClose();
             });
+            return;
+        }
+
+        if (typeof onClose === 'function') {
+            window.setTimeout(function () {
+                onClose();
+            }, 200);
         }
     }
 
@@ -1238,8 +1247,9 @@
             actualizarEstadoAjustePesaje($form, resp.estado || 'Actualizado');
             getPorcentajesModal().modal('hide');
             showFeedback($form, resp.mensaje || 'El Ajuste de Stock se realizó correctamente.');
-            mostrarResultadoAjustePesaje(true, resp.mensaje || 'El Ajuste de Stock se realizÃ³ correctamente.');
-            loadPorcentajesPesaje($form);
+            mostrarResultadoAjustePesaje(true, resp.mensaje || 'El Ajuste de Stock se realizó correctamente.', function () {
+                window.location.reload();
+            });
         }).fail(function () {
             showPorcentajeWarning('No se pudo generar el ajuste.');
             mostrarResultadoAjustePesaje(false, 'No se pudo generar el ajuste.');

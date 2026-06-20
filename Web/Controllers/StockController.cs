@@ -484,6 +484,8 @@ namespace Web.Controllers
 
             model.TipoCompra = tipoOperacion;
             NormalizarDecimalesPosteados(model);
+            AplicarGuardarSinPesaje(model);
+            CompletarDatosProveedor(model);
             string error = ValidarModelo(model, user);
             if (!string.IsNullOrWhiteSpace(error))
             {
@@ -1721,10 +1723,10 @@ namespace Web.Controllers
                 if (model.IdProveedor <= 0)
                     return "Seleccione un proveedor para el pesaje.";
 
-                if (!model.CantMedias.HasValue || model.CantMedias.Value <= 0)
+                if (!model.GuardarSinPesaje && (!model.CantMedias.HasValue || model.CantMedias.Value <= 0))
                     return "Ingrese la cantidad de medias para el pesaje.";
 
-                if (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0)
+                if (!model.GuardarSinPesaje && (!model.KgsMedias.HasValue || model.KgsMedias.Value <= 0))
                     return "Ingrese los kilos de medias para el pesaje.";
             }
 
@@ -1735,6 +1737,32 @@ namespace Web.Controllers
         {
             int id = idProveedor > 0 ? idProveedor : param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
             return id > 0 ? oPersonaN.findById(id) : null;
+        }
+
+        private void CompletarDatosProveedor(StockEditVm model)
+        {
+            if (model == null || !EsPesaje(model.TipoCompra))
+                return;
+
+            if (model.IdProveedor <= 0)
+            {
+                model.ProveedorNombre = "";
+                model.ProveedorCuit = "";
+                return;
+            }
+
+            var proveedor = ResolverProveedor(model.IdProveedor);
+            model.ProveedorNombre = proveedor != null ? proveedor.RazonSocial : "";
+            model.ProveedorCuit = proveedor != null ? proveedor.Cuit : "";
+        }
+
+        private void AplicarGuardarSinPesaje(StockEditVm model)
+        {
+            if (model == null || !EsPesaje(model.TipoCompra) || !model.GuardarSinPesaje)
+                return;
+
+            model.CantMedias = 0;
+            model.KgsMedias = 0f;
         }
 
         private bool EsCompraSeleccionableParaPesaje(Entidades.Compra compra)
