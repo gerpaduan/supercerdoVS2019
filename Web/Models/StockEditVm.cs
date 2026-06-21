@@ -41,6 +41,28 @@ namespace Web.Models
 
         public string ActualizadoPor { get; set; }
 
+        public int? IdPesajeAjustado { get; set; }
+
+        public DateTime? FechaCompraVinculada { get; set; }
+
+        public string ProveedorCompraVinculada { get; set; }
+
+        public int? CantMediasCompraVinculada { get; set; }
+
+        public float? KgsCompraVinculada { get; set; }
+
+        public string EstadoCompraVinculada { get; set; }
+
+        public DateTime? FechaPesajeAjustado { get; set; }
+
+        public string ProveedorPesajeAjustado { get; set; }
+
+        public int? CantMediasPesajeAjustado { get; set; }
+
+        public float? KgsPesajeAjustado { get; set; }
+
+        public string EstadoPesajeAjustado { get; set; }
+
         public List<StockLineaVm> Lineas { get; set; }
 
         public List<int> PesajesVinculadosIds { get; set; }

@@ -93,6 +93,9 @@ namespace Datos
                     p.AddWithValue("@tipoCompra", oCompraE.TipoCompra ?? "");
                     p.AddWithValue("@cantMedias", oCompraE.CantMedias);
                     p.AddWithValue("@kgsMedias", oCompraE.KgsMedias);
+                    p.Add("@idPesajeAjustado", SqlDbType.Int).Value = oCompraE.IdPesajeAjustado.HasValue
+                        ? (object)oCompraE.IdPesajeAjustado.Value
+                        : DBNull.Value;
                     p.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
                     p.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
                     p.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
@@ -124,6 +127,9 @@ namespace Datos
                     p.AddWithValue("@tipoCompra", oCompraE.TipoCompra ?? "");
                     p.AddWithValue("@cantMedias", oCompraE.CantMedias);
                     p.AddWithValue("@kgsMedias", oCompraE.KgsMedias);
+                    p.Add("@idPesajeAjustado", SqlDbType.Int).Value = oCompraE.IdPesajeAjustado.HasValue
+                        ? (object)oCompraE.IdPesajeAjustado.Value
+                        : DBNull.Value;
                     p.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
                     p.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
                     p.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
@@ -152,6 +158,9 @@ namespace Datos
                     p.AddWithValue("@tipoCompra", oCompraE.TipoCompra ?? "");
                     p.AddWithValue("@cantMedias", oCompraE.CantMedias);
                     p.AddWithValue("@kgsMedias", oCompraE.KgsMedias);
+                    p.Add("@idPesajeAjustado", SqlDbType.Int).Value = oCompraE.IdPesajeAjustado.HasValue
+                        ? (object)oCompraE.IdPesajeAjustado.Value
+                        : DBNull.Value;
                     p.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
                     p.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
                     p.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor.Id);
@@ -246,6 +255,18 @@ namespace Datos
                     p.AddWithValue("@creado", oCorteE.Creado);
                     p.AddWithValue("@creadoPor", oCorteE.CreadoPor != null ? oCorteE.CreadoPor.Id : 0);
                 }
+            );
+        }
+
+        public void limpiarCortesPorCompra(int idCompra)
+        {
+            const string sql = "DELETE FROM dbo.CortePorCompra WHERE idCompra = @idCompra;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.Add("@idCompra", SqlDbType.Int).Value = idCompra
             );
         }
 
@@ -422,7 +443,12 @@ namespace Datos
         {
             string tipoAj = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock);
 
-            const string sql = "SELECT idCompra FROM dbo.Compras WHERE tipoCompra = @tipo AND nroRemito = @nroRemito;";
+            const string sql =
+                "SELECT TOP 1 idCompra " +
+                "FROM dbo.Compras " +
+                "WHERE tipoCompra = @tipo " +
+                "  AND (idPesajeAjustado = @idPesaje OR nroRemito = @nroRemito) " +
+                "ORDER BY CASE WHEN idPesajeAjustado = @idPesaje THEN 0 ELSE 1 END, idCompra DESC;";
 
             object obj = Db.Scalar(
                 _empresa,
@@ -431,6 +457,7 @@ namespace Datos
                 p =>
                 {
                     p.Add("@tipo", SqlDbType.NVarChar, 50).Value = tipoAj;
+                    p.Add("@idPesaje", SqlDbType.Int).Value = idPesaje;
                     p.Add("@nroRemito", SqlDbType.NVarChar, 50).Value = idPesaje.ToString();
                 }
             );

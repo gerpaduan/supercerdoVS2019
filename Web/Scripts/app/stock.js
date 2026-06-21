@@ -303,6 +303,40 @@
         $form.find('#lblProveedorCuit').text(persona && persona.cuit ? ('CUIT: ' + persona.cuit) : 'Sin proveedor seleccionado');
     }
 
+    function clearCompraVinculadaPesaje($form) {
+        $form.find('#IdPesajeAjustado').val('');
+        $form.find('#stockCompraVinculadaId').text('');
+        $form.find('#stockCompraVinculadaProveedor').text('-');
+        $form.find('#stockCompraVinculadaFecha').text('-');
+        $form.find('#stockCompraVinculadaEstado').addClass('d-none').text('');
+        $form.find('#stockCompraVinculadaDatos').removeClass('d-none');
+        $form.find('#stockCompraVinculadaBox').addClass('d-none');
+    }
+
+    function setCompraVinculadaPesaje($form, compra) {
+        var idCompra = compra && compra.idCompra ? parseInt(compra.idCompra, 10) || 0 : 0;
+        if (idCompra <= 0) {
+            clearCompraVinculadaPesaje($form);
+            return;
+        }
+
+        $form.find('#IdPesajeAjustado').val(idCompra);
+        $form.find('#stockCompraVinculadaId').text('#' + idCompra);
+        $form.find('#stockCompraVinculadaProveedor').text(compra.proveedor || '-');
+        $form.find('#stockCompraVinculadaFecha').text(compra.fechaCompra || '-');
+
+        var estado = $.trim(compra.estado || '');
+        if (estado) {
+            $form.find('#stockCompraVinculadaEstado').removeClass('d-none').text(estado);
+            $form.find('#stockCompraVinculadaDatos').addClass('d-none');
+        } else {
+            $form.find('#stockCompraVinculadaEstado').addClass('d-none').text('');
+            $form.find('#stockCompraVinculadaDatos').removeClass('d-none');
+        }
+
+        $form.find('#stockCompraVinculadaBox').removeClass('d-none');
+    }
+
     function setProductoActual($form, producto) {
         $form.find('#txtProductoId').val(producto && producto.id ? producto.id : '');
         $form.find('#txtCodigoProducto').val(producto && producto.codigo ? producto.codigo : '');
@@ -835,7 +869,7 @@
                     + '<td class="text-right font-weight-bold">' + formatNumber(item.kgsMedias || item.totalKg || 0, 3) + '</td>'
                     + '<td class="text-right font-weight-bold">' + escapeHtml(item.cantMedias || 0) + '</td>'
                     + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-info" data-action="toggle-detalle-compra-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-target="#' + detailId + '" aria-expanded="false" aria-controls="' + detailId + '"><i class="fas fa-list mr-1"></i>Detalle</button></td>'
-                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-primary" data-action="select-compra-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-id-proveedor="' + escapeHtml(item.idProveedor || 0) + '" data-proveedor="' + escapeHtml(item.proveedor || '') + '">Seleccionar</button></td>'
+                    + '<td class="text-center"><button type="button" class="btn btn-sm btn-primary" data-action="select-compra-pesaje" data-id-compra="' + escapeHtml(item.idCompra) + '" data-id-proveedor="' + escapeHtml(item.idProveedor || 0) + '" data-proveedor="' + escapeHtml(item.proveedor || '') + '">Vincular</button></td>'
                     + '</tr>';
                 html += '<tr class="bg-light">'
                     + '<td colspan="6" class="p-0">'
@@ -966,12 +1000,18 @@
                 cuit: item.proveedorCuit || ''
             });
 
+            setCompraVinculadaPesaje($form, {
+                idCompra: item.idCompra || idCompra,
+                fechaCompra: item.fechaCompra || '',
+                proveedor: item.proveedor || '',
+                estado: ''
+            });
             $form.find('#CantMedias').val(item.cantMedias || '');
             $form.find('#KgsMedias').val(formatNumber(item.kgsMedias || item.totalKg || 0, 2));
             clearWarning($form);
             scheduleDraft($form);
             getComprasPesajeModal().modal('hide');
-            showFeedback($form, 'Compra seleccionada correctamente.');
+            showFeedback($form, 'Compra vinculada correctamente.');
             $button.prop('disabled', false);
         }, function (mensaje) {
             showComprasPesajeWarning(mensaje || 'No se pudo seleccionar la compra.');
@@ -1498,8 +1538,12 @@
                 fechaCompra: $form.find('#FechaCompra').val(),
                 observaciones: $form.find('#Observaciones').val(),
                 idProveedor: $form.find('#IdProveedor').val(),
+                idPesajeAjustado: $form.find('#IdPesajeAjustado').val(),
                 proveedorNombre: $form.find('#razonSocial').val(),
                 proveedorCuit: ($form.find('#lblProveedorCuit').text() || '').replace(/^CUIT:\s*/i, ''),
+                compraVinculadaFecha: $form.find('#stockCompraVinculadaFecha').text() || '',
+                compraVinculadaProveedor: $form.find('#stockCompraVinculadaProveedor').text() || '',
+                compraVinculadaEstado: $form.find('#stockCompraVinculadaEstado').text() || '',
                 cantMedias: $form.find('#CantMedias').val(),
                 kgsMedias: $form.find('#KgsMedias').val(),
                 currentLine: {
@@ -1547,6 +1591,12 @@
                 id: draft.idProveedor || 0,
                 razon: draft.proveedorNombre || '',
                 cuit: draft.proveedorCuit || ''
+            });
+            setCompraVinculadaPesaje($form, {
+                idCompra: draft.idPesajeAjustado || 0,
+                fechaCompra: draft.compraVinculadaFecha || '',
+                proveedor: draft.compraVinculadaProveedor || '',
+                estado: draft.compraVinculadaEstado || ''
             });
             $form.find('#CantMedias').val(draft.cantMedias || '');
             $form.find('#KgsMedias').val(draft.kgsMedias || '');
@@ -2064,6 +2114,7 @@
                 razon: state.config.proveedorDefaultNombre || '',
                 cuit: state.config.proveedorDefaultCuit || ''
             });
+            clearCompraVinculadaPesaje($form);
             scheduleDraft($form);
         });
 
@@ -2310,6 +2361,7 @@
                     razon: $(this).data('razon'),
                     cuit: $(this).data('cuit')
                 });
+                clearCompraVinculadaPesaje($form);
                 $('#modalBuscarPersona').modal('hide');
                 scheduleDraft($form);
             })
@@ -2324,6 +2376,7 @@
                     razon: $target.data('razon'),
                     cuit: $target.data('cuit')
                 });
+                clearCompraVinculadaPesaje($form);
                 $('#modalBuscarPersona').modal('hide');
                 scheduleDraft($form);
             });

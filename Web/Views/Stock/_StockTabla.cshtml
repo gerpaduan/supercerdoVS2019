@@ -1,4 +1,4 @@
-@model Web.Models.CompraIndexVm
+﻿@model Web.Models.CompraIndexVm
 @using System
 @using System.Collections.Generic
 @using System.Data
@@ -6,13 +6,14 @@
 @{
     var dt = Model != null ? Model.Compras : null;
     var detalles = Model != null ? Model.Detalles : new Dictionary<int, Web.Models.CompraIndexDetalleVm>();
-    int totalColumnas = 7;
+    int totalColumnas = 8;
 }
 
 <div class="table-responsive tabla-full">
     <table class="table table-bordered table-hover mb-0">
         <thead class="thead-light">
             <tr>
+                <th style="width: 80px;">ID</th>
                 <th>Fecha</th>
                 <th>Sucursal</th>
                 <th>Acción</th>
@@ -41,26 +42,23 @@
                     Web.Models.CompraIndexDetalleVm detalle = detalles.ContainsKey(idCompra) ? detalles[idCompra] : null;
 
                     <tr>
+                        <td class="font-weight-bold">@idCompra</td>
                         <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
                         <td>@row["sucursal"]</td>
                         <td>
+                            
                             <div>@row["tipoCompra"]</div>
                             @if (detalle != null)
                             {
-                                if (detalle.EsPesaje)
+                                if (detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue)
                                 {
                                     <div class="mt-1">
-                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdCompra</span>
-                                        @if (detalle.IdAjusteRelacionado.HasValue)
-                                        {
-                                            <span class="badge badge-pill badge-success">Aj. #@detalle.IdAjusteRelacionado.Value</span>
-                                        }
+                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdAjusteRelacionado.Value</span>
                                     </div>
                                 }
                                 else if (detalle.EsAjuste && detalle.IdPesajeRelacionado.HasValue)
                                 {
                                     <div class="mt-1">
-                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdCompra</span>
                                         <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
                                     </div>
                                 }
@@ -84,8 +82,8 @@
                             }
                         </td>
                         <td class="text-center text-nowrap">
-                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Stock", new { id = idCompra })">
-                                Modificar
+                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Stock", new { id = idCompra })" title="Ver stock">
+                                <i class="fas fa-eye"></i>
                             </a>
                             <button type="button"
                                     class="btn btn-sm btn-link text-decoration-none btn-detalles-stock"
@@ -99,45 +97,145 @@
                     <tr>
                         <td colspan="@totalColumnas" class="p-0">
                             <div id="@detailId" class="collapse stock-detalle-collapse">
-                                <div class="p-3 bg-light border-top">
+                                <div class="p-3 bg-light border-top stock-detalle-body">
                                     @if (detalle == null)
                                     {
                                         <div class="text-muted">No se pudieron cargar los detalles del movimiento.</div>
                                     }
                                     else
                                     {
+                                        var referenciaPesaje = detalle.IdPesajeRelacionado.HasValue ? detalle.IdPesajeRelacionado.Value.ToString() : "";
+                                        var referenciaAjuste = detalle.IdAjusteRelacionado.HasValue ? detalle.IdAjusteRelacionado.Value.ToString() : "";
+                                        var observaciones = !string.IsNullOrWhiteSpace(detalle.Observaciones) ? detalle.Observaciones : "-";
+                                        var usuarioCreacion = !string.IsNullOrWhiteSpace(detalle.UsuarioCreacion) ? detalle.UsuarioCreacion : "-";
+                                        var fechaCreacion = detalle.FechaCreacion.HasValue ? detalle.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+                                        var usuarioActualizacion = !string.IsNullOrWhiteSpace(detalle.UsuarioActualizacion) ? detalle.UsuarioActualizacion : "-";
+                                        var fechaActualizacion = detalle.FechaActualizacion.HasValue ? detalle.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+                                        var sucursalDetalle = !string.IsNullOrWhiteSpace(detalle.Sucursal) ? detalle.Sucursal : "-";
+                                        var tipoDetalle = !string.IsNullOrWhiteSpace(detalle.TipoCompra) ? detalle.TipoCompra : "-";
                                         <div class="row">
                                             <div class="col-12 col-lg-6">
                                                 <div class="mb-2"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@detalle.IdCompra</span></div>
-                                                @if (detalle.EsPesaje)
+                                                @if (detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue)
                                                 {
                                                     <div class="mb-2">
                                                         <span class="text-muted">Referencia:</span>
-                                                        <span class="font-weight-bold">Pesaje #@detalle.IdCompra</span>
-                                                        @if (detalle.IdAjusteRelacionado.HasValue)
-                                                        {
-                                                            <span class="badge badge-pill badge-success ml-2">Aj. #@detalle.IdAjusteRelacionado.Value</span>
-                                                        }
+                                                        <span class="badge badge-pill badge-success ml-2">Aj. #@referenciaAjuste</span>
                                                     </div>
                                                 }
                                                 else if (detalle.EsAjuste && detalle.IdPesajeRelacionado.HasValue)
                                                 {
                                                     <div class="mb-2">
                                                         <span class="text-muted">Referencia:</span>
-                                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdCompra</span>
-                                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
+                                                        <span class="badge badge-pill badge-info">Pesaje #@referenciaPesaje</span>
                                                     </div>
                                                 }
-                                                <div class="mb-2"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Observaciones) ? detalle.Observaciones : "-")</span></div>
-                                                <div class="mb-2"><span class="text-muted">Quién lo creó:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.UsuarioCreacion) ? detalle.UsuarioCreacion : "-")</span></div>
-                                                <div class="mb-2"><span class="text-muted">Fecha de creación:</span> <span class="font-weight-bold">@(detalle.FechaCreacion.HasValue ? detalle.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
+                                                <div class="mb-2"><span class="text-muted">Quién lo creó:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
+                                                <div class="mb-2"><span class="text-muted">Fecha de creación:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
                                             </div>
                                             <div class="col-12 col-lg-6">
-                                                <div class="mb-2"><span class="text-muted">Quién lo actualizó:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.UsuarioActualizacion) ? detalle.UsuarioActualizacion : "-")</span></div>
-                                                <div class="mb-2"><span class="text-muted">Fecha de actualización:</span> <span class="font-weight-bold">@(detalle.FechaActualizacion.HasValue ? detalle.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</span></div>
-                                                <div class="mb-2"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Sucursal) ? detalle.Sucursal : "-")</span></div>
-                                                <div class="mb-2"><span class="text-muted">Acción:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.TipoCompra) ? detalle.TipoCompra : "-")</span></div>
+                                                <div class="mb-2"><span class="text-muted">Quién lo actualizó:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
+                                                <div class="mb-2"><span class="text-muted">Fecha de actualización:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
+                                                <div class="mb-2"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@sucursalDetalle</span></div>
+                                                <div class="mb-2"><span class="text-muted">Acción:</span> <span class="font-weight-bold">@tipoDetalle</span></div>
                                             </div>
+                                        </div>
+                                        if (detalle.EsPesaje && detalle.IdCompraVinculada.HasValue && detalle.IdCompraVinculada.Value > 0)
+                                        {
+                                            <div class="stock-relacionado-box stock-relacionado-compra mt-3">
+                                                <div class="small text-uppercase font-weight-bold mb-2">Compra vinculada #@detalle.IdCompraVinculada.Value</div>
+                                                @if (!string.IsNullOrWhiteSpace(detalle.EstadoCompraVinculada))
+                                                {
+                                                    <div class="font-weight-bold">@detalle.EstadoCompraVinculada</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="row">
+                                                        <div class="col-12 col-md-3 mb-2 mb-md-0">
+                                                            <div class="text-muted">Fecha de compra</div>
+                                                            <div class="font-weight-bold">@(detalle.FechaCompraVinculada.HasValue ? detalle.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                                        </div>
+                                                        <div class="col-12 col-md-4 mb-2 mb-md-0">
+                                                            <div class="text-muted">Proveedor</div>
+                                                            <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.ProveedorCompraVinculada) ? detalle.ProveedorCompraVinculada : "-")</div>
+                                                        </div>
+                                                        <div class="col-6 col-md-2">
+                                                            <div class="text-muted">Cant.Medias</div>
+                                                            <div class="font-weight-bold">@(detalle.CantMediasCompraVinculada.HasValue ? detalle.CantMediasCompraVinculada.Value.ToString() : "-")</div>
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <div class="text-muted">Kgs.Medias</div>
+                                                            <div class="font-weight-bold">@(detalle.KgsCompraVinculada.HasValue ? detalle.KgsCompraVinculada.Value.ToString("N2") : "-")</div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        if (detalle.EsAjuste && detalle.IdPesajeRelacionado.HasValue && detalle.IdPesajeRelacionado.Value > 0)
+                                        {
+                                            <div class="stock-relacionado-box stock-relacionado-pesaje mt-3">
+                                                <div class="small text-uppercase font-weight-bold mb-2">Pesaje asociado #@detalle.IdPesajeRelacionado.Value</div>
+                                                @if (!string.IsNullOrWhiteSpace(detalle.EstadoPesajeRelacionado))
+                                                {
+                                                    <div class="font-weight-bold">@detalle.EstadoPesajeRelacionado</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="row">
+                                                        <div class="col-12 col-md-3 mb-2 mb-md-0">
+                                                            <div class="text-muted">Fecha del pesaje</div>
+                                                            <div class="font-weight-bold">@(detalle.FechaPesajeRelacionado.HasValue ? detalle.FechaPesajeRelacionado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                                        </div>
+                                                        <div class="col-12 col-md-4 mb-2 mb-md-0">
+                                                            <div class="text-muted">Proveedor</div>
+                                                            <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.ProveedorPesajeRelacionado) ? detalle.ProveedorPesajeRelacionado : "-")</div>
+                                                        </div>
+                                                        <div class="col-6 col-md-2">
+                                                            <div class="text-muted">Cant.Medias</div>
+                                                            <div class="font-weight-bold">@(detalle.CantMediasPesajeRelacionado.HasValue ? detalle.CantMediasPesajeRelacionado.Value.ToString() : "-")</div>
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <div class="text-muted">Kgs.Medias</div>
+                                                            <div class="font-weight-bold">@(detalle.KgsPesajeRelacionado.HasValue ? detalle.KgsPesajeRelacionado.Value.ToString("N2") : "-")</div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>CÃ³digo producto</th>
+                                                        <th>Producto</th>
+                                                        <th class="text-right">Cantidad / kg</th>
+                                                        <th class="text-center">Tipo / signo</th>
+                                                        <th>ObservaciÃ³n lÃ­nea</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if (detalle.Lineas == null || detalle.Lineas.Count == 0)
+                                                    {
+                                                        <tr>
+                                                            <td colspan="5" class="text-center text-muted">No hay lÃ­neas para este movimiento.</td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        foreach (var linea in detalle.Lineas)
+                                                        {
+                                                            <tr>
+                                                                <td>@linea.Codigo</td>
+                                                                <td>@linea.Producto</td>
+                                                                <td class="text-right">@linea.CantidadKgTexto</td>
+                                                                <td class="text-center">@linea.Signo</td>
+                                                                <td>@linea.Observacion</td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
                                         </div>
                                     }
                                 </div>
@@ -149,3 +247,21 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    .stock-detalle-body {
+        font-size: 0.83rem;
+    }
+
+    .stock-relacionado-box {
+        border-radius: 0.5rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid rgba(0, 123, 255, 0.18);
+        background: rgba(0, 123, 255, 0.06);
+    }
+
+    .stock-relacionado-pesaje {
+        border-color: rgba(23, 162, 184, 0.24);
+        background: rgba(23, 162, 184, 0.08);
+    }
+</style>

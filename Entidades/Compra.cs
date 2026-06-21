@@ -159,6 +159,7 @@ namespace Entidades
         private string tipoCompra;
         private int? cantMedias;
         private float? kgsMedias;
+        private int? idPesajeAjustado;
         private Sucursal sucursal;
         private DateTime? creado;
         private DateTime? actualizado;
@@ -190,6 +191,12 @@ namespace Entidades
         {
             get { return kgsMedias; }
             set { kgsMedias = value; }
+        }
+
+        public int? IdPesajeAjustado
+        {
+            get { return idPesajeAjustado; }
+            set { idPesajeAjustado = value; }
         }
 
         public Usuario CreadoPor

@@ -14,6 +14,7 @@
     bool esAjuste = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock), StringComparison.OrdinalIgnoreCase);
     bool esEgreso = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock), StringComparison.OrdinalIgnoreCase);
     bool permiteNegativo = esAjuste || esEgreso;
+    bool tieneCompraVinculadaPesaje = esPesaje && Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0;
     bool mostrarGuardarSinPesaje = Model.GuardarSinPesaje
         || ViewData.ModelState.Values
             .SelectMany(v => v.Errors)
@@ -58,6 +59,7 @@
                 @Html.HiddenFor(m => m.IdCompra)
                 @Html.HiddenFor(m => m.TipoCompra)
                 @Html.HiddenFor(m => m.IdProveedor)
+                @Html.HiddenFor(m => m.IdPesajeAjustado)
                 @Html.HiddenFor(m => m.DraftKey)
                 <div id="lineasHiddenContainer"></div>
                 <div id="pesajesVinculadosHiddenContainer"></div>
@@ -123,6 +125,19 @@
                                     </div>
                                 </div>
                                 <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
+                                <div class="stock-compra-vinculada-box mt-2 @(tieneCompraVinculadaPesaje ? "" : "d-none")" id="stockCompraVinculadaBox">
+                                    <div class="small text-uppercase font-weight-bold mb-2">
+                                        Compra vinculada
+                                        <span id="stockCompraVinculadaId" class="ml-1">@(tieneCompraVinculadaPesaje ? "#" + Model.IdPesajeAjustado.Value : "")</span>
+                                    </div>
+                                    <div id="stockCompraVinculadaEstado" class="font-weight-bold @(!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada) ? "" : "d-none")">@Model.EstadoCompraVinculada</div>
+                                    <div id="stockCompraVinculadaDatos" class="@(!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada) ? "d-none" : "")">
+                                        <div class="small text-muted">Proveedor</div>
+                                        <div class="font-weight-bold" id="stockCompraVinculadaProveedor">@(!string.IsNullOrWhiteSpace(Model.ProveedorCompraVinculada) ? Model.ProveedorCompraVinculada : "-")</div>
+                                        <div class="small text-muted mt-2">Fecha de compra</div>
+                                        <div class="font-weight-bold" id="stockCompraVinculadaFecha">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-6 col-lg-2">
@@ -148,7 +163,7 @@
                             <div class="form-group mb-lg-0">
                                 <label class="d-none d-lg-block">&nbsp;</label>
                                 <button type="button" class="btn btn-outline-primary btn-block" id="btnSeleccionarCompraPesaje">
-                                    <i class="fas fa-shopping-basket mr-1"></i> Seleccionar compra
+                                    <i class="fas fa-shopping-basket mr-1"></i> Vincular compra
                                 </button>
                             </div>
                         </div>
@@ -180,6 +195,41 @@
                                     <div class="small text-muted">@Model.ActualizadoPor</div>
                                 </div>
                             </div>
+                            if (esAjuste)
+                            {
+                                <div class="stock-pesaje-ajustado-box mt-3">
+                                    <div class="small text-uppercase font-weight-bold mb-2">
+                                        @(Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0
+                                            ? "Pesaje vinculado #" + Model.IdPesajeAjustado.Value
+                                            : "Pesaje vinculado")
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(Model.EstadoPesajeAjustado))
+                                    {
+                                        <div class="font-weight-bold">@Model.EstadoPesajeAjustado</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="row">
+                                            <div class="col-12 mb-2">
+                                                <div class="text-muted small">Proveedor</div>
+                                                <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorPesajeAjustado) ? Model.ProveedorPesajeAjustado : "-")</div>
+                                            </div>
+                                            <div class="col-12 mb-2">
+                                                <div class="text-muted small">Fecha del pesaje</div>
+                                                <div class="font-weight-bold">@(Model.FechaPesajeAjustado.HasValue ? Model.FechaPesajeAjustado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-muted small">Cant.Medias</div>
+                                                <div class="font-weight-bold">@(Model.CantMediasPesajeAjustado.HasValue ? Model.CantMediasPesajeAjustado.Value.ToString() : "-")</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-muted small">Kgs.Medias</div>
+                                                <div class="font-weight-bold">@(Model.KgsPesajeAjustado.HasValue ? Model.KgsPesajeAjustado.Value.ToString("N2") : "-")</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         }
                     </div>
                 </div>
@@ -528,7 +578,7 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Seleccionar compra</h5>
+                <h5 class="modal-title">Vincular compra</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -565,7 +615,7 @@
                                 <th class="text-right" style="width:110px;">Kilos</th>
                                 <th class="text-right" style="width:110px;">Medias</th>
                                 <th class="text-center" style="width:120px;">Detalle</th>
-                                <th class="text-center" style="width:130px;">Seleccionar</th>
+                                <th class="text-center" style="width:130px;">Vincular</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyComprasPesajeStock">
@@ -616,7 +666,7 @@
         }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=29")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=30")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         (function () {
@@ -688,14 +738,30 @@ else
                 background-color: #f8f9fa;
             }
 
+            .stock-compra-vinculada-box,
+            .stock-pesaje-ajustado-box {
+                background: rgba(23, 162, 184, 0.10);
+                border: 1px solid rgba(23, 162, 184, 0.25);
+                border-radius: 0.5rem;
+                padding: 0.9rem 1rem;
+            }
+
             html.dark-mode #tablaPorcCortesStock tbody tr:last-child td,
             body.dark-mode #tablaPorcCortesStock tbody tr:last-child td {
                 background-color: #2f3541;
                 color: #f8f9fc;
             }
+
+            html.dark-mode .stock-compra-vinculada-box,
+            body.dark-mode .stock-compra-vinculada-box,
+            html.dark-mode .stock-pesaje-ajustado-box,
+            body.dark-mode .stock-pesaje-ajustado-box {
+                background: rgba(23, 162, 184, 0.16);
+                border-color: rgba(23, 162, 184, 0.35);
+            }
         </style>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-        <script src="@Url.Content("~/Scripts/app/stock.js?v=29")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=30")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
         <script>
             (function () {

@@ -167,6 +167,9 @@ namespace Negocio
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
                 oCompra.KgsMedias = row["kgsMedias"].Equals(DBNull.Value) ? null : (float?) Convert.ToSingle(row["kgsMedias"]);
+                oCompra.IdPesajeAjustado = row.Table.Columns.Contains("idPesajeAjustado") && !row["idPesajeAjustado"].Equals(DBNull.Value)
+                    ? (int?)Convert.ToInt32(row["idPesajeAjustado"])
+                    : null;
                 oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
                 
@@ -219,6 +222,11 @@ namespace Negocio
         public void agregarCortePorCompra(Entidades.CortePorCompra oCortePorCompraE)
         {
             oCompraD.agregarCortePorCompra(oCortePorCompraE);
+        }
+
+        public void limpiarCortesPorCompra(int idCompra)
+        {
+            oCompraD.limpiarCortesPorCompra(idCompra);
         }
 
         public int obtenerUltimaCompra()

@@ -491,6 +491,7 @@ namespace Web.Controllers
             {
                 ModelState.AddModelError("", error);
                 CargarViewBags(model);
+                CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
@@ -501,6 +502,7 @@ namespace Web.Controllers
             {
                 ModelState.AddModelError("", ConstruirMensajePermisoFecha(Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador) ?? "No tiene permisos para guardar este movimiento.");
                 CargarViewBags(model);
+                CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
@@ -510,6 +512,7 @@ namespace Web.Controllers
             {
                 ModelState.AddModelError("", "Seleccione una sucursal válida.");
                 CargarViewBags(model);
+                CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
@@ -520,6 +523,7 @@ namespace Web.Controllers
             {
                 ModelState.AddModelError("", "No se pudo resolver la persona para este movimiento.");
                 CargarViewBags(model);
+                CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
@@ -536,6 +540,9 @@ namespace Web.Controllers
             compra.Sucursal = sucursal;
             compra.EnCtaCte = false;
             compra.Estado = compraActual != null ? compraActual.Estado ?? "" : "";
+            compra.IdPesajeAjustado = (EsPesaje(tipoOperacion) || EsAjuste(tipoOperacion))
+                ? model.IdPesajeAjustado
+                : (compraActual != null ? compraActual.IdPesajeAjustado : null);
             compra.CreadoPor = compraActual != null ? compraActual.CreadoPor : user;
             compra.ActualizadoPor = compraActual != null ? user : null;
 
@@ -549,6 +556,7 @@ namespace Web.Controllers
                 {
                     ModelState.AddModelError("", "No se encontró el producto de la línea " + index + ".");
                     CargarViewBags(model);
+                    CargarDatosRelacionadosEnModelo(model, compraActual);
                     RecalcularTotales(model);
                     return View("~/Views/Stock/Editar.cshtml", model);
                 }
@@ -590,6 +598,7 @@ namespace Web.Controllers
             {
                 ModelState.AddModelError("", "Error al guardar el movimiento de stock. " + ex.Message);
                 CargarViewBags(model);
+                CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
@@ -946,10 +955,13 @@ namespace Web.Controllers
                 ajuste.Proveedor = pesaje.Proveedor;
                 ajuste.FechaCompra = pesaje.FechaCompra;
                 ajuste.Estado = "";
-                ajuste.Observaciones = "ID Pesaje: " + pesaje.IdCompra;
+                string observacionesActuales = (ajuste.Observaciones ?? string.Empty).Trim();
+                if (string.Equals(observacionesActuales, "ID Pesaje: " + pesaje.IdCompra, StringComparison.OrdinalIgnoreCase))
+                    ajuste.Observaciones = "";
                 ajuste.TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock);
                 ajuste.CantMedias = pesaje.CantMedias;
                 ajuste.KgsMedias = pesaje.KgsMedias;
+                ajuste.IdPesajeAjustado = pesaje.IdCompra;
                 ajuste.Sucursal = pesaje.Sucursal;
 
                 if (ajuste.IdCompra <= 0)
@@ -961,6 +973,7 @@ namespace Web.Controllers
                 {
                     ajuste.ActualizadoPor = user;
                     oCompraN.modificarCompra(ajuste);
+                    oCompraN.limpiarCortesPorCompra(ajuste.IdCompra);
                 }
 
                 DataTable dtPorcCortes = oCompraN.getPorcCortesEnMedias(idCompra) ?? new DataTable();
@@ -1332,6 +1345,9 @@ namespace Web.Controllers
                 DraftKey = BuildDraftKey(user, compra.Sucursal != null ? compra.Sucursal.IdSucursal : (user != null ? user.IdSucursal : 0), compra.TipoCompra, compra.IdCompra)
             };
 
+            CargarCompraVinculadaEnPesajeEdicion(model, compra);
+            CargarPesajeAjustadoEnEdicion(model, compra);
+
             var cortes = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
                 .OrderBy(c => c.Creado ?? DateTime.MinValue)
                 .ThenBy(c => c.IdCortePorCompra)
@@ -1388,18 +1404,47 @@ namespace Web.Controllers
                 bool esAjuste = EsAjuste(compra.TipoCompra);
                 int? idPesajeRelacionado = null;
                 int? idAjusteRelacionado = null;
+                Entidades.Compra pesajeRelacionado = null;
+                string estadoPesajeRelacionado = "";
+                var lineas = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
+                    .Select(corte => new StockLineaDetalleVm
+                    {
+                        Codigo = corte.Corte != null ? corte.Corte.Codigo.ToString() : "-",
+                        Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
+                        CantidadKgTexto = corte.CantKgs.ToString("N3"),
+                        Signo = ObtenerSignoStock(compra.TipoCompra),
+                        Observacion = corte.Balanza ? "Peso balanza" : "-",
+                        CantidadKg = Convert.ToDecimal(corte.CantKgs)
+                    })
+                    .ToList();
 
                 if (esPesaje)
                 {
                     int ajusteRelacionado = oCompraN.getIdAjusteDelPesaje(compra.IdCompra);
                     if (ajusteRelacionado > 0)
                         idAjusteRelacionado = ajusteRelacionado;
+
+                    idPesajeRelacionado = compra.IdPesajeAjustado;
+                    if (idPesajeRelacionado.HasValue && idPesajeRelacionado.Value > 0)
+                    {
+                        pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
+                        if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
+                            estadoPesajeRelacionado = "No se encontro la compra vinculada.";
+                    }
                 }
                 else if (esAjuste)
                 {
-                    int idPesaje;
-                    if (int.TryParse(compra.NroRemito ?? "", out idPesaje) && idPesaje > 0)
-                        idPesajeRelacionado = idPesaje;
+                    idPesajeRelacionado = compra.IdPesajeAjustado;
+                    if (!idPesajeRelacionado.HasValue || idPesajeRelacionado.Value <= 0)
+                    {
+                        estadoPesajeRelacionado = "No tiene asignado un pesaje.";
+                    }
+                    else
+                    {
+                        pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
+                        if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
+                            estadoPesajeRelacionado = "No se encontro la referencia del pesaje asignado.";
+                    }
                 }
 
                 detalles[idCompra] = new CompraIndexDetalleVm
@@ -1411,18 +1456,124 @@ namespace Web.Controllers
                     Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
                     Observaciones = compra.Observaciones ?? "",
                     Estado = compra.Estado ?? "",
+                    IdCompraVinculada = esPesaje ? idPesajeRelacionado : null,
+                    FechaCompraVinculada = esPesaje && pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
+                    ProveedorCompraVinculada = esPesaje && pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
+                    CantMediasCompraVinculada = esPesaje && pesajeRelacionado != null ? pesajeRelacionado.CantMedias : null,
+                    KgsCompraVinculada = esPesaje && pesajeRelacionado != null ? pesajeRelacionado.KgsMedias : null,
+                    EstadoCompraVinculada = esPesaje ? estadoPesajeRelacionado : "",
                     IdPesajeRelacionado = idPesajeRelacionado,
                     IdAjusteRelacionado = idAjusteRelacionado,
+                    FechaPesajeRelacionado = pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
+                    ProveedorPesajeRelacionado = pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
+                    CantMediasPesajeRelacionado = pesajeRelacionado != null ? pesajeRelacionado.CantMedias : null,
+                    KgsPesajeRelacionado = pesajeRelacionado != null ? pesajeRelacionado.KgsMedias : null,
+                    EstadoPesajeRelacionado = estadoPesajeRelacionado,
                     EsPesaje = esPesaje,
                     EsAjuste = esAjuste,
                     UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
                     FechaCreacion = compra.Creado,
                     UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
-                    FechaActualizacion = compra.Actualizado
+                    FechaActualizacion = compra.Actualizado,
+                    Lineas = lineas
                 };
             }
 
             return detalles;
+        }
+
+        private void CargarPesajeAjustadoEnEdicion(StockEditVm model, Entidades.Compra compra)
+        {
+            if (model == null || compra == null || !EsAjuste(compra.TipoCompra))
+                return;
+
+            model.IdPesajeAjustado = compra.IdPesajeAjustado;
+            model.FechaPesajeAjustado = null;
+            model.ProveedorPesajeAjustado = "";
+            model.CantMediasPesajeAjustado = null;
+            model.KgsPesajeAjustado = null;
+            if (!compra.IdPesajeAjustado.HasValue || compra.IdPesajeAjustado.Value <= 0)
+            {
+                model.EstadoPesajeAjustado = "No tiene asignado un pesaje.";
+                return;
+            }
+
+            Entidades.Compra pesaje = oCompraN.findById_convertToCompra(compra.IdPesajeAjustado.Value);
+            if (pesaje == null || pesaje.IdCompra <= 0)
+            {
+                model.EstadoPesajeAjustado = "No se encontro la referencia del pesaje asignado.";
+                return;
+            }
+
+            model.IdPesajeAjustado = pesaje.IdCompra;
+            model.FechaPesajeAjustado = pesaje.FechaCompra;
+            model.ProveedorPesajeAjustado = pesaje.Proveedor != null ? pesaje.Proveedor.RazonSocial : "";
+            model.CantMediasPesajeAjustado = pesaje.CantMedias;
+            model.KgsPesajeAjustado = pesaje.KgsMedias;
+            model.EstadoPesajeAjustado = "";
+        }
+
+        private void CargarCompraVinculadaEnPesajeEdicion(StockEditVm model, Entidades.Compra compra)
+        {
+            if (model == null || compra == null || !EsPesaje(compra.TipoCompra))
+                return;
+
+            model.IdPesajeAjustado = compra.IdPesajeAjustado;
+            model.FechaCompraVinculada = null;
+            model.ProveedorCompraVinculada = "";
+            model.CantMediasCompraVinculada = null;
+            model.KgsCompraVinculada = null;
+            if (!compra.IdPesajeAjustado.HasValue || compra.IdPesajeAjustado.Value <= 0)
+            {
+                model.EstadoCompraVinculada = "";
+                return;
+            }
+
+            Entidades.Compra compraVinculada = oCompraN.findById_convertToCompra(compra.IdPesajeAjustado.Value);
+            if (compraVinculada == null || compraVinculada.IdCompra <= 0)
+            {
+                model.EstadoCompraVinculada = "No se encontro la compra vinculada.";
+                return;
+            }
+
+            model.IdPesajeAjustado = compraVinculada.IdCompra;
+            model.FechaCompraVinculada = compraVinculada.FechaCompra;
+            model.ProveedorCompraVinculada = compraVinculada.Proveedor != null ? compraVinculada.Proveedor.RazonSocial : "";
+            model.CantMediasCompraVinculada = compraVinculada.CantMedias;
+            model.KgsCompraVinculada = compraVinculada.KgsMedias;
+            model.EstadoCompraVinculada = "";
+        }
+
+        private void CargarDatosRelacionadosEnModelo(StockEditVm model, Entidades.Compra compraActual)
+        {
+            if (model == null)
+                return;
+
+            string tipoCompra = !string.IsNullOrWhiteSpace(model.TipoCompra)
+                ? model.TipoCompra
+                : (compraActual != null ? compraActual.TipoCompra : "");
+            int? idRelacionado = model.IdPesajeAjustado.HasValue
+                ? model.IdPesajeAjustado
+                : (compraActual != null ? compraActual.IdPesajeAjustado : null);
+
+            if (EsPesaje(tipoCompra))
+            {
+                CargarCompraVinculadaEnPesajeEdicion(model, new Entidades.Compra
+                {
+                    TipoCompra = tipoCompra,
+                    IdPesajeAjustado = idRelacionado
+                });
+                return;
+            }
+
+            if (EsAjuste(tipoCompra))
+            {
+                CargarPesajeAjustadoEnEdicion(model, new Entidades.Compra
+                {
+                    TipoCompra = tipoCompra,
+                    IdPesajeAjustado = idRelacionado
+                });
+            }
         }
 
         private List<ProductoNoCargadoCierreVm> ObtenerProductosNoCargadosCierre(int idSucursal, DateTime fechaCompra, int idCompra, IEnumerable<long> codigosCargados)
