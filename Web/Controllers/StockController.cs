@@ -663,7 +663,7 @@ namespace Web.Controllers
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
-                return Json(new { ok = false, mensaje = "SesiÃ³n invÃ¡lida." }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = "Sesión inválida." }, JsonRequestBehavior.AllowGet);
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, DateTime.Today, user.Id))
                 return Json(new { ok = false, mensaje = "No tiene permisos para consultar compras." }, JsonRequestBehavior.AllowGet);
@@ -775,7 +775,7 @@ namespace Web.Controllers
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
-                return Json(new { ok = false, mensaje = "SesiÃ³n invÃ¡lida." }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, mensaje = "Sesión inválida." }, JsonRequestBehavior.AllowGet);
 
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, DateTime.Today, user.Id))
                 return Json(new { ok = false, mensaje = "No tiene permisos para consultar compras." }, JsonRequestBehavior.AllowGet);
