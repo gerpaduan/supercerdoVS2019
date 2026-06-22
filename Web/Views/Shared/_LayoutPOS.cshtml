@@ -1,5 +1,7 @@
 ﻿@{
     var user = Session["Usuario"] as Entidades.Usuario;
+    var posBrandLabel = ViewBag.PosBrandLabel as string;
+    var posBrandName = ViewBag.PosBrandName as string;
 
     var controller = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString();
     var action = HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString();
@@ -246,17 +248,18 @@
                 <!-- Topbar -->
                 <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <div class="pos-layout-brand pos-layout-brand-main">
-                        <span class="pos-layout-brand-prefix">CarniSys |</span>
                         <div class="pos-brand-shell">
                             <div class="pos-brand-mark">
                                 <i class="fas fa-store-alt"></i>
                             </div>
                             <div class="pos-brand-copy">
-                                <div class="pos-brand-label">Punto de venta</div>
+                                <div class="pos-brand-label">@(string.IsNullOrWhiteSpace(posBrandLabel) ? "Punto de venta" : posBrandLabel)</div>
                                 <div class="pos-empresa text-truncate">
-                                    @(Session["Usuario"] != null
-                                        ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia
-                                        : "")
+                                    @(!string.IsNullOrWhiteSpace(posBrandName)
+                                        ? posBrandName
+                                        : (Session["Usuario"] != null
+                                            ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia
+                                            : ""))
                                 </div>
                             </div>
                         </div>

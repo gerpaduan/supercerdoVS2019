@@ -4,6 +4,8 @@
 @{
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
     ViewBag.Title = "CarniSys | Punto de Expendio";
+    ViewBag.PosBrandLabel = "Punto de expendio";
+    ViewBag.PosBrandName = string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector;
 
     var usuario = Session["Usuario"] as Entidades.Usuario;
     bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
@@ -22,27 +24,9 @@
         <input type="hidden" id="permiteEditarPrecioPuntoExpendio" value="@(permiteEditarPrecio ? "1" : "0")" />
         <input type="hidden" id="fechaExpendio" value="@Model.FechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss")" />
 
-        <div class="pos-topbar-header">
-            <div class="pos-topbar-title">
-                <div class="pos-topbar-caption">CarniSYS</div>
-                <div class="pos-topbar-heading">
-                    Punto de Expendio - <span id="lblSectorSeleccionadoTop">@(string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector)</span>
-                </div>
-            </div>
-
-            <div class="pos-topbar-header-action">
-                <a class="btn btn-light btn-sm pos-btn-layout"
-                   href="@Url.Action("Index", "Home")"
-                   title="Volver al sistema">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Salir</span>
-                </a>
-            </div>
-        </div>
-
         <div class="pos-topbar-grid">
             <div class="pos-topbar-item pos-topbar-item-cliente">
-                <div class="pos-topbar-label">Cliente / Identificación</div>
+                <div class="pos-topbar-label">Cliente / Identificacion</div>
                 <div class="input-group input-group-sm">
                     <input type="text"
                            id="razonSocial"
@@ -50,7 +34,7 @@
                            value="@Model.IdentificacionCliente"
                            maxlength="120"
                            autocomplete="off"
-                           placeholder="Cliente / identificación libre" />
+                           placeholder="Cliente / identificacion libre" />
 
                     <div class="input-group-append">
                         <button type="button"
@@ -71,18 +55,22 @@
             </div>
 
             <div class="pos-topbar-item">
-                <div class="pos-topbar-label">Empresa</div>
-                <div class="pos-topbar-value text-truncate">@(usuario != null && usuario.Empresa != null ? usuario.Empresa.NombreFantasia : "")</div>
-            </div>
-
-            <div class="pos-topbar-item">
-                <div class="pos-topbar-label">Sucursal / Punto de expendio</div>
-                <div class="pos-topbar-value text-truncate">@((usuario != null && usuario.Sucursal != null ? usuario.Sucursal.SucursalNombre : "") + " / Punto de Expendio")</div>
+                <div class="pos-topbar-label">Sucursal</div>
+                <div class="pos-topbar-value text-truncate">@(usuario != null && usuario.Sucursal != null ? usuario.Sucursal.SucursalNombre : "")</div>
             </div>
 
             <div class="pos-topbar-item pos-topbar-item-fecha">
-                <div class="pos-topbar-label">Fecha</div>
+                <div class="pos-topbar-label">Fecha y hora</div>
                 <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
+            </div>
+
+            <div class="pos-topbar-item pos-topbar-item-action">
+                <a class="btn btn-light btn-sm pos-btn-layout"
+                   href="@Url.Action("Index", "Home")"
+                   title="Volver al sistema">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Salir</span>
+                </a>
             </div>
 
         </div>
@@ -447,7 +435,7 @@
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=7")"></script>
+    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=8")"></script>
     <script>
         window.puntoExpendioPosConfig = {
             sectorSeleccionado: @Html.Raw(Json.Encode(Model.Sector ?? "")),
@@ -490,7 +478,7 @@
     .pos-topbar-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-end;
         gap: .5rem;
     }
 
@@ -522,7 +510,7 @@
 
     .pos-topbar-grid {
         display: grid;
-        grid-template-columns: minmax(240px, 1.35fr) minmax(140px, .8fr) minmax(220px, 1.15fr) minmax(220px, 1fr);
+        grid-template-columns: minmax(360px, 1.85fr) minmax(180px, .74fr) minmax(200px, .82fr) minmax(120px, .5fr);
         gap: .4rem;
         align-items: stretch;
     }
@@ -533,7 +521,7 @@
         flex-direction: column;
         justify-content: center;
         gap: .1rem;
-        padding: .45rem .6rem;
+        padding: .38rem .52rem;
         border-radius: 10px;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -541,12 +529,13 @@
 
     .pos-topbar-item-cliente {
         background: #fff;
+        min-width: 0;
+        padding: .32rem .46rem;
     }
 
     .pos-topbar-item-action {
-        padding: 0;
-        background: transparent;
-        border: 0;
+        padding: .22rem;
+        justify-content: center;
     }
 
     .pos-topbar-label {
@@ -565,12 +554,13 @@
     }
 
     .pos-expendio-page .pos-btn-layout {
-        min-height: 42px;
+        min-height: 38px;
         border-radius: 10px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: .45rem;
+        width: 100%;
     }
 
     #pos-app {
@@ -858,30 +848,26 @@
             border: 1px solid #e2e8f0;
         }
 
-        .pos-topbar-title {
-            justify-content: center;
-        }
-
         .pos-topbar-grid {
-            grid-template-columns: minmax(170px, .7fr) minmax(140px, .75fr) minmax(220px, 1.05fr) minmax(220px, .95fr);
+            grid-template-columns: minmax(290px, 1.42fr) minmax(160px, .7fr) minmax(175px, .78fr) minmax(110px, .45fr);
             gap: .35rem;
             height: 100%;
             overflow: hidden;
         }
 
-        .pos-topbar-item,
-        .pos-topbar-header {
-            min-height: 56px;
+        .pos-topbar-item {
+            min-height: 50px;
         }
 
         .pos-topbar-item {
-            padding: .4rem .55rem;
+            padding: .34rem .46rem;
         }
 
         .pos-topbar-item-cliente {
             grid-column: auto;
             min-width: 0;
             max-width: none;
+            padding: .28rem .4rem;
         }
 
         .pos-topbar-label {
@@ -890,10 +876,6 @@
 
         .pos-topbar-value {
             font-size: .82rem;
-        }
-
-        .pos-topbar-heading {
-            font-size: 1.02rem;
         }
 
         .pos-expendio-page .pos-btn-layout {
@@ -905,13 +887,18 @@
 
         .input-group.input-group-sm > .form-control,
         .input-group.input-group-sm > .input-group-append > .btn {
-            min-height: 38px;
+            min-height: 34px;
+        }
+
+        #razonSocial {
+            font-size: calc(1rem + 1pt);
+            font-weight: 700;
         }
     }
 
     @@media (max-width: 1399.98px) {
         .pos-topbar-grid {
-            grid-template-columns: repeat(4, minmax(140px, 1fr));
+            grid-template-columns: minmax(250px, 1.35fr) minmax(145px, .75fr) minmax(170px, .82fr) minmax(105px, .45fr);
         }
     }
 
@@ -1051,16 +1038,18 @@
     }
 
     @@media (max-width: 767.98px) {
-        .pos-topbar-heading {
-            font-size: 1.05rem;
-        }
-
         .pos-topbar-grid {
             grid-template-columns: 1fr;
         }
 
         .pos-topbar-item-cliente {
             grid-column: auto;
+        }
+
+        .pos-topbar-item-action {
+            padding: 0;
+            background: transparent;
+            border: 0;
         }
 
         .pos-topbar-item {
@@ -1381,5 +1370,32 @@
         background: #223449 !important;
         border-color: #4f79a6 !important;
         color: #f8fbff !important;
+    }
+
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .modal-content,
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .modal-body,
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .modal-footer,
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .table-responsive {
+        background: #1a2b40 !important;
+    }
+
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .table tbody tr,
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .table tbody td {
+        background: transparent !important;
+    }
+
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .table tbody tr.bg-light,
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .table tbody tr.bg-light td {
+        background: rgba(255,255,255,.04) !important;
+    }
+
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .badge-warning {
+        background: #c08a16 !important;
+        color: #112033 !important;
+    }
+
+    html.dark-mode body #modalMisExpendiosPuntoExpendio .badge-secondary {
+        background: #42586f !important;
+        color: #ecf2ff !important;
     }
 </style>

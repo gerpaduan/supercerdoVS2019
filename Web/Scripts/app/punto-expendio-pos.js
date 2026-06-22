@@ -176,6 +176,16 @@
             }
         }
 
+        function firePosAlert(options) {
+            return Swal.fire($.extend(true, {
+                focusConfirm: true,
+                didOpen: function () {
+                    var confirmButton = Swal.getConfirmButton();
+                    if (confirmButton) confirmButton.focus();
+                }
+            }, options || {}));
+        }
+
         function formatKg(value) {
             return Number(value || 0).toLocaleString('es-AR', {
                 minimumFractionDigits: 3,
@@ -556,13 +566,13 @@
 
             var payload = construirPayload();
             if (!payload.Sector) {
-                Swal.fire({ icon: 'warning', title: 'Sector', text: 'Debe seleccionar un sector.' });
+                firePosAlert({ icon: 'warning', title: 'Sector', text: 'Debe seleccionar un sector.' });
                 openSectorModal();
                 return;
             }
 
             if (!payload.LineasVenta.length) {
-                Swal.fire({ icon: 'warning', title: 'Punto de expendio', text: 'Debe agregar al menos un producto.' });
+                firePosAlert({ icon: 'warning', title: 'Punto de expendio', text: 'Debe agregar al menos un producto.' });
                 posKeyboard.focusCodigo();
                 return;
             }
@@ -579,7 +589,7 @@
             })
                 .done(function (resp) {
                     if (!resp || !resp.ok) {
-                        Swal.fire({
+                        firePosAlert({
                             icon: 'error',
                             title: 'Punto de Expendio',
                             text: resp && resp.mensaje ? resp.mensaje : 'No se pudo guardar el punto de expendio.'
@@ -590,7 +600,7 @@
                     window.PostPuntoExpendioModal.open(resp);
                 })
                 .fail(function () {
-                    Swal.fire({
+                    firePosAlert({
                         icon: 'error',
                         title: 'Punto de Expendio',
                         text: 'No se pudo guardar el punto de expendio.'
@@ -643,6 +653,12 @@
                 return;
             }
 
+            if (e.key === 'PageDown') {
+                e.preventDefault();
+                $('#razonSocial').trigger('focus');
+                return;
+            }
+
             if (e.key === 'F9') {
                 e.preventDefault();
                 clickIfEnabled('#btnBuscarPersona');
@@ -658,6 +674,9 @@
         });
 
         window.posHotkeysHooks = window.posHotkeysHooks || {};
+        window.posHotkeysHooks.AvPag = function () {
+            $('#razonSocial').trigger('focus');
+        };
         window.posHotkeysHooks.F6 = function () {
             abrirMisExpendios();
         };
