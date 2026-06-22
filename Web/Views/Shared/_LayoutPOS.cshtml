@@ -100,6 +100,115 @@
             color: #e6e6e6 !important;
             border-bottom: 1px solid #3c3f45;
         }
+
+        .pos-layout-brand {
+            display: inline-flex;
+            align-items: center;
+            margin-right: .35rem;
+            min-width: 0;
+            max-width: 320px;
+        }
+
+        .pos-layout-brand-prefix {
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-right: .65rem;
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+
+        .pos-layout-brand .pos-brand-shell {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            min-width: 0;
+        }
+
+        .pos-layout-brand .pos-brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff3e8 0%, #ffe0c1 100%);
+            color: #b45309;
+            border: 1px solid rgba(180, 83, 9, .16);
+            flex: 0 0 auto;
+        }
+
+        .pos-layout-brand .pos-brand-copy {
+            min-width: 0;
+            text-align: left;
+        }
+
+        .pos-layout-brand .pos-brand-label {
+            font-size: .64rem;
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: rgba(255,255,255,.78);
+            margin-bottom: .18rem;
+        }
+
+        .pos-layout-brand .pos-empresa {
+            font-weight: 800;
+            color: #fff;
+            min-width: 0;
+            font-size: 1rem;
+            line-height: 1.1;
+        }
+
+        body.dark-mode .pos-layout-brand .pos-brand-mark {
+            background: linear-gradient(135deg, rgba(203,109,50,.18) 0%, rgba(203,109,50,.30) 100%);
+            border-color: rgba(255,255,255,.08);
+            color: #ffd7be;
+        }
+
+        body.dark-mode .pos-layout-brand .pos-brand-label {
+            color: #97a7bd;
+        }
+
+        body.dark-mode .pos-layout-brand .pos-empresa {
+            color: #ecf2ff;
+        }
+
+        body.dark-mode .pos-layout-brand-prefix {
+            color: #ecf2ff;
+        }
+
+        @@media (max-width: 991.98px) {
+            .pos-layout-brand {
+                max-width: 200px;
+                margin-right: .2rem;
+            }
+
+            .pos-layout-brand-prefix {
+                font-size: .9rem;
+                margin-right: .4rem;
+            }
+
+            .pos-layout-brand .pos-brand-shell {
+                gap: .38rem;
+            }
+
+            .pos-layout-brand .pos-brand-mark {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+            }
+
+            .pos-layout-brand .pos-brand-label {
+                font-size: .55rem;
+                margin-bottom: .08rem;
+            }
+
+            .pos-layout-brand .pos-empresa {
+                font-size: .86rem;
+                line-height: 1.05;
+            }
+        }
     </style>    
 
     <!-- Variable global para AJAX -->
@@ -136,9 +245,22 @@
 
                 <!-- Topbar -->
                 <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <span class="navbar-text text-light h5 mr-3" style="font-weight: bold;">
-                        @ViewBag.Title
-                    </span>
+                    <div class="pos-layout-brand pos-layout-brand-main">
+                        <span class="pos-layout-brand-prefix">CarniSys |</span>
+                        <div class="pos-brand-shell">
+                            <div class="pos-brand-mark">
+                                <i class="fas fa-store-alt"></i>
+                            </div>
+                            <div class="pos-brand-copy">
+                                <div class="pos-brand-label">Punto de venta</div>
+                                <div class="pos-empresa text-truncate">
+                                    @(Session["Usuario"] != null
+                                        ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia
+                                        : "")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <ul class="navbar-nav ml-auto flex-row align-items-center">
                         <li class="nav-item no-arrow">

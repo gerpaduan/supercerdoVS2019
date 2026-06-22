@@ -67,82 +67,10 @@
          ========================================================= -->
     <div class="pos-page">
 
-        <!-- TOP POS (responsive: en mobile arriba comercio/fecha, abajo cliente) -->
+        <!-- TOP POS (responsive: en mobile resumen arriba, cliente abajo) -->
         <div class="pos-topbar row no-gutters align-items-stretch mb-2">
 
-            <!-- DERECHA (en desktop) / ARRIBA (en mobile): comercio + fecha + fullscreen -->
-            <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex align-items-stretch justify-content-between">
-
-                <div class="pos-meta flex-grow-1 text-left text-lg-right pr-2">
-                    <div class="pos-meta-main">
-                        <div class="pos-brand-shell">
-                            <div class="pos-brand-mark">
-                                <i class="fas fa-store-alt"></i>
-                            </div>
-                            <div class="pos-brand-copy">
-                                <div class="pos-brand-label">Punto de venta</div>
-                                <div class="pos-empresa text-truncate">
-                                    @(Session["Usuario"] != null
-                                        ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia
-                                        : "")
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pos-sucursal-chip text-truncate">
-                            <span class="pos-sucursal-chip-label">Sucursal</span>
-                            <span class="pos-sucursal">
-                                @(Session["Usuario"] != null
-                                    ? ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre
-                                    : "")
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="pos-fecha pos-meta-time">
-                        @if (puedeEditarFechaVenta)
-                        {
-                            <label for="fechaVentaEditable" class="small d-block mb-1">Fecha y hora</label>
-                            <input type="datetime-local"
-                                   id="fechaVentaEditable"
-                                   class="form-control form-control-sm"
-                                   value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm")" />
-                        }
-                        else
-                        {
-                            <span class="pos-time-chip">
-                                <i class="far fa-clock"></i>
-                                <span id="fechaHoraPOS" class="font-weight-bold"></span>
-                            </span>
-                        }
-                    </div>
-
-                    <div class="pos-meta-hidden">
-                        <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
-                        <input type="hidden" id="idVentaEditar" value="@idVentaEditar" />
-                        <input type="hidden" id="idSucursalPOS" value="@idSucursalPOS" />
-                        <input type="hidden" id="returnUrlPOS" value="@returnUrlPOS" />
-                    </div>
-                </div>
-
-                <div class="pos-top-actions">
-                    <a class="btn btn-light btn-sm pos-btn-layout"
-                       id="btnSalirPOS"
-                       href="@Url.Action("Index", "Home")"
-                       title="Volver al sistema">
-                        <i class="fas fa-arrow-left"></i>
-                        <span>Salir del POS</span>
-                    </a>
-
-                    <button class="btn btn-light btn-sm pos-btn-fullscreen"
-                            id="btn-toggle-fullscreen"
-                            type="button"
-                            title="Pantalla completa">
-                        <i class="fas fa-expand-arrows-alt"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- IZQUIERDA (en desktop) / ABAJO (en mobile): cliente + buscar + CF -->
+            <!-- IZQUIERDA (desktop) / ABAJO (mobile): cliente -->
             <div class="col-12 col-lg-6 order-2 order-lg-1 d-flex align-items-center">
                 <div class="pos-cliente w-100">
                     @Html.HiddenFor(m => m.IdPersona, new { id = "idPersona" })
@@ -173,6 +101,64 @@
                 </div>
             </div>
 
+            <!-- DERECHA (desktop) / ARRIBA (mobile): resumen + fecha + salida -->
+            <div class="col-12 col-lg-6 order-1 order-lg-2">
+                <div class="pos-topbar-summary d-flex align-items-stretch justify-content-between">
+                    <div class="pos-meta flex-grow-1 pr-2">
+                        <div class="pos-meta-main">
+                            <div class="pos-meta-main-secondary">
+                                <div class="pos-brand-subline">
+                                    <span class="pos-brand-subline-label">Sucursal</span>
+                                    <span class="pos-brand-subline-value text-truncate">
+                                        @(Session["Usuario"] != null
+                                            ? ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre
+                                            : "")
+                                    </span>
+                                </div>
+
+                                @if (!puedeEditarFechaVenta)
+                                {
+                                    <div class="pos-fecha pos-meta-time pos-meta-time-inline">
+                                        <span class="pos-time-chip">
+                                            <i class="far fa-clock"></i>
+                                            <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (puedeEditarFechaVenta)
+                        {
+                            <div class="pos-fecha pos-meta-time">
+                                <label for="fechaVentaEditable" class="small d-block mb-1">Fecha y hora</label>
+                                <input type="datetime-local"
+                                       id="fechaVentaEditable"
+                                       class="form-control form-control-sm"
+                                       value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm")" />
+                            </div>
+                        }
+
+                        <div class="pos-meta-hidden">
+                            <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                            <input type="hidden" id="idVentaEditar" value="@idVentaEditar" />
+                            <input type="hidden" id="idSucursalPOS" value="@idSucursalPOS" />
+                            <input type="hidden" id="returnUrlPOS" value="@returnUrlPOS" />
+                        </div>
+                    </div>
+
+                    <div class="pos-top-actions">
+                        <a class="btn btn-light btn-sm pos-btn-layout"
+                           id="btnSalirPOS"
+                           href="@Url.Action("Index", "Home")"
+                           title="Volver al sistema">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Salir del POS</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Vista: Punto de Venta (SB Admin 2) -->
@@ -187,6 +173,7 @@
                         <!-- ===================== -->
                         <!-- COLUMNA IZQUIERDA - CARRITO -->
                         <div class="col-12 col-md-6 carrito-col pos-ventas-cart-col">
+                            <div id="posFormaPagoMobileAnchor"></div>
 
                             <div class="zona-tabla">
                                 <table class="table table-sm tabla-productos mb-0">
@@ -219,6 +206,7 @@
                                         Los productos ya cargados mantienen su precio original. Los nuevos productos se calcularán según la forma de pago seleccionada.
                                     </div>
                                 }
+                                <div id="posFormaPagoDesktopAnchor"></div>
                                 <div id="posFormaPagoActual" class="pos-forma-pago-banner d-none">
                                     <div class="pos-forma-pago-copy">
                                         <span class="pos-forma-pago-label">Forma de pago:</span>
@@ -259,7 +247,7 @@
 
                                             <div class="d-flex justify-content-between mt-2">
                                                 <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">
-                                                    ?? Flash
+                                                    Flash
                                                 </button>
 
                                                 <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">
@@ -285,7 +273,7 @@
                                         <input type="text"
                                                id="inputCodigo"
                                                class="form-control"
-                                               placeholder="Ingrese el código..."
+                                               placeholder="Ingrese código o escanee..."
                                                autocomplete="off"
                                                autofocus />
 
@@ -413,12 +401,14 @@
                                     </div>
                                 </div>
 
-                                <small class="text-muted pos-balanza-caption">
-                                    Conexión balanza: <span id="estadoBalanza">Desconocida</span>
-                                </small>
-                                <div id="msgBalanzaPOS" class="small text-muted mt-1 pos-balanza-lectura"></div>
-                                <div class="progress mt-1" style="height:8px;">
-                                    <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                <div class="pos-balanza-card">
+                                    <small class="text-muted pos-balanza-caption">
+                                        Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                    </small>
+                                    <div id="msgBalanzaPOS" class="small text-muted mt-1 pos-balanza-lectura"></div>
+                                    <div class="progress mt-1" style="height:8px;">
+                                        <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -965,11 +955,11 @@ else
             if (estado) {
                 btn.classList.remove("btn-secondary");
                 btn.classList.add("btn-warning");
-                btn.textContent = "?? Flash ON";
+                btn.textContent = "Flash activo";
             } else {
                 btn.classList.remove("btn-warning");
                 btn.classList.add("btn-secondary");
-                btn.textContent = "?? Flash";
+                btn.textContent = "Flash";
             }
         });
 
@@ -1891,6 +1881,27 @@ else
 
     $(document).ready(configurarInputsPOS);
     $(window).on('resize', configurarInputsPOS);
+
+    function reubicarFormaPagoPOS() {
+        var $banner = $('#posFormaPagoActual');
+        var $mobileAnchor = $('#posFormaPagoMobileAnchor');
+        var $desktopAnchor = $('#posFormaPagoDesktopAnchor');
+        if (!$banner.length || !$mobileAnchor.length || !$desktopAnchor.length) return;
+
+        if (window.innerWidth < 992) {
+            if ($banner.prev()[0] !== $mobileAnchor[0]) {
+                $banner.insertAfter($mobileAnchor);
+            }
+        } else {
+            if ($banner.prev()[0] !== $desktopAnchor[0]) {
+                $banner.insertAfter($desktopAnchor);
+            }
+        }
+    }
+
+    $(document).ready(reubicarFormaPagoPOS);
+    $(window).on('resize', reubicarFormaPagoPOS);
+
     $(document).on('hidden.bs.modal.posFocoCodigo', '#modalFormaPago', function () {
         if ($('.modal.show').length > 0) return;
 
@@ -2581,17 +2592,39 @@ else
             padding-bottom: .10rem;
         }
 
+    .pos-topbar-summary {
+        min-height: 100%;
+        gap: .45rem;
+    }
+
     body.pos-solo-forma-pago #tablaItems.pos-bloqueado {
         pointer-events: none;
         opacity: .9;
     }
 
+    .pos-meta {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+    }
+
     .pos-meta-main {
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
         gap: .55rem;
         min-width: 0;
+    }
+
+    .pos-meta-main-secondary {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        min-width: 0;
+        margin-left: auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .pos-brand-shell {
@@ -2619,19 +2652,50 @@ else
     }
 
     .pos-brand-label {
-        font-size: .68rem;
+        font-size: .64rem;
         line-height: 1;
         text-transform: uppercase;
-        letter-spacing: .08em;
+        letter-spacing: .12em;
         color: var(--posbar-muted);
-        margin-bottom: .15rem;
+        margin-bottom: .18rem;
     }
 
     .pos-empresa {
-        font-weight: 700;
+        font-weight: 800;
         color: var(--posbar-text);
         min-width: 0;
-        font-size: .98rem;
+        font-size: 1.05rem;
+        line-height: 1.1;
+    }
+
+    .pos-brand-subline {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        min-width: 0;
+        margin-top: 0;
+        padding: .22rem .55rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, .04);
+        border: 1px solid rgba(15, 23, 42, .06);
+        font-size: .76rem;
+        color: var(--posbar-muted);
+    }
+
+    .pos-brand-subline-label {
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        white-space: nowrap;
+        opacity: .9;
+    }
+
+    .pos-brand-subline-value {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--posbar-text);
+        font-weight: 700;
     }
 
     .pos-sucursal-chip {
@@ -2672,7 +2736,12 @@ else
     }
 
     .pos-meta-time {
-        margin-top: .2rem;
+        margin-top: .3rem;
+    }
+
+    .pos-meta-time-inline {
+        margin-top: 0;
+        flex: 0 0 auto;
     }
 
     .pos-time-chip {
@@ -2737,6 +2806,37 @@ else
         border-radius: 10px;
         border-color: #d9dee5;
         background: linear-gradient(180deg, #ffffff 0%, #f3f6f8 100%);
+        padding-left: .85rem;
+        padding-right: .85rem;
+        font-weight: 700;
+    }
+
+    .zona-total {
+        border-top: 1px solid var(--pos-border);
+        background: linear-gradient(180deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 100%);
+    }
+
+    .pos-total-label {
+        color: #91a0b2;
+        font-size: 2.5rem;
+        line-height: 1;
+        letter-spacing: -.02em;
+    }
+
+    .pos-total-value {
+        color: #345f8f;
+        font-size: 3rem;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: -.03em;
+    }
+
+    .pos-sale-summary {
+        font-size: .82rem;
+        line-height: 1.2;
+        text-align: right;
+        margin-top: .12rem;
+        color: #6f8094;
     }
 
     .pos-btn-layout:hover,
@@ -2770,6 +2870,11 @@ else
         overflow: hidden;
         background: linear-gradient(180deg, #fbfcfd 0%, #f1f4f7 100%);
         box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+        min-height: 46px;
+    }
+
+    .pos-cliente {
+        min-width: 0;
     }
 
     .pos-cliente .input-group > .form-control {
@@ -2780,6 +2885,24 @@ else
     .pos-cliente .input-group-append .btn {
         border-top: 0;
         border-bottom: 0;
+        min-width: 48px;
+        padding-left: .75rem;
+        padding-right: .75rem;
+        font-weight: 700;
+    }
+
+    #razonSocial {
+        font-size: calc(1rem + 2pt);
+        font-weight: 700;
+        letter-spacing: -.01em;
+        padding-left: .9rem;
+        padding-right: .9rem;
+        text-overflow: ellipsis;
+    }
+
+    #btnBuscarPersona,
+    #btnConsumidorFinal {
+        min-height: 46px;
     }
 
     .pos-workbench {
@@ -2798,6 +2921,12 @@ else
         box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
     }
 
+    .scanner-btn {
+        min-width: 54px;
+        justify-content: center;
+        transition: background-color .12s ease, color .12s ease, box-shadow .12s ease;
+    }
+
     .pos-search-group > .input-group-text,
     .pos-search-group > .form-control,
     .pos-search-group > .btn {
@@ -2809,6 +2938,12 @@ else
         background: transparent;
         border-left: 0;
         color: #4a617b;
+    }
+
+    .pos-search-group > .input-group-text:hover,
+    .pos-search-group > .input-group-text:focus {
+        background: rgba(79, 121, 166, .08);
+        color: #274761;
     }
 
     .pos-search-group > .form-control {
@@ -2827,6 +2962,13 @@ else
 
     .pos-search-group > .btn {
         border-right: 0;
+        min-width: 92px;
+        font-weight: 700;
+    }
+
+    .pos-search-group:focus-within {
+        border-color: #8eb3dd;
+        box-shadow: 0 0 0 0.14rem rgba(79, 121, 166, .14), 0 12px 24px rgba(15, 23, 42, .07);
     }
 
     #btnBuscarPersona {
@@ -2850,6 +2992,10 @@ else
         background: #dce3ea;
         border-color: #bcc7d2;
         color: #334155;
+    }
+
+    #btnConsumidorFinal {
+        letter-spacing: .02em;
     }
 
     html.dark-mode .pos-cliente .form-control,
@@ -2904,8 +3050,19 @@ else
     }
 
     html.dark-mode .pos-sucursal-chip-label,
-    html.dark-mode .pos-brand-label {
+    html.dark-mode .pos-brand-label,
+    html.dark-mode .pos-brand-subline-label {
         color: #97a7bd;
+    }
+
+    html.dark-mode .pos-brand-subline {
+        background: rgba(255,255,255,.05);
+        border-color: rgba(255,255,255,.08);
+        color: #97a7bd;
+    }
+
+    html.dark-mode .pos-brand-subline-value {
+        color: #ecf2ff;
     }
 
     html.dark-mode .pos-btn-layout,
@@ -2932,6 +3089,12 @@ else
         color: #97a7bd;
     }
 
+    html.dark-mode .pos-search-group > .input-group-text:hover,
+    html.dark-mode .pos-search-group > .input-group-text:focus {
+        background: rgba(110, 168, 254, .10);
+        color: #d8eefc;
+    }
+
     html.dark-mode .pos-search-group > .form-control {
         background: transparent !important;
         border-left: 1px solid #273b52 !important;
@@ -2943,20 +3106,53 @@ else
         color: #8ea2ba;
     }
 
+    html.dark-mode .pos-search-group:focus-within {
+        border-color: #4f79a6;
+        box-shadow: 0 0 0 0.14rem rgba(79, 121, 166, .18), 0 14px 28px rgba(2, 6, 23, .26);
+    }
+
 
     @@media (min-width: 992px) {
-        .pos-meta {
-            min-width: 0;
+        .pos-meta-main {
+            align-items: flex-start;
+            justify-content: flex-end;
+            flex-wrap: nowrap;
         }
 
-        .pos-meta-main {
+        .pos-topbar-summary {
+            align-items: center;
+        }
+
+        .pos-meta-main-secondary {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: .28rem;
+            flex: 0 1 auto;
+            margin-left: auto;
+            justify-content: flex-start;
+        }
+
+        .pos-meta-time {
+            display: flex;
             justify-content: flex-end;
         }
 
-        .pos-btn-fullscreen,
         .pos-btn-layout {
-            height: 100%;
-            min-height: 44px;
+            min-height: 46px;
+        }
+
+        .pos-cliente .input-group {
+            min-height: 48px;
+        }
+
+        #razonSocial {
+            font-size: calc(1.02rem + 2pt);
+        }
+
+        #btnBuscarPersona,
+        #btnConsumidorFinal {
+            min-height: 48px;
         }
     }
 
@@ -2971,12 +3167,52 @@ else
             justify-content: flex-start;
         }
 
+        .pos-meta-main-secondary {
+            width: 100%;
+            margin-left: 0;
+            justify-content: flex-start;
+        }
+
+        .pos-topbar-summary {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+
+        .pos-top-actions {
+            width: 100%;
+        }
+
+        .pos-btn-layout {
+            width: 100%;
+            justify-content: center;
+        }
+
         .pos-sucursal-chip {
             max-width: 100%;
         }
 
         .pos-btn-layout span {
-            display: none;
+            display: inline;
+        }
+
+        .pos-cliente .input-group-append .btn {
+            min-width: 46px;
+            padding-left: .65rem;
+            padding-right: .65rem;
+        }
+
+        #razonSocial {
+            font-size: calc(.98rem + 2pt);
+            padding-left: .8rem;
+            padding-right: .8rem;
+        }
+
+        .pos-empresa {
+            font-size: 1rem;
+        }
+
+        .pos-brand-subline {
+            font-size: .74rem;
         }
     }
 
@@ -3344,7 +3580,8 @@ else
             min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
-            padding-right: 2px;
+            padding-right: 8px;
+            padding-left: 6px;
         }
 
             #pos-app .col-md-6.d-flex.flex-column .row.g-2.mb-3 {
@@ -3381,17 +3618,41 @@ else
         }
 
         .zona-botones {
-            margin-bottom: .25rem;
+            margin-bottom: .18rem;
         }
 
         .pos-footer-panel {
             position: sticky;
             bottom: 0;
             z-index: 2;
-            padding-top: .22rem;
-            margin-top: .25rem !important;
+            padding-top: .16rem;
+            margin-top: .18rem !important;
             background: linear-gradient(180deg, rgba(242, 246, 251, .72) 0%, rgba(242, 246, 251, .96) 18%, rgba(242, 246, 251, 1) 100%);
             backdrop-filter: blur(2px);
+        }
+
+        .scanner-btn {
+            min-width: 48px;
+        }
+
+        .pos-search-group > .btn {
+            min-width: 76px;
+            padding-left: .6rem;
+            padding-right: .6rem;
+            font-size: .94rem;
+        }
+
+        #btnFinalizar {
+            min-height: 56px;
+            gap: .55rem;
+        }
+
+        #btnFinalizar i {
+            font-size: 1.18rem;
+        }
+
+        #btnFinalizar small {
+            font-size: .7rem;
         }
 
         #prodNombre {
@@ -3580,8 +3841,10 @@ else
         max-width: 100%;
         height: 80px;
         overflow: hidden;
-        background: #000;
-        border-radius: 8px;
+        background: radial-gradient(circle at 50% 50%, #1b3550 0%, #08111c 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(79, 121, 166, .24);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 24px rgba(15, 23, 42, .12);
     }
 
     #videoScanner {
@@ -3599,12 +3862,32 @@ else
         box-shadow: 0 0 6px red;
     }
 
+    #scannerContainer .card {
+        border: 1px solid #d8e3ef;
+        border-radius: 14px;
+        box-shadow: 0 14px 28px rgba(15, 23, 42, .08);
+        background: linear-gradient(180deg, #fbfdff 0%, #f3f7fb 100%);
+    }
+
+    #scannerContainer .card-body {
+        padding: .7rem .8rem;
+    }
+
+    #scannerContainer .btn {
+        min-width: 112px;
+        font-weight: 700;
+    }
+
     /* =========================================================
      MODO COMPACTO por altura (desktop bajito: 768px/zoom)
      ========================================================= */
     html.pos-compact .pos-topbar {
         padding: .30rem .40rem !important;
         margin-bottom: .35rem !important;
+    }
+
+    html.pos-compact .pos-topbar-summary {
+        gap: .3rem !important;
     }
 
     html.pos-compact #pos-app {
@@ -3697,6 +3980,71 @@ else
         font-size: .86rem !important;
     }
 
+    @@media (min-width: 992px) and (max-height: 950px) {
+        #producto-info {
+            min-height: clamp(150px, 20vh, 250px) !important;
+            padding: .42rem !important;
+            margin-bottom: .22rem !important;
+        }
+
+        #producto-info .mb-3 {
+            margin-bottom: .18rem !important;
+        }
+
+        .keyboard-grid {
+            --key-h: clamp(34px, 4.3vh, 48px) !important;
+            gap: 4px !important;
+        }
+
+        .btn-key {
+            padding: .18rem .10rem !important;
+            font-size: clamp(.82rem, .88vw, 1rem) !important;
+        }
+
+        #btnFinalizar {
+            min-height: 50px !important;
+            gap: .42rem !important;
+        }
+
+        #btnFinalizar i {
+            font-size: 1.02rem !important;
+        }
+
+        #btnFinalizar small {
+            font-size: .64rem !important;
+        }
+
+        .pos-footer-panel {
+            padding-top: .08rem !important;
+            margin-top: .1rem !important;
+        }
+
+        .zona-botones {
+            padding: .28rem .32rem !important;
+            margin-bottom: .12rem !important;
+        }
+
+        .pos-balanza-card {
+            padding: .18rem .26rem !important;
+        }
+
+        .pos-balanza-caption {
+            font-size: .74rem !important;
+            line-height: 1.08 !important;
+        }
+
+        #msgBalanzaPOS {
+            min-height: .72rem !important;
+            font-size: .78rem !important;
+            margin-top: .04rem !important;
+            line-height: 1.05 !important;
+        }
+
+        .pos-footer-panel .progress {
+            height: 6px !important;
+        }
+    }
+
     /* =========================================================
      TECLADO: forma y spans SIEMPRE (todas las resoluciones)
      ========================================================= */
@@ -3738,13 +4086,13 @@ else
      ========================================================= */
     #producto-info {
 
-        min-height: clamp(260px, 38vh, 460px);
+        min-height: clamp(230px, 33vh, 400px);
     }
 
     /* En desktop, que ambas columnas se estiren igual */
     @@media (min-width: 992px) {
         #producto-info {
-            min-height: clamp(220px, 31vh, 360px);
+            min-height: clamp(168px, 23vh, 290px);
         }
 
         #producto-info .row {
@@ -3768,16 +4116,18 @@ else
         }
 
         .zona-botones {
-            padding: .48rem .55rem;
+            padding: .34rem .38rem;
         }
 
         .pos-balanza-caption {
-            font-size: .88rem;
+            font-size: .78rem;
+            line-height: 1.15;
         }
 
         #msgBalanzaPOS {
-            min-height: 1.25rem;
-            font-size: 1rem;
+            min-height: .85rem;
+            font-size: .84rem;
+            margin-top: .08rem !important;
         }
     }
 
@@ -4080,12 +4430,12 @@ else
     }
 
     .pos-footer-panel {
-        padding-top: .35rem;
+        padding-top: .16rem;
         border-top: 1px solid rgba(148, 163, 184, .18);
     }
 
     .zona-botones {
-        padding: .65rem .7rem;
+        padding: .42rem .46rem;
         border: 1px solid rgba(148, 163, 184, .18);
         border-radius: 14px;
         background: linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(244,247,251,.94) 100%);
@@ -4098,9 +4448,21 @@ else
         overflow: hidden;
     }
 
+    .pos-balanza-card {
+        padding: .24rem .34rem;
+        border: 1px solid rgba(148, 163, 184, .16);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(244,247,251,.94) 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    }
+
     @@media (max-width: 991.98px) {
         .pos-search-row {
             margin-bottom: .45rem !important;
+        }
+
+        #scannerContainer .card-body {
+            padding: .55rem .65rem;
         }
 
         #producto-info {
@@ -4123,6 +4485,10 @@ else
 
         .zona-botones {
             padding: .55rem;
+        }
+
+        .pos-balanza-card {
+            padding: .38rem .46rem;
         }
     }
 
@@ -4186,6 +4552,11 @@ else
 
     html.dark-mode .pos-page .pos-total-value {
         color: #73e0c2;
+    }
+
+    html.dark-mode .pos-page .pos-total-label,
+    html.dark-mode .pos-page .pos-sale-summary {
+        color: #9db0c7 !important;
     }
 
     html.dark-mode .pos-page .input-group-lg > .form-control,
@@ -4277,6 +4648,12 @@ else
         box-shadow: 0 12px 24px rgba(2, 6, 23, .20);
     }
 
+    html.dark-mode .pos-page .pos-balanza-card {
+        background: linear-gradient(180deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.02) 100%);
+        border-color: rgba(151, 167, 189, .16);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
     html.dark-mode .pos-page .pos-footer-panel {
         border-top-color: rgba(151, 167, 189, .16);
         background: linear-gradient(180deg, rgba(26, 43, 64, .72) 0%, rgba(26, 43, 64, .95) 18%, rgba(26, 43, 64, 1) 100%);
@@ -4300,6 +4677,10 @@ else
     html.dark-mode .pos-page .pos-top-actions .btn:focus {
         box-shadow: 0 0 0 0.16rem rgba(79, 121, 166, .22) !important;
         outline: none !important;
+    }
+
+    html.dark-mode .pos-page #razonSocial {
+        color: #f2f6fb !important;
     }
 
     html.dark-mode .pos-page #inputCodigo.pos-input-buscando {
