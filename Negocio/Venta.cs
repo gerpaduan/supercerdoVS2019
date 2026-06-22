@@ -424,9 +424,13 @@ namespace Negocio
         {
             return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
         }
-        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100)
+        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
-            return oVentaD.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top);
+            return oVentaD.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top, fechaDesde, fechaHasta);
+        }
+        public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            return oVentaD.obtenerExpendiosEmpresa(top, fechaDesde, fechaHasta);
         }
         public DataTable obtenerSectores()
         {

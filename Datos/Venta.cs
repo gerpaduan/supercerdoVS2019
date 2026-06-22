@@ -741,7 +741,7 @@ namespace Datos
             );
         }
 
-        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100)
+        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
             const string sql = @"
                 SELECT TOP (@top)
@@ -759,6 +759,8 @@ namespace Datos
                 LEFT JOIN dbo.LineaExpendio le ON e.idExpendio = le.idExpendio
                 WHERE e.idSucursal = @idSucursal
                   AND e.idVendedor = @idVendedor
+                  AND (@fechaDesde IS NULL OR CONVERT(date, e.fechaExpendio) >= @fechaDesde)
+                  AND (@fechaHasta IS NULL OR CONVERT(date, e.fechaExpendio) <= @fechaHasta)
                 GROUP BY e.fechaExpendio,
                          e.idExpendio,
                          e.identificacionExpendio,
@@ -778,6 +780,58 @@ namespace Datos
                     p.AddWithValue("@top", top <= 0 ? 100 : top);
                     p.AddWithValue("@idSucursal", idSucursal);
                     p.AddWithValue("@idVendedor", idVendedor);
+                    p.AddWithValue("@fechaDesde", fechaDesde.HasValue ? (object)fechaDesde.Value.Date : DBNull.Value);
+                    p.AddWithValue("@fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value.Date : DBNull.Value);
+                }
+            );
+        }
+
+        public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            const string sql = @"
+                SELECT TOP (@top)
+                       e.fechaExpendio,
+                       e.idExpendio,
+                       e.identificacionExpendio,
+                       e.sector,
+                       e.cantItems,
+                       e.importe,
+                       e.idVenta,
+                       e.idSucursal,
+                       e.idVendedor,
+                       u.nombre AS vendedor,
+                       s.sucursal AS sucursal,
+                       ISNULL(SUM(le.cantKg), 0) AS totalKg
+                FROM dbo.Expendios e
+                INNER JOIN dbo.Usuarios u ON e.idVendedor = u.id
+                LEFT JOIN dbo.Sucursal s ON e.idSucursal = s.idSucursal
+                LEFT JOIN dbo.LineaExpendio le ON e.idExpendio = le.idExpendio
+                WHERE e.idEmpresa = @idEmpresa
+                  AND (@fechaDesde IS NULL OR CONVERT(date, e.fechaExpendio) >= @fechaDesde)
+                  AND (@fechaHasta IS NULL OR CONVERT(date, e.fechaExpendio) <= @fechaHasta)
+                GROUP BY e.fechaExpendio,
+                         e.idExpendio,
+                         e.identificacionExpendio,
+                         e.sector,
+                         e.cantItems,
+                         e.importe,
+                         e.idVenta,
+                         e.idSucursal,
+                         e.idVendedor,
+                         u.nombre,
+                         s.sucursal
+                ORDER BY e.fechaExpendio DESC, e.idExpendio DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@top", top <= 0 ? 300 : top);
+                    p.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
+                    p.AddWithValue("@fechaDesde", fechaDesde.HasValue ? (object)fechaDesde.Value.Date : DBNull.Value);
+                    p.AddWithValue("@fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value.Date : DBNull.Value);
                 }
             );
         }

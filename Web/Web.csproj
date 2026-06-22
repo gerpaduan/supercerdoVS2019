@@ -2159,6 +2159,7 @@
     <Content Include="Views\Productos\_MarcasTabla.cshtml" />
     <Content Include="Views\Productos\_TiposProductoTabla.cshtml" />
     <Content Include="Views\PuntosExpendio\Abrir.cshtml" />
+    <Content Include="Views\PuntosExpendio\ExpendiosGenerados.cshtml" />
     <Content Include="Views\PuntosExpendio\POS.cshtml" />
     <Content Include="Views\PuntosExpendio\Sectores.cshtml" />
     <Content Include="Views\PuntosExpendio\_ModalAyudaPuntoExpendio.cshtml" />

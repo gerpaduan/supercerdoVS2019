@@ -293,6 +293,7 @@
                 <div id="collapsePuntosExpendio" class="collapse @(controller == "PuntosExpendio" ? "show" : "")" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item @((action == "Abrir" || action == "POS") ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")">Abrir punto de expendio</a>
+                        <a class="collapse-item @(action == "ExpendiosGenerados" ? "active" : "")" href="@Url.Action("ExpendiosGenerados", "PuntosExpendio")">Expendios generados</a>
                         <a class="collapse-item @(action == "Sectores" ? "active" : "")" href="@Url.Action("Sectores", "PuntosExpendio")">Sectores</a>
                     </div>
                 </div>

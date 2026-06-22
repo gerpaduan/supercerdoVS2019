@@ -91,6 +91,56 @@ namespace Web.Controllers
             return View("~/Views/PuntosExpendio/POS.cshtml", model);
         }
 
+        public ActionResult ExpendiosGenerados()
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Venta.NuevaVenta, DateTime.Today, user.Id) ?? "No tiene permisos para consultar expendios generados.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            AsegurarSucursalUsuario(user);
+
+            var oUsuarioN = new Negocio.Usuario(empresa, param);
+            var sectoresDt = oVentaN.obtenerSectores();
+            var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            oUsuarioN.obtenerUsuarios(true);
+            var usuarios = (oUsuarioN.listaUsuario() ?? new List<Entidades.Usuario>())
+                .Where(x => x != null && x.Activo)
+                .OrderBy(x => x.Nombre ?? "")
+                .ToList();
+
+            ViewBag.Title = "Expendios generados";
+            ViewBag.Seccion = "Punto de expendio";
+            ViewBag.FechaHoy = DateTime.Today.ToString("yyyy-MM-dd");
+            ViewBag.SectoresExpendio = (sectoresDt != null
+                ? sectoresDt.AsEnumerable()
+                    .Select(r => Convert.ToString(r["sector"] ?? ""))
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(s => s)
+                    .Select(s => new SelectListItem { Value = s, Text = s })
+                    .ToList()
+                : new List<SelectListItem>());
+            ViewBag.SucursalesExpendio = sucursales
+                .Where(s => s != null && s.idSucursal > 0)
+                .OrderBy(s => s.sucursal ?? "")
+                .Select(s => new SelectListItem { Value = s.sucursal ?? "", Text = s.sucursal ?? "" })
+                .ToList();
+            ViewBag.UsuariosExpendio = usuarios
+                .Where(u => u.Id > 0)
+                .Select(u => new SelectListItem { Value = u.Nombre ?? "", Text = u.Nombre ?? "" })
+                .ToList();
+
+            return View("~/Views/PuntosExpendio/ExpendiosGenerados.cshtml");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Guardar(PuntoExpendioEditVm model)
@@ -437,7 +487,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public JsonResult MisExpendiosPOS(int top = 100)
+        public JsonResult MisExpendiosPOS(string fechaDesde = null, string fechaHasta = null, int top = 100)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null || user.IdSucursal == 0)
@@ -447,7 +497,12 @@ namespace Web.Controllers
 
             try
             {
-                DataTable dt = oVentaN.obtenerExpendiosPorUsuario(user.IdSucursal, user.Id, top <= 0 ? 100 : top);
+                DateTime fechaDesdeValue;
+                DateTime fechaHastaValue;
+                DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue.Date : null;
+                DateTime? fechaHastaFiltro = DateTime.TryParse(fechaHasta, out fechaHastaValue) ? (DateTime?)fechaHastaValue.Date : null;
+                DataTable dt = oVentaN.obtenerExpendiosPorUsuario(user.IdSucursal, user.Id, top <= 0 ? 100 : top, fechaDesdeFiltro, fechaHastaFiltro);
+                string sucursalNombre = user.Sucursal != null ? user.Sucursal.SucursalNombre : "";
 
                 var items = dt.AsEnumerable()
                     .Select(row =>
@@ -472,6 +527,7 @@ namespace Web.Controllers
                             hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
                             idExpendio = idExpendio,
                             identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                            sucursal = sucursalNombre,
                             sector = Convert.ToString(row["sector"] ?? ""),
                             cantItems = Convert.ToString(row["cantItems"] ?? "0"),
                             totalKg = row["totalKg"] != DBNull.Value ? Convert.ToDecimal(row["totalKg"]) : 0m,
@@ -503,6 +559,80 @@ namespace Web.Controllers
                     ok = true,
                     items = items
                 }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "No se pudieron consultar los expendios: " + ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult ExpendiosGeneradosData(string fechaDesde = null, string fechaHasta = null, int top = 300)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null || user.IdSucursal == 0)
+                return Json(new { ok = false, mensaje = "SesiÃ³n invÃ¡lida o sucursal no seleccionada." }, JsonRequestBehavior.AllowGet);
+
+            AsegurarSucursalUsuario(user);
+
+            try
+            {
+                DateTime fechaDesdeValue;
+                DateTime fechaHastaValue;
+                DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue.Date : null;
+                DateTime? fechaHastaFiltro = DateTime.TryParse(fechaHasta, out fechaHastaValue) ? (DateTime?)fechaHastaValue.Date : null;
+                DataTable dt = oVentaN.obtenerExpendiosEmpresa(top <= 0 ? 300 : top, fechaDesdeFiltro, fechaHastaFiltro);
+
+                var items = dt.AsEnumerable()
+                    .Select(row =>
+                    {
+                        DateTime fechaExpendio = row["fechaExpendio"] != DBNull.Value
+                            ? Convert.ToDateTime(row["fechaExpendio"])
+                            : DateTime.MinValue;
+
+                        int idExpendio = row["idExpendio"] != DBNull.Value ? Convert.ToInt32(row["idExpendio"]) : 0;
+                        int idVenta = row["idVenta"] != DBNull.Value ? Convert.ToInt32(row["idVenta"]) : 0;
+                        var expendio = idExpendio > 0 ? oVentaN.getExpedioById(idExpendio) : null;
+                        var lineas = (expendio != null ? expendio.LineasVenta : null) ?? new List<Entidades.LineaVenta>();
+                        string pdfUrl = idExpendio > 0 ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }) : "";
+                        string pdfUrlAbsoluta = idExpendio > 0
+                            ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }, Request != null && Request.Url != null ? Request.Url.Scheme : "http")
+                            : "";
+
+                        return new
+                        {
+                            fechaExpendio = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss") : "",
+                            fecha = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("dd/MM/yyyy") : "",
+                            hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
+                            idExpendio = idExpendio,
+                            identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                            sucursal = Convert.ToString(row["sucursal"] ?? ""),
+                            sector = Convert.ToString(row["sector"] ?? ""),
+                            usuario = Convert.ToString(row["vendedor"] ?? ""),
+                            cantItems = Convert.ToString(row["cantItems"] ?? "0"),
+                            totalKg = row["totalKg"] != DBNull.Value ? Convert.ToDecimal(row["totalKg"]) : 0m,
+                            totalImporte = row["importe"] != DBNull.Value ? Convert.ToDecimal(row["importe"]) : 0m,
+                            idVenta = idVenta,
+                            estado = idVenta > 0 && idVenta != idExpendio ? "Asignado" : "Pendiente",
+                            imprimirUrl = Url.Action("ImprimirTicket", "PuntosExpendio", new { id = idExpendio }),
+                            imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "PuntosExpendio", new { id = idExpendio }),
+                            pdfUrl = pdfUrl,
+                            whatsappTexto = idExpendio > 0 ? "Punto de expendio " + idExpendio + " - " + pdfUrlAbsoluta : "",
+                            lineas = lineas.Select(l => new
+                            {
+                                codigo = l.Corte != null ? l.Corte.Codigo : 0,
+                                producto = l.Corte != null
+                                    ? (!string.IsNullOrWhiteSpace(l.Corte.corte) ? l.Corte.corte : l.Corte.CorteDesc)
+                                    : "",
+                                cantKg = l.CantKg,
+                                precioKg = l.PrecioKg,
+                                total = l.CantKg * l.PrecioKg
+                            }).ToList()
+                        };
+                    })
+                    .ToList();
+
+                return Json(new { ok = true, items = items }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
