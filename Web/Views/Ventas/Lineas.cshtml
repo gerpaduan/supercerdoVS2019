@@ -27,7 +27,7 @@
                 <div class="elaborados-filtros-grid lineas-filtros-grid cols-4">
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Sucursal</label>
-                        <select name="idSucursal" class="form-control js-filtro-recarga">
+                        <select name="idSucursal" id="idSucursalVentasLineas" class="form-control">
                             <option value="-1" @(Model.IdSucursal == -1 ? "selected" : "")>Todas</option>
                             @foreach (var sucursal in sucursales)
                             {
@@ -37,11 +37,11 @@
                     </div>
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Fecha desde</label>
-                        <input name="fechaDesde" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        <input name="fechaDesde" id="fechaDesdeVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Fecha hasta</label>
-                        <input name="fechaHasta" type="datetime-local" step="1" class="form-control js-filtro-recarga" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                        <input name="fechaHasta" id="fechaHastaVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
                     </div>
                     <div class="form-group mb-0">
                         <label class="elaborados-filtro-label">Producto</label>
@@ -49,10 +49,14 @@
                     </div>
                     <div class="form-group mb-0 lineas-filtro-accion">
                         <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
-                        <button type="submit" class="btn btn-outline-primary btn-block">
-                            <i class="fas fa-search mr-1"></i> Buscar
+                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarVentasLineas">
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                         </button>
                     </div>
+                </div>
+
+                <div class="mt-2">
+                    <div id="estadoBusquedaVentasLineas" class="text-muted small">Resultados actualizados.</div>
                 </div>
 
                 <div class="row mt-3">
@@ -195,5 +199,64 @@
 @Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
 
 @section Scripts {
+    <script>
+        (function () {
+            var form = document.querySelector('.js-form-filtros-lineas');
+            if (!form) return;
+
+            var inputSucursal = document.getElementById('idSucursalVentasLineas');
+            var inputFechaDesde = document.getElementById('fechaDesdeVentasLineas');
+            var inputFechaHasta = document.getElementById('fechaHastaVentasLineas');
+            var alerta = document.getElementById('alertaFiltrosPendientes');
+            var estado = document.getElementById('estadoBusquedaVentasLineas');
+            var btnBuscar = document.getElementById('btnBuscarVentasLineas');
+            var btnTexto = btnBuscar ? btnBuscar.querySelector('.btn-buscar-texto') : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+            };
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAviso() {
+                if (!alerta) return;
+                alerta.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscando(mensaje) {
+                if (btnBuscar) btnBuscar.disabled = true;
+                if (btnTexto) btnTexto.textContent = ' Cargando...';
+                if (estado) estado.textContent = mensaje || 'Actualizando búsqueda...';
+            }
+
+            function enviarEnVivo() {
+                setBuscando('Actualizando búsqueda en vivo...');
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                }
+
+                form.submit();
+            }
+
+            if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAviso);
+            if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAviso);
+            if (inputSucursal) inputSucursal.addEventListener('change', enviarEnVivo);
+
+            form.addEventListener('submit', function () {
+                fechasAplicadas = {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+                };
+                actualizarAviso();
+                setBuscando('Actualizando búsqueda...');
+            });
+        })();
+    </script>
     <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js?v=1")"></script>
 }

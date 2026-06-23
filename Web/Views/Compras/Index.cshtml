@@ -41,6 +41,10 @@
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Compras")">
                 <div class="compras-filtros-stack">
+                    <div id="alertaFiltrosPendientesCompras" class="alert alert-warning d-none mb-0" role="alert">
+                        Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                    </div>
+
                     <div class="compras-filtros-row compras-filtros-row-fechas">
                         <div class="form-group mb-0">
                             <label class="compras-filtro-label">Desde</label>
@@ -55,8 +59,8 @@
 
                         <div class="form-group mb-0 compras-filtro-accion">
                             <label class="compras-filtro-label d-none d-lg-block">&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-search mr-1"></i> Buscar
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarCompras">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                             </button>
                         </div>
                     </div>
@@ -64,7 +68,7 @@
                     <div class="compras-filtros-row compras-filtros-row-sucursal">
                         <div class="form-group mb-0 compras-filtro-sucursal">
                             <label class="compras-filtro-label">Sucursal</label>
-                            <select name="idSucursal" class="form-control">
+                            <select name="idSucursal" id="idSucursalCompras" class="form-control">
                                 <option value="-1" @(idSucursal == -1 ? "selected" : "")>Todas</option>
                                 @foreach (var s in sucursales)
                                 {
@@ -79,7 +83,7 @@
                             <label class="compras-filtro-label">Tipo compra</label>
                             @if (permiteMediaRes)
                             {
-                                <select name="tipoCompra" class="form-control">
+                                <select name="tipoCompra" id="tipoCompraCompras" class="form-control">
                                     <option value="Todos" @(tipoCompra == "Todos" ? "selected" : "")>Todos</option>
                                     <option value="Media Res" @(tipoCompra == "Media Res" ? "selected" : "")>Media Res</option>
                                     <option value="Cortes" @(tipoCompra == "Cortes" ? "selected" : "")>Cortes</option>
@@ -97,6 +101,9 @@
                             <input type="text" name="texto" value="@texto" class="form-control" autocomplete="off" placeholder="Proveedor, documento, observaciones..." />
                         </div>
                     </div>
+                </div>
+                <div class="mt-2">
+                    <div id="estadoBusquedaCompras" class="text-muted small">Resultados actualizados.</div>
                 </div>
             </form>
         </div>
@@ -235,6 +242,11 @@
             var inputSucursal = form ? form.querySelector('select[name="idSucursal"]') : null;
             var inputTipoCompra = form ? form.querySelector('[name="tipoCompra"]') : null;
             var inputTexto = form ? form.querySelector('input[name="texto"]') : null;
+            var alertaPendiente = document.getElementById('alertaFiltrosPendientesCompras');
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+            };
 
             function buildState() {
                 return {
@@ -249,6 +261,41 @@
             function saveState() {
                 if (!form || !window.sessionStorage) return;
                 window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscandoCompras(mensaje) {
+                var btnBuscar = document.getElementById("btnBuscarCompras");
+                var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                var estado = document.getElementById("estadoBusquedaCompras");
+
+                if (btnBuscar) btnBuscar.disabled = true;
+                if (btnTexto) btnTexto.textContent = " Cargando...";
+                if (estado) estado.textContent = mensaje || "Actualizando búsqueda...";
+            }
+
+            function enviarFiltrosEnVivo() {
+                if (!form) return;
+                saveState();
+                setBuscandoCompras("Actualizando búsqueda en vivo...");
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    saveState();
+                }
+
+                form.submit();
             }
 
             function restoreStateIfNeeded() {
@@ -277,14 +324,28 @@
 
             restoreStateIfNeeded();
             saveState();
+            actualizarAvisoPendiente();
 
             if (form) {
-                form.addEventListener("submit", saveState);
+                form.addEventListener("submit", function () {
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    saveState();
+                    actualizarAvisoPendiente();
+                    setBuscandoCompras();
+                });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
                     el.addEventListener("input", saveState);
                 });
             }
+
+            if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAvisoPendiente);
+            if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAvisoPendiente);
+            if (inputSucursal) inputSucursal.addEventListener('change', enviarFiltrosEnVivo);
+            if (inputTipoCompra) inputTipoCompra.addEventListener('change', enviarFiltrosEnVivo);
 
             var successAlert = document.getElementById("comprasSuccessAlert");
             if (successAlert) {

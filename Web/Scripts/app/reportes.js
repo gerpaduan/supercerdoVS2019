@@ -1107,6 +1107,8 @@
         $form.on("submit", function () {
             showPending(false);
             $("#buscarReportes").val("true");
+            $("#btnBuscarReporte").prop("disabled", true).find(".btn-buscar-texto").text("Cargando...");
+            $("#estadoReporteTexto").text("Cargando reporte...");
         });
 
         applyReportMode(false);

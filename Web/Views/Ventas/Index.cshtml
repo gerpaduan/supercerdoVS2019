@@ -31,6 +31,10 @@
     <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
         <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
             <div class="filtros-ventas-stack">
+                <div id="alertaFiltrosPendientesVentas" class="alert alert-warning d-none mb-0" role="alert">
+                    Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                </div>
+
                 <div class="filtros-fila filtros-fila-fechas">
                     <div class="form-group mb-0">
                         <label for="fechaDesde" class="filtro-label">Desde</label>
@@ -60,8 +64,8 @@
                         <button type="submit"
                                 id="btnFiltrarFechas"
                                 class="btn btn-primary btn-block"
-                                disabled>
-                            Aplicar
+                                >
+                            <span class="btn-buscar-texto">Buscar</span>
                         </button>
                     </div>
                 </div>
@@ -69,8 +73,7 @@
                 <div class="filtros-fila filtros-fila-sucursal">
                     <div class="form-group mb-0 filtro-sucursal">
                         <label for="idSucursal" class="filtro-label">Sucursal</label>
-                        <select id="idSucursal" name="idSucursal" class="form-control"
-                                onchange="this.form.submit()">
+                        <select id="idSucursal" name="idSucursal" class="form-control">
                             <option value="">Todas las sucursales</option>
 
                             @foreach (var s in ViewBag.Sucursales)
@@ -168,6 +171,10 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div>
+                    <div id="estadoBusquedaVentas" class="text-muted small">Resultados actualizados.</div>
                 </div>
             </div>
         </form>

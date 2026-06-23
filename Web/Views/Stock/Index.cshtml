@@ -66,10 +66,15 @@
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Stock")">
                 <div class="stock-filtros-stack">
+                    <div id="alertaFiltrosPendientesStock" class="alert alert-warning d-none mb-0" role="alert">
+                        Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                    </div>
+
                     <div class="stock-filtros-row stock-filtros-row-sucursal">
                         <div class="form-group mb-0">
                             <label class="stock-filtro-label">Sucursal</label>
-                            <select name="idSucursal" class="form-control">
+                            <select name="idSucursal" class="form-control" id="idSucursalStock">
+                                <option value="0" @(idSucursal == 0 ? "selected" : "")>Todas</option>
                                 @foreach (var s in sucursales)
                                 {
                                     <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
@@ -79,7 +84,7 @@
 
                         <div class="form-group mb-0">
                             <label class="stock-filtro-label">Acción</label>
-                            <select name="tipoCompra" class="form-control">
+                            <select name="tipoCompra" class="form-control" id="tipoCompraStock">
                                 <option value="Ver Todos" @(tipoCompra == "Ver Todos" ? "selected" : "")>Todas</option>
                                 <option value="Ingreso Stock" @(tipoCompra == "Ingreso Stock" ? "selected" : "")>Ingreso</option>
                                 <option value="Egreso Stock" @(tipoCompra == "Egreso Stock" ? "selected" : "")>Egreso</option>
@@ -104,10 +109,14 @@
 
                         <div class="form-group mb-0 stock-filtro-accion">
                             <label class="stock-filtro-label d-none d-lg-block">&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-search mr-1"></i> Buscar
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarStock">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                             </button>
                         </div>
+                    </div>
+
+                    <div>
+                        <div id="estadoBusquedaStock" class="text-muted small">Resultados actualizados.</div>
                     </div>
                 </div>
             </form>
@@ -228,6 +237,11 @@
             var inputFechaHasta = form ? form.querySelector('input[name="fechaHasta"]') : null;
             var inputSucursal = form ? form.querySelector('select[name="idSucursal"]') : null;
             var inputTipoCompra = form ? form.querySelector('select[name="tipoCompra"]') : null;
+            var alertaPendiente = document.getElementById("alertaFiltrosPendientesStock");
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+            };
 
             function buildState() {
                 return {
@@ -241,6 +255,50 @@
             function saveState() {
                 if (!form || !window.sessionStorage) return;
                 window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle("d-none", !hayFechasPendientes());
+            }
+
+            function setBuscandoStock(mensaje) {
+                var btnBuscar = document.getElementById("btnBuscarStock");
+                var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                var estado = document.getElementById("estadoBusquedaStock");
+
+                if (btnBuscar) {
+                    btnBuscar.disabled = true;
+                }
+
+                if (btnTexto) {
+                    btnTexto.textContent = " Cargando...";
+                }
+
+                if (estado) {
+                    estado.textContent = mensaje || "Actualizando búsqueda...";
+                }
+            }
+
+            function enviarFiltrosEnVivo() {
+                if (!form) return;
+
+                saveState();
+                setBuscandoStock("Actualizando búsqueda en vivo...");
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    saveState();
+                }
+
+                form.submit();
             }
 
             function restoreStateIfNeeded() {
@@ -268,13 +326,51 @@
 
             restoreStateIfNeeded();
             saveState();
+            actualizarAvisoPendiente();
 
             if (form) {
-                form.addEventListener("submit", saveState);
+                form.addEventListener("submit", function () {
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    saveState();
+                    var btnBuscar = document.getElementById("btnBuscarStock");
+                    var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                    var estado = document.getElementById("estadoBusquedaStock");
+
+                    if (btnBuscar) {
+                        btnBuscar.disabled = true;
+                    }
+
+                    if (btnTexto) {
+                        btnTexto.textContent = " Cargando...";
+                    }
+
+                    if (estado) {
+                        estado.textContent = "Actualizando búsqueda...";
+                    }
+                });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
                     el.addEventListener("input", saveState);
                 });
+            }
+
+            if (inputFechaDesde) {
+                inputFechaDesde.addEventListener("change", actualizarAvisoPendiente);
+            }
+
+            if (inputFechaHasta) {
+                inputFechaHasta.addEventListener("change", actualizarAvisoPendiente);
+            }
+
+            if (inputSucursal) {
+                inputSucursal.addEventListener("change", enviarFiltrosEnVivo);
+            }
+
+            if (inputTipoCompra) {
+                inputTipoCompra.addEventListener("change", enviarFiltrosEnVivo);
             }
 
             var successAlert = document.getElementById("stockSuccessAlert");

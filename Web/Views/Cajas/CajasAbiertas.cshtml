@@ -39,11 +39,17 @@
                            onkeyup="filtrar()" />
 
                     <div class="input-group-append">
-                        <button class="btn btn-primary" type="button" onclick="filtrar()">
-                            Buscar
+                        <button class="btn btn-primary" type="button" id="btnBuscarCajasAbiertas" onclick="filtrar()">
+                            <span class="btn-buscar-texto">Buscar</span>
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div id="estadoBusquedaCajasAbiertas" class="text-muted small">Resultados actualizados.</div>
             </div>
         </div>
     </form>
@@ -276,6 +282,16 @@
             guardar: '@Url.Action("CambiarSucursalCaja", "Cajas")'
         };
 
+        function setBuscandoCajasAbiertas(buscando, mensaje) {
+            const $btn = $("#btnBuscarCajasAbiertas");
+            const $texto = $btn.find(".btn-buscar-texto");
+            const $estado = $("#estadoBusquedaCajasAbiertas");
+
+            $btn.prop("disabled", buscando);
+            $texto.text(buscando ? "Cargando..." : "Buscar");
+            $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
+        }
+
         function filtrar() {
             const idSucursal = $("#idSucursal").val() || "";
             const buscar = $("#buscarVendedor").val() || "";
@@ -285,6 +301,9 @@
             if (txt && document.activeElement === txt && typeof txt.selectionStart === "number") {
                 pos = txt.selectionStart;
             }
+
+            setBuscandoCajasAbiertas(true);
+            $("#tablaResultado").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
 
             $.ajax({
                 url: '@Url.Action("CajasAbiertas", "Cajas")',
@@ -306,6 +325,14 @@
                             } catch (e) { }
                         }, 30);
                     }
+                },
+                error: function () {
+                    $("#tablaResultado").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar la búsqueda.</div>');
+                    $("#estadoBusquedaCajasAbiertas").text("Ocurrió un error al actualizar la búsqueda.");
+                },
+                complete: function () {
+                    const mensaje = $("#estadoBusquedaCajasAbiertas").text();
+                    setBuscandoCajasAbiertas(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
                 }
             });
         }
@@ -706,5 +733,5 @@
             }
         }
     </script>
-    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=6")"></script>
 }

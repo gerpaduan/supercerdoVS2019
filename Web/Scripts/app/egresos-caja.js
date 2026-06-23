@@ -5,6 +5,7 @@
         origen: "todos",
         gasto: "todos"
     };
+    var fechasAplicadasState = null;
 
     function urls() {
         return window.EgresosCajaUrls || {};
@@ -158,12 +159,88 @@
         setTimeout(aplicarVistaCompleta, 50);
     }
 
-    function filtrar() {
+    function setBuscandoEgresos(buscando, mensaje) {
+        var $btn = $("#btnBuscarEgresosCaja");
+        var $texto = $btn.find(".btn-buscar-texto");
+        var $estado = $("#estadoBusquedaEgresos");
+
+        if ($btn.length) {
+            $btn.prop("disabled", buscando);
+        }
+
+        if ($texto.length) {
+            $texto.text(buscando ? " Cargando..." : " Buscar");
+        }
+
+        if ($estado.length) {
+            $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
+        }
+    }
+
+    function renderLoadingTablaEgresos() {
+        $("#tablaEgresosCaja").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
+    }
+
+    function leerFechasActuales() {
+        return {
+            fechaDesde: $("#filtroDesdeEgreso").val() || "",
+            fechaHasta: $("#filtroHastaEgreso").val() || ""
+        };
+    }
+
+    function asegurarFechasAplicadas() {
+        if (!fechasAplicadasState) {
+            fechasAplicadasState = leerFechasActuales();
+        }
+    }
+
+    function hayCambioFechasPendiente() {
+        asegurarFechasAplicadas();
+        var actuales = leerFechasActuales();
+        return actuales.fechaDesde !== fechasAplicadasState.fechaDesde
+            || actuales.fechaHasta !== fechasAplicadasState.fechaHasta;
+    }
+
+    function actualizarAvisoCambioFechas() {
+        var $mensaje = $("#mensajeCambioFechasEgresos");
+        if (!$mensaje.length) return;
+
+        $mensaje.toggleClass("d-none", !hayCambioFechasPendiente());
+    }
+
+    function construirDataFiltros(opciones) {
+        var usarFechasActuales = !opciones || opciones.usarFechasActuales !== false;
+        asegurarFechasAplicadas();
+
+        var data = $("#formFiltrosEgresos").serializeArray();
+        var fechas = usarFechasActuales ? leerFechasActuales() : fechasAplicadasState;
+        var filtrado = [];
+
+        $.each(data, function (_, item) {
+            if (!item) return;
+            if (item.name === "fechaDesde" || item.name === "fechaHasta") return;
+            filtrado.push(item);
+        });
+
+        filtrado.push({ name: "fechaDesde", value: fechas.fechaDesde || "" });
+        filtrado.push({ name: "fechaHasta", value: fechas.fechaHasta || "" });
+        filtrado.push({ name: "ajax", value: "true" });
+
+        return filtrado;
+    }
+
+    function filtrar(opciones) {
         var cfg = urls();
         if (!cfg.listar) return;
 
-        var data = $("#formFiltrosEgresos").serializeArray();
-        data.push({ name: "ajax", value: "true" });
+        var data = construirDataFiltros(opciones);
+
+        if (!opciones || opciones.usarFechasActuales !== false) {
+            fechasAplicadasState = leerFechasActuales();
+        }
+
+        setBuscandoEgresos(true);
+        renderLoadingTablaEgresos();
 
         $.ajax({
             url: cfg.listar,
@@ -173,6 +250,7 @@
         }).done(function (html) {
             $("#tablaEgresosCaja").html(html);
             aplicarVistaCompleta();
+            actualizarAvisoCambioFechas();
         }).fail(function (xhr) {
             if (xhr && xhr.status === 403) {
                 mostrarPermisoPopup((xhr.responseText || xhr.statusText || "").replace(/<[^>]+>/g, "").trim());
@@ -182,6 +260,11 @@
             if (window.Swal) {
                 Swal.fire("Error", "No se pudieron cargar los egresos.", "error");
             }
+
+            $("#estadoBusquedaEgresos").text("Ocurrió un error al actualizar la búsqueda.");
+        }).always(function () {
+            var mensaje = $("#estadoBusquedaEgresos").text();
+            setBuscandoEgresos(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
         });
     }
 
@@ -807,17 +890,25 @@
             .off("submit.egresosFiltro", "#formFiltrosEgresos")
             .on("submit.egresosFiltro", "#formFiltrosEgresos", function (e) {
                 e.preventDefault();
-                filtrar();
+                filtrar({ usarFechasActuales: true });
             })
-            .off("change.egresosFiltro", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso, #filtroDesdeEgreso, #filtroHastaEgreso, #soloGastos")
-            .on("change.egresosFiltro", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso, #filtroDesdeEgreso, #filtroHastaEgreso, #soloGastos", function () {
-                filtrar();
+            .off("change.egresosFiltroVivo", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso, #soloGastos")
+            .on("change.egresosFiltroVivo", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso, #soloGastos", function () {
+                filtrar({ usarFechasActuales: false });
+            })
+            .off("change.egresosFechas", "#filtroDesdeEgreso, #filtroHastaEgreso")
+            .on("change.egresosFechas", "#filtroDesdeEgreso, #filtroHastaEgreso", function () {
+                actualizarAvisoCambioFechas();
+            })
+            .off("input.egresosDescripcion", "#filtroDescripcionEgreso")
+            .on("input.egresosDescripcion", "#filtroDescripcionEgreso", function () {
+                filtrar({ usarFechasActuales: false });
             })
             .off("keydown.egresosFiltro", "#filtroDescripcionEgreso")
             .on("keydown.egresosFiltro", "#filtroDescripcionEgreso", function (e) {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    filtrar();
+                    filtrar({ usarFechasActuales: false });
                 }
             })
             .off("click.egresosNuevo", "#btnNuevoEgresoCaja")
@@ -898,6 +989,8 @@
             });
 
         initVistaCompleta();
+        asegurarFechasAplicadas();
+        actualizarAvisoCambioFechas();
     }
 
     $(document)

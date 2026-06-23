@@ -21,9 +21,12 @@
             const fechaHasta = document.getElementById('fechaHasta');
             const btnFiltrar = document.getElementById('btnFiltrarFechas');
             const idSucursal = document.getElementById('idSucursal');
+            const alertaPendiente = document.getElementById('@(esVentas ? "alertaFiltrosPendientesVentas" : "alertaFiltrosPendientesVentas")');
+            const estadoBusqueda = document.getElementById('@(esVentas ? "estadoBusquedaVentas" : "estadoBusquedaVentas")');
+            const btnFiltrarTexto = btnFiltrar ? btnFiltrar.querySelector('.btn-buscar-texto') : null;
 
-            const fechaDesdeInicial = fechaDesde ? fechaDesde.value : "";
-            const fechaHastaInicial = fechaHasta ? fechaHasta.value : "";
+            let fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
+            let fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
 
             function getServerState() {
                 return {
@@ -97,8 +100,23 @@
                 return new Date(fechaDesde.value) <= new Date(fechaHasta.value);
             }
 
+            function hayFechasPendientes() {
+                return (fechaDesde ? fechaDesde.value : "") !== fechaDesdeAplicada
+                    || (fechaHasta ? fechaHasta.value : "") !== fechaHastaAplicada;
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscando(mensaje) {
+                if (btnFiltrar) btnFiltrar.disabled = true;
+                if (btnFiltrarTexto) btnFiltrarTexto.textContent = 'Cargando...';
+                if (estadoBusqueda) estadoBusqueda.textContent = mensaje || 'Actualizando búsqueda...';
+            }
+
             function verificarCambios() {
-                const cambio = (fechaDesde ? fechaDesde.value : "") !== fechaDesdeInicial || (fechaHasta ? fechaHasta.value : "") !== fechaHastaInicial;
                 const valido = fechasValidas();
 
                 if (fechaDesde) {
@@ -108,25 +126,32 @@
                 if (fechaHasta) {
                     fechaHasta.classList.toggle('is-invalid', !valido);
                 }
-
-                if (btnFiltrar) {
-                    btnFiltrar.disabled = !(cambio && valido);
-                }
             }
 
             if (fechaDesde) {
-                fechaDesde.addEventListener('change', function () { verificarCambios(); saveServerState(); });
-                fechaDesde.addEventListener('input', function () { verificarCambios(); saveServerState(); });
+                fechaDesde.addEventListener('change', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); });
+                fechaDesde.addEventListener('input', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); });
             }
 
             if (fechaHasta) {
-                fechaHasta.addEventListener('change', function () { verificarCambios(); saveServerState(); });
-                fechaHasta.addEventListener('input', function () { verificarCambios(); saveServerState(); });
+                fechaHasta.addEventListener('change', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); });
+                fechaHasta.addEventListener('input', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); });
             }
 
             if (idSucursal) {
                 idSucursal.addEventListener('change', function () {
                     saveServerState();
+                    setBuscando('Actualizando búsqueda en vivo...');
+
+                    if (hayFechasPendientes()) {
+                        if (fechaDesde) fechaDesde.value = fechaDesdeAplicada;
+                        if (fechaHasta) fechaHasta.value = fechaHastaAplicada;
+                        saveServerState();
+                        verificarCambios();
+                        actualizarAvisoPendiente();
+                    }
+
+                    form.submit();
                 });
             }
 
@@ -136,7 +161,11 @@
                     return;
                 }
 
+                fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
+                fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
                 saveServerState();
+                actualizarAvisoPendiente();
+                setBuscando();
             });
         
 
@@ -295,6 +324,8 @@
         });
 
         restoreClientState();
+        verificarCambios();
+        actualizarAvisoPendiente();
         actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
         actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
         aplicarFiltros();

@@ -22,6 +22,10 @@
         <div class="card-body">
             <form method="get">
                 <div class="movimientos-filtros-stack">
+                    <div id="alertaFiltrosPendientesMovimientos" class="alert alert-warning d-none mb-0" role="alert">
+                        Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                    </div>
+
                     <div class="movimientos-filtros-row movimientos-filtros-row-sucursales">
                         <div class="form-group mb-0">
                             <label for="idSucursalOrigen" class="movimientos-filtro-label">Sucursal origen</label>
@@ -66,10 +70,14 @@
 
                         <div class="form-group mb-0 movimientos-filtro-accion">
                             <label class="movimientos-filtro-label d-none d-lg-block">&nbsp;</label>
-                            <button type="submit" class="btn btn-outline-primary btn-block">
-                                <i class="fas fa-search mr-1"></i> Buscar
+                            <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarMovimientos">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                             </button>
                         </div>
+                    </div>
+
+                    <div>
+                        <div id="estadoBusquedaMovimientos" class="text-muted small">Resultados actualizados.</div>
                     </div>
                 </div>
             </form>
@@ -243,6 +251,11 @@
             var inputSucursalOrigen = document.getElementById('idSucursalOrigen');
             var inputSucursalDestino = document.getElementById('idSucursalDestino');
             var inputVerDetalles = document.getElementById('verDetalles');
+            var alertaPendiente = document.getElementById('alertaFiltrosPendientesMovimientos');
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+            };
 
             function buildState() {
                 return {
@@ -257,6 +270,50 @@
             function saveState() {
                 if (!form || !window.sessionStorage) return;
                 window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscandoMovimientos(mensaje) {
+                var btnBuscar = document.getElementById("btnBuscarMovimientos");
+                var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                var estado = document.getElementById("estadoBusquedaMovimientos");
+
+                if (btnBuscar) {
+                    btnBuscar.disabled = true;
+                }
+
+                if (btnTexto) {
+                    btnTexto.textContent = " Cargando...";
+                }
+
+                if (estado) {
+                    estado.textContent = mensaje || "Actualizando búsqueda...";
+                }
+            }
+
+            function enviarFiltrosEnVivo() {
+                if (!form) return;
+
+                saveState();
+                setBuscandoMovimientos("Actualizando búsqueda en vivo...");
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    saveState();
+                }
+
+                form.submit();
             }
 
             function restoreStateIfNeeded() {
@@ -285,13 +342,59 @@
 
             restoreStateIfNeeded();
             saveState();
+            actualizarAvisoPendiente();
 
             if (form) {
-                form.addEventListener("submit", saveState);
+                form.addEventListener("submit", function () {
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    saveState();
+                    var btnBuscar = document.getElementById("btnBuscarMovimientos");
+                    var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                    var estado = document.getElementById("estadoBusquedaMovimientos");
+
+                    if (btnBuscar) {
+                        btnBuscar.disabled = true;
+                    }
+
+                    if (btnTexto) {
+                        btnTexto.textContent = " Cargando...";
+                    }
+
+                    if (estado) {
+                        estado.textContent = "Actualizando búsqueda...";
+                    }
+                });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
                     el.addEventListener("input", saveState);
                 });
+
+                form.addEventListener("submit", function () {
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    actualizarAvisoPendiente();
+                });
+            }
+
+            if (inputFechaDesde) {
+                inputFechaDesde.addEventListener('change', actualizarAvisoPendiente);
+            }
+
+            if (inputFechaHasta) {
+                inputFechaHasta.addEventListener('change', actualizarAvisoPendiente);
+            }
+
+            if (inputSucursalOrigen) {
+                inputSucursalOrigen.addEventListener('change', enviarFiltrosEnVivo);
+            }
+
+            if (inputSucursalDestino) {
+                inputSucursalDestino.addEventListener('change', enviarFiltrosEnVivo);
             }
         })();
     </script>

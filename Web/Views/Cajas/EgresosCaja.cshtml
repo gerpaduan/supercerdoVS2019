@@ -89,10 +89,20 @@
 
                     <div class="form-group mb-0 egresos-filtro-accion">
                         <label class="egresos-filtro-label d-none d-lg-block">&nbsp;</label>
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="fas fa-search mr-1"></i> Buscar
+                        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarEgresosCaja">
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                         </button>
                     </div>
+                </div>
+
+                <div class="egresos-filtros-row">
+                    <div id="mensajeCambioFechasEgresos" class="alert alert-warning py-2 px-3 mb-0 d-none" role="alert">
+                        Cambió la fecha. Debe presionar el botón Buscar para actualizar la búsqueda.
+                    </div>
+                </div>
+
+                <div class="egresos-filtros-row">
+                    <div id="estadoBusquedaEgresos" class="text-muted small">Resultados actualizados.</div>
                 </div>
 
                 <div class="egresos-filtros-row egresos-filtros-row-busqueda">
@@ -334,5 +344,5 @@
             usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))
         };
     </script>
-<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=5")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=6")"></script>
 }

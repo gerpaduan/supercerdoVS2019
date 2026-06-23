@@ -73,9 +73,13 @@
                     <div class="form-group mb-0 elaborados-filtro-accion">
                         <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
                         <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarElaborados">
-                            <i class="fas fa-search mr-1"></i> Buscar
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
                         </button>
                     </div>
+                </div>
+
+                <div class="mt-2">
+                    <div id="estadoBusquedaElaborados" class="text-muted small">Resultados actualizados.</div>
                 </div>
             </form>
         </div>
@@ -159,7 +163,29 @@
             saveState();
 
             if (form) {
-                form.addEventListener("submit", saveState);
+                form.addEventListener("submit", function () {
+                    saveState();
+                    var btnBuscar = document.getElementById("btnBuscarElaborados");
+                    var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                    var estado = document.getElementById("estadoBusquedaElaborados");
+                    var alerta = document.getElementById("alertaFiltrosPendientes");
+
+                    if (btnBuscar) {
+                        btnBuscar.disabled = true;
+                    }
+
+                    if (btnTexto) {
+                        btnTexto.textContent = " Cargando...";
+                    }
+
+                    if (estado) {
+                        estado.textContent = "Actualizando búsqueda...";
+                    }
+
+                    if (alerta) {
+                        alerta.classList.add("d-none");
+                    }
+                });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
                     el.addEventListener("input", saveState);
