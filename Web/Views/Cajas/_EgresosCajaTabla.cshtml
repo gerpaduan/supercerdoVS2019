@@ -252,19 +252,7 @@
                             @Valor(row, "TipoEgresoCaja")
                             @if (modoActividades)
                             {
-                                <span class="badge badge-light ml-1">@Categoria(row)</span>
-                                if (esAnulacion)
-                                {
-                                    <span class="badge badge-warning ml-1">Anulacion</span>
-                                }
-                                else if (esHistorico)
-                                {
-                                    <span class="badge badge-secondary ml-1">Version anterior</span>
-                                }
-                                else if (esEgresoModificado)
-                                {
-                                    <span class="badge badge-light border ml-1">Modificado</span>
-                                }
+                                <div class="small text-muted mt-1 d-none">@Categoria(row)</div>
                             }
                         </td>
                         <td>
@@ -377,19 +365,7 @@
                         @Valor(row, "TipoEgresoCaja")
                         @if (modoActividades)
                         {
-                            <span class="badge badge-light ml-1">@Categoria(row)</span>
-                            if (esAnulacion)
-                            {
-                                <span class="badge badge-warning ml-1">Anulacion</span>
-                            }
-                            else if (esHistorico)
-                            {
-                                <span class="badge badge-secondary ml-1">Version anterior</span>
-                            }
-                            else if (esEgresoModificado)
-                            {
-                                <span class="badge badge-light border ml-1">Modificado</span>
-                            }
+                            <div class="small text-muted mt-1 d-none">@Categoria(row)</div>
                         }
                     </strong>
                     <span>$ @Monto(row)</span>

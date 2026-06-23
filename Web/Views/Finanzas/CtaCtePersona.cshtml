@@ -29,6 +29,7 @@
 
     var ultimoIdPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     var cantidadPorClave = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    bool tieneColumnaNroDoc = Model != null && Model.Columns.Contains("NroDoc");
 
     foreach (System.Data.DataRow row in Model.Rows)
     {
@@ -46,7 +47,7 @@
     }
 }
 
-<div id="ctactePersonaContainer" class="container-fluid p-0" style="@(desdePos ? "display:flex; flex-direction:column;" : "height:100vh; display:flex; flex-direction:column;")">
+<div id="ctactePersonaContainer" class="container-fluid p-0">
     <!-- =======================
          CABECERA PERSONA + SALDO
          ======================= -->
@@ -189,12 +190,12 @@
 
 
     <!-- =======================
-         TABLA CON SCROLL
+         TABLA COMPLETA
          ======================= -->
-    <div class="card shadow" style="flex:1 1 auto; overflow:hidden;">
-        <div class="card-body p-2" style="height:100%; overflow:hidden;">
+    <div class="card shadow">
+        <div class="card-body p-2">
 
-            <div style="height:100%; overflow-y:auto;">
+            <div class="table-responsive">
 
                 <table class="table table-bordered table-hover" id="tablaPersona" width="100%" cellspacing="0">
 
@@ -206,6 +207,7 @@
 
                             <th>Fecha</th>
                             <th>Operación</th>
+                            <th>Nro.Doc</th>
                             <th>Detalle</th>
                             <th style="text-align:right;">Importe</th>
                             <th style="text-align:right;">Saldo</th>
@@ -219,6 +221,9 @@
                         {
                             string clave = claveMovimiento(row);
                             int id = Convert.ToInt32(row["ID"]);
+                            decimal importeFila = Convert.ToDecimal(row["Importe"]);
+                            bool importePositivo = importeFila >= 0;
+                            string claseColorOperacion = importePositivo ? "ctacte-color-positivo" : "ctacte-color-negativo";
                             bool tieneMasVersiones = cantidadPorClave.ContainsKey(clave) && cantidadPorClave[clave] > 1;
                             bool esVersionActual = ultimoIdPorClave.ContainsKey(clave) && ultimoIdPorClave[clave] == id;
                             bool esHistorico = tieneMasVersiones && !esVersionActual;
@@ -235,7 +240,7 @@
                                 <td name="idTabla" style="display:none;">@row["IdTabla"]</td>
 
                                 <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
-                                <td>
+                                <td class="@claseColorOperacion" style="font-weight:bold;">
                                     @row["Tabla"]
                                     @if (esHistorico)
                                     {
@@ -246,6 +251,7 @@
                                         <span class="badge badge-warning ml-1">Modificado</span>
                                     }
                                 </td>
+                                <td>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "")</td>
                                 <td>
                                     [ID: @row["IdTabla"]] @row["Detalle"]
                                     @if (esHistorico && esPago)
@@ -258,8 +264,8 @@
                                     }
                                 </td>
 
-                                <td style="text-align:right; color:@(Convert.ToDecimal(row["Importe"]) >= 0 ? "green" : "red"); font-weight:bold;">
-                                    @Convert.ToDecimal(row["Importe"]).ToString("N2")
+                                <td class="@claseColorOperacion" style="text-align:right; font-weight:bold;">
+                                    @importeFila.ToString("N2")
                                 </td>
 
                                 <td style="text-align:right;">
@@ -347,6 +353,14 @@
 </script>
 
 <style>
+    #tablaPersona .ctacte-color-positivo {
+        color: green;
+    }
+
+    #tablaPersona .ctacte-color-negativo {
+        color: red;
+    }
+
     #tablaPersona td, #tablaPersona th {
         white-space: nowrap;
     }
@@ -359,5 +373,15 @@
 
     #tablaPersona tr.ctacte-row-modificado:not(.ctacte-row-historico) {
         background-color: #fff8e1;
+    }
+
+    html.dark-mode #tablaPersona .ctacte-color-positivo,
+    body.dark-mode #tablaPersona .ctacte-color-positivo {
+        color: #55d88a !important;
+    }
+
+    html.dark-mode #tablaPersona .ctacte-color-negativo,
+    body.dark-mode #tablaPersona .ctacte-color-negativo {
+        color: #ff7f7f !important;
     }
 </style>

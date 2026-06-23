@@ -665,6 +665,63 @@ else
         background: #fff;
     }
 
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS {
+        font-size: .875rem;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .container-fluid,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .container,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .row {
+        padding-left: .35rem;
+        padding-right: .35rem;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .card-body,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .alert,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .form-group,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .input-group,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .table-responsive {
+        font-size: inherit;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .card-body {
+        padding: .65rem !important;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .alert {
+        padding: .5rem .65rem;
+        margin-bottom: .65rem;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .form-group {
+        margin-bottom: .6rem;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .btn,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .form-control,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .input-group-text,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .custom-control-label,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS table {
+        font-size: inherit;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .btn,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .form-control,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .input-group-text {
+        padding-top: .3rem;
+        padding-bottom: .3rem;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS h5,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .h5 {
+        font-size: 1rem;
+    }
+
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .table td,
+    #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS .table th {
+        padding: .35rem .45rem;
+    }
+
     html.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content,
     body.dark-mode #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content {
         background: #1a2b40 !important;
@@ -714,9 +771,63 @@ else
         margin: 1.75rem auto;
     }
 
+    #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-dialog {
+        max-width: none;
+        width: 100%;
+        margin: 1.75rem auto;
+    }
+
+    #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+        max-width: none;
+        width: 100%;
+        margin: 1.75rem auto;
+    }
+
+    @@media (min-width: 992px) {
+        #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-dialog,
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+            width: 50%;
+        }
+    }
+
+    #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-header {
+        background: #36b9cc !important;
+        color: #fff !important;
+    }
+
+    #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-title,
+    #modalFinanzasPOS.modal-mis-ventas-pos-compacto .close {
+        color: #fff !important;
+        text-shadow: none !important;
+    }
+
+    #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-body {
+        padding: 0 !important;
+        background-color: #fff;
+    }
+
+    #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
+        padding: 0 !important;
+        background-color: #fff;
+    }
+
     #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
         padding: 1rem !important;
         background-color: #f8f9fc;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-body {
+        background-color: #182232;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
+        background-color: #182232;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-header,
+    body.dark-mode #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-header {
+        background: #1f6f7c !important;
+        color: #ecf2ff !important;
     }
 
     html.dark-mode #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
@@ -740,6 +851,24 @@ else
         #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
             width: calc(100% - .75rem);
             margin: .5rem auto;
+        }
+
+        #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-dialog {
+            width: calc(100% - .5rem);
+            margin: .25rem auto;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+            width: calc(100% - .5rem);
+            margin: .25rem auto;
+        }
+
+        #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-body {
+            padding: 0 !important;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
+            padding: 0 !important;
         }
 
         #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
@@ -2067,16 +2196,51 @@ else
         // - ayuda en 1366x768 / zoom 125%
         // ================================
         (function () {
+            function getViewportHeight() {
+                if (window.visualViewport && window.visualViewport.height) {
+                    return Math.round(window.visualViewport.height);
+                }
+
+                return window.innerHeight || document.documentElement.clientHeight || 0;
+            }
+
+            function aplicarAjusteFooter() {
+                var workbench = document.querySelector('.pos-ventas-workbench-col');
+                var footer = document.querySelector('.pos-footer-panel');
+                if (!workbench || !footer) {
+                    document.documentElement.classList.remove('pos-footer-fit');
+                    document.documentElement.classList.remove('pos-footer-tiny-fit');
+                    return;
+                }
+
+                var viewportHeight = getViewportHeight();
+                var workbenchRect = workbench.getBoundingClientRect();
+                var footerRect = footer.getBoundingClientRect();
+                var overflow = Math.max(0, Math.ceil(footerRect.bottom - workbenchRect.bottom));
+
+                var footerFit = overflow > 0 || viewportHeight < 950;
+                var footerTinyFit = overflow > 24 || viewportHeight < 860;
+
+                document.documentElement.classList.toggle('pos-footer-fit', footerFit);
+                document.documentElement.classList.toggle('pos-footer-tiny-fit', footerTinyFit);
+            }
+
             function aplicarCompacto() {
-                const h = window.innerHeight || document.documentElement.clientHeight;
+                const h = getViewportHeight();
 
 
-                document.documentElement.classList.toggle("pos-compact", h < 920);
-                document.documentElement.classList.toggle("pos-tiny", h < 820);
+                document.documentElement.classList.toggle("pos-compact", h < 960);
+                document.documentElement.classList.toggle("pos-tiny", h < 860);
+
+                window.requestAnimationFrame(aplicarAjusteFooter);
             }
 
             window.addEventListener("resize", aplicarCompacto);
             window.addEventListener("orientationchange", aplicarCompacto);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener("resize", aplicarCompacto);
+                window.visualViewport.addEventListener("scroll", aplicarCompacto);
+            }
             document.addEventListener("DOMContentLoaded", aplicarCompacto);
             aplicarCompacto();
         })();
@@ -2199,9 +2363,13 @@ else
                 }
 
                 var esDetalleVenta = !!url && url.indexOf("/Ventas/DetalleVenta") >= 0;
+                var esMisVentas = !!url && url.indexOf("/Ventas/MisVentas") >= 0;
+                var esMisActividades = !!url && url.indexOf("/Cajas/MisEgresosCaja") >= 0;
 
                 $("#modalFinanzasPOS")
-                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto")
+                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto modal-mis-actividades-pos-compacto")
+                    .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades)
+                    .toggleClass("modal-mis-ventas-pos-compacto", esMisVentas)
                     .toggleClass("modal-detalle-venta-pos-compacto", esDetalleVenta);
                 $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                 $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
@@ -3978,6 +4146,79 @@ else
     html.pos-tiny #msgBalanzaPOS {
         min-height: .9rem !important;
         font-size: .86rem !important;
+    }
+
+    html.pos-footer-fit .zona-botones {
+        padding: .30rem .34rem !important;
+        margin-bottom: .12rem !important;
+    }
+
+    html.pos-footer-fit .zona-botones .btn {
+        min-height: 40px !important;
+        font-size: .90rem !important;
+        padding-top: .34rem !important;
+        padding-bottom: .34rem !important;
+    }
+
+    html.pos-footer-fit #btnFinalizar {
+        min-height: 48px !important;
+        gap: .4rem !important;
+    }
+
+    html.pos-footer-fit #btnFinalizar i {
+        font-size: 1.1rem !important;
+    }
+
+    html.pos-footer-fit #btnFinalizar small {
+        font-size: .66rem !important;
+    }
+
+    html.pos-footer-fit .btn-agregar-pos {
+        min-height: 46px !important;
+        gap: .4rem !important;
+    }
+
+    html.pos-footer-fit .btn-agregar-pos i {
+        font-size: 1.05rem !important;
+    }
+
+    html.pos-footer-fit .pos-footer-panel {
+        padding-top: .08rem !important;
+        margin-top: .08rem !important;
+    }
+
+    html.pos-footer-fit .pos-balanza-card {
+        padding: .16rem .24rem !important;
+    }
+
+    html.pos-footer-fit .pos-balanza-caption {
+        font-size: .78rem !important;
+        line-height: 1.12 !important;
+    }
+
+    html.pos-footer-fit #msgBalanzaPOS {
+        min-height: .82rem !important;
+        font-size: .82rem !important;
+        margin-top: .08rem !important;
+        line-height: 1.08 !important;
+    }
+
+    html.pos-footer-fit .pos-footer-panel .progress {
+        height: 6px !important;
+        margin-top: .18rem !important;
+    }
+
+    html.pos-footer-tiny-fit .zona-botones .btn {
+        min-height: 36px !important;
+        font-size: .84rem !important;
+    }
+
+    html.pos-footer-tiny-fit #btnFinalizar {
+        min-height: 44px !important;
+    }
+
+    html.pos-footer-tiny-fit .btn-agregar-pos {
+        min-height: 42px !important;
     }
 
     @@media (min-width: 992px) and (max-height: 950px) {

@@ -155,6 +155,8 @@ namespace Web.Models
         public string CantidadKgTexto { get; set; }
         public string Signo { get; set; }
         public string Observacion { get; set; }
+        public bool Balanza { get; set; }
+        public string CreadoTexto { get; set; }
         public decimal CantidadKg { get; set; }
     }
 

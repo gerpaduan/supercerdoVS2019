@@ -2,11 +2,13 @@
     var KEY_TICKET_MM = 'postpago_ticket_mm';
 
     var state = {
+        pagoId: 0,
         redirectUrl: '',
         imprimirUrl: '',
         imprimirPayloadUrl: '',
         pdfUrl: '',
-        whatsappTexto: '',
+        emailConfigUrl: '',
+        emailSendUrl: '',
         stayOnPage: false,
         ticketMmActual: null,
         agentAvailable: false,
@@ -63,12 +65,6 @@
 
     function abrirNuevaVentana(url) {
         if (!url) return;
-        window.open(url, '_blank', 'noopener');
-    }
-
-    function abrirWhatsapp() {
-        var texto = state.whatsappTexto || '';
-        var url = 'https://wa.me/?text=' + encodeURIComponent(texto);
         window.open(url, '_blank', 'noopener');
     }
 
@@ -230,13 +226,102 @@
             });
     }
 
+    function esEmailValido(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+    }
+
+    function abrirModalEmail() {
+        if (!state.pagoId || !state.emailConfigUrl) {
+            Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudo preparar el envio por email.' });
+            return;
+        }
+
+        $('#ppEmailError').addClass('d-none').text('');
+        $('#ppEmailDestino').val('');
+        $('#ppEmailAsunto').val('');
+        $('#ppEmailMensaje').val('');
+        $('#btnConfirmarEmailPago').prop('disabled', true);
+
+        $.getJSON(state.emailConfigUrl, { id: state.pagoId })
+            .done(function (resp) {
+                if (!resp || !resp.ok) {
+                    Swal.fire({ icon: 'error', title: 'Email', text: (resp && resp.msg) || 'No se pudieron recuperar los datos del email.' });
+                    return;
+                }
+
+                $('#ppEmailDestino').val(resp.email || '');
+                $('#ppEmailAsunto').val(resp.asunto || '');
+                $('#ppEmailMensaje').val(resp.mensaje || '');
+                $('#btnConfirmarEmailPago').prop('disabled', false);
+                $('#modalEmailPago').modal('show');
+            })
+            .fail(function () {
+                Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudieron recuperar los datos del email.' });
+            });
+    }
+
+    function confirmarEmail() {
+        var payload = {
+            idPago: state.pagoId,
+            emailDestino: ($('#ppEmailDestino').val() || '').trim(),
+            asunto: ($('#ppEmailAsunto').val() || '').trim(),
+            mensaje: ($('#ppEmailMensaje').val() || '').trim()
+        };
+
+        if (!state.emailSendUrl || !payload.idPago) {
+            $('#ppEmailError').removeClass('d-none').text('No se pudo preparar el envio por email.');
+            return;
+        }
+
+        if (!payload.emailDestino) {
+            $('#ppEmailError').removeClass('d-none').text('Ingresa el email destino.');
+            return;
+        }
+
+        if (!esEmailValido(payload.emailDestino)) {
+            $('#ppEmailError').removeClass('d-none').text('Ingresa un email valido.');
+            return;
+        }
+
+        if (!payload.asunto) {
+            $('#ppEmailError').removeClass('d-none').text('Ingresa el asunto del email.');
+            return;
+        }
+
+        $('#ppEmailError').addClass('d-none').text('');
+        $('#btnConfirmarEmailPago').prop('disabled', true);
+
+        $.ajax({
+            url: state.emailSendUrl,
+            type: 'POST',
+            dataType: 'json',
+            data: payload
+        }).done(function (resp) {
+            if (!resp || !resp.ok) {
+                $('#btnConfirmarEmailPago').prop('disabled', false);
+                $('#ppEmailError').removeClass('d-none').text((resp && resp.msg) || 'No se pudo enviar el email.');
+                return;
+            }
+
+            $('#modalEmailPago').modal('hide');
+            Swal.fire({ icon: 'success', title: 'Email', text: resp.msg || 'El recibo se envio correctamente.' });
+            cerrarYRedirigir();
+        }).fail(function (xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.msg) || 'No se pudo enviar el email.';
+            $('#btnConfirmarEmailPago').prop('disabled', false);
+            $('#ppEmailError').removeClass('d-none').text(msg);
+        });
+    }
+
     window.PostPagoModal = {
         open: function (resp) {
+            state.pagoId = resp.pagoId || 0;
             state.redirectUrl = resp.redirectUrl || '';
             state.imprimirUrl = resp.imprimirUrl || '';
             state.imprimirPayloadUrl = resp.imprimirPayloadUrl || '';
             state.pdfUrl = resp.pdfUrl || '';
-            state.whatsappTexto = resp.whatsappTexto || '';
+            state.emailConfigUrl = resp.emailConfigUrl || '';
+            state.emailSendUrl = resp.emailSendUrl || '';
             state.stayOnPage = !!resp.stayOnPage;
             state.ticketMmActual = null;
 
@@ -346,9 +431,61 @@
             cerrarYRedirigir();
         });
 
-        $('#btnPostPagoWhatsapp').on('click', function () {
-            abrirWhatsapp();
-            cerrarYRedirigir();
+        $('#btnPostPagoEmail').on('click', function () {
+            abrirModalEmail();
+        });
+
+        $('#btnConfirmarEmailPago').on('click', function () {
+            confirmarEmail();
+        });
+
+        $('#ppEmailDestino, #ppEmailAsunto, #ppEmailMensaje').on('input', function () {
+            $('#ppEmailError').addClass('d-none').text('');
+        });
+
+        $('#modalEmailPago').on('shown.bs.modal', function () {
+            $('#ppEmailDestino').trigger('focus');
+        });
+
+        $(document).on('keydown', function (e) {
+            var $modal = $('#modalPostPago');
+            if (!$modal.hasClass('show')) return;
+
+            var $modalEmail = $('#modalEmailPago');
+            if ($modalEmail.hasClass('show')) return;
+
+            var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea') return;
+
+            if (e.key === '1') { e.preventDefault(); $('#btnPostPagoNoImprimir').click(); return; }
+            if (e.key === '2') { e.preventDefault(); $('#btnPostPagoImprimir').click(); return; }
+            if (e.key === '3') { e.preventDefault(); $('#btnPostPagoPdf').click(); return; }
+            if (e.key === '4') { e.preventDefault(); $('#btnPostPagoEmail').click(); return; }
+
+            var ticketVisible = $('#bloqueTicketOpcionesPago').hasClass('show');
+            if (!ticketVisible) return;
+
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) >= 0) {
+                e.preventDefault();
+
+                var actual = state.ticketMmActual || getUltimoTicketMm() || 58;
+                var nuevo = actual === 58 ? 80 : 58;
+                marcarTicketSeleccionado(nuevo);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                var mm = state.ticketMmActual || getUltimoTicketMm() || 58;
+                setUltimoTicketMm(mm);
+                actualizarTextoTicket();
+                if (state.agentAvailable) {
+                    imprimirConAgente(mm);
+                } else {
+                    imprimirTicket(mm);
+                }
+            }
         });
     });
 })();

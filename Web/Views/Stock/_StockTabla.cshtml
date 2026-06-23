@@ -50,6 +50,13 @@
                             <div>@row["tipoCompra"]</div>
                             @if (detalle != null)
                             {
+                                if (detalle.EsPesaje && detalle.IdCompraVinculada.HasValue)
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-primary">Compra #@detalle.IdCompraVinculada.Value</span>
+                                    </div>
+                                }
+
                                 if (detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue)
                                 {
                                     <div class="mt-1">
@@ -210,8 +217,8 @@
                                                         <th>Código producto</th>
                                                         <th>Producto</th>
                                                         <th class="text-right">Cantidad / kg</th>
-                                                        <th class="text-center">Tipo / signo</th>
-                                                        <th>Observación línea</th>
+                                                        <th class="text-center">Balanza</th>
+                                                        <th>Creado</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -229,8 +236,8 @@
                                                                 <td>@linea.Codigo</td>
                                                                 <td>@linea.Producto</td>
                                                                 <td class="text-right">@linea.CantidadKgTexto</td>
-                                                                <td class="text-center">@linea.Signo</td>
-                                                                <td>@linea.Observacion</td>
+                                                                <td class="text-center">@(linea.Balanza ? "Si" : "-")</td>
+                                                                <td>@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</td>
                                                             </tr>
                                                         }
                                                     }

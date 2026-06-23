@@ -125,7 +125,7 @@
                                     </div>
                                 </div>
                                 <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
-                                <div class="stock-compra-vinculada-box mt-2 @(tieneCompraVinculadaPesaje ? "" : "d-none")" id="stockCompraVinculadaBox">
+                                <div class="stock-compra-vinculada-box mt-2 @((tieneCompraVinculadaPesaje && !Model.EsEdicion) ? "" : "d-none")" id="stockCompraVinculadaBox">
                                     <div class="small text-uppercase font-weight-bold mb-2">
                                         Compra vinculada
                                         <span id="stockCompraVinculadaId" class="ml-1">@(tieneCompraVinculadaPesaje ? "#" + Model.IdPesajeAjustado.Value : "")</span>
@@ -179,6 +179,75 @@
 
                 <div class="row">
                     <div class="col-12 col-xl-8">
+                        @if (Model.EsEdicion && esPesaje)
+                        {
+                            <div class="stock-compra-vinculada-box @(tieneCompraVinculadaPesaje ? "" : "d-none")">
+                                <div class="small text-uppercase font-weight-bold mb-2">
+                                    Compra vinculada
+                                    <span class="ml-1">@(tieneCompraVinculadaPesaje ? "#" + Model.IdPesajeAjustado.Value : "")</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada))
+                                {
+                                    <div class="font-weight-bold">@Model.EstadoCompraVinculada</div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Proveedor</div>
+                                            <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorCompraVinculada) ? Model.ProveedorCompraVinculada : "-")</div>
+                                        </div>
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Fecha de compra</div>
+                                            <div class="font-weight-bold">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Cant.Medias</div>
+                                            <div class="font-weight-bold">@(Model.CantMediasCompraVinculada.HasValue ? Model.CantMediasCompraVinculada.Value.ToString() : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Kgs.Medias</div>
+                                            <div class="font-weight-bold">@(Model.KgsCompraVinculada.HasValue ? Model.KgsCompraVinculada.Value.ToString("N2") : "-")</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (Model.EsEdicion && esAjuste)
+                        {
+                            <div class="stock-pesaje-ajustado-box">
+                                <div class="small text-uppercase font-weight-bold mb-2">
+                                    @(Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0
+                                        ? "Pesaje vinculado #" + Model.IdPesajeAjustado.Value
+                                        : "Pesaje vinculado")
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.EstadoPesajeAjustado))
+                                {
+                                    <div class="font-weight-bold">@Model.EstadoPesajeAjustado</div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Proveedor</div>
+                                            <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorPesajeAjustado) ? Model.ProveedorPesajeAjustado : "-")</div>
+                                        </div>
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Fecha del pesaje</div>
+                                            <div class="font-weight-bold">@(Model.FechaPesajeAjustado.HasValue ? Model.FechaPesajeAjustado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Cant.Medias</div>
+                                            <div class="font-weight-bold">@(Model.CantMediasPesajeAjustado.HasValue ? Model.CantMediasPesajeAjustado.Value.ToString() : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Kgs.Medias</div>
+                                            <div class="font-weight-bold">@(Model.KgsPesajeAjustado.HasValue ? Model.KgsPesajeAjustado.Value.ToString("N2") : "-")</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
                     <div class="col-12 col-xl-4">
                         @if (Model.EsEdicion)
@@ -195,41 +264,6 @@
                                     <div class="small text-muted">@Model.ActualizadoPor</div>
                                 </div>
                             </div>
-                            if (esAjuste)
-                            {
-                                <div class="stock-pesaje-ajustado-box mt-3">
-                                    <div class="small text-uppercase font-weight-bold mb-2">
-                                        @(Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0
-                                            ? "Pesaje vinculado #" + Model.IdPesajeAjustado.Value
-                                            : "Pesaje vinculado")
-                                    </div>
-                                    @if (!string.IsNullOrWhiteSpace(Model.EstadoPesajeAjustado))
-                                    {
-                                        <div class="font-weight-bold">@Model.EstadoPesajeAjustado</div>
-                                    }
-                                    else
-                                    {
-                                        <div class="row">
-                                            <div class="col-12 mb-2">
-                                                <div class="text-muted small">Proveedor</div>
-                                                <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorPesajeAjustado) ? Model.ProveedorPesajeAjustado : "-")</div>
-                                            </div>
-                                            <div class="col-12 mb-2">
-                                                <div class="text-muted small">Fecha del pesaje</div>
-                                                <div class="font-weight-bold">@(Model.FechaPesajeAjustado.HasValue ? Model.FechaPesajeAjustado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="text-muted small">Cant.Medias</div>
-                                                <div class="font-weight-bold">@(Model.CantMediasPesajeAjustado.HasValue ? Model.CantMediasPesajeAjustado.Value.ToString() : "-")</div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="text-muted small">Kgs.Medias</div>
-                                                <div class="font-weight-bold">@(Model.KgsPesajeAjustado.HasValue ? Model.KgsPesajeAjustado.Value.ToString("N2") : "-")</div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
                         }
                     </div>
                 </div>

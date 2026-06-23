@@ -9,9 +9,10 @@
     int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
     string tituloActividades = ViewBag.TituloActividades as string ?? "Mis actividades";
     string subtituloActividades = ViewBag.SubtituloActividades as string;
+    bool mostrarResumenMisActividades = ViewBag.MostrarResumenMisActividades == null || (bool)ViewBag.MostrarResumenMisActividades;
 }
 
-<div class="egresos-pos">
+<div class="egresos-pos mis-actividades-modal">
     @if (!string.IsNullOrWhiteSpace(mensaje))
     {
         <div class="alert alert-warning m-3">@mensaje</div>
@@ -19,24 +20,23 @@
     else
     {
         <div class="egresos-pos-toolbar">
-            <div class="mr-3">
-                <h5 class="mb-0">@tituloActividades</h5>
+            <div class="egresos-pos-toolbar-main">
                 @if (!string.IsNullOrWhiteSpace(subtituloActividades))
                 {
-                    <small class="text-muted d-block mt-1">@subtituloActividades</small>
+                    <small class="text-muted d-block">@subtituloActividades</small>
                 }
             </div>
-            <div class="d-flex flex-wrap align-items-center ml-auto">
-                <button type="button" class="btn btn-outline-primary mr-3 mb-2 mb-md-0" id="btnAbrirMisVentasDesdeActividades">
+            <div class="egresos-pos-toolbar-actions">
+                <button type="button" class="btn btn-outline-primary" id="btnAbrirMisVentasDesdeActividades">
                     <i class="fas fa-shopping-cart mr-1"></i> Mis ventas
                 </button>
-                <div class="egresos-actividad-filtros mr-3 mb-2 mb-md-0" role="group" aria-label="Filtro de actividades">
+                <div class="egresos-actividad-filtros" role="group" aria-label="Filtro de actividades">
                     <button type="button" class="btn btn-sm @(filtroActividad == "todos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="todos">Todos</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "gastos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="gastos">Egresos de caja</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "pagoElectronico" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="pagoElectronico">Pagos electronicos</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "ctaCte" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="ctaCte">Cta Cte</button>
                 </div>
-                <div class="custom-control custom-switch mr-3 mb-2 mb-md-0">
+                <div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" id="switchVistaCompletaEgresos">
                     <label class="custom-control-label" for="switchVistaCompletaEgresos">Vista completa</label>
                 </div>
@@ -50,12 +50,15 @@
         </div>
 
         <div class="px-3 pb-3">
-            <div class="egresos-resumen">
-                <div>
-                    <span class="text-muted">El total corresponde solo a egresos de caja</span>
-                    <strong>$ @total.ToString("N2")</strong>
+            @if (mostrarResumenMisActividades)
+            {
+                <div class="egresos-resumen">
+                    <div>
+                        <span class="text-muted">El total corresponde solo a egresos de caja</span>
+                        <strong>$ @total.ToString("N2")</strong>
+                    </div>
                 </div>
-            </div>
+            }
             <div id="misActividadesContenido">
                 @Html.Partial("~/Views/Cajas/_EgresosCajaTabla.cshtml", Model)
             </div>
@@ -105,6 +108,53 @@
 </script>
 
 <style>
+    .mis-actividades-modal {
+        font-size: 0.875rem;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem 1rem;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar-main {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar-actions {
+        flex: 999 1 680px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .6rem;
+    }
+
+    .mis-actividades-modal .egresos-actividad-filtros {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+    }
+
+    .mis-actividades-modal .egresos-actividad-filtros .btn,
+    .mis-actividades-modal .egresos-pos-toolbar-actions .btn {
+        margin: 0;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar-actions .custom-switch {
+        padding-top: .15rem;
+    }
+
+    @@media (max-width: 767.98px) {
+        .mis-actividades-modal .egresos-pos-toolbar-actions {
+            justify-content: flex-start;
+        }
+    }
+
     html.dark-mode .egresos-pos {
         background: #0f172a;
         color: #e5edf7;

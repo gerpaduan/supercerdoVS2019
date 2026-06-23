@@ -94,7 +94,10 @@ namespace Web.Controllers
                 seleccionadas.Select(f => f.ToString().ToLower())
             );
 
-            List<Entidades.Venta> ventas = oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, false); //new List<Entidades.Venta>();
+            List<Entidades.Venta> ventas = oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, false) ?? new List<Entidades.Venta>();
+            ventas = ventas
+                .Where(v => v != null && v.FechaVenta >= desde && v.FechaVenta <= hasta)
+                .ToList();
 
             ViewBag.TotalFiltrado = ventas.Sum(v => v.TotalImporte);
             //ventas.Add(oVentaE);
@@ -275,6 +278,7 @@ namespace Web.Controllers
             ViewBag.IdCierreActividad = cierre.Id;
             ViewBag.CierreCaja = cierre;
             ViewBag.TotalVisible = ventas.Sum(v => v.TotalImporte);
+            ViewBag.MostrarTotalMisVentas = PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, DateTime.Today);
             ViewBag.TituloVentas = "Mis ventas";
             ViewBag.SubtituloVentas = cierre.UsuarioInicio != null && cierre.Sucursal != null
                 ? cierre.UsuarioInicio.Nombre + " | " + cierre.Sucursal.sucursal

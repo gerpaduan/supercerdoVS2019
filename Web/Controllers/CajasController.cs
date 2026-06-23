@@ -155,6 +155,7 @@ namespace Web.Controllers
             ViewBag.CierreCaja = cierre;
             ViewBag.SucursalActividad = cierre != null && cierre.Sucursal != null ? cierre.Sucursal.sucursal : "";
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
+            ViewBag.MostrarResumenMisActividades = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.Consulta);
             ViewBag.ModoActividades = desdePos;
             CargarPermisosEdicionEgresos(dt, desdePos);
 
@@ -185,6 +186,7 @@ namespace Web.Controllers
             ViewBag.FiltroActividad = filtroActividad ?? "todos";
             ViewBag.CierreCaja = cierre;
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
+            ViewBag.MostrarResumenMisActividades = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.Consulta);
             ViewBag.ModoActividades = true;
             ViewBag.PermitirNuevo = CajaSigueAbierta(cierre) &&
                                     user != null &&

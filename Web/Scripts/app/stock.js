@@ -277,7 +277,9 @@
     function syncCantidadReadonly($form) {
         var state = getState($form);
         var hayProducto = !!$.trim($form.find('#txtProductoId').val() || '');
-        var soloLectura = !!(state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && (!hayProducto || esPesableActual($form)));
+        var soloLecturaVista = $form.hasClass('edit-readonly-active');
+        var soloLecturaBalanza = !!(state && state.balanzaDisponible && $form.find('#chkBalanzaLinea').is(':checked') && (!hayProducto || esPesableActual($form)));
+        var soloLectura = soloLecturaVista || soloLecturaBalanza;
         $form.find('#txtCantKgs').prop('readonly', soloLectura);
     }
 

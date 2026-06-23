@@ -7,10 +7,11 @@
     int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
     string tituloVentas = ViewBag.TituloVentas as string ?? "Mis ventas";
     string subtituloVentas = ViewBag.SubtituloVentas as string;
+    bool mostrarTotalMisVentas = ViewBag.MostrarTotalMisVentas == null || (bool)ViewBag.MostrarTotalMisVentas;
     ViewBag.ModoModalVentas = true;
 }
 
-<div class="egresos-pos">
+<div class="egresos-pos vista-venta mis-ventas-modal">
     @if (!string.IsNullOrWhiteSpace(mensaje))
     {
         <div class="alert alert-warning m-3">@mensaje</div>
@@ -18,13 +19,6 @@
     else
     {
         <div class="egresos-pos-toolbar">
-            <div class="mr-3">
-                <h5 class="mb-0">@tituloVentas</h5>
-                @if (!string.IsNullOrWhiteSpace(subtituloVentas))
-                {
-                    <small class="text-muted d-block mt-1">@subtituloVentas</small>
-                }
-            </div>
             <div class="d-flex flex-wrap align-items-center ml-auto">
                 <div class="form-group mr-3 mb-2 mb-md-0">
                     <input type="text" id="misVentasBuscarCliente" class="form-control form-control-sm" placeholder="Buscar cliente..." autocomplete="off" />
@@ -50,10 +44,13 @@
                     <span class="text-muted">Cant.</span>
                     <strong id="misVentasCantidad">@((Model ?? new List<Entidades.Venta>()).Count)</strong>
                 </div>
-                <div>
-                    <span class="text-muted">Total</span>
-                    <strong id="misVentasTotal">@total.ToString("C")</strong>
-                </div>
+                @if (mostrarTotalMisVentas)
+                {
+                    <div>
+                        <span class="text-muted">Total</span>
+                        <strong id="misVentasTotal">@total.ToString("C")</strong>
+                    </div>
+                }
             </div>
 
             <div class="card shadow-sm ventas-card w-100">
@@ -66,7 +63,33 @@
 </div>
 
 <style>
+    .mis-ventas-modal {
+        font-size: 0.875rem;
+    }
+
+    .egresos-pos .ventas-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .egresos-pos-toolbar h5 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .egresos-pos-toolbar .form-control,
+    .egresos-pos-toolbar .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .egresos-resumen {
+        font-size: 1rem;
+    }
+
     .venta-item-modal { cursor: pointer; }
+
     .venta-item {
         display: flex;
         justify-content: space-between;
@@ -74,10 +97,15 @@
         flex-wrap: wrap;
         padding: 10px 15px;
     }
+
     .venta-icono { flex: 0 0 auto; margin-right: 10px; }
+
     .venta-info { flex: 1 1 auto; min-width: 0; }
+
     .venta-tipo-persona { word-wrap: break-word; white-space: normal; }
+
     .venta-id { font-size: 0.8rem; color: #6c757d; }
+
     .venta-obs {
         font-size: 0.8rem;
         color: #4f5d75;
@@ -87,9 +115,21 @@
         text-overflow: ellipsis;
         max-width: 30rem;
     }
+
     .venta-total { text-align: right; flex: 0 0 auto; }
+
     .venta-total .importe { font-weight: bold; color: #28a745; }
+
     .venta-item:hover { background-color: #f8f9fc; }
+
+    .mis-ventas-modal.vista-venta {
+        width: 100%;
+        max-width: none;
+        margin: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     @@media (max-width: 576px) {
         .venta-tipo-persona {
             max-width: 17ch;

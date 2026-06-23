@@ -588,6 +588,7 @@ namespace Web.Controllers
             {
                 oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
                 RegistrarObservacionesPesajesVinculados(compra, model.PesajesVinculadosIds, user);
+                TempData["StockDraftKeyToClear"] = model.DraftKey ?? "";
                 TempData["StockSuccessMessage"] = model.IdCompra > 0
                     ? "El movimiento de stock se guardó correctamente."
                     : "El movimiento de stock se registró correctamente.";
@@ -1414,6 +1415,8 @@ namespace Web.Controllers
                         CantidadKgTexto = corte.CantKgs.ToString("N3"),
                         Signo = ObtenerSignoStock(compra.TipoCompra),
                         Observacion = corte.Balanza ? "Peso balanza" : "-",
+                        Balanza = corte.Balanza,
+                        CreadoTexto = FormatearFechaHora(corte.Creado),
                         CantidadKg = Convert.ToDecimal(corte.CantKgs)
                     })
                     .ToList();
@@ -1459,8 +1462,12 @@ namespace Web.Controllers
                     IdCompraVinculada = esPesaje ? idPesajeRelacionado : null,
                     FechaCompraVinculada = esPesaje && pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
                     ProveedorCompraVinculada = esPesaje && pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
-                    CantMediasCompraVinculada = esPesaje && pesajeRelacionado != null ? pesajeRelacionado.CantMedias : null,
-                    KgsCompraVinculada = esPesaje && pesajeRelacionado != null ? pesajeRelacionado.KgsMedias : null,
+                    CantMediasCompraVinculada = esPesaje && pesajeRelacionado != null
+                        ? (pesajeRelacionado.CantMedias.HasValue ? pesajeRelacionado.CantMedias : compra.CantMedias)
+                        : null,
+                    KgsCompraVinculada = esPesaje && pesajeRelacionado != null
+                        ? (pesajeRelacionado.KgsMedias.HasValue ? pesajeRelacionado.KgsMedias : compra.KgsMedias)
+                        : null,
                     EstadoCompraVinculada = esPesaje ? estadoPesajeRelacionado : "",
                     IdPesajeRelacionado = idPesajeRelacionado,
                     IdAjusteRelacionado = idAjusteRelacionado,
@@ -1539,8 +1546,8 @@ namespace Web.Controllers
             model.IdPesajeAjustado = compraVinculada.IdCompra;
             model.FechaCompraVinculada = compraVinculada.FechaCompra;
             model.ProveedorCompraVinculada = compraVinculada.Proveedor != null ? compraVinculada.Proveedor.RazonSocial : "";
-            model.CantMediasCompraVinculada = compraVinculada.CantMedias;
-            model.KgsCompraVinculada = compraVinculada.KgsMedias;
+            model.CantMediasCompraVinculada = compraVinculada.CantMedias.HasValue ? compraVinculada.CantMedias : compra.CantMedias;
+            model.KgsCompraVinculada = compraVinculada.KgsMedias.HasValue ? compraVinculada.KgsMedias : compra.KgsMedias;
             model.EstadoCompraVinculada = "";
         }
 

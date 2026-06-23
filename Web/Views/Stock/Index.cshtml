@@ -2,6 +2,7 @@
 @using System
 @using System.Collections.Generic
 @using System.Data
+@using System.Web
 
 @{
     ViewBag.Title = "Stock";
@@ -14,6 +15,7 @@
     DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today;
     float totalKg = ViewBag.TotalKg != null ? (float)ViewBag.TotalKg : 0f;
     string successMessage = TempData["StockSuccessMessage"] as string ?? "";
+    string stockDraftKeyToClear = TempData["StockDraftKeyToClear"] as string ?? "";
 }
 
 <div class="container-fluid stock-index-page">
@@ -212,6 +214,14 @@
 @section Scripts {
     <script>
         (function () {
+            var draftKeyToClear = "@Html.Raw(HttpUtility.JavaScriptStringEncode(stockDraftKeyToClear))";
+            if (draftKeyToClear && window.localStorage) {
+                try {
+                    window.localStorage.removeItem(draftKeyToClear);
+                } catch (e) {
+                }
+            }
+
             var storageKey = "stock_index_filters_v1";
             var form = document.querySelector('.stock-filtros-card form');
             var inputFechaDesde = document.getElementById('fechaDesde');

@@ -662,7 +662,8 @@ namespace Web.Controllers
                     imprimirUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
                     imprimirPayloadUrl = Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = oPagoE.Id }),
                     pdfUrl,
-                    whatsappTexto = "Recibo " + oPagoE.NroRecibo + " - " + pdfUrlAbsoluta
+                    emailConfigUrl = Url.Action("ObtenerDatosEmailPago", "Finanzas"),
+                    emailSendUrl = Url.Action("EnviarComprobantePagoEmail", "Finanzas")
                 });
             }
 
@@ -679,7 +680,8 @@ namespace Web.Controllers
                     imprimirUrl = Url.Action("ImprimirTicketPago", "Finanzas", new { id = oPagoE.Id }),
                     imprimirPayloadUrl = Url.Action("ImprimirTicketPagoPayload", "Finanzas", new { id = oPagoE.Id }),
                     pdfUrl,
-                    whatsappTexto = "Recibo " + oPagoE.NroRecibo + " - " + pdfUrlAbsoluta
+                    emailConfigUrl = Url.Action("ObtenerDatosEmailPago", "Finanzas"),
+                    emailSendUrl = Url.Action("EnviarComprobantePagoEmail", "Finanzas")
                 });
             }
 
@@ -734,6 +736,106 @@ namespace Web.Controllers
             string nroRecibo = string.IsNullOrWhiteSpace(model.Pago.NroRecibo) ? ("Pago_" + model.Pago.Id) : model.Pago.NroRecibo.Replace("/", "-");
             string fileName = "Recibo_" + nroRecibo + ".pdf";
             return File(bytes, "application/pdf", fileName);
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerDatosEmailPago(int id)
+        {
+            try
+            {
+                var model = ConstruirReciboPagoVm(id);
+                if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                    return Json(new { ok = false, msg = "Pago no encontrado." }, JsonRequestBehavior.AllowGet);
+
+                var empresaPago = model.Empresa;
+                string nombreEmpresa = empresaPago != null
+                    ? (!string.IsNullOrWhiteSpace(empresaPago.NombreFantasia) ? empresaPago.NombreFantasia : empresaPago.RazonSocialAfip)
+                    : "";
+                if (string.IsNullOrWhiteSpace(nombreEmpresa))
+                    nombreEmpresa = "CarniSys";
+
+                string tipoOperacion = model.TipoOperacion ?? "Recibo";
+                string nroRecibo = model.Pago.NroRecibo ?? ("#" + model.Pago.Id);
+                string emailDestino = model.Pago.Persona != null ? (model.Pago.Persona.Email ?? "").Trim() : "";
+                string asunto = tipoOperacion + " " + nroRecibo + " - " + nombreEmpresa;
+                string cuerpo =
+                    "Hola" + (model.Pago.Persona != null && !string.IsNullOrWhiteSpace(model.Pago.Persona.RazonSocial) ? " " + model.Pago.Persona.RazonSocial : "") + ",\n\n" +
+                    "Te enviamos adjunto el recibo " + nroRecibo + ".\n\n" +
+                    "Fecha: " + model.Pago.Fecha.ToString("dd/MM/yyyy HH:mm") + "\n" +
+                    "Importe: $" + Convert.ToDecimal(model.Pago.Importe).ToString("N2") + "\n\n" +
+                    "Saludos,\n" +
+                    nombreEmpresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = emailDestino,
+                    asunto = asunto,
+                    mensaje = cuerpo,
+                    empresa = nombreEmpresa,
+                    replyTo = empresaPago != null ? (empresaPago.Email ?? "") : ""
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult EnviarComprobantePagoEmail(int idPago, string emailDestino, string asunto, string mensaje)
+        {
+            try
+            {
+                var model = ConstruirReciboPagoVm(idPago);
+                if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                    return Json(new { ok = false, msg = "Pago no encontrado." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                byte[] pdfBytes = GenerarPdfPago(model);
+                string nroRecibo = string.IsNullOrWhiteSpace(model.Pago.NroRecibo) ? ("Pago_" + model.Pago.Id) : model.Pago.NroRecibo.Replace("/", "-");
+                string nombreAdjunto = "Recibo_" + nroRecibo + ".pdf";
+                string nombreEmpresa = model.Empresa != null
+                    ? (!string.IsNullOrWhiteSpace(model.Empresa.NombreFantasia) ? model.Empresa.NombreFantasia : model.Empresa.RazonSocialAfip)
+                    : "";
+                if (string.IsNullOrWhiteSpace(nombreEmpresa))
+                    nombreEmpresa = "CarniSys";
+
+                string fromName = "CarniSys - " + nombreEmpresa;
+                string replyToEmail = model.Empresa != null ? (model.Empresa.Email ?? "").Trim() : "";
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: model.Pago.Persona != null ? model.Pago.Persona.RazonSocial : "",
+                    subject: asunto,
+                    bodyHtml: ConvertirTextoAHtmlPago(mensaje),
+                    attachmentFileName: nombreAdjunto,
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    fromNameOverride: fromName,
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: nombreEmpresa
+                );
+
+                return Json(new { ok = true, msg = "El recibo se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
         }
 
         private Entidades.CierreCaja ObtenerCajaAbiertaUsuario(Entidades.Usuario user)
@@ -1129,6 +1231,19 @@ namespace Web.Controllers
                 HorizontalAlignment = Element.ALIGN_RIGHT,
                 Padding = 5
             };
+        }
+
+        private string ConvertirTextoAHtmlPago(string texto)
+        {
+            string safe = HttpUtility.HtmlEncode(texto ?? "");
+            safe = safe.Replace("\r\n", "\n").Replace("\r", "\n");
+            string cuerpoHtml = "<p>" + safe.Replace("\n\n", "</p><p>").Replace("\n", "<br />") + "</p>";
+            string pieHtml =
+                "<div style=\"margin-top:24px; padding-top:12px; border-top:1px solid #ddd; font-size:11px; color:#777; line-height:1.4;\">" +
+                "<p>CarniSys es un software de gestión comercial para pequeños y medianos comercios, diseñado para administrar ventas, stock y facturación, con integración a balanzas para agilizar la atención en productos pesables.</p>" +
+                "</div>";
+
+            return cuerpoHtml + pieHtml;
         }
 
 
