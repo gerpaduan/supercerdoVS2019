@@ -207,6 +207,7 @@
 
                             <th>Fecha</th>
                             <th>Operación</th>
+                            <th>Tipo</th>
                             <th>Nro.Doc</th>
                             <th>Detalle</th>
                             <th style="text-align:right;">Importe</th>
@@ -224,15 +225,25 @@
                             decimal importeFila = Convert.ToDecimal(row["Importe"]);
                             bool importePositivo = importeFila >= 0;
                             string claseColorOperacion = importePositivo ? "ctacte-color-positivo" : "ctacte-color-negativo";
+                            string tipoImporte = importePositivo ? "Crédito" : "Débito";
                             bool tieneMasVersiones = cantidadPorClave.ContainsKey(clave) && cantidadPorClave[clave] > 1;
                             bool esVersionActual = ultimoIdPorClave.ContainsKey(clave) && ultimoIdPorClave[clave] == id;
                             bool esHistorico = tieneMasVersiones && !esVersionActual;
                             bool esPago = string.Equals(Convert.ToString(row["Tabla"]), "Pagos", StringComparison.OrdinalIgnoreCase);
                             bool mostrarAdvertenciaAdmin = tieneMasVersiones && !esPago;
+                            string tablaMovimiento = Convert.ToString(row["Tabla"]);
+                            int idTablaMovimiento = 0;
+                            bool tieneOperacion = !string.IsNullOrWhiteSpace(tablaMovimiento)
+                                && int.TryParse(Convert.ToString(row["IdTabla"]), out idTablaMovimiento)
+                                && idTablaMovimiento > 0;
 
-                            <tr onclick="verMovimientoCtaCte('@row["Tabla"]', @row["IdTabla"])"
-                                class="@(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "")"
-                                style="cursor:pointer;">
+                            <tr
+                                @if (tieneOperacion)
+                                {
+                                    @:onclick="verMovimientoCtaCte('@tablaMovimiento', @idTablaMovimiento)"
+                                }
+                                class="@(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(!tieneOperacion ? "ctacte-row-sin-operacion" : "")"
+                                style="cursor:@(tieneOperacion ? "pointer" : "default");">
 
                                 <!-- ID oculto -->
                                 <td name="id" style="display:none;">@row["ID"]</td>
@@ -251,9 +262,16 @@
                                         <span class="badge badge-warning ml-1">Modificado</span>
                                     }
                                 </td>
+                                <td class="@claseColorOperacion" style="font-weight:bold;">
+                                    @tipoImporte
+                                </td>
                                 <td>@(tieneColumnaNroDoc ? Convert.ToString(row["NroDoc"]) : "")</td>
                                 <td>
                                     [ID: @row["IdTabla"]] @row["Detalle"]
+                                    @if (!tieneOperacion)
+                                    {
+                                        <div class="small text-muted mt-1">Sin operación asociada.</div>
+                                    }
                                     @if (esHistorico && esPago)
                                     {
                                         <div class="small text-muted mt-1">Registro anterior anulado por modificación.</div>
@@ -373,6 +391,10 @@
 
     #tablaPersona tr.ctacte-row-modificado:not(.ctacte-row-historico) {
         background-color: #fff8e1;
+    }
+
+    #tablaPersona tr.ctacte-row-sin-operacion {
+        cursor: default !important;
     }
 
     html.dark-mode #tablaPersona .ctacte-color-positivo,
