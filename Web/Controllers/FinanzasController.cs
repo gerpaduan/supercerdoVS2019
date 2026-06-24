@@ -18,6 +18,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using Web.Models;
+using System.Diagnostics;
+using Utilidades;
 
 namespace Web.Controllers
 {
@@ -97,9 +99,14 @@ namespace Web.Controllers
         {
             bool modoPos = desdePos || DesdePOS;
             bool renderParcial = modoPos || Request.IsAjaxRequest();
+            var swTotal = Stopwatch.StartNew();
+            long msPermiso = 0;
+            long msPreparacion = 0;
+            long msDatos = 0;
 
             try
             {
+                var swEtapa = Stopwatch.StartNew();
                 if (!modoPos)
                 {
                     var user = Session["Usuario"] as Entidades.Usuario;
@@ -109,7 +116,10 @@ namespace Web.Controllers
                         return View("~/Views/Shared/AccesoDenegado.cshtml");
                     }
                 }
+                swEtapa.Stop();
+                msPermiso = swEtapa.ElapsedMilliseconds;
 
+                swEtapa.Restart();
                 ordenSaldo = string.Equals(ordenSaldo, "ASC", StringComparison.OrdinalIgnoreCase)
                     ? "ASC"
                     : "DESC";
@@ -118,10 +128,28 @@ namespace Web.Controllers
                 ViewBag.DesdePOS = modoPos;
                 ViewBag.RenderSinLayout = renderParcial;
                 ViewBag.OrdenSaldo = ordenSaldo;
+                swEtapa.Stop();
+                msPreparacion = swEtapa.ElapsedMilliseconds;
 
                 // F2 puede traer muchas cuentas corrientes. Ordenar en SQL evita
                 // un paso extra caro en memoria sobre toda la tabla ya cargada.
+                swEtapa.Restart();
                 DataTable dt = oCtaCteN.obtenerCtasCtes(buscar, null, ordenSaldo);
+                swEtapa.Stop();
+                msDatos = swEtapa.ElapsedMilliseconds;
+
+                swTotal.Stop();
+                PerformanceInstrumentation.LogServerEvent(
+                    "Finanzas",
+                    "CtasCtes",
+                    swTotal.ElapsedMilliseconds,
+                    "permiso=" + msPermiso.ToString() + " ms"
+                        + " | preparar=" + msPreparacion.ToString() + " ms"
+                        + " | datos=" + msDatos.ToString() + " ms"
+                        + " | parcial=" + (renderParcial ? "true" : "false")
+                        + " | rows=" + (dt != null ? dt.Rows.Count.ToString() : "0"),
+                    null,
+                    Request != null ? Request.RawUrl : null);
 
                 if (renderParcial)
                     return PartialView("CtasCtes", dt);

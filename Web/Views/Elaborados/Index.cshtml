@@ -13,7 +13,9 @@
     string alertaPermisoFecha = ViewBag.AlertaPermisoFecha as string ?? "";
 }
 
-<div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="index">
+<div class="container-fluid px-2 px-md-3 elaborados-page"
+     data-elaborados-page="index"
+     data-detalle-url="@Url.Action("Detalle", "Elaborados")">
     @if (!string.IsNullOrWhiteSpace(successMessage))
     {
         <div id="elaboradosSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">

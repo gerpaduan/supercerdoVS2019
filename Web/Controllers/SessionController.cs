@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.SessionState;
+using Utilidades;
 
 namespace Web.Controllers
 {
@@ -21,6 +22,20 @@ namespace Web.Controllers
             }
 
             return new HttpStatusCodeResult(200);
+        }
+
+        [HttpPost]
+        public ActionResult ClientPerf(string categoria, string nombre, long? totalMs, string detalle, string reqId, string url)
+        {
+            PerformanceInstrumentation.LogClientEvent(
+                categoria,
+                nombre,
+                totalMs ?? 0,
+                detalle,
+                reqId,
+                url);
+
+            return new HttpStatusCodeResult(204);
         }
 
     }

@@ -2262,7 +2262,7 @@ else
             }
         }
 
-        function renderConScripts(html, selectorContenedor) {
+        function renderConScripts(html, selectorContenedor, onComplete) {
             var $contenedor = $(selectorContenedor);
             var $tmp = $("<div>").html(html);
             var scripts = [];
@@ -2292,7 +2292,12 @@ else
             }
 
             function ejecutarScript(index) {
-                if (index >= scripts.length) return;
+                if (index >= scripts.length) {
+                    if (typeof onComplete === "function") {
+                        onComplete();
+                    }
+                    return;
+                }
 
                 var item = scripts[index];
 
@@ -2327,6 +2332,36 @@ else
             }
 
             ejecutarScript(0);
+        }
+
+        function reportarPerfPos(payload) {
+            if (!payload) return;
+
+            var data = {
+                categoria: payload.categoria || "POS",
+                nombre: payload.nombre || "Modal",
+                totalMs: payload.totalMs || 0,
+                detalle: payload.detalle || "",
+                reqId: payload.reqId || "",
+                url: payload.url || ""
+            };
+
+            try {
+                if (navigator.sendBeacon) {
+                    var formData = new FormData();
+                    Object.keys(data).forEach(function (key) {
+                        formData.append(key, data[key]);
+                    });
+                    navigator.sendBeacon('@Url.Action("ClientPerf", "Session")', formData);
+                    return;
+                }
+            } catch (e) { }
+
+            $.ajax({
+                url: '@Url.Action("ClientPerf", "Session")',
+                type: "POST",
+                data: data
+            });
         }
 
         function enfocarBuscadorFinanzasPOS() {
@@ -2365,6 +2400,8 @@ else
                 var esDetalleVenta = !!url && url.indexOf("/Ventas/DetalleVenta") >= 0;
                 var esMisVentas = !!url && url.indexOf("/Ventas/MisVentas") >= 0;
                 var esMisActividades = !!url && url.indexOf("/Cajas/MisEgresosCaja") >= 0;
+                var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
+                var inicioTotal = performance.now();
 
                 $("#modalFinanzasPOS")
                     .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto modal-mis-actividades-pos-compacto")
@@ -2389,9 +2426,33 @@ else
                     url: url,
                     type: "GET",
                     cache: false,
-                    success: function (html) {
-                        renderConScripts(html, "#contenedorFinanzasPOS");
-                        enfocarBuscadorFinanzasPOS();
+                    success: function (html, textStatus, xhr) {
+                        var finAjax = performance.now();
+                        var inicioRender = finAjax;
+                        var reqId = xhr && typeof xhr.getResponseHeader === "function"
+                            ? (xhr.getResponseHeader("X-CarniSys-Request-Id") || "")
+                            : "";
+
+                        renderConScripts(html, "#contenedorFinanzasPOS", function () {
+                            var finRender = performance.now();
+                            reportarPerfPos({
+                                categoria: "POS",
+                                nombre: esCtasCtes
+                                    ? "F2-CtasCtes"
+                                    : (esMisActividades
+                                        ? "F6-MisActividades"
+                                        : (esMisVentas
+                                            ? "Ventas-MisVentas"
+                                            : (esDetalleVenta ? "Ventas-DetalleVenta" : "ModalFinanzas"))),
+                                totalMs: Math.round(finRender - inicioTotal),
+                                reqId: reqId,
+                                url: url,
+                                detalle: "ajax=" + Math.round(finAjax - inicioTotal) + " ms"
+                                    + " | render=" + Math.round(finRender - inicioRender) + " ms"
+                                    + " | html=" + (html ? html.length : 0)
+                            });
+                            enfocarBuscadorFinanzasPOS();
+                        });
                     },
                     error: function () {
                         mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
@@ -2491,7 +2552,11 @@ else
                     return;
                 }
 
-                $("#modalFinanzasPOS").toggleClass("modal-egreso-pos-compacto", compacto === true);
+                var esMisActividades = !!url && url.indexOf("/Cajas/MisEgresosCaja") >= 0;
+                $("#modalFinanzasPOS")
+                    .removeClass("modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto")
+                    .toggleClass("modal-egreso-pos-compacto", compacto === true)
+                    .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades);
                 $("#modalFinanzasPOSTitle").text(titulo || "Egresos de Caja");
                 $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
 

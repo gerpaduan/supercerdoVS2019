@@ -66,6 +66,55 @@ namespace Utilidades
             WriteLine(BuildRequestSummary(context, request, settings));
         }
 
+        public static void LogClientEvent(string category, string name, long elapsedMilliseconds, string details = null, string requestId = null, string url = null)
+        {
+            if (!IsEnabled())
+                return;
+
+            WriteCustomEvent("CLIENT", category, name, elapsedMilliseconds, details, requestId, url);
+        }
+
+        public static void LogServerEvent(string category, string name, long elapsedMilliseconds, string details = null, string requestId = null, string url = null)
+        {
+            if (!IsEnabled())
+                return;
+
+            WriteCustomEvent("SERVER", category, name, elapsedMilliseconds, details, requestId, url);
+        }
+
+        private static void WriteCustomEvent(string source, string category, string name, long elapsedMilliseconds, string details, string requestId, string url)
+        {
+            var sb = new StringBuilder();
+            sb.AppendFormat(
+                CultureInfo.InvariantCulture,
+                "{0:yyyy-MM-dd HH:mm:ss.fff} | {1} | {2}/{3} | total={4} ms",
+                DateTime.Now,
+                string.IsNullOrWhiteSpace(source) ? "-" : source,
+                string.IsNullOrWhiteSpace(category) ? "-" : category,
+                string.IsNullOrWhiteSpace(name) ? "-" : name,
+                elapsedMilliseconds);
+
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                sb.Append(" | ");
+                sb.Append(url);
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestId))
+            {
+                sb.Append(" | reqId=");
+                sb.Append(requestId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(details))
+            {
+                sb.Append(" | ");
+                sb.Append(details);
+            }
+
+            WriteLine(sb.ToString());
+        }
+
         public static T MeasureDb<T>(
             string sqlOrSp,
             System.Data.CommandType commandType,

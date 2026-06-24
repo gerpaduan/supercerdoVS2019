@@ -388,6 +388,11 @@ namespace Negocio
             return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
+        public HashSet<int> ObtenerIdsEmbutidosIngresoRapido(IEnumerable<int> idsEmbutidos)
+        {
+            return oCorteD.ObtenerIdsEmbutidosIngresoRapido(idsEmbutidos);
+        }
+
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
              
@@ -561,6 +566,11 @@ namespace Negocio
          {
              
              return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
+         }
+
+         public Dictionary<int, Tuple<decimal, decimal>> ObtenerTotalesPorMovimiento(IEnumerable<int> idsMovimiento)
+         {
+             return oCorteD.ObtenerTotalesPorMovimiento(idsMovimiento);
          }
 
          public void reiniciarStockReal(int idSucursal)

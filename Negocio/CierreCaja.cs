@@ -37,32 +37,22 @@ namespace Negocio
             {
                 Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
                 Entidades.Sucursal oSucursalE = oSucursalD.findById(Convert.ToInt32(dtCierreCaja.Rows[0]["idSucursal"]));
-                
-                Negocio.Usuario oUsuarioN = new Negocio.Usuario(_empresa);
-                List<Entidades.Usuario> listUsers = oUsuarioN.convertDatatableToList();
 
                 foreach (DataRow drCierreCaja in dtCierreCaja.Rows)
                 {
                     oCierreE = new Entidades.CierreCaja();
                     oCierreE.Id = Convert.ToInt32(drCierreCaja["id"]);
                     oCierreE.Sucursal = oSucursalE;
-                    oCierreE.UsuarioCierre = new Entidades.Usuario();
-                    foreach (Entidades.Usuario user in listUsers)
+                    oCierreE.UsuarioInicio = new Entidades.Usuario
                     {
-                        if (Convert.ToInt32(drCierreCaja["usuarioInicio"]).Equals(user.Id))
-                        {
-                            oCierreE.UsuarioInicio = user;
-                            break;
-                        }
-                    }
-                    foreach (Entidades.Usuario user in listUsers)
+                        Id = Convert.ToInt32(drCierreCaja["usuarioInicio"]),
+                        Nombre = ObtenerValorString(drCierreCaja, "vendedor", ObtenerValorString(drCierreCaja, "Iniciada_Por"))
+                    };
+                    oCierreE.UsuarioCierre = new Entidades.Usuario
                     {
-                        if (Convert.ToInt32(drCierreCaja["usuarioCierre"]).Equals(user.Id))
-                        {
-                            oCierreE.UsuarioCierre = user;
-                            break;
-                        }
-                    }
+                        Id = ObtenerValorInt(drCierreCaja, "usuarioCierre"),
+                        Nombre = ObtenerValorString(drCierreCaja, "Cerrada_Por")
+                    };
                     oCierreE.FechaHoraInicio = Convert.ToDateTime(drCierreCaja["fechaHoraInicio"]);
                     oCierreE.FechaHoraCierre = string.IsNullOrEmpty(drCierreCaja["fechaHoraCierre"].ToString()) ? (DateTime?)null : Convert.ToDateTime(drCierreCaja["fechaHoraCierre"].ToString());
                     oCierreE.CajaInicio = string.IsNullOrEmpty(drCierreCaja["cajaInicio"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaInicio"].ToString());
@@ -77,6 +67,22 @@ namespace Negocio
                 }
             }
             return listCierreCaja;
+        }
+
+        private static int ObtenerValorInt(DataRow row, string columna, int valorDefault = 0)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return valorDefault;
+
+            return Convert.ToInt32(row[columna]);
+        }
+
+        private static string ObtenerValorString(DataRow row, string columna, string valorDefault = "")
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return valorDefault;
+
+            return Convert.ToString(row[columna]);
         }
 
         public DataTable findCierreCaja(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto, DateTime? fechaDesde)

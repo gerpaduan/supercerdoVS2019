@@ -39,6 +39,35 @@
         }
     }
 
+    function ensureDetalleElaboradoLoaded(detalle) {
+        var container = detalle ? detalle.querySelector('.js-elaborado-detalle-container') : null;
+        if (!container || container.getAttribute('data-loaded') === 'true') return;
+
+        var id = container.getAttribute('data-elaborado-id');
+        var root = document.querySelector('[data-elaborados-page="index"]');
+        var baseUrl = root ? root.getAttribute('data-detalle-url') : '';
+        if (!id || !baseUrl) {
+            container.textContent = 'No se pudieron cargar los detalles del elaborado.';
+            container.setAttribute('data-loaded', 'error');
+            return;
+        }
+
+        container.textContent = 'Cargando detalles...';
+
+        $.ajax({
+            url: baseUrl,
+            type: 'GET',
+            cache: false,
+            data: { id: id }
+        }).done(function (html) {
+            container.innerHTML = html;
+            container.setAttribute('data-loaded', 'true');
+        }).fail(function () {
+            container.textContent = 'No se pudieron cargar los detalles del elaborado.';
+            container.setAttribute('data-loaded', 'error');
+        });
+    }
+
     function filtrarElaborados() {
         var $page = $('[data-elaborados-page="index"]');
         if (!$page.length) return;
@@ -133,6 +162,9 @@
             if (!detalle) return;
 
             var expanded = detalle.classList.contains('show');
+            if (!expanded) {
+                ensureDetalleElaboradoLoaded(detalle);
+            }
             $(detalle).collapse(expanded ? 'hide' : 'show');
             syncIcon(btn, !expanded);
         });
@@ -141,6 +173,9 @@
             var expandir = switchVista.checked;
             document.querySelectorAll('.elaborado-detalle-collapse').forEach(function (detalle) {
                 if ($(detalle).closest('.js-elaborado-detail-row').hasClass('d-none')) return;
+                if (expandir) {
+                    ensureDetalleElaboradoLoaded(detalle);
+                }
                 $(detalle).collapse(expandir ? 'show' : 'hide');
                 var btn = document.querySelector('.btn-detalles-elaborado[data-target="#' + detalle.id + '"]');
                 syncIcon(btn, expandir);

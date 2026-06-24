@@ -159,7 +159,7 @@ namespace Web.Controllers
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
             ViewBag.MostrarResumenMisActividades = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.Consulta);
             ViewBag.ModoActividades = desdePos;
-            CargarPermisosEdicionEgresos(dt, desdePos);
+            CargarPermisosEdicionEgresos(dt, desdePos, cierre);
 
             return PartialView("~/Views/Cajas/_MisEgresosCaja.cshtml", dt);
         }
@@ -1134,6 +1134,19 @@ namespace Web.Controllers
                 .GroupBy(x => x.Id)
                 .ToDictionary(g => g.Key, g => g.First());
 
+            bool puedeEditarEnPos = false;
+            if (desdePos)
+            {
+                var cierrePos = cierreContexto ?? ObtenerCajaAbiertaUsuario(user);
+                puedeEditarEnPos = cierrePos != null &&
+                                   cierrePos.Id > 0 &&
+                                   cierrePos.Sucursal != null &&
+                                   cierrePos.Sucursal.idSucursal > 0 &&
+                                   CajaSigueAbierta(cierrePos) &&
+                                   user.IdSucursal > 0 &&
+                                   user.IdSucursal == cierrePos.Sucursal.idSucursal;
+            }
+
             foreach (DataRow row in dt.Rows)
             {
                 int id = ValorInt(row, "id");
@@ -1153,7 +1166,29 @@ namespace Web.Controllers
                 if (esPagoCobro)
                     pagosModificables[id] = egreso.IdTabla.Value;
 
-                var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egreso, desdePos, empresa, oCierreN.validarCajaAbiertaVendedor);
+                if (desdePos)
+                {
+                    if (!puedeEditarEnPos)
+                        continue;
+
+                    if (EgresosCajaPolicy.EsCompra(egreso) ||
+                        EgresosCajaPolicy.EsPagoElectronico(egreso) ||
+                        EgresosCajaPolicy.EsCuentaCorriente(egreso))
+                    {
+                        continue;
+                    }
+
+                    if ((cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
+                        egreso.Sucursal != null &&
+                        egreso.Sucursal.idSucursal == user.IdSucursal)
+                    {
+                        idsModificables.Add(id);
+                    }
+
+                    continue;
+                }
+
+                var validacion = EgresosCajaPolicy.EvaluarModificacion(user, egreso, false, empresa, oCierreN.validarCajaAbiertaVendedor);
                 if (validacion.PuedeModificar && (cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)))
                     idsModificables.Add(id);
             }

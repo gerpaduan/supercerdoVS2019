@@ -15,6 +15,8 @@ using AFIP;
 using static Entidades.Venta;
 using System.IO;
 using System.Data;
+using System.Diagnostics;
+using Utilidades;
 
 namespace Web.Controllers
 {
@@ -290,36 +292,97 @@ namespace Web.Controllers
         // GET: Ventas/DetalleVenta/5
         public ActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "")
         {
-            // Buscar la venta por ID
-            var venta = oVentaN.getVentaById(id);
-            //_context.Ventas
-            //    .Include("Persona")
-            //    .Include("Vendedor")
-            //    .Include("Lineas.Producto")
-            //    .FirstOrDefault(v => v.IdVenta == id);
+            var swTotal = Stopwatch.StartNew();
+            long msCargaVenta = 0;
+            long msPreparacion = 0;
+            int cantLineas = 0;
+            Entidades.Venta venta = null;
 
-            if (venta == null)
+            try
             {
-                return HttpNotFound();
+                var swEtapa = Stopwatch.StartNew();
+
+                // Buscar la venta por ID
+                venta = oVentaN.getVentaById(id);
+                //_context.Ventas
+                //    .Include("Persona")
+                //    .Include("Vendedor")
+                //    .Include("Lineas.Producto")
+                //    .FirstOrDefault(v => v.IdVenta == id);
+                swEtapa.Stop();
+                msCargaVenta = swEtapa.ElapsedMilliseconds;
+
+                if (venta == null)
+                {
+                    swTotal.Stop();
+                    PerformanceInstrumentation.LogServerEvent(
+                        "Ventas",
+                        "DetalleVenta",
+                        swTotal.ElapsedMilliseconds,
+                        "modal=" + (modal ? "true" : "false")
+                            + " | desdePos=" + (desdePos ? "true" : "false")
+                            + " | cargaVenta=" + msCargaVenta.ToString() + " ms"
+                            + " | notFound=true"
+                            + " | idVenta=" + id.ToString(),
+                        null,
+                        Request != null ? Request.RawUrl : null);
+
+                    return HttpNotFound();
+                }
+
+                swEtapa.Restart();
+                ViewBag.ModoModal = modal;
+                ViewBag.DesdePOS = desdePos;
+                ViewBag.IdCierreActividad = idCierre;
+                ViewBag.ReturnUrlDetalle = DecodeReturnUrlIfNeeded(returnUrl);
+                ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta);
+                ViewBag.MotivoNoPuedeModificarVenta = ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta);
+                ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
+                ViewBag.MotivoNoPuedeCambiarFormaPago = ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
+                ViewBag.TieneFacturaVenta = oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
+                ViewBag.IdNotaCreditoVenta = oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
+                ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
+                swEtapa.Stop();
+                msPreparacion = swEtapa.ElapsedMilliseconds;
+
+                cantLineas = venta.LineasVenta != null ? venta.LineasVenta.Count : 0;
+                swTotal.Stop();
+                PerformanceInstrumentation.LogServerEvent(
+                    "Ventas",
+                    "DetalleVenta",
+                    swTotal.ElapsedMilliseconds,
+                    "modal=" + (modal ? "true" : "false")
+                        + " | desdePos=" + (desdePos ? "true" : "false")
+                        + " | cargaVenta=" + msCargaVenta.ToString() + " ms"
+                        + " | preparar=" + msPreparacion.ToString() + " ms"
+                        + " | lineas=" + cantLineas.ToString()
+                        + " | idVenta=" + venta.IdVenta.ToString(),
+                    null,
+                    Request != null ? Request.RawUrl : null);
+
+                // Pasar la venta a la vista
+                if (modal)
+                    return PartialView(venta);
+
+                return View(venta);
             }
-
-            ViewBag.ModoModal = modal;
-            ViewBag.DesdePOS = desdePos;
-            ViewBag.IdCierreActividad = idCierre;
-            ViewBag.ReturnUrlDetalle = DecodeReturnUrlIfNeeded(returnUrl);
-            ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta);
-            ViewBag.MotivoNoPuedeModificarVenta = ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta);
-            ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
-            ViewBag.MotivoNoPuedeCambiarFormaPago = ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
-            ViewBag.TieneFacturaVenta = oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
-            ViewBag.IdNotaCreditoVenta = oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
-            ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
-
-            // Pasar la venta a la vista
-            if (modal)
-                return PartialView(venta);
-
-            return View(venta);
+            catch
+            {
+                swTotal.Stop();
+                PerformanceInstrumentation.LogServerEvent(
+                    "Ventas",
+                    "DetalleVentaError",
+                    swTotal.ElapsedMilliseconds,
+                    "modal=" + (modal ? "true" : "false")
+                        + " | desdePos=" + (desdePos ? "true" : "false")
+                        + " | cargaVenta=" + msCargaVenta.ToString() + " ms"
+                        + " | preparar=" + msPreparacion.ToString() + " ms"
+                        + " | lineas=" + cantLineas.ToString()
+                        + " | idVenta=" + id.ToString(),
+                    null,
+                    Request != null ? Request.RawUrl : null);
+                throw;
+            }
         }
 
         public ActionResult DetalleFactura(int id, string returnUrl = "")

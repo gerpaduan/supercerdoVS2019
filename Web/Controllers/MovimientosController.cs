@@ -461,19 +461,34 @@ namespace Web.Controllers
             if (dt == null)
                 return lista;
 
-            foreach (DataRow row in dt.Rows)
+            var filas = dt.Rows.Cast<DataRow>().ToList();
+            var idsConTotalesFaltantes = filas
+                .Select(row => new
+                {
+                    IdMovimiento = ToInt(row, "Id Movimiento", "idMovimiento", "movimiento"),
+                    TotalUnidad = ObtenerDecimalFila(row, "totalUnidad", "cantUnidad", "Cant Prod.", "cantProd", "kgCorte"),
+                    TotalKilos = ObtenerDecimalFila(row, "totalKilos", "cantKg", "cantKgs", "kg", "kgCorte")
+                })
+                .Where(x => x.IdMovimiento > 0 && (x.TotalUnidad == 0m || x.TotalKilos == 0m))
+                .Select(x => x.IdMovimiento)
+                .Distinct()
+                .ToList();
+
+            var totalesPorMovimiento = oCorteN.ObtenerTotalesPorMovimiento(idsConTotalesFaltantes);
+
+            foreach (DataRow row in filas)
             {
                 int idMovimiento = ToInt(row, "Id Movimiento", "idMovimiento", "movimiento");
                 decimal totalUnidad = ObtenerDecimalFila(row, "totalUnidad", "cantUnidad", "Cant Prod.", "cantProd", "kgCorte");
                 decimal totalKilos = ObtenerDecimalFila(row, "totalKilos", "cantKg", "cantKgs", "kg", "kgCorte");
 
-                if (idMovimiento > 0 && (totalUnidad == 0m || totalKilos == 0m))
+                if (idMovimiento > 0 && (totalUnidad == 0m || totalKilos == 0m) && totalesPorMovimiento.ContainsKey(idMovimiento))
                 {
-                    var lineas = oCorteN.cargarCortesPorMovimiento(idMovimiento, false) ?? new List<Entidades.CortePorMovimiento>();
+                    var totales = totalesPorMovimiento[idMovimiento];
                     if (totalUnidad == 0m)
-                        totalUnidad = lineas.Sum(x => Convert.ToDecimal(x.CantUnidad));
+                        totalUnidad = totales.Item1;
                     if (totalKilos == 0m)
-                        totalKilos = lineas.Sum(x => Convert.ToDecimal(x.CantKg));
+                        totalKilos = totales.Item2;
                 }
 
                 string observaciones = ToString(row, "observaciones", "Observaciones", "obs");

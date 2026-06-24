@@ -700,6 +700,42 @@ namespace Datos
             );
         }
 
+        public HashSet<int> ObtenerIdsEmbutidosIngresoRapido(IEnumerable<int> idsEmbutidos)
+        {
+            var ids = (idsEmbutidos ?? Enumerable.Empty<int>())
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            if (!ids.Any())
+                return new HashSet<int>();
+
+            const int tamanoLote = 500;
+            var resultado = new HashSet<int>();
+
+            for (int i = 0; i < ids.Count; i += tamanoLote)
+            {
+                var lote = ids.Skip(i).Take(tamanoLote).ToList();
+                string sql = @"
+                    SELECT E.idEmbutido
+                    FROM dbo.Embutidos E
+                    INNER JOIN dbo.Corte C ON C.idCorte = E.idCorte
+                    WHERE C.ingresoRapidoEmbutido = 1
+                      AND E.idEmbutido IN (" + string.Join(",", lote) + ")";
+
+                foreach (var id in Db.Reader(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    dr => Convert.ToInt32(dr["idEmbutido"])))
+                {
+                    resultado.Add(id);
+                }
+            }
+
+            return resultado;
+        }
+
         public DataTable obtenerInfoCorte(int idCorte)
         {
             return Db.DataTable(
@@ -1333,6 +1369,48 @@ namespace Datos
                     p.AddWithValue("@acumulado", acumulado);
                 }
             );
+        }
+
+        public Dictionary<int, Tuple<decimal, decimal>> ObtenerTotalesPorMovimiento(IEnumerable<int> idsMovimiento)
+        {
+            var ids = (idsMovimiento ?? Enumerable.Empty<int>())
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            var resultado = new Dictionary<int, Tuple<decimal, decimal>>();
+            if (!ids.Any())
+                return resultado;
+
+            const int tamanoLote = 500;
+
+            for (int i = 0; i < ids.Count; i += tamanoLote)
+            {
+                var lote = ids.Skip(i).Take(tamanoLote).ToList();
+                string sql = @"
+                    SELECT CPM.idMovimientos AS idMovimiento,
+                           SUM(ISNULL(CPM.cantUnidad, 0)) AS totalUnidad,
+                           SUM(ISNULL(CPM.cantKg, 0)) AS totalKilos
+                    FROM dbo.CortePorMovimiento CPM
+                    WHERE CPM.idMovimientos IN (" + string.Join(",", lote) + @")
+                    GROUP BY CPM.idMovimientos";
+
+                foreach (var item in Db.Reader(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    dr => new
+                    {
+                        IdMovimiento = Convert.ToInt32(dr["idMovimiento"]),
+                        TotalUnidad = dr["totalUnidad"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["totalUnidad"]),
+                        TotalKilos = dr["totalKilos"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["totalKilos"])
+                    }))
+                {
+                    resultado[item.IdMovimiento] = Tuple.Create(item.TotalUnidad, item.TotalKilos);
+                }
+            }
+
+            return resultado;
         }
 
         public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)

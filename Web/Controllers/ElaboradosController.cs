@@ -61,7 +61,6 @@ namespace Web.Controllers
                 FechaDesde = desde,
                 FechaHasta = hasta,
                 Items = MapElaborados(dt),
-                Detalles = ConstruirDetallesElaborados(dt),
                 Tabs = BuildTabs("Index")
             };
 
@@ -76,6 +75,23 @@ namespace Web.Controllers
             ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Elaborados/Index.cshtml", model);
+        }
+
+        [HttpGet]
+        public ActionResult Detalle(int id = 0)
+        {
+            var user = Session["Usuario"] as Usuario;
+            if (user == null)
+                return new HttpStatusCodeResult(401, "Sesión inválida.");
+
+            if (id <= 0)
+                return HttpNotFound("No se encontró el elaborado.");
+
+            var detalle = ConstruirDetalleElaborado(id);
+            if (detalle == null)
+                return HttpNotFound("No se encontraron los detalles del elaborado.");
+
+            return PartialView("~/Views/Elaborados/_DetalleElaborado.cshtml", detalle);
         }
 
         public ActionResult Lineas(int? idSucursal = null, string descripcion = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
@@ -1016,57 +1032,46 @@ namespace Web.Controllers
             return lista.OrderBy(x => x.Codigo).ToList();
         }
 
-        private Dictionary<int, ElaboradoDetalleVm> ConstruirDetallesElaborados(DataTable dt)
+        private ElaboradoDetalleVm ConstruirDetalleElaborado(int idEmbutido)
         {
-            var detalles = new Dictionary<int, ElaboradoDetalleVm>();
-            if (dt == null)
-                return detalles;
+            var embutido = oCorteN.findEmbutidoById(idEmbutido);
+            if (embutido == null || embutido.IdEmbutido <= 0)
+                return null;
 
-            foreach (DataRow row in dt.Rows)
+            var formula = oCorteN.findFormulaByID(0, embutido.Corte != null ? embutido.Corte.IdCorte : 0);
+            var detalle = new ElaboradoDetalleVm
             {
-                int idEmbutido = ToInt(row, "Id", "idEmbutido");
-                if (idEmbutido <= 0 || detalles.ContainsKey(idEmbutido))
+                Id = embutido.IdEmbutido,
+                Fecha = embutido.FechaEmbutido,
+                Sucursal = embutido.Sucursal != null ? embutido.Sucursal.SucursalNombre : "",
+                Codigo = embutido.Corte != null ? embutido.Corte.Codigo : 0,
+                Elaborado = embutido.Corte != null ? embutido.Corte.CorteDesc : "",
+                Kgs = embutido.CortesEnEmbutido != null ? embutido.CortesEnEmbutido.Sum(x => x != null ? x.KgUtilizado : 0f) : 0f,
+                Observaciones = embutido.Observaciones ?? "",
+                Estado = embutido.Estado ?? "",
+                Receta = formula != null ? (formula.Receta ?? "") : "",
+                UsuarioCreacion = embutido.CreadoPor != null ? embutido.CreadoPor.Nombre : "",
+                FechaCreacion = embutido.Creado,
+                UsuarioActualizacion = embutido.ActualizadoPor != null ? embutido.ActualizadoPor.Nombre : "",
+                FechaActualizacion = embutido.Actualizado,
+                EsIngresoRapido = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
+            };
+
+            foreach (var linea in embutido.CortesEnEmbutido ?? new List<Entidades.CortePorEmbutido>())
+            {
+                if (linea == null || linea.Corte == null)
                     continue;
 
-                var embutido = oCorteN.findEmbutidoById(idEmbutido);
-                if (embutido == null || embutido.IdEmbutido <= 0)
-                    continue;
-
-                var formula = oCorteN.findFormulaByID(0, embutido.Corte != null ? embutido.Corte.IdCorte : 0);
-                detalles[idEmbutido] = new ElaboradoDetalleVm
+                detalle.IngredientesUtilizados.Add(new ElaboradoDetalleLineaVm
                 {
-                    Id = embutido.IdEmbutido,
-                    Fecha = embutido.FechaEmbutido,
-                    Sucursal = embutido.Sucursal != null ? embutido.Sucursal.SucursalNombre : "",
-                    Codigo = embutido.Corte != null ? embutido.Corte.Codigo : 0,
-                    Elaborado = embutido.Corte != null ? embutido.Corte.CorteDesc : "",
-                    Kgs = ToFloat(row, "Kgs", "kgs"),
-                    Observaciones = embutido.Observaciones ?? "",
-                    Estado = embutido.Estado ?? "",
-                    Receta = formula != null ? (formula.Receta ?? "") : "",
-                    UsuarioCreacion = embutido.CreadoPor != null ? embutido.CreadoPor.Nombre : "",
-                    FechaCreacion = embutido.Creado,
-                    UsuarioActualizacion = embutido.ActualizadoPor != null ? embutido.ActualizadoPor.Nombre : "",
-                    FechaActualizacion = embutido.Actualizado,
-                    EsIngresoRapido = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
-                };
-
-                foreach (var linea in embutido.CortesEnEmbutido ?? new List<Entidades.CortePorEmbutido>())
-                {
-                    if (linea == null || linea.Corte == null)
-                        continue;
-
-                    detalles[idEmbutido].IngredientesUtilizados.Add(new ElaboradoDetalleLineaVm
-                    {
-                        Codigo = linea.Corte.Codigo,
-                        Producto = !string.IsNullOrWhiteSpace(linea.Corte.CorteDesc) ? linea.Corte.CorteDesc : linea.Corte.corte,
-                        Kgs = linea.KgUtilizado,
-                        PesoBalanza = linea.PesoBalanza
-                    });
-                }
+                    Codigo = linea.Corte.Codigo,
+                    Producto = !string.IsNullOrWhiteSpace(linea.Corte.CorteDesc) ? linea.Corte.CorteDesc : linea.Corte.corte,
+                    Kgs = linea.KgUtilizado,
+                    PesoBalanza = linea.PesoBalanza
+                });
             }
 
-            return detalles;
+            return detalle;
         }
 
         private Dictionary<int, ElaboradoFormulaDetalleVm> ConstruirDetallesFormulas(DataTable dt)
@@ -1398,38 +1403,23 @@ namespace Web.Controllers
 
         private void MarcarTiposElaborado(List<ElaboradoResumenVm> items)
         {
-            var cache = new Dictionary<int, Entidades.Embutido>();
+            var idsIngresoRapido = oCorteN.ObtenerIdsEmbutidosIngresoRapido((items ?? new List<ElaboradoResumenVm>()).Select(x => x.Id));
             foreach (var item in items ?? new List<ElaboradoResumenVm>())
             {
-                var embutido = ObtenerEmbutidoCacheado(item.Id, cache);
-                item.EsIngresoRapido = embutido != null && embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido;
+                item.EsIngresoRapido = idsIngresoRapido.Contains(item.Id);
             }
         }
 
         private void MarcarTiposLineas(List<ElaboradoLineaResumenVm> items)
         {
-            var cache = new Dictionary<int, Entidades.Embutido>();
+            var idsIngresoRapido = oCorteN.ObtenerIdsEmbutidosIngresoRapido((items ?? new List<ElaboradoLineaResumenVm>()).Select(x => x.Id));
             foreach (var item in items ?? new List<ElaboradoLineaResumenVm>())
             {
-                var embutido = ObtenerEmbutidoCacheado(item.Id, cache);
-                item.EsIngresoRapido = embutido != null && embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido;
+                item.EsIngresoRapido = idsIngresoRapido.Contains(item.Id);
                 item.EsDesarme = !string.IsNullOrWhiteSpace(item.Observaciones)
                     && item.Observaciones.IndexOf("desarme", StringComparison.OrdinalIgnoreCase) >= 0
                     && item.Kgs < 0;
             }
-        }
-
-        private Entidades.Embutido ObtenerEmbutidoCacheado(int idEmbutido, Dictionary<int, Entidades.Embutido> cache)
-        {
-            if (idEmbutido <= 0)
-                return null;
-
-            if (cache.ContainsKey(idEmbutido))
-                return cache[idEmbutido];
-
-            var embutido = oCorteN.findEmbutidoById(idEmbutido);
-            cache[idEmbutido] = embutido;
-            return embutido;
         }
 
         private float CalcularCantidadIngresoRapido(List<ElaboradoFormulaLineaVm> formula, List<Entidades.CortePorEmbutido> lineas)
