@@ -8,10 +8,12 @@ using System.Text;
 using Web.Helpers;
 using Utilidades;
 using System.Linq;
+using System.Web.SessionState;
 using Web.Models;
 
 namespace Web.Controllers
 {
+    [SessionState(SessionStateBehavior.ReadOnly)]
     public class CajasController : BaseController
     {
         Negocio.CierreCaja oCierreN;
@@ -853,7 +855,7 @@ namespace Web.Controllers
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             ViewBag.Sucursales = oSucursalN.findAll();
-            ViewBag.Usuarios = oUsuarioN.obtenerUsuariosConTodos(true);
+            ViewBag.Usuarios = ObtenerUsuariosFiltroEgresos();
             ViewBag.TiposEgresoCaja = oCierreN.obtenerTiposEgresoCaja("", 0);
             ViewBag.IdSucursal = idSucursal;
             ViewBag.IdUsuario = idUsuario;
@@ -1119,13 +1121,29 @@ namespace Web.Controllers
                 return;
             }
 
+            var ids = new List<int>();
+            foreach (DataRow row in dt.Rows)
+            {
+                int id = ValorInt(row, "id");
+                if (id > 0)
+                    ids.Add(id);
+            }
+
+            var egresosPorId = oCierreN.getEgresosCajaByIds(ids)
+                .Where(x => x != null && x.Id > 0)
+                .GroupBy(x => x.Id)
+                .ToDictionary(g => g.Key, g => g.First());
+
             foreach (DataRow row in dt.Rows)
             {
                 int id = ValorInt(row, "id");
                 if (id <= 0)
                     continue;
 
-                var egreso = oCierreN.getEgresoCajaById(id);
+                Entidades.EgresoCaja egreso;
+                if (!egresosPorId.TryGetValue(id, out egreso))
+                    continue;
+
                 bool esPagoCobro = egreso != null &&
                                    egreso.Id > 0 &&
                                    string.Equals(egreso.Tabla, Entidades.EgresoCaja.tablas.Pagos.ToString(), StringComparison.OrdinalIgnoreCase) &&
@@ -1142,6 +1160,23 @@ namespace Web.Controllers
 
             ViewBag.IdsEgresosModificables = idsModificables;
             ViewBag.PagosModificables = pagosModificables;
+        }
+
+        private DataTable ObtenerUsuariosFiltroEgresos()
+        {
+            var oUsuarioD = new Datos.Usuario(empresa);
+            var dtUsuarios = oUsuarioD.obtenerUsuarios(true);
+
+            if (dtUsuarios != null && dtUsuarios.Columns.Contains("id") && dtUsuarios.Columns.Contains("nombre"))
+            {
+                DataRow drTodos = dtUsuarios.NewRow();
+                drTodos["id"] = -1;
+                drTodos["nombre"] = "Todos";
+                dtUsuarios.Rows.Add(drTodos);
+                dtUsuarios.DefaultView.Sort = "id";
+            }
+
+            return dtUsuarios;
         }
 
         private bool CajaSigueAbierta(CierreCaja cierre)

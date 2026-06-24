@@ -90,6 +90,28 @@ namespace Datos
             );
         }
 
+        public List<Entidades.Corte> findAllCortesListado()
+        {
+            const string sql = @"
+                SELECT
+                    c.*,
+                    m.idPersona AS MarcaIdPersona,
+                    m.razonSocial AS MarcaNombreJoin,
+                    cm.idCorte AS CorteMaestroIdJoin,
+                    cm.corte AS CorteMaestroNombreJoin
+                FROM dbo.Corte c
+                LEFT JOIN dbo.Personas m ON c.idMarca = m.idPersona
+                LEFT JOIN dbo.Corte cm ON c.idCorteMaestro = cm.idCorte
+                ORDER BY c.codigo ASC";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => MapCorteListado(dr)
+            );
+        }
+
         public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
         {
             var lista = Db.Reader(
@@ -138,6 +160,83 @@ namespace Datos
                 dr => MapCorte(dr, buscarMaestro),
                 p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa
             );
+        }
+
+        public List<Entidades.Corte> ObtenerCortesPorEmpresaListado(int idEmpresa)
+        {
+            const string sql = @"
+                SELECT
+                    c.*,
+                    m.idPersona AS MarcaIdPersona,
+                    m.razonSocial AS MarcaNombreJoin,
+                    cm.idCorte AS CorteMaestroIdJoin,
+                    cm.corte AS CorteMaestroNombreJoin
+                FROM dbo.Corte c
+                LEFT JOIN dbo.Personas m ON c.idMarca = m.idPersona
+                LEFT JOIN dbo.Corte cm ON c.idCorteMaestro = cm.idCorte
+                WHERE c.idEmpresa = @idEmpresa
+                ORDER BY c.codigo ASC";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => MapCorteListado(dr),
+                p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa
+            );
+        }
+
+        private Entidades.Corte MapCorteListado(SqlDataReader drCorte)
+        {
+            var oCorteE = new Entidades.Corte
+            {
+                IdCorte = Convert.ToInt32(drCorte["idCorte"]),
+                Codigo = Convert.ToInt64(drCorte["codigo"]),
+                CorteDesc = Convert.ToString(drCorte["corte"]),
+                Tipo = Convert.ToString(drCorte["tipo"]),
+                Promedio = float.Parse(drCorte["promedio"].ToString()),
+                PuntoStock = Convert.ToInt32(drCorte["puntoStock"]),
+                Nivel = Convert.ToInt32(drCorte["nivel"]),
+                IdEmpresa = drCorte["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(drCorte["idEmpresa"]),
+                Porcentaje = float.Parse(drCorte["porcentaje"].ToString()),
+                PrecioKg = float.Parse(drCorte["precioKg"].ToString()),
+                PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString()),
+                IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]),
+                Habilitado = Convert.ToBoolean(drCorte["habilitado"]),
+                EnCierreStock = drCorte["enCierreStock"] == DBNull.Value ? true : Convert.ToBoolean(drCorte["enCierreStock"]),
+                PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString()),
+                Independiente = Convert.ToInt32(drCorte["independiente"]),
+                DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString()),
+                Creado = Convert.ToDateTime(drCorte["creado"]),
+                Actualizado = drCorte["actualizado"] == DBNull.Value ? null : (DateTime?)drCorte["actualizado"],
+                IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]),
+                AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString()),
+                Pesable = Convert.ToBoolean(drCorte["pesable"])
+            };
+
+            if (drCorte["MarcaIdPersona"] != DBNull.Value)
+            {
+                oCorteE.Marca = new Entidades.Persona
+                {
+                    IdPersona = Convert.ToInt32(drCorte["MarcaIdPersona"]),
+                    RazonSocial = drCorte["MarcaNombreJoin"] == DBNull.Value ? "" : Convert.ToString(drCorte["MarcaNombreJoin"])
+                };
+            }
+
+            if (drCorte["CorteMaestroIdJoin"] != DBNull.Value)
+            {
+                oCorteE.CorteMaestro = new Entidades.Corte
+                {
+                    IdCorte = Convert.ToInt32(drCorte["CorteMaestroIdJoin"]),
+                    CorteDesc = drCorte["CorteMaestroNombreJoin"] == DBNull.Value ? "" : Convert.ToString(drCorte["CorteMaestroNombreJoin"])
+                };
+            }
+
+            oCorteE.Presentacion = oCorteE.EsPresentacion(oCorteE.PorcentajeHueso);
+            if (oCorteE.Presentacion)
+                oCorteE.Porcentaje = oCorteE.getCantPresentacion(oCorteE.PorcentajeHueso);
+
+            return oCorteE;
         }
 
         public Entidades.Corte findCorteByCodigoEmpresa(long codigo, int idEmpresa, bool buscarMaestro)

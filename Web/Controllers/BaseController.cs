@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.SessionState;
 using Utilidades;
 using Web.Helpers;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace Web.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             HttpSessionStateBase session = filterContext.HttpContext.Session;
+            bool sesionSoloLectura = EsSesionSoloLectura(filterContext.HttpContext);
             bool sesionInvalida = session == null
                 || session["Usuario"] == null
                 || session["IdEmpresa"] == null;
@@ -30,7 +32,9 @@ namespace Web.Controllers
                     session.Remove("Usuario");
                 }
 
-                TempData["Error"] = "La sesión venció o faltan datos de contexto. Iniciá sesión nuevamente.";
+                if (!sesionSoloLectura)
+                    TempData["Error"] = "La sesión venció o faltan datos de contexto. Iniciá sesión nuevamente.";
+
                 string returnUrl = filterContext.HttpContext.Request.RawUrl ?? "";
                 filterContext.Result = RedirectToAction("Index", "Login", new { returnUrl = returnUrl });
                 return;
@@ -51,7 +55,9 @@ namespace Web.Controllers
             {
                 param = new Negocio.Parametros(empresa);
                 param.Reload();
-                Session["PARAM_CTX"] = param;
+
+                if (!sesionSoloLectura)
+                    Session["PARAM_CTX"] = param;
             }
 
             var usuario = Session["Usuario"] as Usuario;
@@ -70,7 +76,9 @@ namespace Web.Controllers
                     {
                         usuario.Sucursal = sucursalActual;
                         usuario.SucursalNombre = sucursalActual.SucursalNombre;
-                        Session["Usuario"] = usuario;
+
+                        if (!sesionSoloLectura)
+                            Session["Usuario"] = usuario;
                     }
                 }
             }
@@ -107,11 +115,14 @@ namespace Web.Controllers
                 return false;
 
             fecha = fechaMinima.Value.Date;
-            TempData["AlertType"] = "warning";
-            TempData["AlertTitle"] = "Permisos";
-            TempData["AlertMsg"] = idCreador >= 0
-                ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
-                : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+            if (!EsSesionSoloLectura(HttpContext))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = idCreador >= 0
+                    ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                    : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+            }
             return true;
         }
 
@@ -147,6 +158,15 @@ namespace Web.Controllers
                 viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
                 return sw.GetStringBuilder().ToString();
             }
+        }
+
+        private static bool EsSesionSoloLectura(HttpContextBase httpContext)
+        {
+            if (httpContext == null)
+                return false;
+
+            var handler = httpContext.CurrentHandler;
+            return handler is IReadOnlySessionState && !(handler is IRequiresSessionState);
         }
     }
 }

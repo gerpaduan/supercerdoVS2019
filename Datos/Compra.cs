@@ -465,6 +465,77 @@ namespace Datos
             return (obj == null || obj == DBNull.Value) ? 0 : Convert.ToInt32(obj);
         }
 
+        public System.Collections.Generic.Dictionary<int, int> getIdsAjustePorPesajes(System.Collections.Generic.IEnumerable<int> idsPesaje)
+        {
+            var resultado = new System.Collections.Generic.Dictionary<int, int>();
+            if (idsPesaje == null)
+                return resultado;
+
+            var ids = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Where(idsPesaje, x => x > 0)));
+            if (ids.Count == 0)
+                return resultado;
+
+            string tipoAj = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock);
+            const int maxIdsPorLote = 900;
+
+            for (int offset = 0; offset < ids.Count; offset += maxIdsPorLote)
+            {
+                int cantidadLote = Math.Min(maxIdsPorLote, ids.Count - offset);
+                var idsLote = ids.GetRange(offset, cantidadLote);
+                var nombresId = new System.Collections.Generic.List<string>();
+                var nombresNro = new System.Collections.Generic.List<string>();
+
+                for (int i = 0; i < idsLote.Count; i++)
+                {
+                    nombresId.Add("@idPesaje" + i);
+                    nombresNro.Add("@nroRemito" + i);
+                }
+
+                string inIds = string.Join(", ", nombresId);
+                string inNros = string.Join(", ", nombresNro);
+
+                string sql =
+                    "SELECT c.idCompra, c.idPesajeAjustado, c.nroRemito " +
+                    "FROM dbo.Compras c " +
+                    "WHERE c.tipoCompra = @tipo " +
+                    "  AND ((c.idPesajeAjustado IS NOT NULL AND c.idPesajeAjustado IN (" + inIds + ")) " +
+                    "       OR c.nroRemito IN (" + inNros + ")) " +
+                    "ORDER BY c.idCompra DESC;";
+
+                DataTable dt = Db.DataTable(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    p =>
+                    {
+                        p.Add("@tipo", SqlDbType.NVarChar, 50).Value = tipoAj;
+                        for (int i = 0; i < idsLote.Count; i++)
+                        {
+                            int idLote = idsLote[i];
+                            p.Add("@idPesaje" + i, SqlDbType.Int).Value = idLote;
+                            p.Add("@nroRemito" + i, SqlDbType.NVarChar, 50).Value = idLote.ToString();
+                        }
+                    });
+
+                foreach (int idPesaje in idsLote)
+                {
+                    DataRow fila = System.Linq.Enumerable.FirstOrDefault(
+                        System.Linq.Enumerable.ThenByDescending(
+                        System.Linq.Enumerable.OrderBy(
+                        System.Linq.Enumerable.Where(System.Data.DataTableExtensions.AsEnumerable(dt), row =>
+                            (row["idPesajeAjustado"] != DBNull.Value && Convert.ToInt32(row["idPesajeAjustado"]) == idPesaje)
+                            || (row["nroRemito"] != DBNull.Value && string.Equals(Convert.ToString(row["nroRemito"]), idPesaje.ToString(), StringComparison.OrdinalIgnoreCase))),
+                        row => row["idPesajeAjustado"] != DBNull.Value && Convert.ToInt32(row["idPesajeAjustado"]) == idPesaje ? 0 : 1),
+                        row => Convert.ToInt32(row["idCompra"])));
+
+                    if (fila != null)
+                        resultado[idPesaje] = Convert.ToInt32(fila["idCompra"]);
+                }
+            }
+
+            return resultado;
+        }
+
         public void actualizarEstadoPesaje(int idPesaje, Entidades.Compra.estadoAjusteStock estadoAjStock)
         {
             const string sql = "UPDATE Compras SET estado = @estado WHERE idCompra = @id;";

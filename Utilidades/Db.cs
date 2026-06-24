@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Runtime.CompilerServices;
 
 namespace Utilidades
 {
@@ -32,18 +33,30 @@ namespace Utilidades
             CommandType commandType,
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
-            int? timeoutOverride = null)
+            int? timeoutOverride = null,
+            [CallerMemberName] string callerMemberName = null,
+            [CallerFilePath] string callerFilePath = null)
         {
-            using (var con = Open(empresa, conexionSucursal))
-            using (var cmd = new SqlCommand(sqlOrSp, con))
-            {
-                cmd.CommandType = commandType;
-                cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
+            return PerformanceInstrumentation.MeasureDb(
+                sqlOrSp,
+                commandType,
+                () =>
+                {
+                    using (var con = Open(empresa, conexionSucursal))
+                    using (var cmd = new SqlCommand(sqlOrSp, con))
+                    {
+                        cmd.CommandType = commandType;
+                        cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
 
-                setParams?.Invoke(cmd.Parameters);
+                        setParams?.Invoke(cmd.Parameters);
 
-                return cmd.ExecuteNonQuery();
-            }
+                        return cmd.ExecuteNonQuery();
+                    }
+                },
+                rows => "rows=" + rows.ToString(),
+                conexionSucursal,
+                callerMemberName,
+                callerFilePath);
         }
 
         /// <summary>
@@ -55,18 +68,30 @@ namespace Utilidades
             CommandType commandType,
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
-            int? timeoutOverride = null)
+            int? timeoutOverride = null,
+            [CallerMemberName] string callerMemberName = null,
+            [CallerFilePath] string callerFilePath = null)
         {
-            using (var con = Open(empresa, conexionSucursal))
-            using (var cmd = new SqlCommand(sqlOrSp, con))
-            {
-                cmd.CommandType = commandType;
-                cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
+            return PerformanceInstrumentation.MeasureDb(
+                sqlOrSp,
+                commandType,
+                () =>
+                {
+                    using (var con = Open(empresa, conexionSucursal))
+                    using (var cmd = new SqlCommand(sqlOrSp, con))
+                    {
+                        cmd.CommandType = commandType;
+                        cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
 
-                setParams?.Invoke(cmd.Parameters);
+                        setParams?.Invoke(cmd.Parameters);
 
-                return cmd.ExecuteScalar();
-            }
+                        return cmd.ExecuteScalar();
+                    }
+                },
+                result => result == null || result == DBNull.Value ? "scalar=null" : "scalar=" + Convert.ToString(result),
+                conexionSucursal,
+                callerMemberName,
+                callerFilePath);
         }
 
         /// <summary>
@@ -79,28 +104,40 @@ namespace Utilidades
             Func<SqlDataReader, T> map,
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
-            int? timeoutOverride = null)
+            int? timeoutOverride = null,
+            [CallerMemberName] string callerMemberName = null,
+            [CallerFilePath] string callerFilePath = null)
         {
             if (map == null) throw new ArgumentNullException(nameof(map));
 
-            var list = new List<T>();
-
-            using (var con = Open(empresa, conexionSucursal))
-            using (var cmd = new SqlCommand(sqlOrSp, con))
-            {
-                cmd.CommandType = commandType;
-                cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
-
-                setParams?.Invoke(cmd.Parameters);
-
-                using (var dr = cmd.ExecuteReader())
+            return PerformanceInstrumentation.MeasureDb(
+                sqlOrSp,
+                commandType,
+                () =>
                 {
-                    while (dr.Read())
-                        list.Add(map(dr));
-                }
-            }
+                    var list = new List<T>();
 
-            return list;
+                    using (var con = Open(empresa, conexionSucursal))
+                    using (var cmd = new SqlCommand(sqlOrSp, con))
+                    {
+                        cmd.CommandType = commandType;
+                        cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
+
+                        setParams?.Invoke(cmd.Parameters);
+
+                        using (var dr = cmd.ExecuteReader())
+                        {
+                            while (dr.Read())
+                                list.Add(map(dr));
+                        }
+                    }
+
+                    return list;
+                },
+                list => "rows=" + (list != null ? list.Count : 0).ToString(),
+                conexionSucursal,
+                callerMemberName,
+                callerFilePath);
         }
 
         /// <summary>
@@ -112,23 +149,35 @@ namespace Utilidades
             CommandType commandType,
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
-            int? timeoutOverride = null)
+            int? timeoutOverride = null,
+            [CallerMemberName] string callerMemberName = null,
+            [CallerFilePath] string callerFilePath = null)
         {
-            var dt = new DataTable();
+            return PerformanceInstrumentation.MeasureDb(
+                sqlOrSp,
+                commandType,
+                () =>
+                {
+                    var dt = new DataTable();
 
-            using (var con = Open(empresa, conexionSucursal))
-            using (var cmd = new SqlCommand(sqlOrSp, con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = commandType;
-                cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
+                    using (var con = Open(empresa, conexionSucursal))
+                    using (var cmd = new SqlCommand(sqlOrSp, con))
+                    using (var da = new SqlDataAdapter(cmd))
+                    {
+                        cmd.CommandType = commandType;
+                        cmd.CommandTimeout = timeoutOverride ?? Conexion.timeOut;
 
-                setParams?.Invoke(cmd.Parameters);
+                        setParams?.Invoke(cmd.Parameters);
 
-                da.Fill(dt);
-            }
+                        da.Fill(dt);
+                    }
 
-            return dt;
+                    return dt;
+                },
+                dt => "rows=" + (dt != null ? dt.Rows.Count : 0).ToString(),
+                conexionSucursal,
+                callerMemberName,
+                callerFilePath);
         }
     }
 }

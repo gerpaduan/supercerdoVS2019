@@ -796,6 +796,30 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerTotalesPagosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        {
+            const string sql = @"
+                SELECT
+                    SUM(CASE WHEN p.aProveedor = 0 THEN p.importe ELSE 0 END) AS TotalCobros,
+                    SUM(CASE WHEN p.aProveedor = 1 THEN p.importe ELSE 0 END) AS TotalPagos
+                FROM dbo.Pagos p
+                WHERE p.fecha >= @fechaDesde
+                  AND p.fecha < @fechaHasta
+                  AND (@idSucursal = -1 OR p.idSucursal = @idSucursal);";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHasta", SqlDbType.DateTime).Value = fechaHasta.AddDays(1);
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
+                }
+            );
+        }
+
         public DataTable obtenerUltimosPagosDashboard(int cantidad)
         {
             const string sql = @"

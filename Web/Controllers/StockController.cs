@@ -152,6 +152,33 @@ namespace Web.Controllers
             return View("~/Views/Stock/Index.cshtml", model);
         }
 
+        [HttpGet]
+        public PartialViewResult Detalle(int idCompra)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+            {
+                ViewBag.StockDetalleError = "La sesion expiró. Recargá la página para continuar.";
+                return PartialView("~/Views/Stock/_StockDetalle.cshtml", null);
+            }
+
+            Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
+            if (compra == null || compra.IdCompra <= 0)
+            {
+                ViewBag.StockDetalleError = "No se encontraron los detalles del movimiento.";
+                return PartialView("~/Views/Stock/_StockDetalle.cshtml", null);
+            }
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                ViewBag.StockDetalleError = ConstruirMensajePermisoFecha(Permisos.Stock.VerStock, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())
+                    ?? "No tiene permisos para consultar este movimiento.";
+                return PartialView("~/Views/Stock/_StockDetalle.cshtml", null);
+            }
+
+            return PartialView("~/Views/Stock/_StockDetalle.cshtml", ConstruirDetalleIndexCompleto(compra));
+        }
+
         public ActionResult Lineas(int? idSucursal = null, string tipoCompra = "Ver Todos", string producto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
@@ -1391,102 +1418,258 @@ namespace Web.Controllers
             if (dt == null)
                 return detalles;
 
+            var filasPorIdCompra = dt.AsEnumerable()
+                .Where(x => x.Table.Columns.Contains("idCompra") && x["idCompra"] != DBNull.Value)
+                .GroupBy(x => Convert.ToInt32(x["idCompra"]))
+                .ToDictionary(x => x.Key, x => x.First());
+            var idsPesaje = filasPorIdCompra.Values
+                .Where(x => EsPesaje(LeerString(x, "tipoCompra")))
+                .Select(x => LeerInt(x, "idCompra"))
+                .Where(x => x > 0)
+                .ToList();
+            var ajustesPorPesaje = oCompraN.getIdsAjustePorPesajes(idsPesaje);
+
             foreach (DataRow row in dt.Rows)
             {
                 int idCompra = Convert.ToInt32(row["idCompra"]);
                 if (detalles.ContainsKey(idCompra))
                     continue;
 
-                Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
-                if (compra == null || compra.IdCompra == 0)
-                    continue;
-
-                bool esPesaje = EsPesaje(compra.TipoCompra);
-                bool esAjuste = EsAjuste(compra.TipoCompra);
-                int? idPesajeRelacionado = null;
-                int? idAjusteRelacionado = null;
-                Entidades.Compra pesajeRelacionado = null;
-                string estadoPesajeRelacionado = "";
-                var lineas = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
-                    .Select(corte => new StockLineaDetalleVm
-                    {
-                        Codigo = corte.Corte != null ? corte.Corte.Codigo.ToString() : "-",
-                        Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
-                        CantidadKgTexto = corte.CantKgs.ToString("N3"),
-                        Signo = ObtenerSignoStock(compra.TipoCompra),
-                        Observacion = corte.Balanza ? "Peso balanza" : "-",
-                        Balanza = corte.Balanza,
-                        CreadoTexto = FormatearFechaHora(corte.Creado),
-                        CantidadKg = Convert.ToDecimal(corte.CantKgs)
-                    })
-                    .ToList();
-
-                if (esPesaje)
-                {
-                    int ajusteRelacionado = oCompraN.getIdAjusteDelPesaje(compra.IdCompra);
-                    if (ajusteRelacionado > 0)
-                        idAjusteRelacionado = ajusteRelacionado;
-
-                    idPesajeRelacionado = compra.IdPesajeAjustado;
-                    if (idPesajeRelacionado.HasValue && idPesajeRelacionado.Value > 0)
-                    {
-                        pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
-                        if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
-                            estadoPesajeRelacionado = "No se encontro la compra vinculada.";
-                    }
-                }
-                else if (esAjuste)
-                {
-                    idPesajeRelacionado = compra.IdPesajeAjustado;
-                    if (!idPesajeRelacionado.HasValue || idPesajeRelacionado.Value <= 0)
-                    {
-                        estadoPesajeRelacionado = "No tiene asignado un pesaje.";
-                    }
-                    else
-                    {
-                        pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
-                        if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
-                            estadoPesajeRelacionado = "No se encontro la referencia del pesaje asignado.";
-                    }
-                }
-
-                detalles[idCompra] = new CompraIndexDetalleVm
-                {
-                    IdCompra = compra.IdCompra,
-                    FechaCompra = compra.FechaCompra,
-                    TipoCompra = compra.TipoCompra ?? "",
-                    Cantidad = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]),
-                    Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
-                    Observaciones = compra.Observaciones ?? "",
-                    Estado = compra.Estado ?? "",
-                    IdCompraVinculada = esPesaje ? idPesajeRelacionado : null,
-                    FechaCompraVinculada = esPesaje && pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
-                    ProveedorCompraVinculada = esPesaje && pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
-                    CantMediasCompraVinculada = esPesaje && pesajeRelacionado != null
-                        ? (pesajeRelacionado.CantMedias.HasValue ? pesajeRelacionado.CantMedias : compra.CantMedias)
-                        : null,
-                    KgsCompraVinculada = esPesaje && pesajeRelacionado != null
-                        ? (pesajeRelacionado.KgsMedias.HasValue ? pesajeRelacionado.KgsMedias : compra.KgsMedias)
-                        : null,
-                    EstadoCompraVinculada = esPesaje ? estadoPesajeRelacionado : "",
-                    IdPesajeRelacionado = idPesajeRelacionado,
-                    IdAjusteRelacionado = idAjusteRelacionado,
-                    FechaPesajeRelacionado = pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
-                    ProveedorPesajeRelacionado = pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
-                    CantMediasPesajeRelacionado = pesajeRelacionado != null ? pesajeRelacionado.CantMedias : null,
-                    KgsPesajeRelacionado = pesajeRelacionado != null ? pesajeRelacionado.KgsMedias : null,
-                    EstadoPesajeRelacionado = estadoPesajeRelacionado,
-                    EsPesaje = esPesaje,
-                    EsAjuste = esAjuste,
-                    UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
-                    FechaCreacion = compra.Creado,
-                    UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
-                    FechaActualizacion = compra.Actualizado,
-                    Lineas = lineas
-                };
+                detalles[idCompra] = ConstruirDetalleIndexLiviano(row, filasPorIdCompra, ajustesPorPesaje);
             }
 
             return detalles;
+        }
+
+        private CompraIndexDetalleVm ConstruirDetalleIndexLiviano(DataRow row, Dictionary<int, DataRow> filasPorIdCompra, Dictionary<int, int> ajustesPorPesaje)
+        {
+            int idCompra = LeerInt(row, "idCompra");
+            string tipoCompra = LeerString(row, "tipoCompra");
+            bool esPesaje = EsPesaje(tipoCompra);
+            bool esAjuste = EsAjuste(tipoCompra);
+            int? idPesajeRelacionado = LeerIntNullable(row, "idPesajeAjustado");
+            int? idAjusteRelacionado = null;
+
+            if (esPesaje)
+            {
+                int ajusteRelacionado = 0;
+                if (ajustesPorPesaje != null)
+                    ajustesPorPesaje.TryGetValue(idCompra, out ajusteRelacionado);
+                if (ajusteRelacionado > 0)
+                    idAjusteRelacionado = ajusteRelacionado;
+            }
+
+            DataRow filaRelacionada = null;
+            if (idPesajeRelacionado.HasValue && filasPorIdCompra != null)
+                filasPorIdCompra.TryGetValue(idPesajeRelacionado.Value, out filaRelacionada);
+
+            return new CompraIndexDetalleVm
+            {
+                IdCompra = idCompra,
+                FechaCompra = LeerDateTimeNullable(row, "fechaCompra"),
+                TipoCompra = tipoCompra,
+                Cantidad = row.Table.Columns.Contains("cantKg") && row["cantKg"] != DBNull.Value ? Convert.ToSingle(row["cantKg"]) : 0f,
+                CantidadMedias = LeerInt(row, "cantMedias"),
+                Sucursal = LeerString(row, "sucursal", "Sucursal", "sucursalNombre"),
+                Observaciones = LeerString(row, "observaciones"),
+                Estado = LeerString(row, "estado"),
+                IdCompraVinculada = esPesaje ? idPesajeRelacionado : null,
+                FechaCompraVinculada = esPesaje ? LeerDateTimeNullable(filaRelacionada, "fechaCompra") : null,
+                ProveedorCompraVinculada = esPesaje ? LeerString(filaRelacionada, "razonSocial") : "",
+                CantMediasCompraVinculada = esPesaje ? LeerIntNullable(filaRelacionada, "cantMedias") : null,
+                KgsCompraVinculada = esPesaje ? LeerFloatNullable(filaRelacionada, "kgsMedias") : null,
+                EstadoCompraVinculada = "",
+                IdPesajeRelacionado = idPesajeRelacionado,
+                IdAjusteRelacionado = idAjusteRelacionado,
+                FechaPesajeRelacionado = esAjuste ? LeerDateTimeNullable(filaRelacionada, "fechaCompra") : null,
+                ProveedorPesajeRelacionado = esAjuste ? LeerString(filaRelacionada, "razonSocial") : "",
+                CantMediasPesajeRelacionado = esAjuste ? LeerIntNullable(filaRelacionada, "cantMedias") : null,
+                KgsPesajeRelacionado = esAjuste ? LeerFloatNullable(filaRelacionada, "kgsMedias") : null,
+                EstadoPesajeRelacionado = "",
+                EsPesaje = esPesaje,
+                EsAjuste = esAjuste,
+                UsuarioCreacion = LeerString(row, "CreadoPor", "creadoPorNombre", "usuarioCreacion"),
+                FechaCreacion = LeerDateTimeNullable(row, "creado", "fechaCreacion"),
+                UsuarioActualizacion = LeerString(row, "ActualizadoPor", "actualizadoPorNombre", "usuarioActualizacion"),
+                FechaActualizacion = LeerDateTimeNullable(row, "actualizado", "fechaActualizacion")
+            };
+        }
+
+        private CompraIndexDetalleVm ConstruirDetalleIndexCompleto(Entidades.Compra compra)
+        {
+            if (compra == null || compra.IdCompra <= 0)
+                return null;
+
+            bool esPesaje = EsPesaje(compra.TipoCompra);
+            bool esAjuste = EsAjuste(compra.TipoCompra);
+            int? idPesajeRelacionado = null;
+            int? idAjusteRelacionado = null;
+            Entidades.Compra pesajeRelacionado = null;
+            string estadoPesajeRelacionado = "";
+            var lineas = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
+                .Select(corte => new StockLineaDetalleVm
+                {
+                    Codigo = corte.Corte != null ? corte.Corte.Codigo.ToString() : "-",
+                    Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
+                    CantidadKgTexto = corte.CantKgs.ToString("N3"),
+                    Signo = ObtenerSignoStock(compra.TipoCompra),
+                    Observacion = corte.Balanza ? "Peso balanza" : "-",
+                    Balanza = corte.Balanza,
+                    CreadoTexto = FormatearFechaHora(corte.Creado),
+                    CantidadKg = Convert.ToDecimal(corte.CantKgs)
+                })
+                .ToList();
+
+            if (esPesaje)
+            {
+                int ajusteRelacionado = oCompraN.getIdAjusteDelPesaje(compra.IdCompra);
+                if (ajusteRelacionado > 0)
+                    idAjusteRelacionado = ajusteRelacionado;
+
+                idPesajeRelacionado = compra.IdPesajeAjustado;
+                if (idPesajeRelacionado.HasValue && idPesajeRelacionado.Value > 0)
+                {
+                    pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
+                    if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
+                        estadoPesajeRelacionado = "No se encontro la compra vinculada.";
+                }
+            }
+            else if (esAjuste)
+            {
+                idPesajeRelacionado = compra.IdPesajeAjustado;
+                if (!idPesajeRelacionado.HasValue || idPesajeRelacionado.Value <= 0)
+                {
+                    estadoPesajeRelacionado = "No tiene asignado un pesaje.";
+                }
+                else
+                {
+                    pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
+                    if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
+                        estadoPesajeRelacionado = "No se encontro la referencia del pesaje asignado.";
+                }
+            }
+
+            return new CompraIndexDetalleVm
+            {
+                IdCompra = compra.IdCompra,
+                FechaCompra = compra.FechaCompra,
+                TipoCompra = compra.TipoCompra ?? "",
+                Cantidad = lineas.Sum(x => Convert.ToSingle(x.CantidadKg)),
+                Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
+                Observaciones = compra.Observaciones ?? "",
+                Estado = compra.Estado ?? "",
+                IdCompraVinculada = esPesaje ? idPesajeRelacionado : null,
+                FechaCompraVinculada = esPesaje && pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
+                ProveedorCompraVinculada = esPesaje && pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
+                CantMediasCompraVinculada = esPesaje && pesajeRelacionado != null
+                    ? (pesajeRelacionado.CantMedias.HasValue ? pesajeRelacionado.CantMedias : compra.CantMedias)
+                    : null,
+                KgsCompraVinculada = esPesaje && pesajeRelacionado != null
+                    ? (pesajeRelacionado.KgsMedias.HasValue ? pesajeRelacionado.KgsMedias : compra.KgsMedias)
+                    : null,
+                EstadoCompraVinculada = esPesaje ? estadoPesajeRelacionado : "",
+                IdPesajeRelacionado = idPesajeRelacionado,
+                IdAjusteRelacionado = idAjusteRelacionado,
+                FechaPesajeRelacionado = pesajeRelacionado != null ? (DateTime?)pesajeRelacionado.FechaCompra : null,
+                ProveedorPesajeRelacionado = pesajeRelacionado != null && pesajeRelacionado.Proveedor != null ? pesajeRelacionado.Proveedor.RazonSocial : "",
+                CantMediasPesajeRelacionado = pesajeRelacionado != null ? pesajeRelacionado.CantMedias : null,
+                KgsPesajeRelacionado = pesajeRelacionado != null ? pesajeRelacionado.KgsMedias : null,
+                EstadoPesajeRelacionado = estadoPesajeRelacionado,
+                EsPesaje = esPesaje,
+                EsAjuste = esAjuste,
+                UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
+                FechaCreacion = compra.Creado,
+                UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
+                FechaActualizacion = compra.Actualizado,
+                Lineas = lineas
+            };
+        }
+
+        private static string LeerString(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return string.Empty;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    return Convert.ToString(row[columna]) ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static int LeerInt(DataRow row, params string[] columnas)
+        {
+            int? valor = LeerIntNullable(row, columnas);
+            return valor ?? 0;
+        }
+
+        private static int? LeerIntNullable(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return null;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    int valor;
+                    if (int.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return null;
+        }
+
+        private static float? LeerFloatNullable(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return null;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    float valor;
+                    if (float.TryParse(Convert.ToString(row[columna]), NumberStyles.Any, CultureInfo.CurrentCulture, out valor)
+                        || float.TryParse(Convert.ToString(row[columna]), NumberStyles.Any, CultureInfo.InvariantCulture, out valor))
+                    {
+                        return valor;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static DateTime? LeerDateTimeNullable(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return null;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    DateTime valor;
+                    if (DateTime.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return null;
         }
 
         private void CargarPesajeAjustadoEnEdicion(StockEditVm model, Entidades.Compra compra)

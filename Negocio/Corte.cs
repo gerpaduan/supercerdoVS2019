@@ -48,6 +48,50 @@ namespace Negocio
             return oCorteD.findCorteByCodigoEmpresa(codigo, idEmpresa, buscarMaestro);
         }
 
+        public List<Entidades.Corte> ObtenerCortesListado(int idEmpresa, int idSucursal)
+        {
+            List<Entidades.Corte> listaCortes = idEmpresa > 0
+                ? oCorteD.ObtenerCortesPorEmpresaListado(idEmpresa)
+                : oCorteD.findAllCortesListado();
+
+            if (idSucursal > 0)
+            {
+                DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
+                DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);
+                var dictStocks = dtCortesStock.AsEnumerable()
+                    .ToDictionary(
+                        row => row.Field<int>("idCorte"),
+                        row => row["DIF"] == DBNull.Value ? null : row["DIF"].ToString()
+                    );
+
+                var dictStockUn = dtCortesStock.AsEnumerable()
+                    .ToDictionary(
+                        row => row.Field<int>("idCorte"),
+                        row => row["Stock.Un"] == DBNull.Value ? null : row["Stock.Un"].ToString()
+                    );
+
+                foreach (var corte in listaCortes)
+                {
+                    if (dictStocks.TryGetValue(corte.idCorte, out var stock))
+                    {
+                        if (double.TryParse(stock, out double stockNum))
+                        {
+                            corte.Stock_EnString = corte.Pesable ? stockNum.ToString("N3") : stockNum.ToString("N0");
+                            if (dictStockUn.TryGetValue(corte.idCorte, out string stockUn))
+                                corte.StockUnidades = stockUn.Contains("u") ? " (" + stockUn + ")" : "";
+                        }
+                    }
+                    else
+                    {
+                        corte.Stock_EnString = "-";
+                        corte.StockUnidades = "";
+                    }
+                }
+            }
+
+            return listaCortes;
+        }
+
         public List<Entidades.Corte> ObtenerCatalogoGlobal(string busqueda)
         {
             return oCorteD.ObtenerCatalogoGlobal(busqueda);

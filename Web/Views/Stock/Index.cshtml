@@ -393,6 +393,36 @@
                 }
             }
 
+            function cargarDetalleStock(detalle) {
+                if (!detalle) return;
+
+                const contenedor = detalle.querySelector(".stock-detalle-lazy");
+                if (!contenedor) return;
+
+                if (contenedor.getAttribute("data-loaded") === "true"
+                    || contenedor.getAttribute("data-loading") === "true") {
+                    return;
+                }
+
+                const url = contenedor.getAttribute("data-url");
+                if (!url) return;
+
+                contenedor.setAttribute("data-loading", "true");
+                contenedor.innerHTML = '<div class="text-muted">Cargando detalle...</div>';
+
+                $.get(url)
+                    .done(function (html) {
+                        contenedor.innerHTML = html;
+                        contenedor.setAttribute("data-loaded", "true");
+                    })
+                    .fail(function () {
+                        contenedor.innerHTML = '<div class="text-danger">No se pudo cargar el detalle del movimiento.</div>';
+                    })
+                    .always(function () {
+                        contenedor.removeAttribute("data-loading");
+                    });
+            }
+
             document.addEventListener("click", function (e) {
                 const btn = e.target.closest(".btn-detalles-stock");
                 if (!btn) return;
@@ -402,6 +432,8 @@
                 const detalle = selector ? document.querySelector(selector) : null;
                 if (!detalle) return;
 
+                cargarDetalleStock(detalle);
+
                 const expanded = detalle.classList.contains("show");
                 $(detalle).collapse(expanded ? "hide" : "show");
                 syncIcon(btn, !expanded);
@@ -410,6 +442,9 @@
             switchVista.addEventListener("change", function () {
                 const expandir = switchVista.checked;
                 document.querySelectorAll(".stock-detalle-collapse").forEach(function (detalle) {
+                    if (expandir) {
+                        cargarDetalleStock(detalle);
+                    }
                     $(detalle).collapse(expandir ? "show" : "hide");
                     const btn = document.querySelector('.btn-detalles-stock[data-target="#' + detalle.id + '"]');
                     syncIcon(btn, expandir);

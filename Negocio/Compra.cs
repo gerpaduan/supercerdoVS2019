@@ -371,6 +371,11 @@ namespace Negocio
             return oCompraD.getIdAjusteDelPesaje(idPesaje);
         }
 
+        public Dictionary<int, int> getIdsAjustePorPesajes(IEnumerable<int> idsPesaje)
+        {
+            return oCompraD.getIdsAjustePorPesajes(idsPesaje);
+        }
+
         //retorna el Estado actual del AjusteStock
         public Entidades.Compra.estadoAjusteStock estadoAjusteStock(int idPesaje, int idAjuste)
         {

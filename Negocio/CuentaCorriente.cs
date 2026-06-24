@@ -226,6 +226,11 @@ namespace Negocio
             return oCtaCteD.obtenerPagos(texto, fechaDesde, fechaHasta);
         }
 
+        public DataTable obtenerTotalesPagosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        {
+            return oCtaCteD.obtenerTotalesPagosBalance(fechaDesde, fechaHasta, idSucursal);
+        }
+
         public DataTable obtenerUltimosPagosDashboard(int cantidad)
         {
             return oCtaCteD.obtenerUltimosPagosDashboard(cantidad);

@@ -672,32 +672,110 @@ namespace Web.Controllers
                 if (detalles.ContainsKey(idCompra))
                     continue;
 
-                Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
-                if (compra == null || compra.IdCompra == 0)
-                    continue;
-
                 detalles[idCompra] = new CompraIndexDetalleVm
                 {
-                    IdCompra = compra.IdCompra,
-                    FechaCompra = compra.FechaCompra,
-                    NumeroDocumento = compra.NroRemito ?? "",
-                    Proveedor = compra.Proveedor != null ? compra.Proveedor.RazonSocial : "",
-                    TipoCompra = compra.TipoCompra ?? "",
+                    IdCompra = idCompra,
+                    FechaCompra = LeerDateTimeNullable(row, "fechaCompra"),
+                    NumeroDocumento = LeerString(row, "nroRemito"),
+                    Proveedor = LeerString(row, "razonSocial"),
+                    TipoCompra = LeerString(row, "tipoCompra"),
                     Cantidad = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]),
-                    CantidadMedias = compra.CantMedias ?? 0,
+                    CantidadMedias = LeerInt(row, "cantMedias"),
                     Total = row["totalS"] == DBNull.Value ? 0f : Convert.ToSingle(row["totalS"]),
-                    Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
-                    Observaciones = compra.Observaciones ?? "",
-                    Estado = compra.Estado ?? "",
-                    EnCtaCte = compra.EnCtaCte,
-                    UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
-                    FechaCreacion = compra.Creado,
-                    UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
-                    FechaActualizacion = compra.Actualizado
+                    Sucursal = LeerString(row, "sucursal", "Sucursal", "sucursalNombre"),
+                    Observaciones = LeerString(row, "observaciones"),
+                    Estado = LeerString(row, "estado"),
+                    EnCtaCte = LeerBool(row, "enCtaCte"),
+                    UsuarioCreacion = LeerString(row, "CreadoPor", "creadoPorNombre", "usuarioCreacion"),
+                    FechaCreacion = LeerDateTimeNullable(row, "creado", "fechaCreacion"),
+                    UsuarioActualizacion = LeerString(row, "ActualizadoPor", "actualizadoPorNombre", "usuarioActualizacion"),
+                    FechaActualizacion = LeerDateTimeNullable(row, "actualizado", "fechaActualizacion")
                 };
             }
 
             return detalles;
+        }
+
+        private static string LeerString(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return string.Empty;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    return Convert.ToString(row[columna]) ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static int LeerInt(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return 0;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    int valor;
+                    if (int.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return 0;
+        }
+
+        private static bool LeerBool(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return false;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    bool valor;
+                    if (bool.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+
+                    int numero;
+                    if (int.TryParse(Convert.ToString(row[columna]), out numero))
+                        return numero != 0;
+                }
+            }
+
+            return false;
+        }
+
+        private static DateTime? LeerDateTimeNullable(DataRow row, params string[] columnas)
+        {
+            if (row == null || row.Table == null || columnas == null)
+                return null;
+
+            foreach (var columna in columnas)
+            {
+                if (!string.IsNullOrWhiteSpace(columna)
+                    && row.Table.Columns.Contains(columna)
+                    && row[columna] != DBNull.Value)
+                {
+                    DateTime valor;
+                    if (DateTime.TryParse(Convert.ToString(row[columna]), out valor))
+                        return valor;
+                }
+            }
+
+            return null;
         }
 
         private List<CompraLineaDetalleVm> ConstruirLineasCompra(Entidades.Compra compra)

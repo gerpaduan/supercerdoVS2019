@@ -45,8 +45,8 @@ namespace Web.Controllers
             long? codigoHasta = null)
         {
             int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
-            var productos = (oCorteN.findAllCortes(true, SucursalId) ?? new List<Entidades.Corte>())
-                .Where(x => x != null && x.IdEmpresa == idEmpresaSesion)
+            var productos = (oCorteN.ObtenerCortesListado(idEmpresaSesion, SucursalId) ?? new List<Entidades.Corte>())
+                .Where(x => x != null)
                 .ToList();
 
             if (!string.IsNullOrWhiteSpace(tipo))

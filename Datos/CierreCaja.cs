@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using Utilidades;
 
 namespace Datos
@@ -363,6 +364,33 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerGastosAgrupadosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        {
+            const string sql = @"
+                SELECT
+                    te.tipoEgresoCaja AS Categoria,
+                    SUM(ROUND(ec.monto, 2)) AS Total
+                FROM dbo.EgresosCaja ec
+                INNER JOIN dbo.TiposEgresoCaja te ON te.id = ec.idTipoEgresoCaja
+                WHERE ec.fechaHora BETWEEN @fechaDesde AND @fechaHasta
+                  AND (@idSucursal = -1 OR ec.idSucursal = @idSucursal)
+                  AND te.esGasto = 1
+                GROUP BY te.tipoEgresoCaja
+                ORDER BY SUM(ROUND(ec.monto, 2)) DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHasta", SqlDbType.DateTime).Value = fechaHasta;
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
+                }
+            );
+        }
+
         public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
             if (oEgresoCaja == null) throw new ArgumentNullException(nameof(oEgresoCaja));
@@ -403,6 +431,54 @@ namespace Datos
             );
 
             return lista.Count > 0 ? lista[0] : new Entidades.EgresoCaja();
+        }
+
+        public List<Entidades.EgresoCaja> getEgresosCajaByIds(List<int> ids)
+        {
+            var resultado = new List<Entidades.EgresoCaja>();
+            if (ids == null || ids.Count == 0)
+                return resultado;
+
+            var idsValidos = ids.Where(x => x > 0).Distinct().ToList();
+            if (idsValidos.Count == 0)
+                return resultado;
+
+            using (var con = Db.Open(_empresa))
+            using (var cmd = new SqlCommand())
+            {
+                cmd.Connection = con;
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = Conexion.timeOut;
+
+                var inParams = new List<string>();
+                for (int i = 0; i < idsValidos.Count; i++)
+                {
+                    string paramName = "@id" + i.ToString();
+                    inParams.Add(paramName);
+                    cmd.Parameters.Add(paramName, SqlDbType.Int).Value = idsValidos[i];
+                }
+
+                cmd.CommandText =
+                    "SELECT id, fechaHora, idTipoEgresoCaja, descripcion, detalle, monto, idCompra, idSucursal, creado, creadoPor, actualizado, actualizadoPor, tabla, idTabla " +
+                    "FROM EgresosCaja WHERE id IN (" + string.Join(",", inParams) + ")";
+
+                using (var dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        var egreso = cargarEgresoCajaDataReader(dr);
+                        egreso.Tabla = ColumnaExiste(dr, "tabla") && dr["tabla"] != DBNull.Value
+                            ? Convert.ToString(dr["tabla"])
+                            : "";
+                        egreso.IdTabla = ColumnaExiste(dr, "idTabla") && dr["idTabla"] != DBNull.Value
+                            ? Convert.ToInt32(dr["idTabla"])
+                            : (int?)null;
+                        resultado.Add(egreso);
+                    }
+                }
+            }
+
+            return resultado;
         }
 
         private Entidades.EgresoCaja cargarEgresoCajaDataReader(SqlDataReader dr)

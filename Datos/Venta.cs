@@ -168,6 +168,20 @@ namespace Datos
             return oVentaE;
         }
 
+        private Entidades.Venta MapVentaBalance(SqlDataReader drVenta)
+        {
+            return new Entidades.Venta
+            {
+                IdVenta = Convert.ToInt32(drVenta["idVenta"]),
+                Estado = Convert.ToString(drVenta["estado"]),
+                EnCtaCte = drVenta["enCtaCte"] != DBNull.Value && Convert.ToBoolean(drVenta["enCtaCte"]),
+                FormaPago = Convert.ToString(drVenta["formaPago"]),
+                PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["pagoMixtoEfectivo"]),
+                TotalImporte = drVenta["totalImporteCalculado"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["totalImporteCalculado"]),
+                TotalImporteOriginal = drVenta["totalImporteCalculado"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["totalImporteCalculado"])
+            };
+        }
+
         #endregion
 
         #region Ventas
@@ -269,6 +283,47 @@ namespace Datos
                     p.Add("@idCliente", SqlDbType.Int).Value = idCliente ?? -1;
                     p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
                     p.Add("@soloAnulados", SqlDbType.Bit).Value = soloAnulados;
+                }
+            );
+        }
+
+        public List<Entidades.Venta> getVentasBalancePeriodo(
+            DateTime fechaDesde,
+            DateTime fechaHasta,
+            int? idSucursal)
+        {
+            const string sql = @"
+                SELECT
+                    v.idVenta,
+                    v.estado,
+                    v.enCtaCte,
+                    v.formaPago,
+                    v.pagoMixtoEfectivo,
+                    ISNULL(SUM(lv.cantKg * lv.precioKg), 0) AS totalImporteCalculado
+                FROM Ventas v
+                LEFT JOIN dbo.LineaVenta lv ON lv.idVenta = v.idVenta
+                WHERE v.fechaVenta >= @fechaDesde
+                  AND v.fechaVenta < @fechaHastaMas1
+                  AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
+                  AND ISNULL(v.estado, '') <> 'ANULADO'
+                GROUP BY
+                    v.idVenta,
+                    v.estado,
+                    v.enCtaCte,
+                    v.formaPago,
+                    v.pagoMixtoEfectivo
+                ORDER BY v.idVenta;";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                MapVentaBalance,
+                p =>
+                {
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHastaMas1", SqlDbType.DateTime).Value = fechaHasta.AddDays(1);
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
                 }
             );
         }

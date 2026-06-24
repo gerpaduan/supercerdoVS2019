@@ -11,11 +11,13 @@ using System.IO;
 using System.Text;
 using Web.Helpers;
 using Web.Models;
+using System.Web.SessionState;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 
 namespace Web.Controllers
 {
+    [SessionState(SessionStateBehavior.ReadOnly)]
     public class HomeController : BaseController
     {
         private Negocio.Usuario oUsuarioN;

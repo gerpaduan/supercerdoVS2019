@@ -5,11 +5,13 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Web.Mvc;
+using System.Web.SessionState;
 using Web.Helpers;
 using Web.Models;
 
 namespace Web.Controllers
 {
+    [SessionState(SessionStateBehavior.ReadOnly)]
     public class ReportesController : BaseController
     {
         private const string TipoReporteStockActual = "Stock Actual";
@@ -285,7 +287,16 @@ namespace Web.Controllers
                 CrearItemReporte(TipoReporteBalance, model.TipoReporteSeleccionado)
             };
 
-            var cortes = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+            bool requiereCatalogoCortes =
+                string.Equals(model.TipoReporteSeleccionado, TipoReporteStockActual, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(model.TipoReporteSeleccionado, TipoReporteCierreStock, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(model.TipoReporteSeleccionado, TipoReporteStockRetroactivo, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(model.TipoReporteSeleccionado, TipoReporteProyeccion, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(model.TipoReporteSeleccionado, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase);
+
+            var cortes = requiereCatalogoCortes
+                ? (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+                : new List<Entidades.Corte>();
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             model.CierresDisponibles = ObtenerCierresDisponibles();
 
@@ -1054,7 +1065,7 @@ namespace Web.Controllers
             DateTime hasta = periodo.FechaHasta.Date;
             DateTime hastaFinDia = hasta.AddDays(1).AddMilliseconds(-1);
 
-            var ventas = (oVentaN.getAllVentas(desde, hasta, "", -1, -1, sucursalConsulta, false, false) ?? new List<Entidades.Venta>())
+            var ventas = (oVentaN.getVentasBalancePeriodo(desde, hasta, sucursalConsulta) ?? new List<Entidades.Venta>())
                 .Where(x => x != null)
                 .Where(x => !string.Equals((x.Estado ?? "").Trim(), "ANULADO", StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -1079,49 +1090,22 @@ namespace Web.Controllers
                 .Where(EsCompraEconomica)
                 .Sum(x => LeerDecimal(x, "totalS"));
 
-            var egresosGasto = ObtenerEgresosGastoBalance(sucursalId, desde, hastaFinDia);
-
-            decimal totalGastos = egresosGasto.Sum(x => LeerDecimalPrimeraCoincidencia(x, "monto", "Monto"));
-            var gastosPorCategoria = egresosGasto
-                .GroupBy(x =>
-                {
-                    string categoria = LeerString(x, "TipoEgresoCaja");
-                    if (string.IsNullOrWhiteSpace(categoria))
-                        categoria = LeerString(x, "tipoEgresoCaja");
-                    return string.IsNullOrWhiteSpace(categoria) ? "Otros gastos" : categoria;
-                })
-                .Select(g => new ReporteBalanceGastoCategoriaVm
+            System.Data.DataTable dtGastosAgrupados = oCierreN.obtenerGastosAgrupadosBalance(desde, hastaFinDia, sucursalConsulta) ?? new System.Data.DataTable();
+            var gastosPorCategoria = dtGastosAgrupados.AsEnumerable()
+                .Select(row => new ReporteBalanceGastoCategoriaVm
                 {
                     PeriodoId = periodo.Id,
-                    Categoria = g.Key,
-                    Total = g.Sum(x => LeerDecimalPrimeraCoincidencia(x, "monto", "Monto"))
+                    Categoria = string.IsNullOrWhiteSpace(LeerString(row, "Categoria")) ? "Otros gastos" : LeerString(row, "Categoria"),
+                    Total = LeerDecimal(row, "Total")
                 })
                 .OrderByDescending(x => x.Total)
                 .ToList();
+            decimal totalGastos = gastosPorCategoria.Sum(x => x.Total);
 
-            System.Data.DataTable dtPagos = oCuentaCorrienteN.obtenerPagos("", desde, hasta) ?? new System.Data.DataTable();
-            decimal totalCobros = 0m;
-            decimal totalPagos = 0m;
-
-            foreach (System.Data.DataRow row in dtPagos.Rows)
-            {
-                int idPago = LeerInt(row, "id");
-                if (idPago <= 0)
-                    continue;
-
-                var pago = oCuentaCorrienteN.getPagoById(idPago);
-                if (pago == null)
-                    continue;
-
-                if (sucursalId > 0 && pago.IdSucursal != sucursalId)
-                    continue;
-
-                decimal importePago = Convert.ToDecimal(pago.Importe);
-                if (pago.AProveedor)
-                    totalPagos += importePago;
-                else
-                    totalCobros += importePago;
-            }
+            System.Data.DataTable dtPagosBalance = oCuentaCorrienteN.obtenerTotalesPagosBalance(desde, hasta, sucursalConsulta) ?? new System.Data.DataTable();
+            System.Data.DataRow rowPagosBalance = dtPagosBalance.Rows.Count > 0 ? dtPagosBalance.Rows[0] : null;
+            decimal totalCobros = rowPagosBalance != null ? LeerDecimal(rowPagosBalance, "TotalCobros") : 0m;
+            decimal totalPagos = rowPagosBalance != null ? LeerDecimal(rowPagosBalance, "TotalPagos") : 0m;
 
             decimal baseBalance = incluirVentasCuentaCorriente ? totalVentas : ventasConsumidorFinal;
             decimal balance = baseBalance - totalCompras - totalGastos;
@@ -1149,31 +1133,6 @@ namespace Web.Controllers
                 },
                 GastosPorCategoria = gastosPorCategoria
             };
-        }
-
-        private List<DataRow> ObtenerEgresosGastoBalance(int sucursalId, DateTime desde, DateTime hasta)
-        {
-            var filas = new List<DataRow>();
-
-            var sucursalesConsulta = (sucursalId > 0
-                    ? (oSucursalN.findAll() ?? new List<Entidades.Sucursal>()).Where(x => x != null && x.IdSucursal == sucursalId)
-                    : (oSucursalN.findAll() ?? new List<Entidades.Sucursal>()).Where(x => x != null && x.IdSucursal > 0))
-                .GroupBy(x => x.IdSucursal)
-                .Select(x => x.First())
-                .ToList();
-
-            foreach (var sucursal in sucursalesConsulta)
-            {
-                System.Data.DataTable dtEgresos = oCierreN.obtenerEgresosCajaGastosBalance(
-                    sucursal.IdSucursal,
-                    desde,
-                    hasta) ?? new System.Data.DataTable();
-
-                foreach (System.Data.DataRow row in dtEgresos.Rows)
-                    filas.Add(row);
-            }
-
-            return filas;
         }
 
         private bool EsVentaCuentaCorriente(Entidades.Venta venta)

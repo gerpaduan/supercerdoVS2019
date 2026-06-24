@@ -154,6 +154,11 @@ namespace Negocio
             return oCierreD.obtenerEgresosCajaGastosBalance(idSucursal, fechaDesde, fechaHasta);
         }
 
+        public DataTable obtenerGastosAgrupadosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        {
+            return oCierreD.obtenerGastosAgrupadosBalance(fechaDesde, fechaHasta, idSucursal);
+        }
+
         public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
             return oCierreD.addOrEditEgresoCaja(oEgresoCaja);
@@ -172,6 +177,11 @@ namespace Negocio
             }
 
             return oEgresoCaja;
+        }
+
+        public List<Entidades.EgresoCaja> getEgresosCajaByIds(List<int> ids)
+        {
+            return oCierreD.getEgresosCajaByIds(ids);
         }
 
         public Entidades.EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID)

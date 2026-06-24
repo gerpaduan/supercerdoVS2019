@@ -43,6 +43,14 @@ namespace Negocio
             return oVentaD.getAllVentas(fechaDesde, fechaHasta, texto, idVendedor, idCliente, idSucursal, soloAnulados, cargarLineas);
         }
 
+        public List<Entidades.Venta> getVentasBalancePeriodo(
+                                            DateTime fechaDesde,
+                                            DateTime fechaHasta,
+                                            int? idSucursal)
+        {
+            return oVentaD.getVentasBalancePeriodo(fechaDesde, fechaHasta, idSucursal);
+        }
+
         public int agregarVenta(Entidades.Venta oVentaE, bool esNotaCredito = false)
         {
             using (TransactionScope scope = new TransactionScope())
