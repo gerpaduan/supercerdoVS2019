@@ -75,7 +75,7 @@ namespace Negocio
                         agregarCortePorCompra(cortePorCompra);
 
                         //se actualiza el precio del corte
-                        if (cortePorCompra.PrecioVenta > 0)
+                        if (cortePorCompra.ActualizarPrecioVenta && cortePorCompra.PrecioVenta > 0)
                         {
                             cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
                             oCorteN.editPrecioCorte(cortePorCompra.Corte);

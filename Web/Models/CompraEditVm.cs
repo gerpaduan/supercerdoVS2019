@@ -98,6 +98,8 @@ namespace Web.Models
 
         public float PrecioVenta { get; set; }
 
+        public bool ActualizarPrecioVenta { get; set; }
+
         public float Margen { get; set; }
 
         public float DescRecargo { get; set; }

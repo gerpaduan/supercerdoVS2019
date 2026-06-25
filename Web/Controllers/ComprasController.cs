@@ -375,6 +375,7 @@ namespace Web.Controllers
                             cantKgs = linea.CantKgs,
                             precioKg = linea.PrecioKg,
                             PrecioVenta = linea.PrecioVenta,
+                            ActualizarPrecioVenta = linea.ActualizarPrecioVenta,
                             Margen = linea.Margen,
                             Desc_recargo = linea.DescRecargo,
                             Iva_compra = linea.IvaCompra,
@@ -540,6 +541,7 @@ namespace Web.Controllers
                             CantKgs = corte.CantKgs,
                             PrecioKg = corte.precioKg,
                             PrecioVenta = corte.PrecioVenta,
+                            ActualizarPrecioVenta = false,
                             Margen = corte.Margen,
                             DescRecargo = corte.Desc_recargo,
                             IvaCompra = corte.Iva_compra,
@@ -885,17 +887,21 @@ namespace Web.Controllers
                 foreach (var linea in model.Lineas)
                 {
                     index++;
+                    string detalleLinea = !string.IsNullOrWhiteSpace(linea.CorteNombre)
+                        ? " (" + linea.CorteNombre.Trim() + ")"
+                        : "";
+
                     if (!linea.IdCorte.HasValue || linea.IdCorte.Value <= 0)
-                        return "La línea " + index + " no tiene un producto válido.";
+                        return "La línea " + index + detalleLinea + " no tiene un producto válido.";
 
                     if (linea.CantKgs <= 0)
-                        return "La línea " + index + " debe tener una cantidad mayor a cero.";
+                        return "La línea " + index + detalleLinea + " debe tener una cantidad mayor a cero.";
 
                     if (linea.PrecioKg <= 0)
-                        return "La línea " + index + " debe tener un precio mayor a cero.";
+                        return "La línea " + index + detalleLinea + " debe tener un precio de compra mayor a cero.";
 
                     if (linea.Margen < 0)
-                        return "La línea " + index + " tiene un margen negativo.";
+                        return "La línea " + index + detalleLinea + " tiene un margen negativo.";
                 }
             }
 

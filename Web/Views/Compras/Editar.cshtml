@@ -48,7 +48,7 @@
                     <small class="text-muted">Complete primero sucursal, fecha y proveedor. Luego cargue las líneas.</small>
                 </div>
 
-                <div class="row">
+                <div class="row compra-datos-principales-row">
                     @if (mostrarSelectorTipo)
                     {
                         <div class="col-12 col-lg-3">
@@ -101,21 +101,10 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-lg-2">
-                        <div class="compra-cta-card">
-                            <div class="compra-cta-title">Forma de registro</div>
-                            <div class="custom-control custom-switch compra-cta-switch">
-                                <input type="checkbox" class="custom-control-input" id="EnCtaCte" name="EnCtaCte" value="true" @(Model.EnCtaCte ? "checked" : "") />
-                                <input type="hidden" name="EnCtaCte" value="false" />
-                                <label class="custom-control-label" for="EnCtaCte">Cuenta corriente</label>
-                            </div>
-                            <small class="text-muted d-block mt-1">Actívelo si la compra queda pendiente de pago.</small>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-12 col-lg-6">
+                    <div class="col-12 col-lg-5">
                         <div class="form-group">
                             <label for="razonSocial">Proveedor</label>
                             <div class="input-group">
@@ -138,10 +127,17 @@
                             @Html.TextBoxFor(m => m.NroRemito, new { @class = "form-control", id = "NroRemito", maxlength = 100 })
                         </div>
                     </div>
-                    <div class="col-12 col-lg-3 js-mediares-only" @(mostrarMediaInicial ? null : new HtmlString("style=\"display:none;\""))>
-                        <div class="form-group">
-                            <label for="CantMediasMediaRes">Cantidad medias</label>
-                            <input type="number" class="form-control js-cant-medias-visible" id="CantMediasMediaRes" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                    <div class="col-12 col-lg-2">
+                        <div class="compra-cta-card">
+                            <div class="compra-cta-head">
+                                <span class="compra-cta-title">Cuenta corriente</span>
+                                <div class="custom-control custom-switch compra-cta-switch">
+                                    <input type="checkbox" class="custom-control-input" id="EnCtaCte" name="EnCtaCte" value="true" @(Model.EnCtaCte ? "checked" : "") />
+                                    <input type="hidden" name="EnCtaCte" value="false" />
+                                    <label class="custom-control-label" for="EnCtaCte"><span class="sr-only">Cuenta corriente</span></label>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block compra-cta-help">Use esta opción si la compra queda pendiente de pago.</small>
                         </div>
                     </div>
                 </div>
@@ -155,12 +151,6 @@
                             <div class="custom-control custom-switch">
                                 <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
                                 <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-2">
-                            <div class="form-group mb-0">
-                                <label for="CantMediasProducto">Cant.Medias Reses</label>
-                                <input type="number" class="form-control js-cant-medias-visible" id="CantMediasProducto" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
                             </div>
                         </div>
                     </div>
@@ -330,6 +320,12 @@
                     <table class="table table-hover table-sm" id="tablaLineasCompra">
                         <thead class="thead-light">
                             <tr>
+                                <th style="width: 70px;">
+                                    <button type="button" class="btn btn-link btn-sm p-0 font-weight-bold text-dark js-line-order-toggle" data-action="toggle-line-order" data-edit-readonly-ignore="true" title="Ordenar por número">
+                                        #
+                                        <span class="js-line-order-indicator" aria-hidden="true">↓</span>
+                                    </button>
+                                </th>
                                 <th>Detalle</th>
                                 <th class="text-right">Cantidad</th>
                                 <th class="text-right">Precio</th>
@@ -342,11 +338,14 @@
                         <tbody>
                             @if (Model.Lineas != null && Model.Lineas.Count > 0)
                             {
-                                foreach (var linea in Model.Lineas)
+                                for (var i = 0; i < Model.Lineas.Count; i++)
                                 {
+                                    var linea = Model.Lineas[i];
+                                    var numeroLinea = i + 1;
                                     if (linea.EsMediaRes)
                                     {
                                         <tr>
+                                            <td class="text-center font-weight-bold">@numeroLinea</td>
                                             <td><strong>Tropa:</strong> @(string.IsNullOrWhiteSpace(linea.NroTropa) ? "-" : linea.NroTropa)</td>
                                             <td class="text-right">@linea.KgMedia.ToString("0.00")</td>
                                             <td class="text-right">@linea.PrecioMedia.ToString("0.00")</td>
@@ -359,6 +358,7 @@
                                     else
                                     {
                                         <tr>
+                                            <td class="text-center font-weight-bold">@numeroLinea</td>
                                             <td>
                                                 <strong>@linea.CorteNombre</strong><br />
                                                 <small class="text-muted">Código: @(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")@(linea.Balanza ? " | Balanza" : "")</small>
@@ -376,7 +376,7 @@
                             else
                             {
                                 <tr class="js-empty-row">
-                                    <td colspan="7" class="text-center text-muted">Todavía no hay líneas cargadas.</td>
+                                    <td colspan="8" class="text-center text-muted">Todavía no hay líneas cargadas.</td>
                                 </tr>
                             }
                         </tbody>
@@ -386,6 +386,12 @@
 
                     <div class="col-12 col-xl-4">
                         <div class="compra-sidebar-stack">
+                        <div class="border rounded p-3 bg-white compra-medias-box">
+                            <div class="form-group mb-0">
+                                <label for="CantMediasMediaRes">Cantidad medias reses</label>
+                                <input type="number" class="form-control js-cant-medias-visible" id="CantMediasMediaRes" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                            </div>
+                        </div>
                         <div class="border rounded p-3 bg-light compra-totales-box">
                             <div class="d-flex justify-content-between">
                                 <span>Items</span>
@@ -473,16 +479,22 @@
 
     .compra-cta-card {
         height: calc(100% - 1rem);
-        min-height: 4.75rem;
+        min-height: 0;
         margin-bottom: 1rem;
-        padding: .8rem .9rem;
+        padding: .65rem .8rem;
         border: 1px solid rgba(13, 110, 253, .2);
         border-radius: .5rem;
         background: linear-gradient(180deg, rgba(13, 110, 253, .08), rgba(13, 110, 253, .03));
     }
 
+    .compra-cta-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+
     .compra-cta-title {
-        margin-bottom: .35rem;
         font-size: .8rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -494,6 +506,12 @@
         font-weight: 700;
     }
 
+    .compra-cta-help {
+        margin-top: .25rem !important;
+        font-size: .74rem;
+        line-height: 1.15;
+    }
+
     .compra-observaciones-box textarea {
         min-height: 4.5rem;
         resize: vertical;
@@ -501,6 +519,11 @@
 
     .compra-sidebar-stack > * + * {
         margin-top: .75rem;
+    }
+
+    .compra-medias-box label {
+        font-weight: 600;
+        margin-bottom: .35rem;
     }
 
     .compra-totales-box {
@@ -538,12 +561,16 @@
             padding: .95rem 1rem;
         }
 
+        .compra-datos-principales-row {
+            align-items: start;
+        }
+
         .compra-page .form-group {
-            margin-bottom: .65rem;
+            margin-bottom: .5rem;
         }
 
         .compra-page .form-group label {
-            margin-bottom: .22rem;
+            margin-bottom: .18rem;
             font-size: .88rem;
         }
 
@@ -558,6 +585,14 @@
 
         .compra-linea-panel h6 {
             margin-bottom: .65rem !important;
+        }
+
+        .compra-cta-card {
+            padding: .45rem .65rem;
+        }
+
+        .compra-cta-help {
+            display: none !important;
         }
 
         .compra-ajustes-grid > div {
@@ -612,7 +647,7 @@
 @if (Model.DesdePos)
 {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/compras.js?v=11")"></script>
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=16")"></script>
     <script>
         (function () {
             if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
@@ -651,7 +686,7 @@ else
 {
     @section Scripts {
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=11")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=16")"></script>
         <script>
             (function () {
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {

@@ -18,6 +18,7 @@ namespace Entidades
         private Usuario creadoPor;
         private float margen;
         private float precioVenta;
+        private bool actualizarPrecioVenta;
 
 
         public int IdCortePorCompra
@@ -104,6 +105,7 @@ namespace Entidades
         public bool Balanza { get => balanza; set => balanza = value; }
         public float Margen { get => margen; set => margen = value; }
         public float PrecioVenta { get => precioVenta; set => precioVenta = value; }
+        public bool ActualizarPrecioVenta { get => actualizarPrecioVenta; set => actualizarPrecioVenta = value; }
         public float Desc_recargo { get => desc_recargo; set => desc_recargo = value; }
         public float Iva_compra { get => iva_compra; set => iva_compra = value; }
     }

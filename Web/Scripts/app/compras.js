@@ -28,6 +28,10 @@
         return toNumber(value).toFixed(2);
     }
 
+    function formatDecimalForPost(value) {
+        return String(toNumber(value)).replace('.', ',');
+    }
+
     function parseInputNumber($input) {
         var raw = $.trim(($input && $input.length ? $input.val() : '') || '');
         if (raw === '') return { empty: true, valid: false, value: 0 };
@@ -51,6 +55,7 @@
         return {
             config: config || {},
             lineas: [],
+            lineasSortAsc: false,
             saving: false,
             personaTimer: null,
             productoTimer: null,
@@ -142,6 +147,27 @@
 
     function getCurrentSubtotal($form) {
         return toNumber($form.find('#txtCantKgs').val()) * getAdjustedUnitPrice($form);
+    }
+
+    function resolvePrecioVentaUpdate($form) {
+        var enabled = $form.find('#chkAplicarPrecioVentaMargen').is(':checked');
+        var byMargin = $form.find('#optMargen').is(':checked');
+        var precioVenta = parseInputNumber($form.find('#txtPrecioVenta'));
+        var margen = parseInputNumber($form.find('#txtMargen'));
+        var actualizar = false;
+
+        if (enabled) {
+            if (byMargin) {
+                actualizar = margen.valid && margen.value > 0 && precioVenta.valid && precioVenta.value > 0;
+            } else {
+                actualizar = precioVenta.valid && precioVenta.value > 0;
+            }
+        }
+
+        return {
+            precioVenta: precioVenta.valid ? precioVenta.value : 0,
+            actualizar: actualizar
+        };
     }
 
     function isContinuousProductMode($form) {
@@ -250,15 +276,7 @@
         $form.find('#txtCantKgs').val('');
         $form.find('#txtPrecioKg').val('');
         $form.find('#txtSubtotalLinea').val('');
-        $form.find('#chkAplicarDescRecargo').prop('checked', false);
-        $form.find('#txtDescRecargo').val('0');
-        $form.find('#chkAplicarIva').prop('checked', false);
-        $form.find('#txtIvaCompra').val('0');
-        $form.find('#chkAplicarPrecioVentaMargen').prop('checked', false);
-        $form.find('#optMargen').prop('checked', true);
-        $form.find('#optPrecioVenta').prop('checked', false);
         $form.find('#txtPrecioVenta').val('');
-        $form.find('#txtMargen').val('');
         syncPriceHelpers($form, 'reset');
     }
 
@@ -336,17 +354,26 @@
         var state = getState($form);
         var $tbody = $form.find('#tablaLineasCompra tbody');
         var html = '';
+        var start = state.lineasSortAsc ? 0 : state.lineas.length - 1;
+        var end = state.lineasSortAsc ? state.lineas.length : -1;
+        var step = state.lineasSortAsc ? 1 : -1;
+
+        $form.find('.js-line-order-indicator').text(state.lineasSortAsc ? '↑' : '↓');
+        $form.find('.js-line-order-toggle').attr('title', state.lineasSortAsc ? 'Orden ascendente por número' : 'Orden descendente por número');
 
         if (!state.lineas.length) {
-            $tbody.html('<tr class="js-empty-row"><td colspan="7" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
+            $tbody.html('<tr class="js-empty-row"><td colspan="8" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
             recalculate($form);
             return;
         }
 
-        $.each(state.lineas, function (index, linea) {
+        for (var index = start; index !== end; index += step) {
+            var linea = state.lineas[index];
+            var numeroLinea = index + 1;
             if (linea.tipoLinea === 'MediaRes') {
                 var totalMedia = toNumber(linea.kgMedia) * toNumber(linea.precioMedia);
                 html += '<tr data-index="' + index + '">'
+                    + '<td class="text-center font-weight-bold">' + numeroLinea + '</td>'
                     + '<td><strong>Media</strong></td>'
                     + '<td class="text-right">' + formatNumber(linea.kgMedia) + '</td>'
                     + '<td class="text-right">' + formatNumber(linea.precioMedia) + '</td>'
@@ -358,6 +385,7 @@
             } else {
                 var totalCorte = toNumber(linea.totalLinea || (linea.cantKgs * linea.precioKg));
                 html += '<tr data-index="' + index + '">'
+                    + '<td class="text-center font-weight-bold">' + numeroLinea + '</td>'
                     + '<td><strong>' + escapeHtml(linea.corteNombre || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
                     + '<td class="text-right">' + formatNumber(linea.cantKgs) + '</td>'
                     + '<td class="text-right">' + formatNumber(linea.precioKg) + '</td>'
@@ -367,7 +395,7 @@
                     + '<td class="text-right"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
                     + '</tr>';
             }
-        });
+        }
 
         $tbody.html(html);
         recalculate($form);
@@ -382,20 +410,21 @@
             html += '<input type="hidden" name="Lineas[' + index + '].TipoLinea" value="' + escapeHtml(linea.tipoLinea) + '"/>';
             if (linea.tipoLinea === 'MediaRes') {
                 html += '<input type="hidden" name="Lineas[' + index + '].NroTropa" value="' + escapeHtml(linea.nroTropa || '') + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].KgMedia" value="' + escapeHtml(toNumber(linea.kgMedia)) + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].PrecioMedia" value="' + escapeHtml(toNumber(linea.precioMedia)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].KgMedia" value="' + escapeHtml(formatDecimalForPost(linea.kgMedia)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].PrecioMedia" value="' + escapeHtml(formatDecimalForPost(linea.precioMedia)) + '"/>';
             } else {
                 html += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + escapeHtml(linea.idCorte || 0) + '"/>';
                 html += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + escapeHtml(linea.codigo || '') + '"/>';
                 html += '<input type="hidden" name="Lineas[' + index + '].CorteNombre" value="' + escapeHtml(linea.corteNombre || '') + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].CantKgs" value="' + escapeHtml(toNumber(linea.cantKgs)) + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].PrecioKg" value="' + escapeHtml(toNumber(linea.precioKg)) + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].PrecioVenta" value="' + escapeHtml(toNumber(linea.precioVenta)) + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].Margen" value="' + escapeHtml(toNumber(linea.margen)) + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].DescRecargo" value="' + escapeHtml(toNumber(linea.descRecargo)) + '"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].IvaCompra" value="' + escapeHtml(toNumber(linea.ivaCompra)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].CantKgs" value="' + escapeHtml(formatDecimalForPost(linea.cantKgs)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].PrecioKg" value="' + escapeHtml(formatDecimalForPost(linea.precioKg)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].PrecioVenta" value="' + escapeHtml(formatDecimalForPost(linea.precioVenta)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].ActualizarPrecioVenta" value="' + (linea.actualizarPrecioVenta ? 'true' : 'false') + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].Margen" value="' + escapeHtml(formatDecimalForPost(linea.margen)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].DescRecargo" value="' + escapeHtml(formatDecimalForPost(linea.descRecargo)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].IvaCompra" value="' + escapeHtml(formatDecimalForPost(linea.ivaCompra)) + '"/>';
                 html += '<input type="hidden" name="Lineas[' + index + '].Balanza" value="false"/>';
-                html += '<input type="hidden" name="Lineas[' + index + '].TotalLinea" value="' + escapeHtml(toNumber(linea.totalLinea)) + '"/>';
+                html += '<input type="hidden" name="Lineas[' + index + '].TotalLinea" value="' + escapeHtml(formatDecimalForPost(linea.totalLinea)) + '"/>';
             }
         });
 
@@ -620,7 +649,7 @@
     function addLineaCorte($form) {
         var state = getState($form);
         var adjustedPrice = getAdjustedUnitPrice($form);
-        var precioVenta = toNumber($form.find('#txtPrecioVenta').val());
+        var precioVentaData = resolvePrecioVentaUpdate($form);
         var margen = toNumber($form.find('#txtMargen').val());
         var linea = {
             tipoLinea: 'Corte',
@@ -629,7 +658,8 @@
             corteNombre: $form.find('#txtProductoNombre').val(),
             cantKgs: toNumber($form.find('#txtCantKgs').val()),
             precioKg: adjustedPrice,
-            precioVenta: precioVenta,
+            precioVenta: precioVentaData.precioVenta,
+            actualizarPrecioVenta: precioVentaData.actualizar,
             margen: margen,
             descRecargo: getDescRecargoValue($form),
             ivaCompra: getIvaValue($form),
@@ -1025,6 +1055,11 @@
             scheduleDraft($form);
         });
 
+        $form.on('click.compras', '[data-action="toggle-line-order"]', function () {
+            state.lineasSortAsc = !state.lineasSortAsc;
+            renderLineas($form);
+        });
+
         $form.on('submit.compras', function (e) {
             e.preventDefault();
             submitForm($form);
@@ -1077,6 +1112,7 @@
             cantKgs: linea.CantKgs || linea.cantKgs || 0,
             precioKg: linea.PrecioKg || linea.precioKg || 0,
             precioVenta: linea.PrecioVenta || linea.precioVenta || 0,
+            actualizarPrecioVenta: linea.ActualizarPrecioVenta === true || linea.actualizarPrecioVenta === true,
             margen: linea.Margen || linea.margen || 0,
             descRecargo: linea.DescRecargo || linea.descRecargo || 0,
             ivaCompra: linea.IvaCompra || linea.ivaCompra || 0,
