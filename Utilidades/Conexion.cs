@@ -49,6 +49,21 @@ namespace Utilidades
 
         public SqlConnection conectar(string conexionSucursal, IEmpresaContext empresa)
         {
+            return conectar(conexionSucursal, empresa, true);
+        }
+
+        public SqlConnection conectarSinTenant(IEmpresaContext empresa)
+        {
+            return conectar(null, empresa, false);
+        }
+
+        public SqlConnection conectarSinTenant(string conexionSucursal, IEmpresaContext empresa)
+        {
+            return conectar(conexionSucursal, empresa, false);
+        }
+
+        private SqlConnection conectar(string conexionSucursal, IEmpresaContext empresa, bool setearSessionContext)
+        {
             if (empresa == null) throw new ArgumentNullException(nameof(empresa));
 
             string cs = GetConnectionStringFromConfig(conexionSucursal);
@@ -57,7 +72,12 @@ namespace Utilidades
             cn.Open();
 
             if (!EsBaseSinSessionContext(cn))
-                SetEmpresaSession(cn, empresa.IdEmpresa);
+            {
+                if (setearSessionContext)
+                    SetEmpresaSession(cn, empresa.IdEmpresa);
+                else
+                    SetAdminSession(cn);
+            }
 
             return cn;
         }
@@ -76,6 +96,17 @@ namespace Utilidades
                 cmd.ExecuteNonQuery();
             }
 
+        }
+
+        private static void SetAdminSession(SqlConnection cn)
+        {
+            using (var cmd = new SqlCommand(
+                "EXEC sys.sp_set_session_context @key=N'EsAdminCarniSys', @value=1, @read_only=1;",
+                cn))
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private static bool EsBaseSinSessionContext(SqlConnection cn)

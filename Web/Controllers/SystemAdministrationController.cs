@@ -305,8 +305,8 @@ namespace Web.Controllers
             model.TieneActivaSucursal = _repo.TablaSucursalTieneActiva();
 
             ValidarEmpresa(model.Empresa);
-            ValidarSucursal(model.Sucursal);
-            ValidarUsuario(model.Usuario);
+            ValidarSucursal(model.Sucursal, true);
+            ValidarUsuario(model.Usuario, true);
 
             if (!ModelState.IsValid)
             {
@@ -373,7 +373,7 @@ namespace Web.Controllers
             }
         }
 
-        private void ValidarSucursal(SystemAdministrationSucursalEditVm model)
+        private void ValidarSucursal(SystemAdministrationSucursalEditVm model, bool permitirEmpresaPendiente = false)
         {
             if (model == null)
             {
@@ -382,11 +382,11 @@ namespace Web.Controllers
             }
 
             model.Sucursal = (model.Sucursal ?? "").Trim();
-            if (model.IdEmpresa <= 0)
+            if (!permitirEmpresaPendiente && model.IdEmpresa <= 0)
                 ModelState.AddModelError("IdEmpresa", "Debe seleccionar una empresa.");
         }
 
-        private void ValidarUsuario(SystemAdministrationUsuarioEditVm model)
+        private void ValidarUsuario(SystemAdministrationUsuarioEditVm model, bool permitirEmpresaPendiente = false)
         {
             if (model == null)
             {
@@ -400,7 +400,7 @@ namespace Web.Controllers
             model.Clave = model.Clave ?? "";
             model.ConfirmarClave = model.ConfirmarClave ?? "";
 
-            if (model.IdEmpresa <= 0)
+            if (!permitirEmpresaPendiente && model.IdEmpresa <= 0)
                 ModelState.AddModelError("IdEmpresa", "Debe seleccionar una empresa.");
 
             if (model.Id == 0 && string.IsNullOrWhiteSpace(model.Clave))

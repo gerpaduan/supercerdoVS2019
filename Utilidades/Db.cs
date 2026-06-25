@@ -25,6 +25,18 @@ namespace Utilidades
         }
 
         /// <summary>
+        /// Abre una conexion administrativa sin SESSION_CONTEXT de tenant.
+        /// Usar solo en modulos globales del sistema.
+        /// </summary>
+        public static SqlConnection OpenAdmin(IEmpresaContext empresa, string conexionSucursal = null)
+        {
+            var cx = new Conexion();
+            return string.IsNullOrWhiteSpace(conexionSucursal)
+                ? cx.conectarSinTenant(empresa)
+                : cx.conectarSinTenant(conexionSucursal, empresa);
+        }
+
+        /// <summary>
         /// Ejecuta un ExecuteNonQuery (INSERT/UPDATE/DELETE o SP) y devuelve filas afectadas.
         /// </summary>
         public static int NonQuery(
@@ -34,6 +46,7 @@ namespace Utilidades
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
             int? timeoutOverride = null,
+            Func<IEmpresaContext, string, SqlConnection> openConnection = null,
             [CallerMemberName] string callerMemberName = null,
             [CallerFilePath] string callerFilePath = null)
         {
@@ -42,7 +55,7 @@ namespace Utilidades
                 commandType,
                 () =>
                 {
-                    using (var con = Open(empresa, conexionSucursal))
+                    using (var con = (openConnection ?? Open)(empresa, conexionSucursal))
                     using (var cmd = new SqlCommand(sqlOrSp, con))
                     {
                         cmd.CommandType = commandType;
@@ -69,6 +82,7 @@ namespace Utilidades
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
             int? timeoutOverride = null,
+            Func<IEmpresaContext, string, SqlConnection> openConnection = null,
             [CallerMemberName] string callerMemberName = null,
             [CallerFilePath] string callerFilePath = null)
         {
@@ -77,7 +91,7 @@ namespace Utilidades
                 commandType,
                 () =>
                 {
-                    using (var con = Open(empresa, conexionSucursal))
+                    using (var con = (openConnection ?? Open)(empresa, conexionSucursal))
                     using (var cmd = new SqlCommand(sqlOrSp, con))
                     {
                         cmd.CommandType = commandType;
@@ -105,6 +119,7 @@ namespace Utilidades
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
             int? timeoutOverride = null,
+            Func<IEmpresaContext, string, SqlConnection> openConnection = null,
             [CallerMemberName] string callerMemberName = null,
             [CallerFilePath] string callerFilePath = null)
         {
@@ -117,7 +132,7 @@ namespace Utilidades
                 {
                     var list = new List<T>();
 
-                    using (var con = Open(empresa, conexionSucursal))
+                    using (var con = (openConnection ?? Open)(empresa, conexionSucursal))
                     using (var cmd = new SqlCommand(sqlOrSp, con))
                     {
                         cmd.CommandType = commandType;
@@ -150,6 +165,7 @@ namespace Utilidades
             Action<SqlParameterCollection> setParams = null,
             string conexionSucursal = null,
             int? timeoutOverride = null,
+            Func<IEmpresaContext, string, SqlConnection> openConnection = null,
             [CallerMemberName] string callerMemberName = null,
             [CallerFilePath] string callerFilePath = null)
         {
@@ -160,7 +176,7 @@ namespace Utilidades
                 {
                     var dt = new DataTable();
 
-                    using (var con = Open(empresa, conexionSucursal))
+                    using (var con = (openConnection ?? Open)(empresa, conexionSucursal))
                     using (var cmd = new SqlCommand(sqlOrSp, con))
                     using (var da = new SqlDataAdapter(cmd))
                     {

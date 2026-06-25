@@ -177,6 +177,7 @@ namespace Datos
                 EnCtaCte = drVenta["enCtaCte"] != DBNull.Value && Convert.ToBoolean(drVenta["enCtaCte"]),
                 FormaPago = Convert.ToString(drVenta["formaPago"]),
                 PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["pagoMixtoEfectivo"]),
+                TotalKgs = drVenta["totalKg"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["totalKg"]),
                 TotalImporte = drVenta["totalImporteCalculado"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["totalImporteCalculado"]),
                 TotalImporteOriginal = drVenta["totalImporteCalculado"] == DBNull.Value ? 0f : Convert.ToSingle(drVenta["totalImporteCalculado"])
             };
@@ -299,6 +300,7 @@ namespace Datos
                     v.enCtaCte,
                     v.formaPago,
                     v.pagoMixtoEfectivo,
+                    ISNULL(SUM(lv.cantKg), 0) AS totalKg,
                     ISNULL(SUM(lv.cantKg * lv.precioKg), 0) AS totalImporteCalculado
                 FROM Ventas v
                 LEFT JOIN dbo.LineaVenta lv ON lv.idVenta = v.idVenta
@@ -326,6 +328,42 @@ namespace Datos
                     p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
                 }
             );
+        }
+
+        public decimal getTotalKgsPesablesBalancePeriodo(
+            DateTime fechaDesde,
+            DateTime fechaHasta,
+            int? idSucursal,
+            bool incluirVentasCuentaCorriente)
+        {
+            const string sql = @"
+                SELECT ISNULL(SUM(lv.cantKg), 0)
+                FROM Ventas v
+                INNER JOIN dbo.LineaVenta lv ON lv.idVenta = v.idVenta
+                INNER JOIN dbo.Corte c ON c.idCorte = lv.idCorte
+                WHERE v.fechaVenta >= @fechaDesde
+                  AND v.fechaVenta < @fechaHastaMas1
+                  AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
+                  AND ISNULL(v.estado, '') <> 'ANULADO'
+                  AND (@incluirVentasCuentaCorriente = 1 OR ISNULL(v.enCtaCte, 0) = 0)
+                  AND ISNULL(c.pesable, 0) = 1;";
+
+            object scalar = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHastaMas1", SqlDbType.DateTime).Value = fechaHasta.AddDays(1);
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
+                    p.Add("@incluirVentasCuentaCorriente", SqlDbType.Bit).Value = incluirVentasCuentaCorriente;
+                }
+            );
+
+            return scalar == null || scalar == DBNull.Value
+                ? 0m
+                : Convert.ToDecimal(scalar);
         }
 
         public int agregarVenta(Entidades.Venta oVentaE)

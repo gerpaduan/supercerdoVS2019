@@ -23,7 +23,7 @@ namespace Web.Helpers
             if (idUsuario <= 0)
                 return false;
 
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             {
                 string columnName = GetExistingColumnName(con, null, "Usuarios", "superadmin");
                 if (string.IsNullOrWhiteSpace(columnName))
@@ -40,7 +40,7 @@ namespace Web.Helpers
 
         public bool TablaSucursalTieneTelefono()
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             {
                 return !string.IsNullOrWhiteSpace(GetExistingColumnName(con, null, "Sucursal", "telefono"));
             }
@@ -48,7 +48,7 @@ namespace Web.Helpers
 
         public bool TablaSucursalTieneActiva()
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             {
                 return !string.IsNullOrWhiteSpace(GetExistingColumnName(con, null, "Sucursal", "activa"));
             }
@@ -76,6 +76,8 @@ namespace Web.Helpers
                     Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
                     Activa = dr["activa"] != DBNull.Value && Convert.ToByte(dr["activa"]) == 1
                 }
+            ,
+                openConnection: Db.OpenAdmin
             );
         }
 
@@ -114,7 +116,8 @@ namespace Web.Helpers
                     Activa = dr["activa"] != DBNull.Value && Convert.ToByte(dr["activa"]) == 1,
                     Observaciones = HasColumn(dr, "observaciones") && dr["observaciones"] != DBNull.Value ? Convert.ToString(dr["observaciones"]) : ""
                 },
-                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa
+                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa,
+                openConnection: Db.OpenAdmin
             );
 
             return list.FirstOrDefault();
@@ -122,7 +125,7 @@ namespace Web.Helpers
 
         public int CrearEmpresa(SystemAdministrationEmpresaEditVm model)
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             using (var tx = con.BeginTransaction())
             {
                 try
@@ -171,7 +174,8 @@ namespace Web.Helpers
                 _empresaRaiz,
                 sql,
                 CommandType.Text,
-                setParams: p => SetEmpresaParams(p, model, false)
+                setParams: p => SetEmpresaParams(p, model, false),
+                openConnection: Db.OpenAdmin
             );
         }
 
@@ -203,7 +207,8 @@ namespace Web.Helpers
                     Telefono = tieneTelefono && HasColumn(dr, "telefono") && dr["telefono"] != DBNull.Value ? Convert.ToString(dr["telefono"]) : "",
                     Activa = tieneActiva && HasColumn(dr, "activa") ? dr["activa"] != DBNull.Value && Convert.ToByte(dr["activa"]) == 1 : true
                 },
-                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa
+                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa,
+                openConnection: Db.OpenAdmin
             );
         }
 
@@ -234,7 +239,8 @@ namespace Web.Helpers
                     TieneTelefono = tieneTelefono,
                     TieneActiva = tieneActiva
                 },
-                setParams: p => p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal
+                setParams: p => p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal,
+                openConnection: Db.OpenAdmin
             );
 
             return list.FirstOrDefault();
@@ -242,7 +248,7 @@ namespace Web.Helpers
 
         public int CrearSucursal(SystemAdministrationSucursalEditVm model)
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             using (var tx = con.BeginTransaction())
             {
                 var columns = GetTableColumns(con, tx, "Sucursal");
@@ -287,7 +293,7 @@ namespace Web.Helpers
 
         public void ActualizarSucursal(SystemAdministrationSucursalEditVm model)
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             using (var tx = con.BeginTransaction())
             {
                 var columns = GetTableColumns(con, tx, "Sucursal");
@@ -348,7 +354,8 @@ namespace Web.Helpers
                     Admin = dr["admin"] != DBNull.Value && Convert.ToBoolean(dr["admin"]),
                     Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"])
                 },
-                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa
+                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa,
+                openConnection: Db.OpenAdmin
             );
         }
 
@@ -373,7 +380,8 @@ namespace Web.Helpers
                     Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
                     PermitirLoginFueraSucursal = HasColumn(dr, "PermitirLoginFueraSucursal") && dr["PermitirLoginFueraSucursal"] != DBNull.Value && Convert.ToBoolean(dr["PermitirLoginFueraSucursal"])
                 },
-                setParams: p => p.Add("@id", SqlDbType.Int).Value = idUsuario
+                setParams: p => p.Add("@id", SqlDbType.Int).Value = idUsuario,
+                openConnection: Db.OpenAdmin
             );
 
             return list.FirstOrDefault();
@@ -381,7 +389,7 @@ namespace Web.Helpers
 
         public int CrearUsuario(SystemAdministrationUsuarioEditVm model)
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             using (var tx = con.BeginTransaction())
             {
                 var columns = GetTableColumns(con, tx, "Usuarios");
@@ -393,7 +401,7 @@ namespace Web.Helpers
 
         public void ActualizarUsuario(SystemAdministrationUsuarioEditVm model)
         {
-            using (var con = Db.Open(_empresaRaiz))
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             using (var tx = con.BeginTransaction())
             {
                 var columns = GetTableColumns(con, tx, "Usuarios");
@@ -435,32 +443,47 @@ namespace Web.Helpers
 
         public int CrearAltaRapida(SystemAdministrationAltaRapidaVm model)
         {
-            using (var con = Db.Open(_empresaRaiz))
+            int idEmpresa;
+
+            using (var con = Db.OpenAdmin(_empresaRaiz))
             using (var tx = con.BeginTransaction())
             {
                 try
                 {
-                    int idEmpresa = CrearEmpresaInterna(con, tx, model.Empresa);
+                    idEmpresa = CrearEmpresaInterna(con, tx, model.Empresa);
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
 
-                    int idSucursal = ObtenerSucursalDefaultEmpresa(con, tx, idEmpresa);
+            using (var conEmpresa = Db.Open(new EmpresaContextFijo(idEmpresa)))
+            using (var txEmpresa = conEmpresa.BeginTransaction())
+            {
+                try
+                {
+                    int idSucursal = ObtenerSucursalDefaultEmpresa(conEmpresa, txEmpresa, idEmpresa);
                     if (idSucursal <= 0)
                         throw new InvalidOperationException("No se pudo generar la sucursal inicial de la empresa.");
 
                     model.Sucursal.IdSucursal = idSucursal;
                     model.Sucursal.IdEmpresa = idEmpresa;
-                    ActualizarSucursalInterna(con, tx, model.Sucursal);
+                    ActualizarSucursalInterna(conEmpresa, txEmpresa, model.Sucursal);
 
-                    var columnsUsuarios = GetTableColumns(con, tx, "Usuarios");
+                    var columnsUsuarios = GetTableColumns(conEmpresa, txEmpresa, "Usuarios");
                     model.Usuario.IdEmpresa = idEmpresa;
                     model.Usuario.IdSucursalUser = idSucursal;
-                    int idUsuario = CrearUsuarioInterno(con, tx, columnsUsuarios, model.Usuario);
+                    int idUsuario = CrearUsuarioInterno(conEmpresa, txEmpresa, columnsUsuarios, model.Usuario);
 
-                    tx.Commit();
+                    txEmpresa.Commit();
                     return idUsuario;
                 }
                 catch
                 {
-                    tx.Rollback();
+                    txEmpresa.Rollback();
                     throw;
                 }
             }
@@ -482,7 +505,8 @@ namespace Web.Helpers
                 {
                     p.Add("@cuit", SqlDbType.BigInt).Value = cuit;
                     p.Add("@idEmpresaExcluir", SqlDbType.Int).Value = idEmpresaExcluir;
-                }
+                },
+                openConnection: Db.OpenAdmin
             );
 
             return value != null && value != DBNull.Value && Convert.ToInt32(value) > 0;
@@ -504,7 +528,8 @@ namespace Web.Helpers
                 {
                     p.Add("@usuario", SqlDbType.NVarChar, 100).Value = usuario ?? "";
                     p.Add("@idUsuarioExcluir", SqlDbType.Int).Value = idUsuarioExcluir;
-                }
+                },
+                openConnection: Db.OpenAdmin
             );
 
             return value != null && value != DBNull.Value && Convert.ToInt32(value) > 0;
@@ -529,7 +554,8 @@ namespace Web.Helpers
                 {
                     p.Add("@email", SqlDbType.NVarChar, 150).Value = email ?? "";
                     p.Add("@idUsuarioExcluir", SqlDbType.Int).Value = idUsuarioExcluir;
-                }
+                },
+                openConnection: Db.OpenAdmin
             );
 
             return value != null && value != DBNull.Value && Convert.ToInt32(value) > 0;
@@ -634,6 +660,7 @@ namespace Web.Helpers
         {
             var columnNames = new List<string>
             {
+                "id",
                 "nombre",
                 "usuario",
                 "email",
@@ -646,6 +673,7 @@ namespace Web.Helpers
 
             var valueNames = new List<string>
             {
+                "@id",
                 "@nombre",
                 "@usuario",
                 "@email",
@@ -673,6 +701,7 @@ namespace Web.Helpers
             int idUsuario;
             using (var cmd = new SqlCommand(sql, con, tx))
             {
+                cmd.Parameters.Add("@id", SqlDbType.Int).Value = ObtenerProximoIdUsuario(con, tx);
                 SetUsuarioParams(cmd.Parameters, model, columns, false);
                 object value = cmd.ExecuteScalar();
                 idUsuario = value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
@@ -682,6 +711,15 @@ namespace Web.Helpers
                 ActualizarPasswordWebSeguro(con, tx, columns, idUsuario, model.Clave);
 
             return idUsuario;
+        }
+
+        private int ObtenerProximoIdUsuario(SqlConnection con, SqlTransaction tx)
+        {
+            using (var cmd = new SqlCommand("SELECT ISNULL(MAX(id), 0) + 1 FROM dbo.Usuarios WITH (UPDLOCK, HOLDLOCK)", con, tx))
+            {
+                object value = cmd.ExecuteScalar();
+                return value == null || value == DBNull.Value ? 1 : Convert.ToInt32(value);
+            }
         }
 
         private void ActualizarPasswordWebSeguro(SqlConnection con, SqlTransaction tx, HashSet<string> columns, int idUsuario, string clave)
@@ -870,6 +908,19 @@ namespace Web.Helpers
                 slug = BuildSlug(razonSocial);
 
             return string.IsNullOrWhiteSpace(slug) ? null : "/" + slug;
+        }
+
+        private sealed class EmpresaContextFijo : IEmpresaContext
+        {
+            public int IdEmpresa { get; private set; }
+
+            public EmpresaContextFijo(int idEmpresa)
+            {
+                if (idEmpresa <= 0)
+                    throw new InvalidOperationException("IdEmpresa invalido para el contexto de sesion.");
+
+                IdEmpresa = idEmpresa;
+            }
         }
     }
 }

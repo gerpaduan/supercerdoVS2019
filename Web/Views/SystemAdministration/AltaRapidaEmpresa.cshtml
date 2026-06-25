@@ -30,7 +30,17 @@
                     </div>
                     <div class="form-group col-md-3">
                         <label>CUIT</label>
-                        @Html.TextBoxFor(m => m.Empresa.Cuit, new { @class = "form-control" })
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.Empresa.Cuit, new { @class = "form-control", autocomplete = "off", maxlength = "20", placeholder = "00-00000000-0" })
+                            <div class="input-group-append">
+                                <button type="button"
+                                        class="btn btn-outline-primary"
+                                        id="btnBuscarAfipAltaRapida"
+                                        title="Buscar en AFIP">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group col-md-4">
                         <label>Condicion IVA</label>
@@ -151,3 +161,99 @@
         }
     </div>
 </div>
+
+<script>
+    (function () {
+        function inicializarAltaRapidaAfip() {
+            var $btnBuscar = $("#btnBuscarAfipAltaRapida");
+            if (!$btnBuscar.length) {
+                return;
+            }
+
+            var urlBuscarAfip = '@Url.Action("BuscarPadronAfipAjax", "Personas")';
+
+            function limpiarCuit(valor) {
+                return (valor || "").replace(/\D/g, "");
+            }
+
+            function mostrarMensaje(tipo, titulo, texto) {
+                if (window.Swal && typeof window.Swal.fire === "function") {
+                    Swal.fire({ icon: tipo, title: titulo, text: texto });
+                } else {
+                    alert(titulo + "\n\n" + texto);
+                }
+            }
+
+            function setValorSiExiste(selector, valor) {
+                if (valor === null || typeof valor === "undefined") {
+                    return;
+                }
+
+                var $input = $(selector);
+                if ($input.length) {
+                    $input.val(valor);
+                }
+            }
+
+            function completarDesdeAfip(resp) {
+                setValorSiExiste("#Empresa_Cuit", limpiarCuit($("#Empresa_Cuit").val()));
+                setValorSiExiste("#Empresa_RazonSocialAfip", resp.razonSocial || "");
+                setValorSiExiste("#Empresa_CondicionIVA", resp.condicionIva || "");
+                setValorSiExiste("#Empresa_Domicilio", resp.domicilio || "");
+                setValorSiExiste("#Empresa_Ciudad", resp.ciudad || "");
+
+                var $dirSucursal = $("#Sucursal_Direccion");
+                if ($dirSucursal.length && !$dirSucursal.val() && resp.domicilio) {
+                    $dirSucursal.val(resp.domicilio);
+                }
+
+                var $localidadSucursal = $("#Sucursal_Localidad");
+                if ($localidadSucursal.length && !$localidadSucursal.val() && resp.ciudad) {
+                    $localidadSucursal.val(resp.ciudad);
+                }
+            }
+
+            $btnBuscar.on("click", function (evt) {
+                evt.preventDefault();
+
+                var $cuit = $("#Empresa_Cuit");
+                var cuit = limpiarCuit($cuit.val());
+                if (cuit.length !== 11) {
+                    mostrarMensaje("warning", "AFIP/ARCA", "Ingrese un CUIT valido de 11 digitos.");
+                    return;
+                }
+
+                $cuit.val(cuit);
+                $btnBuscar.prop("disabled", true);
+
+                $.getJSON(urlBuscarAfip, { cuit: cuit })
+                    .done(function (resp) {
+                        if (!resp || !resp.ok) {
+                            mostrarMensaje((resp && resp.tipo) || "error", "AFIP/ARCA", (resp && resp.msg) || "No se pudo consultar AFIP/ARCA.");
+                            return;
+                        }
+
+                        completarDesdeAfip(resp);
+                        mostrarMensaje("success", "AFIP/ARCA", resp.msg || "Datos recuperados desde AFIP/ARCA.");
+                    })
+                    .fail(function (xhr) {
+                        var msg = "No se pudo conectar con AFIP/ARCA.";
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
+                            msg = xhr.responseJSON.msg;
+                        }
+
+                        mostrarMensaje("error", "AFIP/ARCA", msg);
+                    })
+                    .always(function () {
+                        $btnBuscar.prop("disabled", false);
+                    });
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", inicializarAltaRapidaAfip);
+        } else {
+            inicializarAltaRapidaAfip();
+        }
+    })();
+</script>

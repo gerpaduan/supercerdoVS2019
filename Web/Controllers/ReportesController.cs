@@ -1074,7 +1074,17 @@ namespace Web.Controllers
                 .Where(EsVentaCuentaCorriente)
                 .Sum(x => Convert.ToDecimal(x.TotalImporte));
             decimal totalVentas = ventas.Sum(x => Convert.ToDecimal(x.TotalImporte));
+            decimal kilosVendidos = ventas.Sum(x => Convert.ToDecimal(x.TotalKgs));
+            int cantidadVentas = ventas.Count;
             decimal ventasConsumidorFinal = totalVentas - ventasCuentaCorriente;
+            var ventasConsideradasGrafico = incluirVentasCuentaCorriente
+                ? ventas
+                : ventas.Where(x => !EsVentaCuentaCorriente(x)).ToList();
+            decimal ventasGrafico = ventasConsideradasGrafico.Sum(x => Convert.ToDecimal(x.TotalImporte));
+            decimal kilosVendidosGrafico = ventasConsideradasGrafico.Sum(x => Convert.ToDecimal(x.TotalKgs));
+            int cantidadVentasGrafico = ventasConsideradasGrafico.Count;
+            decimal kilosVendidosPesables = oVentaN.getTotalKgsPesablesBalancePeriodo(desde, hasta, sucursalConsulta, true);
+            decimal kilosVendidosPesablesGrafico = oVentaN.getTotalKgsPesablesBalancePeriodo(desde, hasta, sucursalConsulta, incluirVentasCuentaCorriente);
             decimal ventasEfectivo = ventas.Sum(CalcularVentaEfectivo);
             decimal ventasBancarizadas = ventas.Sum(CalcularVentaBancarizada);
 
@@ -1124,6 +1134,13 @@ namespace Web.Controllers
                     VentasEfectivo = ventasEfectivo,
                     VentasBancarizadas = ventasBancarizadas,
                     TotalVentas = totalVentas,
+                    VentasConsideradasGrafico = ventasGrafico,
+                    KilosVendidos = kilosVendidos,
+                    KilosVendidosGrafico = kilosVendidosGrafico,
+                    KilosVendidosPesables = kilosVendidosPesables,
+                    KilosVendidosPesablesGrafico = kilosVendidosPesablesGrafico,
+                    CantidadVentas = cantidadVentas,
+                    CantidadVentasGrafico = cantidadVentasGrafico,
                     Compras = totalCompras,
                     Gastos = totalGastos,
                     BalanceEconomico = balance,

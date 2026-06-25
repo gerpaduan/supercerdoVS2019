@@ -364,6 +364,21 @@
             });
         }
 
+        function getLastComparativeStart() {
+            if (!$listaPeriodos.length) {
+                return null;
+            }
+
+            var $lastRow = $listaPeriodos.find(".reportes-periodo-comparativo").last();
+            if (!$lastRow.length) {
+                return null;
+            }
+
+            var value = $lastRow.find(".periodo-comparativo-desde").val();
+            var date = parseLocalDate(value);
+            return date && !isNaN(date.getTime()) ? date : null;
+        }
+
         function ensureStickyPlaceholder() {
             if (!$stickyStack.length) {
                 return;
@@ -759,6 +774,58 @@
                 return formatCurrency(value);
             }
 
+            function kilosTooltip(value) {
+                return formatNumber(value, 2) + " kg";
+            }
+
+            function cantidadTooltip(value) {
+                return formatNumber(value, 0);
+            }
+
+            function renderBalanceLineChart(canvasId, datasetLabel, color, backgroundColor, valueKey, tooltipPrefix, valueFormatter) {
+                var canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    return;
+                }
+
+                new Chart(canvas.getContext("2d"), {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: datasetLabel,
+                            borderColor: color,
+                            backgroundColor: backgroundColor,
+                            fill: true,
+                            lineTension: 0,
+                            data: $.map(periodos, function (x) { return x[valueKey]; })
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        tooltips: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    return tooltipPrefix + ": " + valueFormatter(tooltipItem.yLabel);
+                                },
+                                afterTitle: function (items) {
+                                    var idx = items && items.length ? items[0].index : -1;
+                                    return idx >= 0 && periodos[idx] ? periodos[idx].rango : "";
+                                }
+                            }
+                        },
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    callback: function (value) { return valueFormatter(value); }
+                                }
+                            }]
+                        }
+                    }
+                });
+            }
+
             var canvasEconomico = document.getElementById("graficoBalanceEconomico");
             if (canvasEconomico) {
                 new Chart(canvasEconomico.getContext("2d"), {
@@ -798,45 +865,10 @@
                 });
             }
 
-            var canvasLinea = document.getElementById("graficoBalanceLinea");
-            if (canvasLinea) {
-                new Chart(canvasLinea.getContext("2d"), {
-                    type: "line",
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: "Balance economico",
-                            borderColor: "#16a34a",
-                            backgroundColor: "rgba(22,163,74,0.12)",
-                            fill: true,
-                            lineTension: 0,
-                            data: $.map(periodos, function (x) { return x.balance; })
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        tooltips: {
-                            callbacks: {
-                                label: function (tooltipItem) {
-                                    return "Balance: " + moneyTooltip(tooltipItem.yLabel);
-                                },
-                                afterTitle: function (items) {
-                                    var idx = items && items.length ? items[0].index : -1;
-                                    return idx >= 0 && periodos[idx] ? periodos[idx].rango : "";
-                                }
-                            }
-                        },
-                        scales: {
-                            yAxes: [{
-                                ticks: {
-                                    callback: function (value) { return moneyTooltip(value); }
-                                }
-                            }]
-                        }
-                    }
-                });
-            }
+            renderBalanceLineChart("graficoBalanceLinea", "Balance economico", "#16a34a", "rgba(22,163,74,0.12)", "balance", "Balance", moneyTooltip);
+            renderBalanceLineChart("graficoBalanceKilos", "Cantidades vendidas", "#2563eb", "rgba(37,99,235,0.12)", "kilosVendidos", "Kilos", kilosTooltip);
+            renderBalanceLineChart("graficoBalanceCantidadVentas", "Cantidad Tickets", "#7c3aed", "rgba(124,58,237,0.12)", "cantidadVentas", "Tickets", cantidadTooltip);
+            renderBalanceLineChart("graficoBalanceKilosPesables", "Cantidades vendidas de productos pesables", "#0f766e", "rgba(15,118,110,0.12)", "kilosVendidosPesables", "Kilos", kilosTooltip);
 
             var canvasLiquidez = document.getElementById("graficoBalanceLiquidez");
             if (canvasLiquidez) {
@@ -1056,7 +1088,7 @@
 
         $btnAgregarPeriodo.on("click", function () {
             var duration = getMainDurationMs();
-            var baseStart = parseLocalDate($fechaDesdeDate.val());
+            var baseStart = getLastComparativeStart() || parseLocalDate($fechaDesdeDate.val());
             var defaultStart = baseStart && duration > 0
                 ? new Date(baseStart.getTime() - duration)
                 : new Date();

@@ -48,7 +48,10 @@
             {
                 titulo = x.Titulo,
                 rango = x.FechaDesde.ToString("dd/MM/yyyy") + " - " + x.FechaHasta.ToString("dd/MM/yyyy"),
-                ventas = x.TotalVentas,
+                ventas = x.VentasConsideradasGrafico,
+                kilosVendidos = x.KilosVendidosGrafico,
+                kilosVendidosPesables = x.KilosVendidosPesablesGrafico,
+                cantidadVentas = x.CantidadVentasGrafico,
                 compras = x.Compras,
                 gastos = x.Gastos,
                 balance = x.BalanceEconomico,
@@ -234,50 +237,53 @@
 
     @if (esReporteBalance)
     {
-        <div class="reportes-totales-grid reportes-totales-grid-balance mb-3">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Total ventas periodo principal</div>
-                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.TotalVentas : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+        if ((Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>()).Count <= 1)
+        {
+            <div class="reportes-totales-grid reportes-totales-grid-balance mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Total ventas periodo principal</div>
+                        <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? (Model.IncluirVentasCuentaCorrienteBalance ? balancePrincipal.TotalVentas : balancePrincipal.VentasConsumidorFinal) : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Total compras periodo principal</div>
+                        <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Compras : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Total gastos periodo principal</div>
+                        <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Gastos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Balance economico periodo principal</div>
+                        <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.BalanceEconomico < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.BalanceEconomico : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Total cobros periodo principal</div>
+                        <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Cobros : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Total pagos periodo principal</div>
+                        <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Pagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small">Dif. cobros/pagos principal</div>
+                        <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.DiferenciaCobrosPagos < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.DiferenciaCobrosPagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
+                    </div>
                 </div>
             </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Total compras periodo principal</div>
-                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Compras : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
-                </div>
-            </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Total gastos periodo principal</div>
-                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Gastos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
-                </div>
-            </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Balance economico periodo principal</div>
-                    <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.BalanceEconomico < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.BalanceEconomico : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
-                </div>
-            </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Total cobros periodo principal</div>
-                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Cobros : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
-                </div>
-            </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Total pagos periodo principal</div>
-                    <div class="h4 mb-0 font-weight-bold">@((balancePrincipal != null ? balancePrincipal.Pagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
-                </div>
-            </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Dif. cobros/pagos principal</div>
-                    <div class="h4 mb-0 font-weight-bold @((balancePrincipal != null && balancePrincipal.DiferenciaCobrosPagos < 0) ? "text-danger" : "text-success")">@((balancePrincipal != null ? balancePrincipal.DiferenciaCobrosPagos : 0m).ToString("C2", CultureInfo.GetCultureInfo("es-AR")))</div>
-                </div>
-            </div>
-        </div>
+        }
     }
     else
     {
@@ -698,6 +704,36 @@
                             </div>
                             <div class="col-lg-6 mb-3">
                                 <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Evolucion de Cantidades Vendidas</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceKilos"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Cantidad Tickets</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceCantidadVentas"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-header bg-white"><strong>Evolucion de Cantidades Vendidas de Productos Pesables</strong></div>
+                                    <div class="card-body">
+                                        <div class="reporte-balance-chart-wrap">
+                                            <canvas id="graficoBalanceKilosPesables"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-3">
+                                <div class="card shadow-sm h-100">
                                     <div class="card-header bg-white"><strong>Liquidez por periodo</strong></div>
                                     <div class="card-body">
                                         <div class="reporte-balance-chart-wrap">
@@ -733,6 +769,13 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <tr class="reporte-balance-row-metrica">
+                                    <td>Cantidad Tickets</td>
+                                    @foreach (var periodo in periodosBalance)
+                                    {
+                                        <td class="text-right font-weight-bold">@periodo.CantidadVentas.ToString("N0", CultureInfo.GetCultureInfo("es-AR"))</td>
+                                    }
+                                </tr>
                                 <tr>
                                     <td>Ventas consumidor final</td>
                                     @foreach (var periodo in periodosBalance)
@@ -1047,6 +1090,11 @@
         border-right-width: 2px;
     }
 
+    .reporte-balance-row-metrica > td,
+    .reporte-balance-row-metrica > th {
+        background: #eaf7fb;
+    }
+
     .reportes-periodo-grid {
         display: grid;
         grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
@@ -1156,6 +1204,15 @@
     html.dark-mode .reporte-ventas-resumen-card .text-muted,
     html.dark-mode .reporte-ventas-resumen-card .small.text-muted {
         color: #97a7bd !important;
+    }
+
+    html.dark-mode #tablaReporteBalanceEconomico tbody tr.reporte-balance-row-metrica > td,
+    html.dark-mode #tablaReporteBalanceEconomico tbody tr.reporte-balance-row-metrica > th,
+    body.dark-mode #tablaReporteBalanceEconomico tbody tr.reporte-balance-row-metrica > td,
+    body.dark-mode #tablaReporteBalanceEconomico tbody tr.reporte-balance-row-metrica > th {
+        background: rgba(8, 145, 178, 0.18) !important;
+        color: #e6faff !important;
+        border-color: rgba(56, 189, 248, 0.22) !important;
     }
 
     .reporte-balance-chart-wrap {
@@ -1435,5 +1492,5 @@
             ventasPorProductoSerieUrl: "@Url.Action("VentasPorProductoSerie", "Reportes")"
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260623-2")"></script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260625-2")"></script>
 }

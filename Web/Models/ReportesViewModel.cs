@@ -227,6 +227,13 @@ namespace Web.Models
         public decimal VentasEfectivo { get; set; }
         public decimal VentasBancarizadas { get; set; }
         public decimal TotalVentas { get; set; }
+        public decimal VentasConsideradasGrafico { get; set; }
+        public decimal KilosVendidos { get; set; }
+        public decimal KilosVendidosGrafico { get; set; }
+        public decimal KilosVendidosPesables { get; set; }
+        public decimal KilosVendidosPesablesGrafico { get; set; }
+        public int CantidadVentas { get; set; }
+        public int CantidadVentasGrafico { get; set; }
         public decimal Compras { get; set; }
         public decimal Gastos { get; set; }
         public decimal BalanceEconomico { get; set; }

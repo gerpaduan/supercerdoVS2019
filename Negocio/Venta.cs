@@ -51,6 +51,15 @@ namespace Negocio
             return oVentaD.getVentasBalancePeriodo(fechaDesde, fechaHasta, idSucursal);
         }
 
+        public decimal getTotalKgsPesablesBalancePeriodo(
+                                            DateTime fechaDesde,
+                                            DateTime fechaHasta,
+                                            int? idSucursal,
+                                            bool incluirVentasCuentaCorriente)
+        {
+            return oVentaD.getTotalKgsPesablesBalancePeriodo(fechaDesde, fechaHasta, idSucursal, incluirVentasCuentaCorriente);
+        }
+
         public int agregarVenta(Entidades.Venta oVentaE, bool esNotaCredito = false)
         {
             using (TransactionScope scope = new TransactionScope())
