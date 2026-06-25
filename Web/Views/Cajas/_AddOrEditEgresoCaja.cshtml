@@ -1,6 +1,7 @@
 @model Entidades.EgresoCaja
 @using System.Data
 @using System.Globalization
+@using System.Linq
 
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
@@ -13,6 +14,20 @@
     int idSucursal = Model != null && Model.Sucursal != null && Model.Sucursal.idSucursal > 0 ? Model.Sucursal.idSucursal : (ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0);
     bool mostrarSucursales = !desdePos && idCierreActividad == 0;
     string monto = Model != null && Model.Monto > 0 ? Model.Monto.ToString("0.##", CultureInfo.InvariantCulture) : "";
+    string sucursalActual = "";
+    if (Model != null && Model.Sucursal != null && !string.IsNullOrWhiteSpace(Model.Sucursal.SucursalNombre))
+    {
+        sucursalActual = Model.Sucursal.SucursalNombre;
+    }
+    else if (usuario != null && usuario.Sucursal != null && !string.IsNullOrWhiteSpace(usuario.Sucursal.SucursalNombre))
+    {
+        sucursalActual = usuario.Sucursal.SucursalNombre;
+    }
+    else if (sucursales != null)
+    {
+        var sucursalSeleccionada = sucursales.FirstOrDefault(s => s.IdSucursal == idSucursal);
+        sucursalActual = sucursalSeleccionada != null ? sucursalSeleccionada.SucursalNombre : "";
+    }
 }
 
 <div class="egreso-form-wrap">
@@ -27,6 +42,10 @@
             <div>
                 <span class="text-muted d-block">@(esEdicion ? "Modificacion" : "Vendedor")</span>
                 <strong>@(usuario != null ? usuario.Nombre : "-")</strong>
+                @if (!string.IsNullOrWhiteSpace(sucursalActual))
+                {
+                    <small class="text-muted d-block mt-1">Sucursal: <strong>@sucursalActual</strong></small>
+                }
             </div>
             @if (desdePos)
             {
@@ -36,23 +55,47 @@
             }
         </div>
 
-        <div class="form-row">
-            <div class="form-group col-12 col-md-6">
+        <div class="egreso-form-grid">
+            @if (mostrarSucursales)
+            {
+                <div class="form-group egreso-field egreso-field-sucursal">
+                    <label>Sucursal</label>
+                    <select class="form-control" name="idSucursal" id="egresoSucursal">
+                        @if (sucursales != null)
+                        {
+                            foreach (var s in sucursales)
+                            {
+                                <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="form-group egreso-field egreso-field-fecha">
                 <label>Fecha</label>
                 <input type="datetime-local"
                        class="form-control"
                        name="fecha"
+                       id="egresoFecha"
                        value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm")" />
             </div>
 
-            <div class="form-group col-12 col-md-6" style="@(mostrarSucursales ? "" : "display:none;")">
-                <label>Sucursal</label>
-                <select class="form-control" name="idSucursal">
-                    @if (sucursales != null)
+            <div class="form-group egreso-field egreso-field-tipo">
+                <label>Tipo</label>
+                <select class="form-control" name="idTipoEgresoCaja" id="idTipoEgresoCaja">
+                    <option value="0">Seleccione un tipo</option>
+                    @if (tipos != null)
                     {
-                        foreach (var s in sucursales)
+                        foreach (DataRow row in tipos.Rows)
                         {
-                            <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>@s.SucursalNombre</option>
+                            int idTipo = Convert.ToInt32(row["id"]);
+                            bool reservado = row.Table.Columns.Contains("Reservado")
+                                && row["Reservado"] != DBNull.Value
+                                && Convert.ToBoolean(row["Reservado"]);
+                            if (idTipo == 0) { continue; }
+                            if (!esEdicion && reservado) { continue; }
+                            <option value="@idTipo" @(Model != null && idTipo == Model.IdTipoEgresoCaja ? "selected" : "")>@row["tipoEgresoCaja"]</option>
                         }
                     }
                 </select>
@@ -62,72 +105,128 @@
             {
                 <input type="hidden" name="idSucursal" value="@idSucursal" />
             }
-        </div>
 
-        <div class="form-group">
-            <label>Tipo</label>
-            <select class="form-control" name="idTipoEgresoCaja" id="idTipoEgresoCaja">
-                <option value="0">Seleccione un tipo</option>
-                @if (tipos != null)
-                {
-                    foreach (DataRow row in tipos.Rows)
-                    {
-                        int idTipo = Convert.ToInt32(row["id"]);
-                        if (idTipo == 0) { continue; }
-                        <option value="@idTipo" @(Model != null && idTipo == Model.IdTipoEgresoCaja ? "selected" : "")>@row["tipoEgresoCaja"]</option>
-                    }
-                }
-            </select>
-        </div>
+            <div class="form-group egreso-field egreso-field-descripcion">
+                <label>Descripcion</label>
+                <input type="text" class="form-control" id="egresoDescripcion" name="descripcion" maxlength="100" autocomplete="off" value="@(Model != null ? Model.Descripcion : "")" />
+            </div>
 
-        <div class="form-group">
-            <label>Descripcion</label>
-            <input type="text" class="form-control" name="descripcion" maxlength="100" autocomplete="off" value="@(Model != null ? Model.Descripcion : "")" />
-        </div>
-
-        <div class="form-group">
-            <label>Monto</label>
-            <div class="input-group">
-                <input type="text"
-                       class="form-control solo-decimal egreso-monto"
-                       id="egresoMonto"
-                       name="monto"
-                       inputmode="decimal"
-                       autocomplete="off"
-                       value="@monto" />
-                <div class="input-group-append">
-                    <button type="button"
-                            id="btnCalculadoraBilletesEgreso"
-                            class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-egreso"
-                            data-cb-context="egreso"
-                            data-cb-input="#egresoMonto, [name='monto']"
-                            data-cb-detail="#egresoDetalle, [name='detalle']"
-                            title="Calcular efectivo">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </button>
+            <div class="form-group egreso-field egreso-field-monto">
+                <label>Monto</label>
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control solo-decimal egreso-monto"
+                           id="egresoMonto"
+                           name="monto"
+                           inputmode="decimal"
+                           autocomplete="off"
+                           value="@monto" />
+                    <div class="input-group-append">
+                        <button type="button"
+                                id="btnCalculadoraBilletesEgreso"
+                                class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-egreso"
+                                data-cb-context="egreso"
+                                data-cb-input="#egresoMonto, [name='monto']"
+                                data-cb-detail="#egresoDetalle, [name='detalle']"
+                                title="Calcular efectivo">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <div class="form-group egreso-field egreso-field-detalle">
+                <label>Detalle</label>
+                <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@(Model != null ? Model.Detalle : "")</textarea>
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Detalle</label>
-            <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@(Model != null ? Model.Detalle : "")</textarea>
-        </div>
-
-        @if (esEdicion)
-        {
-            <button type="button"
-                    class="btn btn-primary btn-block mb-2"
-                    id="btnHabilitarEdicionEgresoCaja"
-                    data-edit-readonly-ignore="true">
-                <i class="fas fa-edit mr-1"></i> Modificar
+        <div class="egreso-form-actions">
+            @if (esEdicion)
+            {
+                <button type="button"
+                        class="btn btn-primary btn-block mb-2"
+                        id="btnHabilitarEdicionEgresoCaja"
+                        data-edit-readonly-ignore="true">
+                    <i class="fas fa-edit mr-1"></i> Modificar
+                </button>
+            }
+            <button type="submit" class="btn btn-success btn-block @(esEdicion ? "d-none" : "")" id="btnGuardarEgresoCaja">
+                <i class="fas fa-save mr-1"></i> Guardar egreso
             </button>
-        }
-        <button type="submit" class="btn btn-success btn-block @(esEdicion ? "d-none" : "")" id="btnGuardarEgresoCaja">
-            <i class="fas fa-save mr-1"></i> Guardar egreso
-        </button>
+        </div>
     </form>
 </div>
+
+<style>
+    .egreso-form-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        margin-bottom: .55rem;
+        padding-bottom: .45rem;
+        border-bottom: 1px solid rgba(0, 0, 0, .08);
+    }
+
+    .egreso-form-head .text-muted {
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    .egreso-form-head strong {
+        line-height: 1.15;
+    }
+
+    .egreso-form-head small {
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    .egreso-form-grid .form-group label {
+        margin-bottom: .25rem;
+        font-size: .875rem;
+    }
+
+    .egreso-form-grid .form-group {
+        margin-bottom: .65rem;
+    }
+
+    @@media (min-width: 992px) {
+        .egreso-form-wrap {
+            max-width: 100%;
+        }
+
+        .egreso-form-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+            gap: 0 1rem;
+            align-items: start;
+        }
+
+        .egreso-form-grid .egreso-field {
+            min-width: 0;
+        }
+
+        .egreso-form-grid .egreso-field-detalle {
+            grid-column: 1 / -1;
+        }
+
+        .egreso-form-grid .egreso-field-detalle textarea {
+            min-height: 7.5rem;
+            resize: vertical;
+        }
+
+        .egreso-form-actions {
+            margin-top: .5rem;
+        }
+
+        .egreso-form-actions .btn {
+            max-width: 18rem;
+            margin-left: auto;
+        }
+    }
+</style>
 
 <script>
     (function () {
@@ -136,12 +235,37 @@
         }
 
         var soloLecturaInicial = @Html.Raw(esEdicion ? "true" : "false");
+        var esDesdePos = @Html.Raw(desdePos ? "true" : "false");
         var form = document.getElementById("formEgresoCaja");
         var btnModificar = document.getElementById("btnHabilitarEdicionEgresoCaja");
         var btnGuardar = document.getElementById("btnGuardarEgresoCaja");
         var btnCalculadora = document.getElementById("btnCalculadoraBilletesEgreso");
+        var selectSucursal = document.getElementById("egresoSucursal") || (form ? form.querySelector("[name='idSucursal']") : null);
+        var inputFecha = document.getElementById("egresoFecha") || (form ? form.querySelector("[name='fecha']") : null);
+        var selectTipo = document.getElementById("idTipoEgresoCaja") || (form ? form.querySelector("[name='idTipoEgresoCaja']") : null);
+        var inputDescripcion = document.getElementById("egresoDescripcion") || (form ? form.querySelector("[name='descripcion']") : null);
         var inputMonto = document.getElementById("egresoMonto") || (form ? form.querySelector("[name='monto']") : null);
         var inputDetalle = document.getElementById("egresoDetalle") || (form ? form.querySelector("[name='detalle']") : null);
+        var tiposDisponibles = [];
+        var busquedaTipoTexto = "";
+        var busquedaTipoTimer = null;
+        var ultimaTeclaTipo = "";
+
+        if (selectTipo && selectTipo.options) {
+            Array.prototype.forEach.call(selectTipo.options, function (option) {
+                var id = option && option.value ? parseInt(option.value, 10) : 0;
+                var texto = option ? (option.text || "") : "";
+                if (!id || !texto) {
+                    return;
+                }
+
+                tiposDisponibles.push({
+                    id: id,
+                    texto: texto,
+                    normalizado: texto.toLowerCase()
+                });
+            });
+        }
 
         function parseMontoCalculadora(texto) {
             var valor = (texto || "").toString().replace(/\$/g, "").replace(/\s+/g, "").trim();
@@ -189,6 +313,218 @@
             }
 
             return textoActual || "";
+        }
+
+        function focusAndSelect(control) {
+            if (!control) {
+                return;
+            }
+
+            control.focus();
+            if (typeof control.select === "function" && control.tagName !== "SELECT") {
+                control.select();
+            }
+        }
+
+        function buscarTipoCoincidente(texto) {
+            var valor = (texto || "").toString().trim().toLowerCase();
+            if (!valor) {
+                return null;
+            }
+
+            for (var i = 0; i < tiposDisponibles.length; i++) {
+                if (tiposDisponibles[i].normalizado === valor) {
+                    return tiposDisponibles[i];
+                }
+            }
+
+            for (var j = 0; j < tiposDisponibles.length; j++) {
+                if (tiposDisponibles[j].normalizado.indexOf(valor) === 0) {
+                    return tiposDisponibles[j];
+                }
+            }
+
+            for (var k = 0; k < tiposDisponibles.length; k++) {
+                if (tiposDisponibles[k].normalizado.indexOf(valor) >= 0) {
+                    return tiposDisponibles[k];
+                }
+            }
+
+            return null;
+        }
+
+        function seleccionarTipoCoincidente(texto) {
+            if (!selectTipo) {
+                return false;
+            }
+
+            var coincidencia = buscarTipoCoincidente(texto);
+            if (!coincidencia) {
+                return false;
+            }
+
+            selectTipo.value = String(coincidencia.id);
+            dispararEventos(selectTipo, ["input", "change"]);
+            return true;
+        }
+
+        function resetBusquedaTipo() {
+            busquedaTipoTexto = "";
+            ultimaTeclaTipo = "";
+            if (busquedaTipoTimer) {
+                clearTimeout(busquedaTipoTimer);
+                busquedaTipoTimer = null;
+            }
+        }
+
+        function acumularBusquedaTipo(caracter) {
+            busquedaTipoTexto += caracter.toLowerCase();
+            if (busquedaTipoTimer) {
+                clearTimeout(busquedaTipoTimer);
+            }
+
+            busquedaTipoTimer = setTimeout(function () {
+                resetBusquedaTipo();
+            }, 850);
+        }
+
+        function refrescarBusquedaTipo() {
+            if (busquedaTipoTimer) {
+                clearTimeout(busquedaTipoTimer);
+            }
+
+            busquedaTipoTimer = setTimeout(function () {
+                resetBusquedaTipo();
+            }, 850);
+        }
+
+        function seleccionarSiguienteTipoPorInicial(caracter) {
+            if (!selectTipo) {
+                return false;
+            }
+
+            var valor = (caracter || "").toString().trim().toLowerCase();
+            if (!valor) {
+                return false;
+            }
+
+            var coincidencias = [];
+            for (var i = 0; i < tiposDisponibles.length; i++) {
+                if (tiposDisponibles[i].normalizado.indexOf(valor) === 0) {
+                    coincidencias.push(tiposDisponibles[i]);
+                }
+            }
+
+            if (!coincidencias.length) {
+                return false;
+            }
+
+            var actual = (selectTipo.value || "").toString();
+            var indiceActual = -1;
+            for (var j = 0; j < coincidencias.length; j++) {
+                if (String(coincidencias[j].id) === actual) {
+                    indiceActual = j;
+                    break;
+                }
+            }
+
+            var siguiente = coincidencias[(indiceActual + 1) % coincidencias.length];
+            selectTipo.value = String(siguiente.id);
+            dispararEventos(selectTipo, ["input", "change"]);
+            return true;
+        }
+
+        function bindBusquedaTipoSelect(control) {
+            if (!control) {
+                return;
+            }
+
+            control.addEventListener("keydown", function (evt) {
+                if (evt.altKey || evt.ctrlKey || evt.metaKey) {
+                    return;
+                }
+
+                var tecla = evt.key || "";
+                if (tecla.length !== 1 || /\s/.test(tecla)) {
+                    return;
+                }
+
+                var teclaNormalizada = tecla.toLowerCase();
+                if (busquedaTipoTexto.length === 1
+                    && busquedaTipoTexto === teclaNormalizada
+                    && ultimaTeclaTipo === teclaNormalizada) {
+                    refrescarBusquedaTipo();
+                    seleccionarSiguienteTipoPorInicial(teclaNormalizada);
+                    evt.preventDefault();
+                    return;
+                }
+
+                acumularBusquedaTipo(tecla);
+                ultimaTeclaTipo = teclaNormalizada;
+
+                if (seleccionarTipoCoincidente(busquedaTipoTexto)) {
+                    evt.preventDefault();
+                    return;
+                }
+
+                seleccionarTipoCoincidente(tecla);
+                evt.preventDefault();
+            });
+
+            control.addEventListener("blur", resetBusquedaTipo);
+        }
+
+        function avanzarFocusEgreso(actual) {
+            if (!actual) {
+                return;
+            }
+
+            if (actual === selectSucursal) {
+                focusAndSelect(inputFecha);
+                return;
+            }
+
+            if (actual === selectTipo) {
+                focusAndSelect(esDesdePos ? inputDescripcion : inputFecha);
+                return;
+            }
+
+            if (actual === inputFecha) {
+                focusAndSelect(esDesdePos ? inputDescripcion : selectTipo);
+                return;
+            }
+
+            if (actual === inputDescripcion) {
+                focusAndSelect(inputMonto);
+                return;
+            }
+
+            if (actual === inputMonto) {
+                focusAndSelect(inputDetalle);
+                return;
+            }
+
+            if (actual === inputDetalle) {
+                if (btnGuardar && !btnGuardar.classList.contains("d-none") && !btnGuardar.disabled) {
+                    btnGuardar.focus();
+                    btnGuardar.click();
+                }
+            }
+        }
+
+        function bindEnterFlow(control) {
+            if (!control) {
+                return;
+            }
+
+            control.addEventListener("keydown", function (evt) {
+                if (evt.key !== "Enter" || evt.shiftKey || evt.altKey || evt.ctrlKey || evt.metaKey) {
+                    return;
+                }
+
+                evt.preventDefault();
+                avanzarFocusEgreso(control);
+            });
         }
 
         function setSoloLectura(readOnly) {
@@ -286,17 +622,36 @@
                 dispararEventos(inputMonto, ["input", "change", "keyup"]);
             });
 
+        bindBusquedaTipoSelect(selectTipo);
+        bindEnterFlow(selectSucursal);
+        bindEnterFlow(selectTipo);
+        bindEnterFlow(inputFecha);
+        bindEnterFlow(inputDescripcion);
+        bindEnterFlow(inputMonto);
+        bindEnterFlow(inputDetalle);
+
         setSoloLectura(soloLecturaInicial);
 
-        setTimeout(function () {
-            var selector = @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#formEgresoCaja [name='fecha']\""));
+        function enfocarInicialEgreso() {
+            var selector = @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#egresoFecha\""));
             var el = document.querySelector(selector);
-            if (el) {
-                el.focus();
-                if (!@Html.Raw(esEdicion ? "true" : "false") && typeof el.select === "function") {
-                    el.select();
-                }
+            if (!el) {
+                return;
             }
+
+            el.focus();
+            if (!@Html.Raw(esEdicion ? "true" : "false") && typeof el.select === "function") {
+                el.select();
+            }
+        }
+
+        setTimeout(function () {
+            enfocarInicialEgreso();
         }, 100);
+
+        if (esDesdePos) {
+            setTimeout(enfocarInicialEgreso, 220);
+            setTimeout(enfocarInicialEgreso, 420);
+        }
     })();
 </script>

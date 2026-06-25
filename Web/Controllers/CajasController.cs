@@ -1113,11 +1113,13 @@ namespace Web.Controllers
             var user = Session["Usuario"] as Entidades.Usuario;
             var idsModificables = new HashSet<int>();
             var pagosModificables = new Dictionary<int, int>();
+            var comprasModificables = new Dictionary<int, int>();
 
             if (user == null || dt == null || !dt.Columns.Contains("id"))
             {
                 ViewBag.IdsEgresosModificables = idsModificables;
                 ViewBag.PagosModificables = pagosModificables;
+                ViewBag.ComprasModificables = comprasModificables;
                 return;
             }
 
@@ -1171,8 +1173,24 @@ namespace Web.Controllers
                     if (!puedeEditarEnPos)
                         continue;
 
-                    if (EgresosCajaPolicy.EsCompra(egreso) ||
-                        EgresosCajaPolicy.EsPagoElectronico(egreso) ||
+                    if (EgresosCajaPolicy.EsCompra(egreso))
+                    {
+                        int idCompraRelacionado = egreso.IdCompra.HasValue && egreso.IdCompra.Value > 0
+                            ? egreso.IdCompra.Value
+                            : (egreso.IdTabla.HasValue ? egreso.IdTabla.Value : 0);
+
+                        if (idCompraRelacionado > 0 &&
+                            (cierreContexto == null || FechaDentroDeCaja(egreso.Fecha, cierreContexto)) &&
+                            egreso.Sucursal != null &&
+                            egreso.Sucursal.idSucursal == user.IdSucursal)
+                        {
+                            comprasModificables[id] = idCompraRelacionado;
+                        }
+
+                        continue;
+                    }
+
+                    if (EgresosCajaPolicy.EsPagoElectronico(egreso) ||
                         EgresosCajaPolicy.EsCuentaCorriente(egreso))
                     {
                         continue;
@@ -1195,6 +1213,7 @@ namespace Web.Controllers
 
             ViewBag.IdsEgresosModificables = idsModificables;
             ViewBag.PagosModificables = pagosModificables;
+            ViewBag.ComprasModificables = comprasModificables;
         }
 
         private DataTable ObtenerUsuariosFiltroEgresos()

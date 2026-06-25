@@ -162,7 +162,9 @@
     int items = Model != null ? Model.Rows.Count : 0;
     decimal total = 0;
     bool modoActividades = ViewBag.ModoActividades != null && (bool)ViewBag.ModoActividades;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
     var idsModificables = ViewBag.IdsEgresosModificables as HashSet<int> ?? new HashSet<int>();
+    var comprasModificables = ViewBag.ComprasModificables as Dictionary<int, int> ?? new Dictionary<int, int>();
     var descripcionesAnuladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     string returnUrlActual = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Request.RawUrl ?? ""));
     string sucursalActividad = ViewBag.SucursalActividad as string ?? "";
@@ -237,14 +239,18 @@
                     bool esEgresoModificado = !esHistorico && EsEgresoCajaModificado(row);
                     int idInt;
                     bool puedeModificarEgreso = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
-                    bool mostrarBotonModificar = puedeModificarEgreso && !string.IsNullOrWhiteSpace(id);
+                    int idCompraRelacionado = int.TryParse(id, out idInt) && comprasModificables.ContainsKey(idInt) ? comprasModificables[idInt] : 0;
+                    bool puedeModificarCompra = idCompraRelacionado > 0;
+                    bool mostrarBotonModificar = (puedeModificarEgreso || puedeModificarCompra) && !string.IsNullOrWhiteSpace(id);
                     string sucursalFila = ValorFlexible(row, "Sucursal", "sucursal");
                     if (string.IsNullOrWhiteSpace(sucursalFila))
                     {
                         sucursalFila = sucursalActividad;
                     }
-                    string urlModificar = "";
-                    string tipoModificacion = "egreso";
+                    string urlModificar = puedeModificarCompra
+                        ? Url.Action("ModificarCompra", "Compras", new { id = idCompraRelacionado, origen = desdePos ? "pos" : "layout" })
+                        : "";
+                    string tipoModificacion = puedeModificarCompra ? "compra" : "egreso";
 
                     <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id">
                         <td class="text-nowrap">@Fecha(row, "Fecha")</td>
@@ -283,6 +289,7 @@
                                 <button type="button"
                                         class="btn btn-sm btn-primary btn-modificar-egreso"
                                         data-id="@id"
+                                        data-id-compra="@(puedeModificarCompra ? idCompraRelacionado : 0)"
                                         data-url="@urlModificar"
                                         data-tipo-modificacion="@tipoModificacion"
                                         title="Modificar"
@@ -354,14 +361,18 @@
             bool esEgresoModificado = !esHistorico && EsEgresoCajaModificado(row);
             int idInt;
             bool puedeModificarEgreso = int.TryParse(id, out idInt) && idsModificables.Contains(idInt);
-            bool mostrarBotonModificar = puedeModificarEgreso && !string.IsNullOrWhiteSpace(id);
+            int idCompraRelacionado = int.TryParse(id, out idInt) && comprasModificables.ContainsKey(idInt) ? comprasModificables[idInt] : 0;
+            bool puedeModificarCompra = idCompraRelacionado > 0;
+            bool mostrarBotonModificar = (puedeModificarEgreso || puedeModificarCompra) && !string.IsNullOrWhiteSpace(id);
             string sucursalFila = ValorFlexible(row, "Sucursal", "sucursal");
             if (string.IsNullOrWhiteSpace(sucursalFila))
             {
                 sucursalFila = sucursalActividad;
             }
-            string urlModificar = "";
-            string tipoModificacion = "egreso";
+            string urlModificar = puedeModificarCompra
+                ? Url.Action("ModificarCompra", "Compras", new { id = idCompraRelacionado, origen = desdePos ? "pos" : "layout" })
+                : "";
+            string tipoModificacion = puedeModificarCompra ? "compra" : "egreso";
 
             <div class="egreso-card @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")">
                 <div class="egreso-card-top">
@@ -402,6 +413,7 @@
                         <button type="button"
                                 class="btn btn-sm btn-primary btn-modificar-egreso"
                                 data-id="@id"
+                                data-id-compra="@(puedeModificarCompra ? idCompraRelacionado : 0)"
                                 data-url="@urlModificar"
                                 data-tipo-modificacion="@tipoModificacion"
                                 title="Modificar"

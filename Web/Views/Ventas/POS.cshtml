@@ -643,6 +643,17 @@ else
         margin: 1.75rem auto;
     }
 
+    @@media (min-width: 992px) {
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+            max-width: 980px;
+            width: calc(100% - 2.5rem);
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
+            padding: 1.1rem 1.25rem !important;
+        }
+    }
+
     #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content {
         border: 1px solid #e3e6f0;
         border-radius: .75rem;
@@ -930,7 +941,7 @@ else
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3237")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=6")"></script>
-<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=6")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=7")"></script>
     <script>
     window.EgresosCajaUrls = {
         listar: '@Url.Action("EgresosCaja", "Cajas")',
@@ -2609,6 +2620,17 @@ else
             abrirNueva: function () {
                 var url = '@Url.Action("NuevaCompra", "Compras", new { origen = "pos" })';
                 window.POSFinanzas.cargar(url, "Nueva compra");
+            },
+            abrirModificar: function (idCompra) {
+                var id = parseInt(idCompra, 10) || 0;
+                if (id <= 0) {
+                    return;
+                }
+
+                var url = '@Url.Action("ModificarCompra", "Compras")'
+                    + '?id=' + encodeURIComponent(id)
+                    + '&origen=pos';
+                window.POSFinanzas.cargar(url, "Modificar compra");
             }
         };
 

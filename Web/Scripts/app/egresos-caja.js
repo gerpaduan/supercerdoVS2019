@@ -378,6 +378,42 @@
         window.location.href = url;
     }
 
+    function abrirCompra(url, titulo, idCompra) {
+        var id = parseInt(idCompra, 10) || 0;
+
+        if (estaEnPos() && window.POSCompras && typeof window.POSCompras.abrirModificar === "function" && id > 0) {
+            window.POSCompras.abrirModificar(id);
+            return;
+        }
+
+        if (!url) return;
+
+        if (estaEnPos() && window.POSFinanzas && typeof window.POSFinanzas.cargar === "function") {
+            window.POSFinanzas.cargar(url, titulo || "Modificar compra");
+            return;
+        }
+
+        if ($("#modalEgresoCaja").length) {
+            setTituloModal(titulo || "Modificar compra");
+            $("#contenedorEgresoCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalEgresoCaja").modal("show");
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                cache: false
+            }).done(function (html) {
+                renderConScripts(html, "#contenedorEgresoCaja");
+            }).fail(function (xhr) {
+                var mensaje = (xhr && (xhr.statusText || xhr.responseText)) || "No se pudo cargar la compra.";
+                $("#contenedorEgresoCaja").html('<div class="alert alert-danger m-3">' + $("<div>").text(mensaje).html() + '</div>');
+            });
+            return;
+        }
+
+        window.location.href = url;
+    }
+
     function tokenTipos() {
         return $("#formTokenTiposEgresoCaja input[name='__RequestVerificationToken']").val()
             || $("#formTipoEgresoCaja input[name='__RequestVerificationToken']").val()
@@ -930,6 +966,11 @@
 
                 if (tipoModificacion === "pago" && url) {
                     abrirPago(url, "Modificar Pago / Cobro");
+                    return;
+                }
+
+                if (tipoModificacion === "compra" && url) {
+                    abrirCompra(url, "Modificar compra", $(this).data("id-compra"));
                     return;
                 }
 
