@@ -114,7 +114,13 @@ namespace Datos
                     break;
 
                 case Entidades.CierreCaja.tipoBusqueda.FindById:
-                    selectText = "select * from CierreCaja where id = @id";
+                    selectText =
+                        "select CierreCaja.*, Usuarios.nombre as vendedor, Usuarios.usuario as vendedorUsuario, " +
+                        "Sucursal.sucursal " +
+                        "from CierreCaja " +
+                        "inner join Usuarios on CierreCaja.usuarioInicio = Usuarios.id " +
+                        "inner join Sucursal on CierreCaja.idSucursal = Sucursal.idSucursal " +
+                        "where CierreCaja.id = @id";
                     break;
 
                 case Entidades.CierreCaja.tipoBusqueda.FindLast:

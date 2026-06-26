@@ -46,7 +46,8 @@ namespace Negocio
                     oCierreE.UsuarioInicio = new Entidades.Usuario
                     {
                         Id = Convert.ToInt32(drCierreCaja["usuarioInicio"]),
-                        Nombre = ObtenerValorString(drCierreCaja, "vendedor", ObtenerValorString(drCierreCaja, "Iniciada_Por"))
+                        Nombre = ObtenerValorString(drCierreCaja, "vendedor", ObtenerValorString(drCierreCaja, "Iniciada_Por")),
+                        User = ObtenerValorString(drCierreCaja, "vendedorUsuario")
                     };
                     oCierreE.UsuarioCierre = new Entidades.Usuario
                     {

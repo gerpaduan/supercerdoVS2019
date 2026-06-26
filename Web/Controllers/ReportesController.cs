@@ -1023,7 +1023,18 @@ namespace Web.Controllers
 
             var fechaDesdeBase = model.FechaDesde.Date;
             var fechaHastaBase = model.FechaHasta.Date;
-            model.PeriodosComparativosVentas = ConstruirPeriodosComparativosVentas(fechaDesdeBase, fechaHastaBase, periodoComparativoDesde);
+            model.PeriodosComparativosVentas = ConstruirPeriodosComparativosVentas(fechaDesdeBase, fechaHastaBase, periodoComparativoDesde)
+                .OrderBy(x => x.FechaDesde)
+                .ThenBy(x => x.FechaHasta)
+                .Select((x, index) => new ReportePeriodoComparativoVm
+                {
+                    Id = x.Id,
+                    Titulo = "Periodo " + (index + 1).ToString(CultureInfo.InvariantCulture),
+                    EsPrincipal = x.EsPrincipal,
+                    FechaDesde = x.FechaDesde,
+                    FechaHasta = x.FechaHasta
+                })
+                .ToList();
 
             foreach (var periodo in model.PeriodosComparativosVentas)
             {
@@ -1036,7 +1047,8 @@ namespace Web.Controllers
                 model.GastosBalanceCategorias.AddRange(metricas.GastosPorCategoria);
             }
 
-            var periodoPrincipal = model.PeriodosBalance.FirstOrDefault();
+            var periodoPrincipal = model.PeriodosBalance.FirstOrDefault(x => x.EsPrincipal)
+                ?? model.PeriodosBalance.FirstOrDefault();
             model.HayResultados = periodoPrincipal != null;
 
             if (!model.HayResultados)

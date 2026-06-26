@@ -130,11 +130,20 @@
         var $stickyPlaceholder = $();
         var $tablaStock = $("#tablaReporteStockActual");
         var $rowsStock = $tablaStock.find(".reporte-stock-row");
+        var stockSortState = {
+            key: "",
+            direction: "asc"
+        };
         var $modalDetalleStock = $("#modalDetalleStockReporte");
         var $tablaVentas = $("#tablaReporteVentasProducto");
         var $rowsVentas = $tablaVentas.find(".reporte-ventas-row");
         var $tablaProyeccion = $("#tablaReporteProyeccionVentasStock");
         var $rowsProyeccion = $tablaProyeccion.find(".reporte-proyeccion-row");
+        var proyeccionSortState = {
+            key: "",
+            index: -1,
+            direction: "asc"
+        };
         var $btnAgregarPeriodo = $("#btnAgregarPeriodoComparativo");
         var $listaPeriodos = $("#listaPeriodosComparativos");
         var $agrupacionTemporal = $("#agrupacionTemporalReporte");
@@ -512,6 +521,78 @@
             $("#filaSinResultadosReporte").toggleClass("d-none", registros !== 0);
         }
 
+        function sortStockRows(sortKey, sortType) {
+            if (!$tablaStock.length || !$rowsStock.length || !sortKey) {
+                return;
+            }
+
+            if (stockSortState.key === sortKey) {
+                stockSortState.direction = stockSortState.direction === "asc" ? "desc" : "asc";
+            } else {
+                stockSortState.key = sortKey;
+                stockSortState.direction = "asc";
+            }
+
+            var direction = stockSortState.direction === "asc" ? 1 : -1;
+            var rows = $rowsStock.get().sort(function (a, b) {
+                var $a = $(a);
+                var $b = $(b);
+                var valueA = $a.attr("data-" + sortKey);
+                var valueB = $b.attr("data-" + sortKey);
+
+                if (sortType === "number") {
+                    valueA = toNumber(valueA);
+                    valueB = toNumber(valueB);
+
+                    if (valueA === valueB) {
+                        return (($a.attr("data-producto") || "").toUpperCase())
+                            .localeCompare(($b.attr("data-producto") || "").toUpperCase()) * direction;
+                    }
+
+                    return (valueA - valueB) * direction;
+                }
+
+                valueA = (valueA || "").toString().toUpperCase();
+                valueB = (valueB || "").toString().toUpperCase();
+
+                var compare = valueA.localeCompare(valueB);
+                if (compare === 0) {
+                    compare = (($a.attr("data-producto") || "").toUpperCase())
+                        .localeCompare(($b.attr("data-producto") || "").toUpperCase());
+                }
+
+                return compare * direction;
+            });
+
+            var $tbody = $tablaStock.find("tbody");
+            var $emptyRow = $("#filaSinResultadosReporte");
+            var fragment = document.createDocumentFragment();
+
+            $.each(rows, function (_, row) {
+                fragment.appendChild(row);
+            });
+
+            if ($emptyRow.length) {
+                $emptyRow.before(fragment);
+            } else {
+                $tbody.append(fragment);
+            }
+
+            $rowsStock = $tablaStock.find(".reporte-stock-row");
+            $tablaStock.find(".reporte-sortable-col")
+                .removeClass("is-sort-asc is-sort-desc")
+                .attr("aria-sort", "none");
+            $tablaStock.find('.reporte-sortable-col[data-sort-key="' + sortKey + '"]')
+                .addClass(direction === 1 ? "is-sort-asc" : "is-sort-desc")
+                .attr("aria-sort", direction === 1 ? "ascending" : "descending");
+
+            applyLiveFilters();
+
+            if (window.TableScrollSync && window.TableScrollSync.refresh) {
+                window.TableScrollSync.refresh(document);
+            }
+        }
+
         function updateVisibleTotalsVentas() {
             if (!$rowsVentas.length) {
                 return;
@@ -579,6 +660,82 @@
             $("#cantidadProductosReporte").text(registros);
             $("#cantidadRegistrosReporte").text(registros);
             $("#filaSinResultadosProyeccionReporte").toggleClass("d-none", registros !== 0);
+        }
+
+        function sortProyeccionRows(sortKey, sortType, sortIndex) {
+            if (!$tablaProyeccion.length || !$rowsProyeccion.length || !sortKey) {
+                return;
+            }
+
+            var normalizedIndex = parseInt(sortIndex, 10);
+            if (isNaN(normalizedIndex)) {
+                normalizedIndex = -1;
+            }
+
+            if (proyeccionSortState.key === sortKey && proyeccionSortState.index === normalizedIndex) {
+                proyeccionSortState.direction = proyeccionSortState.direction === "asc" ? "desc" : "asc";
+            } else {
+                proyeccionSortState.key = sortKey;
+                proyeccionSortState.index = normalizedIndex;
+                proyeccionSortState.direction = "asc";
+            }
+
+            var direction = proyeccionSortState.direction === "asc" ? 1 : -1;
+            var rows = $rowsProyeccion.get().sort(function (a, b) {
+                var $a = $(a);
+                var $b = $(b);
+                var valueA;
+                var valueB;
+
+                if (sortKey === "producto") {
+                    valueA = ($a.attr("data-producto") || "").toString().toUpperCase();
+                    valueB = ($b.attr("data-producto") || "").toString().toUpperCase();
+                    return valueA.localeCompare(valueB) * direction;
+                }
+
+                valueA = toNumber($a.children("td").eq(normalizedIndex).text());
+                valueB = toNumber($b.children("td").eq(normalizedIndex).text());
+
+                if (valueA === valueB) {
+                    return (($a.attr("data-producto") || "").toUpperCase())
+                        .localeCompare(($b.attr("data-producto") || "").toUpperCase()) * direction;
+                }
+
+                return (valueA - valueB) * direction;
+            });
+
+            var $tbody = $tablaProyeccion.find("tbody");
+            var $emptyRow = $("#filaSinResultadosProyeccionReporte");
+            var fragment = document.createDocumentFragment();
+
+            $.each(rows, function (_, row) {
+                fragment.appendChild(row);
+            });
+
+            if ($emptyRow.length) {
+                $emptyRow.before(fragment);
+            } else {
+                $tbody.append(fragment);
+            }
+
+            $rowsProyeccion = $tablaProyeccion.find(".reporte-proyeccion-row");
+            $tablaProyeccion.find('.reporte-sortable-col[data-sort-scope="proyeccion"]')
+                .removeClass("is-sort-asc is-sort-desc")
+                .attr("aria-sort", "none");
+
+            var selector = sortKey === "producto"
+                ? '.reporte-sortable-col[data-sort-scope="proyeccion"][data-sort-key="producto"]'
+                : '.reporte-sortable-col[data-sort-scope="proyeccion"][data-sort-key="cell"][data-sort-index="' + normalizedIndex + '"]';
+
+            $tablaProyeccion.find(selector)
+                .addClass(direction === 1 ? "is-sort-asc" : "is-sort-desc")
+                .attr("aria-sort", direction === 1 ? "ascending" : "descending");
+
+            applyLiveFilters();
+
+            if (window.TableScrollSync && window.TableScrollSync.refresh) {
+                window.TableScrollSync.refresh(document);
+            }
         }
 
         function applyLiveFilters() {
@@ -1123,6 +1280,18 @@
             e.preventDefault();
             e.stopPropagation();
             openStockDetailModal($(this).closest(".reporte-stock-row"));
+        });
+
+        $(document).on("click", "#tablaReporteStockActual .reporte-sortable-col", function () {
+            sortStockRows($(this).attr("data-sort-key"), $(this).attr("data-sort-type"));
+        });
+
+        $(document).on("click", "#tablaReporteProyeccionVentasStock .reporte-sortable-col[data-sort-scope='proyeccion']", function () {
+            sortProyeccionRows(
+                $(this).attr("data-sort-key"),
+                $(this).attr("data-sort-type"),
+                $(this).attr("data-sort-index")
+            );
         });
 
         $(document).on("click", ".btn-metrica-ventas", function () {

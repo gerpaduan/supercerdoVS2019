@@ -370,16 +370,16 @@
                                         <th class="text-right reporte-detalle-col d-none">Tot. egresos</th>
                                         @if (esCierreStock)
                                         {
-                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">St. inicial</th>
-                                            <th class="text-right reporte-stock-resumen-col">Stock Cierre</th>
-                                            <th class="text-right reporte-stock-resumen-col">Faltante</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-sortable-col" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="stockcierre" data-sort-type="number">Stock Cierre</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="stockactual" data-sort-type="number">Faltante</th>
                                         }
                                         else
                                         {
                                             <th class="text-right reporte-stock-resumen-col">Stock actual</th>
                                         }
-                                        <th class="text-right reporte-stock-resumen-col">Punto stock</th>
-                                        <th class="reporte-stock-resumen-col">Estado</th>
+                                        <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="puntostock" data-sort-type="number">Punto stock</th>
+                                        <th class="reporte-stock-resumen-col reporte-sortable-col" data-sort-key="estado" data-sort-type="text">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -565,25 +565,36 @@
                             <thead class="thead-light">
                                 @if (proyeccionMultiplesSucursales)
                                 {
+                                    var totalSortIndex = 1 + (sucursalesProyeccion.Count * (1 + (periodosProyeccion.Count * 2)));
                                     <tr class="reportes-proyeccion-head-group">
-                                        <th rowspan="2">Producto</th>
+                                        <th rowspan="2" class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
                                         @foreach (var sucursal in sucursalesProyeccion)
                                         {
                                             <th colspan="@(1 + (periodosProyeccion.Count * 2))" class="text-center reportes-proyeccion-sucursal-head">@sucursal.Sucursal</th>
                                         }
+                                        @{
+                                            var totalPeriodoSortIndex = totalSortIndex;
+                                        }
                                         @foreach (var periodo in periodosProyeccion)
                                         {
-                                            <th rowspan="2" class="text-right reportes-proyeccion-total-periodo-head">@periodo.Titulo<br /><span class="small font-weight-normal">Dif. total</span></th>
+                                            <th rowspan="2" class="text-right reportes-proyeccion-total-periodo-head reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@totalPeriodoSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Dif. total</span></th>
+                                            totalPeriodoSortIndex++;
                                         }
                                     </tr>
                                     <tr class="reportes-proyeccion-head-metrics">
+                                        @{
+                                            var proyeccionMetricSortIndex = 1;
+                                        }
                                         @foreach (var sucursal in sucursalesProyeccion)
                                         {
-                                            <th class="text-right">Stock actual</th>
+                                            <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">Stock actual</th>
+                                            proyeccionMetricSortIndex++;
                                             foreach (var periodo in periodosProyeccion)
                                             {
-                                                <th class="text-right">@periodo.Titulo<br /><span class="small font-weight-normal">Ventas</span></th>
-                                                <th class="text-right">@periodo.Titulo<br /><span class="small font-weight-normal">Dif.</span></th>
+                                                <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Ventas</span></th>
+                                                proyeccionMetricSortIndex++;
+                                                <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionMetricSortIndex">@periodo.Titulo<br /><span class="small font-weight-normal">Dif.</span></th>
+                                                proyeccionMetricSortIndex++;
                                             }
                                         }
                                     </tr>
@@ -591,12 +602,17 @@
                                 else
                                 {
                                     <tr>
-                                        <th>Producto</th>
-                                        <th class="text-right">Stock Actual</th>
+                                        <th class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
+                                        <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="1">Stock Actual</th>
+                                        @{
+                                            var proyeccionSimpleSortIndex = 2;
+                                        }
                                         @foreach (var periodo in periodosProyeccion)
                                         {
-                                            <th class="text-right">@periodo.Titulo Ventas</th>
-                                            <th class="text-right">@periodo.Titulo Dif.</th>
+                                            <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionSimpleSortIndex">@periodo.Titulo Ventas</th>
+                                            proyeccionSimpleSortIndex++;
+                                            <th class="text-right reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="cell" data-sort-type="number" data-sort-index="@proyeccionSimpleSortIndex">@periodo.Titulo Dif.</th>
+                                            proyeccionSimpleSortIndex++;
                                         }
                                     </tr>
                                 }
@@ -611,6 +627,7 @@
                                         data-search="@textoBusqueda"
                                         data-tipo="@((item.TipoProducto ?? "").Trim().ToUpperInvariant())"
                                         data-marcaid="@item.MarcaId"
+                                        data-producto="@item.Producto"
                                         data-stockactual="@item.StockActual.ToString(CultureInfo.InvariantCulture)"
                                         data-totalventas="@totalVentasFila.ToString(CultureInfo.InvariantCulture)"
                                         data-totaldiferencia="@totalDiferenciaFila.ToString(CultureInfo.InvariantCulture)">
@@ -986,6 +1003,40 @@
     #tablaReporteStockActual thead th {
         font-size: 0.72rem !important;
         line-height: 1.1;
+    }
+
+    .reporte-sortable-col {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition: background-color .15s ease, color .15s ease;
+    }
+
+    .reporte-sortable-col::after {
+        content: "⇅";
+        font-size: .78rem;
+        opacity: .45;
+        margin-left: .35rem;
+    }
+
+    .reporte-sortable-col:hover {
+        background: #eef4ff;
+    }
+
+    .reporte-sortable-col.is-sort-asc,
+    .reporte-sortable-col.is-sort-desc {
+        background: #dbeafe;
+        color: #0f3d91;
+    }
+
+    .reporte-sortable-col.is-sort-asc::after {
+        content: "↑";
+        opacity: 1;
+    }
+
+    .reporte-sortable-col.is-sort-desc::after {
+        content: "↓";
+        opacity: 1;
     }
 
     .reportes-tabla td:first-child {
@@ -1413,6 +1464,16 @@
 
     html.dark-mode .reporte-stock-modal-line span {
         color: #c7d2e3;
+    }
+
+    html.dark-mode .reporte-sortable-col:hover {
+        background: #23324a;
+    }
+
+    html.dark-mode .reporte-sortable-col.is-sort-asc,
+    html.dark-mode .reporte-sortable-col.is-sort-desc {
+        background: #284466;
+        color: #f3f7ff;
     }
 
     @@media (min-width: 1200px) {
