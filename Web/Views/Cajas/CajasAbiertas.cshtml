@@ -699,7 +699,7 @@
             }
 
             if (this.id === 'ImporteRetirado') {
-                $("#CajaInicioSiguiente").trigger("focus").trigger("select");
+                $("#modalCerrarCaja .modal-footer .btn-danger").trigger("focus");
             }
         });
 
@@ -744,7 +744,8 @@
                         title: 'Caja cerrada',
                         text: 'La caja se cerró correctamente',
                         confirmButtonText: 'Aceptar',
-                        confirmButtonColor: '#4e73df'
+                        confirmButtonColor: '#4e73df',
+                        focusConfirm: true
                     }).then(() => {
                         let idSucursal = $("#idSucursal").val() || "";
                         window.location.href = '@Url.Action("CajasAbiertas", "Cajas")' + '?idSucursal=' + encodeURIComponent(idSucursal) + '&buscar=';
