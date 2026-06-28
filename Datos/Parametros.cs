@@ -101,7 +101,7 @@ namespace Datos
                 SELECT p.nombre, ep.valor
                 FROM dbo.Parametros p
                 LEFT JOIN dbo.EmpresaParametros ep
-                       ON ep.idParametro = p.idParametro
+                       ON ep.idParametro = p.id
                       AND ep.idEmpresa = @idEmpresa;";
 
             var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
