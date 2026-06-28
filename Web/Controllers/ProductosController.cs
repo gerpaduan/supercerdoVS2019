@@ -42,7 +42,9 @@ namespace Web.Controllers
             int marcaId = 0,
             int proveedorId = 0,
             long? codigoDesde = null,
-            long? codigoHasta = null)
+            long? codigoHasta = null,
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null)
         {
             int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
             var productos = (oCorteN.ObtenerCortesListado(idEmpresaSesion, SucursalId) ?? new List<Entidades.Corte>())
@@ -86,6 +88,22 @@ namespace Web.Controllers
                     .ToList();
             }
 
+            if (fechaDesde.HasValue)
+            {
+                DateTime desde = fechaDesde.Value.Date;
+                productos = productos
+                    .Where(x => ObtenerFechaFiltroProducto(x) >= desde)
+                    .ToList();
+            }
+
+            if (fechaHasta.HasValue)
+            {
+                DateTime hastaExclusivo = fechaHasta.Value.Date.AddDays(1);
+                productos = productos
+                    .Where(x => ObtenerFechaFiltroProducto(x) < hastaExclusivo)
+                    .ToList();
+            }
+
             var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
 
             ViewBag.Sucursales = sucursales;
@@ -98,6 +116,14 @@ namespace Web.Controllers
             ViewBag.PuedeEliminarProducto = PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null);
 
             return View(productos);
+        }
+
+        private static DateTime ObtenerFechaFiltroProducto(Entidades.Corte producto)
+        {
+            if (producto == null)
+                return DateTime.MinValue;
+
+            return producto.Actualizado ?? producto.Creado;
         }
 
         [HttpGet]
@@ -402,6 +428,60 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public JsonResult BuscarProductoGlobalParaAlta(string codigoBarra)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+                return Json(new { ok = false, mensaje = "No tenés permisos para agregar productos." }, JsonRequestBehavior.AllowGet);
+
+            if (!EsCodigoEanValido(codigoBarra))
+                return Json(new { ok = false, mensaje = "Solo se autocompleta con EAN-8 o EAN-13 válidos." }, JsonRequestBehavior.AllowGet);
+
+            long codigo = NormalizarCodigoBarra(codigoBarra);
+            if (codigo <= 0)
+                return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." }, JsonRequestBehavior.AllowGet);
+
+            var global = oCorteN.findCorteGlobalByCodigo(codigo, true);
+            if (global == null)
+                return Json(new { ok = false, mensaje = "No existe un producto global para ese código." }, JsonRequestBehavior.AllowGet);
+
+            string modoCorte = "Ninguno";
+            if (global.Presentacion)
+                modoCorte = "Presentacion";
+            else if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
+                modoCorte = "CorteMaestro";
+
+            return Json(new
+            {
+                ok = true,
+                producto = new
+                {
+                    idCorte = 0,
+                    idEmpresa = (int?)null,
+                    codigo = global.Codigo,
+                    descripcion = global.CorteDesc,
+                    precioKg = global.PrecioKg,
+                    tipo = global.Tipo,
+                    idAlicuotaIva = global.IdAlicuotaIva,
+                    idMarca = global.Marca != null ? global.Marca.IdPersona : 0,
+                    marcaNombre = global.MarcaNombre ?? (global.Marca != null ? global.Marca.RazonSocial : ""),
+                    pesable = global.Pesable,
+                    habilitado = global.Habilitado,
+                    ingresoRapidoEmbutido = global.IngresoRapidoEmbutido,
+                    enCierreStock = global.EnCierreStock,
+                    puntoStock = global.PuntoStock,
+                    promedio = global.Promedio,
+                    modoCorte = modoCorte,
+                    idCorteMaestro = global.CorteMaestro != null ? global.CorteMaestro.IdCorte : 0,
+                    corteMaestroNombre = global.CorteMaestro != null ? global.CorteMaestro.CorteDesc : "",
+                    porcentaje = global.Porcentaje,
+                    porcentajeHueso = global.PorcentajeHueso,
+                    independiente = global.Independiente == 1,
+                    presentacionUnidades = global.Presentacion ? global.getCantPresentacion(global.PorcentajeHueso) : (float?)null
+                }
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public JsonResult AgregarDesdeCodigoBarra(AgregarProductoDesdeCodigoBarraVm model)
@@ -631,6 +711,46 @@ namespace Web.Controllers
             return oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false);
         }
 
+        private static bool EsCodigoEanValido(string codigoBarra)
+        {
+            var limpio = Regex.Replace(codigoBarra ?? "", @"[^\d]", "");
+            if (limpio.Length == 8) return EsCodigoEan8Valido(limpio);
+            if (limpio.Length == 13) return EsCodigoEan13Valido(limpio);
+            return false;
+        }
+
+        private static bool EsCodigoEan13Valido(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo) || !Regex.IsMatch(codigo, @"^\d{13}$"))
+                return false;
+
+            int suma = 0;
+            for (int i = 0; i < 12; i++)
+            {
+                int digito = codigo[i] - '0';
+                suma += (i % 2 == 0) ? digito : digito * 3;
+            }
+
+            int control = (10 - (suma % 10)) % 10;
+            return control == (codigo[12] - '0');
+        }
+
+        private static bool EsCodigoEan8Valido(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo) || !Regex.IsMatch(codigo, @"^\d{8}$"))
+                return false;
+
+            int suma = 0;
+            for (int i = 0; i < 7; i++)
+            {
+                int digito = codigo[i] - '0';
+                suma += (i % 2 == 0) ? digito * 3 : digito;
+            }
+
+            int control = (10 - (suma % 10)) % 10;
+            return control == (codigo[7] - '0');
+        }
+
         private static long NormalizarCodigoBarra(string codigoBarra)
         {
             var limpio = Regex.Replace(codigoBarra ?? "", @"[^\d]", "");
@@ -848,7 +968,7 @@ namespace Web.Controllers
         // ===============================
         // EJEMPLO: GET AddOrEdit
         // ===============================
-        public ActionResult AddOrEdit(int id = 0)
+        public ActionResult AddOrEdit(int id = 0, bool cargaContinua = false, bool productoGuardado = false, int? ultimoProductoContinuoId = null, int? retomarProductoId = null, string flujoBaseContinuo = null)
         {
             if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
             {
@@ -863,7 +983,16 @@ namespace Web.Controllers
             if (id > 0 && entity == null) return HttpNotFound();
 
             var vm = BuildVM(entity);   // Entity -> VM (tu método)
+            vm.CargaContinua = cargaContinua;
+            vm.UltimoProductoContinuoId = ultimoProductoContinuoId;
+            vm.RetomarProductoId = retomarProductoId;
+            vm.FlujoBaseContinuo = !string.IsNullOrWhiteSpace(flujoBaseContinuo)
+                ? flujoBaseContinuo
+                : (id > 0 ? "edicion" : "alta");
+
             LoadCombos(vm);
+            ViewBag.ProductoGuardadoContinuo = productoGuardado;
+            ViewBag.FlashSuccessContinuo = TempData["FlashSuccessContinuo"] as string;
 
             return View(vm);
         }
@@ -884,10 +1013,20 @@ namespace Web.Controllers
             // 1) Normalizar floats desde Request.Form (acepta coma o punto)
             NormalizarFloatsDesdeRequest(vm);
 
+            bool esEdicionFormulario = string.Equals(Request.Form["EsEdicionFormulario"], "1", StringComparison.Ordinal);
+            if (!esEdicionFormulario)
+            {
+                vm.IdCorte = 0;
+            }
+
             // 2) Validación server-side de código duplicado (seguridad extra)
             if (vm.Codigo > 0)
             {
-                var existente = oCorteN.findCorteByCodigo(vm.Codigo, false);
+                int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+                var existente = idEmpresaSesion > 0
+                    ? oCorteN.findCorteByCodigoEmpresa(vm.Codigo, idEmpresaSesion, false)
+                    : oCorteN.findCorteByCodigo(vm.Codigo, false);
+
                 if (existente != null && existente.IdCorte != vm.IdCorte)
                 {
                     ModelState.AddModelError("Codigo", $"El código ya existe para el producto: {existente.CorteDesc}");
@@ -903,6 +1042,19 @@ namespace Web.Controllers
                 return View("AddOrEdit", vm);
             }
 
+            int idEmpresaSesionActual = empresa != null ? empresa.IdEmpresa : 0;
+            bool altaDesdeCatalogoGlobal = false;
+            bool codigoExisteEnCatalogoGlobal = false;
+
+            if (vm.IdCorte <= 0 && idEmpresaSesionActual > 0 && vm.Codigo > 0)
+            {
+                codigoExisteEnCatalogoGlobal = oCorteN.findCorteGlobalByCodigo(vm.Codigo, false) != null;
+                if (codigoExisteEnCatalogoGlobal)
+                {
+                    altaDesdeCatalogoGlobal = true;
+                }
+            }
+
             var entity = (vm.IdCorte > 0)
                 ? oCorteN.findCorteById(vm.IdCorte, true)
                 : new Entidades.Corte();
@@ -910,12 +1062,107 @@ namespace Web.Controllers
             if (vm.IdCorte > 0 && entity == null)
                 return HttpNotFound();
 
+            if (vm.IdCorte > 0 && entity != null)
+            {
+                if (entity.IdEmpresa == 0)
+                {
+                    var productoGlobalBase = entity;
+                    altaDesdeCatalogoGlobal = true;
+                    vm.IdCorte = 0;
+                    entity = ClonarProductoGlobal(productoGlobalBase, vm.Codigo, vm.PrecioKg);
+                }
+                else if (idEmpresaSesionActual > 0 && entity.IdEmpresa != idEmpresaSesionActual)
+                {
+                    TempData["FlashError"] = "Solo puede modificar productos de la empresa actual.";
+                    return RedirectToAction("Index");
+                }
+            }
+
             // Si querés guardar el porcentaje (sin columna), lo saco del texto:
             vm.AlicuotaIva = ObtenerAlicuotaPorcentajeDesdeDT(vm.IdAlicuotaIva);
 
             MapToEntity(vm, entity); // VM -> Entity
 
-            oCorteN.addOrEditCorte(entity);
+            entity.IdEmpresa = idEmpresaSesionActual;
+
+            if (vm.IdCorte <= 0)
+            {
+                entity.IdCorte = 0;
+            }
+
+            if (altaDesdeCatalogoGlobal)
+            {
+                entity.IdCorte = oCorteN.InsertarCorteEnEmpresa(entity);
+            }
+            else
+            {
+                oCorteN.addOrEditCorte(entity);
+            }
+
+            int idProductoGuardado = entity.IdCorte;
+            if (idProductoGuardado <= 0 && vm.Codigo > 0)
+            {
+                int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+                var productoGuardado = idEmpresaSesion > 0
+                    ? oCorteN.findCorteByCodigoEmpresa(vm.Codigo, idEmpresaSesion, false)
+                    : oCorteN.findCorteByCodigo(vm.Codigo, false);
+
+                if (productoGuardado != null)
+                {
+                    idProductoGuardado = productoGuardado.IdCorte;
+                }
+            }
+
+            string flujoBase = string.Equals(vm.FlujoBaseContinuo, "edicion", StringComparison.OrdinalIgnoreCase)
+                ? "edicion"
+                : "alta";
+
+            if (vm.IdCorte <= 0 && vm.CargaContinua)
+            {
+                TempData["FlashSuccessContinuo"] = $"Se cargó exitosamente el producto \"{vm.CorteDesc}\".";
+                return RedirectToAction("AddOrEdit", new
+                {
+                    cargaContinua = true,
+                    productoGuardado = true,
+                    ultimoProductoContinuoId = idProductoGuardado,
+                    flujoBaseContinuo = "alta"
+                });
+            }
+
+            if (vm.IdCorte > 0 && vm.CargaContinua)
+            {
+                TempData["FlashSuccessContinuo"] = $"Se guardó el producto \"{vm.CorteDesc}\".";
+
+                if (flujoBase == "alta")
+                {
+                    return RedirectToAction("AddOrEdit", new
+                    {
+                        cargaContinua = true,
+                        productoGuardado = true,
+                        ultimoProductoContinuoId = idProductoGuardado,
+                        flujoBaseContinuo = "alta"
+                    });
+                }
+
+                int idRetorno = vm.RetomarProductoId.GetValueOrDefault() > 0
+                    ? vm.RetomarProductoId.Value
+                    : vm.SiguienteIdEdicion.GetValueOrDefault();
+
+                if (idRetorno > 0)
+                {
+                    return RedirectToAction("AddOrEdit", new
+                    {
+                        id = idRetorno,
+                        cargaContinua = true,
+                        productoGuardado = true,
+                        ultimoProductoContinuoId = idProductoGuardado,
+                        flujoBaseContinuo = "edicion"
+                    });
+                }
+
+                TempData["FlashSuccess"] = $"El producto \"{vm.CorteDesc}\" guardó correctamente.";
+                return RedirectToAction("Index");
+            }
 
             TempData["FlashSuccess"] = $"El producto \"{vm.CorteDesc}\" guardó correctamente.";
             return RedirectToAction("Index");
@@ -1228,7 +1475,10 @@ namespace Web.Controllers
                 }, JsonRequestBehavior.AllowGet);
             }
 
-            var corte = oCorteN.findCorteByCodigo(codigo.Value, false);
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+            var corte = idEmpresaSesion > 0
+                ? oCorteN.findCorteByCodigoEmpresa(codigo.Value, idEmpresaSesion, false)
+                : oCorteN.findCorteByCodigo(codigo.Value, false);
 
             if (corte == null)
             {

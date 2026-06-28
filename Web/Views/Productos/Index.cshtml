@@ -19,6 +19,8 @@
     int.TryParse((Request["proveedorId"] ?? "0").ToString(), out filtroProveedorActual);
     var filtroCodigoDesdeActual = (Request["codigoDesde"] ?? "").ToString();
     var filtroCodigoHastaActual = (Request["codigoHasta"] ?? "").ToString();
+    var filtroFechaDesdeActual = (Request["fechaDesde"] ?? "").ToString();
+    var filtroFechaHastaActual = (Request["fechaHasta"] ?? "").ToString();
 }
 
 <div class="container-fluid productos-wrap">
@@ -206,6 +208,16 @@
                     </div>
                 </div>
 
+                <div class="col-lg-4 col-md-6 mb-2">
+                    <label class="mb-1 font-weight-bold">Actualizado en período</label>
+                    <div class="d-flex align-items-center">
+                        <input type="date" class="form-control" id="fFechaDesde" value="@filtroFechaDesdeActual">
+                        <span class="px-2 text-muted font-weight-bold">/</span>
+                        <input type="date" class="form-control" id="fFechaHasta" value="@filtroFechaHastaActual">
+                    </div>
+                    <small class="text-muted">Toma la fecha de modificación o, si no existe, la de creación.</small>
+                </div>
+
                 <div class="col-12 mt-2">
                     <div id="mensajeFiltrosPendientes" class="alert alert-warning py-2 px-3 mb-2 d-none">
                         Se modificaron filtros. Presione Aplicar para actualizar los datos.
@@ -371,6 +383,12 @@
                             </td>
 
                             <td class="text-nowrap td-acciones-producto">
+                                <a class="btn btn-sm btn-primary mr-1 js-editar-producto @(puedeEditarProducto ? "" : "disabled")"
+                                   title="Ver producto"
+                                   href="@Url.Action("AddOrEdit", "Productos", new { id = item.idCorte })">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
                                 <button type="button" class="btn btn-sm btn-warning mr-1"
                                         title="Modificar precio"
                                         onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg', this)"
@@ -383,12 +401,6 @@
                                         onclick="verStockSucursales(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
                                     <i class="fas fa-warehouse"></i>
                                 </button>
-
-                                <a class="btn btn-sm btn-primary mr-1 @(puedeEditarProducto ? "" : "disabled")"
-                                   title="Editar producto"
-                                   href="@Url.Action("AddOrEdit", "Productos", new { id = item.idCorte })">
-                                    <i class="fas fa-edit"></i>
-                                </a>
 
                                 <button type="button" class="btn btn-sm btn-danger"
                                         title="Eliminar"
@@ -953,6 +965,28 @@
         return Array.from(tabla.querySelectorAll("tbody tr"))
             .filter(tr => tr.id && tr.id.startsWith("fila_"));
     }
+
+    function guardarOrdenVisibleParaEdicion() {
+        const idsVisibles = getFilasProductos()
+            .filter(fila => fila.style.display !== "none")
+            .map(fila => Number(fila.dataset.id))
+            .filter(id => Number.isFinite(id) && id > 0);
+
+        try {
+            window.sessionStorage.setItem("productos_edicion_orden_visible", JSON.stringify(idsVisibles));
+        } catch (e) {
+        }
+    }
+
+    document.addEventListener("click", function (event) {
+        const linkEditar = event.target.closest("a.js-editar-producto");
+        if (!linkEditar || linkEditar.classList.contains("disabled")) return;
+        guardarOrdenVisibleParaEdicion();
+        try {
+            window.sessionStorage.removeItem("productos_edicion_historial");
+        } catch (e) {
+        }
+    });
 
     function getFilaDetallesDe(filaProducto) {
         const next = filaProducto.nextElementSibling;
@@ -1765,6 +1799,8 @@
     const filtroProveedor = document.getElementById("fProveedor");
     const filtroCodigoDesde = document.getElementById("fCodigoDesde");
     const filtroCodigoHasta = document.getElementById("fCodigoHasta");
+    const filtroFechaDesde = document.getElementById("fFechaDesde");
+    const filtroFechaHasta = document.getElementById("fFechaHasta");
     let filtrosPendientesServidor = false;
 
     function setMensajeFiltrosPendientes(show) {
@@ -1846,12 +1882,16 @@
         const proveedorId = (filtroProveedor?.value || "").trim();
         const codigoDesde = (filtroCodigoDesde?.value || "").trim();
         const codigoHasta = (filtroCodigoHasta?.value || "").trim();
+        const fechaDesde = (filtroFechaDesde?.value || "").trim();
+        const fechaHasta = (filtroFechaHasta?.value || "").trim();
 
         if (tipo) nuevaUrl.searchParams.set("tipo", tipo);
         if (marcaId) nuevaUrl.searchParams.set("marcaId", marcaId);
         if (proveedorId) nuevaUrl.searchParams.set("proveedorId", proveedorId);
         if (codigoDesde) nuevaUrl.searchParams.set("codigoDesde", codigoDesde);
         if (codigoHasta) nuevaUrl.searchParams.set("codigoHasta", codigoHasta);
+        if (fechaDesde) nuevaUrl.searchParams.set("fechaDesde", fechaDesde);
+        if (fechaHasta) nuevaUrl.searchParams.set("fechaHasta", fechaHasta);
 
         window.location.href = nuevaUrl.toString();
     }
@@ -1866,7 +1906,7 @@
     }
 
     function limpiarFiltrosAvanzados() {
-        ["fTipo","fMarca","fProveedor","fCodigoDesde","fCodigoHasta"].forEach(id => {
+        ["fTipo","fMarca","fProveedor","fCodigoDesde","fCodigoHasta","fFechaDesde","fFechaHasta"].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = "";
         });
@@ -1876,7 +1916,9 @@
             || url.searchParams.get("tipo")
             || url.searchParams.get("marcaId")
             || url.searchParams.get("codigoDesde")
-            || url.searchParams.get("codigoHasta"));
+            || url.searchParams.get("codigoHasta")
+            || url.searchParams.get("fechaDesde")
+            || url.searchParams.get("fechaHasta"));
 
         setMensajeFiltrosPendientes(false);
 
@@ -1917,6 +1959,12 @@
 
     filtroProveedor?.addEventListener("change", function () {
         setMensajeFiltrosPendientes(true);
+    });
+
+    [filtroFechaDesde, filtroFechaHasta].forEach(el => {
+        el?.addEventListener("change", function () {
+            setMensajeFiltrosPendientes(true);
+        });
     });
 
     aplicarFiltrosCliente();

@@ -18,6 +18,36 @@ namespace Datos
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
+        private static int GetInt32Safe(SqlDataReader dr, string columnName, int defaultValue = 0)
+        {
+            return dr[columnName] == DBNull.Value ? defaultValue : Convert.ToInt32(dr[columnName]);
+        }
+
+        private static long GetInt64Safe(SqlDataReader dr, string columnName, long defaultValue = 0)
+        {
+            return dr[columnName] == DBNull.Value ? defaultValue : Convert.ToInt64(dr[columnName]);
+        }
+
+        private static float GetFloatSafe(SqlDataReader dr, string columnName, float defaultValue = 0f)
+        {
+            return dr[columnName] == DBNull.Value ? defaultValue : float.Parse(dr[columnName].ToString());
+        }
+
+        private static bool GetBoolSafe(SqlDataReader dr, string columnName, bool defaultValue = false)
+        {
+            return dr[columnName] == DBNull.Value ? defaultValue : Convert.ToBoolean(dr[columnName]);
+        }
+
+        private static string GetStringSafe(SqlDataReader dr, string columnName, string defaultValue = "")
+        {
+            return dr[columnName] == DBNull.Value ? defaultValue : Convert.ToString(dr[columnName]);
+        }
+
+        private static DateTime GetDateTimeSafe(SqlDataReader dr, string columnName, DateTime defaultValue)
+        {
+            return dr[columnName] == DBNull.Value ? defaultValue : Convert.ToDateTime(dr[columnName]);
+        }
+
         // =========================
         // MAPPER
         // =========================
@@ -25,9 +55,9 @@ namespace Datos
         {
             Entidades.Corte oCorteE = new Entidades.Corte();
 
-            oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
-            oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
-            oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
+            oCorteE.IdCorte = GetInt32Safe(drCorte, "idCorte");
+            oCorteE.Codigo = GetInt64Safe(drCorte, "codigo");
+            oCorteE.CorteDesc = GetStringSafe(drCorte, "corte");
 
             
             if (drCorte["idMarca"] != DBNull.Value)
@@ -35,37 +65,37 @@ namespace Datos
                 //TODO: Nota: esto abre otra consulta por cada corte.
                 // Si querés performance, después lo cambiamos a JOIN.
                 Datos.Persona oPersonaD = new Datos.Persona(_empresa, _param);
-                oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));            
+                oCorteE.Marca = oPersonaD.findById(GetInt32Safe(drCorte, "idMarca"));
             }
 
-            oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
-            oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
-            oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
-            oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
-            oCorteE.IdEmpresa = drCorte["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(drCorte["idEmpresa"]);
+            oCorteE.Tipo = GetStringSafe(drCorte, "tipo");
+            oCorteE.Promedio = GetFloatSafe(drCorte, "promedio");
+            oCorteE.PuntoStock = GetInt32Safe(drCorte, "puntoStock");
+            oCorteE.Nivel = GetInt32Safe(drCorte, "nivel");
+            oCorteE.IdEmpresa = GetInt32Safe(drCorte, "idEmpresa");
 
             if (cargarMaestro)
             {
-                int idMaestro = drCorte["idCorteMaestro"] == DBNull.Value ? 0 : Convert.ToInt32(drCorte["idCorteMaestro"]);
+                int idMaestro = GetInt32Safe(drCorte, "idCorteMaestro");
                 oCorteE.CorteMaestro = (idMaestro > 0) ? findCorteById(idMaestro, false) : null;
             }
 
-            oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
-            oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
-            oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
-            oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
-            oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
-            oCorteE.EnCierreStock = drCorte["enCierreStock"] == DBNull.Value ? true : Convert.ToBoolean(drCorte["enCierreStock"]);
-            oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
-            oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
-            oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+            oCorteE.Porcentaje = GetFloatSafe(drCorte, "porcentaje");
+            oCorteE.PrecioKg = GetFloatSafe(drCorte, "precioKg");
+            oCorteE.PrecioKgReferencia = GetFloatSafe(drCorte, "precioKg");
+            oCorteE.IngresoRapidoEmbutido = GetBoolSafe(drCorte, "ingresoRapidoEmbutido");
+            oCorteE.Habilitado = GetBoolSafe(drCorte, "habilitado");
+            oCorteE.EnCierreStock = GetBoolSafe(drCorte, "enCierreStock", true);
+            oCorteE.PorcentajeHueso = GetFloatSafe(drCorte, "porcentajeHueso");
+            oCorteE.Independiente = GetInt32Safe(drCorte, "independiente");
+            oCorteE.DesvioEstandar = GetFloatSafe(drCorte, "desvioEstandar");
 
-            oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+            oCorteE.Creado = GetDateTimeSafe(drCorte, "creado", DateTime.MinValue);
             oCorteE.Actualizado = drCorte["actualizado"] == DBNull.Value ? null : (DateTime?)drCorte["actualizado"];
 
-            oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
-            oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
-            oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
+            oCorteE.IdAlicuotaIva = GetInt32Safe(drCorte, "idAlicuotaIva");
+            oCorteE.AlicuotaIva = GetFloatSafe(drCorte, "alicuotaIva");
+            oCorteE.Pesable = GetBoolSafe(drCorte, "pesable");
 
             // Presentación
             oCorteE.Presentacion = oCorteE.EsPresentacion(oCorteE.porcentajeHueso);

@@ -5,6 +5,8 @@
 @{
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
     bool esEdicion = Model != null && Model.IdCorte > 0;
+    bool productoGuardadoContinuo = ViewBag.ProductoGuardadoContinuo != null && System.Convert.ToBoolean(ViewBag.ProductoGuardadoContinuo);
+    string flashSuccessContinuo = ViewBag.FlashSuccessContinuo as string;
     ViewBag.Title = esEdicion ? "Editar producto" : "Alta de producto";
 }
 
@@ -12,6 +14,61 @@
     /* Igualar alto inputs y combos (por si tu bootstrap no los iguala) */
     .form-control, .form-select, select.form-control {
         min-height: 38px;
+    }
+
+    html:not(.dark-mode) body .form-switch {
+        padding-left: 3rem;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input {
+        width: 2.55rem;
+        height: 1.35rem;
+        margin-top: 0.1rem;
+        margin-left: -3rem;
+        vertical-align: top;
+        cursor: pointer;
+        border: 1px solid #b8c2d1;
+        border-radius: 999px;
+        background-color: #dfe6ef;
+        background-image: radial-gradient(circle, #ffffff 0 42%, transparent 43%);
+        background-repeat: no-repeat;
+        background-position: left 0.14rem center;
+        background-size: 1rem 1rem;
+        -webkit-appearance: none;
+        appearance: none;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        transition: background-color 0.16s ease, border-color 0.16s ease, background-position 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        background-position: right 0.14rem center;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(78, 115, 223, 0.12);
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.16rem rgba(78, 115, 223, 0.2);
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:disabled {
+        cursor: default;
+        opacity: 1;
+        background-color: #e9edf4;
+        border-color: #cfd7e3;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:disabled:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        background-position: right 0.14rem center;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(78, 115, 223, 0.12);
+    }
+
+    .atajos-acciones {
+        font-size: 0.78rem;
+        line-height: 1.35;
     }
 </style>
 
@@ -30,14 +87,26 @@
                 @Html.HiddenFor(m => m.Porcentaje)
                 @Html.HiddenFor(m => m.PorcentajeHueso)
                 @Html.HiddenFor(m => m.AlicuotaIva)
+                @Html.HiddenFor(m => m.SiguienteIdEdicion)
+                @Html.HiddenFor(m => m.UltimoProductoContinuoId)
+                @Html.HiddenFor(m => m.RetomarProductoId)
+                @Html.HiddenFor(m => m.FlujoBaseContinuo)
+                <input type="hidden" name="EsEdicionFormulario" value="@(esEdicion ? "1" : "0")" />
 
                 <div id="page-urls"
+                     data-url-add-or-edit="@Url.Action("AddOrEdit", "Productos")"
                      data-url-marcas="@Url.Action("BuscarMarca", "Productos")"
                      data-url-cortes="@Url.Action("Buscar", "Productos")"
-                     data-url-existe-codigo="@Url.Action("FindCorteByCodigo", "Productos")">
+                     data-url-existe-codigo="@Url.Action("FindCorteByCodigo", "Productos")"
+                     data-url-autocomplete-global="@(esEdicion ? "" : Url.Action("BuscarProductoGlobalParaAlta", "Productos"))">
                 </div>
 
                 @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+                <div id="alertCargaContinua"
+                     class="alert alert-success py-2 px-3 mb-3 @( string.IsNullOrWhiteSpace(flashSuccessContinuo) ? "d-none" : "" )"
+                     data-recargar="@(!esEdicion && productoGuardadoContinuo ? "1" : "0")">
+                    @flashSuccessContinuo
+                </div>
 
                 <!-- =========================
                  1) DATOS PRINCIPALES
@@ -45,12 +114,21 @@
                 <div class="p-3 rounded bg-light border mb-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <h5 class="mb-0">Datos del producto</h5>
-                        @if (esEdicion)
-                        {
-                            <span class="text-muted">ID: <b>@Model.IdCorte</b></span>
-                        }
+                        <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
+                            <span class="text-muted @(esEdicion ? "" : "d-none")">ID: <b>@Model.IdCorte</b></span>
+                            <div class="form-check form-switch mb-0 text-end">
+                                @Html.CheckBoxFor(m => m.CargaContinua, new { @class = "form-check-input", id = "swCargaContinua", data_edit_readonly_ignore = "true" })
+                                <label class="form-check-label fw-semibold" for="swCargaContinua">Carga continua</label>
+                            </div>
+                        </div>
                     </div>
 
+                    <div id="hintCargaContinuaAlta" class="small text-info mb-3 d-none">
+                        Al guardar, se limpia el formulario para cargar el siguiente producto.
+                    </div>
+                    <div id="hintCargaContinuaEdicion" class="small text-info mb-3 d-none">
+                        Al guardar, se abre el siguiente producto visible de la grilla actual.
+                    </div>
                     <div class="row g-3">
                         <!-- ?? SCANNER (arriba del C�digo) -->
                         <div class="col-12" id="scannerContainer" style="display:none;">
@@ -83,6 +161,7 @@
                             </div>
 
                             <small id="scannerMsg" class="text-danger d-none"></small>
+                            <small id="autocompleteCodigoMsg" class="text-success d-none"></small>
                             <div id="alertCodigoExiste" class="alert alert-warning py-2 px-2 mt-2 mb-0 d-none"></div>
                             <small id="msgCodigoReq" class="text-danger d-none">El campo codigo es obligatorio.</small>
                             @Html.ValidationMessageFor(m => m.Codigo, "", new { @class = "text-danger" })
@@ -167,13 +246,17 @@
                             @Html.TextBoxFor(m => m.Promedio, new { @class = "form-control", placeholder = "0,00" })
                         </div>
 
-                        @if (esEdicion)
-                        {
-                            <div class="col-12 col-md-6">
+                        
+                        <div class="col-12 col-md-6 @(esEdicion ? "" : "d-none")">
+                        
+                            
+                            
                                 <label class="form-label">Nivel (solo edición)</label>
                                 <input class="form-control" value="@Model.Nivel" readonly />
-                            </div>
-                        }
+                        
+                        
+                            
+                        </div>
 
 
                     </div>
@@ -257,25 +340,42 @@
 
                 <div class="barra-acciones-fija">
                     <div class="barra-acciones-inner d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                        <a class="btn btn-outline-secondary" href="@Url.Action("Index","Productos")">Volver</a>
+                        <a class="btn btn-outline-secondary" id="btnVolverProducto" href="@Url.Action("Index","Productos")" title="Alt+V">
+                            <span class="shortcut-letter">V</span>olver
+                        </a>
 
-                        <div class="d-flex gap-2">
-                            @if (esEdicion)
-                            {
-                                <button type="button"
-                                        class="btn btn-secondary"
-                                        id="btnHabilitarEdicionProducto"
-                                        data-edit-readonly-ignore="true">
-                                    Modificar
-                                </button>
-                            }
-                            <button type="submit" name="accion" value="guardar" class="btn btn-primary @(esEdicion ? "d-none" : "")" id="btnGuardarProducto">
-                                @(esEdicion ? "Guardar cambios" : "Crear producto")
+                        <div class="d-flex flex-column align-items-end">
+                            <div class="d-flex gap-2">
+                            <button type="button"
+                                    class="btn btn-outline-primary d-none"
+                                    id="btnSiguienteProducto"
+                                    data-edit-readonly-ignore="true"
+                                    title="Alt+S">
+                                <span class="shortcut-letter">S</span>iguiente
+                            </button>
+                            <button type="button"
+                                    class="btn btn-secondary @(esEdicion ? "" : "d-none")"
+                                    id="btnHabilitarEdicionProducto"
+                                    data-edit-readonly-ignore="true"
+                                    title="Alt+M">
+                                <span class="shortcut-letter">M</span>odificar
+                            </button>
+                            <button type="submit" name="accion" value="guardar" class="btn btn-primary btn-guardar-destacado @(esEdicion ? "d-none" : "")" id="btnGuardarProducto" title="@(esEdicion ? "Alt+G o Alt+C" : "Alt+C o Alt+G")">
+                                @if (esEdicion)
+                                {
+                                    <span><span class="shortcut-letter">G</span>uardar cambios</span>
+                                }
+                                else
+                                {
+                                    <span><span class="shortcut-letter">C</span>rear producto</span>
+                                }
                             </button>
 
                             @*<button type="submit" name="accion" value="guardar_nuevo" class="btn btn-outline-primary">
                                     @(esEdicion ? "Guardar y cargar otro" : "Crear y continuar")
                                 </button>*@
+                            </div>
+                            <div class="atajos-acciones small text-muted d-none d-lg-block mt-2 text-right" id="atajosAccionesProducto"></div>
                         </div>
                     </div>
                 </div>
@@ -376,14 +476,28 @@
     const urlMarcas = $urls.data("url-marcas");
     const urlCortes = $urls.data("url-cortes");
     const urlExisteCodigo = $urls.data("url-existe-codigo");
+    const urlAddOrEdit = $urls.data("url-add-or-edit");
+    const urlAutocompleteGlobal = $urls.data("url-autocomplete-global");
 
     const esEdicion = @((Model?.IdCorte ?? 0) > 0 ? "true" : "false");
+    const cargaContinuaInicial = @(Model?.CargaContinua == true ? "true" : "false");
+    const idProductoActual = @(Model?.IdCorte ?? 0);
+    const STORAGE_ORDEN_EDICION_KEY = "productos_edicion_orden_visible";
+    const STORAGE_HISTORIAL_EDICION_KEY = "productos_edicion_historial";
+    const STORAGE_MODO_EDICION_ACTIVO_KEY = "productos_edicion_modo_activo";
+    const STORAGE_FOCUS_CODIGO_KEY = "productos_focus_codigo";
+    const flujoBaseContinuo = '@((Model?.FlujoBaseContinuo ?? "").ToLowerInvariant())';
 
     // =========================
     // Refs principales
     // =========================
     const $frm = $("#frmCorte");
+    const $btnVolver = $("#btnVolverProducto");
     const $btnGuardar = $("#btnGuardarProducto");
+    const $btnVerAnteriorProducto = $("#btnVerAnteriorProducto");
+    const $btnSiguienteProducto = $("#btnSiguienteProducto");
+    const $btnHabilitarEdicionProducto = $("#btnHabilitarEdicionProducto");
+    const $atajosAccionesProducto = $("#atajosAccionesProducto");
     const $codigo = $("#Codigo");
     const $precioKg = $("#frmCorte").find("input[name='PrecioKg']").first();
     const $promedio = $("#frmCorte").find("input[name='Promedio']").first();
@@ -395,8 +509,15 @@
     const $presentacionUnidades = $("#txtPresentacionUnidades");
     const $porcentaje = $("#txtPorcentaje");
     const $desperdicio = $("#txtDesperdicio");
+    const $swCargaContinua = $("#swCargaContinua");
+    const $siguienteIdEdicion = $("input[name='SiguienteIdEdicion']");
+    const $ultimoProductoContinuoId = $("input[name='UltimoProductoContinuoId']");
+    const $retomarProductoId = $("input[name='RetomarProductoId']");
+    const $hintCargaContinuaAlta = $("#hintCargaContinuaAlta");
+    const $hintCargaContinuaEdicion = $("#hintCargaContinuaEdicion");
 
     const $alertCodigoExiste = $("#alertCodigoExiste");
+    const $autocompleteCodigoMsg = $("#autocompleteCodigoMsg");
     const $msgCodigoReq = $("#msgCodigoReq");
     const $msgNombreReq = $("#msgNombreReq");
     const $msgTipoReq = $("#msgTipoReq");
@@ -404,7 +525,11 @@
 
     let codigoDuplicado = false;
     let xhrCodigo = null;
+    let xhrAutocompleteCodigo = null;
+    let debounceAutocompleteCodigo = null;
+    let ultimoCodigoAutocompletado = "";
     let reenviandoSubmit = false;
+    let snapshotEdicionInicial = "";
 
     // =========================
     // Helpers UI (texto seguro)
@@ -416,6 +541,441 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
+    }
+
+    function setAutocompleteCodigoMsg(texto) {
+        if (!$autocompleteCodigoMsg.length) return;
+
+        if (!texto) {
+            $autocompleteCodigoMsg.addClass("d-none").text("");
+            return;
+        }
+
+        $autocompleteCodigoMsg.removeClass("d-none").text(texto);
+    }
+
+    function construirSnapshotEdicion() {
+        const partes = [];
+
+        $frm.find("input, select, textarea").each(function () {
+            const $el = $(this);
+            const nombre = ($el.attr("name") || "").trim();
+            if (!nombre) return;
+            if ($el.is("[type='hidden']")) return;
+            if (nombre === "CargaContinua") return;
+            if ($el.is("[data-edit-readonly-ignore='true']")) return;
+
+            const tipo = (($el.attr("type") || "") + "").toLowerCase();
+            let valor = "";
+
+            if (tipo === "checkbox" || tipo === "radio") {
+                valor = $el.prop("checked") ? "1" : "0";
+            } else {
+                valor = ($el.val() || "").toString().trim();
+            }
+
+            partes.push(nombre + "=" + valor);
+        });
+
+        return partes.join("|");
+    }
+
+    function actualizarSnapshotEdicion() {
+        snapshotEdicionInicial = construirSnapshotEdicion();
+    }
+
+    function hayCambiosSinGuardar() {
+        if (!esEdicion) return false;
+        return construirSnapshotEdicion() !== snapshotEdicionInicial;
+    }
+
+    function leerOrdenEdicionVisible() {
+        try {
+            const raw = window.sessionStorage.getItem(STORAGE_ORDEN_EDICION_KEY);
+            if (!raw) return [];
+
+            const ids = JSON.parse(raw);
+            if (!Array.isArray(ids)) return [];
+
+            return ids
+                .map(v => Number(v))
+                .filter(v => Number.isFinite(v) && v > 0);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function obtenerSiguienteProductoId() {
+        const orden = leerOrdenEdicionVisible();
+        if (!orden.length || !idProductoActual) return 0;
+
+        const indexActual = orden.findIndex(id => id === Number(idProductoActual));
+        if (indexActual < 0 || indexActual + 1 >= orden.length) return 0;
+
+        return Number(orden[indexActual + 1]) || 0;
+    }
+
+    function tieneOrdenEdicionVisibleValido() {
+        const orden = leerOrdenEdicionVisible();
+        if (!orden.length || !idProductoActual) return false;
+        return orden.indexOf(Number(idProductoActual)) >= 0;
+    }
+
+    function leerHistorialEdicion() {
+        try {
+            const raw = window.sessionStorage.getItem(STORAGE_HISTORIAL_EDICION_KEY);
+            if (!raw) return [];
+
+            const ids = JSON.parse(raw);
+            if (!Array.isArray(ids)) return [];
+
+            return ids
+                .map(v => Number(v))
+                .filter(v => Number.isFinite(v) && v > 0);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function guardarHistorialEdicion(historial) {
+        try {
+            const limpio = (historial || [])
+                .map(v => Number(v))
+                .filter(v => Number.isFinite(v) && v > 0);
+
+            if (!limpio.length) {
+                window.sessionStorage.removeItem(STORAGE_HISTORIAL_EDICION_KEY);
+                return;
+            }
+
+            window.sessionStorage.setItem(STORAGE_HISTORIAL_EDICION_KEY, JSON.stringify(limpio));
+        } catch (e) {
+        }
+    }
+
+    function limpiarHistorialEdicion() {
+        try {
+            window.sessionStorage.removeItem(STORAGE_HISTORIAL_EDICION_KEY);
+        } catch (e) {
+        }
+    }
+
+    function guardarModoEdicionActivo(activo) {
+        try {
+            if (activo) {
+                window.sessionStorage.setItem(STORAGE_MODO_EDICION_ACTIVO_KEY, "1");
+            } else {
+                window.sessionStorage.removeItem(STORAGE_MODO_EDICION_ACTIVO_KEY);
+            }
+        } catch (e) {
+        }
+    }
+
+    function obtenerModoEdicionActivo() {
+        try {
+            return window.sessionStorage.getItem(STORAGE_MODO_EDICION_ACTIVO_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function obtenerAnteriorProductoId() {
+        const historial = leerHistorialEdicion();
+        if (!historial.length) return 0;
+
+        return Number(historial[historial.length - 1]) || 0;
+    }
+
+    function registrarProductoActualEnHistorial() {
+        if (!esEdicion || !(Number(idProductoActual) > 0)) return;
+
+        const historial = leerHistorialEdicion();
+        const actual = Number(idProductoActual);
+
+        if (historial[historial.length - 1] === actual) {
+            return;
+        }
+
+        historial.push(actual);
+        guardarHistorialEdicion(historial);
+    }
+
+    function consumirAnteriorHistorial() {
+        const historial = leerHistorialEdicion();
+        if (!historial.length) return 0;
+
+        const anterior = Number(historial.pop()) || 0;
+        guardarHistorialEdicion(historial);
+        return anterior;
+    }
+
+    function obtenerUltimoProductoContinuoId() {
+        const id = Number($ultimoProductoContinuoId.val() || 0);
+        return Number.isFinite(id) && id > 0 ? id : 0;
+    }
+
+    function actualizarUiCargaContinua() {
+        const activa = !!$swCargaContinua.prop("checked");
+        const siguienteId = esEdicion ? obtenerSiguienteProductoId() : 0;
+        const anteriorId = esEdicion ? obtenerAnteriorProductoId() : 0;
+        const ultimoProductoId = obtenerUltimoProductoContinuoId();
+        const puedeVerAnterior = esEdicion
+            ? activa && anteriorId > 0
+            : activa && ultimoProductoId > 0 && ultimoProductoId !== Number(idProductoActual || 0);
+
+        $hintCargaContinuaAlta.toggleClass("d-none", esEdicion || !activa);
+        $hintCargaContinuaEdicion.toggleClass("d-none", !esEdicion || !activa);
+        $btnVerAnteriorProducto.toggleClass("d-none", !puedeVerAnterior);
+
+        if (esEdicion) {
+            if (activa && (siguienteId > 0 || anteriorId > 0)) {
+                $hintCargaContinuaEdicion.text("En edición puede navegar entre los productos visibles. Si el formulario está habilitado, se advertirá antes de continuar.");
+            } else if (activa) {
+                $hintCargaContinuaEdicion.text(tieneOrdenEdicionVisibleValido()
+                    ? "No hay otros productos visibles en la grilla actual para navegar."
+                    : "No se pudo recuperar el orden visible del listado. Vuelva a abrir el producto desde el Index para usar Carga continua.");
+            }
+
+            $siguienteIdEdicion.val(activa && siguienteId > 0 ? String(siguienteId) : "");
+            $btnSiguienteProducto.toggleClass("d-none", !activa);
+            $btnSiguienteProducto.prop("disabled", !(activa && siguienteId > 0));
+        } else {
+            $siguienteIdEdicion.val("");
+            $btnSiguienteProducto.addClass("d-none").prop("disabled", true);
+        }
+
+        actualizarTextoAtajosAcciones();
+    }
+
+    function actualizarTextoAtajosAcciones() {
+        if (!$atajosAccionesProducto.length) return;
+
+        const atajos = [];
+        if (esElementoAccion($btnVerAnteriorProducto)) {
+            atajos.push("Alt + Flecha izquierda anterior");
+        }
+        if (esElementoAccion($btnSiguienteProducto)) {
+            atajos.push("Alt + Flecha derecha siguiente");
+        }
+
+        const editReadonlyApi = window.productosEditReadonly;
+        const estaSoloLectura = !editReadonlyApi || editReadonlyApi.isReadOnly();
+        const $accionPrincipal = estaSoloLectura ? $btnHabilitarEdicionProducto : $btnGuardar;
+        if (esElementoAccion($accionPrincipal)) {
+            atajos.push("Alt + Enter modificar/guardar");
+        }
+
+        if (!atajos.length) {
+            $atajosAccionesProducto.addClass("d-none").text("");
+            return;
+        }
+
+        $atajosAccionesProducto.removeClass("d-none").text("Atajos: " + atajos.join(", "));
+    }
+
+    function irAProductoEdicion(destinoId) {
+        const idDestino = Number(destinoId || 0);
+        if (!(idDestino > 0)) {
+            return;
+        }
+
+        const query = new URLSearchParams();
+        query.set("id", String(idDestino));
+        query.set("cargaContinua", "true");
+        query.set("flujoBaseContinuo", "edicion");
+
+        window.location.href = urlAddOrEdit + "?" + query.toString();
+    }
+
+    function confirmarNavegacionEdicion(destinoId, esAnterior) {
+        const idDestino = Number(destinoId || 0);
+        if (!(idDestino > 0)) {
+            return;
+        }
+
+        const editReadonlyApi = window.productosEditReadonly;
+        const estaSoloLectura = !editReadonlyApi || editReadonlyApi.isReadOnly();
+
+        if (estaSoloLectura) {
+            guardarModoEdicionActivo(false);
+            if (esAnterior) {
+                consumirAnteriorHistorial();
+            }
+            irAProductoEdicion(idDestino);
+            return;
+        }
+
+        if (!esAnterior) {
+            guardarModoEdicionActivo(true);
+            registrarProductoActualEnHistorial();
+            $swCargaContinua.prop("checked", true);
+            $("input[name='FlujoBaseContinuo']").val("edicion");
+            $siguienteIdEdicion.val(String(idDestino));
+            $retomarProductoId.val("");
+            $frm.trigger("submit");
+            return;
+        }
+
+        if (!hayCambiosSinGuardar()) {
+            guardarModoEdicionActivo(true);
+            consumirAnteriorHistorial();
+            irAProductoEdicion(idDestino);
+            return;
+        }
+
+        let keyHandler = null;
+
+        Swal.fire({
+            title: "Hay cambios sin guardar",
+            html: "Si continúa sin guardar, se perderán los cambios del producto actual.",
+            icon: "warning",
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: "1- Guardar y continuar",
+            denyButtonText: "2- Continuar sin guardar",
+            cancelButtonText: "3- Cancelar",
+            didOpen: function () {
+                keyHandler = function (evt) {
+                    if (evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.repeat) {
+                        return;
+                    }
+
+                    const key = String(evt.key || "");
+                    if (key === "1") {
+                        evt.preventDefault();
+                        Swal.clickConfirm();
+                        return;
+                    }
+
+                    if (key === "2") {
+                        evt.preventDefault();
+                        Swal.clickDeny();
+                        return;
+                    }
+
+                    if (key === "3") {
+                        evt.preventDefault();
+                        Swal.close();
+                    }
+                };
+
+                document.addEventListener("keydown", keyHandler, true);
+            },
+            willClose: function () {
+                if (keyHandler) {
+                    document.removeEventListener("keydown", keyHandler, true);
+                    keyHandler = null;
+                }
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                guardarModoEdicionActivo(true);
+                $swCargaContinua.prop("checked", true);
+                $("input[name='FlujoBaseContinuo']").val("edicion");
+
+                if (esAnterior) {
+                    consumirAnteriorHistorial();
+                    $retomarProductoId.val(String(idDestino));
+                    $siguienteIdEdicion.val("");
+                } else {
+                    registrarProductoActualEnHistorial();
+                    $siguienteIdEdicion.val(String(idDestino));
+                    $retomarProductoId.val("");
+                }
+
+                $frm.trigger("submit");
+                return;
+            }
+
+            if (result.isDenied) {
+                guardarModoEdicionActivo(true);
+                if (esAnterior) {
+                    consumirAnteriorHistorial();
+                }
+                if (!esAnterior) {
+                    registrarProductoActualEnHistorial();
+                }
+                irAProductoEdicion(idDestino);
+            }
+        });
+    }
+
+    function enfocarInputCodigo() {
+        const inputCodigo = document.getElementById("Codigo");
+        if (!inputCodigo) return;
+
+        try {
+            inputCodigo.focus();
+            if (typeof inputCodigo.select === "function") {
+                inputCodigo.select();
+            }
+        } catch (e) {
+        }
+    }
+
+    function enfocarInputCodigoAlFinal() {
+        const inputCodigo = document.getElementById("Codigo");
+        if (!inputCodigo) return;
+
+        try {
+            inputCodigo.focus();
+
+            if (typeof inputCodigo.value === "string" && typeof inputCodigo.setSelectionRange === "function") {
+                const largo = inputCodigo.value.length;
+                inputCodigo.setSelectionRange(largo, largo);
+            }
+        } catch (e) {
+        }
+    }
+
+    function esElementoAccion($elemento) {
+        if (!$elemento || !$elemento.length) return false;
+        if (!$elemento.is(":visible")) return false;
+        if ($elemento.is(":disabled")) return false;
+        return true;
+    }
+
+    function obtenerElementosTabulables() {
+        return $frm
+            .find("input, select, textarea, button, a[href], [tabindex]")
+            .filter(function () {
+                const $el = $(this);
+                const tabIndex = this.getAttribute("tabindex");
+                const esTabIndexInvalido = tabIndex != null && Number(tabIndex) < 0;
+
+                return !esTabIndexInvalido
+                    && !$el.is(":disabled")
+                    && $el.is(":visible")
+                    && $el.css("visibility") !== "hidden";
+            });
+    }
+
+    function moverFocoComoTab(reversa) {
+        const $elementos = obtenerElementosTabulables();
+        if (!$elementos.length) return;
+
+        const actual = document.activeElement;
+        let indiceActual = $elementos.index(actual);
+
+        if (indiceActual < 0) {
+            indiceActual = reversa ? 0 : -1;
+        }
+
+        const siguienteIndice = reversa
+            ? (indiceActual <= 0 ? $elementos.length - 1 : indiceActual - 1)
+            : (indiceActual + 1 >= $elementos.length ? 0 : indiceActual + 1);
+
+        const siguiente = $elementos.get(siguienteIndice);
+        if (!siguiente) return;
+
+        siguiente.focus();
+
+        if ((siguiente.tagName || "").toLowerCase() === "input" && typeof siguiente.select === "function") {
+            const type = (siguiente.type || "").toLowerCase();
+            if (type !== "checkbox" && type !== "radio" && type !== "button" && type !== "submit") {
+                siguiente.select();
+            }
+        }
     }
 
     // =========================
@@ -511,6 +1071,164 @@
     }
 
     $ddlModo.on("change", aplicarModo);
+
+    function aplicarProductoGlobalEnFormulario(producto) {
+        if (!producto) return;
+
+        $("input[name='IdCorte']").val("0");
+
+        if (producto.codigo) $codigo.val(producto.codigo);
+        $nombre.val(producto.descripcion || "");
+        $precioKg.val(producto.precioKg != null ? normalizarDecimalTexto(producto.precioKg) : "");
+        $tipo.val(producto.tipo || "");
+        $iva.val(producto.idAlicuotaIva || "");
+
+        $("input[name='IdMarca']").val(producto.idMarca || "");
+        $("#txtMarcaNombre").val(producto.marcaNombre || "");
+
+        $("#swPesable").prop("checked", !!producto.pesable);
+        $("#swHabilitado").prop("checked", !!producto.habilitado);
+        $("#swRapido").prop("checked", !!producto.ingresoRapidoEmbutido);
+        $("#swCierre").prop("checked", !!producto.enCierreStock);
+        $("#swIndependiente").prop("checked", !!producto.independiente);
+
+        $puntoStock.val(producto.puntoStock != null ? producto.puntoStock : "");
+        $promedio.val(producto.promedio != null ? normalizarDecimalTexto(producto.promedio) : "");
+
+        $ddlModo.val(producto.modoCorte || "Ninguno");
+        $("input[name='IdCorteMaestro']").val(producto.idCorteMaestro || "");
+        $("#txtCorteMaestroNombre").val(producto.corteMaestroNombre || "");
+
+        $("input[name='Porcentaje']").val(producto.porcentaje != null ? formatFloatForPost(producto.porcentaje) : "0");
+        $("input[name='PorcentajeHueso']").val(producto.porcentajeHueso != null ? formatFloatForPost(producto.porcentajeHueso) : "0");
+        $("#txtPorcentaje").val(producto.porcentaje != null ? normalizarDecimalTexto(producto.porcentaje) : "0");
+        $("#txtDesperdicio").val(producto.porcentajeHueso != null ? normalizarDecimalTexto(producto.porcentajeHueso) : "0");
+        $("#txtPresentacionUnidades").val(producto.presentacionUnidades != null ? normalizarDecimalTexto(producto.presentacionUnidades) : "");
+
+        aplicarModo();
+        validarModoDependientes();
+    }
+
+    function intentarAutocompleteProductoGlobal() {
+        if (esEdicion || !urlAutocompleteGlobal) return;
+
+        const codigo = onlyDigits($codigo.val());
+        if (!isValidEAN(codigo)) return;
+        if (codigo === ultimoCodigoAutocompletado) return;
+
+        if (xhrAutocompleteCodigo && xhrAutocompleteCodigo.readyState !== 4) {
+            xhrAutocompleteCodigo.abort();
+        }
+
+        xhrAutocompleteCodigo = $.get(urlAutocompleteGlobal, { codigoBarra: codigo })
+            .done(function (data) {
+                if (!data || !data.ok || !data.producto) return;
+
+                ultimoCodigoAutocompletado = codigo;
+                aplicarProductoGlobalEnFormulario(data.producto);
+                setAutocompleteCodigoMsg("Se autocompletaron los datos desde el catálogo global.");
+            })
+            .fail(function (xhr, status) {
+                if (status === "abort") return;
+                setAutocompleteCodigoMsg("");
+            });
+    }
+
+    $swCargaContinua.on("change", actualizarUiCargaContinua);
+
+    $btnHabilitarEdicionProducto.on("click", function () {
+        guardarModoEdicionActivo(true);
+        window.setTimeout(enfocarInputCodigoAlFinal, 120);
+    });
+
+    $btnSiguienteProducto.on("click", function () {
+        if (!tieneOrdenEdicionVisibleValido()) {
+            Swal.fire("Carga continua no disponible", "No se pudo recuperar el orden del listado actual. Volvé a abrir el producto desde el Index para continuar navegando.", "info");
+            return;
+        }
+
+        const siguienteId = obtenerSiguienteProductoId();
+        if (!(siguienteId > 0)) {
+            Swal.fire("Sin siguiente producto", "No hay otro producto visible en la grilla actual.", "info");
+            return;
+        }
+        confirmarNavegacionEdicion(siguienteId, false);
+    });
+
+    $btnVerAnteriorProducto.on("click", function () {
+        const anteriorId = esEdicion ? obtenerAnteriorProductoId() : obtenerUltimoProductoContinuoId();
+        if (!(anteriorId > 0)) {
+            return;
+        }
+
+        if (esEdicion) {
+            confirmarNavegacionEdicion(anteriorId, true);
+            return;
+        }
+
+        const query = new URLSearchParams();
+        query.set("id", String(anteriorId));
+        query.set("cargaContinua", "true");
+        query.set("flujoBaseContinuo", flujoBaseContinuo || "alta");
+        query.set("ultimoProductoContinuoId", String(anteriorId));
+
+        const retomarId = Number(idProductoActual || 0);
+        if (retomarId > 0 && retomarId !== anteriorId) {
+            query.set("retomarProductoId", String(retomarId));
+        }
+
+        window.location.href = urlAddOrEdit + "?" + query.toString();
+    });
+
+    $(document).on("keydown", function (e) {
+        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+        if (document.body.classList.contains("swal2-shown")) return;
+
+        const tecla = (e.key || "").toLowerCase();
+        let $destino = null;
+
+        if (tecla === "arrowleft") {
+            $destino = $btnVerAnteriorProducto;
+        } else if (tecla === "arrowright") {
+            $destino = $btnSiguienteProducto;
+        } else if (tecla === "enter") {
+            const editReadonlyApi = window.productosEditReadonly;
+            const estaSoloLectura = !editReadonlyApi || editReadonlyApi.isReadOnly();
+            $destino = estaSoloLectura ? $btnHabilitarEdicionProducto : $btnGuardar;
+        } else if (tecla === "v") {
+            $destino = $btnVolver;
+        } else if (tecla === "a") {
+            $destino = $btnVerAnteriorProducto;
+        } else if (tecla === "s") {
+            $destino = $btnSiguienteProducto;
+        } else if (tecla === "m") {
+            $destino = $btnHabilitarEdicionProducto;
+        } else if (tecla === "g" || tecla === "c") {
+            $destino = $btnGuardar;
+        }
+
+        if (!esElementoAccion($destino)) return;
+
+        e.preventDefault();
+        $destino.trigger("click");
+    });
+
+    $frm.on("keydown", function (e) {
+        if (e.key !== "Enter" || e.altKey || e.ctrlKey || e.metaKey) return;
+
+        const target = e.target;
+        if (!target) return;
+
+        const tag = (target.tagName || "").toLowerCase();
+        const type = ((target.type || "") + "").toLowerCase();
+
+        if (tag === "textarea") return;
+        if (type === "submit" || type === "button") return;
+        if ($(target).closest(".modal").length) return;
+
+        e.preventDefault();
+        moverFocoComoTab(!!e.shiftKey);
+    });
 
     // =========================
     // MODAL MARCAS
@@ -1053,11 +1771,28 @@
 
     $codigo.on("blur", function () {
         validarCodigoExistente();
+        intentarAutocompleteProductoGlobal();
     });
 
     // Si cambia el c�digo, limpiar alerta y re-habilitar hasta revalidar
     $codigo.on("input", function () {
         setCodigoDuplicadoUI(false, "");
+        setAutocompleteCodigoMsg("");
+
+        const codigoActual = onlyDigits($codigo.val());
+        if (codigoActual !== ultimoCodigoAutocompletado) {
+            ultimoCodigoAutocompletado = "";
+        }
+
+        if (debounceAutocompleteCodigo) {
+            clearTimeout(debounceAutocompleteCodigo);
+        }
+
+        if (!esEdicion && isValidEAN(codigoActual)) {
+            debounceAutocompleteCodigo = setTimeout(function () {
+                intentarAutocompleteProductoGlobal();
+            }, 250);
+        }
     });
 
     // =========================
@@ -1321,6 +2056,31 @@
         return check === parseInt(code8[7], 10);
     }
 
+    document.addEventListener('DOMContentLoaded', function () {
+        if (esEdicion && !cargaContinuaInicial) {
+            limpiarHistorialEdicion();
+            guardarModoEdicionActivo(false);
+        }
+
+        enfocarInputCodigo();
+
+        actualizarUiCargaContinua();
+        actualizarSnapshotEdicion();
+
+        if (window.sessionStorage.getItem(STORAGE_FOCUS_CODIGO_KEY) === "1") {
+            window.sessionStorage.removeItem(STORAGE_FOCUS_CODIGO_KEY);
+            window.setTimeout(enfocarInputCodigo, 150);
+        }
+
+        const alertaCargaContinua = document.getElementById('alertCargaContinua');
+        if (alertaCargaContinua && alertaCargaContinua.getAttribute('data-recargar') === '1') {
+            window.setTimeout(function () {
+                window.sessionStorage.setItem(STORAGE_FOCUS_CODIGO_KEY, "1");
+                window.location.replace('@Url.Action("AddOrEdit", "Productos", new { cargaContinua = true })');
+            }, 2000);
+        }
+    });
+
     if (typeof BarcodeScanner !== "undefined") {
         const scanner = new BarcodeScanner({
             videoSelector: "#videoScanner",
@@ -1373,13 +2133,6 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const inputCodigo = document.getElementById('Codigo');
-            if (inputCodigo) {
-                inputCodigo.focus();
-            }
-        });
-
         document.getElementById("btnScanner")?.addEventListener("click", () => {
             setScannerMsg("");
             limpiarEstadoLecturaScanner();
@@ -1406,12 +2159,22 @@
         });
     }
 
-    window.EditReadOnly && window.EditReadOnly.init({
+    window.productosEditReadonly = window.EditReadOnly && window.EditReadOnly.init({
         formSelector: "#frmCorte",
         soloLecturaInicial: @(esEdicion ? "true" : "false"),
         modifyButtonSelector: "#btnHabilitarEdicionProducto",
-        saveButtonSelector: "#btnGuardarProducto"
+        saveButtonSelector: "#btnGuardarProducto",
+        onStateChanged: function () {
+            actualizarTextoAtajosAcciones();
+        }
     });
+
+    if (window.productosEditReadonly && esEdicion && cargaContinuaInicial && obtenerModoEdicionActivo()) {
+        window.productosEditReadonly.setReadOnly(false);
+        window.setTimeout(actualizarSnapshotEdicion, 0);
+    }
+
+    window.setTimeout(actualizarTextoAtajosAcciones, 0);
 })();
     </script>
 }
@@ -1473,6 +2236,11 @@
         margin-bottom: 0;
     }
 
+    .shortcut-letter {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
     /* Modal: que no supere el alto de pantalla */
     .modal-fit-screen .modal-content,
     #modalBuscarProducto .modal-content {
@@ -1520,6 +2288,18 @@
     /* ?? usa todo el ancho de la barra (que ya coincide con la columna) */
     max-width: none;
     margin: 0;
+}
+
+.btn-guardar-destacado {
+    transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+.btn-guardar-destacado:focus,
+.btn-guardar-destacado:focus-visible {
+    outline: 0;
+    border-color: #ffb84d;
+    box-shadow: 0 0 0 .28rem rgba(255, 184, 77, .45), 0 .35rem 1rem rgba(13, 110, 253, .18);
+    transform: translateY(-1px);
 }
 
 @@media (max-width: 576px) {

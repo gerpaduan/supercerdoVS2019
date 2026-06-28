@@ -48,6 +48,11 @@ public class CorteUpsertVM
     public float PorcentajeHueso { get; set; }    // Desperdicio (o 100*(n-1) en presentación)
 
     public bool Independiente { get; set; } = true;
+    public bool CargaContinua { get; set; }
+    public int? SiguienteIdEdicion { get; set; }
+    public int? UltimoProductoContinuoId { get; set; }
+    public int? RetomarProductoId { get; set; }
+    public string FlujoBaseContinuo { get; set; }
 
     // solo UI (no DB)
     public float? PresentacionUnidades { get; set; }
