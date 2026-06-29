@@ -1,0 +1,14 @@
+powershell -ExecutionPolicy Bypass -File "C:\Sistemas - Codigo\supercerdoVS2019\Scripts\publish-web-dev.ps1"
+
+
+
+Quedó así en [publish-web-dev.ps1](C:/Sistemas - Codigo/supercerdoVS2019/Scripts/publish-web-dev.ps1):
+-RecycleAppPool -AppPoolName "..." para reciclar el pool
+-RestartSite -IisSiteName "..." para reiniciar el sitio
+ambos son opt-in, así que no hacen nada si no los pasás
+
+powershell -ExecutionPolicy Bypass -File "C:\Sistemas - Codigo\supercerdoVS2019\Scripts\publish-web-dev.ps1" -RecycleAppPool -AppPoolName "CarniSysWeb"
+
+powershell -ExecutionPolicy Bypass -File "C:\Sistemas - Codigo\supercerdoVS2019\Scripts\publish-web-dev.ps1" -RestartSite -IisSiteName "CarniSysWeb"
+
+powershell -ExecutionPolicy Bypass -File "C:\Sistemas - Codigo\supercerdoVS2019\Scripts\publish-web-dev.ps1" -RecycleAppPool -AppPoolName "CarniSysWeb" -RestartSite -IisSiteName "CarniSysWeb"
