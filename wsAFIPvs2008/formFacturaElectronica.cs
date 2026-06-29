@@ -1878,8 +1878,25 @@ namespace wsAFIPvs2008
 
             string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
             string rutaFacturas = @ruta + "\\" + "Facturas";
-            string rutaPDF = @rutaFacturas + "\\" +  oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyyMMdd") + " " +
-                oDocumentoImprimir.DescTipoCbteAfip + " " + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip + ".pdf";
+
+            string tipoFacturaNombre = (oDocumentoImprimir.DescTipoCbteAfip ?? string.Empty).ToUpper().Trim();
+            string nombreClienteArchivo = (oDocumentoImprimir.RazonSocialAFIP ?? string.Empty).Trim();
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                tipoFacturaNombre = tipoFacturaNombre.Replace(invalidChar.ToString(), string.Empty);
+                nombreClienteArchivo = nombreClienteArchivo.Replace(invalidChar.ToString(), string.Empty);
+            }
+
+            if (string.IsNullOrWhiteSpace(nombreClienteArchivo))
+                nombreClienteArchivo = "CLIENTE";
+
+            nombreClienteArchivo = nombreClienteArchivo.Length > 15 ? nombreClienteArchivo.Substring(0, 15).Trim() : nombreClienteArchivo;
+
+            string rutaPDF = @rutaFacturas + "\\" +
+                oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyyMMdd") + "_Fact" +
+                tipoFacturaNombre + "_" +
+                oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip + "_" +
+                nombreClienteArchivo + ".pdf";
 
             // Verificar si la carpeta existe, si no, crearla
             if (!Directory.Exists(@rutaFacturas))
@@ -1897,6 +1914,7 @@ namespace wsAFIPvs2008
             var fontSubTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
             var fontNormal = FontFactory.GetFont(FontFactory.HELVETICA, 10);
             var fontComments = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+            var fontCommentsSmall = FontFactory.GetFont(FontFactory.HELVETICA, 6);
             var fontNormalBold = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
 
             var colorRojo = new BaseColor(174, 0, 0);
@@ -2088,7 +2106,7 @@ namespace wsAFIPvs2008
             PdfPTable importeTextoTable = new PdfPTable(1);
             importeTextoTable.WidthPercentage = 100;
             importeTextoTable.SetWidths(new float[] { 1f });
-            importeTextoTable.AddCell(new PdfPCell(new Phrase(ConvertirMontoEnTexto(Convert.ToDecimal(oDocumentoImprimir.ImporteTotal)), fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+            importeTextoTable.AddCell(new PdfPCell(new Phrase(ConvertirMontoEnTexto(Convert.ToDecimal(oDocumentoImprimir.ImporteTotal)), fontCommentsSmall)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
             documento.Add(importeTextoTable);
 
             // Agregar la línea al documento
@@ -2099,7 +2117,7 @@ namespace wsAFIPvs2008
             totalTable.WidthPercentage = 100;
             totalTable.SetWidths(new float[] { 5f, 1f, 1f });
 
-            totalTable.AddCell(new PdfPCell(new Phrase(txtObservaciones.Text, fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+            totalTable.AddCell(new PdfPCell(new Phrase(txtObservaciones.Text, fontCommentsSmall)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
 
             if (letraFactura == 'A')
             {

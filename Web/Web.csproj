@@ -2115,6 +2115,7 @@
     <Content Include="Views\Reportes\Index.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Shared\_CalculadoraBilletesModal.cshtml" />
+    <Content Include="Views\Shared\_AdvertenciaPermisoFecha.cshtml" />
     <Content Include="Views\Shared\_LineasAgrupadasStyles.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
     <Content Include="Views\Login\ForgotPassword.cshtml" />

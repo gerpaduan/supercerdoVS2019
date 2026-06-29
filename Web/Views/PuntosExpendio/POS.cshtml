@@ -181,6 +181,12 @@
                                         </h4>
                                         <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-precio">Precio</label>
+                                                <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-cantidad">Cantidad</label>
                                                 <input id="inputCantidad"
                                                        class="form-control"
@@ -1100,9 +1106,14 @@
     html.dark-mode .pos-expendio-page .pos-topbar-caption,
     html.dark-mode .pos-expendio-page .pos-topbar-label,
     html.dark-mode .pos-expendio-page .pos-sale-summary,
+    html.dark-mode .pos-expendio-page .lbl-precio,
     html.dark-mode .pos-expendio-page .lbl-cantidad,
     html.dark-mode .pos-expendio-page .lbl-subtotal {
         color: #97a7bd !important;
+    }
+
+    html.dark-mode .pos-expendio-page #prodPrecio {
+        color: #ecf2ff !important;
     }
 
     html.dark-mode .pos-expendio-page .pos-topbar-heading,

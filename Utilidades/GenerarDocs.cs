@@ -311,6 +311,7 @@ namespace Utilidades
                 var colorRojo = new BaseColor(174, 0, 0);
                 var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 30, colorRojo);
                 var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
+                var fuenteComentarios = FontFactory.GetFont(FontFactory.HELVETICA, 7);
                 var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
                 var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
                 var fuenteFooter = FontFactory.GetFont(FontFactory.HELVETICA, 7);
@@ -328,7 +329,7 @@ namespace Utilidades
                     margenInferior = CalcularMargenInferiorFactura(
                         venta,
                         factura,
-                        fuenteNormal,
+                        fuenteComentarios,
                         fuenteNegrita,
                         fuenteFooter,
                         PageSize.A4.Width - margenIzquierdo - margenDerecho
@@ -373,7 +374,7 @@ namespace Utilidades
                         pdfGenerado,
                         venta,
                         factura,
-                        fuenteNormal,
+                        fuenteComentarios,
                         fuenteNegrita,
                         fuenteFooter,
                         margenIzquierdo,

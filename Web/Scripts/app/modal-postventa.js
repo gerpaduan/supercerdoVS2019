@@ -425,18 +425,71 @@ function pvActualizarPreviewWhatsapp() {
     $('#pvWhatsappNumeroFinal').text(numeroFinal);
 }
 
-function pvAbrirNuevaPestanaConSesion(url) {
-    if (!url) return;
+function pvObtenerNombreArchivoDesdeHeader(contentDisposition) {
+    if (!contentDisposition) return '';
 
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match && utf8Match[1]) {
+        return decodeURIComponent(utf8Match[1]).replace(/["']/g, '').trim();
+    }
+
+    const asciiMatch = contentDisposition.match(/filename=([^;]+)/i);
+    if (asciiMatch && asciiMatch[1]) {
+        return asciiMatch[1].replace(/["']/g, '').trim();
+    }
+
+    return '';
+}
+
+function pvDispararDescargaBlob(blob, nombreArchivo) {
+    const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    link.rel = 'noopener';
+    link.href = blobUrl;
+    link.download = nombreArchivo || 'comprobante.pdf';
     link.style.display = 'none';
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    window.setTimeout(function () {
+        window.URL.revokeObjectURL(blobUrl);
+    }, 1000);
+}
+
+function pvAbrirNuevaPestanaConSesion(url) {
+    if (!url) return;
+
+    fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error('No se pudo descargar el PDF.');
+            }
+
+            return Promise.all([
+                response.blob(),
+                Promise.resolve(pvObtenerNombreArchivoDesdeHeader(response.headers.get('Content-Disposition')))
+            ]);
+        })
+        .then(function (result) {
+            const blob = result[0];
+            const nombreArchivo = result[1];
+            pvDispararDescargaBlob(blob, nombreArchivo);
+        })
+        .catch(function () {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.style.display = 'none';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
 }
 
 function pvBuildPdfUrl() {

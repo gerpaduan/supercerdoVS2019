@@ -1306,9 +1306,9 @@ namespace Web.Controllers
                 byte[] pdfDetalleBytes = null;
                 byte[] pdfNotaCreditoBytes = null;
                 string bodyHtml = ConvertirTextoAHtml(mensaje);
-                string nombreAdjunto = "Comprobante_" + venta.IdVenta + ".pdf";
+                string nombreAdjunto = ConstruirNombreArchivoComprobante(venta, factura, "Factura_" + venta.IdVenta + ".pdf");
                 string nombreAdjuntoDetalle = "Detalle_" + venta.IdVenta + ".pdf";
-                string nombreAdjuntoNotaCredito = "NotaCredito_" + venta.IdVenta + ".pdf";
+                string nombreAdjuntoNotaCredito = ConstruirNombreArchivoComprobante(venta, notaCredito, "NotaCredito_" + venta.IdVenta + ".pdf");
                 string fromName = "CarniSys - " + nombreEmpresa;
                 string replyToEmail = empresaVenta != null ? (empresaVenta.Email ?? "").Trim() : "";
                 string documentoSolicitado = (documento ?? "").Trim().ToLowerInvariant();
@@ -1391,17 +1391,63 @@ namespace Web.Controllers
                     nombreArchivo = "Detalle_" + id + ".pdf";
                     break;
                 case "nc":
+                    var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
                     pdfBytes = GenerarPdfNotaCreditoBytes(venta);
-                    nombreArchivo = "NotaCredito_" + id + ".pdf";
+                    nombreArchivo = ConstruirNombreArchivoComprobante(venta, notaCredito, "NotaCredito_" + id + ".pdf");
                     break;
                 case "factura":
                 default:
+                    var factura = ObtenerFacturaAsociadaVenta(venta.IdVenta);
                     pdfBytes = GenerarPdfVentaBytes(venta);
-                    nombreArchivo = "Factura_" + id + ".pdf";
+                    nombreArchivo = ConstruirNombreArchivoComprobante(venta, factura, "Factura_" + id + ".pdf");
                     break;
             }
 
             return File(pdfBytes, "application/pdf", nombreArchivo);
+        }
+
+        private static string ConstruirNombreArchivoComprobante(
+            Entidades.Venta venta,
+            Entidades.FacturaElectronica comprobante,
+            string nombreFallback)
+        {
+            if (comprobante == null || comprobante.Id <= 0)
+                return nombreFallback;
+
+            string letraFactura = string.Empty;
+            if (comprobante.CodTipoCbteAfip > 0)
+            {
+                char letraPorCodigo = comprobante.getLetraId_TipoCbte(comprobante.CodTipoCbteAfip);
+                letraFactura = letraPorCodigo == '\0' ? string.Empty : letraPorCodigo.ToString().ToUpper();
+            }
+
+            if (string.IsNullOrWhiteSpace(letraFactura) && !string.IsNullOrWhiteSpace(comprobante.DescTipoCbteAfip))
+            {
+                string descTipoCbteAfip = comprobante.DescTipoCbteAfip.Trim();
+                letraFactura = descTipoCbteAfip.Substring(descTipoCbteAfip.Length - 1).ToUpper();
+            }
+            string nombreClienteArchivo = (comprobante.RazonSocialAFIP ?? venta?.Persona?.razonSocial ?? string.Empty).Trim();
+
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                letraFactura = letraFactura.Replace(invalidChar.ToString(), string.Empty);
+                nombreClienteArchivo = nombreClienteArchivo.Replace(invalidChar.ToString(), string.Empty);
+            }
+
+            if (string.IsNullOrWhiteSpace(nombreClienteArchivo))
+                nombreClienteArchivo = "CLIENTE";
+
+            nombreClienteArchivo = nombreClienteArchivo.Length > 15
+                ? nombreClienteArchivo.Substring(0, 15).Trim()
+                : nombreClienteArchivo;
+
+            string fechaArchivo = (comprobante.FechaEmisionAfip ?? venta?.FechaVenta ?? DateTime.Now).ToString("yyyyMMdd");
+
+            return fechaArchivo + "_Factura" +
+                letraFactura + "_" +
+                (comprobante.PtoVtaAfip ?? string.Empty) + "-" +
+                (comprobante.NroCbteAfip ?? string.Empty) + "_" +
+                nombreClienteArchivo + ".pdf";
         }
 
         private byte[] GenerarPdfVentaBytes(Entidades.Venta venta)
