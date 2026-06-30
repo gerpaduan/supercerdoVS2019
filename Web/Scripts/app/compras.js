@@ -92,6 +92,68 @@
         $form.find('#lblProveedorCuit').text(persona && persona.cuit ? ('CUIT: ' + persona.cuit) : 'Sin proveedor seleccionado');
     }
 
+    var nativeAlert = window.alert ? window.alert.bind(window) : function () { };
+
+    function focusField($field) {
+        if (!$field || !$field.length) return;
+
+        window.setTimeout(function () {
+            $field.trigger('focus');
+            if (typeof $field.select === 'function') {
+                $field.select();
+            }
+        }, 0);
+    }
+
+    function showValidationMessage(message, $field) {
+        if (window.Swal) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Validacion',
+                text: message || 'Revise los datos ingresados.'
+            }).then(function () {
+                focusField($field);
+            });
+            return;
+        }
+
+        nativeAlert(message || 'Revise los datos ingresados.');
+        focusField($field);
+    }
+
+    function resolveValidationField(message) {
+        var text = String(message || '').toLowerCase();
+        var $form = $('#formCompra');
+        if (!$form.length) return $();
+
+        if (text.indexOf('producto') >= 0 && text.indexOf('val') >= 0) {
+            return $form.find('#txtCodigoProducto');
+        }
+        if (text.indexOf('cantidad mayor a cero') >= 0) {
+            return $form.find('#txtCantKgs');
+        }
+        if (text.indexOf('kilos mayores a cero') >= 0) {
+            return $form.find('#txtKgMedia');
+        }
+        if (text.indexOf('margen no puede ser negativo') >= 0) {
+            return $form.find('#txtMargen');
+        }
+        if (text.indexOf('precio mayor a cero') >= 0) {
+            var $activo = $(document.activeElement);
+            if ($activo.is('#txtPrecioMedia, #txtKgMedia, #btnAgregarLineaMediaRes')) {
+                return $form.find('#txtPrecioMedia');
+            }
+            return $form.find('#txtPrecioKg');
+        }
+
+        return $();
+    }
+
+    function alert(message) {
+        nativeAlert(message);
+        focusField(resolveValidationField(message));
+    }
+
     function getDescRecargoValue($form) {
         if (!$form.find('#chkAplicarDescRecargo').is(':checked')) return 0;
         return toNumber($form.find('#txtDescRecargo').val());
@@ -544,9 +606,6 @@
         $('#modalBuscarPersona').modal('show');
         $('#filtroPersona').val('');
         cargarProveedores($form, '');
-        window.setTimeout(function () {
-            $('#filtroPersona').focus().select();
-        }, 80);
     }
 
     function abrirProveedorModal($form) {
@@ -618,9 +677,6 @@
         $modal.modal('show');
         $modal.find('.js-buscar-producto-input').val('');
         cargarProductosModal($form, '');
-        window.setTimeout(function () {
-            $modal.find('.js-buscar-producto-input').focus().select();
-        }, 80);
     }
 
     function buscarProductoPorCodigo($form, codigo, enfocarCantidad) {
@@ -827,6 +883,8 @@
         $form.off('.compras');
         $page.off('.compras');
 
+        var modalProductoSelector = state.config.modalProductoSelector || '#modalBuscarProducto';
+
         $form.on('change.compras', '#TipoCompra', function () {
             syncTipoPanels($form);
             state.lineas = [];
@@ -860,6 +918,18 @@
             setProveedor($form, null);
             scheduleDraft($form);
         });
+
+        $(document)
+            .off('shown.bs.modal.comprasPersona', '#modalBuscarPersona')
+            .on('shown.bs.modal.comprasPersona', '#modalBuscarPersona', function () {
+                $('#filtroPersona').focus().select();
+            });
+
+        $(document)
+            .off('hidden.bs.modal.comprasPersona', '#modalBuscarPersona')
+            .on('hidden.bs.modal.comprasPersona', '#modalBuscarPersona', function () {
+                $form.find('#NroRemito').focus().select();
+            });
 
         $(document)
             .off('input.comprasPersona', '#filtroPersona')
@@ -899,6 +969,12 @@
                     if (!$target.length) $target = $('#tablaPersonas tr.fila-persona').first();
                     if ($target.length) $target.trigger('dblclick');
                 }
+            });
+
+        $(document)
+            .off('shown.bs.modal.comprasProducto', modalProductoSelector)
+            .on('shown.bs.modal.comprasProducto', modalProductoSelector, function () {
+                $(this).find('.js-buscar-producto-input').focus().select();
             });
 
         $form.on('click.compras', '#btnBuscarProducto', function () {

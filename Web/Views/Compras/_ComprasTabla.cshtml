@@ -61,14 +61,18 @@
                         <td class="text-right">@totalS.ToString("N2")</td>
                         <td class="text-center text-nowrap">
                             <button type="button"
-                                    class="btn btn-sm btn-link text-decoration-none btn-detalles-compra"
+                                    class="btn btn-sm btn-outline-secondary btn-detalles-compra"
                                     data-target="#@detailId"
                                     aria-expanded="false"
-                                    aria-controls="@detailId">
-                                <i class="fas fa-chevron-down"></i> Detalles
+                                    aria-controls="@detailId"
+                                    title="Ver detalle">
+                                <i class="fas fa-angle-down"></i>
                             </button>
-                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("ModificarCompra", "Compras", new { id = idCompra, origen = "layout" })">
-                                Editar
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="@Url.Action("ModificarCompra", "Compras", new { id = idCompra, origen = "layout" })"
+                               title="Ver compra"
+                               aria-label="Ver compra">
+                                <i class="fas fa-eye"></i>
                             </a>
                         </td>
                     </tr>

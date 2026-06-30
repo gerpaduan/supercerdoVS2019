@@ -607,6 +607,14 @@ else
 
 <div id="contenedorModalPersona"></div>
 
+<div id="posModalLoading" class="pos-modal-loading" style="display:none;" aria-hidden="true">
+    <div class="pos-modal-loading__box" role="status" aria-live="polite" aria-atomic="true">
+        <div class="pos-modal-loading__spinner"></div>
+        <div class="pos-modal-loading__title" data-loading-text>Cargando solicitud...</div>
+        <div class="pos-modal-loading__subtitle">Aguarde un instante</div>
+    </div>
+</div>
+
 <div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content" id="contenedorFacturaElectronica">
@@ -637,6 +645,79 @@ else
 </div>
 
 <style>
+    .pos-modal-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(255, 255, 255, .38);
+        display: none;
+    }
+
+    .pos-modal-loading__box {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 230px;
+        max-width: calc(100vw - 2rem);
+        padding: 1rem 1.2rem;
+        border-radius: .85rem;
+        background: rgba(255, 255, 255, .96);
+        border: 1px solid rgba(78, 115, 223, .18);
+        box-shadow: 0 .7rem 1.8rem rgba(58, 59, 69, .18);
+        text-align: center;
+    }
+
+    .pos-modal-loading__spinner {
+        width: 2rem;
+        height: 2rem;
+        margin: 0 auto .65rem;
+        border-radius: 50%;
+        border: .22rem solid rgba(78, 115, 223, .16);
+        border-top-color: #4e73df;
+        animation: posModalLoadingSpin .8s linear infinite;
+    }
+
+    .pos-modal-loading__title {
+        color: #2f3a56;
+        font-weight: 600;
+        font-size: .98rem;
+    }
+
+    .pos-modal-loading__subtitle {
+        margin-top: .2rem;
+        color: #858796;
+        font-size: .83rem;
+    }
+
+    @@keyframes posModalLoadingSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    html.dark-mode .pos-modal-loading,
+    body.dark-mode .pos-modal-loading {
+        background: rgba(10, 18, 32, .42);
+    }
+
+    html.dark-mode .pos-modal-loading__box,
+    body.dark-mode .pos-modal-loading__box {
+        background: rgba(22, 37, 56, .96);
+        border-color: rgba(77, 112, 150, .5);
+        box-shadow: 0 1rem 2.2rem rgba(2, 6, 23, .45);
+    }
+
+    html.dark-mode .pos-modal-loading__title,
+    body.dark-mode .pos-modal-loading__title {
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .pos-modal-loading__subtitle,
+    body.dark-mode .pos-modal-loading__subtitle {
+        color: #b8c7df;
+    }
+
     #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
         max-width: 570px;
         width: calc(100% - 1rem);
@@ -949,6 +1030,41 @@ else
         nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas", new { desdePos = true })',
         guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
     };
+
+    window.POSModalLoading = window.POSModalLoading || (function ($) {
+        function getOverlay() {
+            return $('#posModalLoading');
+        }
+
+        function show(message) {
+            var $overlay = getOverlay();
+            if (!$overlay.length) return;
+
+            $overlay.find('[data-loading-text]').text(message || 'Cargando solicitud...');
+            $overlay.stop(true, true).fadeIn(120).attr('aria-hidden', 'false');
+        }
+
+        function hide() {
+            var $overlay = getOverlay();
+            if (!$overlay.length) return;
+
+            $overlay.stop(true, true).fadeOut(120).attr('aria-hidden', 'true');
+        }
+
+        function html(message) {
+            var texto = message || 'Cargando...';
+            return '<div class="p-4 text-center text-muted">'
+                + '<div class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></div>'
+                + texto
+                + '</div>';
+        }
+
+        return {
+            show: show,
+            hide: hide,
+            html: html
+        };
+    })(window.jQuery);
 
 
     $(function () {
@@ -1484,11 +1600,13 @@ else
         if (window.POSGuard && !window.POSGuard.startModalLoad('persona')) return;
 
         $btn.prop('disabled', true);
+        window.POSModalLoading?.show('Cargando clientes...');
 
         $.get(window.api.persona.buscar)
             .done(function (html) {
                 $contenedor.html(html);
                 window.POSGuard?.endModalLoad('persona');
+                window.POSModalLoading?.hide();
 
                 const abierto = window.POSGuard
                     ? window.POSGuard.requestModalOpen('persona', function () {
@@ -1504,6 +1622,7 @@ else
             })
             .fail(function () {
                 window.POSGuard?.endModalLoad('persona');
+                window.POSModalLoading?.hide();
                 Swal.fire({
                     icon: 'error',
                     title: 'Cliente',
@@ -2420,7 +2539,8 @@ else
                     .toggleClass("modal-mis-ventas-pos-compacto", esMisVentas)
                     .toggleClass("modal-detalle-venta-pos-compacto", esDetalleVenta);
                 $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
-                $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
+                window.POSModalLoading?.show('Cargando solicitud...');
 
                 const abierto = window.POSGuard
                     ? window.POSGuard.requestModalOpen('finanzas', function () {
@@ -2429,6 +2549,7 @@ else
                     : true;
 
                 if (!abierto) {
+                    window.POSModalLoading?.hide();
                     window.POSGuard?.endAction("finanzas:cargar");
                     return;
                 }
@@ -2445,6 +2566,7 @@ else
                             : "";
 
                         renderConScripts(html, "#contenedorFinanzasPOS", function () {
+                            window.POSModalLoading?.hide();
                             var finRender = performance.now();
                             reportarPerfPos({
                                 categoria: "POS",
@@ -2466,6 +2588,7 @@ else
                         });
                     },
                     error: function () {
+                        window.POSModalLoading?.hide();
                         mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
                     },
                     complete: function () {
@@ -2480,7 +2603,8 @@ else
                 }
 
                 $("#modalPagoPOSTitle").text(titulo || "Pago / Cobro");
-                $("#contenedorPagoPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                $("#contenedorPagoPOS").html(window.POSModalLoading.html("Cargando..."));
+                window.POSModalLoading?.show('Cargando solicitud...');
 
                 const abierto = window.POSGuard
                     ? window.POSGuard.requestModalOpen('pagoPos', function () {
@@ -2489,6 +2613,7 @@ else
                     : true;
 
                 if (!abierto) {
+                    window.POSModalLoading?.hide();
                     window.POSGuard?.endAction("pago:cargar");
                     return;
                 }
@@ -2502,9 +2627,11 @@ else
                     type: "GET",
                     cache: false,
                     success: function (html) {
+                        window.POSModalLoading?.hide();
                         renderConScripts(html, "#contenedorPagoPOS");
                     },
                     error: function () {
+                        window.POSModalLoading?.hide();
                         mostrarErrorPago("No se pudo cargar el pago.");
                     },
                     complete: function () {
@@ -2569,7 +2696,8 @@ else
                     .toggleClass("modal-egreso-pos-compacto", compacto === true)
                     .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades);
                 $("#modalFinanzasPOSTitle").text(titulo || "Egresos de Caja");
-                $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
+                window.POSModalLoading?.show('Cargando solicitud...');
 
                 const abierto = window.POSGuard
                     ? window.POSGuard.requestModalOpen('finanzas', function () {
@@ -2578,6 +2706,7 @@ else
                     : true;
 
                 if (!abierto) {
+                    window.POSModalLoading?.hide();
                     window.POSGuard?.endAction("egresos:cargar");
                     return;
                 }
@@ -2587,6 +2716,7 @@ else
                     type: "GET",
                     cache: false,
                     success: function (html) {
+                        window.POSModalLoading?.hide();
                         if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
                             window.EgresosCaja.renderConScripts(html, "#contenedorFinanzasPOS");
                         } else {
@@ -2594,6 +2724,7 @@ else
                         }
                     },
                     error: function () {
+                        window.POSModalLoading?.hide();
                         mostrarErrorFinanzas("No se pudo cargar egresos de caja.");
                     },
                     complete: function () {
