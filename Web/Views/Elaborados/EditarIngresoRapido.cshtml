@@ -5,7 +5,7 @@
 
 @{
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
-    ViewBag.Title = Model.EsDesarme ? "Desarme de elaborado" : "Ingreso rápido";
+    ViewBag.Title = Model.EsDesarme ? "Desarme de elaborado" : "Ingreso rapido";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     bool esAnulado = string.Equals(Model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
 }
@@ -27,11 +27,11 @@
         }
         else
         {
-            <span class="badge badge-primary px-3 py-2 text-uppercase">Ingreso rápido</span>
+            <span class="badge badge-primary px-3 py-2 text-uppercase">Ingreso rapido</span>
         }
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm elaborados-panel-card elaborados-form-compact">
         <div class="card-body">
             <form id="formIngresoRapidoElaborado" method="post" action="@Url.Action("GuardarIngresoRapido", "Elaborados")" novalidate>
                 @Html.AntiForgeryToken()
@@ -48,7 +48,7 @@
                 @if (Model.EsEdicion && !esAnulado)
                 {
                     <div class="alert alert-warning" role="alert">
-                        Al guardar esta modificación se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
+                        Al guardar esta modificacion se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
                     </div>
                 }
 
@@ -86,11 +86,11 @@
                     </div>
                 </div>
 
-                <div class="border rounded p-3 mb-3">
+                <div class="border rounded p-3 mb-3 elaborados-section-box">
                     <div class="row">
                         <div class="col-12 col-lg-3">
                             <div class="form-group">
-                                <label>Código</label>
+                                <label>Codigo</label>
                                 <input type="text" class="form-control" value="@Model.CodigoElaborado" readonly />
                             </div>
                         </div>
@@ -111,7 +111,7 @@
 
                 <div class="row">
                     <div class="col-12 col-xl-4">
-                        <div class="card border-left-@(Model.EsDesarme ? "info" : "primary") shadow-sm mb-3">
+                        <div class="card border-left-@(Model.EsDesarme ? "info" : "primary") shadow-sm mb-3 elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
@@ -119,7 +119,7 @@
                                             @(Model.EsDesarme ? "Cantidad a desarmar" : "Cantidad a elaborar")
                                         </div>
                                         <div class="small text-muted">
-                                            @(Model.EsDesarme ? "La fórmula se mostrará en negativo." : "La fórmula se calcula automáticamente en vivo.")
+                                            @(Model.EsDesarme ? "La formula se mostrara en negativo." : "La formula se calcula automaticamente en vivo.")
                                         </div>
                                     </div>
                                     <div class="custom-control custom-switch">
@@ -139,7 +139,7 @@
 
                                 <div id="balanzaStatusWrapRapido">
                                     <div class="small text-muted mt-3">
-                                        Conexión balanza: <span id="estadoBalanzaRapido">Desconocida</span>
+                                        Conexion balanza: <span id="estadoBalanzaRapido">Desconocida</span>
                                     </div>
                                     <div class="progress mt-2" style="height:4px;">
                                         <div id="barraBalanzaRapido" class="progress-bar" role="progressbar" style="width:0%"></div>
@@ -151,15 +151,15 @@
                     </div>
 
                     <div class="col-12 col-xl-8">
-                        <div class="card bg-light mb-3">
+                        <div class="card bg-light mb-3 elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
                                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                                    <h6 class="font-weight-bold text-uppercase text-muted mb-0">Fórmula calculada</h6>
-                                    <div class="small text-muted">Se guardan todos los ingredientes de la fórmula</div>
+                                    <h6 class="font-weight-bold text-uppercase text-muted mb-0">Formula calculada</h6>
+                                    <div class="small text-muted">Se guardan todos los ingredientes de la formula</div>
                                 </div>
 
                                 <div class="table-responsive formula-elaborado-wrap">
-                                    <table class="table table-sm table-bordered mb-0" id="tablaFormulaRapida">
+                                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact" id="tablaFormulaRapida">
                                         <thead>
                                             <tr>
                                                 <th>Ingrediente</th>
@@ -173,7 +173,7 @@
 
                                 <hr />
                                 <div class="d-flex justify-content-between">
-                                    <span>Total fórmula</span>
+                                    <span>Total formula</span>
                                     <strong id="lblTotalFormulaRapida">0.000</strong>
                                 </div>
                             </div>
@@ -194,7 +194,7 @@
                     @if (!esAnulado)
                     {
                         <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !esAnulado) ? "d-none" : "")" id="btnGuardarIngresoRapido">
-                            <i class="fas fa-save mr-1"></i> @(Model.EsDesarme ? "Guardar desarme" : "Guardar ingreso rápido")
+                            <i class="fas fa-save mr-1"></i> @(Model.EsDesarme ? "Guardar desarme" : "Guardar ingreso rapido")
                         </button>
                     }
                     @if (Model.EsEdicion && Model.PuedeAnular)

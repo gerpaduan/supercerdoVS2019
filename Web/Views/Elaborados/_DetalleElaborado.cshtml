@@ -28,7 +28,7 @@ else
                 <table class="table table-sm table-bordered mb-0 elaborado-detalle-tabla">
                     <thead class="thead-light">
                         <tr>
-                            <th style="width:120px;">CÃ³digo</th>
+                            <th style="width:120px;">Codigo</th>
                             <th>Producto</th>
                             <th class="text-right" style="width:120px;">Kgs</th>
                             <th class="text-center" style="width:90px;">Balanza</th>
@@ -49,7 +49,7 @@ else
                                     <td>@(linea.Codigo > 0 ? linea.Codigo.ToString() : "-")</td>
                                     <td>@(!string.IsNullOrWhiteSpace(linea.Producto) ? linea.Producto : "-")</td>
                                     <td class="text-right">@linea.Kgs.ToString("N3", cultura)</td>
-                                    <td class="text-center">@(linea.PesoBalanza ? "SÃ­" : "No")</td>
+                                    <td class="text-center">@(linea.PesoBalanza ? "Si" : "No")</td>
                                 </tr>
                             }
                         }
@@ -62,13 +62,13 @@ else
             <div class="elaborado-detalle-meta-card">
                 <div class="elaborado-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.Id</span></div>
                 <div class="elaborado-detalle-meta-row"><span class="text-muted">Elaborado:</span> <span class="font-weight-bold">@elaborado</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">CÃ³digo:</span> <span class="font-weight-bold">@codigo</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Codigo:</span> <span class="font-weight-bold">@codigo</span></div>
                 <div class="elaborado-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
                 <div class="elaborado-detalle-meta-row"><span class="text-muted">Receta:</span> <span class="font-weight-bold">@receta</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">QuiÃ©n lo creÃ³:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de creaciÃ³n:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">QuiÃ©n lo actualizÃ³:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
-                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de actualizaciÃ³n:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
                 <div class="elaborado-detalle-meta-row"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@sucursal</span></div>
                 <div class="elaborado-detalle-meta-row mb-0"><span class="text-muted">Estado:</span> <span class="font-weight-bold">@estado</span></div>
             </div>

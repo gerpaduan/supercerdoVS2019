@@ -3,7 +3,7 @@
 
 @{
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
-    ViewBag.Title = "Fórmulas";
+    ViewBag.Title = "Formulas";
     string successMessage = TempData["ElaboradosSuccessMessage"] as string ?? "";
 }
 
@@ -24,8 +24,8 @@
         <div></div>
         @if (Model.PuedeCrear)
         {
-            <a class="btn btn-primary" href="@Url.Action("EditarFormula", "Elaborados", new { id = 0 })">
-                <i class="fas fa-plus mr-1"></i> Nueva fórmula
+            <a class="btn btn-primary btn-sm" href="@Url.Action("EditarFormula", "Elaborados", new { id = 0 })">
+                <i class="fas fa-plus mr-1"></i> Nueva formula
             </a>
         }
     </div>
@@ -59,14 +59,14 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm elaborados-panel-card">
         <div class="card-body p-0">
             <div class="table-responsive tabla-full">
-                <table class="table table-bordered table-hover mb-0">
+                <table class="table table-bordered table-hover mb-0 elaborados-table-compact">
                     <thead class="thead-light">
                         <tr>
                             <th style="width:110px;">Id</th>
-                            <th style="width:110px;">Código</th>
+                            <th style="width:110px;">Codigo</th>
                             <th>Elaborado</th>
                             <th style="width:160px;">Creado</th>
                             <th style="width:160px;">Actualizado</th>
@@ -77,7 +77,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">No se encontraron fórmulas para los filtros seleccionados.</td>
+                                <td colspan="6" class="text-center text-muted py-4">No se encontraron formulas para los filtros seleccionados.</td>
                             </tr>
                         }
                         else
@@ -95,77 +95,98 @@
                                     <td>@item.Elaborado</td>
                                     <td>@item.Creado</td>
                                     <td>@item.Actualizado</td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-left text-nowrap elaborados-table-actions">
                                         @if (Model.PuedeEditar)
                                         {
-                                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditarFormula", "Elaborados", new { id = item.IdFormula })">Modificar</a>
+                                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditarFormula", "Elaborados", new { id = item.IdFormula })" title="Ver formula">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
                                         }
                                         @if (Model.PuedeEliminar)
                                         {
-                                            <button type="button" class="btn btn-sm btn-outline-danger js-eliminar-formula" data-id="@item.IdFormula" data-nombre="@item.Elaborado">Eliminar</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger js-eliminar-formula" data-id="@item.IdFormula" data-nombre="@item.Elaborado" title="Eliminar formula">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         }
                                         <button type="button"
                                                 class="btn btn-sm btn-link text-decoration-none btn-detalles-formula"
                                                 data-target="#@detailId"
                                                 aria-expanded="false"
-                                                aria-controls="@detailId">
-                                            <i class="fas fa-chevron-down"></i> Detalles
+                                                aria-controls="@detailId"
+                                                title="Detalles">
+                                            <i class="fas fa-chevron-down"></i>
                                         </button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="p-0">
                                         <div id="@detailId" class="collapse formula-detalle-collapse">
-                                            <div class="p-3 bg-light border-top">
+                                            <div class="p-3 bg-light border-top elaborados-formula-detail-wrap">
                                                 @if (detalle == null)
                                                 {
-                                                    <div class="text-muted">No se pudieron cargar los detalles de la fórmula.</div>
+                                                    <div class="text-muted">No se pudieron cargar los detalles de la formula.</div>
                                                 }
                                                 else
                                                 {
-                                                    <div class="row mb-3">
-                                                        <div class="col-12 col-lg-6">
-                                                            <div class="mb-2"><span class="text-muted">Elaborado:</span> <span class="font-weight-bold">@detalle.Elaborado</span></div>
-                                                            <div class="mb-2"><span class="text-muted">Código:</span> <span class="font-weight-bold">@detalle.Codigo</span></div>
-                                                            <div class="mb-2"><span class="text-muted">Receta:</span> <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Receta) ? detalle.Receta : "-")</span></div>
-                                                        </div>
-                                                        <div class="col-12 col-lg-6">
-                                                            <div class="mb-2"><span class="text-muted">Creado:</span> <span class="font-weight-bold">@detalle.CreadoPor | @detalle.Creado</span></div>
-                                                            <div class="mb-2"><span class="text-muted">Actualizado:</span> <span class="font-weight-bold">@detalle.ActualizadoPor | @detalle.Actualizado</span></div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="table-responsive">
-                                                        <table class="table table-sm table-bordered mb-0">
-                                                            <thead class="thead-light">
-                                                                <tr>
-                                                                    <th style="width:120px;">Código</th>
-                                                                    <th>Ingrediente</th>
-                                                                    <th class="text-right" style="width:120px;">%</th>
-                                                                    <th class="text-center" style="width:90px;">Auto</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @if (detalle.Lineas == null || detalle.Lineas.Count == 0)
-                                                                {
-                                                                    <tr>
-                                                                        <td colspan="4" class="text-center text-muted">No hay ingredientes cargados.</td>
-                                                                    </tr>
-                                                                }
-                                                                else
-                                                                {
-                                                                    foreach (var linea in detalle.Lineas)
-                                                                    {
+                                                    <div class="row align-items-start">
+                                                        <div class="col-12 col-xl-8 order-2 order-xl-1">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-bordered mb-0 elaborados-table-compact">
+                                                                    <thead class="thead-light">
                                                                         <tr>
-                                                                            <td>@linea.Codigo</td>
-                                                                            <td>@linea.Producto</td>
-                                                                            <td class="text-right">@linea.Porcentaje.ToString("N2")</td>
-                                                                            <td class="text-center">@(linea.AgregarAuto ? "Si" : "No")</td>
+                                                                            <th style="width:120px;">Codigo</th>
+                                                                            <th>Ingrediente</th>
+                                                                            <th class="text-right" style="width:120px;">%</th>
+                                                                            <th class="text-center" style="width:90px;">Auto</th>
                                                                         </tr>
-                                                                    }
-                                                                }
-                                                            </tbody>
-                                                        </table>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @if (detalle.Lineas == null || detalle.Lineas.Count == 0)
+                                                                        {
+                                                                            <tr>
+                                                                                <td colspan="4" class="text-center text-muted">No hay ingredientes cargados.</td>
+                                                                            </tr>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            foreach (var linea in detalle.Lineas)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>@linea.Codigo</td>
+                                                                                    <td>@linea.Producto</td>
+                                                                                    <td class="text-right">@linea.Porcentaje.ToString("N2")</td>
+                                                                                    <td class="text-center">@(linea.AgregarAuto ? "Si" : "No")</td>
+                                                                                </tr>
+                                                                            }
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-12 col-xl-4 order-1 order-xl-2 mb-3 mb-xl-0">
+                                                            <div class="elaborados-detail-meta-card">
+                                                                <div class="elaborados-detail-meta-row">
+                                                                    <span class="text-muted d-block">Elaborado</span>
+                                                                    <span class="font-weight-bold">@detalle.Elaborado</span>
+                                                                </div>
+                                                                <div class="elaborados-detail-meta-row">
+                                                                    <span class="text-muted d-block">Codigo</span>
+                                                                    <span class="font-weight-bold">@detalle.Codigo</span>
+                                                                </div>
+                                                                <div class="elaborados-detail-meta-row">
+                                                                    <span class="text-muted d-block">Receta</span>
+                                                                    <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(detalle.Receta) ? detalle.Receta : "-")</span>
+                                                                </div>
+                                                                <div class="elaborados-detail-meta-row">
+                                                                    <span class="text-muted d-block">Creado</span>
+                                                                    <span class="font-weight-bold">@detalle.CreadoPor | @detalle.Creado</span>
+                                                                </div>
+                                                                <div class="elaborados-detail-meta-row mb-0">
+                                                                    <span class="text-muted d-block">Actualizado</span>
+                                                                    <span class="font-weight-bold">@detalle.ActualizadoPor | @detalle.Actualizado</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 }
                                             </div>
@@ -229,32 +250,32 @@
                         }
                     }).done(function (resp) {
                         if (!resp || !resp.ok) {
-                            if (window.Swal) Swal.fire('Error', (resp && resp.mensaje) || 'No se pudo eliminar la fórmula.', 'error');
-                            else alert((resp && resp.mensaje) || 'No se pudo eliminar la fórmula.');
+                            if (window.Swal) Swal.fire('Error', (resp && resp.mensaje) || 'No se pudo eliminar la formula.', 'error');
+                            else alert((resp && resp.mensaje) || 'No se pudo eliminar la formula.');
                             return;
                         }
                         window.location.href = resp.redirectUrl || '@Url.Action("Formulas", "Elaborados")';
                     }).fail(function (xhr) {
-                        var msg = 'No se pudo eliminar la fórmula.';
+                        var msg = 'No se pudo eliminar la formula.';
                         if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) msg = xhr.responseJSON.mensaje;
                         if (window.Swal) Swal.fire('Error', msg, 'error');
                         else alert(msg);
                     });
                 };
 
-                var nombre = btnEliminar.getAttribute('data-nombre') || 'la fórmula';
+                var nombre = btnEliminar.getAttribute('data-nombre') || 'la formula';
                 if (window.Swal) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Eliminar fórmula',
-                        text: '¿Está seguro que desea eliminar la fórmula de ' + nombre + '?',
+                        title: 'Eliminar formula',
+                        text: 'Esta seguro que desea eliminar la formula de ' + nombre + '?',
                         showCancelButton: true,
-                        confirmButtonText: 'Sí, eliminar',
+                        confirmButtonText: 'Si, eliminar',
                         cancelButtonText: 'Cancelar'
                     }).then(function (result) {
                         if (result.isConfirmed) ejecutar();
                     });
-                } else if (window.confirm('¿Está seguro que desea eliminar la fórmula de ' + nombre + '?')) {
+                } else if (window.confirm('Esta seguro que desea eliminar la formula de ' + nombre + '?')) {
                     ejecutar();
                 }
             });

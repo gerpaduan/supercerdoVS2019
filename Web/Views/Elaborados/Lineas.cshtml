@@ -5,7 +5,7 @@
 
 @{
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
-    ViewBag.Title = "Líneas de elaborado";
+    ViewBag.Title = "Lineas de elaborado";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     string alertaPermisoFecha = ViewBag.AlertaPermisoFecha as string ?? "";
 }
@@ -27,7 +27,7 @@
         <div class="card-body">
             <form method="get" action="@Url.Action("Lineas", "Elaborados")" id="formFiltrosLineasElaborados">
                 <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
-                    Cambiaste sucursal o fechas. Presioná <strong>Buscar</strong> para actualizar la búsqueda.
+                    Cambiaste sucursal o fechas. Presiona <strong>Buscar</strong> para actualizar la busqueda.
                 </div>
 
                 <div class="elaborados-filtros-grid">
@@ -42,7 +42,7 @@
                     </div>
 
                     <div class="form-group mb-0">
-                        <label class="elaborados-filtro-label" for="descripcion">Descripción</label>
+                        <label class="elaborados-filtro-label" for="descripcion">Descripcion</label>
                         <input id="descripcion" name="descripcion" type="text" class="form-control js-filtro-vivo-lineas" value="@Model.Descripcion" autocomplete="off" />
                     </div>
 
@@ -75,20 +75,20 @@
 
     <div class="row mb-3">
         <div class="col-12 col-md-4">
-            <div class="card border-left-primary shadow-sm h-100">
-                <div class="card-body py-3">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg líneas</div>
+            <div class="card border-left-primary shadow-sm h-100 elaborados-total-card elaborados-summary-card">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg lineas</div>
                     <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalKg.ToString("N3")</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm elaborados-panel-card">
         <div class="card-body p-0">
             <div class="table-responsive js-sync-scroll-body">
-                <table class="table table-hover mb-0">
-                    <thead class="thead-dark">
+                <table class="table table-hover mb-0 elaborados-table-compact">
+                    <thead class="thead-light">
                         <tr>
                             <th style="width:150px;">Fecha</th>
                             <th>Sucursal</th>
@@ -105,7 +105,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr class="js-linea-empty-server">
-                                <td colspan="9" class="text-center text-muted py-4">No se encontraron líneas para los filtros seleccionados.</td>
+                                <td colspan="9" class="text-center text-muted py-4">No se encontraron lineas para los filtros seleccionados.</td>
                             </tr>
                         }
                         else
@@ -129,7 +129,7 @@
                                     <td>@item.Ingrediente</td>
                                     <td class="text-right">@item.Kgs.ToString("N3")</td>
                                     <td>@item.Estado</td>
-                                    <td class="text-center">
+                                    <td class="text-left elaborados-table-actions">
                                         <a class="btn btn-sm btn-outline-primary" href="@urlSeleccion">Seleccionar</a>
                                     </td>
                                 </tr>

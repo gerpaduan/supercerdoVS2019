@@ -34,30 +34,30 @@
                 }
                 else
                 {
-                    <span class="badge badge-primary px-3 py-2 text-uppercase">Modo ingreso rápido</span>
+                    <span class="badge badge-primary px-3 py-2 text-uppercase">Modo ingreso rapido</span>
                 }
             </div>
 
             <div class="elaborados-filtros-grid elaborados-filtros-grid-rapido">
                 <div class="form-group mb-0">
-                    <label class="elaborados-filtro-label" for="filtroRapidoTexto">Producto o código</label>
-                    <input id="filtroRapidoTexto" type="text" class="form-control" autocomplete="off" placeholder="Buscar por nombre o código" />
+                    <label class="elaborados-filtro-label" for="filtroRapidoTexto">Producto o codigo</label>
+                    <input id="filtroRapidoTexto" type="text" class="form-control" autocomplete="off" placeholder="Buscar por nombre o codigo" />
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm elaborados-panel-card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="tablaIngresoRapidoLista">
+                <table class="table table-hover mb-0 elaborados-table-compact" id="tablaIngresoRapidoLista">
                     <thead class="thead-light">
                         <tr>
-                            <th style="width:120px;">Código</th>
+                            <th style="width:120px;">Codigo</th>
                             <th>Elaborado</th>
-                            <th style="width:160px;">Ingreso rápido</th>
-                            <th style="width:150px;">Fórmula</th>
-                            <th style="width:140px;">Acción</th>
+                            <th style="width:160px;">Ingreso rapido</th>
+                            <th style="width:150px;">Formula</th>
+                            <th style="width:140px;">Accion</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,7 +78,7 @@
                                 <td>
                                     @if (item.IngresoRapido)
                                     {
-                                        <span class="badge badge-success">Sí</span>
+                                        <span class="badge badge-success">Si</span>
                                     }
                                     else
                                     {
@@ -86,7 +86,7 @@
                                     }
                                 </td>
                                 <td><span class="badge badge-light border">Cargada</span></td>
-                                <td>
+                                <td class="elaborados-table-actions">
                                     <a class="btn btn-sm @(Model.EsDesarme ? "btn-outline-info" : "btn-outline-primary")"
                                        href="@Url.Action("EditarIngresoRapido", "Elaborados", new { idElaborado = item.IdCorte, esDesarme = Model.EsDesarme })">
                                         Seleccionar
