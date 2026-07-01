@@ -970,10 +970,44 @@
 </div>
 
 <style>
+    .reportes-page .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .reportes-filtros-card {
+        font-size: .9rem;
+    }
+
+    .reportes-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
     .reportes-filtros-grid,
     .reportes-totales-grid {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
+    }
+
+    .reportes-page .stock-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .reportes-filtros-card .form-control,
+    .reportes-filtros-card .btn {
+        font-size: .87rem;
+        min-height: 2.35rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .reportes-filtros-card .alert,
+    .reportes-filtros-card .small,
+    .reportes-filtros-card .text-muted,
+    .reportes-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
     }
 
     .reportes-filtro-accion {
@@ -981,17 +1015,42 @@
         align-items: end;
     }
 
+    .reportes-totales-grid .card-body,
+    .reportes-page .reportes-totales-grid-balance .card-body {
+        padding: .6rem .8rem;
+    }
+
+    .reportes-totales-grid .text-muted.small,
+    .reportes-page .reportes-totales-grid-balance .text-muted.small {
+        font-size: .68rem !important;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .reportes-totales-grid .h4,
+    .reportes-page .reportes-totales-grid-balance .h4 {
+        font-size: 1rem;
+        line-height: 1.05;
+    }
+
+    .reportes-tabla {
+        font-size: .84rem;
+    }
+
     .reportes-tabla th,
     .reportes-tabla td {
         vertical-align: middle;
         white-space: nowrap;
+        padding-left: .5rem;
+        padding-right: .5rem;
         padding-top: .38rem;
         padding-bottom: .38rem;
+        line-height: 1.15;
     }
 
     .reportes-tabla th.reporte-detalle-col,
     .reportes-tabla td.reporte-detalle-col {
-        font-size: calc(1rem - 2pt);
+        font-size: .81rem;
         padding: .3rem .4rem;
     }
 
@@ -1477,6 +1536,14 @@
     }
 
     @@media (min-width: 1200px) {
+        .reportes-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .reportes-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
         .reportes-filtros-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr));
         }
@@ -1487,6 +1554,32 @@
 
         .reportes-totales-grid {
             grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .reportes-filtros-card .form-control,
+        .reportes-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .reportes-totales-grid .card-body,
+        .reportes-page .reportes-totales-grid-balance .card-body {
+            padding: .5rem .72rem;
+        }
+
+        .reportes-tabla {
+            font-size: .81rem;
+        }
+
+        .reportes-tabla thead th.reporte-detalle-col,
+        #tablaReporteStockActual thead th,
+        #tablaReporteStockActual thead .reporte-stock-resumen-col,
+        .reportes-proyeccion-head-metrics th,
+        .reportes-tabla-proyeccion-multi thead th,
+        #tablaReporteVentasProducto thead th,
+        #tablaReporteBalanceEconomico thead th {
+            font-size: .69rem !important;
         }
     }
 

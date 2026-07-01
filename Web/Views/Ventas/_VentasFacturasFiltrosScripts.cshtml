@@ -365,12 +365,16 @@
 </script>
 
 <style>
+    .filtros-ventas-card {
+        font-size: .9rem;
+    }
+
     .venta-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        padding: 10px 15px;
+        padding: .55rem .78rem;
     }
 
     .venta-icono {
@@ -399,12 +403,12 @@
     }
 
     .venta-id {
-        font-size: 0.8rem;
+        font-size: .75rem;
         color: #6c757d;
     }
 
     .venta-obs {
-        font-size: 0.8rem;
+        font-size: .75rem;
         color: #4f5d75;
         margin-top: .15rem;
         white-space: nowrap;
@@ -432,31 +436,47 @@
         border-radius: .75rem;
     }
 
+    .filtros-ventas-card .card-body,
+    .filtros-ventas-card {
+        padding: .72rem .85rem !important;
+    }
+
     .filtros-ventas-stack {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .filtros-fila {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .filtro-label {
-        font-size: .85rem;
+        font-size: .76rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: .35rem;
+        margin-bottom: .18rem;
     }
 
     .filtros-ventas-card .form-control {
-        min-height: 2.65rem;
+        min-height: 2.35rem;
         border-radius: .55rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
     }
 
     .filtros-ventas-card .btn {
-        min-height: 2.65rem;
+        min-height: 2.35rem;
         border-radius: .55rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .filtros-ventas-card .small,
+    .filtros-ventas-card .text-muted,
+    .filtros-ventas-card #estadoBusquedaVentas,
+    .filtros-ventas-card #estadoBusquedaFacturas {
+        font-size: .8rem !important;
     }
 
     .filtro-forma-pago-btn {
@@ -480,6 +500,7 @@
         overflow-y: auto;
         border-radius: .7rem;
         box-shadow: 0 .35rem 1rem rgba(0, 0, 0, .12);
+        font-size: .84rem;
     }
 
     .filtro-forma-pago-item {
@@ -494,6 +515,30 @@
         background-color: #f8f9fc;
     }
 
+    .ventas-totales-card {
+        padding: .38rem .65rem !important;
+    }
+
+    .ventas-totales-card h5 {
+        font-size: .88rem;
+    }
+
+    #listaVentas .fecha-grupo {
+        font-size: .76rem;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding: .38rem .78rem;
+    }
+
+    .venta-tipo-persona {
+        font-size: .84rem;
+        line-height: 1.15;
+    }
+
+    .venta-total .importe {
+        font-size: .85rem;
+    }
+
     @@media (min-width: 992px) {
         .vista-venta {
             width: 60%;
@@ -505,6 +550,18 @@
     }
 
     @@media (min-width: 1200px) {
+        .filtros-ventas-card .form-control,
+        .filtros-ventas-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .filtros-ventas-card .card-body,
+        .filtros-ventas-card {
+            padding: .65rem .8rem !important;
+        }
+
         .filtros-fila-fechas {
             grid-template-columns: 1.15fr 1.15fr 140px;
             align-items: end;
@@ -516,6 +573,29 @@
 
         .filtros-fila-busqueda {
             grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .venta-item {
+            padding: .48rem .72rem;
+        }
+
+        .venta-tipo-persona {
+            font-size: .8rem;
+        }
+
+        .venta-id,
+        .venta-obs,
+        .venta-total .text-muted.small {
+            font-size: .72rem !important;
+        }
+
+        .venta-total .importe,
+        .ventas-totales-card h5 {
+            font-size: .82rem;
+        }
+
+        #listaVentas .fecha-grupo {
+            font-size: .68rem;
         }
     }
 

@@ -544,7 +544,11 @@ namespace Web.Controllers
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
 
-            int idProveedor = EsPesaje(tipoOperacion) ? model.IdProveedor : param.GetInt(Entidades.ParamKeys.IdIndefinido, 0);
+            int idProveedor = model.IdProveedor > 0
+                ? model.IdProveedor
+                : (compraActual != null && compraActual.Proveedor != null && compraActual.Proveedor.IdPersona > 0
+                    ? compraActual.Proveedor.IdPersona
+                    : param.GetInt(Entidades.ParamKeys.IdIndefinido, 0));
             Entidades.Persona proveedor = ResolverProveedor(idProveedor);
             if (proveedor == null || proveedor.IdPersona <= 0)
             {

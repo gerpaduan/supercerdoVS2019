@@ -111,26 +111,26 @@
 
     <div class="row mb-3">
         <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-info shadow-sm h-100">
-                <div class="card-body py-3">
-                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalCantMedias</div>
+            <div class="card border-left-info shadow-sm h-100 compras-total-card">
+                <div class="card-body">
+                    <div class="compras-total-label text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
+                    <div class="compras-total-value font-weight-bold text-gray-800">@totalCantMedias</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-primary shadow-sm h-100">
-                <div class="card-body py-3">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
+            <div class="card border-left-primary shadow-sm h-100 compras-total-card">
+                <div class="card-body">
+                    <div class="compras-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="compras-total-value font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-success shadow-sm h-100">
-                <div class="card-body py-3">
-                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@totalS.ToString("N2")</div>
+            <div class="card border-left-success shadow-sm h-100 compras-total-card">
+                <div class="card-body">
+                    <div class="compras-total-label text-xs font-weight-bold text-success text-uppercase mb-1">Total</div>
+                    <div class="compras-total-value font-weight-bold text-gray-800">@totalS.ToString("N2")</div>
                 </div>
             </div>
         </div>
@@ -154,33 +154,40 @@
     .compras-filtros-card {
         border: 1px solid #e9ecef;
         border-radius: .75rem;
+        font-size: .9rem;
+    }
+
+    .compras-index-page .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .compras-filtros-card .card-body {
+        padding: .72rem .85rem;
     }
 
     .compras-filtros-stack {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .compras-filtros-row {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .compras-filtro-label {
-        font-size: .85rem;
+        font-size: .76rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: .35rem;
+        margin-bottom: .18rem;
     }
 
-    .compras-filtros-card .form-control {
-        min-height: 2.65rem;
-        border-radius: .55rem;
-    }
-
+    .compras-filtros-card .form-control,
     .compras-filtros-card .btn {
+        font-size: .87rem;
         min-height: 2.65rem;
         border-radius: .55rem;
+        padding: .32rem .62rem;
     }
 
     .compras-acciones-header {
@@ -191,6 +198,32 @@
         width: 100%;
     }
 
+    .compras-filtros-card .alert,
+    .compras-filtros-card .small,
+    .compras-filtros-card .text-muted,
+    .compras-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .compras-total-card .card-body {
+        padding: .6rem .8rem;
+    }
+
+    .compras-total-label {
+        font-size: .68rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .compras-total-value {
+        font-size: 1rem;
+        line-height: 1.05;
+    }
+
+    .compras-index-page .tabla-full .table {
+        font-size: .84rem;
+    }
+
     .compras-index-page .tabla-full .table th,
     .compras-index-page .tabla-full .table td {
         padding: .38rem .5rem;
@@ -198,7 +231,10 @@
         line-height: 1.15;
     }
 
-    .compras-index-page .tabla-full .table thead th {
+    .compras-index-page .tabla-full .table thead th,
+    .compras-index-page .tabla-full .table > thead > tr > th {
+        font-size: .72rem !important;
+        line-height: 1.05;
         padding-top: .42rem;
         padding-bottom: .42rem;
     }
@@ -209,12 +245,24 @@
     }
 
     @@media (min-width: 1200px) {
+        .compras-index-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
         .compras-acciones-header {
             justify-content: flex-end;
         }
 
         .compras-btn-nuevo {
             width: auto;
+        }
+
+        .compras-index-page .compras-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .compras-total-card .card-body {
+            padding: .5rem .72rem;
         }
 
         .compras-filtros-row-fechas {
@@ -228,6 +276,22 @@
 
         .compras-filtros-row-busqueda {
             grid-template-columns: .9fr 1.5fr;
+        }
+
+        .compras-filtros-card .form-control,
+        .compras-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .compras-index-page .tabla-full .table {
+            font-size: .81rem;
+        }
+
+        .compras-index-page .tabla-full .table thead th,
+        .compras-index-page .tabla-full .table > thead > tr > th {
+            font-size: .69rem !important;
         }
     }
 

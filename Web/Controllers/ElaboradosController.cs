@@ -1062,10 +1062,31 @@ namespace Web.Controllers
                 if (linea == null || linea.Corte == null)
                     continue;
 
+                var corteLinea = linea.Corte;
+                string nombreLinea = !string.IsNullOrWhiteSpace(corteLinea.CorteDesc) ? corteLinea.CorteDesc : corteLinea.corte;
+                if (corteLinea.Codigo <= 0 && corteLinea.IdCorte > 0)
+                {
+                    var corteRecargado = oCorteN.findCorteById(corteLinea.IdCorte, false);
+                    if (corteRecargado != null && corteRecargado.IdCorte > 0)
+                    {
+                        corteLinea = corteRecargado;
+                        nombreLinea = !string.IsNullOrWhiteSpace(corteLinea.CorteDesc) ? corteLinea.CorteDesc : corteLinea.corte;
+                    }
+                }
+
+                long codigoLinea = corteLinea.Codigo;
+                if (codigoLinea <= 0
+                    && embutido.Corte != null
+                    && !string.IsNullOrWhiteSpace(nombreLinea)
+                    && nombreLinea.IndexOf("Ajuste Formula", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    codigoLinea = embutido.Corte.Codigo;
+                }
+
                 detalle.IngredientesUtilizados.Add(new ElaboradoDetalleLineaVm
                 {
-                    Codigo = linea.Corte.Codigo,
-                    Producto = !string.IsNullOrWhiteSpace(linea.Corte.CorteDesc) ? linea.Corte.CorteDesc : linea.Corte.corte,
+                    Codigo = codigoLinea,
+                    Producto = nombreLinea,
                     Kgs = linea.KgUtilizado,
                     PesoBalanza = linea.PesoBalanza
                 });

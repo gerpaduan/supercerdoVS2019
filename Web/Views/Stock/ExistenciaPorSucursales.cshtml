@@ -141,11 +141,15 @@
 </div>
 
 <style>
+    .existencia-sucursales-page .card-body {
+        padding: .82rem 1rem;
+    }
+
     .existencia-filtros-row-top,
     .existencia-filtros-row-bottom,
     .existencia-estado-grid {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .existencia-check-wrap {
@@ -154,7 +158,7 @@
     }
 
     .existencia-check {
-        padding-bottom: .55rem;
+        padding-bottom: .38rem;
     }
 
     .existencia-estado-card {
@@ -179,6 +183,38 @@
         justify-content: flex-end;
     }
 
+    .existencia-sucursales-page .stock-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .existencia-sucursales-page .stock-filtros-card .form-control,
+    .existencia-sucursales-page .stock-filtros-card .btn {
+        min-height: 2.35rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .existencia-sucursales-page .stock-filtro-label,
+    .existencia-sucursales-page .custom-control-label {
+        font-size: .76rem;
+    }
+
+    .existencia-sucursales-page .existencia-estado-card .card-body {
+        padding: .62rem .82rem !important;
+    }
+
+    .existencia-sucursales-page .existencia-estado-item,
+    .existencia-sucursales-page .existencia-estado-item .text-muted,
+    .existencia-sucursales-page .existencia-estado-item .small,
+    .existencia-sucursales-page #lblEstadoConsultaExistencia,
+    .existencia-sucursales-page #lblAvisoPendienteExistencia {
+        font-size: .8rem;
+    }
+
+    .existencia-sucursales-page .existencia-estado-item strong {
+        font-size: .84rem;
+    }
+
     .input-group-append .existencia-btn-buscar-inline {
         margin-left: .45rem !important;
         border-top-left-radius: .25rem !important;
@@ -186,6 +222,41 @@
     }
 
     @@media (min-width: 1200px) {
+        .existencia-sucursales-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .existencia-sucursales-page .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .existencia-sucursales-page .stock-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .existencia-sucursales-page .stock-filtros-card .form-control,
+        .existencia-sucursales-page .stock-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .existencia-sucursales-page .existencia-estado-card .card-body {
+            padding: .52rem .74rem !important;
+        }
+
+        .existencia-sucursales-page .existencia-estado-item,
+        .existencia-sucursales-page .existencia-estado-item .text-muted,
+        .existencia-sucursales-page .existencia-estado-item .small,
+        .existencia-sucursales-page #lblEstadoConsultaExistencia,
+        .existencia-sucursales-page #lblAvisoPendienteExistencia {
+            font-size: .76rem;
+        }
+
+        .existencia-sucursales-page .existencia-estado-item strong {
+            font-size: .8rem;
+        }
+
         .existencia-filtros-row-top {
             grid-template-columns: repeat(6, minmax(0, 1fr));
         }

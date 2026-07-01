@@ -3039,6 +3039,46 @@
         vertical-align: middle;
     }
 
+    .productos-wrap {
+        font-size: .9rem;
+    }
+
+    .productos-wrap .mb-3 {
+        margin-bottom: .9rem !important;
+    }
+
+    .productos-wrap .mb-2 {
+        margin-bottom: .7rem !important;
+    }
+
+    .productos-wrap .form-control,
+    .productos-wrap .input-group-text {
+        font-size: .87rem;
+    }
+
+    .productos-wrap .custom-control-label,
+    .productos-wrap #contadorProductos,
+    .productos-wrap .text-muted,
+    .productos-wrap small {
+        font-size: .8rem;
+    }
+
+    #panelFiltrosAvanzados .card-body {
+        padding: .72rem .85rem;
+    }
+
+    #panelFiltrosAvanzados label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem !important;
+    }
+
+    #panelFiltrosAvanzados .btn {
+        font-size: .83rem;
+        padding: .32rem .62rem;
+    }
+
     .th-codigo-producto,
     .td-codigo-producto {
         width: 15ch;
@@ -3129,6 +3169,44 @@
             width: 1%;
         }
 
+    .tabla-productos td, .tabla-productos th {
+        font-size: .84rem;
+        line-height: 1.15;
+        padding: .42rem .58rem;
+    }
+
+    .tabla-productos thead th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .tabla-productos .btn {
+        font-size: .78rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .productos-wrap .form-control,
+        .productos-wrap .input-group-text {
+            font-size: .84rem;
+        }
+
+        #panelFiltrosAvanzados .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .tabla-productos td, .tabla-productos th {
+            font-size: .8rem;
+            padding: .38rem .52rem;
+        }
+
+        .tabla-productos thead th {
+            font-size: .68rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
         .tabla-productos td, .tabla-productos th {
             white-space: nowrap;
             padding: 0.45rem;

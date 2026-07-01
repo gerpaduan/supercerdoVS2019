@@ -152,42 +152,134 @@
 </div>
 
 <style>
+    .egresos-page {
+        font-size: .9rem;
+    }
+
+    .egresos-page .mb-2 {
+        margin-bottom: .7rem !important;
+    }
+
     .egresos-filtros-card {
         background: #fff;
         border: 1px solid #e9ecef;
         border-radius: .75rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
+        padding: .72rem .85rem;
+        margin-bottom: .9rem;
     }
 
     .egresos-filtros-stack {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .egresos-filtros-row {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .egresos-filtro-label {
-        font-size: .85rem;
+        font-size: .76rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: .35rem;
+        margin-bottom: .18rem;
     }
 
     .egresos-filtros-card .form-control {
-        min-height: 2.65rem;
+        min-height: 2.35rem;
         border-radius: .55rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
     }
 
     .egresos-filtros-card .btn {
-        min-height: 2.65rem;
+        min-height: 2.35rem;
         border-radius: .55rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .egresos-filtros-card .alert,
+    .egresos-filtros-card .small,
+    .egresos-filtros-card .text-muted,
+    .egresos-filtros-card .btn-buscar-texto,
+    .egresos-page .custom-control-label {
+        font-size: .8rem !important;
+    }
+
+    .egresos-page .egresos-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: .85rem;
+    }
+
+    .egresos-page .egresos-actions .btn {
+        font-size: .84rem;
+        padding: .36rem .7rem;
+    }
+
+    .egresos-page .egresos-resumen {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-bottom: .55rem;
+        font-size: .8rem;
+    }
+
+    .egresos-page .egresos-resumen .text-muted {
+        font-size: .7rem !important;
+        margin-right: .22rem;
+    }
+
+    .egresos-page .egresos-resumen strong {
+        font-size: .92rem;
+        line-height: 1.05;
+    }
+
+    .egresos-page .egresos-tabla-desktop .table {
+        font-size: .84rem;
+    }
+
+    .egresos-page .egresos-tabla-desktop .table th,
+    .egresos-page .egresos-tabla-desktop .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .egresos-page .egresos-tabla-desktop .table thead th,
+    .egresos-page .egresos-tabla-desktop .table > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .egresos-page .egresos-tabla-desktop .btn {
+        font-size: .78rem;
+        padding: .2rem .42rem;
+    }
+
+    .egresos-page .egresos-tabla-desktop .small,
+    .egresos-page .egresos-tabla-desktop .text-muted,
+    .egresos-page .egreso-detalle-collapse .text-muted {
+        font-size: .74rem !important;
+    }
+
+    .egresos-page .egreso-detalle-collapse .p-3 {
+        padding: .7rem .85rem !important;
     }
 
     @@media (min-width: 1200px) {
+        .egresos-page .egresos-actions {
+            margin-bottom: .75rem;
+        }
+
+        .egresos-filtros-card {
+            padding: .65rem .8rem;
+        }
+
         .egresos-filtros-row-principal {
             grid-template-columns: 1fr 1fr;
         }
@@ -200,6 +292,30 @@
         .egresos-filtros-row-busqueda {
             grid-template-columns: 1fr 1.4fr .9fr;
             align-items: end;
+        }
+
+        .egresos-filtros-card .form-control,
+        .egresos-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .egresos-page .egresos-resumen {
+            margin-bottom: .45rem;
+        }
+
+        .egresos-page .egresos-resumen strong {
+            font-size: .86rem;
+        }
+
+        .egresos-page .egresos-tabla-desktop .table {
+            font-size: .8rem;
+        }
+
+        .egresos-page .egresos-tabla-desktop .table thead th,
+        .egresos-page .egresos-tabla-desktop .table > thead > tr > th {
+            font-size: .68rem;
         }
     }
 

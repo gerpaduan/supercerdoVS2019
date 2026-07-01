@@ -6,7 +6,7 @@
     string successMessage = TempData["PersonasSuccessMessage"] as string ?? "";
 }
 
-<div class="container-fluid">
+<div class="container-fluid personas-index-page">
     <style>
         .persona-global {
             opacity: 1;
@@ -15,6 +15,91 @@
         .persona-global td {
             background-color: var(--ui-surface-alt);
             color: var(--ui-text-soft);
+        }
+
+        .personas-index-page .card-body {
+            padding: .85rem 1rem;
+        }
+
+        .personas-index-page .personas-filtros-card .card-body {
+            padding: .72rem .85rem;
+        }
+
+        .personas-index-page .personas-filtro-label {
+            font-size: .76rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: .18rem;
+        }
+
+        .personas-index-page .personas-filtros-card .form-control,
+        .personas-index-page .personas-filtros-card .btn {
+            font-size: .87rem;
+            min-height: 2.35rem;
+            border-radius: .55rem;
+            padding: .32rem .62rem;
+        }
+
+        .personas-index-page .tabla-full .table,
+        .personas-index-page .table-responsive .table {
+            font-size: .84rem;
+        }
+
+        .personas-index-page .tabla-full .table th,
+        .personas-index-page .tabla-full .table td,
+        .personas-index-page .table-responsive .table th,
+        .personas-index-page .table-responsive .table td {
+            padding: .38rem .5rem;
+            vertical-align: middle;
+            line-height: 1.15;
+        }
+
+        .personas-index-page .tabla-full .table thead th,
+        .personas-index-page .tabla-full .table > thead > tr > th,
+        .personas-index-page .table-responsive .table thead th,
+        .personas-index-page .table-responsive .table > thead > tr > th {
+            font-size: .72rem !important;
+            line-height: 1.05;
+            padding-top: .42rem;
+            padding-bottom: .42rem;
+        }
+
+        .personas-index-page .btn-sm {
+            padding: .18rem .42rem;
+            line-height: 1.15;
+        }
+
+        .personas-index-page .persona-id-cell {
+            font-size: .76rem;
+        }
+
+        @@media (min-width: 1200px) {
+            .personas-index-page .mb-3 {
+                margin-bottom: .85rem !important;
+            }
+
+            .personas-index-page .personas-filtros-card .card-body {
+                padding: .65rem .8rem;
+            }
+
+            .personas-index-page .personas-filtros-card .form-control,
+            .personas-index-page .personas-filtros-card .btn {
+                min-height: 2.15rem;
+                font-size: .84rem;
+                padding: .28rem .56rem;
+            }
+
+            .personas-index-page .tabla-full .table,
+            .personas-index-page .table-responsive .table {
+                font-size: .81rem;
+            }
+
+            .personas-index-page .tabla-full .table thead th,
+            .personas-index-page .tabla-full .table > thead > tr > th,
+            .personas-index-page .table-responsive .table thead th,
+            .personas-index-page .table-responsive .table > thead > tr > th {
+                font-size: .69rem !important;
+            }
         }
     </style>
 
@@ -38,12 +123,12 @@
         </a>
     </div>
 
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm mb-3 personas-filtros-card">
         <div class="card-body">
             <form method="get" action="@Url.Action("Index", "Personas")">
                 <div class="form-row align-items-end">
                     <div class="col-12 col-md-7 col-lg-6 mb-2">
-                        <label class="small font-weight-bold text-muted mb-1">Buscar</label>
+                        <label class="personas-filtro-label">Buscar</label>
                         <input type="text"
                                class="form-control"
                                id="txtFiltroPersonas"
@@ -95,7 +180,7 @@
                             foreach (var item in Model.Items)
                             {
                                 <tr class="@(item.IdEmpresa == 0 ? "persona-global" : "")">
-                                    <td>@item.IdPersona</td>
+                                    <td class="persona-id-cell">@item.IdPersona</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Identificacion) ? item.Identificacion : "-")</td>
                                     <td class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.RazonSocial) ? item.RazonSocial : "-")</td>
                                     <td>@(!string.IsNullOrWhiteSpace(item.Iva) ? item.Iva : "-")</td>
@@ -163,7 +248,7 @@
             items.forEach(function (item) {
                 var esGlobal = Number(item.idEmpresa || 0) === 0;
                 html += '<tr' + (esGlobal ? ' class="persona-global"' : '') + ">";
-                html += "<td>" + escapeHtml(item.idPersona) + "</td>";
+                html += '<td class="persona-id-cell">' + escapeHtml(item.idPersona) + "</td>";
                 html += valorCelda(item.identificacion, false);
                 html += valorCelda(item.razonSocial, true);
                 html += valorCelda(item.iva, false);

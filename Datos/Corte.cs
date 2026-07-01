@@ -1088,14 +1088,31 @@ namespace Datos
 
             return Db.Reader(
                 _empresa,
-                "SELECT * FROM CortePorEmbutido WHERE idEmbutido = @idEmbutido",
+                @"SELECT
+                    cpe.idCorteEmbutido,
+                    cpe.idEmbutido,
+                    cpe.idCorte,
+                    cpe.kgUtilizados,
+                    cpe.pesoBalanza,
+                    c.codigo,
+                    c.corte,
+                    c.tipo
+                  FROM CortePorEmbutido cpe
+                  INNER JOIN Corte c ON c.idCorte = cpe.idCorte
+                  WHERE cpe.idEmbutido = @idEmbutido",
                 CommandType.Text,
                 dr =>
                 {
                     Entidades.CortePorEmbutido item = new Entidades.CortePorEmbutido();
                     item.IdCorteEmbutido = Convert.ToInt32(dr["idCorteEmbutido"]);
                     item.Embutido = oEmbutidoParam;
-                    item.Corte = findCorteById(Convert.ToInt32(dr["idCorte"]), false);
+                    item.Corte = new Entidades.Corte
+                    {
+                        IdCorte = Convert.ToInt32(dr["idCorte"]),
+                        Codigo = dr["codigo"] == DBNull.Value ? 0L : Convert.ToInt64(dr["codigo"]),
+                        CorteDesc = dr["corte"] == DBNull.Value ? "" : Convert.ToString(dr["corte"]),
+                        Tipo = dr["tipo"] == DBNull.Value ? "" : Convert.ToString(dr["tipo"])
+                    };
                     item.KgUtilizado = float.Parse(dr["kgUtilizados"].ToString());
                     item.PesoBalanza = Convert.ToBoolean(dr["pesoBalanza"]);
                     return item;

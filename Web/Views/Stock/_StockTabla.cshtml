@@ -9,6 +9,39 @@
     int totalColumnas = 8;
 }
 
+@functions {
+    public static string TruncarProveedor(string valor, int maximo)
+    {
+        if (string.IsNullOrWhiteSpace(valor)) return "";
+        var limpio = valor.Trim();
+        return limpio.Length <= maximo ? limpio : limpio.Substring(0, maximo);
+    }
+
+    public static string LeerTexto(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return "";
+
+        return Convert.ToString(row[columna]);
+    }
+
+    public static int? LeerEnteroNullable(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return null;
+
+        return Convert.ToInt32(row[columna]);
+    }
+
+    public static float? LeerFloatNullable(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return null;
+
+        return Convert.ToSingle(row[columna]);
+    }
+}
+
 <div class="table-responsive tabla-full">
     <table class="table table-bordered table-hover mb-0">
         <thead class="thead-light">
@@ -40,14 +73,55 @@
                     string estado = row.Table.Columns.Contains("estado") && row["estado"] != DBNull.Value ? row["estado"].ToString() : "";
                     string detailId = "detStock_" + idCompra;
                     Web.Models.CompraIndexDetalleVm detalle = detalles.ContainsKey(idCompra) ? detalles[idCompra] : null;
+                    string resumenPesaje = "";
+                    string tipoCompraFila = LeerTexto(row, "tipoCompra");
+                    bool esPesajeFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Pesaje", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool esAjusteFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Ajuste", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if ((detalle != null && detalle.EsPesaje) || esPesajeFila)
+                    {
+                        string proveedorOrigen = detalle != null && !string.IsNullOrWhiteSpace(detalle.ProveedorCompraVinculada)
+                            ? detalle.ProveedorCompraVinculada
+                            : LeerTexto(row, "razonSocial");
+                        float? kgsOrigen = detalle != null && detalle.KgsCompraVinculada.HasValue
+                            ? detalle.KgsCompraVinculada
+                            : (LeerFloatNullable(row, "kgsMedias") ?? (cantKg > 0 ? (float?)cantKg : null));
+                        int? mediasOrigen = detalle != null && detalle.CantMediasCompraVinculada.HasValue
+                            ? detalle.CantMediasCompraVinculada
+                            : (LeerEnteroNullable(row, "cantMedias") ?? (detalle != null && detalle.CantidadMedias > 0 ? (int?)detalle.CantidadMedias : null));
+                        string proveedorPesaje = TruncarProveedor(proveedorOrigen, 8);
+                        string kgsPesaje = kgsOrigen.HasValue ? kgsOrigen.Value.ToString("N0") + " kgs" : "";
+                        string mediasPesaje = mediasOrigen.HasValue ? mediasOrigen.Value.ToString() + " Medias Reses" : "";
+                        var partesPesaje = new List<string>();
+
+                        if (!string.IsNullOrWhiteSpace(proveedorPesaje))
+                        {
+                            partesPesaje.Add(proveedorPesaje);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(kgsPesaje))
+                        {
+                            partesPesaje.Add(kgsPesaje);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(mediasPesaje))
+                        {
+                            partesPesaje.Add(mediasPesaje);
+                        }
+
+                        resumenPesaje = string.Join(" | ", partesPesaje);
+                    }
 
                     <tr>
-                        <td class="font-weight-bold">@idCompra</td>
+                        <td class="stock-id-cell font-weight-bold">@idCompra</td>
                         <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
                         <td>@row["sucursal"]</td>
                         <td>
-                            
-                            <div>@row["tipoCompra"]</div>
+                            <div class="stock-accion-titulo">@row["tipoCompra"]</div>
+                            @if (!string.IsNullOrWhiteSpace(resumenPesaje))
+                            {
+                                <div class="stock-accion-resumen" title="@resumenPesaje">@resumenPesaje</div>
+                            }
                             @if (detalle != null)
                             {
                                 if (detalle.EsPesaje && detalle.IdCompraVinculada.HasValue)
@@ -63,7 +137,7 @@
                                         <span class="badge badge-pill badge-success">Aj. #@detalle.IdAjusteRelacionado.Value</span>
                                     </div>
                                 }
-                                else if (detalle.EsAjuste && detalle.IdPesajeRelacionado.HasValue)
+                                else if (((detalle.EsAjuste || esAjusteFila) && detalle.IdPesajeRelacionado.HasValue))
                                 {
                                     <div class="mt-1">
                                         <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
@@ -123,6 +197,25 @@
 <style>
     .stock-detalle-body {
         font-size: 0.83rem;
+    }
+
+    .stock-accion-resumen {
+        font-size: .72rem;
+        line-height: 1.15;
+        color: #6c757d;
+        margin-top: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+    }
+
+    .stock-id-cell {
+        font-size: .76rem;
+    }
+
+    .stock-accion-titulo {
+        font-weight: 700;
     }
 
     .stock-relacionado-box {

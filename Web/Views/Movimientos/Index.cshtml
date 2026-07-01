@@ -167,33 +167,41 @@
     .movimientos-filtros-card {
         border: 1px solid #e9ecef;
         border-radius: .75rem;
+        font-size: .9rem;
+    }
+
+    .movimientos-index-page .card-body,
+    .container-fluid[data-movimientos-index] .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .movimientos-filtros-card .card-body {
+        padding: .72rem .85rem;
     }
 
     .movimientos-filtros-stack {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .movimientos-filtros-row {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .movimientos-filtro-label {
-        font-size: .85rem;
+        font-size: .76rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: .35rem;
+        margin-bottom: .18rem;
     }
 
-    .movimientos-filtros-card .form-control {
-        min-height: 2.65rem;
-        border-radius: .55rem;
-    }
-
+    .movimientos-filtros-card .form-control,
     .movimientos-filtros-card .btn {
+        font-size: .87rem;
         min-height: 2.65rem;
         border-radius: .55rem;
+        padding: .32rem .62rem;
     }
 
     .movimientos-acciones-header {
@@ -204,13 +212,53 @@
         width: 100%;
     }
 
+    .movimientos-filtros-card .alert,
+    .movimientos-filtros-card .small,
+    .movimientos-filtros-card .text-muted,
+    .movimientos-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .container-fluid[data-movimientos-index] .table {
+        font-size: .84rem;
+    }
+
+    .container-fluid[data-movimientos-index] .table th,
+    .container-fluid[data-movimientos-index] .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .container-fluid[data-movimientos-index] .table thead th,
+    .container-fluid[data-movimientos-index] .table > thead > tr > th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    .container-fluid[data-movimientos-index] .btn-group-sm > .btn,
+    .container-fluid[data-movimientos-index] .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.15;
+    }
+
     @@media (min-width: 1200px) {
+        .container-fluid[data-movimientos-index] .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
         .movimientos-acciones-header {
             justify-content: flex-end;
         }
 
         .movimientos-btn-nuevo {
             width: auto;
+        }
+
+        .movimientos-filtros-card .card-body {
+            padding: .65rem .8rem;
         }
 
         .movimientos-filtros-row-sucursales {
@@ -220,6 +268,22 @@
         .movimientos-filtros-row-fechas {
             grid-template-columns: 1fr 1fr 1fr 140px;
             align-items: end;
+        }
+
+        .movimientos-filtros-card .form-control,
+        .movimientos-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .container-fluid[data-movimientos-index] .table {
+            font-size: .81rem;
+        }
+
+        .container-fluid[data-movimientos-index] .table thead th,
+        .container-fluid[data-movimientos-index] .table > thead > tr > th {
+            font-size: .69rem !important;
         }
     }
 

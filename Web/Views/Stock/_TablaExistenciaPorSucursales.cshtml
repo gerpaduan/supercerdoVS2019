@@ -37,6 +37,7 @@ else
         .tabla-existencia-sucursales {
             table-layout: auto;
             min-width: max-content;
+            font-size: .84rem;
         }
 
         .tabla-full {
@@ -46,6 +47,8 @@ else
         .tabla-existencia-sucursales th,
         .tabla-existencia-sucursales td {
             vertical-align: top;
+            padding: .42rem .58rem;
+            line-height: 1.15;
         }
 
         .existencia-col-toggle,
@@ -66,6 +69,18 @@ else
         .tabla-existencia-sucursales thead .existencia-col-producto {
             z-index: 5;
             background: #f8f9fc;
+        }
+
+        .tabla-existencia-sucursales thead th,
+        .tabla-existencia-sucursales > thead > tr > th,
+        .tabla-existencia-sucursales .thead-light th {
+            font-size: .73rem !important;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+            padding-top: .38rem;
+            padding-bottom: .38rem;
+            line-height: 1.1;
         }
 
         .tabla-existencia-sucursales th.text-right.text-nowrap,
@@ -97,12 +112,12 @@ else
         .existencia-producto-codigo {
             display: block;
             margin-top: .2rem;
-            font-size: .78rem;
+            font-size: .72rem;
             color: #858796;
         }
 
         .existencia-producto-completo {
-            font-size: .85rem;
+            font-size: .78rem;
             color: #6c757d;
             margin-bottom: .75rem;
         }
@@ -125,7 +140,7 @@ else
         .existencia-detalle-tabla {
             width: max-content;
             min-width: 100%;
-            font-size: calc(1rem - 3pt);
+            font-size: .79rem;
         }
 
         .existencia-detalle-tabla th,
@@ -134,8 +149,10 @@ else
         }
 
         .existencia-detalle-tabla thead th {
-            font-size: 0.64rem !important;
+            font-size: .67rem !important;
             line-height: 1.1;
+            padding-top: .32rem;
+            padding-bottom: .32rem;
         }
 
         .existencia-detalle-destacado {
@@ -174,6 +191,28 @@ else
         html.dark-mode .existencia-detalle-stockactual {
             background: #35506f;
             color: #ffffff;
+        }
+
+        @@media (min-width: 1200px) {
+            .tabla-existencia-sucursales {
+                font-size: .8rem;
+            }
+
+            .tabla-existencia-sucursales thead th,
+            .tabla-existencia-sucursales > thead > tr > th,
+            .tabla-existencia-sucursales .thead-light th {
+                font-size: .68rem !important;
+                padding-top: .34rem;
+                padding-bottom: .34rem;
+            }
+
+            .existencia-detalle-tabla {
+                font-size: .75rem;
+            }
+
+            .existencia-detalle-tabla thead th {
+                font-size: .63rem !important;
+            }
         }
 
         @@media (max-width: 767.98px) {

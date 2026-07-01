@@ -12,7 +12,7 @@
         .ToList();
 }
 
-<div class="container-fluid">
+<div class="container-fluid parametros-index-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h1 class="h3 mb-1 text-gray-800">Parámetros de la empresa</h1>
@@ -125,6 +125,79 @@
         </div>
     </div>
 </div>
+
+<style>
+    .parametros-index-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .parametros-index-page .alert,
+    .parametros-index-page .text-muted,
+    .parametros-index-page .form-text,
+    .parametros-index-page small {
+        font-size: .8rem;
+    }
+
+    .parametros-index-page .form-control {
+        font-size: .87rem;
+        min-height: 2.3rem;
+        padding: .32rem .58rem;
+    }
+
+    .parametros-index-page .table {
+        font-size: .84rem;
+    }
+
+    .parametros-index-page .table th,
+    .parametros-index-page .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .parametros-index-page .table thead th,
+    .parametros-index-page .table > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .parametros-index-page .badge,
+    .parametros-index-page .custom-control-label {
+        font-size: .76rem;
+    }
+
+    .parametros-index-page .btn {
+        font-size: .83rem;
+        padding: .34rem .65rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .parametros-index-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .parametros-index-page .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .parametros-index-page .form-control {
+            font-size: .84rem;
+            min-height: 2.15rem;
+            padding: .28rem .54rem;
+        }
+
+        .parametros-index-page .table {
+            font-size: .8rem;
+        }
+
+        .parametros-index-page .table thead th,
+        .parametros-index-page .table > thead > tr > th {
+            font-size: .68rem;
+        }
+    }
+</style>
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>

@@ -12,7 +12,7 @@
     string filtroDesde = ViewBag.FiltroDesde ?? "";
 }
 
-<div class="container-fluid">
+<div class="container-fluid cheques-page">
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="d-flex align-items-center flex-wrap cheques-acciones-header">
@@ -30,21 +30,114 @@
 @Html.Partial("_ModalAltaCheque")
 
 <style>
+    .cheques-page {
+        font-size: .9rem;
+    }
+
+    .cheques-page .card-body {
+        padding: .82rem 1rem;
+    }
+
     .cheques-acciones-header {
         justify-content: flex-start;
     }
 
     .cheques-btn-nuevo {
         width: 100%;
+        font-size: .84rem;
+        padding: .36rem .7rem;
+    }
+
+    .cheques-page .cheques-filtros-card {
+        margin-bottom: .85rem !important;
+    }
+
+    .cheques-page .cheques-filtros-stack,
+    .cheques-page .cheques-filtros-row {
+        gap: .65rem;
+    }
+
+    .cheques-page .cheques-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        margin-bottom: .18rem;
+    }
+
+    .cheques-page .cheques-filtros-card .form-control,
+    .cheques-page .cheques-filtros-card .btn {
+        min-height: 2.35rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .cheques-page #tablaBusquedaCheques {
+        font-size: .84rem;
+    }
+
+    .cheques-page #tablaBusquedaCheques td,
+    .cheques-page #tablaBusquedaCheques th {
+        white-space: nowrap;
+        vertical-align: middle;
+        padding: .42rem .58rem;
+        line-height: 1.15;
+    }
+
+    .cheques-page #tablaBusquedaCheques thead th,
+    .cheques-page #tablaBusquedaCheques > thead > tr > th,
+    .cheques-page #tablaBusquedaCheques .thead-light th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    .cheques-page #tablaBusquedaCheques .btn {
+        font-size: .78rem;
+        padding: .2rem .42rem;
+    }
+
+    .cheques-page .badge {
+        font-size: .72rem;
+    }
+
+    .cheques-page .text-muted,
+    .cheques-page .small {
+        font-size: .78rem;
     }
 
     @@media (min-width: 1200px) {
+        .cheques-page .card-body {
+            padding: .7rem .85rem;
+        }
+
         .cheques-acciones-header {
             justify-content: flex-end;
         }
 
         .cheques-btn-nuevo {
             width: auto;
+        }
+
+        .cheques-page .cheques-filtros-card .form-control,
+        .cheques-page .cheques-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .cheques-page #tablaBusquedaCheques {
+            font-size: .8rem;
+        }
+
+        .cheques-page #tablaBusquedaCheques thead th,
+        .cheques-page #tablaBusquedaCheques > thead > tr > th,
+        .cheques-page #tablaBusquedaCheques .thead-light th {
+            font-size: .68rem;
+            padding-top: .34rem;
+            padding-bottom: .34rem;
         }
     }
 </style>
@@ -500,12 +593,6 @@ else
             })(window);
         </script>
         <style>
-            #tablaBusquedaCheques td,
-            #tablaBusquedaCheques th {
-                white-space: nowrap;
-                vertical-align: middle;
-            }
-
             .tr-detalles-cheque td {
                 white-space: normal !important;
             }

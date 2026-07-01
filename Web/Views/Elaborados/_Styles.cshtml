@@ -5,6 +5,10 @@
         border-radius: .75rem;
     }
 
+    .elaborados-page .card-body {
+        padding: .85rem 1rem;
+    }
+
     .elaborados-tabs-nav {
         display: flex;
         flex-wrap: wrap;
@@ -23,22 +27,32 @@
         color: #fff;
     }
 
+    .elaborados-filtros-card {
+        font-size: .9rem;
+    }
+
+    .elaborados-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
     .elaborados-filtros-grid {
         display: grid;
-        gap: .85rem;
+        gap: .65rem;
     }
 
     .elaborados-filtro-label {
-        font-size: .85rem;
+        font-size: .76rem;
         font-weight: 600;
         color: #495057;
-        margin-bottom: .35rem;
+        margin-bottom: .18rem;
     }
 
     .elaborados-filtros-card .form-control,
     .elaborados-filtros-card .btn {
+        font-size: .87rem;
         min-height: 2.65rem;
         border-radius: .55rem;
+        padding: .32rem .62rem;
     }
 
     .elaborados-filtros-card .custom-switch {
@@ -50,7 +64,37 @@
         color: #495057;
     }
 
+    .elaborados-filtros-card .alert,
+    .elaborados-filtros-card .small,
+    .elaborados-filtros-card .text-muted,
+    .elaborados-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .elaborados-total-card .card-body {
+        padding: .6rem .8rem;
+    }
+
+    .elaborados-total-label {
+        font-size: .68rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .elaborados-total-value {
+        font-size: 1rem;
+        line-height: 1.05;
+    }
+
     @@media (min-width: 1200px) {
+        .elaborados-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .elaborados-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
         .elaborados-filtros-grid {
             grid-template-columns: 1fr 1.2fr 1fr 1fr 140px;
             align-items: end;
@@ -63,6 +107,17 @@
         .elaborados-filtros-grid-rapido {
             grid-template-columns: 1.3fr .9fr;
             align-items: end;
+        }
+
+        .elaborados-filtros-card .form-control,
+        .elaborados-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .elaborados-total-card .card-body {
+            padding: .5rem .72rem;
         }
     }
 

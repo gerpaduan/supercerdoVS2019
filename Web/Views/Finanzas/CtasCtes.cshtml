@@ -10,7 +10,7 @@
     string buscar = ViewBag.Buscar ?? "";
     string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";
 }
-<div class="container-fluid">
+<div class="container-fluid ctactes-index-page">
 
     <!-- PANEL SUPERIOR DE BÚSQUEDA -->
     <div class="card shadow mb-4">
@@ -357,6 +357,56 @@
 </script>
 
 <style>
+    .ctactes-index-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .ctactes-index-page .card.mb-4 {
+        margin-bottom: .9rem !important;
+    }
+
+    .ctactes-index-page .form-control,
+    .ctactes-index-page .input-group-text {
+        font-size: .87rem;
+    }
+
+    .ctactes-index-page #tablaCtasCtes {
+        font-size: .84rem;
+    }
+
+    .ctactes-index-page #tablaCtasCtes th,
+    .ctactes-index-page #tablaCtasCtes td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .ctactes-index-page #tablaCtasCtes thead th,
+    .ctactes-index-page #tablaCtasCtes > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    .ctactes-index-page #tablaCtasCtes thead.thead-dark th,
+    .ctactes-index-page #tablaCtasCtes .thead-dark th {
+        font-size: .73rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    .ctactes-index-page #tablaCtasCtes .btn {
+        font-size: .74rem;
+        padding: .18rem .44rem;
+    }
 
     /* Siempre permitir que el input crezca */
     #txtBuscar {
@@ -367,6 +417,33 @@
 
     #tbodyCtas tr.is-selected {
         background: rgba(13, 110, 253, 0.12);
+    }
+
+    @@media (min-width: 1200px) {
+        .ctactes-index-page .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .ctactes-index-page .form-control,
+        .ctactes-index-page .input-group-text {
+            font-size: .84rem;
+        }
+
+        .ctactes-index-page #tablaCtasCtes {
+            font-size: .8rem;
+        }
+
+        .ctactes-index-page #tablaCtasCtes thead th,
+        .ctactes-index-page #tablaCtasCtes > thead > tr > th {
+            font-size: .68rem;
+        }
+
+        .ctactes-index-page #tablaCtasCtes thead.thead-dark th,
+        .ctactes-index-page #tablaCtasCtes .thead-dark th {
+            font-size: .68rem !important;
+            padding-top: .34rem;
+            padding-bottom: .34rem;
+        }
     }
 
     /* ----- PANTALLAS GRANDES ----- */
