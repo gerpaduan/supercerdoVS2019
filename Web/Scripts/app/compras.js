@@ -603,6 +603,7 @@
     }
 
     function mostrarProveedorModal($form) {
+        window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
         $('#modalBuscarPersona').modal('show');
         $('#filtroPersona').val('');
         cargarProveedores($form, '');
@@ -617,6 +618,7 @@
 
         if (state.loadingPersonaModal) return;
         state.loadingPersonaModal = true;
+        window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
 
         $.get(state.config.urls.personaBuscarModal)
             .done(function (html) {
@@ -624,6 +626,7 @@
                 mostrarProveedorModal($form);
             })
             .fail(function () {
+                window.ModalRequestLoading && window.ModalRequestLoading.hide();
                 alert('No se pudo cargar el buscador de proveedores.');
             })
             .always(function () {
@@ -674,6 +677,7 @@
             return;
         }
 
+        window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
         $modal.modal('show');
         $modal.find('.js-buscar-producto-input').val('');
         cargarProductosModal($form, '');
@@ -1175,6 +1179,16 @@
                     e.preventDefault();
                     e.stopPropagation();
                     abrirProductoModal($form);
+                    return;
+                }
+
+                if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && String(e.key || '').toLowerCase() === 'c') {
+                    var $cancel = $form.find('#btnCancelarCompra');
+                    if (!$cancel.length || !$cancel.is(':visible')) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                    $cancel[0].click();
                 }
             });
     }

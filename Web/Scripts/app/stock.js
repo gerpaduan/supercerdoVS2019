@@ -1942,6 +1942,7 @@
     }
 
     function mostrarProveedorModal($form) {
+        window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
         $('#modalBuscarPersona').modal('show');
         $('#filtroPersona').val('');
         cargarProveedores($form, '');
@@ -1959,6 +1960,7 @@
 
         if (state.loadingPersonaModal) return;
         state.loadingPersonaModal = true;
+        window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
 
         $.get(state.config.urls.personaBuscarModal)
             .done(function (html) {
@@ -1966,6 +1968,7 @@
                 mostrarProveedorModal($form);
             })
             .fail(function () {
+                window.ModalRequestLoading && window.ModalRequestLoading.hide();
                 showWarning($form, 'No se pudo cargar el buscador de proveedores.');
             })
             .always(function () {
@@ -2103,6 +2106,7 @@
 
         $form.on('click.stock', '#btnBuscarProducto', function () {
             loadProductsModal($form, '');
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $(state.config.modalProductoSelector).modal('show');
         });
 
@@ -2122,18 +2126,21 @@
 
         $form.on('click.stock', '#btnVerAcumulados', function () {
             renderAcumulados($form);
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $('#modalAcumuladosStock').modal('show');
         });
 
         $form.on('click.stock', '#btnSeleccionarCompraPesaje', function () {
             resetFiltrosComprasPesaje();
             cargarComprasPesaje($form);
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $modalComprasPesaje.modal('show');
         });
 
         $form.on('click.stock', '#btnVincularPesajes', function () {
             resetFiltrosPesajesVinculables();
             cargarPesajesVinculables($form);
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $modalVincularPesajes.modal('show');
         });
 
@@ -2149,11 +2156,13 @@
 
             clearPorcentajeWarning();
             loadPorcentajesPesaje($form);
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $modalPorcentajes.modal('show');
         });
 
         $form.on('click.stock', '#btnProductosNoCargados', function () {
             cargarProductosNoCargados($form);
+            window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
             $('#modalProductosNoCargadosStock').modal('show');
         });
 

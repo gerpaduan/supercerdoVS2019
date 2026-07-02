@@ -378,7 +378,11 @@ namespace Web.Controllers
         {
             try
             {
-                var productos = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+                int idEmpresaSesion = ObtenerIdEmpresaSesionActual();
+                if (idEmpresaSesion <= 0)
+                    return Json(new List<object>(), JsonRequestBehavior.AllowGet);
+
+                var productos = oCorteN.ObtenerCortesPorEmpresa(idEmpresaSesion, false) ?? new List<Entidades.Corte>();
                 if (!string.IsNullOrWhiteSpace(q))
                 {
                     string filtro = q.Trim();
@@ -404,7 +408,11 @@ namespace Web.Controllers
             if (!codigo.HasValue || codigo.Value <= 0)
                 return Json(new { ok = false, mensaje = "Codigo invalido." }, JsonRequestBehavior.AllowGet);
 
-            var corte = oCorteN.findCorteByCodigo(codigo.Value, false);
+            int idEmpresaSesion = ObtenerIdEmpresaSesionActual();
+            if (idEmpresaSesion <= 0)
+                return Json(new { ok = false, mensaje = "No se encontro el producto." }, JsonRequestBehavior.AllowGet);
+
+            var corte = oCorteN.findCorteByCodigoEmpresa(codigo.Value, idEmpresaSesion, false);
             if (corte == null || corte.IdCorte <= 0)
                 return Json(new { ok = false, mensaje = "No se encontro el producto." }, JsonRequestBehavior.AllowGet);
 
@@ -505,7 +513,10 @@ namespace Web.Controllers
             try
             {
                 var embutido = oCorteN.findCorteById(model.IdElaborado, false);
-                if (embutido == null || embutido.IdCorte <= 0)
+                int idEmpresaSesion = (Session["Usuario"] as Usuario) != null
+                    ? ((Session["Usuario"] as Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                if (embutido == null || embutido.IdCorte <= 0 || (idEmpresaSesion > 0 && embutido.IdEmpresa != idEmpresaSesion))
                 {
                     ModelState.AddModelError("", "No se encontró el elaborado seleccionado.");
                     model.Tabs = BuildTabs("Formulas");
@@ -541,7 +552,7 @@ namespace Web.Controllers
                 foreach (var linea in model.Lineas ?? new List<ElaboradoFormulaEditLineaVm>())
                 {
                     var corte = oCorteN.findCorteById(linea.IdCorte, false);
-                    if (corte == null || corte.IdCorte <= 0)
+                    if (corte == null || corte.IdCorte <= 0 || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
                     {
                         ModelState.AddModelError("", "No se encontró el ingrediente " + (linea.Producto ?? "") + ".");
                         model.Tabs = BuildTabs("Formulas");
@@ -641,7 +652,10 @@ namespace Web.Controllers
                     return Json(new { ok = false, mensaje = "No tiene permisos para guardar este movimiento." });
 
                 var elaborado = oCorteN.findCorteById(model.IdElaborado, false);
-                if (elaborado == null || elaborado.IdCorte <= 0)
+                int idEmpresaSesion = (Session["Usuario"] as Usuario) != null
+                    ? ((Session["Usuario"] as Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                if (elaborado == null || elaborado.IdCorte <= 0 || (idEmpresaSesion > 0 && elaborado.IdEmpresa != idEmpresaSesion))
                     return Json(new { ok = false, mensaje = "No se encontró el elaborado seleccionado." });
 
                 if (!elaborado.IngresoRapidoEmbutido)
@@ -737,7 +751,10 @@ namespace Web.Controllers
                     return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
 
                 var corteElaborado = oCorteN.findCorteById(model.IdElaborado, false);
-                if (corteElaborado == null || corteElaborado.IdCorte <= 0)
+                int idEmpresaSesion = (Session["Usuario"] as Usuario) != null
+                    ? ((Session["Usuario"] as Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                if (corteElaborado == null || corteElaborado.IdCorte <= 0 || (idEmpresaSesion > 0 && corteElaborado.IdEmpresa != idEmpresaSesion))
                     return Json(new { ok = false, mensaje = "El elaborado seleccionado no es valido." });
 
                 if (embutidoOriginal != null)
@@ -899,6 +916,11 @@ namespace Web.Controllers
                     continue;
 
                 var corte = oCorteN.findCorteById(idCorte, false);
+                int idEmpresaSesion = (Session["Usuario"] as Usuario) != null
+                    ? ((Session["Usuario"] as Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                if (corte == null || corte.IdCorte <= 0 || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
+                    continue;
                 var item = CrearItemIngresoRapido(corte);
                 if (item == null)
                     continue;
@@ -907,7 +929,12 @@ namespace Web.Controllers
                 items.Add(item);
             }
 
-            foreach (var corte in oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+            int idEmpresaSesionListado = (Session["Usuario"] as Usuario) != null
+                ? ((Session["Usuario"] as Usuario).IdEmpresa)
+                : (empresa != null ? empresa.IdEmpresa : 0);
+            foreach (var corte in (idEmpresaSesionListado > 0
+                ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaSesionListado, false) ?? new List<Entidades.Corte>())
+                : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())))
             {
                 if (corte == null || corte.IdCorte <= 0 || ids.Contains(corte.IdCorte))
                     continue;
@@ -1349,7 +1376,10 @@ namespace Web.Controllers
             }
 
             var elaborado = oCorteN.findCorteById(model.IdElaborado, false);
-            if (elaborado == null || elaborado.IdCorte <= 0)
+            int idEmpresaSesion = (Session["Usuario"] as Usuario) != null
+                ? ((Session["Usuario"] as Usuario).IdEmpresa)
+                : (empresa != null ? empresa.IdEmpresa : 0);
+            if (elaborado == null || elaborado.IdCorte <= 0 || (idEmpresaSesion > 0 && elaborado.IdEmpresa != idEmpresaSesion))
                 return;
 
             model.CodigoElaborado = elaborado.Codigo;
@@ -1652,6 +1682,23 @@ namespace Web.Controllers
         private static DateTime NormalizarFechaDesde(DateTime fecha)
         {
             return fecha.Date;
+        }
+
+        private int ObtenerIdEmpresaSesionActual()
+        {
+            object idEmpresaSesion = Session["IdEmpresa"];
+            if (idEmpresaSesion != null)
+            {
+                int idEmpresa;
+                if (int.TryParse(idEmpresaSesion.ToString(), out idEmpresa))
+                    return idEmpresa;
+            }
+
+            var usuario = Session["Usuario"] as Usuario;
+            if (usuario != null && usuario.IdEmpresa > 0)
+                return usuario.IdEmpresa;
+
+            return empresa != null ? empresa.IdEmpresa : 0;
         }
 
         private static DateTime NormalizarFechaHasta(DateTime fecha)

@@ -11,9 +11,60 @@
 }
 
 <style>
-    /* Igualar alto inputs y combos (por si tu bootstrap no los iguala) */
-    .form-control, .form-select, select.form-control {
-        min-height: 38px;
+    .producto-edit-page {
+        font-size: .9rem;
+    }
+
+    .producto-edit-page .form-control,
+    .producto-edit-page .form-select,
+    .producto-edit-page select.form-control {
+        min-height: 2.6rem;
+        font-size: .87rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .producto-edit-page .btn:not(.btn-sm) {
+        min-height: 2.6rem;
+        font-size: .87rem;
+        border-radius: .55rem;
+        padding: .32rem .7rem;
+    }
+
+    .producto-edit-page .form-label,
+    .producto-edit-page .form-check-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .32rem;
+    }
+
+    .producto-edit-page .small,
+    .producto-edit-page small,
+    .producto-edit-page .text-muted {
+        font-size: .74rem;
+        line-height: 1.15;
+    }
+
+    .producto-edit-page .alert {
+        font-size: .82rem;
+    }
+
+    .producto-edit-page .input-group > .btn,
+    .producto-edit-page .input-group > .form-control {
+        min-height: 2.6rem;
+    }
+
+    .producto-edit-card {
+        padding: .9rem 1rem !important;
+        border-radius: .75rem;
+    }
+
+    .producto-edit-section-title {
+        font-size: .82rem;
+        line-height: 1.05;
+        letter-spacing: .03em;
+        margin-bottom: .8rem !important;
     }
 
     html:not(.dark-mode) body .form-switch {
@@ -52,6 +103,15 @@
         box-shadow: 0 0 0 0.16rem rgba(78, 115, 223, 0.2);
     }
 
+    html:not(.dark-mode) body .producto-focus-switch .form-check-input:focus {
+        box-shadow: 0 0 0 0.24rem rgba(78, 115, 223, 0.34), inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+    }
+
+    .producto-focus-switch:focus-within .form-check-label {
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
     html:not(.dark-mode) body .form-switch .form-check-input:disabled {
         cursor: default;
         opacity: 1;
@@ -67,12 +127,33 @@
     }
 
     .atajos-acciones {
-        font-size: 0.78rem;
+        font-size: 0.74rem;
         line-height: 1.35;
+    }
+
+    .producto-edit-page .row.g-3 {
+        row-gap: .8rem !important;
+    }
+
+    .producto-edit-page .form-check.form-switch {
+        margin-bottom: .55rem !important;
+    }
+
+    .producto-edit-page .btn-guardar-destacado,
+    .producto-edit-page #btnHabilitarEdicionProducto,
+    .producto-edit-page #btnVolverProducto,
+    .producto-edit-page #btnSiguienteProducto {
+        font-size: .84rem;
+    }
+
+    @@media (min-width: 992px) {
+        .producto-edit-card {
+            padding: .85rem .95rem !important;
+        }
     }
 </style>
 
-<div class="container-fluid px-2 px-md-3">
+<div class="container-fluid px-2 px-md-3 producto-edit-page">
 
     <div class="row">
         <div class="col-12 col-lg-7">
@@ -111,12 +192,12 @@
                 <!-- =========================
                  1) DATOS PRINCIPALES
                  ========================= -->
-                <div class="p-3 rounded bg-light border mb-3">
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h5 class="mb-0">Datos del producto</h5>
+                        <h5 class="mb-0 producto-edit-section-title">Datos del producto</h5>
                         <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
                             <span class="text-muted @(esEdicion ? "" : "d-none")">ID: <b>@Model.IdCorte</b></span>
-                            <div class="form-check form-switch mb-0 text-end">
+                            <div class="form-check form-switch mb-0 text-end producto-focus-switch">
                                 @Html.CheckBoxFor(m => m.CargaContinua, new { @class = "form-check-input", id = "swCargaContinua", data_edit_readonly_ignore = "true" })
                                 <label class="form-check-label fw-semibold" for="swCargaContinua">Carga continua</label>
                             </div>
@@ -197,10 +278,11 @@
                             <label class="form-label">Marca (opcional)</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="txtMarcaNombre"
-                                       value="@(Model?.MarcaNombre ?? "")" readonly placeholder="Sin marca" />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca"><i class="fas fa-search"></i></button>
+                                       value="@(Model?.MarcaNombre ?? "")" readonly placeholder="Sin marca" tabindex="-1" />
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca" tabindex="-1"><i class="fas fa-search"></i></button>
                                 <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca"><i class="fas fa-times"></i></button>
                             </div>
+                            <small class="text-muted d-block mt-1">Presione F9 para abrir marcas.</small>
                         </div>
                     </div>
                 </div>
@@ -208,29 +290,29 @@
                 <!-- =========================
                  2) STOCK Y ESTADO (debajo)
                  ========================= -->
-                <div class="p-3 rounded bg-light border mb-3">
-                    <h5 class="mb-3">Stock y estado</h5>
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
+                    <h5 class="mb-3 producto-edit-section-title">Stock y estado</h5>
 
                     <div class="row g-3">
 
 
                         <div class="col-12">
-                            <div class="form-check form-switch mb-2">
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
                                 @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "swPesable" })
                                 <label class="form-check-label" for="swPesable">Pesable</label>
                             </div>
 
-                            <div class="form-check form-switch mb-2">
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
                                 @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input", id = "swHabilitado" })
                                 <label class="form-check-label" for="swHabilitado">Habilitado</label>
                             </div>
 
-                            <div class="form-check form-switch mb-2">
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
                                 @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
                                 <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
                             </div>
 
-                            <div class="form-check form-switch mb-2">
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
                                 @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
                                 <label class="form-check-label" for="swCierre">En cierre stock</label>
                             </div>
@@ -265,8 +347,8 @@
                 <!-- =========================
                  3) CORTE MAESTRO / PRESENTACIÓN (debajo)
                  ========================= -->
-                <div class="p-3 rounded bg-light border mb-3">
-                    <h5 class="mb-3">Corte maestro / Presentación</h5>
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
+                    <h5 class="mb-3 producto-edit-section-title">Corte maestro / Presentación</h5>
 
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-md-4">
@@ -324,7 +406,7 @@
 
 
                         <div class="col-12" id="boxIndependiente">
-                            <div class="form-check form-switch">
+                            <div class="form-check form-switch producto-focus-switch">
                                 @Html.CheckBoxFor(m => m.Independiente, new { @class = "form-check-input", id = "swIndependiente" })
                                 <label class="form-check-label" for="swIndependiente">Independiente</label>
                             </div>
@@ -344,8 +426,8 @@
                             <span class="shortcut-letter">V</span>olver
                         </a>
 
-                        <div class="d-flex flex-column align-items-end">
-                            <div class="d-flex gap-2">
+                        <div class="producto-edit-actions-right d-flex flex-column align-items-end">
+                            <div class="producto-edit-actions-buttons d-flex gap-2">
                             <button type="button"
                                     class="btn btn-outline-primary d-none"
                                     id="btnSiguienteProducto"
@@ -375,7 +457,7 @@
                                     @(esEdicion ? "Guardar y cargar otro" : "Crear y continuar")
                                 </button>*@
                             </div>
-                            <div class="atajos-acciones small text-muted d-none d-lg-block mt-2 text-right" id="atajosAccionesProducto"></div>
+                            <div class="atajos-acciones small text-muted d-none d-lg-block mt-1 text-right" id="atajosAccionesProducto"></div>
                         </div>
                     </div>
                 </div>
@@ -389,13 +471,13 @@
 
 <!-- MODAL MARCAS -->
 <div class="modal fade" id="modalMarcas" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fit-screen">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fit-screen modal-search-compact-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
                 <h5 class="modal-title">Buscar marca</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-search-compact-body">
                 <div class="input-group mb-2">
                     <input type="text" class="form-control" id="qMarca" placeholder="Escribí para buscar..." />
                     <button class="btn btn-primary" type="button" id="btnDoBuscarMarca">Buscar</button>
@@ -403,7 +485,7 @@
 
                 <div class="table-responsive modal-table-scroll" id="wrapTablaMarcas">
                     <table class="table table-sm table-hover mb-0">
-                        <thead>
+                        <thead class="thead-light">
                             <tr>
                                 <th>Marca</th>
                                 <th style="width:35%;">Propietario</th>
@@ -415,7 +497,7 @@
                     </table>
                 </div>
 
-                <small class="text-muted d-block mt-2">
+                <small class="text-muted d-block mt-2 modal-search-help">
                     Enter = selecciona la primera fila. Doble clic = selecciona la fila.
                 </small>
             </div>
@@ -504,6 +586,7 @@
     const $nombre = $("#CorteDesc");
     const $tipo = $("#ddlTipo");
     const $iva = $("#ddlIva");
+    const $pesable = $("#swPesable");
     const $puntoStock = $("#frmCorte").find("input[name='PuntoStock']").first();
     const $idCorteMaestroHidden = $("input[name='IdCorteMaestro']");
     const $presentacionUnidades = $("#txtPresentacionUnidades");
@@ -552,6 +635,36 @@
         }
 
         $autocompleteCodigoMsg.removeClass("d-none").text(texto);
+    }
+
+    let cargaSolicitudActiva = false;
+
+    function mostrarCargaSolicitud() {
+        if (!window.Swal || cargaSolicitudActiva) return;
+
+        cargaSolicitudActiva = true;
+        Swal.fire({
+            title: "Cargando solicitud...",
+            text: "Espere un momento.",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showConfirmButton: false,
+            didOpen: function () {
+                if (Swal.showLoading) {
+                    Swal.showLoading();
+                }
+            }
+        });
+    }
+
+    function ocultarCargaSolicitud() {
+        if (!cargaSolicitudActiva) return;
+        cargaSolicitudActiva = false;
+
+        if (window.Swal && typeof Swal.close === "function") {
+            Swal.close();
+        }
     }
 
     function construirSnapshotEdicion() {
@@ -1181,6 +1294,15 @@
     });
 
     $(document).on("keydown", function (e) {
+        if (e.key === "F9" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            if ($(e.target).closest(".modal").length) return;
+            if (!esElementoAccion($("#btnBuscarMarca"))) return;
+
+            e.preventDefault();
+            $("#btnBuscarMarca").trigger("click");
+            return;
+        }
+
         if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
         if (document.body.classList.contains("swal2-shown")) return;
 
@@ -1227,6 +1349,12 @@
         if ($(target).closest(".modal").length) return;
 
         e.preventDefault();
+
+        if (target.id === "ddlIva" && $pesable.length) {
+            $pesable.focus();
+            return;
+        }
+
         moverFocoComoTab(!!e.shiftKey);
     });
 
@@ -1257,6 +1385,7 @@
     $("#btnBuscarMarca").on("click", function () {
         // ?? GUARDO el bot�n que abri�
         $triggerModalMarcas = $(this);
+        mostrarCargaSolicitud();
         $("#modalMarcas").modal("show");
     });
 
@@ -1302,6 +1431,9 @@
             .done(renderMarcas)
             .fail(function () {
                 $("#tbMarcas").html('<tr><td colspan="2" class="text-danger">Error cargando marcas</td></tr>');
+            })
+            .always(function () {
+                ocultarCargaSolicitud();
             });
     }
 
@@ -1318,10 +1450,8 @@
     // al cerrar, devolver foco al bot�n que lo abri�
     $("#modalMarcas").on("hidden.bs.modal", function () {
         setTimeout(function () {
-            if ($triggerModalMarcas && $triggerModalMarcas.length) {
-                $triggerModalMarcas.focus();
-            } else {
-                $("#btnBuscarMarca").focus(); // fallback
+            if ($pesable.length && $pesable.is(":visible") && !$pesable.is(":disabled")) {
+                $pesable.focus();
             }
         }, 0);
     });
@@ -1384,6 +1514,7 @@
         }
 
         $triggerModalCorteMaestro = $(this);
+        mostrarCargaSolicitud();
 
         window.abrirBuscarProductoModal({
             modalSelector: "#modalBuscarProducto", // <-- explícito
@@ -1408,6 +1539,10 @@
                 $("#btnBuscarCorteMaestro").focus(); // fallback
             }
         }, 0);
+    });
+
+    $("#modalBuscarProducto").on("shown.bs.modal", function () {
+        ocultarCargaSolicitud();
     });
 
     // =========================
@@ -2175,6 +2310,13 @@
     }
 
     window.setTimeout(actualizarTextoAtajosAcciones, 0);
+    window.setTimeout(function () {
+        if (window.productosEditReadonly && window.productosEditReadonly.isReadOnly && window.productosEditReadonly.isReadOnly()) {
+            return;
+        }
+
+        enfocarInputCodigo();
+    }, 120);
 })();
     </script>
 }
@@ -2257,6 +2399,56 @@
         overflow-y: auto;
     }
 
+    #modalMarcas .modal-search-compact-dialog {
+        max-width: 920px;
+    }
+
+    #modalMarcas .modal-content {
+        border-radius: .75rem;
+    }
+
+    #modalMarcas .modal-search-compact-header {
+        padding: .65rem .9rem;
+    }
+
+    #modalMarcas .modal-title {
+        font-size: .92rem;
+        line-height: 1.1;
+    }
+
+    #modalMarcas .modal-search-compact-body {
+        padding: .8rem .9rem .75rem;
+        font-size: .86rem;
+    }
+
+    #modalMarcas .form-control,
+    #modalMarcas .btn {
+        min-height: 2.45rem;
+        font-size: .85rem;
+    }
+
+    #modalMarcas .table {
+        font-size: .82rem;
+    }
+
+    #modalMarcas .table th,
+    #modalMarcas .table td {
+        padding: .38rem .5rem;
+        line-height: 1.1;
+        vertical-align: middle;
+    }
+
+    #modalMarcas .table thead th {
+        font-size: .72rem;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    #modalMarcas .modal-search-help {
+        font-size: .73rem;
+        line-height: 1.15;
+    }
+
     /* Fila activa (si no se nota bien con tu theme) */
     #tbMarcas tr.table-active,
     #tablaProductos tr.table-active {
@@ -2264,7 +2456,7 @@
     }
     /* Botonera fija inferior */
 .espacio-botonera-fija {
-    height: 84px; /* reserva espacio para que no tape contenido */
+    height: 78px; /* reserva espacio para que no tape contenido */
 }
 
 .barra-acciones-fija {
@@ -2281,13 +2473,61 @@
     border-top: 1px solid var(--ui-border);
     box-shadow: 0 -4px 16px rgba(0,0,0,.06);
     backdrop-filter: blur(8px);
-    padding: .5rem .75rem;
+    padding: .4rem .65rem;
+    border-radius: .7rem .7rem 0 0;
 }
 
 .barra-acciones-inner {
     /* ?? usa todo el ancho de la barra (que ya coincide con la columna) */
     max-width: none;
     margin: 0;
+    gap: .6rem;
+}
+
+.producto-edit-actions-right {
+    gap: .18rem;
+}
+
+.producto-edit-actions-buttons {
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.barra-acciones-fija .btn {
+    min-height: 2.45rem;
+}
+
+.barra-acciones-fija #btnVolverProducto,
+.barra-acciones-fija #btnSiguienteProducto,
+.barra-acciones-fija #btnHabilitarEdicionProducto {
+    font-weight: 600;
+}
+
+.barra-acciones-fija #btnGuardarProducto {
+    min-width: 11.5rem;
+    font-weight: 700;
+}
+
+.barra-acciones-fija .atajos-acciones {
+    letter-spacing: .01em;
+}
+
+@@media (min-width: 992px) {
+    .barra-acciones-fija {
+        padding: .38rem .62rem;
+    }
+
+    .barra-acciones-inner {
+        min-width: 100%;
+    }
+
+    .producto-edit-actions-buttons {
+        gap: .45rem;
+    }
+
+    .barra-acciones-fija .btn {
+        min-height: 2.38rem;
+    }
 }
 
 .btn-guardar-destacado {
@@ -2305,6 +2545,16 @@
 @@media (max-width: 576px) {
     .espacio-botonera-fija {
         height: 96px;
+    }
+
+    .producto-edit-actions-right,
+    .producto-edit-actions-buttons {
+        width: 100%;
+    }
+
+    .producto-edit-actions-buttons {
+        justify-content: flex-end;
+        flex-wrap: wrap;
     }
 
     .barra-acciones-fija .btn {

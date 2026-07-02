@@ -381,6 +381,14 @@
             if (!soloLecturaInicial) {
                 $("#Cuit").trigger("focus").trigger("select");
             }
+
+            if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+                window.EditPageGuard.init({
+                    formSelector: "#formPersona",
+                    modifyButtonSelector: "#btnHabilitarEdicionPersona",
+                    saveButtonSelector: "#btnGuardarPersona"
+                });
+            }
         }
 
         function esperarJQuery() {

@@ -582,7 +582,9 @@
     <script src="@Url.Content("~/Content/vendor/jquery-easing/jquery.easing.min.js")"></script>
     <script src="@Url.Content("~/Content/js/sb-admin-2.min.js")"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-productos.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/swal-single-confirm.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-request-loading.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-productos.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
     <link rel="manifest" href="@Url.Content("~/manifest.json")" />
 
@@ -599,6 +601,7 @@
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3237")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
 
 
     @RenderSection("Scripts", required: false)
@@ -726,24 +729,48 @@
 
             e.preventDefault();
 
+            let keyHandler = null;
+
             Swal.fire({
-                title: "¿Salir?",
-                text: "Los cambios que hiciste podrían no haberse guardado.",
+                title: "Salir sin guardar",
+                text: "¿Está seguro de salir sin guardar?",
                 icon: "warning",
-
                 showCancelButton: true,
-                confirmButtonText: "Salir igual",
-                cancelButtonText: "Cancelar",
-
-                // Que CANCELAR sea el botón por defecto
+                confirmButtonText: "Si, salir",
+                cancelButtonText: "No, quedarme",
                 reverseButtons: true,
                 focusCancel: true,
-
                 allowOutsideClick: false,
                 allowEscapeKey: true,
-
                 customClass: {
                     popup: 'swal2-popup-mid'
+                },
+                didOpen: function () {
+                    keyHandler = function (evt) {
+                        if (evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.repeat) {
+                            return;
+                        }
+
+                        var key = String(evt.key || "").toLowerCase();
+                        if (key === "s") {
+                            evt.preventDefault();
+                            Swal.clickConfirm();
+                            return;
+                        }
+
+                        if (key === "n") {
+                            evt.preventDefault();
+                            Swal.close();
+                        }
+                    };
+
+                    document.addEventListener("keydown", keyHandler, true);
+                },
+                willClose: function () {
+                    if (keyHandler) {
+                        document.removeEventListener("keydown", keyHandler, true);
+                        keyHandler = null;
+                    }
                 }
             }).then(result => {
                 if (result.isConfirmed) {

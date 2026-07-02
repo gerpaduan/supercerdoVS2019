@@ -234,6 +234,12 @@
         function saveDraft() {
             var key = getDraftKey();
             if (!key || !window.localStorage || state.saving) return;
+
+            if (!state.lines.length) {
+                clearDraft();
+                return;
+            }
+
             try {
                 window.localStorage.setItem(key, JSON.stringify(buildDraft()));
             } catch (err) {

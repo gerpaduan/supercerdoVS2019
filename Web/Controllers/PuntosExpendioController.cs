@@ -250,7 +250,12 @@ namespace Web.Controllers
         {
             try
             {
-                var productos = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+                int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
+                    ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                var productos = idEmpresaSesion > 0
+                    ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaSesion, false) ?? new List<Entidades.Corte>())
+                    : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>());
                 if (!string.IsNullOrWhiteSpace(q))
                 {
                     string filtro = q.Trim();
@@ -283,7 +288,12 @@ namespace Web.Controllers
             if (!codigo.HasValue || codigo.Value <= 0)
                 return Json(new { ok = false, mensaje = "Código inválido." }, JsonRequestBehavior.AllowGet);
 
-            var corte = oCorteN.findCorteByCodigo(codigo.Value, false);
+            int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
+                ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                : (empresa != null ? empresa.IdEmpresa : 0);
+            var corte = idEmpresaSesion > 0
+                ? oCorteN.findCorteByCodigoEmpresa(codigo.Value, idEmpresaSesion, false)
+                : oCorteN.findCorteByCodigo(codigo.Value, false);
             if (corte == null || corte.IdCorte <= 0)
                 return Json(new { ok = false, mensaje = "No se encontró el producto." }, JsonRequestBehavior.AllowGet);
 
@@ -304,7 +314,12 @@ namespace Web.Controllers
             if (string.IsNullOrWhiteSpace(codigo) || !long.TryParse(codigo, out codigoBuscado) || codigoBuscado <= 0)
                 return Json(new { success = false, message = "Código inválido." }, JsonRequestBehavior.AllowGet);
 
-            var corte = oCorteN.findCorteByCodigo(codigoBuscado, false);
+            int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
+                ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                : (empresa != null ? empresa.IdEmpresa : 0);
+            var corte = idEmpresaSesion > 0
+                ? oCorteN.findCorteByCodigoEmpresa(codigoBuscado, idEmpresaSesion, false)
+                : oCorteN.findCorteByCodigo(codigoBuscado, false);
             if (corte == null || corte.IdCorte <= 0)
                 return Json(new { success = false, message = "No se encontró el producto." }, JsonRequestBehavior.AllowGet);
 
@@ -405,11 +420,18 @@ namespace Web.Controllers
 
                 foreach (var linea in model.Lineas)
                 {
+                    int idEmpresaSesionLinea = (Session["Usuario"] as Entidades.Usuario) != null
+                        ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                        : (empresa != null ? empresa.IdEmpresa : 0);
                     var corte = linea.IdCorte > 0
                         ? oCorteN.findCorteById(linea.IdCorte, false)
-                        : (linea.Codigo > 0 ? oCorteN.findCorteByCodigo(linea.Codigo, false) : null);
+                        : (linea.Codigo > 0
+                            ? (idEmpresaSesionLinea > 0
+                                ? oCorteN.findCorteByCodigoEmpresa(linea.Codigo, idEmpresaSesionLinea, false)
+                                : oCorteN.findCorteByCodigo(linea.Codigo, false))
+                            : null);
 
-                    if (corte == null || corte.IdCorte <= 0)
+                    if (corte == null || corte.IdCorte <= 0 || (idEmpresaSesionLinea > 0 && corte.IdEmpresa != idEmpresaSesionLinea))
                         return Json(new { ok = false, mensaje = "No se encontró uno de los productos cargados." });
 
                     var item = new Entidades.LineaVenta

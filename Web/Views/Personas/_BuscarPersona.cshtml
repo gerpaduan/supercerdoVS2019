@@ -1,5 +1,58 @@
-﻿<div class="modal fade" id="modalBuscarPersona" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+<style>
+    #modalBuscarPersona.modal-search-compact .modal-dialog {
+        max-width: 920px;
+    }
+
+    #modalBuscarPersona.modal-search-compact .modal-content {
+        border-radius: .75rem;
+    }
+
+    #modalBuscarPersona.modal-search-compact .modal-header {
+        padding: .65rem .9rem;
+    }
+
+    #modalBuscarPersona.modal-search-compact .modal-title {
+        font-size: .92rem;
+        line-height: 1.1;
+    }
+
+    #modalBuscarPersona.modal-search-compact .modal-body {
+        padding: .8rem .9rem .75rem;
+        font-size: .86rem;
+    }
+
+    #modalBuscarPersona.modal-search-compact .form-control {
+        min-height: 2.45rem;
+        font-size: .85rem;
+        padding: .32rem .6rem;
+    }
+
+    #modalBuscarPersona.modal-search-compact .table {
+        font-size: .82rem;
+        margin-bottom: 0;
+    }
+
+    #modalBuscarPersona.modal-search-compact .table th,
+    #modalBuscarPersona.modal-search-compact .table td {
+        padding: .38rem .5rem;
+        line-height: 1.1;
+        vertical-align: middle;
+    }
+
+    #modalBuscarPersona.modal-search-compact .table thead th {
+        font-size: .72rem;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    #modalBuscarPersona.modal-search-compact .modal-search-help {
+        font-size: .73rem;
+        line-height: 1.15;
+    }
+</style>
+
+<div class="modal fade modal-search-compact" id="modalBuscarPersona" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div class="modal-content">
 
             <div class="modal-header bg-primary text-white">
@@ -13,7 +66,6 @@
 
             <div class="modal-body">
 
-                <!-- Filtro -->
                 <div class="form-group mb-3">
                     <input type="text"
                            id="filtroPersona"
@@ -21,8 +73,7 @@
                            placeholder="Buscar por razón social, CUIT o identificación">
                 </div>
 
-                <!-- Tabla -->
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: calc(100vh - 235px); overflow-y:auto;">
                     <table class="table table-hover table-sm">
                         <thead class="thead-light">
                             <tr>
@@ -35,9 +86,12 @@
                     </table>
                 </div>
 
+                <small class="text-muted d-block mt-2 modal-search-help">
+                    Enter selecciona la fila activa. Doble clic también selecciona.
+                </small>
+
             </div>
 
         </div>
     </div>
 </div>
-

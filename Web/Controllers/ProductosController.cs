@@ -571,7 +571,10 @@ namespace Web.Controllers
         {
             try
             {
-                var productos = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+                int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+                var productos = idEmpresaSesion > 0
+                    ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaSesion, false) ?? new List<Entidades.Corte>())
+                    : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>());
 
                 if (!string.IsNullOrWhiteSpace(q))
                 {

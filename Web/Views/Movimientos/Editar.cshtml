@@ -15,7 +15,7 @@
     };
 }
 
-<div class="container-fluid px-2 px-md-3 movimiento-page" data-movimiento-page="1">
+<div class="container-fluid px-2 px-md-3 movimiento-page movimiento-form-compact" data-movimiento-page="1">
     <div id="movimientoDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontró un borrador local de este movimiento.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -34,7 +34,7 @@
         }
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm movimiento-panel-card">
         <div class="card-body">
             <form id="formMovimiento" method="post" action="@Url.Action("Guardar", "Movimientos")" novalidate>
                 @Html.AntiForgeryToken()
@@ -84,20 +84,20 @@
                 {
                     <div class="row mb-3">
                         <div class="col-12 col-lg-3">
-                            <div class="small text-muted">Movimiento origen</div>
+                            <div class="small text-muted movimiento-meta-label">Movimiento origen</div>
                             <div class="font-weight-bold">@Model.IdMovimientoOrigen</div>
                         </div>
                         <div class="col-12 col-lg-3">
-                            <div class="small text-muted">Movimiento destino</div>
+                            <div class="small text-muted movimiento-meta-label">Movimiento destino</div>
                             <div class="font-weight-bold">@Model.IdMovimientoDestino</div>
                         </div>
                         <div class="col-12 col-lg-3">
-                            <div class="small text-muted">Creado</div>
+                            <div class="small text-muted movimiento-meta-label">Creado</div>
                             <div class="font-weight-bold">@Model.Creado</div>
                             <div class="small text-muted">@Model.CreadoPor</div>
                         </div>
                         <div class="col-12 col-lg-3">
-                            <div class="small text-muted">Actualizado</div>
+                            <div class="small text-muted movimiento-meta-label">Actualizado</div>
                             <div class="font-weight-bold">@Model.Actualizado</div>
                             <div class="small text-muted">@Model.ActualizadoPor</div>
                         </div>
@@ -108,9 +108,9 @@
 
                 <div class="row">
                     <div class="col-12 col-xl-8">
-                        <div class="border rounded p-3 mb-3">
+                        <div class="border rounded p-3 mb-3 movimiento-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                                <h6 class="font-weight-bold text-uppercase text-muted mb-0">Agregar producto</h6>
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
                                     <div class="custom-control custom-switch mr-2">
                                         <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
@@ -134,14 +134,14 @@
                             <div id="movimientoFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                             <div id="movimientoWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
-                            <div class="row align-items-end">
-                                <div class="col-12 col-md-4 col-lg-3">
+                            <div class="row align-items-end movimiento-producto-row">
+                                <div class="col-12 col-md-4 col-lg-3 movimiento-col-codigo">
                                     <div class="form-group">
                                         <label for="txtCodigoProducto">Código</label>
-                                        <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" style="min-width:15ch;" />
+                                        <input type="number" id="txtCodigoProducto" class="form-control movimiento-input-codigo" min="0" step="1" autocomplete="off" />
                                     </div>
                                 </div>
-                                <div class="col-12 col-md-8 col-lg-5">
+                                <div class="col-12 col-md-8 col-lg movimiento-col-producto">
                                     <div class="form-group">
                                         <label for="txtProductoNombre">Producto</label>
                                         <div class="input-group">
@@ -159,16 +159,24 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6 col-md-3 col-lg-2">
+                                <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
                                     <div class="form-group">
                                         <label for="txtCantUnidad">Cant.Un.</label>
-                                        <input type="number" id="txtCantUnidad" class="form-control" min="0" step="1" />
+                                        <input type="number" id="txtCantUnidad" class="form-control movimiento-input-cantidad" min="0" step="1" />
                                     </div>
                                 </div>
-                                <div class="col-6 col-md-3 col-lg-2">
+                                <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
                                     <div class="form-group">
                                         <label for="txtCantKgs">Kgs.</label>
-                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
+                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal movimiento-input-cantidad" inputmode="decimal" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-auto movimiento-col-accion">
+                                    <div class="form-group">
+                                        <label class="d-block invisible mb-0">&nbsp;</label>
+                                        <button type="button" class="btn btn-primary movimiento-btn-add" id="btnAgregarProducto" title="Agregar producto" aria-label="Agregar producto">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -179,13 +187,10 @@
                                 <small class="form-text text-muted">Presione <strong>+</strong> para registrar.</small>
                             </div>
 
-                            <button type="button" class="btn btn-primary" id="btnAgregarProducto">
-                                <i class="fas fa-plus mr-1"></i> Agregar producto
-                            </button>
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm" id="tablaLineasMovimiento">
+                            <table class="table table-bordered table-sm movimiento-table-compact" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
                                     <tr>
                                         <th style="width:110px;">Código</th>
@@ -203,9 +208,9 @@
                     </div>
 
                     <div class="col-12 col-xl-4">
-                        <div class="card bg-light">
+                        <div class="card bg-light movimiento-panel-card movimiento-summary-card">
                             <div class="card-body">
-                                <h6 class="font-weight-bold text-uppercase text-muted">Resumen</h6>
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-2 movimiento-section-title">Resumen</h6>
                                 <div class="d-flex justify-content-between">
                                     <span>Total items</span>
                                     <strong id="lblTotalItems">0</strong>
@@ -224,14 +229,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group mt-3 mb-0">
-                            <label for="Observaciones">Observaciones</label>
-                            <textarea id="Observaciones"
-                                      name="Observaciones"
-                                      class="form-control js-auto-resize"
-                                      rows="2"
-                                      style="min-height: calc(1.5em * 2 + 1rem); overflow:hidden; resize:none;"
-                                      maxlength="250">@Model.Observaciones</textarea>
+                        <div class="card movimiento-panel-card mt-3">
+                            <div class="card-body">
+                                <div class="form-group mb-0">
+                                    <label for="Observaciones">Observaciones</label>
+                                    <textarea id="Observaciones"
+                                              name="Observaciones"
+                                              class="form-control js-auto-resize"
+                                              rows="2"
+                                              style="min-height: calc(1.5em * 2 + 1rem); overflow:hidden; resize:none;"
+                                              maxlength="250">@Model.Observaciones</textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -269,7 +278,7 @@
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
+                    <table class="table table-sm table-bordered mb-0 movimiento-table-compact">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width:110px;">Código</th>
@@ -288,6 +297,220 @@
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 @Html.Partial("~/Views/Movimientos/_ModalPostMovimiento.cshtml")
+
+<style>
+    .movimiento-page .movimiento-panel-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .movimiento-page .movimiento-panel-card > .card-body,
+    .movimiento-page .movimiento-panel-card .card-body {
+        padding: .82rem .96rem;
+    }
+
+    .movimiento-page .movimiento-section-box {
+        border: 1px solid #e9ecef !important;
+        border-radius: .7rem !important;
+        padding: .8rem .92rem !important;
+        margin-bottom: .85rem !important;
+    }
+
+    .movimiento-page .movimiento-form-compact label,
+    .movimiento-page .movimiento-section-box label,
+    .movimiento-page .movimiento-panel-card label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .movimiento-page .movimiento-form-compact .form-control,
+    .movimiento-page .movimiento-form-compact .input-group-text,
+    .movimiento-page .movimiento-form-compact .btn:not(.btn-sm),
+    .movimiento-page .movimiento-section-box .form-control,
+    .movimiento-page .movimiento-section-box .input-group-text,
+    .movimiento-page .movimiento-section-box .btn:not(.btn-sm),
+    .movimiento-page .movimiento-panel-card .form-control,
+    .movimiento-page .movimiento-panel-card .input-group-text,
+    .movimiento-page .movimiento-panel-card .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .movimiento-page .movimiento-section-title {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+        margin-bottom: .55rem !important;
+    }
+
+    .movimiento-page .movimiento-form-compact .custom-control-label,
+    .movimiento-page .movimiento-section-box .custom-control-label,
+    .movimiento-page .movimiento-panel-card .custom-control-label,
+    .movimiento-page .movimiento-form-compact .small,
+    .movimiento-page .movimiento-form-compact .text-muted,
+    .movimiento-page .movimiento-section-box .small,
+    .movimiento-page .movimiento-section-box .text-muted,
+    .movimiento-page .movimiento-panel-card .small,
+    .movimiento-page .movimiento-panel-card .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .movimiento-page .movimiento-section-box h6.text-uppercase,
+    .movimiento-page .movimiento-panel-card h6.text-uppercase {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+    }
+
+    .movimiento-page .movimiento-meta-label {
+        font-size: .68rem !important;
+        line-height: 1.05;
+        margin-bottom: .14rem !important;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .movimiento-page .movimiento-summary-card .card-body {
+        padding: .62rem .78rem;
+    }
+
+    .movimiento-page .movimiento-producto-row {
+        margin-left: -.3rem;
+        margin-right: -.3rem;
+    }
+
+    .movimiento-page .movimiento-producto-row > div {
+        padding-left: .3rem;
+        padding-right: .3rem;
+    }
+
+    .movimiento-page .movimiento-input-codigo {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .movimiento-page .movimiento-input-cantidad {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .movimiento-page .movimiento-btn-add {
+        width: 100%;
+    }
+
+    .movimiento-page .movimiento-table-compact {
+        font-size: .82rem;
+    }
+
+    .movimiento-page .movimiento-table-compact th,
+    .movimiento-page .movimiento-table-compact td {
+        padding: .36rem .48rem;
+        vertical-align: middle;
+        line-height: 1.12;
+    }
+
+    .movimiento-page .movimiento-table-compact thead th,
+    .movimiento-page .movimiento-table-compact > thead > tr > th {
+        font-size: .7rem !important;
+        line-height: 1.05;
+        padding-top: .36rem;
+        padding-bottom: .36rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .movimiento-page .movimiento-table-compact .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.12;
+        font-size: .76rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .movimiento-page .movimiento-col-codigo {
+            -ms-flex: 0 0 25%;
+            flex: 0 0 25%;
+            max-width: 25%;
+        }
+
+        .movimiento-page .movimiento-col-producto {
+            -ms-flex: 1 1 0%;
+            flex: 1 1 0%;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-col-cantidad {
+            -ms-flex: 0 0 16.666667%;
+            flex: 0 0 16.666667%;
+            max-width: 16.666667%;
+        }
+
+        .movimiento-page .movimiento-col-accion {
+            -ms-flex: 0 0 auto;
+            flex: 0 0 auto;
+            width: auto;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-input-codigo {
+            width: 100%;
+            min-width: 100%;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-input-cantidad {
+            width: 100%;
+            min-width: 100%;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-btn-add {
+            width: 2.15rem;
+            min-width: 2.15rem;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .movimiento-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .movimiento-page .movimiento-panel-card > .card-body,
+        .movimiento-page .movimiento-panel-card .card-body {
+            padding: .74rem .86rem;
+        }
+
+        .movimiento-page .movimiento-section-box {
+            padding: .72rem .84rem !important;
+        }
+
+        .movimiento-page .movimiento-form-compact .form-control,
+        .movimiento-page .movimiento-form-compact .input-group-text,
+        .movimiento-page .movimiento-form-compact .btn:not(.btn-sm),
+        .movimiento-page .movimiento-section-box .form-control,
+        .movimiento-page .movimiento-section-box .input-group-text,
+        .movimiento-page .movimiento-section-box .btn:not(.btn-sm),
+        .movimiento-page .movimiento-panel-card .form-control,
+        .movimiento-page .movimiento-panel-card .input-group-text,
+        .movimiento-page .movimiento-panel-card .btn:not(.btn-sm) {
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .movimiento-page .movimiento-table-compact {
+            font-size: .79rem;
+        }
+
+        .movimiento-page .movimiento-table-compact thead th,
+        .movimiento-page .movimiento-table-compact > thead > tr > th {
+            font-size: .67rem !important;
+        }
+    }
+</style>
 
 @section Scripts {
     <script>

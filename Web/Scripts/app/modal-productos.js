@@ -292,6 +292,7 @@
         state.onSelect = (typeof opts.onSelect === 'function') ? opts.onSelect : null;
 
         aplicarVisibilidadPrecio($modal, state);
+        window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
         $modal.modal('show');
     };
 

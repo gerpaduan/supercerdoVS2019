@@ -369,6 +369,10 @@
             esGuardado: @(Model.EsGuardado ? "true" : "false")
         };
         window.puntoExpendioLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.PuntoExpendioLineaVm>()));
+        window.EditPageGuard && window.EditPageGuard.init({
+            formSelector: "#formPuntoExpendio",
+            saveButtonSelector: "#btnGuardarPuntoExpendio"
+        });
     </script>
     <script src="@Url.Content("~/Scripts/app/puntos-expendio.js?v=1")"></script>
 }

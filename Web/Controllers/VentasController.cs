@@ -999,9 +999,14 @@ namespace Web.Controllers
                     : Convert.ToInt64(codigo);
 
                 var gestorCortes = oCorteN;
-                var corte = gestorCortes.findCorteByCodigo(codigoProducto, false);
+                int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
+                    ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                var corte = idEmpresaSesion > 0
+                    ? gestorCortes.findCorteByCodigoEmpresa(codigoProducto, idEmpresaSesion, false)
+                    : gestorCortes.findCorteByCodigo(codigoProducto, false);
 
-                if (corte == null)
+                if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
                 {
                     string mensaje = esGenerico ? ("No existe  el código genérico") : "Código inexistente"; 
                     return Json(new { success = false, message = mensaje }, JsonRequestBehavior.AllowGet);
@@ -1061,8 +1066,11 @@ namespace Web.Controllers
                 // Obtener el producto
                 var gestorCortes = oCorteN;
                 var corte = gestorCortes.findCorteById(idCorte, false);
+                int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
+                    ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
 
-                if (corte == null)
+                if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
                     return Json(new { error = "Producto no encontrado por ID" });
 
                 // Crear la línea
@@ -2188,7 +2196,12 @@ namespace Web.Controllers
             foreach (var l in request.LineasVenta)
             {
                 var linea = new Entidades.LineaVenta();
-                linea.Corte = oCorteN.findCorteByCodigo(l.Codigo, false);
+                int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
+                    ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
+                    : (empresa != null ? empresa.IdEmpresa : 0);
+                linea.Corte = idEmpresaSesion > 0
+                    ? oCorteN.findCorteByCodigoEmpresa(l.Codigo, idEmpresaSesion, false)
+                    : oCorteN.findCorteByCodigo(l.Codigo, false);
                 linea.KgsTotalCalculado = l.CantKg;
                 linea.CantKg = l.CantKg;
                 linea.PrecioKg = l.PrecioKg;

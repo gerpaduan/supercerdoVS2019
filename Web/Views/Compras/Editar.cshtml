@@ -103,7 +103,7 @@
 
                 </div>
 
-                <div class="row">
+                <div class="row compra-datos-secundarios-row">
                     <div class="col-12 col-lg-5">
                         <div class="form-group">
                             <label for="razonSocial">Proveedor</label>
@@ -127,7 +127,7 @@
                             @Html.TextBoxFor(m => m.NroRemito, new { @class = "form-control", id = "NroRemito", maxlength = 100 })
                         </div>
                     </div>
-                    <div class="col-12 col-lg-2">
+                    <div class="col-12 col-lg-2 compra-cta-col">
                         <div class="compra-cta-card">
                             <div class="compra-cta-head">
                                 <span class="compra-cta-title">Cuenta corriente</span>
@@ -236,7 +236,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-4">
                             <div class="border rounded p-3 h-100 compra-ajuste-card">
                                 <div class="custom-control custom-switch mb-2">
                                     <input type="checkbox" class="custom-control-input" id="chkAplicarPrecioVentaMargen" />
@@ -273,13 +273,13 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-12 col-lg-2 d-flex align-items-end justify-content-lg-end">
+                            <button type="button" class="btn btn-primary mt-2 mt-lg-0" id="btnAgregarLineaCorte">
+                                <i class="fas fa-plus"></i> Agregar producto
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-end flex-wrap mb-3">
-                        <button type="button" class="btn btn-primary mt-2 mt-md-0" id="btnAgregarLineaCorte">
-                            <i class="fas fa-plus"></i> Agregar producto
-                        </button>
-                    </div>
                 </div>
 
                 <div id="panelLineaMediaRes" class="compra-linea-panel" @(mostrarMediaInicial ? null : new HtmlString("style=\"display:none;\""))>
@@ -292,25 +292,32 @@
                         <div><strong>Precio media en carga:</strong> <span id="lblPrecioMediaContinuo">-</span></div>
                     </div>
                     <div id="alertUltimoAgregadoMedia" class="alert alert-success py-2 px-3 mb-3" style="display:none;"></div>
-                    <div class="row">
+                    <div class="row compra-media-row">
                         <input type="hidden" id="txtNroTropa" />
-                        <div class="col-6 col-md-6">
+                        <div class="col-6 col-md-4 compra-col-media-kgs">
                             <div class="form-group">
                                 <label for="txtKgMedia">Kg media</label>
                                 <input type="number" id="txtKgMedia" class="form-control" min="0" step="0.01" />
                             </div>
                         </div>
-                        <div class="col-6 col-md-6">
+                        <div class="col-6 col-md-4 compra-col-media-precio">
                             <div class="form-group">
                                 <label for="txtPrecioMedia">Precio media</label>
                                 <input type="number" id="txtPrecioMedia" class="form-control" min="0" step="0.01" />
                             </div>
                         </div>
-                    </div>
-                    <div class="text-right mb-3">
-                        <button type="button" class="btn btn-primary" id="btnAgregarLineaMediaRes">
-                            <i class="fas fa-plus"></i> Agregar media
-                        </button>
+                        <div class="col-12 col-md-2 compra-col-media-add">
+                            <div class="form-group mb-0 compra-add-action-group">
+                                <label class="d-none d-md-block">&nbsp;</label>
+                                <button type="button"
+                                        class="btn btn-primary compra-icon-btn"
+                                        id="btnAgregarLineaMediaRes"
+                                        title="Agregar media"
+                                        aria-label="Agregar media">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -346,7 +353,7 @@
                                     {
                                         <tr>
                                             <td class="text-center font-weight-bold">@numeroLinea</td>
-                                            <td><strong>Tropa:</strong> @(string.IsNullOrWhiteSpace(linea.NroTropa) ? "-" : linea.NroTropa)</td>
+                                            <td class="compra-detalle-cell"><strong>Tropa:</strong> @(string.IsNullOrWhiteSpace(linea.NroTropa) ? "-" : linea.NroTropa)</td>
                                             <td class="text-right">@linea.KgMedia.ToString("0.00")</td>
                                             <td class="text-right">@linea.PrecioMedia.ToString("0.00")</td>
                                             <td class="text-right">-</td>
@@ -359,7 +366,7 @@
                                     {
                                         <tr>
                                             <td class="text-center font-weight-bold">@numeroLinea</td>
-                                            <td>
+                                            <td class="compra-detalle-cell">
                                                 <strong>@linea.CorteNombre</strong><br />
                                                 <small class="text-muted">Código: @(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")@(linea.Balanza ? " | Balanza" : "")</small>
                                             </td>
@@ -429,7 +436,7 @@
                         <button type="button" class="btn btn-outline-secondary" id="btnLimpiarBorrador">
                             Limpiar borrador
                         </button>
-                        <small class="text-muted ml-0 ml-md-3 mt-2 mt-md-0">Atajos: F9 proveedor, F10 producto.</small>
+                        <small class="text-muted ml-0 ml-md-3 mt-2 mt-md-0 compra-shortcuts-help">Atajos: F9 proveedor, F10 producto, Alt+G guardar, Alt+Enter guardar, Alt+C cancelar.</small>
                     </div>
                     <div class="mb-2">
                         @if (Model.EsEdicion)
@@ -443,7 +450,7 @@
                         }
                         @if (!Model.DesdePos)
                         {
-                            <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary">
+                            <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary" id="btnCancelarCompra">
                                 Cancelar
                             </a>
                         }
@@ -458,6 +465,81 @@
 </div>
 
 <style>
+    .compra-page {
+        font-size: .9rem;
+    }
+
+    .compra-page .card {
+        border-radius: .75rem;
+    }
+
+    .compra-page .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .compra-page .form-group label,
+    .compra-page .custom-control-label,
+    .compra-page .compra-section-label span {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .compra-page .small,
+    .compra-page .text-muted,
+    .compra-page small {
+        font-size: .8rem;
+    }
+
+    .compra-section-label small,
+    #lblProveedorCuit,
+    .compra-page .form-text {
+        font-size: .74rem !important;
+        line-height: 1.15;
+    }
+
+    .compra-shortcuts-help {
+        font-size: .74rem !important;
+    }
+
+    .compra-page .form-control,
+    .compra-page .input-group-text,
+    .compra-page .btn:not(.btn-sm) {
+        font-size: .87rem;
+        min-height: 2.65rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .compra-page textarea.form-control {
+        min-height: 4.25rem;
+    }
+
+    .compra-page .table {
+        font-size: .84rem;
+    }
+
+    .compra-page .table th,
+    .compra-page .table td {
+        padding: .38rem .5rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .compra-page .table thead th,
+    .compra-page .table > thead > tr > th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    .compra-linea-panel > h6 {
+        font-size: .82rem;
+        line-height: 1.05;
+        letter-spacing: .03em;
+    }
+
     .compra-section-label {
         display: flex;
         align-items: center;
@@ -469,47 +551,110 @@
     }
 
     .compra-section-label span {
+        font-size: .82rem;
+        line-height: 1.05;
         font-weight: 700;
-        letter-spacing: .02em;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: #6c757d;
     }
 
     .compra-section-label small {
         text-align: right;
+        display: none !important;
     }
 
     .compra-cta-card {
-        height: calc(100% - 1rem);
+        height: 2.25rem;
         min-height: 0;
-        margin-bottom: 1rem;
-        padding: .65rem .8rem;
+        margin-bottom: 0;
+        padding: .18rem .34rem;
         border: 1px solid rgba(13, 110, 253, .2);
         border-radius: .5rem;
         background: linear-gradient(180deg, rgba(13, 110, 253, .08), rgba(13, 110, 253, .03));
+        display: flex;
+        align-items: center;
+    }
+
+    .compra-datos-secundarios-row .compra-cta-card {
+        margin-top: 0;
     }
 
     .compra-cta-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: .5rem;
+        gap: .4rem;
+        min-height: 0;
+        margin-bottom: 0;
+        width: 100%;
     }
 
     .compra-cta-title {
-        font-size: .8rem;
+        font-size: .62rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: .04em;
+        letter-spacing: .01em;
+        line-height: 1;
         color: #1d4f91;
+        margin-bottom: 0;
+        white-space: nowrap;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .compra-cta-switch {
+        flex: 0 0 auto;
+        margin-left: .55rem;
+        margin-bottom: 0;
+        padding-left: 1.55rem;
+        min-height: .78rem;
+    }
+
+    .compra-cta-switch .custom-control-input {
+        top: .02rem;
     }
 
     .compra-cta-switch .custom-control-label {
         font-weight: 700;
+        min-height: .72rem;
+        line-height: .72rem;
+        margin-bottom: 0;
     }
 
     .compra-cta-help {
-        margin-top: .25rem !important;
-        font-size: .74rem;
+        display: none !important;
+    }
+
+    .compra-add-action-group {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    .compra-icon-btn {
+        width: 2.15rem;
+        min-width: 2.15rem;
+        padding-left: .35rem !important;
+        padding-right: .35rem !important;
+    }
+
+    #txtSubtotalLinea {
+        font-weight: 700;
+        color: #0f3d75;
+        background: #eef5ff;
+        border-color: #9ec5fe;
+        box-shadow: inset 0 0 0 1px rgba(13, 110, 253, .08);
+    }
+
+    .compra-tabla-wrap tbody td:nth-child(2) {
+        font-size: .78rem;
         line-height: 1.15;
+    }
+
+    .compra-tabla-wrap tbody td:nth-child(2) small {
+        font-size: .72rem;
+        line-height: 1.1;
     }
 
     .compra-observaciones-box textarea {
@@ -528,6 +673,8 @@
 
     .compra-totales-box {
         height: 100%;
+        font-size: .81rem;
+        line-height: 1.15;
     }
 
     .compra-tabla-wrap {
@@ -538,13 +685,15 @@
 
     .compra-meta-box {
         margin-bottom: 0;
+        font-size: .78rem;
+        line-height: 1.2;
     }
 
     .compra-total-principal {
         margin-top: .55rem;
         padding-top: .55rem;
         border-top: 1px solid rgba(0, 0, 0, .08);
-        font-size: 1.05rem;
+        font-size: .96rem;
     }
 
     .compra-actions-bar {
@@ -558,25 +707,37 @@
 
     @@media (min-width: 992px) {
         .compra-page .card-body {
-            padding: .95rem 1rem;
+            padding: .75rem .9rem;
         }
 
         .compra-datos-principales-row {
             align-items: start;
         }
 
+        .compra-datos-secundarios-row {
+            align-items: start;
+        }
+
+        .compra-cta-col {
+            display: flex;
+            align-items: flex-start;
+            padding-top: 1.48rem;
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+
         .compra-page .form-group {
-            margin-bottom: .5rem;
+            margin-bottom: .42rem;
         }
 
         .compra-page .form-group label {
             margin-bottom: .18rem;
-            font-size: .88rem;
+            font-size: .74rem;
         }
 
         .compra-page hr {
-            margin-top: .7rem;
-            margin-bottom: .9rem;
+            margin-top: .55rem;
+            margin-bottom: .7rem;
         }
 
         .compra-workspace-row {
@@ -587,12 +748,50 @@
             margin-bottom: .65rem !important;
         }
 
+        .compra-media-row {
+            flex-wrap: nowrap;
+        }
+
+        .compra-col-media-kgs,
+        .compra-col-media-precio {
+            flex: 0 0 38%;
+            max-width: 38%;
+        }
+
+        .compra-col-media-add {
+            flex: 0 0 10%;
+            max-width: 10%;
+        }
+
         .compra-cta-card {
-            padding: .45rem .65rem;
+            height: 2.75rem;
+            padding: .14rem .28rem;
         }
 
         .compra-cta-help {
             display: none !important;
+        }
+
+        .compra-page .form-control,
+        .compra-page .input-group-text,
+        .compra-page .btn:not(.btn-sm) {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .compra-icon-btn {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .compra-page .table {
+            font-size: .81rem;
+        }
+
+        .compra-page .table thead th,
+        .compra-page .table > thead > tr > th {
+            font-size: .69rem !important;
         }
 
         .compra-ajustes-grid > div {
@@ -630,6 +829,7 @@
 
         .compra-cta-card {
             height: auto;
+            min-height: 2.25rem;
         }
 
         .compra-ajustes-grid > div {
@@ -646,8 +846,9 @@
 
 @if (Model.DesdePos)
 {
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/compras.js?v=18")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=20")"></script>
     <script>
         (function () {
             if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
@@ -685,8 +886,8 @@
 else
 {
     @section Scripts {
-        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=18")"></script>
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=20")"></script>
         <script>
             (function () {
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {

@@ -35,13 +35,65 @@
             return isNaN(n) ? 0.0 : n;
         }
 
-        function showMessage(icon, title, text) {
+        function focusElementLater(selector) {
+            if (!selector) return;
+
+            setTimeout(function () {
+                var $element = $(selector).filter(":visible").first();
+                if (!$element.length) return;
+
+                $element.trigger("focus");
+
+                var element = $element.get(0);
+                if (element && typeof element.select === "function") {
+                    try { element.select(); } catch { }
+                }
+            }, 0);
+        }
+
+        function inferFocusTarget(title, text) {
+            var safeTitle = String(title || "").toLowerCase();
+            var safeText = String(text || "").toLowerCase();
+            var modalLineaAbierto = $("#modalLineaVenta").hasClass("show");
+
+            if (safeTitle.indexOf("cantidad inv") >= 0) {
+                return modalLineaAbierto ? "#modalCantidad" : "#inputCantidad";
+            }
+
+            if (safeTitle.indexOf("precio inv") >= 0) {
+                return modalLineaAbierto ? "#txtPrecioKg" : "#inputCodigo";
+            }
+
+            if (safeText.indexOf("precio es 0") >= 0) {
+                return "#inputCodigo";
+            }
+
+            return "";
+        }
+
+        function showMessage(icon, title, text, afterClose) {
+            var inferredSelector = inferFocusTarget(title, text);
+            var closeHandler = typeof afterClose === "function"
+                ? afterClose
+                : function () {
+                    if (inferredSelector) {
+                        focusElementLater(inferredSelector);
+                    }
+                };
+
             if (window.Swal) {
-                Swal.fire({ icon: icon, title: title, text: text });
+                Swal.fire({ icon: icon, title: title, text: text }).then(function () {
+                    if (typeof closeHandler === "function") {
+                        closeHandler();
+                    }
+                });
                 return;
             }
 
             alert(text || title);
+            if (typeof closeHandler === "function") {
+                closeHandler();
+            }
         }
 
         const CANT_DECIMALES = 3;

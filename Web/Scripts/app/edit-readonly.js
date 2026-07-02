@@ -149,6 +149,14 @@
 
         setReadOnly(state.readOnly);
 
+        if (window.EditPageGuard && typeof window.EditPageGuard.init === 'function') {
+            window.EditPageGuard.init({
+                formSelector: settings.formSelector,
+                modifyButtonSelector: settings.modifyButtonSelector,
+                saveButtonSelector: settings.saveButtonSelector
+            });
+        }
+
         return {
             setReadOnly: setReadOnly,
             isReadOnly: function () { return state.readOnly; }

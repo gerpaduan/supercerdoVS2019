@@ -79,6 +79,8 @@
             balanzaUltimaLectura: null,
             ingredienteTimer: null,
             elaboradoTimer: null,
+            ingredienteRequestSeq: 0,
+            elaboradoRequestSeq: 0,
             draftTimer: null,
             guardando: false
         };
@@ -237,10 +239,18 @@
         function clearIngrediente() {
             $ingredienteId.val('');
             $ingredienteCodigo.val('');
+            clearIngredienteSeleccion(false);
+        }
+
+        function clearIngredienteSeleccion(preserveCodigo) {
+            var codigoActual = $ingredienteCodigo.val();
             $ingredienteNombre.val('');
             $ingredientePesable.val('');
             $ingredienteTipo.val('');
             $ingredientePromedio.val('');
+            if (preserveCodigo) {
+                $ingredienteCodigo.val(codigoActual);
+            }
             if ($balanza.is(':checked') && state.balanzaDisponible && state.balanzaUltimaLectura && !state.balanzaDesactivadaManual) {
                 $ingredienteKg.val(state.balanzaUltimaLectura.pesoDisplay || state.balanzaUltimaLectura.pesoTexto || '');
             } else {
@@ -270,6 +280,11 @@
             if (!config.esEdicion) {
                 $elaboradoCodigo.val('');
             }
+            clearElaboradoSeleccion(config.esEdicion);
+        }
+
+        function clearElaboradoSeleccion(preserveCodigo) {
+            var codigoActual = $elaboradoCodigo.val();
             $elaboradoNombre.val('');
             $elaboradoTipo.val('');
             $elaboradoPromedio.val('');
@@ -278,6 +293,9 @@
             renderFormula();
             $elaboradoWarning.addClass('d-none').text('');
             autoResizeTextarea($receta);
+            if (preserveCodigo) {
+                $elaboradoCodigo.val(codigoActual);
+            }
         }
 
         function setElaborado(producto) {
@@ -618,23 +636,45 @@
         function buscarPorCodigo($codigo, callback) {
             var codigo = toInt($codigo.val());
             if (!codigo || !config.buscarProductoPorCodigoUrl) return;
+            var esElaborado = $codigo.is($elaboradoCodigo);
+            if (esElaborado) {
+                state.elaboradoRequestSeq += 1;
+            } else {
+                state.ingredienteRequestSeq += 1;
+            }
+
+            var requestSeq = esElaborado ? state.elaboradoRequestSeq : state.ingredienteRequestSeq;
 
             $.get(config.buscarProductoPorCodigoUrl, { codigo: codigo })
                 .done(function (resp) {
+                    if (requestSeq !== (esElaborado ? state.elaboradoRequestSeq : state.ingredienteRequestSeq)) return;
                     if (resp && resp.ok) {
-                        if ($codigo.is($elaboradoCodigo)) setElaborado(resp);
+                        if (esElaborado) setElaborado(resp);
                         else setIngrediente(resp);
 
                         if (typeof callback === 'function') callback(true, resp);
                     } else {
-                        if ($codigo.is($elaboradoCodigo)) clearElaborado();
-                        else clearIngrediente();
+                        if (esElaborado) {
+                            clearElaboradoSeleccion(true);
+                            $elaboradoNombre.val('No existe o sin coincidencia');
+                            $elaboradoCodigo.val(codigo);
+                        } else {
+                            clearIngredienteSeleccion(true);
+                            $ingredienteNombre.val('No existe o sin coincidencia');
+                            $ingredienteCodigo.val(codigo);
+                        }
                         if (typeof callback === 'function') callback(false);
                     }
                 })
                 .fail(function () {
-                    if ($codigo.is($elaboradoCodigo)) clearElaborado();
-                    else clearIngrediente();
+                    if (requestSeq !== (esElaborado ? state.elaboradoRequestSeq : state.ingredienteRequestSeq)) return;
+                    if (esElaborado) {
+                        clearElaboradoSeleccion(true);
+                        $elaboradoNombre.val('No existe o sin coincidencia');
+                    } else {
+                        clearIngredienteSeleccion(true);
+                        $ingredienteNombre.val('No existe o sin coincidencia');
+                    }
                     if (typeof callback === 'function') callback(false);
                 });
         }
@@ -747,6 +787,7 @@
         $elaboradoCodigo.on('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                window.clearTimeout(state.elaboradoTimer);
                 buscarPorCodigo($elaboradoCodigo, function (ok) {
                     if (ok) focusIngredienteCodigo();
                 });
@@ -759,6 +800,7 @@
         $ingredienteCodigo.on('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                window.clearTimeout(state.ingredienteTimer);
                 buscarPorCodigo($ingredienteCodigo, function (ok) {
                     if (ok) $ingredienteKg.focus().select();
                 });
@@ -776,22 +818,40 @@
         });
 
         $elaboradoCodigo.on('input', function () {
-            clearTimeout(state.elaboradoTimer);
-            if (!($elaboradoCodigo.val() || '').trim()) {
+            window.clearTimeout(state.elaboradoTimer);
+
+            var raw = ($elaboradoCodigo.val() || '').trim();
+            if (!raw) {
                 clearElaborado();
                 return;
             }
+
+            if (!/^\d+$/.test(raw)) {
+                clearElaborado();
+                $elaboradoCodigo.val(raw.replace(/\D/g, ''));
+                return;
+            }
+
             state.elaboradoTimer = setTimeout(function () {
                 buscarPorCodigo($elaboradoCodigo);
             }, 250);
         });
 
         $ingredienteCodigo.on('input', function () {
-            clearTimeout(state.ingredienteTimer);
-            if (!($ingredienteCodigo.val() || '').trim()) {
+            window.clearTimeout(state.ingredienteTimer);
+
+            var raw = ($ingredienteCodigo.val() || '').trim();
+            if (!raw) {
                 clearIngrediente();
                 return;
             }
+
+            if (!/^\d+$/.test(raw)) {
+                clearIngrediente();
+                $ingredienteCodigo.val(raw.replace(/\D/g, ''));
+                return;
+            }
+
             state.ingredienteTimer = setTimeout(function () {
                 buscarPorCodigo($ingredienteCodigo);
             }, 250);
