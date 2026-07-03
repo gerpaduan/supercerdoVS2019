@@ -146,6 +146,51 @@
             @Html.Partial("~/Views/Stock/_StockTabla.cshtml", Model)
         </div>
     </div>
+
+    <div class="d-none">
+        @Html.AntiForgeryToken()
+    </div>
+
+    <div class="modal fade modal-stock-compact" id="modalPorcentajesPesajeStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title">Ver Porcentaje Cortes</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="stockIndexPesajeIdActual" value="0" />
+                    <div id="stockPorcentajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                        <div class="mb-2">
+                            <span class="font-weight-bold">Estado:</span>
+                            <span id="lblEstadoAjusteModalStock" class="font-weight-bold text-danger">-</span>
+                        </div>
+                        <button type="button" class="btn btn-success mb-2" id="btnGenerarAjustePesajeStock">
+                            <i class="fas fa-balance-scale mr-1"></i> Generar Ajuste
+                        </button>
+                    </div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPromMediasStock">
+                            <thead class="thead-light"></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPorcCortesStock">
+                            <thead class="thead-light"></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -258,6 +303,38 @@
         line-height: 1.15;
     }
 
+    .modal-stock-compact .modal-content {
+        border-radius: .75rem;
+    }
+
+    .modal-stock-compact .modal-header {
+        padding: .58rem .82rem;
+    }
+
+    .modal-stock-compact .modal-title {
+        font-size: .94rem;
+        line-height: 1.1;
+    }
+
+    .modal-stock-compact .modal-body {
+        padding: .78rem .86rem;
+    }
+
+    .modal-stock-compact .form-control,
+    .modal-stock-compact .input-group-text,
+    .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+        min-height: 2.08rem;
+        font-size: .83rem;
+        padding: .26rem .52rem;
+        border-radius: .5rem;
+    }
+
+    .modal-stock-compact .alert {
+        margin-bottom: .75rem !important;
+        padding: .48rem .72rem;
+        font-size: .8rem;
+    }
+
     @@media (min-width: 1200px) {
         .stock-index-page .mb-3 {
             margin-bottom: .85rem !important;
@@ -306,6 +383,22 @@
         .stock-index-page .tabla-full .table thead th,
         .stock-index-page .tabla-full .table > thead > tr > th {
             font-size: .69rem !important;
+        }
+
+        .modal-stock-compact .modal-header {
+            padding: .52rem .76rem;
+        }
+
+        .modal-stock-compact .modal-body {
+            padding: .72rem .8rem;
+        }
+
+        .modal-stock-compact .form-control,
+        .modal-stock-compact .input-group-text,
+        .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+            min-height: 2rem;
+            font-size: .8rem;
+            padding: .22rem .48rem;
         }
     }
 
@@ -557,6 +650,166 @@
                     $(detalle).collapse(expandir ? "show" : "hide");
                     const btn = document.querySelector('.btn-detalles-stock[data-target="#' + detalle.id + '"]');
                     syncIcon(btn, expandir);
+                });
+            });
+
+            function escapeHtmlStock(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function clearPorcentajeWarningStock() {
+                $('#stockPorcentajeWarning').addClass('d-none').text('');
+            }
+
+            function showPorcentajeWarningStock(text) {
+                $('#stockPorcentajeWarning').text(text || '').removeClass('d-none');
+            }
+
+            function renderTablaPorcentajesStock($table, tabla, emptyText) {
+                var $thead = $table.find('thead');
+                var $tbody = $table.find('tbody');
+                var columnas = tabla && $.isArray(tabla.columnas) ? tabla.columnas : [];
+                var filas = tabla && $.isArray(tabla.filas) ? tabla.filas : [];
+                var visibles = $.grep(columnas, function (col) { return !col.oculta; });
+                var headHtml = '';
+                var bodyHtml = '';
+
+                if (!visibles.length) {
+                    $thead.html('');
+                    $tbody.html('<tr><td class="text-center text-muted py-3">' + escapeHtmlStock(emptyText || 'Sin datos.') + '</td></tr>');
+                    return;
+                }
+
+                headHtml += '<tr>';
+                $.each(columnas, function (_, col) {
+                    if (col.oculta) return;
+                    headHtml += '<th' + (col.alineacionDerecha ? ' class="text-right"' : '') + '>' + escapeHtmlStock(col.nombre || '') + '</th>';
+                });
+                headHtml += '</tr>';
+
+                if (!filas.length) {
+                    bodyHtml = '<tr><td colspan="' + visibles.length + '" class="text-center text-muted py-3">' + escapeHtmlStock(emptyText || 'Sin datos.') + '</td></tr>';
+                } else {
+                    $.each(filas, function (_, fila) {
+                        bodyHtml += '<tr>';
+                        $.each(columnas, function (colIndex, col) {
+                            if (col.oculta) return;
+                            var valor = $.isArray(fila) ? (fila[colIndex] || '') : '';
+                            bodyHtml += '<td' + (col.alineacionDerecha ? ' class="text-right"' : '') + '>' + escapeHtmlStock(valor) + '</td>';
+                        });
+                        bodyHtml += '</tr>';
+                    });
+                }
+
+                $thead.html(headHtml);
+                $tbody.html(bodyHtml);
+            }
+
+            function actualizarEstadoAjustePesajeStock(estado) {
+                var texto = $.trim(estado || '');
+                var actualizado = texto.toLowerCase() === 'actualizado';
+                $('#lblEstadoAjusteModalStock')
+                    .text(texto || '-')
+                    .toggleClass('text-success', actualizado)
+                    .toggleClass('text-danger', !actualizado);
+            }
+
+            function cargarPorcentajesPesajeStock(idCompra) {
+                clearPorcentajeWarningStock();
+                $('#stockIndexPesajeIdActual').val(idCompra || 0);
+                $('#btnGenerarAjustePesajeStock').prop('disabled', true);
+                actualizarEstadoAjustePesajeStock('-');
+                renderTablaPorcentajesStock($('#tablaPromMediasStock'), null, 'Cargando...');
+                renderTablaPorcentajesStock($('#tablaPorcCortesStock'), null, 'Cargando...');
+
+                $.ajax({
+                    url: '@Url.Action("VerPorcentajesPesaje", "Stock")',
+                    method: 'POST',
+                    data: {
+                        idCompra: idCompra
+                    }
+                }).done(function (resp) {
+                    if (!resp || resp.ok !== true) {
+                        showPorcentajeWarningStock((resp && resp.mensaje) || 'No se pudo obtener el análisis del pesaje.');
+                        renderTablaPorcentajesStock($('#tablaPromMediasStock'), null, 'Sin datos.');
+                        renderTablaPorcentajesStock($('#tablaPorcCortesStock'), null, 'Sin datos.');
+                        return;
+                    }
+
+                    actualizarEstadoAjustePesajeStock(resp.estado || '');
+                    $('#btnGenerarAjustePesajeStock').prop('disabled', resp.puedeGenerarAjuste !== true);
+                    renderTablaPorcentajesStock($('#tablaPromMediasStock'), resp.promMedias, 'Sin datos de promedios.');
+                    renderTablaPorcentajesStock($('#tablaPorcCortesStock'), resp.porcCortes, 'Sin datos de porcentajes.');
+                }).fail(function () {
+                    showPorcentajeWarningStock('No se pudo obtener el análisis del pesaje.');
+                    renderTablaPorcentajesStock($('#tablaPromMediasStock'), null, 'Sin datos.');
+                    renderTablaPorcentajesStock($('#tablaPorcCortesStock'), null, 'Sin datos.');
+                });
+            }
+
+            $(document).on('click', '.btn-ver-porcentaje-pesaje-index', function () {
+                var idCompra = parseInt($(this).data('id-compra'), 10) || 0;
+                if (idCompra <= 0) {
+                    return;
+                }
+
+                $('#modalPorcentajesPesajeStock').modal('show');
+                cargarPorcentajesPesajeStock(idCompra);
+            });
+
+            $('#btnGenerarAjustePesajeStock').on('click', function () {
+                var idCompra = parseInt($('#stockIndexPesajeIdActual').val(), 10) || 0;
+                var token = $('input[name="__RequestVerificationToken"]').first().val() || '';
+
+                if (idCompra <= 0 || !token) {
+                    showPorcentajeWarningStock('No se pudo identificar el pesaje.');
+                    return;
+                }
+
+                clearPorcentajeWarningStock();
+                $('#btnGenerarAjustePesajeStock').prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("GenerarAjustePesaje", "Stock")',
+                    method: 'POST',
+                    data: {
+                        __RequestVerificationToken: token,
+                        idCompra: idCompra
+                    }
+                }).done(function (resp) {
+                    if (!resp || resp.ok !== true) {
+                        var mensajeError = (resp && resp.mensaje) || 'No se pudo generar el ajuste.';
+                        showPorcentajeWarningStock(mensajeError);
+                        if ($.trim($('#lblEstadoAjusteModalStock').text() || '').toLowerCase() !== 'actualizado') {
+                            $('#btnGenerarAjustePesajeStock').prop('disabled', false);
+                        }
+                        return;
+                    }
+
+                    actualizarEstadoAjustePesajeStock(resp.estado || 'Actualizado');
+                    $('#modalPorcentajesPesajeStock').modal('hide');
+
+                    if (window.Swal && typeof window.Swal.fire === 'function') {
+                        window.Swal.fire({
+                            icon: 'success',
+                            title: 'Ajuste generado correctamente',
+                            text: resp.mensaje || 'El Ajuste de Stock se realizó correctamente.'
+                        }).then(function () {
+                            window.location.reload();
+                        });
+                    } else {
+                        window.location.reload();
+                    }
+                }).fail(function () {
+                    showPorcentajeWarningStock('No se pudo generar el ajuste.');
+                    if ($.trim($('#lblEstadoAjusteModalStock').text() || '').toLowerCase() !== 'actualizado') {
+                        $('#btnGenerarAjustePesajeStock').prop('disabled', false);
+                    }
                 });
             });
         })();

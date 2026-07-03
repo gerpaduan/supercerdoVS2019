@@ -29,6 +29,7 @@
             fechaDesde = DateTime.Today.ToString("yyyy-MM-dd")
         });
     bool soloLecturaInicial = Model != null && Model.Id > 0;
+    bool altaSinOperacionInicial = !soloLecturaInicial;
 }
 
 <div class="container-fluid">
@@ -67,7 +68,7 @@
             {
                 <div class="d-flex justify-content-end mb-3">
                     <button type="button"
-                            class="btn btn-outline-primary"
+                            class="btn btn-outline-primary btn-sm"
                             id="btnImprimirPago"
                             data-imprimir-url="@ViewBag.ImprimirPagoUrl"
                             data-imprimir-payload-url="@ViewBag.ImprimirPagoPayloadUrl"
@@ -89,7 +90,54 @@
                         <input type="hidden" id="idPersona" name="idPersona" value="@personaIdView" />
                         <input type="hidden" name="desdePos" value="@(renderComoModal.ToString().ToLower())" />
 
-                        <div id="comboSucursales" class="mb-3" style="@estiloComboSucursales">
+                        <div class="form-group pago-operacion-grupo">
+                            <label>¿Qué desea registrar?</label>
+                            <div class="pago-operacion-ayuda">Seleccione primero la operación para continuar. Atajos: `1` pagar, `2` cobrar.</div>
+                            <div class="pago-operacion-selector" role="radiogroup" aria-label="Qué desea registrar">
+                                <button type="button"
+                                        class="pago-operacion-opcion"
+                                        data-operacion-valor="true"
+                                        aria-pressed="false">
+                                    <span class="pago-operacion-icono pago-operacion-icono-pagar">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </span>
+                                    <span class="pago-operacion-contenido">
+                                        <strong>Realizar un pago</strong>
+                                        <small>Salida de dinero hacia proveedor o persona</small>
+                                    </span>
+                                </button>
+
+                                <button type="button"
+                                        class="pago-operacion-opcion"
+                                        data-operacion-valor="false"
+                                        aria-pressed="false">
+                                    <span class="pago-operacion-icono pago-operacion-icono-cobrar">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </span>
+                                    <span class="pago-operacion-contenido">
+                                        <strong>Recibir un cobro</strong>
+                                        <small>Ingreso de dinero desde cliente o persona</small>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <select id="AProveedor" name="AProveedor" class="form-control pago-operacion-select">
+                                @if (altaSinOperacionInicial)
+                                {
+                                    <option value="" selected="selected"></option>
+                                }
+                                <option value="true" @(!altaSinOperacionInicial && Model.AProveedor ? "selected" : "")>Realizar un pago</option>
+                                <option value="false" @(!altaSinOperacionInicial && !Model.AProveedor ? "selected" : "")>Recibir un cobro</option>
+                            </select>
+
+                            <div id="pagoOperacionResumen" class="pago-operacion-resumen pago-operacion-pago @(altaSinOperacionInicial ? "d-none" : "")" aria-live="polite">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <strong>Operación seleccionada</strong>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div id="comboSucursales" class="mb-3 pago-requiere-operacion" style="@estiloComboSucursales">
                             <div class="form-group">
                                 <label>Sucursal</label>
                                 <select class="form-control" id="SucursalId" name="SucursalId">
@@ -106,54 +154,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group pago-operacion-grupo">
-                            <label>Tipo de Operación</label>
-                            <div class="pago-operacion-selector" role="radiogroup" aria-label="Tipo de Operación">
-                                <button type="button"
-                                        class="pago-operacion-opcion"
-                                        data-operacion-valor="true"
-                                        aria-pressed="false">
-                                    <span class="pago-operacion-icono pago-operacion-icono-pagar">
-                                        <i class="fas fa-arrow-up"></i>
-                                    </span>
-                                    <span class="pago-operacion-contenido">
-                                        <strong>Pagar</strong>
-                                        <small>Egreso</small>
-                                    </span>
-                                </button>
-
-                                <button type="button"
-                                        class="pago-operacion-opcion"
-                                        data-operacion-valor="false"
-                                        aria-pressed="false">
-                                    <span class="pago-operacion-icono pago-operacion-icono-cobrar">
-                                        <i class="fas fa-arrow-down"></i>
-                                    </span>
-                                    <span class="pago-operacion-contenido">
-                                        <strong>Cobrar</strong>
-                                        <small>Ingreso</small>
-                                    </span>
-                                </button>
-                            </div>
-
-                            @Html.DropDownListFor(
-                                m => m.AProveedor,
-                                new List<SelectListItem>
-                                {
-                                    new SelectListItem { Text = "Pagar (egreso)", Value = "true"},
-                                    new SelectListItem { Text = "Cobrar (ingreso)", Value = "false"}
-                                },
-                                new { @class = "form-control pago-operacion-select" }
-                            )
-
-                            <div id="pagoOperacionResumen" class="pago-operacion-resumen pago-operacion-pago" aria-live="polite">
-                                <i class="fas fa-arrow-up mr-1"></i>
-                                <strong>Estás registrando un PAGO</strong>
-                                <span>Salida de dinero de caja o cuenta corriente.</span>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
+                        <div class="form-group pago-requiere-operacion">
                             @Html.LabelFor(m => m.Fecha)
                             @Html.TextBoxFor(
                                 m => m.Fecha,
@@ -162,17 +163,17 @@
                             )
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group pago-requiere-operacion">
                             @Html.LabelFor(m => m.NroRecibo)
                             @Html.TextBoxFor(m => m.NroRecibo, new { @class = "form-control", type = "nroRecibo" })
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group pago-requiere-operacion">
                             @Html.Label("Forma de pago")
                             @Html.EnumDropDownListFor(m => m.FormaPago_, new { @class = "form-control", id = "formaPago" })
                         </div>
 
-                        <div id="pagoModoResumen" class="pago-modo-resumen pago-modo-neutro" aria-live="polite">
+                        <div id="pagoModoResumen" class="pago-modo-resumen pago-modo-neutro pago-requiere-operacion" aria-live="polite">
                             <div class="pago-modo-badge" id="pagoModoBadge">Pago simple</div>
                             <div class="pago-modo-texto">
                                 <strong id="pagoModoTitulo">Importe manual</strong>
@@ -180,7 +181,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group importe-destacado">
+                        <div class="form-group importe-destacado pago-requiere-operacion">
                             <label>Importe</label>
                             <div class="input-group">
                                 @Html.TextBoxFor(m => m.Importe, new
@@ -188,7 +189,8 @@
                                     @class = "form-control solo-decimal",
                                     id = "importe",
                                     type = "text",
-                                    autocomplete = "off"
+                                    autocomplete = "off",
+                                    @readonly = soloLecturaInicial ? "readonly" : null
                                 })
                                 <div class="input-group-append">
                                     <button type="button"
@@ -203,7 +205,7 @@
                             </div>
                         </div>
 
-                        <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
+                        <div id="bloqueEfectivo" class="bloque-pago pago-requiere-operacion" style="display:none;">
                             <div class="form-group">
                                 <h5 class="text-primary">Efectivo</h5>
 
@@ -232,7 +234,7 @@
                             </div>
                         </div>
 
-                        <div id="bloqueCheques" class="bloque-pago" style="display:none;">
+                        <div id="bloqueCheques" class="bloque-pago pago-requiere-operacion" style="display:none;">
 
                             <h5 class="mt-1 mb-3 text-primary">Cheques</h5>
 
@@ -271,7 +273,7 @@
 
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group pago-requiere-operacion">
                             @Html.LabelFor(m => m.Observaciones)
                             @Html.TextAreaFor(m => m.Observaciones, new { @class = "form-control", rows = 3 })
                         </div>
@@ -288,7 +290,7 @@
                         <button type="submit"
                                 id="btnGuardarPago"
                                 onclick="if (!@renderComoModal.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
-                                class="btn btn-success btn-block @(soloLecturaInicial ? "d-none" : "")">
+                                class="btn btn-success btn-block pago-requiere-operacion @(soloLecturaInicial ? "d-none" : "")">
                             Guardar pago
                         </button>
                     }
@@ -470,7 +472,13 @@
             formSelector: "#formPago",
             soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionPago",
-            saveButtonSelector: "#btnGuardarPago"
+            saveButtonSelector: "#btnGuardarPago",
+            onStateChanged: function (readOnly) {
+                window.pagoEdicionHabilitada = !readOnly;
+                if (typeof window.actualizarVisibilidadPago === "function") {
+                    window.actualizarVisibilidadPago();
+                }
+            }
         });
     </script>
 }
@@ -571,29 +579,115 @@ else
                 formSelector: "#formPago",
                 soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
                 modifyButtonSelector: "#btnHabilitarEdicionPago",
-                saveButtonSelector: "#btnGuardarPago"
+                saveButtonSelector: "#btnGuardarPago",
+                onStateChanged: function (readOnly) {
+                    window.pagoEdicionHabilitada = !readOnly;
+                    if (typeof window.actualizarVisibilidadPago === "function") {
+                        window.actualizarVisibilidadPago();
+                    }
+                }
             });
         </script>
     }
 }
 
 <style>
+    .container-fluid {
+        font-size: .9rem;
+    }
+
+    .container-fluid > .row > .col-12.col-lg-8.mx-auto {
+        max-width: 980px;
+    }
+
+    .card.shadow.mb-4 {
+        border: 1px solid #e2e8f0;
+        border-radius: .75rem;
+        margin-bottom: .9rem !important;
+        box-shadow: 0 .125rem .35rem rgba(58, 59, 69, .08) !important;
+    }
+
+    .card.shadow.mb-4 .card-body {
+        padding: .85rem .95rem;
+    }
+
+    #formPago .form-group {
+        margin-bottom: .7rem;
+    }
+
+    #formPago label {
+        margin-bottom: .22rem;
+        font-size: .78rem;
+        font-weight: 600;
+    }
+
+    .pago-operacion-ayuda {
+        margin-bottom: .35rem;
+        font-size: .75rem;
+        color: #64748b;
+    }
+
+    #formPago.pago-operacion-pendiente .pago-operacion-grupo {
+        border: 1px solid #b8d6f5;
+        border-radius: .75rem;
+        background: #f7fbff;
+        box-shadow: 0 0 0 3px rgba(78, 115, 223, .10);
+        padding: .7rem .8rem;
+    }
+
+    #formPago.pago-operacion-pendiente .pago-requiere-operacion {
+        opacity: .42;
+        transition: opacity .18s ease;
+    }
+
+    #formPago .form-control,
+    #formPago .input-group-text,
+    #formPago .btn:not(.btn-sm) {
+        min-height: 2.1rem;
+        padding: .28rem .55rem;
+        font-size: .84rem;
+        border-radius: .5rem;
+    }
+
+    #formPago textarea.form-control {
+        min-height: 74px;
+    }
+
+    #formPago .input-group-append .btn {
+        padding-left: .55rem;
+        padding-right: .55rem;
+    }
+
+    #btnImprimirPago {
+        padding: .22rem .5rem;
+        font-size: .78rem;
+        line-height: 1.15;
+        border-radius: .45rem;
+    }
+
+    #btnHabilitarEdicionPago,
+    #btnGuardarPago {
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        font-size: .86rem;
+    }
+
     .importe-destacado label {
         font-weight: bold;
-        font-size: 1.1rem;
+        font-size: .95rem;
     }
 
     .importe-destacado input {
         font-weight: bold;
-        font-size: 1.3rem;
+        font-size: 1.05rem;
     }
 
     .bloque-pago {
         background: #f7f7f7;
         border: 1px solid #e0e0e0;
         border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 12px;
+        padding: .72rem .8rem;
+        margin-bottom: .75rem;
         transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
 
@@ -612,8 +706,8 @@ else
         border-radius: 8px;
         background: #eef6ff;
         color: #1f3b64;
-        padding: .55rem .75rem;
-        margin-bottom: .75rem;
+        padding: .45rem .65rem;
+        margin-bottom: .65rem;
     }
 
     .pago-cabecera-persona {
@@ -624,6 +718,7 @@ else
     }
 
     .pago-cabecera-persona h5 {
+        font-size: 1rem;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -647,26 +742,27 @@ else
         display: flex;
         align-items: center;
         gap: .35rem;
+        font-size: .95rem;
     }
 
     .pago-operacion-selector {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: .6rem;
-        margin-bottom: .55rem;
+        gap: .5rem;
+        margin-bottom: .45rem;
     }
 
     .pago-operacion-opcion {
         display: flex;
         align-items: center;
         gap: .65rem;
-        min-height: 64px;
+        min-height: 56px;
         width: 100%;
         border: 1px solid #dbe5f3;
         border-radius: 8px;
         background: #fff;
         color: #334155;
-        padding: .65rem .75rem;
+        padding: .5rem .65rem;
         text-align: left;
         transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
     }
@@ -692,13 +788,13 @@ else
 
     .pago-operacion-icono {
         flex: 0 0 38px;
-        width: 38px;
-        height: 38px;
+        width: 34px;
+        height: 34px;
         border-radius: 8px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 1rem;
+        font-size: .92rem;
     }
 
     .pago-operacion-icono-pagar {
@@ -719,12 +815,12 @@ else
 
     .pago-operacion-contenido strong {
         line-height: 1.15;
-        font-size: 1rem;
+        font-size: .88rem;
     }
 
     .pago-operacion-contenido small {
         color: #64748b;
-        font-size: .76rem;
+        font-size: .73rem;
         line-height: 1.2;
     }
 
@@ -738,8 +834,8 @@ else
         flex-wrap: wrap;
         gap: .25rem .35rem;
         border-radius: 8px;
-        padding: .45rem .65rem;
-        font-size: .86rem;
+        padding: .38rem .58rem;
+        font-size: .8rem;
         border: 1px solid #dbe5f3;
     }
 
@@ -779,8 +875,8 @@ else
         align-items: center;
         gap: .55rem;
         border-radius: 10px;
-        padding: .45rem .7rem;
-        margin-bottom: .75rem;
+        padding: .36rem .58rem;
+        margin-bottom: .65rem;
         border: 1px solid #dbe5f3;
         background: #f8fafc;
     }
@@ -865,8 +961,50 @@ else
         border: 1px solid #dbe5f3;
         border-radius: 8px;
         background: #f8fafc;
-        padding: .75rem;
+        padding: .6rem;
         white-space: pre-wrap;
+    }
+
+    #tablaCheques {
+        font-size: .82rem;
+        margin-bottom: .55rem;
+    }
+
+    #tablaCheques th,
+    #tablaCheques td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    #tablaCheques thead th {
+        font-size: .71rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        white-space: nowrap;
+    }
+
+    #tablaCheques .btn {
+        font-size: .75rem;
+        padding: .18rem .42rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .container-fluid > .row > .col-12.col-lg-8.mx-auto {
+            max-width: 920px;
+        }
+
+        #formPago .form-control,
+        #formPago .input-group-text,
+        #formPago .btn:not(.btn-sm) {
+            min-height: 2rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .card.shadow.mb-4 .card-body {
+            padding: .76rem .86rem;
+        }
     }
 
     .modal.modal-fondo-activo .modal-dialog {

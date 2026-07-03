@@ -7,6 +7,11 @@
     if (!window || !$) return;
 
     var desdePosPago = @Html.Raw((desdePos ? "true" : "false"));
+    var pagoEsAlta = @Html.Raw((Model == null || Model.Id == 0 ? "true" : "false"));
+    var pagoSoloLecturaInicial = @Html.Raw((Model != null && Model.Id > 0 ? "true" : "false"));
+    var pagoEdicionHabilitada = !pagoSoloLecturaInicial;
+    window.pagoEdicionHabilitada = pagoEdicionHabilitada;
+    var operacionPendienteSeleccion = pagoEsAlta;
     var cambioProgramaticoPago = false;
     var estadoPagoForm = {
         ultimaFormaPago: "",
@@ -124,6 +129,15 @@
     }
 
     function actualizarOperacionPago() {
+        if (operacionPendienteSeleccion) {
+            $(".pago-operacion-opcion")
+                .removeClass("activo-pagar activo-cobrar")
+                .attr("aria-pressed", "false");
+
+            $("#pagoOperacionResumen").addClass("d-none");
+            return;
+        }
+
         var esPago = ($("#AProveedor").val() || "").toString().toLowerCase() === "true";
         var $opciones = $(".pago-operacion-opcion");
         var $resumen = $("#pagoOperacionResumen");
@@ -138,12 +152,13 @@
             .attr("aria-pressed", "true");
 
         if ($resumen.length) {
+            $resumen.removeClass("d-none");
             $resumen
                 .removeClass("pago-operacion-pago pago-operacion-cobro")
                 .addClass(esPago ? "pago-operacion-pago" : "pago-operacion-cobro")
                 .html(esPago
-                    ? '<i class="fas fa-arrow-up mr-1"></i><strong>Estas registrando un PAGO</strong><span>Salida de dinero de caja o cuenta corriente.</span>'
-                    : '<i class="fas fa-arrow-down mr-1"></i><strong>Estas registrando un COBRO</strong><span>Ingreso de dinero a caja o cuenta corriente.</span>');
+                    ? '<i class="fas fa-arrow-up mr-1"></i><strong>Operación seleccionada: Realizar un pago</strong><span>Salida de dinero hacia proveedor o persona.</span>'
+                    : '<i class="fas fa-arrow-down mr-1"></i><strong>Operación seleccionada: Recibir un cobro</strong><span>Ingreso de dinero desde cliente o persona.</span>');
         }
 
         if ($guardar.length) {
@@ -152,6 +167,42 @@
                 .addClass(esPago ? "btn-danger" : "btn-success")
                 .text(esPago ? "Guardar pago" : "Guardar cobro");
         }
+    }
+
+    function setOperacionPendiente(pendiente) {
+        operacionPendienteSeleccion = !!pendiente;
+
+        var $form = $("#formPago");
+        var $bloqueados = $form.find(".pago-requiere-operacion");
+        var $controles = $bloqueados.find("input, select, textarea, button").not("[type='hidden']");
+        var puedeHabilitarControles = !pagoSoloLecturaInicial || pagoEdicionHabilitada;
+
+        $form.toggleClass("pago-operacion-pendiente", operacionPendienteSeleccion);
+        if (operacionPendienteSeleccion) {
+            $controles.prop("disabled", true);
+        } else if (puedeHabilitarControles) {
+            $controles.prop("disabled", false);
+        }
+
+        if (operacionPendienteSeleccion) {
+            $("#btnGuardarPago").addClass("d-none").prop("disabled", true);
+        } else if (!pagoSoloLecturaInicial) {
+            $("#btnGuardarPago").removeClass("d-none").prop("disabled", false);
+        }
+
+        actualizarOperacionPago();
+    }
+
+    function focoEnControlEditable() {
+        var el = document.activeElement;
+        if (!el) return false;
+
+        var tag = (el.tagName || "").toLowerCase();
+        if (tag === "textarea" || tag === "select") return true;
+        if (tag !== "input") return false;
+
+        var tipo = (el.type || "").toLowerCase();
+        return tipo !== "button" && tipo !== "checkbox" && tipo !== "radio";
     }
 
     function validarChequesContraTipoOperacion(esAProveedor, onComplete) {
@@ -197,8 +248,16 @@
     }
 
     function actualizarVisibilidad() {
+        if (operacionPendienteSeleccion) {
+            $("#bloqueCheques").hide();
+            $("#bloqueEfectivo").hide();
+            $("#importe").prop("readonly", true);
+            return;
+        }
+
         var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
         var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
+        var bloquearImporte = !pagoEdicionHabilitada;
 
         var esCheque = esFormaCheque(valor, texto);
         var esMixto = esFormaMixta(valor, texto);
@@ -222,7 +281,7 @@
 
         $("#bloqueCheques").hide();
         $("#bloqueEfectivo").hide();
-        $("#importe").prop("readonly", false);
+        $("#importe").prop("readonly", bloquearImporte);
 
         if (window.PagoCheques) {
             window.PagoCheques.clearCheques();
@@ -231,6 +290,11 @@
             $("#txtTotalCheques").val(0);
         }
     }
+
+    window.actualizarVisibilidadPago = function () {
+        pagoEdicionHabilitada = !!window.pagoEdicionHabilitada;
+        actualizarVisibilidad();
+    };
 
     $(document)
         .off("change.posPagoProteccion keyup.posPagoProteccion", "#formPago input, #formPago select, #formPago textarea")
@@ -241,6 +305,7 @@
         })
         .off("change.posPago", "#formaPago")
         .on("change.posPago", "#formaPago", function () {
+            if (operacionPendienteSeleccion) return;
             if (cambioProgramaticoPago) return;
 
             var valorNuevo = $(this).val();
@@ -277,6 +342,18 @@
         })
         .off("change.posPagoOperacion", "#AProveedor")
         .on("change.posPagoOperacion", "#AProveedor", function () {
+            var valorActual = ($(this).val() || "").toString();
+            if (valorActual === "") {
+                setOperacionPendiente(true);
+                setTimeout(actualizarVisibilidad, 0);
+                return;
+            }
+
+            if (operacionPendienteSeleccion) {
+                setOperacionPendiente(false);
+                setTimeout(actualizarVisibilidad, 0);
+            }
+
             if (cambioProgramaticoPago) return;
 
             var valorAnterior = estadoPagoForm.ultimoAProveedor || $(this).val();
@@ -284,6 +361,7 @@
 
             if (valorAnterior === valorNuevo) {
                 actualizarOperacionPago();
+                setTimeout(actualizarVisibilidad, 0);
                 return;
             }
 
@@ -295,6 +373,7 @@
 
                 estadoPagoForm.ultimoAProveedor = valorNuevo;
                 actualizarOperacionPago();
+                setTimeout(actualizarVisibilidad, 0);
             });
         })
         .off("click.posPagoOperacion", ".pago-operacion-opcion")
@@ -304,19 +383,65 @@
 
             $("#AProveedor").val(valor).trigger("change");
         })
+        .off("keydown.posPagoAtajos")
+        .on("keydown.posPagoAtajos", function (event) {
+            if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+            if (focoEnControlEditable()) return;
+
+            if (event.key === "1") {
+                event.preventDefault();
+                $(".pago-operacion-opcion[data-operacion-valor='true']").trigger("click");
+                return;
+            }
+
+            if (event.key === "2") {
+                event.preventDefault();
+                $(".pago-operacion-opcion[data-operacion-valor='false']").trigger("click");
+            }
+        })
+        .off("submit.posPagoOperacion", "#formPago")
+        .on("submit.posPagoOperacion", "#formPago", function (event) {
+            if (!operacionPendienteSeleccion) return;
+
+            event.preventDefault();
+            window.swalPago({
+                icon: "warning",
+                title: "Validación",
+                text: "Seleccione primero si desea realizar un pago o recibir un cobro."
+            });
+            return false;
+        })
         .off("input.posPago", "#Efectivo")
         .on("input.posPago", "#Efectivo", function () {
             if (window.PagoCheques) {
                 window.PagoCheques.recalcularTotales();
             }
+        })
+        .off("click.posPagoModificar", "#btnHabilitarEdicionPago")
+        .on("click.posPagoModificar", "#btnHabilitarEdicionPago", function () {
+            pagoEdicionHabilitada = true;
+            window.pagoEdicionHabilitada = true;
+            setTimeout(actualizarVisibilidad, 0);
         });
 
     $(document).ready(function () {
         estadoPagoForm.ultimaFormaPago = $("#formaPago").val() || "";
-        estadoPagoForm.ultimoAProveedor = $("#AProveedor").val() || "";
-        $("#SucursalId").trigger("focus");
-        actualizarOperacionPago();
+
+        if (pagoEsAlta) {
+            cambioProgramaticoPago = true;
+            $("#AProveedor").val("");
+            cambioProgramaticoPago = false;
+            estadoPagoForm.ultimoAProveedor = "";
+            setOperacionPendiente(true);
+            $(".pago-operacion-opcion[data-operacion-valor='true']").trigger("focus");
+        } else {
+            estadoPagoForm.ultimoAProveedor = $("#AProveedor").val() || "";
+            setOperacionPendiente(false);
+            $("#SucursalId").trigger("focus");
+        }
+
         setTimeout(actualizarVisibilidad, 0);
+        actualizarOperacionPago();
     });
 })(window, jQuery);
 </script>

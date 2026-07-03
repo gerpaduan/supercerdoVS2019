@@ -130,6 +130,16 @@ else
         <div class="col-12 col-xl-4 order-1 order-xl-2">
             <div class="stock-detalle-meta-card">
                 <div class="stock-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.IdCompra</span></div>
+                @if (Model.EsPesaje)
+                {
+                    <div class="stock-detalle-meta-row">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-info btn-ver-porcentaje-pesaje-index"
+                                data-id-compra="@Model.IdCompra">
+                            <i class="fas fa-percent mr-1"></i> Ver Porc(%)
+                        </button>
+                    </div>
+                }
                 @if (Model.EsPesaje && Model.IdAjusteRelacionado.HasValue)
                 {
                     <div class="stock-detalle-meta-row">

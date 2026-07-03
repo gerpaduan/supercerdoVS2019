@@ -95,24 +95,86 @@
                 }
                 <input type="hidden" name="returnUrl" value="@returnUrlCtaCte" />
 
-                <!-- FECHA + FILTRAR: usamos input-group para que queden SIEMPRE en la misma línea -->
-                <div class="input-group mb-3 ctacte-filtros-group" style="max-width: 520px;">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Desde</span>
-                    </div>
-                    <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-filter"></i> Filtrar
-                        </button>
+                <div class="d-none d-md-flex justify-content-between align-items-center ctacte-toolbar-row">
+                    <div class="d-flex align-items-center ctacte-filtros-group">
+                        <div class="input-group ctacte-fecha-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Desde</span>
+                            </div>
+                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="custom-control custom-switch ctacte-anulados-switch">
+                            @if (!desdePos)
+                            {
+                                <input type="checkbox"
+                                       class="custom-control-input"
+                                       id="chkMostrarAnulados"
+                                       name="mostrarAnulados"
+                                       value="true"
+                                       onchange="this.form.submit();"
+                                       @(mostrarAnulados ? "checked" : "") />
+                            }
+                            else
+                            {
+                                <input type="checkbox"
+                                       class="custom-control-input"
+                                       id="chkMostrarAnulados"
+                                       @(mostrarAnulados ? "checked" : "") />
+                            }
+                            <label class="custom-control-label" for="chkMostrarAnulados">
+                                Mostrar anulados
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="custom-control custom-switch">
+                    <div class="d-flex justify-content-end align-items-center ctacte-acciones-row">
+                        <a href="@Url.Action("AddOrEditPago", "Finanzas",
+            new { idPersona = ViewBag.IdPersona, returnUrl = returnUrl, desdePos = desdePos })"
+                           class="btn btn-success mr-2"
+                           id="btnNuevoPagoCtaCteDesktop"
+                           data-pos-ajax="@(desdePos ? "true" : "false")"
+                           data-pos-title="Pago / Cobro">
+                            <i class="fas fa-plus"></i> Agregar Pago / Cobro
+                        </a>
+
+                        <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
+                           class="btn btn-outline-danger mr-2">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+
+                        <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
+                           class="btn btn-outline-success">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                    </div>
+                </div>
+
+                <!-- BOTONES PARA MOBILE (xs - sm) -->
+                <div class="d-md-none mt-3">
+                    <div class="input-group mb-2 ctacte-filtros-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Desde</span>
+                        </div>
+                        <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="custom-control custom-switch mb-3">
                         @if (!desdePos)
                         {
                             <input type="checkbox"
                                    class="custom-control-input"
-                                   id="chkMostrarAnulados"
+                                   id="chkMostrarAnuladosMobile"
                                    name="mostrarAnulados"
                                    value="true"
                                    onchange="this.form.submit();"
@@ -122,42 +184,19 @@
                         {
                             <input type="checkbox"
                                    class="custom-control-input"
-                                   id="chkMostrarAnulados"
+                                   id="chkMostrarAnuladosMobile"
                                    @(mostrarAnulados ? "checked" : "") />
                         }
-                        <label class="custom-control-label" for="chkMostrarAnulados">
+                        <label class="custom-control-label" for="chkMostrarAnuladosMobile">
                             Mostrar anulados
                         </label>
                     </div>
-                </div>
 
-                <!-- BOTONES PARA DESKTOP (md+) -->
-                <div class="d-none d-md-flex justify-content-end align-items-center ctacte-acciones-row">
-                    <a href="@Url.Action("AddOrEditPago", "Finanzas",
-        new { idPersona = ViewBag.IdPersona, returnUrl = returnUrl, desdePos = desdePos })"
-                       class="btn btn-success mr-2"
-                       data-pos-ajax="@(desdePos ? "true" : "false")"
-                       data-pos-title="Pago / Cobro">
-                        <i class="fas fa-plus"></i> Agregar Pago / Cobro
-                    </a>
-
-                    <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
-                       class="btn btn-outline-danger mr-2">
-                        <i class="fas fa-file-pdf"></i> PDF
-                    </a>
-
-                    <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
-                       class="btn btn-outline-success">
-                        <i class="fas fa-file-excel"></i> Excel
-                    </a>
-                </div>
-
-                <!-- BOTONES PARA MOBILE (xs - sm) -->
-                <div class="d-md-none mt-3">
                     <!-- Agregar Pago / Cobro 100% -->
                     <a href="@Url.Action("AddOrEditPago", "Finanzas",
         new { idPersona = ViewBag.IdPersona, returnUrl = returnUrl, desdePos = desdePos })"
                        class="btn btn-success btn-block mb-2"
+                       id="btnNuevoPagoCtaCteMobile"
                        data-pos-ajax="@(desdePos ? "true" : "false")"
                        data-pos-title="Pago / Cobro">
                         <i class="fas fa-plus"></i> Agregar Pago / Cobro
@@ -205,14 +244,14 @@
                             <!-- ID oculto -->
                             <th style="display:none;">ID</th>
 
-                            <th>Fecha</th>
-                            <th>Operación</th>
-                            <th>Tipo</th>
-                            <th>Nro.Doc</th>
-                            <th>Detalle</th>
-                            <th style="text-align:right;">Importe</th>
-                            <th style="text-align:right;">Saldo</th>
-                            <th>Sucursal</th>
+                            <th data-sort-type="date" data-sort-index="3">Fecha</th>
+                            <th data-sort-type="text" data-sort-index="4">Operación</th>
+                            <th data-sort-type="text" data-sort-index="5">Tipo</th>
+                            <th data-sort-type="text" data-sort-index="6">Nro.Doc</th>
+                            <th data-sort-type="text" data-sort-index="7">Detalle</th>
+                            <th data-sort-type="number" data-sort-index="8" style="text-align:right;">Importe</th>
+                            <th data-sort-type="number" data-sort-index="9" style="text-align:right;">Saldo</th>
+                            <th data-sort-type="text" data-sort-index="10">Sucursal</th>
 
                         </tr>
                     </thead>
@@ -340,13 +379,34 @@
         align-items: center;
     }
 
-    .ctacte-page .ctacte-filtros-group .custom-control {
-        margin-left: .55rem;
+    .ctacte-page .ctacte-toolbar-row {
+        gap: .75rem;
+    }
+
+    .ctacte-page .ctacte-fecha-group {
+        max-width: 286px;
+    }
+
+    .ctacte-page .ctacte-fecha-group .input-group-text,
+    .ctacte-page .ctacte-fecha-group .form-control,
+    .ctacte-page .ctacte-fecha-group .btn {
+        min-height: 1.92rem;
+        font-size: .78rem;
+        padding: .18rem .42rem;
+    }
+
+    .ctacte-page .ctacte-fecha-group .input-group-text {
+        padding-left: .38rem;
+        padding-right: .38rem;
+    }
+
+    .ctacte-page .ctacte-anulados-switch {
+        margin-left: .35rem;
     }
 
     .ctacte-page .ctacte-acciones-row .btn {
-        font-size: .82rem;
-        padding: .28rem .58rem;
+        font-size: .79rem;
+        padding: .24rem .5rem;
     }
 
     .ctacte-page .small,
@@ -392,6 +452,18 @@
             min-height: 2.02rem;
             font-size: .81rem;
             padding: .24rem .5rem;
+        }
+
+        .ctacte-page .ctacte-fecha-group {
+            max-width: 272px;
+        }
+
+        .ctacte-page .ctacte-fecha-group .input-group-text,
+        .ctacte-page .ctacte-fecha-group .form-control,
+        .ctacte-page .ctacte-fecha-group .btn {
+            min-height: 1.82rem;
+            font-size: .75rem;
+            padding: .14rem .38rem;
         }
 
         .ctacte-page .ctacte-table-compact {
@@ -449,9 +521,31 @@
 </script>
 <script>
     (function () {
+        function focoEnControlEditable() {
+            var el = document.activeElement;
+            if (!el) return false;
+
+            var tag = (el.tagName || "").toLowerCase();
+            if (tag === "textarea" || tag === "select") return true;
+            if (tag !== "input") return false;
+
+            var tipo = (el.type || "").toLowerCase();
+            return tipo !== "button" && tipo !== "checkbox" && tipo !== "radio";
+        }
+
+        function abrirNuevoPagoDesdeAtajo() {
+            var btn = document.getElementById("btnNuevoPagoCtaCteDesktop");
+            if (!btn || btn.offsetParent === null) {
+                btn = document.getElementById("btnNuevoPagoCtaCteMobile");
+            }
+
+            if (!btn) return;
+            btn.click();
+        }
+
         $(document)
-            .off("change.ctacteMostrarAnulados", "#chkMostrarAnulados")
-            .on("change.ctacteMostrarAnulados", "#chkMostrarAnulados", function () {
+            .off("change.ctacteMostrarAnulados", "#chkMostrarAnulados, #chkMostrarAnuladosMobile")
+            .on("change.ctacteMostrarAnulados", "#chkMostrarAnulados, #chkMostrarAnuladosMobile", function () {
                 if (!desdePos) {
                     return;
                 }
@@ -465,7 +559,24 @@
         $(document)
             .off("submit.ctacteMostrarAnulados", 'form[action*="CtaCtePersona"]')
             .on("submit.ctacteMostrarAnulados", 'form[action*="CtaCtePersona"]', function () {
-                $("#mostrarAnuladosHidden").val($("#chkMostrarAnulados").is(":checked") ? "true" : "false");
+                var checkedDesktop = $("#chkMostrarAnulados").is(":checked");
+                var checkedMobile = $("#chkMostrarAnuladosMobile").is(":checked");
+                $("#mostrarAnuladosHidden").val((checkedDesktop || checkedMobile) ? "true" : "false");
+            })
+            .off("keydown.ctacteNuevoPago")
+            .on("keydown.ctacteNuevoPago", function (event) {
+                if (!event.altKey || event.ctrlKey || event.metaKey) return;
+                if (focoEnControlEditable()) return;
+
+                var esMas =
+                    event.key === "+" ||
+                    event.code === "NumpadAdd" ||
+                    (event.shiftKey && event.key === "=");
+
+                if (!esMas) return;
+
+                event.preventDefault();
+                abrirNuevoPagoDesdeAtajo();
             });
     })();
 </script>
@@ -481,6 +592,31 @@
 
     #tablaPersona td, #tablaPersona th {
         white-space: nowrap;
+    }
+
+    #tablaPersona thead th[data-sort-type] {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 1.15rem;
+    }
+
+    #tablaPersona thead th[data-sort-type]::after {
+        content: " ";
+        position: absolute;
+        right: .38rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, .72);
+        font-size: .62rem;
+    }
+
+    #tablaPersona thead th.sort-asc::after {
+        content: "▲";
+    }
+
+    #tablaPersona thead th.sort-desc::after {
+        content: "▼";
     }
 
     #tablaPersona tr.ctacte-row-historico td {
@@ -507,3 +643,90 @@
         color: #ff7f7f !important;
     }
 </style>
+
+<script>
+    (function () {
+        var tabla = document.getElementById("tablaPersona");
+        if (!tabla || !tabla.tHead || !tabla.tBodies.length) return;
+
+        var tbody = tabla.tBodies[0];
+        var headers = Array.from(tabla.tHead.querySelectorAll("th[data-sort-type]"));
+        var sortState = {
+            index: 3,
+            direction: "desc"
+        };
+
+        function parseNumber(value) {
+            var normalized = (value || "")
+                .toString()
+                .replace(/\./g, "")
+                .replace(",", ".")
+                .replace(/[^\d.-]/g, "");
+            var parsed = parseFloat(normalized);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function parseDate(value) {
+            var match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((value || "").toString().trim());
+            if (!match) return 0;
+            return new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10)).getTime();
+        }
+
+        function getCellSortValue(row, index, type) {
+            var cell = row.cells[index];
+            var text = cell ? (cell.textContent || "").trim() : "";
+
+            if (type === "number") return parseNumber(text);
+            if (type === "date") return parseDate(text);
+            return text.toLowerCase();
+        }
+
+        function updateHeaderState(activeHeader, direction) {
+            headers.forEach(function (header) {
+                header.classList.remove("sort-asc", "sort-desc");
+            });
+
+            if (activeHeader) {
+                activeHeader.classList.add(direction === "asc" ? "sort-asc" : "sort-desc");
+            }
+        }
+
+        function sortByColumn(index, type, direction, activeHeader) {
+            var rows = Array.from(tbody.rows).map(function (row, originalIndex) {
+                return {
+                    row: row,
+                    value: getCellSortValue(row, index, type),
+                    originalIndex: originalIndex
+                };
+            });
+
+            rows.sort(function (a, b) {
+                if (a.value < b.value) return direction === "asc" ? -1 : 1;
+                if (a.value > b.value) return direction === "asc" ? 1 : -1;
+                return a.originalIndex - b.originalIndex;
+            });
+
+            rows.forEach(function (item) {
+                tbody.appendChild(item.row);
+            });
+
+            updateHeaderState(activeHeader, direction);
+        }
+
+        headers.forEach(function (header) {
+            header.addEventListener("click", function () {
+                var index = parseInt(header.getAttribute("data-sort-index"), 10);
+                var type = header.getAttribute("data-sort-type") || "text";
+                var direction = (sortState.index === index && sortState.direction === "asc") ? "desc" : "asc";
+
+                sortState.index = index;
+                sortState.direction = direction;
+                sortByColumn(index, type, direction, header);
+            });
+        });
+
+        if (headers.length) {
+            sortByColumn(sortState.index, headers[0].getAttribute("data-sort-type") || "date", sortState.direction, headers[0]);
+        }
+    })();
+</script>
