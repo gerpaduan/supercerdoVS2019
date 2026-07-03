@@ -15,6 +15,13 @@
         --dash-soft: #f4f7fa;
         --dash-good: #2f9e67;
         --dash-bad: #b94a48;
+        font-size: .93rem;
+    }
+
+    .dashboard-shell > .dashboard-hero,
+    .dashboard-shell > .row,
+    .dashboard-shell > .card {
+        margin-bottom: 1rem !important;
     }
 
     html.dark-mode .dashboard-shell {
@@ -27,6 +34,8 @@
         color: #fff;
         overflow: hidden;
         position: relative;
+        border-radius: 1rem;
+        padding: 1rem 1.25rem !important;
     }
 
     .dashboard-hero::after {
@@ -41,19 +50,27 @@
 
     .dashboard-filters .form-control,
     .dashboard-filters .custom-select {
-        border-radius: .85rem;
-        min-height: 44px;
+        border-radius: .7rem;
+        min-height: 38px;
+        font-size: .86rem;
+        padding-top: .3rem;
+        padding-bottom: .3rem;
     }
 
     .dashboard-card {
         border: 1px solid var(--dash-line);
-        border-radius: 1rem;
-        box-shadow: 0 14px 28px rgba(26, 46, 69, 0.06);
+        border-radius: .85rem;
+        box-shadow: 0 10px 22px rgba(26, 46, 69, 0.05);
     }
 
     .dashboard-card .card-header {
         background: #fff;
         border-bottom: 1px solid rgba(219, 228, 236, 0.9);
+        padding: .75rem .95rem !important;
+    }
+
+    .dashboard-card .card-body {
+        padding: .85rem .95rem;
     }
 
     .dashboard-kpi {
@@ -62,34 +79,34 @@
     }
 
     .dashboard-kpi .kpi-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: .9rem;
+        width: 36px;
+        height: 36px;
+        border-radius: .75rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background: rgba(45, 106, 138, 0.1);
         color: var(--dash-cool);
-        font-size: 1rem;
+        font-size: .9rem;
     }
 
     .dashboard-kpi .kpi-label {
         color: var(--dash-muted);
-        font-size: .82rem;
+        font-size: .74rem;
         text-transform: uppercase;
         letter-spacing: .05em;
     }
 
     .dashboard-kpi .kpi-value {
         color: var(--dash-ink);
-        font-size: 1.6rem;
+        font-size: 1.35rem;
         font-weight: 700;
         line-height: 1.1;
     }
 
     .dashboard-kpi .kpi-meta {
         color: var(--dash-muted);
-        font-size: .85rem;
+        font-size: .78rem;
     }
 
     .balance-scale-card {
@@ -116,7 +133,7 @@
     }
 
     .scale-weight {
-        font-size: 2.25rem;
+        font-size: 1.95rem;
         font-weight: 700;
         color: var(--dash-ink);
         letter-spacing: .04em;
@@ -124,43 +141,47 @@
 
     .dash-chart-wrap {
         position: relative;
-        min-height: 290px;
+        min-height: 235px;
     }
 
     .dash-chart-wrap.is-compact {
-        min-height: 330px;
+        min-height: 280px;
     }
 
     .mini-table th,
     .mini-table td {
         vertical-align: middle;
-        font-size: .92rem;
+        font-size: .84rem;
+        padding: .4rem .5rem;
+        line-height: 1.15;
     }
 
     .mini-table thead th {
         border-top: 0;
         color: var(--dash-muted);
-        font-size: .76rem;
+        font-size: .69rem;
         text-transform: uppercase;
         letter-spacing: .05em;
+        padding-top: .35rem;
+        padding-bottom: .35rem;
     }
 
     .dashboard-empty,
     .dashboard-loading {
         color: var(--dash-muted);
-        font-size: .95rem;
-        padding: 1rem 0;
+        font-size: .84rem;
+        padding: .75rem 0;
     }
 
     .dashboard-subtle {
         color: var(--dash-muted);
-        font-size: .85rem;
+        font-size: .78rem;
     }
 
     .dashboard-finanzas-resumen {
         border: 1px solid rgba(219, 228, 236, 0.85);
         border-radius: .9rem;
-        padding: .9rem 1rem;
+        padding: .72rem .85rem;
         background: #f9fbfd;
         height: 100%;
     }
@@ -173,26 +194,40 @@
 
     .dashboard-finanzas-resumen .summary-label {
         color: var(--dash-muted);
-        font-size: .78rem;
+        font-size: .71rem;
         text-transform: uppercase;
         letter-spacing: .05em;
     }
 
     .dashboard-finanzas-resumen .summary-value {
         color: var(--dash-ink);
-        font-size: 1.25rem;
+        font-size: 1.08rem;
         font-weight: 700;
         line-height: 1.15;
     }
 
     .dashboard-cheque-obs {
         display: inline-block;
-        padding: .18rem .55rem;
+        padding: .14rem .45rem;
         border-radius: 999px;
         background: rgba(45, 106, 138, 0.12);
         color: var(--dash-cool);
-        font-size: .76rem;
+        font-size: .69rem;
         font-weight: 700;
+    }
+
+    .dashboard-shell h1.h3 {
+        font-size: 1.45rem;
+        line-height: 1.15;
+    }
+
+    .dashboard-shell h6 {
+        font-size: .92rem;
+    }
+
+    .dashboard-shell .badge {
+        font-size: .72rem;
+        padding: .3rem .45rem;
     }
 
     .dashboard-cheque-obs.is-danger {
@@ -216,13 +251,17 @@
     }
 
     @@media (max-width: 767.98px) {
+        .dashboard-hero {
+            padding: .9rem 1rem !important;
+        }
+
         .scale-weight {
-            font-size: 1.9rem;
+            font-size: 1.65rem;
         }
 
         .dash-chart-wrap,
         .dash-chart-wrap.is-compact {
-            min-height: 240px;
+            min-height: 210px;
         }
     }
 </style>
