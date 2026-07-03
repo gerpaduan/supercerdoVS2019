@@ -9,55 +9,142 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
-<div class="container-fluid">
+<div class="container-fluid px-2 px-md-3 cajas-page cajas-form-compact">
     @Html.AntiForgeryToken()
 
-    <form id="formFiltros">
-        <div class="row mb-3">
-            <!-- Combo sucursal -->
-            <div class="col-md-3">
-                <select name="idSucursal" id="idSucursal" class="form-control">
-                    <option value="">-- Todas las sucursales --</option>
-                    @foreach (var s in sucursales)
-                    {
-                        <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>
-                            @s.SucursalNombre
-                        </option>
-                    }
-                </select>
-            </div>
+    <div class="card shadow-sm mb-3 cajas-panel-card">
+        <div class="card-body">
+            <form id="formFiltros">
+                <div class="row mb-3">
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <label for="idSucursal" class="cajas-filtro-label">Sucursal</label>
+                        <select name="idSucursal" id="idSucursal" class="form-control">
+                            <option value="">-- Todas las sucursales --</option>
+                            @foreach (var s in sucursales)
+                            {
+                                <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>
+                                    @s.SucursalNombre
+                                </option>
+                            }
+                        </select>
+                    </div>
 
-            <!-- Buscar vendedor -->
-            <div class="col-md-3">
-                <div class="input-group">
-                    <input type="text"
-                           name="buscar"
-                           id="buscarVendedor"
-                           value="@buscar"
-                           class="form-control"
-                           placeholder="buscar vendedor"
-                           onkeyup="filtrar()" />
+                    <div class="col-12 col-md-5 col-xl-4">
+                        <label for="buscarVendedor" class="cajas-filtro-label">Vendedor</label>
+                        <div class="input-group">
+                            <input type="text"
+                                   name="buscar"
+                                   id="buscarVendedor"
+                                   value="@buscar"
+                                   class="form-control"
+                                   placeholder="buscar vendedor"
+                                   onkeyup="filtrar()" />
 
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="button" id="btnBuscarCajasAbiertas" onclick="filtrar()">
-                            <span class="btn-buscar-texto">Buscar</span>
-                        </button>
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="btnBuscarCajasAbiertas" onclick="filtrar()">
+                                    <span class="btn-buscar-texto">Buscar</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-md-6">
                 <div id="estadoBusquedaCajasAbiertas" class="text-muted small">Resultados actualizados.</div>
-            </div>
+            </form>
         </div>
-    </form>
+    </div>
 
-    <!-- Área que se actualiza con AJAX -->
-    <div id="tablaResultado">
+    <div id="tablaResultado" class="cajas-resultado-wrap">
         @Html.Partial("_TablaCajasAbiertas", Model)
     </div>
+
+    <style>
+        .cajas-page {
+            font-size: .9rem;
+        }
+
+        .cajas-page .cajas-panel-card {
+            border: 1px solid #e9ecef;
+            border-radius: .75rem;
+        }
+
+        .cajas-page .cajas-panel-card > .card-body,
+        .cajas-page .cajas-panel-card .card-body {
+            padding: .8rem .92rem;
+        }
+
+        .cajas-page .cajas-filtro-label {
+            font-size: .76rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: .18rem;
+        }
+
+        .cajas-page .cajas-form-compact .form-control,
+        .cajas-page .cajas-form-compact .input-group-text,
+        .cajas-page .cajas-form-compact .btn:not(.btn-sm) {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+            border-radius: .52rem;
+        }
+
+        .cajas-page .small,
+        .cajas-page .text-muted {
+            font-size: .76rem !important;
+        }
+
+        .cajas-page #tablaCajas {
+            font-size: .82rem;
+        }
+
+        .cajas-page #tablaCajas th,
+        .cajas-page #tablaCajas td {
+            padding: .36rem .48rem;
+            vertical-align: middle;
+            line-height: 1.12;
+        }
+
+        .cajas-page #tablaCajas thead th,
+        .cajas-page #tablaCajas > thead > tr > th {
+            font-size: .72rem !important;
+            line-height: 1.05;
+            padding-top: .42rem;
+            padding-bottom: .42rem;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        .cajas-page #tablaCajas .btn-sm {
+            padding: .18rem .42rem;
+            line-height: 1.12;
+            font-size: .76rem;
+        }
+
+        @@media (min-width: 1200px) {
+            .cajas-page .cajas-panel-card > .card-body,
+            .cajas-page .cajas-panel-card .card-body {
+                padding: .72rem .84rem;
+            }
+
+            .cajas-page .cajas-form-compact .form-control,
+            .cajas-page .cajas-form-compact .input-group-text,
+            .cajas-page .cajas-form-compact .btn:not(.btn-sm) {
+                min-height: 2.02rem;
+                font-size: .81rem;
+                padding: .24rem .5rem;
+            }
+
+            .cajas-page #tablaCajas {
+                font-size: .79rem;
+            }
+
+            .cajas-page #tablaCajas thead th,
+            .cajas-page #tablaCajas > thead > tr > th {
+                font-size: .69rem !important;
+            }
+        }
+    </style>
 
 </div>
 

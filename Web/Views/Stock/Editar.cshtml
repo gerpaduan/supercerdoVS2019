@@ -28,7 +28,7 @@
     };
 }
 
-<div class="container-fluid px-2 px-md-3 stock-page" data-stock-page="1">
+<div class="container-fluid px-2 px-md-3 stock-page stock-form-compact" data-stock-page="1">
     <div id="stockDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontró un borrador local de este movimiento de stock.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -45,7 +45,7 @@
         </span>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm stock-panel-card">
         <div class="card-body">
             @if (!ViewData.ModelState.IsValid)
             {
@@ -106,6 +106,8 @@
                             </div>
                             <small class="form-text text-muted">La acción se desbloquea sólo cuando presiona cambiar.</small>
                         </div>
+                    </div>
+                    <div class="col-12 col-xl-4">
                     </div>
                 </div>
 
@@ -249,32 +251,15 @@
                             </div>
                         }
                     </div>
-                    <div class="col-12 col-xl-4">
-                        @if (Model.EsEdicion)
-                        {
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="small text-muted">Creado</div>
-                                    <div class="font-weight-bold">@Model.Creado</div>
-                                    <div class="small text-muted">@Model.CreadoPor</div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="small text-muted">Actualizado</div>
-                                    <div class="font-weight-bold">@Model.Actualizado</div>
-                                    <div class="small text-muted">@Model.ActualizadoPor</div>
-                                </div>
-                            </div>
-                        }
-                    </div>
                 </div>
 
                 <hr />
 
                 <div class="row">
                     <div class="col-12 col-xl-8">
-                        <div class="border rounded p-3 mb-3">
+                        <div class="border rounded p-3 mb-3 stock-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                                <h6 class="font-weight-bold text-uppercase text-muted mb-0">Agregar producto</h6>
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 stock-section-title">Agregar producto</h6>
                                 <div class="d-flex flex-wrap align-items-center gap-3">
                                     <div class="custom-control custom-switch mr-2">
                                         <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
@@ -333,9 +318,12 @@
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-1">
-                                    <button type="button" class="btn btn-primary btn-block mb-3 d-flex align-items-center justify-content-center" id="btnAgregarLineaStock" title="Agregar">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
+                                    <div class="form-group">
+                                        <label class="d-block invisible mb-0">&nbsp;</label>
+                                        <button type="button" class="btn btn-primary btn-block d-flex align-items-center justify-content-center" id="btnAgregarLineaStock" title="Agregar">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -345,7 +333,7 @@
                         <div id="stockPesajesVinculadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm" id="tablaLineasStock">
+                            <table class="table table-bordered table-sm stock-table-compact" id="tablaLineasStock">
                                 <thead class="thead-light">
                                     <tr>
                                         <th>Producto</th>
@@ -361,9 +349,9 @@
                     </div>
 
                     <div class="col-12 col-xl-4">
-                        <div class="card bg-light">
+                        <div class="card bg-light stock-panel-card stock-summary-card">
                             <div class="card-body">
-                                <h6 class="font-weight-bold text-uppercase text-muted">Resumen</h6>
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-2 stock-section-title">Resumen</h6>
                                 <div class="d-flex justify-content-between">
                                     <span>Total items</span>
                                     <strong id="totalItems">@Model.CantItems</strong>
@@ -381,10 +369,33 @@
                         <small class="form-text text-muted mt-2" id="txtAyudaCantidad">
                             @(permiteNegativo ? "Puede ingresar valores positivos o negativos según el ajuste o egreso." : "")
                         </small>
-                        <div class="form-group mt-3 mb-0 col-xl-12 px-0">
-                            <label for="Observaciones">Observaciones</label>
-                            @Html.TextAreaFor(m => m.Observaciones, 2, 1, new { @class = "form-control js-auto-resize", id = "Observaciones", style = "min-height: calc(1.5em * 2 + 1rem); overflow:hidden; resize:vertical;" })
+                        <div class="card stock-panel-card mt-3">
+                            <div class="card-body">
+                                <div class="form-group mb-0">
+                                    <label for="Observaciones">Observaciones</label>
+                                    @Html.TextAreaFor(m => m.Observaciones, 2, 1, new { @class = "form-control js-auto-resize", id = "Observaciones", style = "min-height: calc(1.5em * 2 + 1rem); overflow:hidden; resize:vertical;" })
+                                </div>
+                            </div>
                         </div>
+                        @if (Model.EsEdicion)
+                        {
+                            <div class="card stock-panel-card mt-3">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="small text-muted">Creado</div>
+                                            <div class="font-weight-bold">@Model.Creado</div>
+                                            <div class="small text-muted">@Model.CreadoPor</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Actualizado</div>
+                                            <div class="font-weight-bold">@Model.Actualizado</div>
+                                            <div class="small text-muted">@Model.ActualizadoPor</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -410,7 +421,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalVincularPesajesStock" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade modal-stock-compact" id="modalVincularPesajesStock" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
@@ -423,7 +434,7 @@
                 <div id="stockVincularPesajesWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
                 <div class="small text-muted mb-1">Se muestran solo pesajes de la misma sucursal, ordenados del m&aacute;s reciente al m&aacute;s antiguo.</div>
                 <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalVincularPesajesStock">-</strong></div>
-                <div class="row align-items-end mb-3">
+                <div class="row align-items-end mb-3 stock-modal-filters">
                     <div class="col-12 col-lg-4">
                         <label for="txtFiltroProveedorVincularPesajes">Proveedor</label>
                         <input type="text" id="txtFiltroProveedorVincularPesajes" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
@@ -443,7 +454,7 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0" id="tablaVincularPesajesStock">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaVincularPesajesStock">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width:70px;">ID</th>
@@ -468,7 +479,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalPorcentajesPesajeStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal fade modal-stock-compact" id="modalPorcentajesPesajeStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-secondary text-white">
@@ -491,14 +502,14 @@
                 </div>
 
                 <div class="table-responsive mb-3">
-                    <table class="table table-sm table-bordered mb-0" id="tablaPromMediasStock">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPromMediasStock">
                         <thead class="thead-light"></thead>
                         <tbody></tbody>
                     </table>
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0" id="tablaPorcCortesStock">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPorcCortesStock">
                         <thead class="thead-light"></thead>
                         <tbody></tbody>
                     </table>
@@ -581,8 +592,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalAcumuladosStock" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+<div class="modal fade modal-stock-compact" id="modalAcumuladosStock" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-acumulados-stock-compact" role="document">
         <div class="modal-content">
             <div class="modal-header bg-secondary text-white">
                 <h5 class="modal-title">Acumulados del stock</h5>
@@ -592,7 +603,7 @@
             </div>
             <div class="modal-body">
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width:120px;">Código</th>
@@ -608,7 +619,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalSeleccionCompraPesajeStock" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade modal-stock-compact" id="modalSeleccionCompraPesajeStock" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
@@ -621,7 +632,7 @@
                 <div id="stockComprasPesajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
                 <div class="small text-muted mb-1">Se muestran compras de Cortes y Media Res de la misma sucursal, ordenadas de la m&aacute;s reciente a la m&aacute;s antigua.</div>
                 <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalComprasPesajeStock">-</strong></div>
-                <div class="row align-items-end mb-3">
+                <div class="row align-items-end mb-3 stock-modal-filters">
                     <div class="col-12 col-lg-4">
                         <label for="txtFiltroProveedorComprasPesaje">Proveedor</label>
                         <input type="text" id="txtFiltroProveedorComprasPesaje" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
@@ -641,7 +652,7 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0" id="tablaComprasPesajeStock">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaComprasPesajeStock">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width:150px;">Fecha</th>
@@ -666,6 +677,219 @@
 
 <div id="contenedorModalPersonaStock"></div>
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+
+<style>
+    .stock-page .stock-panel-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .stock-page .stock-panel-card > .card-body,
+    .stock-page .stock-panel-card .card-body {
+        padding: .8rem .92rem;
+    }
+
+    .stock-page .stock-section-box {
+        border: 1px solid #e9ecef !important;
+        border-radius: .7rem !important;
+        padding: .8rem .92rem !important;
+        margin-bottom: .85rem !important;
+    }
+
+    .stock-page .stock-section-title {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+        margin-bottom: .55rem !important;
+    }
+
+    .stock-page .stock-section-box h6.text-uppercase,
+    .stock-page .stock-panel-card h6.text-uppercase {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+    }
+
+    .stock-page .stock-form-compact label,
+    .stock-page .stock-section-box label,
+    .stock-page .stock-panel-card label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .stock-page .stock-form-compact .form-control,
+    .stock-page .stock-form-compact .input-group-text,
+    .stock-page .stock-form-compact .btn:not(.btn-sm),
+    .stock-page .stock-section-box .form-control,
+    .stock-page .stock-section-box .input-group-text,
+    .stock-page .stock-section-box .btn:not(.btn-sm),
+    .stock-page .stock-panel-card .form-control,
+    .stock-page .stock-panel-card .input-group-text,
+    .stock-page .stock-panel-card .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .stock-page .stock-form-compact .custom-control-label,
+    .stock-page .stock-section-box .custom-control-label,
+    .stock-page .stock-panel-card .custom-control-label {
+        font-size: .78rem;
+    }
+
+    .stock-page .stock-form-compact .small,
+    .stock-page .stock-form-compact .text-muted,
+    .stock-page .stock-section-box .small,
+    .stock-page .stock-section-box .text-muted,
+    .stock-page .stock-panel-card .small,
+    .stock-page .stock-panel-card .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .stock-page .stock-summary-card .card-body {
+        padding: .58rem .76rem;
+    }
+
+    .stock-page .stock-table-compact {
+        font-size: .82rem;
+    }
+
+    .stock-page .stock-table-compact th,
+    .stock-page .stock-table-compact td {
+        padding: .36rem .48rem;
+        vertical-align: middle;
+        line-height: 1.12;
+    }
+
+    .stock-page .stock-table-compact thead th,
+    .stock-page .stock-table-compact > thead > tr > th {
+        font-size: .66rem !important;
+        line-height: 1.02;
+        padding-top: .32rem;
+        padding-bottom: .32rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .stock-page .stock-table-compact .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.12;
+        font-size: .76rem;
+    }
+
+    .modal-stock-compact .modal-content {
+        border-radius: .75rem;
+    }
+
+    .modal-stock-compact .modal-header {
+        padding: .58rem .82rem;
+    }
+
+    .modal-stock-compact .modal-title {
+        font-size: .94rem;
+        line-height: 1.1;
+    }
+
+    .modal-stock-compact .modal-body {
+        padding: .78rem .86rem;
+    }
+
+    .modal-stock-compact label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .modal-stock-compact .form-control,
+    .modal-stock-compact .input-group-text,
+    .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+        min-height: 2.08rem;
+        font-size: .83rem;
+        padding: .26rem .52rem;
+        border-radius: .5rem;
+    }
+
+    .modal-stock-compact .small,
+    .modal-stock-compact .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .modal-stock-compact .alert {
+        margin-bottom: .75rem !important;
+        padding: .48rem .72rem;
+        font-size: .8rem;
+    }
+
+    .modal-stock-compact .table-responsive {
+        margin-bottom: 0;
+    }
+
+    .modal-stock-compact .stock-modal-filters {
+        margin-bottom: .75rem !important;
+    }
+
+    .modal-acumulados-stock-compact {
+        max-width: 420px;
+    }
+
+    @@media (min-width: 1200px) {
+        .stock-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .stock-page .stock-panel-card > .card-body,
+        .stock-page .stock-panel-card .card-body {
+            padding: .72rem .84rem;
+        }
+
+        .stock-page .stock-section-box {
+            padding: .72rem .84rem !important;
+        }
+
+        .stock-page .stock-form-compact .form-control,
+        .stock-page .stock-form-compact .input-group-text,
+        .stock-page .stock-form-compact .btn:not(.btn-sm),
+        .stock-page .stock-section-box .form-control,
+        .stock-page .stock-section-box .input-group-text,
+        .stock-page .stock-section-box .btn:not(.btn-sm),
+        .stock-page .stock-panel-card .form-control,
+        .stock-page .stock-panel-card .input-group-text,
+        .stock-page .stock-panel-card .btn:not(.btn-sm) {
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .stock-page .stock-table-compact {
+            font-size: .79rem;
+        }
+
+        .stock-page .stock-table-compact thead th,
+        .stock-page .stock-table-compact > thead > tr > th {
+            font-size: .63rem !important;
+        }
+
+        .modal-stock-compact .modal-header {
+            padding: .52rem .76rem;
+        }
+
+        .modal-stock-compact .modal-body {
+            padding: .72rem .8rem;
+        }
+
+        .modal-stock-compact .form-control,
+        .modal-stock-compact .input-group-text,
+        .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+            min-height: 2rem;
+            font-size: .8rem;
+            padding: .22rem .48rem;
+        }
+    }
+</style>
 
 @if (renderInlineScripts)
 {

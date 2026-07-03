@@ -1850,6 +1850,10 @@
 
                 if (!res || res.ok !== true) {
                     clearProductoInputs($form, true);
+                    $form.find('#txtProductoNombre').val('No existe o sin coincidencia');
+                    if (!focusCantidad) {
+                        focusCodigo($form);
+                    }
                     return;
                 }
 
@@ -1866,6 +1870,10 @@
                     return;
                 }
                 clearProductoInputs($form, true);
+                $form.find('#txtProductoNombre').val('No existe o sin coincidencia');
+                if (!focusCantidad) {
+                    focusCodigo($form);
+                }
             });
     }
 

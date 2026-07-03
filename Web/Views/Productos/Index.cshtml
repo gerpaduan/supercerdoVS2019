@@ -994,6 +994,29 @@
         return null;
     }
 
+    function toggleDetallesFila(filaProducto) {
+        if (!filaProducto) return;
+
+        const filaDetalles = getFilaDetallesDe(filaProducto);
+        if (!filaDetalles) return;
+
+        const collapse = filaDetalles.querySelector(".collapse");
+        if (!collapse) return;
+
+        $(collapse).collapse(collapse.classList.contains("show") ? "hide" : "show");
+    }
+
+    tabla?.addEventListener("dblclick", function (event) {
+        const fila = event.target.closest("tr[id^='fila_']");
+        if (!fila) return;
+
+        if (event.target.closest(".td-acciones-producto, button, a, input, label")) {
+            return;
+        }
+
+        toggleDetallesFila(fila);
+    });
+
     function setAlertCatalogoGlobal(mensaje) {
         const $alert = $("#alertCatalogoGlobal");
         if (!$alert.length) return;
@@ -3022,11 +3045,74 @@
 }
 
 <style>
-    /* NO ocupar 100%: hacemos el bloque más "compacto" */
+    .productos-wrap {
+        font-size: .9rem;
+    }
+
+    .productos-wrap .tabla-card,
+    .productos-wrap #panelFiltrosAvanzados {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
     .productos-wrap .tabla-card {
-        max-width: 1200px; /* ajustá si querés más/menos */
-        margin-left: auto;
+        max-width: 1200px;
+        margin-left: 0;
         margin-right: auto;
+        box-shadow: 0 .125rem .35rem rgba(58, 59, 69, .08) !important;
+    }
+
+    .productos-wrap .card-body,
+    .productos-wrap .tabla-card .card-body {
+        padding: .8rem .92rem;
+    }
+
+    .productos-wrap .mb-3 {
+        margin-bottom: .85rem !important;
+    }
+
+    .productos-wrap .mb-2 {
+        margin-bottom: .65rem !important;
+    }
+
+    .productos-wrap .form-control,
+    .productos-wrap .input-group-text,
+    .productos-wrap .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .productos-wrap .custom-control-label,
+    .productos-wrap #contadorProductos,
+    .productos-wrap .text-muted,
+    .productos-wrap small {
+        font-size: .76rem !important;
+    }
+
+    .productos-wrap #panelFiltrosAvanzados .card-body {
+        padding: .72rem .84rem;
+    }
+
+    .productos-wrap #panelFiltrosAvanzados label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem !important;
+    }
+
+    .productos-wrap #panelFiltrosAvanzados .btn {
+        font-size: .8rem;
+        padding: .24rem .5rem;
+    }
+
+    .productos-wrap .d-flex.flex-wrap.align-items-center.justify-content-between.mb-3.gap-2 {
+        margin-bottom: .85rem !important;
+    }
+
+    .productos-wrap .btn {
+        font-size: .82rem;
     }
 
     .tabla-full {
@@ -3035,54 +3121,37 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    .tabla-productos th, .tabla-productos td {
+    .tabla-productos {
+        font-size: .84rem;
+    }
+
+    .tabla-productos th,
+    .tabla-productos td {
         vertical-align: middle;
+        line-height: 1.15;
+        padding: .38rem .5rem;
     }
 
-    .productos-wrap {
-        font-size: .9rem;
+    .tabla-productos thead th {
+        font-size: .72rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
     }
 
-    .productos-wrap .mb-3 {
-        margin-bottom: .9rem !important;
-    }
-
-    .productos-wrap .mb-2 {
-        margin-bottom: .7rem !important;
-    }
-
-    .productos-wrap .form-control,
-    .productos-wrap .input-group-text {
-        font-size: .87rem;
-    }
-
-    .productos-wrap .custom-control-label,
-    .productos-wrap #contadorProductos,
-    .productos-wrap .text-muted,
-    .productos-wrap small {
-        font-size: .8rem;
-    }
-
-    #panelFiltrosAvanzados .card-body {
-        padding: .72rem .85rem;
-    }
-
-    #panelFiltrosAvanzados label {
+    .tabla-productos .btn {
         font-size: .76rem;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: .18rem !important;
-    }
-
-    #panelFiltrosAvanzados .btn {
-        font-size: .83rem;
-        padding: .32rem .62rem;
+        padding: .18rem .42rem;
+        line-height: 1.12;
     }
 
     .th-codigo-producto,
     .td-codigo-producto {
-        width: 15ch;
-        min-width: 15ch;
+        width: 18ch;
+        min-width: 18ch;
+        max-width: 18ch;
     }
 
     /* Columna producto más chica (aprox 60%) y truncado */
@@ -3094,8 +3163,23 @@
         max-width: 420px;
     }
 
+    .td-producto > .d-flex {
+        gap: .45rem;
+    }
+
     .producto-text {
+        flex: 1 1 auto;
+        min-width: 0;
         max-width: 340px;
+    }
+
+    .btn-detalles {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .btn-detalles-text {
+        white-space: nowrap;
     }
 
     .codigo-inline-mobile {
@@ -3120,6 +3204,40 @@
         }
     }
 
+    @@media (min-width: 1200px) {
+        .productos-wrap .tabla-card {
+            max-width: 840px;
+            margin-left: 0;
+        }
+
+        .productos-wrap .form-control,
+        .productos-wrap .input-group-text,
+        .productos-wrap .btn:not(.btn-sm) {
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .productos-wrap .card-body,
+        .productos-wrap .tabla-card .card-body,
+        #panelFiltrosAvanzados .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .tabla-productos {
+            font-size: .81rem;
+        }
+
+        .tabla-productos td,
+        .tabla-productos th {
+            padding: .38rem .52rem;
+        }
+
+        .tabla-productos thead th {
+            font-size: .69rem !important;
+        }
+    }
+
     @@media (max-width: 768px) {
         .productos-wrap .tabla-card {
             max-width: 100%;
@@ -3128,10 +3246,7 @@
         .th-stock-simple,
         .td-stock-simple,
         .th-stock-sucursal,
-        .td-stock-sucursal {
-            display: none;
-        }
-
+        .td-stock-sucursal,
         .th-codigo-producto,
         .td-codigo-producto {
             display: none;
@@ -3155,8 +3270,8 @@
         }
 
         .btn-detalles {
-            padding-left: 0.2rem;
-            padding-right: 0.2rem;
+            padding-left: .2rem;
+            padding-right: .2rem;
             white-space: nowrap;
         }
 
@@ -3169,56 +3284,19 @@
             width: 1%;
         }
 
-    .tabla-productos td, .tabla-productos th {
-        font-size: .84rem;
-        line-height: 1.15;
-        padding: .42rem .58rem;
-    }
-
-    .tabla-productos thead th {
-        font-size: .73rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-        text-transform: uppercase;
-    }
-
-    .tabla-productos .btn {
-        font-size: .78rem;
-    }
-
-    @@media (min-width: 1200px) {
-        .productos-wrap .form-control,
-        .productos-wrap .input-group-text {
+        .tabla-productos td,
+        .tabla-productos th {
+            white-space: nowrap;
+            padding: .42rem .5rem;
             font-size: .84rem;
         }
 
-        #panelFiltrosAvanzados .card-body {
-            padding: .65rem .8rem;
-        }
-
-        .tabla-productos td, .tabla-productos th {
-            font-size: .8rem;
-            padding: .38rem .52rem;
-        }
-
-        .tabla-productos thead th {
-            font-size: .68rem;
-        }
-    }
-
-    @@media (max-width: 768px) {
-        .tabla-productos td, .tabla-productos th {
-            white-space: nowrap;
-            padding: 0.45rem;
-            font-size: 0.9rem;
-        }
-
         .td-acciones-producto .btn {
-            padding: 0.2rem 0.45rem;
-            margin-right: 0.2rem;
+            padding: .18rem .4rem;
+            margin-right: .18rem;
         }
 
-        .btn {
+        .productos-wrap .btn {
             margin-bottom: 4px;
         }
     }

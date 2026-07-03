@@ -12,8 +12,8 @@
     string filtroDesde = ViewBag.FiltroDesde ?? "";
 }
 
-<div class="container-fluid cheques-page">
-    <div class="card shadow mb-4">
+<div class="container-fluid px-2 px-md-3 cheques-page cheques-form-compact">
+    <div class="card shadow-sm mb-3 cheques-panel-card">
         <div class="card-body">
             <div class="d-flex align-items-center flex-wrap cheques-acciones-header">
                 <button type="button" class="btn btn-success cheques-btn-nuevo" id="btnNuevoCheque">
@@ -34,8 +34,13 @@
         font-size: .9rem;
     }
 
+    .cheques-page .cheques-panel-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
     .cheques-page .card-body {
-        padding: .82rem 1rem;
+        padding: .8rem .92rem;
     }
 
     .cheques-acciones-header {
@@ -44,8 +49,8 @@
 
     .cheques-btn-nuevo {
         width: 100%;
-        font-size: .84rem;
-        padding: .36rem .7rem;
+        font-size: .82rem;
+        padding: .3rem .62rem;
     }
 
     .cheques-page .cheques-filtros-card {
@@ -65,33 +70,38 @@
 
     .cheques-page .cheques-filtros-card .form-control,
     .cheques-page .cheques-filtros-card .btn {
-        min-height: 2.35rem;
-        font-size: .87rem;
-        padding: .32rem .62rem;
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
     }
 
-    .cheques-page #tablaBusquedaCheques {
+    .cheques-page #tablaBusquedaCheques,
+    .cheques-page .cheques-table-compact {
         font-size: .84rem;
     }
 
     .cheques-page #tablaBusquedaCheques td,
-    .cheques-page #tablaBusquedaCheques th {
+    .cheques-page #tablaBusquedaCheques th,
+    .cheques-page .cheques-table-compact td,
+    .cheques-page .cheques-table-compact th {
         white-space: nowrap;
         vertical-align: middle;
-        padding: .42rem .58rem;
-        line-height: 1.15;
+        padding: .36rem .48rem;
+        line-height: 1.12;
     }
 
     .cheques-page #tablaBusquedaCheques thead th,
     .cheques-page #tablaBusquedaCheques > thead > tr > th,
-    .cheques-page #tablaBusquedaCheques .thead-light th {
-        font-size: .73rem;
+    .cheques-page #tablaBusquedaCheques .thead-light th,
+    .cheques-page .cheques-table-compact thead th,
+    .cheques-page .cheques-table-compact > thead > tr > th {
+        font-size: .72rem !important;
         font-weight: 700;
         letter-spacing: .02em;
         text-transform: uppercase;
-        padding-top: .38rem;
-        padding-bottom: .38rem;
-        line-height: 1.1;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+        line-height: 1.05;
     }
 
     .cheques-page #tablaBusquedaCheques .btn {
@@ -110,7 +120,7 @@
 
     @@media (min-width: 1200px) {
         .cheques-page .card-body {
-            padding: .7rem .85rem;
+            padding: .72rem .84rem;
         }
 
         .cheques-acciones-header {
@@ -123,9 +133,9 @@
 
         .cheques-page .cheques-filtros-card .form-control,
         .cheques-page .cheques-filtros-card .btn {
-            min-height: 2.15rem;
-            font-size: .84rem;
-            padding: .28rem .56rem;
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
         }
 
         .cheques-page #tablaBusquedaCheques {
@@ -135,7 +145,7 @@
         .cheques-page #tablaBusquedaCheques thead th,
         .cheques-page #tablaBusquedaCheques > thead > tr > th,
         .cheques-page #tablaBusquedaCheques .thead-light th {
-            font-size: .68rem;
+            font-size: .69rem !important;
             padding-top: .34rem;
             padding-bottom: .34rem;
         }

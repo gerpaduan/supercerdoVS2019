@@ -98,6 +98,15 @@
         }
 
         $filtro.on('input', aplicarFiltro);
+        $rows.on('dblclick', function (e) {
+            var $target = $(e.target);
+            if ($target.closest('a, button, input, textarea, select, label').length) return;
+
+            var $seleccionar = $(this).find('a.btn').first();
+            if ($seleccionar.length) {
+                window.location.href = $seleccionar.attr('href');
+            }
+        });
         aplicarFiltro();
         window.setTimeout(function () { $filtro.trigger('focus'); }, 40);
 
