@@ -757,6 +757,40 @@ else
         background: #fff;
     }
 
+    #modalFinanzasPOS.modal-compra-pos-layout .modal-dialog {
+        max-width: 1320px;
+        width: calc(100% - 1.25rem);
+        margin: 1rem auto;
+    }
+
+    #modalFinanzasPOS.modal-compra-pos-layout .modal-content {
+        border: 1px solid #e3e6f0;
+        border-radius: .8rem;
+        overflow: hidden;
+        box-shadow: 0 .45rem 1.4rem rgba(58, 59, 69, .18);
+    }
+
+    #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+        background: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        padding: .95rem 1.2rem;
+    }
+
+    #modalFinanzasPOS.modal-compra-pos-layout .modal-title,
+    #modalFinanzasPOS.modal-compra-pos-layout .close {
+        color: #2f3e52;
+        text-shadow: none !important;
+    }
+
+    #modalFinanzasPOS.modal-compra-pos-layout .modal-title {
+        font-weight: 700;
+    }
+
+    #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+        padding: .6rem !important;
+        background: #f4f7fb;
+    }
+
     #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS {
         font-size: .875rem;
     }
@@ -857,6 +891,31 @@ else
         color: #97a7bd !important;
     }
 
+    html.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-content,
+    body.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-content {
+        background: #152233 !important;
+        border-color: #2a3b52 !important;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .42) !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-header,
+    body.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+        background: #162538 !important;
+        border-bottom-color: #2a3b52 !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-title,
+    html.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .close,
+    body.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-title,
+    body.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .close {
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-body,
+    body.dark-mode #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+        background: #101a28 !important;
+    }
+
     #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
         max-width: 760px;
         width: calc(100% - 1rem);
@@ -870,15 +929,18 @@ else
     }
 
     #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
-        max-width: none;
-        width: 100%;
-        margin: 1.75rem auto;
+        max-width: 920px;
+        width: calc(100% - 1rem);
+        margin: 1.25rem auto;
     }
 
     @@media (min-width: 992px) {
-        #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-dialog,
-        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+        #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-dialog {
             width: 50%;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+            width: min(920px, calc(100% - 1rem));
         }
     }
 
@@ -938,6 +1000,19 @@ else
 
         #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
             padding: .75rem !important;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-dialog {
+            width: calc(100% - .5rem);
+            margin: .25rem auto;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+            padding: .85rem .95rem;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+            padding: .35rem !important;
         }
 
         #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-dialog {
@@ -2530,11 +2605,13 @@ else
                 var esDetalleVenta = !!url && url.indexOf("/Ventas/DetalleVenta") >= 0;
                 var esMisVentas = !!url && url.indexOf("/Ventas/MisVentas") >= 0;
                 var esMisActividades = !!url && url.indexOf("/Cajas/MisEgresosCaja") >= 0;
+                var esCompra = !!url && url.indexOf("/Compras/Editar") >= 0;
                 var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
                 var inicioTotal = performance.now();
 
                 $("#modalFinanzasPOS")
-                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto modal-mis-actividades-pos-compacto")
+                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto modal-mis-actividades-pos-compacto modal-compra-pos-layout")
+                    .toggleClass("modal-compra-pos-layout", esCompra)
                     .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades)
                     .toggleClass("modal-mis-ventas-pos-compacto", esMisVentas)
                     .toggleClass("modal-detalle-venta-pos-compacto", esDetalleVenta);

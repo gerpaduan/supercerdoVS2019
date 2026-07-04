@@ -39,6 +39,7 @@ namespace Web.Models
         public long Codigo { get; set; }
         public string Producto { get; set; }
         public string TipoProducto { get; set; }
+        public bool Pesable { get; set; }
         public float PromedioProducto { get; set; }
         public int CantUnidad { get; set; }
         public float CantKg { get; set; }

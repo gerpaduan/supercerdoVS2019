@@ -147,7 +147,10 @@
             saving: false,
             productoTimer: null,
             productoRequestSeq: 0,
-            readOnly: !!config.soloLecturaInicial
+            readOnly: !!config.soloLecturaInicial,
+            sortKey: 'ordenIngreso',
+            sortDirection: 'asc',
+            lineSequence: 0
         };
 
         var $codigo = $('#txtCodigoProducto');
@@ -264,6 +267,117 @@
 
         function clearWarning() {
             $warning.addClass('d-none').text('');
+        }
+
+        function ensureLineMetadata(line, fallbackOrder) {
+            if (!line || typeof line !== 'object') return line;
+
+            if (!line.__ordenIngreso || toInt(line.__ordenIngreso) <= 0) {
+                line.__ordenIngreso = fallbackOrder > 0 ? fallbackOrder : (state.lineSequence + 1);
+            }
+
+            state.lineSequence = Math.max(state.lineSequence, toInt(line.__ordenIngreso));
+            return line;
+        }
+
+        function ensureAllLinesMetadata() {
+            state.lineSequence = 0;
+            state.lines.forEach(function (line, index) {
+                ensureLineMetadata(line, index + 1);
+            });
+        }
+
+        function getSortValue(line, sortKey) {
+            switch (sortKey) {
+                case 'ordenIngreso':
+                    return toInt(line.__ordenIngreso);
+                case 'codigo':
+                    return toInt(line.Codigo);
+                case 'producto':
+                    return String(line.Producto || '').toLowerCase();
+                case 'cantUnidad':
+                    return toInt(line.CantUnidad);
+                case 'cantKg':
+                    return toFloat(line.CantKg);
+                case 'pesoBalanza':
+                    return line.PesoBalanza ? 1 : 0;
+                case 'permitirIngreso':
+                    return line.PermitirIngreso ? 1 : 0;
+                default:
+                    return '';
+            }
+        }
+
+        function getSortedLinesWithIndex() {
+            return state.lines
+                .map(function (line, index) {
+                    return {
+                        line: line,
+                        originalIndex: index
+                    };
+                })
+                .sort(function (a, b) {
+                    var left = getSortValue(a.line, state.sortKey);
+                    var right = getSortValue(b.line, state.sortKey);
+                    var result = 0;
+
+                    if (typeof left === 'string' || typeof right === 'string') {
+                        result = String(left).localeCompare(String(right), 'es', { numeric: true, sensitivity: 'base' });
+                    } else {
+                        result = left === right ? 0 : (left > right ? 1 : -1);
+                    }
+
+                    if (result === 0) {
+                        result = toInt(a.line.__ordenIngreso) - toInt(b.line.__ordenIngreso);
+                    }
+
+                    return state.sortDirection === 'desc' ? result * -1 : result;
+                });
+        }
+
+        function syncSortHeaders() {
+            var $headers = $('#tablaLineasMovimiento thead th[data-sort-key]');
+            $headers.css('cursor', 'pointer');
+            $headers.removeClass('movimiento-sort-active movimiento-sort-asc movimiento-sort-desc');
+
+            $headers.each(function () {
+                var $th = $(this);
+                var label = ($th.data('base-label') || $th.text() || '').trim();
+                var key = String($th.data('sort-key') || '');
+
+                if (!$th.data('base-label')) {
+                    $th.data('base-label', label);
+                }
+
+                if (key === state.sortKey) {
+                    $th.text(label + (state.sortDirection === 'desc' ? ' ↓' : ' ↑'));
+                    $th.addClass('movimiento-sort-active ' + (state.sortDirection === 'desc' ? 'movimiento-sort-desc' : 'movimiento-sort-asc'));
+                    $th.attr('title', 'Ordenado por ' + label + ' (' + (state.sortDirection === 'desc' ? 'descendente' : 'ascendente') + ')');
+                } else {
+                    $th.text(label);
+                    $th.attr('title', 'Ordenar por ' + label);
+                }
+            });
+        }
+
+        function ensureSortableHeaders() {
+            var $theadRow = $('#tablaLineasMovimiento thead tr');
+            if (!$theadRow.length) return;
+
+            if (!$theadRow.find('th[data-sort-key="ordenIngreso"]').length) {
+                $theadRow.prepend('<th style="width:60px;" data-sort-key="ordenIngreso">#</th>');
+            }
+
+            var keys = ['ordenIngreso', 'codigo', 'producto', 'cantUnidad', 'cantKg', 'pesoBalanza', 'permitirIngreso'];
+            $theadRow.find('th').each(function (index) {
+                if (index >= keys.length) return;
+                var $th = $(this);
+                if (!$th.attr('data-sort-key')) {
+                    $th.attr('data-sort-key', keys[index]);
+                }
+            });
+
+            syncSortHeaders();
         }
 
         function setProducto(producto) {
@@ -441,6 +555,17 @@
             });
         }
 
+        function verificarBalanzaInicial() {
+            verificarBalanza(function (disponible) {
+                if (!disponible) {
+                    balanzaManualDesactivada = true;
+                    $balanza.prop('checked', false);
+                }
+                syncBalanzaStatusVisibility();
+                syncReadOnlyUi();
+            });
+        }
+
         function intentarActivarBalanza() {
             verificarBalanza(function (disponible) {
                 if (!disponible) {
@@ -465,19 +590,25 @@
             var totalItems = state.lines.length;
             var totalUnidades = 0;
             var totalKilos = 0;
+            var sortedLines = getSortedLinesWithIndex();
 
-            state.lines.forEach(function (line, index) {
+            sortedLines.forEach(function (item, index) {
+                var line = item.line;
+                var mostrarCantUnidad = toInt(line.CantUnidad) === 0 ? '' : formatInt(line.CantUnidad);
+                var ocultarKilos = line.Pesable === false && toInt(line.CantUnidad) === toInt(line.CantKg);
+                var mostrarKilos = ocultarKilos ? '' : formatKg(line.CantKg);
                 totalUnidades += toInt(line.CantUnidad);
                 totalKilos += toFloat(line.CantKg);
 
                 html += '<tr>'
+                    + '<td class="text-center font-weight-bold">' + toInt(line.__ordenIngreso) + '</td>'
                     + '<td>' + line.Codigo + '</td>'
                     + '<td>' + line.Producto + '</td>'
-                    + '<td class="text-right">' + formatInt(line.CantUnidad) + '</td>'
-                    + '<td class="text-right">' + formatKg(line.CantKg) + '</td>'
+                    + '<td class="text-right">' + mostrarCantUnidad + '</td>'
+                    + '<td class="text-right">' + mostrarKilos + '</td>'
                     + '<td class="text-center">' + (line.PesoBalanza ? 'Sí' : 'No') + '</td>'
                     + '<td class="text-center">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</td>'
-                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + index + '"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
+                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
                     + '</tr>';
 
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorteMovimiento" value="' + (line.IdCorteMovimiento || 0) + '" />';
@@ -496,11 +627,13 @@
                 html = '<tr><td colspan="7" class="text-center text-muted">Todavía no agregaste productos al movimiento.</td></tr>';
             }
 
+            html = html.replace('colspan="7"', 'colspan="8"');
             $('#tablaLineasMovimiento tbody').html(html);
             $('#lineasHiddenContainer').html(hidden);
             $('#lblTotalItems').text(formatInt(totalItems));
             $('#lblTotalUnidades').text(formatInt(totalUnidades));
             $('#lblTotalKilos').text(formatKg(totalKilos));
+            syncSortHeaders();
             syncReadOnlyUi();
         }
 
@@ -564,18 +697,19 @@
         }
 
         function buildCurrentLine() {
-            return {
+            return ensureLineMetadata({
                 IdCorteMovimiento: 0,
                 IdCorte: toInt($productoId.val()),
                 Codigo: toInt($codigo.val()),
                 Producto: $productoNombre.val(),
                 TipoProducto: $productoTipo.val(),
+                Pesable: productoEsPesable(),
                 PromedioProducto: toFloat($productoPromedio.val()),
                 CantUnidad: toInt($cantUnidad.val()),
                 CantKg: toFloat($cantKgs.val()),
                 PesoBalanza: $balanza.is(':checked') && productoEsPesable(),
                 PermitirIngreso: $permitir.is(':checked')
-            };
+            }, state.lineSequence + 1);
         }
 
         function validateCurrentLine() {
@@ -741,6 +875,20 @@
             state.lines.splice(index, 1);
             renderLines();
             scheduleDraft();
+        });
+
+        $(document).on('click.movimientoSort', '#tablaLineasMovimiento thead th[data-sort-key]', function () {
+            var key = String($(this).data('sort-key') || '');
+            if (!key) return;
+
+            if (state.sortKey === key) {
+                state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortKey = key;
+                state.sortDirection = 'asc';
+            }
+
+            renderLines();
         });
 
         $btnImprimirMovimiento.on('click', function (e) {
@@ -922,10 +1070,11 @@
             scheduleDraft();
         });
 
+        ensureAllLinesMetadata();
+        ensureSortableHeaders();
         renderLines();
         renderBalanzaStatus(null);
-        verificarBalanza();
-        syncBalanzaStatusVisibility();
+        verificarBalanzaInicial();
         autoResizeObservaciones();
         if (readDraft()) {
             showDraftBanner();

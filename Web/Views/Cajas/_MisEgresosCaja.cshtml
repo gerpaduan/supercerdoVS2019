@@ -4,6 +4,7 @@
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
     string mensaje = ViewBag.Mensaje as string;
     decimal total = ViewBag.TotalVisible != null ? (decimal)ViewBag.TotalVisible : 0;
+    int cantidadItems = Model != null ? Model.Rows.Count : 0;
     string filtroActividad = ViewBag.FiltroActividad as string ?? "todos";
     bool permitirNuevo = ViewBag.PermitirNuevo == null || (bool)ViewBag.PermitirNuevo;
     int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
@@ -12,7 +13,7 @@
     bool mostrarResumenMisActividades = ViewBag.MostrarResumenMisActividades == null || (bool)ViewBag.MostrarResumenMisActividades;
 }
 
-<div class="egresos-pos mis-actividades-modal">
+<div class="egresos-pos mis-actividades-modal @(desdePos ? "mis-actividades-pos-compacta" : "")">
     @if (!string.IsNullOrWhiteSpace(mensaje))
     {
         <div class="alert alert-warning m-3">@mensaje</div>
@@ -25,6 +26,9 @@
                 {
                     <small class="text-muted d-block">@subtituloActividades</small>
                 }
+                <span class="mis-actividades-items-badge" title="Cantidad de items mostrados en la tabla">
+                    @cantidadItems item@(cantidadItems == 1 ? "" : "s")
+                </span>
             </div>
             <div class="egresos-pos-toolbar-actions">
                 <button type="button" class="btn btn-outline-primary" id="btnAbrirMisVentasDesdeActividades">
@@ -112,6 +116,10 @@
         font-size: 0.875rem;
     }
 
+    .mis-actividades-modal.mis-actividades-pos-compacta {
+        font-size: 0.82rem;
+    }
+
     .mis-actividades-modal .egresos-pos-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -123,6 +131,21 @@
     .mis-actividades-modal .egresos-pos-toolbar-main {
         flex: 1 1 180px;
         min-width: 0;
+    }
+
+    .mis-actividades-modal .mis-actividades-items-badge {
+        display: inline-flex;
+        align-items: center;
+        margin-top: .35rem;
+        padding: .2rem .55rem;
+        border: 1px solid #d9e2ef;
+        border-radius: 999px;
+        background: #f8f9fc;
+        color: #4f5d75;
+        font-size: .78rem;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
     }
 
     .mis-actividades-modal .egresos-pos-toolbar-actions {
@@ -149,9 +172,121 @@
         padding-top: .15rem;
     }
 
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar {
+        margin: .75rem;
+        padding: .7rem .85rem;
+        border-radius: .75rem;
+        gap: .55rem .75rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-main small {
+        font-size: .73rem;
+        line-height: 1.2;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .mis-actividades-items-badge {
+        margin-top: .25rem;
+        padding: .16rem .48rem;
+        font-size: .72rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions {
+        gap: .45rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .btn {
+        min-height: 2rem;
+        padding: .35rem .65rem;
+        border-radius: .55rem;
+        font-size: .79rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros {
+        gap: .3rem;
+        padding: .2rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 999px;
+        background: #f8f9fc;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros .btn {
+        min-height: 1.85rem;
+        padding: .25rem .55rem;
+        font-size: .76rem;
+        border-radius: 999px;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .custom-switch {
+        margin-left: .15rem;
+        padding-top: .05rem;
+        font-size: .78rem;
+        white-space: nowrap;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .px-3.pb-3 {
+        padding: 0 .75rem .75rem !important;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-resumen {
+        margin-bottom: .5rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-resumen > div {
+        min-width: 0;
+        padding: .35rem .55rem;
+        border-radius: .65rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table-responsive {
+        border: 1px solid #e3e6f0;
+        border-radius: .75rem;
+        background: #fff;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table {
+        font-size: .8rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table th,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table td {
+        padding: .42rem .5rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-detalle-egreso,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-modificar-egreso {
+        padding: .15rem .35rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .egreso-detalle-collapse > div {
+        padding: .75rem !important;
+    }
+
     @@media (max-width: 767.98px) {
         .mis-actividades-modal .egresos-pos-toolbar-actions {
             justify-content: flex-start;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar {
+            margin: .5rem;
+            padding: .6rem;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .px-3.pb-3 {
+            padding: 0 .5rem .5rem !important;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros {
+            width: 100%;
+            border-radius: .8rem;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros .btn {
+            flex: 1 1 calc(50% - .3rem);
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .custom-switch {
+            width: 100%;
+            margin-left: 0;
         }
     }
 
@@ -191,6 +326,11 @@
         border-color: #2a3b52 !important;
     }
 
+    html.dark-mode .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table-responsive {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
     html.dark-mode .egresos-pos .table-hover tbody tr:hover {
         background: rgba(255, 255, 255, .04);
     }
@@ -218,6 +358,7 @@
     }
 
     html.dark-mode .egresos-pos .btn-outline-primary {
+        background: #162538;
         color: #b9d7ff;
         border-color: #436886;
     }
@@ -227,6 +368,43 @@
         background: #274761;
         border-color: #4f7aa0;
         color: #f4f8fc;
+    }
+
+    html.dark-mode .egresos-pos .btn-primary {
+        background: #2d6fa3;
+        border-color: #3f84bb;
+        color: #f4f8fc;
+    }
+
+    html.dark-mode .egresos-pos .btn-primary:hover,
+    html.dark-mode .egresos-pos .btn-primary:focus {
+        background: #347db7;
+        border-color: #4b95d1;
+        color: #fff;
+    }
+
+    html.dark-mode .egresos-pos .btn-success {
+        background: #1d6f52;
+        border-color: #2b8d69;
+        color: #f4f8fc;
+    }
+
+    html.dark-mode .egresos-pos .btn-success:hover,
+    html.dark-mode .egresos-pos .btn-success:focus {
+        background: #238562;
+        border-color: #33a178;
+        color: #fff;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .mis-actividades-modal .mis-actividades-items-badge {
+        background: #162538;
+        border-color: #2f4d69;
+        color: #d7e7fb;
     }
 
     html.dark-mode .egresos-pos .custom-control-label::before {

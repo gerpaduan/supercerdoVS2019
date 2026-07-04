@@ -468,9 +468,7 @@ namespace Web.Controllers
                 PermiteMediaRes = permiteMediaRes,
                 SucursalEditable = !desdePos,
                 PuedeEditar = true,
-                TipoCompra = permiteMediaRes
-                    ? Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)
-                    : Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes),
+                TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes),
                 IdSucursal = idSucursal,
                 SucursalNombre = sucursal != null ? sucursal.SucursalNombre : "",
                 FechaCompra = DateTime.Now,

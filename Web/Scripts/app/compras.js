@@ -550,7 +550,7 @@
         var state = getState($form);
         if (!draft) return;
 
-        if (permiteMediaRes($form) && draft.tipoCompra) {
+        if (permiteMediaRes($form) && draft.tipoCompra && !(state.config.desdePos && state.config.esEdicion !== true)) {
             $form.find('#TipoCompra').val(draft.tipoCompra);
         }
 

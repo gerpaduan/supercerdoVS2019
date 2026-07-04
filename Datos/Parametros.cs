@@ -17,12 +17,14 @@ namespace Datos
 
         public DataTable ObtenerGrid()
         {
-            const string sql = @"
+            bool tieneColumnaTipo = TieneColumna("dbo.Parametros", "tipo");
+
+            string sql = @"
                 SELECT
                     p.idParametro,
                     p.nombre,
                     p.descripcion,
-                    p.tipo,
+                    " + (tieneColumnaTipo ? "ISNULL(p.tipo, 0)" : "CAST(0 AS int)") + @" AS tipo,
                     ep.valor
                 FROM dbo.Parametros p
                 LEFT JOIN dbo.EmpresaParametros ep
@@ -151,6 +153,28 @@ namespace Datos
             );
 
             return (obj == null || obj == DBNull.Value) ? null : obj.ToString();
+        }
+
+        private bool TieneColumna(string nombreTabla, string nombreColumna)
+        {
+            const string sql = @"
+                SELECT CASE
+                           WHEN COL_LENGTH(@tabla, @columna) IS NULL THEN 0
+                           ELSE 1
+                       END;";
+
+            object obj = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@tabla", SqlDbType.NVarChar, 256).Value = nombreTabla;
+                    p.Add("@columna", SqlDbType.NVarChar, 128).Value = nombreColumna;
+                }
+            );
+
+            return obj != null && obj != DBNull.Value && Convert.ToInt32(obj) == 1;
         }
 
         public void SetValor(string nombreParametro, string valor)

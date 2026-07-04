@@ -605,6 +605,7 @@ namespace Web.Controllers
                 Codigo = linea.Corte != null ? linea.Corte.Codigo : 0,
                 Producto = linea.Corte != null ? linea.Corte.CorteDesc : "",
                 TipoProducto = linea.Corte != null ? linea.Corte.Tipo : "",
+                Pesable = linea.Corte != null && linea.Corte.Pesable,
                 PromedioProducto = linea.Corte != null ? linea.Corte.Promedio : 0,
                 CantUnidad = linea.CantUnidad,
                 CantKg = linea.CantKg,

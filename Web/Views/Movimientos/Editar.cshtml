@@ -80,30 +80,6 @@
                     </div>
                 </div>
 
-                @if (Model.EsEdicion)
-                {
-                    <div class="row mb-3">
-                        <div class="col-12 col-lg-3">
-                            <div class="small text-muted movimiento-meta-label">Movimiento origen</div>
-                            <div class="font-weight-bold">@Model.IdMovimientoOrigen</div>
-                        </div>
-                        <div class="col-12 col-lg-3">
-                            <div class="small text-muted movimiento-meta-label">Movimiento destino</div>
-                            <div class="font-weight-bold">@Model.IdMovimientoDestino</div>
-                        </div>
-                        <div class="col-12 col-lg-3">
-                            <div class="small text-muted movimiento-meta-label">Creado</div>
-                            <div class="font-weight-bold">@Model.Creado</div>
-                            <div class="small text-muted">@Model.CreadoPor</div>
-                        </div>
-                        <div class="col-12 col-lg-3">
-                            <div class="small text-muted movimiento-meta-label">Actualizado</div>
-                            <div class="font-weight-bold">@Model.Actualizado</div>
-                            <div class="small text-muted">@Model.ActualizadoPor</div>
-                        </div>
-                    </div>
-                }
-
                 <hr />
 
                 <div class="row">
@@ -195,10 +171,10 @@
                                     <tr>
                                         <th style="width:110px;">Código</th>
                                         <th>Producto</th>
-                                        <th class="text-right" style="width:110px;">Cant.Un.</th>
-                                        <th class="text-right" style="width:110px;">Kilos</th>
-                                        <th class="text-center" style="width:90px;">Balanza</th>
-                                        <th class="text-center" style="width:130px;">Permitir ingreso</th>
+                                        <th class="text-right" style="width:8ch;">Cant.Un.</th>
+                                        <th class="text-right" style="width:8ch;">Kilos</th>
+                                        <th class="text-center" style="width:8ch;">Balanza</th>
+                                        <th class="text-center" style="width:8ch;">Permitir ingreso</th>
                                         <th style="width:70px;">Acción</th>
                                     </tr>
                                 </thead>
@@ -242,6 +218,34 @@
                                 </div>
                             </div>
                         </div>
+                        @if (Model.EsEdicion)
+                        {
+                            <div class="card movimiento-panel-card mt-3 movimiento-meta-card">
+                                <div class="card-body">
+                                    <label class="d-block mb-2">Datos del movimiento</label>
+                                    <div class="movimiento-meta-grid">
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Movimiento origen</div>
+                                            <div class="font-weight-bold">@Model.IdMovimientoOrigen</div>
+                                        </div>
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Movimiento destino</div>
+                                            <div class="font-weight-bold">@Model.IdMovimientoDestino</div>
+                                        </div>
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Creado</div>
+                                            <div class="font-weight-bold">@Model.Creado</div>
+                                            <div class="small text-muted">@Model.CreadoPor</div>
+                                        </div>
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Actualizado</div>
+                                            <div class="font-weight-bold">@Model.Actualizado</div>
+                                            <div class="small text-muted">@Model.ActualizadoPor</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -378,6 +382,30 @@
         padding: .62rem .78rem;
     }
 
+    .movimiento-page .movimiento-meta-card .card-body {
+        min-height: calc(1.5em * 2 + 3.2rem);
+    }
+
+    .movimiento-page .movimiento-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .65rem;
+    }
+
+    .movimiento-page .movimiento-meta-item {
+        min-width: 0;
+    }
+
+    .movimiento-page .movimiento-meta-card .font-weight-bold {
+        font-size: .82rem;
+        line-height: 1.15;
+    }
+
+    .movimiento-page .movimiento-meta-card .small.text-muted:not(.movimiento-meta-label) {
+        font-size: .7rem !important;
+        line-height: 1.1;
+    }
+
     .movimiento-page .movimiento-producto-row {
         margin-left: -.3rem;
         margin-right: -.3rem;
@@ -421,6 +449,33 @@
         padding-bottom: .32rem;
         text-transform: uppercase;
         letter-spacing: .02em;
+    }
+
+    .movimiento-page #tablaLineasMovimiento thead th[data-sort-key] {
+        user-select: none;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .movimiento-page #tablaLineasMovimiento thead th[data-sort-key]:hover {
+        background: rgba(0, 0, 0, .045);
+    }
+
+    .movimiento-page #tablaLineasMovimiento thead th.movimiento-sort-active {
+        background: rgba(13, 110, 253, .12);
+        color: #0b57c0;
+        box-shadow: inset 0 -2px 0 rgba(13, 110, 253, .45);
+    }
+
+    .dark-mode .movimiento-page #tablaLineasMovimiento thead th[data-sort-key]:hover,
+    body.dark-mode .movimiento-page #tablaLineasMovimiento thead th[data-sort-key]:hover {
+        background: rgba(255, 255, 255, .08);
+    }
+
+    .dark-mode .movimiento-page #tablaLineasMovimiento thead th.movimiento-sort-active,
+    body.dark-mode .movimiento-page #tablaLineasMovimiento thead th.movimiento-sort-active {
+        background: rgba(84, 160, 255, .18);
+        color: #d9e9ff;
+        box-shadow: inset 0 -2px 0 rgba(149, 197, 255, .55);
     }
 
     .movimiento-page .movimiento-table-compact .btn-sm {
@@ -483,6 +538,14 @@
             padding: .74rem .86rem;
         }
 
+        .movimiento-page .movimiento-meta-card .card-body {
+            min-height: calc(1.5em * 2 + 3rem);
+        }
+
+        .movimiento-page .movimiento-meta-card .font-weight-bold {
+            font-size: .79rem;
+        }
+
         .movimiento-page .movimiento-section-box {
             padding: .72rem .84rem !important;
         }
@@ -510,6 +573,12 @@
             font-size: .63rem !important;
         }
     }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .movimiento-page .movimiento-meta-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
 </style>
 
 @section Scripts {
@@ -530,7 +599,7 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=19")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=20")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

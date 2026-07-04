@@ -23,7 +23,7 @@
     bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="container-fluid px-2 px-md-3 compra-page" data-compra-page="1">
+<div class="container-fluid px-2 px-md-3 compra-page @(Model.DesdePos ? "compra-page-pos" : "")" data-compra-page="1">
     <div id="compraDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontró un borrador local de esta compra.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -323,7 +323,7 @@
 
                 <div class="row compra-workspace-row">
                     <div class="col-12 col-xl-8">
-                <div class="table-responsive mb-3">
+                <div class="table-responsive mb-3 compra-tabla-wrap">
                     <table class="table table-hover table-sm" id="tablaLineasCompra">
                         <thead class="thead-light">
                             <tr>
@@ -471,6 +471,11 @@
 
     .compra-page .card {
         border-radius: .75rem;
+    }
+
+    .compra-page.compra-page-pos {
+        padding-top: .15rem;
+        padding-bottom: .15rem;
     }
 
     .compra-page .card-body {
@@ -705,6 +710,91 @@
         font-weight: 700;
     }
 
+    html.dark-mode .compra-page {
+        color: #e5edf7;
+    }
+
+    html.dark-mode .compra-page .card,
+    html.dark-mode .compra-page .card-body {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .compra-page .form-group label,
+    html.dark-mode .compra-page .custom-control-label,
+    html.dark-mode .compra-page .compra-section-label span {
+        color: #dbe7f5;
+    }
+
+    html.dark-mode .compra-page .small,
+    html.dark-mode .compra-page .text-muted,
+    html.dark-mode .compra-page small,
+    html.dark-mode .compra-page .form-text,
+    html.dark-mode .compra-shortcuts-help {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .compra-page .compra-section-label {
+        border-bottom-color: #2a3b52;
+    }
+
+    html.dark-mode .compra-page .compra-cta-card {
+        border-color: #34516d;
+        background: linear-gradient(180deg, rgba(58, 130, 246, .22), rgba(17, 37, 58, .68));
+    }
+
+    html.dark-mode .compra-page .compra-cta-title {
+        color: #cfe3fb;
+    }
+
+    html.dark-mode .compra-page #txtSubtotalLinea {
+        color: #eaf2fb;
+        background: #19324c;
+        border-color: #34516d;
+        box-shadow: inset 0 0 0 1px rgba(80, 151, 224, .18);
+    }
+
+    html.dark-mode .compra-page .compra-ajuste-card,
+    html.dark-mode .compra-page .compra-medias-box,
+    html.dark-mode .compra-page .compra-observaciones-box {
+        background: #132032 !important;
+        border-color: #2a3b52 !important;
+    }
+
+    html.dark-mode .compra-page .compra-totales-box {
+        background: #16283d !important;
+        border-color: #2f4560 !important;
+    }
+
+    html.dark-mode .compra-page .compra-tabla-wrap {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .compra-page .compra-total-principal,
+    html.dark-mode .compra-page .compra-actions-bar {
+        border-top-color: #2a3b52;
+    }
+
+    html.dark-mode .compra-page .alert-light {
+        background: #162538;
+        border-color: #2f4d69;
+        color: #dbe7f5;
+    }
+
+    html.dark-mode .compra-page .btn-outline-primary {
+        background: #162538;
+        color: #b9d7ff;
+        border-color: #436886;
+    }
+
+    html.dark-mode .compra-page .btn-outline-primary:hover,
+    html.dark-mode .compra-page .btn-outline-primary:focus {
+        background: #274761;
+        border-color: #4f7aa0;
+        color: #f4f8fc;
+    }
+
     @@media (min-width: 992px) {
         .compra-page .card-body {
             padding: .75rem .9rem;
@@ -848,7 +938,7 @@
 {
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/compras.js?v=20")"></script>
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=21")"></script>
     <script>
         (function () {
             if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
@@ -887,7 +977,7 @@ else
 {
     @section Scripts {
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=20")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=21")"></script>
         <script>
             (function () {
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {

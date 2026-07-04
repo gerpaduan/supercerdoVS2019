@@ -8,7 +8,7 @@
     string buscar = ViewBag.BuscarTipoProducto as string ?? "";
 }
 
-<div class="container-fluid">
+<div class="container-fluid productos-tipos-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h3 class="mb-1">Tipos de Producto</h3>
@@ -96,6 +96,88 @@
         </div>
     </div>
 </div>
+
+<style>
+    .productos-tipos-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .productos-tipos-page .alert,
+    .productos-tipos-page .text-muted,
+    .productos-tipos-page .small,
+    .productos-tipos-page label {
+        font-size: .8rem;
+    }
+
+    .productos-tipos-page .form-control {
+        font-size: .87rem;
+        min-height: 2.3rem;
+        padding: .32rem .58rem;
+    }
+
+    .productos-tipos-page .table {
+        font-size: .84rem;
+    }
+
+    .productos-tipos-page .table th,
+    .productos-tipos-page .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .productos-tipos-page .table thead th,
+    .productos-tipos-page .table > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .productos-tipos-page .badge {
+        font-size: .76rem;
+    }
+
+    .productos-tipos-page .btn {
+        font-size: .83rem;
+        padding: .34rem .65rem;
+    }
+
+    .productos-tipos-page .btn.btn-sm {
+        font-size: .76rem;
+        padding: .28rem .5rem;
+    }
+
+    .productos-tipos-page .modal-header,
+    .productos-tipos-page .modal-body {
+        font-size: .87rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .productos-tipos-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .productos-tipos-page .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .productos-tipos-page .form-control {
+            font-size: .84rem;
+            min-height: 2.15rem;
+            padding: .28rem .54rem;
+        }
+
+        .productos-tipos-page .table {
+            font-size: .8rem;
+        }
+
+        .productos-tipos-page .table thead th,
+        .productos-tipos-page .table > thead > tr > th {
+            font-size: .68rem;
+        }
+    }
+</style>
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>

@@ -16,8 +16,8 @@
         .ToList();
 }
 
-<div class="container-fluid">
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+<div class="container-fluid persona-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 persona-page-header">
         <div>
             <h1 class="h3 mb-1 text-gray-800">@textoTitulo</h1>
         </div>
@@ -190,6 +190,152 @@
         </div>
     </div>
 </div>
+
+<style>
+    .persona-page {
+        font-size: .9rem;
+    }
+
+    .persona-page .card {
+        border-radius: .75rem;
+    }
+
+    .persona-page .card-body {
+        padding: .9rem 1rem;
+    }
+
+    .persona-page .form-group label,
+    .persona-page .custom-control-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .22rem;
+    }
+
+    .persona-page .small,
+    .persona-page .text-danger.small {
+        font-size: .78rem;
+    }
+
+    .persona-page .form-control,
+    .persona-page .btn:not(.btn-sm),
+    .persona-page .input-group-text {
+        font-size: .86rem;
+        min-height: 2.45rem;
+        border-radius: .55rem;
+        padding: .3rem .62rem;
+    }
+
+    .persona-page textarea.form-control {
+        min-height: 5rem;
+        resize: vertical;
+    }
+
+    .persona-page .form-group {
+        margin-bottom: .65rem;
+    }
+
+    .persona-page .alert {
+        padding: .7rem .85rem;
+        margin-bottom: .75rem;
+        border-radius: .65rem;
+    }
+
+    .persona-page .alert ul {
+        margin-bottom: 0;
+    }
+
+    .persona-page .input-group-append .btn {
+        min-width: 2.7rem;
+        padding-left: .45rem;
+        padding-right: .45rem;
+    }
+
+    .persona-page .custom-switch {
+        padding-top: 1.65rem;
+    }
+
+    .persona-page .custom-switch .custom-control-label {
+        font-size: .82rem;
+    }
+
+    .persona-page .mt-3.d-flex {
+        margin-top: .85rem !important;
+        padding-top: .85rem;
+        border-top: 1px solid rgba(0, 0, 0, .08);
+    }
+
+    @@media (min-width: 992px) {
+        .persona-page .card-body {
+            padding: .8rem .95rem;
+        }
+
+        .persona-page .form-control,
+        .persona-page .btn:not(.btn-sm),
+        .persona-page .input-group-text {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .persona-page .form-group {
+            margin-bottom: .5rem;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .persona-page .card-body {
+            padding: .8rem;
+        }
+
+        .persona-page .custom-switch {
+            padding-top: .15rem;
+        }
+
+        .persona-page .mt-3.d-flex .btn {
+            width: 100%;
+            margin-right: 0 !important;
+        }
+    }
+
+    html.dark-mode .persona-page .card,
+    html.dark-mode .persona-page .card-body {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .persona-page h1,
+    html.dark-mode .persona-page .form-group label,
+    html.dark-mode .persona-page .custom-control-label {
+        color: #e5edf7 !important;
+    }
+
+    html.dark-mode .persona-page .alert-info {
+        background: #162538;
+        border-color: #2f4d69;
+        color: #dbe7f5;
+    }
+
+    html.dark-mode .persona-page .alert-warning {
+        background: #3a2b12;
+        border-color: #70511f;
+        color: #f7dfaa;
+    }
+
+    html.dark-mode .persona-page .alert-danger {
+        background: #3a1f24;
+        border-color: #70414a;
+        color: #ffd9de;
+    }
+
+    html.dark-mode .persona-page .text-gray-800 {
+        color: #ecf2ff !important;
+    }
+
+    html.dark-mode .persona-page .mt-3.d-flex {
+        border-top-color: #2a3b52;
+    }
+</style>
 
 <script>
     (function () {
