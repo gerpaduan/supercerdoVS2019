@@ -41,10 +41,31 @@
                         <input type="datetime-local"
                                id="fechaDesde"
                                name="fechaDesde"
-                               class="form-control"
+                               class="form-control fecha-datetime-original"
                                value="@(string.IsNullOrEmpty(Request["fechaDesde"])
 ? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
 : Request["fechaDesde"])" />
+                        <div class="fecha-mobile-picker">
+                            <input type="date"
+                                   id="fechaDesdeDateMobile"
+                                   class="form-control fecha-mobile-date" />
+                            <div class="fecha-mobile-time-row">
+                                <select id="fechaDesdeHourMobile" class="form-control fecha-mobile-time">
+                                    @for (var hora = 0; hora < 24; hora++)
+                                    {
+                                        <option value="@hora.ToString("00")">@hora.ToString("00")</option>
+                                    }
+                                </select>
+                                <span class="fecha-mobile-time-sep">:</span>
+                                <select id="fechaDesdeMinuteMobile" class="form-control fecha-mobile-time">
+                                    @for (var minuto = 0; minuto < 60; minuto++)
+                                    {
+                                        <option value="@minuto.ToString("00")">@minuto.ToString("00")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <small id="fechaDesdeResumen" class="form-text text-muted fecha-resumen-dia"></small>
                         @Html.Partial("_AdvertenciaPermisoFecha")
                     </div>
 
@@ -53,10 +74,31 @@
                         <input type="datetime-local"
                                id="fechaHasta"
                                name="fechaHasta"
-                               class="form-control"
+                               class="form-control fecha-datetime-original"
                                value="@(string.IsNullOrEmpty(Request["fechaHasta"])
 ? DateTime.Today.ToString("yyyy-MM-ddT23:59")
 : Request["fechaHasta"])" />
+                        <div class="fecha-mobile-picker">
+                            <input type="date"
+                                   id="fechaHastaDateMobile"
+                                   class="form-control fecha-mobile-date" />
+                            <div class="fecha-mobile-time-row">
+                                <select id="fechaHastaHourMobile" class="form-control fecha-mobile-time">
+                                    @for (var hora = 0; hora < 24; hora++)
+                                    {
+                                        <option value="@hora.ToString("00")">@hora.ToString("00")</option>
+                                    }
+                                </select>
+                                <span class="fecha-mobile-time-sep">:</span>
+                                <select id="fechaHastaMinuteMobile" class="form-control fecha-mobile-time">
+                                    @for (var minuto = 0; minuto < 60; minuto++)
+                                    {
+                                        <option value="@minuto.ToString("00")">@minuto.ToString("00")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <small id="fechaHastaResumen" class="form-text text-muted fecha-resumen-dia"></small>
                     </div>
 
                     <div class="form-group mb-0 filtro-accion">

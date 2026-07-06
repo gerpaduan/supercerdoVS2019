@@ -656,6 +656,8 @@
     <script>
         (function () {
             const SIDEBAR_STORAGE_KEY = "carnisys-sidebar-collapsed";
+            const SIDEBAR_COLLAPSES_STORAGE_KEY = "carnisys-sidebar-collapses";
+            let suppressCollapsePersistence = false;
 
             function applySidebarState(collapsed) {
                 var $body = $("body");
@@ -665,7 +667,11 @@
                 $sidebar.toggleClass("toggled", collapsed);
 
                 if (collapsed) {
+                    suppressCollapsePersistence = true;
                     $sidebar.find(".collapse").collapse("hide");
+                    suppressCollapsePersistence = false;
+                } else {
+                    restoreSidebarCollapses();
                 }
             }
 
@@ -683,13 +689,98 @@
                 } catch (e) { }
             }
 
-            $(function () {
+            function readSidebarCollapsesState() {
+                try {
+                    return JSON.parse(localStorage.getItem(SIDEBAR_COLLAPSES_STORAGE_KEY) || "{}") || {};
+                } catch (e) {
+                    return {};
+                }
+            }
+
+            function saveSidebarCollapsesState(state) {
+                try {
+                    localStorage.setItem(SIDEBAR_COLLAPSES_STORAGE_KEY, JSON.stringify(state || {}));
+                } catch (e) { }
+            }
+
+            function ensureInitialSidebarCollapsesState() {
+                var state = readSidebarCollapsesState();
+                if (Object.keys(state).length > 0) {
+                    return;
+                }
+
+                $(".sidebar .collapse").each(function () {
+                    if (!this.id) return;
+                    state[this.id] = $(this).hasClass("show");
+                });
+
+                saveSidebarCollapsesState(state);
+            }
+
+            function setCollapseState(id, isOpen) {
+                if (!id) return;
+                var state = readSidebarCollapsesState();
+                state[id] = !!isOpen;
+                saveSidebarCollapsesState(state);
+            }
+
+            function restoreSidebarCollapses() {
+                var state = readSidebarCollapsesState();
+                var $sidebar = $(".sidebar");
+
+                if ($sidebar.hasClass("toggled")) {
+                    return;
+                }
+
+                suppressCollapsePersistence = true;
+
+                $sidebar.find(".collapse").each(function () {
+                    var id = this.id;
+                    if (!id) return;
+
+                    if (state[id]) {
+                        $(this).collapse("show");
+                    } else {
+                        $(this).collapse("hide");
+                    }
+                });
+
+                suppressCollapsePersistence = false;
+            }
+
+            function enforceStoredSidebarState() {
                 applySidebarState(readSidebarState());
+            }
+
+            $(function () {
+                ensureInitialSidebarCollapsesState();
+                applySidebarState(readSidebarState());
+
+                $(".sidebar .collapse").on("shown.bs.collapse", function () {
+                    if (suppressCollapsePersistence) return;
+                    setCollapseState(this.id, true);
+                });
+
+                $(".sidebar .collapse").on("hidden.bs.collapse", function () {
+                    if (suppressCollapsePersistence) return;
+                    setCollapseState(this.id, false);
+                });
 
                 $(document).on("click", "#sidebarToggle, #sidebarToggleTop", function () {
                     window.setTimeout(function () {
-                        saveSidebarState($(".sidebar").hasClass("toggled"));
+                        var collapsed = $(".sidebar").hasClass("toggled");
+                        saveSidebarState(collapsed);
+                        if (!collapsed) {
+                            restoreSidebarCollapses();
+                        }
                     }, 0);
+                });
+
+                $(window).on("resize.sidebarStateFix orientationchange.sidebarStateFix", function () {
+                    window.clearTimeout(window.__sidebarStateFixTimer);
+                    window.__sidebarStateFixTimer = window.setTimeout(function () {
+                        enforceStoredSidebarState();
+                    }, 80);
                 });
             });
         })();
