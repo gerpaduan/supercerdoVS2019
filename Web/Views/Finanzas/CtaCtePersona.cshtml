@@ -5,6 +5,10 @@
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
     bool mostrarAnulados = ViewBag.MostrarAnulados != null && (bool)ViewBag.MostrarAnulados;
+    bool ocultarSaldo = ViewBag.OcultarSaldo != null && (bool)ViewBag.OcultarSaldo;
+    bool mostrarSoloUltimosRegistros = ViewBag.MostrarSoloUltimosRegistros != null && (bool)ViewBag.MostrarSoloUltimosRegistros;
+    bool mostrarSoloMovimientosCajaActual = ViewBag.MostrarSoloMovimientosCajaActual != null && (bool)ViewBag.MostrarSoloMovimientosCajaActual;
+    int cantidadUltimosRegistros = ViewBag.CantidadUltimosRegistros != null ? (int)ViewBag.CantidadUltimosRegistros : 0;
 
     ViewBag.Title = "Cuenta Corriente";
     Layout = (desdePos || renderSinLayout) ? null : "~/Views/Shared/_LayoutBase.cshtml";
@@ -62,17 +66,20 @@
             <h5 class="mb-0"><strong>@persona</strong></h5>
         </div>
         <div>
-            <h5 class="mb-0">
-                Saldo:
-                @if (saldo >= 0)
-                {
-                    <span class="text-success font-weight-bold">$ @saldo.ToString("N2")</span>
-                }
-                else
-                {
-                    <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
-                }
-            </h5>
+            @if (!ocultarSaldo)
+            {
+                <h5 class="mb-0">
+                    Saldo:
+                    @if (saldo >= 0)
+                    {
+                        <span class="text-success font-weight-bold">$ @saldo.ToString("N2")</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
+                    }
+                </h5>
+            }
         </div>
     </div>
 
@@ -233,6 +240,18 @@
          ======================= -->
     <div class="card shadow-sm ctacte-panel-card">
         <div class="card-body p-2">
+            @if (mostrarSoloMovimientosCajaActual)
+            {
+                <div class="alert alert-info py-2 px-3 mb-2">
+                    Mostrando sólo los movimientos creados por el usuario actual desde la apertura de su caja.
+                </div>
+            }
+            else if (mostrarSoloUltimosRegistros && cantidadUltimosRegistros > 0)
+            {
+                <div class="alert alert-info py-2 px-3 mb-2">
+                    Mostrando los últimos @cantidadUltimosRegistros registros.
+                </div>
+            }
 
             <div class="table-responsive">
 
@@ -326,7 +345,7 @@
                                 </td>
 
                                 <td style="text-align:right;">
-                                    @Convert.ToDecimal(row["Saldo"]).ToString("N2")
+                                    @(ocultarSaldo ? "***" : Convert.ToDecimal(row["Saldo"]).ToString("N2"))
                                 </td>
 
                                 <td>@row["Sucursal"]</td>

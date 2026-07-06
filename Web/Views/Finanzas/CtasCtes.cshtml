@@ -3,6 +3,7 @@
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
+    bool ocultarSaldo = ViewBag.OcultarSaldo != null && (bool)ViewBag.OcultarSaldo;
 
     ViewBag.Title = "Cuentas Corrientes";
     Layout = (desdePos || renderSinLayout) ? null : "~/Views/Shared/_LayoutBase.cshtml";
@@ -49,12 +50,15 @@
                                         @col.ColumnName
 
                                         <!-- Botón ordenar -->
-                                        <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
-                                           class="btn btn-sm btn-light ml-2"
-                                           data-pos-ajax="@(desdePos ? "true" : "false")"
-                                           data-pos-title="Cuentas corrientes">
-                                            @(ordenSaldo == "ASC" ? "↓" : "↑")
-                                        </a>
+                                        @if (!ocultarSaldo)
+                                        {
+                                            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
+                                               class="btn btn-sm btn-light ml-2"
+                                               data-pos-ajax="@(desdePos ? "true" : "false")"
+                                               data-pos-title="Cuentas corrientes">
+                                                @(ordenSaldo == "ASC" ? "↓" : "↑")
+                                            </a>
+                                        }
                                     </th>
                                 }
                                 else
@@ -75,7 +79,7 @@
                                     if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
                                     {
                                         decimal saldoFila = row[col] == DBNull.Value ? 0m : Convert.ToDecimal(row[col]);
-                                        <td>@saldoFila.ToString("N2")</td>
+                                        <td>@(ocultarSaldo ? "***" : saldoFila.ToString("N2"))</td>
                                     }
                                     else
                                     {

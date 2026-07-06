@@ -99,6 +99,8 @@ namespace Web.Controllers
         {
             bool modoPos = desdePos || DesdePOS;
             bool renderParcial = modoPos || Request.IsAjaxRequest();
+            var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+            bool puedeVerCtasCtes = PuedeVerSaldosCuentaCorriente(usuarioActual, Permisos.Finanza.VerCtasCtes);
             var swTotal = Stopwatch.StartNew();
             long msPermiso = 0;
             long msPreparacion = 0;
@@ -128,6 +130,7 @@ namespace Web.Controllers
                 ViewBag.DesdePOS = modoPos;
                 ViewBag.RenderSinLayout = renderParcial;
                 ViewBag.OrdenSaldo = ordenSaldo;
+                ViewBag.OcultarSaldo = modoPos && !puedeVerCtasCtes;
                 swEtapa.Stop();
                 msPreparacion = swEtapa.ElapsedMilliseconds;
 
@@ -215,6 +218,7 @@ namespace Web.Controllers
         {
             bool modoPos = desdePos || DesdePOS;
             bool renderParcial = modoPos || Request.IsAjaxRequest();
+            var usuarioActual = Session["Usuario"] as Entidades.Usuario;
 
             try
             {
@@ -231,6 +235,7 @@ namespace Web.Controllers
                 if (!fechaDesde.HasValue)
                     fechaDesde = DateTime.Now.Date;
 
+                var persona = oPersonasN.findById(idPersona);
                 DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value);
 
                 // MISMA LÓGICA QUE EN WINFORMS:
@@ -238,6 +243,19 @@ namespace Web.Controllers
                 if (!mostrarAnulados)
                 {
                     dtMov = FiltrarRegistrosRepetidos(dtMov);
+                }
+
+                if (modoPos)
+                {
+                    if (persona != null && persona.CtaCte)
+                    {
+                        var cierreCajaActual = ObtenerCajaAbiertaUsuario(usuarioActual);
+                        dtMov = FiltrarMovimientosPosCuentaCorrienteActiva(dtMov, usuarioActual, cierreCajaActual);
+                    }
+                    else
+                    {
+                        dtMov = TomarUltimosRegistros(dtMov, 5);
+                    }
                 }
 
                 decimal saldo = 0;
@@ -249,14 +267,19 @@ namespace Web.Controllers
                         saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
                 }
 
+                bool ocultarSaldoEnPos = modoPos && persona != null && persona.CtaCte;
                 ViewBag.IdPersona = idPersona;
-                ViewBag.Persona = oPersonasN.findById(idPersona);
+                ViewBag.Persona = persona;
                 ViewBag.SaldoPersona = saldo;
                 ViewBag.ReturnUrlCtaCte = DecodeReturnUrlIfNeeded(returnUrl);
                 ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd");
                 ViewBag.MostrarAnulados = mostrarAnulados;
                 ViewBag.DesdePOS = modoPos;
                 ViewBag.RenderSinLayout = renderParcial;
+                ViewBag.OcultarSaldo = ocultarSaldoEnPos;
+                ViewBag.MostrarSoloUltimosRegistros = modoPos && (persona == null || !persona.CtaCte);
+                ViewBag.CantidadUltimosRegistros = 5;
+                ViewBag.MostrarSoloMovimientosCajaActual = modoPos && persona != null && persona.CtaCte;
 
                 if (renderParcial)
                     return PartialView("CtaCtePersona", dtMov);
@@ -323,6 +346,115 @@ namespace Web.Controllers
             }
 
             return filtrado;
+        }
+
+        private DataTable TomarUltimosRegistros(DataTable dtMov, int cantidad)
+        {
+            if (dtMov == null)
+                return new DataTable();
+
+            if (cantidad <= 0 || dtMov.Rows.Count <= cantidad)
+                return dtMov;
+
+            DataTable ultimos = dtMov.Clone();
+            int indiceInicial = Math.Max(0, dtMov.Rows.Count - cantidad);
+
+            for (int i = indiceInicial; i < dtMov.Rows.Count; i++)
+            {
+                ultimos.ImportRow(dtMov.Rows[i]);
+            }
+
+            return ultimos;
+        }
+
+        private DataTable FiltrarMovimientosPosCuentaCorrienteActiva(DataTable dtMov, Entidades.Usuario usuarioActual, Entidades.CierreCaja cierreCajaActual)
+        {
+            if (dtMov == null)
+                return new DataTable();
+
+            if (usuarioActual == null || usuarioActual.Id <= 0)
+                return dtMov.Clone();
+
+            if (cierreCajaActual == null || !cierreCajaActual.FechaHoraInicio.HasValue || cierreCajaActual.FechaHoraCierre.HasValue)
+                return dtMov.Clone();
+
+            string columnaCreadoPor = ObtenerNombreColumna(dtMov,
+                "creadoPor",
+                "CreadoPor",
+                "creadoPorId",
+                "CreadoPorId",
+                "idUsuario",
+                "IdUsuario");
+
+            string columnaFecha = ObtenerNombreColumna(dtMov, "Fecha", "fecha");
+
+            if (string.IsNullOrWhiteSpace(columnaCreadoPor) || string.IsNullOrWhiteSpace(columnaFecha))
+                return dtMov.Clone();
+
+            DateTime fechaAperturaCaja = cierreCajaActual.FechaHoraInicio.Value;
+            DataTable filtrado = dtMov.Clone();
+
+            foreach (DataRow row in dtMov.Rows)
+            {
+                int idCreador = LeerIntRow(row, columnaCreadoPor);
+                DateTime fechaMovimiento = LeerDateTimeRow(row, columnaFecha);
+
+                if (idCreador == usuarioActual.Id && fechaMovimiento >= fechaAperturaCaja)
+                {
+                    filtrado.ImportRow(row);
+                }
+            }
+
+            return filtrado;
+        }
+
+        private static string ObtenerNombreColumna(DataTable dt, params string[] candidatos)
+        {
+            if (dt == null || dt.Columns == null || candidatos == null)
+                return null;
+
+            foreach (string candidato in candidatos)
+            {
+                if (string.IsNullOrWhiteSpace(candidato))
+                    continue;
+
+                foreach (DataColumn col in dt.Columns)
+                {
+                    if (string.Equals(col.ColumnName, candidato, StringComparison.OrdinalIgnoreCase))
+                        return col.ColumnName;
+                }
+            }
+
+            return null;
+        }
+
+        private static int LeerIntRow(DataRow row, string columna)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(columna) || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return 0;
+
+            int valor;
+            return int.TryParse(Convert.ToString(row[columna]), out valor) ? valor : 0;
+        }
+
+        private static DateTime LeerDateTimeRow(DataRow row, string columna)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(columna) || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return DateTime.MinValue;
+
+            DateTime valor;
+            return DateTime.TryParse(Convert.ToString(row[columna]), out valor) ? valor : DateTime.MinValue;
+        }
+
+        private bool PuedeVerSaldosCuentaCorriente(Entidades.Usuario usuario, string permiso)
+        {
+            if (usuario == null)
+                return false;
+
+            if (usuario.Admin)
+                return true;
+
+            return PermisosHelper.TienePermiso(Session, permiso, null);
         }
 
         // POST: Finanzas/CtaCtePersona
@@ -885,7 +1017,7 @@ namespace Web.Controllers
 
             cierre = oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
 
-            bool abierta = cierre != null && cierre.UsuarioCierre != null && cierre.UsuarioCierre.Id == 0;
+            bool abierta = cierre != null && !cierre.FechaHoraCierre.HasValue;
             return abierta ? cierre : null;
         }
 
