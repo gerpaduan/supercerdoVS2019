@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Mail;
 using System.Web.Mvc;
+using Web.Helpers;
 using Web.Models;
 using AFIP;
 
@@ -111,11 +112,13 @@ namespace Web.Controllers
 
             bool tieneMovimientos = esEdicion && oPersonaN.personaTieneCompras_Ventas(model.IdPersona);
             bool esAdministrador = usuario != null && usuario.Admin;
+            bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
 
             model.EsEdicion = esEdicion;
             model.SoloLecturaInicial = false;
             model.TieneMovimientos = tieneMovimientos;
             model.EsAdministrador = esAdministrador;
+            model.PuedeGestionarCuentaCorriente = puedeGestionarCuentaCorriente;
             model.PuedeEditarCamposProtegidos = !esEdicion || !tieneMovimientos || esAdministrador;
             model.MensajeRestriccion = ConstruirMensajeRestriccion(tieneMovimientos, esAdministrador);
 
@@ -141,7 +144,9 @@ namespace Web.Controllers
             personaGuardar.Domicilio = NormalizarTexto(model.Domicilio, true);
             personaGuardar.Ciudad = NormalizarTexto(model.Ciudad, true);
             personaGuardar.otrosDatos = (model.OtrosDatos ?? "").Trim();
-            personaGuardar.CtaCte = model.CtaCte;
+            personaGuardar.CtaCte = puedeGestionarCuentaCorriente
+                ? model.CtaCte
+                : (esEdicion && personaOriginal != null && personaOriginal.IdPersona > 0 && personaOriginal.CtaCte);
             personaGuardar.Bonificacion = bonificacion;
             personaGuardar.tipo = personaGuardar.tipo ?? "";
             personaGuardar.Marca = false;
@@ -403,6 +408,7 @@ namespace Web.Controllers
             var usuario = Session["Usuario"] as Entidades.Usuario;
             bool tieneMovimientos = esEdicion && persona != null && persona.IdPersona > 0 && oPersonaN.personaTieneCompras_Ventas(persona.IdPersona);
             bool esAdministrador = usuario != null && usuario.Admin;
+            bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
 
             return new PersonaEditVm
             {
@@ -411,6 +417,7 @@ namespace Web.Controllers
                 SoloLecturaInicial = esEdicion,
                 TieneMovimientos = tieneMovimientos,
                 EsAdministrador = esAdministrador,
+                PuedeGestionarCuentaCorriente = puedeGestionarCuentaCorriente,
                 PuedeEditarCamposProtegidos = !esEdicion || !tieneMovimientos || esAdministrador,
                 MensajeRestriccion = ConstruirMensajeRestriccion(tieneMovimientos, esAdministrador),
                 Identificacion = persona != null ? persona.Identificacion : "",
@@ -427,6 +434,12 @@ namespace Web.Controllers
                     ? persona.Bonificacion.ToString("0.##", CultureInfo.InvariantCulture)
                     : "0"
             };
+        }
+
+        private bool PuedeGestionarCuentaCorriente(Entidades.Usuario usuario)
+        {
+            return usuario != null
+                && (usuario.Admin || PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtasCtes, null));
         }
 
         private void CargarIvas(PersonaEditVm model)

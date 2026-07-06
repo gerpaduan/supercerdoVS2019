@@ -45,6 +45,7 @@ namespace Web.Models
         public bool SoloLecturaInicial { get; set; }
         public bool TieneMovimientos { get; set; }
         public bool EsAdministrador { get; set; }
+        public bool PuedeGestionarCuentaCorriente { get; set; }
         public bool PuedeEditarCamposProtegidos { get; set; }
         public string MensajeRestriccion { get; set; }
         public string Identificacion { get; set; }
