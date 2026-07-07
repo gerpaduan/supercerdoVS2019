@@ -943,6 +943,33 @@ $(document).ready(function () {
 
     let facturaOk = false;
 
+    function traerModalFacturaAlFrente($modal) {
+        if (!$modal || !$modal.length) return;
+
+        if (!$modal.parent().is('body')) {
+            $modal.appendTo('body');
+        }
+
+        let zBase = 1040;
+        $('.modal.show').not($modal).each(function () {
+            const zActual = parseInt($(this).css('z-index'), 10) || 1040;
+            if (zActual > zBase) {
+                zBase = zActual;
+            }
+        });
+
+        const zBackdrop = zBase + 10;
+        const zModal = zBase + 20;
+
+        $modal.css('z-index', zModal);
+
+        window.setTimeout(function () {
+            $('.modal-backdrop').last()
+                .css('z-index', zBackdrop)
+                .attr('data-factura-backdrop-front', 'true');
+        }, 0);
+    }
+
     function abrirFacturaVentaModal(ventaId, opciones) {
         const opts = opciones || {};
         const volverAPostVenta = opts.volverAPostVenta === true;
@@ -981,6 +1008,7 @@ $(document).ready(function () {
                 }
 
                 $modal.off('shown.factura').on('shown.bs.modal.factura', function () {
+                    traerModalFacturaAlFrente($modal);
                     ajustarFacturaModal();
                     $(window).on('resize.factura', ajustarFacturaModal);
                 });
@@ -998,9 +1026,14 @@ $(document).ready(function () {
 
                 $modal.off('hidden.factura').on('hidden.bs.modal.factura', function () {
                     $(window).off('resize.factura');
+                    $modal.css('z-index', '');
+                    if ($('.modal.show').length) {
+                        $('body').addClass('modal-open');
+                    }
                     $modal.off('.factura');
                 });
 
+                traerModalFacturaAlFrente($modal);
                 $modal.modal({
                     backdrop: facturaObligatoria ? 'static' : true,
                     keyboard: !facturaObligatoria,

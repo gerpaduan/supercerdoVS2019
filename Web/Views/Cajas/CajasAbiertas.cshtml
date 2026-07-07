@@ -385,7 +385,7 @@
 
                         <div class="col-md-6">
                             <label>EgresosCaja</label>
-                            <input type="number" step="0.01" id="EgresosCaja" class="form-control" readonly />
+                            <input type="text" id="EgresosCaja" class="form-control" readonly />
                         </div>
                     </div>
 
@@ -869,14 +869,14 @@
                     $("#CajaDesc").val(data.vendedor);
                     $("#FechaApertura").val(data.fechaApertura);
                     $("#FechaCierre").val(data.fechaCierre || "");
-                    $("#CajaInicial").val(data.cajaInicial);
+                    setFormattedValue("#CajaInicial", data.cajaInicial);
                     $("#Usuario").val(data.usuario);
-                    $("#Ventas").val(data.ventas);
-                    $("#EgresosCaja").val(data.egresosCaja);
-                    $("#CajaCierre").val(data.modoModificacion && data.cajaCierre != null ? data.cajaCierre : "");
-                    $("#Diferencia").val(data.modoModificacion && data.diferencia != null ? data.diferencia : "");
-                    $("#ImporteRetirado").val(data.modoModificacion && data.importeRetirado != null ? data.importeRetirado : "");
-                    $("#CajaInicioSiguiente").val(data.modoModificacion && data.cajaInicioSiguiente != null ? data.cajaInicioSiguiente : "");
+                    setFormattedValue("#Ventas", data.ventas);
+                    setFormattedValue("#EgresosCaja", data.egresosCaja);
+                    setFormattedValue("#CajaCierre", data.modoModificacion ? data.cajaCierre : null, true);
+                    setFormattedValue("#Diferencia", data.modoModificacion ? data.diferencia : null, true);
+                    setFormattedValue("#ImporteRetirado", data.modoModificacion ? data.importeRetirado : null, true);
+                    setFormattedValue("#CajaInicioSiguiente", data.modoModificacion ? data.cajaInicioSiguiente : null, true);
                     $("#modalCerrarCajaTitulo").text(data.modoModificacion ? "Modificar Cierre de Caja" : "Cerrar Caja");
                     $("#btnGuardarCierreCaja").text(data.modoModificacion ? "Actualizar datos" : "Cerrar Caja");
                     if (data.modoModificacion) {
@@ -945,13 +945,70 @@
             return /^-?\d*(\.\d+)?$/.test(v);
         }
 
+        function toFloat(value) {
+            if (value == null) return 0;
+
+            let v = String(value).trim();
+            if (v === "") return 0;
+
+            v = v.replace(/\$/g, "").replace(/\s+/g, "");
+
+            if (/[eE]/.test(v) && v.indexOf(",") === -1) {
+                const exponencial = Number(v);
+                return isFinite(exponencial) ? exponencial : 0;
+            }
+
+            const tieneComa = v.indexOf(",") >= 0;
+            const tienePunto = v.indexOf(".") >= 0;
+
+            if (tieneComa && tienePunto) {
+                v = v.replace(/\./g, "").replace(",", ".");
+            } else if (tieneComa) {
+                v = v.replace(",", ".");
+            }
+
+            const numero = Number(v);
+            return isFinite(numero) ? numero : 0;
+        }
+
+        function formatNumberEsAr(value, permitirVacio) {
+            if (value == null || value === "") {
+                return permitirVacio ? "" : "0,00";
+            }
+
+            const numero = toFloat(value);
+            return numero.toLocaleString("es-AR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function setFormattedValue(selector, value, permitirVacio) {
+            $(selector).val(formatNumberEsAr(value, !!permitirVacio));
+        }
+
+        function toEditableNumberString(value) {
+            if (value == null) return "";
+
+            const texto = String(value).trim();
+            if (texto === "") return "";
+
+            return toFloat(texto).toFixed(2);
+        }
+
+        function toPostNumberString(value) {
+            const texto = value == null ? "" : String(value).trim();
+            if (texto === "") return "";
+            return toFloat(texto).toFixed(2);
+        }
+
         function guardarCierreCaja() {
             let data = {
                 Id: $("#Id").val(),
-                CajaCierre: $("#CajaCierre").val(),
-                Diferencia: $("#Diferencia").val(),
-                ImporteRetirado: $("#ImporteRetirado").val(),
-                CajaInicioSiguiente: $("#CajaInicioSiguiente").val(),
+                CajaCierre: toPostNumberString($("#CajaCierre").val()),
+                Diferencia: toPostNumberString($("#Diferencia").val()),
+                ImporteRetirado: toPostNumberString($("#ImporteRetirado").val()),
+                CajaInicioSiguiente: toPostNumberString($("#CajaInicioSiguiente").val()),
                 modoModificacion: $("#ModoModificacion").val() === "true"
             };
 
@@ -981,25 +1038,43 @@
             });
         }
 
-        function toFloat(value) {
-            let v = value.trim();
-            if (v === "") return 0;
-            v = v.replace(",", ".");
-            return parseFloat(v) || 0;
-        }
-
         function validarNumero(input) {
             let v = input.value;
-            v = v.replace(/[^\d.,]/g, "");
-            v = v.replace(",", ".");
+            if (!v) {
+                input.value = "";
+                return;
+            }
+
+            v = v.replace(/[^\d,.\-]/g, "");
+            v = v.replace(/,/g, ".");
+
+            const signo = v.startsWith("-") ? "-" : "";
+            v = (signo ? v.substring(1) : v).replace(/-/g, "");
 
             const partes = v.split(".");
             if (partes.length > 2) {
-                v = partes[0] + "." + partes[1];
+                v = partes.shift() + "." + partes.join("");
             }
 
-            input.value = v;
+            input.value = signo + v;
         }
+
+        $(document).on('focus', '#CajaCierre, #ImporteRetirado', function () {
+            if (!this.value) {
+                return;
+            }
+
+            this.value = toEditableNumberString(this.value);
+        });
+
+        $(document).on('blur', '#CajaCierre, #ImporteRetirado', function () {
+            if (!this.value || !String(this.value).trim()) {
+                return;
+            }
+
+            this.value = formatNumberEsAr(this.value, false);
+            recalcularCierre();
+        });
 
         function recalcularCierre() {
             let cajaInicial = toFloat($("#CajaInicial").val());
@@ -1011,18 +1086,18 @@
             let diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
 
             if ($("#CajaCierre").val().length > 0)
-                $("#Diferencia").val(diferencia.toFixed(2));
+                $("#Diferencia").val(formatNumberEsAr(diferencia, false));
             else
                 $("#Diferencia").val("");
 
             let cajaInicioSiguiente = cajaCierre - importeRetirado;
-            $("#CajaInicioSiguiente").val(cajaInicioSiguiente.toFixed(2));
+            $("#CajaInicioSiguiente").val(formatNumberEsAr(cajaInicioSiguiente, false));
 
             colorearDiferencia();
         }
 
         function colorearDiferencia() {
-            let valor = parseFloat($("#Diferencia").val().replace(",", "."));
+            let valor = toFloat($("#Diferencia").val());
 
             if (isNaN(valor)) {
                 $("#Diferencia").css("background-color", "white");
