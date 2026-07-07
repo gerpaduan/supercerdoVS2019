@@ -2,10 +2,13 @@
 
 @{
     ViewBag.Title = "Cajas Abiertas";
-    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
     bool puedeCambiarSucursalCaja = ViewBag.PuedeCambiarSucursalCaja != null && (bool)ViewBag.PuedeCambiarSucursalCaja;
+    bool puedeModificarCierres = ViewBag.PuedeModificarCierres != null && (bool)ViewBag.PuedeModificarCierres;
     int? idSucursal = ViewBag.IdSucursal;
     string buscar = ViewBag.Buscar ?? "";
+    DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today.AddDays(-7);
+    var historialCierres = ViewBag.HistorialCierres as System.Data.DataTable ?? new System.Data.DataTable();
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
@@ -19,7 +22,10 @@
                     <div class="col-12 col-md-4 col-xl-3">
                         <label for="idSucursal" class="cajas-filtro-label">Sucursal</label>
                         <select name="idSucursal" id="idSucursal" class="form-control">
-                            <option value="">-- Todas las sucursales --</option>
+                            @if (sucursales.Count > 1)
+                            {
+                                <option value="" @(!idSucursal.HasValue ? "selected" : "")>-- Todas las sucursales --</option>
+                            }
                             @foreach (var s in sucursales)
                             {
                                 <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>
@@ -29,7 +35,16 @@
                         </select>
                     </div>
 
-                    <div class="col-12 col-md-5 col-xl-4">
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <label for="fechaDesde" class="cajas-filtro-label">Fecha desde</label>
+                        <input type="date"
+                               name="fechaDesde"
+                               id="fechaDesde"
+                               value="@fechaDesde.ToString("yyyy-MM-dd")"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-12 col-md-4 col-xl-4">
                         <label for="buscarVendedor" class="cajas-filtro-label">Vendedor</label>
                         <div class="input-group">
                             <input type="text"
@@ -49,16 +64,77 @@
                     </div>
                 </div>
 
+                @Html.Partial("_AdvertenciaPermisoFecha")
+
                 <div id="estadoBusquedaCajasAbiertas" class="text-muted small">Resultados actualizados.</div>
             </form>
         </div>
     </div>
 
-    <div id="tablaResultado" class="cajas-resultado-wrap">
-        @Html.Partial("_TablaCajasAbiertas", Model)
+    <div class="card shadow-sm mb-3 cajas-panel-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Cajas abiertas</h6>
+                <div id="estadoBusquedaCajasAbiertasTabla" class="text-muted small">Resultados actualizados.</div>
+            </div>
+            <div id="tablaResultado" class="cajas-resultado-wrap">
+                @Html.Partial("_TablaCajasAbiertas", Model)
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm cajas-panel-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Historial de cierres</h6>
+                <div id="estadoBusquedaHistorialCajas" class="text-muted small">Resultados actualizados.</div>
+            </div>
+            <div id="tablaResultadoHistorial" class="cajas-resultado-wrap">
+                @Html.Partial("_TablaCierresDeCaja", historialCierres)
+            </div>
+        </div>
     </div>
 
     <style>
+        .cajas-page h6 {
+            font-size: .92rem;
+            font-weight: 700;
+            color: #2f3a4a;
+        }
+
+        .cajas-page #tablaResultadoHistorial .btn-sm,
+        .cajas-page #tablaResultado .btn-sm {
+            padding: .18rem .42rem;
+            line-height: 1.12;
+            font-size: .76rem;
+        }
+
+        .cajas-page #tablaResultadoHistorial table {
+            font-size: .8rem;
+        }
+
+        .cajas-page #tablaResultadoHistorial th,
+        .cajas-page #tablaResultadoHistorial td {
+            padding: .36rem .48rem;
+            vertical-align: middle;
+            line-height: 1.12;
+        }
+
+        .cajas-page #tablaResultadoHistorial thead th {
+            font-size: .69rem !important;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        .cajas-page .badge-modificar {
+            font-size: .72rem;
+            padding: .28rem .42rem;
+        }
+
+        .cajas-page #permisoFechaWarning {
+            margin-top: .65rem !important;
+        }
+
         .cajas-page {
             font-size: .9rem;
         }
@@ -115,12 +191,6 @@
             letter-spacing: .02em;
         }
 
-        .cajas-page #tablaCajas .btn-sm {
-            padding: .18rem .42rem;
-            line-height: 1.12;
-            font-size: .76rem;
-        }
-
         @@media (min-width: 1200px) {
             .cajas-page .cajas-panel-card > .card-body,
             .cajas-page .cajas-panel-card .card-body {
@@ -135,12 +205,14 @@
                 padding: .24rem .5rem;
             }
 
-            .cajas-page #tablaCajas {
+            .cajas-page #tablaCajas,
+            .cajas-page #tablaResultadoHistorial table {
                 font-size: .79rem;
             }
 
             .cajas-page #tablaCajas thead th,
-            .cajas-page #tablaCajas > thead > tr > th {
+            .cajas-page #tablaCajas > thead > tr > th,
+            .cajas-page #tablaResultadoHistorial thead th {
                 font-size: .69rem !important;
             }
         }
@@ -252,7 +324,7 @@
         <div class="modal-content">
 
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Cerrar Caja</h5>
+                <h5 class="modal-title" id="modalCerrarCajaTitulo">Cerrar Caja</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -265,6 +337,7 @@
                 <form id="formCerrarCaja">
 
                     <input type="hidden" id="Id" name="Id" />
+                    <input type="hidden" id="ModoModificacion" name="modoModificacion" value="false" />
 
                     <div class="mb-2">
                         <label class="mb-1">Sucursal</label>
@@ -289,6 +362,18 @@
                         <div class="col-md-6 order-1 order-md-2">
                             <label>Apertura</label>
                             <input type="text" id="FechaApertura" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Usuario Cierre</label>
+                            <input type="text" id="Usuario" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Fecha Cierre</label>
+                            <input type="text" id="FechaCierre" class="form-control" readonly />
                         </div>
                     </div>
 
@@ -331,14 +416,12 @@
                         </div>
                     </div>
 
-                    <input type="hidden" id="Usuario" class="form-control" readonly />
-
                 </form>
 
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
+                <button type="button" class="btn btn-danger" id="btnGuardarCierreCaja" onclick="guardarCierreCaja()">Cerrar Caja</button>
                 <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
             </div>
 
@@ -416,6 +499,9 @@
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
             guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
         };
+        window.CajasHistorialUrls = {
+            listar: '@Url.Action("HistorialCierresCaja", "Cajas")'
+        };
         window.VentasCajaUrls = {
             mis: '@Url.Action("MisVentas", "Ventas")',
             detalle: '@Url.Action("DetalleVenta", "Ventas")'
@@ -428,16 +514,22 @@
         function setBuscandoCajasAbiertas(buscando, mensaje) {
             const $btn = $("#btnBuscarCajasAbiertas");
             const $texto = $btn.find(".btn-buscar-texto");
-            const $estado = $("#estadoBusquedaCajasAbiertas");
+            const $estado = $("#estadoBusquedaCajasAbiertasTabla");
 
             $btn.prop("disabled", buscando);
             $texto.text(buscando ? "Cargando..." : "Buscar");
             $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
         }
 
+        function setBuscandoHistorial(buscando, mensaje) {
+            const $estado = $("#estadoBusquedaHistorialCajas");
+            $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
+        }
+
         function filtrar() {
             const idSucursal = $("#idSucursal").val() || "";
             const buscar = $("#buscarVendedor").val() || "";
+            const fechaDesde = $("#fechaDesde").val() || "";
 
             let pos = 0;
             const txt = document.getElementById("buscarVendedor");
@@ -446,7 +538,9 @@
             }
 
             setBuscandoCajasAbiertas(true);
+            setBuscandoHistorial(true);
             $("#tablaResultado").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
+            $("#tablaResultadoHistorial").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
 
             $.ajax({
                 url: '@Url.Action("CajasAbiertas", "Cajas")',
@@ -454,6 +548,7 @@
                 data: {
                     idSucursal: idSucursal,
                     buscar: buscar,
+                    fechaDesde: fechaDesde,
                     ajax: true
                 },
                 cache: false,
@@ -471,11 +566,33 @@
                 },
                 error: function () {
                     $("#tablaResultado").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar la búsqueda.</div>');
-                    $("#estadoBusquedaCajasAbiertas").text("Ocurrió un error al actualizar la búsqueda.");
+                    $("#estadoBusquedaCajasAbiertasTabla").text("Ocurrió un error al actualizar la búsqueda.");
                 },
                 complete: function () {
-                    const mensaje = $("#estadoBusquedaCajasAbiertas").text();
+                    const mensaje = $("#estadoBusquedaCajasAbiertasTabla").text();
                     setBuscandoCajasAbiertas(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
+                }
+            });
+
+            $.ajax({
+                url: window.CajasHistorialUrls.listar,
+                type: 'GET',
+                data: {
+                    idSucursal: idSucursal,
+                    buscar: buscar,
+                    fechaDesde: fechaDesde
+                },
+                cache: false,
+                success: function (html) {
+                    $("#tablaResultadoHistorial").html(html);
+                },
+                error: function () {
+                    $("#tablaResultadoHistorial").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar el historial.</div>');
+                    $("#estadoBusquedaHistorialCajas").text("Ocurrió un error al actualizar el historial.");
+                },
+                complete: function () {
+                    const mensaje = $("#estadoBusquedaHistorialCajas").text();
+                    setBuscandoHistorial(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
                 }
             });
         }
@@ -483,10 +600,7 @@
         $(document).on('change', '#idSucursal', function () {
             filtrar();
         });
-
-        $(function () {
-            filtrar();
-        });
+        $(document).on('change', '#fechaDesde', function () { filtrar(); });
 
         $(document)
             .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
@@ -738,23 +852,44 @@
             cargarPreviewCambioSucursalCaja();
         });
 
-        function abrirModalCerrarCaja(Id) {
+        function abrirModalCerrarCaja(Id, modoModificacion) {
             $("#cerrarCajaError").addClass("d-none").text("");
 
             $.ajax({
                 url: '@Url.Action("ObtenerDatosCierre", "Cajas")',
                 type: 'GET',
-                data: { id: Id },
+                data: {
+                    id: Id,
+                    modoModificacion: !!modoModificacion
+                },
                 success: function (data) {
                     $("#Id").val(data.id);
+                    $("#ModoModificacion").val(data.modoModificacion ? "true" : "false");
                     $("#labelSucursal").text(data.suc);
                     $("#CajaDesc").val(data.vendedor);
                     $("#FechaApertura").val(data.fechaApertura);
+                    $("#FechaCierre").val(data.fechaCierre || "");
                     $("#CajaInicial").val(data.cajaInicial);
                     $("#Usuario").val(data.usuario);
                     $("#Ventas").val(data.ventas);
                     $("#EgresosCaja").val(data.egresosCaja);
-                    $("#Diferencia").val("");
+                    $("#CajaCierre").val(data.modoModificacion && data.cajaCierre != null ? data.cajaCierre : "");
+                    $("#Diferencia").val(data.modoModificacion && data.diferencia != null ? data.diferencia : "");
+                    $("#ImporteRetirado").val(data.modoModificacion && data.importeRetirado != null ? data.importeRetirado : "");
+                    $("#CajaInicioSiguiente").val(data.modoModificacion && data.cajaInicioSiguiente != null ? data.cajaInicioSiguiente : "");
+                    $("#modalCerrarCajaTitulo").text(data.modoModificacion ? "Modificar Cierre de Caja" : "Cerrar Caja");
+                    $("#btnGuardarCierreCaja").text(data.modoModificacion ? "Actualizar datos" : "Cerrar Caja");
+                    if (data.modoModificacion) {
+                        recalcularCierre();
+                    }
+                    $("#modalCerrarCaja").modal("show");
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron cargar los datos del cierre.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#cerrarCajaError").removeClass("d-none").text(mensaje);
                     $("#modalCerrarCaja").modal("show");
                 }
             });
@@ -771,6 +906,9 @@
             $(this).find('textarea').val('');
             $(this).find('select').prop('selectedIndex', 0);
             $('.text-danger').addClass('d-none').text('');
+            $("#ModoModificacion").val("false");
+            $("#modalCerrarCajaTitulo").text("Cerrar Caja");
+            $("#btnGuardarCierreCaja").text("Cerrar Caja");
         });
 
         $(document).on('keydown', '#CajaCierre, #ImporteRetirado', function (e) {
@@ -813,7 +951,8 @@
                 CajaCierre: $("#CajaCierre").val(),
                 Diferencia: $("#Diferencia").val(),
                 ImporteRetirado: $("#ImporteRetirado").val(),
-                CajaInicioSiguiente: $("#CajaInicioSiguiente").val()
+                CajaInicioSiguiente: $("#CajaInicioSiguiente").val(),
+                modoModificacion: $("#ModoModificacion").val() === "true"
             };
 
             $.ajax({
@@ -826,16 +965,17 @@
                         return;
                     }
 
+                    const esModificacion = $("#ModoModificacion").val() === "true";
                     Swal.fire({
                         icon: 'success',
-                        title: 'Caja cerrada',
-                        text: 'La caja se cerró correctamente',
+                        title: esModificacion ? 'Cierre actualizado' : 'Caja cerrada',
+                        text: esModificacion ? (resp.mensaje || 'El cierre de caja se actualizó correctamente') : 'La caja se cerró correctamente',
                         confirmButtonText: 'Aceptar',
                         confirmButtonColor: '#4e73df',
                         focusConfirm: true
                     }).then(() => {
-                        let idSucursal = $("#idSucursal").val() || "";
-                        window.location.href = '@Url.Action("CajasAbiertas", "Cajas")' + '?idSucursal=' + encodeURIComponent(idSucursal) + '&buscar=';
+                        $("#modalCerrarCaja").modal("hide");
+                        filtrar();
                     });
                 }
             });

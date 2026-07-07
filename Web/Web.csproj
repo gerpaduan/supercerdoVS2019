@@ -2135,6 +2135,7 @@
     <Content Include="Views\Cajas\_AddOrEditEgresoCaja.cshtml" />
     <Content Include="Views\Cajas\_AddOrEditTipoEgresoCaja.cshtml" />
     <Content Include="Views\Cajas\_CalcularComisionesElectronicas.cshtml" />
+    <Content Include="Views\Cajas\_TablaCierresDeCaja.cshtml" />
     <Content Include="Views\Cajas\_EgresosCajaTabla.cshtml" />
     <Content Include="Views\Cajas\_MisEgresosCaja.cshtml" />
     <Content Include="Views\Cajas\_TablaCajasAbiertas.cshtml" />

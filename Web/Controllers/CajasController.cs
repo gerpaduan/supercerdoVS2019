@@ -47,7 +47,7 @@ namespace Web.Controllers
         }
 
         // GET: Cajas/CajasAbiertas
-        public ActionResult CajasAbiertas(int? idSucursal, string buscar = "", bool ajax = false)
+        public ActionResult CajasAbiertas(int? idSucursal, string buscar = "", DateTime? fechaDesde = null, bool ajax = false)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta))
@@ -56,41 +56,22 @@ namespace Web.Controllers
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
 
-            // --- Sucursales para el combo ---
-            var sucursales = oSucursalN.findAll();
+            var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            int? idSucursalSeleccionada = ResolverSucursalSeleccionada(sucursales, idSucursal);
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            AjustarFechaIndiceSegunLimiteYPermiso(PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+
             ViewBag.Sucursales = sucursales;
             ViewBag.PuedeCambiarSucursalCaja = PuedeCambiarSucursalCaja(user, sucursales);
-            ViewBag.IdSucursal = idSucursal;
-            ViewBag.Buscar = buscar;
+            ViewBag.IdSucursal = idSucursalSeleccionada;
+            ViewBag.Buscar = buscar ?? "";
+            ViewBag.FechaDesde = desde;
+            ViewBag.PuedeModificarCierres = user != null && user.Admin;
+            ViewBag.HistorialCierres = ObtenerHistorialCierresCaja(idSucursalSeleccionada, buscar ?? "", desde, sucursales);
+            ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo("fechaDesde", PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
-            // --- Armar filtro ---
-            CierreCaja filtro = new CierreCaja();
-
-            if (idSucursal.HasValue)
-            {
-                var sucursalActual = oSucursalN.findById(idSucursal.Value);
-
-                if (sucursalActual == null)
-                {
-                    var dtVacio = new DataTable();
-
-                    if (ajax)
-                        return PartialView("_TablaCajasAbiertas", dtVacio);
-
-                    return View("~/Views/Cajas/CajasAbiertas.cshtml", dtVacio);
-                }
-
-                filtro.Sucursal = sucursalActual;
-            }
-
-            // Si idSucursal viene null, filtro queda sin sucursal
-            // y debería traer todas las sucursales
-            var dt = oCierreN.findCierreCaja(
-                filtro,
-                CierreCaja.tipoBusqueda.FindOpen,
-                buscar,
-                null
-            );
+            var dt = ObtenerCajasAbiertas(idSucursalSeleccionada, buscar ?? "");
 
             if (ajax)
                 return PartialView("_TablaCajasAbiertas", dt);
@@ -602,20 +583,27 @@ namespace Web.Controllers
             }
         }
 
-        public ActionResult ObtenerDatosCierre(int id)
+        public ActionResult ObtenerDatosCierre(int id, bool modoModificacion = false)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja))
-            {
-                ViewBag.Seccion = "Cierrar Caja";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
-            }
+                return new HttpStatusCodeResult(403, "No tiene permisos para operar sobre cierres de caja.");
+
+            if (modoModificacion && (user == null || !user.Admin))
+                return new HttpStatusCodeResult(403, "Solo un administrador puede modificar un cierre de caja histórico.");
 
             Entidades.CierreCaja oCierreE = new CierreCaja();
             oCierreE.Id = id;
             var caja = oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");// oCajasN.obtenerDatosCierre(id);
 
-            bool esModificarCaja = false;
+            if (caja == null || caja.Id == 0)
+                return HttpNotFound("No se encontró la caja seleccionada.");
+
+            DateTime fechaHastaVentas = modoModificacion && caja.FechaHoraCierre.HasValue
+                ? caja.FechaHoraCierre.Value
+                : DateTime.Now;
+
+            caja.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE);
 
             return Json(new
             {
@@ -624,11 +612,33 @@ namespace Web.Controllers
                 vendedor = caja.UsuarioInicio.Nombre,
                 cajaInicial = caja.CajaInicio,
                 fechaApertura = caja.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm"),
-                usuario = caja.UsuarioCierre.Nombre,
+                fechaCierre = caja.FechaHoraCierre.HasValue ? caja.FechaHoraCierre.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                usuario = caja.UsuarioCierre != null ? caja.UsuarioCierre.Nombre : "",
                 ventas = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
-                        oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString(),
-                egresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE)
+                        oCierreE.FechaHoraInicio, fechaHastaVentas).ToString(),
+                egresosCaja = caja.EgresosCaja,
+                cajaCierre = caja.CajaCierre,
+                diferencia = caja.Diferencia,
+                importeRetirado = caja.ImporteRetirado,
+                cajaInicioSiguiente = caja.CajaInicioSiguiente,
+                modoModificacion = modoModificacion
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult HistorialCierresCaja(int? idSucursal, string buscar = "", DateTime? fechaDesde = null)
+        {
+            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta))
+                return new HttpStatusCodeResult(403, "No tiene permisos para ver cierres de caja.");
+
+            var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            int? idSucursalSeleccionada = ResolverSucursalSeleccionada(sucursales, idSucursal);
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            AjustarFechaIndiceSegunLimiteYPermiso(PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+
+            ViewBag.PuedeModificarCierres = (Session["Usuario"] as Entidades.Usuario)?.Admin ?? false;
+            var dt = ObtenerHistorialCierresCaja(idSucursalSeleccionada, buscar ?? "", desde, sucursales);
+            return PartialView("~/Views/Cajas/_TablaCierresDeCaja.cshtml", dt);
         }
 
         public JsonResult PreviewCambioSucursalCaja(int idCierre, int idSucursalNueva)
@@ -699,7 +709,8 @@ namespace Web.Controllers
                 string CajaCierre,
                 string Diferencia,
                 string ImporteRetirado,
-                string CajaInicioSiguiente
+                string CajaInicioSiguiente,
+                bool modoModificacion = false
             )
         {
 
@@ -710,22 +721,31 @@ namespace Web.Controllers
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
 
+            if (modoModificacion && (user == null || !user.Admin))
+                return Json(new { ok = false, error = "Solo un administrador puede modificar un cierre de caja histórico." });
+
             Entidades.CierreCaja model = oCierreN.findByIdOrLast(
                 new CierreCaja { Id = Id },
                 Entidades.CierreCaja.tipoBusqueda.FindById,
                 ""
             );
 
-            bool esModificarCaja = false;
+            if (model == null || model.Id == 0)
+                return Json(new { ok = false, error = "No se encontró la caja seleccionada." });
+
+            if (modoModificacion && !model.FechaHoraCierre.HasValue)
+                return Json(new { ok = false, error = "La caja seleccionada todavía no tiene cierre para modificar." });
 
             model.CajaCierre = ParseFloat(CajaCierre);
             model.Diferencia = ParseFloat(Diferencia);
             model.ImporteRetirado = ParseFloat(ImporteRetirado);
             model.CajaInicioSiguiente = ParseFloat(CajaInicioSiguiente);
-            model.UsuarioCierre = (Entidades.Usuario)Session["Usuario"];
-            model.FechaHoraCierre = model.FechaHoraCierre != null ? model.FechaHoraCierre : DateTime.Now;
+            model.UsuarioCierre = user;
+            model.FechaHoraCierre = modoModificacion
+                ? model.FechaHoraCierre
+                : (model.FechaHoraCierre != null ? model.FechaHoraCierre : DateTime.Now);
             model.Ventas = oCierreN.obtenerTotalVentas(model.UsuarioInicio.Id, model.Sucursal.idSucursal,
-                    model.FechaHoraInicio, esModificarCaja ? model.FechaHoraCierre : DateTime.Now);
+                    model.FechaHoraInicio, modoModificacion ? model.FechaHoraCierre : DateTime.Now);
             model.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(model);
 
             var result = oCierreN.addOrEditCierreCaja_Result(model);
@@ -733,7 +753,11 @@ namespace Web.Controllers
             if (!result.Ok)
                 return Json(new { ok = false, error = result.Mensaje });
 
-            return Json(new { ok = true, result.Mensaje });
+            return Json(new
+            {
+                ok = true,
+                mensaje = modoModificacion ? "El cierre de caja se actualizó correctamente." : result.Mensaje
+            });
         }
 
         [HttpPost]
@@ -868,6 +892,81 @@ namespace Web.Controllers
             ViewBag.UsuarioAdmin = user != null && user.Admin;
             ViewBag.PuedeVerTiposEgreso = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.TiposConsulta);
             ViewBag.PuedeEditarTiposEgreso = user != null && PermisosHelper.TienePermisoEditar(Session, PermisosPantallasWeb.EgresosCaja.TiposAltaEdicion, DateTime.Today, user.Id);
+        }
+
+        private int? ResolverSucursalSeleccionada(List<Entidades.Sucursal> sucursales, int? idSucursal)
+        {
+            if (idSucursal.HasValue)
+                return idSucursal.Value > 0 ? idSucursal : (int?)null;
+
+            if (sucursales != null && sucursales.Count == 1)
+                return sucursales[0].IdSucursal;
+
+            return null;
+        }
+
+        private DataTable ObtenerCajasAbiertas(int? idSucursal, string buscar)
+        {
+            CierreCaja filtro = new CierreCaja();
+
+            if (idSucursal.HasValue)
+            {
+                var sucursalActual = oSucursalN.findById(idSucursal.Value);
+                if (sucursalActual == null)
+                    return new DataTable();
+
+                filtro.Sucursal = sucursalActual;
+            }
+
+            return oCierreN.findCierreCaja(filtro, CierreCaja.tipoBusqueda.FindOpen, buscar, null);
+        }
+
+        private DataTable ObtenerHistorialCierresCaja(int? idSucursal, string buscar, DateTime fechaDesde, List<Entidades.Sucursal> sucursales)
+        {
+            if (idSucursal.HasValue)
+            {
+                var sucursal = oSucursalN.findById(idSucursal.Value);
+                return sucursal == null ? new DataTable() : ObtenerHistorialCierresCajaSucursal(sucursal, buscar, fechaDesde);
+            }
+
+            var listaSucursales = sucursales ?? new List<Entidades.Sucursal>();
+            DataTable acumulado = null;
+
+            foreach (var sucursal in listaSucursales)
+            {
+                if (sucursal == null || sucursal.IdSucursal <= 0)
+                    continue;
+
+                var dtSucursal = ObtenerHistorialCierresCajaSucursal(sucursal, buscar, fechaDesde);
+                if (dtSucursal == null)
+                    continue;
+
+                if (acumulado == null)
+                    acumulado = dtSucursal.Clone();
+
+                foreach (DataRow row in dtSucursal.Rows)
+                    acumulado.ImportRow(row);
+            }
+
+            if (acumulado == null)
+                return new DataTable();
+
+            var vista = acumulado.DefaultView;
+            vista.Sort = "id DESC";
+            return vista.ToTable();
+        }
+
+        private DataTable ObtenerHistorialCierresCajaSucursal(Entidades.Sucursal sucursal, string buscar, DateTime fechaDesde)
+        {
+            if (sucursal == null)
+                return new DataTable();
+
+            var filtro = new CierreCaja
+            {
+                Sucursal = sucursal
+            };
+
+            return oCierreN.findCierreCaja(filtro, CierreCaja.tipoBusqueda.FindAll, buscar ?? "", fechaDesde);
         }
 
         private void CargarViewBagsFormularioEgreso(bool desdePos, int idSucursal, CierreCaja cierreContexto = null)
