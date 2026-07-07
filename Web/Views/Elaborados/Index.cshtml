@@ -123,6 +123,7 @@
             var inputFechaHasta = document.getElementById('fechaHasta');
             var inputSucursal = document.getElementById('idSucursal');
             var inputElaborado = document.getElementById('elaborado');
+            var fechaDesdeDefault = '@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")';
 
             function buildState() {
                 return {
@@ -149,7 +150,7 @@
                     var params = new URLSearchParams();
                     if (state.idSucursal) params.set("idSucursal", state.idSucursal);
                     if (state.elaborado) params.set("elaborado", state.elaborado);
-                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaDesde && state.fechaDesde >= fechaDesdeDefault) params.set("fechaDesde", state.fechaDesde);
                     if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
 
                     var query = params.toString();

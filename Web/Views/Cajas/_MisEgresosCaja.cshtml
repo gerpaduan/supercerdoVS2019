@@ -244,17 +244,32 @@
     }
 
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table {
-        font-size: .8rem;
+        font-size: .75rem;
+        line-height: 1.05;
     }
 
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table th,
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table td {
-        padding: .42rem .5rem;
+        padding: .2rem .34rem;
+        line-height: 1.05;
+        vertical-align: middle;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table thead th {
+        padding-top: .18rem;
+        padding-bottom: .18rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table .badge,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table .badge-light {
+        padding: .1rem .24rem;
+        font-size: .66rem;
     }
 
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-detalle-egreso,
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-modificar-egreso {
-        padding: .15rem .35rem;
+        padding: .06rem .22rem;
+        line-height: 1;
     }
 
     .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .egreso-detalle-collapse > div {
@@ -405,6 +420,31 @@
         background: #162538;
         border-color: #2f4d69;
         color: #d7e7fb;
+    }
+
+    html.dark-mode .mis-actividades-modal .custom-control-label {
+        color: #eaf2fb !important;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn,
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn i,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn i {
+        color: #eaf2fb !important;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn-outline-primary,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn-outline-primary {
+        background: #162538;
+        border-color: #436886;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn-outline-primary:hover,
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn-outline-primary:focus,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn-outline-primary:hover,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn-outline-primary:focus {
+        background: #274761;
+        border-color: #4f7aa0;
     }
 
     html.dark-mode .egresos-pos .custom-control-label::before {

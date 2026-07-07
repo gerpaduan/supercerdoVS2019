@@ -126,6 +126,27 @@ namespace Web.Controllers
             return true;
         }
 
+        protected bool AjustarFechaIndiceSegunLimiteYPermiso(string permiso, ref System.DateTime fecha, System.DateTime fechaLimiteSinPermiso, int idCreador = -1)
+        {
+            var limite = fechaLimiteSinPermiso.Date;
+            var fechaAdvertencia = ObtenerFechaAdvertenciaIndice(permiso, fechaLimiteSinPermiso, idCreador);
+            if (fecha.Date >= limite)
+                return false;
+
+            if (PermisosHelper.TienePermiso(Session, permiso, fecha, idCreador))
+                return false;
+
+            fecha = fechaAdvertencia;
+            if (!EsSesionSoloLectura(HttpContext))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permiso para ingresar una fecha desde menor a " + fechaAdvertencia.ToString("dd/MM/yyyy") + ".";
+            }
+
+            return true;
+        }
+
         protected void ConfigurarAdvertenciaFechaEnVivo(string inputId, string permiso, int idCreador = -1)
         {
             var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
@@ -138,6 +159,30 @@ namespace Web.Controllers
             ViewBag.PermisoFechaMensaje = idCreador >= 0
                 ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
                 : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+        }
+
+        protected void ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo(string inputId, string permiso, System.DateTime fechaLimiteSinPermiso, int idCreador = -1)
+        {
+            var limite = fechaLimiteSinPermiso.Date;
+            var fechaAdvertencia = ObtenerFechaAdvertenciaIndice(permiso, fechaLimiteSinPermiso, idCreador);
+            if (PermisosHelper.TienePermiso(Session, permiso, limite.AddDays(-1), idCreador))
+                return;
+
+            ViewBag.PermisoFechaInputId = inputId;
+            ViewBag.PermisoFechaMinimaIso = fechaAdvertencia.ToString("yyyy-MM-dd");
+            ViewBag.PermisoFechaMinimaIsoDateTime = fechaAdvertencia.ToString("yyyy-MM-ddT00:00:00");
+            ViewBag.PermisoFechaMensaje = "No tiene permiso para ingresar una fecha desde menor a " + fechaAdvertencia.ToString("dd/MM/yyyy") + ".";
+        }
+
+        protected System.DateTime ObtenerFechaAdvertenciaIndice(string permiso, System.DateTime fechaLimiteSinPermiso, int idCreador = -1)
+        {
+            var limite = fechaLimiteSinPermiso.Date;
+            var fechaPermiso = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
+
+            if (fechaPermiso.HasValue && fechaPermiso.Value.Date < limite)
+                return fechaPermiso.Value.Date;
+
+            return limite;
         }
 
         protected string RenderPartialViewToString(string viewName, object model)

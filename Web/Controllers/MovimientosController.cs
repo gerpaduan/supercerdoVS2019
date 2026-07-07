@@ -39,16 +39,12 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = fechaDesde ?? fechaLimiteSinPermiso;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Movimiento.VerMovimientos, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
-                    hasta = desde;
-                else
-                    return VistaAccesoDenegado("Movimientos", Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-            }
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Movimiento.VerMovimientos, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                hasta = desde;
 
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             string sucOrigen = ObtenerNombreSucursalFiltro(sucursales, idSucursalOrigen);
@@ -69,7 +65,7 @@ namespace Web.Controllers
             ViewBag.Title = "Movimientos";
             ViewBag.Seccion = "Movimientos";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(sucursales);
-            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Movimiento.VerMovimientos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo("fechaDesde", Permisos.Movimiento.VerMovimientos, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Movimientos/Index.cshtml", model);
         }
@@ -80,16 +76,12 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = fechaDesde ?? fechaLimiteSinPermiso;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Movimiento.VerMovimientos, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
-                    hasta = desde;
-                else
-                    return VistaAccesoDenegado("Movimientos", Permisos.Movimiento.VerMovimientos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-            }
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Movimiento.VerMovimientos, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                hasta = desde;
 
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             string sucOrigen = ObtenerNombreSucursalFiltro(sucursales, idSucursalOrigen);

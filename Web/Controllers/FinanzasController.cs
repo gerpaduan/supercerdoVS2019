@@ -219,6 +219,7 @@ namespace Web.Controllers
             bool modoPos = desdePos || DesdePOS;
             bool renderParcial = modoPos || Request.IsAjaxRequest();
             var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+            bool puedeVerCuentaCorrienteCompleta = PuedeVerSaldosCuentaCorriente(usuarioActual, Permisos.Finanza.VerCtasCtes);
 
             try
             {
@@ -249,14 +250,19 @@ namespace Web.Controllers
                 {
                     if (persona != null && persona.CtaCte)
                     {
-                        var cierreCajaActual = ObtenerCajaAbiertaUsuario(usuarioActual);
-                        dtMov = FiltrarMovimientosPosCuentaCorrienteActiva(dtMov, usuarioActual, cierreCajaActual);
+                        if (!puedeVerCuentaCorrienteCompleta)
+                        {
+                            var cierreCajaActual = ObtenerCajaAbiertaUsuario(usuarioActual);
+                            dtMov = FiltrarMovimientosPosCuentaCorrienteActiva(dtMov, usuarioActual, cierreCajaActual);
+                        }
                     }
                     else
                     {
                         dtMov = TomarUltimosRegistros(dtMov, 5);
                     }
                 }
+
+                dtMov = OrdenarMovimientosCuentaCorrientePorFecha(dtMov, true);
 
                 decimal saldo = 0;
                 if (dtMov != null && dtMov.Rows.Count > 0)
@@ -267,7 +273,7 @@ namespace Web.Controllers
                         saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
                 }
 
-                bool ocultarSaldoEnPos = modoPos && persona != null && persona.CtaCte;
+                bool ocultarSaldoEnPos = modoPos && persona != null && persona.CtaCte && !puedeVerCuentaCorrienteCompleta;
                 ViewBag.IdPersona = idPersona;
                 ViewBag.Persona = persona;
                 ViewBag.SaldoPersona = saldo;
@@ -279,7 +285,7 @@ namespace Web.Controllers
                 ViewBag.OcultarSaldo = ocultarSaldoEnPos;
                 ViewBag.MostrarSoloUltimosRegistros = modoPos && (persona == null || !persona.CtaCte);
                 ViewBag.CantidadUltimosRegistros = 5;
-                ViewBag.MostrarSoloMovimientosCajaActual = modoPos && persona != null && persona.CtaCte;
+                ViewBag.MostrarSoloMovimientosCajaActual = modoPos && persona != null && persona.CtaCte && !puedeVerCuentaCorrienteCompleta;
 
                 if (renderParcial)
                     return PartialView("CtaCtePersona", dtMov);
@@ -365,6 +371,50 @@ namespace Web.Controllers
             }
 
             return ultimos;
+        }
+
+        private DataTable OrdenarMovimientosCuentaCorrientePorFecha(DataTable dtMov, bool ascendente)
+        {
+            if (dtMov == null)
+                return new DataTable();
+
+            if (dtMov.Rows.Count <= 1)
+                return dtMov;
+
+            string columnaFecha = ObtenerNombreColumna(dtMov, "Fecha", "fecha");
+            string columnaId = ObtenerNombreColumna(dtMov, "ID", "Id", "id");
+
+            if (string.IsNullOrWhiteSpace(columnaFecha) && string.IsNullOrWhiteSpace(columnaId))
+                return dtMov;
+
+            var filasOrdenadas = dtMov.AsEnumerable()
+                .OrderBy(row =>
+                {
+                    int id = string.IsNullOrWhiteSpace(columnaId) ? 0 : LeerIntRow(row, columnaId);
+                    return ascendente ? (id == 0 ? 0 : 1) : (id == 0 ? 1 : 0);
+                });
+
+            if (!string.IsNullOrWhiteSpace(columnaFecha))
+            {
+                filasOrdenadas = ascendente
+                    ? filasOrdenadas.ThenBy(row => LeerDateTimeRow(row, columnaFecha))
+                    : filasOrdenadas.ThenByDescending(row => LeerDateTimeRow(row, columnaFecha));
+            }
+
+            if (!string.IsNullOrWhiteSpace(columnaId))
+            {
+                filasOrdenadas = ascendente
+                    ? filasOrdenadas.ThenBy(row => LeerIntRow(row, columnaId))
+                    : filasOrdenadas.ThenByDescending(row => LeerIntRow(row, columnaId));
+            }
+
+            DataTable ordenado = dtMov.Clone();
+            foreach (DataRow row in filasOrdenadas)
+            {
+                ordenado.ImportRow(row);
+            }
+
+            return ordenado;
         }
 
         private DataTable FiltrarMovimientosPosCuentaCorrienteActiva(DataTable dtMov, Entidades.Usuario usuarioActual, Entidades.CierreCaja cierreCajaActual)

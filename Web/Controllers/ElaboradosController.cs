@@ -31,25 +31,12 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            DateTime desde = NormalizarFechaDesde(fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0)));
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = NormalizarFechaDesde(fechaDesde ?? fechaLimiteSinPermiso);
             DateTime hasta = NormalizarFechaHasta(fechaHasta ?? DateTime.Today);
-            string alertaPermisoFecha = null;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-                if (fechaMinima.HasValue && desde.Date < fechaMinima.Value.Date)
-                {
-                    desde = fechaMinima.Value.Date;
-                    alertaPermisoFecha = "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
-                    if (hasta < desde)
-                        hasta = desde;
-                }
-                else
-                {
-                    return VistaAccesoDenegado("Elaborados", Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-                }
-            }
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Elaborado.VerEmbutidos, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                hasta = desde;
 
             int sucursalSeleccionada = idSucursal ?? (user.IdSucursal > 0 ? user.IdSucursal : 0);
             DataTable dt = oCorteN.buscarEmbutido(sucursalSeleccionada > 0 ? sucursalSeleccionada : -1, (elaborado ?? "").Trim(), desde, hasta) ?? new DataTable();
@@ -71,8 +58,7 @@ namespace Web.Controllers
             ViewBag.Title = "Elaborados";
             ViewBag.Seccion = "Elaborados";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(oSucursalN.findAll() ?? new List<Sucursal>());
-            ViewBag.AlertaPermisoFecha = alertaPermisoFecha;
-            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Elaborados/Index.cshtml", model);
         }
@@ -100,25 +86,12 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            DateTime desde = NormalizarFechaDesde(fechaDesde ?? DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0)));
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = NormalizarFechaDesde(fechaDesde ?? fechaLimiteSinPermiso);
             DateTime hasta = NormalizarFechaHasta(fechaHasta ?? DateTime.Today);
-            string alertaPermisoFecha = null;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-                if (fechaMinima.HasValue && desde.Date < fechaMinima.Value.Date)
-                {
-                    desde = fechaMinima.Value.Date;
-                    alertaPermisoFecha = "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
-                    if (hasta < desde)
-                        hasta = desde;
-                }
-                else
-                {
-                    return VistaAccesoDenegado("Elaborados", Permisos.Elaborado.VerEmbutidos, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-                }
-            }
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Elaborado.VerEmbutidos, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                hasta = desde;
 
             int sucursalSeleccionada = idSucursal ?? (user.IdSucursal > 0 ? user.IdSucursal : 0);
             DataTable dt = oCorteN.obtenerLineasEmb(sucursalSeleccionada > 0 ? sucursalSeleccionada : -1, (descripcion ?? "").Trim(), desde, hasta) ?? new DataTable();
@@ -140,8 +113,7 @@ namespace Web.Controllers
             ViewBag.Title = "Lineas de elaborado";
             ViewBag.Seccion = "Elaborados";
             ViewBag.Sucursales = ConstruirSucursalesConTodas(oSucursalN.findAll() ?? new List<Sucursal>());
-            ViewBag.AlertaPermisoFecha = alertaPermisoFecha;
-            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo("fechaDesde", Permisos.Elaborado.VerEmbutidos, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             return View("~/Views/Elaborados/Lineas.cshtml", model);
         }

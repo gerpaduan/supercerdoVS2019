@@ -116,16 +116,12 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = fechaDesde ?? fechaLimiteSinPermiso;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Stock.VerStock, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
-                    hasta = desde;
-                else
-                    return VistaAccesoDenegado("Stock", Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-            }
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Stock.VerStock, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                hasta = desde;
 
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
             string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
@@ -146,7 +142,7 @@ namespace Web.Controllers
             ViewBag.TipoCompra = tipoNormalizado;
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
-            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Stock.VerStock, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo("fechaDesde", Permisos.Stock.VerStock, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             ViewBag.TotalKg = CalcularTotalKg(dt);
 
             return View("~/Views/Stock/Index.cshtml", model);
@@ -185,16 +181,12 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            DateTime desde = fechaDesde ?? fechaLimiteSinPermiso;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Stock.VerStock, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
-                    hasta = desde;
-                else
-                    return VistaAccesoDenegado("Stock", Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
-            }
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Stock.VerStock, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                hasta = desde;
 
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
             string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);

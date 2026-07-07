@@ -263,7 +263,7 @@
                             <!-- ID oculto -->
                             <th style="display:none;">ID</th>
 
-                            <th data-sort-type="date" data-sort-index="3">Fecha</th>
+                            <th @(desdePos ? "data-sort-type=\"date\" data-sort-index=\"3\"" : "")>Fecha</th>
                             <th data-sort-type="text" data-sort-index="4">Operación</th>
                             <th data-sort-type="text" data-sort-index="5">Tipo</th>
                             <th data-sort-type="text" data-sort-index="6">Nro.Doc</th>
@@ -672,7 +672,7 @@
         var headers = Array.from(tabla.tHead.querySelectorAll("th[data-sort-type]"));
         var sortState = {
             index: 3,
-            direction: "desc"
+            direction: "asc"
         };
 
         function parseNumber(value) {
@@ -700,6 +700,13 @@
             return text.toLowerCase();
         }
 
+        function getRowId(row) {
+            var cell = row && row.cells && row.cells.length ? row.cells[0] : null;
+            var text = cell ? (cell.textContent || "").trim() : "";
+            var parsed = parseInt(text, 10);
+            return isNaN(parsed) ? -1 : parsed;
+        }
+
         function updateHeaderState(activeHeader, direction) {
             headers.forEach(function (header) {
                 header.classList.remove("sort-asc", "sort-desc");
@@ -720,6 +727,21 @@
             });
 
             rows.sort(function (a, b) {
+                if (type === "date") {
+                    var idA = getRowId(a.row);
+                    var idB = getRowId(b.row);
+                    var esSaldoAnteriorA = idA === 0;
+                    var esSaldoAnteriorB = idB === 0;
+
+                    if (esSaldoAnteriorA !== esSaldoAnteriorB) {
+                        if (direction === "asc") {
+                            return esSaldoAnteriorA ? -1 : 1;
+                        }
+
+                        return esSaldoAnteriorA ? 1 : -1;
+                    }
+                }
+
                 if (a.value < b.value) return direction === "asc" ? -1 : 1;
                 if (a.value > b.value) return direction === "asc" ? 1 : -1;
                 return a.originalIndex - b.originalIndex;
@@ -745,7 +767,18 @@
         });
 
         if (headers.length) {
-            sortByColumn(sortState.index, headers[0].getAttribute("data-sort-type") || "date", sortState.direction, headers[0]);
+            var headerInicial = headers.find(function (header) {
+                return parseInt(header.getAttribute("data-sort-index"), 10) === sortState.index;
+            });
+
+            if (headerInicial) {
+                sortByColumn(
+                    sortState.index,
+                    headerInicial.getAttribute("data-sort-type") || "date",
+                    sortState.direction,
+                    headerInicial
+                );
+            }
         }
     })();
 </script>

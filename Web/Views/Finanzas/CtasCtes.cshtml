@@ -10,6 +10,23 @@
 
     string buscar = ViewBag.Buscar ?? "";
     string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";
+    int indiceNombreIdentif = -1;
+    int indiceRazonSocial = -1;
+
+    for (int i = 0; i < Model.Columns.Count; i++)
+    {
+        string nombreColumna = (Model.Columns[i].ColumnName ?? "").Trim().ToLowerInvariant();
+
+        if (indiceNombreIdentif < 0 && (nombreColumna.Contains("nombre identif") || nombreColumna.Contains("identificacion") || nombreColumna.Contains("identif.")))
+        {
+            indiceNombreIdentif = i;
+        }
+
+        if (indiceRazonSocial < 0 && nombreColumna.Contains("razon social"))
+        {
+            indiceRazonSocial = i;
+        }
+    }
 }
 <div class="container-fluid ctactes-index-page">
 
@@ -34,7 +51,7 @@
 
 
     <!-- GRILLA -->
-    <div class="card shadow">
+    <div class="card shadow @(desdePos ? "" : "ctactes-tabla-card")">
         <div class="card-body">
 
             <div class="table-responsive">
@@ -42,9 +59,21 @@
                     <thead class="thead-dark">
                         <tr>
 
-                            @foreach (System.Data.DataColumn col in Model.Columns)
+                            @for (int i = 0; i < Model.Columns.Count; i++)
                             {
-                                if (col.ColumnName.ToLower() == "saldo")
+                                var col = Model.Columns[i];
+                                bool combinarPersona = indiceNombreIdentif >= 0 && indiceRazonSocial >= 0;
+
+                                if (combinarPersona && i == indiceRazonSocial)
+                                {
+                                    continue;
+                                }
+
+                                if (combinarPersona && i == indiceNombreIdentif)
+                                {
+                                    <th>Persona</th>
+                                }
+                                else if (col.ColumnName.ToLower() == "saldo")
                                 {
                                     <th>
                                         @col.ColumnName
@@ -70,13 +99,34 @@
                         </tr>
                     </thead>
 
-                    <tbody id="tbodyCtas">
+                        <tbody id="tbodyCtas">
                         @foreach (System.Data.DataRow row in Model.Rows)
                         {
-                            <tr onclick="irACtaCte(this)" style="cursor:pointer;">
-                                @foreach (System.Data.DataColumn col in Model.Columns)
+                            var idPersona = row[0] != DBNull.Value ? row[0].ToString() : "";
+                            var nombreIdentif = indiceNombreIdentif >= 0 && row[indiceNombreIdentif] != DBNull.Value ? row[indiceNombreIdentif].ToString() : "";
+                            var razonSocial = indiceRazonSocial >= 0 && row[indiceRazonSocial] != DBNull.Value ? row[indiceRazonSocial].ToString() : "";
+                            <tr onclick="irACtaCte(this)" style="cursor:pointer;" data-id-persona="@idPersona">
+                                @for (int i = 0; i < Model.Columns.Count; i++)
                                 {
-                                    if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
+                                    var col = Model.Columns[i];
+                                    bool combinarPersona = indiceNombreIdentif >= 0 && indiceRazonSocial >= 0;
+
+                                    if (combinarPersona && i == indiceRazonSocial)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (combinarPersona && i == indiceNombreIdentif)
+                                    {
+                                        <td class="ctacte-persona-cell">
+                                            <div class="ctacte-persona-principal">@nombreIdentif</div>
+                                            @if (!string.IsNullOrWhiteSpace(razonSocial))
+                                            {
+                                                <div class="ctacte-persona-secundaria">@razonSocial</div>
+                                            }
+                                        </td>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
                                     {
                                         decimal saldoFila = row[col] == DBNull.Value ? 0m : Convert.ToDecimal(row[col]);
                                         <td>@(ocultarSaldo ? "***" : saldoFila.ToString("N2"))</td>
@@ -99,7 +149,10 @@
 
 <script>
     function irACtaCte(row) {
-        let id = row.children[0].innerText.trim();
+        let id = (row.getAttribute("data-id-persona") || "").trim();
+        if (!id && row.children.length) {
+            id = row.children[0].innerText.trim();
+        }
 
         let hoy = new Date();
         hoy.setMonth(hoy.getMonth() - 1);
@@ -230,7 +283,7 @@
             $tabla.find("thead th").each(function (i) {
                 const texto = normalizarTexto($(this).clone().children().remove().end().text() || "");
 
-                if (texto.includes("nombre identif") || texto.includes("identificacion") || texto.includes("identif.")) {
+                if (texto.includes("nombre identif") || texto.includes("identificacion") || texto.includes("identif.") || texto === "persona") {
                     indiceNombreIdentif = i;
                 }
 
@@ -412,6 +465,24 @@
         padding: .18rem .44rem;
     }
 
+    .ctactes-index-page .ctacte-persona-cell {
+        min-width: 16rem;
+    }
+
+    .ctactes-index-page .ctacte-persona-principal {
+        color: #1f2937;
+        font-size: inherit;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .ctactes-index-page .ctacte-persona-secundaria {
+        margin-top: .15rem;
+        color: #6b7280;
+        font-size: calc(100% - 2px);
+        line-height: 1.2;
+    }
+
     /* Siempre permitir que el input crezca */
     #txtBuscar {
         min-width: 0;
@@ -426,6 +497,12 @@
     @@media (min-width: 1200px) {
         .ctactes-index-page .card-body {
             padding: .7rem .85rem;
+        }
+
+        .ctactes-index-page .ctactes-tabla-card {
+            max-width: 60%;
+            margin-left: 0;
+            margin-right: auto;
         }
 
         .ctactes-index-page .form-control,
@@ -489,5 +566,13 @@
                 min-width: 0;
                 flex: 1 1 auto;
             }
+    }
+
+    html.dark-mode .ctactes-index-page .ctacte-persona-principal {
+        color: #e5edf7;
+    }
+
+    html.dark-mode .ctactes-index-page .ctacte-persona-secundaria {
+        color: #97a7bd;
     }
 </style>
