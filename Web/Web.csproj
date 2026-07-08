@@ -210,6 +210,8 @@
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\css\ctasctes.css" />
+    <Content Include="Content\css\compras-editar.css" />
     <Content Include="Content\css\custom.css" />
     <Content Include="Content\css\dark-mode.css" />
     <Content Include="Content\downloads\Carnisys.Balanza.Agent.zip" />
@@ -2269,6 +2271,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="Scripts\app\compras.js" />
+    <Content Include="Scripts\app\ctasctes.js" />
     <Content Include="Scripts\app\punto-expendio-pos.js" />
     <Content Include="Scripts\app\puntos-expendio.js" />
     <Content Include="Scripts\app\reportes.js" />

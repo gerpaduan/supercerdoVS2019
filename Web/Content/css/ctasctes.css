@@ -1,0 +1,157 @@
+.ctactes-index-page .card-body {
+    padding: .82rem 1rem;
+}
+
+.ctactes-index-page .card.mb-4 {
+    margin-bottom: .9rem !important;
+}
+
+.ctactes-index-page .form-control,
+.ctactes-index-page .input-group-text {
+    font-size: .87rem;
+}
+
+.ctactes-index-page #tablaCtasCtes {
+    font-size: .84rem;
+}
+
+.ctactes-index-page #tablaCtasCtes th,
+.ctactes-index-page #tablaCtasCtes td {
+    padding: .42rem .58rem;
+    line-height: 1.15;
+    vertical-align: middle;
+}
+
+.ctactes-index-page #tablaCtasCtes thead th,
+.ctactes-index-page #tablaCtasCtes > thead > tr > th {
+    font-size: .73rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    padding-top: .38rem;
+    padding-bottom: .38rem;
+    line-height: 1.1;
+}
+
+.ctactes-index-page #tablaCtasCtes thead.thead-dark th,
+.ctactes-index-page #tablaCtasCtes .thead-dark th {
+    font-size: .73rem !important;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    padding-top: .38rem;
+    padding-bottom: .38rem;
+    line-height: 1.1;
+}
+
+.ctactes-index-page #tablaCtasCtes .btn {
+    font-size: .74rem;
+    padding: .18rem .44rem;
+}
+
+.ctactes-index-page .ctacte-persona-cell {
+    min-width: 16rem;
+}
+
+.ctactes-index-page .ctacte-persona-principal {
+    color: #1f2937;
+    font-size: inherit;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.ctactes-index-page .ctacte-persona-secundaria {
+    margin-top: .15rem;
+    color: #6b7280;
+    font-size: calc(100% - 2px);
+    line-height: 1.2;
+}
+
+#txtBuscar {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#tbodyCtas tr.is-selected {
+    background: rgba(13, 110, 253, 0.12);
+}
+
+@media (min-width: 1200px) {
+    .ctactes-index-page .card-body {
+        padding: .7rem .85rem;
+    }
+
+    .ctactes-index-page .ctactes-tabla-card {
+        max-width: 60%;
+        margin-left: 0;
+        margin-right: auto;
+    }
+
+    .ctactes-index-page .form-control,
+    .ctactes-index-page .input-group-text {
+        font-size: .84rem;
+    }
+
+    .ctactes-index-page #tablaCtasCtes {
+        font-size: .8rem;
+    }
+
+    .ctactes-index-page #tablaCtasCtes thead th,
+    .ctactes-index-page #tablaCtasCtes > thead > tr > th {
+        font-size: .68rem;
+    }
+
+    .ctactes-index-page #tablaCtasCtes thead.thead-dark th,
+    .ctactes-index-page #tablaCtasCtes .thead-dark th {
+        font-size: .68rem !important;
+        padding-top: .34rem;
+        padding-bottom: .34rem;
+    }
+}
+
+.form-inline {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.form-inline .form-group {
+    flex: 1;
+}
+
+.input-group {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 576px) {
+    .form-inline {
+        display: block;
+        width: 100%;
+    }
+
+    .form-group,
+    .input-group {
+        width: 100% !important;
+    }
+
+    .input-group {
+        display: flex;
+        flex-wrap: nowrap;
+    }
+
+    .input-group .form-control {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+}
+
+html.dark-mode .ctactes-index-page .ctacte-persona-principal {
+    color: #e5edf7;
+}
+
+html.dark-mode .ctactes-index-page .ctacte-persona-secundaria {
+    color: #97a7bd;
+}

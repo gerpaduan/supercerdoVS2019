@@ -1,0 +1,461 @@
+.compra-page {
+    font-size: .9rem;
+}
+
+.compra-page .card {
+    border-radius: .75rem;
+}
+
+.compra-page.compra-page-pos {
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+}
+
+.compra-page .card-body {
+    padding: .85rem 1rem;
+}
+
+.compra-page .form-group label,
+.compra-page .custom-control-label,
+.compra-page .compra-section-label span {
+    font-size: .76rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.compra-page .small,
+.compra-page .text-muted,
+.compra-page small {
+    font-size: .8rem;
+}
+
+.compra-section-label small,
+#lblProveedorCuit,
+.compra-page .form-text {
+    font-size: .74rem !important;
+    line-height: 1.15;
+}
+
+.compra-shortcuts-help {
+    font-size: .74rem !important;
+}
+
+.compra-page .form-control,
+.compra-page .input-group-text,
+.compra-page .btn:not(.btn-sm) {
+    font-size: .87rem;
+    min-height: 2.65rem;
+    border-radius: .55rem;
+    padding: .32rem .62rem;
+}
+
+.compra-page textarea.form-control {
+    min-height: 4.25rem;
+}
+
+.compra-page .table {
+    font-size: .84rem;
+}
+
+.compra-page .table th,
+.compra-page .table td {
+    padding: .38rem .5rem;
+    line-height: 1.15;
+    vertical-align: middle;
+}
+
+.compra-page .table thead th,
+.compra-page .table > thead > tr > th {
+    font-size: .72rem !important;
+    line-height: 1.05;
+    padding-top: .42rem;
+    padding-bottom: .42rem;
+}
+
+.compra-linea-panel > h6 {
+    font-size: .82rem;
+    line-height: 1.05;
+    letter-spacing: .03em;
+}
+
+.compra-section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .85rem;
+    padding-bottom: .55rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .08);
+}
+
+.compra-section-label span {
+    font-size: .82rem;
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.compra-section-label small {
+    text-align: right;
+    display: none !important;
+}
+
+.compra-cta-card {
+    height: 2.25rem;
+    min-height: 0;
+    margin-bottom: 0;
+    padding: .18rem .34rem;
+    border: 1px solid rgba(13, 110, 253, .2);
+    border-radius: .5rem;
+    background: linear-gradient(180deg, rgba(13, 110, 253, .08), rgba(13, 110, 253, .03));
+    display: flex;
+    align-items: center;
+}
+
+.compra-datos-secundarios-row .compra-cta-card {
+    margin-top: 0;
+}
+
+.compra-cta-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    min-height: 0;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.compra-cta-title {
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .01em;
+    line-height: 1;
+    color: #1d4f91;
+    margin-bottom: 0;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.compra-cta-switch {
+    flex: 0 0 auto;
+    margin-left: .55rem;
+    margin-bottom: 0;
+    padding-left: 1.55rem;
+    min-height: .78rem;
+}
+
+.compra-cta-switch .custom-control-input {
+    top: .02rem;
+}
+
+.compra-cta-switch .custom-control-label {
+    font-weight: 700;
+    min-height: .72rem;
+    line-height: .72rem;
+    margin-bottom: 0;
+}
+
+.compra-cta-help {
+    display: none !important;
+}
+
+.compra-add-action-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.compra-icon-btn {
+    width: 2.15rem;
+    min-width: 2.15rem;
+    padding-left: .35rem !important;
+    padding-right: .35rem !important;
+}
+
+#txtSubtotalLinea {
+    font-weight: 700;
+    color: #0f3d75;
+    background: #eef5ff;
+    border-color: #9ec5fe;
+    box-shadow: inset 0 0 0 1px rgba(13, 110, 253, .08);
+}
+
+.compra-tabla-wrap tbody td:nth-child(2) {
+    font-size: .78rem;
+    line-height: 1.15;
+}
+
+.compra-tabla-wrap tbody td:nth-child(2) small {
+    font-size: .72rem;
+    line-height: 1.1;
+}
+
+.compra-observaciones-box textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+}
+
+.compra-sidebar-stack > * + * {
+    margin-top: .75rem;
+}
+
+.compra-medias-box label {
+    font-weight: 600;
+    margin-bottom: .35rem;
+}
+
+.compra-totales-box {
+    height: 100%;
+    font-size: .81rem;
+    line-height: 1.15;
+}
+
+.compra-tabla-wrap {
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: .5rem;
+    background: #fff;
+}
+
+.compra-meta-box {
+    margin-bottom: 0;
+    font-size: .78rem;
+    line-height: 1.2;
+}
+
+.compra-total-principal {
+    margin-top: .55rem;
+    padding-top: .55rem;
+    border-top: 1px solid rgba(0, 0, 0, .08);
+    font-size: .96rem;
+}
+
+.compra-actions-bar {
+    border-top: 1px solid rgba(0, 0, 0, .08);
+    padding-top: 1rem;
+}
+
+.compra-ajuste-card .custom-control-label {
+    font-weight: 700;
+}
+
+html.dark-mode .compra-page {
+    color: #e5edf7;
+}
+
+html.dark-mode .compra-page .card,
+html.dark-mode .compra-page .card-body {
+    background: #132032;
+    border-color: #2a3b52;
+}
+
+html.dark-mode .compra-page .form-group label,
+html.dark-mode .compra-page .custom-control-label,
+html.dark-mode .compra-page .compra-section-label span {
+    color: #dbe7f5;
+}
+
+html.dark-mode .compra-page .small,
+html.dark-mode .compra-page .text-muted,
+html.dark-mode .compra-page small,
+html.dark-mode .compra-page .form-text,
+html.dark-mode .compra-shortcuts-help {
+    color: #97a7bd !important;
+}
+
+html.dark-mode .compra-page .compra-section-label {
+    border-bottom-color: #2a3b52;
+}
+
+html.dark-mode .compra-page .compra-cta-card {
+    border-color: #34516d;
+    background: linear-gradient(180deg, rgba(58, 130, 246, .22), rgba(17, 37, 58, .68));
+}
+
+html.dark-mode .compra-page .compra-cta-title {
+    color: #cfe3fb;
+}
+
+html.dark-mode .compra-page #txtSubtotalLinea {
+    color: #eaf2fb;
+    background: #19324c;
+    border-color: #34516d;
+    box-shadow: inset 0 0 0 1px rgba(80, 151, 224, .18);
+}
+
+html.dark-mode .compra-page .compra-ajuste-card,
+html.dark-mode .compra-page .compra-medias-box,
+html.dark-mode .compra-page .compra-observaciones-box {
+    background: #132032 !important;
+    border-color: #2a3b52 !important;
+}
+
+html.dark-mode .compra-page .compra-totales-box {
+    background: #16283d !important;
+    border-color: #2f4560 !important;
+}
+
+html.dark-mode .compra-page .compra-tabla-wrap {
+    background: #132032;
+    border-color: #2a3b52;
+}
+
+html.dark-mode .compra-page .compra-total-principal,
+html.dark-mode .compra-page .compra-actions-bar {
+    border-top-color: #2a3b52;
+}
+
+html.dark-mode .compra-page .alert-light {
+    background: #162538;
+    border-color: #2f4d69;
+    color: #dbe7f5;
+}
+
+html.dark-mode .compra-page .btn-outline-primary {
+    background: #162538;
+    color: #b9d7ff;
+    border-color: #436886;
+}
+
+html.dark-mode .compra-page .btn-outline-primary:hover,
+html.dark-mode .compra-page .btn-outline-primary:focus {
+    background: #274761;
+    border-color: #4f7aa0;
+    color: #f4f8fc;
+}
+
+@media (min-width: 992px) {
+    .compra-page .card-body {
+        padding: .75rem .9rem;
+    }
+
+    .compra-datos-principales-row {
+        align-items: start;
+    }
+
+    .compra-datos-secundarios-row {
+        align-items: start;
+    }
+
+    .compra-cta-col {
+        display: flex;
+        align-items: flex-start;
+        padding-top: 1.48rem;
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+
+    .compra-page .form-group {
+        margin-bottom: .42rem;
+    }
+
+    .compra-page .form-group label {
+        margin-bottom: .18rem;
+        font-size: .74rem;
+    }
+
+    .compra-page hr {
+        margin-top: .55rem;
+        margin-bottom: .7rem;
+    }
+
+    .compra-workspace-row {
+        align-items: flex-start;
+    }
+
+    .compra-linea-panel h6 {
+        margin-bottom: .65rem !important;
+    }
+
+    .compra-media-row {
+        flex-wrap: nowrap;
+    }
+
+    .compra-col-media-kgs,
+    .compra-col-media-precio {
+        flex: 0 0 38%;
+        max-width: 38%;
+    }
+
+    .compra-col-media-add {
+        flex: 0 0 10%;
+        max-width: 10%;
+    }
+
+    .compra-cta-card {
+        height: 2.75rem;
+        padding: .14rem .28rem;
+    }
+
+    .compra-cta-help {
+        display: none !important;
+    }
+
+    .compra-page .form-control,
+    .compra-page .input-group-text,
+    .compra-page .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+    }
+
+    .compra-icon-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .compra-page .table {
+        font-size: .81rem;
+    }
+
+    .compra-page .table thead th,
+    .compra-page .table > thead > tr > th {
+        font-size: .69rem !important;
+    }
+
+    .compra-ajustes-grid > div {
+        margin-bottom: 0;
+    }
+
+    .compra-sidebar-stack {
+        position: sticky;
+        top: .75rem;
+    }
+
+    .compra-ajuste-card {
+        padding: .8rem .85rem !important;
+    }
+
+    .compra-ajuste-card .alert {
+        margin-bottom: .55rem !important;
+    }
+
+    .compra-tabla-wrap .table th,
+    .compra-tabla-wrap .table td {
+        vertical-align: middle;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .compra-section-label {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .compra-section-label small {
+        text-align: left;
+    }
+
+    .compra-cta-card {
+        height: auto;
+        min-height: 2.25rem;
+    }
+
+    .compra-ajustes-grid > div {
+        margin-bottom: .75rem;
+    }
+}
