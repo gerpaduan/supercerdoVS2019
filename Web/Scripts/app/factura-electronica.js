@@ -148,9 +148,9 @@
         $('#feInputIva').val(toServerDec(iva, 2));
 
         // UI
-        $('#feInputTotalUI').val(toServerDec(total, 2));
-        $('#feInputNetoUI').val(toServerDec(neto, 2));
-        $('#feInputIvaUI').val(toServerDec(iva, 2));
+        $('#feInputTotalUI').val(nfMoney.format(total));
+        $('#feInputNetoUI').val(nfMoney.format(neto));
+        $('#feInputIvaUI').val(nfMoney.format(iva));
     }
 
     function modoEdicion() {
@@ -208,6 +208,16 @@
 
         $('#feObservacionesWrap').toggle(activo);
         $obs.prop('disabled', !activo);
+    }
+
+    function syncResumenSticky() {
+        const $tipo = $root().find('select[name="CodTipoCbteAfip"]');
+        const $pto = $root().find('input[name="PtoVtaAfip"]');
+        const $cliente = $root().find('input[name="RazonSocialAFIP"]');
+
+        $('#feStickyTipo').text(($tipo.find('option:selected').text() || '').trim() || '-');
+        $('#feStickyPuntoVenta').text(($pto.val() || '').trim() || '-');
+        $('#feStickyCliente').text(($cliente.val() || '').trim() || '-');
     }
 
     function generarNotaCredito(anularVenta) {
@@ -495,6 +505,7 @@
         $('#feAgruparItemUnitario').prop('checked', $f.data('agrupar-item') === 1 || $f.data('agrupar-item') === "1");
         actualizarEstadoAgruparItemUnitario();
         syncObservacionesComprobante();
+        syncResumenSticky();
 
         setTimeout(() => {
             ajustarAlturasModal();
@@ -579,6 +590,14 @@
     $(document).on('change', '#feUsarObservaciones', function () {
         syncObservacionesComprobante();
         ajustarAlturasModal();
+    });
+
+    $(document).on('change', '#formFacturaElectronica select[name="CodTipoCbteAfip"]', function () {
+        syncResumenSticky();
+    });
+
+    $(document).on('input change', '#formFacturaElectronica input[name="RazonSocialAFIP"], #formFacturaElectronica input[name="PtoVtaAfip"]', function () {
+        syncResumenSticky();
     });
 
     $(document).on('input', '#feInputPorcentajeUI', function () {

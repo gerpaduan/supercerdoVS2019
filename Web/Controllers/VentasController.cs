@@ -1128,6 +1128,9 @@ namespace Web.Controllers
                                         venta,
                                         factuElec
                                     );
+                    ViewBag.SucursalNombreFactura = venta.Sucursal != null
+                        ? (!string.IsNullOrWhiteSpace(venta.Sucursal.SucursalNombre) ? venta.Sucursal.SucursalNombre : venta.Sucursal.sucursal)
+                        : "";
                     return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
                 }
 
