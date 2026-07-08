@@ -92,7 +92,7 @@
             <div class="card border-left-primary shadow-sm h-100 elaborados-total-card">
                 <div class="card-body">
                     <div class="elaborados-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
-                    <div class="elaborados-total-value font-weight-bold text-gray-800">@Model.TotalKg.ToString("N3", cultura)</div>
+                    <div class="elaborados-total-value font-weight-bold text-gray-800" id="lblTotalKgElaborados">@Model.TotalKg.ToString("N3", cultura)</div>
                 </div>
             </div>
         </div>
@@ -117,13 +117,51 @@
 @section Scripts {
     <script>
         (function () {
+            document.addEventListener("keydown", function (event) {
+                if (!event.altKey) return;
+
+                var target = event.target;
+                var tagName = target && target.tagName ? target.tagName.toUpperCase() : "";
+                var isEditable = target && (target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT");
+                if (isEditable) return;
+
+                var key = (event.key || "").toLowerCase();
+                if (key === "n" || key === "enter") {
+                    event.preventDefault();
+                    window.location.href = '@Url.Action("Carga", "Elaborados")';
+                } else if (key === "v") {
+                    event.preventDefault();
+                    window.location.href = '@Url.Action("Lineas", "Elaborados")';
+                }
+            });
+
             var storageKey = "elaborados_index_filters_v1";
+            var restoreKey = "elaborados_restore_enabled_v1";
             var form = document.getElementById('formFiltrosElaborados');
             var inputFechaDesde = document.getElementById('fechaDesde');
             var inputFechaHasta = document.getElementById('fechaHasta');
             var inputSucursal = document.getElementById('idSucursal');
             var inputElaborado = document.getElementById('elaborado');
             var fechaDesdeDefault = '@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")';
+
+            function limpiarStorageElaborados() {
+                if (!window.sessionStorage) return;
+                window.sessionStorage.removeItem(storageKey);
+                window.sessionStorage.removeItem("elaborados_lineas_filters_v1");
+                window.sessionStorage.removeItem(restoreKey);
+            }
+
+            function vieneDesdeModuloElaborados() {
+                if (!document.referrer) return false;
+
+                try {
+                    var refUrl = new URL(document.referrer);
+                    return refUrl.origin === window.location.origin
+                        && /\/Elaborados(\/|$)/i.test(refUrl.pathname || "");
+                } catch (e) {
+                    return false;
+                }
+            }
 
             function buildState() {
                 return {
@@ -141,8 +179,15 @@
 
             function restoreStateIfNeeded() {
                 if (!form || !window.sessionStorage || window.location.search) return;
+                if (window.sessionStorage.getItem(restoreKey) !== "1") {
+                    if (!vieneDesdeModuloElaborados()) {
+                        limpiarStorageElaborados();
+                    }
+                    return;
+                }
 
                 var raw = window.sessionStorage.getItem(storageKey);
+                window.sessionStorage.removeItem(restoreKey);
                 if (!raw) return;
 
                 try {
@@ -158,7 +203,7 @@
                         window.location.replace(form.action + "?" + query);
                     }
                 } catch (e) {
-                    window.sessionStorage.removeItem(storageKey);
+                    limpiarStorageElaborados();
                 }
             }
 

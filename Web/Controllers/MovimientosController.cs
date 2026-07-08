@@ -166,20 +166,41 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id))
+            MovimientoEditVm model;
+            bool puedeModificar = true;
+
+            if (id > 0)
             {
-                TempData["AlertType"] = "warning";
-                TempData["AlertTitle"] = "Permisos";
-                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id) ?? "No tiene permisos para crear o modificar movimientos.";
-                return RedirectToAction("Index");
+                model = CrearModeloEdicion(id, user);
+                if (model == null)
+                    return HttpNotFound();
+
+                puedeModificar = PermisosHelper.TienePermiso(Session, Permisos.Movimiento.NuevoMovimiento, model.FechaMovimiento, user.Id);
+                if (!puedeModificar && !PermisosHelper.TienePermiso(Session, Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) ?? "No tiene permisos para consultar movimientos.";
+                    return RedirectToAction("Index");
+                }
+
+                model.SoloLecturaInicial = true;
+                model.PuedeHabilitarEdicion = puedeModificar;
             }
+            else
+            {
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id) ?? "No tiene permisos para crear o modificar movimientos.";
+                    return RedirectToAction("Index");
+                }
 
-            MovimientoEditVm model = id > 0
-                ? CrearModeloEdicion(id, user)
-                : CrearModeloNuevo(user);
-
-            if (model == null)
-                return HttpNotFound();
+                model = CrearModeloNuevo(user);
+                model.SoloLecturaInicial = false;
+                model.PuedeHabilitarEdicion = true;
+            }
 
             ViewBag.Title = model.EsEdicion ? "Modificar Movimiento" : "Nuevo Movimiento";
             ViewBag.Seccion = "Movimientos";

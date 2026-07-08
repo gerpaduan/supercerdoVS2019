@@ -444,12 +444,16 @@ namespace Web.Controllers
 
             DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
             int idCreador = compra != null && compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador))
+            bool puedeModificar = PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador);
+            if (!puedeModificar)
             {
-                TempData["AlertType"] = "warning";
-                TempData["AlertTitle"] = "Permisos";
-                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador) ?? "No tiene permisos para crear o modificar stock.";
-                return RedirectToAction("Index");
+                if (compra == null || !PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, fechaPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador) ?? "No tiene permisos para crear o modificar stock.";
+                    return RedirectToAction("Index");
+                }
             }
 
             if (EsAjuste(tipoOperacion) && (user == null || !user.Admin))
@@ -461,6 +465,8 @@ namespace Web.Controllers
             }
 
             var model = compra != null ? CrearViewModelEdicion(compra, user) : CrearViewModelNuevo(user, tipoOperacion);
+            model.SoloLecturaInicial = model.EsEdicion;
+            model.PuedeHabilitarEdicion = !model.EsEdicion || puedeModificar;
             CargarViewBags(model);
             ConfigurarAdvertenciaFechaEnVivo("FechaCompra", Permisos.Stock.AddOrEditStock, idCreador);
 

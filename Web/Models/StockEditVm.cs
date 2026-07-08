@@ -8,6 +8,8 @@ namespace Web.Models
         public int IdCompra { get; set; }
 
         public bool EsEdicion { get; set; }
+        public bool SoloLecturaInicial { get; set; }
+        public bool PuedeHabilitarEdicion { get; set; }
 
         public string TipoCompra { get; set; }
 

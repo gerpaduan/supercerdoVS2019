@@ -145,5 +145,91 @@
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
 
 @section Scripts {
+    <script>
+        (function () {
+            var storageKey = "elaborados_lineas_filters_v1";
+            var restoreKey = "elaborados_restore_enabled_v1";
+            var form = document.getElementById('formFiltrosLineasElaborados');
+            var inputFechaDesde = document.getElementById('fechaDesde');
+            var inputFechaHasta = document.getElementById('fechaHasta');
+            var inputSucursal = document.getElementById('idSucursal');
+            var inputDescripcion = document.getElementById('descripcion');
+            var fechaDesdeDefault = '@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")';
+
+            function limpiarStorageElaborados() {
+                if (!window.sessionStorage) return;
+                window.sessionStorage.removeItem("elaborados_index_filters_v1");
+                window.sessionStorage.removeItem(storageKey);
+                window.sessionStorage.removeItem(restoreKey);
+            }
+
+            function vieneDesdeModuloElaborados() {
+                if (!document.referrer) return false;
+
+                try {
+                    var refUrl = new URL(document.referrer);
+                    return refUrl.origin === window.location.origin
+                        && /\/Elaborados(\/|$)/i.test(refUrl.pathname || "");
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursal: inputSucursal ? inputSucursal.value : "",
+                    descripcion: inputDescripcion ? inputDescripcion.value : ""
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search) return;
+                if (window.sessionStorage.getItem(restoreKey) !== "1") {
+                    if (!vieneDesdeModuloElaborados()) {
+                        limpiarStorageElaborados();
+                    }
+                    return;
+                }
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                window.sessionStorage.removeItem(restoreKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.idSucursal) params.set("idSucursal", state.idSucursal);
+                    if (state.descripcion) params.set("descripcion", state.descripcion);
+                    if (state.fechaDesde && state.fechaDesde >= fechaDesdeDefault) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+
+                    var query = params.toString();
+                    if (query) {
+                        window.location.replace(form.action + "?" + query);
+                    }
+                } catch (e) {
+                    limpiarStorageElaborados();
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+
+            if (form) {
+                form.addEventListener("submit", saveState);
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+            }
+        })();
+    </script>
     <script src="@Url.Content("~/Scripts/app/elaborados.js?v=1")"></script>
 }

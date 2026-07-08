@@ -8,12 +8,15 @@
     bool ocultarSaldo = ViewBag.OcultarSaldo != null && (bool)ViewBag.OcultarSaldo;
     bool mostrarSoloUltimosRegistros = ViewBag.MostrarSoloUltimosRegistros != null && (bool)ViewBag.MostrarSoloUltimosRegistros;
     bool mostrarSoloMovimientosCajaActual = ViewBag.MostrarSoloMovimientosCajaActual != null && (bool)ViewBag.MostrarSoloMovimientosCajaActual;
+    bool puedeExportarCuentaCorriente = ViewBag.PuedeExportarCuentaCorriente != null && (bool)ViewBag.PuedeExportarCuentaCorriente;
+    bool ocultarFiltroFechaDesde = ViewBag.OcultarFiltroFechaDesde != null && (bool)ViewBag.OcultarFiltroFechaDesde;
     int cantidadUltimosRegistros = ViewBag.CantidadUltimosRegistros != null ? (int)ViewBag.CantidadUltimosRegistros : 0;
 
     ViewBag.Title = "Cuenta Corriente";
     Layout = (desdePos || renderSinLayout) ? null : "~/Views/Shared/_LayoutBase.cshtml";
 
-    string persona = ViewBag.Persona.RazonSocial;
+    var personaObj = ViewBag.Persona as Entidades.Persona;
+    string persona = personaObj != null ? (personaObj.RazonSocial ?? "") : "";
     decimal saldo = ViewBag.SaldoPersona;
     string fechaDesde = ViewBag.FechaDesde ?? "";
     string returnUrlCtaCte = ViewBag.ReturnUrlCtaCte as string ?? "";
@@ -101,20 +104,27 @@
                     <input type="hidden" name="mostrarAnulados" id="mostrarAnuladosHidden" value="@(mostrarAnulados.ToString().ToLower())" />
                 }
                 <input type="hidden" name="returnUrl" value="@returnUrlCtaCte" />
+                @if (ocultarFiltroFechaDesde)
+                {
+                    <input type="hidden" name="fechaDesde" value="@fechaDesde" />
+                }
 
                 <div class="d-none d-md-flex justify-content-between align-items-center ctacte-toolbar-row">
                     <div class="d-flex align-items-center ctacte-filtros-group">
-                        <div class="input-group ctacte-fecha-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Desde</span>
+                        @if (!ocultarFiltroFechaDesde)
+                        {
+                            <div class="input-group ctacte-fecha-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Desde</span>
+                                </div>
+                                <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-filter"></i> Filtrar
+                                    </button>
+                                </div>
                             </div>
-                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="submit">
-                                    <i class="fas fa-filter"></i> Filtrar
-                                </button>
-                            </div>
-                        </div>
+                        }
 
                         <div class="custom-control custom-switch ctacte-anulados-switch">
                             @if (!desdePos)
@@ -150,31 +160,43 @@
                             <i class="fas fa-plus"></i> Agregar Pago / Cobro
                         </a>
 
-                        <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
-                           class="btn btn-outline-danger mr-2">
-                            <i class="fas fa-file-pdf"></i> PDF
-                        </a>
+                        @if (puedeExportarCuentaCorriente)
+                        {
+                            <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados, desdePos = desdePos })"
+                               class="btn btn-outline-danger mr-2">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
 
-                        <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
-                           class="btn btn-outline-success">
-                            <i class="fas fa-file-excel"></i> Excel
-                        </a>
+                            <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados, desdePos = desdePos })"
+                               class="btn btn-outline-success mr-2">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-outline-primary ctacte-btn-mail"
+                                    id="btnEnviarMailCtaCteDesktop">
+                                <i class="fas fa-envelope"></i> Enviar por mail
+                            </button>
+                        }
                     </div>
                 </div>
 
                 <!-- BOTONES PARA MOBILE (xs - sm) -->
                 <div class="d-md-none mt-3">
-                    <div class="input-group mb-2 ctacte-filtros-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Desde</span>
+                    @if (!ocultarFiltroFechaDesde)
+                    {
+                        <div class="input-group mb-2 ctacte-filtros-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Desde</span>
+                            </div>
+                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                            </div>
                         </div>
-                        <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
-                        <div class="input-group-append">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-filter"></i> Filtrar
-                            </button>
-                        </div>
-                    </div>
+                    }
 
                     <div class="custom-control custom-switch mb-3">
                         @if (!desdePos)
@@ -209,24 +231,31 @@
                         <i class="fas fa-plus"></i> Agregar Pago / Cobro
                     </a>
 
-                    <!-- PDF y EXCEL: en la misma línea, 50% cada uno -->
-                    <div class="row no-gutters">
-                        <div class="col-6 pr-1">
-                            <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
-                               class="btn btn-outline-danger mr-2"
-                               target="@(desdePos ? "_blank" : "_self")">
-                                <i class="fas fa-file-pdf"></i> PDF
-                            </a>
+                    @if (puedeExportarCuentaCorriente)
+                    {
+                        <div class="row no-gutters">
+                            <div class="col-6 pr-1">
+                                <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados, desdePos = desdePos })"
+                                   class="btn btn-outline-danger btn-block"
+                                   target="@(desdePos ? "_blank" : "_self")">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </a>
+                            </div>
+                            <div class="col-6 pl-1">
+                                <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados, desdePos = desdePos })"
+                                   class="btn btn-outline-success btn-block"
+                                   target="@(desdePos ? "_blank" : "_self")">
+                                    <i class="fas fa-file-excel"></i> Excel
+                                </a>
+                            </div>
+                        </div>
 
-                        </div>
-                        <div class="col-6 pl-1">
-                            <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde, mostrarAnulados = mostrarAnulados })"
-                               class="btn btn-outline-success"
-                               target="@(desdePos ? "_blank" : "_self")">
-                                <i class="fas fa-file-excel"></i> Excel
-                            </a>
-                        </div>
-                    </div>
+                        <button type="button"
+                                class="btn btn-outline-primary btn-block mt-2 ctacte-btn-mail"
+                                id="btnEnviarMailCtaCteMobile">
+                            <i class="fas fa-envelope"></i> Enviar por mail
+                        </button>
+                    }
                 </div>
 
             </form>
@@ -363,6 +392,54 @@
 
 </div>
 
+@if (puedeExportarCuentaCorriente)
+{
+    <div class="modal fade" id="modalEmailCtaCte" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Enviar cuenta corriente por mail</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="ccEmailFormato">Adjuntar como</label>
+                        <select class="form-control" id="ccEmailFormato">
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ccEmailDestino">Email destino</label>
+                        <input type="email" class="form-control" id="ccEmailDestino" maxlength="200" placeholder="cliente@dominio.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ccEmailAsunto">Asunto</label>
+                        <input type="text" class="form-control" id="ccEmailAsunto" maxlength="200">
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label for="ccEmailMensaje">Mensaje</label>
+                        <textarea class="form-control" id="ccEmailMensaje" rows="6"></textarea>
+                    </div>
+
+                    <div class="alert alert-danger d-none mb-0" id="ccEmailError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" type="button" id="btnConfirmarEmailCtaCte">
+                        <i class="fas fa-paper-plane mr-1"></i> Enviar mail
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
     .ctacte-page {
         font-size: .9rem;
@@ -423,9 +500,27 @@
         margin-left: .35rem;
     }
 
+    .ctacte-page .ctacte-anulados-switch .custom-control-label,
+    .ctacte-page .custom-control.custom-switch .custom-control-label {
+        color: #495057 !important;
+        font-weight: 600;
+    }
+
     .ctacte-page .ctacte-acciones-row .btn {
         font-size: .79rem;
         padding: .24rem .5rem;
+    }
+
+    .ctacte-page .ctacte-btn-mail {
+        color: #007bff;
+        border-color: #007bff;
+    }
+
+    .ctacte-page .ctacte-btn-mail:hover,
+    .ctacte-page .ctacte-btn-mail:focus {
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
     }
 
     .ctacte-page .small,
@@ -497,15 +592,16 @@
 </style>
 
 <script>
-    const returnUrl = '@returnUrl';
-    const desdePos = @Html.Raw((desdePos ? "true" : "false"));
+    (function () {
+        var returnUrl = '@returnUrl';
+        var desdePos = @Html.Raw((desdePos ? "true" : "false"));
 
-    function verMovimientoCtaCte(tabla, idTabla) {
-        const tablaNorm = String(tabla || "").toLowerCase();
-        const returnUrlEncoded = encodeURIComponent(returnUrl);
+        window.verMovimientoCtaCte = function (tabla, idTabla) {
+        var tablaNorm = String(tabla || "").toLowerCase();
+        var returnUrlEncoded = encodeURIComponent(returnUrl);
 
         if (tablaNorm === "ventas") {
-            let urlDetalleVenta = '@Url.Action("DetalleVenta", "Ventas")'
+            var urlDetalleVenta = '@Url.Action("DetalleVenta", "Ventas")'
                 + '?id=' + encodeURIComponent(idTabla)
                 + '&returnUrl=' + returnUrlEncoded;
 
@@ -519,7 +615,7 @@
             return;
         }
 
-        let url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
+        var url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
                     + '&returnUrl=' + returnUrlEncoded
                     + '&tabla=' + encodeURIComponent(tabla)
                     + '&idTabla=' + encodeURIComponent(idTabla)
@@ -536,10 +632,108 @@
         }
 
         window.location.href = url;
-    }
+        };
+    })();
 </script>
 <script>
     (function () {
+        var desdePos = @Html.Raw((desdePos ? "true" : "false"));
+        var puedeExportarCuentaCorriente = @Html.Raw((puedeExportarCuentaCorriente ? "true" : "false"));
+        var ctaCteEmailConfigUrl = '@Url.Action("ObtenerDatosEmailCuentaCorriente", "Finanzas")';
+        var ctaCteEmailSendUrl = '@Url.Action("EnviarCuentaCorrienteEmail", "Finanzas")';
+        var ctaCteFechaDesde = '@fechaDesde';
+        var ctaCteIdPersona = @ViewBag.IdPersona;
+
+        function esEmailValido(email) {
+            return new RegExp('^[^\\s\\x40]+\\x40[^\\s\\x40]+\\.[^\\s\\x40]+$').test(String(email || '').trim());
+        }
+
+        function obtenerMostrarAnuladosActual() {
+            return $("#chkMostrarAnulados").is(":checked") || $("#chkMostrarAnuladosMobile").is(":checked");
+        }
+
+        function abrirModalEmailCuentaCorriente() {
+            if (!puedeExportarCuentaCorriente) return;
+
+            $("#ccEmailError").addClass("d-none").text("");
+            $("#ccEmailDestino").val("");
+            $("#ccEmailAsunto").val("");
+            $("#ccEmailMensaje").val("");
+            $("#ccEmailFormato").val("pdf");
+            $("#btnConfirmarEmailCtaCte").prop("disabled", true);
+
+            $.getJSON(ctaCteEmailConfigUrl, {
+                idPersona: ctaCteIdPersona,
+                fechaDesde: ctaCteFechaDesde,
+                mostrarAnulados: obtenerMostrarAnuladosActual(),
+                desdePos: desdePos
+            }).done(function (resp) {
+                if (!resp || !resp.ok) {
+                    Swal.fire({ icon: "error", title: "Email", text: (resp && resp.msg) || "No se pudieron recuperar los datos del email." });
+                    return;
+                }
+
+                $("#ccEmailDestino").val(resp.email || "");
+                $("#ccEmailAsunto").val(resp.asunto || "");
+                $("#ccEmailMensaje").val(resp.mensaje || "");
+                $("#btnConfirmarEmailCtaCte").prop("disabled", false);
+                $("#modalEmailCtaCte").modal("show");
+            }).fail(function () {
+                Swal.fire({ icon: "error", title: "Email", text: "No se pudieron recuperar los datos del email." });
+            });
+        }
+
+        function confirmarEmailCuentaCorriente() {
+            var payload = {
+                idPersona: ctaCteIdPersona,
+                fechaDesde: ctaCteFechaDesde,
+                mostrarAnulados: obtenerMostrarAnuladosActual(),
+                desdePos: desdePos,
+                emailDestino: ($("#ccEmailDestino").val() || "").trim(),
+                asunto: ($("#ccEmailAsunto").val() || "").trim(),
+                mensaje: ($("#ccEmailMensaje").val() || "").trim(),
+                formato: ($("#ccEmailFormato").val() || "pdf").trim()
+            };
+
+            if (!payload.emailDestino) {
+                $("#ccEmailError").removeClass("d-none").text("Ingresa el email destino.");
+                return;
+            }
+
+            if (!esEmailValido(payload.emailDestino)) {
+                $("#ccEmailError").removeClass("d-none").text("Ingresa un email válido.");
+                return;
+            }
+
+            if (!payload.asunto) {
+                $("#ccEmailError").removeClass("d-none").text("Ingresa el asunto del mail.");
+                return;
+            }
+
+            $("#ccEmailError").addClass("d-none").text("");
+            $("#btnConfirmarEmailCtaCte").prop("disabled", true);
+
+            $.ajax({
+                url: ctaCteEmailSendUrl,
+                type: "POST",
+                dataType: "json",
+                data: payload
+            }).done(function (resp) {
+                if (!resp || !resp.ok) {
+                    $("#btnConfirmarEmailCtaCte").prop("disabled", false);
+                    $("#ccEmailError").removeClass("d-none").text((resp && resp.msg) || "No se pudo enviar el mail.");
+                    return;
+                }
+
+                $("#modalEmailCtaCte").modal("hide");
+                Swal.fire({ icon: "success", title: "Email", text: resp.msg || "La cuenta corriente se envió correctamente." });
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.msg) || "No se pudo enviar el mail.";
+                $("#btnConfirmarEmailCtaCte").prop("disabled", false);
+                $("#ccEmailError").removeClass("d-none").text(msg);
+            });
+        }
+
         function focoEnControlEditable() {
             var el = document.activeElement;
             if (!el) return false;
@@ -581,6 +775,22 @@
                 var checkedDesktop = $("#chkMostrarAnulados").is(":checked");
                 var checkedMobile = $("#chkMostrarAnuladosMobile").is(":checked");
                 $("#mostrarAnuladosHidden").val((checkedDesktop || checkedMobile) ? "true" : "false");
+            })
+            .off("click.ctacteEnviarMail", "#btnEnviarMailCtaCteDesktop, #btnEnviarMailCtaCteMobile")
+            .on("click.ctacteEnviarMail", "#btnEnviarMailCtaCteDesktop, #btnEnviarMailCtaCteMobile", function () {
+                abrirModalEmailCuentaCorriente();
+            })
+            .off("click.ctacteConfirmarMail", "#btnConfirmarEmailCtaCte")
+            .on("click.ctacteConfirmarMail", "#btnConfirmarEmailCtaCte", function () {
+                confirmarEmailCuentaCorriente();
+            })
+            .off("input.ctacteMailInputs", "#ccEmailDestino, #ccEmailAsunto, #ccEmailMensaje")
+            .on("input.ctacteMailInputs", "#ccEmailDestino, #ccEmailAsunto, #ccEmailMensaje", function () {
+                $("#ccEmailError").addClass("d-none").text("");
+            })
+            .off("shown.bs.modal.ctacteMail", "#modalEmailCtaCte")
+            .on("shown.bs.modal.ctacteMail", "#modalEmailCtaCte", function () {
+                $("#ccEmailDestino").trigger("focus");
             })
             .off("keydown.ctacteNuevoPago")
             .on("keydown.ctacteNuevoPago", function (event) {
@@ -660,6 +870,27 @@
     html.dark-mode #tablaPersona .ctacte-color-negativo,
     body.dark-mode #tablaPersona .ctacte-color-negativo {
         color: #ff7f7f !important;
+    }
+
+    html.dark-mode .ctacte-page .ctacte-btn-mail,
+    body.dark-mode .ctacte-page .ctacte-btn-mail {
+        color: #8ec5ff !important;
+        border-color: #5aa9ff !important;
+        background-color: transparent !important;
+    }
+
+    html.dark-mode .ctacte-page .ctacte-btn-mail i,
+    body.dark-mode .ctacte-page .ctacte-btn-mail i {
+        color: inherit !important;
+    }
+
+    html.dark-mode .ctacte-page .ctacte-btn-mail:hover,
+    html.dark-mode .ctacte-page .ctacte-btn-mail:focus,
+    body.dark-mode .ctacte-page .ctacte-btn-mail:hover,
+    body.dark-mode .ctacte-page .ctacte-btn-mail:focus {
+        color: #0f1720 !important;
+        background-color: #8ec5ff !important;
+        border-color: #8ec5ff !important;
     }
 </style>
 

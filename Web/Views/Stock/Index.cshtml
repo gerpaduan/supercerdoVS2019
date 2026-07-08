@@ -30,7 +30,7 @@
     }
 
     <div class="d-flex justify-content-end mb-3">
-        <a class="btn btn-outline-primary" href="@Url.Action("Lineas", "Stock", new { idSucursal = idSucursal, tipoCompra = tipoCompra, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
+        <a class="btn btn-outline-primary stock-btn-lineas" href="@Url.Action("Lineas", "Stock", new { idSucursal = idSucursal, tipoCompra = tipoCompra, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
     </div>
@@ -201,7 +201,7 @@
     }
 
     .stock-index-page .card-body {
-        padding: .85rem 1rem;
+        padding: .72rem .9rem;
     }
 
     .stock-acciones-grid,
@@ -216,7 +216,7 @@
     }
 
     .stock-filtros-card .card-body {
-        padding: .72rem .85rem;
+        padding: .68rem .82rem;
     }
 
     .stock-filtro-label {
@@ -250,10 +250,28 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: .4rem;
+        gap: .32rem;
         font-weight: 600;
         font-size: .92rem;
-        padding: .45rem .75rem;
+        padding: .1rem .42rem;
+        min-height: 1.65rem;
+        line-height: 1;
+    }
+
+    .stock-action-btn i {
+        font-size: inherit;
+        line-height: 1;
+    }
+
+    .stock-action-btn span {
+        line-height: 1;
+    }
+
+    .stock-btn-lineas {
+        min-height: 2.1rem;
+        font-size: .82rem;
+        padding: .24rem .58rem;
+        border-radius: .5rem;
     }
 
     .stock-index-page .custom-switch {
@@ -342,7 +360,7 @@
 
         .stock-index-page .stock-acciones-card .card-body,
         .stock-index-page .stock-filtros-card .card-body {
-            padding: .65rem .8rem;
+            padding: .52rem .72rem;
         }
 
         .stock-total-card .card-body {
@@ -364,8 +382,8 @@
         }
 
         .stock-action-btn {
-            min-height: 2.15rem;
-            padding: .35rem .55rem;
+            min-height: 1.55rem;
+            padding: .06rem .36rem;
             font-size: .88rem;
         }
 

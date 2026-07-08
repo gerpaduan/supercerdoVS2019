@@ -29,10 +29,10 @@
     }
 
     <div class="d-flex flex-wrap align-items-center mb-3 compras-acciones-header">
-        <a class="btn btn-success mt-2 mt-md-0 compras-btn-nuevo" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })">
+        <a class="btn btn-success mt-2 mt-md-0 compras-btn-accion" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })" id="btnNuevaCompraIndex">
             <i class="fas fa-plus mr-1"></i> Nueva compra
         </a>
-        <a class="btn btn-outline-primary mt-2 mt-md-0 ml-md-2 compras-btn-nuevo" href="@Url.Action("Lineas", "Compras", new { idSucursal = idSucursal, tipoCompra = tipoCompra, texto = texto, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
+        <a class="btn btn-outline-primary mt-2 mt-md-0 ml-md-2 compras-btn-accion" href="@Url.Action("Lineas", "Compras", new { idSucursal = idSucursal, tipoCompra = tipoCompra, texto = texto, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasComprasIndex">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
     </div>
@@ -194,8 +194,12 @@
         justify-content: flex-start;
     }
 
-    .compras-btn-nuevo {
+    .compras-btn-accion {
         width: 100%;
+        min-height: 2.1rem;
+        font-size: .82rem;
+        padding: .24rem .58rem;
+        border-radius: .5rem;
     }
 
     .compras-filtros-card .alert,
@@ -253,7 +257,7 @@
             justify-content: flex-end;
         }
 
-        .compras-btn-nuevo {
+        .compras-btn-accion {
             width: auto;
         }
 
@@ -316,6 +320,27 @@
 @section Scripts {
     <script>
         (function () {
+            document.addEventListener("keydown", function (event) {
+                if (!event.altKey) return;
+
+                var target = event.target;
+                var tagName = target && target.tagName ? target.tagName.toUpperCase() : "";
+                var isEditable = target && (target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT");
+                if (isEditable) return;
+
+                var key = (event.key || "").toLowerCase();
+                var btnNuevo = document.getElementById("btnNuevaCompraIndex");
+                var btnLineas = document.getElementById("btnVerLineasComprasIndex");
+
+                if ((key === "n" || key === "enter") && btnNuevo) {
+                    event.preventDefault();
+                    window.location.href = btnNuevo.href;
+                } else if (key === "v" && btnLineas) {
+                    event.preventDefault();
+                    window.location.href = btnLineas.href;
+                }
+            });
+
             var storageKey = "compras_index_filters_v1";
             var form = document.querySelector('.compras-filtros-card form');
             var inputFechaDesde = document.getElementById('fechaDesde');

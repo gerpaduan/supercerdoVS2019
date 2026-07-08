@@ -153,6 +153,8 @@ namespace Web.Models
 
         public int IdEmbutido { get; set; }
         public bool EsEdicion { get; set; }
+        public bool SoloLecturaInicial { get; set; }
+        public bool PuedeHabilitarEdicion { get; set; }
         public bool EsDesarme { get; set; }
         public bool PuedeAnular { get; set; }
         public int IdSucursal { get; set; }
@@ -181,6 +183,8 @@ namespace Web.Models
 
         public int IdEmbutido { get; set; }
         public bool EsEdicion { get; set; }
+        public bool SoloLecturaInicial { get; set; }
+        public bool PuedeHabilitarEdicion { get; set; }
         public bool PermiteGuardarEdicion { get; set; }
         public bool PuedeAnular { get; set; }
         public bool EsPesableElaborado { get; set; }

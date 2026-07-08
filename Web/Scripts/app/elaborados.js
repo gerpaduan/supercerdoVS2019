@@ -74,8 +74,10 @@
 
         var filtro = normalizarTexto($('.js-filtro-vivo-elaborados').val());
         var visibles = 0;
+        var totalKgs = 0;
         var $rows = $page.find('.js-elaborado-row');
         var $tbody = $('#tbodyElaborados');
+        var $lblTotal = $('#lblTotalKgElaborados');
 
         $tbody.find('.js-elaborado-empty-client').remove();
         $tbody.find('.js-elaborado-empty-server').toggleClass('d-none', $rows.length > 0);
@@ -102,8 +104,18 @@
                 }
             }
 
-            if (match) visibles++;
+            if (match) {
+                visibles++;
+                totalKgs += parseFloat($row.data('kgs')) || 0;
+            }
         });
+
+        if ($lblTotal.length) {
+            $lblTotal.text(totalKgs.toLocaleString('es-AR', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3
+            }));
+        }
 
         if ($rows.length > 0 && visibles === 0) {
             renderEmptyRow($tbody, 'js-elaborado-empty-client', 8, 'No hay resultados con el filtro en vivo.');

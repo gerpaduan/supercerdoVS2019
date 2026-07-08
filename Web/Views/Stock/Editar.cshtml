@@ -84,7 +84,6 @@
                                    name="FechaCompra"
                                    class="form-control"
                                    value="@Model.FechaCompra.ToString("yyyy-MM-ddTHH:mm")" />
-                            @Html.Partial("_AdvertenciaPermisoFecha")
                         </div>
                     </div>
                     <div class="col-12 col-lg-6">
@@ -108,6 +107,12 @@
                         </div>
                     </div>
                     <div class="col-12 col-xl-4">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        @Html.Partial("_AdvertenciaPermisoFecha")
                     </div>
                 </div>
 
@@ -405,7 +410,8 @@
                         <button type="button"
                                 class="btn btn-primary mr-2 mb-2"
                                 id="btnHabilitarEdicionStock"
-                                data-edit-readonly-ignore="true">
+                                data-edit-readonly-ignore="true"
+                                @(Model.PuedeHabilitarEdicion ? "" : "disabled")>
                             <i class="fas fa-edit mr-1"></i> Modificar
                         </button>
                     }
@@ -972,7 +978,7 @@
 
             window.EditReadOnly && window.EditReadOnly.init({
                 formSelector: "#formStock",
-                soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
                 modifyButtonSelector: "#btnHabilitarEdicionStock",
                 saveButtonSelector: "#btnGuardarStock"
             });
@@ -1076,7 +1082,7 @@ else
 
                 window.EditReadOnly && window.EditReadOnly.init({
                     formSelector: "#formStock",
-                    soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                    soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
                     modifyButtonSelector: "#btnHabilitarEdicionStock",
                     saveButtonSelector: "#btnGuardarStock"
                 });

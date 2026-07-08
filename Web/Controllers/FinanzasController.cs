@@ -20,6 +20,7 @@ using System.Text;
 using Web.Models;
 using System.Diagnostics;
 using Utilidades;
+using System.Net;
 
 namespace Web.Controllers
 {
@@ -283,9 +284,14 @@ namespace Web.Controllers
                 ViewBag.DesdePOS = modoPos;
                 ViewBag.RenderSinLayout = renderParcial;
                 ViewBag.OcultarSaldo = ocultarSaldoEnPos;
-                ViewBag.MostrarSoloUltimosRegistros = modoPos && (persona == null || !persona.CtaCte);
+                bool mostrarSoloUltimosRegistros = modoPos && (persona == null || !persona.CtaCte);
+                bool permitirExportacionReducidaEnPos = modoPos && persona != null && !persona.CtaCte;
+
+                ViewBag.MostrarSoloUltimosRegistros = mostrarSoloUltimosRegistros;
                 ViewBag.CantidadUltimosRegistros = 5;
                 ViewBag.MostrarSoloMovimientosCajaActual = modoPos && persona != null && persona.CtaCte && !puedeVerCuentaCorrienteCompleta;
+                ViewBag.PuedeExportarCuentaCorriente = puedeVerCuentaCorrienteCompleta || permitirExportacionReducidaEnPos;
+                ViewBag.OcultarFiltroFechaDesde = mostrarSoloUltimosRegistros && !puedeVerCuentaCorrienteCompleta;
 
                 if (renderParcial)
                     return PartialView("CtaCtePersona", dtMov);
@@ -518,27 +524,161 @@ namespace Web.Controllers
         // ============================================================
         //  EXPORTAR A EXCEL
         // ============================================================
-        public ActionResult ExportarExcelPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false)
+        public ActionResult ExportarExcelPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false, bool desdePos = false)
         {
+            bool exportacionReducida;
+            if (!UsuarioPuedeExportarCuentaCorriente(idPersona, desdePos, out exportacionReducida))
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden, "Acceso denegado");
+
             DateTime fecha = DateTime.ParseExact(fechaDesde, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            string fileName;
+            byte[] buffer = GenerarExcelCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, exportacionReducida, out fileName);
+            return File(buffer, "text/csv", fileName);
+        }
 
-            DataTable dt = oCtaCteN.getCtaCteByIdPersona(idPersona, fecha);
-            if (!mostrarAnulados)
+
+        // ============================================================
+        //  EXPORTAR A PDF
+        // ============================================================
+        public ActionResult ExportarPdfPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false, bool desdePos = false)
+        {
+            bool exportacionReducida;
+            if (!UsuarioPuedeExportarCuentaCorriente(idPersona, desdePos, out exportacionReducida))
+                return new HttpStatusCodeResult(HttpStatusCode.Forbidden, "Acceso denegado");
+
+            DateTime fechaD;
+            if (!DateTime.TryParse(fechaDesde, out fechaD))
+                fechaD = DateTime.Today.AddMonths(-1);
+            string fileName;
+            byte[] pdfBytes = GenerarPdfCuentaCorrienteBytes(idPersona, fechaD, mostrarAnulados, exportacionReducida, out fileName);
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerDatosEmailCuentaCorriente(int idPersona, string fechaDesde, bool mostrarAnulados = false, bool desdePos = false)
+        {
+            try
             {
-                dt = FiltrarRegistrosRepetidos(dt);
-            }
+                bool exportacionReducida;
+                if (!UsuarioPuedeExportarCuentaCorriente(idPersona, desdePos, out exportacionReducida))
+                    return Json(new { ok = false, msg = "No tiene permisos para enviar la cuenta corriente." }, JsonRequestBehavior.AllowGet);
 
-            // Calcular saldos
-            decimal saldo = 0;
-            if (dt != null && dt.Rows.Count > 0)
+                DateTime fecha = ParsearFechaCuentaCorriente(fechaDesde);
+                var persona = oPersonasN.findById(idPersona);
+                var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+                var empresaActual = usuarioActual != null ? usuarioActual.Empresa : null;
+                string nombreEmpresa = empresaActual != null
+                    ? (!string.IsNullOrWhiteSpace(empresaActual.NombreFantasia) ? empresaActual.NombreFantasia : empresaActual.RazonSocialAfip)
+                    : "";
+
+                if (string.IsNullOrWhiteSpace(nombreEmpresa))
+                    nombreEmpresa = "CarniSys";
+
+                string razonSocial = persona != null ? (persona.RazonSocial ?? "").Trim() : "";
+                string asunto = "Cuenta corriente de " + (!string.IsNullOrWhiteSpace(razonSocial) ? razonSocial : "cliente") + " - " + nombreEmpresa;
+                string cuerpo =
+                    "Hola" + (!string.IsNullOrWhiteSpace(razonSocial) ? " " + razonSocial : "") + ",\n\n" +
+                    "Te enviamos adjunta la cuenta corriente solicitada.\n\n" +
+                    "Fecha desde: " + fecha.ToString("dd/MM/yyyy") + "\n" +
+                    "Incluye anulados: " + (mostrarAnulados ? "Sí" : "No") + "\n\n" +
+                    "Saludos,\n" +
+                    nombreEmpresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = persona != null ? (persona.Email ?? "").Trim() : "",
+                    asunto = asunto,
+                    mensaje = cuerpo,
+                    replyTo = empresaActual != null ? (empresaActual.Email ?? "") : ""
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
             {
-                DataRow ultimaFila = dt.Rows[dt.Rows.Count - 1];
-
-                if (ultimaFila["Saldo"] != DBNull.Value)
-                    saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
+                return Json(new { ok = false, msg = ex.Message }, JsonRequestBehavior.AllowGet);
             }
+        }
 
-            // EXPORTACIÓN A EXCEL SIN LIBRERÍAS (CSV)
+        [HttpPost]
+        public JsonResult EnviarCuentaCorrienteEmail(int idPersona, string fechaDesde, bool mostrarAnulados, string emailDestino, string asunto, string mensaje, string formato, bool desdePos = false)
+        {
+            try
+            {
+                bool exportacionReducida;
+                if (!UsuarioPuedeExportarCuentaCorriente(idPersona, desdePos, out exportacionReducida))
+                    return Json(new { ok = false, msg = "No tiene permisos para enviar la cuenta corriente." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+                string formatoNormalizado = (formato ?? "").Trim().ToLowerInvariant();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                if (formatoNormalizado != "pdf" && formatoNormalizado != "excel")
+                    return Json(new { ok = false, msg = "Seleccione un formato válido para adjuntar." });
+
+                DateTime fecha = ParsearFechaCuentaCorriente(fechaDesde);
+                var persona = oPersonasN.findById(idPersona);
+                var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+                var empresaActual = usuarioActual != null ? usuarioActual.Empresa : null;
+                string nombreEmpresa = empresaActual != null
+                    ? (!string.IsNullOrWhiteSpace(empresaActual.NombreFantasia) ? empresaActual.NombreFantasia : empresaActual.RazonSocialAfip)
+                    : "";
+
+                if (string.IsNullOrWhiteSpace(nombreEmpresa))
+                    nombreEmpresa = "CarniSys";
+
+                string fileName;
+                byte[] attachmentBytes;
+                string contentType;
+
+                if (formatoNormalizado == "excel")
+                {
+                    attachmentBytes = GenerarExcelCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, exportacionReducida, out fileName);
+                    contentType = "text/csv";
+                }
+                else
+                {
+                    attachmentBytes = GenerarPdfCuentaCorrienteBytes(idPersona, fecha, mostrarAnulados, exportacionReducida, out fileName);
+                    contentType = "application/pdf";
+                }
+
+                string fromName = "CarniSys - " + nombreEmpresa;
+                string replyToEmail = empresaActual != null ? (empresaActual.Email ?? "").Trim() : "";
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: persona != null ? persona.RazonSocial : "",
+                    subject: asunto,
+                    bodyHtml: ConvertirTextoAHtmlPago(mensaje),
+                    attachmentFileName: fileName,
+                    attachmentBytes: attachmentBytes,
+                    attachmentContentType: contentType,
+                    fromNameOverride: fromName,
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: nombreEmpresa
+                );
+
+                return Json(new { ok = true, msg = "La cuenta corriente se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
+        }
+
+        private byte[] GenerarExcelCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, bool exportacionReducida, out string fileName)
+        {
+            DataTable dt = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados, exportacionReducida);
             string csv = "Fecha;Tabla;Detalle;Importe;Saldo;Sucursal\n";
 
             foreach (DataRow r in dt.Rows)
@@ -551,43 +691,69 @@ namespace Web.Controllers
                        $"{r["Sucursal"]}\n";
             }
 
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(csv);
-
             string persona = ObtenerNombreArchivoPersona(dt, idPersona);
-            string fileName = $"CuentaCorriente_{persona}_Desde_{fecha:yyyy-MM-dd}.csv";
-            return File(buffer, "text/csv", fileName);
+            fileName = $"CuentaCorriente_{persona}_Desde_{fecha:yyyy-MM-dd}.csv";
+            return System.Text.Encoding.UTF8.GetBytes(csv);
         }
 
-
-        // ============================================================
-        //  EXPORTAR A PDF
-        // ============================================================
-        public ActionResult ExportarPdfPersona(int idPersona, string fechaDesde, bool mostrarAnulados = false)
+        private byte[] GenerarPdfCuentaCorrienteBytes(int idPersona, DateTime fecha, bool mostrarAnulados, bool exportacionReducida, out string fileName)
         {
-            DateTime fechaD;
-            if (!DateTime.TryParse(fechaDesde, out fechaD))
-                fechaD = DateTime.Today.AddMonths(-1);
-
-            DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaD);
-            if (!mostrarAnulados)
-            {
-                dtMov = FiltrarRegistrosRepetidos(dtMov);
-            }
-
-            // Obtener persona y saldo igual que en la vista
+            DataTable dtMov = ObtenerMovimientosCuentaCorrienteParaExportacion(idPersona, fecha, mostrarAnulados, exportacionReducida);
             string persona = "";
 
             if (dtMov.Rows.Count > 0)
-            {
-                persona = dtMov.Rows[0]["razonSocial"].ToString();
-            }
+                persona = Convert.ToString(dtMov.Rows[0]["razonSocial"]);
 
             persona = SanitizarNombreArchivo(persona);
+            fileName = $"CuentaCorriente_{persona}_Desde_{fecha:yyyy-MM-dd}.pdf";
+            return Utilidades.GenerarDocs.GenerarPdfCtaCtePersona(dtMov, fecha);
+        }
 
-            byte[] pdfBytes = Utilidades.GenerarDocs.GenerarPdfCtaCtePersona(dtMov, fechaD); // GenerarPdfPersona(dtMov, persona, saldo, fechaD);
+        private DataTable ObtenerMovimientosCuentaCorrienteParaExportacion(int idPersona, DateTime fecha, bool mostrarAnulados, bool exportacionReducida)
+        {
+            DataTable dt = oCtaCteN.getCtaCteByIdPersona(idPersona, fecha);
+            if (!mostrarAnulados)
+            {
+                dt = FiltrarRegistrosRepetidos(dt);
+            }
 
-            string fileName = $"CuentaCorriente_{persona}_Desde_{fechaD:yyyy-MM-dd}.pdf";
-            return File(pdfBytes, "application/pdf", fileName);
+            if (exportacionReducida)
+            {
+                dt = TomarUltimosRegistros(dt, 5);
+            }
+
+            dt = OrdenarMovimientosCuentaCorrientePorFecha(dt, true);
+
+            return dt;
+        }
+
+        private DateTime ParsearFechaCuentaCorriente(string fechaDesde)
+        {
+            DateTime fecha;
+            if (!DateTime.TryParseExact(fechaDesde ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha))
+                fecha = DateTime.Today;
+
+            return fecha;
+        }
+
+        private bool UsuarioPuedeExportarCuentaCorriente(int idPersona, bool desdePos, out bool exportacionReducida)
+        {
+            exportacionReducida = false;
+            var usuarioActual = Session["Usuario"] as Entidades.Usuario;
+            if (PuedeVerSaldosCuentaCorriente(usuarioActual, Permisos.Finanza.VerCtasCtes))
+                return true;
+
+            if (!desdePos)
+                return false;
+
+            var persona = oPersonasN.findById(idPersona);
+            if (persona != null && !persona.CtaCte)
+            {
+                exportacionReducida = true;
+                return true;
+            }
+
+            return false;
         }
 
         private string ObtenerNombreArchivoPersona(DataTable dt, int idPersona)

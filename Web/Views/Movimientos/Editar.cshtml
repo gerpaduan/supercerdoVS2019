@@ -75,8 +75,13 @@
                                    name="FechaMovimiento"
                                    class="form-control"
                                    value="@Model.FechaMovimiento.ToString("yyyy-MM-ddTHH:mm")" />
-                            @Html.Partial("_AdvertenciaPermisoFecha")
                         </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        @Html.Partial("_AdvertenciaPermisoFecha")
                     </div>
                 </div>
 
@@ -255,7 +260,8 @@
                         <button type="button"
                                 class="btn btn-primary mr-2 mb-2"
                                 id="btnHabilitarEdicionMovimiento"
-                                data-edit-readonly-ignore="true">
+                                data-edit-readonly-ignore="true"
+                                @(Model.PuedeHabilitarEdicion ? "" : "disabled")>
                             <i class="fas fa-edit mr-1"></i> Modificar
                         </button>
                     }
@@ -592,7 +598,7 @@
             pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             whatsappTexto: '@(Model.EsEdicion ? HttpUtility.JavaScriptStringEncode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Request.Url.Scheme)) : "")',
             balanzaUrl: 'http://localhost:5100/peso',
-            soloLecturaInicial: @(Model.EsEdicion ? "true" : "false")
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false")
         };
         window.movimientoLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.MovimientoLineaVm>()));
     </script>
@@ -604,7 +610,7 @@
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formMovimiento",
-            soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionMovimiento",
             saveButtonSelector: "#btnGuardarMovimiento",
             onStateChanged: function (readOnly) {

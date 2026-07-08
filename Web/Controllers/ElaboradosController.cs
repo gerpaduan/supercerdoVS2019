@@ -216,7 +216,7 @@ namespace Web.Controllers
                 return RedirectToAction("Index", "Login");
             int idCreadorPermiso = user.Id;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
+            if (id <= 0 && !PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Permisos";
@@ -231,11 +231,12 @@ namespace Web.Controllers
                     return HttpNotFound("No se encontró el elaborado.");
 
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
-                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador))
+                bool puedeModificar = PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador);
+                if (!puedeModificar && !PermisosHelper.TienePermiso(Session, Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
-                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador) ?? "No tiene permisos para ingreso rápido.";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) ?? "No tiene permisos para consultar elaborados.";
                     return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
                 }
 
@@ -243,6 +244,11 @@ namespace Web.Controllers
                 var modelEdicion = CrearViewModelIngresoRapidoEdicion(embutido, user, esDesarme);
                 if (modelEdicion == null)
                     return HttpNotFound("No se encontró el elaborado.");
+
+                modelEdicion.SoloLecturaInicial = !string.Equals(modelEdicion.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
+                modelEdicion.PuedeHabilitarEdicion = puedeModificar;
+                if (!puedeModificar)
+                    modelEdicion.PuedeAnular = false;
 
                 ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rápido";
                 ViewBag.Seccion = "Elaborados";
@@ -275,7 +281,8 @@ namespace Web.Controllers
                 Receta = formula != null ? (formula.Receta ?? "") : "",
                 EsPesableElaborado = corte.Pesable,
                 Formula = formulaItems,
-                Tabs = BuildTabs(esDesarme ? "Desarme" : "IngresoRapido")
+                Tabs = BuildTabs(esDesarme ? "Desarme" : "IngresoRapido"),
+                PuedeHabilitarEdicion = true
             };
 
             RecalcularFormulaRapida(model);
@@ -302,16 +309,22 @@ namespace Web.Controllers
                     return HttpNotFound("No se encontró el elaborado.");
 
                 int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
-                if (!PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador))
+                bool puedeModificar = PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador);
+                if (!puedeModificar && !PermisosHelper.TienePermiso(Session, Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
                     TempData["AlertType"] = "warning";
                     TempData["AlertTitle"] = "Permisos";
-                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador) ?? "No tiene permisos para crear o modificar elaborados.";
+                    TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) ?? "No tiene permisos para consultar elaborados.";
                     return RedirectToAction("Index");
                 }
 
                 idCreadorPermiso = idCreador;
                 model = CrearViewModelEdicion(embutido, user);
+                model.SoloLecturaInicial = !string.Equals(model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
+                model.PuedeHabilitarEdicion = puedeModificar;
+                model.PermiteGuardarEdicion = puedeModificar;
+                if (!puedeModificar)
+                    model.PuedeAnular = false;
             }
             else
             {
@@ -329,7 +342,8 @@ namespace Web.Controllers
                     FechaEmbutido = DateTime.Now,
                     UsuarioNombre = user.Nombre ?? "",
                     Tabs = BuildTabs("Carga"),
-                    PermiteGuardarEdicion = true
+                    PermiteGuardarEdicion = true,
+                    PuedeHabilitarEdicion = true
                 };
             }
 
@@ -1725,3 +1739,4 @@ namespace Web.Controllers
         }
     }
 }
+

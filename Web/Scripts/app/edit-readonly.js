@@ -108,7 +108,7 @@
 
             if ($modify.length) {
                 $modify.toggleClass('d-none', !state.readOnly);
-                $modify.prop('disabled', false);
+                $modify.prop('disabled', !!$modify.data('editReadonlyOriginalDisabled'));
             }
         }
 

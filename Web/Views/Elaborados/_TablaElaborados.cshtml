@@ -32,7 +32,7 @@
                 foreach (var item in Model.Items)
                 {
                     var rowClass = !string.IsNullOrWhiteSpace(item.Estado)
-                        ? "table-warning"
+                        ? "elaborados-row-anulado"
                         : (item.EsDesarme ? "table-info" : "");
                     var detailId = "detElaborado_" + item.Id;
                     var codigo = item.Codigo;
@@ -46,6 +46,7 @@
                     <tr class="@rowClass js-elaborado-row"
                         data-elaborado="@((descripcion ?? "").ToLowerInvariant())"
                         data-codigo="@codigo"
+                        data-kgs="@item.Kgs.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                         data-observaciones="@((observaciones ?? "").ToLowerInvariant())"
                         data-estado="@((item.Estado ?? "").ToLowerInvariant())"
                         data-detail-id="@detailId">
@@ -90,7 +91,7 @@
                     <tr class="js-elaborado-detail-row" data-parent-detail-id="@detailId">
                         <td colspan="@totalColumnas" class="p-0">
                             <div id="@detailId" class="collapse elaborado-detalle-collapse">
-                                <div class="p-3 bg-light border-top">
+                                <div class="p-3 border-top elaborados-detalle-wrap">
                                     <div class="js-elaborado-detalle-container text-muted"
                                          data-elaborado-id="@item.Id"
                                          data-loaded="false">
@@ -136,6 +137,41 @@
         color: #6c757d;
         line-height: 1.1;
         margin-top: .12rem;
+    }
+
+    .elaborados-page .elaborados-row-anulado > td {
+        background-color: #fff3cd;
+    }
+
+    .elaborados-page .elaborados-detalle-wrap {
+        background-color: #f8f9fa;
+    }
+
+    html.dark-mode .elaborados-page .elaborados-row-anulado > td,
+    body.dark-mode .elaborados-page .elaborados-row-anulado > td {
+        background-color: #5c4712;
+        color: #f3f4f6;
+    }
+
+    html.dark-mode .elaborados-page .elaborados-row-anulado .font-weight-bold,
+    html.dark-mode .elaborados-page .elaborados-row-anulado .text-muted,
+    html.dark-mode .elaborados-page .elaborados-row-anulado .elaborados-codigo-inline,
+    body.dark-mode .elaborados-page .elaborados-row-anulado .font-weight-bold,
+    body.dark-mode .elaborados-page .elaborados-row-anulado .text-muted,
+    body.dark-mode .elaborados-page .elaborados-row-anulado .elaborados-codigo-inline {
+        color: #f3f4f6 !important;
+    }
+
+    html.dark-mode .elaborados-page .elaborados-row-anulado .badge-info,
+    body.dark-mode .elaborados-page .elaborados-row-anulado .badge-info {
+        background-color: #0f4c81;
+        color: #eaf4ff;
+    }
+
+    html.dark-mode .elaborados-page .elaborados-detalle-wrap,
+    body.dark-mode .elaborados-page .elaborados-detalle-wrap {
+        background-color: #1f2937;
+        border-top-color: #374151 !important;
     }
 
     @@media (min-width: 1200px) {

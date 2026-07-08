@@ -53,7 +53,13 @@
                 <input type="hidden" id="IdEmbutido" name="IdEmbutido" value="@Model.IdEmbutido" />
                 <div id="lineasHiddenContainer"></div>
 
-                @if (Model.EsEdicion && !esAnulado)
+                @if (Model.EsEdicion && !esAnulado && !Model.PuedeHabilitarEdicion)
+                {
+                    <div class="alert alert-secondary" role="alert">
+                        El elaborado se muestra en modo vista porque no tiene permisos para modificarlo.
+                    </div>
+                }
+                else if (Model.EsEdicion && !esAnulado)
                 {
                     <div class="alert alert-warning" role="alert">
                         Al guardar esta modificacion se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
@@ -89,7 +95,6 @@
                                    value="@Model.FechaEmbutido.ToString("yyyy-MM-ddTHH:mm:ss")"
                                    step="1"
                                    @(esAnulado ? "readonly" : "") />
-                            @Html.Partial("_AdvertenciaPermisoFecha")
                         </div>
                     </div>
                     <div class="col-12 col-lg-3">
@@ -107,6 +112,12 @@
                             </div>
                         </div>
                     }
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        @Html.Partial("_AdvertenciaPermisoFecha")
+                    </div>
                 </div>
 
                 <div class="border rounded p-3 mb-3 elaborados-section-box">
@@ -291,7 +302,8 @@
                         <button type="button"
                                 class="btn btn-primary mr-2 mb-2"
                                 id="btnHabilitarEdicionElaborado"
-                                data-edit-readonly-ignore="true">
+                                data-edit-readonly-ignore="true"
+                                @(Model.PuedeHabilitarEdicion ? "" : "disabled")>
                             <i class="fas fa-edit mr-1"></i> Modificar
                         </button>
                     }
@@ -378,7 +390,7 @@
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formCargaElaborado",
-            soloLecturaInicial: @((Model.EsEdicion && !esAnulado) ? "true" : "false"),
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionElaborado",
             saveButtonSelector: "#btnGuardarElaborado"
         });

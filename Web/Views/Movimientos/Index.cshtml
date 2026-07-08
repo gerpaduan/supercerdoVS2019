@@ -10,10 +10,10 @@
 
 <div class="container-fluid px-2 px-md-3" data-movimientos-index="1" data-detalle-url="@Url.Action("Detalle", "Movimientos")">
     <div class="d-flex flex-wrap align-items-center mb-3 gap-2 movimientos-acciones-header">
-        <a class="btn btn-success movimientos-btn-nuevo" href="@Url.Action("Nuevo", "Movimientos")">
+        <a class="btn btn-success movimientos-btn-accion" href="@Url.Action("Nuevo", "Movimientos")" id="btnNuevoMovimientoIndex">
             <i class="fas fa-plus mr-1"></i> Nuevo movimiento
         </a>
-        <a class="btn btn-outline-primary movimientos-btn-nuevo ml-md-2" href="@Url.Action("Lineas", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-dd") })">
+        <a class="btn btn-outline-primary movimientos-btn-accion ml-md-2" href="@Url.Action("Lineas", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasMovimientosIndex">
             <i class="fas fa-stream mr-1"></i> Ver lineas
         </a>
     </div>
@@ -208,8 +208,12 @@
         justify-content: flex-start;
     }
 
-    .movimientos-btn-nuevo {
+    .movimientos-btn-accion {
         width: 100%;
+        min-height: 2.1rem;
+        font-size: .82rem;
+        padding: .24rem .58rem;
+        border-radius: .5rem;
     }
 
     .movimientos-filtros-card .alert,
@@ -253,7 +257,7 @@
             justify-content: flex-end;
         }
 
-        .movimientos-btn-nuevo {
+        .movimientos-btn-accion {
             width: auto;
         }
 
@@ -308,6 +312,27 @@
 @section Scripts {
     <script>
         (function () {
+            document.addEventListener("keydown", function (event) {
+                if (!event.altKey) return;
+
+                var target = event.target;
+                var tagName = target && target.tagName ? target.tagName.toUpperCase() : "";
+                var isEditable = target && (target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT");
+                if (isEditable) return;
+
+                var key = (event.key || "").toLowerCase();
+                var btnNuevo = document.getElementById("btnNuevoMovimientoIndex");
+                var btnLineas = document.getElementById("btnVerLineasMovimientosIndex");
+
+                if ((key === "n" || key === "enter") && btnNuevo) {
+                    event.preventDefault();
+                    window.location.href = btnNuevo.href;
+                } else if (key === "v" && btnLineas) {
+                    event.preventDefault();
+                    window.location.href = btnLineas.href;
+                }
+            });
+
             var storageKey = "movimientos_index_filters_v1";
             var form = document.querySelector('.movimientos-filtros-card form');
             var inputFechaDesde = document.getElementById('fechaDesde');

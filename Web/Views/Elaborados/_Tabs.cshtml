@@ -12,3 +12,58 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        if (window.__elaboradosModuleStorageBound) return;
+        window.__elaboradosModuleStorageBound = true;
+
+        var restoreKey = "elaborados_restore_enabled_v1";
+        var managedKeys = [
+            "elaborados_index_filters_v1",
+            "elaborados_lineas_filters_v1",
+            restoreKey
+        ];
+
+        function sameOrigin(url) {
+            return url && url.origin === window.location.origin;
+        }
+
+        function esRutaElaborados(url) {
+            return sameOrigin(url) && /\/Elaborados(\/|$)/i.test(url.pathname || "");
+        }
+
+        function limpiarStorageElaborados() {
+            if (!window.sessionStorage) return;
+            for (var i = 0; i < managedKeys.length; i++) {
+                window.sessionStorage.removeItem(managedKeys[i]);
+            }
+        }
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest ? event.target.closest("a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            var href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            var url;
+            try {
+                url = new URL(href, window.location.href);
+            } catch (e) {
+                return;
+            }
+
+            if (!sameOrigin(url)) return;
+
+            if (esRutaElaborados(url)) {
+                if (window.sessionStorage) {
+                    window.sessionStorage.setItem(restoreKey, "1");
+                }
+            } else {
+                limpiarStorageElaborados();
+            }
+        }, true);
+    })();
+</script>
