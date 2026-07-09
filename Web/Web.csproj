@@ -1923,6 +1923,7 @@
     <Content Include="Scripts\app\modal-postventa.js" />
     <Content Include="Scripts\app\modal-sucursales.js" />
     <Content Include="Scripts\app\persona-buscar.js" />
+    <Content Include="Scripts\app\pos-multi-instance.js" />
     <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\app\scanner.js" />
     <Content Include="Scripts\app\pos-balanza.js" />

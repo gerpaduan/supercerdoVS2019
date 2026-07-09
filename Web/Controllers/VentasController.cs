@@ -625,11 +625,18 @@ namespace Web.Controllers
         }
 
         #region POS
-        public ActionResult POS(int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "", int abrirDetalleVentaId = 0, string returnUrlDetalle = "")
+        public ActionResult POS(int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "", int abrirDetalleVentaId = 0, string returnUrlDetalle = "", string modoPos = "original", string posInstanceId = "")
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+
+            string modoPosNormalizado = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)
+                ? "duplicado"
+                : "original";
+            string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
+                ? Guid.NewGuid().ToString("N")
+                : posInstanceId.Trim();
 
             if (user.IdSucursal == 0)
             {
@@ -683,6 +690,8 @@ namespace Web.Controllers
             var formasPagoConfig = ObtenerConfiguracionFormaPagoPOS();
             ViewBag.FormasPagoConfig = formasPagoConfig;
             ViewBag.RequierePreseleccionFormaPago = RequierePreseleccionFormaPagoPOS(formasPagoConfig);
+            ViewBag.PosModoInstancia = modoPosNormalizado;
+            ViewBag.PosInstanceId = posInstanceIdNormalizado;
 
             // 🚨 Si NO hay caja abierta, NO inicializo venta
             if (!cajaAbierta)

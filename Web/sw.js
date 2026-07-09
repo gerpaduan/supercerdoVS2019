@@ -1,4 +1,4 @@
-const CACHE_NAME = "carnisys-pos-v1";
+const CACHE_NAME = "carnisys-pos-v3";
 
 const CORE = [
     "./",
@@ -8,7 +8,7 @@ const CORE = [
     "./Content/img/pwa-512-maskable.png"
 ];
 
-// Install: cache básico
+// Install: cache bÃ¡sico
 self.addEventListener("install", (event) => {
     event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE)));
     self.skipWaiting();
@@ -24,7 +24,7 @@ self.addEventListener("activate", (event) => {
     self.clients.claim();
 });
 
-// Fetch: cache-first para estáticos; network para lo demás
+// Fetch: cache-first para estÃ¡ticos; network para lo demÃ¡s
 self.addEventListener("fetch", (event) => {
     const req = event.request;
 
@@ -32,7 +32,7 @@ self.addEventListener("fetch", (event) => {
 
     const url = new URL(req.url);
 
-    // No cachear endpoints típicos de tu app (ajustá si querés)
+    // No cachear endpoints tÃ­picos de tu app (ajustÃ¡ si querÃ©s)
     // Ej: acciones que devuelven JSON, listar productos, finalizar venta, etc.
     if (url.pathname.includes("/Ventas/") ||
         url.pathname.includes("/Productos/") ||
@@ -55,7 +55,7 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener('message', (event) => {
     if (event.data.type === 'GET_LAST_URL') {
-        // Leer la última URL desde localStorage (guardada por la app)
+        // Leer la Ãºltima URL desde localStorage (guardada por la app)
         event.waitUntil((async () => {
             const allClients = await clients.matchAll({ type: 'window' });
             for (const client of allClients) {

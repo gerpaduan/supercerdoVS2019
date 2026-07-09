@@ -6,6 +6,9 @@
 
   "start_url": "./?source=pwa",
   "scope": "./",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  },
 
   "display": "standalone",
   "background_color": "#0b1320",

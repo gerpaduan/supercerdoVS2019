@@ -270,6 +270,7 @@ function cerrarPostVentaYRecargar(delayMs) {
     const $modal = $('#modalPostVenta');
     $modal.data('permitir-cierre', true);
     $modal.modal('hide');
+    window.POSMultiInstance?.closeAfterPostVenta?.();
     setTimeout(() => location.reload(), delayMs || 400);
 }
 
@@ -282,6 +283,7 @@ function cerrarPostVentaSegunOrigen(delayMs) {
         return;
     }
 
+    window.POSMultiInstance?.closeAfterPostVenta?.();
     setTimeout(() => location.reload(), delayMs || 400);
 }
 

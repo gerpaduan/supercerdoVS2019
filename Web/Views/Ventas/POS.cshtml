@@ -13,6 +13,8 @@
     bool puedeEditarFechaVenta = ViewBag.PuedeEditarFechaVenta != null && (bool)ViewBag.PuedeEditarFechaVenta;
     int idVentaEditar = ViewBag.IdVentaEditar != null ? (int)ViewBag.IdVentaEditar : 0;
     bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
+    string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
+    string posInstanceId = ViewBag.PosInstanceId as string ?? Guid.NewGuid().ToString("N");
     string returnUrlPOS = ViewBag.ReturnUrlPOS as string ?? "";
     int abrirDetalleVentaId = ViewBag.AbrirDetalleVentaId != null ? (int)ViewBag.AbrirDetalleVentaId : 0;
     string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
@@ -148,12 +150,22 @@
                     </div>
 
                     <div class="pos-top-actions">
+                        <span id="posInstanceBadge" class="badge badge-pill mr-2 @(posModoInstancia == "duplicado" ? "badge-warning" : "badge-info d-none")">
+                            @(posModoInstancia == "duplicado" ? "POS Duplicado" : "POS Original")
+                        </span>
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm pos-btn-layout mr-2"
+                                id="btnDuplicarPOS"
+                                title="Abrir POS duplicado">
+                            <i class="fas fa-clone"></i>
+                            <span>Duplicar POS</span>
+                        </button>
                         <a class="btn btn-light btn-sm pos-btn-layout"
                            id="btnSalirPOS"
                            href="@Url.Action("Index", "Home")"
                            title="Volver al sistema">
                             <i class="fas fa-arrow-left"></i>
-                            <span>Salir del POS</span>
+                            <span>Salir</span>
                         </a>
                     </div>
                 </div>
@@ -1203,6 +1215,7 @@ else
 @section Scripts {
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=7")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-forma-pago-precios.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=8")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=26")"></script>
@@ -1446,11 +1459,26 @@ else
     window.POSSoloFormaPagoGuardado = false;
     window.esEdicionVenta = esEdicionVenta;
     window.POSFormaPagoConfig = formasPagoConfigPOS || {};
+    window.POSMultiInstanceConfig = {
+        role: @Html.Raw(Json.Encode(posModoInstancia)),
+        instanceId: @Html.Raw(Json.Encode(posInstanceId)),
+        userId: @idUsuarioPOS,
+        sucursalId: @idSucursalPOS,
+        homeUrl: @Html.Raw(Json.Encode(Url.Action("Index", "Home"))),
+        originalUrl: @Html.Raw(Json.Encode(Url.Action("POS", "Ventas", new { modoPos = "original" }))),
+        duplicateBaseUrl: @Html.Raw(Json.Encode(Url.Action("POS", "Ventas"))),
+        originalWindowName: @Html.Raw(Json.Encode("CarniSysPOS-" + idUsuarioPOS + "-" + idSucursalPOS + "-original")),
+        windowName: @Html.Raw(Json.Encode("CarniSysPOS-" + idUsuarioPOS + "-" + idSucursalPOS + "-" + posModoInstancia)),
+        duplicateWindowName: @Html.Raw(Json.Encode("CarniSysPOSDuplicado-" + idUsuarioPOS + "-" + idSucursalPOS))
+    };
     window.POSModo = window.POSModo || {};
     window.POSModo.soloFormaPago = soloFormaPago;
     window.POSModo.returnUrl = @Html.Raw(Json.Encode(returnUrlPOS));
     window.POSModo.abrirDetalleVentaId = @abrirDetalleVentaId;
     window.POSModo.returnUrlDetalle = @Html.Raw(Json.Encode(returnUrlDetalle));
+    window.POSModo.instancia = @Html.Raw(Json.Encode(posModoInstancia));
+    window.POSModo.instanceId = @Html.Raw(Json.Encode(posInstanceId));
+    window.POSMultiInstance?.init?.();
     window.POSFacturaElectronicaConfig = {
         empresaTieneCertificado: empresaTieneCertificadoFacturaElectronica
     };
@@ -1592,7 +1620,10 @@ else
         const keyBase = "carnisys-pos-venta-en-curso";
         const idSucursalActual = parseInt($("#idSucursalPOS").val(), 10) || 0;
         const idUsuarioActual = @idUsuarioPOS;
-        const key = keyBase + "-" + idUsuarioActual + "-" + idSucursalActual;
+        const draftSuffix = (window.POSMultiInstanceConfig && window.POSMultiInstanceConfig.instanceId)
+            ? window.POSMultiInstanceConfig.instanceId
+            : "default";
+        const key = keyBase + "-" + idUsuarioActual + "-" + idSucursalActual + "-" + draftSuffix;
         const legacyKey = keyBase;
 
         function getLineasActivas() {
@@ -1675,6 +1706,10 @@ else
         }
 
         function restore() {
+            if (window.POSMultiInstance?.isBlocked?.()) {
+                return false;
+            }
+
             let draft = tryParseDraft(key);
 
             if (!esDraftCompatible(draft)) {
