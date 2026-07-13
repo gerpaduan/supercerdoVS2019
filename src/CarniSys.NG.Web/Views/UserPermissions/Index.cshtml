@@ -1,0 +1,128 @@
+@model UserPermissionEditViewModel
+@{
+    ViewData["Title"] = "Permisos de usuario";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Usuarios NG</p>
+    <h1>Permisos de @Model.UserName</h1>
+    <p class="lead-copy">
+        Grilla de permisos por formulario alineada al MVC. El acceso y el guardado siguen la misma regla: solo administradores de usuarios.
+    </p>
+</section>
+
+<section class="status-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <p class="mb-1"><strong>Usuario:</strong> @Model.UserLogin</p>
+            <p class="mb-0 text-muted">Total de formularios: @Model.Items.Count</p>
+        </div>
+        <div>
+            <a asp-controller="Users" asp-action="Detail" asp-route-id="@Model.UserId" class="app-inline-link">Volver a la ficha</a>
+        </div>
+    </div>
+</section>
+
+<section class="status-card mt-3">
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="UserId" type="hidden" />
+        <input asp-for="UserName" type="hidden" />
+        <input asp-for="UserLogin" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="table-responsive">
+            <table class="table app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Permiso</th>
+                        <th>Detalle</th>
+                        <th>Puede ver</th>
+                        <th>Dias ver</th>
+                        <th>Puede editar</th>
+                        <th>Dias editar</th>
+                        <th>Alcance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Items.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <input asp-for="Items[@i].FormId" type="hidden" />
+                                <input asp-for="Items[@i].FormName" type="hidden" />
+                                <input asp-for="Items[@i].Description" type="hidden" />
+                                @Model.Items[i].FormName
+                            </td>
+                            <td>@Model.Items[i].Description</td>
+                            <td>
+                                <input asp-for="Items[@i].CanRead" class="form-check-input js-puede-ver" />
+                            </td>
+                            <td>
+                                <input asp-for="Items[@i].ReadDays" class="form-control js-dias-ver" />
+                                <span asp-validation-for="Items[@i].ReadDays" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Items[@i].CanEdit" class="form-check-input js-puede-editar" />
+                            </td>
+                            <td>
+                                <input asp-for="Items[@i].EditDays" class="form-control js-dias-editar" />
+                                <span asp-validation-for="Items[@i].EditDays" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <select asp-for="Items[@i].OwnRecordsOnly" class="form-select js-alcance">
+                                    <option value="true">Propios</option>
+                                    <option value="false">Todos</option>
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="product-edit-actions mt-3">
+            <button type="submit" class="btn app-button">Guardar permisos</button>
+            <a asp-controller="Users" asp-action="Detail" asp-route-id="@Model.UserId" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            function syncRow(row) {
+                var canRead = row.querySelector('.js-puede-ver').checked;
+                var canEdit = row.querySelector('.js-puede-editar').checked;
+                var readDays = row.querySelector('.js-dias-ver');
+                var editDays = row.querySelector('.js-dias-editar');
+                var scope = row.querySelector('.js-alcance');
+
+                readDays.disabled = !canRead;
+                editDays.disabled = !canEdit;
+                scope.disabled = !canEdit;
+
+                if (!canRead) {
+                    readDays.value = 0;
+                }
+
+                if (!canEdit) {
+                    editDays.value = 0;
+                    scope.value = 'true';
+                }
+            }
+
+            document.querySelectorAll('tbody tr').forEach(syncRow);
+
+            document.addEventListener('change', function (event) {
+                if (!event.target.classList.contains('js-puede-ver') && !event.target.classList.contains('js-puede-editar')) {
+                    return;
+                }
+
+                syncRow(event.target.closest('tr'));
+            });
+        })();
+    </script>
+}

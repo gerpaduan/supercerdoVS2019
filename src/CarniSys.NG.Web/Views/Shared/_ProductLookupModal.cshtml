@@ -1,0 +1,49 @@
+@model ProductLookupModalViewModel
+
+<div class="modal fade app-lookup-modal"
+     id="@Model.ModalId"
+     tabindex="-1"
+     aria-hidden="true"
+     data-lookup-kind="product"
+     data-search-url="@Model.SearchUrl"
+     data-show-price="@Model.ShowPrice.ToString().ToLowerInvariant()"
+     data-show-type="@Model.ShowType.ToString().ToLowerInvariant()">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Model.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="@($"{Model.ModalId}_search")">Buscar</label>
+                    <input id="@($"{Model.ModalId}_search")"
+                           type="text"
+                           class="form-control js-lookup-search"
+                           placeholder="Codigo o nombre del producto" />
+                    <div class="form-text">La busqueda es en vivo. Presione Enter para seleccionar el primer registro.</div>
+                </div>
+
+                <div class="alert alert-info d-none js-lookup-status" role="alert"></div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Nombre</th>
+                                <th class="js-col-type @(Model.ShowType ? "" : "d-none")">Tipo</th>
+                                <th class="js-col-price text-end @(Model.ShowPrice ? "" : "d-none")">Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody class="js-lookup-results">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Escriba para buscar productos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,2275 @@
+@model StockEditViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = Model.IsEdit ? "Modificar stock" : "Nuevo stock";
+    var esPesaje = string.Equals(Model.StockOperationType, "Pesaje Cortes", StringComparison.OrdinalIgnoreCase);
+    var esAjuste = string.Equals(Model.StockOperationType, "Ajuste Stock", StringComparison.OrdinalIgnoreCase);
+    var esEgreso = string.Equals(Model.StockOperationType, "Egreso Stock", StringComparison.OrdinalIgnoreCase);
+    var esCierre = string.Equals(Model.StockOperationType, "Cierre Stock", StringComparison.OrdinalIgnoreCase);
+    var permiteNegativo = esAjuste || esEgreso;
+    var tieneCompraVinculadaPesaje = esPesaje && Model.LinkedWeighingId.HasValue && Model.LinkedWeighingId.Value > 0;
+    var quickProductsJson = JsonSerializer.Serialize(Model.QuickProducts.Select(x => new
+    {
+        productId = x.ProductId,
+        code = x.Code,
+        description = x.Description,
+        type = x.Type,
+        weighable = x.Weighable,
+        averageWeight = x.AverageWeight
+    }));
+}
+
+<div class="stock-unified-page">
+    <section class="hero-panel">
+        <p class="eyebrow">Stock NG</p>
+        <h1>@(Model.IsEdit ? "Edicion de stock" : "Nuevo movimiento de stock")</h1>
+        <p class="lead-copy">
+            Esta pantalla ya usa la misma base visual del MVC para cabecera y lineas. El siguiente tramo seguro es conectar modales y endpoints uno por uno, sin romper el flujo compartido.
+        </p>
+    </section>
+
+    <section class="status-card">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <a asp-controller="Stock" asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+            <span class="table-badge @(string.Equals(Model.Status, "Actualizado", StringComparison.OrdinalIgnoreCase) ? "is-enabled" : "is-disabled") @(esPesaje && !string.IsNullOrWhiteSpace(Model.Status) ? "" : "d-none")">
+                Ajuste: @Model.Status
+            </span>
+        </div>
+
+        <form class="stock-unified-form" method="post" action="@Url.Action("Save", "Stock")" id="stockEditForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="StockId" value="@Model.StockId" />
+            <input type="hidden" name="IsEdit" value="@Model.IsEdit.ToString().ToLowerInvariant()" />
+            <input type="hidden" name="SupplierId" id="SupplierId" value="@Model.SupplierId" />
+            <input type="hidden" name="LinkedWeighingId" id="LinkedWeighingId" value="@(Model.LinkedWeighingId?.ToString() ?? string.Empty)" />
+            <div id="stockHiddenLinesContainer"></div>
+
+            <div class="stock-header-grid">
+                <div>
+                    <label for="BranchId" class="form-label">Sucursal</label>
+                    <select id="BranchId" name="BranchId" class="form-select">
+                        @foreach (var branch in Model.Branches)
+                        {
+                            if (branch.BranchId == Model.BranchId)
+                            {
+                                <option value="@branch.BranchId" selected>@branch.BranchName</option>
+                            }
+                            else
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label for="OperationDate" class="form-label">Fecha</label>
+                    <input id="OperationDate" name="OperationDate" type="datetime-local" class="form-control" value="@Model.OperationDate.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+
+                <div class="stock-edit-type-wrap">
+                    <label for="StockOperationType" class="form-label">Accion</label>
+                    <div class="input-group">
+                        <select id="StockOperationType" name="StockOperationType" class="form-select" data-stock-type-select="true">
+                            @foreach (var operationType in Model.OperationTypes)
+                            {
+                                if (string.Equals(operationType, Model.StockOperationType, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="@operationType" selected>@operationType</option>
+                                }
+                                else
+                                {
+                                    <option value="@operationType">@operationType</option>
+                                }
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-outline-secondary" formaction="@Url.Action("Edit", "Stock")" formmethod="get" name="id" value="@Model.StockId">Cambiar</button>
+                    </div>
+                    <div class="form-text">Seguimos el mismo criterio del MVC: una sola vista y la accion define que bloques se ven.</div>
+                </div>
+            </div>
+
+            <div class="stock-inline-note mt-3">
+                <strong>Sucursal activa:</strong> @(string.IsNullOrWhiteSpace(Model.BranchName) ? "-" : Model.BranchName)
+            </div>
+
+            <div class="stock-context-grid mt-3">
+                <article class="stock-context-card @(esPesaje ? "" : "d-none")" data-stock-block="pesaje">
+                    <div class="stock-pesaje-grid">
+                        <div class="stock-pesaje-provider">
+                            <label class="form-label" for="SupplierName">Proveedor</label>
+                            <div class="input-group">
+                            <input id="SupplierName" name="SupplierName" class="form-control" value="@Model.SupplierName" placeholder="Seleccione un proveedor" readonly />
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#stockPersonLookupModal">Buscar</button>
+                                <button type="button" class="btn btn-outline-secondary" id="stockClearSupplierButton">Limpiar</button>
+                            </div>
+                            <div class="form-text" id="stockSupplierTaxIdLabel">@(string.IsNullOrWhiteSpace(Model.SupplierTaxId) ? "Sin proveedor seleccionado" : $"CUIT: {Model.SupplierTaxId}")</div>
+                        </div>
+
+                        <div>
+                            <label for="HalfCarcassCount" class="form-label">Cant. medias</label>
+                            <input id="HalfCarcassCount" name="HalfCarcassCount" class="form-control" value="@(Model.HalfCarcassCount?.ToString() ?? string.Empty)" />
+                            <div class="form-text">Este valor solo debe venir de carga manual o de una compra vinculada.</div>
+                        </div>
+
+                        <div>
+                            <label for="HalfCarcassWeightKg" class="form-label">Kgs. medias</label>
+                            <input id="HalfCarcassWeightKg" name="HalfCarcassWeightKg" class="form-control" value="@(Model.HalfCarcassWeightKg?.ToString("0.00") ?? string.Empty)" />
+                            <div class="form-text">No se completa por la suma de las filas. Puede guardarse en 0.</div>
+                            <div class="form-check mt-2">
+                                @if (Model.SaveWithoutWeighing)
+                                {
+                                    <input id="SaveWithoutWeighing" name="SaveWithoutWeighing" class="form-check-input" type="checkbox" checked />
+                                }
+                                else
+                                {
+                                    <input id="SaveWithoutWeighing" name="SaveWithoutWeighing" class="form-check-input" type="checkbox" />
+                                }
+                                <label class="form-check-label" for="SaveWithoutWeighing">Guardar sin pesaje</label>
+                            </div>
+                        </div>
+
+                        <div class="stock-pesaje-actions">
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#stockWeighingPurchaseModal">Vincular compra</button>
+                            <button type="button" class="btn btn-outline-info" disabled title="Pendiente en NG">Vincular pesajes</button>
+                            <button type="button" class="btn btn-outline-secondary" data-stock-open-percentages>Ver porc(%)</button>
+                        </div>
+                    </div>
+
+                    <div class="form-text mt-2">
+                        En NG, por ahora, el pesaje solo conserva un vinculo relacionado por cabecera.
+                    </div>
+
+                    <div id="stockLinkedWeighingsInfo" class="alert alert-info mt-3 mb-0 d-none"></div>
+
+                    <div class="stock-link-box @(tieneCompraVinculadaPesaje ? "" : "d-none")">
+                        <div class="stock-link-title">Compra vinculada @(Model.LinkedWeighingId.HasValue ? $"#{Model.LinkedWeighingId.Value}" : string.Empty)</div>
+                        <div class="stock-link-meta-grid">
+                            <div>
+                                <div class="stock-link-label">Proveedor</div>
+                                <div class="stock-link-value">@(string.IsNullOrWhiteSpace(Model.LinkedPurchaseSupplierName) ? "-" : Model.LinkedPurchaseSupplierName)</div>
+                            </div>
+                            <div>
+                                <div class="stock-link-label">Fecha</div>
+                                <div class="stock-link-value">@(Model.LinkedPurchaseDate.HasValue ? Model.LinkedPurchaseDate.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                            </div>
+                            <div>
+                                <div class="stock-link-label">Cant. medias</div>
+                                <div class="stock-link-value">@(Model.LinkedPurchaseHalfCarcassCount?.ToString() ?? "-")</div>
+                            </div>
+                            <div>
+                                <div class="stock-link-label">Kgs. medias</div>
+                                <div class="stock-link-value">@(Model.LinkedPurchaseWeightKg?.ToString("0.00") ?? "-")</div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="stock-context-card @(esAjuste ? "" : "d-none")" data-stock-block="ajuste">
+                    <div class="stock-link-title">Pesaje vinculado @(Model.LinkedWeighingId.HasValue ? $"#{Model.LinkedWeighingId.Value}" : string.Empty)</div>
+                    <div class="stock-link-meta-grid">
+                        <div>
+                            <div class="stock-link-label">Proveedor</div>
+                            <div class="stock-link-value">@(string.IsNullOrWhiteSpace(Model.AdjustedWeighingSupplierName) ? "-" : Model.AdjustedWeighingSupplierName)</div>
+                        </div>
+                        <div>
+                            <div class="stock-link-label">Fecha</div>
+                            <div class="stock-link-value">@(Model.AdjustedWeighingDate.HasValue ? Model.AdjustedWeighingDate.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                        </div>
+                        <div>
+                            <div class="stock-link-label">Cant. medias</div>
+                            <div class="stock-link-value">@(Model.AdjustedWeighingHalfCarcassCount?.ToString() ?? "-")</div>
+                        </div>
+                        <div>
+                            <div class="stock-link-label">Kgs. medias</div>
+                            <div class="stock-link-value">@(Model.AdjustedWeighingWeightKg?.ToString("0.00") ?? "-")</div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="stock-context-card @(esCierre ? "" : "d-none")" data-stock-block="cierre">
+                    <h2>Bloque cierre</h2>
+                    <p class="mb-2">Cierre NG con soporte para productos no cargados y carga rapida desde el modal.</p>
+                    <div class="product-edit-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#stockMissingClosingProductsModal">Productos no cargados</button>
+                    </div>
+                </article>
+
+                <article class="stock-context-card @((!esPesaje && !esAjuste && !esCierre) ? "" : "d-none")" data-stock-block="simple">
+                    <h2>Bloque comun</h2>
+                    <p class="mb-0">Ingreso y egreso comparten la misma base. @(permiteNegativo ? "En egreso la cantidad se guarda como negativa; en ajuste se respeta el signo ingresado." : "Este flujo trabaja con cantidades positivas.")</p>
+                </article>
+            </div>
+
+            <div class="stock-work-grid mt-3">
+                <section class="status-card stock-lines-panel">
+                    <div class="stock-section-box">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <h2 class="mb-0">Agregar producto</h2>
+                            <div class="product-edit-actions">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="chkBalanzaLinea" checked>
+                                    <label class="form-check-label" for="chkBalanzaLinea">Balanza</label>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm @(esPesaje ? "" : "d-none")" data-bs-toggle="modal" data-bs-target="#stockWeighingPurchaseModal">Vincular compra</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#stockAccumulatedModal">Ver acumulados</button>
+                                <button type="button" class="btn btn-outline-info btn-sm @(esPesaje ? "" : "d-none")" data-stock-open-percentages>Ver porc(%)</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm @(esCierre ? "" : "d-none")" data-bs-toggle="modal" data-bs-target="#stockMissingClosingProductsModal">Productos no cargados</button>
+                            </div>
+                        </div>
+
+                        <div class="stock-scale-status">
+                            <div class="small text-muted mb-2">Conexion balanza: <span>Desconocida</span></div>
+                            <div class="progress" style="height:4px;">
+                                <div class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="stock-line-entry-grid mt-3">
+                            <div>
+                                <label for="LineCode" class="form-label">Codigo</label>
+                                <input id="LineCode" class="form-control" type="number" min="0" step="1" />
+                            </div>
+                            <div>
+                                <label for="LineProductName" class="form-label">Producto</label>
+                                <div class="input-group">
+                                    <input id="LineProductId" type="hidden" />
+                                    <input id="LineProductWeighable" type="hidden" />
+                                    <input id="LineProductName" class="form-control" readonly />
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#stockProductLookupModal">Buscar</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="LineQuantityKg" class="form-label">Cantidad</label>
+                                <input id="LineQuantityKg" class="form-control" />
+                            </div>
+                            <div class="stock-add-line-wrap">
+                                <button type="button" class="btn btn-primary w-100" id="stockAddLineButton">Agregar</button>
+                            </div>
+                        </div>
+
+                        <div id="stockLineLookupMessage" class="form-text mt-2"></div>
+                        <div id="stockLineStatus" class="alert d-none mt-3 mb-0" role="alert"></div>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table app-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-center">Bal</th>
+                                    <th>Creado</th>
+                                    <th>Accion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockLinesTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <aside class="stock-side-panel">
+                    <section class="status-card">
+                        <h2 class="mb-3">Resumen</h2>
+                        <div class="stock-summary-row">
+                            <span>Total items</span>
+                            <strong id="stockSummaryItems">@Model.ItemCount</strong>
+                        </div>
+                        <div class="stock-summary-row">
+                            <span>Total cantidad</span>
+                            <strong id="stockSummaryKg">@Model.TotalQuantityKg.ToString("0.000")</strong>
+                        </div>
+                        <hr />
+                        <div class="small text-muted">
+                            Accion: <strong>@Model.StockOperationType</strong>
+                        </div>
+                        @if (permiteNegativo)
+                        {
+                            <div class="form-text mt-2">En egreso se normaliza a negativo. En ajuste se conserva el signo ingresado.</div>
+                        }
+                    </section>
+
+                    <section class="status-card mt-3">
+                        <label for="Notes" class="form-label">Observaciones</label>
+                        <textarea id="Notes" name="Notes" class="form-control" rows="3">@Model.Notes</textarea>
+                    </section>
+
+                    @if (Model.IsEdit)
+                    {
+                        <section class="status-card mt-3">
+                            <div class="stock-link-meta-grid">
+                                <div>
+                                    <div class="stock-link-label">Creado</div>
+                                    <div class="stock-link-value">@(string.IsNullOrWhiteSpace(Model.CreatedAtLabel) ? "-" : Model.CreatedAtLabel)</div>
+                                    <div class="small text-muted">@(string.IsNullOrWhiteSpace(Model.CreatedByLabel) ? "-" : Model.CreatedByLabel)</div>
+                                </div>
+                                <div>
+                                    <div class="stock-link-label">Actualizado</div>
+                                    <div class="stock-link-value">@(string.IsNullOrWhiteSpace(Model.UpdatedAtLabel) ? "-" : Model.UpdatedAtLabel)</div>
+                                    <div class="small text-muted">@(string.IsNullOrWhiteSpace(Model.UpdatedByLabel) ? "-" : Model.UpdatedByLabel)</div>
+                                </div>
+                            </div>
+                        </section>
+                    }
+                </aside>
+            </div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn app-button">Guardar stock</button>
+                <a asp-controller="Stock" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+
+<div class="modal fade" id="stockWeighingPurchaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vincular compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stockWeighingPurchaseStatus" class="alert d-none mb-3" role="alert"></div>
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-lg-4">
+                        <label for="stockWeighingPurchaseSupplierSearch" class="form-label">Proveedor</label>
+                        <input type="text" id="stockWeighingPurchaseSupplierSearch" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="stockWeighingPurchaseFromDate" class="form-label">Fecha desde</label>
+                        <input type="date" id="stockWeighingPurchaseFromDate" class="form-control" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="stockWeighingPurchaseToDate" class="form-label">Fecha hasta</label>
+                        <input type="date" id="stockWeighingPurchaseToDate" class="form-control" />
+                    </div>
+                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary w-100" id="stockWeighingPurchaseResetFilters">Limpiar</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Proveedor</th>
+                                <th class="text-end">Kgs. medias</th>
+                                <th class="text-end">Cant. medias</th>
+                                <th>Tipo</th>
+                                <th>Accion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockWeighingPurchaseTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Abra el modal para consultar compras vinculables.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stockMissingClosingProductsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Productos no cargados</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    Solo para <strong>Cierre Stock</strong>. Se muestran productos con <code>enCierreStock = true</code> que todavia no estan cargados en la grilla actual.
+                </div>
+
+                <div id="stockMissingClosingProductsStatus" class="alert d-none mb-3" role="alert"></div>
+                <div id="stockMissingClosingProductsInfo" class="alert alert-info d-none mb-3" role="alert"></div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="stockMissingClosingProductsSearch">Buscar</label>
+                    <input type="text" id="stockMissingClosingProductsSearch" class="form-control" placeholder="Codigo o descripcion" autocomplete="off" />
+                </div>
+
+                <div class="detail-grid mb-3">
+                    <div>
+                        <label class="form-label" for="stockMissingClosingProductsFilter">Filtro</label>
+                        <select id="stockMissingClosingProductsFilter" class="form-select">
+                            <option value="all">Todos</option>
+                            <option value="with-stock">Con stock</option>
+                            <option value="without-stock">Sin stock</option>
+                        </select>
+                    </div>
+                    <div class="stock-link-meta-grid">
+                        <div>
+                            <div class="stock-link-label">Pendientes</div>
+                            <div class="stock-link-value" id="stockMissingClosingProductsCount">0 productos</div>
+                        </div>
+                        <div>
+                            <div class="stock-link-label">Seleccionados</div>
+                            <div class="stock-link-value" id="stockMissingClosingProductsSelectedCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-edit-actions mb-3">
+                    <button type="button" class="btn app-button" id="stockAddMissingClosingProductsWithStockButton">Agregar con stock actual</button>
+                    <button type="button" class="btn btn-outline-secondary" id="stockAddMissingClosingProductsWithoutStockButton">Agregar como sin stock (0,000)</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width:60px;">
+                                    <input type="checkbox" id="stockMissingClosingProductsSelectAll" />
+                                </th>
+                                <th>Codigo</th>
+                                <th>Producto</th>
+                                <th class="text-end">Stock actual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockMissingClosingProductsTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Abra el modal para consultar pendientes del cierre.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stockLinkedWeighingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vincular pesajes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stockLinkedWeighingsStatus" class="alert d-none mb-3" role="alert"></div>
+                <div class="small text-muted mb-3">Sucursal actual: <strong id="stockLinkedWeighingsBranchLabel">-</strong></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-lg-4">
+                        <label for="stockLinkedWeighingsSupplierSearch" class="form-label">Proveedor</label>
+                        <input type="text" id="stockLinkedWeighingsSupplierSearch" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="stockLinkedWeighingsFromDate" class="form-label">Fecha desde</label>
+                        <input type="date" id="stockLinkedWeighingsFromDate" class="form-control" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="stockLinkedWeighingsToDate" class="form-label">Fecha hasta</label>
+                        <input type="date" id="stockLinkedWeighingsToDate" class="form-control" />
+                    </div>
+                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary w-100" id="stockLinkedWeighingsResetFilters">Limpiar</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Fecha</th>
+                                <th>Proveedor</th>
+                                <th class="text-end">Cant. medias</th>
+                                <th class="text-end">Kgs. medias</th>
+                                <th>Accion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockLinkedWeighingsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Abra el modal para consultar pesajes vinculables.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_PersonLookupModal", new PersonLookupModalViewModel
+{
+    ModalId = "stockPersonLookupModal",
+    Title = "Buscar proveedor",
+    SearchUrl = Url.Action("Lookup", "People") ?? string.Empty,
+    ShowTaxId = true,
+    ShowIdentification = true
+})
+
+@await Html.PartialAsync("_ProductLookupModal", new ProductLookupModalViewModel
+{
+    ModalId = "stockProductLookupModal",
+    Title = "Buscar producto de stock",
+    SearchUrl = Url.Action("Lookup", "Products") ?? string.Empty,
+    ShowPrice = false,
+    ShowType = true
+})
+
+<div class="modal fade" id="stockAccumulatedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Acumulados de la grilla</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    Este resumen se arma con las lineas actualmente cargadas en la vista.
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-end">Lineas</th>
+                                <th class="text-end">Total cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockAccumulatedTableBody">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">Todavia no hay lineas para acumular.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stockWeighingPercentagesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ver Porcentaje Cortes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stockWeighingPercentagesWarning" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                    <div>
+                        <span class="fw-semibold">Estado:</span>
+                        <span id="stockWeighingPercentagesState" class="fw-semibold">-</span>
+                    </div>
+                    <button type="button" class="btn btn-success" id="stockGenerateWeighingAdjustmentButton">
+                        Generar Ajuste
+                    </button>
+                </div>
+
+                <div class="table-responsive mb-3">
+                    <table class="table app-table align-middle mb-0" id="stockAverageHalfCarcassesTable">
+                        <thead></thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center text-muted py-4">Abra el modal para consultar el analisis del pesaje.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0" id="stockCutPercentagesTable">
+                        <thead></thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center text-muted py-4">Abra el modal para consultar el analisis del pesaje.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const personLookupModal = document.getElementById('stockPersonLookupModal');
+            const productLookupModal = document.getElementById('stockProductLookupModal');
+            const accumulatedModal = document.getElementById('stockAccumulatedModal');
+            const accumulatedTableBody = document.getElementById('stockAccumulatedTableBody');
+            const weighingPurchaseModal = document.getElementById('stockWeighingPurchaseModal');
+            const weighingPurchaseStatus = document.getElementById('stockWeighingPurchaseStatus');
+            const weighingPurchaseTableBody = document.getElementById('stockWeighingPurchaseTableBody');
+            const weighingPurchaseSupplierSearch = document.getElementById('stockWeighingPurchaseSupplierSearch');
+            const weighingPurchaseFromDate = document.getElementById('stockWeighingPurchaseFromDate');
+            const weighingPurchaseToDate = document.getElementById('stockWeighingPurchaseToDate');
+            const weighingPurchaseResetFilters = document.getElementById('stockWeighingPurchaseResetFilters');
+            const weighingPercentagesModal = document.getElementById('stockWeighingPercentagesModal');
+            const weighingPercentagesWarning = document.getElementById('stockWeighingPercentagesWarning');
+            const weighingPercentagesState = document.getElementById('stockWeighingPercentagesState');
+            const generateWeighingAdjustmentButton = document.getElementById('stockGenerateWeighingAdjustmentButton');
+            const averageHalfCarcassesTable = document.getElementById('stockAverageHalfCarcassesTable');
+            const cutPercentagesTable = document.getElementById('stockCutPercentagesTable');
+            const openWeighingPercentagesButtons = document.querySelectorAll('[data-stock-open-percentages]');
+            const missingClosingProductsModal = document.getElementById('stockMissingClosingProductsModal');
+            const missingClosingProductsTableBody = document.getElementById('stockMissingClosingProductsTableBody');
+            const missingClosingProductsStatus = document.getElementById('stockMissingClosingProductsStatus');
+            const missingClosingProductsInfo = document.getElementById('stockMissingClosingProductsInfo');
+            const missingClosingProductsSearch = document.getElementById('stockMissingClosingProductsSearch');
+            const missingClosingProductsFilter = document.getElementById('stockMissingClosingProductsFilter');
+            const missingClosingProductsCount = document.getElementById('stockMissingClosingProductsCount');
+            const missingClosingProductsSelectedCount = document.getElementById('stockMissingClosingProductsSelectedCount');
+            const missingClosingProductsSelectAll = document.getElementById('stockMissingClosingProductsSelectAll');
+            const addMissingClosingProductsWithStockButton = document.getElementById('stockAddMissingClosingProductsWithStockButton');
+            const addMissingClosingProductsWithoutStockButton = document.getElementById('stockAddMissingClosingProductsWithoutStockButton');
+            const linkedWeighingsModal = document.getElementById('stockLinkedWeighingsModal');
+            const linkedWeighingsStatus = document.getElementById('stockLinkedWeighingsStatus');
+            const linkedWeighingsBranchLabel = document.getElementById('stockLinkedWeighingsBranchLabel');
+            const linkedWeighingsSupplierSearch = document.getElementById('stockLinkedWeighingsSupplierSearch');
+            const linkedWeighingsFromDate = document.getElementById('stockLinkedWeighingsFromDate');
+            const linkedWeighingsToDate = document.getElementById('stockLinkedWeighingsToDate');
+            const linkedWeighingsResetFilters = document.getElementById('stockLinkedWeighingsResetFilters');
+            const linkedWeighingsTableBody = document.getElementById('stockLinkedWeighingsTableBody');
+            const linkedWeighingsInfo = document.getElementById('stockLinkedWeighingsInfo');
+            const typeSelect = document.querySelector('[data-stock-type-select="true"]');
+            const branchInput = document.getElementById('BranchId');
+            const operationDateInput = document.getElementById('OperationDate');
+            const codeInput = document.getElementById('LineCode');
+            const productIdInput = document.getElementById('LineProductId');
+            const productWeighableInput = document.getElementById('LineProductWeighable');
+            const productNameInput = document.getElementById('LineProductName');
+            const quantityInput = document.getElementById('LineQuantityKg');
+            const scaleWeightInput = document.getElementById('chkBalanzaLinea');
+            const addLineButton = document.getElementById('stockAddLineButton');
+            const lookupMessage = document.getElementById('stockLineLookupMessage');
+            const statusBox = document.getElementById('stockLineStatus');
+            const tableBody = document.getElementById('stockLinesTableBody');
+            const hiddenLinesContainer = document.getElementById('stockHiddenLinesContainer');
+            const summaryItems = document.getElementById('stockSummaryItems');
+            const summaryKg = document.getElementById('stockSummaryKg');
+            const halfCarcassCountInput = document.getElementById('HalfCarcassCount');
+            const halfCarcassWeightInput = document.getElementById('HalfCarcassWeightKg');
+            const supplierIdInput = document.getElementById('SupplierId');
+            const supplierNameInput = document.getElementById('SupplierName');
+            const supplierTaxIdLabel = document.getElementById('stockSupplierTaxIdLabel');
+            const linkedWeighingIdInput = document.getElementById('LinkedWeighingId');
+            const clearSupplierButton = document.getElementById('stockClearSupplierButton');
+            const productByCodeUrl = '@Url.Action("ProductByCode", "Stock")';
+            const missingClosingProductsUrl = '@Url.Action("MissingClosingProducts", "Stock")';
+            const weighingPercentagesUrl = '@Url.Action("WeighingPercentages", "Stock")';
+            const generateWeighingAdjustmentUrl = '@Url.Action("GenerateWeighingAdjustment", "Stock")';
+            const weighingPurchasesUrl = '@Url.Action("WeighingPurchases", "Stock")';
+            const weighingPurchaseDetailUrl = '@Url.Action("WeighingPurchaseDetail", "Stock")';
+            const linkedWeighingDetailUrl = '@Url.Action("WeighingDetailLines", "Stock")';
+            const quickProducts = @Html.Raw(quickProductsJson);
+            const quickProductMap = new Map(quickProducts.map(x => [String(x.code), x]));
+            const initialLines = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lines));
+            let missingClosingProducts = [];
+            const selectedMissingClosingProducts = new Set();
+            const linkedWeighingIds = new Set();
+            if (!typeSelect) {
+                return;
+            }
+
+            const lines = Array.isArray(initialLines) ? initialLines.map(function (line, index) {
+                return {
+                    index: index + 1,
+                    productId: line.productId ?? 0,
+                    code: line.code ?? 0,
+                    productName: line.productName ?? '',
+                    quantityKg: Number(line.quantityKg ?? 0),
+                    scaleWeight: !!line.scaleWeight,
+                    createdLabel: line.createdLabel ?? '',
+                    isWeighable: !!line.isWeighable,
+                    sourceType: line.sourceType ?? '',
+                    sourceStockId: Number(line.sourceStockId ?? 0),
+                    sourceLabel: line.sourceLabel ?? ''
+                };
+            }) : [];
+
+            lines.forEach(function (line) {
+                let stockId = Number(line.sourceStockId || 0);
+                if (stockId <= 0) {
+                    const match = /^Pesaje\s+#(\d+)$/i.exec(String(line.createdLabel || '').trim());
+                    stockId = match ? Number(match[1] || 0) : 0;
+                }
+
+                if (stockId > 0) {
+                    line.sourceType = 'weighing';
+                    line.sourceStockId = stockId;
+                    line.sourceLabel = line.sourceLabel || `Pesaje #${stockId}`;
+                    linkedWeighingIds.add(stockId);
+                }
+            });
+
+            const blocks = {
+                pesaje: document.querySelector('[data-stock-block="pesaje"]'),
+                ajuste: document.querySelector('[data-stock-block="ajuste"]'),
+                cierre: document.querySelector('[data-stock-block="cierre"]'),
+                simple: document.querySelector('[data-stock-block="simple"]')
+            };
+
+            const sync = () => {
+                const value = (typeSelect.value || '').toUpperCase();
+                const isPesaje = value === 'PESAJE CORTES';
+                const isAjuste = value === 'AJUSTE STOCK';
+                const isCierre = value === 'CIERRE STOCK';
+                const showSimple = !isPesaje && !isAjuste && !isCierre;
+
+                if (blocks.pesaje) blocks.pesaje.classList.toggle('d-none', !isPesaje);
+                if (blocks.ajuste) blocks.ajuste.classList.toggle('d-none', !isAjuste);
+                if (blocks.cierre) blocks.cierre.classList.toggle('d-none', !isCierre);
+                if (blocks.simple) blocks.simple.classList.toggle('d-none', !showSimple);
+                openWeighingPercentagesButtons.forEach(function (button) {
+                    button.classList.toggle('d-none', !isPesaje);
+                });
+            };
+
+            typeSelect.addEventListener('change', sync);
+            sync();
+
+            const setStatus = (type, message) => {
+                if (!statusBox) {
+                    return;
+                }
+
+                statusBox.className = 'alert mt-3 mb-0';
+                if (!message) {
+                    statusBox.classList.add('d-none');
+                    statusBox.textContent = '';
+                    return;
+                }
+
+                statusBox.classList.remove('d-none');
+                statusBox.classList.add(type === 'success' ? 'alert-success' : type === 'info' ? 'alert-info' : type === 'warning' ? 'alert-warning' : 'alert-danger');
+                statusBox.textContent = message;
+            };
+
+            const setMissingClosingProductsStatus = (type, message) => {
+                if (!missingClosingProductsStatus) {
+                    return;
+                }
+
+                missingClosingProductsStatus.className = 'alert mb-3';
+                if (!message) {
+                    missingClosingProductsStatus.classList.add('d-none');
+                    missingClosingProductsStatus.textContent = '';
+                    return;
+                }
+
+                missingClosingProductsStatus.classList.remove('d-none');
+                missingClosingProductsStatus.classList.add(type === 'success' ? 'alert-success' : type === 'info' ? 'alert-info' : type === 'warning' ? 'alert-warning' : 'alert-danger');
+                missingClosingProductsStatus.textContent = message;
+            };
+
+            const setMissingClosingProductsInfo = (message) => {
+                if (!missingClosingProductsInfo) {
+                    return;
+                }
+
+                if (!message) {
+                    missingClosingProductsInfo.classList.add('d-none');
+                    missingClosingProductsInfo.textContent = '';
+                    return;
+                }
+
+                missingClosingProductsInfo.classList.remove('d-none');
+                missingClosingProductsInfo.textContent = message;
+            };
+
+            const setWeighingPurchaseStatus = (type, message) => {
+                if (!weighingPurchaseStatus) {
+                    return;
+                }
+
+                weighingPurchaseStatus.className = 'alert mb-3';
+                if (!message) {
+                    weighingPurchaseStatus.classList.add('d-none');
+                    weighingPurchaseStatus.textContent = '';
+                    return;
+                }
+
+                weighingPurchaseStatus.classList.remove('d-none');
+                weighingPurchaseStatus.classList.add(type === 'success' ? 'alert-success' : type === 'info' ? 'alert-info' : type === 'warning' ? 'alert-warning' : 'alert-danger');
+                weighingPurchaseStatus.textContent = message;
+            };
+
+            const setWeighingPercentagesWarning = (type, message) => {
+                if (!weighingPercentagesWarning) {
+                    return;
+                }
+
+                weighingPercentagesWarning.className = 'alert mb-3';
+                if (!message) {
+                    weighingPercentagesWarning.classList.add('d-none');
+                    weighingPercentagesWarning.textContent = '';
+                    return;
+                }
+
+                weighingPercentagesWarning.classList.remove('d-none');
+                weighingPercentagesWarning.classList.add(type === 'success' ? 'alert-success' : type === 'info' ? 'alert-info' : type === 'warning' ? 'alert-warning' : 'alert-danger');
+                weighingPercentagesWarning.textContent = message;
+            };
+
+            const setLinkedWeighingsStatus = (type, message) => {
+                if (!linkedWeighingsStatus) {
+                    return;
+                }
+
+                linkedWeighingsStatus.className = 'alert mb-3';
+                if (!message) {
+                    linkedWeighingsStatus.classList.add('d-none');
+                    linkedWeighingsStatus.textContent = '';
+                    return;
+                }
+
+                linkedWeighingsStatus.classList.remove('d-none');
+                linkedWeighingsStatus.classList.add(type === 'success' ? 'alert-success' : type === 'info' ? 'alert-info' : type === 'warning' ? 'alert-warning' : 'alert-danger');
+                linkedWeighingsStatus.textContent = message;
+            };
+
+            const setLookupMessage = (text, isError) => {
+                if (!lookupMessage) {
+                    return;
+                }
+
+                lookupMessage.textContent = text || '';
+                lookupMessage.classList.toggle('text-danger', !!isError);
+                lookupMessage.classList.toggle('text-muted', !isError);
+            };
+
+            const clearProductLookup = () => {
+                if (productIdInput) {
+                    productIdInput.value = '';
+                }
+
+                if (productWeighableInput) {
+                    productWeighableInput.value = '';
+                }
+
+                if (productNameInput) {
+                    productNameInput.value = '';
+                }
+
+                if (quantityInput) {
+                    quantityInput.value = '';
+                }
+            };
+
+            const applySelectedProduct = (payload) => {
+                if (productIdInput) {
+                    productIdInput.value = payload.productId || '';
+                }
+
+                if (productWeighableInput) {
+                    productWeighableInput.value = payload.weighable ? 'true' : 'false';
+                }
+
+                if (productNameInput) {
+                    productNameInput.value = payload.description || '';
+                }
+            };
+
+            const applySelectedSupplier = (payload) => {
+                if (supplierIdInput) {
+                    supplierIdInput.value = payload.personId || '';
+                }
+
+                if (supplierNameInput) {
+                    supplierNameInput.value = payload.businessName || '';
+                }
+
+                if (supplierTaxIdLabel) {
+                    supplierTaxIdLabel.textContent = payload.taxId ? `CUIT: ${payload.taxId}` : 'Sin proveedor seleccionado';
+                }
+            };
+
+            const normalizeDecimal = (value) => String(value || '').trim().replace(',', '.');
+
+            const parseDecimal = (value) => {
+                const parsed = Number(normalizeDecimal(value));
+                return Number.isFinite(parsed) ? parsed : 0;
+            };
+
+            const getCurrentOperationType = () => (typeSelect?.value || '').trim().toUpperCase();
+
+            const isClosingOperation = () => getCurrentOperationType() === 'CIERRE STOCK';
+
+            const isExitOperation = () => getCurrentOperationType() === 'EGRESO STOCK';
+
+            const formatDecimal = (value, digits) => Number(value || 0).toFixed(digits);
+
+            const isLinkedWeighingLine = (line) => {
+                return String(line?.sourceType || '').trim().toLowerCase() === 'weighing' && Number(line?.sourceStockId || 0) > 0;
+            };
+
+            const getLinkedWeighingSummaries = () => {
+                const summaryMap = new Map();
+                lines.forEach(function (line) {
+                    if (!isLinkedWeighingLine(line)) {
+                        return;
+                    }
+
+                    const stockId = Number(line.sourceStockId || 0);
+                    const current = summaryMap.get(stockId) || {
+                        stockId: stockId,
+                        label: line.sourceLabel || `Pesaje #${stockId}`,
+                        count: 0,
+                        quantityKg: 0
+                    };
+
+                    current.count += 1;
+                    current.quantityKg += Number(line.quantityKg || 0);
+                    summaryMap.set(stockId, current);
+                });
+
+                return Array.from(summaryMap.values()).sort(function (a, b) {
+                    return a.stockId - b.stockId;
+                });
+            };
+
+            const formatDateInputValue = (date) => {
+                if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+                    return '';
+                }
+
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
+
+            const resetWeighingPurchaseFilters = () => {
+                if (weighingPurchaseSupplierSearch) {
+                    weighingPurchaseSupplierSearch.value = '';
+                }
+
+                const today = new Date();
+                const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+                if (weighingPurchaseFromDate) {
+                    weighingPurchaseFromDate.value = formatDateInputValue(from);
+                }
+                if (weighingPurchaseToDate) {
+                    weighingPurchaseToDate.value = formatDateInputValue(today);
+                }
+            };
+
+            const resetLinkedWeighingsFilters = () => {
+                if (linkedWeighingsSupplierSearch) {
+                    linkedWeighingsSupplierSearch.value = '';
+                }
+
+                const today = new Date();
+                const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+                if (linkedWeighingsFromDate) {
+                    linkedWeighingsFromDate.value = formatDateInputValue(from);
+                }
+                if (linkedWeighingsToDate) {
+                    linkedWeighingsToDate.value = formatDateInputValue(today);
+                }
+            };
+
+            const snapshotMediaValues = () => ({
+                halfCarcassCount: halfCarcassCountInput ? halfCarcassCountInput.value : '',
+                halfCarcassWeightKg: halfCarcassWeightInput ? halfCarcassWeightInput.value : ''
+            });
+
+            const restoreMediaValues = (snapshot) => {
+                if (!snapshot) {
+                    return;
+                }
+
+                if (halfCarcassCountInput) {
+                    halfCarcassCountInput.value = snapshot.halfCarcassCount ?? '';
+                }
+
+                if (halfCarcassWeightInput) {
+                    halfCarcassWeightInput.value = snapshot.halfCarcassWeightKg ?? '';
+                }
+            };
+
+            const escapeHtmlAttribute = (value) => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            const escapeHtml = (value) => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            const renderSummary = () => {
+                const totalItems = lines.length;
+                const totalKg = lines.reduce((sum, line) => sum + Number(line.quantityKg || 0), 0);
+
+                if (summaryItems) {
+                    summaryItems.textContent = String(totalItems);
+                }
+
+                if (summaryKg) {
+                    summaryKg.textContent = formatDecimal(totalKg, 3);
+                }
+            };
+
+            const renderAccumulated = () => {
+                if (!accumulatedTableBody) {
+                    return;
+                }
+
+                if (lines.length === 0) {
+                    accumulatedTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-4">Todavia no hay lineas para acumular.</td></tr>';
+                    return;
+                }
+
+                const grouped = new Map();
+                lines.forEach(function (line) {
+                    const key = String(line.productId || line.code || line.productName || '');
+                    const current = grouped.get(key) || {
+                        productName: line.productName || '-',
+                        code: line.code || '-',
+                        count: 0,
+                        quantityKg: 0
+                    };
+
+                    current.count += 1;
+                    current.quantityKg += Number(line.quantityKg || 0);
+                    grouped.set(key, current);
+                });
+
+                const rows = Array.from(grouped.values())
+                    .sort(function (a, b) {
+                        return a.productName.localeCompare(b.productName);
+                    });
+
+                accumulatedTableBody.innerHTML = rows.map(function (row) {
+                    return `
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">${row.productName}</div>
+                                <div class="small text-muted">Codigo: ${row.code}</div>
+                            </td>
+                            <td class="text-end">${row.count}</td>
+                            <td class="text-end">${formatDecimal(row.quantityKg, 3)}</td>
+                        </tr>`;
+                }).join('');
+            };
+
+            const getFilteredMissingClosingProducts = () => {
+                const filter = String(missingClosingProductsFilter?.value || 'all').trim().toLowerCase();
+                const searchText = (missingClosingProductsSearch?.value || '').trim().toLowerCase();
+
+                return missingClosingProducts.filter(function (item) {
+                    const currentStock = Number(item.currentStock ?? 0);
+                    if (filter === 'with-stock' && currentStock === 0) {
+                        return false;
+                    }
+
+                    if (filter === 'without-stock' && currentStock !== 0) {
+                        return false;
+                    }
+
+                    if (!searchText) {
+                        return true;
+                    }
+
+                    return String(item.code || '').toLowerCase().includes(searchText)
+                        || String(item.description || '').toLowerCase().includes(searchText);
+                });
+            };
+
+            const updateMissingClosingProductsCounters = (filteredItems) => {
+                const currentItems = Array.isArray(filteredItems) ? filteredItems : getFilteredMissingClosingProducts();
+                const visibleIds = new Set(currentItems.map(function (item) {
+                    return String(item.productId || 0);
+                }));
+
+                let selectedVisibleCount = 0;
+                visibleIds.forEach(function (itemId) {
+                    if (selectedMissingClosingProducts.has(itemId)) {
+                        selectedVisibleCount += 1;
+                    }
+                });
+
+                if (missingClosingProductsCount) {
+                    missingClosingProductsCount.textContent = `${currentItems.length} producto(s)`;
+                }
+
+                if (missingClosingProductsSelectedCount) {
+                    missingClosingProductsSelectedCount.textContent = String(selectedMissingClosingProducts.size);
+                }
+
+                if (missingClosingProductsSelectAll) {
+                    missingClosingProductsSelectAll.checked = currentItems.length > 0 && selectedVisibleCount === currentItems.length;
+                    missingClosingProductsSelectAll.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < currentItems.length;
+                }
+
+                if (selectedVisibleCount > 0 && selectedVisibleCount < currentItems.length) {
+                    setMissingClosingProductsInfo('Hay una seleccion parcial. Puede seleccionar o deseleccionar todos los visibles.');
+                } else {
+                    setMissingClosingProductsInfo('');
+                }
+            };
+
+            const renderMissingClosingProducts = () => {
+                if (!missingClosingProductsTableBody) {
+                    return;
+                }
+
+                const filteredItems = getFilteredMissingClosingProducts();
+
+                if (filteredItems.length === 0) {
+                    missingClosingProductsTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">${missingClosingProducts.length === 0 ? 'No hay productos pendientes para este cierre.' : 'No hay coincidencias para el filtro actual.'}</td></tr>`;
+                    updateMissingClosingProductsCounters(filteredItems);
+                    return;
+                }
+
+                missingClosingProductsTableBody.innerHTML = filteredItems.map(function (item) {
+                    const itemId = String(item.productId || 0);
+                    const checked = selectedMissingClosingProducts.has(itemId);
+                    return `
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input js-stock-missing-product-check" data-stock-missing-product-id="${itemId}"${checked ? ' checked' : ''} />
+                            </td>
+                            <td>${item.code || ''}</td>
+                            <td>${item.description || ''}</td>
+                            <td class="text-end">${item.currentStockText || '0.000'}</td>
+                        </tr>`;
+                }).join('');
+
+                updateMissingClosingProductsCounters(filteredItems);
+            };
+
+            const addMissingClosingProducts = (useCurrentStock) => {
+                const selectedItems = missingClosingProducts.filter(function (item) {
+                    return selectedMissingClosingProducts.has(String(item.productId || 0));
+                });
+
+                if (selectedItems.length === 0) {
+                    setMissingClosingProductsStatus('warning', 'Seleccione al menos un producto.');
+                    return;
+                }
+
+                if (selectedItems.length >= 80 && !window.confirm(`Vas a agregar ${selectedItems.length} productos. ¿Confirmar?`)) {
+                    return;
+                }
+
+                let addedCount = 0;
+                let skippedExistingCount = 0;
+                let skippedZeroStockCount = 0;
+                const loadedCodes = new Set(lines.map(function (line) {
+                    return Number(line.code || 0);
+                }));
+
+                selectedItems.forEach(function (item) {
+                    const code = Number(item.code || 0);
+                    if (code > 0 && loadedCodes.has(code)) {
+                        skippedExistingCount += 1;
+                        return;
+                    }
+
+                    const currentStock = Number(item.currentStock ?? 0);
+                    if (useCurrentStock && currentStock === 0) {
+                        skippedZeroStockCount += 1;
+                        return;
+                    }
+
+                    lines.push({
+                        index: lines.length + 1,
+                        productId: Number(item.productId || 0),
+                        code: code,
+                        productName: item.description || '',
+                        quantityKg: useCurrentStock ? currentStock : -0.0006,
+                        scaleWeight: false,
+                        createdLabel: 'Ahora',
+                        isWeighable: !!item.weighable
+                    });
+
+                    if (code > 0) {
+                        loadedCodes.add(code);
+                    }
+
+                    selectedMissingClosingProducts.delete(String(item.productId || 0));
+                    addedCount += 1;
+                });
+
+                if (addedCount === 0) {
+                    if (useCurrentStock && skippedZeroStockCount > 0) {
+                        setMissingClosingProductsStatus('warning', 'Los productos seleccionados no tienen stock actual. Use "Agregar como sin stock (0,000)".');
+                    } else {
+                        setMissingClosingProductsStatus('warning', 'No se agregaron productos nuevos.');
+                    }
+                    return;
+                }
+
+                missingClosingProducts = missingClosingProducts.filter(function (item) {
+                    const code = Number(item.code || 0);
+                    return code <= 0 || !loadedCodes.has(code);
+                });
+
+                renderLines();
+                renderMissingClosingProducts();
+
+                const messages = [`Se agregaron ${addedCount} producto(s).`];
+                if (skippedExistingCount > 0) {
+                    messages.push(`${skippedExistingCount} ya estaban cargados.`);
+                }
+                if (skippedZeroStockCount > 0) {
+                    messages.push(`${skippedZeroStockCount} quedaron pendientes porque tienen stock actual en 0.`);
+                }
+
+                setMissingClosingProductsStatus('success', messages.join(' '));
+                setStatus('success', messages[0]);
+            };
+
+            const renderWeighingPurchases = (items) => {
+                if (!weighingPurchaseTableBody) {
+                    return;
+                }
+
+                if (!Array.isArray(items) || items.length === 0) {
+                    weighingPurchaseTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay compras disponibles para seleccionar.</td></tr>';
+                    return;
+                }
+
+                weighingPurchaseTableBody.innerHTML = items.map(function (item) {
+                    return `
+                        <tr>
+                            <td>${escapeHtml(item.operationDate || '-')}</td>
+                            <td>${escapeHtml(item.supplierName || '-')}</td>
+                            <td class="text-end">${escapeHtml(formatDecimal(item.halfCarcassWeightKg ?? item.totalQuantityKg ?? 0, 3))}</td>
+                            <td class="text-end">${escapeHtml(item.halfCarcassCount ?? 0)}</td>
+                            <td>${escapeHtml(item.stockOperationType || '')}</td>
+                            <td><button type="button" class="btn btn-primary btn-sm" data-stock-select-weighing-purchase="${item.stockId}">Seleccionar</button></td>
+                        </tr>`;
+                }).join('');
+            };
+
+            const renderLinkedWeighingsInfo = () => {
+                if (!linkedWeighingsInfo) {
+                    return;
+                }
+
+                const summaries = getLinkedWeighingSummaries();
+                if (summaries.length === 0) {
+                    linkedWeighingsInfo.classList.add('d-none');
+                    linkedWeighingsInfo.textContent = '';
+                    linkedWeighingsInfo.innerHTML = '';
+                    return;
+                }
+
+                linkedWeighingsInfo.classList.remove('d-none');
+                linkedWeighingsInfo.innerHTML = `
+                    <div class="fw-semibold mb-2">Pesajes vinculados en esta edicion</div>
+                    <div class="d-flex flex-column gap-2">
+                        ${summaries.map(function (summary) {
+                            return `
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <strong>${escapeHtml(summary.label)}</strong>
+                                        <span class="small text-muted ms-2">${summary.count} linea(s) | ${escapeHtml(formatDecimal(summary.quantityKg, 3))} kg</span>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-stock-unlink-weighing="${summary.stockId}">
+                                        Desvincular
+                                    </button>
+                                </div>`;
+                        }).join('')}
+                    </div>`;
+            };
+
+            const renderLinkedWeighings = (items) => {
+                if (!linkedWeighingsTableBody) {
+                    return;
+                }
+
+                if (!Array.isArray(items) || items.length === 0) {
+                    linkedWeighingsTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay pesajes disponibles para vincular.</td></tr>';
+                    return;
+                }
+
+                linkedWeighingsTableBody.innerHTML = items.map(function (item) {
+                    const stockId = Number(item.stockId || 0);
+                    const alreadyLinked = linkedWeighingIds.has(stockId);
+                    return `
+                        <tr>
+                            <td>${escapeHtml(stockId || '-')}</td>
+                            <td>${escapeHtml(item.operationDate || '-')}</td>
+                            <td>${escapeHtml(item.supplierName || '-')}</td>
+                            <td class="text-end">${escapeHtml(item.halfCarcassCount ?? 0)}</td>
+                            <td class="text-end">${escapeHtml(formatDecimal(item.halfCarcassWeightKg ?? item.totalQuantityKg ?? 0, 3))}</td>
+                            <td><button type="button" class="btn btn-sm ${alreadyLinked ? 'btn-outline-secondary' : 'btn-outline-info'}" data-stock-link-weighing="${stockId}"${alreadyLinked ? ' disabled' : ''}>${alreadyLinked ? 'Ya vinculado' : 'Vincular'}</button></td>
+                        </tr>`;
+                }).join('');
+            };
+
+            const loadWeighingPurchases = async () => {
+                const currentType = (typeSelect.value || '').trim().toUpperCase();
+                if (currentType !== 'PESAJE CORTES') {
+                    renderWeighingPurchases([]);
+                    setWeighingPurchaseStatus('warning', 'Esta herramienta solo esta disponible para la accion Pesaje Cortes.');
+                    return;
+                }
+
+                const branchId = Number(branchInput?.value || 0);
+                if (branchId <= 0) {
+                    renderWeighingPurchases([]);
+                    setWeighingPurchaseStatus('warning', 'Seleccione una sucursal valida.');
+                    return;
+                }
+
+                setWeighingPurchaseStatus('info', 'Consultando compras...');
+
+                const query = new URLSearchParams({
+                    branchId: String(branchId),
+                    currentStockId: String(document.querySelector('input[name="StockId"]')?.value || 0),
+                    supplier: weighingPurchaseSupplierSearch?.value || '',
+                    fromDate: weighingPurchaseFromDate?.value || '',
+                    toDate: weighingPurchaseToDate?.value || ''
+                });
+
+                try {
+                    const response = await fetch(`${weighingPurchasesUrl}?${query.toString()}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudieron cargar las compras.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        throw new Error(payload.message || 'No se pudieron cargar las compras.');
+                    }
+
+                    renderWeighingPurchases(payload.items || []);
+                    setWeighingPurchaseStatus('', '');
+                } catch (error) {
+                    renderWeighingPurchases([]);
+                    setWeighingPurchaseStatus('warning', error instanceof Error ? error.message : 'No se pudieron cargar las compras.');
+                }
+            };
+
+            const loadLinkedWeighings = async () => {
+                const currentType = (typeSelect.value || '').trim().toUpperCase();
+                if (currentType !== 'PESAJE CORTES') {
+                    renderLinkedWeighings([]);
+                    setLinkedWeighingsStatus('warning', 'Esta herramienta solo esta disponible para la accion Pesaje Cortes.');
+                    return;
+                }
+
+                const branchId = Number(branchInput?.value || 0);
+                if (branchId <= 0) {
+                    renderLinkedWeighings([]);
+                    setLinkedWeighingsStatus('warning', 'Seleccione una sucursal valida.');
+                    return;
+                }
+
+                if (linkedWeighingsBranchLabel) {
+                    const branchName = branchInput instanceof HTMLSelectElement
+                        ? branchInput.options[branchInput.selectedIndex]?.text || '-'
+                        : '-';
+                    linkedWeighingsBranchLabel.textContent = branchName;
+                }
+
+                setLinkedWeighingsStatus('info', 'Consultando pesajes...');
+
+                const query = new URLSearchParams({
+                    branchId: String(branchId),
+                    currentStockId: String(document.querySelector('input[name="StockId"]')?.value || 0),
+                    supplier: linkedWeighingsSupplierSearch?.value || '',
+                    fromDate: linkedWeighingsFromDate?.value || '',
+                    toDate: linkedWeighingsToDate?.value || '',
+                    onlyWeighings: 'true'
+                });
+
+                try {
+                    const response = await fetch(`${weighingPurchasesUrl}?${query.toString()}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudieron cargar los pesajes.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        throw new Error(payload.message || 'No se pudieron cargar los pesajes.');
+                    }
+
+                    renderLinkedWeighings(payload.items || []);
+                    setLinkedWeighingsStatus('', '');
+                } catch (error) {
+                    renderLinkedWeighings([]);
+                    setLinkedWeighingsStatus('warning', error instanceof Error ? error.message : 'No se pudieron cargar los pesajes.');
+                }
+            };
+
+            const selectWeighingPurchase = async (stockId) => {
+                if (!stockId || stockId <= 0) {
+                    setWeighingPurchaseStatus('warning', 'Seleccione una compra valida.');
+                    return;
+                }
+
+                setWeighingPurchaseStatus('info', 'Vinculando compra...');
+
+                try {
+                    const response = await fetch(`${weighingPurchaseDetailUrl}?stockId=${encodeURIComponent(stockId)}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo obtener el detalle de la compra.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok || !payload.item) {
+                        throw new Error(payload.message || 'No se pudo obtener el detalle de la compra.');
+                    }
+
+                    const item = payload.item;
+                    applySelectedSupplier({
+                        personId: item.supplierId || '',
+                        businessName: item.supplierName || '',
+                        taxId: item.supplierTaxId || ''
+                    });
+
+                    if (linkedWeighingIdInput) {
+                        linkedWeighingIdInput.value = item.stockId || '';
+                    }
+                    if (halfCarcassCountInput) {
+                        halfCarcassCountInput.value = item.halfCarcassCount ?? '';
+                    }
+                    if (halfCarcassWeightInput) {
+                        halfCarcassWeightInput.value = formatDecimal(item.halfCarcassWeightKg ?? item.totalQuantityKg ?? 0, 3);
+                    }
+
+                    const linkBox = document.querySelector('.stock-link-box');
+                    if (linkBox) {
+                        linkBox.classList.remove('d-none');
+                        const title = linkBox.querySelector('.stock-link-title');
+                        const values = linkBox.querySelectorAll('.stock-link-value');
+                        if (title) title.textContent = `Compra vinculada #${item.stockId}`;
+                        if (values.length >= 4) {
+                            values[0].textContent = item.supplierName || '-';
+                            values[1].textContent = item.operationDate || '-';
+                            values[2].textContent = String(item.halfCarcassCount ?? '-');
+                            values[3].textContent = formatDecimal(item.halfCarcassWeightKg ?? item.totalQuantityKg ?? 0, 3);
+                        }
+                    }
+
+                    setWeighingPurchaseStatus('success', 'Compra vinculada correctamente.');
+                    setStatus('success', 'Compra vinculada correctamente.');
+                    const modalInstance = bootstrap.Modal.getInstance(weighingPurchaseModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                } catch (error) {
+                    setWeighingPurchaseStatus('warning', error instanceof Error ? error.message : 'No se pudo vincular la compra.');
+                }
+            };
+
+            const linkWeighing = async (stockId) => {
+                if (!stockId || stockId <= 0) {
+                    setLinkedWeighingsStatus('warning', 'Seleccione un pesaje valido.');
+                    return;
+                }
+
+                if (linkedWeighingIds.has(stockId)) {
+                    setLinkedWeighingsStatus('warning', 'Ese pesaje ya fue vinculado en esta edicion.');
+                    return;
+                }
+
+                setLinkedWeighingsStatus('info', 'Vinculando pesaje...');
+
+                try {
+                    const response = await fetch(`${linkedWeighingDetailUrl}?stockId=${encodeURIComponent(stockId)}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo obtener el detalle del pesaje.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok || !payload.item) {
+                        throw new Error(payload.message || 'No se pudo obtener el detalle del pesaje.');
+                    }
+
+                    const item = payload.item;
+                    const sourceLines = Array.isArray(item.lines) ? item.lines : [];
+                    if (sourceLines.length === 0) {
+                        throw new Error('El pesaje seleccionado no tiene lineas de cortes para vincular.');
+                    }
+
+                    sourceLines.forEach(function (line) {
+                        lines.push({
+                            index: lines.length + 1,
+                            productId: Number(line.productId || 0),
+                            code: Number(line.code || 0),
+                            productName: line.productName || '',
+                            quantityKg: Number(line.quantityKg || 0),
+                            scaleWeight: !!line.scaleWeight,
+                            createdLabel: `Pesaje #${stockId}`,
+                            isWeighable: !!line.isWeighable,
+                            sourceType: 'weighing',
+                            sourceStockId: stockId,
+                            sourceLabel: `Pesaje #${stockId}`
+                        });
+                    });
+
+                    linkedWeighingIds.add(stockId);
+                    renderLines();
+                    renderLinkedWeighingsInfo();
+                    setLinkedWeighingsStatus('success', 'Pesaje vinculado correctamente.');
+                    setStatus('success', 'Pesaje vinculado correctamente.');
+
+                    const modalInstance = bootstrap.Modal.getInstance(linkedWeighingsModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                } catch (error) {
+                    setLinkedWeighingsStatus('warning', error instanceof Error ? error.message : 'No se pudo vincular el pesaje.');
+                }
+            };
+
+            const unlinkWeighing = (stockId) => {
+                if (!stockId || stockId <= 0) {
+                    setLinkedWeighingsStatus('warning', 'Seleccione un pesaje valido.');
+                    return;
+                }
+
+                const originalLength = lines.length;
+                const filteredLines = lines.filter(function (line) {
+                    return !(isLinkedWeighingLine(line) && Number(line.sourceStockId || 0) === stockId);
+                });
+
+                if (filteredLines.length === originalLength) {
+                    setLinkedWeighingsStatus('warning', `No se encontraron lineas para ${'Pesaje #' + stockId}.`);
+                    return;
+                }
+
+                lines.length = 0;
+                filteredLines.forEach(function (line, index) {
+                    line.index = index + 1;
+                    lines.push(line);
+                });
+
+                linkedWeighingIds.delete(stockId);
+                renderLines();
+                renderLinkedWeighingsInfo();
+                if (linkedWeighingsModal && linkedWeighingsModal.classList.contains('show')) {
+                    loadLinkedWeighings();
+                }
+                setLinkedWeighingsStatus('success', `Se desvinculo ${'Pesaje #' + stockId} y se quitaron sus lineas.`);
+                setStatus('info', `Se quitaron las lineas de ${'Pesaje #' + stockId}.`);
+            };
+
+            const renderWeighingPercentagesTable = (table, payload, emptyText) => {
+                if (!(table instanceof HTMLTableElement)) {
+                    return;
+                }
+
+                const thead = table.tHead || table.createTHead();
+                const tbody = table.tBodies[0] || table.createTBody();
+                const columns = Array.isArray(payload?.columnas) ? payload.columnas.filter(function (column) {
+                    return !column.oculta;
+                }) : [];
+                const rows = Array.isArray(payload?.filas) ? payload.filas : [];
+
+                if (columns.length === 0) {
+                    thead.innerHTML = '';
+                    tbody.innerHTML = `<tr><td class="text-center text-muted py-4">${escapeHtml(emptyText || 'Sin datos.')}</td></tr>`;
+                    return;
+                }
+
+                thead.innerHTML = `<tr>${columns.map(function (column) {
+                    return `<th${column.alineacionDerecha ? ' class="text-end"' : ''}>${escapeHtml(column.nombre || '')}</th>`;
+                }).join('')}</tr>`;
+
+                if (rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center text-muted py-4">${escapeHtml(emptyText || 'Sin datos.')}</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(function (row) {
+                    const currentRow = Array.isArray(row) ? row : [];
+                    let visibleColumnIndex = 0;
+                    return `<tr>${(payload.columnas || []).map(function (column, index) {
+                        if (column.oculta) {
+                            return '';
+                        }
+
+                        const value = currentRow[index] || '';
+                        const currentColumn = columns[visibleColumnIndex++];
+                        return `<td${currentColumn?.alineacionDerecha ? ' class="text-end"' : ''}>${escapeHtml(value)}</td>`;
+                    }).join('')}</tr>`;
+                }).join('');
+            };
+
+            const loadWeighingPercentages = async () => {
+                const stockId = Number(document.querySelector('input[name="StockId"]')?.value || 0);
+                if (stockId <= 0) {
+                    setStatus('warning', 'Ingrese KgsMedias y CantMedias, presione Guardar y vuelva a intentarlo.');
+                    return;
+                }
+
+                setWeighingPercentagesWarning('info', 'Consultando analisis del pesaje...');
+                if (weighingPercentagesState) {
+                    weighingPercentagesState.textContent = '-';
+                }
+                if (generateWeighingAdjustmentButton) {
+                    generateWeighingAdjustmentButton.disabled = true;
+                }
+
+                renderWeighingPercentagesTable(averageHalfCarcassesTable, null, 'Cargando...');
+                renderWeighingPercentagesTable(cutPercentagesTable, null, 'Cargando...');
+
+                try {
+                    const response = await fetch(weighingPercentagesUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            WeighingId: String(stockId)
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo obtener el analisis del pesaje.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        throw new Error(payload.message || 'No se pudo obtener el analisis del pesaje.');
+                    }
+
+                    if (weighingPercentagesState) {
+                        weighingPercentagesState.textContent = payload.estado || '-';
+                    }
+
+                    if (generateWeighingAdjustmentButton) {
+                        generateWeighingAdjustmentButton.disabled = String(payload.estado || '').trim().toUpperCase() === 'ACTUALIZADO';
+                    }
+
+                    renderWeighingPercentagesTable(averageHalfCarcassesTable, payload.promMedias, 'Sin datos de promedios.');
+                    renderWeighingPercentagesTable(cutPercentagesTable, payload.porcCortes, 'Sin datos de porcentajes.');
+                    setWeighingPercentagesWarning('', '');
+                } catch (error) {
+                    if (generateWeighingAdjustmentButton) {
+                        generateWeighingAdjustmentButton.disabled = true;
+                    }
+
+                    renderWeighingPercentagesTable(averageHalfCarcassesTable, null, 'Sin datos.');
+                    renderWeighingPercentagesTable(cutPercentagesTable, null, 'Sin datos.');
+                    setWeighingPercentagesWarning('warning', error instanceof Error ? error.message : 'No se pudo obtener el analisis del pesaje.');
+                }
+            };
+
+            const generateWeighingAdjustment = async () => {
+                const stockId = Number(document.querySelector('input[name="StockId"]')?.value || 0);
+                if (stockId <= 0) {
+                    setStatus('warning', 'Ingrese KgsMedias y CantMedias, presione Guardar y vuelva a intentarlo.');
+                    return;
+                }
+
+                if (generateWeighingAdjustmentButton) {
+                    generateWeighingAdjustmentButton.disabled = true;
+                }
+
+                setWeighingPercentagesWarning('info', 'Generando ajuste de stock...');
+
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    const response = await fetch(generateWeighingAdjustmentUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            __RequestVerificationToken: token,
+                            WeighingId: String(stockId)
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo generar el ajuste.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        throw new Error(payload.message || 'No se pudo generar el ajuste.');
+                    }
+
+                    if (weighingPercentagesState) {
+                        weighingPercentagesState.textContent = payload.estado || 'Actualizado';
+                    }
+
+                    setWeighingPercentagesWarning('success', payload.message || 'El Ajuste de Stock se realizo correctamente.');
+                    setStatus('success', payload.message || 'El Ajuste de Stock se realizo correctamente.');
+                    window.location.reload();
+                } catch (error) {
+                    setWeighingPercentagesWarning('warning', error instanceof Error ? error.message : 'No se pudo generar el ajuste.');
+                    if (generateWeighingAdjustmentButton && String(weighingPercentagesState?.textContent || '').trim().toUpperCase() !== 'ACTUALIZADO') {
+                        generateWeighingAdjustmentButton.disabled = false;
+                    }
+                }
+            };
+
+            const loadMissingClosingProducts = async () => {
+                if (!missingClosingProductsModal) {
+                    return;
+                }
+
+                const currentType = (typeSelect.value || '').trim().toUpperCase();
+                if (currentType !== 'CIERRE STOCK') {
+                    missingClosingProducts = [];
+                    renderMissingClosingProducts();
+                    setMissingClosingProductsStatus('warning', 'Esta herramienta solo esta disponible para la accion Cierre Stock.');
+                    return;
+                }
+
+                const branchId = Number(branchInput?.value || 0);
+                const operationDate = operationDateInput?.value || '';
+                const loadedCodes = lines
+                    .map(function (line) { return Number(line.code || 0); })
+                    .filter(function (code) { return Number.isFinite(code) && code > 0; });
+
+                setMissingClosingProductsStatus('info', 'Consultando productos pendientes...');
+
+                try {
+                    const response = await fetch(missingClosingProductsUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            branchId: branchId,
+                            operationDate: operationDate,
+                            loadedCodes: loadedCodes
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo consultar los productos no cargados.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        throw new Error(payload.message || 'No se pudo consultar los productos no cargados.');
+                    }
+
+                    missingClosingProducts = Array.isArray(payload.items) ? payload.items : [];
+                    const validIds = new Set(missingClosingProducts.map(function (item) {
+                        return String(item.productId || 0);
+                    }));
+                    Array.from(selectedMissingClosingProducts).forEach(function (itemId) {
+                        if (!validIds.has(itemId)) {
+                            selectedMissingClosingProducts.delete(itemId);
+                        }
+                    });
+                    renderMissingClosingProducts();
+                    setMissingClosingProductsStatus(
+                        missingClosingProducts.length > 0 ? 'success' : 'info',
+                        missingClosingProducts.length > 0
+                            ? `${missingClosingProducts.length} producto(s) pendientes para el cierre actual.`
+                            : 'No hay productos pendientes para este cierre.'
+                    );
+                } catch (error) {
+                    missingClosingProducts = [];
+                    renderMissingClosingProducts();
+                    setMissingClosingProductsStatus('danger', error instanceof Error ? error.message : 'No se pudo consultar los productos no cargados.');
+                }
+            };
+
+            const renderHiddenLines = () => {
+                if (!hiddenLinesContainer) {
+                    return;
+                }
+
+                hiddenLinesContainer.innerHTML = lines.map(function (line, index) {
+                    return `
+                        <input type="hidden" name="Lines[${index}].Index" value="${index + 1}" />
+                        <input type="hidden" name="Lines[${index}].ProductId" value="${line.productId}" />
+                        <input type="hidden" name="Lines[${index}].Code" value="${line.code}" />
+                        <input type="hidden" name="Lines[${index}].ProductName" value="${escapeHtmlAttribute(line.productName)}" />
+                        <input type="hidden" name="Lines[${index}].QuantityKg" value="${line.quantityKg}" />
+                        <input type="hidden" name="Lines[${index}].ScaleWeight" value="${line.scaleWeight}" />
+                        <input type="hidden" name="Lines[${index}].CreatedLabel" value="${escapeHtmlAttribute(line.createdLabel)}" />
+                        <input type="hidden" name="Lines[${index}].IsWeighable" value="${line.isWeighable}" />
+                        <input type="hidden" name="Lines[${index}].SourceType" value="${escapeHtmlAttribute(line.sourceType || '')}" />
+                        <input type="hidden" name="Lines[${index}].SourceStockId" value="${line.sourceStockId || ''}" />
+                        <input type="hidden" name="Lines[${index}].SourceLabel" value="${escapeHtmlAttribute(line.sourceLabel || '')}" />`;
+                }).join('');
+            };
+
+            const renderLines = () => {
+                if (!tableBody) {
+                    return;
+                }
+
+                if (lines.length === 0) {
+                    renderHiddenLines();
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Todavia no hay lineas cargadas en esta vista unificada.</td></tr>';
+                    renderSummary();
+                    return;
+                }
+
+                tableBody.innerHTML = lines.map(function (line, index) {
+                    const productName = line.productName || '-';
+                    const code = line.code || '-';
+                    const quantity = formatDecimal(line.quantityKg, 3);
+                    const scaleWeight = line.scaleWeight ? 'Si' : 'No';
+                    const created = line.createdLabel || 'Ahora';
+                    const linkedWeighingLine = isLinkedWeighingLine(line);
+                    const sourceLabel = linkedWeighingLine ? (line.sourceLabel || `Pesaje #${line.sourceStockId}`) : '';
+
+                    return `
+                        <tr data-line-index="${index}">
+                            <td>
+                                <div class="fw-semibold">${productName}</div>
+                                <div class="small text-muted">Codigo: ${code}</div>
+                                ${linkedWeighingLine ? `<div class="small text-muted">Origen: ${escapeHtml(sourceLabel)} | solo lectura</div>` : ''}
+                            </td>
+                            <td class="text-end">${quantity}</td>
+                            <td class="text-center">${scaleWeight}</td>
+                            <td>${created}</td>
+                            <td>
+                                ${linkedWeighingLine
+                                    ? '<span class="small text-muted">Desvincule el pesaje para quitar estas lineas.</span>'
+                                    : `<button type="button" class="btn btn-outline-secondary btn-sm" data-stock-remove-line="${index}">Quitar</button>`}
+                            </td>
+                        </tr>`;
+                }).join('');
+
+                renderHiddenLines();
+                renderSummary();
+                renderAccumulated();
+            };
+
+            const resetLineEntry = () => {
+                if (codeInput) {
+                    codeInput.value = '';
+                }
+
+                clearProductLookup();
+                setLookupMessage('', false);
+                setStatus('', '');
+            };
+
+            const lookupProduct = async () => {
+                const normalizedCode = (codeInput?.value || '').trim();
+                if (!normalizedCode) {
+                    clearProductLookup();
+                    setLookupMessage('', false);
+                    setStatus('', '');
+                    return;
+                }
+
+                if (quickProductMap.has(normalizedCode)) {
+                    const payload = quickProductMap.get(normalizedCode);
+                    applySelectedProduct(payload);
+                    if (quantityInput && !quantityInput.value) {
+                        quantityInput.value = payload.weighable ? '' : (payload.averageWeight ?? '');
+                    }
+                    setLookupMessage(payload.weighable ? 'Producto pesable encontrado en cache.' : 'Producto encontrado en cache.', false);
+                    setStatus('success', 'Producto encontrado en cache local.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${productByCodeUrl}?code=${encodeURIComponent(normalizedCode)}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo consultar el producto.');
+                    }
+
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        clearProductLookup();
+                        setLookupMessage(payload.message || 'No existe un producto con ese codigo.', true);
+                        setStatus('warning', payload.message || 'No existe un producto con ese codigo.');
+                        return;
+                    }
+
+                    applySelectedProduct(payload);
+
+                    if (quantityInput && !quantityInput.value) {
+                        quantityInput.value = payload.weighable ? '' : (payload.averageWeight ?? '');
+                    }
+
+                    setLookupMessage(payload.weighable ? 'Producto pesable encontrado.' : 'Producto encontrado.', false);
+                    setStatus('success', 'Producto encontrado.');
+                } catch (error) {
+                    clearProductLookup();
+                    setLookupMessage(error instanceof Error ? error.message : 'No se pudo consultar el producto.', true);
+                    setStatus('error', error instanceof Error ? error.message : 'No se pudo consultar el producto.');
+                }
+            };
+
+            if (codeInput) {
+                codeInput.addEventListener('change', lookupProduct);
+                codeInput.addEventListener('blur', lookupProduct);
+                codeInput.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        lookupProduct();
+                    }
+                });
+            }
+
+            const addLine = () => {
+                const mediaSnapshot = snapshotMediaValues();
+                const productId = Number(productIdInput?.value || 0);
+                const code = Number(codeInput?.value || 0);
+                const productName = (productNameInput?.value || '').trim();
+                const quantityKg = parseDecimal(quantityInput?.value || '');
+
+                if (productId <= 0 || code <= 0 || !productName) {
+                    setStatus('warning', 'Primero seleccione un producto valido.');
+                    return;
+                }
+
+                if (quantityKg === 0 && !isClosingOperation()) {
+                    setStatus('warning', 'Ingrese una cantidad distinta de cero.');
+                    return;
+                }
+
+                const normalizedQuantityKg = isExitOperation() && quantityKg > 0
+                    ? quantityKg * -1
+                    : quantityKg;
+
+                lines.push({
+                    index: lines.length + 1,
+                    productId: productId,
+                    code: code,
+                    productName: productName,
+                    quantityKg: normalizedQuantityKg,
+                    scaleWeight: !!scaleWeightInput?.checked,
+                    createdLabel: 'Ahora',
+                    isWeighable: (productWeighableInput?.value || '').toLowerCase() === 'true',
+                    sourceType: 'manual',
+                    sourceStockId: 0,
+                    sourceLabel: ''
+                });
+
+                renderLines();
+                restoreMediaValues(mediaSnapshot);
+                resetLineEntry();
+                setStatus('success', isExitOperation() && quantityKg > 0
+                    ? 'Linea agregada a la grilla. La cantidad se normalizo como egreso.'
+                    : 'Linea agregada a la grilla.');
+                if (codeInput) {
+                    codeInput.focus();
+                }
+            };
+
+            if (addLineButton) {
+                addLineButton.addEventListener('click', addLine);
+            }
+
+            if (quantityInput) {
+                quantityInput.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        addLine();
+                    }
+                });
+            }
+
+            if (tableBody) {
+                tableBody.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    const button = target.closest('[data-stock-remove-line]');
+                    if (!button) {
+                        return;
+                    }
+
+                    const index = Number(button.getAttribute('data-stock-remove-line'));
+                    if (!Number.isInteger(index) || index < 0 || index >= lines.length) {
+                        return;
+                    }
+
+                    if (isLinkedWeighingLine(lines[index])) {
+                        setStatus('warning', 'Las lineas vinculadas desde un pesaje no se pueden quitar individualmente. Desvincule el pesaje.');
+                        return;
+                    }
+
+                    const mediaSnapshot = snapshotMediaValues();
+                    lines.splice(index, 1);
+                    renderLines();
+                    restoreMediaValues(mediaSnapshot);
+                    setStatus('info', 'Linea quitada de la grilla.');
+                });
+            }
+
+            if (missingClosingProductsTableBody) {
+                missingClosingProductsTableBody.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    if (target instanceof HTMLInputElement && target.classList.contains('js-stock-missing-product-check')) {
+                        return;
+                    }
+
+                    const row = target.closest('tr');
+                    const checkbox = row?.querySelector('.js-stock-missing-product-check');
+                    if (!(checkbox instanceof HTMLInputElement)) {
+                        return;
+                    }
+
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+
+                missingClosingProductsTableBody.addEventListener('change', function (event) {
+                    const target = event.target;
+                    if (!(target instanceof HTMLInputElement) || !target.classList.contains('js-stock-missing-product-check')) {
+                        return;
+                    }
+
+                    const itemId = String(target.getAttribute('data-stock-missing-product-id') || '');
+                    if (!itemId) {
+                        return;
+                    }
+
+                    if (target.checked) {
+                        selectedMissingClosingProducts.add(itemId);
+                    } else {
+                        selectedMissingClosingProducts.delete(itemId);
+                    }
+
+                    updateMissingClosingProductsCounters();
+                });
+            }
+
+            if (personLookupModal) {
+                personLookupModal.addEventListener('lookup:selected', function (event) {
+                    applySelectedSupplier(event.detail || {});
+                });
+            }
+
+            if (productLookupModal) {
+                productLookupModal.addEventListener('lookup:selected', function (event) {
+                    const payload = event.detail || {};
+                    applySelectedProduct(payload);
+                    if (codeInput) {
+                        codeInput.value = payload.code || '';
+                    }
+                    if (quantityInput && !quantityInput.value) {
+                        quantityInput.value = payload.weighable ? '' : (payload.averageWeight ?? '');
+                    }
+                    setLookupMessage('Producto seleccionado desde el modal.', false);
+                    setStatus('success', 'Producto seleccionado.');
+                });
+            }
+
+            if (clearSupplierButton) {
+                clearSupplierButton.addEventListener('click', function () {
+                    applySelectedSupplier({});
+                });
+            }
+
+            if (accumulatedModal) {
+                accumulatedModal.addEventListener('shown.bs.modal', renderAccumulated);
+            }
+
+            if (generateWeighingAdjustmentButton) {
+                generateWeighingAdjustmentButton.addEventListener('click', generateWeighingAdjustment);
+            }
+
+            if (weighingPurchaseModal) {
+                weighingPurchaseModal.addEventListener('shown.bs.modal', function () {
+                    resetWeighingPurchaseFilters();
+                    loadWeighingPurchases();
+                    if (weighingPurchaseSupplierSearch) {
+                        weighingPurchaseSupplierSearch.focus();
+                    }
+                });
+            }
+
+            if (linkedWeighingsModal) {
+                linkedWeighingsModal.addEventListener('shown.bs.modal', function () {
+                    resetLinkedWeighingsFilters();
+                    loadLinkedWeighings();
+                    if (linkedWeighingsSupplierSearch) {
+                        linkedWeighingsSupplierSearch.focus();
+                        linkedWeighingsSupplierSearch.select();
+                    }
+                });
+            }
+
+            if (weighingPurchaseSupplierSearch) {
+                weighingPurchaseSupplierSearch.addEventListener('input', loadWeighingPurchases);
+            }
+
+            if (weighingPurchaseFromDate) {
+                weighingPurchaseFromDate.addEventListener('change', loadWeighingPurchases);
+            }
+
+            if (weighingPurchaseToDate) {
+                weighingPurchaseToDate.addEventListener('change', loadWeighingPurchases);
+            }
+
+            if (weighingPurchaseResetFilters) {
+                weighingPurchaseResetFilters.addEventListener('click', function () {
+                    resetWeighingPurchaseFilters();
+                    loadWeighingPurchases();
+                });
+            }
+
+            if (linkedWeighingsSupplierSearch) {
+                linkedWeighingsSupplierSearch.addEventListener('input', loadLinkedWeighings);
+            }
+
+            if (linkedWeighingsFromDate) {
+                linkedWeighingsFromDate.addEventListener('change', loadLinkedWeighings);
+            }
+
+            if (linkedWeighingsToDate) {
+                linkedWeighingsToDate.addEventListener('change', loadLinkedWeighings);
+            }
+
+            if (linkedWeighingsResetFilters) {
+                linkedWeighingsResetFilters.addEventListener('click', function () {
+                    resetLinkedWeighingsFilters();
+                    loadLinkedWeighings();
+                });
+            }
+
+            if (weighingPurchaseTableBody) {
+                weighingPurchaseTableBody.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    const button = target.closest('[data-stock-select-weighing-purchase]');
+                    if (!button) {
+                        return;
+                    }
+
+                    const stockId = Number(button.getAttribute('data-stock-select-weighing-purchase') || 0);
+                    selectWeighingPurchase(stockId);
+                });
+            }
+
+            if (linkedWeighingsTableBody) {
+                linkedWeighingsTableBody.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    const button = target.closest('[data-stock-link-weighing]');
+                    if (!button) {
+                        return;
+                    }
+
+                    const stockId = Number(button.getAttribute('data-stock-link-weighing') || 0);
+                    linkWeighing(stockId);
+                });
+            }
+
+            if (linkedWeighingsInfo) {
+                linkedWeighingsInfo.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+
+                    const button = target.closest('[data-stock-unlink-weighing]');
+                    if (!button) {
+                        return;
+                    }
+
+                    const stockId = Number(button.getAttribute('data-stock-unlink-weighing') || 0);
+                    unlinkWeighing(stockId);
+                });
+            }
+
+            openWeighingPercentagesButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (!weighingPercentagesModal) {
+                        return;
+                    }
+
+                    const currentType = (typeSelect.value || '').trim().toUpperCase();
+                    if (currentType !== 'PESAJE CORTES') {
+                        setStatus('warning', 'Esta herramienta solo esta disponible para la accion Pesaje Cortes.');
+                        return;
+                    }
+
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(weighingPercentagesModal);
+                    modalInstance.show();
+                    loadWeighingPercentages();
+                });
+            });
+
+            if (missingClosingProductsSearch) {
+                missingClosingProductsSearch.addEventListener('input', renderMissingClosingProducts);
+            }
+
+            if (missingClosingProductsFilter) {
+                missingClosingProductsFilter.addEventListener('change', renderMissingClosingProducts);
+            }
+
+            if (missingClosingProductsSelectAll) {
+                missingClosingProductsSelectAll.addEventListener('change', function () {
+                    const filteredItems = getFilteredMissingClosingProducts();
+                    filteredItems.forEach(function (item) {
+                        const itemId = String(item.productId || 0);
+                        if (missingClosingProductsSelectAll.checked) {
+                            selectedMissingClosingProducts.add(itemId);
+                        } else {
+                            selectedMissingClosingProducts.delete(itemId);
+                        }
+                    });
+
+                    renderMissingClosingProducts();
+                });
+            }
+
+            if (addMissingClosingProductsWithStockButton) {
+                addMissingClosingProductsWithStockButton.addEventListener('click', function () {
+                    addMissingClosingProducts(true);
+                });
+            }
+
+            if (addMissingClosingProductsWithoutStockButton) {
+                addMissingClosingProductsWithoutStockButton.addEventListener('click', function () {
+                    addMissingClosingProducts(false);
+                });
+            }
+
+            if (missingClosingProductsModal) {
+                missingClosingProductsModal.addEventListener('shown.bs.modal', function () {
+                    loadMissingClosingProducts();
+                    if (missingClosingProductsSearch) {
+                        missingClosingProductsSearch.focus();
+                        missingClosingProductsSearch.select();
+                    }
+                });
+            }
+
+            renderLines();
+            renderLinkedWeighingsInfo();
+        })();
+    </script>
+}

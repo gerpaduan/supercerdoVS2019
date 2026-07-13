@@ -1,0 +1,126 @@
+@model PurchaseListPageViewModel
+@{
+    ViewData["Title"] = "Compras";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Compras NG</p>
+    <h1>Compras</h1>
+    <p class="lead-copy">
+        Esta etapa replica compras NG con consulta completa y una primera edicion conservadora para compras tipo Cortes y Media Res.
+    </p>
+</section>
+
+<section class="status-card">
+    @if (Model.CanCreatePurchase)
+    {
+        <div class="d-flex justify-content-end mb-3">
+            <a asp-controller="Purchases" asp-action="Edit" class="btn app-button">Nueva compra</a>
+        </div>
+    }
+
+    <form method="get" class="product-filters movement-filters">
+        <div>
+            <label for="branchId" class="form-label">Sucursal</label>
+            <select id="branchId" name="branchId" class="form-select">
+                <option value="0">Todas</option>
+                @foreach (var branch in Model.Branches)
+                {
+                    <option value="@branch.BranchId" selected="@(branch.BranchId == Model.BranchId)">@branch.BranchName</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="purchaseType" class="form-label">Tipo compra</label>
+            <select id="purchaseType" name="purchaseType" class="form-select">
+                <option value="Todos" selected="@(string.Equals(Model.PurchaseType, "Todos", StringComparison.OrdinalIgnoreCase))">Todos</option>
+                <option value="Cortes" selected="@(string.Equals(Model.PurchaseType, "Cortes", StringComparison.OrdinalIgnoreCase))">Cortes</option>
+                <option value="Media Res" selected="@(string.Equals(Model.PurchaseType, "Media Res", StringComparison.OrdinalIgnoreCase))">Media Res</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="dateFrom" class="form-label">Desde</label>
+            <input id="dateFrom" name="dateFrom" type="date" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div>
+            <label for="dateTo" class="form-label">Hasta</label>
+            <input id="dateTo" name="dateTo" type="date" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div>
+            <label for="searchText" class="form-label">Descripcion</label>
+            <input id="searchText" name="searchText" value="@Model.SearchText" class="form-control" placeholder="Proveedor, documento, observaciones..." />
+        </div>
+
+        <div class="product-filter-actions">
+            <button type="submit" class="btn app-button">Buscar</button>
+        </div>
+    </form>
+</section>
+
+<section class="detail-grid mt-3">
+    <article class="status-card">
+        <h2>Cant. medias</h2>
+        <p class="display-6 mb-0">@Model.TotalHalfCarcassCount</p>
+    </article>
+    <article class="status-card">
+        <h2>Total kg</h2>
+        <p class="display-6 mb-0">@Model.TotalKg.ToString("0.###")</p>
+    </article>
+    <article class="status-card">
+        <h2>Total $</h2>
+        <p class="display-6 mb-0">@Model.TotalAmount.ToString("0.00")</p>
+    </article>
+</section>
+
+<section class="status-card mt-3">
+    <div class="table-responsive">
+        <table class="table app-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Compra</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Sucursal</th>
+                    <th>Proveedor</th>
+                    <th>Nro remito</th>
+                    <th>Cant. medias</th>
+                    <th>Total kg</th>
+                    <th>Total $</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">No se encontraron compras para los filtros indicados.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.PurchaseId</td>
+                            <td>@item.PurchaseDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@item.PurchaseType</td>
+                            <td>@item.BranchName</td>
+                            <td>@item.SupplierName</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.ReceiptNumber) ? "-" : item.ReceiptNumber)</td>
+                            <td>@(item.HalfCarcassCount > 0 ? item.HalfCarcassCount : 0)</td>
+                            <td>@item.TotalKg.ToString("0.###")</td>
+                            <td>@item.TotalAmount.ToString("0.00")</td>
+                            <td>
+                                <a asp-controller="Purchases" asp-action="Detail" asp-route-id="@item.PurchaseId" class="app-inline-link">Ver detalle</a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

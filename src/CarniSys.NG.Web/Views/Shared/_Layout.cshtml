@@ -1,49 +1,165 @@
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var pageTitle = ViewData["Title"]?.ToString();
+
+    var navigationItems = new[]
+    {
+        new { Controller = "Home", Action = "Index", Label = "Inicio" },
+        new { Controller = "Permissions", Action = "Index", Label = "Permisos" },
+        new { Controller = "Products", Action = "Index", Label = "Productos" },
+        new { Controller = "ProductTypes", Action = "Index", Label = "Tipos Producto" },
+        new { Controller = "Brands", Action = "Index", Label = "Marcas" },
+        new { Controller = "GlobalCatalog", Action = "Index", Label = "Catalogo Global" },
+        new { Controller = "GlobalProductTypes", Action = "Index", Label = "Tipos Globales" },
+        new { Controller = "People", Action = "Index", Label = "Personas" },
+        new { Controller = "Purchases", Action = "Index", Label = "Compras" },
+        new { Controller = "Movements", Action = "Index", Label = "Movimientos" },
+        new { Controller = "Stock", Action = "Index", Label = "Stock" },
+        new { Controller = "Users", Action = "Index", Label = "Usuarios" }
+    };
+}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CarniSys NG</title>
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "CarniSys NG" : $"{pageTitle} - CarniSys NG")</title>
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem("carnisys-theme");
+                if (mode === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                }
+            } catch (e) { }
+        })();
+    </script>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CarniSys.NG.Web.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm app-navbar">
-            <div class="container-fluid">
-                <a class="navbar-brand app-brand" asp-area="" asp-controller="Home" asp-action="Index">CarniSys NG</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link app-link" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
-                        </li>
-                    </ul>
-                </div>
+<body class="app-body">
+    @if (isAuthenticated)
+    {
+        <div class="app-shell">
+            <aside class="app-sidebar">
+                <a class="app-sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="app-sidebar-brand-mark" aria-hidden="true">C</span>
+                    <span class="app-sidebar-brand-text">CarniSys</span>
+                </a>
+
+                <nav class="app-sidebar-nav" aria-label="Principal">
+                    @foreach (var item in navigationItems)
+                    {
+                        var isActive = string.Equals(currentController, item.Controller, StringComparison.OrdinalIgnoreCase);
+                        <a class="app-sidebar-link @(isActive ? "is-active" : string.Empty)"
+                           asp-area=""
+                           asp-controller="@item.Controller"
+                           asp-action="@item.Action">
+                            @item.Label
+                        </a>
+                    }
+                </nav>
+            </aside>
+
+            <div class="app-main-shell">
+                <header class="app-topbar">
+                    <div class="app-topbar-heading">
+                        <div class="app-topbar-eyebrow">CarniSys Next Generation</div>
+                        <h1 class="app-topbar-title">@(string.IsNullOrWhiteSpace(pageTitle) ? "Panel" : pageTitle)</h1>
+                    </div>
+
+                    <div class="app-session">
+                        <button type="button"
+                                id="btnToggleTheme"
+                                class="btn app-theme-button"
+                                title="Activar modo oscuro"
+                                aria-label="Cambiar tema">
+                            <span id="icoTheme" aria-hidden="true">◐</span>
+                        </button>
+                        <span class="app-session-label">@User.Identity?.Name</span>
+                        <form asp-controller="Access" asp-action="Logout" method="post" class="app-session-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm app-session-button">Salir</button>
+                        </form>
+                    </div>
+                </header>
+
+                <main class="app-page-content">
+                    <div class="container-fluid px-3 px-lg-4 py-4">
+                        @RenderBody()
+                    </div>
+                </main>
+
+                <footer class="footer-shell">
+                    <div class="container-fluid px-3 px-lg-4">
+                        CarniSys NG - base alineada con LayoutBase
+                    </div>
+                </footer>
             </div>
-        </nav>
-    </header>
-
-    <div class="container py-4">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="footer-shell">
-        <div class="container">
-            CarniSys NG · base inicial de migración
         </div>
-    </footer>
+    }
+    else
+    {
+        <div class="app-auth-shell">
+            <header class="app-auth-header">
+                <a class="app-auth-brand" asp-area="" asp-controller="Access" asp-action="Login">CarniSys</a>
+            </header>
+
+            <main class="app-auth-main">
+                <div class="container py-4">
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script>
+        (function () {
+            const storageKey = "carnisys-theme";
+
+            function setTheme(mode) {
+                const isDark = mode === "dark";
+                document.documentElement.classList.toggle("dark-mode", isDark);
+                document.body.classList.toggle("dark-mode", isDark);
+
+                var btn = document.getElementById("btnToggleTheme");
+                var ico = document.getElementById("icoTheme");
+                if (btn && ico) {
+                    ico.textContent = isDark ? "☀" : "◐";
+                    btn.title = isDark ? "Activar modo claro" : "Activar modo oscuro";
+                    btn.setAttribute("aria-label", btn.title);
+                }
+
+                try {
+                    localStorage.setItem(storageKey, mode);
+                    localStorage.setItem("darkMode", isDark ? "true" : "false");
+                } catch (e) { }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                var saved = "light";
+                try {
+                    saved = localStorage.getItem(storageKey) || (localStorage.getItem("darkMode") === "true" ? "dark" : "light");
+                } catch (e) { }
+
+                setTheme(saved);
+
+                var btn = document.getElementById("btnToggleTheme");
+                if (btn) {
+                    btn.addEventListener("click", function () {
+                        var current = document.body.classList.contains("dark-mode") ? "dark" : "light";
+                        setTheme(current === "dark" ? "light" : "dark");
+                    });
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

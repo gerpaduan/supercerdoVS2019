@@ -1,0 +1,69 @@
+@model ProductDetailPageViewModel
+@{
+    ViewData["Title"] = "Detalle de producto";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Productos NG</p>
+    <h1>@Model.Item.Description</h1>
+    <p class="lead-copy">
+        Ficha de producto en solo lectura, resuelta desde la base actual y protegida por permiso real de consulta.
+    </p>
+    @if (Model.CanEdit)
+    {
+        <p class="mt-3 mb-0">
+            <a asp-controller="ProductEdit" asp-action="Index" asp-route-id="@Model.Item.ProductId" class="btn app-button">Editar campos basicos</a>
+        </p>
+    }
+</section>
+
+@if (TempData["FlashSuccess"] is string successMessage && !string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success status-card mt-3" role="alert">
+        @successMessage
+    </div>
+}
+
+<section class="detail-grid">
+    <article class="status-card">
+        <h2>Identificacion</h2>
+        <p><strong>Codigo:</strong> @Model.Item.Code</p>
+        <p><strong>Tipo:</strong> @Model.Item.Type</p>
+        <p><strong>Marca:</strong> @(string.IsNullOrWhiteSpace(Model.Item.BrandName) ? "-" : Model.Item.BrandName)</p>
+        <p><strong>Empresa:</strong> @Model.Item.CompanyId</p>
+    </article>
+
+    <article class="status-card">
+        <h2>Comercial</h2>
+        <p><strong>Precio Kg:</strong> @Model.Item.PricePerKilogram.ToString("0.00")</p>
+        <p><strong>Pesable:</strong> @(Model.Item.Weighable ? "Si" : "No")</p>
+        <p><strong>Promedio:</strong> @Model.Item.AverageWeight.ToString("0.00")</p>
+        <p><strong>IVA:</strong> @Model.Item.VatRate.ToString("0.##")%</p>
+    </article>
+
+    <article class="status-card">
+        <h2>Operacion</h2>
+        <p><strong>Habilitado:</strong> @(Model.Item.Enabled ? "Si" : "No")</p>
+        <p><strong>En cierre stock:</strong> @(Model.Item.IncludedInStockClosing ? "Si" : "No")</p>
+        <p><strong>Ingreso rapido elaborado:</strong> @(Model.Item.QuickElaboratedEntry ? "Si" : "No")</p>
+        <p><strong>Punto stock:</strong> @Model.Item.StockPoint</p>
+    </article>
+
+    <article class="status-card">
+        <h2>Estructura</h2>
+        <p><strong>Modo:</strong> @Model.Item.CutMode</p>
+        <p><strong>Corte maestro:</strong> @(string.IsNullOrWhiteSpace(Model.Item.MasterProductName) ? "-" : Model.Item.MasterProductName)</p>
+        <p><strong>Porcentaje:</strong> @Model.Item.Percentage.ToString("0.##")</p>
+        <p><strong>Desperdicio:</strong> @Model.Item.BonePercentage.ToString("0.##")</p>
+        <p><strong>Presentacion:</strong> @(Model.Item.PresentationUnits.HasValue ? Model.Item.PresentationUnits.Value.ToString("0.##") : "-")</p>
+        <p><strong>Independiente:</strong> @(Model.Item.Independent ? "Si" : "No")</p>
+        <p><strong>Nivel:</strong> @Model.Item.Level</p>
+    </article>
+
+    <article class="status-card">
+        <h2>Trazabilidad</h2>
+        <p><strong>Creado:</strong> @Model.Item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+        <p><strong>Actualizado:</strong> @((Model.Item.UpdatedAt ?? Model.Item.CreatedAt).ToString("dd/MM/yyyy HH:mm"))</p>
+        <p><strong>Id producto:</strong> @Model.Item.ProductId</p>
+    </article>
+</section>

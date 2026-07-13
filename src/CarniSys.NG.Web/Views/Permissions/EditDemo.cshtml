@@ -1,0 +1,19 @@
+@model CarniSys.NG.Domain.Authentication.AuthenticatedUser
+@{
+    ViewData["Title"] = "Permiso de edicion";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Permisos NG</p>
+    <h1>Edicion habilitada</h1>
+    <p class="lead-copy">
+        Esta vista solo abre si el usuario tiene permiso de edicion para <code>formAddOrEditStock</code> sobre sus propios registros en fecha actual.
+    </p>
+</section>
+
+<section class="status-card">
+    <h2>Contexto resuelto</h2>
+    <p><strong>Usuario:</strong> @Model.DisplayName</p>
+    <p><strong>Admin:</strong> @(Model.IsAdministrator ? "Si" : "No")</p>
+    <p><strong>Cantidad de grants:</strong> @Model.Permissions.Count</p>
+</section>

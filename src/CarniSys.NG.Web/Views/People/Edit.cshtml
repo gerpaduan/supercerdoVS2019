@@ -1,0 +1,256 @@
+@model PersonEditViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? "Editar persona" : "Nueva persona";
+    var protectedFieldsReadOnly = Model.IsEdit && !Model.CanEditProtectedFields;
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Personas NG</p>
+    <h1>@(Model.IsEdit ? "Editar persona" : "Nueva persona")</h1>
+    <p class="lead-copy">
+        Esta pantalla replica el flujo operativo actual de personas: registros existentes abren en solo lectura, los campos protegidos quedan bloqueados si la persona ya tiene movimientos y la consulta AFIP/ARCA completa automaticamente los datos cuando la empresa tiene certificado configurado.
+    </p>
+</section>
+
+<section class="status-card">
+    <form method="post" class="product-edit-form" id="person-form" novalidate>
+        @Html.AntiForgeryToken()
+        <input asp-for="PersonId" type="hidden" />
+        <input asp-for="IsEdit" type="hidden" />
+        <input asp-for="IsInitiallyReadOnly" type="hidden" />
+        <input asp-for="HasMovements" type="hidden" />
+        <input asp-for="IsAdministrator" type="hidden" />
+        <input asp-for="CanManageCurrentAccount" type="hidden" />
+        <input asp-for="CanEditProtectedFields" type="hidden" />
+        <input asp-for="DiscountText" type="hidden" />
+        @if (protectedFieldsReadOnly)
+        {
+            <input asp-for="VatId" type="hidden" />
+        }
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.RestrictionMessage))
+        {
+            <div class="alert @(Model.IsAdministrator ? "alert-info" : "alert-warning")" role="alert">
+                @Model.RestrictionMessage
+            </div>
+        }
+
+        <div id="afip-status" class="alert d-none" role="alert"></div>
+
+        <div class="person-grid">
+            <div>
+                <label class="form-label">ID</label>
+                <input class="form-control" value="@(Model.PersonId > 0 ? Model.PersonId.ToString() : "Nuevo")" readonly />
+            </div>
+
+            <div>
+                <label asp-for="TaxId" class="form-label">CUIT</label>
+                <div class="input-group">
+                    <input asp-for="TaxId" class="form-control js-person-input @(protectedFieldsReadOnly ? "js-protected-field" : string.Empty)" maxlength="20" autocomplete="off" placeholder="00-00000000-0" />
+                    <button type="button" class="btn btn-outline-primary js-person-input" id="afip-lookup-button" title="Buscar en AFIP/ARCA">Buscar</button>
+                </div>
+                <span asp-validation-for="TaxId" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="Identification" class="form-label">Identificacion</label>
+                <input asp-for="Identification" class="form-control js-person-input @(protectedFieldsReadOnly ? "js-protected-field" : string.Empty)" maxlength="150" autocomplete="off" />
+                <span asp-validation-for="Identification" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="BusinessName" class="form-label">Razon social / nombre</label>
+                <input asp-for="BusinessName" class="form-control js-person-input @(protectedFieldsReadOnly ? "js-protected-field" : string.Empty)" maxlength="200" autocomplete="off" />
+                <span asp-validation-for="BusinessName" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="VatId" class="form-label">Condicion frente al IVA</label>
+                <select asp-for="VatId" asp-items="Model.VatOptions" class="form-select js-person-input @(protectedFieldsReadOnly ? "js-protected-field-select" : string.Empty)" id="VatId">
+                    <option value="">Seleccionar IVA</option>
+                </select>
+                <span asp-validation-for="VatId" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="Phone" class="form-label">Telefono</label>
+                <input asp-for="Phone" class="form-control js-person-input" maxlength="100" autocomplete="off" />
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" class="form-control js-person-input" maxlength="200" autocomplete="off" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="Address" class="form-label">Domicilio</label>
+                <input asp-for="Address" class="form-control js-person-input" maxlength="200" autocomplete="off" />
+                <span asp-validation-for="Address" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="City" class="form-label">Ciudad</label>
+                <input asp-for="City" class="form-control js-person-input" maxlength="150" autocomplete="off" />
+                <span asp-validation-for="City" class="text-danger small"></span>
+            </div>
+        </div>
+
+        @if (Model.CanManageCurrentAccount)
+        {
+            <label class="toggle-row mt-3">
+                <input asp-for="HasCurrentAccount" class="form-check-input js-person-input" />
+                <span>Cuenta corriente</span>
+            </label>
+        }
+
+        <div class="mt-3">
+            <label asp-for="Notes" class="form-label">Otros datos</label>
+            <textarea asp-for="Notes" class="form-control js-person-input" rows="4" maxlength="4000"></textarea>
+            <span asp-validation-for="Notes" class="text-danger small"></span>
+        </div>
+
+        <div class="product-edit-actions">
+            @if (Model.IsEdit)
+            {
+                <button type="button" class="btn app-button" id="enable-edit-button">Modificar</button>
+            }
+
+            <button type="submit" class="btn app-button @(Model.IsEdit ? "d-none" : string.Empty)" id="save-button">Guardar persona</button>
+            <a asp-controller="People" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const form = document.getElementById("person-form");
+            const enableEditButton = document.getElementById("enable-edit-button");
+            const saveButton = document.getElementById("save-button");
+            const lookupButton = document.getElementById("afip-lookup-button");
+            const statusBox = document.getElementById("afip-status");
+            const initialReadOnly = @Model.IsInitiallyReadOnly.ToString().ToLowerInvariant();
+            const canEditProtectedFields = @Model.CanEditProtectedFields.ToString().ToLowerInvariant();
+            const taxIdInput = document.getElementById("TaxId");
+            const identificationInput = document.getElementById("Identification");
+            const businessNameInput = document.getElementById("BusinessName");
+            const addressInput = document.getElementById("Address");
+            const cityInput = document.getElementById("City");
+            const vatSelect = document.getElementById("VatId");
+
+            function isTextElement(element) {
+                return element.tagName === "INPUT" || element.tagName === "TEXTAREA";
+            }
+
+            function setReadOnlyState(readOnly) {
+                form.querySelectorAll(".js-person-input").forEach(function (element) {
+                    const isProtectedText = element.classList.contains("js-protected-field");
+                    const isProtectedSelect = element.classList.contains("js-protected-field-select");
+                    const mustRemainBlocked = (isProtectedText || isProtectedSelect) && !canEditProtectedFields;
+
+                    if (isTextElement(element)) {
+                        element.readOnly = readOnly || mustRemainBlocked;
+                    } else {
+                        element.disabled = readOnly || mustRemainBlocked;
+                    }
+                });
+
+                if (saveButton) {
+                    saveButton.classList.toggle("d-none", readOnly);
+                    saveButton.disabled = readOnly;
+                }
+
+                if (enableEditButton) {
+                    enableEditButton.classList.toggle("d-none", !readOnly);
+                }
+            }
+
+            function setStatus(type, message) {
+                statusBox.className = "alert";
+                if (!message) {
+                    statusBox.classList.add("d-none");
+                    statusBox.textContent = "";
+                    return;
+                }
+
+                statusBox.classList.remove("d-none");
+                statusBox.classList.add(type === "success" ? "alert-success" : type === "info" ? "alert-info" : type === "warning" ? "alert-warning" : "alert-danger");
+                statusBox.textContent = message;
+            }
+
+            function normalizeTaxId(value) {
+                return (value || "").replace(/\D/g, "");
+            }
+
+            function applyAfipResponse(payload) {
+                if (payload.identificacion) {
+                    identificationInput.value = payload.identificacion;
+                }
+                if (payload.razonSocial) {
+                    businessNameInput.value = payload.razonSocial;
+                }
+                if (payload.domicilio) {
+                    addressInput.value = payload.domicilio;
+                }
+                if (payload.ciudad) {
+                    cityInput.value = payload.ciudad;
+                }
+                if (payload.idIva && vatSelect && !vatSelect.disabled) {
+                    vatSelect.value = String(payload.idIva);
+                }
+            }
+
+            async function lookupAfip() {
+                const normalizedTaxId = normalizeTaxId(taxIdInput.value);
+                if (normalizedTaxId.length !== 11) {
+                    setStatus("warning", "Ingrese un CUIT valido de 11 digitos.");
+                    return;
+                }
+
+                lookupButton.disabled = true;
+                setStatus("info", "Consultando AFIP/ARCA...");
+
+                try {
+                    const response = await fetch(`@Url.Action("AfipLookup", "People")?taxId=${encodeURIComponent(normalizedTaxId)}`, {
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    });
+                    const payload = await response.json();
+
+                    if (!payload.ok) {
+                        setStatus(payload.tipo || "error", payload.msg || "No se pudieron recuperar los datos desde AFIP/ARCA.");
+                        return;
+                    }
+
+                    applyAfipResponse(payload);
+                    setStatus(payload.tipo || "success", payload.msg || "Datos recuperados desde AFIP/ARCA.");
+                } catch {
+                    setStatus("error", "No se pudieron recuperar los datos desde AFIP/ARCA.");
+                } finally {
+                    lookupButton.disabled = false;
+                }
+            }
+
+            if (enableEditButton) {
+                enableEditButton.addEventListener("click", function () {
+                    setReadOnlyState(false);
+                    taxIdInput.focus();
+                    taxIdInput.select();
+                });
+            }
+
+            lookupButton.addEventListener("click", lookupAfip);
+            taxIdInput.addEventListener("blur", function () {
+                if (!taxIdInput.readOnly && normalizeTaxId(taxIdInput.value).length === 11) {
+                    lookupAfip();
+                }
+            });
+
+            setReadOnlyState(initialReadOnly);
+        })();
+    </script>
+}

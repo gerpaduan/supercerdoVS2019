@@ -1,41 +1,51 @@
+@model HomeIndexViewModel
 @{
     ViewData["Title"] = "Base inicial";
 }
 
 <section class="hero-panel">
     <p class="eyebrow">CarniSys Next Generation</p>
-    <h1>Base de solución creada dentro del repositorio actual</h1>
+    <h1>Base autenticada con permisos reutilizables</h1>
     <p class="lead-copy">
-        Esta aplicación queda preparada para comenzar la migración por módulos, tomando como referencia funcional
-        el sistema MVC actual y respetando la convivencia con WinForms durante la transición.
+        La shell NG ya muestra el contexto real de usuario, empresa y sucursal, y puede proteger pantallas por permiso legacy sin depender del MVC actual.
     </p>
 </section>
 
 <section class="status-grid">
     <article class="status-card">
-        <h2>Capas disponibles</h2>
-        <ul>
-            <li>Domain</li>
-            <li>Application</li>
-            <li>Infrastructure</li>
-            <li>Web</li>
-            <li>Integrations.AFIP</li>
-            <li>Integrations.Devices</li>
-        </ul>
+        <h2>Sesion activa</h2>
+        <p><strong>Usuario:</strong> @Model.UserName</p>
+        <p><strong>Login:</strong> @Model.Login</p>
+        <p><strong>Empresa:</strong> @Model.CompanyName</p>
+        <p><strong>Sucursal:</strong> @Model.BranchName</p>
     </article>
 
     <article class="status-card">
-        <h2>Próximo punto de arranque</h2>
+        <h2>Flujos de prueba</h2>
         <p>
-            Autenticación, empresa activa y permisos como base transversal del proyecto.
+            <a asp-controller="Permissions" asp-action="Index" class="app-inline-link">Pantalla con permiso de lectura</a>
+        </p>
+        <p>
+            <a asp-controller="Permissions" asp-action="EditDemo" class="app-inline-link">Pantalla con permiso de edicion</a>
         </p>
     </article>
+</section>
 
-    <article class="status-card">
-        <h2>Fuente de verdad funcional</h2>
-        <p>
-            El comportamiento actual de MVC sigue siendo la referencia principal para no romper UX, permisos ni
-            validaciones operativas.
-        </p>
-    </article>
+<section class="status-card mt-3">
+    <h2>Resumen rapido de permisos</h2>
+    <div class="permission-grid">
+        @foreach (var probe in Model.PermissionProbes)
+        {
+            <article class="permission-card">
+                <h3>@probe.Label</h3>
+                <p class="permission-resource">@probe.Resource</p>
+                <p class="permission-state @(probe.CanRead ? "is-allowed" : "is-denied")">
+                    Lectura: @(probe.CanRead ? "Permitida" : "Denegada")
+                </p>
+                <p class="permission-state @(probe.CanEdit ? "is-allowed" : "is-denied")">
+                    Edicion: @(probe.CanEdit ? "Permitida" : "Denegada")
+                </p>
+            </article>
+        }
+    </div>
 </section>

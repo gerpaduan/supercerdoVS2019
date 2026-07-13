@@ -1,0 +1,30 @@
+@model CarniSys.NG.Application.People.BrandDetailItem
+@{
+    ViewData["Title"] = "Detalle de marca";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Productos NG</p>
+    <h1>@Model.BrandName</h1>
+    <p class="lead-copy">
+        Ficha read-only de marca dentro del modulo de productos. La edicion y las advertencias de marcas parecidas siguen fuera de alcance por ahora.
+    </p>
+</section>
+
+<section class="detail-grid">
+    <article class="status-card">
+        <h2>Marca</h2>
+        <p><strong>Empresa:</strong> @(Model.CompanyId == 0 ? "Global" : Model.CompanyId.ToString())</p>
+        <p><strong>Nombre:</strong> @Model.BrandName</p>
+        <p><strong>Notas:</strong> @(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</p>
+    </article>
+
+    <article class="status-card">
+        <h2>Propietario</h2>
+        <p><strong>Nombre:</strong> @(string.IsNullOrWhiteSpace(Model.OwnerName) ? "-" : Model.OwnerName)</p>
+        <p><strong>CUIT:</strong> @(string.IsNullOrWhiteSpace(Model.OwnerTaxId) ? "-" : Model.OwnerTaxId)</p>
+        <p><strong>Telefono:</strong> @(string.IsNullOrWhiteSpace(Model.OwnerPhone) ? "-" : Model.OwnerPhone)</p>
+        <p><strong>Domicilio:</strong> @(string.IsNullOrWhiteSpace(Model.OwnerAddress) ? "-" : Model.OwnerAddress)</p>
+        <p><strong>Ciudad:</strong> @(string.IsNullOrWhiteSpace(Model.OwnerCity) ? "-" : Model.OwnerCity)</p>
+    </article>
+</section>

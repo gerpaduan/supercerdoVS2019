@@ -1,0 +1,582 @@
+@using System.Text.Json
+@model MovementEditViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? "Editar movimiento" : "Nuevo movimiento";
+    var quickProductsJson = JsonSerializer.Serialize(Model.QuickProducts.Select(x => new
+    {
+        productId = x.ProductId,
+        code = x.Code,
+        description = x.Description,
+        type = x.Type,
+        weighable = x.Weighable,
+        averageWeight = x.AverageWeight
+    }));
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Movimientos NG</p>
+    <h1>@(Model.IsEdit ? "Editar movimiento" : "Nuevo movimiento")</h1>
+    <p class="lead-copy">
+        Esta pantalla replica la carga operativa del movimiento con foco en ingreso rapido por codigo: precarga productos frecuentes de codigo corto, resuelve al instante los del cache y usa busqueda diferida o `Enter` solo como respaldo.
+    </p>
+</section>
+
+<section class="status-card">
+    <form method="post" id="movement-form" class="product-edit-form" novalidate>
+        @Html.AntiForgeryToken()
+        <input asp-for="MovementId" type="hidden" />
+        <input asp-for="IsEdit" type="hidden" />
+        <input asp-for="IsInitiallyReadOnly" type="hidden" />
+        <input asp-for="CanEnableEditing" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div class="movement-edit-grid">
+            <div>
+                <label asp-for="OriginBranchId" class="form-label">Sucursal origen</label>
+                <select asp-for="OriginBranchId" class="form-select js-movement-input">
+                    <option value="0">Seleccione...</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.BranchId">@branch.BranchName</option>
+                    }
+                </select>
+                <span asp-validation-for="OriginBranchId" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="DestinationBranchId" class="form-label">Sucursal destino</label>
+                <select asp-for="DestinationBranchId" class="form-select js-movement-input">
+                    <option value="0">Seleccione...</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.BranchId">@branch.BranchName</option>
+                    }
+                </select>
+                <span asp-validation-for="DestinationBranchId" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="MovementDate" class="form-label">Fecha</label>
+                <input asp-for="MovementDate" type="datetime-local" class="form-control js-movement-input" value="@Model.MovementDate.ToString("yyyy-MM-ddTHH:mm")" />
+            </div>
+        </div>
+
+        <hr />
+
+        <section class="movement-line-editor">
+            <div class="movement-line-header">
+                <h2>Agregar producto</h2>
+                <div class="toggle-row compact-toggle">
+                    <input id="line-scale-weight" class="form-check-input js-movement-input" type="checkbox" checked />
+                    <span>Balanza</span>
+                </div>
+            </div>
+
+            <div id="movement-product-status" class="alert d-none" role="alert"></div>
+
+            <div class="movement-line-entry">
+                <div>
+                    <label for="line-code" class="form-label">Codigo</label>
+                    <input id="line-code" class="form-control js-movement-input" inputmode="numeric" autocomplete="off" />
+                </div>
+
+                <div class="movement-product-column">
+                    <label for="line-product-name" class="form-label">Producto</label>
+                    <div class="input-group">
+                        <input id="line-product-name" class="form-control" readonly />
+                        <button type="button" class="btn btn-outline-primary js-movement-input" data-bs-toggle="modal" data-bs-target="#movementProductLookupModal">Buscar</button>
+                    </div>
+                    <input id="line-product-id" type="hidden" />
+                    <input id="line-product-type" type="hidden" />
+                    <input id="line-product-weighable" type="hidden" />
+                    <input id="line-product-average-weight" type="hidden" />
+                </div>
+
+                <div>
+                    <label for="line-units" class="form-label">Cant.Un.</label>
+                    <input id="line-units" class="form-control js-movement-input" type="number" min="0" step="1" value="0" />
+                </div>
+
+                <div>
+                    <label for="line-weight-kg" class="form-label">Kgs.</label>
+                    <input id="line-weight-kg" class="form-control js-movement-input" inputmode="decimal" autocomplete="off" value="" />
+                </div>
+
+                <div class="movement-entry-action">
+                    <button type="button" class="btn app-button js-movement-input" id="add-line-button">Agregar</button>
+                </div>
+            </div>
+
+            <label class="toggle-row mt-3">
+                <input id="line-allow-entry" class="form-check-input js-movement-input" type="checkbox" />
+                <span>Permitir ingreso</span>
+            </label>
+        </section>
+
+        <section class="status-card mt-3 movement-lines-card">
+            <div class="table-responsive">
+                <table class="table app-table align-middle mb-0" id="movement-lines-table">
+                    <thead>
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Producto</th>
+                            <th>Cant.Un.</th>
+                            <th>Kilos</th>
+                            <th>Balanza</th>
+                            <th>Permitir ingreso</th>
+                            <th>Accion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Lines.Count == 0)
+                        {
+                            <tr class="movement-lines-empty">
+                                <td colspan="7" class="text-center text-muted py-4">Todavia no hay productos agregados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @for (var index = 0; index < Model.Lines.Count; index++)
+                            {
+                                <tr class="movement-line-row">
+                                    <td>
+                                        @Model.Lines[index].Code
+                                        <input asp-for="Lines[index].Code" type="hidden" />
+                                        <input asp-for="Lines[index].ProductId" type="hidden" />
+                                        <input asp-for="Lines[index].ProductName" type="hidden" />
+                                        <input asp-for="Lines[index].ProductType" type="hidden" />
+                                        <input asp-for="Lines[index].Weighable" type="hidden" />
+                                        <input asp-for="Lines[index].AverageWeight" type="hidden" />
+                                    </td>
+                                    <td>@Model.Lines[index].ProductName</td>
+                                    <td>
+                                        @Model.Lines[index].QuantityUnits
+                                        <input asp-for="Lines[index].QuantityUnits" type="hidden" />
+                                    </td>
+                                    <td>
+                                        @Model.Lines[index].QuantityWeightKg.ToString("0.###")
+                                        <input asp-for="Lines[index].QuantityWeightKg" type="hidden" />
+                                    </td>
+                                    <td>
+                                        @(Model.Lines[index].ScaleWeight ? "Si" : "No")
+                                        <input asp-for="Lines[index].ScaleWeight" type="hidden" />
+                                    </td>
+                                    <td>
+                                        @(Model.Lines[index].AllowEntry ? "Si" : "No")
+                                        <input asp-for="Lines[index].AllowEntry" type="hidden" />
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-danger btn-sm movement-remove-line">Quitar</button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="status-card mt-3">
+            <div class="movement-summary-grid">
+                <div>
+                    <span class="text-muted">Total items</span>
+                    <strong id="summary-items">0</strong>
+                </div>
+                <div>
+                    <span class="text-muted">Total unidades</span>
+                    <strong id="summary-units">0</strong>
+                </div>
+                <div>
+                    <span class="text-muted">Total kilos</span>
+                    <strong id="summary-weight">0.000</strong>
+                </div>
+                <div>
+                    <span class="text-muted">Usuario</span>
+                    <strong>@Model.UserDisplayName</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="status-card mt-3">
+            <label asp-for="Notes" class="form-label">Observaciones</label>
+            <textarea asp-for="Notes" class="form-control js-movement-input" rows="3" maxlength="250"></textarea>
+        </section>
+
+        @if (Model.IsEdit)
+        {
+            <section class="status-card mt-3">
+                <div class="movement-summary-grid">
+                    <div>
+                        <span class="text-muted">Movimiento origen</span>
+                        <strong>@Model.OriginMovementReference</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted">Movimiento destino</span>
+                        <strong>@Model.DestinationMovementReference</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted">Creado</span>
+                        <strong>@Model.CreatedAtText</strong>
+                        <span>@Model.CreatedByName</span>
+                    </div>
+                    <div>
+                        <span class="text-muted">Actualizado</span>
+                        <strong>@Model.UpdatedAtText</strong>
+                        <span>@Model.UpdatedByName</span>
+                    </div>
+                </div>
+            </section>
+        }
+
+        <div class="product-edit-actions">
+            @if (Model.IsEdit)
+            {
+                <button type="button" class="btn app-button" id="enable-edit-button" @(Model.CanEnableEditing ? null : "disabled")>Modificar</button>
+            }
+            <button type="submit" class="btn app-button @(Model.IsEdit ? "d-none" : string.Empty)" id="save-movement-button">Guardar movimiento</button>
+            <a asp-controller="Movements" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+@await Html.PartialAsync("_ProductLookupModal", new ProductLookupModalViewModel
+{
+    ModalId = "movementProductLookupModal",
+    Title = "Buscar producto para movimiento",
+    SearchUrl = Url.Action("Lookup", "Products") ?? string.Empty,
+    ShowPrice = false,
+    ShowType = true
+})
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const productLookupModal = document.getElementById("movementProductLookupModal");
+            const form = document.getElementById("movement-form");
+            const tableBody = document.querySelector("#movement-lines-table tbody");
+            const emptyRowSelector = ".movement-lines-empty";
+            const enableEditButton = document.getElementById("enable-edit-button");
+            const saveButton = document.getElementById("save-movement-button");
+            const statusBox = document.getElementById("movement-product-status");
+            const codeInput = document.getElementById("line-code");
+            const productIdInput = document.getElementById("line-product-id");
+            const productNameInput = document.getElementById("line-product-name");
+            const productTypeInput = document.getElementById("line-product-type");
+            const productWeighableInput = document.getElementById("line-product-weighable");
+            const productAverageWeightInput = document.getElementById("line-product-average-weight");
+            const unitsInput = document.getElementById("line-units");
+            const weightInput = document.getElementById("line-weight-kg");
+            const scaleWeightInput = document.getElementById("line-scale-weight");
+            const allowEntryInput = document.getElementById("line-allow-entry");
+            const addLineButton = document.getElementById("add-line-button");
+            const initialReadOnly = @Model.IsInitiallyReadOnly.ToString().ToLowerInvariant();
+            const quickProducts = @Html.Raw(quickProductsJson);
+            const quickProductMap = new Map(quickProducts.map(x => [String(x.code), x]));
+            const productLookupUrl = "@Url.Action("ProductByCode", "Movements")";
+            let searchTimer = null;
+
+            function setStatus(type, message) {
+                statusBox.className = "alert";
+                if (!message) {
+                    statusBox.classList.add("d-none");
+                    statusBox.textContent = "";
+                    return;
+                }
+
+                statusBox.classList.remove("d-none");
+                statusBox.classList.add(type === "success" ? "alert-success" : type === "info" ? "alert-info" : type === "warning" ? "alert-warning" : "alert-danger");
+                statusBox.textContent = message;
+            }
+
+            function normalizeCode(value) {
+                return (value || "").replace(/\D/g, "");
+            }
+
+            function setReadOnlyState(readOnly) {
+                form.querySelectorAll(".js-movement-input").forEach(function (element) {
+                    if (element.tagName === "INPUT" || element.tagName === "TEXTAREA") {
+                        if (element.type === "checkbox") {
+                            element.disabled = readOnly;
+                        } else {
+                            element.readOnly = readOnly;
+                        }
+                    } else {
+                        element.disabled = readOnly;
+                    }
+                });
+
+                if (saveButton) {
+                    saveButton.classList.toggle("d-none", readOnly);
+                    saveButton.disabled = readOnly;
+                }
+
+                if (enableEditButton) {
+                    enableEditButton.classList.toggle("d-none", !readOnly);
+                }
+            }
+
+            function clearSelectedProduct(message) {
+                productIdInput.value = "";
+                productNameInput.value = message || "";
+                productTypeInput.value = "";
+                productWeighableInput.value = "";
+                productAverageWeightInput.value = "";
+            }
+
+            function applySelectedProduct(product) {
+                productIdInput.value = product.productId;
+                codeInput.value = product.code;
+                productNameInput.value = product.description;
+                productTypeInput.value = product.type || "";
+                productWeighableInput.value = product.weighable ? "true" : "false";
+                productAverageWeightInput.value = product.averageWeight ?? 0;
+            }
+
+            async function resolveProductByCode(code, focusOnSuccess) {
+                const normalizedCode = normalizeCode(code);
+                if (!normalizedCode) {
+                    clearSelectedProduct("");
+                    setStatus("", "");
+                    return false;
+                }
+
+                if (quickProductMap.has(normalizedCode)) {
+                    applySelectedProduct(quickProductMap.get(normalizedCode));
+                    setStatus("success", "Producto encontrado en cache local.");
+                    if (focusOnSuccess) {
+                        weightInput.focus();
+                        weightInput.select();
+                    }
+                    return true;
+                }
+
+                setStatus("info", "Buscando producto...");
+
+                try {
+                    const response = await fetch(`${productLookupUrl}?code=${encodeURIComponent(normalizedCode)}`, {
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    });
+                    const payload = await response.json();
+                    if (!payload.ok) {
+                        clearSelectedProduct(payload.message || "No existe un producto con ese codigo.");
+                        setStatus("warning", payload.message || "No existe un producto con ese codigo.");
+                        codeInput.focus();
+                        codeInput.select();
+                        return false;
+                    }
+
+                    applySelectedProduct(payload);
+                    setStatus("success", "Producto encontrado.");
+                    if (focusOnSuccess) {
+                        weightInput.focus();
+                        weightInput.select();
+                    }
+                    return true;
+                } catch {
+                    clearSelectedProduct("No fue posible buscar el producto.");
+                    setStatus("error", "No fue posible buscar el producto.");
+                    return false;
+                }
+            }
+
+            function queueLookup() {
+                window.clearTimeout(searchTimer);
+                const normalizedCode = normalizeCode(codeInput.value);
+                if (!normalizedCode) {
+                    clearSelectedProduct("");
+                    setStatus("", "");
+                    return;
+                }
+
+                searchTimer = window.setTimeout(function () {
+                    resolveProductByCode(normalizedCode, false);
+                }, 1500);
+            }
+
+            function parseDecimal(value) {
+                const normalized = String(value || "").trim().replace(",", ".");
+                const parsed = Number(normalized);
+                return Number.isFinite(parsed) ? parsed : 0;
+            }
+
+            function recalculateSummary() {
+                const rows = tableBody.querySelectorAll(".movement-line-row");
+                let totalUnits = 0;
+                let totalWeight = 0;
+
+                rows.forEach(function (row) {
+                    totalUnits += parseInt(row.querySelector("input[name$='.QuantityUnits']").value || "0", 10) || 0;
+                    totalWeight += parseDecimal(row.querySelector("input[name$='.QuantityWeightKg']").value || "0");
+                });
+
+                document.getElementById("summary-items").textContent = String(rows.length);
+                document.getElementById("summary-units").textContent = String(totalUnits);
+                document.getElementById("summary-weight").textContent = totalWeight.toFixed(3);
+            }
+
+            function refreshLineIndexes() {
+                const rows = Array.from(tableBody.querySelectorAll(".movement-line-row"));
+                rows.forEach(function (row, index) {
+                    row.querySelectorAll("input[type='hidden']").forEach(function (input) {
+                        const currentName = input.getAttribute("name");
+                        if (!currentName) {
+                            return;
+                        }
+
+                        input.setAttribute("name", currentName.replace(/Lines\[\d+\]/, `Lines[${index}]`));
+                        input.setAttribute("id", `Lines_${index}_${currentName.split(".").pop()}`);
+                    });
+                });
+
+                recalculateSummary();
+            }
+
+            function removeEmptyRow() {
+                const emptyRow = tableBody.querySelector(emptyRowSelector);
+                if (emptyRow) {
+                    emptyRow.remove();
+                }
+            }
+
+            function resetEntrySection() {
+                codeInput.value = "";
+                unitsInput.value = "0";
+                weightInput.value = "";
+                scaleWeightInput.checked = true;
+                allowEntryInput.checked = false;
+                clearSelectedProduct("");
+                setStatus("", "");
+                codeInput.focus();
+            }
+
+            function addCurrentLine() {
+                const productId = parseInt(productIdInput.value || "0", 10);
+                const code = normalizeCode(codeInput.value);
+                const productName = productNameInput.value.trim();
+                const productType = productTypeInput.value.trim();
+                const weighable = productWeighableInput.value === "true";
+                const averageWeight = parseDecimal(productAverageWeightInput.value);
+                const quantityUnits = parseInt(unitsInput.value || "0", 10) || 0;
+                const quantityWeightKg = parseDecimal(weightInput.value);
+                const scaleWeight = scaleWeightInput.checked;
+                const allowEntry = allowEntryInput.checked;
+
+                if (productId <= 0 || !code || !productName) {
+                    setStatus("warning", "Primero debe seleccionar un producto valido por codigo.");
+                    codeInput.focus();
+                    codeInput.select();
+                    return;
+                }
+
+                if (quantityWeightKg <= 0) {
+                    setStatus("warning", "Debe ingresar kilos mayores a cero.");
+                    weightInput.focus();
+                    weightInput.select();
+                    return;
+                }
+
+                removeEmptyRow();
+                const rowIndex = tableBody.querySelectorAll(".movement-line-row").length;
+                const row = document.createElement("tr");
+                row.className = "movement-line-row";
+                row.innerHTML = `
+                    <td>
+                        ${code}
+                        <input type="hidden" name="Lines[${rowIndex}].Code" value="${code}" />
+                        <input type="hidden" name="Lines[${rowIndex}].ProductId" value="${productId}" />
+                        <input type="hidden" name="Lines[${rowIndex}].ProductName" value="${escapeHtml(productName)}" />
+                        <input type="hidden" name="Lines[${rowIndex}].ProductType" value="${escapeHtml(productType)}" />
+                        <input type="hidden" name="Lines[${rowIndex}].Weighable" value="${weighable}" />
+                        <input type="hidden" name="Lines[${rowIndex}].AverageWeight" value="${averageWeight}" />
+                    </td>
+                    <td>${escapeHtml(productName)}</td>
+                    <td>
+                        ${quantityUnits}
+                        <input type="hidden" name="Lines[${rowIndex}].QuantityUnits" value="${quantityUnits}" />
+                    </td>
+                    <td>
+                        ${quantityWeightKg.toFixed(3)}
+                        <input type="hidden" name="Lines[${rowIndex}].QuantityWeightKg" value="${quantityWeightKg.toFixed(3)}" />
+                    </td>
+                    <td>
+                        ${scaleWeight ? "Si" : "No"}
+                        <input type="hidden" name="Lines[${rowIndex}].ScaleWeight" value="${scaleWeight}" />
+                    </td>
+                    <td>
+                        ${allowEntry ? "Si" : "No"}
+                        <input type="hidden" name="Lines[${rowIndex}].AllowEntry" value="${allowEntry}" />
+                    </td>
+                    <td><button type="button" class="btn btn-outline-danger btn-sm movement-remove-line">Quitar</button></td>
+                `;
+
+                tableBody.appendChild(row);
+                refreshLineIndexes();
+                resetEntrySection();
+            }
+
+            function escapeHtml(value) {
+                return String(value || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+
+            tableBody.addEventListener("click", function (event) {
+                const button = event.target.closest(".movement-remove-line");
+                if (!button) {
+                    return;
+                }
+
+                button.closest(".movement-line-row").remove();
+                if (tableBody.querySelectorAll(".movement-line-row").length === 0) {
+                    tableBody.innerHTML = '<tr class="movement-lines-empty"><td colspan="7" class="text-center text-muted py-4">Todavia no hay productos agregados.</td></tr>';
+                }
+                refreshLineIndexes();
+            });
+
+            addLineButton.addEventListener("click", addCurrentLine);
+
+            codeInput.addEventListener("input", queueLookup);
+            codeInput.addEventListener("keydown", function (event) {
+                if (event.key !== "Enter") {
+                    return;
+                }
+
+                event.preventDefault();
+                window.clearTimeout(searchTimer);
+                resolveProductByCode(codeInput.value, true);
+            });
+
+            if (productLookupModal) {
+                productLookupModal.addEventListener("lookup:selected", function (event) {
+                    const product = event.detail || {};
+                    applySelectedProduct(product);
+                    setStatus("success", "Producto seleccionado.");
+                    weightInput.focus();
+                    weightInput.select();
+                });
+            }
+
+            weightInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    addCurrentLine();
+                }
+            });
+
+            if (enableEditButton) {
+                enableEditButton.addEventListener("click", function () {
+                    setReadOnlyState(false);
+                    codeInput.focus();
+                    codeInput.select();
+                });
+            }
+
+            setReadOnlyState(initialReadOnly);
+            recalculateSummary();
+        })();
+    </script>
+}

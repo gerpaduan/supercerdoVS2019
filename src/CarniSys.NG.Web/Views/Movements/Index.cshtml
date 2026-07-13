@@ -1,0 +1,110 @@
+@model MovementListPageViewModel
+@{
+    ViewData["Title"] = "Movimientos";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Movimientos NG</p>
+    <h1>Movimientos</h1>
+    <p class="lead-copy">
+        Esta vista replica la consulta operativa de movimientos entre sucursales usando el permiso legacy real del modulo. Mantiene el alcance en solo lectura para no tocar todavia la carga y edicion de lineas.
+    </p>
+</section>
+
+<section class="status-card">
+    <form method="get" class="product-filters movement-filters">
+        <div>
+            <label for="originBranchId" class="form-label">Sucursal origen</label>
+            <select id="originBranchId" name="originBranchId" class="form-select">
+                <option value="0">Todas</option>
+                @foreach (var branch in Model.Branches)
+                {
+                    <option value="@branch.BranchId" selected="@(branch.BranchId == Model.OriginBranchId)">@branch.BranchName</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="destinationBranchId" class="form-label">Sucursal destino</label>
+            <select id="destinationBranchId" name="destinationBranchId" class="form-select">
+                <option value="0">Todas</option>
+                @foreach (var branch in Model.Branches)
+                {
+                    <option value="@branch.BranchId" selected="@(branch.BranchId == Model.DestinationBranchId)">@branch.BranchName</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="dateFrom" class="form-label">Desde</label>
+            <input id="dateFrom" name="dateFrom" type="date" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div>
+            <label for="dateTo" class="form-label">Hasta</label>
+            <input id="dateTo" name="dateTo" type="date" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="product-filter-actions">
+            <button type="submit" class="btn app-button">Buscar</button>
+        </div>
+    </form>
+</section>
+
+<section class="status-card mt-3">
+    @if (Model.CanManageMovements)
+    {
+        <div class="mb-3">
+            <a asp-controller="Movements" asp-action="Edit" class="btn app-button">Nuevo movimiento</a>
+        </div>
+    }
+    <div class="table-responsive">
+        <table class="table app-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Movimiento</th>
+                    <th>Fecha</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Estado</th>
+                    <th>Total un.</th>
+                    <th>Total kg</th>
+                    <th>Observaciones</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">No se encontraron movimientos para los filtros indicados.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.MovementId</td>
+                            <td>@item.MovementDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@item.OriginBranchName</td>
+                            <td>@item.DestinationBranchName</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Status) ? "-" : item.Status)</td>
+                            <td>@item.TotalUnits.ToString("0.##")</td>
+                            <td>@item.TotalWeightKg.ToString("0.###")</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "-" : item.Notes)</td>
+                            <td>
+                                <a asp-controller="Movements" asp-action="Detail" asp-route-id="@item.MovementId" class="app-inline-link">Ver detalle</a>
+                                @if (Model.CanManageMovements)
+                                {
+                                    <span> · </span>
+                                    <a asp-controller="Movements" asp-action="Edit" asp-route-id="@item.MovementId" class="app-inline-link">Editar</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

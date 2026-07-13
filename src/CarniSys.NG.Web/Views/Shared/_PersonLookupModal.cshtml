@@ -1,0 +1,57 @@
+@model PersonLookupModalViewModel
+@{
+    var visibleColumnCount = 1 + (Model.ShowIdentification ? 1 : 0) + (Model.ShowTaxId ? 1 : 0);
+}
+
+<div class="modal fade app-lookup-modal"
+     id="@Model.ModalId"
+     tabindex="-1"
+     aria-hidden="true"
+     data-lookup-kind="person"
+     data-search-url="@Model.SearchUrl"
+     data-show-tax-id="@Model.ShowTaxId.ToString().ToLowerInvariant()"
+     data-show-identification="@Model.ShowIdentification.ToString().ToLowerInvariant()">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Model.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" for="@($"{Model.ModalId}_search")">Buscar</label>
+                    <input id="@($"{Model.ModalId}_search")"
+                           type="text"
+                           class="form-control js-lookup-search"
+                           placeholder="@Model.SearchPlaceholder" />
+                    <div class="form-text">La busqueda es en vivo. Presione Enter para seleccionar el primer registro.</div>
+                </div>
+
+                <div class="alert alert-info d-none js-lookup-status" role="alert"></div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                @if (Model.ShowIdentification)
+                                {
+                                    <th class="js-col-identification">Identificacion</th>
+                                }
+                                <th>@Model.NameColumnTitle</th>
+                                @if (Model.ShowTaxId)
+                                {
+                                    <th class="js-col-tax-id">CUIT</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody class="js-lookup-results">
+                            <tr>
+                                <td colspan="@visibleColumnCount" class="text-center text-muted py-4">Escriba para buscar personas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,123 @@
+@model BrandEditViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? "Editar marca" : "Nueva marca";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Productos NG</p>
+    <h1>@(Model.IsEdit ? "Editar marca" : "Nueva marca")</h1>
+    <p class="lead-copy">
+        Esta pantalla replica el flujo operativo de marcas del area de productos. Si el usuario no es administrador, en edicion no puede cambiar el nombre de la marca.
+    </p>
+</section>
+
+<section class="status-card">
+    <form method="post" class="product-edit-form">
+        @Html.AntiForgeryToken()
+        <input asp-for="BrandId" type="hidden" />
+        <input asp-for="IsEdit" type="hidden" />
+        <input asp-for="IsAdministrator" type="hidden" />
+        <input asp-for="IsNameReadOnly" type="hidden" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <div>
+            <label asp-for="BrandName" class="form-label">Nombre marca</label>
+            @if (Model.IsNameReadOnly)
+            {
+                <input asp-for="BrandName" class="form-control" readonly />
+            }
+            else
+            {
+                <input asp-for="BrandName" class="form-control" />
+            }
+            <span asp-validation-for="BrandName" class="text-danger small"></span>
+        </div>
+
+        <div>
+            <label asp-for="Notes" class="form-label">Otros datos</label>
+            <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+        </div>
+
+        <div>
+            <label asp-for="OwnerName" class="form-label">Propietario</label>
+            <div class="input-group">
+                <input asp-for="OwnerName" class="form-control" placeholder="Seleccione una persona" readonly />
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#brandOwnerLookupModal">Buscar</button>
+                <button type="button" class="btn btn-outline-secondary" id="brandClearOwnerButton">Limpiar</button>
+            </div>
+        </div>
+
+        <div>
+            <input asp-for="OwnerId" type="hidden" />
+        </div>
+
+        @if (Model.ConfirmSimilarBrands)
+        {
+            <label class="toggle-row">
+                <input asp-for="ConfirmSimilarBrands" class="form-check-input" />
+                <span>Confirmar guardado aunque existan marcas parecidas</span>
+            </label>
+        }
+        else
+        {
+            <input asp-for="ConfirmSimilarBrands" type="hidden" />
+        }
+
+        <div class="product-edit-actions">
+            <button type="submit" class="btn app-button">Guardar marca</button>
+            <a asp-controller="Brands" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+
+@await Html.PartialAsync("_PersonLookupModal", new PersonLookupModalViewModel
+{
+    ModalId = "brandOwnerLookupModal",
+    Title = "Buscar propietario",
+    SearchUrl = Url.Action("Lookup", "People") ?? string.Empty,
+    SearchPlaceholder = "Nombre, identificacion o CUIT",
+    NameColumnTitle = "Nombre",
+    ShowIdentification = true,
+    ShowTaxId = true
+})
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const ownerLookupModal = document.getElementById("brandOwnerLookupModal");
+            const ownerIdInput = document.getElementById("OwnerId");
+            const ownerNameInput = document.getElementById("OwnerName");
+            const clearOwnerButton = document.getElementById("brandClearOwnerButton");
+
+            function clearOwner() {
+                if (ownerIdInput) {
+                    ownerIdInput.value = "";
+                }
+
+                if (ownerNameInput) {
+                    ownerNameInput.value = "";
+                }
+            }
+
+            if (clearOwnerButton) {
+                clearOwnerButton.addEventListener("click", clearOwner);
+            }
+
+            if (ownerLookupModal) {
+                ownerLookupModal.addEventListener("lookup:selected", function (event) {
+                    const person = event.detail || {};
+
+                    if (ownerIdInput) {
+                        ownerIdInput.value = person.personId || "";
+                    }
+
+                    if (ownerNameInput) {
+                        ownerNameInput.value = person.businessName || person.identification || "";
+                    }
+                });
+            }
+        })();
+    </script>
+}

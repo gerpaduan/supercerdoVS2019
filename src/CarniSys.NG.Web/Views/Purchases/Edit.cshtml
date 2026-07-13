@@ -1,0 +1,733 @@
+@model PurchaseEditViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? $"Editar compra #{Model.PurchaseId}" : "Nueva compra";
+    var purchaseDateValue = Model.PurchaseDate == DateTime.MinValue
+        ? DateTime.Now.ToString("yyyy-MM-ddTHH:mm")
+        : Model.PurchaseDate.ToString("yyyy-MM-ddTHH:mm");
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Compras NG</p>
+    <h1>@(Model.IsEdit ? $"Editar compra #{Model.PurchaseId}" : "Nueva compra")</h1>
+    <p class="lead-copy">
+        Edicion conservadora NG para compras tipo Cortes y Media Res.
+    </p>
+</section>
+
+<form method="post" class="d-grid gap-3">
+    @Html.AntiForgeryToken()
+    <input asp-for="PurchaseId" type="hidden" />
+    <input asp-for="IsEdit" type="hidden" />
+    @if (Model.IsEdit)
+    {
+        <input asp-for="PurchaseType" type="hidden" />
+    }
+
+    <section class="status-card">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="detail-grid">
+            <div>
+                <label asp-for="BranchId" class="form-label">Sucursal</label>
+                <select asp-for="BranchId" class="form-select">
+                    <option value="0">Seleccionar</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.BranchId">@branch.BranchName</option>
+                    }
+                </select>
+                <span asp-validation-for="BranchId" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="PurchaseDate" class="form-label">Fecha y hora</label>
+                <input asp-for="PurchaseDate" type="datetime-local" value="@purchaseDateValue" class="form-control" />
+                <span asp-validation-for="PurchaseDate" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="PurchaseType" class="form-label">Tipo de compra</label>
+                <select asp-for="PurchaseType" class="form-select" id="purchase-type-select" disabled="@Model.IsEdit">
+                    @foreach (var purchaseType in Model.AvailablePurchaseTypes)
+                    {
+                        <option value="@purchaseType">@purchaseType</option>
+                    }
+                </select>
+            </div>
+
+            <div id="purchase-halfcarcass-count-container">
+                <label asp-for="HalfCarcassCount" class="form-label">Cant. medias</label>
+                <input asp-for="HalfCarcassCount" type="number" min="0" step="1" class="form-control" />
+                <span asp-validation-for="HalfCarcassCount" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="CurrentAccount" class="form-check-input" />
+                    <label asp-for="CurrentAccount" class="form-check-label">Cuenta corriente</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-grid mt-3">
+            <div>
+                <label asp-for="ReceiptNumber" class="form-label">Nro. remito</label>
+                <input asp-for="ReceiptNumber" class="form-control" />
+            </div>
+
+            <div class="detail-grid" style="grid-template-columns: 1fr auto;">
+                <div>
+                    <label asp-for="SupplierName" class="form-label">Proveedor</label>
+                    <input asp-for="SupplierId" type="hidden" />
+                    <input asp-for="SupplierName" class="form-control" readonly />
+                    <span asp-validation-for="SupplierId" class="text-danger"></span>
+                </div>
+                <div class="d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#purchaseSupplierLookupModal">Buscar</button>
+                </div>
+            </div>
+
+            <div>
+                <label asp-for="SupplierTaxId" class="form-label">CUIT</label>
+                <input asp-for="SupplierTaxId" class="form-control" readonly />
+            </div>
+
+            <div>
+                <label asp-for="Notes" class="form-label">Observaciones</label>
+                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+
+        @if (Model.IsEdit)
+        {
+            <div class="detail-grid mt-3">
+                <div>
+                    <label class="form-label">Creado</label>
+                    <input value="@Model.CreatedAtLabel" class="form-control" readonly />
+                </div>
+                <div>
+                    <label class="form-label">Creado por</label>
+                    <input value="@Model.CreatedByLabel" class="form-control" readonly />
+                </div>
+                <div>
+                    <label class="form-label">Actualizado</label>
+                    <input value="@Model.UpdatedAtLabel" class="form-control" readonly />
+                </div>
+                <div>
+                    <label class="form-label">Actualizado por</label>
+                    <input value="@Model.UpdatedByLabel" class="form-control" readonly />
+                </div>
+            </div>
+        }
+    </section>
+
+    <section class="status-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Lineas</h2>
+            <div class="text-muted">
+                Total kg: <strong id="purchase-total-kg">@Model.TotalKg.ToString("0.###")</strong>
+                |
+                Total $: <strong id="purchase-total-amount">@Model.TotalAmount.ToString("0.00")</strong>
+            </div>
+        </div>
+
+        <div id="purchase-cut-search-panel">
+            <div class="detail-grid mb-3" style="grid-template-columns: 1fr auto 1.5fr auto;">
+                <div>
+                    <label class="form-label">Codigo directo</label>
+                    <input id="purchase-product-code-search" class="form-control" inputmode="numeric" placeholder="Codigo" />
+                </div>
+                <div class="d-flex align-items-end">
+                    <button type="button" id="purchase-search-product-code-button" class="btn btn-outline-primary">Cargar</button>
+                </div>
+                <div>
+                    <label class="form-label">Buscar producto</label>
+                    <input id="purchase-product-search" class="form-control" placeholder="Codigo o descripcion" />
+                </div>
+                <div class="d-flex align-items-end">
+                    <button type="button" id="purchase-search-product-button" class="btn btn-outline-primary">Buscar</button>
+                </div>
+            </div>
+
+            <div id="purchase-product-results" class="table-responsive d-none mb-3">
+                <table class="table app-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Descripcion</th>
+                            <th>Tipo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchase-product-results-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="purchase-cut-editor" class="detail-grid mb-3">
+            <div>
+                <label class="form-label">Producto seleccionado</label>
+                <input id="purchase-selected-product-name" class="form-control" readonly />
+                <input id="purchase-selected-product-id" type="hidden" />
+                <input id="purchase-selected-product-code" type="hidden" />
+            </div>
+            <div>
+                <label class="form-label">Kgs</label>
+                <input id="purchase-line-quantity" type="number" step="0.001" min="0" class="form-control" />
+            </div>
+            <div>
+                <label class="form-label">Precio kg</label>
+                <input id="purchase-line-price" type="number" step="0.01" min="0" class="form-control" />
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="button" id="purchase-add-line-button" class="btn app-button">Agregar linea</button>
+            </div>
+        </div>
+
+        <div id="purchase-halfcarcass-editor" class="detail-grid mb-3">
+            <div>
+                <label class="form-label">Nro. tropa</label>
+                <input id="purchase-halfcarcass-troop-number" class="form-control" placeholder="Nro. tropa" />
+            </div>
+            <div>
+                <label class="form-label">Kgs</label>
+                <input id="purchase-halfcarcass-quantity" type="number" step="0.001" min="0" class="form-control" />
+            </div>
+            <div>
+                <label class="form-label">Precio media</label>
+                <input id="purchase-halfcarcass-price" type="number" step="0.01" min="0" class="form-control" />
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="button" id="purchase-add-halfcarcass-line-button" class="btn app-button">Agregar linea</button>
+            </div>
+        </div>
+
+        <div id="purchase-line-editor-state" class="text-muted small mb-3 d-none">
+            Editando una linea existente. Al agregarla de nuevo, reemplaza la original.
+        </div>
+
+        <div id="purchase-line-feedback" class="text-danger small mb-3 d-none"></div>
+
+        <span asp-validation-for="Lines" class="text-danger"></span>
+
+        <div class="table-responsive">
+            <table class="table app-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>Producto</th>
+                        <th>Kgs</th>
+                        <th>Precio</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="purchase-lines-body">
+                    @for (var i = 0; i < Model.Lines.Count; i++)
+                    {
+                        <tr data-quantity="@Model.Lines[i].QuantityKg.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-total="@Model.Lines[i].LineTotal.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                            <td>
+                                @Model.Lines[i].Code
+                                <input type="hidden" name="Lines[@i].LineType" value="@Model.Lines[i].LineType" />
+                                <input type="hidden" name="Lines[@i].ProductId" value="@Model.Lines[i].ProductId" />
+                                <input type="hidden" name="Lines[@i].Code" value="@Model.Lines[i].Code" />
+                                <input type="hidden" name="Lines[@i].ProductName" value="@Model.Lines[i].ProductName" />
+                                <input type="hidden" name="Lines[@i].TroopNumber" value="@Model.Lines[i].TroopNumber" />
+                            </td>
+                            <td>@Model.Lines[i].ProductName</td>
+                            <td>
+                                @Model.Lines[i].QuantityKg.ToString("0.###")
+                                <input type="hidden" name="Lines[@i].QuantityKg" value="@Model.Lines[i].QuantityKg.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                            </td>
+                            <td>
+                                @Model.Lines[i].PricePerKg.ToString("0.00")
+                                <input type="hidden" name="Lines[@i].PricePerKg" value="@Model.Lines[i].PricePerKg.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                            </td>
+                            <td>@Model.Lines[i].LineTotal.ToString("0.00")</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-primary js-edit-line">Editar</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger js-remove-line">Quitar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn app-button">Guardar</button>
+        <a asp-controller="Purchases" asp-action="@(Model.IsEdit ? "Detail" : "Index")" asp-route-id="@Model.PurchaseId" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+<div class="modal fade" id="purchaseSupplierLookupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5">Buscar proveedor</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input id="purchase-supplier-search" class="form-control" placeholder="Nombre, identificacion o CUIT" />
+                    <button type="button" id="purchase-search-supplier-button" class="btn btn-outline-primary">Buscar</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table app-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Identificacion</th>
+                                <th>CUIT</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchase-supplier-results-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Ingrese un texto para buscar.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const supplierModal = document.getElementById("purchaseSupplierLookupModal");
+            const purchaseTypeSelect = document.getElementById("purchase-type-select");
+            const halfCarcassCountContainer = document.getElementById("purchase-halfcarcass-count-container");
+            const supplierIdInput = document.getElementById("SupplierId");
+            const supplierNameInput = document.getElementById("SupplierName");
+            const supplierTaxIdInput = document.getElementById("SupplierTaxId");
+            const supplierSearchInput = document.getElementById("purchase-supplier-search");
+            const supplierSearchButton = document.getElementById("purchase-search-supplier-button");
+            const supplierResultsBody = document.getElementById("purchase-supplier-results-body");
+
+            const productCodeSearchInput = document.getElementById("purchase-product-code-search");
+            const productCodeSearchButton = document.getElementById("purchase-search-product-code-button");
+            const productSearchInput = document.getElementById("purchase-product-search");
+            const productSearchButton = document.getElementById("purchase-search-product-button");
+            const cutSearchPanel = document.getElementById("purchase-cut-search-panel");
+            const productResults = document.getElementById("purchase-product-results");
+            const productResultsBody = document.getElementById("purchase-product-results-body");
+            const cutEditor = document.getElementById("purchase-cut-editor");
+            const selectedProductIdInput = document.getElementById("purchase-selected-product-id");
+            const selectedProductCodeInput = document.getElementById("purchase-selected-product-code");
+            const selectedProductNameInput = document.getElementById("purchase-selected-product-name");
+            const quantityInput = document.getElementById("purchase-line-quantity");
+            const priceInput = document.getElementById("purchase-line-price");
+            const addLineButton = document.getElementById("purchase-add-line-button");
+            const halfCarcassEditor = document.getElementById("purchase-halfcarcass-editor");
+            const troopNumberInput = document.getElementById("purchase-halfcarcass-troop-number");
+            const halfCarcassQuantityInput = document.getElementById("purchase-halfcarcass-quantity");
+            const halfCarcassPriceInput = document.getElementById("purchase-halfcarcass-price");
+            const addHalfCarcassLineButton = document.getElementById("purchase-add-halfcarcass-line-button");
+            const linesBody = document.getElementById("purchase-lines-body");
+            const totalKgLabel = document.getElementById("purchase-total-kg");
+            const totalAmountLabel = document.getElementById("purchase-total-amount");
+            const lineEditorState = document.getElementById("purchase-line-editor-state");
+            const lineFeedback = document.getElementById("purchase-line-feedback");
+
+            const supplierModalInstance = supplierModal ? bootstrap.Modal.getOrCreateInstance(supplierModal) : null;
+            const currencyFormatter = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const quantityFormatter = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+            let currentPurchaseType = purchaseTypeSelect?.value ?? "Cortes";
+            let ignorePurchaseTypeChange = false;
+
+            function htmlEncode(value) {
+                return (value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;");
+            }
+
+            function isHalfCarcassType() {
+                return (purchaseTypeSelect?.value ?? "") === "Media Res";
+            }
+
+            function showLineFeedback(message) {
+                lineFeedback.textContent = message ?? "";
+                lineFeedback.classList.toggle("d-none", !message);
+            }
+
+            function clearSelectedProduct() {
+                selectedProductIdInput.value = "";
+                selectedProductCodeInput.value = "";
+                selectedProductNameInput.value = "";
+                productCodeSearchInput.value = "";
+                quantityInput.value = "";
+                priceInput.value = "";
+            }
+
+            function clearHalfCarcassEditor() {
+                troopNumberInput.value = "";
+                halfCarcassQuantityInput.value = "";
+                halfCarcassPriceInput.value = "";
+            }
+
+            function clearEditors() {
+                clearSelectedProduct();
+                clearHalfCarcassEditor();
+                lineEditorState.classList.add("d-none");
+                addLineButton.textContent = "Agregar linea";
+                addHalfCarcassLineButton.textContent = "Agregar linea";
+            }
+
+            function togglePurchaseTypeUi() {
+                const halfCarcass = isHalfCarcassType();
+                cutSearchPanel.classList.toggle("d-none", halfCarcass);
+                cutEditor.classList.toggle("d-none", halfCarcass);
+                halfCarcassEditor.classList.toggle("d-none", !halfCarcass);
+                halfCarcassCountContainer.classList.toggle("d-none", !halfCarcass);
+                if (halfCarcass) {
+                    productResults.classList.add("d-none");
+                }
+                clearEditors();
+                showLineFeedback("");
+            }
+
+            async function searchSuppliers() {
+                const text = supplierSearchInput.value.trim();
+                const response = await fetch(`@Url.Action("Lookup", "People")?searchText=${encodeURIComponent(text)}`);
+                const payload = await response.json();
+                const items = Array.isArray(payload.items) ? payload.items : [];
+
+                if (items.length === 0) {
+                    supplierResultsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No se encontraron proveedores.</td></tr>';
+                    return;
+                }
+
+                supplierResultsBody.innerHTML = items.map(item => `
+                    <tr>
+                        <td>${htmlEncode(item.businessName)}</td>
+                        <td>${htmlEncode(item.identification)}</td>
+                        <td>${htmlEncode(item.taxId)}</td>
+                        <td><button type="button" class="btn btn-sm btn-outline-primary js-select-supplier" data-person-id="${item.personId}" data-business-name="${htmlEncode(item.businessName)}" data-tax-id="${htmlEncode(item.taxId)}">Seleccionar</button></td>
+                    </tr>`).join("");
+            }
+
+            async function searchProducts() {
+                if (isHalfCarcassType()) {
+                    return;
+                }
+
+                const text = productSearchInput.value.trim();
+                const response = await fetch(`@Url.Action("Lookup", "Products")?searchText=${encodeURIComponent(text)}&take=20`);
+                const payload = await response.json();
+                const items = Array.isArray(payload.items) ? payload.items : [];
+
+                productResults.classList.remove("d-none");
+                if (items.length === 0) {
+                    productResultsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No se encontraron productos.</td></tr>';
+                    return;
+                }
+
+                productResultsBody.innerHTML = items.map(item => `
+                    <tr>
+                        <td>${htmlEncode(item.code)}</td>
+                        <td>${htmlEncode(item.description)}</td>
+                        <td>${htmlEncode(item.type)}</td>
+                        <td><button type="button" class="btn btn-sm btn-outline-primary js-select-product" data-product-id="${item.productId}" data-code="${htmlEncode(item.code)}" data-name="${htmlEncode(item.description)}">Seleccionar</button></td>
+                    </tr>`).join("");
+            }
+
+            async function searchProductByCode() {
+                if (isHalfCarcassType()) {
+                    return;
+                }
+
+                const rawCode = productCodeSearchInput.value.trim();
+                if (!rawCode) {
+                    return;
+                }
+
+                const response = await fetch(`@Url.Action("ProductByCode", "Purchases")?code=${encodeURIComponent(rawCode)}`);
+                const payload = await response.json();
+
+                if (!payload.ok) {
+                    selectedProductIdInput.value = "";
+                    selectedProductCodeInput.value = "";
+                    selectedProductNameInput.value = "";
+                    showLineFeedback(payload.message ?? "No se encontro el producto.");
+                    return;
+                }
+
+                selectedProductIdInput.value = payload.productId ?? "";
+                selectedProductCodeInput.value = payload.code ?? "";
+                selectedProductNameInput.value = payload.description ?? "";
+                productSearchInput.value = "";
+                productResults.classList.add("d-none");
+                showLineFeedback("");
+                quantityInput.focus();
+            }
+
+            function normalizeLineIndexes() {
+                Array.from(linesBody.querySelectorAll("tr")).forEach((row, index) => {
+                    row.querySelectorAll("input[name]").forEach(input => {
+                        input.name = input.name.replace(/Lines\[\d+\]/g, `Lines[${index}]`);
+                    });
+                });
+            }
+
+            function updateTotals() {
+                let totalKg = 0;
+                let totalAmount = 0;
+
+                Array.from(linesBody.querySelectorAll("tr")).forEach(row => {
+                    const qty = Number.parseFloat(row.dataset.quantity ?? "0") || 0;
+                    const amount = Number.parseFloat(row.dataset.total ?? "0") || 0;
+                    totalKg += qty;
+                    totalAmount += amount;
+                });
+
+                totalKgLabel.textContent = quantityFormatter.format(totalKg);
+                totalAmountLabel.textContent = currencyFormatter.format(totalAmount);
+            }
+
+            function getRowHiddenValue(row, fieldName) {
+                const input = row.querySelector(`input[name$='.${fieldName}']`);
+                return input ? input.value : "";
+            }
+
+            function loadRowIntoEditor(row) {
+                const lineType = getRowHiddenValue(row, "LineType");
+
+                if (lineType === "MediaRes") {
+                    ignorePurchaseTypeChange = true;
+                    purchaseTypeSelect.value = "Media Res";
+                    ignorePurchaseTypeChange = false;
+                } else {
+                    ignorePurchaseTypeChange = true;
+                    purchaseTypeSelect.value = "Cortes";
+                    ignorePurchaseTypeChange = false;
+                }
+
+                togglePurchaseTypeUi();
+
+                if (lineType === "MediaRes") {
+                    troopNumberInput.value = getRowHiddenValue(row, "TroopNumber") || getRowHiddenValue(row, "Code");
+                    halfCarcassQuantityInput.value = getRowHiddenValue(row, "QuantityKg");
+                    halfCarcassPriceInput.value = getRowHiddenValue(row, "PricePerKg");
+                    addHalfCarcassLineButton.textContent = "Actualizar linea";
+                } else {
+                    selectedProductIdInput.value = getRowHiddenValue(row, "ProductId");
+                    selectedProductCodeInput.value = getRowHiddenValue(row, "Code");
+                    selectedProductNameInput.value = getRowHiddenValue(row, "ProductName");
+                    quantityInput.value = getRowHiddenValue(row, "QuantityKg");
+                    priceInput.value = getRowHiddenValue(row, "PricePerKg");
+                    addLineButton.textContent = "Actualizar linea";
+                }
+
+                lineEditorState.classList.remove("d-none");
+                productResults.classList.add("d-none");
+                productSearchInput.value = "";
+            }
+
+            function addCutLine(productId, code, name, quantity, price) {
+                const qty = Number.parseFloat(quantity);
+                const priceValue = Number.parseFloat(price);
+
+                if (!productId || Number.isNaN(qty) || qty <= 0 || Number.isNaN(priceValue) || priceValue <= 0) {
+                    showLineFeedback("Seleccione un producto valido e ingrese kilos y precio mayores a cero.");
+                    return;
+                }
+
+                const total = qty * priceValue;
+                const row = document.createElement("tr");
+                row.dataset.quantity = qty.toString();
+                row.dataset.total = total.toString();
+                row.innerHTML = `
+                    <td>
+                        ${htmlEncode(code)}
+                        <input type="hidden" name="Lines[0].LineType" value="Corte" />
+                        <input type="hidden" name="Lines[0].ProductId" value="${productId}" />
+                        <input type="hidden" name="Lines[0].Code" value="${htmlEncode(code)}" />
+                        <input type="hidden" name="Lines[0].ProductName" value="${htmlEncode(name)}" />
+                        <input type="hidden" name="Lines[0].TroopNumber" value="" />
+                    </td>
+                    <td>${htmlEncode(name)}</td>
+                    <td>
+                        ${quantityFormatter.format(qty)}
+                        <input type="hidden" name="Lines[0].QuantityKg" value="${qty.toString()}" />
+                    </td>
+                    <td>
+                        ${currencyFormatter.format(priceValue)}
+                        <input type="hidden" name="Lines[0].PricePerKg" value="${priceValue.toString()}" />
+                    </td>
+                    <td>${currencyFormatter.format(total)}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary js-edit-line">Editar</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger js-remove-line">Quitar</button>
+                    </td>`;
+
+                linesBody.appendChild(row);
+                normalizeLineIndexes();
+                updateTotals();
+                clearEditors();
+                productSearchInput.value = "";
+                productResults.classList.add("d-none");
+                showLineFeedback("");
+            }
+
+            function addHalfCarcassLine(troopNumber, quantity, price) {
+                const qty = Number.parseFloat(quantity);
+                const priceValue = Number.parseFloat(price);
+                const normalizedTroopNumber = (troopNumber ?? "").trim();
+
+                if (Number.isNaN(qty) || qty <= 0 || Number.isNaN(priceValue) || priceValue <= 0) {
+                    showLineFeedback("Ingrese kilos y precio mayores a cero para la media res.");
+                    return;
+                }
+
+                const total = qty * priceValue;
+                const row = document.createElement("tr");
+                row.dataset.quantity = qty.toString();
+                row.dataset.total = total.toString();
+                row.innerHTML = `
+                    <td>
+                        ${htmlEncode(normalizedTroopNumber)}
+                        <input type="hidden" name="Lines[0].LineType" value="MediaRes" />
+                        <input type="hidden" name="Lines[0].ProductId" value="0" />
+                        <input type="hidden" name="Lines[0].Code" value="${htmlEncode(normalizedTroopNumber)}" />
+                        <input type="hidden" name="Lines[0].ProductName" value="Media Res" />
+                        <input type="hidden" name="Lines[0].TroopNumber" value="${htmlEncode(normalizedTroopNumber)}" />
+                    </td>
+                    <td>Media Res</td>
+                    <td>
+                        ${quantityFormatter.format(qty)}
+                        <input type="hidden" name="Lines[0].QuantityKg" value="${qty.toString()}" />
+                    </td>
+                    <td>
+                        ${currencyFormatter.format(priceValue)}
+                        <input type="hidden" name="Lines[0].PricePerKg" value="${priceValue.toString()}" />
+                    </td>
+                    <td>${currencyFormatter.format(total)}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary js-edit-line">Editar</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger js-remove-line">Quitar</button>
+                    </td>`;
+
+                linesBody.appendChild(row);
+                normalizeLineIndexes();
+                updateTotals();
+                clearEditors();
+                showLineFeedback("");
+            }
+
+            supplierSearchButton?.addEventListener("click", searchSuppliers);
+            supplierSearchInput?.addEventListener("keydown", event => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    searchSuppliers();
+                }
+            });
+
+            supplierResultsBody?.addEventListener("click", event => {
+                const button = event.target.closest(".js-select-supplier");
+                if (!button) {
+                    return;
+                }
+
+                supplierIdInput.value = button.dataset.personId ?? "";
+                supplierNameInput.value = button.dataset.businessName ?? "";
+                supplierTaxIdInput.value = button.dataset.taxId ?? "";
+                supplierModalInstance?.hide();
+            });
+
+            productSearchButton?.addEventListener("click", searchProducts);
+            productCodeSearchButton?.addEventListener("click", searchProductByCode);
+            productSearchInput?.addEventListener("keydown", event => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    searchProducts();
+                }
+            });
+            productCodeSearchInput?.addEventListener("keydown", event => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    searchProductByCode();
+                }
+            });
+
+            productResultsBody?.addEventListener("click", event => {
+                const button = event.target.closest(".js-select-product");
+                if (!button) {
+                    return;
+                }
+
+                selectedProductIdInput.value = button.dataset.productId ?? "";
+                selectedProductCodeInput.value = button.dataset.code ?? "";
+                selectedProductNameInput.value = button.dataset.name ?? "";
+                showLineFeedback("");
+                quantityInput.focus();
+            });
+
+            addLineButton?.addEventListener("click", () => {
+                addCutLine(
+                    selectedProductIdInput.value,
+                    selectedProductCodeInput.value,
+                    selectedProductNameInput.value,
+                    quantityInput.value,
+                    priceInput.value
+                );
+            });
+
+            addHalfCarcassLineButton?.addEventListener("click", () => {
+                addHalfCarcassLine(
+                    troopNumberInput.value,
+                    halfCarcassQuantityInput.value,
+                    halfCarcassPriceInput.value
+                );
+            });
+
+            purchaseTypeSelect?.addEventListener("change", () => {
+                if (!ignorePurchaseTypeChange && linesBody.querySelector("tr")) {
+                    purchaseTypeSelect.value = currentPurchaseType;
+                    showLineFeedback("No se puede cambiar el tipo de compra mientras existan lineas cargadas.");
+                    return;
+                }
+
+                currentPurchaseType = purchaseTypeSelect.value;
+                togglePurchaseTypeUi();
+            });
+
+            linesBody?.addEventListener("click", event => {
+                const editButton = event.target.closest(".js-edit-line");
+                if (editButton) {
+                    const row = editButton.closest("tr");
+                    if (!row) {
+                        return;
+                    }
+
+                    loadRowIntoEditor(row);
+                    row.remove();
+                    normalizeLineIndexes();
+                    updateTotals();
+                    if (isHalfCarcassType()) {
+                        halfCarcassQuantityInput.focus();
+                    } else {
+                        quantityInput.focus();
+                    }
+                    return;
+                }
+
+                const button = event.target.closest(".js-remove-line");
+                if (!button) {
+                    return;
+                }
+
+                button.closest("tr")?.remove();
+                normalizeLineIndexes();
+                updateTotals();
+            });
+
+            updateTotals();
+            togglePurchaseTypeUi();
+            currentPurchaseType = purchaseTypeSelect?.value ?? "Cortes";
+        })();
+    </script>
+}

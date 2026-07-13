@@ -1,0 +1,82 @@
+@model BrandListPageViewModel
+@{
+    ViewData["Title"] = "Marcas";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Productos NG</p>
+    <h1>Marcas en solo lectura</h1>
+    <p class="lead-copy">
+        Esta vista replica la consulta de marcas del area de productos, manteniendo el alcance de lectura del MVC sin habilitar todavia edicion ni validaciones de parecidos.
+    </p>
+</section>
+
+<section class="status-card">
+    <h2>Busqueda</h2>
+    <form method="get" class="product-filters">
+        <div>
+            <label for="searchText" class="form-label">Filtro</label>
+            <input id="searchText" name="searchText" value="@Model.SearchText" class="form-control" placeholder="Nombre de marca" />
+        </div>
+        <div class="product-filter-actions">
+            <button type="submit" class="btn app-button">Buscar</button>
+        </div>
+    </form>
+</section>
+
+<section class="status-card mt-3">
+    <div class="mb-3">
+        <a asp-controller="Brands" asp-action="Edit" class="btn app-button">Nueva marca</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table app-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Marca</th>
+                    <th>Propietario</th>
+                    <th>Telefono</th>
+                    <th>Ciudad</th>
+                    <th>Detalle</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No se encontraron marcas para el filtro indicado.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@(item.CompanyId == 0 ? "Global" : item.CompanyId.ToString())</td>
+                            <td>@item.BrandName</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.OwnerName) ? "-" : item.OwnerName)</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.OwnerPhone) ? "-" : item.OwnerPhone)</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.OwnerCity) ? "-" : item.OwnerCity)</td>
+                            <td>
+                                <a asp-controller="Brands" asp-action="Detail" asp-route-id="@item.BrandId" class="app-inline-link">Ver ficha</a>
+                            </td>
+                            <td>
+                                <a asp-controller="Brands" asp-action="Edit" asp-route-id="@item.BrandId" class="app-inline-link">Editar</a>
+                                @if (item.CompanyId > 0)
+                                {
+                                    <span> · </span>
+                                    <form asp-controller="Brands" asp-action="Delete" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="brandId" value="@item.BrandId" />
+                                        <button type="submit" class="btn btn-link p-0 align-baseline app-inline-link" onclick="return confirm('Se eliminara la marca &quot;@item.BrandName&quot;. Continuar?');">Eliminar</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

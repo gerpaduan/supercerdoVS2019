@@ -1,0 +1,161 @@
+@model ProductTypeListPageViewModel
+@{
+    ViewData["Title"] = Model.IsGlobalCatalog ? "Tipos globales" : "Tipos de producto";
+}
+
+<section class="hero-panel">
+    <p class="eyebrow">Productos NG</p>
+    <h1>@(Model.IsGlobalCatalog ? "Catalogo global de tipos" : "Tipos de producto de la empresa")</h1>
+    <p class="lead-copy">
+        @(Model.IsGlobalCatalog
+            ? "Esta vista replica el catalogo global de tipos usado por el flujo administrativo del MVC. Desde NG todavia no importa ni modifica estos registros."
+            : "Esta vista replica la grilla actual de tipos de producto por empresa, incluyendo tipos reservados del sistema y tipos propios.")
+    </p>
+</section>
+
+<section class="status-card">
+    <h2>Filtro</h2>
+    <form method="get" class="product-filters">
+        <div>
+            <label for="searchText" class="form-label">Busqueda</label>
+            <input id="searchText" name="searchText" value="@Model.SearchText" class="form-control" placeholder="Tipo" />
+        </div>
+        <div class="product-filter-actions">
+            <button type="submit" class="btn app-button">Buscar</button>
+        </div>
+    </form>
+</section>
+
+<section class="status-card mt-3">
+    @if (Model.IsGlobalCatalog)
+    {
+        <div class="alert alert-warning mb-3">
+            Los tipos globales se muestran como referencia del catalogo compartido. Desde aqui solo se habilita la importacion hacia la empresa actual.
+        </div>
+    }
+    @if (!Model.IsGlobalCatalog && Model.CanManageTypes)
+    {
+        <div class="mb-3">
+            <a asp-controller="ProductTypeEdit" asp-action="Index" class="btn app-button">Nuevo tipo</a>
+        </div>
+    }
+    @if (Model.IsGlobalCatalog)
+    {
+        <form asp-controller="GlobalProductTypes" asp-action="Import" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <button type="submit" class="btn app-button">Importar seleccionados</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table app-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Importar</th>
+                            <th>Tipo</th>
+                            <th>Orden</th>
+                            <th>Reservado</th>
+                            <th>Origen</th>
+                            <th>Actualizado</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No se encontraron tipos para el filtro indicado.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            var index = 0;
+                            @foreach (var item in Model.Items)
+                            {
+                                var existsInCompany = Model.ExistingCompanyTypes.Contains(item.TypeName);
+                                <tr>
+                                    <td>
+                                        @if (!existsInCompany)
+                                        {
+                                            <input type="checkbox" name="Types[@index]" value="@item.TypeName" class="form-check-input" />
+                                            index++;
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@item.TypeName</td>
+                                    <td>@item.SortOrder</td>
+                                    <td>@(item.IsReserved ? "Si" : "No")</td>
+                                    <td>@(item.IsGlobal ? "Global" : (item.IsReserved ? "Sistema" : "Empresa"))</td>
+                                    <td>@((item.UpdatedAt ?? item.CreatedAt)?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                    <td>@(existsInCompany ? "Ya existe en la empresa" : "Disponible")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    }
+    else
+    {
+    <div class="table-responsive">
+        <table class="table app-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Orden</th>
+                    <th>Reservado</th>
+                    <th>Origen</th>
+                    <th>Actualizado</th>
+                    @if (!Model.IsGlobalCatalog && Model.CanManageTypes)
+                    {
+                        <th>Acciones</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@(Model.IsGlobalCatalog || !Model.CanManageTypes ? 5 : 6)" class="text-center text-muted py-4">No se encontraron tipos para el filtro indicado.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.TypeName</td>
+                            <td>@item.SortOrder</td>
+                            <td>@(item.IsReserved ? "Si" : "No")</td>
+                            <td>@(item.IsGlobal ? "Global" : (item.IsReserved ? "Sistema" : "Empresa"))</td>
+                            <td>@((item.UpdatedAt ?? item.CreatedAt)?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            @if (!Model.IsGlobalCatalog && Model.CanManageTypes)
+                            {
+                                <td>
+                                    @if (item.IsReserved)
+                                    {
+                                        <span class="text-muted">Reservado</span>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="ProductTypeEdit" asp-action="Index" asp-route-type="@item.TypeName" class="app-inline-link">Editar</a>
+                                        <span> · </span>
+                                        <form asp-controller="ProductTypeEdit" asp-action="Delete" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="typeName" value="@item.TypeName" />
+                                            <button type="submit" class="btn btn-link p-0 align-baseline app-inline-link" onclick="return confirm('Se eliminara el tipo de producto &quot;@item.TypeName&quot;. Continuar?');">Eliminar</button>
+                                        </form>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</section>
