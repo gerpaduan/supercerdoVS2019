@@ -195,6 +195,17 @@ namespace Negocio
             int idUsuario = actualizadoPor != null ? actualizadoPor.Id : 0;
             oCompraD.actualizarObservacionesCompra(idCompra, observaciones, idUsuario);
         }
+
+        public List<int> obtenerPesajesVinculadosPorDestino(int idPesajeDestino)
+        {
+            return oCompraD.obtenerPesajesVinculadosPorDestino(idPesajeDestino);
+        }
+
+        public void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, Entidades.Usuario actualizadoPor)
+        {
+            int idUsuario = actualizadoPor != null ? actualizadoPor.Id : 0;
+            oCompraD.actualizarIdPesajeAjustado(idCompra, idPesajeAjustado, idUsuario);
+        }
         
         public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
         {

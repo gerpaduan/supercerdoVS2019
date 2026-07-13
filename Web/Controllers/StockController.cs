@@ -619,7 +619,7 @@ namespace Web.Controllers
             try
             {
                 oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
-                RegistrarObservacionesPesajesVinculados(compra, model.PesajesVinculadosIds, user);
+                SincronizarPesajesVinculados(compra, model.PesajesVinculadosIds, user);
                 TempData["StockDraftKeyToClear"] = model.DraftKey ?? "";
                 TempData["StockSuccessMessage"] = model.IdCompra > 0
                     ? "El movimiento de stock se guardó correctamente."
@@ -2121,6 +2121,29 @@ namespace Web.Controllers
             model.KgsMedias = 0f;
         }
 
+        private void SincronizarPesajesVinculados(Entidades.Compra compraDestino, IEnumerable<int> pesajesVinculadosIds, Entidades.Usuario user)
+        {
+            if (compraDestino == null || compraDestino.IdCompra <= 0 || !EsPesaje(compraDestino.TipoCompra))
+                return;
+
+            var idsActuales = (pesajesVinculadosIds ?? Enumerable.Empty<int>())
+                .Where(id => id > 0 && id != compraDestino.IdCompra)
+                .Distinct()
+                .ToList();
+
+            var idsPrevios = oCompraN.obtenerPesajesVinculadosPorDestino(compraDestino.IdCompra) ?? new List<int>();
+
+            foreach (int idPesaje in idsActuales)
+            {
+                oCompraN.actualizarIdPesajeAjustado(idPesaje, compraDestino.IdCompra, user);
+            }
+
+            foreach (int idPesaje in idsPrevios.Except(idsActuales))
+            {
+                oCompraN.actualizarIdPesajeAjustado(idPesaje, null, user);
+            }
+        }
+
         private bool EsCompraSeleccionableParaPesaje(Entidades.Compra compra)
         {
             if (compra == null || compra.IdCompra <= 0 || string.IsNullOrWhiteSpace(compra.TipoCompra))
@@ -2174,68 +2197,6 @@ namespace Web.Controllers
             }
 
             return lineas;
-        }
-
-        private void RegistrarObservacionesPesajesVinculados(Entidades.Compra compraDestino, List<int> pesajesVinculadosIds, Entidades.Usuario user)
-        {
-            if (compraDestino == null || compraDestino.IdCompra <= 0 || pesajesVinculadosIds == null || pesajesVinculadosIds.Count == 0)
-                return;
-
-            var ids = pesajesVinculadosIds
-                .Where(id => id > 0 && id != compraDestino.IdCompra)
-                .Distinct()
-                .ToList();
-
-            if (ids.Count == 0)
-                return;
-
-            string observacionesDestino = compraDestino.Observaciones ?? "";
-            foreach (int idPesaje in ids)
-            {
-                var compraOrigen = oCompraN.findById_convertToCompra(idPesaje);
-                if (compraOrigen == null || compraOrigen.IdCompra <= 0)
-                    continue;
-
-                string proveedor = compraOrigen.Proveedor != null ? compraOrigen.Proveedor.RazonSocial : "-";
-                string fecha = compraOrigen.FechaCompra.ToString("dd/MM/yyyy HH:mm");
-                string kilos = (compraOrigen.KgsMedias ?? 0f).ToString("N3");
-
-                string marcaDestino = "Pesaje vinculado ID: " + compraOrigen.IdCompra;
-                string textoDestino = marcaDestino + " | Fecha: " + fecha + " | Proveedor: " + proveedor + " | Kilos: " + kilos;
-                observacionesDestino = AgregarObservacionSiNoExiste(observacionesDestino, marcaDestino, textoDestino);
-
-                string marcaOrigen = "Pesaje vinculado a Pesaje ID: " + compraDestino.IdCompra;
-                string textoOrigen = marcaOrigen;
-                string nuevasObsOrigen = AgregarObservacionSiNoExiste(compraOrigen.Observaciones, marcaOrigen, textoOrigen);
-                if (!string.Equals(nuevasObsOrigen, compraOrigen.Observaciones ?? "", StringComparison.Ordinal))
-                {
-                    oCompraN.actualizarObservacionesCompra(compraOrigen.IdCompra, nuevasObsOrigen, user);
-                }
-            }
-
-            if (!string.Equals(observacionesDestino, compraDestino.Observaciones ?? "", StringComparison.Ordinal))
-            {
-                oCompraN.actualizarObservacionesCompra(compraDestino.IdCompra, observacionesDestino, user);
-            }
-        }
-
-        private static string AgregarObservacionSiNoExiste(string observacionesActuales, string marcaBusqueda, string textoAgregar)
-        {
-            string actuales = (observacionesActuales ?? "").Trim();
-            string marca = (marcaBusqueda ?? "").Trim();
-            string texto = (textoAgregar ?? "").Trim();
-
-            if (string.IsNullOrWhiteSpace(texto))
-                return actuales;
-
-            if (!string.IsNullOrWhiteSpace(marca)
-                && actuales.IndexOf(marca, StringComparison.OrdinalIgnoreCase) >= 0)
-                return actuales;
-
-            if (string.IsNullOrWhiteSpace(actuales))
-                return texto;
-
-            return actuales + Environment.NewLine + texto;
         }
 
         private static float ParseFloatFlexibleLocal(string text)

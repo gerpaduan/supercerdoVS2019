@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Collections.Generic;
 using Utilidades;
 
 namespace Datos
@@ -183,6 +184,51 @@ namespace Datos
                 {
                     p.Add("@idCompra", SqlDbType.Int).Value = idCompra;
                     p.Add("@observaciones", SqlDbType.NVarChar).Value = observaciones ?? "";
+                    p.Add("@actualizadoPor", SqlDbType.Int).Value = actualizadoPor;
+                }
+            );
+        }
+
+        public List<int> obtenerPesajesVinculadosPorDestino(int idPesajeDestino)
+        {
+            const string sql =
+                "SELECT idCompra " +
+                "FROM Compras " +
+                "WHERE tipoCompra = @tipoCompra " +
+                "  AND idPesajeAjustado = @idPesajeDestino " +
+                "  AND idCompra <> @idPesajeDestino;";
+
+            return Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => Convert.ToInt32(dr["idCompra"]),
+                p =>
+                {
+                    p.Add("@tipoCompra", SqlDbType.NVarChar, 50).Value =
+                        Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+                    p.Add("@idPesajeDestino", SqlDbType.Int).Value = idPesajeDestino;
+                }
+            );
+        }
+
+        public void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, int actualizadoPor)
+        {
+            const string sql =
+                "UPDATE Compras " +
+                "SET idPesajeAjustado = @idPesajeAjustado, actualizado = GETDATE(), actualizadoPor = @actualizadoPor " +
+                "WHERE idCompra = @idCompra;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@idCompra", SqlDbType.Int).Value = idCompra;
+                    p.Add("@idPesajeAjustado", SqlDbType.Int).Value = idPesajeAjustado.HasValue
+                        ? (object)idPesajeAjustado.Value
+                        : DBNull.Value;
                     p.Add("@actualizadoPor", SqlDbType.Int).Value = actualizadoPor;
                 }
             );
