@@ -334,10 +334,10 @@
 
                 if ((key === "n" || key === "enter") && btnNuevo) {
                     event.preventDefault();
-                    window.location.href = btnNuevo.href;
+                    navegarConLoader(btnNuevo.href, false);
                 } else if (key === "v" && btnLineas) {
                     event.preventDefault();
-                    window.location.href = btnLineas.href;
+                    navegarConLoader(btnLineas.href, false);
                 }
             });
 
@@ -349,10 +349,43 @@
             var inputTipoCompra = form ? form.querySelector('[name="tipoCompra"]') : null;
             var inputTexto = form ? form.querySelector('input[name="texto"]') : null;
             var alertaPendiente = document.getElementById('alertaFiltrosPendientesCompras');
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
             var fechasAplicadas = {
                 fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
                 fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
             };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                if (!form) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
 
             function buildState() {
                 return {
@@ -401,7 +434,7 @@
                     saveState();
                 }
 
-                form.submit();
+                submitConLoader();
             }
 
             function restoreStateIfNeeded() {
@@ -421,7 +454,7 @@
 
                     var query = params.toString();
                     if (query) {
-                        window.location.replace(form.action + "?" + query);
+                        navegarConLoader(form.action + "?" + query, true);
                     }
                 } catch (e) {
                     window.sessionStorage.removeItem(storageKey);
@@ -433,7 +466,13 @@
             actualizarAvisoPendiente();
 
             if (form) {
-                form.addEventListener("submit", function () {
+                form.addEventListener("submit", function (event) {
+                    if (form.dataset.loadingSubmitPending === "true") {
+                        form.dataset.loadingSubmitPending = "";
+                        return;
+                    }
+
+                    event.preventDefault();
                     fechasAplicadas = {
                         fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
                         fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
@@ -441,6 +480,8 @@
                     saveState();
                     actualizarAvisoPendiente();
                     setBuscandoCompras();
+                    form.dataset.loadingSubmitPending = "true";
+                    submitConLoader();
                 });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
@@ -452,6 +493,15 @@
             if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAvisoPendiente);
             if (inputSucursal) inputSucursal.addEventListener('change', enviarFiltrosEnVivo);
             if (inputTipoCompra) inputTipoCompra.addEventListener('change', enviarFiltrosEnVivo);
+
+            document.querySelectorAll("#btnNuevaCompraIndex, #btnVerLineasComprasIndex").forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    var href = link.getAttribute("href") || "";
+                    if (!href) return;
+                    event.preventDefault();
+                    navegarConLoader(href, false);
+                });
+            });
 
             var successAlert = document.getElementById("comprasSuccessAlert");
             if (successAlert) {

@@ -329,10 +329,30 @@
             var estado = document.getElementById('estadoBusquedaComprasLineas');
             var btnBuscar = document.getElementById('btnBuscarComprasLineas');
             var btnTexto = btnBuscar ? btnBuscar.querySelector('.btn-buscar-texto') : null;
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
             var fechasAplicadas = {
                 fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
                 fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
             };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
+                    window.ModalRequestLoading.trackNavigation(message || 'Cargando solicitud...');
+                }
+            }
+
+            function submitConLoader() {
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
 
             function hayFechasPendientes() {
                 return !!inputFechaDesde && !!inputFechaHasta
@@ -359,20 +379,28 @@
                     if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
                 }
 
-                form.submit();
+                submitConLoader();
             }
 
             if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAviso);
             if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAviso);
             if (inputSucursal) inputSucursal.addEventListener('change', enviarEnVivo);
 
-            form.addEventListener('submit', function () {
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    form.dataset.loadingSubmitPending = '';
+                    return;
+                }
+
+                event.preventDefault();
                 fechasAplicadas = {
                     fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
                     fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
                 };
                 actualizarAviso();
                 setBuscando('Actualizando búsqueda...');
+                form.dataset.loadingSubmitPending = 'true';
+                submitConLoader();
             });
         })();
     </script>

@@ -308,5 +308,92 @@
 @Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
 
 @section Scripts {
+    <script>
+        (function () {
+            var form = document.querySelector('.js-form-filtros-lineas');
+            if (!form) return;
+
+            var inputFechaDesde = form.querySelector('input[name="fechaDesde"]');
+            var inputFechaHasta = form.querySelector('input[name="fechaHasta"]');
+            var reloadFilters = Array.from(form.querySelectorAll('.js-filtro-recarga'));
+            var alerta = document.getElementById('alertaFiltrosPendientes');
+            var btnBuscar = form.querySelector('button[type="submit"]');
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+            };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
+                    window.ModalRequestLoading.trackNavigation(message || 'Cargando solicitud...');
+                }
+            }
+
+            function submitConLoader() {
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAviso() {
+                if (!alerta) return;
+                alerta.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscando() {
+                if (btnBuscar) {
+                    btnBuscar.disabled = true;
+                }
+            }
+
+            function enviarEnVivo() {
+                setBuscando();
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                }
+
+                submitConLoader();
+            }
+
+            if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAviso);
+            if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAviso);
+            reloadFilters.forEach(function (control) {
+                control.addEventListener('change', enviarEnVivo);
+            });
+
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    form.dataset.loadingSubmitPending = '';
+                    return;
+                }
+
+                event.preventDefault();
+                fechasAplicadas = {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+                };
+                actualizarAviso();
+                setBuscando();
+                form.dataset.loadingSubmitPending = 'true';
+                submitConLoader();
+            });
+        })();
+    </script>
     <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js?v=1")"></script>
 }

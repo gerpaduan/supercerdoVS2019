@@ -32,9 +32,41 @@
             const alertaPendiente = document.getElementById('@(esVentas ? "alertaFiltrosPendientesVentas" : "alertaFiltrosPendientesVentas")');
             const estadoBusqueda = document.getElementById('@(esVentas ? "estadoBusquedaVentas" : "estadoBusquedaVentas")');
             const btnFiltrarTexto = btnFiltrar ? btnFiltrar.querySelector('.btn-buscar-texto') : null;
+            const nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
 
             let fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
             let fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
+                    window.ModalRequestLoading.trackNavigation(message || 'Cargando solicitud...');
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
 
             function getServerState() {
                 return {
@@ -90,7 +122,7 @@
 
                 const query = params.toString();
                 if (query) {
-                    window.location.replace(form.action + "?" + query);
+                    navegarConLoader(form.action + "?" + query, true);
                     return true;
                 }
 
@@ -236,21 +268,29 @@
                         actualizarAvisoPendiente();
                     }
 
-                    form.submit();
+                    submitConLoader();
                 });
             }
 
             form.addEventListener('submit', function (e) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    form.dataset.loadingSubmitPending = '';
+                    return;
+                }
+
                 if (!fechasValidas()) {
                     e.preventDefault();
                     return;
                 }
 
+                e.preventDefault();
                 fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
                 fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
                 saveServerState();
                 actualizarAvisoPendiente();
                 setBuscando();
+                form.dataset.loadingSubmitPending = 'true';
+                submitConLoader();
             });
         
 
@@ -434,7 +474,7 @@
             params.set("vendedor", buscadorVendedor?.value || "");
             params.set("formasPago", getSeleccionados(filtroFormaPagoChecks).join(","));
 
-            window.location.href = baseUrl + "?" + params.toString();
+            navegarConLoader(baseUrl + "?" + params.toString(), false);
         });
 
         document.getElementById("btnVerFacturasVentas")?.addEventListener("click", function () {
@@ -448,7 +488,7 @@
             params.set("fechaHasta", document.getElementById("fechaHasta")?.value || "");
             params.set("idSucursal", document.getElementById("idSucursal")?.value || "-1");
 
-            window.location.href = baseUrl + "?" + params.toString();
+            navegarConLoader(baseUrl + "?" + params.toString(), false);
         });
         })();
 </script>

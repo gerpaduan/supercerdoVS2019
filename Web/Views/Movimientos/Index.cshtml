@@ -326,10 +326,10 @@
 
                 if ((key === "n" || key === "enter") && btnNuevo) {
                     event.preventDefault();
-                    window.location.href = btnNuevo.href;
+                    navegarConLoader(btnNuevo.href, false);
                 } else if (key === "v" && btnLineas) {
                     event.preventDefault();
-                    window.location.href = btnLineas.href;
+                    navegarConLoader(btnLineas.href, false);
                 }
             });
 
@@ -341,10 +341,43 @@
             var inputSucursalDestino = document.getElementById('idSucursalDestino');
             var inputVerDetalles = document.getElementById('verDetalles');
             var alertaPendiente = document.getElementById('alertaFiltrosPendientesMovimientos');
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
             var fechasAplicadas = {
                 fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
                 fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
             };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                if (!form) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
 
             function buildState() {
                 return {
@@ -402,7 +435,7 @@
                     saveState();
                 }
 
-                form.submit();
+                submitConLoader();
             }
 
             function restoreStateIfNeeded() {
@@ -422,7 +455,7 @@
 
                     var query = params.toString();
                     if (query) {
-                        window.location.replace((form.action || window.location.pathname) + "?" + query);
+                        navegarConLoader((form.action || window.location.pathname) + "?" + query, true);
                     }
                 } catch (e) {
                     window.sessionStorage.removeItem(storageKey);
@@ -434,7 +467,13 @@
             actualizarAvisoPendiente();
 
             if (form) {
-                form.addEventListener("submit", function () {
+                form.addEventListener("submit", function (event) {
+                    if (form.dataset.loadingSubmitPending === "true") {
+                        form.dataset.loadingSubmitPending = "";
+                        return;
+                    }
+
+                    event.preventDefault();
                     fechasAplicadas = {
                         fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
                         fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
@@ -455,6 +494,8 @@
                     if (estado) {
                         estado.textContent = "Actualizando búsqueda...";
                     }
+                    form.dataset.loadingSubmitPending = "true";
+                    submitConLoader();
                 });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
@@ -485,6 +526,15 @@
             if (inputSucursalDestino) {
                 inputSucursalDestino.addEventListener('change', enviarFiltrosEnVivo);
             }
+
+            document.querySelectorAll("#btnNuevoMovimientoIndex, #btnVerLineasMovimientosIndex").forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    var href = link.getAttribute("href") || "";
+                    if (!href) return;
+                    event.preventDefault();
+                    navegarConLoader(href, false);
+                });
+            });
         })();
     </script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js?v=20")"></script>
