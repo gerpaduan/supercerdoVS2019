@@ -342,6 +342,12 @@
 
 <script>
     (function () {
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
         function inicializarPersona() {
             var soloLecturaInicial = @(soloLecturaInicial ? "true" : "false");
             var puedeEditarCamposProtegidos = @(Model.PuedeEditarCamposProtegidos ? "true" : "false");
@@ -523,6 +529,8 @@
                     $("#IdIva").trigger("focus");
                     return false;
                 }
+
+                showNavigationLoading("Cargando solicitud...");
             });
 
             setSoloLectura(soloLecturaInicial);
@@ -538,6 +546,21 @@
                     saveButtonSelector: "#btnGuardarPersona"
                 });
             }
+
+            document.addEventListener("click", function (event) {
+                var link = event.target.closest ? event.target.closest(".persona-page a[href]") : null;
+                if (!link) return;
+                if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+                var href = link.getAttribute("href") || "";
+                if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+                event.preventDefault();
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    window.location.href = link.href;
+                }, 0);
+            });
         }
 
         function esperarJQuery() {

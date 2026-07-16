@@ -173,6 +173,45 @@
         var balanzaClientStarted = false;
         var balanzaUltimaLectura = null;
 
+        function esAccionVisible($button) {
+            return !!($button && $button.length && !$button.prop('disabled') && !$button.hasClass('d-none'));
+        }
+
+        function getPrimaryActionButton() {
+            var $modify = $('#btnHabilitarEdicionMovimiento');
+            var $save = $('#btnGuardarMovimiento');
+
+            if (esAccionVisible($modify)) return $modify;
+            if (esAccionVisible($save)) return $save;
+            return $();
+        }
+
+        function syncPrimaryAction() {
+            var esEdicion = toInt($('#IdMovimiento').val()) > 0;
+            if (!esEdicion) return;
+
+            var $modify = $('#btnHabilitarEdicionMovimiento');
+            var $save = $('#btnGuardarMovimiento');
+            if (!$modify.length || !$save.length) return;
+
+            if (state.readOnly) {
+                $modify
+                    .html('<i class="fas fa-edit mr-1"></i> Modificar')
+                    .toggleClass('d-none', false)
+                    .attr('title', 'Modificar (Alt+Enter)');
+
+                $save
+                    .toggleClass('d-none', true)
+                    .attr('title', 'Guardar movimiento (Alt+Enter)');
+                return;
+            }
+
+            $modify.toggleClass('d-none', true);
+            $save
+                .toggleClass('d-none', false)
+                .attr('title', 'Guardar movimiento (Alt+Enter)');
+        }
+
         function productoEsPesable() {
             return String($productoPesable.val() || '').toLowerCase() === 'true';
         }
@@ -181,6 +220,7 @@
             var hayProducto = toInt($productoId.val()) > 0;
             $('#tablaLineasMovimiento .js-remove-line').prop('disabled', !!state.readOnly);
             $cantKgs.prop('readonly', !!($balanza.is(':checked') && balanzaDisponible && !balanzaManualDesactivada && (!hayProducto || productoEsPesable())));
+            syncPrimaryAction();
         }
 
         function getDraftKey() {
@@ -999,9 +1039,19 @@
         $(document).on('keydown.movimientoGlobal', function (e) {
             if (!$page.length) return;
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            var key = String(e.key || '').toLowerCase();
             if (e.key === 'F10' && tag !== 'textarea') {
                 e.preventDefault();
                 openProductoModal();
+                return;
+            }
+
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
+                var $primaryAction = getPrimaryActionButton();
+                if (!$primaryAction.length || $primaryAction.prop('disabled')) return;
+
+                e.preventDefault();
+                $primaryAction.trigger('click');
                 return;
             }
 
@@ -1076,6 +1126,7 @@
         renderBalanzaStatus(null);
         verificarBalanzaInicial();
         autoResizeObservaciones();
+        syncPrimaryAction();
         if (readDraft()) {
             showDraftBanner();
         }
@@ -1086,6 +1137,7 @@
             state.readOnly = !!readOnly;
             syncReadOnlyUi();
         };
+        window.MovimientosEdit.syncPrimaryAction = syncPrimaryAction;
     }
 
     $(function () {

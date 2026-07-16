@@ -94,3 +94,34 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
+        document.addEventListener("submit", function (event) {
+            var form = event.target;
+            if (!form || !form.closest || !form.closest(".container-fluid")) return;
+            showNavigationLoading("Cargando solicitud...");
+        });
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest ? event.target.closest(".container-fluid a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            var href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            event.preventDefault();
+            showNavigationLoading("Cargando solicitud...");
+            window.setTimeout(function () {
+                window.location.href = link.href;
+            }, 0);
+        });
+    })();
+</script>

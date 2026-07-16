@@ -240,6 +240,49 @@
         return $form.find('#chkCargaContinuaMedia').is(':checked');
     }
 
+    function esAccionVisible($button) {
+        return !!($button && $button.length && !$button.prop('disabled') && !$button.hasClass('d-none'));
+    }
+
+    function getPrimaryActionButton($form) {
+        var $modify = $form.find('#btnHabilitarEdicionCompra');
+        var $save = $form.find('#btnGuardarCompra');
+
+        if (esAccionVisible($modify)) return $modify;
+        if (esAccionVisible($save)) return $save;
+        return $();
+    }
+
+    function syncPrimaryAction($form) {
+        if (!$form || !$form.length) return;
+
+        var esEdicion = !!$.trim($form.find('#IdCompra').val() || '');
+        if (!esEdicion) return;
+
+        var $modify = $form.find('#btnHabilitarEdicionCompra');
+        var $save = $form.find('#btnGuardarCompra');
+        if (!$modify.length || !$save.length) return;
+
+        var readOnly = $form.hasClass('edit-readonly-active');
+
+        if (readOnly) {
+            $modify
+                .html('<i class="fas fa-edit mr-1"></i> Modificar')
+                .toggleClass('d-none', false)
+                .attr('title', 'Modificar (Alt+Enter)');
+
+            $save
+                .toggleClass('d-none', true)
+                .attr('title', 'Guardar compra (Alt+Enter)');
+            return;
+        }
+
+        $modify.toggleClass('d-none', true);
+        $save
+            .toggleClass('d-none', false)
+            .attr('title', 'Guardar compra (Alt+Enter)');
+    }
+
     function setCantMedias($form, value) {
         var text = value === null || value === undefined ? '' : String(value);
         $form.find('#CantMedias').val(text);
@@ -1182,6 +1225,16 @@
                     return;
                 }
 
+                if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && String(e.key || '').toLowerCase() === 'enter') {
+                    var $primaryAction = getPrimaryActionButton($form);
+                    if (!$primaryAction.length || !$primaryAction.is(':visible') || $primaryAction.prop('disabled')) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                    $primaryAction.trigger('click');
+                    return;
+                }
+
                 if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && String(e.key || '').toLowerCase() === 'c') {
                     var $cancel = $form.find('#btnCancelarCompra');
                     if (!$cancel.length || !$cancel.is(':visible')) return;
@@ -1224,6 +1277,7 @@
         syncContinuousMediaState($form);
         renderLineas($form);
         rebuildHiddenInputs($form);
+        syncPrimaryAction($form);
 
         var draft = readDraft($form);
         if (draft) {
@@ -1239,4 +1293,6 @@
             bindEvents($form);
         }
     };
+
+    window.ComprasUI.syncPrimaryAction = syncPrimaryAction;
 })(window, window.jQuery);

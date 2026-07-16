@@ -61,6 +61,10 @@
                 if (window.sessionStorage) {
                     window.sessionStorage.setItem(restoreKey, "1");
                 }
+
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation("Cargando solicitud...");
+                }
             } else {
                 limpiarStorageElaborados();
             }

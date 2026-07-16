@@ -308,8 +308,29 @@
                 $('#txtCodigoElaboradoFormula, #txtCodigoIngredienteFormula, #txtPorcentajeFormula, #Receta').prop('readonly', readOnly);
                 $('#btnBuscarElaboradoFormula, #btnBuscarIngredienteFormula, #btnAgregarLineaFormula, .js-remove-linea-formula').prop('disabled', readOnly);
                 $('#chkAgregarAutoFormula').prop('disabled', readOnly);
-                $('#btnGuardarFormula').toggleClass('d-none', readOnly);
-                $('#btnHabilitarEdicionFormula').toggleClass('d-none', !readOnly);
+                syncPrimaryAction();
+            }
+
+            function syncPrimaryAction() {
+                var $modify = $('#btnHabilitarEdicionFormula');
+                var $save = $('#btnGuardarFormula');
+
+                if (state.soloLectura) {
+                    $modify
+                        .html('Modificar')
+                        .toggleClass('d-none', false)
+                        .attr('title', 'Modificar (Alt+Enter)');
+
+                    $save
+                        .toggleClass('d-none', true)
+                        .attr('title', 'Guardar formula (Alt+Enter)');
+                    return;
+                }
+
+                $modify.toggleClass('d-none', true);
+                $save
+                    .toggleClass('d-none', false)
+                    .attr('title', 'Guardar formula (Alt+Enter)');
             }
 
             function syncAjusteFormula() {
@@ -499,8 +520,21 @@
             });
 
             $('#btnHabilitarEdicionFormula').on('click', function () {
+                if (!state.soloLectura) return;
                 setReadOnly(false);
                 $('#txtCodigoIngredienteFormula').focus();
+            });
+
+            $(document).on('keydown.formulaHotkeys', function (e) {
+                if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+                if (String(e.key || '').toLowerCase() !== 'enter') return;
+                if ($(e.target).closest('.modal').length) return;
+
+                var $action = state.soloLectura ? $('#btnHabilitarEdicionFormula') : $('#btnGuardarFormula');
+                if (!$action.length || $action.prop('disabled') || $action.hasClass('d-none')) return;
+
+                e.preventDefault();
+                $action.trigger('click');
             });
 
             updateModeLabels();

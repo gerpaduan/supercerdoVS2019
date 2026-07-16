@@ -605,8 +605,8 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=20")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=21")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formMovimiento",
@@ -616,6 +616,9 @@
             onStateChanged: function (readOnly) {
                 if (window.MovimientosEdit && typeof window.MovimientosEdit.setReadOnly === "function") {
                     window.MovimientosEdit.setReadOnly(readOnly);
+                }
+                if (window.MovimientosEdit && typeof window.MovimientosEdit.syncPrimaryAction === "function") {
+                    window.MovimientosEdit.syncPrimaryAction();
                 }
             }
         });

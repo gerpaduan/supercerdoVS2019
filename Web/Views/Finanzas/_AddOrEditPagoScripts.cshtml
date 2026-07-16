@@ -50,6 +50,9 @@
 
         var urlVolver = $("#urlVolverPago").val();
         if (urlVolver) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation("Cargando solicitud...");
+            }
             window.location.href = urlVolver;
             return;
         }

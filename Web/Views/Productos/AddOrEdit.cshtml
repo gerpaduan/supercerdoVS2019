@@ -897,6 +897,7 @@
         query.set("cargaContinua", "true");
         query.set("flujoBaseContinuo", "edicion");
 
+        mostrarCargaSolicitud();
         window.location.href = urlAddOrEdit + "?" + query.toString();
     }
 
@@ -1290,6 +1291,7 @@
             query.set("retomarProductoId", String(retomarId));
         }
 
+        mostrarCargaSolicitud();
         window.location.href = urlAddOrEdit + "?" + query.toString();
     });
 
@@ -2211,6 +2213,7 @@
         if (alertaCargaContinua && alertaCargaContinua.getAttribute('data-recargar') === '1') {
             window.setTimeout(function () {
                 window.sessionStorage.setItem(STORAGE_FOCUS_CODIGO_KEY, "1");
+                mostrarCargaSolicitud();
                 window.location.replace('@Url.Action("AddOrEdit", "Productos", new { cargaContinua = true })');
             }, 2000);
         }
@@ -2310,6 +2313,18 @@
     }
 
     window.setTimeout(actualizarTextoAtajosAcciones, 0);
+
+    $frm.on("submit.productosLoader", function () {
+        mostrarCargaSolicitud();
+    });
+
+    $btnVolver.on("click.productosLoader", function (e) {
+        e.preventDefault();
+        mostrarCargaSolicitud();
+        window.setTimeout(function () {
+            window.location.href = $btnVolver.attr("href");
+        }, 0);
+    });
     window.setTimeout(function () {
         if (window.productosEditReadonly && window.productosEditReadonly.isReadOnly && window.productosEditReadonly.isReadOnly()) {
             return;

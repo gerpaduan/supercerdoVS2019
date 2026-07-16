@@ -833,6 +833,20 @@
 @section Scripts {
 
     <script>
+    function showProductosNavigationLoading(message) {
+        if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+            window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+        }
+    }
+
+    function navegarProductosConLoader(url) {
+        if (!url) return;
+        showProductosNavigationLoading("Cargando solicitud...");
+        window.setTimeout(function () {
+            window.location.href = url;
+        }, 0);
+    }
+
     // ============================
     // Helpers
     // ============================
@@ -1916,7 +1930,7 @@
         if (fechaDesde) nuevaUrl.searchParams.set("fechaDesde", fechaDesde);
         if (fechaHasta) nuevaUrl.searchParams.set("fechaHasta", fechaHasta);
 
-        window.location.href = nuevaUrl.toString();
+        navegarProductosConLoader(nuevaUrl.toString());
     }
 
     function aplicarFiltrosAvanzados() {
@@ -1951,7 +1965,7 @@
             const sucursalId = url.searchParams.get("SucursalId");
             if (modo) nuevaUrl.searchParams.set("modo", modo);
             if (sucursalId) nuevaUrl.searchParams.set("SucursalId", sucursalId);
-            window.location.href = nuevaUrl.toString();
+            navegarProductosConLoader(nuevaUrl.toString());
             return;
         }
 
@@ -3005,6 +3019,18 @@
                 updateExitProtectionEtiquetas();
             };
         }
+
+        document.addEventListener("click", function (event) {
+            const link = event.target.closest ? event.target.closest(".productos-wrap a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            const href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            event.preventDefault();
+            navegarProductosConLoader(link.href);
+        });
 
             (function () {
                 document.addEventListener('keydown', function (e) {

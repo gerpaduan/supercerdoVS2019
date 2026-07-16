@@ -7,7 +7,11 @@
     // Lo dejamos chico y reutilizable para que cualquier modulo del POS pueda usarlo.
     window.POSGuard = window.POSGuard || (function () {
         const busyActions = Object.create(null);
+        const busyActionSince = Object.create(null);
         const modalStates = Object.create(null);
+        const modalStateSince = Object.create(null);
+        const MODAL_TRANSITION_STALE_MS = 3000;
+        const MODAL_LOAD_STALE_MS = 15000;
 
         function actionKey(key) {
             return String(key || "").trim().toLowerCase();
@@ -17,8 +21,14 @@
             const normalized = actionKey(key);
             if (!normalized) return;
 
-            if (busy) busyActions[normalized] = true;
-            else delete busyActions[normalized];
+            if (busy) {
+                busyActions[normalized] = true;
+                busyActionSince[normalized] = Date.now();
+                return;
+            }
+
+            delete busyActions[normalized];
+            delete busyActionSince[normalized];
         }
 
         function startAction(key) {
@@ -38,14 +48,45 @@
             return !!busyActions[actionKey(key)];
         }
 
+        function isActionStale(key, maxAgeMs) {
+            const normalized = actionKey(key);
+            if (!normalized || !busyActions[normalized]) return false;
+
+            const startedAt = busyActionSince[normalized] || 0;
+            return !!startedAt && (Date.now() - startedAt) > (maxAgeMs || 0);
+        }
+
         function modalKey(key) {
             return actionKey(key);
+        }
+
+        function clearModalBusyState(key) {
+            const normalized = modalKey(key);
+            if (!normalized) return;
+
+            delete modalStates[normalized];
+            delete modalStateSince[normalized];
+            endAction("modal-load:" + normalized);
         }
 
         function isModalBusy(key) {
             const normalized = modalKey(key);
             const state = modalStates[normalized];
-            return state === "opening" || state === "closing" || isActionBusy("modal-load:" + normalized);
+            const startedAt = modalStateSince[normalized] || 0;
+
+            if ((state === "opening" || state === "closing")
+                && startedAt
+                && (Date.now() - startedAt) > MODAL_TRANSITION_STALE_MS) {
+                clearModalBusyState(normalized);
+            }
+
+            if (isActionStale("modal-load:" + normalized, MODAL_LOAD_STALE_MS)) {
+                endAction("modal-load:" + normalized);
+            }
+
+            return modalStates[normalized] === "opening"
+                || modalStates[normalized] === "closing"
+                || isActionBusy("modal-load:" + normalized);
         }
 
         function bindModal(selector, key) {
@@ -61,16 +102,18 @@
                 .off("hidden.bs.modal" + ns, selector)
                 .on("show.bs.modal" + ns, selector, function () {
                     modalStates[normalized] = "opening";
+                    modalStateSince[normalized] = Date.now();
                 })
                 .on("shown.bs.modal" + ns, selector, function () {
                     modalStates[normalized] = "open";
+                    modalStateSince[normalized] = Date.now();
                 })
                 .on("hide.bs.modal" + ns, selector, function () {
                     modalStates[normalized] = "closing";
+                    modalStateSince[normalized] = Date.now();
                 })
                 .on("hidden.bs.modal" + ns, selector, function () {
-                    delete modalStates[normalized];
-                    endAction("modal-load:" + normalized);
+                    clearModalBusyState(normalized);
                 });
         }
 

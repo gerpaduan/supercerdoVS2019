@@ -117,6 +117,24 @@
 @section Scripts {
     <script>
         (function () {
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 0);
+            }
+
             document.addEventListener("keydown", function (event) {
                 if (!event.altKey) return;
 
@@ -128,10 +146,10 @@
                 var key = (event.key || "").toLowerCase();
                 if (key === "n" || key === "enter") {
                     event.preventDefault();
-                    window.location.href = '@Url.Action("Carga", "Elaborados")';
+                    navegarConLoader('@Url.Action("Carga", "Elaborados")', false);
                 } else if (key === "v") {
                     event.preventDefault();
-                    window.location.href = '@Url.Action("Lineas", "Elaborados")';
+                    navegarConLoader('@Url.Action("Lineas", "Elaborados")', false);
                 }
             });
 
@@ -200,7 +218,7 @@
 
                     var query = params.toString();
                     if (query) {
-                        window.location.replace(form.action + "?" + query);
+                        navegarConLoader(form.action + "?" + query, true);
                     }
                 } catch (e) {
                     limpiarStorageElaborados();
@@ -213,6 +231,7 @@
             if (form) {
                 form.addEventListener("submit", function () {
                     saveState();
+                    showNavigationLoading("Cargando solicitud...");
                     var btnBuscar = document.getElementById("btnBuscarElaborados");
                     var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
                     var estado = document.getElementById("estadoBusquedaElaborados");
@@ -239,6 +258,18 @@
                     el.addEventListener("input", saveState);
                 });
             }
+
+            document.addEventListener("click", function (event) {
+                var link = event.target.closest ? event.target.closest('.elaborados-page a[href]') : null;
+                if (!link) return;
+                if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+                var href = link.getAttribute("href") || "";
+                if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+                event.preventDefault();
+                navegarConLoader(link.href, false);
+            });
 
             var successAlert = document.getElementById('elaboradosSuccessAlert');
             if (successAlert) {

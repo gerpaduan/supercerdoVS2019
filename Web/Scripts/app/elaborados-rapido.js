@@ -140,6 +140,47 @@
         var $alertaBalanza = $('#alertaBalanzaRapido');
         var $receta = $('#RecetaRapido');
 
+        function esAccionVisible($button) {
+            return !!($button && $button.length && !$button.prop('disabled') && !$button.hasClass('d-none'));
+        }
+
+        function getPrimaryActionButton() {
+            var $modify = $('#btnHabilitarEdicionIngresoRapido');
+            var $save = $('#btnGuardarIngresoRapido');
+
+            if (esAccionVisible($modify)) return $modify;
+            if (esAccionVisible($save)) return $save;
+            return $();
+        }
+
+        function syncPrimaryAction() {
+            var esEdicion = (parseInt($form.find('input[name="IdEmbutido"]').val(), 10) || 0) > 0;
+            if (!esEdicion) return;
+
+            var $modify = $('#btnHabilitarEdicionIngresoRapido');
+            var $save = $('#btnGuardarIngresoRapido');
+            if (!$modify.length || !$save.length) return;
+
+            var readOnly = $form.hasClass('edit-readonly-active');
+
+            if (readOnly) {
+                $modify
+                    .html('<i class="fas fa-edit mr-1"></i> Modificar')
+                    .toggleClass('d-none', false)
+                    .attr('title', 'Modificar (Alt+Enter)');
+
+                $save
+                    .toggleClass('d-none', true)
+                    .attr('title', 'Guardar elaborado (Alt+Enter)');
+                return;
+            }
+
+            $modify.toggleClass('d-none', true);
+            $save
+                .toggleClass('d-none', false)
+                .attr('title', 'Guardar elaborado (Alt+Enter)');
+        }
+
         function esPesable() {
             return config.esPesable === true || config.esPesable === 'true';
         }
@@ -390,6 +431,17 @@
 
         $(document).on('keydown.elaboradosRapidos', function (e) {
             if (config.esAnulado) return;
+            var key = String(e.key || '').toLowerCase();
+
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
+                var $primaryAction = getPrimaryActionButton();
+                if ($primaryAction.length && !$primaryAction.prop('disabled')) {
+                    e.preventDefault();
+                    $primaryAction.trigger('click');
+                    return;
+                }
+            }
+
             if (e.key === '*') {
                 e.preventDefault();
                 $balanza.prop('checked', !$balanza.is(':checked')).trigger('change');
@@ -434,6 +486,10 @@
         verificarBalanzaInicial();
         syncBalanzaStatusVisibility();
         syncCantidadReadonly();
+
+        window.ElaboradosRapido = window.ElaboradosRapido || {};
+        window.ElaboradosRapido.syncPrimaryAction = syncPrimaryAction;
+        syncPrimaryAction();
     }
 
     $(function () {

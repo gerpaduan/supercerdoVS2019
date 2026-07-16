@@ -143,7 +143,11 @@
 
         if ($modify.length) {
             $modify.off('click.editReadonly').on('click.editReadonly', function () {
+                $form.data('editReadonlyJustUnlocked', true);
                 setReadOnly(false);
+                window.setTimeout(function () {
+                    $form.removeData('editReadonlyJustUnlocked');
+                }, 0);
             });
         }
 

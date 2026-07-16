@@ -385,14 +385,19 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=12")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=13")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formCargaElaborado",
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
             modifyButtonSelector: "#btnHabilitarEdicionElaborado",
-            saveButtonSelector: "#btnGuardarElaborado"
+            saveButtonSelector: "#btnGuardarElaborado",
+            onStateChanged: function (readOnly) {
+                if (window.ElaboradosCarga && typeof window.ElaboradosCarga.syncPrimaryAction === "function") {
+                    window.ElaboradosCarga.syncPrimaryAction();
+                }
+            }
         });
     </script>
 }

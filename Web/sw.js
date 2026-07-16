@@ -1,4 +1,4 @@
-const CACHE_NAME = "carnisys-pos-v3";
+const CACHE_NAME = "carnisys-pos-v4";
 
 const CORE = [
     "./",
@@ -36,7 +36,10 @@ self.addEventListener("fetch", (event) => {
     // Ej: acciones que devuelven JSON, listar productos, finalizar venta, etc.
     if (url.pathname.includes("/Ventas/") ||
         url.pathname.includes("/Productos/") ||
-        url.pathname.includes("/Personas/")) {
+        url.pathname.includes("/Personas/") ||
+        url.pathname.includes("/Scripts/app/pos-") ||
+        url.pathname.includes("/Scripts/app/ventas-expendios-pos.js") ||
+        url.pathname.includes("/Scripts/app/punto-expendio-pos.js")) {
         return; // deja pasar a red
     }
 

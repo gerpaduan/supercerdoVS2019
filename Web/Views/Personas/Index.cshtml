@@ -125,7 +125,7 @@
 
     <div class="card shadow-sm mb-3 personas-filtros-card">
         <div class="card-body">
-            <form method="get" action="@Url.Action("Index", "Personas")">
+            <form method="get" action="@Url.Action("Index", "Personas")" id="formFiltrosPersonas">
                 <div class="form-row align-items-end">
                     <div class="col-12 col-md-7 col-lg-6 mb-2">
                         <label class="personas-filtro-label">Buscar</label>
@@ -215,12 +215,45 @@
 
 <script>
     (function () {
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
+        function navegarConLoader(url) {
+            if (!url) return;
+            showNavigationLoading("Cargando solicitud...");
+            window.setTimeout(function () {
+                window.location.href = url;
+            }, 0);
+        }
+
         var successAlert = document.getElementById("personasSuccessAlert");
         if (successAlert) {
             window.setTimeout(function () {
                 $(successAlert).alert("close");
             }, 2500);
         }
+
+        var formFiltros = document.getElementById("formFiltrosPersonas");
+        if (formFiltros) {
+            formFiltros.addEventListener("submit", function () {
+                showNavigationLoading("Cargando solicitud...");
+            });
+        }
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest ? event.target.closest(".personas-index-page a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            var href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            event.preventDefault();
+            navegarConLoader(link.href);
+        });
 
         var $input = $("#txtFiltroPersonas");
         var $tbody = $("#tbodyPersonas");

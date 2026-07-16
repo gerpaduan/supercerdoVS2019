@@ -475,8 +475,8 @@
 @if (Model.DesdePos)
 {
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/compras.js?v=21")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=22")"></script>
     <script>
         (function () {
             if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
@@ -506,7 +506,12 @@
                     formSelector: "#formCompra",
                     soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
                     modifyButtonSelector: "#btnHabilitarEdicionCompra",
-                    saveButtonSelector: "#btnGuardarCompra"
+                    saveButtonSelector: "#btnGuardarCompra",
+                    onStateChanged: function (readOnly, $form) {
+                        if (window.ComprasUI && typeof window.ComprasUI.syncPrimaryAction === "function") {
+                            window.ComprasUI.syncPrimaryAction($form);
+                        }
+                    }
                 });
         })();
     </script>
@@ -514,8 +519,8 @@
 else
 {
     @section Scripts {
-        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=21")"></script>
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=22")"></script>
         <script>
             (function () {
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
@@ -545,7 +550,12 @@ else
                     formSelector: "#formCompra",
                     soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
                     modifyButtonSelector: "#btnHabilitarEdicionCompra",
-                    saveButtonSelector: "#btnGuardarCompra"
+                    saveButtonSelector: "#btnGuardarCompra",
+                    onStateChanged: function (readOnly, $form) {
+                        if (window.ComprasUI && typeof window.ComprasUI.syncPrimaryAction === "function") {
+                            window.ComprasUI.syncPrimaryAction($form);
+                        }
+                    }
                 });
             })();
         </script>

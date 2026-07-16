@@ -150,6 +150,33 @@
 <link rel="stylesheet" href="@Url.Content("~/Content/css/ctasctes.css?v=1")" />
 <script src="@Url.Content("~/Scripts/app/ctasctes.js?v=1")"></script>
 <script>
+    (function () {
+        if (@Html.Raw((desdePos || renderSinLayout ? "true" : "false"))) {
+            return;
+        }
+
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest ? event.target.closest(".ctactes-index-page a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            var href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            event.preventDefault();
+            showNavigationLoading("Cargando solicitud...");
+            window.setTimeout(function () {
+                window.location.href = link.href;
+            }, 0);
+        });
+    })();
+
     window.CtasCtesConfig = {
         ctaCtePersonaUrl: '@Url.Action("CtaCtePersona", "Finanzas")',
         desdePos: @Html.Raw(desdePos.ToString().ToLower())

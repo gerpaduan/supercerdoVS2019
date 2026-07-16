@@ -939,9 +939,9 @@
         }
     </style>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=32")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=33")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
     <script>
         (function () {
             if (!window.StockUI || typeof window.StockUI.init !== "function") {
@@ -980,7 +980,12 @@
                 formSelector: "#formStock",
                 soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
                 modifyButtonSelector: "#btnHabilitarEdicionStock",
-                saveButtonSelector: "#btnGuardarStock"
+                saveButtonSelector: "#btnGuardarStock",
+                onStateChanged: function (readOnly, $form) {
+                    if (window.StockUI && typeof window.StockUI.syncPrimaryAction === "function") {
+                        window.StockUI.syncPrimaryAction($form);
+                    }
+                }
             });
         })();
     </script>
@@ -1044,8 +1049,8 @@ else
             }
         </style>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-        <script src="@Url.Content("~/Scripts/app/stock.js?v=32")"></script>
-        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=33")"></script>
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
         <script>
             (function () {
                 if (!window.StockUI || typeof window.StockUI.init !== "function") {
@@ -1084,7 +1089,12 @@ else
                     formSelector: "#formStock",
                     soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
                     modifyButtonSelector: "#btnHabilitarEdicionStock",
-                    saveButtonSelector: "#btnGuardarStock"
+                    saveButtonSelector: "#btnGuardarStock",
+                    onStateChanged: function (readOnly, $form) {
+                        if (window.StockUI && typeof window.StockUI.syncPrimaryAction === "function") {
+                            window.StockUI.syncPrimaryAction($form);
+                        }
+                    }
                 });
             })();
         </script>

@@ -593,6 +593,40 @@
 
 <script>
     (function () {
+        if (@Html.Raw((desdePos || renderSinLayout ? "true" : "false"))) {
+            return;
+        }
+
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
+        var form = document.querySelector('#ctactePersonaContainer form[action*="CtaCtePersona"]');
+        if (form) {
+            form.addEventListener("submit", function () {
+                showNavigationLoading("Cargando solicitud...");
+            });
+        }
+
+        ["btnVolverCtasCtesPersona", "btnNuevoPagoCtaCteDesktop", "btnNuevoPagoCtaCteMobile"].forEach(function (id) {
+            var link = document.getElementById(id);
+            if (!link) return;
+
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    window.location.href = link.href;
+                }, 0);
+            });
+        });
+    })();
+</script>
+
+<script>
+    (function () {
         var returnUrl = '@returnUrl';
         var desdePos = @Html.Raw((desdePos ? "true" : "false"));
 
@@ -611,6 +645,9 @@
                 return;
             }
 
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation("Cargando solicitud...");
+            }
             window.location.href = urlDetalleVenta;
             return;
         }
@@ -631,6 +668,9 @@
             return;
         }
 
+        if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+            window.ModalRequestLoading.trackNavigation("Cargando solicitud...");
+        }
         window.location.href = url;
         };
     })();

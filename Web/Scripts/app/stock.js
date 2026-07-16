@@ -283,6 +283,52 @@
         $form.find('#txtCantKgs').prop('readonly', soloLectura);
     }
 
+    function esAccionVisible($button) {
+        return !!($button && $button.length && !$button.prop('disabled') && !$button.hasClass('d-none'));
+    }
+
+    function getPrimaryActionButton($form) {
+        var $modify = $form.find('#btnHabilitarEdicionStock');
+        var $save = $form.find('#btnGuardarStock');
+
+        if (esAccionVisible($modify)) return $modify;
+        if (esAccionVisible($save)) return $save;
+        return $();
+    }
+
+    function syncPrimaryAction($form) {
+        if (!$form || !$form.length) return;
+
+        var esEdicion = (parseInt($form.find('#IdCompra').val(), 10) || 0) > 0;
+        if (!esEdicion) return;
+
+        var $modify = $form.find('#btnHabilitarEdicionStock');
+        var $save = $form.find('#btnGuardarStock');
+        if (!$modify.length || !$save.length) return;
+
+        var readOnly = $form.hasClass('edit-readonly-active');
+
+        $modify.removeAttr('accesskey');
+        $save.removeAttr('accesskey');
+
+        if (readOnly) {
+            $modify
+                .html('<i class="fas fa-edit mr-1"></i> Modificar')
+                .toggleClass('d-none', false)
+                .attr('title', 'Modificar (Alt+Enter)');
+
+            $save
+                .toggleClass('d-none', true)
+                .attr('title', 'Guardar stock (Alt+Enter)');
+            return;
+        }
+
+        $modify.toggleClass('d-none', true);
+        $save
+            .toggleClass('d-none', false)
+            .attr('title', 'Guardar stock (Alt+Enter)');
+    }
+
     function normalizeLinea(linea) {
         return {
             index: linea.Index || linea.index || 0,
@@ -2402,6 +2448,7 @@
 
         $(document).on('keydown.stock', function (e) {
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            var key = String(e.key || '').toLowerCase();
 
             if (e.key === 'F10' && tag !== 'textarea') {
                 e.preventDefault();
@@ -2413,6 +2460,18 @@
             if (state.config.esPesaje && e.key === 'F9' && tag !== 'textarea') {
                 e.preventDefault();
                 abrirProveedorModal($form);
+                return;
+            }
+
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
+                if ($(e.target).closest('.modal').length) return;
+                if (window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible()) return;
+
+                var $primaryAction = getPrimaryActionButton($form);
+                if (!$primaryAction.length || $primaryAction.prop('disabled')) return;
+
+                e.preventDefault();
+                $primaryAction.trigger('click');
                 return;
             }
 
@@ -2445,6 +2504,7 @@
             syncCantidadReadonly($form);
             autoResizeObservaciones($form);
             actualizarEstadoAjustePesaje($form, $.trim($('#stockEstadoAjusteTexto').text() || ''));
+            syncPrimaryAction($form);
             if (readDraft($form)) {
                 showDraftBanner($form);
             }
@@ -2452,4 +2512,6 @@
             $form.find('#txtCodigoProducto').focus();
         }
     };
+
+    window.StockUI.syncPrimaryAction = syncPrimaryAction;
 })(window, window.jQuery);

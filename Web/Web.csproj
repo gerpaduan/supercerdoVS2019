@@ -1914,6 +1914,8 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\app\factura-electronica.js" />
+    <Content Include="Scripts\app\edit-page-guard.js" />
+    <Content Include="Scripts\app\edit-readonly.js" />
     <Content Include="Scripts\app\egresos-caja.js" />
     <Content Include="Scripts\app\modal-cheque.js" />
     <Content Include="Scripts\app\modal-postexpendio.js" />
@@ -1923,6 +1925,7 @@
     <Content Include="Scripts\app\modal-postventa.js" />
     <Content Include="Scripts\app\modal-sucursales.js" />
     <Content Include="Scripts\app\persona-buscar.js" />
+    <Content Include="Scripts\app\pos-guard.js" />
     <Content Include="Scripts\app\pos-multi-instance.js" />
     <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\app\scanner.js" />
@@ -2273,9 +2276,17 @@
   <ItemGroup>
     <Content Include="Scripts\app\compras.js" />
     <Content Include="Scripts\app\ctasctes.js" />
+    <Content Include="Scripts\app\pos-cart.js" />
+    <Content Include="Scripts\app\pos-comment.js" />
+    <Content Include="Scripts\app\pos-help.js" />
+    <Content Include="Scripts\app\pos-keyboard.js" />
+    <Content Include="Scripts\app\pos-product.js" />
+    <Content Include="Scripts\app\pos-state.js" />
+    <Content Include="Scripts\app\print-agent.js" />
     <Content Include="Scripts\app\punto-expendio-pos.js" />
     <Content Include="Scripts\app\puntos-expendio.js" />
     <Content Include="Scripts\app\reportes.js" />
+    <Content Include="Scripts\app\ventas-expendios-pos.js" />
     <Content Include="Scripts\carnisys.balanza.js" />
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />

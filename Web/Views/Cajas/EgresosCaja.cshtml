@@ -373,6 +373,20 @@
 @section Scripts {
     <script>
         (function () {
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    window.location.replace(url);
+                }, 0);
+            }
+
             var storageKey = "egresos_caja_filters_v1";
             var form = document.getElementById('formFiltrosEgresos');
             var inputFechaDesde = document.getElementById('filtroDesdeEgreso');
@@ -419,7 +433,7 @@
 
                     var query = params.toString();
                     if (query) {
-                        window.location.replace(window.location.pathname + "?" + query);
+                        navegarConLoader(window.location.pathname + "?" + query);
                     }
                 } catch (e) {
                     window.sessionStorage.removeItem(storageKey);
@@ -430,7 +444,10 @@
             saveState();
 
             if (form) {
-                form.addEventListener("submit", saveState);
+                form.addEventListener("submit", function () {
+                    saveState();
+                    showNavigationLoading("Cargando solicitud...");
+                });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);
                     el.addEventListener("input", saveState);

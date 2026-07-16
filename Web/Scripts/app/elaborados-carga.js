@@ -104,6 +104,46 @@
         var $feedback = $('#cargaFeedback');
         var $warning = $('#cargaWarning');
 
+        function esAccionVisible($button) {
+            return !!($button && $button.length && !$button.prop('disabled') && !$button.hasClass('d-none'));
+        }
+
+        function getPrimaryActionButton() {
+            var $modify = $('#btnHabilitarEdicionElaborado');
+            var $save = $('#btnGuardarElaborado');
+
+            if (esAccionVisible($modify)) return $modify;
+            if (esAccionVisible($save)) return $save;
+            return $();
+        }
+
+        function syncPrimaryAction() {
+            if (!config.esEdicion) return;
+
+            var $modify = $('#btnHabilitarEdicionElaborado');
+            var $save = $('#btnGuardarElaborado');
+            if (!$modify.length || !$save.length) return;
+
+            var readOnly = $form.hasClass('edit-readonly-active');
+
+            if (readOnly) {
+                $modify
+                    .html('<i class="fas fa-edit mr-1"></i> Modificar')
+                    .toggleClass('d-none', false)
+                    .attr('title', 'Modificar (Alt+Enter)');
+
+                $save
+                    .toggleClass('d-none', true)
+                    .attr('title', 'Guardar elaborado (Alt+Enter)');
+                return;
+            }
+
+            $modify.toggleClass('d-none', true);
+            $save
+                .toggleClass('d-none', false)
+                .attr('title', 'Guardar elaborado (Alt+Enter)');
+        }
+
         function ingredienteEsPesable() {
             return String($ingredientePesable.val() || '').toLowerCase() === 'true';
         }
@@ -876,6 +916,7 @@
         $(document).on('keydown.elaboradosCarga', function (e) {
             if (config.esAnulado) return;
             var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            var key = String(e.key || '').toLowerCase();
             if (tag === 'textarea') return;
 
             if (e.key === 'F9') {
@@ -887,6 +928,15 @@
             if (e.key === 'F10') {
                 e.preventDefault();
                 openModalIngrediente();
+                return;
+            }
+
+            if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
+                var $primaryAction = getPrimaryActionButton();
+                if (!$primaryAction.length || $primaryAction.prop('disabled')) return;
+
+                e.preventDefault();
+                $primaryAction.trigger('click');
                 return;
             }
 
@@ -948,6 +998,7 @@
         verificarBalanzaInicial();
         syncBalanzaStatusVisibility();
         syncIngredienteReadonly();
+        syncPrimaryAction();
         if (readDraft()) {
             showDraftBanner();
         }
@@ -963,6 +1014,8 @@
             if (!confirm('Se eliminara el borrador local de este elaborado. ¿Continuar?')) return;
             clearDraft();
         });
+        window.ElaboradosCarga = window.ElaboradosCarga || {};
+        window.ElaboradosCarga.syncPrimaryAction = syncPrimaryAction;
     }
 
     $(function () {
