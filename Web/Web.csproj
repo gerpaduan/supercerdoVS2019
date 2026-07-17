@@ -151,12 +151,17 @@
     <Compile Include="EmpresaContextWeb.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
     <Compile Include="Filters\RequirePermissionAttribute.cs" />
+    <Compile Include="Filters\SkipAppAntiForgeryValidationAttribute.cs" />
+    <Compile Include="Filters\ValidateAppAntiForgeryTokenAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\EgresosCajaPolicy.cs" />
+    <Compile Include="Helpers\LoginRateLimiter.cs" />
     <Compile Include="Helpers\PermisosHelper.cs" />
     <Compile Include="Helpers\PermisosPantallasWeb.cs" />
+    <Compile Include="Helpers\SecurityRuntime.cs" />
+    <Compile Include="Helpers\SessionSecurityHelper.cs" />
     <Compile Include="Helpers\SystemAdministrationAccessHelper.cs" />
     <Compile Include="Helpers\SystemAdministrationRepository.cs" />
     <Compile Include="Helpers\SmtpMailHelper.cs" />

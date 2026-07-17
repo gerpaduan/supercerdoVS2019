@@ -5,14 +5,18 @@ using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Web.Security;
 using System.Web.Mvc;
 using Utilidades;
+using Web.Filters;
 using Web.Helpers;
 using Web.Models;
 using wsAFIPvs2008;
 
 namespace Web.Controllers
 {
+    [AllowAnonymous]
     public class LoginController : Controller
     {
         private const string GenericRecoveryMessage = "Si los datos ingresados corresponden a un usuario registrado, recibirás instrucciones para recuperar tu contraseña.";
@@ -53,10 +57,23 @@ namespace Web.Controllers
         {
             model = model ?? new LoginIndexVm();
             model.Usuario = (model.Usuario ?? "").Trim();
+            model.Clave = model.Clave ?? "";
             model.ReturnUrl = model.ReturnUrl ?? "";
 
             if (!ModelState.IsValid)
                 return View("~/Views/Login/Index.cshtml", model);
+
+            TimeSpan retryAfter;
+            if (LoginRateLimiter.IsBlocked(Request, model.Usuario, out retryAfter))
+            {
+                Response.StatusCode = 429;
+                model.Clave = "";
+                model.Error = string.Format(
+                    CultureInfo.CurrentCulture,
+                    "Se supero el maximo de intentos. Espera {0} minuto(s) y volve a intentar.",
+                    Math.Max(1, (int)Math.Ceiling(retryAfter.TotalMinutes)));
+                return View("~/Views/Login/Index.cshtml", model);
+            }
 
             var user = oUsuarioN.ValidarUsuarioWeb(model.Usuario, model.Clave);
 
@@ -78,6 +95,7 @@ namespace Web.Controllers
                 if (user != null)
                     user.SucursalNombre = sucNombre ?? "";
 
+                SessionSecurityHelper.RenewAuthenticatedSession(HttpContext, model.Usuario);
                 Session["Usuario"] = user;
                 Session["IdEmpresa"] = user != null ? user.IdEmpresa : 0;
                 Session.Remove("PARAM_CTX");
@@ -85,6 +103,7 @@ namespace Web.Controllers
                 IParametrosContext paramCtx = new Negocio.Parametros(new EmpresaContextWeb());
                 paramCtx.Reload();
                 Session["PARAM_CTX"] = paramCtx;
+                LoginRateLimiter.Reset(Request, model.Usuario);
 
                 bool requiereValidacionUbicacion = RequiereValidacionUbicacionPostLogin(user);
                 Session[SessionKeyUbicacionLoginValidada] = !requiereValidacionUbicacion;
@@ -95,12 +114,19 @@ namespace Web.Controllers
                 return RedirigirPostLogin(model.ReturnUrl);
             }
 
+            LoginRateLimiter.RegisterFailure(Request, model.Usuario);
+            model.Clave = "";
+            model.Error = "No fue posible iniciar sesión con los datos ingresados.";
+            return View("~/Views/Login/Index.cshtml", model);
+
+#pragma warning disable 162
             model.Clave = "";
             model.Error = user != null && !user.Activo
                 ? "No fue posible iniciar sesión. Verificá tus datos o consultá a un administrador si tu usuario está inactivo."
                 : "Usuario o contraseña incorrectos.";
 
             return View("~/Views/Login/Index.cshtml", model);
+#pragma warning restore 162
         }
 
         [HttpGet]
@@ -351,6 +377,7 @@ namespace Web.Controllers
                 Response.Cookies["ASP.NET_SessionId"].Expires = DateTime.Now.AddDays(-1);
 
             Session.Abandon();
+            SessionSecurityHelper.ClearAuthentication(HttpContext);
 
             return RedirectToAction("Index", "Login");
         }
@@ -382,6 +409,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
+        [SkipAppAntiForgeryValidation]
         public JsonResult CambiarSucursal(int idSucursal)
         {
             try

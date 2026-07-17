@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.SessionState;
 using Utilidades;
+using Web.Filters;
 
 namespace Web.Controllers
 {
@@ -25,6 +26,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
+        [SkipAppAntiForgeryValidation]
         public ActionResult ClientPerf(string categoria, string nombre, long? totalMs, string detalle, string reqId, string url)
         {
             PerformanceInstrumentation.LogClientEvent(

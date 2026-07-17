@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web.Mvc;
 using Utilidades;
 using Web.Models;
@@ -29,13 +30,21 @@ namespace Web.Helpers
                 if (string.IsNullOrWhiteSpace(columnName))
                     return false;
 
-                using (var cmd = new SqlCommand("SELECT CAST(ISNULL([" + columnName + "], 0) AS bit) FROM dbo.Usuarios WHERE id = @id", con))
+                using (var cmd = new SqlCommand("SELECT CAST(ISNULL(" + QuoteSqlIdentifier(columnName) + ", 0) AS bit) FROM dbo.Usuarios WHERE id = @id", con))
                 {
                     cmd.Parameters.Add("@id", SqlDbType.Int).Value = idUsuario;
                     object value = cmd.ExecuteScalar();
                     return value != null && value != DBNull.Value && Convert.ToBoolean(value);
                 }
             }
+        }
+
+        private static string QuoteSqlIdentifier(string identifier)
+        {
+            if (string.IsNullOrWhiteSpace(identifier) || !Regex.IsMatch(identifier, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+                throw new InvalidOperationException("El identificador SQL no es válido.");
+
+            return "[" + identifier.Replace("]", "]]") + "]";
         }
 
         public bool TablaSucursalTieneTelefono()

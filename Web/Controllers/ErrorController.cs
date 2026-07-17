@@ -4,9 +4,9 @@ using System.Web.Mvc;
 
 namespace Web.Controllers
 {
+    [AllowAnonymous]
     public class ErrorController : Controller
     {
-        [AllowAnonymous]
         public ActionResult NotFound()
         {
             Response.StatusCode = 200;
@@ -15,7 +15,6 @@ namespace Web.Controllers
             return View();
         }
 
-        [AllowAnonymous]
         public ActionResult General()
         {
             Response.StatusCode = 200;

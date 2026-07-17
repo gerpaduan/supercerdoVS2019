@@ -66,6 +66,8 @@ packages/
 [Dd]ebug/
 [Rr]elease/
 x64/
+Web/Config/connectionStrings.config
+Web/Config/appSettings.secrets.config
 x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
