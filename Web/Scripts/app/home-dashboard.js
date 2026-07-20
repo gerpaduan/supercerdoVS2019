@@ -27,7 +27,9 @@
         charts: {
             ventasHora: null,
             topProductos: null
-        }
+        },
+        reloadToken: 0,
+        activeRequests: []
     };
 
     function getFiltros() {
@@ -60,6 +62,38 @@
         return baseUrl + (baseUrl.indexOf('?') >= 0 ? '&' : '?') + $.param(params || {});
     }
 
+    function removeActiveRequest(xhr) {
+        state.activeRequests = $.grep(state.activeRequests, function (item) {
+            return item !== xhr;
+        });
+    }
+
+    function abortActiveRequests() {
+        $.each(state.activeRequests.slice(0), function (_, xhr) {
+            if (xhr && xhr.readyState !== 4) {
+                xhr.abort();
+            }
+        });
+
+        state.activeRequests = [];
+    }
+
+    function getJsonSilently(url) {
+        var xhr = $.ajax({
+            url: url,
+            method: 'GET',
+            dataType: 'json',
+            silentLoading: true
+        });
+
+        state.activeRequests.push(xhr);
+        xhr.always(function () {
+            removeActiveRequest(xhr);
+        });
+
+        return xhr;
+    }
+
     function setLoadingTable(selector, colspan) {
         $(selector).html('<tr><td colspan="' + colspan + '" class="dashboard-loading">Cargando...</td></tr>');
     }
@@ -81,13 +115,17 @@
         state.charts[key] = new Chart(canvas.getContext('2d'), configBuilder());
     }
 
-    function cargarResumen() {
+    function cargarResumen(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
         var filtros = getFiltros();
-        $.getJSON(buildUrl(urls.resumen, filtros))
+        return getJsonSilently(buildUrl(urls.resumen, filtros))
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok || !response.data) {
                     return;
                 }
@@ -103,13 +141,17 @@
             });
     }
 
-    function cargarVentasPorHora() {
+    function cargarVentasPorHora(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
         var filtros = getFiltros();
-        $.getJSON(buildUrl(urls.ventasHora, filtros))
+        return getJsonSilently(buildUrl(urls.ventasHora, filtros))
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok || !response.data) {
                     return;
                 }
@@ -171,17 +213,21 @@
             });
     }
 
-    function cargarTopProductos() {
+    function cargarTopProductos(token) {
         if (!puedeVerDashboard) {
             if (state.charts.topProductos) {
                 state.charts.topProductos.destroy();
                 state.charts.topProductos = null;
             }
-            return;
+            return $.Deferred().resolve().promise();
         }
         var filtros = getFiltros();
-        $.getJSON(buildUrl(urls.topProductos, filtros))
+        return getJsonSilently(buildUrl(urls.topProductos, filtros))
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok) {
                     return;
                 }
@@ -268,28 +314,47 @@
         $(selector).html(rows);
     }
 
-    function cargarCuentasCorrientes() {
+    function cargarCuentasCorrientes(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
-        $.getJSON(urls.topDeudores).done(function (response) {
-            renderSaldoRows('#tablaTopDeudores', response && response.ok ? response.data : []);
-        });
+        return getJsonSilently(urls.topDeudores)
+            .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
 
-        $.getJSON(urls.topAcreedores).done(function (response) {
-            renderSaldoRows('#tablaTopAcreedores', response && response.ok ? response.data : []);
-        });
+                renderSaldoRows('#tablaTopDeudores', response && response.ok ? response.data : []);
+            })
+            .then(function () {
+                if (token !== state.reloadToken) {
+                    return $.Deferred().resolve().promise();
+                }
+
+                return getJsonSilently(urls.topAcreedores)
+                    .done(function (response) {
+                        if (token !== state.reloadToken) {
+                            return;
+                        }
+
+                        renderSaldoRows('#tablaTopAcreedores', response && response.ok ? response.data : []);
+                    });
+            });
     }
 
-    function cargarUltimasVentas() {
+    function cargarUltimasVentas(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
         var filtros = getFiltros();
         setLoadingTable('#tablaUltimasVentas', 6);
 
-        $.getJSON(buildUrl(urls.ultimasVentas, filtros))
+        return getJsonSilently(buildUrl(urls.ultimasVentas, filtros))
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok || !response.data || !response.data.length) {
                     setEmptyTable('#tablaUltimasVentas', 6, 'No hay ventas en el periodo seleccionado.');
                     return;
@@ -315,15 +380,19 @@
             });
     }
 
-    function cargarUltimosElaborados() {
+    function cargarUltimosElaborados(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
         var filtros = getFiltros();
         setLoadingTable('#tablaUltimosElaborados', 4);
 
-        $.getJSON(buildUrl(urls.ultimosElaborados, filtros))
+        return getJsonSilently(buildUrl(urls.ultimosElaborados, filtros))
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok || !response.data || !response.data.length) {
                     setEmptyTable('#tablaUltimosElaborados', 4, 'No hay elaborados en el periodo seleccionado.');
                     return;
@@ -343,15 +412,19 @@
             });
     }
 
-    function cargarUltimosMovimientosDashboard() {
+    function cargarUltimosMovimientosDashboard(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
 
         setLoadingTable('#tablaUltimosMovimientosDashboard', 3);
 
-        $.getJSON(urls.movimientosDashboard)
+        return getJsonSilently(urls.movimientosDashboard)
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok || !response.data || !response.data.length) {
                     setEmptyTable('#tablaUltimosMovimientosDashboard', 3, 'No hay movimientos recientes.');
                     return;
@@ -369,6 +442,10 @@
                 $('#tablaUltimosMovimientosDashboard').html(rows);
             })
             .fail(function () {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 setEmptyTable('#tablaUltimosMovimientosDashboard', 3, 'No hay movimientos recientes.');
             });
     }
@@ -411,16 +488,20 @@
         $('#resumenFinanzasCtaCte').html(html);
     }
 
-    function cargarFinanzas() {
+    function cargarFinanzas(token) {
         if (!puedeVerDashboard) {
-            return;
+            return $.Deferred().resolve().promise();
         }
 
         setLoadingTable('#tablaFinanzasMovimientos', 4);
         setLoadingTable('#tablaFinanzasCheques', 7);
 
-        $.getJSON(urls.finanzas)
+        return getJsonSilently(urls.finanzas)
             .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 if (!response || !response.ok || !response.data) {
                     setEmptyTable('#tablaFinanzasMovimientos', 4, 'No hay movimientos recientes.');
                     setEmptyTable('#tablaFinanzasCheques', 7, 'No hay cheques vencidos.');
@@ -475,9 +556,28 @@
                 }
             })
             .fail(function () {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
                 setEmptyTable('#tablaFinanzasMovimientos', 4, 'No hay movimientos recientes.');
                 setEmptyTable('#tablaFinanzasCheques', 7, 'No hay cheques vencidos.');
             });
+    }
+
+    function runDashboardStep(sequence, task, token) {
+        return sequence.then(function () {
+            if (token !== state.reloadToken) {
+                return $.Deferred().resolve().promise();
+            }
+
+            var request = task(token);
+            if (request && $.isFunction(request.always)) {
+                return request;
+            }
+
+            return $.Deferred().resolve().promise();
+        });
     }
 
     function renderEstadoBalanza(status, peso) {
@@ -556,14 +656,21 @@
         if (!puedeVerDashboard) {
             return;
         }
-        cargarResumen();
-        cargarVentasPorHora();
-        cargarTopProductos();
-        cargarCuentasCorrientes();
-        cargarFinanzas();
-        cargarUltimasVentas();
-        cargarUltimosElaborados();
-        cargarUltimosMovimientosDashboard();
+
+        state.reloadToken += 1;
+        abortActiveRequests();
+
+        var token = state.reloadToken;
+        var sequence = $.Deferred().resolve().promise();
+
+        sequence = runDashboardStep(sequence, cargarResumen, token);
+        sequence = runDashboardStep(sequence, cargarVentasPorHora, token);
+        sequence = runDashboardStep(sequence, cargarTopProductos, token);
+        sequence = runDashboardStep(sequence, cargarCuentasCorrientes, token);
+        sequence = runDashboardStep(sequence, cargarFinanzas, token);
+        sequence = runDashboardStep(sequence, cargarUltimasVentas, token);
+        sequence = runDashboardStep(sequence, cargarUltimosElaborados, token);
+        runDashboardStep(sequence, cargarUltimosMovimientosDashboard, token);
     }
 
     $(function () {

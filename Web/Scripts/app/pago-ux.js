@@ -27,6 +27,23 @@
             return ($("#formPago input[name='desdePos']").val() || "").toString().toLowerCase() === "true";
         }
 
+        function esLayoutPago() {
+            return !esDesdePos();
+        }
+
+        function permitirSalidaSinAdvertencia() {
+            const guardApi = $("#formPago").data("editPageGuardApi");
+            if (guardApi && typeof guardApi.allowNavigation === "function") {
+                guardApi.allowNavigation();
+            }
+
+            if (typeof window.desactivarProteccionSalida === "function") {
+                window.desactivarProteccionSalida();
+            } else {
+                window.__protegerSalida = false;
+            }
+        }
+
         function construirChequesJson() {
             const lista = [];
 
@@ -66,18 +83,41 @@
             return true;
         }
 
+        function abrirModalPostPago(resp, opciones) {
+            if (!window.PostPagoModal || !resp || !resp.imprimirUrl) {
+                return false;
+            }
+
+            const config = opciones || {};
+            window.PostPagoModal.open({
+                pagoId: resp.pagoId,
+                redirectUrl: resp.redirectUrl || "",
+                imprimirUrl: resp.imprimirUrl,
+                imprimirPayloadUrl: resp.imprimirPayloadUrl,
+                pdfUrl: resp.pdfUrl,
+                emailConfigUrl: resp.emailConfigUrl,
+                emailSendUrl: resp.emailSendUrl,
+                stayOnPage: !!config.stayOnPage,
+                returnInPos: !!config.returnInPos
+            });
+            return true;
+        }
+
         function resolverRedirectNoPos(resp) {
             const redirectUrl = (resp && resp.redirectUrl) || $("#urlVolverPago").val() || window.location.href;
 
-            if (window.PostPagoModal && resp && resp.imprimirUrl) {
-                    window.PostPagoModal.open({
-                        redirectUrl: redirectUrl,
-                        imprimirUrl: resp.imprimirUrl,
-                        imprimirPayloadUrl: resp.imprimirPayloadUrl,
-                        pdfUrl: resp.pdfUrl,
-                        whatsappTexto: resp.whatsappTexto,
-                        stayOnPage: false
-                });
+            if (abrirModalPostPago({
+                    pagoId: resp && resp.pagoId,
+                    redirectUrl: redirectUrl,
+                    imprimirUrl: resp && resp.imprimirUrl,
+                    imprimirPayloadUrl: resp && resp.imprimirPayloadUrl,
+                    pdfUrl: resp && resp.pdfUrl,
+                    emailConfigUrl: resp && resp.emailConfigUrl,
+                    emailSendUrl: resp && resp.emailSendUrl
+                }, {
+                    stayOnPage: false,
+                    returnInPos: false
+                })) {
                 return;
             }
 
@@ -118,21 +158,10 @@
                 window.POSFinanzasState.tituloDespuesDePago = "Cuenta corriente";
             }
 
-            if (window.PostPagoModal && resp && resp.imprimirUrl) {
-                if (resp && resp.cerrarModalPago && $("#modalPagoPOS").length) {
-                    $("#modalPagoPOS").modal("hide");
-                }
-
-                window.setTimeout(function () {
-                    window.PostPagoModal.open({
-                        redirectUrl: resp.redirectUrl,
-                        imprimirUrl: resp.imprimirUrl,
-                        imprimirPayloadUrl: resp.imprimirPayloadUrl,
-                        pdfUrl: resp.pdfUrl,
-                        whatsappTexto: resp.whatsappTexto,
-                        stayOnPage: false
-                    });
-                }, 250);
+            if (abrirModalPostPago(resp, {
+                    stayOnPage: false,
+                    returnInPos: true
+                })) {
                 return;
             }
 
@@ -166,6 +195,8 @@
                         });
                         return;
                     }
+
+                    permitirSalidaSinAdvertencia();
 
                     if (esDesdePos()) {
                         resolverRedirectPos(resp);
@@ -274,6 +305,19 @@
             }, 0);
         }
 
+        function enfocarPrimeroDisponible(selectores) {
+            for (let i = 0; i < selectores.length; i++) {
+                const selector = selectores[i];
+                const $el = $(selector).filter(":visible:not(:disabled)").first();
+                if ($el.length) {
+                    enfocar(selector);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         function enfocarCampoPrincipal() {
             if ($("#bloqueCheques").is(":visible")) {
                 enfocar("#txtNroCheque");
@@ -286,6 +330,100 @@
             }
 
             enfocar("#importe");
+        }
+
+        function enfocarSiguientePorEnter(selectorActual) {
+            if (selectorActual === "#formaPago") {
+                enfocarCampoPrincipal();
+                return;
+            }
+
+            if (selectorActual === "#importe" || selectorActual === "#Efectivo" || selectorActual === "#txtNroCheque") {
+                if (enfocarPrimeroDisponible(["#Observaciones"])) {
+                    return;
+                }
+            }
+
+            const orden = esLayoutPago()
+                ? ["#SucursalId", "#Fecha", "#NroRecibo", "#formaPago", "#Observaciones", "#btnGuardarPago"]
+                : ["#Fecha", "#NroRecibo", "#formaPago", "#Observaciones", "#btnGuardarPago"];
+
+            const indice = orden.indexOf(selectorActual);
+            if (indice < 0) return;
+
+            for (let i = indice + 1; i < orden.length; i++) {
+                if (enfocarPrimeroDisponible([orden[i]])) {
+                    return;
+                }
+            }
+        }
+
+        function abrirContadorBilletes() {
+            const $launcher = $(".js-calculadora-billetes-launch:visible:not(:disabled)").first();
+            if (!$launcher.length) {
+                return false;
+            }
+
+            $launcher.trigger("click");
+            return true;
+        }
+
+        function guardarPagoDesdeAtajo() {
+            const $modify = $("#btnHabilitarEdicionPago:visible:not(:disabled)").first();
+            if ($modify.length) {
+                $modify.trigger("click");
+                return true;
+            }
+
+            const $save = $("#btnGuardarPago:visible:not(:disabled)").first();
+            if ($save.length) {
+                if ($save.closest("form").length && $save.closest("form")[0] && typeof $save.closest("form")[0].requestSubmit === "function") {
+                    $save.closest("form")[0].requestSubmit($save[0]);
+                } else {
+                    $save.trigger("click");
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        function bindGlobalShortcutsCapture() {
+            if (window.__pagoUxGlobalShortcutsBound) {
+                return;
+            }
+
+            window.__pagoUxGlobalShortcutsBound = true;
+
+            window.addEventListener("keydown", function (e) {
+                if (e.defaultPrevented) return;
+                if (!$("#formPago").length) return;
+                if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+
+                const key = String(e.key || "").toLowerCase();
+
+                if (key === "enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    guardarPagoDesdeAtajo();
+                    return;
+                }
+
+                if (key === "s" && esLayoutPago()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.volverDesdePago === "function") {
+                        window.volverDesdePago();
+                    }
+                    return;
+                }
+
+                if (key === "c" && abrirContadorBilletes()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
         }
 
         function setGuardando(activo) {
@@ -341,6 +479,36 @@
                 });
         }
 
+        function bindKeyboardUX() {
+            $(document)
+                .off("keydown.pagoUXFlow", "#SucursalId, #Fecha, #NroRecibo, #formaPago, #importe, #Efectivo, #txtNroCheque, #Observaciones")
+                .on("keydown.pagoUXFlow", "#SucursalId, #Fecha, #NroRecibo, #formaPago, #importe, #Efectivo, #txtNroCheque, #Observaciones", function (e) {
+                    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+                    if (e.key !== "Enter") return;
+
+                    e.preventDefault();
+                    enfocarSiguientePorEnter("#" + (this.id || ""));
+                })
+                .off("keydown.pagoUXShortcuts")
+                .on("keydown.pagoUXShortcuts", function (e) {
+                    if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+
+                    const key = String(e.key || "").toLowerCase();
+
+                    if (key === "s" && esLayoutPago()) {
+                        e.preventDefault();
+                        if (typeof window.volverDesdePago === "function") {
+                            window.volverDesdePago();
+                        }
+                        return;
+                    }
+
+                    if (key === "c" && abrirContadorBilletes()) {
+                        e.preventDefault();
+                    }
+                });
+        }
+
         function bindSubmitGuard() {
             $(document)
                 .off("submit.pagoUX", "#formPago")
@@ -372,9 +540,15 @@
         function init() {
             bindChequeSearch();
             bindFormFocus();
+            bindKeyboardUX();
+            bindGlobalShortcutsCapture();
             bindSubmitGuard();
             actualizarResumenModo();
-            enfocarCampoPrincipal();
+            if (esLayoutPago()) {
+                enfocarPrimeroDisponible([".pago-operacion-opcion[data-operacion-valor='true']", ".pago-operacion-opcion[data-operacion-valor='false']"]);
+            } else {
+                enfocarCampoPrincipal();
+            }
 
             $(document)
                 .off("click.pagoUXImprimir", "#btnImprimirPago")
@@ -384,19 +558,21 @@
                     const pdfUrl = ($(this).data("pdf-url") || "").toString();
                     const imprimirUrl = ($(this).data("imprimir-url") || "").toString();
                     const imprimirPayloadUrl = ($(this).data("imprimir-payload-url") || "").toString();
-                    let whatsappTexto = "Recibo";
+                    const pagoId = parseInt($(this).data("pago-id"), 10) || 0;
+                    const emailConfigUrl = ($(this).data("email-config-url") || "").toString();
+                    const emailSendUrl = ($(this).data("email-send-url") || "").toString();
 
-                    if (pdfUrl) {
-                        whatsappTexto = "Recibo - " + new URL(pdfUrl, window.location.origin).toString();
-                    }
-
-                    window.PostPagoModal.open({
+                    abrirModalPostPago({
+                        pagoId: pagoId,
                         redirectUrl: "",
                         imprimirUrl: imprimirUrl,
                         imprimirPayloadUrl: imprimirPayloadUrl,
                         pdfUrl: pdfUrl,
-                        whatsappTexto: whatsappTexto,
-                        stayOnPage: true
+                        emailConfigUrl: emailConfigUrl,
+                        emailSendUrl: emailSendUrl
+                    }, {
+                        stayOnPage: true,
+                        returnInPos: false
                     });
                 });
         }

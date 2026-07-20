@@ -58,6 +58,13 @@
         return parseDecimal(value).value;
     }
 
+    function isIntegerDecimal(value) {
+        var parsed = parseDecimal(value);
+        if (!parsed.ok) return false;
+
+        return Math.abs(parsed.value - Math.round(parsed.value)) < 0.000001;
+    }
+
     function formatKg(value) {
         return toFloat(value).toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
     }
@@ -635,7 +642,8 @@
             sortedLines.forEach(function (item, index) {
                 var line = item.line;
                 var mostrarCantUnidad = toInt(line.CantUnidad) === 0 ? '' : formatInt(line.CantUnidad);
-                var ocultarKilos = line.Pesable === false && toInt(line.CantUnidad) === toInt(line.CantKg);
+                var kilosEnteros = isIntegerDecimal(line.CantKg);
+                var ocultarKilos = line.Pesable === false && kilosEnteros && toInt(line.CantUnidad) === toInt(line.CantKg);
                 var mostrarKilos = ocultarKilos ? '' : formatKg(line.CantKg);
                 totalUnidades += toInt(line.CantUnidad);
                 totalKilos += toFloat(line.CantKg);

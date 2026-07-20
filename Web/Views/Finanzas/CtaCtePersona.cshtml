@@ -117,9 +117,9 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text">Desde</span>
                                 </div>
-                                <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                                <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" id="ctacteFechaDesdeDesktop" />
                                 <div class="input-group-append">
-                                    <button class="btn btn-primary" type="submit">
+                                    <button class="btn btn-primary" type="submit" id="btnFiltrarCtaCteDesktop">
                                         <i class="fas fa-filter"></i> Filtrar
                                     </button>
                                 </div>
@@ -189,9 +189,9 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text">Desde</span>
                             </div>
-                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" id="ctacteFechaDesdeMobile" />
                             <div class="input-group-append">
-                                <button class="btn btn-primary" type="submit">
+                                <button class="btn btn-primary" type="submit" id="btnFiltrarCtaCteMobile">
                                     <i class="fas fa-filter"></i> Filtrar
                                 </button>
                             </div>
@@ -796,6 +796,106 @@
             btn.click();
         }
 
+        function obtenerFechaDesdeVisible() {
+            var $input = $('#ctactePersonaContainer input[name="fechaDesde"]:visible:not(:disabled)').first();
+            return $input.length ? $input : $();
+        }
+
+        function obtenerBotonFiltrarVisible() {
+            var $btn = $('#btnFiltrarCtaCteDesktop:visible:not(:disabled)').first();
+            if (!$btn.length) {
+                $btn = $('#btnFiltrarCtaCteMobile:visible:not(:disabled)').first();
+            }
+
+            return $btn;
+        }
+
+        function enfocarFechaDesde() {
+            var $input = obtenerFechaDesdeVisible();
+            if (!$input.length) return;
+
+            window.setTimeout(function () {
+                $input.trigger('focus');
+            }, 0);
+        }
+
+        function filtrarCuentaCorrienteDesdeFecha(input) {
+            var $input = $(input);
+            var $form = $input.closest('form');
+            if (!$form.length) return;
+
+            var $btn = obtenerBotonFiltrarVisible();
+            if ($btn.length) {
+                $btn.trigger('click');
+                return;
+            }
+
+            if ($form[0] && typeof $form[0].requestSubmit === 'function') {
+                $form[0].requestSubmit();
+                return;
+            }
+
+            $form.trigger('submit');
+        }
+
+        function volverFinanzasDesdeAtajo() {
+            var btnVolver = document.getElementById('btnVolverCtasCtesPersona');
+            if (btnVolver) {
+                btnVolver.click();
+                return;
+            }
+
+            window.location.href = '@hrefBotonVolver';
+        }
+
+        function esCampoFechaCuentaCorriente(target) {
+            if (!target || !target.id) return false;
+            return target.id === 'ctacteFechaDesdeDesktop' || target.id === 'ctacteFechaDesdeMobile';
+        }
+
+        function bindAtajosCuentaCorrienteCaptura() {
+            if (window.__ctacteAtajosCapturaBound) {
+                return;
+            }
+
+            window.__ctacteAtajosCapturaBound = true;
+
+            window.addEventListener('keydown', function (event) {
+                if (event.defaultPrevented) return;
+
+                if (esCampoFechaCuentaCorriente(event.target) && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    filtrarCuentaCorrienteDesdeFecha(event.target);
+                    return;
+                }
+
+                if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return;
+
+                var key = String(event.key || '').toLowerCase();
+
+                if (key === 'enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    abrirNuevoPagoDesdeAtajo();
+                    return;
+                }
+
+                if (key === 'f') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    enfocarFechaDesde();
+                    return;
+                }
+
+                if (key === 's' && !desdePos) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    volverFinanzasDesdeAtajo();
+                }
+            }, true);
+        }
+
         $(document)
             .off("change.ctacteMostrarAnulados", "#chkMostrarAnulados, #chkMostrarAnuladosMobile")
             .on("change.ctacteMostrarAnulados", "#chkMostrarAnulados, #chkMostrarAnuladosMobile", function () {
@@ -832,21 +932,38 @@
             .on("shown.bs.modal.ctacteMail", "#modalEmailCtaCte", function () {
                 $("#ccEmailDestino").trigger("focus");
             })
+            .off("keydown.ctacteFechaDesde", '#ctactePersonaContainer input[name="fechaDesde"]')
+            .on("keydown.ctacteFechaDesde", '#ctactePersonaContainer input[name="fechaDesde"]', function (event) {
+                if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+                if (event.key !== 'Enter') return;
+
+                event.preventDefault();
+                filtrarCuentaCorrienteDesdeFecha(this);
+            })
             .off("keydown.ctacteNuevoPago")
             .on("keydown.ctacteNuevoPago", function (event) {
                 if (!event.altKey || event.ctrlKey || event.metaKey) return;
-                if (focoEnControlEditable()) return;
+                var key = String(event.key || '').toLowerCase();
 
-                var esMas =
-                    event.key === "+" ||
-                    event.code === "NumpadAdd" ||
-                    (event.shiftKey && event.key === "=");
+                if (key === 'f' && !event.shiftKey) {
+                    event.preventDefault();
+                    enfocarFechaDesde();
+                    return;
+                }
 
-                if (!esMas) return;
+                if (key === 's' && !event.shiftKey && !desdePos) {
+                    event.preventDefault();
+                    volverFinanzasDesdeAtajo();
+                    return;
+                }
 
-                event.preventDefault();
-                abrirNuevoPagoDesdeAtajo();
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    abrirNuevoPagoDesdeAtajo();
+                }
             });
+
+        bindAtajosCuentaCorrienteCaptura();
     })();
 </script>
 

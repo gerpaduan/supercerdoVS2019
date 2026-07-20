@@ -12,6 +12,7 @@
     var pagoEdicionHabilitada = !pagoSoloLecturaInicial;
     window.pagoEdicionHabilitada = pagoEdicionHabilitada;
     var operacionPendienteSeleccion = pagoEsAlta;
+    var operacionCompactaExpandida = pagoEsAlta;
     var cambioProgramaticoPago = false;
     var estadoPagoForm = {
         ultimaFormaPago: "",
@@ -132,11 +133,19 @@
     }
 
     function actualizarOperacionPago() {
+        var $grupo = $(".pago-operacion-grupo");
+        var $compacto = $("#pagoOperacionCompacto");
+        var $compactoTitulo = $("#pagoOperacionCompactoTitulo");
+        var $compactoDescripcion = $("#pagoOperacionCompactoDescripcion");
+        var $compactoIcono = $compacto.find(".pago-operacion-compacto-icono i");
+
         if (operacionPendienteSeleccion) {
             $(".pago-operacion-opcion")
-                .removeClass("activo-pagar activo-cobrar")
+                .removeClass("activo-pagar activo-cobrar pago-operacion-inactiva")
                 .attr("aria-pressed", "false");
 
+            $grupo.removeClass("pago-operacion-contraida");
+            $compacto.addClass("d-none");
             $("#pagoOperacionResumen").addClass("d-none");
             return;
         }
@@ -148,9 +157,11 @@
 
         $opciones
             .removeClass("activo-pagar activo-cobrar")
+            .addClass("pago-operacion-inactiva")
             .attr("aria-pressed", "false");
 
         $opciones.filter("[data-operacion-valor='" + (esPago ? "true" : "false") + "']")
+            .removeClass("pago-operacion-inactiva")
             .addClass(esPago ? "activo-pagar" : "activo-cobrar")
             .attr("aria-pressed", "true");
 
@@ -163,6 +174,32 @@
                     ? '<i class="fas fa-arrow-up mr-1"></i><strong>Operación seleccionada: Realizar un pago</strong><span>Salida de dinero hacia proveedor o persona.</span>'
                     : '<i class="fas fa-arrow-down mr-1"></i><strong>Operación seleccionada: Recibir un cobro</strong><span>Ingreso de dinero desde cliente o persona.</span>');
         }
+
+        if ($compacto.length) {
+            $compacto
+                .removeClass("d-none")
+                .toggleClass("pago-operacion-pago", esPago)
+                .toggleClass("pago-operacion-cobro", !esPago);
+
+            if ($compactoTitulo.length) {
+                $compactoTitulo.text(esPago ? "Realizar un pago" : "Recibir un cobro");
+            }
+
+            if ($compactoDescripcion.length) {
+                $compactoDescripcion.text(esPago
+                    ? "Salida de dinero hacia proveedor o persona."
+                    : "Ingreso de dinero desde cliente o persona.");
+            }
+
+            if ($compactoIcono.length) {
+                $compactoIcono
+                    .removeClass("fa-arrow-up fa-arrow-down")
+                    .addClass(esPago ? "fa-arrow-up" : "fa-arrow-down");
+            }
+        }
+
+        var contraer = !operacionCompactaExpandida;
+        $grupo.toggleClass("pago-operacion-contraida", contraer);
 
         if ($guardar.length) {
             $guardar
@@ -206,6 +243,107 @@
 
         var tipo = (el.type || "").toLowerCase();
         return tipo !== "button" && tipo !== "checkbox" && tipo !== "radio";
+    }
+
+    function tieneObservacionesPago() {
+        return $.trim($("#Observaciones").val() || "").length > 0;
+    }
+
+    function actualizarBloqueObservacionesPago() {
+        var $bloque = $(".pago-observaciones-bloque");
+        var $contenido = $("#pagoObservacionesContenido");
+        var $boton = $("#btnToggleObservacionesPago");
+        if (!$bloque.length || !$contenido.length || !$boton.length) {
+            return;
+        }
+
+        var tieneTexto = tieneObservacionesPago();
+        var estaContraido = $bloque.hasClass("pago-observaciones-contraido");
+
+        if (!tieneTexto && estaContraido) {
+            $boton.text("Agregar");
+            return;
+        }
+
+        if (estaContraido) {
+            $boton.text("Ver");
+            return;
+        }
+
+        $boton.text("Ocultar");
+    }
+
+    function enfocarPrimerCampoPago() {
+        if (desdePosPago) {
+            return;
+        }
+
+        enfocarCampoPagoConReintento("#SucursalId", "#Fecha");
+    }
+
+    function enfocarSucursalPago() {
+        if (desdePosPago) {
+            return;
+        }
+
+        enfocarCampoPagoConReintento("#SucursalId", "#Fecha");
+    }
+
+    function enfocarCampoPagoConReintento(selectorPrincipal, selectorAlternativo) {
+        var intentos = 0;
+        var maxIntentos = 8;
+
+        function resolverCampo() {
+            var $cardBody = $("#formPago").closest(".card-body");
+            var $campo = $cardBody.find(selectorPrincipal + ":visible:not(:disabled)");
+            if (!$campo.length && selectorAlternativo) {
+                $campo = $cardBody.find(selectorAlternativo + ":visible:not(:disabled)");
+            }
+            return $campo;
+        }
+
+        function intentar() {
+            intentos++;
+
+            var $campo = resolverCampo();
+            if (!$campo.length) {
+                if (intentos < maxIntentos) {
+                    setTimeout(intentar, 70);
+                }
+                return;
+            }
+
+            var control = $campo.get(0);
+            if (!control) {
+                return;
+            }
+
+            control.focus();
+
+            if (document.activeElement === control) {
+                return;
+            }
+
+            if (intentos < maxIntentos) {
+                setTimeout(intentar, 70);
+            }
+        }
+
+        setTimeout(intentar, 40);
+    }
+
+    function seleccionarOperacionPago(valor, forzarFocoSucursal) {
+        valor = (valor || "").toString();
+        if (!valor) {
+            return;
+        }
+
+        operacionCompactaExpandida = false;
+        $("#AProveedor").val(valor).trigger("change");
+
+        if (forzarFocoSucursal) {
+            enfocarSucursalPago();
+        }
     }
 
     function validarChequesContraTipoOperacion(esAProveedor, onComplete) {
@@ -365,6 +503,7 @@
             if (valorAnterior === valorNuevo) {
                 actualizarOperacionPago();
                 setTimeout(actualizarVisibilidad, 0);
+                enfocarSucursalPago();
                 return;
             }
 
@@ -377,14 +516,63 @@
                 estadoPagoForm.ultimoAProveedor = valorNuevo;
                 actualizarOperacionPago();
                 setTimeout(actualizarVisibilidad, 0);
+                enfocarSucursalPago();
             });
         })
         .off("click.posPagoOperacion", ".pago-operacion-opcion")
-        .on("click.posPagoOperacion", ".pago-operacion-opcion", function () {
-            var valor = ($(this).attr("data-operacion-valor") || "").toString();
-            if (!valor) return;
+        .on("click.posPagoOperacion", ".pago-operacion-opcion", function (event) {
+            event.preventDefault();
+            $(this).trigger("blur");
 
-            $("#AProveedor").val(valor).trigger("change");
+            var valor = ($(this).attr("data-operacion-valor") || "").toString();
+            seleccionarOperacionPago(valor);
+        })
+        .off("click.posPagoOperacionExpandir", "#btnCambiarOperacionPago")
+        .on("click.posPagoOperacionExpandir", "#btnCambiarOperacionPago", function (event) {
+            event.preventDefault();
+            operacionCompactaExpandida = true;
+            $(".pago-operacion-grupo").removeClass("pago-operacion-contraida");
+            $("#pagoOperacionCompacto").addClass("d-none");
+            $(".pago-operacion-expandible .pago-operacion-opcion[aria-pressed='true']").trigger("focus");
+        })
+        .off("click.posPagoObservaciones", "#btnToggleObservacionesPago")
+        .on("click.posPagoObservaciones", "#btnToggleObservacionesPago", function (event) {
+            event.preventDefault();
+            var $bloque = $(".pago-observaciones-bloque");
+            var contraer = !$bloque.hasClass("pago-observaciones-contraido");
+            $bloque.toggleClass("pago-observaciones-contraido", contraer);
+            actualizarBloqueObservacionesPago();
+
+            if (!contraer) {
+                setTimeout(function () {
+                    $("#Observaciones").trigger("focus");
+                }, 30);
+            }
+        })
+        .off("keydown.posPagoOperacion", ".pago-operacion-opcion")
+        .on("keydown.posPagoOperacion", ".pago-operacion-opcion", function (event) {
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === "function") {
+                event.stopImmediatePropagation();
+            }
+
+            var valor = ($(this).attr("data-operacion-valor") || "").toString();
+            $(this).trigger("blur");
+            seleccionarOperacionPago(valor, true);
+        })
+        .off("keyup.posPagoOperacion", ".pago-operacion-opcion")
+        .on("keyup.posPagoOperacion", ".pago-operacion-opcion", function (event) {
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            $(this).trigger("blur");
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === "function") {
+                event.stopImmediatePropagation();
+            }
         })
         .off("keydown.posPagoAtajos")
         .on("keydown.posPagoAtajos", function (event) {
@@ -420,6 +608,10 @@
                 window.PagoCheques.recalcularTotales();
             }
         })
+        .off("input.posPagoObservaciones", "#Observaciones")
+        .on("input.posPagoObservaciones", "#Observaciones", function () {
+            actualizarBloqueObservacionesPago();
+        })
         .off("click.posPagoModificar", "#btnHabilitarEdicionPago")
         .on("click.posPagoModificar", "#btnHabilitarEdicionPago", function () {
             pagoEdicionHabilitada = true;
@@ -436,15 +628,20 @@
             cambioProgramaticoPago = false;
             estadoPagoForm.ultimoAProveedor = "";
             setOperacionPendiente(true);
+            operacionCompactaExpandida = true;
             $(".pago-operacion-opcion[data-operacion-valor='true']").trigger("focus");
+            $(".pago-observaciones-bloque").addClass("pago-observaciones-contraido");
         } else {
             estadoPagoForm.ultimoAProveedor = $("#AProveedor").val() || "";
             setOperacionPendiente(false);
+            operacionCompactaExpandida = false;
             $("#SucursalId").trigger("focus");
+            $(".pago-observaciones-bloque").toggleClass("pago-observaciones-contraido", !tieneObservacionesPago());
         }
 
         setTimeout(actualizarVisibilidad, 0);
         actualizarOperacionPago();
+        actualizarBloqueObservacionesPago();
     });
 })(window, jQuery);
 </script>

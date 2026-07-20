@@ -100,6 +100,42 @@ a > code {
 .table-hover .table-danger:hover > th {
     background-color: #f1dfd8;
 }
+
+.app-product-highlight {
+    font-size: .92rem !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    border-color: #9ec5fe !important;
+    letter-spacing: .01em;
+}
+
+.app-product-highlight[readonly],
+.app-product-highlight:read-only {
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    opacity: 1;
+}
+
+.app-product-highlight {
+    font-size: .92rem !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    border-color: #9ec5fe !important;
+    letter-spacing: .01em;
+}
+
+.app-product-highlight[readonly],
+.app-product-highlight:read-only {
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    opacity: 1;
+}
 /* Contenedor responsive: permite scroll horizontal si es necesario */
 .table-responsive {
     overflow-x: auto !important;

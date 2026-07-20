@@ -200,6 +200,26 @@ namespace Web.Controllers
             return Json(personas, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public JsonResult Obtener(int id)
+        {
+            if (id <= 0)
+                return Json(new { ok = false, msg = "Persona inválida." }, JsonRequestBehavior.AllowGet);
+
+            var persona = oPersonaN.findById(id);
+            if (persona == null || persona.IdPersona <= 0)
+                return Json(new { ok = false, msg = "No se encontró la persona." }, JsonRequestBehavior.AllowGet);
+
+            return Json(new
+            {
+                ok = true,
+                idPersona = persona.IdPersona,
+                razonSocial = persona.RazonSocial ?? "",
+                identificacion = persona.Identificacion ?? "",
+                cuit = persona.Cuit ?? ""
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         private ActionResult BuscarDatosAfipDesdeGuardar(PersonaEditVm model)
         {
             model = model ?? new PersonaEditVm();

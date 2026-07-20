@@ -76,6 +76,7 @@
             <div class="col-12 col-lg-6 order-2 order-lg-1 d-flex align-items-center">
                 <div class="pos-cliente w-100">
                     @Html.HiddenFor(m => m.IdPersona, new { id = "idPersona" })
+                    <input type="hidden" id="clienteIdentificacionValor" value="@(Model.Persona?.Identificacion ?? "")" />
 
                     <div class="input-group input-group-sm">
                         <input type="text"
@@ -99,6 +100,12 @@
                                 CF
                             </button>
                         </div>
+                    </div>
+                    <div id="clienteIdentificacionWrap"
+                         class="pos-cliente-identificacion @((Model.Persona == null || string.IsNullOrWhiteSpace(Model.Persona.Identificacion) || string.Equals(Model.Persona.Identificacion, Model.Persona.RazonSocial, StringComparison.OrdinalIgnoreCase)) ? "d-none" : "")"
+                         title="@(Model.Persona?.Identificacion ?? "")">
+                        <span class="pos-cliente-identificacion-label">Ident.:</span>
+                        <span id="clienteIdentificacionTexto">@(Model.Persona?.Identificacion ?? "")</span>
                     </div>
                 </div>
             </div>
@@ -1616,6 +1623,60 @@ else
         });
     }
 
+    function normalizeClientText(value) {
+        return (value || "").toString().trim();
+    }
+
+    function setClienteIdentificacionVisual(identificacion, razonSocial) {
+        const razon = normalizeClientText(razonSocial || $("#razonSocial").val());
+        const identificacionNormalizada = normalizeClientText(identificacion);
+        const $wrap = $("#clienteIdentificacionWrap");
+        const $texto = $("#clienteIdentificacionTexto");
+        const $valor = $("#clienteIdentificacionValor");
+
+        if (!$wrap.length || !$texto.length) return;
+
+        const mostrar = !!identificacionNormalizada &&
+            !!razon &&
+            identificacionNormalizada.localeCompare(razon, undefined, { sensitivity: 'accent' }) !== 0;
+
+        if ($valor.length) {
+            $valor.val(identificacionNormalizada);
+        }
+
+        $texto.text(identificacionNormalizada);
+        $wrap.attr("title", identificacionNormalizada);
+        $wrap.toggleClass("d-none", !mostrar);
+    }
+
+    window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
+    setClienteIdentificacionVisual("@(Model.Persona?.Identificacion ?? "")", "@(Model.Persona?.RazonSocial ?? "")");
+
+    function resolverIdentificacionClienteActual() {
+        const idPersonaActual = parseInt($("#idPersona").val(), 10) || 0;
+        const razonActual = normalizeClientText($("#razonSocial").val());
+        const identificacionActual = normalizeClientText($("#clienteIdentificacionValor").val() || $("#clienteIdentificacionTexto").text());
+
+        if (!idPersonaActual || idPersonaActual === @idConsumidorFinal || !razonActual || identificacionActual) {
+            return;
+        }
+
+        if (!window.api || !window.api.persona || !window.api.persona.obtener) {
+            return;
+        }
+
+        $.get(window.api.persona.obtener, { id: idPersonaActual })
+            .done(function (resp) {
+                if (!resp || !resp.ok) return;
+
+                const razonRespuesta = normalizeClientText(resp.razonSocial || razonActual);
+                const identificacionRespuesta = normalizeClientText(resp.identificacion);
+                if (!identificacionRespuesta) return;
+
+                setClienteIdentificacionVisual(identificacionRespuesta, razonRespuesta || razonActual);
+            });
+    }
+
     window.POSDraft = window.POSDraft || (function () {
         const keyBase = "carnisys-pos-venta-en-curso";
         const idSucursalActual = parseInt($("#idSucursalPOS").val(), 10) || 0;
@@ -1667,6 +1728,7 @@ else
                 idSucursalPOS: idSucursalActual,
                 idPersona: $("#idPersona").val(),
                 razonSocial: $("#razonSocial").val(),
+                identificacionCliente: $("#clienteIdentificacionValor").val() || $("#clienteIdentificacionTexto").text(),
                 observaciones: POSState.getObservaciones(),
                 fechaVenta: getFechaVentaPOS()
             }));
@@ -1730,6 +1792,7 @@ else
                         idSucursalPOS: idSucursalActual,
                         idPersona: legacyDraft.idPersona,
                         razonSocial: legacyDraft.razonSocial,
+                        identificacionCliente: legacyDraft.identificacionCliente,
                         observaciones: legacyDraft.observaciones,
                         fechaVenta: legacyDraft.fechaVenta
                     }));
@@ -1748,6 +1811,8 @@ else
 
             if (draft.idPersona) $("#idPersona").val(draft.idPersona);
             if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
+            setClienteIdentificacionVisual(draft.identificacionCliente || "", draft.razonSocial || $("#razonSocial").val() || "");
+            resolverIdentificacionClienteActual();
             if (draft.observaciones != null) POSState.setObservaciones(draft.observaciones);
             if (draft.fechaVenta) setFechaVentaPOS(draft.fechaVenta);
 
@@ -1769,6 +1834,7 @@ else
     })();
 
     const ventaRestauradaPOS = esEdicionVenta ? false : window.POSDraft.restore();
+    resolverIdentificacionClienteActual();
 
     (function () {
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -1864,6 +1930,7 @@ else
     $('#btnConsumidorFinal').on('click', function () {
         $('#idPersona').val(@idConsumidorFinal);
         $('#razonSocial').val('Consumidor Final');
+        setClienteIdentificacionVisual('', 'Consumidor Final');
     });
 
     document.addEventListener("keydown", function (e) {
@@ -2111,6 +2178,7 @@ else
         }
         $("#idPersona").val('@idConsumidorFinal');
         $("#razonSocial").val('Consumidor Final');
+        setClienteIdentificacionVisual('', 'Consumidor Final');
         $("#inputCodigo").val("");
         $("#inputCantidad").val("").prop("disabled", true);
         $("#prodSubtotal").text("$ 0,00");
@@ -2460,8 +2528,10 @@ else
     };
     window.api.persona = {
         listar: '@Url.Action("Listar", "Personas")',
-        buscar: '@Url.Action("Buscar", "Personas")'
+        buscar: '@Url.Action("Buscar", "Personas")',
+        obtener: '@Url.Action("Obtener", "Personas")'
     };
+    resolverIdentificacionClienteActual();
     window.VentasUrls = {
         mis: '@Url.Action("MisVentas", "Ventas", new { desdePos = true })',
         detalle: '@Url.Action("DetalleVenta", "Ventas")'
@@ -3493,6 +3563,27 @@ else
         min-width: 0;
     }
 
+    .pos-cliente-identificacion {
+        margin-top: .16rem;
+        min-height: 14px;
+        padding-left: .9rem;
+        padding-right: .35rem;
+        font-size: .76rem;
+        line-height: 1.12;
+        color: #1f2937;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: .92;
+    }
+
+    .pos-cliente-identificacion-label {
+        font-weight: 700;
+        color: #475569;
+        margin-right: .24rem;
+    }
+
     .pos-cliente .input-group > .form-control {
         border: 0 !important;
         background: transparent !important;
@@ -3627,6 +3718,15 @@ else
         background: #132032 !important;
         border-color: #314155 !important;
         color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-cliente-identificacion {
+        color: #e2e8f0;
+        opacity: .95;
+    }
+
+    html.dark-mode .pos-cliente-identificacion-label {
+        color: #cbd5e1;
     }
 
     html.dark-mode #btnBuscarPersona {

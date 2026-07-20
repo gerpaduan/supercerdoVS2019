@@ -1027,7 +1027,6 @@ namespace Web.Controllers
             if (modoPos)
             {
                 string pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id });
-                string pdfUrlAbsoluta = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }, Request != null && Request.Url != null ? Request.Url.Scheme : "http");
 
                 return Json(new
                 {
@@ -1046,7 +1045,6 @@ namespace Web.Controllers
             if (Request.IsAjaxRequest())
             {
                 string pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id });
-                string pdfUrlAbsoluta = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }, Request != null && Request.Url != null ? Request.Url.Scheme : "http");
 
                 return Json(new
                 {

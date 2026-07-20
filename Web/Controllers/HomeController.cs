@@ -144,53 +144,16 @@ namespace Web.Controllers
                 var dt = oCorteN.TotalPorCortesVendidos("", sucursalReporte, filtro.FechaDesde, filtro.FechaHasta, "", 0, 0)
                     ?? new System.Data.DataTable();
 
-                var cortes = (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
-                    .Where(x => x != null)
-                    .GroupBy(x => x.IdCorte)
-                    .ToDictionary(g => g.Key, g => g.First());
-                var cortesPorCodigo = cortes.Values
-                    .Where(x => x.codigo > 0)
-                    .GroupBy(x => x.codigo)
-                    .ToDictionary(g => g.Key, g => g.First());
-                var cortesPorNombre = cortes.Values
-                    .Where(x => !string.IsNullOrWhiteSpace(x.corte))
-                    .GroupBy(x => NormalizarClaveProducto(x.corte))
-                    .ToDictionary(g => g.Key, g => g.First());
-
                 var items = new List<DashboardTopProductoVm>();
                 foreach (System.Data.DataRow row in dt.Rows)
                 {
                     long codigo = LeerLong(row, "Codigo", "codigo");
                     string producto = LeerString(row, "Corte", "Producto", "corte");
-                    int idCorte = LeerInt(row, "idCorte");
-                    Entidades.Corte corteMeta = null;
-
-                    if (idCorte > 0)
-                        cortes.TryGetValue(idCorte, out corteMeta);
-
-                    if (corteMeta == null && codigo > 0)
-                    {
-                        cortesPorCodigo.TryGetValue(codigo, out corteMeta);
-                        if (corteMeta != null)
-                            idCorte = corteMeta.IdCorte;
-                    }
-
-                    if (corteMeta == null && !string.IsNullOrWhiteSpace(producto))
-                    {
-                        cortesPorNombre.TryGetValue(NormalizarClaveProducto(producto), out corteMeta);
-                        if (corteMeta != null)
-                            idCorte = corteMeta.IdCorte;
-                    }
-
-                    string productoNormalizado = !string.IsNullOrWhiteSpace(producto)
-                        ? producto
-                        : corteMeta != null
-                            ? (!string.IsNullOrWhiteSpace(corteMeta.CorteDesc) ? corteMeta.CorteDesc : (corteMeta.corte ?? ""))
-                            : "";
+                    string productoNormalizado = (producto ?? "").Trim();
 
                     items.Add(new DashboardTopProductoVm
                     {
-                        IdCorte = idCorte,
+                        IdCorte = 0,
                         Codigo = codigo,
                         Producto = productoNormalizado,
                         Kg = LeerDecimalPrimeraCoincidencia(row, "Total Kgs", "Total Kg", "Kgs", "Kg", "cantKg", "CantKg"),
@@ -305,14 +268,14 @@ namespace Web.Controllers
                 if (acceso != null) return acceso;
 
                 var filtro = CrearFiltroDashboard(periodo, idSucursal);
-                var dt = oCorteN.buscarEmbutido(filtro.IdSucursalConsulta, "", filtro.FechaDesde, filtro.FechaHasta)
+                var dt = oCorteN.obtenerUltimosElaboradosDashboard(5, filtro.IdSucursalConsulta, filtro.FechaDesde, filtro.FechaHasta)
                     ?? new System.Data.DataTable();
 
-                var items = new List<Tuple<DateTime, DashboardUltimoElaboradoVm>>();
+                var resultado = new List<Tuple<DateTime, DashboardUltimoElaboradoVm>>();
                 foreach (System.Data.DataRow row in dt.Rows)
                 {
                     DateTime fecha = LeerDate(row, "Fecha", "fechaEmbutido", "fecha");
-                    items.Add(Tuple.Create(fecha, new DashboardUltimoElaboradoVm
+                    resultado.Add(Tuple.Create(fecha, new DashboardUltimoElaboradoVm
                     {
                         Id = LeerInt(row, "Id", "idEmbutido"),
                         Fecha = fecha == DateTime.MinValue ? "-" : fecha.ToString("dd/MM HH:mm"),
@@ -323,14 +286,13 @@ namespace Web.Controllers
                     }));
                 }
 
-                var resultado = items
+                var items = resultado
                     .Where(x => x.Item2 != null && !string.IsNullOrWhiteSpace(x.Item2.Producto))
                     .OrderByDescending(x => x.Item1)
-                    .Take(5)
                     .Select(x => x.Item2)
                     .ToList();
 
-                return Json(new { ok = true, data = resultado }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, data = items }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -643,18 +605,21 @@ namespace Web.Controllers
 
         private DashboardFinanzasViewModel ConstruirDashboardFinanzas()
         {
-            var saldos = ObtenerSaldosCuentaCorriente();
-            var model = new DashboardFinanzasViewModel
+            var model = new DashboardFinanzasViewModel();
+
+            var dtResumen = oCuentaCorrienteN.obtenerResumenDashboard() ?? new System.Data.DataTable();
+            if (dtResumen.Rows.Count > 0)
             {
-                Resumen = new DashboardFinanzasResumenVm
+                var row = dtResumen.Rows[0];
+                model.Resumen = new DashboardFinanzasResumenVm
                 {
-                    CantidadConSaldo = saldos.Count,
-                    CantidadDeudores = saldos.Count(x => x.Saldo < -100m) * -1,
-                    CantidadAcreedores = saldos.Count(x => x.Saldo > 0m),
-                    TotalACobrar = saldos.Where(x => x.Saldo < -100m).Sum(x => x.Saldo) * -1,
-                    TotalAPagar = saldos.Where(x => x.Saldo > 0m).Sum(x => Math.Abs(x.Saldo))
-                }
-            };
+                    CantidadConSaldo = LeerInt(row, "CantidadConSaldo"),
+                    CantidadDeudores = LeerInt(row, "CantidadDeudores"),
+                    CantidadAcreedores = LeerInt(row, "CantidadAcreedores"),
+                    TotalACobrar = LeerDecimalPrimeraCoincidencia(row, "TotalACobrar"),
+                    TotalAPagar = LeerDecimalPrimeraCoincidencia(row, "TotalAPagar")
+                };
+            }
 
             var dtMovimientos = oCuentaCorrienteN.obtenerUltimosPagosDashboard(5) ?? new System.Data.DataTable();
             foreach (System.Data.DataRow row in dtMovimientos.Rows)
@@ -718,8 +683,8 @@ namespace Web.Controllers
 
         private List<DashboardMovimientoResumenVm> ObtenerUltimosMovimientosDashboardData(int cantidad)
         {
-            var items = new List<Tuple<DateTime, DashboardMovimientoResumenVm>>();
-            var dtMovimientos = oCorteN.obtenerMovimientos("", "", DateTime.Today.AddYears(-5), DateTime.Today, "")
+            var items = new List<DashboardMovimientoResumenVm>();
+            var dtMovimientos = oCorteN.obtenerUltimosMovimientosDashboard(cantidad)
                 ?? new System.Data.DataTable();
 
             foreach (System.Data.DataRow row in dtMovimientos.Rows)
@@ -728,19 +693,15 @@ namespace Web.Controllers
                 string origen = LeerString(row, "Origen", "sucursalOrigen", "origen");
                 string destino = LeerString(row, "Destino", "sucursalDestino", "destino");
 
-                items.Add(Tuple.Create(fecha, new DashboardMovimientoResumenVm
+                items.Add(new DashboardMovimientoResumenVm
                 {
                     Fecha = fecha == DateTime.MinValue ? "-" : fecha.ToString("dd/MM/yyyy HH:mm"),
                     Origen = string.IsNullOrWhiteSpace(origen) ? "-" : origen,
                     Destino = string.IsNullOrWhiteSpace(destino) ? "-" : destino
-                }));
+                });
             }
 
-            return items
-                .OrderByDescending(x => x.Item1)
-                .Take(cantidad)
-                .Select(x => x.Item2)
-                .ToList();
+            return items;
         }
 
         private static int CalcularClientesAtendidos(IEnumerable<Entidades.Venta> ventas)

@@ -27,6 +27,11 @@ namespace Negocio
             return oCtaCteD.obtenerCtasCtes(txtBusqueda, idPersona, ordenSaldo);
         }
 
+        public DataTable obtenerResumenDashboard()
+        {
+            return oCtaCteD.obtenerResumenDashboard();
+        }
+
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde)
         {
             DataTable dtMovCtaCte = oCtaCteD.getCtaCteByIdPersona(idPersona, fechaDesde);

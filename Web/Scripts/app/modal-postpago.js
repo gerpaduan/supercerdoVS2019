@@ -10,6 +10,7 @@
         emailConfigUrl: '',
         emailSendUrl: '',
         stayOnPage: false,
+        returnInPos: false,
         ticketMmActual: null,
         agentAvailable: false,
         agentChecked: false,
@@ -47,14 +48,50 @@
         $('#modalPostPago').modal('hide');
     }
 
-    function cerrarYRedirigir() {
-        cerrarModal();
-        if (state.stayOnPage) {
+    function intentarRetornoPos() {
+        var $modalPagoPos = $('#modalPagoPOS');
+
+        if (!state.returnInPos || !state.redirectUrl || !window.POSFinanzasState) {
+            return false;
+        }
+
+        window.POSFinanzasState.redirectDespuesDePago = state.redirectUrl;
+        window.POSFinanzasState.tituloDespuesDePago = 'Cuenta corriente';
+
+        if ($modalPagoPos.length && $modalPagoPos.hasClass('show')) {
+            cerrarModal();
+            $modalPagoPos.modal('hide');
+            return true;
+        }
+
+        if (window.POSFinanzas && typeof window.POSFinanzas.cargar === 'function') {
+            cerrarModal();
+            window.POSFinanzas.cargar(state.redirectUrl, 'Cuenta corriente');
+            return true;
+        }
+
+        return false;
+    }
+
+    function navegarARedirect() {
+        if (!state.redirectUrl) {
             return;
         }
-        if (state.redirectUrl) {
-            window.location.href = state.redirectUrl;
+
+        if (intentarRetornoPos()) {
+            return;
         }
+
+        cerrarModal();
+        window.location.href = state.redirectUrl;
+    }
+
+    function cerrarYRedirigir() {
+        if (state.stayOnPage) {
+            cerrarModal();
+            return;
+        }
+        navegarARedirect();
     }
 
     function cerrarLuegoDeImprimir(delayMs) {
@@ -323,6 +360,7 @@
             state.emailConfigUrl = resp.emailConfigUrl || '';
             state.emailSendUrl = resp.emailSendUrl || '';
             state.stayOnPage = !!resp.stayOnPage;
+            state.returnInPos = !!resp.returnInPos;
             state.ticketMmActual = null;
 
             $('#modalPostPago').modal({

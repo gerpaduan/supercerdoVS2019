@@ -382,6 +382,11 @@ namespace Negocio
             return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
+        public DataTable obtenerUltimosElaboradosDashboard(int cantidad, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            return oCorteD.obtenerUltimosElaboradosDashboard(cantidad, idSucursal, fechaDesde, fechaHasta);
+        }
+
         public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             
@@ -542,6 +547,11 @@ namespace Negocio
          {
              
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
+         }
+
+         public DataTable obtenerUltimosMovimientosDashboard(int cantidad)
+         {
+             return oCorteD.obtenerUltimosMovimientosDashboard(cantidad);
          }
 
          public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)

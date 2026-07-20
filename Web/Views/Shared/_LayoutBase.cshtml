@@ -537,6 +537,10 @@
         </div>
     </div>
 
+    <div id="globalAntiForgeryToken" style="display:none;">
+        @Html.AntiForgeryToken()
+    </div>
+
     @Html.Partial("_ModalSucursales")
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
 

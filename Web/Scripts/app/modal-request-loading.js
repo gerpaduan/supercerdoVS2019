@@ -10,9 +10,41 @@
     var AUTO_DELAY_MS = 1000;
     var stylesInjected = false;
     var navigationTimer = 0;
+    var csrfTokenCache = null;
 
     function hasOwn(obj, key) {
         return Object.prototype.hasOwnProperty.call(obj, key);
+    }
+
+    function isUnsafeMethod(method) {
+        var normalized = String(method || 'GET').toUpperCase();
+        return normalized === 'POST' || normalized === 'PUT' || normalized === 'PATCH' || normalized === 'DELETE';
+    }
+
+    function readRequestVerificationToken() {
+        if (csrfTokenCache) return csrfTokenCache;
+
+        var selector = 'input[name="__RequestVerificationToken"]';
+        var globalToken = document.getElementById('globalAntiForgeryToken');
+        var input = globalToken ? globalToken.querySelector(selector) : null;
+        if (!input) {
+            input = document.querySelector(selector);
+        }
+
+        csrfTokenCache = input && input.value ? input.value : '';
+        return csrfTokenCache;
+    }
+
+    function ensureRequestVerificationHeader(jqXHR, settings) {
+        if (!jqXHR || !settings || !isUnsafeMethod(settings.type || settings.method)) return;
+        if (!isSameOrigin(settings.url || '')) return;
+        if (settings.disableRequestVerification === true) return;
+        if (settings.headers && settings.headers.RequestVerificationToken) return;
+
+        var token = readRequestVerificationToken();
+        if (!token) return;
+
+        jqXHR.setRequestHeader('RequestVerificationToken', token);
     }
 
     function ensureStyles() {
@@ -281,6 +313,8 @@
         $(document)
             .off('.modalRequestLoadingAuto')
             .on('ajaxSend.modalRequestLoadingAuto', function (event, jqXHR, settings) {
+                ensureRequestVerificationHeader(jqXHR, settings);
+
                 if (!shouldAutoTrackAjax(settings)) return;
 
                 var requestId = beginTrackedRequest({
@@ -317,6 +351,18 @@
             var fetchInit = init || {};
             var controller = null;
             var abortFn = null;
+            var method = (fetchInit.method || 'GET').toUpperCase();
+
+            if (isUnsafeMethod(method) && isSameOrigin(normalizeFetchInput(input)) && fetchInit.disableRequestVerification !== true) {
+                var token = readRequestVerificationToken();
+                if (token) {
+                    var headers = new window.Headers(fetchInit.headers || {});
+                    if (!headers.has('RequestVerificationToken')) {
+                        headers.set('RequestVerificationToken', token);
+                    }
+                    fetchInit = $.extend({}, fetchInit, { headers: headers });
+                }
+            }
 
             if (shouldTrack) {
                 if (!fetchInit.signal && typeof window.AbortController === 'function') {

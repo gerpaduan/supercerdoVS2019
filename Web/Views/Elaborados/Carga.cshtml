@@ -141,7 +141,7 @@
                                     <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
                                     <input type="hidden" id="txtElaboradoTipo" />
                                     <input type="hidden" id="txtElaboradoPromedio" />
-                                    <input type="text" id="txtElaboradoNombre" class="form-control" value="@Model.Elaborado" readonly />
+                                    <input type="text" id="txtElaboradoNombre" class="form-control app-product-highlight" value="@Model.Elaborado" readonly />
                                     <div class="input-group-append">
                                         <button type="button" class="btn btn-outline-primary" id="btnBuscarElaborado" title="Buscar elaborado (F9)" @(esAnulado ? "disabled" : "")>
                                             <i class="fas fa-search"></i>
@@ -209,7 +209,7 @@
                                             <input type="hidden" id="txtIngredientePesable" />
                                             <input type="hidden" id="txtIngredienteTipo" />
                                             <input type="hidden" id="txtIngredientePromedio" />
-                                            <input type="text" id="txtIngredienteNombre" class="form-control" readonly />
+                                            <input type="text" id="txtIngredienteNombre" class="form-control app-product-highlight" readonly />
                                             <div class="input-group-append">
                                                 <button type="button" class="btn btn-outline-primary" id="btnBuscarIngrediente" title="Buscar ingrediente (F10)" @(esAnulado ? "disabled" : "")>
                                                     <i class="fas fa-search"></i>

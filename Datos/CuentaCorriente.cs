@@ -180,6 +180,31 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerResumenDashboard()
+        {
+            const string sql = @"
+                WITH Saldos AS (
+                    SELECT
+                        m.idPersona,
+                        SUM(m.importe) AS Saldo
+                    FROM dbo.MovCtaCte m
+                    GROUP BY m.idPersona
+                )
+                SELECT
+                    COUNT(CASE WHEN s.Saldo <> 0 THEN 1 END) AS CantidadConSaldo,
+                    COUNT(CASE WHEN s.Saldo < -100 THEN 1 END) AS CantidadDeudores,
+                    COUNT(CASE WHEN s.Saldo > 0 THEN 1 END) AS CantidadAcreedores,
+                    SUM(CASE WHEN s.Saldo < -100 THEN ABS(s.Saldo) ELSE 0 END) AS TotalACobrar,
+                    SUM(CASE WHEN s.Saldo > 0 THEN s.Saldo ELSE 0 END) AS TotalAPagar
+                FROM Saldos s
+                INNER JOIN dbo.Personas p ON p.idPersona = s.idPersona;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text);
+        }
+
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde)
         {
             return Db.DataTable(

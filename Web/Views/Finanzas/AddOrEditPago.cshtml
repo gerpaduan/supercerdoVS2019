@@ -70,9 +70,12 @@
                     <button type="button"
                             class="btn btn-outline-primary btn-sm"
                             id="btnImprimirPago"
+                            data-pago-id="@Model.Id"
                             data-imprimir-url="@ViewBag.ImprimirPagoUrl"
                             data-imprimir-payload-url="@ViewBag.ImprimirPagoPayloadUrl"
-                            data-pdf-url="@ViewBag.ImprimirPagoPdfUrl">
+                            data-pdf-url="@ViewBag.ImprimirPagoPdfUrl"
+                            data-email-config-url="@Url.Action("ObtenerDatosEmailPago", "Finanzas")"
+                            data-email-send-url="@Url.Action("EnviarComprobantePagoEmail", "Finanzas")">
                         <i class="fas fa-print mr-1"></i> Imprimir
                     </button>
                 </div>
@@ -93,32 +96,50 @@
                         <div class="form-group pago-operacion-grupo">
                             <label>¿Qué desea registrar?</label>
                             <div class="pago-operacion-ayuda">Seleccione primero la operación para continuar. Atajos: `1` pagar, `2` cobrar.</div>
-                            <div class="pago-operacion-selector" role="radiogroup" aria-label="Qué desea registrar">
-                                <button type="button"
-                                        class="pago-operacion-opcion"
-                                        data-operacion-valor="true"
-                                        aria-pressed="false">
-                                    <span class="pago-operacion-icono pago-operacion-icono-pagar">
-                                        <i class="fas fa-arrow-up"></i>
-                                    </span>
-                                    <span class="pago-operacion-contenido">
-                                        <strong>Realizar un pago</strong>
-                                        <small>Salida de dinero hacia proveedor o persona</small>
-                                    </span>
-                                </button>
+                            <div class="pago-operacion-expandible">
+                                <div class="pago-operacion-selector" role="radiogroup" aria-label="Qué desea registrar">
+                                    <button type="button"
+                                            class="pago-operacion-opcion"
+                                            data-operacion-valor="true"
+                                            aria-pressed="false">
+                                        <span class="pago-operacion-icono pago-operacion-icono-pagar">
+                                            <i class="fas fa-arrow-up"></i>
+                                        </span>
+                                        <span class="pago-operacion-contenido">
+                                            <strong>Realizar un pago</strong>
+                                            <small>Salida de dinero hacia proveedor o persona</small>
+                                        </span>
+                                    </button>
 
+                                    <button type="button"
+                                            class="pago-operacion-opcion"
+                                            data-operacion-valor="false"
+                                            aria-pressed="false">
+                                        <span class="pago-operacion-icono pago-operacion-icono-cobrar">
+                                            <i class="fas fa-arrow-down"></i>
+                                        </span>
+                                        <span class="pago-operacion-contenido">
+                                            <strong>Recibir un cobro</strong>
+                                            <small>Ingreso de dinero desde cliente o persona</small>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="pagoOperacionCompacto" class="pago-operacion-compacto d-none" aria-live="polite">
                                 <button type="button"
-                                        class="pago-operacion-opcion"
-                                        data-operacion-valor="false"
-                                        aria-pressed="false">
-                                    <span class="pago-operacion-icono pago-operacion-icono-cobrar">
-                                        <i class="fas fa-arrow-down"></i>
-                                    </span>
-                                    <span class="pago-operacion-contenido">
-                                        <strong>Recibir un cobro</strong>
-                                        <small>Ingreso de dinero desde cliente o persona</small>
-                                    </span>
+                                        id="btnCambiarOperacionPago"
+                                        class="btn btn-outline-secondary btn-sm pago-operacion-cambiar"
+                                        data-edit-readonly-ignore="true">
+                                    Cambiar
                                 </button>
+                                <div class="pago-operacion-compacto-icono">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="pago-operacion-compacto-texto">
+                                    <strong id="pagoOperacionCompactoTitulo">Operación seleccionada</strong>
+                                    <span id="pagoOperacionCompactoDescripcion"></span>
+                                </div>
                             </div>
 
                             <select id="AProveedor" name="AProveedor" class="form-control pago-operacion-select">
@@ -137,94 +158,67 @@
                             </div>
                         </div>
 
-                        <div id="comboSucursales" class="mb-3 pago-requiere-operacion" style="@estiloComboSucursales">
-                            <div class="form-group">
-                                <label>Sucursal</label>
-                                <select class="form-control" id="SucursalId" name="SucursalId">
-                                    <option value="">- Seleccione sucursal -</option>
+                        <div class="pago-layout-escritorio">
+                            <div id="comboSucursales" class="mb-3 pago-requiere-operacion" style="@estiloComboSucursales">
+                                <div class="form-group">
+                                    <label>Sucursal</label>
+                                    <select class="form-control" id="SucursalId" name="SucursalId">
+                                        <option value="">- Seleccione sucursal -</option>
 
-                                    @foreach (var s in sucursalesView)
-                                    {
-                                        <option value="@s.IdSucursal"
-                                                @((Model.Sucursal?.IdSucursal == s.IdSucursal || ViewBag.SucursalId == s.IdSucursal) ? "selected" : "")>
-                                            @s.SucursalNombre
-                                        </option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group pago-requiere-operacion">
-                            @Html.LabelFor(m => m.Fecha)
-                            @Html.TextBoxFor(
-                                m => m.Fecha,
-                                "{0:yyyy-MM-ddTHH:mm}",
-                                new { @class = "form-control", type = "datetime-local" }
-                            )
-                        </div>
-
-                        <div class="form-group pago-requiere-operacion">
-                            @Html.LabelFor(m => m.NroRecibo)
-                            @Html.TextBoxFor(m => m.NroRecibo, new { @class = "form-control", type = "nroRecibo" })
-                        </div>
-
-                        <div class="form-group pago-requiere-operacion">
-                            @Html.Label("Forma de pago")
-                            @Html.EnumDropDownListFor(m => m.FormaPago_, new { @class = "form-control", id = "formaPago" })
-                        </div>
-
-                        <div id="pagoModoResumen" class="pago-modo-resumen pago-modo-neutro pago-requiere-operacion" aria-live="polite">
-                            <div class="pago-modo-badge" id="pagoModoBadge">Pago simple</div>
-                            <div class="pago-modo-texto">
-                                <strong id="pagoModoTitulo">Importe manual</strong>
-                                <span id="pagoModoDescripcion">Ingresá el importe total del pago.</span>
-                            </div>
-                        </div>
-
-                        <div class="form-group importe-destacado pago-requiere-operacion">
-                            <label>Importe</label>
-                            <div class="input-group">
-                                @Html.TextBoxFor(m => m.Importe, new
-                                {
-                                    @class = "form-control solo-decimal",
-                                    id = "importe",
-                                    type = "text",
-                                    autocomplete = "off",
-                                    @readonly = soloLecturaInicial ? "readonly" : null
-                                })
-                                <div class="input-group-append">
-                                    <button type="button"
-                                            class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-pago js-calculadora-billetes-pago-importe d-none"
-                                            data-cb-context="pago"
-                                            data-cb-input="#importe"
-                                            data-cb-detail="#Observaciones, #Detalle, #descripcion"
-                                            title="Calcular efectivo">
-                                        <i class="fas fa-money-bill-wave"></i>
-                                    </button>
+                                        @foreach (var s in sucursalesView)
+                                        {
+                                            <option value="@s.IdSucursal"
+                                                    @((Model.Sucursal?.IdSucursal == s.IdSucursal || ViewBag.SucursalId == s.IdSucursal) ? "selected" : "")>
+                                                @s.SucursalNombre
+                                            </option>
+                                        }
+                                    </select>
                                 </div>
                             </div>
-                        </div>
 
-                        <div id="bloqueEfectivo" class="bloque-pago pago-requiere-operacion" style="display:none;">
-                            <div class="form-group">
-                                <h5 class="text-primary">Efectivo</h5>
+                            <div class="form-group pago-requiere-operacion">
+                                @Html.LabelFor(m => m.Fecha)
+                                @Html.TextBoxFor(
+                                    m => m.Fecha,
+                                    "{0:yyyy-MM-ddTHH:mm}",
+                                    new { @class = "form-control", type = "datetime-local" }
+                                )
+                            </div>
 
+                            <div class="form-group pago-requiere-operacion">
+                                @Html.LabelFor(m => m.NroRecibo)
+                                @Html.TextBoxFor(m => m.NroRecibo, new { @class = "form-control", type = "nroRecibo" })
+                            </div>
+
+                            <div class="form-group pago-requiere-operacion">
+                                @Html.Label("Forma de pago")
+                                @Html.EnumDropDownListFor(m => m.FormaPago_, new { @class = "form-control", id = "formaPago" })
+                            </div>
+
+                            <div id="pagoModoResumen" class="pago-modo-resumen pago-modo-neutro pago-requiere-operacion">
+                                <div class="pago-modo-badge" id="pagoModoBadge">Pago simple</div>
+                                <div class="pago-modo-texto">
+                                    <strong id="pagoModoTitulo">Importe manual</strong>
+                                    <span id="pagoModoDescripcion">Ingresá el importe total del pago.</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group importe-destacado pago-requiere-operacion">
+                                <label>Importe</label>
                                 <div class="input-group">
-                                    @Html.TextBox(
-                                        "Efectivo",
-                                        Model.Efectivo.ToString("0.00", CultureInfo.InvariantCulture),
-                                        new
-                                        {
-                                            @class = "form-control solo-decimal",
-                                            id = "Efectivo",
-                                            type = "text"
-                                        }
-                                    )
+                                    @Html.TextBoxFor(m => m.Importe, new
+                                    {
+                                        @class = "form-control solo-decimal",
+                                        id = "importe",
+                                        type = "text",
+                                        autocomplete = "off",
+                                        @readonly = soloLecturaInicial ? "readonly" : null
+                                    })
                                     <div class="input-group-append">
                                         <button type="button"
-                                                class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-pago js-calculadora-billetes-pago-efectivo d-none"
+                                                class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-pago js-calculadora-billetes-pago-importe d-none"
                                                 data-cb-context="pago"
-                                                data-cb-input="#Efectivo"
+                                                data-cb-input="#importe"
                                                 data-cb-detail="#Observaciones, #Detalle, #descripcion"
                                                 title="Calcular efectivo">
                                             <i class="fas fa-money-bill-wave"></i>
@@ -232,6 +226,36 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div id="bloqueEfectivo" class="bloque-pago pago-requiere-operacion" style="display:none;">
+                                <div class="form-group">
+                                    <h5 class="text-primary">Efectivo</h5>
+
+                                    <div class="input-group">
+                                        @Html.TextBox(
+                                            "Efectivo",
+                                            Model.Efectivo.ToString("0.00", CultureInfo.InvariantCulture),
+                                            new
+                                            {
+                                                @class = "form-control solo-decimal",
+                                                id = "Efectivo",
+                                                type = "text"
+                                            }
+                                        )
+                                        <div class="input-group-append">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-pago js-calculadora-billetes-pago-efectivo d-none"
+                                                    data-cb-context="pago"
+                                                    data-cb-input="#Efectivo"
+                                                    data-cb-detail="#Observaciones, #Detalle, #descripcion"
+                                                    title="Calcular efectivo">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
 
                         <div id="bloqueCheques" class="bloque-pago pago-requiere-operacion" style="display:none;">
@@ -273,9 +297,19 @@
 
                         </div>
 
-                        <div class="form-group pago-requiere-operacion">
-                            @Html.LabelFor(m => m.Observaciones)
-                            @Html.TextAreaFor(m => m.Observaciones, new { @class = "form-control", rows = 3 })
+                        <div class="form-group pago-requiere-operacion pago-observaciones-bloque">
+                            <div class="pago-observaciones-cabecera">
+                                @Html.LabelFor(m => m.Observaciones)
+                                <button type="button"
+                                        id="btnToggleObservacionesPago"
+                                        class="btn btn-outline-secondary btn-sm pago-observaciones-toggle"
+                                        data-edit-readonly-ignore="true">
+                                    Agregar
+                                </button>
+                            </div>
+                            <div id="pagoObservacionesContenido" class="pago-observaciones-contenido">
+                                @Html.TextAreaFor(m => m.Observaciones, new { @class = "form-control", rows = 3 })
+                            </div>
                         </div>
 
                         <input type="hidden" id="ChequesJson" name="ChequesJson" />
@@ -454,9 +488,9 @@
     </script>
     <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=10")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
@@ -468,6 +502,11 @@
         });
         window.PagoUX && window.PagoUX.init();
         window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
+        window.EditPageGuard && window.EditPageGuard.init({
+            formSelector: "#formPago",
+            saveButtonSelector: "#btnGuardarPago",
+            modifyButtonSelector: "#btnHabilitarEdicionPago"
+        });
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formPago",
             soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
@@ -562,9 +601,9 @@ else
         </script>
         <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
         <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=3")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=6")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=5")"></script>
+        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=10")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
         <script>
             window.PagoCheques && window.PagoCheques.init({
@@ -575,6 +614,11 @@ else
             });
             window.PagoUX && window.PagoUX.init();
             window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
+            window.EditPageGuard && window.EditPageGuard.init({
+                formSelector: "#formPago",
+                saveButtonSelector: "#btnGuardarPago",
+                modifyButtonSelector: "#btnHabilitarEdicionPago"
+            });
             window.EditReadOnly && window.EditReadOnly.init({
                 formSelector: "#formPago",
                 soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
@@ -765,6 +809,19 @@ else
         padding: .5rem .65rem;
         text-align: left;
         transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+
+    .pago-operacion-opcion.pago-operacion-inactiva {
+        opacity: .54;
+    }
+
+    .pago-operacion-opcion.pago-operacion-inactiva .pago-operacion-contenido strong,
+    .pago-operacion-opcion.pago-operacion-inactiva .pago-operacion-contenido small,
+    .pago-operacion-opcion.pago-operacion-inactiva .pago-operacion-icono {
+        filter: saturate(.72);
     }
 
     .pago-operacion-opcion:hover,
@@ -825,6 +882,94 @@ else
     }
 
     .pago-operacion-select {
+        display: none;
+    }
+
+    .pago-operacion-expandible {
+        display: block;
+    }
+
+    .pago-operacion-compacto {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        border: 1px solid #dbe5f3;
+        border-radius: 10px;
+        background: #f8fafc;
+        padding: .42rem .55rem;
+        margin-bottom: .45rem;
+    }
+
+    .pago-operacion-compacto-icono {
+        flex: 0 0 32px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef2ff;
+        color: #35539a;
+        font-size: .88rem;
+    }
+
+    .pago-operacion-compacto-texto {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .pago-operacion-compacto-texto strong {
+        color: #1f2937;
+        font-size: .84rem;
+        line-height: 1.1;
+    }
+
+    .pago-operacion-compacto-texto span {
+        color: #64748b;
+        font-size: .73rem;
+        line-height: 1.15;
+    }
+
+    .pago-operacion-cambiar {
+        flex: 0 0 auto;
+        order: 3;
+    }
+
+    .pago-operacion-grupo.pago-operacion-contraida .pago-operacion-ayuda,
+    .pago-operacion-grupo.pago-operacion-contraida .pago-operacion-expandible,
+    .pago-operacion-grupo.pago-operacion-contraida .pago-operacion-resumen {
+        display: none;
+    }
+
+    .pago-observaciones-bloque {
+        border: 1px solid #dbe5f3;
+        border-radius: 10px;
+        background: #f8fafc;
+        padding: .55rem .65rem;
+    }
+
+    .pago-observaciones-cabecera {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+
+    .pago-observaciones-cabecera label {
+        margin-bottom: 0 !important;
+    }
+
+    .pago-observaciones-toggle {
+        flex: 0 0 auto;
+    }
+
+    .pago-observaciones-contenido {
+        margin-top: .55rem;
+    }
+
+    .pago-observaciones-bloque.pago-observaciones-contraido .pago-observaciones-contenido {
         display: none;
     }
 
@@ -991,7 +1136,7 @@ else
 
     @@media (min-width: 1200px) {
         .container-fluid > .row > .col-12.col-lg-8.mx-auto {
-            max-width: 920px;
+            max-width: 1080px;
         }
 
         #formPago .form-control,
@@ -1004,6 +1149,35 @@ else
 
         .card.shadow.mb-4 .card-body {
             padding: .76rem .86rem;
+        }
+
+        .pago-layout-escritorio {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            column-gap: .85rem;
+            row-gap: .25rem;
+            align-items: start;
+        }
+
+        .pago-layout-escritorio > #comboSucursales,
+        .pago-layout-escritorio > .form-group,
+        .pago-layout-escritorio > .bloque-pago,
+        .pago-layout-escritorio > .pago-modo-resumen {
+            margin-bottom: .45rem;
+        }
+
+        .pago-layout-escritorio .importe-destacado,
+        .pago-layout-escritorio .pago-modo-resumen,
+        .pago-layout-escritorio-span-2 {
+            grid-column: 1 / -1;
+        }
+
+        #bloqueCheques {
+            width: 100%;
+        }
+
+        #bloqueCheques .table-responsive {
+            overflow-x: visible;
         }
     }
 
@@ -1053,14 +1227,34 @@ else
         color: #d7e4f3;
     }
 
+    html.dark-mode .pago-operacion-ayuda,
+    body.dark-mode .pago-operacion-ayuda {
+        color: #c7d6e6;
+    }
+
+    html.dark-mode #formPago.pago-operacion-pendiente .pago-operacion-grupo,
+    body.dark-mode #formPago.pago-operacion-pendiente .pago-operacion-grupo {
+        border-color: #4f79a6;
+        background: #13263b;
+        box-shadow: 0 0 0 3px rgba(110, 168, 254, .18);
+    }
+
     html.dark-mode .pago-operacion-opcion {
         background: #162538;
         border-color: #2f4d69;
         color: #ecf2ff;
     }
 
+    body.dark-mode .pago-operacion-opcion {
+        background: #162538;
+        border-color: #2f4d69;
+        color: #ecf2ff;
+    }
+
     html.dark-mode .pago-operacion-opcion:hover,
-    html.dark-mode .pago-operacion-opcion:focus {
+    html.dark-mode .pago-operacion-opcion:focus,
+    body.dark-mode .pago-operacion-opcion:hover,
+    body.dark-mode .pago-operacion-opcion:focus {
         border-color: #4f79a6;
         box-shadow: 0 0 0 0.18rem rgba(79, 121, 166, .18);
     }
@@ -1077,6 +1271,40 @@ else
         box-shadow: 0 0 0 0.18rem rgba(34, 197, 94, .14);
     }
 
+    html.dark-mode .pago-operacion-compacto,
+    body.dark-mode .pago-operacion-compacto {
+        background: #162538;
+        border-color: #2f4d69;
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .pago-operacion-compacto-icono,
+    body.dark-mode .pago-operacion-compacto-icono {
+        background: #223449;
+        color: #dbeafe;
+    }
+
+    html.dark-mode .pago-operacion-compacto-texto strong,
+    body.dark-mode .pago-operacion-compacto-texto strong {
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .pago-operacion-compacto-texto span,
+    body.dark-mode .pago-operacion-compacto-texto span {
+        color: #c0d0e2;
+    }
+
+    html.dark-mode .pago-observaciones-bloque,
+    body.dark-mode .pago-observaciones-bloque {
+        background: #162538;
+        border-color: #2f4d69;
+    }
+
+    html.dark-mode .pago-operacion-opcion.pago-operacion-inactiva,
+    body.dark-mode .pago-operacion-opcion.pago-operacion-inactiva {
+        opacity: .46;
+    }
+
     html.dark-mode .pago-operacion-icono-pagar {
         background: rgba(239, 68, 68, .18);
         color: #fecaca;
@@ -1090,7 +1318,13 @@ else
     html.dark-mode .pago-operacion-contenido small,
     html.dark-mode .pago-operacion-resumen span,
     html.dark-mode .pago-modo-texto span {
-        color: #97a7bd;
+        color: #c0d0e2;
+    }
+
+    body.dark-mode .pago-operacion-contenido small,
+    body.dark-mode .pago-operacion-resumen span,
+    body.dark-mode .pago-modo-texto span {
+        color: #c0d0e2;
     }
 
     html.dark-mode .pago-operacion-resumen,

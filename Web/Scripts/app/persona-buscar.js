@@ -63,8 +63,9 @@ $(document).on('keydown', '#filtroPersona', function (e) {
 
         const idPersona = $target.data('id');
         const razonSocial = $target.data('razon');
+        const identificacion = $target.data('identificacion') || '';
 
-        seleccionarPersona(idPersona, razonSocial);
+        seleccionarPersona(idPersona, razonSocial, identificacion);
         return;
     }
 });
@@ -80,7 +81,8 @@ function cargarPersonas() {
             html += `
                 <tr class="fila-persona"
                     data-id="${p.idPersona}"
-                    data-razon="${p.razonSocial}">
+                    data-razon="${p.razonSocial}"
+                    data-identificacion="${p.identificacion ?? ''}">
                     <td>${p.cuit ?? ''}</td>
                     <td>${p.razonSocial}</td>
                     <td>${p.identificacion ?? ''}</td>
@@ -106,12 +108,16 @@ $(document).on('click', '#tablaPersonas tr.fila-persona', function () {
 $(document).on('dblclick', '#tablaPersonas tr.fila-persona', function () {
     let idPersona = $(this).data('id');
     let razonSocial = $(this).data('razon');
-    seleccionarPersona(idPersona, razonSocial);
+    let identificacion = $(this).data('identificacion') || '';
+    seleccionarPersona(idPersona, razonSocial, identificacion);
 });
 
-function seleccionarPersona(idPersona, razonSocial) {
+function seleccionarPersona(idPersona, razonSocial, identificacion) {
     $('#idPersona').val(idPersona);
     $('#razonSocial').val(razonSocial);
+    if (typeof window.setClienteIdentificacionVisual === 'function') {
+        window.setClienteIdentificacionVisual(identificacion, razonSocial);
+    }
     // Marcamos que hubo una seleccion real para que el POS pueda decidir
     // acciones posteriores cuando el modal termine de cerrarse.
     $('#modalBuscarPersona').data('persona-seleccionada', true);

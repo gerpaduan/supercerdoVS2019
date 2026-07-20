@@ -714,6 +714,45 @@ namespace Datos
             );
         }
 
+        public DataTable obtenerUltimosElaboradosDashboard(int cantidad, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql = @"
+                SELECT TOP (@cantidad)
+                    e.idEmbutido AS Id,
+                    e.fechaEmbutido AS Fecha,
+                    ce.corte AS Corte,
+                    SUM(cpe.kgUtilizados) AS Kgs,
+                    s.sucursal AS Sucursal,
+                    uc.nombre AS Usuario
+                FROM dbo.Embutidos e
+                INNER JOIN dbo.CortePorEmbutido cpe ON cpe.idEmbutido = e.idEmbutido
+                INNER JOIN dbo.Corte ce ON ce.idCorte = e.idCorte
+                INNER JOIN dbo.Sucursal s ON s.idSucursal = e.idSucursal
+                LEFT JOIN dbo.Usuarios uc ON uc.id = e.creadoPor
+                WHERE e.fechaEmbutido BETWEEN @fechaDesde AND @fechaHasta
+                  AND ((@idSucursal > 0 AND e.idSucursal = @idSucursal) OR (@idSucursal <= 0 AND e.idSucursal > 0))
+                GROUP BY
+                    e.idEmbutido,
+                    e.fechaEmbutido,
+                    ce.corte,
+                    s.sucursal,
+                    uc.nombre
+                ORDER BY e.fechaEmbutido DESC, e.idEmbutido DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.Add("@cantidad", SqlDbType.Int).Value = cantidad;
+                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal;
+                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+                    p.Add("@fechaHasta", SqlDbType.DateTime).Value = fechaHasta;
+                }
+            );
+        }
+
         public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             return Db.DataTable(
@@ -1333,6 +1372,26 @@ namespace Datos
                     p.AddWithValue("@fechaHasta", fechaHasta);
                     p.AddWithValue("@texto", texto ?? "");
                 }
+            );
+        }
+
+        public DataTable obtenerUltimosMovimientosDashboard(int cantidad)
+        {
+            const string sql = @"
+                SELECT TOP (@cantidad)
+                    m.fechaMovimiento AS [Fecha Movimiento],
+                    so.sucursal AS Origen,
+                    sd.sucursal AS Destino
+                FROM dbo.Movimientos m
+                INNER JOIN dbo.Sucursal so ON so.idSucursal = m.idOrigen
+                INNER JOIN dbo.Sucursal sd ON sd.idSucursal = m.idDestino
+                ORDER BY m.fechaMovimiento DESC, m.idMovimiento DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.Add("@cantidad", SqlDbType.Int).Value = cantidad
             );
         }
 
