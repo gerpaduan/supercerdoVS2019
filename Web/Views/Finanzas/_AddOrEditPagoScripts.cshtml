@@ -82,6 +82,13 @@
         };
     }
 
+    function textoDescribeFormaMixtaCheque(fp) {
+        if (!fp) return false;
+
+        var texto = (fp.texto || "").replace(/\s+/g, " ").trim();
+        return texto.indexOf("efectivo") >= 0 && texto.indexOf("cheque") >= 0;
+    }
+
     function esFormaCheque(valor, texto) {
         var fp = normalizarFormaPago(valor, texto);
         return fp.valor === "cheque" ||
@@ -89,7 +96,8 @@
             fp.valor === "efvtocheque" ||
             fp.texto === "cheque" ||
             fp.texto === "eftvocheque" ||
-            fp.texto === "efvtocheque";
+            fp.texto === "efvtocheque" ||
+            textoDescribeFormaMixtaCheque(fp);
     }
 
     function esFormaMixta(valor, texto) {
@@ -97,7 +105,8 @@
         return fp.valor === "eftvocheque" ||
             fp.valor === "efvtocheque" ||
             fp.texto === "eftvocheque" ||
-            fp.texto === "efvtocheque";
+            fp.texto === "efvtocheque" ||
+            textoDescribeFormaMixtaCheque(fp);
     }
 
     function tieneChequesAsignados() {
@@ -576,6 +585,7 @@
         })
         .off("keydown.posPagoAtajos")
         .on("keydown.posPagoAtajos", function (event) {
+            if (desdePosPago && window.POSGuard && !window.POSGuard.isModalOnTop("#modalPagoPOS")) return;
             if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
             if (focoEnControlEditable()) return;
 
@@ -618,6 +628,47 @@
             window.pagoEdicionHabilitada = true;
             setTimeout(actualizarVisibilidad, 0);
         });
+
+    if (desdePosPago && !window.__pagoPosAltEnterShortcutBound) {
+        window.__pagoPosAltEnterShortcutBound = true;
+
+        document.addEventListener("keydown", function (event) {
+            if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat) return;
+            if (String(event.key || "").toLowerCase() !== "enter") return;
+
+            var $modalPagoPos = $("#modalPagoPOS");
+            if (!$modalPagoPos.hasClass("show")) return;
+            if (window.POSGuard && !window.POSGuard.isModalOnTop("#modalPagoPOS")) return;
+
+            var $formPago = $modalPagoPos.find("#formPago:visible").first();
+            if (!$formPago.length) return;
+
+            var $modificar = $formPago.find("#btnHabilitarEdicionPago:visible:not(:disabled)").first();
+            var $guardar = $formPago.find("#btnGuardarPago:visible:not(:disabled)").first();
+
+            if (!$modificar.length && !$guardar.length) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === "function") {
+                event.stopImmediatePropagation();
+            }
+
+            if ($modificar.length) {
+                $modificar.trigger("click");
+                return;
+            }
+
+            if ($guardar.length) {
+                if ($formPago[0] && typeof $formPago[0].requestSubmit === "function") {
+                    $formPago[0].requestSubmit($guardar[0]);
+                    return;
+                }
+
+                $guardar.trigger("click");
+            }
+        }, true);
+    }
 
     $(document).ready(function () {
         estadoPagoForm.ultimaFormaPago = $("#formaPago").val() || "";

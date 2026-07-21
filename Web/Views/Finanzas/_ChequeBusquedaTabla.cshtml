@@ -69,37 +69,69 @@
 
 <style>
     .cheques-filtros-card {
-        border: 1px solid #e9ecef;
+        border: 1px solid #dbe5f3;
         border-radius: .75rem;
-        padding: 1rem;
-        background: #fff;
+        padding: .85rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 0 .125rem .35rem rgba(58, 59, 69, .06);
     }
 
     .cheques-filtros-stack {
         display: grid;
-        gap: .85rem;
+        gap: .75rem;
     }
 
     .cheques-filtros-row {
         display: grid;
-        gap: .85rem;
+        gap: .75rem;
     }
 
     .cheques-filtro-label {
-        font-size: .85rem;
+        font-size: .78rem;
         font-weight: 600;
-        color: #495057;
-        margin-bottom: .35rem;
+        color: #475569;
+        margin-bottom: .22rem;
     }
 
     .cheques-filtros-card .form-control {
-        min-height: 2.65rem;
-        border-radius: .55rem;
+        min-height: 2.1rem;
+        border-radius: .5rem;
+        font-size: .84rem;
+        padding: .28rem .55rem;
     }
 
     .cheques-filtros-card .btn {
-        min-height: 2.65rem;
-        border-radius: .55rem;
+        min-height: 2.1rem;
+        border-radius: .5rem;
+        font-size: .84rem;
+        padding: .28rem .7rem;
+    }
+
+    .cheques-table-compact {
+        margin-bottom: 0;
+        font-size: .82rem;
+        background: #fff;
+    }
+
+    .cheques-table-compact th,
+    .cheques-table-compact td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .cheques-table-compact thead th {
+        font-size: .71rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        white-space: nowrap;
+        color: #334155;
+        background: #eef2f7;
+        border-color: #d9e2ef;
+    }
+
+    .cheques-table-compact tbody tr:hover {
+        background: rgba(13, 110, 253, 0.04);
     }
 
     @@media (min-width: 1200px) {
@@ -129,5 +161,26 @@
         .cheques-filtros-row {
             grid-template-columns: 1fr;
         }
+    }
+
+    html.dark-mode .cheques-filtros-card {
+        background: linear-gradient(180deg, #162538 0%, #132234 100%);
+        border-color: #2f4d69;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .24);
+    }
+
+    html.dark-mode .cheques-filtro-label,
+    html.dark-mode .small.text-muted {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .cheques-table-compact {
+        background: #152233;
+    }
+
+    html.dark-mode .cheques-table-compact thead th {
+        background: #172638;
+        color: #eaf2fb;
+        border-color: #2a3b52;
     }
 </style>

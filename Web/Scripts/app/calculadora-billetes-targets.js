@@ -63,11 +63,12 @@
     function resolveModePago() {
         var valor = ($('#formaPago').val() || '').toString().trim().toLowerCase();
         var texto = ($('#formaPago option:selected').text() || '').toString().trim().toLowerCase();
+        var textoEsMixtoCheque = texto.indexOf('efectivo') >= 0 && texto.indexOf('cheque') >= 0;
 
         var esCheque = valor === 'cheque' || valor === 'eftvocheque' || valor === 'efvtocheque'
-            || texto === 'cheque' || texto === 'eftvocheque' || texto === 'efvtocheque';
+            || texto === 'cheque' || texto === 'eftvocheque' || texto === 'efvtocheque' || textoEsMixtoCheque;
         var esMixto = valor === 'eftvocheque' || valor === 'efvtocheque'
-            || texto === 'eftvocheque' || texto === 'efvtocheque';
+            || texto === 'eftvocheque' || texto === 'efvtocheque' || textoEsMixtoCheque;
         var esEfectivo = !esCheque && (valor === 'efectivo' || texto === 'efectivo');
 
         if (esMixto) return 'mixto';

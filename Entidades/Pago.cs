@@ -16,6 +16,7 @@ namespace Entidades
             Qr,
             Transferencia, 
             Cheque,
+            [System.ComponentModel.DataAnnotations.Display(Name = "Efectivo + Cheques")]
             EftvoCheque,
             Otro
         }

@@ -225,6 +225,7 @@
         function obtenerModoPago() {
             const valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
             const texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
+            const textoEsMixtoCheque = texto.indexOf("efectivo") >= 0 && texto.indexOf("cheque") >= 0;
 
             const esCheque =
                 valor === "cheque" ||
@@ -232,13 +233,15 @@
                 valor === "efvtocheque" ||
                 texto === "cheque" ||
                 texto === "eftvocheque" ||
-                texto === "efvtocheque";
+                texto === "efvtocheque" ||
+                textoEsMixtoCheque;
 
             const esMixto =
                 valor === "eftvocheque" ||
                 valor === "efvtocheque" ||
                 texto === "eftvocheque" ||
-                texto === "efvtocheque";
+                texto === "efvtocheque" ||
+                textoEsMixtoCheque;
 
             const esEfectivo = !esCheque && (valor === "efectivo" || texto === "efectivo");
 
@@ -481,8 +484,8 @@
 
         function bindKeyboardUX() {
             $(document)
-                .off("keydown.pagoUXFlow", "#SucursalId, #Fecha, #NroRecibo, #formaPago, #importe, #Efectivo, #txtNroCheque, #Observaciones")
-                .on("keydown.pagoUXFlow", "#SucursalId, #Fecha, #NroRecibo, #formaPago, #importe, #Efectivo, #txtNroCheque, #Observaciones", function (e) {
+                .off("keydown.pagoUXFlow", "#SucursalId, #Fecha, #NroRecibo, #formaPago, #importe, #Efectivo, #Observaciones")
+                .on("keydown.pagoUXFlow", "#SucursalId, #Fecha, #NroRecibo, #formaPago, #importe, #Efectivo, #Observaciones", function (e) {
                     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
                     if (e.key !== "Enter") return;
 

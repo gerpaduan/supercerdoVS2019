@@ -258,9 +258,14 @@
 
                         </div>
 
-                        <div id="bloqueCheques" class="bloque-pago pago-requiere-operacion" style="display:none;">
+                        <div id="bloqueCheques" class="bloque-pago pago-requiere-operacion cheques-panel" style="display:none;">
 
-                            <h5 class="mt-1 mb-3 text-primary">Cheques</h5>
+                            <div class="cheques-panel-cabecera">
+                                <div>
+                                    <h5 class="mt-0 mb-1 cheques-panel-titulo">Cheques</h5>
+                                    <div class="cheques-panel-ayuda">Buscá, agregá o cargá cheques sin salir del pago.</div>
+                                </div>
+                            </div>
 
                             <div class="form-group">
                                 <label>Número de Cheque</label>
@@ -275,8 +280,8 @@
                                 </div>
                             </div>
 
-                            <div class="table-responsive">
-                                <table class="table table-bordered" id="tablaCheques">
+                            <div class="table-responsive cheques-tabla-wrap">
+                                <table class="table table-bordered table-sm cheques-table-compact" id="tablaCheques">
                                     <thead class="thead-light">
                                         <tr>
                                             <th>Número</th>
@@ -290,7 +295,7 @@
                                 </table>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group cheques-total-grupo mb-0">
                                 <label>Total Cheques</label>
                                 <input type="text" id="txtTotalCheques" class="form-control solo-decimal" readonly value="0">
                             </div>
@@ -336,21 +341,23 @@
 </div>
 
 <div class="modal fade" id="modalBuscarCheques" tabindex="-1" role="dialog" aria-labelledby="modalBuscarChequesLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
+    <div class="modal-dialog modal-xl modal-cheque-compact-dialog" role="document">
+        <div class="modal-content modal-cheque-compact">
 
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Buscar Cheques</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <div class="modal-header modal-cheque-compact-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search mr-2"></i>Buscar Cheques
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body modal-cheque-compact-body modal-cheque-busqueda-body">
                 @Html.Partial("_ChequeBusquedaTabla", null, chequeBusquedaPagoViewData)
             </div>
 
-            <div class="modal-footer">
+            <div class="modal-footer modal-cheque-compact-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             </div>
 
@@ -362,16 +369,18 @@
 @Html.Partial("_ModalAltaCheque")
 
 <div class="modal fade" id="modalDetalleCheque" tabindex="-1" role="dialog" aria-labelledby="modalDetalleChequeLabel" aria-hidden="true" data-backdrop="static" data-keyboard="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="modalDetalleChequeLabel">Detalle del cheque</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+    <div class="modal-dialog modal-lg modal-cheque-compact-dialog" role="document">
+        <div class="modal-content modal-cheque-compact">
+            <div class="modal-header modal-cheque-compact-header">
+                <h5 class="modal-title" id="modalDetalleChequeLabel">
+                    <i class="fas fa-receipt mr-2"></i>Detalle del cheque
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="row">
+            <div class="modal-body modal-cheque-compact-body">
+                <div class="row cheque-detalle-grid">
                     <div class="col-md-6 mb-3">
                         <small class="text-muted d-block">Numero</small>
                         <strong id="detalleChequeNumero">-</strong>
@@ -402,7 +411,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer modal-cheque-compact-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
@@ -459,7 +468,7 @@
             function esModoMixtoPago() {
                 var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
                 var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
-                return valor === "eftvocheque" || valor === "efvtocheque" || texto === "eftvocheque" || texto === "efvtocheque";
+                return valor === "eftvocheque" || valor === "efvtocheque" || texto === "eftvocheque" || texto === "efvtocheque" || (texto.indexOf("efectivo") >= 0 && texto.indexOf("cheque") >= 0);
             }
 
             $(document)
@@ -488,9 +497,9 @@
     </script>
     <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=8")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=10")"></script>
+    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=11")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
@@ -572,7 +581,7 @@ else
                 function esModoMixtoPago() {
                     var valor = ($("#formaPago").val() || "").toString().trim().toLowerCase();
                     var texto = ($("#formaPago option:selected").text() || "").toString().trim().toLowerCase();
-                    return valor === "eftvocheque" || valor === "efvtocheque" || texto === "eftvocheque" || texto === "efvtocheque";
+                    return valor === "eftvocheque" || valor === "efvtocheque" || texto === "eftvocheque" || texto === "efvtocheque" || (texto.indexOf("efectivo") >= 0 && texto.indexOf("cheque") >= 0);
                 }
 
                 $(document)
@@ -601,9 +610,9 @@ else
         </script>
         <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
         <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=6")"></script>
+        <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=8")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=10")"></script>
+        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=11")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
         <script>
             window.PagoCheques && window.PagoCheques.init({
@@ -1101,6 +1110,104 @@ else
         background: rgba(13, 110, 253, 0.12);
     }
 
+    .cheques-panel {
+        background: linear-gradient(180deg, #fbfcff 0%, #f8fafc 100%);
+        border-color: #dbe5f3;
+        border-radius: .75rem;
+    }
+
+    .cheques-panel-cabecera {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .65rem;
+        margin-bottom: .7rem;
+    }
+
+    .cheques-panel-titulo {
+        font-size: .98rem;
+        font-weight: 700;
+        color: #3451b2;
+    }
+
+    .cheques-panel-ayuda {
+        font-size: .75rem;
+        color: #64748b;
+    }
+
+    .cheques-tabla-wrap {
+        border: 1px solid #dbe5f3;
+        border-radius: .7rem;
+        background: #fff;
+    }
+
+    .cheques-total-grupo {
+        max-width: 220px;
+        margin-left: auto;
+    }
+
+    .modal-cheque-compact-dialog {
+        width: calc(100% - 1.25rem);
+        margin: 1rem auto;
+    }
+
+    #modalBuscarCheques .modal-cheque-compact-dialog {
+        max-width: 1080px;
+    }
+
+    #modalDetalleCheque .modal-cheque-compact-dialog {
+        max-width: 760px;
+    }
+
+    .modal-cheque-compact {
+        border: 1px solid #e2e8f0;
+        border-radius: .8rem;
+        overflow: hidden;
+        box-shadow: 0 .45rem 1.4rem rgba(58, 59, 69, .18);
+    }
+
+    .modal-cheque-compact-header {
+        background: #f8f9fc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: .9rem 1.05rem;
+    }
+
+    .modal-cheque-compact-header .modal-title,
+    .modal-cheque-compact-header .close {
+        color: #2f3e52;
+        text-shadow: none;
+    }
+
+    .modal-cheque-compact-header .modal-title {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .modal-cheque-compact-body {
+        background: #fff;
+        padding: .9rem 1rem;
+    }
+
+    .modal-cheque-compact-footer {
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: .7rem 1rem;
+    }
+
+    .modal-cheque-busqueda-body {
+        background: #f8fafc;
+    }
+
+    .cheque-detalle-grid {
+        margin-left: -.35rem;
+        margin-right: -.35rem;
+    }
+
+    .cheque-detalle-grid > [class*='col-'] {
+        padding-left: .35rem;
+        padding-right: .35rem;
+    }
+
     .detalle-cheque-box {
         min-height: 72px;
         border: 1px solid #dbe5f3;
@@ -1178,6 +1285,18 @@ else
 
         #bloqueCheques .table-responsive {
             overflow-x: visible;
+        }
+
+        .modal-cheque-compact-dialog {
+            width: calc(100% - .9rem);
+            margin: .55rem auto;
+        }
+
+        .modal-cheque-compact-header,
+        .modal-cheque-compact-body,
+        .modal-cheque-compact-footer {
+            padding-left: .85rem;
+            padding-right: .85rem;
         }
     }
 
@@ -1380,5 +1499,40 @@ else
 
     html.dark-mode .pago-modo-mixto {
         border-color: rgba(251, 191, 36, .26);
+    }
+
+    html.dark-mode .cheques-panel {
+        background: linear-gradient(180deg, #162538 0%, #132234 100%);
+        border-color: #2f4d69;
+    }
+
+    html.dark-mode .cheques-panel-titulo,
+    html.dark-mode .modal-cheque-compact-header .modal-title,
+    html.dark-mode .modal-cheque-compact-header .close {
+        color: #ecf2ff;
+    }
+
+    html.dark-mode .cheques-panel-ayuda,
+    html.dark-mode .cheque-detalle-grid .text-muted {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .cheques-tabla-wrap,
+    html.dark-mode .modal-cheque-compact {
+        background: #152233;
+        border-color: #2a3b52;
+        box-shadow: 0 18px 42px rgba(2, 6, 23, .42);
+    }
+
+    html.dark-mode .modal-cheque-compact-header {
+        background: #162538;
+        border-bottom-color: #2a3b52;
+    }
+
+    html.dark-mode .modal-cheque-compact-body,
+    html.dark-mode .modal-cheque-compact-footer,
+    html.dark-mode .modal-cheque-busqueda-body {
+        background: #101a28;
+        border-color: #2a3b52;
     }
 </style>
