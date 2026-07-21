@@ -20,6 +20,7 @@ namespace Web.Controllers
 {
     public class ProductosController : BaseController
     {
+        private const int CatalogoGlobalTamanoPagina = 50;
         private Negocio.Sucursal oSucursalN;
         private Negocio.Corte oCorteN;
         private Negocio.Usuario oUsuarioN;
@@ -132,24 +133,26 @@ namespace Web.Controllers
             if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
                 return new HttpStatusCodeResult(403);
 
-            var model = ConstruirCatalogoGlobalVm("");
+            var model = ConstruirCatalogoGlobalVm("", "", 1, true);
             return PartialView("~/Views/Productos/_CatalogoGlobalModal.cshtml", model);
         }
 
         [HttpGet]
-        public JsonResult BuscarGlobales(string q = "")
+        public JsonResult BuscarGlobales(string q = "", string tipo = "", int pagina = 1)
         {
             if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
                 return Json(new { ok = false, mensaje = "No tenés permisos para importar productos." }, JsonRequestBehavior.AllowGet);
 
-            var model = ConstruirCatalogoGlobalVm(q);
+            var model = ConstruirCatalogoGlobalVm(q, tipo, pagina, false);
             string html = RenderPartialViewToString("~/Views/Productos/_CatalogoGlobalRows.cshtml", model.Productos);
 
             return Json(new
             {
                 ok = true,
                 html,
-                cantidad = model.Productos.Count
+                cantidad = model.Productos.Count,
+                pagina = model.Pagina,
+                hayMas = model.HayMas
             }, JsonRequestBehavior.AllowGet);
         }
 
@@ -173,14 +176,12 @@ namespace Web.Controllers
                 return Json(new { ok = false, mensaje = "Seleccione al menos un producto del catálogo global." });
 
             var catalogoGlobal = ObtenerGestorCatalogoGlobal();
-            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobal("")
-                .Where(x => seleccionados.Any(s => s.IdProductoGlobal == x.IdCorte))
-                .ToList();
+            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobalPorIds(seleccionados.Select(x => x.IdProductoGlobal));
 
             if (productosGlobales.Count != seleccionados.Count)
                 return Json(new { ok = false, mensaje = "No se pudieron resolver todos los productos seleccionados del catálogo global." });
 
-            var importacionesExistentes = oCorteN.ObtenerImportacionesCatalogoGlobal(productosGlobales.Select(x => x.IdCorte))
+            var importacionesExistentes = oCorteN.ObtenerImportacionesCatalogoGlobal()
                 .ToDictionary(x => x.IdProductoGlobal, x => x);
 
             var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
@@ -204,10 +205,7 @@ namespace Web.Controllers
             }
 
             var seleccionPorId = seleccionados.ToDictionary(x => x.IdProductoGlobal, x => x);
-            var importacionesMaestros = oCorteN.ObtenerImportacionesCatalogoGlobal(
-                productosGlobales
-                    .Where(x => x.CorteMaestro != null && x.CorteMaestro.IdCorte > 0)
-                    .Select(x => x.CorteMaestro.IdCorte));
+            var importacionesMaestros = oCorteN.ObtenerImportacionesCatalogoGlobal();
 
             var importacionesMaestrosPorGlobal = importacionesMaestros
                 .GroupBy(x => x.IdProductoGlobal)
@@ -612,22 +610,32 @@ namespace Web.Controllers
             return new Negocio.Corte(new EmpresaContextNulo(), null);
         }
 
-        private CatalogoGlobalProductosVm ConstruirCatalogoGlobalVm(string busqueda)
+        private CatalogoGlobalProductosVm ConstruirCatalogoGlobalVm(string busqueda, string tipo, int pagina, bool incluirTipos)
         {
             oCorteN.AsegurarTablaImportacionCatalogoGlobal();
 
             var catalogoGlobal = ObtenerGestorCatalogoGlobal();
-            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobal(busqueda) ?? new List<Entidades.Corte>();
+            pagina = pagina < 1 ? 1 : pagina;
+            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, CatalogoGlobalTamanoPagina, 1) ?? new List<Entidades.Corte>();
+            bool hayMas = productosGlobales.Count > CatalogoGlobalTamanoPagina;
+            if (hayMas)
+                productosGlobales.RemoveAt(productosGlobales.Count - 1);
             var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
             var codigosEmpresa = new HashSet<long>(productosEmpresaActual.Select(x => x.Codigo));
             var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
-            var importaciones = oCorteN.ObtenerImportacionesCatalogoGlobal(productosGlobales.Select(x => x.IdCorte))
+            var importaciones = oCorteN.ObtenerImportacionesCatalogoGlobal()
                 .ToDictionary(x => x.IdProductoGlobal, x => x);
 
             var model = new CatalogoGlobalProductosVm
             {
-                Busqueda = busqueda ?? ""
+                Busqueda = busqueda ?? "",
+                Tipo = tipo ?? "",
+                Pagina = pagina,
+                HayMas = hayMas
             };
+
+            if (incluirTipos)
+                model.Tipos = catalogoGlobal.ObtenerTiposCatalogoGlobal() ?? new List<string>();
 
             foreach (var producto in productosGlobales)
             {

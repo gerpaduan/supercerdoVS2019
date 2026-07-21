@@ -97,6 +97,31 @@ namespace Negocio
             return oCorteD.ObtenerCatalogoGlobal(busqueda);
         }
 
+        public List<Entidades.Corte> ObtenerCatalogoGlobalPagina(string busqueda, int pagina, int cantidad)
+        {
+            return oCorteD.ObtenerCatalogoGlobalPagina(busqueda, pagina, cantidad);
+        }
+
+        public List<Entidades.Corte> ObtenerCatalogoGlobalPagina(string busqueda, int pagina, int cantidad, int cantidadExtra)
+        {
+            return oCorteD.ObtenerCatalogoGlobalPagina(busqueda, pagina, cantidad, cantidadExtra);
+        }
+
+        public List<Entidades.Corte> ObtenerCatalogoGlobalPagina(string busqueda, string tipo, int pagina, int cantidad, int cantidadExtra)
+        {
+            return oCorteD.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, cantidad, cantidadExtra);
+        }
+
+        public List<string> ObtenerTiposCatalogoGlobal()
+        {
+            return oCorteD.ObtenerTiposCatalogoGlobal();
+        }
+
+        public List<Entidades.Corte> ObtenerCatalogoGlobalPorIds(IEnumerable<int> idsCortes)
+        {
+            return oCorteD.ObtenerCatalogoGlobalPorIds(idsCortes);
+        }
+
         public void AsegurarTablaImportacionCatalogoGlobal()
         {
             oCorteD.AsegurarTablaImportacionCatalogoGlobal();

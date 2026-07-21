@@ -1,21 +1,23 @@
 @model Web.Models.CatalogoGlobalProductosVm
 
-<form id="formCatalogoGlobalImportacion" class="form-catalogo-global h-100">
+<form id="formCatalogoGlobalImportacion" class="form-catalogo-global h-100"
+      data-pagina="@Model.Pagina"
+      data-hay-mas="@(Model.HayMas ? "1" : "0")">
     @Html.AntiForgeryToken()
 
-    <div class="modal-header">
-        <h5 class="modal-title">
+    <div class="modal-header py-2">
+        <h6 class="modal-title mb-0">
             <i class="fas fa-globe-americas mr-1"></i> Catalogo global
-        </h5>
+        </h6>
         <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
 
-    <div class="modal-body modal-catalogo-global-body">
-        <div class="row align-items-end mb-3 flex-shrink-0">
-            <div class="col-lg-7 mb-2 mb-lg-0">
-                <label class="font-weight-bold mb-1">Buscar por codigo o descripcion</label>
+    <div class="modal-body modal-catalogo-global-body p-2">
+        <div class="row align-items-end mb-2 flex-shrink-0">
+            <div class="col-lg-5 mb-2 mb-lg-0">
+                <label class="font-weight-bold small mb-1">Buscar por codigo o descripcion</label>
                 <div id="scannerCatalogoGlobalContainer" class="mb-2" style="display:none;">
                     <div class="card shadow-sm">
                         <div class="card-body p-2">
@@ -34,11 +36,11 @@
                 </div>
 
                 <div class="input-group">
-                    <button type="button" class="btn btn-outline-secondary" id="btnScannerCatalogoGlobal" title="Escanear código">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnScannerCatalogoGlobal" title="Escanear código">
                         <i class="fas fa-barcode"></i>
                     </button>
                     <input type="text"
-                           class="form-control"
+                           class="form-control form-control-sm"
                            id="txtBuscarCatalogoGlobal"
                            value="@Model.Busqueda"
                            autocomplete="off"
@@ -46,16 +48,26 @@
                 </div>
                 <small id="scannerCatalogoGlobalMsg" class="text-danger d-none"></small>
             </div>
-            <div class="col-lg-5">
-                <div class="alert alert-info mb-0 py-2 px-3">
+            <div class="col-lg-3 mb-2 mb-lg-0">
+                <label class="font-weight-bold small mb-1" for="selTipoCatalogoGlobal">Tipo</label>
+                <select id="selTipoCatalogoGlobal" class="form-control form-control-sm">
+                    <option value="">Todos</option>
+                    @foreach (var tipo in Model.Tipos)
+                    {
+                        <option value="@tipo" @(string.Equals(Model.Tipo, tipo, System.StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@tipo</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-4">
+                <div class="alert alert-info mb-0 py-1 px-2 small">
                     Seleccione los productos y cargue un precio para cada uno antes de importar.
                 </div>
             </div>
         </div>
 
-        <div id="alertCatalogoGlobal" class="alert alert-danger d-none py-2 px-3 flex-shrink-0"></div>
+        <div id="alertCatalogoGlobal" class="alert alert-danger d-none py-1 px-2 small flex-shrink-0"></div>
 
-        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 flex-shrink-0">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-1 flex-shrink-0 small">
             <div class="d-flex flex-wrap align-items-center">
                 <div class="custom-control custom-checkbox mr-3">
                     <input type="checkbox" class="custom-control-input" id="chkSeleccionarTodosGlobales">
@@ -77,13 +89,13 @@
             <table class="table table-sm table-hover mb-0" id="tablaCatalogoGlobal">
                 <thead class="thead-light">
                     <tr>
-                        <th style="width:42px;" class="text-center">Sel.</th>
-                        <th style="width:130px;">Codigo global</th>
+                        <th style="width:36px;" class="text-center">Sel.</th>
+                        <th style="width:110px;">Codigo global</th>
                         <th>Descripcion</th>
-                        <th style="width:180px;">Relacion</th>
-                        <th style="width:170px;">Codigo destino</th>
-                        <th style="width:170px;">Precio</th>
-                        <th style="width:220px;">Estado</th>
+                        <th style="width:150px;">Relacion</th>
+                        <th style="width:130px;">Codigo destino</th>
+                        <th style="width:125px;">Precio</th>
+                        <th style="width:185px;">Estado</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyCatalogoGlobal">
@@ -91,12 +103,15 @@
                 </tbody>
             </table>
         </div>
+        <div id="catalogoGlobalCargandoMas" class="text-center text-muted py-2 d-none flex-shrink-0">
+            <i class="fas fa-spinner fa-spin mr-1"></i> Cargando más productos...
+        </div>
     </div>
 
-    <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="btnImportarCatalogoGlobal">
+    <div class="modal-footer py-2">
+        <button type="button" class="btn btn-primary btn-sm" id="btnImportarCatalogoGlobal">
             <i class="fas fa-download mr-1"></i> Importar seleccionados
         </button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cerrar</button>
     </div>
 </form>

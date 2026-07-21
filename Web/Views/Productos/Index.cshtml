@@ -859,7 +859,11 @@
         selectedIds: {},
         codigoDestinoPorId: {},
         precioPorId: {},
-        verSoloSeleccionados: false
+        verSoloSeleccionados: false,
+        paginaActual: 1,
+        hayMas: false,
+        cargandoMas: false,
+        solicitudActual: 0
     };
     const tabla = document.getElementById("tablaProductos");
     const codigoGlobalState = {
@@ -1216,28 +1220,74 @@
     function bindCatalogoGlobalEvents() {
         let searchTimer = null;
 
+        catalogoGlobalState.paginaActual = parseInt($("#formCatalogoGlobalImportacion").data("pagina"), 10) || 1;
+        catalogoGlobalState.hayMas = String($("#formCatalogoGlobalImportacion").data("hay-mas")) === "1";
+        catalogoGlobalState.cargandoMas = false;
+
+        function cargarPaginaCatalogoGlobal(q, tipo, pagina, reemplazar) {
+            const solicitud = ++catalogoGlobalState.solicitudActual;
+            catalogoGlobalState.cargandoMas = !reemplazar;
+            $("#catalogoGlobalCargandoMas").toggleClass("d-none", reemplazar);
+
+            $.get(urlBuscarGlobalesProductos, { q: q, tipo: tipo, pagina: pagina })
+                .done(function (resp) {
+                    if (solicitud !== catalogoGlobalState.solicitudActual) return;
+
+                    if (!resp || resp.ok === false) {
+                        setAlertCatalogoGlobal(resp && resp.mensaje ? resp.mensaje : "No se pudo buscar en el catálogo global.");
+                        return;
+                    }
+
+                    if (reemplazar) {
+                        $("#tbodyCatalogoGlobal").html(resp.html || "");
+                    } else {
+                        $("#tbodyCatalogoGlobal").append(resp.html || "");
+                    }
+
+                    catalogoGlobalState.paginaActual = resp.pagina || pagina;
+                    catalogoGlobalState.hayMas = !!resp.hayMas;
+                    restoreCatalogoGlobalState();
+                    setAlertCatalogoGlobal("");
+                    actualizarResumenCatalogoGlobal();
+                })
+                .fail(function () {
+                    if (solicitud === catalogoGlobalState.solicitudActual) {
+                        setAlertCatalogoGlobal("No se pudo buscar en el catálogo global.");
+                    }
+                })
+                .always(function () {
+                    if (solicitud === catalogoGlobalState.solicitudActual) {
+                        catalogoGlobalState.cargandoMas = false;
+                        $("#catalogoGlobalCargandoMas").addClass("d-none");
+                    }
+                });
+        }
+
         $("#txtBuscarCatalogoGlobal").off("input").on("input", function () {
             const valor = this.value || "";
             setScannerCatalogoGlobalMsg("");
             clearTimeout(searchTimer);
+            catalogoGlobalState.solicitudActual++;
             searchTimer = window.setTimeout(function () {
                 snapshotCatalogoGlobalState();
-                $.get(urlBuscarGlobalesProductos, { q: valor })
-                    .done(function (resp) {
-                        if (!resp || resp.ok === false) {
-                            setAlertCatalogoGlobal(resp && resp.mensaje ? resp.mensaje : "No se pudo buscar en el catálogo global.");
-                            return;
-                        }
-
-                        $("#tbodyCatalogoGlobal").html(resp.html || "");
-                        restoreCatalogoGlobalState();
-                        setAlertCatalogoGlobal("");
-                        actualizarResumenCatalogoGlobal();
-                    })
-                    .fail(function () {
-                        setAlertCatalogoGlobal("No se pudo buscar en el catálogo global.");
-                    });
+                cargarPaginaCatalogoGlobal(valor, $("#selTipoCatalogoGlobal").val() || "", 1, true);
             }, 250);
+        });
+
+        $("#selTipoCatalogoGlobal").off("change").on("change", function () {
+            snapshotCatalogoGlobalState();
+            setScannerCatalogoGlobalMsg("");
+            cargarPaginaCatalogoGlobal($("#txtBuscarCatalogoGlobal").val() || "", this.value || "", 1, true);
+        });
+
+        $(".tabla-catalogo-global").off("scroll.catalogoGlobal").on("scroll.catalogoGlobal", function () {
+            if (catalogoGlobalState.verSoloSeleccionados || catalogoGlobalState.cargandoMas || !catalogoGlobalState.hayMas) return;
+
+            const restante = this.scrollHeight - this.scrollTop - this.clientHeight;
+            if (restante > 120) return;
+
+            snapshotCatalogoGlobalState();
+            cargarPaginaCatalogoGlobal($("#txtBuscarCatalogoGlobal").val() || "", $("#selTipoCatalogoGlobal").val() || "", catalogoGlobalState.paginaActual + 1, false);
         });
 
         $("#chkSeleccionarTodosGlobales").off("change").on("change", function () {
@@ -3408,8 +3458,12 @@
     }
 
     .modal-catalogo-global-dialog {
-        max-width: 96vw;
+        max-width: 67vw;
         margin: 1rem auto;
+    }
+
+    #modalCatalogoGlobal .modal-title {
+        font-size: .83rem;
     }
 
     #formCatalogoGlobalImportacion.form-catalogo-global {
@@ -3436,7 +3490,8 @@
     }
 
     #tablaCatalogoGlobal {
-        min-width: 1100px;
+        min-width: 920px;
+        font-size: .82rem;
     }
 
     #tablaCatalogoGlobal thead th {
@@ -3444,6 +3499,28 @@
         top: 0;
         z-index: 2;
         background: #f8f9fa;
+        padding: .38rem .45rem;
+        font-size: .76rem;
+        white-space: nowrap;
+    }
+
+    #tablaCatalogoGlobal tbody td {
+        padding: .3rem .45rem;
+        line-height: 1.2;
+    }
+
+    #tablaCatalogoGlobal .font-weight-bold {
+        font-size: .84rem;
+    }
+
+    #tablaCatalogoGlobal small {
+        font-size: .72rem;
+    }
+
+    #tablaCatalogoGlobal .form-control-sm {
+        height: calc(1.35em + .38rem + 2px);
+        padding: .15rem .35rem;
+        font-size: .78rem;
     }
 
     #modalCatalogoGlobal .modal-footer {
@@ -3482,6 +3559,7 @@
         #modalVerificarPrecios .modal-dialog,
         .modal-catalogo-global-dialog {
             margin: .5rem;
+            max-width: calc(100vw - 1rem);
         }
 
         #modalCatalogoGlobal .modal-content {
