@@ -16,9 +16,27 @@
         return $form.serialize();
     }
 
+    function getTopVisibleModal() {
+        return $('.modal.show:visible').last();
+    }
+
+    function isElementInside($element, $container) {
+        return !!($element && $element.length && $container && $container.length && $.contains($container[0], $element[0]));
+    }
+
     function resolveGuardFromTarget(target) {
         var $target = $(target || document.activeElement);
+        var $topModal = getTopVisibleModal();
         var $form = $target.closest('form');
+
+        if ($topModal.length) {
+            if ($target.length && !isElementInside($target, $topModal) && !$target.is($topModal)) {
+                $target = $topModal;
+                $form = $topModal.find('form:visible').first();
+            } else if (!$form.length) {
+                $form = $topModal.find('form:visible').first();
+            }
+        }
 
         if ($form.length) {
             for (var i = 0; i < guards.length; i++) {
@@ -59,6 +77,12 @@
         if (!isSaveShortcut) return;
 
         if (window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible()) {
+            return;
+        }
+
+        var $topModal = getTopVisibleModal();
+        var $target = $(evt.target || document.activeElement);
+        if ($topModal.length && $target.length && !isElementInside($target, $topModal) && !$target.is($topModal)) {
             return;
         }
 

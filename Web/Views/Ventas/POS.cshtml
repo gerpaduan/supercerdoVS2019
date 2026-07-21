@@ -1222,7 +1222,7 @@ else
 @section Scripts {
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-forma-pago-precios.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=8")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=26")"></script>
@@ -1232,7 +1232,7 @@ else
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3237")"></script>
-    <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=7")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=7")"></script>
     <script>
@@ -2252,9 +2252,23 @@ else
         return true;
     }
 
+    function hayModalAbiertoEnPOS() {
+        return $(".modal.show:visible").length > 0;
+    }
+
     document.addEventListener("keydown", function (e) {
         const key = (e.key || "").toLowerCase();
         const intentaRecargar = e.key === "F5" || ((e.ctrlKey || e.metaKey) && key === "r");
+
+        if (e.key === "F5" && hayModalAbiertoEnPOS()) {
+            e.preventDefault();
+            if (typeof e.stopImmediatePropagation === "function") {
+                e.stopImmediatePropagation();
+            } else if (typeof e.stopPropagation === "function") {
+                e.stopPropagation();
+            }
+            return;
+        }
 
         if (intentaRecargar) {
             bloquearSalidaSiVentaEnCurso(e);

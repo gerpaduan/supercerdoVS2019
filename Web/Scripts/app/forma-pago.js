@@ -323,6 +323,7 @@ if (window.POSGuard) {
 window.seleccionarFormaPago = function (tipo) {
     // modal abierto?
     if (!$('#modalFormaPago').hasClass('show')) return;
+    if (window.POSGuard && !window.POSGuard.isModalOnTop('#modalFormaPago')) return;
 
     const $btn = getBotonFormaPago(tipo);
     if (!$btn.length) return;
@@ -721,6 +722,7 @@ $(document).ready(function () {
 
         if (ventaEnProceso) return;
         if (!$('#modalFormaPago').hasClass('show')) return;
+        if (window.POSGuard && !window.POSGuard.isModalOnTop('#modalFormaPago')) return;
 
         const esPagoMixto = $('#chkPagoMixto').is(':checked');
 

@@ -93,6 +93,13 @@
         };
     }
 
+    function isSameWindowEntry(entry) {
+        return !!(entry &&
+            entry.windowName &&
+            config().windowName &&
+            entry.windowName === config().windowName);
+    }
+
     function buildRoleUrl(role, instanceId) {
         var url = new URL(config().duplicateBaseUrl || window.location.pathname, window.location.origin);
         url.searchParams.set('modoPos', role);
@@ -576,6 +583,12 @@
 
         var state = readState();
         var active = isDuplicate() ? state.duplicado : state.original;
+        if (isFresh(active) && active.id !== config().instanceId && isSameWindowEntry(active)) {
+            config().instanceId = active.id;
+            ensureUrlParams();
+            return true;
+        }
+
         if (isFresh(active) && active.id !== config().instanceId) {
             blocked = true;
             updateUi();

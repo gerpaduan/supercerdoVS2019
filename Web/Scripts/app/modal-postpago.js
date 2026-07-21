@@ -48,6 +48,20 @@
         $('#modalPostPago').modal('hide');
     }
 
+    function permitirSalidaSinAdvertencia() {
+        var guardApi = $('#formPago').data('editPageGuardApi');
+        if (guardApi && typeof guardApi.allowNavigation === 'function') {
+            guardApi.allowNavigation();
+        }
+
+        if (typeof window.desactivarProteccionSalida === 'function') {
+            window.desactivarProteccionSalida();
+            return;
+        }
+
+        window.__protegerSalida = false;
+    }
+
     function intentarRetornoPos() {
         var $modalPagoPos = $('#modalPagoPOS');
 
@@ -83,6 +97,7 @@
         }
 
         cerrarModal();
+        permitirSalidaSinAdvertencia();
         window.location.href = state.redirectUrl;
     }
 
@@ -488,6 +503,7 @@
         $(document).on('keydown', function (e) {
             var $modal = $('#modalPostPago');
             if (!$modal.hasClass('show')) return;
+            if (window.POSGuard && !window.POSGuard.isModalOnTop('#modalPostPago')) return;
 
             var $modalEmail = $('#modalEmailPago');
             if ($modalEmail.hasClass('show')) return;
@@ -525,5 +541,121 @@
                 }
             }
         });
+    });
+
+    $(function () {
+        $('#modalPostPago').off('shown.bs.modal');
+        $('#btnPostPagoNoImprimir').off('click');
+        $('#btnPostPagoImprimir').off('click');
+        $('#btnCambiarTicketPago').off('click');
+        $('#btnConfigurarAgentePago').off('click');
+        $('#btnGuardarConfigAgentePago').off('click');
+        $('#btnPostPagoPdf').off('click');
+        $('#btnPostPagoEmail').off('click');
+        $('#btnConfirmarEmailPago').off('click');
+        $('#ppEmailDestino, #ppEmailAsunto, #ppEmailMensaje').off('input');
+        $('#modalEmailPago').off('shown.bs.modal');
+
+        $(document)
+            .off('shown.bs.modal.postPagoRebind', '#modalPostPago')
+            .on('shown.bs.modal.postPagoRebind', '#modalPostPago', function () {
+                $('#bloqueTicketOpcionesPago').collapse('hide');
+                state.ticketMmActual = null;
+                actualizarTextoTicket();
+                refrescarEstadoAgente();
+                verificarAgente();
+                setTimeout(function () {
+                    $('#btnPostPagoImprimir').trigger('focus');
+                }, 50);
+            })
+            .off('click.postPagoRebind', '#btnPostPagoNoImprimir')
+            .on('click.postPagoRebind', '#btnPostPagoNoImprimir', function () {
+                cerrarYRedirigir();
+            })
+            .off('click.postPagoRebind', '#btnPostPagoImprimir')
+            .on('click.postPagoRebind', '#btnPostPagoImprimir', function () {
+                var mm = getUltimoTicketMm();
+                if (mm) {
+                    if (state.agentAvailable) {
+                        imprimirConAgente(mm);
+                    } else {
+                        imprimirTicket(mm);
+                    }
+                } else {
+                    abrirOpcionesTicket(58);
+                }
+            })
+            .off('click.postPagoRebind', '#btnCambiarTicketPago')
+            .on('click.postPagoRebind', '#btnCambiarTicketPago', function () {
+                abrirOpcionesTicket();
+            })
+            .off('click.postPagoRebind', '#btnConfigurarAgentePago')
+            .on('click.postPagoRebind', '#btnConfigurarAgentePago', function () {
+                $('#msgConfigAgentePago').addClass('d-none').text('');
+
+                verificarAgente().done(function (available) {
+                    if (!available) {
+                        $('#msgConfigAgentePago')
+                            .removeClass('d-none')
+                            .text('No se detectÃ³ el agente local. Descargalo e instalalo en esta terminal.');
+                        $('#modalConfigAgentePago').modal('show');
+                        return;
+                    }
+
+                    cargarConfiguracionAgente()
+                        .done(function () {
+                            $('#modalConfigAgentePago').modal('show');
+                        })
+                        .fail(function () {
+                            $('#msgConfigAgentePago')
+                                .removeClass('d-none')
+                                .text('No se pudieron leer las impresoras instaladas.');
+                            $('#modalConfigAgentePago').modal('show');
+                        });
+                });
+            })
+            .off('click.postPagoRebind', '#btnGuardarConfigAgentePago')
+            .on('click.postPagoRebind', '#btnGuardarConfigAgentePago', function () {
+                if (!window.CarniSysPrintAgent) return;
+
+                var printerName = ($('#cmbImpresoraAgentePago').val() || '').toString();
+                var ticketMm = parseInt($('#cmbMmAgentePago').val(), 10);
+                window.CarniSysPrintAgent.saveConfig({
+                    printerName: printerName,
+                    ticketMm: ticketMm === 80 ? 80 : 58
+                }).done(function () {
+                    if (ticketMm === 58 || ticketMm === 80) {
+                        setUltimoTicketMm(ticketMm);
+                        actualizarTextoTicket();
+                    }
+                    $('#modalConfigAgentePago').modal('hide');
+                    verificarAgente();
+                }).fail(function () {
+                    $('#msgConfigAgentePago')
+                        .removeClass('d-none')
+                        .text('No se pudo guardar la configuraciÃ³n de impresiÃ³n.');
+                });
+            })
+            .off('click.postPagoRebind', '#btnPostPagoPdf')
+            .on('click.postPagoRebind', '#btnPostPagoPdf', function () {
+                abrirNuevaVentana(state.pdfUrl);
+                cerrarYRedirigir();
+            })
+            .off('click.postPagoRebind', '#btnPostPagoEmail')
+            .on('click.postPagoRebind', '#btnPostPagoEmail', function () {
+                abrirModalEmail();
+            })
+            .off('click.postPagoRebind', '#btnConfirmarEmailPago')
+            .on('click.postPagoRebind', '#btnConfirmarEmailPago', function () {
+                confirmarEmail();
+            })
+            .off('input.postPagoRebind', '#ppEmailDestino, #ppEmailAsunto, #ppEmailMensaje')
+            .on('input.postPagoRebind', '#ppEmailDestino, #ppEmailAsunto, #ppEmailMensaje', function () {
+                $('#ppEmailError').addClass('d-none').text('');
+            })
+            .off('shown.bs.modal.postPagoRebind', '#modalEmailPago')
+            .on('shown.bs.modal.postPagoRebind', '#modalEmailPago', function () {
+                $('#ppEmailDestino').trigger('focus');
+            });
     });
 })();

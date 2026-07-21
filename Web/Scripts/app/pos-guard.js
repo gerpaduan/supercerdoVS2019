@@ -134,6 +134,17 @@
             return true;
         }
 
+        function getTopVisibleModal() {
+            return $(".modal.show:visible").last();
+        }
+
+        function isModalOnTop(selector) {
+            if (!selector) return false;
+
+            const $topModal = getTopVisibleModal();
+            return $topModal.length > 0 && $topModal.is(selector);
+        }
+
         return {
             bindModal: bindModal,
             startAction: startAction,
@@ -142,7 +153,9 @@
             startModalLoad: startModalLoad,
             endModalLoad: endModalLoad,
             isModalBusy: isModalBusy,
-            requestModalOpen: requestModalOpen
+            requestModalOpen: requestModalOpen,
+            getTopVisibleModal: getTopVisibleModal,
+            isModalOnTop: isModalOnTop
         };
     })();
 })(window, window.jQuery);

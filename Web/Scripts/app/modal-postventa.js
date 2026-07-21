@@ -1192,6 +1192,7 @@ $(document).ready(function () {
     $(document).on('keydown', function (e) {
         const $modal = $('#modalPostVenta');
         if (!$modal.hasClass('show')) return;
+        if (window.POSGuard && !window.POSGuard.isModalOnTop('#modalPostVenta')) return;
 
         const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
         if (tag === "input" || tag === "textarea") return;
