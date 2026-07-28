@@ -448,7 +448,6 @@
         $form.find('#totalImporte').text(formatNumber(totalImporte));
 
         if (permiteMediaRes($form) && esMediaRes($form)) {
-            setCantMedias($form, state.lineas.length ? state.lineas.length : '');
             $form.find('#KgsMedias').val(formatNumber(totalKg));
         } else {
             $form.find('#KgsMedias').val('0');

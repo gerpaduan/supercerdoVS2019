@@ -14,6 +14,10 @@
     bool tieneFacturaVenta = ViewBag.TieneFacturaVenta != null && (bool)ViewBag.TieneFacturaVenta;
     bool tieneNotaCreditoVenta = ViewBag.TieneNotaCreditoVenta != null && (bool)ViewBag.TieneNotaCreditoVenta;
     int idNotaCreditoVenta = ViewBag.IdNotaCreditoVenta != null ? (int)ViewBag.IdNotaCreditoVenta : 0;
+    string razonSocialCliente = Model.Persona != null ? Model.Persona.razonSocial ?? "" : "";
+    string identificacionCliente = Model.Persona != null ? Model.Persona.Identificacion ?? "" : "";
+    bool mostrarIdentificacionCliente = !string.IsNullOrWhiteSpace(identificacionCliente)
+        && !string.Equals(identificacionCliente.Trim(), razonSocialCliente.Trim(), StringComparison.OrdinalIgnoreCase);
 }
 
 <style>
@@ -25,8 +29,12 @@
         font-size: 0.625rem;
     }
 
-    .detalle-documento-resumen h5 {
-        font-size: 18px;
+    .detalle-venta-resumen h5 {
+        font-size: 17px;
+    }
+
+    .detalle-venta-identificacion {
+        font-size: 14px;
     }
 </style>
 
@@ -47,11 +55,15 @@
 
     <div class="card-body bg-white">
         <!-- Cliente y forma de pago -->
-        <div class="row mb-3 detalle-documento-resumen">
+        <div class="row mb-3 detalle-documento-resumen detalle-venta-resumen">
             <div class="col-md-6">
                 <h5 class="font-weight-bold text-dark">
-                    Cliente: <span class="text-muted">@Model.Persona.razonSocial</span>
+                    Cliente: <span class="text-muted">@razonSocialCliente</span>
                 </h5>
+                @if (mostrarIdentificacionCliente)
+                {
+                    <div class="text-muted detalle-venta-identificacion">Ident: @identificacionCliente</div>
+                }
             </div>
             <div class="col-md-6 text-md-right">
                 <h5 class="font-weight-bold text-dark">

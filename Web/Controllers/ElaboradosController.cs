@@ -792,6 +792,8 @@ namespace Web.Controllers
                     FormatearCantidadMensaje(cantidadRegistrada, corteElaborado.Pesable) + " " +
                     unidadTexto + " de " + nombreElaborado + ".";
 
+                TempData.Remove("ElaboradosSuccessMessage");
+
                 return Json(new
                 {
                     ok = true,
@@ -979,7 +981,7 @@ namespace Web.Controllers
                     Id = ToInt(row, "Id", "idEmbutido"),
                     Fecha = ToDate(row, "Fecha", "fechaEmbutido", "fecha"),
                     Sucursal = ToString(row, "Sucursal", "sucursal"),
-                    Codigo = ToLong(row, "Cod.Emb", "CodEmb", "codigoEmbutido", "CodigoEmbutido", "Codigo", "codigo"),
+                    Codigo = ToLong(row, "Cod.Emb", "CodEmb", "codigoEmbutido", "CodigoEmbutido", "Código", "Codigo", "codigo"),
                     Elaborado = ToString(row, "Embutido", "Elaborado", "corte"),
                     Kgs = kgs,
                     Observaciones = observaciones,
