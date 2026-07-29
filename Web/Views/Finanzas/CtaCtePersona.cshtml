@@ -676,7 +676,10 @@
     })();
 </script>
 <script>
-    (function () {
+    // El layout carga jQuery al final del body, asi que este bloque se ejecuta antes de que exista $.
+    // Sin esperarlo, el $(document) de mas abajo cortaba la funcion con ReferenceError y quedaban
+    // muertos los atajos de teclado y los handlers del modal de mail. Por eso se espera a jQuery.
+    function inicializarCtaCtePersona() {
         var desdePos = @Html.Raw((desdePos ? "true" : "false"));
         var puedeExportarCuentaCorriente = @Html.Raw((puedeExportarCuentaCorriente ? "true" : "false"));
         var ctaCteEmailConfigUrl = '@Url.Action("ObtenerDatosEmailCuentaCorriente", "Finanzas")';
@@ -861,7 +864,7 @@
             var key = String(event.key || '');
             var code = String(event.code || '');
 
-            return key === '+' || key === 'Add' || code === 'NumpadAdd';
+            return key === '+' || key === 'Add' || code === 'NumpadAdd' || key === 'Enter';
         }
 
         function bindAtajosCuentaCorrienteCaptura() {
@@ -976,6 +979,20 @@
             });
 
         bindAtajosCuentaCorrienteCaptura();
+    }
+
+    (function esperarJQuery() {
+        if (!window.jQuery) {
+            window.setTimeout(esperarJQuery, 50);
+            return;
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", inicializarCtaCtePersona, { once: true });
+            return;
+        }
+
+        inicializarCtaCtePersona();
     })();
 </script>
 
