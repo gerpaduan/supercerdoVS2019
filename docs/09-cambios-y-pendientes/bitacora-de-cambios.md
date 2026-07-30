@@ -12,6 +12,27 @@ Registrar cambios funcionales o tecnicos realizados sobre el sistema.
 - Motivo
 - Resultado
 
+## 2026-07-29
+
+- Cambio: primer deploy de produccion hecho a traves de Claude, contra la VM Windows (`carnisys.com`), commit `79f7d53f` de `codex_ia`. Incluye el fix de atajos de teclado de `CtaCtePersona` (ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md`) y la limpieza de `AGENTS.md`/`PROMPT_CARNISYS.md`/`docs/10-carnisys-ng/`.
+- Archivos o modulos afectados: sistema web legacy en `C:\inetpub\wwwroot\CarniSysWeb` de la VM.
+- Motivo: pedido explicito de deploy a produccion.
+- Resultado: publish Release precompilado, subido por SFTP y aplicado con el App Pool `CarniSys` detenido brevemente. Se preservaron intactos `Config\connectionStrings.config`, `Config\appSettings.secrets.config`, `AFIP\` y `App_Data\` de la VM (no se tocan en un deploy: son estado vivo, no codigo). Backup completo del `CarniSysWeb` previo en `C:\inetpub\wwwroot\web\backups\CarniSysWeb_20260729_210501` (rollback: restaurar esa carpeta con robocopy /MIR y reiniciar el App Pool). Verificado con `200 OK` en `/Login/Index` sin excepciones tras el deploy. Ver riesgo documentado en `riesgos-conocidos.md` sobre `requireSSL`.
+
+## 2026-07-29 (segundo deploy, mismo dia) - Fix de POS/Movimientos/pagos rotos en produccion
+
+- Cambio: se agregaron a `Web.csproj` 6 archivos `<Content Include>` de `Scripts\app` que existian en disco y se usaban desde vistas reales pero nunca se habian agregado al proyecto: `modal-request-loading.js`, `modal-postmovimiento.js`, `movimientos.js`, `pago-cheques.js`, `pago-ux.js`, `swal-single-confirm.js`. Se agrego ademas un header explicito de antiforgery en `Web/Scripts/app/forma-pago.js` (refuerzo, no la causa raiz).
+- Archivos o modulos afectados: `Web.csproj`, `Web/Scripts/app/forma-pago.js`.
+- Motivo: el usuario reporto que el POS no permitia finalizar ninguna venta al elegir forma de pago. Investigando se encontro que `modal-request-loading.js` (el script que auto-inyecta el token CSRF en los POST JSON) daba `404` en produccion, aunque funcionaba perfecto en local. Causa: el publish de produccion solo empaqueta lo que `Web.csproj` lista como `Content`; en local, IIS Express sirve cualquier archivo del disco sin mirar el `.csproj`, por eso el problema era invisible en desarrollo. Se verifico con Chrome real (via CDP) contra `carnisys.com` con el codigo original, confirmando `400` en `/Ventas/FinalizarVenta` siempre. Se audito el resto del proyecto (130 vistas, 7 css) y no hay mas archivos huerfanos.
+- Resultado: republish + mismo procedimiento de deploy documentado en `despliegue-y-publicacion.md`. Backup previo en `C:\inetpub\wwwroot\web\backups\CarniSysWeb_20260729_220100`. Verificado con Chrome real contra produccion: `window.ModalRequestLoading` ya existe, y `FinalizarVenta` responde `200` (antes `400` en el 100% de los intentos desde el 2026-07-28 21:23). De paso quedaron arreglados Movimientos, pagos/cheques y las confirmaciones de SweetAlert en toda la app, que dependian de los mismos archivos huerfanos.
+
+## 2026-07-30 - Lectura de codigo de barra por camara, cross-browser
+
+- Cambio: `Permissions-Policy` ya no bloquea la camara (`camera=()` -> `camera=(self)`), y se agrego ZXing (`@zxing/library@0.23.0`, vendorizado) como motor de decodificacion de respaldo para navegadores sin `BarcodeDetector` (Firefox, Safari/iOS).
+- Archivos o modulos afectados: `Web/Helpers/SecurityRuntime.cs`, `Web/Scripts/app/scanner.js`, `Web/Content/vendor/zxing/zxing.min.js` (nuevo), `Web/Web.csproj`, `Web/Views/Shared/_LayoutBase.cshtml`, `Web/Views/Shared/_LayoutPOS.cshtml`.
+- Motivo: el usuario reporto que la lectura de codigo de barra por camara dejo de funcionar hace varios dias, en las 5 pantallas donde se usa (POS de Ventas, POS de PuntosExpendio, y 3 escaners en Productos). Ver detalle de la causa e investigacion en `docs/07-operacion-y-soporte/incidencias-frecuentes.md`.
+- Resultado: compila y precompila sin errores (Release). Verificado con Chrome real: round-trip de ZXing con una imagen EAN-13 real decodifica correctamente, e integracion completa de `scanner.js` con el motor nativo deshabilitado a proposito (simulando Firefox/Safari) procesa frames y detecta codigos sin excepciones. Pendiente: probar en un dispositivo real con Firefox y con Safari/iOS, y con un lector fisico de codigo de barra apuntando a productos reales — no se pudo automatizar esa parte.
+
 ## 2026-07-10
 
 - Cambio: se unifico la base NG de `Stock` en una sola pantalla `Edit` por `tipoCompra`, alineada a la estructura del MVC.

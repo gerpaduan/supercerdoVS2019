@@ -570,11 +570,20 @@ function finalizarVenta(data) {
         lineasVenta: lineasPayload
     };
 
+    // El filtro global de antiforgery (Web/Filters/ValidateAppAntiForgeryTokenAttribute.cs) exige el token
+    // en el form o en el header RequestVerificationToken. Como este POST manda JSON crudo, Request.Form
+    // queda vacio y hay que mandarlo a mano en el header (el auto-inject de modal-request-loading.js
+    // no llega a tiempo/no corre en algunos flujos de navegacion del POS y el server devuelve 400 siempre).
+    const tokenAntiForgeryFinalizar = document.querySelector('#globalAntiForgeryToken input[name="__RequestVerificationToken"]')?.value
+        || document.querySelector('input[name="__RequestVerificationToken"]')?.value
+        || '';
+
     $.ajax({
         url: payload.idVenta > 0 ? api.venta.modificar : api.venta.finalizar,
         type: 'POST',
         contentType: 'application/json',
         dataType: 'json', // 🔥 CLAVE
+        headers: { RequestVerificationToken: tokenAntiForgeryFinalizar },
         data: JSON.stringify(payload),
 
         success: function (resp) {

@@ -72,7 +72,7 @@ namespace Web.Helpers
             response.Headers["X-Frame-Options"] = "SAMEORIGIN";
             response.Headers["X-Content-Type-Options"] = "nosniff";
             response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-            response.Headers["Permissions-Policy"] = "accelerometer=(), autoplay=(), camera=(), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
+            response.Headers["Permissions-Policy"] = "accelerometer=(), autoplay=(), camera=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
             response.Headers["Content-Security-Policy"] =
                 "default-src 'self'; " +
                 "base-uri 'self'; " +

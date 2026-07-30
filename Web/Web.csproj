@@ -240,6 +240,12 @@
     <Content Include="Content\js\sb-admin-2.min.js" />
     <Content Include="Content\js\scripts.js" />
     <Content Include="Scripts\app\lineas-agrupadas.js" />
+    <Content Include="Scripts\app\modal-postmovimiento.js" />
+    <Content Include="Scripts\app\movimientos.js" />
+    <Content Include="Scripts\app\pago-cheques.js" />
+    <Content Include="Scripts\app\pago-ux.js" />
+    <Content Include="Scripts\app\swal-single-confirm.js" />
+    <Content Include="Scripts\app\modal-request-loading.js" />
     <Content Include="Scripts\app\calculadora-billetes.js" />
     <Content Include="Scripts\app\calculadora-billetes-targets.js" />
     <Content Include="Scripts\app\home-dashboard.js" />
@@ -1910,6 +1916,7 @@
     <Content Include="Content\vendor\jquery-easing\jquery.easing.compatibility.js" />
     <Content Include="Content\vendor\jquery-easing\jquery.easing.js" />
     <Content Include="Content\vendor\jquery-easing\jquery.easing.min.js" />
+    <Content Include="Content\vendor\zxing\zxing.min.js" />
     <Content Include="Content\vendor\jquery\jquery.js" />
     <Content Include="Content\vendor\jquery\jquery.min.js" />
     <Content Include="Content\vendor\jquery\jquery.slim.js" />
