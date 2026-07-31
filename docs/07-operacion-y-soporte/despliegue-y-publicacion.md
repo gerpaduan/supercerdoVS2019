@@ -46,9 +46,23 @@ Restaurar el backup de `web\backups\CarniSysWeb_<timestamp>` con `robocopy /MIR`
 **No confundir con la VM de arriba.** Hay dos servidores de deploy distintos para este proyecto:
 
 - **Servidor "Carnisys"**: la VM Windows de produccion documentada arriba, acceso SSH (`~/hosts/carnisys-vm-windows.env`), publica detras de Caddy en `carnisys.com`.
-- **Servidor "SM"** (`PCSERVIDORSM`, IP `192.168.0.151`): otro servidor en la LAN, sin acceso SSH conocido. Acceso por **SMB** (`\\servidorsm\carnisysweb` o `\\192.168.0.151\carnisysweb`), credenciales en `~/hosts/servidorsm.env`. Aloja IIS con un sitio "web" en el puerto **8069** que contiene, como aplicaciones separadas: `CarniSysWeb` (produccion de este servidor), `CarniSysWeb - copia`, y otro sitio independiente `SuperCerdoWeb` (otro proyecto, fuera de alcance). URL real: `https://192.168.0.151/CarniSysWeb/` (el `:8069` sobre HTTP redirige ahi con 301). PENDIENTE: confirmar si hay un hostname/dominio real para este server (hoy solo se probo por IP) y si el puerto 443 esta pensado para accederse solo desde la LAN/VPN (desde una sesion externa a esa red dio timeout).
+- **Servidor "SM"** (`PCSERVIDORSM`, IP `192.168.0.151`): otro servidor en la LAN. Acceso por **SMB** (`\\servidorsm\carnisysweb` o `\\192.168.0.151\carnisysweb`) y por **SSH** (puerto 22, cuenta admin), credenciales en `~/hosts/servidorsm.env`. Aloja IIS con un sitio "web" en el puerto **8069** (HTTP) y **443** (HTTPS) que contiene, como aplicaciones separadas: `CarniSysWeb` (produccion de este servidor), `CarniSysWeb - copia`, y otro sitio independiente `SuperCerdoWeb` (otro proyecto, fuera de alcance). URL real: `https://192.168.0.151/CarniSysWeb/` (el `:8069` sobre HTTP redirige ahi con 301). PENDIENTE: confirmar si hay un hostname/dominio real para este server (hoy solo se probo por IP).
 
-### Pasos (probado 2026-07-30)
+### Setup unico del servidor (hecho 2026-07-31, no hace falta repetir en cada deploy)
+
+Al momento del primer deploy (2026-07-30) el servidor no tenia SSH, la cuenta de deploy no era admin, y el sitio "web" no tenia ningun binding HTTPS ni certificado (por eso el redirect a HTTPS de la app, `Security:EnforceHttps=true`, daba timeout). Se resolvio asi:
+
+1. **SSH**: `Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0` -> `Start-Service sshd` -> `Set-Service -Name sshd -StartupType Automatic`. La regla de firewall `OpenSSH-Server-In-TCP` se crea sola.
+2. **Privilegios admin para la cuenta de deploy** (`carnisys-deploy`, la misma que SMB): `Add-LocalGroupMember -SID "S-1-5-32-544" -Member "carnisys-deploy"` mas la clave de registro `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\LocalAccountTokenFilterPolicy = 1` (DWORD). Sin esa clave, las sesiones remotas (SSH/SMB) de una cuenta admin que no es la `Administrador` incorporada reciben igual un token recortado por UAC y los comandos de administracion fallan con "el proceso debe tener un estado elevado" (KB951016).
+3. **Certificado y binding HTTPS**: no habia ningun certificado en `Cert:\LocalMachine\My` ni binding HTTPS en ningun sitio del servidor. Se genero uno autofirmado (es una IP privada, no aplica un cert publico tipo Let's Encrypt) y se bindeo al sitio "web":
+   ```powershell
+   $cert = New-SelfSignedCertificate -DnsName "192.168.0.151" -CertStoreLocation "Cert:\LocalMachine\My" -FriendlyName "CarniSysWeb-ServidorSM-selfsigned" -NotAfter (Get-Date).AddYears(5)
+   New-WebBinding -Name "web" -Protocol https -Port 443 -IPAddress 192.168.0.151
+   New-Item -Path "IIS:\SslBindings\192.168.0.151!443" -Value $cert
+   ```
+   **Nota**: al ser autofirmado, cualquier navegador muestra advertencia de "certificado no confiable" la primera vez, hasta que se instale como confiable en cada PC que lo use. Es el mismo tradeoff que la VM evita usando Caddy con TLS real hacia afuera; este servidor no tiene ese reverse proxy.
+
+### Pasos de deploy (probado 2026-07-30 y 2026-07-31)
 
 1. Publish Release precompilado a una carpeta local, igual que el paso 1 de la VM (mismo `msbuild ... /p:PublishProfile=FolderProfile /p:publishUrl=<carpeta_local> ...`). A diferencia de la VM, **no hace falta tocar `requireSSL`**: el transform de `Web.Release.config` (`true`) ya es el valor correcto para este servidor.
 2. Backup del sitio actual: mapear el share con `net use Z: \\192.168.0.151\carnisysweb /user:ServidorSM\carnisys-deploy <password>` y `robocopy Z:\ <carpeta_local_backup> /MIR`.
@@ -60,7 +74,7 @@ Restaurar el backup de `web\backups\CarniSysWeb_<timestamp>` con `robocopy /MIR`
 ### Validaciones posteriores
 
 - `curl http://192.168.0.151:8069/CarniSysWeb/` debe dar `301` a `https://192.168.0.151/CarniSysWeb/` con los headers de seguridad (`Content-Security-Policy`, `X-Frame-Options`) del `Web.config` publicado.
-- El `200` final de `/CarniSysWeb/Login/Index` sobre HTTPS **no se pudo verificar en la sesion del 2026-07-30** (puerto 443 no alcanzable desde esa sesion) — validar desde un navegador en la LAN.
+- `curl -k https://192.168.0.151/CarniSysWeb/Login/Index` debe dar `200`, titulo `CarniSysWeb - Login`, sin `Stack Trace`/`Server Error` en el body, y `Set-Cookie` con `secure`/`HttpOnly` (confirma que `requireSSL="true"` esta funcionando con el binding). El `-k` es porque el certificado es autofirmado. **Verificado 2026-07-31.**
 
 ### Rollback
 
