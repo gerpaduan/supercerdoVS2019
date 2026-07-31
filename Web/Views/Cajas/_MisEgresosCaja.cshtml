@@ -277,6 +277,18 @@
     }
 
     @@media (max-width: 767.98px) {
+        /* custom.css fuerza flex-direction:column en TODO .egresos-pos-toolbar
+           a este ancho (pensado para el toolbar simple de "Egresos de Caja").
+           Acá los hijos (.egresos-pos-toolbar-main / -actions) tienen
+           "flex: 1 1 180px" / "flex: 999 1 680px" pensados como ANCHO en modo
+           fila; en modo columna esos mismos numeros pasan a ser ALTO (y el
+           "actions" encima tiene flex-grow:999), lo que explota el header a
+           ~900px. Se neutraliza volviendo a fila, para que main/actions
+           apilen por wrap normal (alto real por contenido). */
+        .mis-actividades-modal .egresos-pos-toolbar {
+            flex-direction: row;
+        }
+
         .mis-actividades-modal .egresos-pos-toolbar-actions {
             justify-content: flex-start;
         }
@@ -290,16 +302,57 @@
             padding: 0 .5rem .5rem !important;
         }
 
+        /* Reordenamos con flexbox "order" (sin tocar el DOM) para que en
+           mobile el encabezado ocupe menos filas: "Mis ventas" y "Nuevo
+           Egreso" comparten una fila 50/50, los filtros pasan a una sola
+           fila con scroll horizontal en vez de una grilla 2x2, y el switch
+           queda al final. En desktop no se define "order" en ningun lado,
+           asi que el layout actual (una sola fila con todo) no cambia. */
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnAbrirMisVentasDesdeActividades,
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnNuevoEgresoDesdeMis {
+            flex: 1 1 0;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnAbrirMisVentasDesdeActividades {
+            order: 1;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnNuevoEgresoDesdeMis {
+            order: 2;
+        }
+
         .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros {
+            order: 3;
             width: 100%;
-            border-radius: .8rem;
+            border-radius: 999px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros::-webkit-scrollbar {
+            display: none;
         }
 
         .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros .btn {
-            flex: 1 1 calc(50% - .3rem);
+            /* custom.css tiene ".egresos-pos-toolbar .btn { width:100%; }" en
+               este mismo breakpoint. flex-basis:auto (de "flex:0 0 auto")
+               USA ese width como base, asi que cada boton terminaba ocupando
+               el 100% del contenedor (solo se veia uno a la vez al scrollear).
+               Se pisa explicito con width:auto para que cada boton mida
+               segun su contenido. */
+            flex: 0 0 auto;
+            width: auto;
+            white-space: nowrap;
         }
 
         .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .custom-switch {
+            order: 4;
             width: 100%;
             margin-left: 0;
         }
