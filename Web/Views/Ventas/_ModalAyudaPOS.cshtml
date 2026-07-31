@@ -179,6 +179,41 @@
                         </button>
                     </div>
                 </div>
+
+                <hr />
+
+                <h6 class="pos-help-title mb-2"><i class="fas fa-barcode mr-2"></i>Código genérico (cantidad y precio manual)</h6>
+                <p class="pos-help-subtitle mb-2">
+                    Sirve para vender algo que no tiene código propio en el sistema (un artículo suelto,
+                    un ajuste, un producto de otro rubro, etc.), escribiendo la cantidad y el precio a mano
+                    directamente en el campo de código.
+                </p>
+
+                <div class="pos-help-note">
+                    <p class="mb-2">
+                        Escribí en el campo de código (el mismo de siempre, donde se escanea o tipea el
+                        código de un producto) usando la letra <strong>X</strong> como separador, y confirmá
+                        con <span class="badge badge-secondary pos-help-key">Enter</span>:
+                    </p>
+                    <ul class="mb-2 pl-4">
+                        <li class="mb-2">
+                            <code>CANTIDAD X PRECIO</code> — por ejemplo <code>5.15X100.50</code> carga
+                            <strong>5,15</strong> unidades a <strong>$100,50</strong> cada una, usando el
+                            producto genérico de esta empresa.
+                        </li>
+                        <li>
+                            <code>CANTIDAD X PRECIO G#</code> — por ejemplo <code>5.15X100.50G1</code> hace lo
+                            mismo pero usa la variante <strong>genérico + #</strong> (genérico+1, genérico+2,
+                            etc.), si tu empresa tiene configuradas variantes distintas del genérico
+                            (por ejemplo, con otra alícuota de IVA o marcado como pesable). El número después
+                            de la <code>G</code> indica cuál variante usar.
+                        </li>
+                    </ul>
+                    <p class="mb-0 text-muted">
+                        Si el código genérico (o la variante <code>G#</code> pedida) no existe para tu
+                        empresa, el sistema te avisa y no carga nada.
+                    </p>
+                </div>
             </div>
 
             <div class="modal-footer justify-content-between">

@@ -409,11 +409,19 @@
 
             updateSaleState();
 
-            if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso)) return;
+            // Ademas de la venta en curso, si hay algun modal del POS abierto
+            // (Mis Ventas, Cta Cte, calculadora, factura, etc.) tambien se
+            // avisa: recargar/cerrar la pestaña ahi puede perder lo que el
+            // usuario esta viendo o cargando en ese modal.
+            const hayModalAbierto = document.querySelector(".modal.show") !== null;
+
+            if (omitirAvisoSalidaPOS || window.POSFinalizandoVenta || (!hayVentaEnCurso && !window.POSCancelacionEnCurso && !hayModalAbierto)) return;
 
             window.POSDraft?.save?.();
             e.preventDefault();
-            e.returnValue = 'Debe presionar "Cancelar Venta".';
+            e.returnValue = (hayVentaEnCurso || window.POSCancelacionEnCurso)
+                ? 'Debe presionar "Cancelar Venta".'
+                : 'Hay una ventana abierta en el POS.';
         });
 
         function precioLineaAplicadoNum() {

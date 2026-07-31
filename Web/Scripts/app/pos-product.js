@@ -292,6 +292,11 @@
 
                 finishTyping(parsed.codigo, function (ok) {
                     if (ok === false) return;
+                    // showProduct() ya disparo onProductoChanged, que para productos no
+                    // pesables (como el generico) limpia #inputCantidad para forzar carga
+                    // manual. Como acá la cantidad ya vino explicita en "cantXcodigo",
+                    // la reponemos antes de agregar.
+                    $('#inputCantidad').val(String(parsed.cant));
                     options.addProduct();
                     showWaiting();
                 }, true);
@@ -305,6 +310,9 @@
 
                 finishTyping(entrada, function (ok) {
                     if (ok === false) return;
+                    // Mismo caso que arriba: si el producto escaneado no es pesable,
+                    // onProductoChanged ya limpio la cantidad por defecto (1).
+                    $('#inputCantidad').val('1');
                     options.addProduct();
                     showWaiting();
                 }, true);

@@ -48,3 +48,24 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
   3. El script de ZXing se agrego en los dos layouts que lo usan (`_LayoutBase.cshtml`, `_LayoutPOS.cshtml`), antes de `scanner.js` — cubre las 4 vistas (5 escaners) sin tocar cada una.
 - **Verificacion**: se probo con Chrome real (headless via CDP), sin poder usar camara fisica real: (a) round-trip de ZXing con una imagen EAN-13 real (Wikimedia, valor conocido `5901234123457`) decodificado correctamente con el bundle vendorizado; (b) integracion real de `scanner.js` con `BarcodeDetector` borrado a proposito (simula Firefox/Safari) y una camara falsa (`canvas.captureStream()`): el motor ZXing se activa, procesa frames continuamente (callback disparado cientos de veces), y `cerrar()` libera la camara sin excepciones. No se pudo probar con un lector fisico real ni en Firefox/Safari reales — pendiente de confirmacion del usuario en dispositivo real.
 - **Nota**: `decodeFromStream` de esta version de ZXing no devuelve un objeto de control usable (resuelve `undefined`); el corte del escaneo se hace deteniendo el `MediaStream` directamente en `cerrar()`, igual que el motor nativo.
+
+## 2026-07-30 - Calculadora de billetes abria el modal de impresion con resultado $0
+
+- **Sintoma**: al cerrar/aceptar la calculadora de billetes (F3) sin cargar ningun billete, igual se abria el modal de "que haces con esto" (imprimir/pdf/whatsapp) con un comprobante vacio.
+- **Causa**: `Web/Scripts/app/calculadora-billetes.js` llamaba `abrirPostModal()` sin condicion en los handlers de `#btnAceptarCalculadoraBilletes` y `#btnCancelarCalculadoraBilletes, #btnCerrarCalculadoraBilletes`.
+- **Resolucion**: nuevo helper `hayMontoParaImprimir()` (chequea `getPrintData().total > 0`); si no hay monto, `cerrarCalculadoraSinPost()` cierra el modal directo (via el `permitiendoCerrar` que ya usaba el guard existente de `hide.bs.modal`), sin pasar por el post-modal.
+- **Verificacion**: probado en Chrome real (CDP) con cache de navegador deshabilitada: total $0 -> cierra sin post-modal; total $2.000 -> post-modal sigue abriendo igual que antes (sin regresion).
+
+## 2026-07-30 - Texto invisible en hover de botones outline (modo claro)
+
+- **Sintoma**: al pasar el mouse sobre el boton "Duplicar POS" (`Ventas/POS.cshtml`), en modo claro el texto se volvia ilegible (blanco sobre fondo claro).
+- **Causa**: `Content/css/ui-refresh.css` tiene `body.app-shell .btn-outline-primary, .btn-outline-secondary, .btn-outline-dark { background: transparent; }`. Esa regla (por especificidad: 1 tipo + 2 clases) le gana al `:hover` propio de Bootstrap (`sb-admin-2.css`, 2 clases/pseudo-clases) y lo pisa **incluso en estado hover**, dejando el fondo transparente mientras Bootstrap ya puso el texto en blanco -> texto blanco invisible sobre fondo claro.
+- **Resolucion aplicada (acotada)**: `#btnDuplicarPOS.btn-outline-primary:hover { background-color/color !important; }` en `POS.cshtml`, especifico para este boton.
+- **Riesgo pendiente (no corregido, ver `riesgos-conocidos.md`)**: la regla de `ui-refresh.css` afecta a **todo** `.btn-outline-primary/secondary/dark` dentro de `body.app-shell`, no solo a este boton — cualquier otro boton outline que dependa del hover blanco-sobre-solido de Bootstrap tiene el mismo problema latente.
+
+## 2026-07-30 - JS de POS servido desde cache del navegador tras editar el archivo
+
+- **Sintoma**: al probar un fix en `calculadora-billetes.js` en un navegador ya usado antes en la sesion, el comportamiento viejo seguia apareciendo pese a que el archivo en disco y lo que devolvia el servidor (verificado con `curl`) ya tenian el fix.
+- **Causa**: los scripts de POS se referencian con cache-busting manual por query string (`calculadora-billetes.js?v=3237`, `pos-cart.js?v=26`, `factura-electronica.js?v=11`). Si se edita el archivo sin subir el numero de version, el navegador sigue sirviendo la copia cacheada de esa URL exacta.
+- **Resolucion**: al tocar cualquiera de estos archivos, **subir el numero de `?v=` en TODAS las vistas/layouts que lo referencian** (buscar `grep -rn "nombre-archivo.js?v="` en `Web/Views`), no alcanza con guardar el `.cs`/`.js`.
+- **Leccion**: esto no es solo un problema de testing — cualquier usuario real que haya usado la funcion antes del deploy va a seguir corriendo el JS viejo hasta que la version cambie. Regla para el futuro: **todo cambio a un archivo con `?v=` en su tag `<script>` debe incluir el bump de esa version en el mismo commit**, sin excepcion.

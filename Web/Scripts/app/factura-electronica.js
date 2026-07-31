@@ -759,6 +759,14 @@
         });
     });
 
+    // La X del header no debe cerrar el modal "por atras": debe pasar por
+    // la misma logica que el boton Cancelar (que ya decide si hace falta
+    // forzar "Cerrar venta sin facturar" segun la forma de pago).
+    $(document).on('click', '#btnCerrarXFacturaElectronica', function (e) {
+        e.preventDefault();
+        $('#btnCancelarFacturaElectronica').trigger('click');
+    });
+
     $(document).on('click', '#btnCancelarFacturaElectronica', function (e) {
         if (!requiereConfirmacionCancelarSinFacturar()) return;
 

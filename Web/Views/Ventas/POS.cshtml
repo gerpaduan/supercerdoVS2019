@@ -634,7 +634,7 @@ else
     </div>
 </div>
 
-<div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content" id="contenedorFacturaElectronica">
             <!-- se inyecta por ajax -->
@@ -1088,6 +1088,27 @@ else
         background-color: #fff;
     }
 
+    /* Encabezado propio para "Mis actividades": antes usaba el header
+       generico (bg-light, sin icono, texto negro) y quedaba muy plano,
+       en especial en mobile. Se le da el mismo tratamiento que a
+       "Mis ventas" pero con el azul primario de la app para diferenciarlos. */
+    #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header {
+        background: #4e73df !important;
+        border-bottom: none;
+        padding: .9rem 1.1rem;
+    }
+
+    #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-title,
+    #modalFinanzasPOS.modal-mis-actividades-pos-compacto .close {
+        color: #fff !important;
+        text-shadow: none !important;
+        font-weight: 700;
+    }
+
+    #modalFinanzasPOS.modal-mis-actividades-pos-compacto .close {
+        opacity: .85;
+    }
+
     #modalFinanzasPOS.modal-detalle-venta-pos-compacto .modal-body {
         padding: 1rem !important;
         background-color: #f8f9fc;
@@ -1099,6 +1120,11 @@ else
 
     html.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
         background-color: #182232;
+    }
+
+    html.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header,
+    body.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header {
+        background: #2b4a86 !important;
     }
 
     html.dark-mode #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-header,
@@ -1166,6 +1192,14 @@ else
             margin: .25rem auto;
         }
 
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header {
+            padding: .75rem .9rem;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-title {
+            font-size: 1rem;
+        }
+
         #modalFinanzasPOS.modal-mis-ventas-pos-compacto .modal-body {
             padding: 0 !important;
         }
@@ -1224,14 +1258,14 @@ else
     <script src="@Url.Content("~/Scripts/app/pos-state.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-forma-pago-precios.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=8")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=26")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-product.js?v=9")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=27")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-help.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3237")"></script>
+    <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3238")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=7")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=7")"></script>
@@ -2203,6 +2237,9 @@ else
         window.actualizarResumenFormaPagoPOS?.();
         window.activarAvisoSalidaPOS?.();
         setTimeout(function () { posKeyboard.focusCodigo(); }, 50);
+        // Igual que al agregar un item: en mobile, dejar visible el boton
+        // Finalizar en vez de quedar arriba del todo tras registrar la venta.
+        setTimeout(scrollPantallaMobile, 50);
     };
 
     window.resetPOSDespuesDeFinalizar = function () {
@@ -2449,6 +2486,13 @@ else
 
     $(document).ready(configurarInputsPOS);
     $(window).on('resize', configurarInputsPOS);
+
+    // En mobile, arrancar ya viendo el boton Finalizar (igual que cuando se
+    // agrega un item al carrito), en vez de arrancar arriba del todo con el
+    // encabezado. setTimeout para que el layout ya este armado.
+    $(document).ready(function () {
+        setTimeout(scrollPantallaMobile, 50);
+    });
 
     function reubicarFormaPagoPOS() {
         var $banner = $('#posFormaPagoActual');
@@ -3542,6 +3586,16 @@ else
     .pos-btn-layout:hover,
     .pos-btn-fullscreen:hover {
         transform: translateY(-1px);
+    }
+
+    /* body.app-shell fuerza background transparente en los .btn-outline-*
+       incluso en :hover (ui-refresh.css), pisando por especificidad el
+       fondo solido que pone Bootstrap en su :hover. El texto se pone
+       blanco (por Bootstrap) sobre fondo transparente = invisible en modo
+       claro. Se repone el fondo solido puntualmente para este boton. */
+    #btnDuplicarPOS.btn-outline-primary:hover {
+        background-color: #4e73df !important;
+        color: #fff !important;
     }
 
     .pos-cliente .form-control,
@@ -5292,6 +5346,61 @@ else
 
         .pos-balanza-card {
             padding: .38rem .46rem;
+        }
+    }
+
+    /* =========================================================
+     AJUSTES RESPONSIVE (mobile) - pedido puntual, no toca desktop
+       - achica Total/importe
+       - iguala tamaño de #inputCantidad al de #inputCodigo
+       - resalta #prodNombre en modo claro sin agrandarlo
+       - oculta el bloque de conexion de balanza
+       - empareja la altura de los 3 botones del pie
+       ========================================================= */
+    @@media (max-width: 767.98px) {
+        .pos-total-label {
+            font-size: 1.5rem !important;
+        }
+
+        .pos-total-value,
+        html.pos-compact .pos-total-value {
+            font-size: 2rem !important;
+        }
+
+        #inputCantidad {
+            font-size: 1.25rem;
+            min-height: 42px;
+        }
+
+        /* Selector con la misma especificidad que la regla que deja el
+           nombre del producto en font-weight:100 dentro de .producto-resumen
+           (linea ~5116), para poder pisarla sin usar !important de mas. */
+        .producto-resumen #prodNombre {
+            font-weight: 700 !important;
+            color: #111827 !important;
+        }
+
+        .pos-balanza-card {
+            display: none !important;
+        }
+
+        .zona-botones .btn {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* El boton "Comentario" es angosto y con el badge al lado del texto
+           el numero termina saliendose del borde. Se apila debajo en vez de
+           al lado. */
+        #btnLimpiar {
+            flex-direction: column;
+            gap: .15rem;
+        }
+
+        #btnLimpiar .pos-comment-badge {
+            margin-left: 0;
         }
     }
 

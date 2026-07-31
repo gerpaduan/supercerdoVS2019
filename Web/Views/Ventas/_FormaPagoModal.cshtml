@@ -151,6 +151,19 @@
 </div>
 
 <style>
+    @@media (max-width: 767.98px) {
+        /* Los inputs de pago mixto (y el total) usan width:50% inline;
+           en pantallas chicas eso no alcanza para leer/escribir comodo
+           un monto de varios digitos. Se ensanchan para que entren al
+           menos 12 caracteres. */
+        #modalFormaPago #montoEfectivo,
+        #modalFormaPago #montoOtroPago,
+        #modalFormaPago #totalVenta {
+            width: 100% !important;
+            min-width: 12ch;
+        }
+    }
+
     @@media (min-width: 1200px) {
         #modalFormaPago .modal-title {
             font-size: 1.35rem;

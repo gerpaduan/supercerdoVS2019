@@ -18,12 +18,17 @@
     }
     else
     {
-        <div class="egresos-pos-toolbar">
-            <div class="d-flex flex-wrap align-items-center ml-auto">
-                <div class="form-group mr-3 mb-2 mb-md-0">
-                    <input type="text" id="misVentasBuscarCliente" class="form-control form-control-sm" placeholder="Buscar cliente..." autocomplete="off" />
+        <div class="egresos-pos-toolbar mis-ventas-filtros">
+            <div class="mis-ventas-filtros-campos">
+                <div class="form-group mis-ventas-filtro-cliente mb-2 mb-md-0">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <input type="text" id="misVentasBuscarCliente" class="form-control" placeholder="Buscar cliente..." autocomplete="off" />
+                    </div>
                 </div>
-                <div class="form-group mr-3 mb-2 mb-md-0">
+                <div class="form-group mis-ventas-filtro-forma-pago mb-2 mb-md-0">
                     <select id="misVentasFormaPago" class="form-control form-control-sm">
                         <option value="">Forma de pago (todas)</option>
                         @foreach (Entidades.Venta.FormaPagoEnum fp in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
@@ -32,7 +37,7 @@
                         }
                     </select>
                 </div>
-                <button type="button" class="btn btn-outline-secondary" id="btnVolverMisActividadesDesdeVentas">
+                <button type="button" class="btn btn-outline-secondary mis-ventas-filtro-volver" id="btnVolverMisActividadesDesdeVentas">
                     <i class="fas fa-arrow-left mr-1"></i> Volver
                 </button>
             </div>
@@ -138,6 +143,63 @@
             text-overflow: ellipsis;
             display: block;
         }
+    }
+
+    /* Fila de filtros de Mis Ventas: antes los 3 campos (buscar, forma de
+       pago, volver) quedaban apretados y con ancho angosto por defecto del
+       navegador. Se agrupan con ancho consistente y se agrega icono de
+       busqueda para que se entienda de un vistazo que es un filtro. */
+    .mis-ventas-filtros {
+        background: #f8f9fc;
+    }
+
+    .mis-ventas-filtros-campos {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .6rem;
+        width: 100%;
+    }
+
+    .mis-ventas-filtro-cliente {
+        flex: 1 1 220px;
+        max-width: 320px;
+        margin: 0;
+    }
+
+    .mis-ventas-filtro-forma-pago {
+        flex: 0 1 200px;
+        margin: 0;
+    }
+
+    .mis-ventas-filtros .input-group-text {
+        background: #fff;
+        color: #858796;
+    }
+
+    @@media (max-width: 767.98px) {
+        .mis-ventas-filtros-campos {
+            justify-content: stretch;
+        }
+
+        .mis-ventas-filtro-cliente,
+        .mis-ventas-filtro-forma-pago,
+        .mis-ventas-filtro-volver {
+            flex: 1 1 100%;
+            max-width: none;
+            width: 100%;
+        }
+    }
+
+    html.dark-mode .mis-ventas-filtros {
+        background: #132032;
+    }
+
+    html.dark-mode .mis-ventas-filtros .input-group-text {
+        background: #172638;
+        color: #97a7bd;
+        border-color: #2a3b52;
     }
 </style>
 

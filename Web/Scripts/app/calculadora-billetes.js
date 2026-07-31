@@ -545,6 +545,18 @@
             });
     }
 
+    // Si no se cargo ningun billete/moneda (total 0), no tiene sentido
+    // ofrecer imprimir/enviar un comprobante vacio.
+    function hayMontoParaImprimir() {
+        var data = getPrintData();
+        return Number(data && data.total) > 0;
+    }
+
+    function cerrarCalculadoraSinPost() {
+        permitiendoCerrar = true;
+        $('#modalCalculadoraBilletes').modal('hide');
+    }
+
     function cerrarPostYCalculadora() {
         devolverResultado();
         $('#modalPostCalculadoraBilletes').data('permitir-cierre', true).modal('hide');
@@ -701,10 +713,21 @@
 
         $(document).on('click', '#btnAceptarCalculadoraBilletes', function () {
             devolverResultado();
+
+            if (!hayMontoParaImprimir()) {
+                cerrarCalculadoraSinPost();
+                return;
+            }
+
             abrirPostModal();
         });
 
         $(document).on('click', '#btnCancelarCalculadoraBilletes, #btnCerrarCalculadoraBilletes', function () {
+            if (!hayMontoParaImprimir()) {
+                cerrarCalculadoraSinPost();
+                return;
+            }
+
             abrirPostModal();
         });
 
