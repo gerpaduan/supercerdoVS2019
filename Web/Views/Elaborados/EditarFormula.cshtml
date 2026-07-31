@@ -71,58 +71,52 @@
                     }
                 </div>
 
-                <div class="border rounded p-3 mb-3 elaborados-section-box">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                        <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
-                    </div>
-
-                    <div id="formulaErrorElaboradoExistente" class="alert alert-warning py-2 px-3 mb-3 d-none">
-                        El elaborado ya posee una formula. Modifique la existente.
-                    </div>
-
-                    <div id="formulaInfoIngresoRapido" class="alert alert-info py-2 px-3 mb-3 @(Model.EsIngresoRapidoElaborado ? "" : "d-none")">
-                        Este elaborado es de Ingreso Rapido. El sistema calculara automaticamente un Ajuste de Formula para que el resultado final represente 1 unidad.
-                        @if (Model.CodigoProductoGenerico > 0)
-                        {
-                            <span class="d-block mt-1">Se usa el codigo generico <strong>@Model.CodigoProductoGenerico</strong>@(!string.IsNullOrWhiteSpace(Model.NombreProductoGenerico) ? (" - " + Model.NombreProductoGenerico) : "") para realizar el ajuste.</span>
-                        }
-                    </div>
-
-                    <div class="row align-items-end">
-                        <div class="col-12 col-md-3 col-lg-2">
-                            <div class="form-group">
-                                <label for="txtCodigoElaboradoFormula">Codigo</label>
-                                <input type="number" id="txtCodigoElaboradoFormula" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" />
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
                             </div>
-                        </div>
-                        <div class="col-12 col-md-9 col-lg-5">
-                            <div class="form-group">
-                                <label for="txtElaboradoFormulaNombre">Elaborado</label>
-                                <div class="input-group">
-                                    <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
-                                    <input type="hidden" id="txtElaboradoEsPesableFormula" value="@(Model.EsPesableElaborado ? "true" : "false")" />
-                                    <input type="hidden" id="txtElaboradoIngresoRapidoFormula" value="@(Model.EsIngresoRapidoElaborado ? "true" : "false")" />
-                                    <input type="text" id="txtElaboradoFormulaNombre" class="form-control" value="@Model.Elaborado" readonly />
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarElaboradoFormula" title="Buscar elaborado (F9)">
-                                            <i class="fas fa-search"></i>
-                                            <span class="d-none d-lg-inline ml-1">F9</span>
-                                        </button>
+
+                            <div id="formulaErrorElaboradoExistente" class="alert alert-warning py-2 px-3 mb-3 d-none">
+                                El elaborado ya posee una formula. Modifique la existente.
+                            </div>
+
+                            <div id="formulaInfoIngresoRapido" class="alert alert-info py-2 px-3 mb-3 @(Model.EsIngresoRapidoElaborado ? "" : "d-none")">
+                                Este elaborado es de Ingreso Rapido. El sistema calculara automaticamente un Ajuste de Formula para que el resultado final represente 1 unidad.
+                                @if (Model.CodigoProductoGenerico > 0)
+                                {
+                                    <span class="d-block mt-1">Se usa el codigo generico <strong>@Model.CodigoProductoGenerico</strong>@(!string.IsNullOrWhiteSpace(Model.NombreProductoGenerico) ? (" - " + Model.NombreProductoGenerico) : "") para realizar el ajuste.</span>
+                                }
+                            </div>
+
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-3 col-lg-2">
+                                    <div class="form-group">
+                                        <label for="txtCodigoElaboradoFormula">Codigo</label>
+                                        <input type="number" id="txtCodigoElaboradoFormula" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-9 col-lg-10">
+                                    <div class="form-group">
+                                        <label for="txtElaboradoFormulaNombre">Elaborado</label>
+                                        <div class="input-group">
+                                            <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
+                                            <input type="hidden" id="txtElaboradoEsPesableFormula" value="@(Model.EsPesableElaborado ? "true" : "false")" />
+                                            <input type="hidden" id="txtElaboradoIngresoRapidoFormula" value="@(Model.EsIngresoRapidoElaborado ? "true" : "false")" />
+                                            <input type="text" id="txtElaboradoFormulaNombre" class="form-control" value="@Model.Elaborado" readonly />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarElaboradoFormula" title="Buscar elaborado (F9)">
+                                                    <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F9</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-5">
-                            <div class="form-group mb-0">
-                                <label for="Receta">Receta</label>
-                                <textarea id="Receta" name="Receta" class="form-control js-auto-receta" rows="2">@Model.Receta</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-12 col-xl-8">
                         <div class="border rounded p-3 mb-3 elaborados-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes de la formula</h6>
@@ -191,6 +185,16 @@
                     </div>
 
                     <div class="col-12 col-xl-4">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="Receta" class="sr-only">Receta</label>
+                                <textarea id="Receta" name="Receta" class="form-control js-auto-receta" rows="6" placeholder="Instrucciones de preparacion...">@Model.Receta</textarea>
+                            </div>
+                        </div>
+
                         <div class="card bg-light elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Totales</h6>
@@ -256,6 +260,7 @@
     <script>
         (function () {
             var $form = $('#formEditarFormula');
+            var $receta = $('#Receta');
             var state = {
                 lineas: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.ElaboradoFormulaEditLineaVm>())),
                 esPesable: @Html.Raw(Json.Encode(Model.EsPesableElaborado)),
@@ -276,6 +281,29 @@
 
             function formatValue(value) {
                 return (toNumber(value)).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function autoResizeTextarea($textarea) {
+                if (!$textarea || !$textarea.length) return;
+                $textarea.css('height', 'auto');
+                $textarea.css('height', $textarea.get(0).scrollHeight + 'px');
+            }
+
+            // Cuenta las lineas ya escritas en la receta para proponer el numero del proximo paso.
+            function siguienteNumeroPasoReceta($textarea) {
+                var valor = $textarea.val() || '';
+                if (valor.trim() === '') return 1;
+                return valor.split('\n').length + 1;
+            }
+
+            function insertarTextoEnCursor($textarea, texto) {
+                var el = $textarea.get(0);
+                var inicio = el.selectionStart;
+                var fin = el.selectionEnd;
+                var valorActual = el.value;
+                el.value = valorActual.substring(0, inicio) + texto + valorActual.substring(fin);
+                var nuevaPosicion = inicio + texto.length;
+                el.setSelectionRange(nuevaPosicion, nuevaPosicion);
             }
 
             function targetValorVisible() {
@@ -439,39 +467,54 @@
                     });
             }
 
-            function openModal(selector, focusSelector, onSelected) {
-                var $modal = $(selector);
-                $modal.off('producto:seleccionado.formula').on('producto:seleccionado.formula', function (e, producto) {
-                    if (!producto) return;
-                    if (selector === '#modalBuscarElaboradoFormula') {
-                        $('#txtCodigoElaboradoFormula').val(producto.Codigo || producto.codigo || '');
-                        $('#IdElaborado').val(producto.IdCorte || producto.id || '');
-                        $('#txtElaboradoFormulaNombre').val(producto.CorteDesc || producto.nombre || '');
-                        state.esPesable = !!(producto.Pesable || producto.pesable);
-                        state.esIngresoRapido = !!(producto.IngresoRapidoEmbutido || producto.ingresoRapido);
-                    } else {
-                        $('#txtCodigoIngredienteFormula').val(producto.Codigo || producto.codigo || '');
-                        $('#txtIngredienteFormulaId').val(producto.IdCorte || producto.id || '');
-                        $('#txtIngredienteFormulaNombre').val(producto.CorteDesc || producto.nombre || '');
-                    }
-                    updateModeLabels();
-                    renderLineas();
-                    if (onSelected) onSelected(producto);
-                });
-                $modal.modal('show');
-                if (focusSelector) {
-                    window.setTimeout(function () { $(focusSelector).focus(); }, 250);
+            function abrirModalElaborado() {
+                if (typeof window.abrirBuscarProductoModal !== 'function') {
+                    console.error('abrirBuscarProductoModal no esta disponible (falta cargar modal-productos.js).');
+                    return;
                 }
+                window.abrirBuscarProductoModal({
+                    modalSelector: '#modalBuscarElaboradoFormula',
+                    mostrarPrecio: false,
+                    onSelect: function (producto) {
+                        $('#txtCodigoElaboradoFormula').val(producto.codigo || '');
+                        buscarPorCodigo($('#txtCodigoElaboradoFormula'), function () {
+                            $('#txtCodigoIngredienteFormula').focus();
+                        });
+                    }
+                });
             }
 
-            $('#btnBuscarElaboradoFormula').on('click', function () {
-                openModal('#modalBuscarElaboradoFormula', '#txtCodigoElaboradoFormula', function () {
-                    $('#txtCodigoIngredienteFormula').focus();
+            function abrirModalIngrediente() {
+                if (typeof window.abrirBuscarProductoModal !== 'function') {
+                    console.error('abrirBuscarProductoModal no esta disponible (falta cargar modal-productos.js).');
+                    return;
+                }
+                window.abrirBuscarProductoModal({
+                    modalSelector: '#modalBuscarIngredienteFormula',
+                    mostrarPrecio: false,
+                    onSelect: function (producto) {
+                        $('#txtCodigoIngredienteFormula').val(producto.codigo || '');
+                        buscarPorCodigo($('#txtCodigoIngredienteFormula'), function () {
+                            $('#txtPorcentajeFormula').focus().select();
+                        });
+                    }
                 });
+            }
+
+            $('#btnBuscarElaboradoFormula').on('click', abrirModalElaborado);
+            $('#btnBuscarIngredienteFormula').on('click', abrirModalIngrediente);
+
+            $receta.on('input', function () {
+                autoResizeTextarea($receta);
             });
 
-            $('#btnBuscarIngredienteFormula').on('click', function () {
-                openModal('#modalBuscarIngredienteFormula', '#txtCodigoIngredienteFormula');
+            // Enter propone el siguiente paso numerado; Shift+Enter deja el salto de linea libre dentro de un mismo paso.
+            $receta.on('keydown', function (e) {
+                if (e.key !== 'Enter' || e.shiftKey || $(this).prop('readonly')) return;
+                e.preventDefault();
+                var numero = siguienteNumeroPasoReceta($receta);
+                insertarTextoEnCursor($receta, '\nPaso ' + numero + ': ');
+                autoResizeTextarea($receta);
             });
 
             $('#btnAgregarLineaFormula').on('click', function () {
@@ -536,6 +579,11 @@
                 e.preventDefault();
                 $action.trigger('click');
             });
+
+            if ($.trim($receta.val()) === '') {
+                $receta.val('Paso 1: ');
+            }
+            autoResizeTextarea($receta);
 
             updateModeLabels();
             renderLineas();
