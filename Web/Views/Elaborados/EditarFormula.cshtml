@@ -188,11 +188,12 @@
                         <div class="border rounded p-3 mb-3 elaborados-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarPasoReceta">
+                                    <i class="fas fa-plus mr-1"></i> Agregar paso
+                                </button>
                             </div>
-                            <div class="form-group mb-0">
-                                <label for="Receta" class="sr-only">Receta</label>
-                                <textarea id="Receta" name="Receta" class="form-control js-auto-receta" rows="6" placeholder="Instrucciones de preparacion...">@Model.Receta</textarea>
-                            </div>
+                            <textarea id="Receta" name="Receta" class="d-none">@Model.Receta</textarea>
+                            <div id="pasosRecetaContainer"></div>
                         </div>
 
                         <div class="card bg-light elaborados-panel-card elaborados-summary-card">
@@ -260,7 +261,8 @@
     <script>
         (function () {
             var $form = $('#formEditarFormula');
-            var $receta = $('#Receta');
+            var $recetaHidden = $('#Receta');
+            var $pasosContainer = $('#pasosRecetaContainer');
             var state = {
                 lineas: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.ElaboradoFormulaEditLineaVm>())),
                 esPesable: @Html.Raw(Json.Encode(Model.EsPesableElaborado)),
@@ -289,21 +291,56 @@
                 $textarea.css('height', $textarea.get(0).scrollHeight + 'px');
             }
 
-            // Cuenta las lineas ya escritas en la receta para proponer el numero del proximo paso.
-            function siguienteNumeroPasoReceta($textarea) {
-                var valor = $textarea.val() || '';
-                if (valor.trim() === '') return 1;
-                return valor.split('\n').length + 1;
+            // Interpreta el texto plano guardado ("Paso N: texto" por linea) como un array de pasos.
+            // Lineas sin el prefijo "Paso N:" se pliegan al paso anterior (texto multilinea) o, si no hay
+            // paso previo, arrancan un primer paso para no perder contenido de recetas cargadas antes de este cambio.
+            function parsearPasosReceta(texto) {
+                var lineas = (texto || '').replace(/\r\n/g, '\n').split('\n');
+                var regexPaso = /^Paso\s+\d+\s*:\s?(.*)$/i;
+                var pasos = [];
+                var pasoActual = null;
+
+                lineas.forEach(function (linea) {
+                    var match = linea.match(regexPaso);
+                    if (match) {
+                        pasoActual = { texto: match[1] };
+                        pasos.push(pasoActual);
+                    } else if (pasoActual) {
+                        pasoActual.texto += (pasoActual.texto ? '\n' : '') + linea;
+                    } else if (linea.trim() !== '') {
+                        pasoActual = { texto: linea };
+                        pasos.push(pasoActual);
+                    }
+                });
+
+                return pasos;
             }
 
-            function insertarTextoEnCursor($textarea, texto) {
-                var el = $textarea.get(0);
-                var inicio = el.selectionStart;
-                var fin = el.selectionEnd;
-                var valorActual = el.value;
-                el.value = valorActual.substring(0, inicio) + texto + valorActual.substring(fin);
-                var nuevaPosicion = inicio + texto.length;
-                el.setSelectionRange(nuevaPosicion, nuevaPosicion);
+            // Arma el texto plano a guardar. Los pasos vacios al final se descartan (no corren la numeracion
+            // de ningun paso con contenido); un paso vacio en el medio se conserva para no renumerar lo de abajo.
+            function construirRecetaFinal() {
+                var pasos = state.pasos.slice();
+                while (pasos.length > 0 && $.trim(pasos[pasos.length - 1].texto || '') === '') {
+                    pasos.pop();
+                }
+                return pasos.map(function (paso, index) {
+                    return 'Paso ' + (index + 1) + ': ' + (paso.texto || '');
+                }).join('\n');
+            }
+
+            function renderPasosReceta() {
+                var html = '';
+                state.pasos.forEach(function (paso, index) {
+                    html += '<div class="formula-paso-row d-flex align-items-start mb-2" data-index="' + index + '">';
+                    html += '<div class="input-group flex-grow-1">';
+                    html += '<div class="input-group-prepend"><span class="input-group-text formula-paso-numero">Paso ' + (index + 1) + ':</span></div>';
+                    html += '<textarea class="form-control js-auto-receta formula-paso-texto" rows="1" placeholder="Describa el paso..."' + (state.soloLectura ? ' readonly' : '') + '>' + $('<div/>').text(paso.texto || '').html() + '</textarea>';
+                    html += '</div>';
+                    html += '<button type="button" class="btn btn-outline-danger btn-sm ml-2 js-remove-paso" data-index="' + index + '" title="Eliminar paso"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>';
+                    html += '</div>';
+                });
+                $pasosContainer.html(html);
+                $pasosContainer.find('.formula-paso-texto').each(function () { autoResizeTextarea($(this)); });
             }
 
             function targetValorVisible() {
@@ -333,9 +370,11 @@
 
             function setReadOnly(readOnly) {
                 state.soloLectura = readOnly;
-                $('#txtCodigoElaboradoFormula, #txtCodigoIngredienteFormula, #txtPorcentajeFormula, #Receta').prop('readonly', readOnly);
+                $('#txtCodigoElaboradoFormula, #txtCodigoIngredienteFormula, #txtPorcentajeFormula').prop('readonly', readOnly);
                 $('#btnBuscarElaboradoFormula, #btnBuscarIngredienteFormula, #btnAgregarLineaFormula, .js-remove-linea-formula').prop('disabled', readOnly);
                 $('#chkAgregarAutoFormula').prop('disabled', readOnly);
+                $('#btnAgregarPasoReceta, .js-remove-paso').prop('disabled', readOnly);
+                $pasosContainer.find('.formula-paso-texto').prop('readonly', readOnly);
                 syncPrimaryAction();
             }
 
@@ -504,17 +543,32 @@
             $('#btnBuscarElaboradoFormula').on('click', abrirModalElaborado);
             $('#btnBuscarIngredienteFormula').on('click', abrirModalIngrediente);
 
-            $receta.on('input', function () {
-                autoResizeTextarea($receta);
+            $pasosContainer.on('input', '.formula-paso-texto', function () {
+                var $textarea = $(this);
+                var index = parseInt($textarea.closest('.formula-paso-row').attr('data-index'), 10);
+                if (!isNaN(index) && state.pasos[index]) {
+                    state.pasos[index].texto = $textarea.val();
+                }
+                autoResizeTextarea($textarea);
             });
 
-            // Enter propone el siguiente paso numerado; Shift+Enter deja el salto de linea libre dentro de un mismo paso.
-            $receta.on('keydown', function (e) {
-                if (e.key !== 'Enter' || e.shiftKey || $(this).prop('readonly')) return;
-                e.preventDefault();
-                var numero = siguienteNumeroPasoReceta($receta);
-                insertarTextoEnCursor($receta, '\nPaso ' + numero + ': ');
-                autoResizeTextarea($receta);
+            $pasosContainer.on('click', '.js-remove-paso', function () {
+                if (state.soloLectura) return;
+                var index = parseInt($(this).attr('data-index'), 10);
+                if (isNaN(index)) return;
+                state.pasos.splice(index, 1);
+                renderPasosReceta();
+            });
+
+            $('#btnAgregarPasoReceta').on('click', function () {
+                if (state.soloLectura) return;
+                state.pasos.push({ texto: '' });
+                renderPasosReceta();
+                $pasosContainer.find('.formula-paso-row').last().find('.formula-paso-texto').focus();
+            });
+
+            $form.on('submit', function () {
+                $recetaHidden.val(construirRecetaFinal());
             });
 
             $('#btnAgregarLineaFormula').on('click', function () {
@@ -580,10 +634,9 @@
                 $action.trigger('click');
             });
 
-            if ($.trim($receta.val()) === '') {
-                $receta.val('Paso 1: ');
-            }
-            autoResizeTextarea($receta);
+            state.pasos = parsearPasosReceta($recetaHidden.val());
+            if (state.pasos.length === 0) state.pasos.push({ texto: '' });
+            renderPasosReceta();
 
             updateModeLabels();
             renderLineas();

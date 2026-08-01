@@ -120,54 +120,48 @@
                     </div>
                 </div>
 
-                <div class="border rounded p-3 mb-3 elaborados-section-box">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                        <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
-                    </div>
-
-                    <div id="elaboradoWarning" class="alert alert-info d-none py-2 px-3 mb-3"></div>
-
-                    <div class="row align-items-end">
-                        <div class="col-12 col-md-3 col-lg-2">
-                            <div class="form-group">
-                                <label for="txtCodigoElaborado">Codigo</label>
-                                <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" @(esAnulado ? "readonly" : "") />
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
                             </div>
-                        </div>
-                        <div class="col-12 col-md-9 col-lg-5">
-                            <div class="form-group">
-                                <label for="txtElaboradoNombre">Elaborado</label>
-                                <div class="input-group">
-                                    <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
-                                    <input type="hidden" id="txtElaboradoTipo" />
-                                    <input type="hidden" id="txtElaboradoPromedio" />
-                                    <input type="text" id="txtElaboradoNombre" class="form-control app-product-highlight" value="@Model.Elaborado" readonly />
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarElaborado" title="Buscar elaborado (F9)" @(esAnulado ? "disabled" : "")>
-                                            <i class="fas fa-search"></i>
-                                            <span class="d-none d-lg-inline ml-1">F9</span>
-                                        </button>
+
+                            <div id="elaboradoWarning" class="alert alert-info d-none py-2 px-3 mb-3"></div>
+
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-3 col-lg-2">
+                                    <div class="form-group">
+                                        <label for="txtCodigoElaborado">Codigo</label>
+                                        <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" @(esAnulado ? "readonly" : "") />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-9 col-lg-10">
+                                    <div class="form-group">
+                                        <label for="txtElaboradoNombre">Elaborado</label>
+                                        <div class="input-group">
+                                            <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
+                                            <input type="hidden" id="txtElaboradoTipo" />
+                                            <input type="hidden" id="txtElaboradoPromedio" />
+                                            <input type="text" id="txtElaboradoNombre" class="form-control app-product-highlight" value="@Model.Elaborado" readonly />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarElaborado" title="Buscar elaborado (F9)" @(esAnulado ? "disabled" : "")>
+                                                    <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F9</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            @if (Model.EsEdicion)
+                            {
+                                <div class="small text-muted mt-2">
+                                    Ultima actualizacion: @Model.ActualizadoPor | @Model.Actualizado
+                                </div>
+                            }
                         </div>
-                        <div class="col-12 col-lg-5">
-                            <div class="form-group mb-0">
-                                <label for="Receta">Receta</label>
-                                <textarea id="Receta" class="form-control js-auto-receta" rows="2" readonly>@Model.Receta</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    @if (Model.EsEdicion)
-                    {
-                        <div class="small text-muted mt-2">
-                            Ultima actualizacion: @Model.ActualizadoPor | @Model.Actualizado
-                        </div>
-                    }
-                </div>
 
-                <div class="row">
-                    <div class="col-12 col-xl-8">
                         <div class="border rounded p-3 mb-3 elaborados-section-box">
                             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                 <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes manuales</h6>
@@ -253,6 +247,16 @@
                     </div>
 
                     <div class="col-12 col-xl-4">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="Receta" class="sr-only">Receta</label>
+                                <textarea id="Receta" class="form-control js-auto-receta" rows="2" readonly>@Model.Receta</textarea>
+                            </div>
+                        </div>
+
                         <div class="card bg-light mb-3 elaborados-panel-card elaborados-summary-card">
                             <div class="card-body">
                                 <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Formula</h6>
