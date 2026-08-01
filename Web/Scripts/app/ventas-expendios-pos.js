@@ -312,7 +312,10 @@
                 bonificacion: Number(detalle.bonificacion || 0),
                 anulado: false,
                 indexAnulado: -1,
-                balanza: detalle.balanza === true
+                balanza: detalle.balanza === true,
+                // Los expendios siempre se cargan por peso (cantKg), no hay
+                // variante "por unidad" para este flujo.
+                pesable: true
             };
         }
 

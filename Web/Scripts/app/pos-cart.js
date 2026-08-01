@@ -169,16 +169,41 @@
             const cargadas = lineas.filter(function (linea) { return !!linea; }).length;
             const activas = lineas.filter(function (linea) { return linea && !linea.anulado; }).length;
             const anuladas = lineas.filter(function (linea) { return linea && linea.anulado; }).length;
+            const $resumenItems = $("#posVentaItemsResumen");
             const $resumen = $("#posVentaResumen");
             const $cancelar = $("#btnCancelarItem");
 
+            if ($resumenItems.length) {
+                $resumenItems.text(!activas && !anuladas ? "" : (activas + (activas === 1 ? " ítem activo" : " ítems activos") +
+                    (!eliminarFisicoLineasPendientes && anuladas ? " | " + anuladas + (anuladas === 1 ? " anulado" : " anulados") : "")));
+            }
+
             if ($resumen.length) {
-                if (!activas && !anuladas) {
-                    $resumen.text("Sin productos");
-                } else {
-                    $resumen.text(activas + (activas === 1 ? " ítem activo" : " ítems activos") +
-                        (!eliminarFisicoLineasPendientes && anuladas ? " | " + anuladas + (anuladas === 1 ? " anulado" : " anulados") : ""));
+                // Suma de cantidades del carrito, separando lo que se vende
+                // por peso (kgs) de lo que se vende por unidad, para que el
+                // cajero vea de un vistazo cuanto va a pesar/entregar sin
+                // tener que abrir cada linea.
+                let sumaKg = 0;
+                let sumaUnidades = 0;
+                lineas.forEach(function (linea) {
+                    if (!linea || linea.anulado) return;
+                    const cant = parseCant(linea.cant);
+                    if (!isFinite(cant)) return;
+                    if (linea.pesable) {
+                        sumaKg += cant;
+                    } else {
+                        sumaUnidades += cant;
+                    }
+                });
+
+                const partes = [];
+                if (sumaKg > 0) partes.push(fmtCant(sumaKg) + " kgs");
+                if (sumaUnidades > 0) {
+                    const unidadesRedondeadas = Math.round(sumaUnidades);
+                    partes.push(unidadesRedondeadas + (unidadesRedondeadas === 1 ? " unidad" : " unidades"));
                 }
+
+                $resumen.text(partes.length ? partes.join(" | ") : "Sin productos");
             }
 
             if ($cancelar.length) {
@@ -267,6 +292,7 @@
                 anulado: false,
                 indexAnulado: -1,
                 balanza: productoSeleccionado.balanza,
+                pesable: !!productoSeleccionado.pesable,
                 esHistorica: false,
                 formaPagoAplicada: formaPagoPreseleccionada ? formaPagoPreseleccionada.tipo : ''
             };
@@ -663,10 +689,16 @@
                 if (!window.lineaSeleccionada) return;
                 if (window.lineaSeleccionada.anulado) {
                     if (window.Swal) {
+                        // El boton "OK" ya queda enfocado por default de
+                        // SweetAlert2 (Enter lo dispara). Al cerrarse, el
+                        // foco se devuelve a codigo para seguir vendiendo
+                        // sin pasos extra.
                         Swal.fire({
                             icon: "info",
                             title: "Línea anulada",
                             text: "Esta línea ya fue anulada y no se puede modificar."
+                        }).then(function () {
+                            options.focusCodigo();
                         });
                     }
                     window.lineaSeleccionada = null;
@@ -718,6 +750,17 @@
                 if (!$("#chkPorcentaje").is(":checked")) return;
                 syncDesdePorcentaje();
             });
+
+            // Enter sobre el precio bonificado o el porcentaje dispara
+            // "Aplicar bonificación", igual que si el usuario clickeara el
+            // boton a mano.
+            $("#txtPrecioKg, #txtPorcentaje")
+                .off("keydown.aplicarBonif")
+                .on("keydown.aplicarBonif", function (e) {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    $("#btnAplicarBonificacion").trigger("click");
+                });
 
             $("#btnAplicarBonificacion").off("click").on("click", function () {
                 if (soloFormaPago) return;
@@ -776,12 +819,28 @@
                 if (!window.lineaSeleccionada) return;
                 const linea = window.lineaSeleccionada;
 
+                // "Enter" ya confirma solo (SweetAlert2 enfoca "Sí" por
+                // default). "N" para cancelar no es un atajo nativo de la
+                // libreria, se agrega a mano scopeado a mientras este Swal
+                // esta abierto.
+                function onKeydownCancelarConN(e) {
+                    if (e.key.toLowerCase() !== "n") return;
+                    e.preventDefault();
+                    Swal.clickCancel();
+                }
+
                 Swal.fire({
                     icon: "warning",
                     title: "¿Eliminar el producto?",
                     showCancelButton: true,
                     confirmButtonText: "Sí",
-                    cancelButtonText: "No"
+                    cancelButtonText: "No",
+                    didOpen: function () {
+                        document.addEventListener("keydown", onKeydownCancelarConN);
+                    },
+                    willClose: function () {
+                        document.removeEventListener("keydown", onKeydownCancelarConN);
+                    }
                 }).then(function (result) {
                     if (!result.isConfirmed) return;
 
@@ -816,7 +875,7 @@
                 $("#btnCantMenos").removeClass("d-none");
                 $("#btnCantMas").removeClass("d-none");
 
-                requestAnimationFrame(function () { $("#modalCantidad").focus(); });
+                requestAnimationFrame(function () { $("#modalCantidad").focus().select(); });
                 previewSubtotalDesdeCantidad();
             });
 
@@ -826,8 +885,15 @@
                     if ($(this).prop("readonly")) return;
 
                     const k = e.key;
+
+                    if (k === "Enter") {
+                        e.preventDefault();
+                        $("#btnAplicarCantidad").trigger("click");
+                        return;
+                    }
+
                     const ctrl = e.ctrlKey || e.metaKey;
-                    const allow = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Tab", "Enter"];
+                    const allow = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Tab"];
 
                     if (allow.includes(k)) return;
                     if (ctrl && ["a", "c", "v", "x"].includes(k.toLowerCase())) return;
@@ -901,6 +967,38 @@
                 $("#btnCantMas").addClass("d-none");
 
                 window.lineaSeleccionada = null;
+            });
+
+            // Atajos B/Bonificar, C/Cantidad, E/Eliminar mientras el modal
+            // "Linea de venta" esta abierto. Se ignoran si el usuario esta
+            // escribiendo en un input (para no pisar tipeo normal) o si hay
+            // un SweetAlert encima (ese tiene sus propios atajos, ver
+            // btnEliminarItem y el aviso de linea anulada).
+            document.addEventListener("keydown", function (e) {
+                if (!$("#modalLineaVenta").hasClass("show")) return;
+                if (window.Swal && Swal.isVisible && Swal.isVisible()) return;
+
+                const tag = (document.activeElement && document.activeElement.tagName) || "";
+                if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+                const key = e.key.toLowerCase();
+
+                if (key === "b" && $("#bloqueBonificar").is(":hidden")) {
+                    e.preventDefault();
+                    $("#btnMostrarBonificar").trigger("click");
+                    return;
+                }
+
+                if (key === "c" && $("#bloqueCantidad").is(":hidden")) {
+                    e.preventDefault();
+                    $("#btnMostrarCantidad").trigger("click");
+                    return;
+                }
+
+                if (key === "e") {
+                    e.preventDefault();
+                    $("#btnEliminarItem").trigger("click");
+                }
             });
         }
 

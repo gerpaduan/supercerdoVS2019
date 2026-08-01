@@ -86,6 +86,7 @@
                         break;
                     case 'F2':
                     case 'F3':
+                    case 'F4':
                     case 'F5':
                     case 'F6':
                     case 'F7':
@@ -153,7 +154,7 @@
                     return;
                 }
 
-                if (key === 'F2' || key === 'F3' || key === 'F5' || key === 'F6' || key === 'F7' || key === 'PageDown') {
+                if (key === 'F2' || key === 'F3' || key === 'F4' || key === 'F5' || key === 'F6' || key === 'F7' || key === 'PageDown') {
                     e.preventDefault();
                     runAction(key === 'PageDown' ? 'AvPag' : key, false);
                     return;

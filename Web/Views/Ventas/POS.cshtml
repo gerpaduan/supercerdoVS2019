@@ -55,6 +55,7 @@
                 anulado = lineasAnuladasPorLinea.ContainsKey(linea.IdLineaVenta),
                 indexAnulado = -1,
                 balanza = linea.PesoBalanza,
+                pesable = linea.Corte.Pesable,
                 idExpendio = linea.IdExpendio,
                 esHistorica = true
             });
@@ -243,8 +244,11 @@
                                     <h2 class="m-0 pos-total-label">Total</h2>
                                     <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
                                 </div>
-                                <div id="posVentaResumen" class="pos-sale-summary text-muted">
-                                    Sin productos
+                                <div class="d-flex justify-content-between align-items-start pos-sale-summary-row">
+                                    <div id="posVentaItemsResumen" class="pos-sale-items text-muted"></div>
+                                    <div id="posVentaResumen" class="pos-sale-summary text-muted">
+                                        Sin productos
+                                    </div>
                                 </div>
                             </div>
 
@@ -1259,15 +1263,15 @@ else
     <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-forma-pago-precios.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-product.js?v=9")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=27")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=28")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3238")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=7")"></script>
+    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=8")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=7")"></script>
     <script>
     window.EgresosCajaUrls = {
@@ -3155,6 +3159,14 @@ else
             });
         };
 
+        window.posHotkeysHooks.F4 = function () {
+            // Simula el click sobre la ultima fila del carrito para abrir
+            // el modal "Linea de venta" de ese producto (el mismo flujo que
+            // ya corre al hacer click con el mouse, incluida la validacion
+            // de linea anulada).
+            $("#tablaItems tr.fila-item").last().trigger("click");
+        };
+
         window.posHotkeysHooks.F5 = function () {
             window.POSCompras.abrirNueva();
         };
@@ -3579,6 +3591,14 @@ else
         font-size: .82rem;
         line-height: 1.2;
         text-align: right;
+        margin-top: .12rem;
+        color: #6f8094;
+    }
+
+    .pos-sale-items {
+        font-size: .82rem;
+        line-height: 1.2;
+        text-align: left;
         margin-top: .12rem;
         color: #6f8094;
     }
@@ -4071,6 +4091,12 @@ else
         font-size: .86rem;
         line-height: 1.2;
         text-align: right;
+    }
+
+    .pos-sale-items {
+        font-size: .86rem;
+        line-height: 1.2;
+        text-align: left;
     }
 
     .pos-restore-banner {
@@ -5435,6 +5461,7 @@ else
 
     html.dark-mode .pos-page .pos-fecha,
     html.dark-mode .pos-page .pos-sale-summary,
+    html.dark-mode .pos-page .pos-sale-items,
     html.dark-mode .pos-page .text-muted,
     html.dark-mode .pos-page .small.text-muted,
     html.dark-mode .pos-page #msgBalanzaPOS,
@@ -5467,7 +5494,8 @@ else
     }
 
     html.dark-mode .pos-page .pos-total-label,
-    html.dark-mode .pos-page .pos-sale-summary {
+    html.dark-mode .pos-page .pos-sale-summary,
+    html.dark-mode .pos-page .pos-sale-items {
         color: #9db0c7 !important;
     }
 
