@@ -329,7 +329,7 @@
                                 <div class="col-8 col-md-3 col-lg-2">
                                     <div class="form-group">
                                         <label for="txtCantKgs" id="lblCantidadStock">Cantidad</label>
-                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" style="min-width:8ch;" />
+                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal" inputmode="decimal" enterkeyhint="done" autocomplete="off" style="min-width:8ch;" />
                                     </div>
                                 </div>
                                 <div class="col-4 col-md-1">
@@ -966,8 +966,9 @@
     <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=33")"></script>
-    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=36")"></script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
     <script>
@@ -1028,9 +1029,13 @@
                 flashButtonSelector: "#btnFlash",
                 msgSelector: "#scannerMsg",
                 codigoInputSelector: "#txtCodigoProducto",
+                // Se cargan varios productos seguidos: la camara queda
+                // abierta lista para la proxima lectura en vez de cerrarse.
+                cerrarAlLeer: false,
                 onCodigoAceptado: function (codigo) {
                     var el = document.getElementById("txtCodigoProducto");
                     if (!el) return;
+                    window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
                     el.value = codigo;
                     el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
                 }
@@ -1097,8 +1102,9 @@ else
             }
         </style>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-        <script src="@Url.Content("~/Scripts/app/stock.js?v=33")"></script>
-        <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=1")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=36")"></script>
+        <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
+        <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
         <script>
             (function () {
@@ -1158,9 +1164,13 @@ else
                     flashButtonSelector: "#btnFlash",
                     msgSelector: "#scannerMsg",
                     codigoInputSelector: "#txtCodigoProducto",
+                    // Se cargan varios productos seguidos: la camara queda
+                    // abierta lista para la proxima lectura en vez de cerrarse.
+                    cerrarAlLeer: false,
                     onCodigoAceptado: function (codigo) {
                         var el = document.getElementById("txtCodigoProducto");
                         if (!el) return;
+                        window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
                         el.value = codigo;
                         el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
                     }

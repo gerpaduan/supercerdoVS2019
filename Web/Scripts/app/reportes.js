@@ -1105,14 +1105,19 @@
                 return;
             }
 
+            // El texto vive en un <span> propio (no directo en el boton) para
+            // que en mobile el CSS pueda ocultarlo y mostrar solo el icono
+            // (.btn-toggle-grafico-icono) sin perder el texto para desktop.
             if (!$chartRow.hasClass("d-none")) {
                 $chartRow.addClass("d-none");
-                $button.text("Mostrar grafico");
+                $button.removeClass("expandido").attr("title", "Mostrar grafico")
+                    .find(".btn-toggle-grafico-texto").text("Mostrar grafico");
                 return;
             }
 
             $chartRow.removeClass("d-none");
-            $button.text("Ocultar grafico");
+            $button.addClass("expandido").attr("title", "Ocultar grafico")
+                .find(".btn-toggle-grafico-texto").text("Ocultar grafico");
 
             if (chartInstances[idCorte] && chartInstances[idCorte].lineChart) {
                 return;

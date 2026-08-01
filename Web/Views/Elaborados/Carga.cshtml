@@ -130,7 +130,7 @@
                             <div id="elaboradoWarning" class="alert alert-info d-none py-2 px-3 mb-3"></div>
 
                             <div class="row align-items-end">
-                                <div class="col-12 col-md-3 col-lg-2">
+                                <div class="col-12 col-md-3 col-lg-2 elaborado-col-codigo">
                                     <div class="form-group">
                                         <label for="txtCodigoElaborado">Codigo</label>
                                         <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" @(esAnulado ? "readonly" : "") />
@@ -189,7 +189,7 @@
                             <div id="cargaWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
                             <div class="row align-items-end">
-                                <div class="col-12 col-md-4 col-lg-3">
+                                <div class="col-12 col-md-4 col-lg-3 ingrediente-col-codigo">
                                     <div class="form-group">
                                         <label for="txtCodigoIngrediente">Codigo</label>
                                         <input type="number" id="txtCodigoIngrediente" class="form-control" min="0" step="1" autocomplete="off" @(esAnulado ? "readonly" : "") />
@@ -389,7 +389,21 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=13")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=15")"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script>
+        // Solo en mobile: cada aviso de validacion queda entre su propio
+        // input de codigo y el de nombre (elaborado / ingrediente), a la
+        // vista del usuario (en desktop no se mueve).
+        window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
+            "#elaboradoWarning",
+            ".elaborado-col-codigo"
+        );
+        window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
+            "#cargaFeedback, #cargaWarning",
+            ".ingrediente-col-codigo"
+        );
+    </script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

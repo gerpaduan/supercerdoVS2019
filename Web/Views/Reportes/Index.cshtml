@@ -431,15 +431,28 @@
                                             <td class="text-right reporte-detalle-col d-none">@item.EgresoElaborado.ToString("N3")</td>
                                             <td class="text-right reporte-detalle-col d-none">@item.Ventas.ToString("N3")</td>
                                             <td class="text-right reporte-detalle-col d-none">@item.TotalEgresos.ToString("N3")</td>
+                                            @{ var equivalenteUnidadesStock = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(item.StockActual, item.Promedio, item.Pesable); }
                                             @if (esCierreStock)
                                             {
                                                 <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">@item.StockInicial.ToString("N3")</td>
                                                 <td class="text-right reporte-stock-resumen-col font-weight-bold">@item.StockCierre.ToString("N3")</td>
-                                                <td class="text-right reporte-stock-resumen-col">@item.StockActual.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col">
+                                                    @item.StockActual.ToString("N3")
+                                                    @if (equivalenteUnidadesStock != null)
+                                                    {
+                                                        <span class="text-muted small d-block">@equivalenteUnidadesStock</span>
+                                                    }
+                                                </td>
                                             }
                                             else
                                             {
-                                                <td class="text-right reporte-stock-resumen-col font-weight-bold">@item.StockActual.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col font-weight-bold">
+                                                    @item.StockActual.ToString("N3")
+                                                    @if (equivalenteUnidadesStock != null)
+                                                    {
+                                                        <span class="text-muted small d-block">@equivalenteUnidadesStock</span>
+                                                    }
+                                                </td>
                                             }
                                             <td class="text-right reporte-stock-resumen-col">@item.PuntoStock.ToString("N3")</td>
                                             <td class="reporte-stock-resumen-col">@item.EstadoStock</td>
@@ -489,8 +502,8 @@
                                         data-idcorte="@item.IdCorte">
                                         <td>
                                             <div class="d-flex align-items-start justify-content-between">
-                                                <div>
-                                                    <div class="font-weight-semibold">@item.Producto</div>
+                                                <div class="reporte-ventas-producto-wrap">
+                                                    <div class="font-weight-semibold reporte-ventas-producto-texto" title="@item.Producto">@item.Producto</div>
                                                     <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
                                                 </div>
                                                 @if (item.IdCorte > 0)
@@ -498,8 +511,10 @@
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-secondary btn-toggle-grafico-ventas ml-2"
                                                             data-idcorte="@item.IdCorte"
-                                                            data-producto="@item.Producto">
-                                                        Mostrar grafico
+                                                            data-producto="@item.Producto"
+                                                            title="Mostrar grafico">
+                                                        <span class="btn-toggle-grafico-texto">Mostrar grafico</span>
+                                                        <i class="fas fa-chevron-down btn-toggle-grafico-icono" aria-hidden="true"></i>
                                                     </button>
                                                 }
                                             </div>
@@ -640,7 +655,14 @@
                                             foreach (var sucursal in sucursalesProyeccion)
                                             {
                                                 var stockSucursal = item.StocksPorSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal) ?? new Web.Models.ReporteProyeccionSucursalStockVm();
-                                                <td class="text-right font-weight-bold reportes-proyeccion-stock-cell">@stockSucursal.StockActual.ToString("N3")</td>
+                                                var equivalenteUnidadesSucursal = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(stockSucursal.StockActual, stockSucursal.Promedio, stockSucursal.Pesable);
+                                                <td class="text-right font-weight-bold reportes-proyeccion-stock-cell">
+                                                    @stockSucursal.StockActual.ToString("N3")
+                                                    @if (equivalenteUnidadesSucursal != null)
+                                                    {
+                                                        <span class="text-muted small d-block font-weight-normal">@equivalenteUnidadesSucursal</span>
+                                                    }
+                                                </td>
                                                 foreach (var periodo in periodosProyeccion)
                                                 {
                                                     var valorSucursal = item.ValoresPeriodoSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal && x.PeriodoId == periodo.Id) ?? new Web.Models.ReporteProyeccionVentasStockSucursalValorVm();
@@ -659,7 +681,14 @@
                                         }
                                         else
                                         {
-                                            <td class="text-right font-weight-bold">@item.StockActual.ToString("N3")</td>
+                                            var equivalenteUnidadesProyeccion = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades(item.StockActual, item.Promedio, item.Pesable);
+                                            <td class="text-right font-weight-bold">
+                                                @item.StockActual.ToString("N3")
+                                                @if (equivalenteUnidadesProyeccion != null)
+                                                {
+                                                    <span class="text-muted small d-block font-weight-normal">@equivalenteUnidadesProyeccion</span>
+                                                }
+                                            </td>
                                             foreach (var periodo in periodosProyeccion)
                                             {
                                                 var valorPeriodo = item.ValoresPeriodo.FirstOrDefault(x => x.PeriodoId == periodo.Id) ?? new Web.Models.ReporteProyeccionVentasStockValorVm();
@@ -1035,6 +1064,13 @@
 
     .reportes-tabla {
         font-size: .84rem;
+    }
+
+    /* El icono de despliegue de "Mostrar grafico" solo se ve en responsive
+       (ver @@media max-width:767.98px mas abajo); en desktop el boton
+       sigue mostrando el texto como siempre. */
+    .btn-toggle-grafico-icono {
+        display: none;
     }
 
     .reportes-tabla th,
@@ -1612,6 +1648,42 @@
             max-width: 15ch;
         }
 
+        /* Ventas por Producto: la columna Producto se acota a 15 caracteres
+           (mismo criterio que Stock Actual arriba) para que el resto de las
+           columnas gane espacio visible. */
+        #tablaReporteVentasProducto th:first-child,
+        #tablaReporteVentasProducto td:first-child {
+            width: 15ch;
+            min-width: 15ch;
+            max-width: 15ch;
+        }
+
+        #tablaReporteVentasProducto .reporte-ventas-producto-texto {
+            max-width: 15ch;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* "Mostrar grafico" pasa a ser solo un icono de despliegue (ahorra
+           espacio horizontal); en desktop sigue siendo el boton con texto. */
+        #tablaReporteVentasProducto .btn-toggle-grafico-texto {
+            display: none;
+        }
+
+        #tablaReporteVentasProducto .btn-toggle-grafico-ventas {
+            padding: .25rem .5rem;
+        }
+
+        #tablaReporteVentasProducto .btn-toggle-grafico-icono {
+            display: inline-block;
+            transition: transform .15s ease-in-out;
+        }
+
+        #tablaReporteVentasProducto .btn-toggle-grafico-ventas.expandido .btn-toggle-grafico-icono {
+            transform: rotate(180deg);
+        }
+
         .reporte-stock-modal-top,
         .reporte-stock-modal-grid {
             grid-template-columns: 1fr;
@@ -1646,5 +1718,5 @@
             ventasPorProductoSerieUrl: "@Url.Action("VentasPorProductoSerie", "Reportes")"
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260625-2")"></script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260801-1")"></script>
 }

@@ -41,6 +41,19 @@ namespace Web.Controllers
             oCuentaCorrienteN = new Negocio.CuentaCorriente(empresa, param);
         }
 
+        // Mismo patron que ya usan StockController/PuntosExpendioController/etc. para
+        // decidir si el catalogo de cortes se puede acotar a la empresa (ObtenerCortesPorEmpresa)
+        // o hay que caer al listado completo (findAllCortes, que por RLS trae tambien el
+        // catalogo global) por no tener empresa en sesion.
+        private int ObtenerIdEmpresaSesion()
+        {
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            if (usuario != null)
+                return usuario.IdEmpresa;
+
+            return empresa != null ? empresa.IdEmpresa : 0;
+        }
+
         [HttpGet]
         public ActionResult Index(
             string tipoReporte = TipoReporteStockActual,
@@ -294,8 +307,11 @@ namespace Web.Controllers
                 string.Equals(model.TipoReporteSeleccionado, TipoReporteProyeccion, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(model.TipoReporteSeleccionado, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase);
 
+            int idEmpresaCatalogo = ObtenerIdEmpresaSesion();
             var cortes = requiereCatalogoCortes
-                ? (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+                ? (idEmpresaCatalogo > 0
+                    ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaCatalogo, false) ?? new List<Entidades.Corte>())
+                    : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>()))
                 : new List<Entidades.Corte>();
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             model.CierresDisponibles = ObtenerCierresDisponibles();
@@ -511,7 +527,10 @@ namespace Web.Controllers
             model.ConsultaRealizada = true;
             model.FilasStockActual.Clear();
 
-            var cortes = (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+            int idEmpresaCatalogo = ObtenerIdEmpresaSesion();
+            var cortes = (idEmpresaCatalogo > 0
+                    ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaCatalogo, false) ?? new List<Entidades.Corte>())
+                    : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>()))
                 .Where(x => x != null)
                 .GroupBy(x => x.IdCorte)
                 .ToDictionary(g => g.Key, g => g.First());
@@ -572,6 +591,7 @@ namespace Web.Controllers
                     StockCierre = stockCierre,
                     Promedio = LeerDecimal(row, "promedio"),
                     PuntoStock = puntoStock,
+                    Pesable = LeerBool(row, "Pesable"),
                     EstadoStock = estado
                 });
             }
@@ -604,7 +624,10 @@ namespace Web.Controllers
             model.FilasVentasProducto.Clear();
             model.PeriodosComparativosVentas = ConstruirPeriodosComparativosVentas(model.FechaDesde, model.FechaHasta, periodoComparativoDesde);
 
-            var cortes = (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+            int idEmpresaCatalogo = ObtenerIdEmpresaSesion();
+            var cortes = (idEmpresaCatalogo > 0
+                    ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaCatalogo, false) ?? new List<Entidades.Corte>())
+                    : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>()))
                 .Where(x => x != null)
                 .GroupBy(x => x.IdCorte)
                 .ToDictionary(g => g.Key, g => g.First());
@@ -746,7 +769,10 @@ namespace Web.Controllers
             model.SucursalesProyeccion.Clear();
             model.PeriodosComparativosVentas = ConstruirPeriodosComparativosVentas(model.FechaDesde, model.FechaHasta, periodoComparativoDesde);
 
-            var cortes = (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>())
+            int idEmpresaCatalogo = ObtenerIdEmpresaSesion();
+            var cortes = (idEmpresaCatalogo > 0
+                    ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaCatalogo, false) ?? new List<Entidades.Corte>())
+                    : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>()))
                 .Where(x => x != null)
                 .GroupBy(x => x.IdCorte)
                 .ToDictionary(g => g.Key, g => g.First());
@@ -780,7 +806,10 @@ namespace Web.Controllers
                 })
                 .ToList();
 
-            var stockPorSucursal = new Dictionary<int, Dictionary<long, decimal>>();
+            // Promedio/Pesable son atributos del corte (constantes entre sucursales),
+            // se llevan junto al stock para poder mostrar el equivalente en unidades
+            // sin tener que volver a buscar el producto.
+            var stockPorSucursal = new Dictionary<int, Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>>();
             foreach (var sucursal in model.SucursalesProyeccion)
             {
                 var dtStockActual = oCorteN.CierreStock(
@@ -794,7 +823,7 @@ namespace Web.Controllers
                     0,
                     model.MarcaId);
 
-                var stockPorCodigo = new Dictionary<long, decimal>();
+                var stockPorCodigo = new Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>();
                 if (dtStockActual != null)
                 {
                     foreach (System.Data.DataRow row in dtStockActual.Rows)
@@ -803,7 +832,10 @@ namespace Web.Controllers
                         if (codigo <= 0)
                             continue;
 
-                        stockPorCodigo[codigo] = LeerDecimalPrimeraCoincidencia(row, "Faltante", "DIF");
+                        stockPorCodigo[codigo] = (
+                            LeerDecimalPrimeraCoincidencia(row, "Faltante", "DIF"),
+                            LeerDecimal(row, "promedio"),
+                            LeerBool(row, "Pesable"));
                     }
                 }
 
@@ -877,12 +909,17 @@ namespace Web.Controllers
                         }
 
                         var stockActualSucursal = 0m;
-                        Dictionary<long, decimal> stockSucursalActual;
+                        var promedioSucursal = 0m;
+                        var pesableSucursal = false;
+                        Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)> stockSucursalActual;
                         if (codigo > 0
                             && stockPorSucursal.TryGetValue(sucursal.IdSucursal, out stockSucursalActual)
-                            && stockSucursalActual != null)
+                            && stockSucursalActual != null
+                            && stockSucursalActual.TryGetValue(codigo, out var stockInfo))
                         {
-                            stockSucursalActual.TryGetValue(codigo, out stockActualSucursal);
+                            stockActualSucursal = stockInfo.StockActual;
+                            promedioSucursal = stockInfo.Promedio;
+                            pesableSucursal = stockInfo.Pesable;
                         }
 
                         var stockSucursalVm = fila.StocksPorSucursal.FirstOrDefault(x => x.IdSucursal == sucursal.IdSucursal);
@@ -892,7 +929,9 @@ namespace Web.Controllers
                             {
                                 IdSucursal = sucursal.IdSucursal,
                                 Sucursal = sucursal.Sucursal,
-                                StockActual = stockActualSucursal
+                                StockActual = stockActualSucursal,
+                                Promedio = promedioSucursal,
+                                Pesable = pesableSucursal
                             });
                         }
 
@@ -929,19 +968,26 @@ namespace Web.Controllers
                     if (stockSucursal == null)
                     {
                         var stockActualSucursal = 0m;
-                        Dictionary<long, decimal> stockSucursalActual;
+                        var promedioSucursal = 0m;
+                        var pesableSucursal = false;
+                        Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)> stockSucursalActual;
                         if (fila.Codigo > 0
                             && stockPorSucursal.TryGetValue(sucursal.IdSucursal, out stockSucursalActual)
-                            && stockSucursalActual != null)
+                            && stockSucursalActual != null
+                            && stockSucursalActual.TryGetValue(fila.Codigo, out var stockInfo))
                         {
-                            stockSucursalActual.TryGetValue(fila.Codigo, out stockActualSucursal);
+                            stockActualSucursal = stockInfo.StockActual;
+                            promedioSucursal = stockInfo.Promedio;
+                            pesableSucursal = stockInfo.Pesable;
                         }
 
                         stockSucursal = new ReporteProyeccionSucursalStockVm
                         {
                             IdSucursal = sucursal.IdSucursal,
                             Sucursal = sucursal.Sucursal,
-                            StockActual = stockActualSucursal
+                            StockActual = stockActualSucursal,
+                            Promedio = promedioSucursal,
+                            Pesable = pesableSucursal
                         };
                         fila.StocksPorSucursal.Add(stockSucursal);
                     }
@@ -974,6 +1020,9 @@ namespace Web.Controllers
                     .ToList();
 
                 fila.StockActual = fila.StocksPorSucursal.Sum(x => x.StockActual);
+                var stockRepresentativo = fila.StocksPorSucursal.FirstOrDefault(x => x.Pesable && x.Promedio > 0) ?? fila.StocksPorSucursal.FirstOrDefault();
+                fila.Promedio = stockRepresentativo != null ? stockRepresentativo.Promedio : 0m;
+                fila.Pesable = stockRepresentativo != null && stockRepresentativo.Pesable;
                 fila.ValoresPeriodo = model.PeriodosComparativosVentas
                     .Select(periodo =>
                     {

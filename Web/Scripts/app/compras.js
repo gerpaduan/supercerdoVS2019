@@ -770,18 +770,22 @@
         };
 
         if (!linea.idCorte || !linea.corteNombre) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
             alert('Seleccione un producto válido.');
             return;
         }
         if (linea.cantKgs <= 0) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
             alert('Ingrese una cantidad mayor a cero.');
             return;
         }
         if (adjustedPrice <= 0) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
             alert('Ingrese un precio mayor a cero.');
             return;
         }
         if (linea.margen < 0) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
             alert('El margen no puede ser negativo.');
             return;
         }
@@ -790,6 +794,7 @@
         renderLineas($form);
         rebuildHiddenInputs($form);
         showUltimoAgregado($form, 'Agregado correctamente: ' + linea.corteNombre + ' | Cantidad ' + formatNumber(linea.cantKgs) + ' | Precio ' + formatNumber(linea.precioKg), '#alertUltimoAgregadoProducto');
+        window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
         scheduleDraft($form);
         if (isContinuousProductMode($form)) {
             clearProductoCantidadOnly($form);

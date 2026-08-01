@@ -2438,6 +2438,28 @@ else
 
 
     $('#btnFinalizar').on('click', function () {
+        // El cajero puede haber tipeado un codigo y no haberlo agregado
+        // (sin querer, sin presionar Enter): si se finaliza asi, ese
+        // producto queda sin registrar en la venta. Se bloquea mientras
+        // el input de codigo no este vacio.
+        var codigoPendiente = ($('#inputCodigo').val() || '').trim();
+        if (codigoPendiente !== '') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Código sin registrar',
+                text: 'Hay un código cargado que todavía no se agregó a la venta. Agrégelo o bórrelo antes de finalizar.',
+                // SweetAlert2 devuelve el foco solo al elemento que lo tenia
+                // antes de abrirse (returnFocus), pero eso corre despues de
+                // este .then() y nos lo pisa: se desactiva para que el foco
+                // final sea siempre el de #inputCodigo, sin importar donde
+                // estaba el foco al apretar "Finalizar".
+                returnFocus: false
+            }).then(function () {
+                $('#inputCodigo').trigger('focus');
+            });
+            return;
+        }
+
         if (soloFormaPago) {
             window.preCargarFormaPagoActual?.();
         }

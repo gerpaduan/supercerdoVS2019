@@ -791,6 +791,58 @@
         })();
     </script>
 
+    <script>
+        // Gesto de swipe para mostrar/ocultar el menu lateral, solo en mobile.
+        // No reimplementa el toggle: dispara un click sintetico sobre el mismo
+        // boton hamburguesa (#sidebarToggleTop) que ya usan sb-admin-2.js (clase
+        // .toggled) y el bloque de arriba (persistencia en localStorage), asi el
+        // gesto queda 100% consistente con el toggle manual existente.
+        (function () {
+            var mqMobile = window.matchMedia("(max-width: 767.98px)");
+            var EDGE_ZONE_PX = 24;          // franja desde el borde izquierdo que "abre" el menu
+            var SWIPE_THRESHOLD_PX = 45;    // distancia horizontal minima para contar como swipe
+            var MAX_VERTICAL_DRIFT_PX = 60; // si el dedo se desvia mucho en vertical, no es swipe (es scroll)
+
+            var touchStartX = null;
+            var touchStartY = null;
+            var startedOnSidebar = false;
+            var startedOnEdge = false;
+
+            document.addEventListener("touchstart", function (e) {
+                if (!mqMobile.matches) return;
+                if (!e.touches || e.touches.length !== 1) return;
+                var touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                startedOnSidebar = !!$(e.target).closest(".sidebar").length;
+                startedOnEdge = touch.clientX <= EDGE_ZONE_PX;
+            }, { passive: true });
+
+            document.addEventListener("touchend", function (e) {
+                if (!mqMobile.matches || touchStartX === null) return;
+                var touch = e.changedTouches && e.changedTouches[0];
+                var startX = touchStartX, startY = touchStartY;
+                touchStartX = null;
+                touchStartY = null;
+                if (!touch) return;
+
+                var dx = touch.clientX - startX;
+                var dy = touch.clientY - startY;
+                if (Math.abs(dy) > MAX_VERTICAL_DRIFT_PX) return;
+
+                var oculto = $(".sidebar").hasClass("toggled");
+
+                if (dx <= -SWIPE_THRESHOLD_PX && startedOnSidebar && !oculto) {
+                    // swipe hacia la izquierda empezando sobre el menu: ocultarlo
+                    $("#sidebarToggleTop").trigger("click");
+                } else if (dx >= SWIPE_THRESHOLD_PX && startedOnEdge && oculto) {
+                    // swipe hacia la derecha empezando cerca del borde izquierdo: mostrarlo
+                    $("#sidebarToggleTop").trigger("click");
+                }
+            }, { passive: true });
+        })();
+    </script>
+
     @*CARTEL ADVERTENCIA AL SALIR*@
     <script>
         // Estado global

@@ -122,6 +122,7 @@ namespace Web.Models
         public decimal StockCierre { get; set; }
         public decimal Promedio { get; set; }
         public decimal PuntoStock { get; set; }
+        public bool Pesable { get; set; }
         public string EstadoStock { get; set; }
     }
 
@@ -174,6 +175,8 @@ namespace Web.Models
         public int MarcaId { get; set; }
         public string Marca { get; set; }
         public decimal StockActual { get; set; }
+        public decimal Promedio { get; set; }
+        public bool Pesable { get; set; }
         public List<ReporteProyeccionVentasStockValorVm> ValoresPeriodo { get; set; }
         public List<ReporteProyeccionSucursalStockVm> StocksPorSucursal { get; set; }
         public List<ReporteProyeccionVentasStockSucursalValorVm> ValoresPeriodoSucursal { get; set; }
@@ -204,6 +207,8 @@ namespace Web.Models
         public int IdSucursal { get; set; }
         public string Sucursal { get; set; }
         public decimal StockActual { get; set; }
+        public decimal Promedio { get; set; }
+        public bool Pesable { get; set; }
     }
 
     public class ReporteProyeccionVentasStockSucursalValorVm

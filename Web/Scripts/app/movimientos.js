@@ -796,11 +796,15 @@
         }
 
         function addCurrentLine() {
-            if (!validateCurrentLine()) return;
+            if (!validateCurrentLine()) {
+                window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+                return;
+            }
             var line = buildCurrentLine();
             state.lines.push(line);
             renderLines();
             showFeedback('Agregado correctamente: ' + line.Producto + ' | Cantidad ' + line.CantUnidad + ' | Kilos ' + formatKg(line.CantKg));
+            window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
             clearProducto();
             scheduleDraft();
             focusCodigo();
@@ -909,6 +913,16 @@
         });
 
         $('#btnAgregarProducto').on('click', function () {
+            addCurrentLine();
+        });
+
+        // "Enter" (o el "Sig./Ir" del teclado tactil en mobile, que en la
+        // mayoria de los navegadores dispara el mismo evento) sobre Kgs
+        // agrega el producto, igual que tocar el boton +.
+        $cantKgs.on('keydown.movimientoAgregar', function (e) {
+            if (e.key !== 'Enter') return;
+            if ($(this).prop('readonly')) return;
+            e.preventDefault();
             addCurrentLine();
         });
 

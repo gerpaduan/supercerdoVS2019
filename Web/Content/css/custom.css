@@ -136,6 +136,24 @@ a > code {
     background: #f8fbff !important;
     opacity: 1;
 }
+
+/* El fondo/color de arriba es fijo (!important) y no tiene variante oscura:
+   en paginas con el tema de ui-refresh.css (body.app-shell), el input
+   "resaltado" del producto seleccionado (Movimientos, Stock, etc.) quedaba
+   siempre con fondo claro aunque el resto de la pagina estuviera en modo
+   oscuro. Se pisa con las mismas variables que usa el resto de los inputs
+   en modo oscuro (--ui-input-bg / --ui-text de ui-refresh.css). */
+html.dark-mode body.app-shell .app-product-highlight,
+body.app-shell.dark-mode .app-product-highlight,
+html.dark-mode body.app-shell .app-product-highlight[readonly],
+body.app-shell.dark-mode .app-product-highlight[readonly],
+html.dark-mode body.app-shell .app-product-highlight:read-only,
+body.app-shell.dark-mode .app-product-highlight:read-only {
+    color: var(--ui-text) !important;
+    -webkit-text-fill-color: var(--ui-text);
+    background: var(--ui-input-bg) !important;
+    border-color: var(--ui-border) !important;
+}
 /* Contenedor responsive: permite scroll horizontal si es necesario */
 .table-responsive {
     overflow-x: auto !important;

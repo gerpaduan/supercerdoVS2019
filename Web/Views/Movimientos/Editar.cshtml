@@ -159,7 +159,7 @@
                                 <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
                                     <div class="form-group">
                                         <label for="txtCantKgs">Kgs.</label>
-                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal movimiento-input-cantidad" inputmode="decimal" autocomplete="off" />
+                                        <input type="text" id="txtCantKgs" class="form-control solo-decimal movimiento-input-cantidad" inputmode="decimal" enterkeyhint="done" autocomplete="off" />
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6 col-lg-auto movimiento-col-accion">
@@ -437,6 +437,26 @@
         min-width: 100%;
     }
 
+    /* El input de codigo ahora vive dentro de un .input-group junto al
+       boton de escanear (btnScanner). El width:100%/min-width:100% de
+       arriba asume un input suelto: dentro del input-group empuja al
+       boton a su propia fila (mismo problema que el filtro de "Mis
+       actividades" del 2026-07-31, ver incidencias-frecuentes.md). Se
+       pisa con mayor especificidad para que el input vuelva a compartir
+       fila con el boton via flexbox normal de Bootstrap. */
+    .movimiento-page .input-group .movimiento-input-codigo {
+        /* Bootstrap resuelve esto con width:1% (no "auto") en su propio
+           ".input-group > .form-control": el motor de flexbox decide en
+           que fila entra cada item usando el ancho preferido ANTES de
+           aplicar el shrink, y "auto" cae al ancho nativo del <input>
+           (~190px), mas ancho que el hueco junto al boton -> wrappea.
+           1% le da un ancho preferido chico para esa decision; el
+           flex-grow:1 despues lo estira para ocupar la fila entera. */
+        width: 1%;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
     .movimiento-page .movimiento-input-cantidad {
         width: 100%;
         min-width: 100%;
@@ -630,8 +650,18 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=22")"></script>
-    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=25")"></script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script>
+        // Solo en mobile: el aviso de validacion queda entre codigo y
+        // producto (a la vista del usuario, en vez de arriba de todo,
+        // detras de la camara; en desktop no se mueve).
+        window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
+            "#movimientoFeedback, #movimientoWarning",
+            ".movimiento-col-codigo"
+        );
+    </script>
     <script>
         // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
         // Enter que ya usa la busqueda manual (movimientos.js), asi reusa la
@@ -645,9 +675,13 @@
             flashButtonSelector: "#btnFlash",
             msgSelector: "#scannerMsg",
             codigoInputSelector: "#txtCodigoProducto",
+            // Acá se cargan varios productos seguidos: la camara queda
+            // abierta lista para la proxima lectura en vez de cerrarse sola.
+            cerrarAlLeer: false,
             onCodigoAceptado: function (codigo) {
                 var el = document.getElementById("txtCodigoProducto");
                 if (!el) return;
+                window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
                 el.value = codigo;
                 el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
             }

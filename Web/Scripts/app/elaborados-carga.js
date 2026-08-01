@@ -680,7 +680,10 @@
 
         function agregarLinea() {
             clearWarning();
-            if (!validarLineaActual()) return;
+            if (!validarLineaActual()) {
+                window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+                return;
+            }
 
             var linea = {
                 IdCorte: toInt($ingredienteId.val()),
@@ -695,6 +698,7 @@
             renderLineas();
             clearIngrediente();
             showFeedback('Agregado correctamente: <strong>' + linea.Producto + '</strong> | Cantidad <strong>' + formatKg(linea.CantKg) + '</strong>');
+            window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
             scheduleDraft();
             focusIngredienteCodigo();
         }

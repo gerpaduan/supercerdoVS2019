@@ -2106,7 +2106,10 @@
     function addLinea($form) {
         var state = getState($form);
         var linea = validarLinea($form);
-        if (!linea) return;
+        if (!linea) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+            return;
+        }
 
         state.lineas.push(linea);
         renderLineas($form);
@@ -2115,6 +2118,7 @@
             $form,
             'Agregado correctamente: <strong>' + escapeHtml(linea.producto) + '</strong> | Cantidad <strong>' + escapeHtml(formatNumber(linea.cantKgs, 3)) + '</strong>'
         );
+        window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
         clearProductoInputs($form);
         $form.find('#txtCodigoProducto').focus();
     }

@@ -862,9 +862,16 @@ namespace Negocio
                         StockActual = x.StockActual,
                         Promedio = x.Promedio,
                         PuntoStock = x.PuntoStock,
+                        Pesable = x.Pesable,
                         EstadoStock = NormalizarEstadoStock(x.EstadoStock)
                     })
                     .ToList();
+
+                // el producto es el mismo para todas las sucursales del grupo:
+                // "pesable" y "promedio" son propiedades del corte, no de la sucursal.
+                var primeraFila = grupo.FirstOrDefault();
+                bool productoPesable = primeraFila != null && primeraFila.Pesable;
+                float productoPromedio = primeraFila != null ? primeraFila.Promedio : 0f;
 
                 foreach (var columna in resultado.Columnas)
                 {
@@ -874,6 +881,8 @@ namespace Negocio
                         IdSucursal = columna.IdSucursal,
                         Sucursal = columna.Sucursal,
                         StockActual = filaSucursal != null ? filaSucursal.StockActual : 0f,
+                        Promedio = filaSucursal != null ? filaSucursal.Promedio : productoPromedio,
+                        Pesable = filaSucursal != null ? filaSucursal.Pesable : productoPesable,
                         EstadoStock = filaSucursal != null
                             ? NormalizarEstadoStock(filaSucursal.EstadoStock)
                             : "SIN STOCK"
@@ -886,8 +895,9 @@ namespace Negocio
                             IdSucursal = columna.IdSucursal,
                             Sucursal = columna.Sucursal,
                             StockActual = 0f,
-                            Promedio = 0f,
+                            Promedio = productoPromedio,
                             PuntoStock = 0f,
+                            Pesable = productoPesable,
                             EstadoStock = "SIN STOCK"
                         });
                     }

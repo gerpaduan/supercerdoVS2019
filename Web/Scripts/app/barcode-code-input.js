@@ -145,7 +145,15 @@
                 pausaLecturaActiva = true;
                 setMsg('Código leído correctamente.');
                 beep();
-                scanner.cerrar();
+                // Por default se cierra la camara tras leer (flujo de un
+                // solo codigo, ej. AddOrEdit). Si el consumidor pasa
+                // cerrarAlLeer:false (flujo de cargar varios productos
+                // seguidos, ej. Movimientos/Stock), la camara queda abierta
+                // y lista para la proxima lectura; el cooldown de mas abajo
+                // sigue evitando que la misma lectura se dispare de nuevo.
+                if (options.cerrarAlLeer !== false) {
+                    scanner.cerrar();
+                }
                 pausaLecturaTimer = setTimeout(function () {
                     limpiarEstadoLectura();
                     setMsg('');

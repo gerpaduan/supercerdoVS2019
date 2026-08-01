@@ -1696,7 +1696,8 @@ namespace Datos
                 int idProveedor,
                 int idMarca)
         {
-            string sp = (nroCierre == 2) ? "StockCierre_2" : "a_CierreStock";
+            bool esCierreClasico = nroCierre == 2;
+            string sp = esCierreClasico ? "StockCierre_2" : "a_CierreStock";
 
             return Db.DataTable(
                 _empresa,
@@ -1711,6 +1712,11 @@ namespace Datos
                     p.AddWithValue("@tipo", tipo ?? "");
                     p.AddWithValue("@idProveedor", idProveedor);
                     p.AddWithValue("@idMarca", idMarca);
+                    // StockCierre_2 no tiene este parametro (SP separado, solo usado
+                    // por el desktop WinForms con nroCierre=2) — no se envia ahi para
+                    // no romper esa llamada.
+                    if (!esCierreClasico)
+                        p.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
                 },
                 conexionSucursal: string.IsNullOrWhiteSpace(conexionSucursal) ? null : conexionSucursal
             );
@@ -1945,6 +1951,7 @@ namespace Datos
                     StockActual = dr["StockActual"] == DBNull.Value ? 0f : Convert.ToSingle(dr["StockActual"]),
                     Promedio = dr["promedio"] == DBNull.Value ? 0f : Convert.ToSingle(dr["promedio"]),
                     PuntoStock = dr["PuntoStock"] == DBNull.Value ? 0f : Convert.ToSingle(dr["PuntoStock"]),
+                    Pesable = dr["pesable"] != DBNull.Value && Convert.ToBoolean(dr["pesable"]),
                     EstadoStock = dr["EstadoStock"] == DBNull.Value ? "" : Convert.ToString(dr["EstadoStock"])
                 },
                 setParams: p =>

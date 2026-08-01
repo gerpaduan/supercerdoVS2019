@@ -177,16 +177,19 @@
             var pesoBalanza = $('#chkBalanzaLinea').is(':checked');
 
             if (idCorte <= 0 || !producto) {
+                window.BusquedaFeedback && window.BusquedaFeedback.beepError();
                 showWarning('Debe seleccionar un producto válido.');
                 return;
             }
 
             if (!cantKg.ok || cantKg.value <= 0) {
+                window.BusquedaFeedback && window.BusquedaFeedback.beepError();
                 showWarning('Debe ingresar una cantidad en kilos mayor a cero.');
                 return;
             }
 
             if (!precioKg.ok || precioKg.value <= 0) {
+                window.BusquedaFeedback && window.BusquedaFeedback.beepError();
                 showWarning('Debe ingresar un precio por kilo mayor a cero.');
                 return;
             }
@@ -202,6 +205,7 @@
             });
 
             renderLines();
+            window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
             clearProducto();
             $('#txtCodigoProductoExpendio').trigger('focus');
         }

@@ -59,6 +59,7 @@ namespace Entidades
         public float StockActual { get; set; }
         public float Promedio { get; set; }
         public float PuntoStock { get; set; }
+        public bool Pesable { get; set; }
         public string EstadoStock { get; set; }
     }
 
@@ -112,6 +113,8 @@ namespace Entidades
         public int IdSucursal { get; set; }
         public string Sucursal { get; set; }
         public float StockActual { get; set; }
+        public float Promedio { get; set; }
+        public bool Pesable { get; set; }
         public string EstadoStock { get; set; }
     }
 
@@ -135,6 +138,7 @@ namespace Entidades
         public float StockActual { get; set; }
         public float Promedio { get; set; }
         public float PuntoStock { get; set; }
+        public bool Pesable { get; set; }
         public string EstadoStock { get; set; }
     }
 
@@ -152,6 +156,21 @@ namespace Entidades
             Columnas = new List<SucursalColumnaStockVm>();
             Productos = new List<ProductoStockPorSucursalVm>();
             Mensaje = "";
+        }
+    }
+
+    // Formatea el equivalente en unidades de un stock en kilos (stock / promedio
+    // por unidad), usado en ExistenciaPorSucursales y en los reportes de stock.
+    // Solo tiene sentido para productos pesables con un promedio cargado.
+    public static class StockUnidadesHelper
+    {
+        public static string FormatearEquivalenteUnidades(decimal stock, decimal promedio, bool pesable)
+        {
+            if (!pesable || promedio <= 0)
+                return null;
+
+            decimal equivalente = stock / promedio;
+            return equivalente.ToString("N1", System.Globalization.CultureInfo.InvariantCulture) + " un.";
         }
     }
 }

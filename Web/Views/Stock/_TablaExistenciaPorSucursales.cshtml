@@ -284,6 +284,11 @@ else
 
                             <td class="text-right text-nowrap @CssEstado(celda.EstadoStock)" title="@celda.EstadoStock">
                                 @celda.StockActual.ToString("N3")
+                                @{ var equivalenteUnidades = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)celda.StockActual, (decimal)celda.Promedio, celda.Pesable); }
+                                @if (equivalenteUnidades != null)
+                                {
+                                    <span class="existencia-producto-codigo">@equivalenteUnidades</span>
+                                }
                             </td>
                         }
                         <td class="text-center existencia-col-toggle-cell">
