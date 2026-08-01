@@ -451,3 +451,55 @@ a > code {
         display: block;
     }
 }
+
+/* Scanner de codigo de barra por camara (compartido por las vistas que usan
+   Views/Shared/_ScannerCodigoBarra.cshtml + Scripts/app/barcode-code-input.js).
+   Mismos valores que el bloque propio de Views/Productos/AddOrEdit.cshtml
+   (no se toca ese archivo, se deja como esta). width:100% lo hace responsive
+   de fabrica, sin necesidad de media queries aparte. */
+#scannerContainer {
+    margin-bottom: .75rem;
+}
+
+.scanner-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    height: 80px;
+    overflow: hidden;
+    background: #000;
+    border-radius: 8px;
+}
+
+#videoScanner {
+    width: 100%;
+    height: auto;
+}
+
+.scanner-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: red;
+    box-shadow: 0 0 6px red;
+    animation: scan 1.2s linear infinite;
+}
+
+@keyframes scan {
+    0% {
+        top: 15%;
+        opacity: .9;
+    }
+
+    50% {
+        top: 50%;
+        opacity: 1;
+    }
+
+    100% {
+        top: 85%;
+        opacity: .9;
+    }
+}

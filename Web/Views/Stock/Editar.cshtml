@@ -291,11 +291,21 @@
                                 </div>
                             </div>
 
+                            @Html.Partial("~/Views/Shared/_ScannerCodigoBarra.cshtml")
+
                             <div class="row align-items-end">
                                 <div class="col-12 col-md-3 col-lg-3">
                                     <div class="form-group">
                                         <label for="txtCodigoProducto">Código</label>
-                                        <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" style="min-width:13ch;" />
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código de barra">
+                                                    <i class="fas fa-barcode"></i>
+                                                </button>
+                                            </div>
+                                            <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" style="min-width:13ch;" />
+                                        </div>
+                                        <small id="scannerMsg" class="text-danger d-none"></small>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-5 col-lg-6">
@@ -950,8 +960,14 @@
             color: #f8f9fc;
         }
     </style>
+    @* Este modo no pasa por _LayoutBase.cshtml, asi que scanner.js/ZXing no estan
+       cargados todavia: se agregan aca para que el boton de escanear funcione
+       igual que en el modo con layout completo. *@
+    <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/stock.js?v=33")"></script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
     <script>
@@ -997,6 +1013,26 @@
                     if (window.StockUI && typeof window.StockUI.syncPrimaryAction === "function") {
                         window.StockUI.syncPrimaryAction($form);
                     }
+                }
+            });
+
+            // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
+            // Enter que ya usa la busqueda manual (stock.js), asi reusa la logica
+            // existente de buscar producto + foco en Cantidad sin duplicarla.
+            window.BarcodeCodeInput && window.BarcodeCodeInput.attach({
+                videoSelector: "#videoScanner",
+                containerSelector: "#scannerContainer",
+                buttonSelector: "#btnScanner",
+                closeButtonSelector: "#btnCerrarScanner",
+                clearButtonSelector: "#btnLimpiarScanner",
+                flashButtonSelector: "#btnFlash",
+                msgSelector: "#scannerMsg",
+                codigoInputSelector: "#txtCodigoProducto",
+                onCodigoAceptado: function (codigo) {
+                    var el = document.getElementById("txtCodigoProducto");
+                    if (!el) return;
+                    el.value = codigo;
+                    el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
                 }
             });
         })();
@@ -1062,6 +1098,7 @@ else
         </style>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
         <script src="@Url.Content("~/Scripts/app/stock.js?v=33")"></script>
+        <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=1")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
         <script>
             (function () {
@@ -1106,6 +1143,26 @@ else
                         if (window.StockUI && typeof window.StockUI.syncPrimaryAction === "function") {
                             window.StockUI.syncPrimaryAction($form);
                         }
+                    }
+                });
+
+                // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
+                // Enter que ya usa la busqueda manual (stock.js), asi reusa la logica
+                // existente de buscar producto + foco en Cantidad sin duplicarla.
+                window.BarcodeCodeInput && window.BarcodeCodeInput.attach({
+                    videoSelector: "#videoScanner",
+                    containerSelector: "#scannerContainer",
+                    buttonSelector: "#btnScanner",
+                    closeButtonSelector: "#btnCerrarScanner",
+                    clearButtonSelector: "#btnLimpiarScanner",
+                    flashButtonSelector: "#btnFlash",
+                    msgSelector: "#scannerMsg",
+                    codigoInputSelector: "#txtCodigoProducto",
+                    onCodigoAceptado: function (codigo) {
+                        var el = document.getElementById("txtCodigoProducto");
+                        if (!el) return;
+                        el.value = codigo;
+                        el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
                     }
                 });
             })();

@@ -115,11 +115,21 @@
                             <div id="movimientoFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                             <div id="movimientoWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
+                            @Html.Partial("~/Views/Shared/_ScannerCodigoBarra.cshtml")
+
                             <div class="row align-items-end movimiento-producto-row">
                                 <div class="col-12 col-md-4 col-lg-3 movimiento-col-codigo">
                                     <div class="form-group">
                                         <label for="txtCodigoProducto">Código</label>
-                                        <input type="number" id="txtCodigoProducto" class="form-control movimiento-input-codigo" min="0" step="1" autocomplete="off" />
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código de barra">
+                                                    <i class="fas fa-barcode"></i>
+                                                </button>
+                                            </div>
+                                            <input type="number" id="txtCodigoProducto" class="form-control movimiento-input-codigo" min="0" step="1" autocomplete="off" />
+                                        </div>
+                                        <small id="scannerMsg" class="text-danger d-none"></small>
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-8 col-lg movimiento-col-producto">
@@ -621,6 +631,28 @@
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js?v=22")"></script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=1")"></script>
+    <script>
+        // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
+        // Enter que ya usa la busqueda manual (movimientos.js), asi reusa la
+        // logica existente de buscar producto + foco en Cant.Un. sin duplicarla.
+        window.BarcodeCodeInput && window.BarcodeCodeInput.attach({
+            videoSelector: "#videoScanner",
+            containerSelector: "#scannerContainer",
+            buttonSelector: "#btnScanner",
+            closeButtonSelector: "#btnCerrarScanner",
+            clearButtonSelector: "#btnLimpiarScanner",
+            flashButtonSelector: "#btnFlash",
+            msgSelector: "#scannerMsg",
+            codigoInputSelector: "#txtCodigoProducto",
+            onCodigoAceptado: function (codigo) {
+                var el = document.getElementById("txtCodigoProducto");
+                if (!el) return;
+                el.value = codigo;
+                el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+            }
+        });
+    </script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

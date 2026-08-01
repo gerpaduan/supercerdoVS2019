@@ -1942,6 +1942,7 @@
     <Content Include="Scripts\app\pos-multi-instance.js" />
     <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\app\scanner.js" />
+    <Content Include="Scripts\app\barcode-code-input.js" />
     <Content Include="Scripts\app\pos-balanza.js" />
     <Content Include="Scripts\app\stock.js" />
     <Content Include="Scripts\app\elaborados.js" />
@@ -2137,6 +2138,7 @@
     <Content Include="Views\Reportes\Index.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Shared\_CalculadoraBilletesModal.cshtml" />
+    <Content Include="Views\Shared\_ScannerCodigoBarra.cshtml" />
     <Content Include="Views\Shared\_AdvertenciaPermisoFecha.cshtml" />
     <Content Include="Views\Shared\_LineasAgrupadasStyles.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
