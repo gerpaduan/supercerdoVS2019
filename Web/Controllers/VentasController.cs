@@ -1675,6 +1675,36 @@ namespace Web.Controllers
                     if (factura.Venta == null)
                         return Json(new { ok = false, msg = "Venta no encontrada" });
 
+                    // Factura ya emitida (tiene CAE): los campos fiscales ya fueron
+                    // reportados a AFIP y no se tocan nunca por este camino, sin
+                    // importar lo que haya mandado el cliente en el POST (defensa
+                    // en profundidad -- la UI ya los pone readonly/disabled, pero
+                    // el servidor no debe confiar en eso). Solo quedan editables
+                    // los campos que MapDtoToFactura ya tomo del DTO y que la UI
+                    // deja editables cuando ya-emitida=1: FormaPago, Observaciones,
+                    // DescItemUnitario (ver _FacturaElectronica.cshtml).
+                    var facturaExistente = oVentaN.getFactuElecById(dto.IdFactura);
+                    if (facturaExistente == null)
+                        return Json(new { ok = false, msg = "Factura no encontrada" });
+
+                    factura.PtoVtaAfip = facturaExistente.PtoVtaAfip;
+                    factura.CodTipoCbteAfip = facturaExistente.CodTipoCbteAfip;
+                    factura.DescTipoCbteAfip = facturaExistente.DescTipoCbteAfip;
+                    factura.NroCbteAfip = facturaExistente.NroCbteAfip;
+                    factura.FechaEmisionAfip = facturaExistente.FechaEmisionAfip;
+                    factura.TipoDocAfip = facturaExistente.TipoDocAfip;
+                    factura.NroDocAfip = facturaExistente.NroDocAfip;
+                    factura.RazonSocialAFIP = facturaExistente.RazonSocialAFIP;
+                    factura.CondicionIvaAFIP = facturaExistente.CondicionIvaAFIP;
+                    factura.DomicilioAFIP = facturaExistente.DomicilioAFIP;
+                    factura.CondicionVenta = facturaExistente.CondicionVenta;
+                    factura.PorcentajeFacturacion = facturaExistente.PorcentajeFacturacion;
+                    factura.ImporteNetoGravado = facturaExistente.ImporteNetoGravado;
+                    factura.Iva = facturaExistente.Iva;
+                    factura.ImporteTotal = facturaExistente.ImporteTotal;
+                    factura.CAE1 = facturaExistente.CAE1;
+                    factura.FecVtoCAE = facturaExistente.FecVtoCAE;
+
                     oVentaN.addOrEditFactuElec(factura);
 
                     return Json(new

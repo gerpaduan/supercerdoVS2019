@@ -495,12 +495,17 @@
             $('#feInputPorcentajeUI').prop('readonly', true);
             $('#feInputTotalFacturar').prop('readonly', true);
             $('#feModoPorcentaje, #feModoTotal').prop('disabled', true);
+            // No recalcular: los importes ya vienen correctos desde el server
+            // (Model.ImporteTotal/ImporteNetoGravado/Iva, ya persistidos con el
+            // % aplicado en su momento). Si se llamara a aplicarPorcentaje aca,
+            // volveria a multiplicar ese total ya reducido por el mismo % de
+            // nuevo (bug: 56% de un total ya facturado al 56% -> 31.36%).
         } else {
             habilitarInputsEdicion(ajusteInicialActivo);
+            // Recalcular desde el % actual: solo aplica a una factura nueva
+            // (el total todavia es el 100% de la venta).
+            aplicarPorcentaje(porcentajeInicial);
         }
-
-        // Recalcular o restaurar respetando el porcentaje guardado
-        aplicarPorcentaje(porcentajeInicial);
 
         $('#feAgruparItemUnitario').prop('checked', $f.data('agrupar-item') === 1 || $f.data('agrupar-item') === "1");
         actualizarEstadoAgruparItemUnitario();
