@@ -1523,6 +1523,30 @@ namespace Datos
             );
         }
 
+        // Reemplazo de CierreStock exclusivo para Web (SP a_CierreStockWeb). No usar desde
+        // WinForms: ese cliente sigue en CierreStock/a_CierreStock, que nunca se toca (ver
+        // docs/DECISIONS.md). idSucursal=0 trae todas las sucursales de la empresa en una
+        // sola llamada (a diferencia de a_CierreStock, que con idSucursal=0 devuelve 0 filas).
+        public DataTable CierreStockWeb(string texto, int idEmpresa, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
+        {
+            return Db.DataTable(
+                _empresa,
+                "a_CierreStockWeb",
+                CommandType.StoredProcedure,
+                setParams: p =>
+                {
+                    p.AddWithValue("@texto", texto ?? "");
+                    p.AddWithValue("@idEmpresa", idEmpresa);
+                    p.AddWithValue("@idSucursal", idSucursal);
+                    p.AddWithValue("@fechaDesde", fechaDesde);
+                    p.AddWithValue("@fechaHasta", fechaHasta);
+                    p.AddWithValue("@tipo", tipo ?? "");
+                    p.AddWithValue("@idProveedor", idProveedor);
+                    p.AddWithValue("@idMarca", idMarca);
+                }
+            );
+        }
+
         public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
         {
             return Db.DataTable(

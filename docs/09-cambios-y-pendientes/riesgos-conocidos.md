@@ -4,6 +4,13 @@
 
 Concentrar puntos sensibles que requieren especial cuidado antes de cualquier ajuste.
 
+## 2026-08-04 - `a_CierreStock` (SP compartido con WinForms) tiene 2 bugs reales de calculo
+
+- Riesgo: `dbo.a_CierreStock` (usado por Stock Actual/Cierre Stock, ver `docs/DECISIONS.md` 2026-08-05 para el detalle completo) tiene 2 bugs de comportamiento encontrados al escribir su reemplazo `a_CierreStockWeb`: (1) arma la sucursal via `CROSS APPLY (SELECT TOP 1 * FROM Sucursal WHERE idSucursal=@idSucursal) s`, que sin coincidencias se comporta como `INNER JOIN` -- con `@idSucursal=0` (el default cuando el usuario ve el reporte sin filtrar por una sucursal puntual) el SP devuelve **0 filas sin error**, no un error visible; (2) el filtro `enCierreStock=1` no se aplica en el mismo punto segun si hay `@texto` o no -- buscar un producto por texto se saltea ese filtro, mostrando productos que no deberian entrar en el cierre de stock.
+- Area afectada: `dbo.a_CierreStock`, `Negocio.Corte.CierreStock`, cualquier pantalla de WinForms que use "Stock Actual"/"Cierre Stock" sin elegir una sucursal puntual o buscando por texto (`Presentacion/Cortes/formReporteStock.cs`, `Presentacion/Stock/formStockActual.cs`, `Presentacion/Stock/formAddOrEditStock.cs`).
+- Posible impacto: en WinForms, un usuario que entra a Stock Actual/Cierre Stock sin fijar sucursal puede ver una grilla vacia sin ningun mensaje de error (bug 1); una busqueda por texto puede traer productos fuera del cierre de stock (bug 2).
+- Mitigacion: **no aplicada en WinForms** -- por regla del proyecto ese SP y ese cliente no se tocan nunca sin poder probarlo. En Web, `a_CierreStockWeb` (SP nuevo, exclusivo de Web) corrige ambos bugs de raiz. Si en el futuro se decide corregir tambien el lado WinForms, coordinar una sesion de testing manual de esa app antes de tocar el SP compartido -- no asumir que el fix de Web es trasladable sin verificarlo ahi.
+
 ## 2026-08-04 - DESCARTADO: sospecha de que Tipo/IVA/Independiente se reseteaban al presionar "Modificar" en `Productos/AddOrEdit`
 
 - Lo que se penso originalmente: durante testing en vivo se vio, en un producto real (CABEZA), que despues de presionar "Modificar" (`#btnHabilitarEdicionProducto`) los `<select>` de Tipo e IVA quedaban en blanco. Se documento como riesgo serio y sin causa raiz identificada.

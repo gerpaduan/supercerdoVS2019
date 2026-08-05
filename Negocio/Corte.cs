@@ -733,6 +733,44 @@ namespace Negocio
             return dtGrillaReporte;
         }
 
+        // Reemplazo de CierreStock exclusivo para Web (ver Datos/Corte.cs:CierreStockWeb y
+        // docs/DECISIONS.md). A diferencia del viejo, Tot.INGR/Tot.EGR/DIF/Faltante/Stock.Un ya
+        // vienen calculados desde el SP -- solo hace falta sobrescribir Pto.Stock con el valor
+        // real por sucursal (mismo motivo que CierreStock) y recalcular Falta, que depende de
+        // Pto.Stock. idSucursal=0 trae varias sucursales en una sola llamada, por eso el override
+        // se agrupa por la columna idSucursal del resultado en vez de un solo idSucursal fijo.
+        public DataTable CierreStockWeb(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
+        {
+            DataTable dtGrillaReporte = oCorteD.CierreStockWeb(texto, _empresa.IdEmpresa, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+
+            var idsSucursalesEnResultado = dtGrillaReporte.Rows
+                .Cast<DataRow>()
+                .Select(r => r.Field<int>("idSucursal"))
+                .Distinct()
+                .ToList();
+
+            var puntosStockPorSucursal = new Dictionary<(int idCorte, int idSucursal), int>();
+            foreach (var idSuc in idsSucursalesEnResultado)
+            {
+                foreach (var par in oCortePuntoStockSucursalD.FindPorSucursal(idSuc))
+                    puntosStockPorSucursal[(par.Key, idSuc)] = par.Value;
+            }
+
+            foreach (DataRow fila in dtGrillaReporte.Rows)
+            {
+                int idCorteFila = fila.Field<int>("idCorte");
+                int idSucursalFila = fila.Field<int>("idSucursal");
+                int puntoStockReal = puntosStockPorSucursal.TryGetValue((idCorteFila, idSucursalFila), out int p) ? p : 0;
+
+                fila["Pto.Stock"] = (decimal)puntoStockReal;
+
+                decimal dif = Convert.ToDecimal(fila["DIF"]);
+                fila["Falta"] = puntoStockReal > 0 && (dif < 0 || puntoStockReal > dif) ? "X" : "";
+            }
+
+            return dtGrillaReporte;
+        }
+
          public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo , int idProveedor, int idMarca)
          {
              

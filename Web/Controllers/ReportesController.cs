@@ -487,25 +487,21 @@ namespace Web.Controllers
 
         private void CargarReporteStockDesdeCierres(ReportesViewModel model, bool graficarTop)
         {
-            var dt = oCorteN.CierreStock(
-                1,
+            var dt = oCorteN.CierreStockWeb(
                 "",
                 model.SucursalId > 0 ? model.SucursalId : 0,
                 model.FechaDesde,
                 model.FechaHasta,
-                null,
                 "",
                 0,
                 0);
 
             // Obtener Stock Cierre (stock en la fecha hasta)
-            var dtStockCierre = oCorteN.CierreStock(
-                1,
+            var dtStockCierre = oCorteN.CierreStockWeb(
                 "",
                 model.SucursalId > 0 ? model.SucursalId : 0,
                 model.FechaHasta,
                 model.FechaHasta,
-                null,
                 "",
                 0,
                 0);
@@ -810,36 +806,39 @@ namespace Web.Controllers
             // se llevan junto al stock para poder mostrar el equivalente en unidades
             // sin tener que volver a buscar el producto.
             var stockPorSucursal = new Dictionary<int, Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>>();
-            foreach (var sucursal in model.SucursalesProyeccion)
+            // Una sola llamada para todas las sucursales de la proyeccion (a_CierreStockWeb
+            // soporta idSucursal=0 = "todas"), en vez de una llamada al SP por sucursal en un
+            // loop -- ver auditoria de performance, era el cuello de botella mas grande de los
+            // encontrados (el SP mas caro de los tres, ejecutado N veces).
+            var dtStockActualTodas = oCorteN.CierreStockWeb(
+                model.BusquedaProducto,
+                model.SucursalId > 0 ? model.SucursalId : 0,
+                fechaUltimoCierreStock,
+                DateTime.Now,
+                model.TipoProducto,
+                0,
+                model.MarcaId);
+
+            if (dtStockActualTodas != null)
             {
-                var dtStockActual = oCorteN.CierreStock(
-                    1,
-                    model.BusquedaProducto,
-                    sucursal.IdSucursal,
-                    fechaUltimoCierreStock,
-                    DateTime.Now,
-                    null,
-                    model.TipoProducto,
-                    0,
-                    model.MarcaId);
-
-                var stockPorCodigo = new Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>();
-                if (dtStockActual != null)
+                foreach (System.Data.DataRow row in dtStockActualTodas.Rows)
                 {
-                    foreach (System.Data.DataRow row in dtStockActual.Rows)
+                    var codigo = LeerLong(row, "Codigo");
+                    if (codigo <= 0)
+                        continue;
+
+                    int idSucursalFila = LeerInt(row, "idSucursal");
+                    if (!stockPorSucursal.TryGetValue(idSucursalFila, out var stockPorCodigo))
                     {
-                        var codigo = LeerLong(row, "Codigo");
-                        if (codigo <= 0)
-                            continue;
-
-                        stockPorCodigo[codigo] = (
-                            LeerDecimalPrimeraCoincidencia(row, "Faltante", "DIF"),
-                            LeerDecimal(row, "promedio"),
-                            LeerBool(row, "Pesable"));
+                        stockPorCodigo = new Dictionary<long, (decimal StockActual, decimal Promedio, bool Pesable)>();
+                        stockPorSucursal[idSucursalFila] = stockPorCodigo;
                     }
-                }
 
-                stockPorSucursal[sucursal.IdSucursal] = stockPorCodigo;
+                    stockPorCodigo[codigo] = (
+                        LeerDecimalPrimeraCoincidencia(row, "Faltante", "DIF"),
+                        LeerDecimal(row, "promedio"),
+                        LeerBool(row, "Pesable"));
+                }
             }
 
             var filas = new Dictionary<string, ReporteProyeccionVentasStockFilaVm>(StringComparer.OrdinalIgnoreCase);
