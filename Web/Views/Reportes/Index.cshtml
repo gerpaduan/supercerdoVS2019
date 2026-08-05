@@ -371,6 +371,8 @@
                                         @if (esCierreStock)
                                         {
                                             <th class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial reporte-sortable-col" data-sort-key="stockinicial" data-sort-type="number">St. inicial</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="totalingresos" data-sort-type="number">Total Ingresos</th>
+                                            <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="totalegresos" data-sort-type="number">Total Egresos</th>
                                             <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="stockcierre" data-sort-type="number">Stock Cierre</th>
                                             <th class="text-right reporte-stock-resumen-col reporte-sortable-col" data-sort-key="stockactual" data-sort-type="number">Faltante</th>
                                         }
@@ -435,6 +437,8 @@
                                             @if (esCierreStock)
                                             {
                                                 <td class="text-right reporte-stock-resumen-col reporte-stock-resumen-inicial">@item.StockInicial.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col">@item.TotalIngresos.ToString("N3")</td>
+                                                <td class="text-right reporte-stock-resumen-col">@item.TotalEgresos.ToString("N3")</td>
                                                 <td class="text-right reporte-stock-resumen-col font-weight-bold">@item.StockCierre.ToString("N3")</td>
                                                 <td class="text-right reporte-stock-resumen-col">
                                                     @item.StockActual.ToString("N3")
@@ -1139,20 +1143,23 @@
         white-space: normal;
     }
 
-    #tablaReporteStockActual th:first-child,
-    #tablaReporteStockActual td:first-child {
-        width: 30ch;
-        min-width: 30ch;
-        max-width: 30ch;
+    #tablaReporteStockActual {
+        table-layout: fixed;
+        width: max-content;
     }
 
-    @@media (min-width: 992px) {
-        #tablaReporteStockActual.reportes-stock-detalles-activos th:first-child,
-        #tablaReporteStockActual.reportes-stock-detalles-activos td:first-child {
-            width: 23ch;
-            min-width: 23ch;
-            max-width: 23ch;
-        }
+    #tablaReporteStockActual th:first-child,
+    #tablaReporteStockActual td:first-child {
+        width: 25ch;
+        min-width: 25ch;
+        max-width: 25ch;
+    }
+
+    #tablaReporteStockActual th:not(:first-child),
+    #tablaReporteStockActual td:not(:first-child) {
+        width: 18ch;
+        min-width: 18ch;
+        max-width: 18ch;
     }
 
     .reporte-stock-producto-wrap {

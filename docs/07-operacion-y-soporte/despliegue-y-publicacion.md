@@ -79,3 +79,33 @@ Al momento del primer deploy (2026-07-30) el servidor no tenia SSH, la cuenta de
 ### Rollback
 
 Restaurar el backup local (paso 2 de arriba) con `robocopy <backup> Z:\ /MIR`, respetando no tocar `Config\`/`AFIP\`/`App_Data\`. No hay snapshot historico en el propio servidor (a diferencia de la VM, que tiene `web\backups\`) — el backup queda en la maquina donde se corrio el deploy, PENDIENTE definir si conviene subirlo tambien a un `backups\` dentro del server.
+
+## Tercer destino: "San Lorenzo" (`200.107.108.44`) -> IP publica, sin SMB, sin carpeta `Config\`
+
+**No confundir con los dos de arriba.** Servidor Windows nuevo (alta 2026-08-01), acceso solo por **SSH** (puerto `2222`, no `22` — bloqueado por el ISP en la WAN, ver `~/hosts/sanlorenzo.env`) y RDP (`3389`). **No tiene SMB compartido** (a diferencia de Servidor SM), asi que la transferencia de archivos es por **SFTP** (Posh-SSH), no por `net use`. Aloja IIS con un sitio "web" (puertos `8069` HTTP / `443` HTTPS) con `CarniSysWeb` y `SuperCerdoWeb` como aplicaciones hermanas, mas un sitio standalone separado `SuperCerdo` (fuera de alcance). URL real: `https://200.107.108.44/CarniSysWeb/` (funciona desde afuera via DMZ del router; el certificado es autofirmado, con `-k`/`-k` en `curl`).
+
+**Diferencia critica con los otros dos destinos**: este servidor **no tiene carpeta `Config\`** — el `connectionStrings` y todo `appSettings` (incluidas credenciales SMTP reales) viven **directo dentro de `Web.config`**. Esto significa que un publish normal (que trae su propio `Web.config` transformado, con connection strings distintas) **pisaria los secretos reales del servidor** si se copia sin cuidado. Por eso el paso de swap de este destino **excluye explicitamente `Web.config`** — se deja el que ya esta en el servidor, intacto.
+
+### Primer deploy de codigo (hecho 2026-08-03, commit `257ca0ab` de `codex_ia`)
+
+El IIS/cert/binding de este servidor ya estaban configurados de antes (alta del servidor, 2026-08-01/02) — este fue el primer deploy de la **aplicacion** en si.
+
+1. Publish Release local, igual que los otros dos destinos (mismo `msbuild ... /p:PublishProfile=FolderProfile /p:publishUrl=<carpeta_local> ...`). Si ya se publico el mismo commit para otro destino en la misma sesion, se puede reusar la misma carpeta de publish.
+2. Backup remoto (en el propio servidor, via SSH — no hay forma de traerlo a la maquina local sin SMB): 
+   ```
+   robocopy C:\inetpub\wwwroot\web\CarniSysWeb C:\inetpub\wwwroot\web\backups\CarniSysWeb_<timestamp> /MIR
+   ```
+3. Subida por **SFTP** (Posh-SSH, `New-SFTPSession` + `Set-SFTPItem`) de `bin`, `Content`, `Scripts`, `Views`, `fonts` (carpetas completas) y los sueltos `favicon.ico`, `libman.json`, `manifest.json`, `sw.js`, `PrecompiledApp.config` — **nunca `Web.config`** — a una carpeta de staging: `C:\inetpub\wwwroot\web\_deploy\<algo>\`. El path de destino en `Set-SFTPItem` va en formato POSIX (`/C:/inetpub/...`), igual que el SFTP de la VM.
+4. Swap por SSH (`Invoke-SSHCommand`, shell remoto es **`cmd.exe`**, no PowerShell — usar `dir`/`copy`/`robocopy`, no cmdlets): `robocopy <staging>\<carpeta> C:\inetpub\wwwroot\web\CarniSysWeb\<carpeta> /MIR` para cada una de las 5 carpetas, y `copy /Y <staging>\<archivo> C:\inetpub\wwwroot\web\CarniSysWeb\<archivo>` para cada suelto.
+5. **Nunca tocar** `Web.config` (secretos reales embebidos, ver arriba), `AFIP\` ni `App_Data\`.
+6. No hace falta reciclar el App Pool a mano — IIS/ASP.NET lo hace solo al detectar cambios en `bin\`.
+
+### Validaciones posteriores
+
+- `curl http://200.107.108.44:8069/CarniSysWeb/` da `302` a `.../Login/Index?ReturnUrl=...` (no `301` a HTTPS como los otros dos destinos — este servidor no fuerza upgrade a HTTPS por Web.config, es el comportamiento esperado, no un bug).
+- `curl -k https://200.107.108.44/CarniSysWeb/Login/Index` debe dar `200`, titulo `CarniSysWeb - Login`, sin `Stack Trace`/`Server Error`. El `Set-Cookie` **no** trae `secure` (a diferencia de SM/VM) — tampoco es un bug: este `Web.config` no tiene `requireSSL`/`CookieRequireSsl` configurado, se deja como esta (no se toca `Web.config`). **Verificado 2026-08-03.**
+- `Invoke-WebRequest` de PowerShell 5.1 **falla** contra el binding HTTPS de este servidor (error de renegociacion TLS) aunque `curl.exe` funciona bien — usar siempre `curl.exe`/`curl -k` para health checks aca, nunca `Invoke-WebRequest`.
+
+### Rollback
+
+Restaurar el backup remoto (paso 2 de arriba) con `robocopy C:\inetpub\wwwroot\web\backups\CarniSysWeb_<timestamp> C:\inetpub\wwwroot\web\CarniSysWeb /MIR` (via SSH), sin tocar `Web.config`/`AFIP\`/`App_Data\`. El backup queda en el propio servidor (a diferencia de Servidor SM, que no tiene backup remoto — aca si, porque no hay SMB para bajarlo a la maquina local).
