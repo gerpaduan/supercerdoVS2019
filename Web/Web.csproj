@@ -166,6 +166,7 @@
     <Compile Include="Helpers\SystemAdministrationRepository.cs" />
     <Compile Include="Helpers\SmtpMailHelper.cs" />
     <Compile Include="Models\CorteUpsertVM.cs" />
+    <Compile Include="Models\PuntoStockSucursalItemVm.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
     <Compile Include="Models\CompraIndexVm.cs" />
     <Compile Include="Models\CalcularComisionesElectronicasVm.cs" />

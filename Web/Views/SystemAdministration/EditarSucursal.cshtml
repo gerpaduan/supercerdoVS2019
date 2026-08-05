@@ -23,7 +23,7 @@
             <div class="form-row">
                 <div class="form-group col-md-5">
                     <label>Empresa</label>
-                    @Html.DropDownListFor(m => m.IdEmpresa, Model.Empresas, "Seleccione empresa", new { @class = "form-control" })
+                    @Html.DropDownListFor(m => m.IdEmpresa, Model.Empresas, "Seleccione empresa", new { @class = "form-control", id = "IdEmpresa" })
                     @Html.ValidationMessageFor(m => m.IdEmpresa, "", new { @class = "text-danger small" })
                 </div>
                 <div class="form-group col-md-4">
@@ -84,9 +84,62 @@
                 @Html.TextAreaFor(m => m.Observaciones, 3, 1, new { @class = "form-control" })
             </div>
 
+            if (!Model.EsEdicion)
+            {
+                bool hayPuntoStockParaCopiar = Model.SucursalesParaCopiarPuntoStock != null && Model.SucursalesParaCopiarPuntoStock.Count > 0;
+                <div class="form-group @(hayPuntoStockParaCopiar ? "" : "d-none")" id="divPuntoStockOrigen">
+                    <label>Puntos de stock por producto para esta sucursal nueva</label>
+                    @Html.DropDownListFor(m => m.IdSucursalOrigenPuntoStock, Model.SucursalesParaCopiarPuntoStock, "Todos en 0", new { @class = "form-control", id = "IdSucursalOrigenPuntoStock" })
+                    <small class="form-text text-muted">
+                        Opcional: copiar el punto de stock de cada producto desde una sucursal existente. Si no se elige ninguna, todos los productos arrancan con punto de stock 0 en esta sucursal.
+                    </small>
+                </div>
+            }
+
             <div class="d-flex justify-content-end">
                 <button type="submit" class="btn btn-primary">Guardar sucursal</button>
             </div>
         }
     </div>
 </div>
+
+@if (!Model.EsEdicion)
+{
+    <script>
+        (function () {
+            var empresa = document.getElementById("IdEmpresa");
+            var divPuntoStockOrigen = document.getElementById("divPuntoStockOrigen");
+            var puntoStockOrigen = document.getElementById("IdSucursalOrigenPuntoStock");
+            if (!empresa || !divPuntoStockOrigen || !puntoStockOrigen) {
+                return;
+            }
+
+            empresa.addEventListener("change", function () {
+                var idEmpresa = empresa.value || "0";
+                puntoStockOrigen.innerHTML = '<option value="0">Todos en 0</option>';
+                divPuntoStockOrigen.classList.add("d-none");
+
+                if (idEmpresa === "0") {
+                    return;
+                }
+
+                fetch('@Url.Action("SucursalesPorEmpresa", "SystemAdministration")?idEmpresa=' + encodeURIComponent(idEmpresa), {
+                    credentials: 'same-origin'
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (items) {
+                        (items || []).forEach(function (item) {
+                            var option = document.createElement("option");
+                            option.value = item.value;
+                            option.textContent = item.text;
+                            puntoStockOrigen.appendChild(option);
+                        });
+
+                        if (items && items.length > 0) {
+                            divPuntoStockOrigen.classList.remove("d-none");
+                        }
+                    });
+            });
+        })();
+    </script>
+}

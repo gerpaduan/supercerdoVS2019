@@ -402,6 +402,11 @@ namespace Web.Controllers
                 ViewBag.ProductoCodigo = corte.Codigo;
                 ViewBag.ProductoId = corte.IdCorte;
                 ViewBag.ProductoSinStock = !model.Productos.Any() || !model.Productos.Any(x => x.TieneStockPositivo);
+                // El SP de existencia excluye productos con EnCierreStock=false o Independiente=false
+                // (ver a_ExistenciaStockPorSucursales). Se informa el motivo real en vez de un
+                // generico "no tiene stock" cuando por eso no aparecen filas.
+                ViewBag.ProductoEnCierreStock = corte.EnCierreStock;
+                ViewBag.ProductoEsIndependiente = corte.Independiente != 0;
             }
             catch (Exception ex)
             {

@@ -318,9 +318,15 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-6 @(esEdicion ? "d-none" : "")">
                             <label class="form-label">Punto Stock (número entero)</label>
                             @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
+                            @if (!esEdicion)
+                            {
+                                <small class="form-text text-muted">
+                                    Este valor se va a cargar como punto de stock inicial en todas las sucursales existentes al crear el producto. Después se administra por sucursal desde "Ver stock por sucursales".
+                                </small>
+                            }
                         </div>
 
                         <div class="col-12 col-md-6">

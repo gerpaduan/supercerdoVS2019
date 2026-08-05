@@ -143,6 +143,11 @@ namespace Web.Controllers
             model.Empresas = _repo.ObtenerEmpresasSelectList(model.IdEmpresa);
             model.EsEdicion = id > 0;
 
+            if (!model.EsEdicion && model.IdEmpresa > 0)
+            {
+                model.SucursalesParaCopiarPuntoStock = _repo.ObtenerSucursalesSelectList(model.IdEmpresa);
+            }
+
             ViewBag.Title = model.EsEdicion ? "Modificar sucursal" : "Nueva sucursal";
             ViewBag.Seccion = "Administracion del sistema";
             return View("~/Views/SystemAdministration/EditarSucursal.cshtml", model);
@@ -160,6 +165,10 @@ namespace Web.Controllers
                 model.TieneTelefono = _repo.TablaSucursalTieneTelefono();
                 model.TieneActiva = _repo.TablaSucursalTieneActiva();
                 model.EsEdicion = model.IdSucursal > 0;
+                if (!model.EsEdicion)
+                {
+                    model.SucursalesParaCopiarPuntoStock = _repo.ObtenerSucursalesSelectList(model.IdEmpresa);
+                }
                 ViewBag.Title = model.EsEdicion ? "Modificar sucursal" : "Nueva sucursal";
                 ViewBag.Seccion = "Administracion del sistema";
                 return View("~/Views/SystemAdministration/EditarSucursal.cshtml", model);
@@ -189,6 +198,10 @@ namespace Web.Controllers
                 model.TieneTelefono = _repo.TablaSucursalTieneTelefono();
                 model.TieneActiva = _repo.TablaSucursalTieneActiva();
                 model.EsEdicion = model.IdSucursal > 0;
+                if (!model.EsEdicion)
+                {
+                    model.SucursalesParaCopiarPuntoStock = _repo.ObtenerSucursalesSelectList(model.IdEmpresa);
+                }
                 ViewBag.Title = model.EsEdicion ? "Modificar sucursal" : "Nueva sucursal";
                 ViewBag.Seccion = "Administracion del sistema";
                 return View("~/Views/SystemAdministration/EditarSucursal.cshtml", model);

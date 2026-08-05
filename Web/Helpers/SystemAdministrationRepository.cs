@@ -290,13 +290,57 @@ namespace Web.Helpers
 
                 string sql = "INSERT INTO dbo.Sucursal (" + string.Join(", ", columnNames) + ") OUTPUT INSERTED.idSucursal VALUES (" + string.Join(", ", valueNames) + ");";
 
+                int idSucursalNueva;
                 using (var cmd = new SqlCommand(sql, con, tx))
                 {
                     SetSucursalParams(cmd.Parameters, model, columns);
                     object value = cmd.ExecuteScalar();
-                    tx.Commit();
-                    return value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
+                    idSucursalNueva = value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
                 }
+
+                if (idSucursalNueva > 0)
+                {
+                    SembrarPuntoStockSucursalNueva(con, tx, model.IdEmpresa, idSucursalNueva, model.IdSucursalOrigenPuntoStock);
+                }
+
+                tx.Commit();
+                return idSucursalNueva;
+            }
+        }
+
+        // Al crear una sucursal nueva, cada producto existente de la empresa necesita una fila
+        // en dbo.CortePuntoStockSucursal para esa sucursal (ver Datos/CortePuntoStockSucursal.cs,
+        // caso simetrico para el alta de producto). Corre en la misma transaccion que el INSERT
+        // de la sucursal: si algo falla, no queda ni la sucursal ni los puntos de stock a medias.
+        private void SembrarPuntoStockSucursalNueva(SqlConnection con, SqlTransaction tx, int idEmpresa, int idSucursalNueva, int? idSucursalOrigen)
+        {
+            bool copiarDeSucursalExistente = idSucursalOrigen.HasValue && idSucursalOrigen.Value > 0;
+
+            string sql = copiarDeSucursalExistente
+                ? @"
+                    INSERT INTO dbo.CortePuntoStockSucursal (idEmpresa, idCorte, idSucursal, puntoStock)
+                    SELECT c.idEmpresa, c.idCorte, @idSucursalNueva, ISNULL(origen.puntoStock, 0)
+                    FROM dbo.Corte c
+                    LEFT JOIN dbo.CortePuntoStockSucursal origen
+                        ON origen.idCorte = c.idCorte AND origen.idSucursal = @idSucursalOrigen
+                    WHERE c.idEmpresa = @idEmpresa;"
+                : @"
+                    INSERT INTO dbo.CortePuntoStockSucursal (idEmpresa, idCorte, idSucursal, puntoStock)
+                    SELECT c.idEmpresa, c.idCorte, @idSucursalNueva, 0
+                    FROM dbo.Corte c
+                    WHERE c.idEmpresa = @idEmpresa;";
+
+            using (var cmd = new SqlCommand(sql, con, tx))
+            {
+                cmd.CommandTimeout = Conexion.timeOut;
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                cmd.Parameters.Add("@idSucursalNueva", SqlDbType.Int).Value = idSucursalNueva;
+                if (copiarDeSucursalExistente)
+                {
+                    cmd.Parameters.Add("@idSucursalOrigen", SqlDbType.Int).Value = idSucursalOrigen.Value;
+                }
+
+                cmd.ExecuteNonQuery();
             }
         }
 

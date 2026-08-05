@@ -96,6 +96,7 @@ namespace Web.Models
         public SystemAdministrationSucursalEditVm()
         {
             Empresas = new List<SelectListItem>();
+            SucursalesParaCopiarPuntoStock = new List<SelectListItem>();
             Activa = true;
         }
 
@@ -119,6 +120,12 @@ namespace Web.Models
         public bool TieneTelefono { get; set; }
         public bool TieneActiva { get; set; }
         public List<SelectListItem> Empresas { get; set; }
+
+        // Solo se usa en el alta (EsEdicion = false): de que sucursal existente de la misma
+        // empresa copiar los puntos de stock por producto. 0/null = todos los productos
+        // arrancan en punto de stock 0 para esta sucursal nueva.
+        public int? IdSucursalOrigenPuntoStock { get; set; }
+        public List<SelectListItem> SucursalesParaCopiarPuntoStock { get; set; }
     }
 
     public class SystemAdministrationUsuarioResumenVm

@@ -11,12 +11,14 @@ namespace Negocio
     public class Corte
     {
         private readonly Datos.Corte oCorteD;
+        private readonly Datos.CortePuntoStockSucursal oCortePuntoStockSucursalD;
 
         IEmpresaContext _empresa;private readonly IParametrosContext _param;
         public Corte(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
             oCorteD = new Datos.Corte(empresa, param);
+            oCortePuntoStockSucursalD = new Datos.CortePuntoStockSucursal(empresa, param);
         }
 
         //Mantuve el metodo con este nombre getCorteById para no modificar toda la capa presentacion
@@ -31,11 +33,6 @@ namespace Negocio
         public Entidades.Corte findCorteByCodigo(Int64 codigo, bool buscarMaestro)
         {
             return oCorteD.findCorteByCodigo(codigo, buscarMaestro);
-        }
-
-        public Entidades.Corte findCorteGlobalByCodigo(long codigo, bool buscarMaestro)
-        {
-            return oCorteD.findCorteGlobalByCodigo(codigo, buscarMaestro);
         }
 
         public List<Entidades.Corte> ObtenerCortesPorEmpresa(int idEmpresa, bool buscarMaestro)
@@ -90,36 +87,6 @@ namespace Negocio
             }
 
             return listaCortes;
-        }
-
-        public List<Entidades.Corte> ObtenerCatalogoGlobal(string busqueda)
-        {
-            return oCorteD.ObtenerCatalogoGlobal(busqueda);
-        }
-
-        public List<Entidades.Corte> ObtenerCatalogoGlobalPagina(string busqueda, int pagina, int cantidad)
-        {
-            return oCorteD.ObtenerCatalogoGlobalPagina(busqueda, pagina, cantidad);
-        }
-
-        public List<Entidades.Corte> ObtenerCatalogoGlobalPagina(string busqueda, int pagina, int cantidad, int cantidadExtra)
-        {
-            return oCorteD.ObtenerCatalogoGlobalPagina(busqueda, pagina, cantidad, cantidadExtra);
-        }
-
-        public List<Entidades.Corte> ObtenerCatalogoGlobalPagina(string busqueda, string tipo, int pagina, int cantidad, int cantidadExtra)
-        {
-            return oCorteD.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, cantidad, cantidadExtra);
-        }
-
-        public List<string> ObtenerTiposCatalogoGlobal()
-        {
-            return oCorteD.ObtenerTiposCatalogoGlobal();
-        }
-
-        public List<Entidades.Corte> ObtenerCatalogoGlobalPorIds(IEnumerable<int> idsCortes)
-        {
-            return oCorteD.ObtenerCatalogoGlobalPorIds(idsCortes);
         }
 
         public void AsegurarTablaImportacionCatalogoGlobal()
@@ -632,6 +599,22 @@ namespace Negocio
              
              DataTable dtGrillaReporte = oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal, tipo, idProveedor, idMarca);
 
+            // El SP a_CierreStock devuelve Pto.Stock leyendo Corte.puntoStock (valor global,
+            // no por sucursal). Se sobrescribe aca con el valor real de la tabla intermedia
+            // Producto x Sucursal, sin tocar el SP (ver docs/DECISIONS.md: su script versionado
+            // esta desactualizado respecto a la firma real y no se puede editar con confianza).
+            if (idSucursal > 0)
+            {
+                var puntosStockSucursal = oCortePuntoStockSucursalD.FindPorSucursal(idSucursal);
+                foreach (DataRow fila in dtGrillaReporte.Rows)
+                {
+                    int idCorteFila = fila.Field<int>("idCorte");
+                    fila["Pto.Stock"] = puntosStockSucursal.TryGetValue(idCorteFila, out int puntoStockSucursal)
+                        ? (object)puntoStockSucursal
+                        : 0;
+                }
+            }
+
             foreach (DataRow fila in dtGrillaReporte.Rows)
             {
                 decimal TotINGR = 0, TotEGR = 0;
@@ -815,6 +798,27 @@ namespace Negocio
                 filtro.IdMarca,
                 filtro.IdCorte,
                 filtro.SoloConStock) ?? new List<Entidades.ExistenciaStockPorSucursalPlanoVm>();
+
+            // El SP devuelve PuntoStock desde el campo legacy Corte.puntoStock (global, no por
+            // sucursal). Se sobrescribe aca con el valor real de la tabla intermedia Producto x
+            // Sucursal, para las filas ya devueltas por el SP (chico: solo los productos de esta
+            // empresa que ya pasaron los filtros), sin tocar la logica SQL del SP en si.
+            var idsSucursalesEnResultado = plano.Select(x => x.IdSucursal).Distinct().ToList();
+            var puntosStockPorSucursal = new Dictionary<(int idCorte, int idSucursal), int>();
+            foreach (var idSucursal in idsSucursalesEnResultado)
+            {
+                foreach (var par in oCortePuntoStockSucursalD.FindPorSucursal(idSucursal))
+                {
+                    puntosStockPorSucursal[(par.Key, idSucursal)] = par.Value;
+                }
+            }
+
+            foreach (var fila in plano)
+            {
+                fila.PuntoStock = puntosStockPorSucursal.TryGetValue((fila.IdCorte, fila.IdSucursal), out int puntoStockReal)
+                    ? puntoStockReal
+                    : 0;
+            }
 
             resultado.Columnas = plano
                 .GroupBy(x => new { x.IdSucursal, Nombre = x.Sucursal ?? "" })

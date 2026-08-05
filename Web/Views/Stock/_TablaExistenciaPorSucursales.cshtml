@@ -16,7 +16,10 @@
 @{
     var columnas = Model != null ? Model.Columnas : new System.Collections.Generic.List<Entidades.SucursalColumnaStockVm>();
     var productos = Model != null ? Model.Productos : new System.Collections.Generic.List<Entidades.ProductoStockPorSucursalVm>();
-    int totalColumnas = 2 + columnas.Count;
+    // Columna "Total" solo cuando el filtro de sucursal es "Todas" (idSucursal=0):
+    // con una sola sucursal seleccionada no hay nada que sumar.
+    bool mostrarTotal = Model != null && Model.Filtro != null && Model.Filtro.IdSucursal == 0;
+    int totalColumnas = 2 + columnas.Count + (mostrarTotal ? 1 : 0);
 }
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -35,8 +38,8 @@ else
 {
     <style>
         .tabla-existencia-sucursales {
-            table-layout: auto;
-            min-width: max-content;
+            table-layout: fixed;
+            width: max-content;
             font-size: .84rem;
         }
 
@@ -63,7 +66,9 @@ else
             left: 0;
             z-index: 3;
             background: #fff;
-            min-width: 22rem;
+            width: 25ch;
+            min-width: 25ch;
+            max-width: 25ch;
         }
 
         .tabla-existencia-sucursales thead .existencia-col-producto {
@@ -85,7 +90,14 @@ else
 
         .tabla-existencia-sucursales th.text-right.text-nowrap,
         .tabla-existencia-sucursales td.text-right.text-nowrap {
-            min-width: 110px;
+            width: 18ch;
+            min-width: 18ch;
+            max-width: 18ch;
+        }
+
+        .existencia-col-total {
+            font-weight: 700;
+            background: #f8f9fc;
         }
 
         .existencia-producto-row {
@@ -93,7 +105,7 @@ else
         }
 
         .existencia-producto-wrap {
-            max-width: 50ch;
+            max-width: 25ch;
         }
 
         .existencia-producto-desc {
@@ -104,7 +116,7 @@ else
             text-overflow: ellipsis;
             white-space: normal;
             line-height: 1.2;
-            max-width: 50ch;
+            max-width: 25ch;
             font-weight: 600;
             word-break: break-word;
         }
@@ -171,6 +183,10 @@ else
         }
 
         html.dark-mode .tabla-existencia-sucursales thead .existencia-col-producto {
+            background: #273043;
+        }
+
+        html.dark-mode .existencia-col-total {
             background: #273043;
         }
 
@@ -254,6 +270,10 @@ else
                     {
                         <th class="text-right text-nowrap">@columna.Sucursal</th>
                     }
+                    @if (mostrarTotal)
+                    {
+                        <th class="text-right text-nowrap existencia-col-total">Total</th>
+                    }
                     <th class="existencia-col-toggle"></th>
                 </tr>
             </thead>
@@ -289,6 +309,13 @@ else
                                 {
                                     <span class="existencia-producto-codigo">@equivalenteUnidades</span>
                                 }
+                            </td>
+                        }
+                        @if (mostrarTotal)
+                        {
+                            float totalStock = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.StockActual ?? 0f);
+                            <td class="text-right text-nowrap existencia-col-total" title="Suma de stock en todas las sucursales">
+                                @totalStock.ToString("N3")
                             </td>
                         }
                         <td class="text-center existencia-col-toggle-cell">

@@ -396,9 +396,9 @@
                                     <i class="fas fa-dollar-sign"></i>
                                 </button>
 
-                                <button type="button" class="btn btn-sm btn-info mr-1"
-                                        title="Ver stock por sucursales (modal)"
-                                        onclick="verStockSucursales(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
+                                <button type="button" class="btn btn-sm btn-info mr-1 js-btn-stock-sucursales"
+                                        title="Ver / editar stock por sucursales"
+                                        onclick="verStockSucursales(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', this)">
                                     <i class="fas fa-warehouse"></i>
                                 </button>
 
@@ -701,7 +701,7 @@
     <!-- =========================
          MODAL VER STOCK (por sucursales)
          ========================= -->
-    <div class="modal fade" id="modalStockSucursales" tabindex="-1" role="dialog">
+    <div class="modal fade" id="modalStockSucursales" tabindex="-1" role="dialog" data-backdrop="static">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
 
@@ -2961,9 +2961,17 @@
     });
 
     // =========================
-    // VER STOCK MODAL
+    // VER / EDITAR STOCK MODAL
     // =========================
-    function verStockSucursales(idCorte, nombre) {
+    const stockModalState = {
+        currentRow: null,
+        currentId: 0
+    };
+
+    function verStockSucursales(idCorte, nombre, boton) {
+        const fila = boton ? boton.closest("tr") : getProductRowById(idCorte);
+        stockModalState.currentRow = fila || null;
+        stockModalState.currentId = Number(idCorte);
 
         $("#contenedorStockSucursalesProducto").html(`<div class="text-muted text-center py-4">Sin datos</div>`);
         $("#stockLoading").removeClass("d-none");
@@ -2985,6 +2993,35 @@
             }
         });
     }
+
+    function getVisibleStockRows() {
+        return getFilasProductos().filter(fila => {
+            if (fila.style.display === "none") return false;
+            const boton = fila.querySelector(".js-btn-stock-sucursales");
+            return !!(boton && !boton.disabled);
+        });
+    }
+
+    function avanzarSiguienteProductoLotePuntoStock() {
+        const filas = getVisibleStockRows();
+        const idActual = Number(stockModalState.currentId);
+        const indexActual = filas.findIndex(fila => Number(fila.dataset.id) === idActual);
+        const siguiente = indexActual >= 0 ? filas[indexActual + 1] : null;
+
+        if (!siguiente) {
+            $("#modalStockSucursales").modal("hide");
+            Swal.fire("Sin más productos", "No hay más productos para modificar con los filtros actuales", "info");
+            return;
+        }
+
+        const boton = siguiente.querySelector(".js-btn-stock-sucursales");
+        const nombreSiguiente = siguiente.dataset.nombre || "";
+        verStockSucursales(Number(siguiente.dataset.id), nombreSiguiente, boton);
+    }
+
+    $("#modalStockSucursales").on("hidden.bs.modal", function () {
+        window.modoLotePuntoStockActivo = false;
+    });
 
     // =========================
     // ELIMINAR

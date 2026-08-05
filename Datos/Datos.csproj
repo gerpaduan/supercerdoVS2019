@@ -77,6 +77,8 @@
     <Compile Include="CierreCaja.cs" />
     <Compile Include="Compra.cs" />
     <Compile Include="Corte.cs" />
+    <Compile Include="CatalogoGlobalProducto.cs" />
+    <Compile Include="CortePuntoStockSucursal.cs" />
     <Compile Include="CuentaCorriente.cs" />
     <Compile Include="WhatsApp.cs" />
     <Compile Include="DataSetCorte.Designer.cs">

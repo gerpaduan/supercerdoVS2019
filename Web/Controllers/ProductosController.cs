@@ -25,6 +25,7 @@ namespace Web.Controllers
         private Negocio.Corte oCorteN;
         private Negocio.Usuario oUsuarioN;
         private Negocio.Persona oPersonaN;
+        private Negocio.CortePuntoStockSucursal oCortePuntoStockSucursalN;
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
@@ -35,6 +36,7 @@ namespace Web.Controllers
             oCorteN = new Negocio.Corte(empresa, param);
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oPersonaN = new Negocio.Persona(empresa, param);
+            oCortePuntoStockSucursalN = new Negocio.CortePuntoStockSucursal(empresa, param);
         }
 
         public ActionResult Index(
@@ -439,7 +441,7 @@ namespace Web.Controllers
             if (codigo <= 0)
                 return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." }, JsonRequestBehavior.AllowGet);
 
-            var global = oCorteN.findCorteGlobalByCodigo(codigo, true);
+            var global = ObtenerGestorCatalogoGlobal().findCorteGlobalByCodigo(codigo, true);
             if (global == null)
                 return Json(new { ok = false, mensaje = "No existe un producto global para ese código." }, JsonRequestBehavior.AllowGet);
 
@@ -605,9 +607,9 @@ namespace Web.Controllers
             }
         }
 
-        private Negocio.Corte ObtenerGestorCatalogoGlobal()
+        private Negocio.CatalogoGlobalProducto ObtenerGestorCatalogoGlobal()
         {
-            return new Negocio.Corte(new EmpresaContextNulo(), null);
+            return new Negocio.CatalogoGlobalProducto(new EmpresaContextNulo(), null);
         }
 
         private CatalogoGlobalProductosVm ConstruirCatalogoGlobalVm(string busqueda, string tipo, int pagina, bool incluirTipos)
@@ -616,7 +618,7 @@ namespace Web.Controllers
 
             var catalogoGlobal = ObtenerGestorCatalogoGlobal();
             pagina = pagina < 1 ? 1 : pagina;
-            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, CatalogoGlobalTamanoPagina, 1) ?? new List<Entidades.Corte>();
+            var productosGlobales = catalogoGlobal.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, CatalogoGlobalTamanoPagina, 1) ?? new List<Entidades.CatalogoGlobalProducto>();
             bool hayMas = productosGlobales.Count > CatalogoGlobalTamanoPagina;
             if (hayMas)
                 productosGlobales.RemoveAt(productosGlobales.Count - 1);
@@ -779,14 +781,14 @@ namespace Web.Controllers
             return float.TryParse(normalizado, NumberStyles.Any, CultureInfo.InvariantCulture, out valor);
         }
 
-        private static List<Entidades.Corte> OrdenarProductosParaImportacion(IEnumerable<Entidades.Corte> productos)
+        private static List<Entidades.CatalogoGlobalProducto> OrdenarProductosParaImportacion(IEnumerable<Entidades.CatalogoGlobalProducto> productos)
         {
-            var lista = (productos ?? new List<Entidades.Corte>()).ToList();
+            var lista = (productos ?? new List<Entidades.CatalogoGlobalProducto>()).ToList();
             var dict = lista.ToDictionary(x => x.IdCorte, x => x);
-            var resultado = new List<Entidades.Corte>();
+            var resultado = new List<Entidades.CatalogoGlobalProducto>();
             var visitados = new HashSet<int>();
 
-            Action<Entidades.Corte> visitar = null;
+            Action<Entidades.CatalogoGlobalProducto> visitar = null;
             visitar = producto =>
             {
                 if (producto == null || !visitados.Add(producto.IdCorte))
@@ -794,7 +796,7 @@ namespace Web.Controllers
 
                 if (producto.CorteMaestro != null && producto.CorteMaestro.IdCorte > 0)
                 {
-                    Entidades.Corte maestro;
+                    Entidades.CatalogoGlobalProducto maestro;
                     if (dict.TryGetValue(producto.CorteMaestro.IdCorte, out maestro))
                         visitar(maestro);
                 }
@@ -810,7 +812,56 @@ namespace Web.Controllers
             return resultado;
         }
 
+        // Caso defensivo de Guardar(): si vm.IdCorte terminó apuntando a una fila que resultó
+        // ser global (entity.IdEmpresa == 0, ver mas abajo), esa fila todavia se lee de
+        // dbo.Corte via findCorteById -- por eso este overload con Entidades.Corte se
+        // mantiene. Deberia dejar de dispararse una vez que se borren las filas idEmpresa=0
+        // de Corte (20260804-Delete_Corte_IdEmpresa0.sql), pero no se retira todavia por las
+        // dudas (ver docs/09-cambios-y-pendientes/riesgos-conocidos.md, entrada de
+        // sessionStorage del 2026-08-04, que ya mostro comportamiento raro de estado viejo
+        // en esta misma pantalla).
         private static Entidades.Corte ClonarProductoGlobal(Entidades.Corte global, long codigoDestino, float precioDestino)
+        {
+            var nuevo = new Entidades.Corte
+            {
+                IdCorte = 0,
+                Codigo = codigoDestino,
+                CorteDesc = global.CorteDesc,
+                Tipo = global.Tipo,
+                Pesable = global.Pesable,
+                Promedio = global.Promedio,
+                IdAlicuotaIva = global.IdAlicuotaIva,
+                AlicuotaIva = global.AlicuotaIva,
+                PuntoStock = global.PuntoStock,
+                EnCierreStock = global.EnCierreStock,
+                Habilitado = global.Habilitado,
+                IngresoRapidoEmbutido = global.IngresoRapidoEmbutido,
+                Independiente = global.Independiente,
+                Porcentaje = global.Porcentaje,
+                PorcentajeHueso = global.PorcentajeHueso,
+                DesvioEstandar = global.DesvioEstandar,
+                PrecioKg = precioDestino,
+                PrecioKgReferencia = precioDestino,
+                Presentacion = global.Presentacion,
+                Nivel = global != null ? global.Nivel : 0
+            };
+
+            if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
+            {
+                nuevo.CorteMaestro = new Entidades.Corte
+                {
+                    IdCorte = global.CorteMaestro.IdCorte,
+                    CorteDesc = global.CorteMaestro.CorteDesc
+                };
+            }
+
+            return nuevo;
+        }
+
+        // Overload real usado por los flujos de catalogo global (dbo.CatalogoGlobalProducto):
+        // VerGlobales/BuscarGlobales/ImportarSeleccionados, BuscarProductoGlobalParaAlta y
+        // AgregarDesdeCodigoBarra.
+        private static Entidades.Corte ClonarProductoGlobal(Entidades.CatalogoGlobalProducto global, long codigoDestino, float precioDestino)
         {
             var nuevo = new Entidades.Corte
             {
@@ -1059,7 +1110,7 @@ namespace Web.Controllers
 
             if (vm.IdCorte <= 0 && idEmpresaSesionActual > 0 && vm.Codigo > 0)
             {
-                codigoExisteEnCatalogoGlobal = oCorteN.findCorteGlobalByCodigo(vm.Codigo, false) != null;
+                codigoExisteEnCatalogoGlobal = ObtenerGestorCatalogoGlobal().findCorteGlobalByCodigo(vm.Codigo, false) != null;
                 if (codigoExisteEnCatalogoGlobal)
                 {
                     altaDesdeCatalogoGlobal = true;
@@ -1072,6 +1123,11 @@ namespace Web.Controllers
 
             if (vm.IdCorte > 0 && entity == null)
                 return HttpNotFound();
+
+            // Se guarda antes de mapear/clonar: si esto termina siendo una edicion real (no
+            // alta, ver esAltaNueva mas abajo), sirve para detectar si EnCierreStock paso de
+            // false a true en este guardado.
+            bool enCierreStockAntesDeEditar = vm.IdCorte > 0 && entity != null && entity.EnCierreStock;
 
             if (vm.IdCorte > 0 && entity != null)
             {
@@ -1095,6 +1151,11 @@ namespace Web.Controllers
             MapToEntity(vm, entity); // VM -> Entity
 
             entity.IdEmpresa = idEmpresaSesionActual;
+
+            // Se guarda antes de la mutacion de mas abajo: si vm.IdCorte ya es <= 0 aca, esto es
+            // una insercion nueva en dbo.Corte (alta directa o clonado de un producto global),
+            // sea cual sea el camino que se tome unas lineas mas abajo.
+            bool esAltaNueva = vm.IdCorte <= 0;
 
             if (vm.IdCorte <= 0)
             {
@@ -1122,6 +1183,23 @@ namespace Web.Controllers
                 {
                     idProductoGuardado = productoGuardado.IdCorte;
                 }
+            }
+
+            // Alta nueva: el punto de stock cargado en el formulario se replica como valor
+            // inicial en todas las sucursales existentes de la empresa (tabla intermedia
+            // Producto x Sucursal, ver dbo.CortePuntoStockSucursal).
+            if (esAltaNueva && idProductoGuardado > 0)
+            {
+                oCortePuntoStockSucursalN.CrearParaTodasLasSucursales(idEmpresaSesionActual, idProductoGuardado, vm.PuntoStock);
+            }
+            // Edicion de un producto existente que pasa de "no cierra stock" a "si cierra
+            // stock": si por lo que sea no tiene fila en la tabla intermedia para alguna
+            // sucursal (no deberia faltar, pero CrearParaTodasLasSucursales es idempotente
+            // y sirve de red de seguridad), se crea ahi con el valor legacy del producto
+            // como punto de stock inicial.
+            else if (!esAltaNueva && idProductoGuardado > 0 && !enCierreStockAntesDeEditar && entity.EnCierreStock)
+            {
+                oCortePuntoStockSucursalN.CrearParaTodasLasSucursales(idEmpresaSesionActual, idProductoGuardado, entity.PuntoStock);
             }
 
             string flujoBase = string.Equals(vm.FlujoBaseContinuo, "edicion", StringComparison.OrdinalIgnoreCase)
@@ -1564,6 +1642,46 @@ namespace Web.Controllers
             });
         }
 
+        // ===============================
+        // Guardar punto de stock por sucursal (en lote, todas las sucursales de un
+        // producto juntas — nunca sucursal por sucursal, ver modal "Ver stock por sucursales").
+        // ===============================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult GuardarPuntosStockSucursal(int idCorte, List<PuntoStockSucursalItemVm> valores)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+            {
+                return Json(new { error = "No tenés permisos para editar el punto de stock." });
+            }
+
+            if (idCorte <= 0)
+                return Json(new { error = "Producto inválido." });
+
+            if (valores == null || valores.Count == 0)
+                return Json(new { error = "No hay valores para guardar." });
+
+            if (valores.Any(v => v.PuntoStock < 0))
+                return Json(new { error = "El punto de stock debe ser un número entero mayor o igual a 0." });
+
+            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
+
+            try
+            {
+                var lista = valores
+                    .Select(v => (idSucursal: v.IdSucursal, puntoStock: v.PuntoStock))
+                    .ToList();
+
+                oCortePuntoStockSucursalN.GuardarPuntosStockLote(idEmpresaSesion, idCorte, lista);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("GuardarPuntosStockSucursal - idCorte={0}: {1}", idCorte, ex);
+                return Json(new { error = "No se pudieron guardar los puntos de stock. Intentá de nuevo." });
+            }
+
+            return Json(new { ok = true });
+        }
 
         // ===============================
         // CARGA DE COMBOS

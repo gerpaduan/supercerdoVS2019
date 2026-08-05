@@ -73,6 +73,7 @@
     <Compile Include="PermisosUsuarios.cs" />
     <Compile Include="TemporalLineaVenta.cs" />
     <Compile Include="Corte.cs" />
+    <Compile Include="CatalogoGlobalProducto.cs" />
     <Compile Include="CortePorCompra.cs" />
     <Compile Include="CortePorEmbutido.cs" />
     <Compile Include="CortePorMovimiento.cs" />

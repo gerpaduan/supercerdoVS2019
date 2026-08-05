@@ -2,6 +2,7 @@
 
 ## Indice
 
+- [Productos](./productos.md)
 - [Ventas y POS](./ventas-y-pos.md)
 - [Compras y abastecimiento](./compras-y-abastecimiento.md)
 - [Stock e inventario](./stock-e-inventario.md)
