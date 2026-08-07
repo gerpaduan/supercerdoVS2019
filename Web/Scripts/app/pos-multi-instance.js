@@ -19,8 +19,18 @@
         return Date.now();
     }
 
+    // Namespace por producto (Venta vs Expendio) dentro de la misma clave de
+    // usuario+sucursal. Sin esto, abrir POS Expendio en una pestaña y POS
+    // Venta en otra (mismo cajero) se detectaban como el MISMO POS "ya
+    // abierto" -- eran dos productos distintos compartiendo este modulo, no
+    // dos instancias del mismo POS. Default '' para Venta: no cambia su
+    // clave de storage existente (compatibilidad con sesiones ya abiertas).
+    function productKey() {
+        return config().productKey ? '-' + config().productKey : '';
+    }
+
     function stateKey() {
-        return STORAGE_PREFIX + '-' + (config().userId || 0) + '-' + (config().sucursalId || 0);
+        return STORAGE_PREFIX + productKey() + '-' + (config().userId || 0) + '-' + (config().sucursalId || 0);
     }
 
     function postVentaRedirectKey() {
@@ -28,7 +38,7 @@
     }
 
     function pwaSessionKey() {
-        return PWA_SESSION_PREFIX + '-' + (config().userId || 0) + '-' + (config().sucursalId || 0);
+        return PWA_SESSION_PREFIX + productKey() + '-' + (config().userId || 0) + '-' + (config().sucursalId || 0);
     }
 
     function isDuplicate() {

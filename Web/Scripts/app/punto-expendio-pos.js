@@ -511,6 +511,7 @@
         posKeyboard.init();
         posHelp.init();
         posComment.init();
+        window.POSMultiInstance?.init?.();
         actualizarFechaHora();
         window.setInterval(actualizarFechaHora, 60000);
 
@@ -550,6 +551,7 @@
         $('#btnConsumidorFinal').on('click', function () {
             $('#idPersona').val(config.idConsumidorFinal || 0);
             $('#razonSocial').val('Consumidor Final');
+            setClienteIdentificacionVisual('', 'Consumidor Final');
         });
 
         $('#btnBuscarMisExpendiosPuntoExpendio').on('click', function () {
@@ -597,9 +599,9 @@
             $('#modalMisExpendiosPuntoExpendio').modal('hide');
 
             window.PostPuntoExpendioModal.open({
+                idExpendio: item.idExpendio || idExpendio,
                 imprimirUrl: item.imprimirUrl || '',
-                pdfUrl: item.pdfUrl || '',
-                whatsappTexto: item.whatsappTexto || ''
+                pdfUrl: item.pdfUrl || ''
             }, {
                 returnModalSelector: '#modalMisExpendiosPuntoExpendio',
                 titulo: 'Acciones del expendio',
@@ -625,7 +627,43 @@
 
         $('#razonSocial').on('input', function () {
             $('#idPersona').val('0');
+            setClienteIdentificacionVisual('', '');
         });
+
+        // Mismo comportamiento que la tecla Fin cuando el campo ya tiene el
+        // foco: Enter finaliza directo (no hace falta la rama de "vacio y sin
+        // foco" del atajo Fin, porque si esto dispara es porque ya esta enfocado).
+        $('#razonSocial').on('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            clickIfEnabled('#btnFinalizar');
+        });
+
+        // Muestra la identificacion del cliente debajo del input, igual que POS
+        // Venta (Views/Ventas/POS.cshtml), solo cuando difiere de la razon social
+        // (si son iguales o no hay identificacion, no aporta nada mostrarla).
+        function setClienteIdentificacionVisual(identificacion, razonSocial) {
+            var razon = (razonSocial || $('#razonSocial').val() || '').toString().trim();
+            var identificacionNormalizada = (identificacion || '').toString().trim();
+            var $wrap = $('#clienteIdentificacionWrap');
+            var $texto = $('#clienteIdentificacionTexto');
+            var $valor = $('#clienteIdentificacionValor');
+
+            if (!$wrap.length || !$texto.length) return;
+
+            var mostrar = !!identificacionNormalizada &&
+                !!razon &&
+                identificacionNormalizada.localeCompare(razon, undefined, { sensitivity: 'accent' }) !== 0;
+
+            if ($valor.length) {
+                $valor.val(identificacionNormalizada);
+            }
+
+            $texto.text(identificacionNormalizada);
+            $wrap.attr('title', identificacionNormalizada);
+            $wrap.toggleClass('d-none', !mostrar);
+        }
+        window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
 
         function actualizarSectorUI(sector) {
             var texto = sector || 'Sin seleccionar';
@@ -770,6 +808,20 @@
 
             if (e.key === 'End') {
                 e.preventDefault();
+
+                // Si el cliente/identificacion esta vacio y no tiene el foco, primero
+                // llevamos el foco ahi (para que se pueda cargar antes de finalizar).
+                // Si ya tiene contenido (con o sin foco), o si esta vacio pero ya tiene
+                // el foco, se finaliza directo.
+                var $cliente = $('#razonSocial');
+                var clienteVacio = !($cliente.val() || '').trim();
+                var clienteTieneFoco = document.activeElement === $cliente.get(0);
+
+                if (clienteVacio && !clienteTieneFoco) {
+                    $cliente.trigger('focus');
+                    return;
+                }
+
                 clickIfEnabled('#btnFinalizar');
                 return;
             }
@@ -807,6 +859,80 @@
         window.posHotkeysHooks.F6 = function () {
             abrirMisExpendios();
         };
+        // Mismo comportamiento que POS Venta: simula click en la ultima fila del
+        // carrito para abrir el modal "Linea del punto de expendio" de ese item.
+        window.posHotkeysHooks.F4 = function () {
+            $('#tablaItems tr.fila-item').last().trigger('click');
+        };
+
+        // Compactado adaptativo del teclado/producto-info por altura de viewport,
+        // portado de Ventas/POS.cshtml (aplicarCompacto/aplicarAjusteFooter). A
+        // diferencia de Venta, aca se agrega un guard de ancho: el pedido fue
+        // "solo responsive", asi que estas clases nunca se aplican en desktop
+        // aunque la ventana sea baja (Venta si lo hace, por diseno propio de esa
+        // vista).
+        (function () {
+            function getViewportHeight() {
+                if (window.visualViewport && window.visualViewport.height) {
+                    return Math.round(window.visualViewport.height);
+                }
+                return window.innerHeight || document.documentElement.clientHeight || 0;
+            }
+
+            function aplicarAjusteFooter() {
+                var workbench = document.querySelector('.pos-expendio-actions-col');
+                var footer = document.querySelector('.pos-footer-panel');
+                if (!workbench || !footer) {
+                    document.documentElement.classList.remove('pos-footer-fit');
+                    document.documentElement.classList.remove('pos-footer-tiny-fit');
+                    return;
+                }
+
+                var viewportHeight = getViewportHeight();
+                var workbenchRect = workbench.getBoundingClientRect();
+                var footerRect = footer.getBoundingClientRect();
+                var overflow = Math.max(0, Math.ceil(footerRect.bottom - workbenchRect.bottom));
+
+                var footerFit = overflow > 0 || viewportHeight < 950;
+                var footerTinyFit = overflow > 24 || viewportHeight < 860;
+
+                document.documentElement.classList.toggle('pos-footer-fit', footerFit);
+                document.documentElement.classList.toggle('pos-footer-tiny-fit', footerTinyFit);
+            }
+
+            function aplicarCompacto() {
+                if (window.innerWidth <= 991) {
+                    // Responsive: sin cambios respecto a la ronda anterior.
+                    var h = getViewportHeight();
+                    document.documentElement.classList.toggle('pos-compact', h < 960);
+                    document.documentElement.classList.toggle('pos-tiny', h < 860);
+
+                    window.requestAnimationFrame(aplicarAjusteFooter);
+                    return;
+                }
+
+                // Desktop: mismo mecanismo (antes solo corria en responsive).
+                // El problema real es el mismo en las dos resoluciones -- en
+                // notebooks con poca altura (768-900px) el contenido de la
+                // columna de acciones no entra y #pos-app (overflow:hidden) lo
+                // recorta, sin ningun mecanismo de achique. Rama separada (en
+                // vez de sacar el guard de ancho sin mas) para que el codigo de
+                // arriba, que ya corre en responsive, quede sin tocar.
+                var hDesktop = getViewportHeight();
+                document.documentElement.classList.toggle('pos-compact', hDesktop < 960);
+                document.documentElement.classList.toggle('pos-tiny', hDesktop < 860);
+
+                window.requestAnimationFrame(aplicarAjusteFooter);
+            }
+
+            window.addEventListener('resize', aplicarCompacto);
+            window.addEventListener('orientationchange', aplicarCompacto);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', aplicarCompacto);
+                window.visualViewport.addEventListener('scroll', aplicarCompacto);
+            }
+            aplicarCompacto();
+        })();
 
         setTimeout(function () {
             posKeyboard.focusCodigo();

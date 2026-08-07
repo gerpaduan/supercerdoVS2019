@@ -17,6 +17,10 @@
     <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
         <form id="formFiltroFacturas" method="get" action="@Url.Action("Facturas", "Ventas")" class="w-100">
             <div class="filtros-ventas-stack">
+                <div id="alertaFiltrosPendientesFacturas" class="alert alert-warning d-none mb-0" role="alert">
+                    Cambiaste las fechas. Presioná <strong>Aplicar</strong> para actualizar los resultados.
+                </div>
+
                 <div class="filtros-fila filtros-fila-fechas">
                     <div class="form-group mb-0">
                         <label for="fechaDesde" class="filtro-label">Desde</label>
@@ -41,8 +45,7 @@
                         <label class="filtro-label d-none d-lg-block">&nbsp;</label>
                         <button type="submit"
                                 id="btnFiltrarFechas"
-                                class="btn btn-primary btn-block"
-                                disabled>
+                                class="btn btn-primary btn-block">
                             Aplicar
                         </button>
                     </div>
@@ -51,7 +54,7 @@
                 <div class="filtros-fila filtros-fila-sucursal">
                     <div class="form-group mb-0 filtro-sucursal">
                         <label for="idSucursal" class="filtro-label">Sucursal</label>
-                        <select id="idSucursal" name="idSucursal" class="form-control" onchange="this.form.submit()">
+                        <select id="idSucursal" name="idSucursal" class="form-control">
                             <option value="">Todas las sucursales</option>
                             @foreach (var s in ViewBag.Sucursales)
                             {
@@ -66,16 +69,17 @@
                 <div class="filtros-fila filtros-fila-busqueda">
                     <div class="form-group mb-0">
                         <label for="buscadorVendedor" class="filtro-label">Vendedor</label>
-                        <input type="text" id="buscadorVendedor" class="form-control" placeholder="Nombre del vendedor" />
+                        <input type="text" id="buscadorVendedor" name="vendedor" class="form-control" placeholder="Nombre del vendedor" value="@Model.Vendedor" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label for="buscadorCliente" class="filtro-label">Cliente</label>
-                        <input type="text" id="buscadorCliente" class="form-control" placeholder="Nombre o identificación" />
+                        <input type="text" id="buscadorCliente" name="cliente" class="form-control" placeholder="Nombre o identificación" value="@Model.Cliente" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label for="btnFiltroFormaPago" class="filtro-label">Forma de pago</label>
+                        <input type="hidden" id="hiddenFormasPago" name="formasPago" value="@Model.FormasPagoCsv" />
                         <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroFormaPagoDropdown">
                             <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroFormaPago" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span id="filtroFormaPagoTexto">Todas las formas de pago</span>
@@ -101,6 +105,7 @@
 
                     <div class="form-group mb-0">
                         <label for="btnFiltroTipoComprobante" class="filtro-label">Tipo comprobante</label>
+                        <input type="hidden" id="hiddenTiposComprobante" name="tiposComprobante" value="@Model.TiposComprobanteCsv" />
                         <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroTipoComprobanteDropdown">
                             <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroTipoComprobante" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span id="filtroTipoComprobanteTexto">Todos los comprobantes</span>
@@ -112,16 +117,20 @@
                                     Todos los comprobantes
                                 </button>
                                 <div class="dropdown-divider my-2"></div>
-                                @foreach (var tipo in new[] { "Factura A", "Factura B", "Factura C", "NC A", "NC B", "NC C" })
+                                @foreach (var tipo in Web.Models.TipoComprobanteFacturas.Mapeo)
                                 {
                                     <label class="dropdown-item filtro-forma-pago-item px-2 mb-0">
-                                        <input type="checkbox" class="mr-2 chk-tipo-comprobante" value="@tipo" data-label="@tipo" />
-                                        <span>@tipo</span>
+                                        <input type="checkbox" class="mr-2 chk-tipo-comprobante" value="@tipo.Etiqueta" data-label="@tipo.Etiqueta" />
+                                        <span>@tipo.Etiqueta</span>
                                     </label>
                                 }
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div>
+                    <div id="estadoBusquedaFacturas" class="text-muted small">Resultados actualizados.</div>
                 </div>
             </div>
         </form>
@@ -130,7 +139,7 @@
     <div class="card mb-2 shadow-sm ventas-totales-card" style="padding: 6px 10px;">
         <div class="d-flex justify-content-between">
             <h5 id="cantFiltrado" class="text-muted m-0" style="font-weight: 500;">
-                Cant.: @(Model.Facturas != null ? Model.Facturas.Count : 0)
+                Cant.: @Model.Cantidad
             </h5>
             <h5 id="totalFiltrado" class="text-muted m-0" style="font-weight: 500;">
                 Total: @Model.TotalFacturado.ToString("C")
@@ -138,9 +147,12 @@
         </div>
     </div>
 
-    <div class="card shadow-sm ventas-card w-100">
+    <div class="card shadow-sm ventas-card w-100" id="facturasCardLista" data-hay-mas="@Model.HayMas.ToString().ToLowerInvariant()" data-pagina="1">
         <div class="card-body p-0">
             @Html.Partial("~/Views/Ventas/_TablaFacturas.cshtml", Model.Facturas)
+        </div>
+        <div id="facturasCargandoMas" class="text-center text-muted py-2 d-none">
+            <i class="fas fa-spinner fa-spin mr-1"></i> Cargando más facturas...
         </div>
     </div>
 </div>

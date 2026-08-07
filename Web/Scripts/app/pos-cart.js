@@ -133,6 +133,14 @@
         // Calcula el subtotal del producto actualmente seleccionado antes de
         // agregarlo al carrito.
         function calculateSubtotal() {
+            // Resalta #inputCantidad con un color mas oscuro mientras tiene contenido
+            // cargado (mismo criterio que prodNombre/prodPrecio via .pos-campo-cargado).
+            // Se resuelve aca porque calculateSubtotal ya es el punto de paso comun
+            // tanto del tipeo real (input nativo) como de los sets programaticos
+            // (EAN, "cantidadXcodigo"), que no siempre disparan el evento 'input'.
+            const rawCantidad = ($("#inputCantidad").val() || "").toString().trim();
+            $("#inputCantidad").toggleClass("pos-campo-cargado", rawCantidad.length > 0);
+
             const precioActual = options.getPrecioActual();
             let cant = parseCant($("#inputCantidad").val());
 
@@ -334,7 +342,7 @@
                 return;
             }
 
-            lineas.forEach(function (l) {
+            lineas.forEach(function (l, posicion) {
                 const claseAnulada = l.anulado ? "fila-anulada" : "";
                 const bonificacion = l.bonificacion == 0
                     ? ""
@@ -345,11 +353,16 @@
                     ? `<div class="text-muted small">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp.Nro: ${l.idExpendio}</div>`
                     : "";
 
+                // El numero visible es la posicion actual en la lista (1-based), no
+                // l.index (que es un contador que nunca se reutiliza). Asi, al eliminar
+                // un item del medio, los siguientes se renumeran sin saltos. l.index se
+                // sigue usando como data-id: es la clave estable para lookups/clicks
+                // (findLineaByIndex, scrollLineVisible), no puede cambiar entre renders.
                 $tbody.append(`
                     <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
                         <td>
                             <div class="fw-bold">
-                                #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
+                                #${posicion + 1} <strong>${l.producto}</strong> (cod: ${l.codigo})
                             </div>
                             ${detalleExpendio}
                             <div class="d-flex justify-content-between item-detalle">
@@ -626,7 +639,11 @@
 
         function loadLineModal(linea) {
             if (soloFormaPago) return;
-            $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
+            // Mismo numero visible que la fila del carrito (posicion actual en la
+            // lista), no linea.index -- ver el comentario en renderTable().
+            const posicionLinea = POSState.getLineas().findIndex(function (l) { return l && l.index === linea.index; });
+            const numeroVisible = posicionLinea >= 0 ? posicionLinea + 1 : linea.index;
+            $("#modalProducto").val(`#${numeroVisible} ${linea.producto}`);
 
             const cantNum = parseCant(linea.cant);
             $("#modalCantidad").val(isFinite(cantNum) ? fmtCant(cantNum) : String(linea.cant ?? ""));

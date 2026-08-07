@@ -571,9 +571,19 @@ namespace Negocio
             return oVentaD.getFactuElecById(idFactuElec);
         }
 
-        public List<Entidades.FacturaElectronica> getFacturasRealizadas(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            int pagina, int cantidad, int cantidadExtra)
         {
-            return oVentaD.getFacturasRealizadas(fechaDesde, fechaHasta, idSucursal);
+            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra);
+        }
+
+        public (int Cantidad, decimal Total) ObtenerFacturasResumen(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
+        {
+            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
         }
 
         #endregion

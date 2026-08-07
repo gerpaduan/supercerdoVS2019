@@ -8,6 +8,13 @@
 
     var filtro = Model != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
     string fechaHasta = filtro.FechaHasta.HasValue ? filtro.FechaHasta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    string fechaMinima = filtro.FechaMinimaConsulta.HasValue ? filtro.FechaMinimaConsulta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    string fechaMinimaCorta = filtro.FechaMinimaConsulta.HasValue ? filtro.FechaMinimaConsulta.Value.ToString("dd/MM/yyyy") : "";
+    string detalleUltimosCierres = filtro.UltimosCierresPorSucursal != null && filtro.UltimosCierresPorSucursal.Any()
+        ? string.Join(" · ", filtro.UltimosCierresPorSucursal
+            .OrderBy(x => x.Sucursal)
+            .Select(x => x.Sucursal + ": " + x.FechaUltimoCierre.ToString("dd/MM/yyyy HH:mm")))
+        : "";
     var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
     long empresaCuit = usuarioSesion != null && usuarioSesion.Empresa != null ? usuarioSesion.Empresa.Cuit : 0;
     int intervaloAutoMinutos = empresaCuit == 20306210786 ? 15 : 30;
@@ -86,9 +93,21 @@
                         </div>
 
                         <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="filtroFechaHastaExistencia">Fecha hasta</label>
+                            <label class="stock-filtro-label existencia-label-fecha-hasta" for="filtroFechaHastaExistencia">
+                                Fecha hasta
+                                <small class="text-muted existencia-fecha-minima-inline" id="lblFechaMinimaExistencia" title="@detalleUltimosCierres">
+                                    @if (filtro.FechaMinimaConsulta.HasValue)
+                                    {
+                                        <text>— Cálculo desde @fechaMinimaCorta</text>
+                                    }
+                                    else
+                                    {
+                                        <text>— sin cierre de stock registrado</text>
+                                    }
+                                </small>
+                            </label>
                             <div class="input-group">
-                                <input type="datetime-local" id="filtroFechaHastaExistencia" name="fechaHasta" class="form-control" value="@fechaHasta" />
+                                <input type="datetime-local" id="filtroFechaHastaExistencia" name="fechaHasta" class="form-control" value="@fechaHasta" min="@fechaMinima" />
                                 <div class="input-group-append">
                                     <button type="button" class="btn btn-outline-secondary" id="btnAhoraExistencia">
                                         <i class="fas fa-clock mr-1"></i>Ahora
@@ -199,6 +218,18 @@
         font-size: .76rem;
     }
 
+    .existencia-label-fecha-hasta {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: .3rem;
+    }
+
+    .existencia-fecha-minima-inline {
+        font-weight: 400;
+        font-size: .72rem;
+    }
+
     .existencia-sucursales-page .existencia-estado-card .card-body {
         padding: .62rem .82rem !important;
     }
@@ -305,7 +336,10 @@
     <script>
         (function () {
             var buscarUrl = '@Url.Action("BuscarExistenciaPorSucursales", "Stock")';
+            var fechaMinimaUrl = '@Url.Action("ObtenerFechaMinimaExistencia", "Stock")';
             var $form = $("#formExistenciaSucursales");
+            var $fechaHasta = $("#filtroFechaHastaExistencia");
+            var $lblFechaMinima = $("#lblFechaMinimaExistencia");
             var $contenedor = $("#contenedorTablaExistenciaSucursales");
             var $btnBuscar = $("#btnBuscarExistencia");
             var $btnBuscarTexto = $btnBuscar.find(".btn-buscar-texto");
@@ -340,6 +374,37 @@
 
             function estadosIguales(a, b) {
                 return JSON.stringify(a) === JSON.stringify(b);
+            }
+
+            // El calculo de existencia parte siempre del ultimo cierre de stock registrado, sin
+            // importar que "Fecha hasta" se pida -- por eso no tiene sentido dejar elegir una fecha
+            // anterior a ese cierre (daria un resultado incorrecto, ver docs/DECISIONS.md). Esto
+            // actualiza el limite (atributo "min" del selector + el texto de ayuda) cada vez que
+            // cambia la sucursal elegida, sin esperar a que se presione Buscar.
+            function actualizarFechaMinimaExistencia() {
+                var idSucursal = $("#filtroSucursalExistencia").val() || "0";
+
+                $.ajax({
+                    url: fechaMinimaUrl,
+                    type: "GET",
+                    data: { idSucursal: idSucursal }
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) return;
+
+                    $fechaHasta.attr("min", resp.fechaMinima || "");
+
+                    if (resp.fechaMinima && $fechaHasta.val() && $fechaHasta.val() < resp.fechaMinima) {
+                        $fechaHasta.val(resp.fechaMinima);
+                    }
+
+                    if (resp.fechaMinima) {
+                        var fechaCorta = resp.fechaMinima.split("T")[0].split("-").reverse().join("/");
+                        var detalle = (resp.detalle || []).map(function (d) { return d.Sucursal + ": " + d.fecha; }).join(" · ");
+                        $lblFechaMinima.text("— Cálculo desde " + fechaCorta).attr("title", detalle);
+                    } else {
+                        $lblFechaMinima.text("— sin cierre de stock registrado").attr("title", "");
+                    }
+                });
             }
 
             function actualizarPendiente() {
@@ -640,6 +705,8 @@
                     actualizarPendiente();
                     aplicarFiltrosVisuales();
                 });
+
+            $("#filtroSucursalExistencia").on("change", actualizarFechaMinimaExistencia);
 
             $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
 

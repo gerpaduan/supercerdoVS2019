@@ -47,9 +47,9 @@
                     Generar PDF
                 </button>
 
-                <button class="btn btn-success btn-lg btn-block" id="btnPostPuntoExpendioWhatsapp" type="button">
+                <button class="btn btn-success btn-lg btn-block" id="btnPostPuntoExpendioEmail" type="button">
                     <span class="badge badge-light mr-2">4</span>
-                    <i class="fab fa-whatsapp mr-2"></i>Enviar a WhatsApp
+                    <i class="fas fa-envelope mr-2"></i>Enviar por email
                 </button>
 
                 <div class="mt-3 pt-2 border-top text-left">
@@ -99,6 +99,47 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
                 <button class="btn btn-primary" type="button" id="btnGuardarConfigAgentePuntoExpendio">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEmailPuntoExpendio" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Enviar comprobante por email</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">
+                    El comprobante PDF del punto de expendio se adjuntará automáticamente al email.
+                </p>
+
+                <div class="form-group">
+                    <label for="peEmailDestino">Email destino</label>
+                    <input type="email" class="form-control" id="peEmailDestino" maxlength="200" placeholder="cliente@dominio.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="peEmailAsunto">Asunto</label>
+                    <input type="text" class="form-control" id="peEmailAsunto" maxlength="200">
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="peEmailMensaje">Mensaje</label>
+                    <textarea class="form-control" id="peEmailMensaje" rows="6"></textarea>
+                </div>
+
+                <div class="alert alert-danger d-none mb-0" id="peEmailError"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" type="button" id="btnConfirmarEmailPuntoExpendio">
+                    <i class="fas fa-paper-plane mr-1"></i> Enviar email
+                </button>
             </div>
         </div>
     </div>

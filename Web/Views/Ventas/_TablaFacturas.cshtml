@@ -1,126 +1,19 @@
 @model List<Web.Models.FacturaListadoItemVm>
 @using System.Web
 
+@* Envoltorio: el <ul> fijo + mensaje de "sin resultados" + las filas en si (extraidas a
+   _FacturasRows.cshtml, que tambien se usa para el HTML que appendea el scroll infinito -- ver
+   VentasController.BuscarFacturas y _VentasFacturasFiltrosScripts.cshtml). *@
 <ul id="listaFacturas" class="list-group list-group-flush">
     @if (Model == null || Model.Count == 0)
     {
-        <li class="list-group-item text-center text-muted py-4">
+        <li class="list-group-item text-center text-muted py-4" id="listaFacturasVacia">
             <i class="fas fa-search fa-2x mb-2"></i><br />
             No hay coincidencias
         </li>
     }
     else
     {
-        foreach (var facturaAgrupada in Model.GroupBy(x => (x.Factura != null && x.Factura.FechaEmisionAfip.HasValue ? x.Factura.FechaEmisionAfip.Value : DateTime.MinValue).Date))
-        {
-            if (facturaAgrupada.Any())
-            {
-                <li class="list-group-item bg-light font-weight-bold fecha-grupo">
-                    @facturaAgrupada.Key.ToString("dd/MM/yyyy")
-                </li>
-
-                foreach (var item in facturaAgrupada)
-                {
-                    var factura = item.Factura;
-                    var venta = item.Venta;
-                    var detalleUrl = Url.Action("DetalleFactura", "Ventas", new { id = factura.Id, returnUrl = Request.RawUrl ?? "" });
-                    var tipoComprobante = "";
-                    if (factura != null)
-                    {
-                        switch (factura.CodTipoCbteAfip)
-                        {
-                            case Entidades.FacturaElectronica.codFacturaA_Afip:
-                                tipoComprobante = "Factura A";
-                                break;
-                            case Entidades.FacturaElectronica.codNotaCreditoA_Afip:
-                                tipoComprobante = "NC A";
-                                break;
-                            case Entidades.FacturaElectronica.codFacturaB_Afip:
-                                tipoComprobante = "Factura B";
-                                break;
-                            case Entidades.FacturaElectronica.codNotaCreditoB_Afip:
-                                tipoComprobante = "NC B";
-                                break;
-                            case Entidades.FacturaElectronica.codFacturaC_Afip:
-                                tipoComprobante = "Factura C";
-                                break;
-                            case Entidades.FacturaElectronica.codNotaCreditoC_Afip:
-                                tipoComprobante = "NC C";
-                                break;
-                            default:
-                                tipoComprobante = factura.getLetraId_TipoCbte(factura.CodTipoCbteAfip).ToString();
-                                break;
-                        }
-                    }
-                    var formaPago = !string.IsNullOrWhiteSpace(factura != null ? factura.FormaPago : "") ? factura.FormaPago : (venta != null ? venta.FormaPago : "");
-                    var cliente = venta != null && venta.Persona != null ? venta.Persona.razonSocial : (factura != null ? factura.RazonSocialAFIP : "");
-                    var identificacion = venta != null && venta.Persona != null ? venta.Persona.Identificacion : (factura != null ? factura.NroDocAfip : "");
-                    var vendedor = venta != null && venta.Vendedor != null ? venta.Vendedor.Nombre : "";
-                    var fechaFactura = factura != null && factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value : DateTime.MinValue;
-                    var numeroFactura = factura != null ? ((factura.PtoVtaAfip ?? "") + "-" + (factura.NroCbteAfip ?? "")) : "";
-                    var esNotaCredito = factura != null && (
-                        factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoA_Afip ||
-                        factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoB_Afip ||
-                        factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoC_Afip);
-                    var importeVisual = factura != null
-                        ? (esNotaCredito ? -factura.ImporteTotal : factura.ImporteTotal)
-                        : 0f;
-                    var facturaAsociada = item.FacturaAsociada;
-                    var notaCreditoAsociada = item.NotaCreditoAsociada;
-
-                    <li class="list-group-item venta-item"
-                        data-forma-pago="@formaPago"
-                        data-tipo-comprobante="@tipoComprobante"
-                        data-cliente="@cliente"
-                        data-identificacion="@identificacion"
-                        data-vendedor="@vendedor"
-                        onclick="location.href='@detalleUrl'">
-                        <div class="venta-icono">
-                            <i class="fas fa-file-invoice-dollar fa-2x text-primary"></i>
-                        </div>
-
-                        <div class="venta-info">
-                            <div class="venta-tipo-persona font-weight-bold">
-                                @tipoComprobante - @formaPago
-                            </div>
-                            @if (!string.IsNullOrWhiteSpace(cliente))
-                            {
-                                <div class="venta-tipo-persona font-weight-bold">
-                                    a @cliente
-                                </div>
-                            }
-                            <div class="venta-id">Nro: @numeroFactura</div>
-                            <div class="venta-id">Venta asociada: @factura.IdVenta</div>
-                            @if (facturaAsociada != null)
-                            {
-                                <div class="venta-id">Factura asociada: @(string.Format("{0}-{1}", facturaAsociada.PtoVtaAfip ?? "", facturaAsociada.NroCbteAfip ?? ""))</div>
-                            }
-                            @if (notaCreditoAsociada != null)
-                            {
-                                <div class="venta-id text-danger">NC asociada: @(string.Format("{0}-{1}", notaCreditoAsociada.PtoVtaAfip ?? "", notaCreditoAsociada.NroCbteAfip ?? ""))</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(factura.Observaciones))
-                            {
-                                <div class="venta-id">
-                                    <span class="badge badge-pill badge-info" title="@factura.Observaciones">1</span>
-                                    Observación del comprobante
-                                </div>
-                            }
-                        </div>
-
-                        <div class="venta-total">
-                            <div class="importe @(importeVisual < 0 ? "text-danger font-weight-bold" : "")"
-                                 data-valor="@importeVisual">
-                                @((importeVisual > 0 ? "+ " : "") + importeVisual.ToString("C"))
-                            </div>
-
-                            <div class="text-muted small">
-                                @(fechaFactura == DateTime.MinValue ? "" : fechaFactura.ToString("HH:mm")) hs
-                            </div>
-                        </div>
-                    </li>
-                }
-            }
-        }
+        @Html.Partial("~/Views/Ventas/_FacturasRows.cshtml", Model)
     }
 </ul>

@@ -62,7 +62,7 @@ namespace Web.Controllers
             return View("~/Views/PuntosExpendio/Abrir.cshtml", model);
         }
 
-        public ActionResult POS(string sector = "")
+        public ActionResult POS(string sector = "", string modoPos = "original", string posInstanceId = "")
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
@@ -78,6 +78,16 @@ namespace Web.Controllers
 
             AsegurarSucursalUsuario(user);
 
+            // Mismo patron que VentasController.POS: "duplicado" habilita abrir una segunda
+            // ventana del mismo POS (boton "Duplicar POS", pos-multi-instance.js), cada una
+            // con su propio posInstanceId para que el heartbeat entre pestanas las distinga.
+            string modoPosNormalizado = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)
+                ? "duplicado"
+                : "original";
+            string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
+                ? Guid.NewGuid().ToString("N")
+                : posInstanceId.Trim();
+
             var model = CrearModeloNuevo(user, sector);
             ViewBag.IdConsumidorFinal = oPersonaN.getConsumidorFinal() != null ? oPersonaN.getConsumidorFinal().IdPersona : 0;
             ViewBag.PuedeBonificarPuntoExpendio = PermisosHelper.TienePermiso(
@@ -87,6 +97,8 @@ namespace Web.Controllers
                 Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             ViewBag.Title = "CarniSys | Punto de Expendio";
             ViewBag.Seccion = "Punto de expendio";
+            ViewBag.PosModoInstancia = modoPosNormalizado;
+            ViewBag.PosInstanceId = posInstanceIdNormalizado;
 
             return View("~/Views/PuntosExpendio/POS.cshtml", model);
         }
@@ -203,7 +215,7 @@ namespace Web.Controllers
                 IdentificacionExpendio = model.IdentificacionCliente ?? "",
                 Sector = (model.Sector ?? "").Trim(),
                 CantItems = model.Lineas.Count.ToString(CultureInfo.InvariantCulture),
-                Observaciones = "",
+                Observaciones = model.Observaciones ?? "",
                 NroRemito = "",
                 SerialCPU = "",
                 Vendedor = user
@@ -310,9 +322,37 @@ namespace Web.Controllers
         [HttpGet]
         public JsonResult BuscarProductoPOS(string codigo, bool ingresoCantidadX = false)
         {
-            long codigoBuscado;
-            if (string.IsNullOrWhiteSpace(codigo) || !long.TryParse(codigo, out codigoBuscado) || codigoBuscado <= 0)
+            if (string.IsNullOrWhiteSpace(codigo))
                 return Json(new { success = false, message = "Código inválido." }, JsonRequestBehavior.AllowGet);
+
+            // Mismo mecanismo de "codigo generico" que VentasController.BuscarProducto
+            // (el pedido de puerto fue explicito): el input "cantidadXprecio" (ej.
+            // "2.345x23.4") llega aca con ingresoCantidadX=true y codigo="23.4" --
+            // como no es un codigo de catalogo real, se interpreta como precio manual
+            // contra un producto generico configurado por parametro (ParamKeys.CodProdGenerico).
+            // El sufijo "G<n>" (ej. "23.4G1") selecciona el generico base + n
+            // ("codigo generico + 1", "+2", etc.), para tener varios genericos
+            // distintos (ej. por alicuota de IVA) sin cambiar el flujo de carga.
+            codigo = codigo.Replace(",", ".");
+
+            if (codigo.Split('.').Length - 1 > 1)
+                return Json(new { success = false, message = "Formato de código inválido." }, JsonRequestBehavior.AllowGet);
+
+            var matchGenerico = System.Text.RegularExpressions.Regex.Match(codigo, @"^[^G]*G(\d+)[^G]*$");
+            long numeroSumaGen = matchGenerico.Success ? int.Parse(matchGenerico.Groups[1].Value) : 0;
+
+            const int cantMinDigEan8 = 8;
+            bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDigEan8);
+
+            long codigoBuscado;
+            if (esGenerico)
+            {
+                codigoBuscado = param.GetLong(ParamKeys.CodProdGenerico, 0L) + numeroSumaGen;
+            }
+            else if (!long.TryParse(codigo, out codigoBuscado) || codigoBuscado <= 0)
+            {
+                return Json(new { success = false, message = "Código inválido." }, JsonRequestBehavior.AllowGet);
+            }
 
             int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
                 ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
@@ -321,7 +361,17 @@ namespace Web.Controllers
                 ? oCorteN.findCorteByCodigoEmpresa(codigoBuscado, idEmpresaSesion, false)
                 : oCorteN.findCorteByCodigo(codigoBuscado, false);
             if (corte == null || corte.IdCorte <= 0)
-                return Json(new { success = false, message = "No se encontró el producto." }, JsonRequestBehavior.AllowGet);
+            {
+                string mensajeNoEncontrado = esGenerico ? "No existe el código genérico." : "No se encontró el producto.";
+                return Json(new { success = false, message = mensajeNoEncontrado }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (esGenerico)
+            {
+                int indexG = codigo.IndexOf('G');
+                string precioTexto = indexG != -1 ? codigo.Substring(0, indexG) : codigo;
+                corte.PrecioKg = float.Parse(precioTexto, CultureInfo.InvariantCulture);
+            }
 
             return Json(new
             {
@@ -330,6 +380,15 @@ namespace Web.Controllers
                 nombre = !string.IsNullOrWhiteSpace(corte.corte) ? corte.corte : corte.CorteDesc,
                 precioKg = corte.PrecioKg,
                 precioOriginal = corte.PrecioKg,
+                // "pesable" ademas de "balanza" (mismo valor): pos-cart.js (compartido con
+                // Ventas/POS) arma cada linea del carrito leyendo productoSeleccionado.pesable
+                // para el resumen "N kgs | N unidades" -- Venta.BuscarProducto ya devuelve ese
+                // campo, este endpoint solo devolvia "balanza" (que sigue usando el modulo de
+                // integracion con la balanza de Expendio, no se saca). Sin "pesable" el resumen
+                // clasificaba TODOS los productos de Expendio como "unidades", incluso los
+                // pesables. Confirmado con Chrome real: CARRE (balanza:true) quedaba con
+                // linea.pesable=false en el carrito antes de este fix.
+                pesable = corte.Pesable,
                 balanza = corte.Pesable
             }, JsonRequestBehavior.AllowGet);
         }
@@ -408,7 +467,7 @@ namespace Web.Controllers
                 IdentificacionExpendio = model.IdentificacionCliente ?? "",
                 Sector = (model.Sector ?? "").Trim(),
                 CantItems = model.Lineas.Count.ToString(CultureInfo.InvariantCulture),
-                Observaciones = "",
+                Observaciones = model.Observaciones ?? "",
                 NroRemito = "",
                 SerialCPU = "",
                 Vendedor = user
@@ -671,6 +730,125 @@ namespace Web.Controllers
 
             byte[] bytes = GenerarPdfPuntoExpendio(expendio);
             return File(bytes, "application/pdf", "PuntoExpendio_" + id + ".pdf");
+        }
+
+        // Reemplazo de "Enviar por WhatsApp" en el modal post-expendio (ver
+        // docs/DECISIONS.md). Mismo patron que VentasController.ObtenerDatosEmailComprobante/
+        // EnviarComprobanteEmail, simplificado: el punto de expendio no tiene factura
+        // electronica ni nota de credito, y el cliente es texto libre (sin Persona.Email
+        // confiable) -- por eso el email destino arranca vacio, a cargar a mano.
+        [HttpGet]
+        public JsonResult ObtenerDatosEmailExpendio(int idExpendio)
+        {
+            try
+            {
+                var expendio = oVentaN.getExpedioById(idExpendio);
+                if (expendio == null || expendio.IdExpendio <= 0)
+                    return Json(new { ok = false, msg = "Punto de expendio no encontrado." }, JsonRequestBehavior.AllowGet);
+
+                string nombreEmpresa = ObtenerNombreEmpresaExpendio(expendio);
+                string asunto = "Punto de expendio " + expendio.IdExpendio + " - " + nombreEmpresa;
+                string cuerpo =
+                    "Hola:\n\n" +
+                    "Adjuntamos el comprobante del punto de expendio Nro " + expendio.IdExpendio + ".\n\n" +
+                    "Este correo fue enviado automáticamente. Por favor, no responda a este mensaje.\n\n" +
+                    "Atentamente,\n" +
+                    nombreEmpresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = "",
+                    asunto = asunto,
+                    mensaje = cuerpo
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult EnviarComprobanteEmailExpendio(int idExpendio, string emailDestino, string asunto, string mensaje)
+        {
+            try
+            {
+                var expendio = oVentaN.getExpedioById(idExpendio);
+                if (expendio == null || expendio.IdExpendio <= 0)
+                    return Json(new { ok = false, msg = "Punto de expendio no encontrado." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                string nombreEmpresa = ObtenerNombreEmpresaExpendio(expendio);
+                var empresaExpendio = ObtenerEmpresaExpendio(expendio);
+                byte[] pdfBytes = GenerarPdfPuntoExpendio(expendio);
+                string nombreAdjunto = "PuntoExpendio_" + expendio.IdExpendio + ".pdf";
+                string fromName = "CarniSys - " + nombreEmpresa;
+                string replyToEmail = empresaExpendio != null ? (empresaExpendio.Email ?? "").Trim() : "";
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: "",
+                    subject: asunto,
+                    bodyHtml: ConvertirTextoAHtmlExpendio(mensaje),
+                    attachmentFileName: nombreAdjunto,
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    fromNameOverride: fromName,
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: nombreEmpresa
+                );
+
+                return Json(new { ok = true, msg = "El comprobante se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
+        }
+
+        private Entidades.Empresa ObtenerEmpresaExpendio(Entidades.Venta expendio)
+        {
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            return (expendio != null && expendio.Sucursal != null ? expendio.Sucursal.Empresa : null)
+                ?? (usuario != null ? usuario.Empresa : null);
+        }
+
+        private string ObtenerNombreEmpresaExpendio(Entidades.Venta expendio)
+        {
+            var empresaExpendio = ObtenerEmpresaExpendio(expendio);
+            string nombre = empresaExpendio != null
+                ? (!string.IsNullOrWhiteSpace(empresaExpendio.NombreFantasia) ? empresaExpendio.NombreFantasia : empresaExpendio.RazonSocialAfip)
+                : "";
+            return !string.IsNullOrWhiteSpace(nombre)
+                ? nombre.Trim()
+                : "CarniSys";
+        }
+
+        private string ConvertirTextoAHtmlExpendio(string texto)
+        {
+            string safe = System.Web.HttpUtility.HtmlEncode(texto ?? "");
+            safe = safe.Replace("\r\n", "\n").Replace("\r", "\n");
+            string cuerpoHtml = "<p>" + safe.Replace("\n\n", "</p><p>").Replace("\n", "<br />") + "</p>";
+            string pieHtml =
+                "<div style=\"margin-top:24px; padding-top:12px; border-top:1px solid #ddd; font-size:11px; color:#777; line-height:1.4;\">" +
+                "<p>CarniSys es un software de gestión comercial para pequeños y medianos comercios, diseñado para administrar ventas, stock y facturación, con integración a balanzas para agilizar la atención en productos pesables.</p>" +
+                "</div>";
+
+            return cuerpoHtml + pieHtml;
         }
 
         public ActionResult Sectores(string editar = "")

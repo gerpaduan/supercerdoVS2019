@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 using Entidades;
 using Utilidades;
 
@@ -757,6 +758,7 @@ namespace Datos
                     p.AddWithValue("@cantItems", oVentaE.CantItems ?? "");
                     p.AddWithValue("@importe", oVentaE.TotalImporte);
                     p.AddWithValue("@serialCPU", oVentaE.SerialCPU ?? "");
+                    p.AddWithValue("@observaciones", oVentaE.Observaciones ?? "");
                 }
             );
 
@@ -814,7 +816,8 @@ namespace Datos
                        le.precioKg,
                        (le.cantKg * le.precioKg) AS total,
                        idVenta,
-                       u.nombre AS vendedor
+                       u.nombre AS vendedor,
+                       e.observaciones
                 FROM dbo.Expendios e
                 INNER JOIN dbo.LineaExpendio le ON e.idExpendio = le.idExpendio
                 INNER JOIN dbo.Corte c ON le.idCorte = c.idCorte
@@ -1087,7 +1090,8 @@ namespace Datos
                         IdentificacionExpendio = Convert.ToString(dr["identificacionExpendio"]),
                         Sector = Convert.ToString(dr["sector"]),
                         CantItems = Convert.ToString(dr["cantItems"]),
-                        TotalImporte = dr["importe"] == DBNull.Value ? 0f : Convert.ToSingle(dr["importe"])
+                        TotalImporte = dr["importe"] == DBNull.Value ? 0f : Convert.ToSingle(dr["importe"]),
+                        Observaciones = dr["observaciones"] == DBNull.Value ? "" : Convert.ToString(dr["observaciones"])
                     };
 
                     var oUsuarioD = new Usuario(_empresa);
@@ -1333,121 +1337,254 @@ namespace Datos
             return fact;
         }
 
-        public List<Entidades.FacturaElectronica> getFacturasRealizadas(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal)
+        private Entidades.FacturaElectronica MapFacturaCompleta(SqlDataReader dr)
         {
-            const string sql = @"
-                SELECT
-                    f.*,
-                    v.idVenta,
-                    v.fechaVenta,
-                    v.turno,
-                    v.diaFestivo,
-                    v.observaciones,
-                    v.nroRemito,
-                    v.estado,
-                    v.enCtaCte,
-                    v.cuit,
-                    v.email,
-                    v.formaPago AS ventaFormaPago,
-                    v.tipoComprobante,
-                    v.creado AS ventaCreado,
-                    v.actualizado AS ventaActualizado,
-                    v.pagoMixtoEfectivo,
-                    v.idVendedor,
-                    v.idSucursal,
-                    v.idPersona,
-                    ISNULL(lv.totalImporteCalculado, 0) AS totalImporteCalculado,
-                    ISNULL(lv.cantItemsCalculado, 0) AS cantItemsCalculado,
-                    u.nombre AS vendedorNombre,
-                    u.usuario AS vendedorUsuario,
-                    u.email AS vendedorEmail,
-                    u.idEmpresa AS vendedorIdEmpresa,
-                    s.sucursal AS sucursalNombre,
-                    s.idEmpresa AS sucursalIdEmpresa,
-                    s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
-                    s.direccion AS sucursalDireccion,
-                    s.localidad AS sucursalLocalidad,
-                    s.provincia AS sucursalProvincia,
-                    s.pais AS sucursalPais,
-                    p.razonSocial AS personaRazonSocial,
-                    p.identificacion AS personaIdentificacion,
-                    p.idIva AS personaIdIva,
-                    i.iva AS personaIva,
-                    p.cuit AS personaCuit,
-                    p.telefono AS personaTelefono,
-                    p.domicilio AS personaDomicilio,
-                    p.ciudad AS personaCiudad,
-                    p.ctaCte AS personaCtaCte,
-                    p.bonificacion AS personaBonificacion
-                FROM FacturaElectronica f
-                INNER JOIN Ventas v ON v.idVenta = f.idVenta
-                LEFT JOIN Usuarios u ON u.id = v.idVendedor
-                LEFT JOIN Sucursal s ON s.idSucursal = v.idSucursal
-                LEFT JOIN Personas p ON p.idPersona = v.idPersona
-                LEFT JOIN Iva i ON i.id = p.idIva
-                LEFT JOIN (
+            var factura = new Entidades.FacturaElectronica
+            {
+                Id = Convert.ToInt32(dr["id"]),
+                PtoVtaAfip = Convert.ToString(dr["ptoVtaAfip"]),
+                FechaEmisionAfip = dr["fechaEmisionAfip"] == DBNull.Value ? null : (DateTime?)dr["fechaEmisionAfip"],
+                DescTipoCbteAfip = Convert.ToString(dr["descTipoCbteAfip"]),
+                CodTipoCbteAfip = dr["codTipoCbteAfip"] == DBNull.Value ? 0 : Convert.ToInt32(dr["codTipoCbteAfip"]),
+                NroCbteAfip = Convert.ToString(dr["nroCbteAfip"]),
+                TipoDocAfip = Convert.ToString(dr["tipoDocAfip"]),
+                NroDocAfip = Convert.ToString(dr["nroDocAfip"]),
+                RazonSocialAFIP = Convert.ToString(dr["razonSocialAFIP"]),
+                CondicionIvaAFIP = Convert.ToString(dr["condicionIvaAFIP"]),
+                DomicilioAFIP = Convert.ToString(dr["domicilioAFIP"]),
+                CondicionVenta = Convert.ToString(dr["condicionVenta"]),
+                FormaPago = Convert.ToString(dr["formaPago"]),
+                CAE1 = Convert.ToString(dr["CAE"]),
+                FecVtoCAE = Convert.ToString(dr["fecVtoCAE"]),
+                ImporteNetoGravado = string.IsNullOrEmpty(dr["importeNetoGravado"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeNetoGravado"]),
+                Iva = string.IsNullOrEmpty(dr["iva"]?.ToString()) ? 0 : Convert.ToSingle(dr["iva"]),
+                ImporteTotal = string.IsNullOrEmpty(dr["importeTotal"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeTotal"]),
+                PorcentajeFacturacion = string.IsNullOrEmpty(dr["porcentajeFacturacion"]?.ToString()) ? 100 : Convert.ToSingle(dr["porcentajeFacturacion"]),
+                DescItemUnitario = Convert.ToString(dr["descItemUnitario"]),
+                Observaciones = ColumnaExiste(dr, "observaciones") ? Convert.ToString(dr["observaciones"]) : "",
+                IdVenta = dr["idVenta"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idVenta"]),
+                Error = dr["error"] != DBNull.Value && Convert.ToBoolean(dr["error"]),
+                MensajeError = Convert.ToString(dr["mensajeError"]),
+                FechaError = dr["fechaError"] == DBNull.Value ? null : (DateTime?)dr["fechaError"]
+            };
+
+            var venta = MapVenta(dr, false);
+            if (string.IsNullOrWhiteSpace(factura.FormaPago))
+                factura.FormaPago = venta.FormaPago;
+
+            factura.Venta = venta;
+            return factura;
+        }
+
+        // Arma la clausula WHERE de filtros de Facturas (fecha/sucursal/cliente/vendedor/forma de
+        // pago/tipo de comprobante) como texto SQL parametrizado -- compartida entre
+        // BuscarFacturasPagina (trae filas) y ObtenerFacturasResumen (cuenta/suma el total del
+        // filtro completo, sin paginar), para que las dos consultas filtren exactamente igual.
+        // Los IN(...) de formasPago/codigosComprobante se arman con placeholders numerados
+        // (@fp0, @fp1, ...) igual que Datos.CatalogoGlobalProducto.ObtenerCatalogoGlobalPaginaPorIds,
+        // nunca concatenando los valores directo en el SQL.
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante)
+        {
+            string whereFormaPago = "1 = 1";
+            if (formasPago != null && formasPago.Count > 0)
+            {
+                var placeholders = new StringBuilder();
+                for (int i = 0; i < formasPago.Count; i++)
+                {
+                    if (i > 0) placeholders.Append(", ");
+                    placeholders.Append("@fp").Append(i);
+                }
+                whereFormaPago = "ISNULL(NULLIF(f.formaPago, ''), v.formaPago) IN (" + placeholders + ")";
+            }
+
+            string whereComprobante = "1 = 1";
+            if (codigosComprobante != null && codigosComprobante.Count > 0)
+            {
+                var placeholders = new StringBuilder();
+                for (int i = 0; i < codigosComprobante.Count; i++)
+                {
+                    if (i > 0) placeholders.Append(", ");
+                    placeholders.Append("@cc").Append(i);
+                }
+                whereComprobante = "f.codTipoCbteAfip IN (" + placeholders + ")";
+            }
+
+            return $@"
+                ISNULL(f.CAE, '') <> ''
+                AND f.fechaEmisionAfip >= @fechaDesde
+                AND f.fechaEmisionAfip < @fechaHastaMas1
+                AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
+                AND (@cliente = '' OR p.razonSocial LIKE @clienteBuscar OR p.identificacion LIKE @clienteBuscar OR f.razonSocialAFIP LIKE @clienteBuscar OR f.nroDocAfip LIKE @clienteBuscar)
+                AND (@vendedor = '' OR u.nombre LIKE @vendedorBuscar)
+                AND ({whereFormaPago})
+                AND ({whereComprobante})";
+        }
+
+        private static void AgregarParametrosFacturas(
+            SqlParameterCollection p,
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor,
+            List<string> formasPago, List<int> codigosComprobante)
+        {
+            string clienteLimpio = (cliente ?? "").Trim();
+            string vendedorLimpio = (vendedor ?? "").Trim();
+
+            p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
+            p.Add("@fechaHastaMas1", SqlDbType.DateTime).Value = fechaHasta.AddDays(1);
+            p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal;
+            p.Add("@cliente", SqlDbType.NVarChar, 200).Value = clienteLimpio;
+            p.Add("@clienteBuscar", SqlDbType.NVarChar, 210).Value = "%" + clienteLimpio + "%";
+            p.Add("@vendedor", SqlDbType.NVarChar, 200).Value = vendedorLimpio;
+            p.Add("@vendedorBuscar", SqlDbType.NVarChar, 210).Value = "%" + vendedorLimpio + "%";
+
+            if (formasPago != null)
+                for (int i = 0; i < formasPago.Count; i++)
+                    p.Add("@fp" + i, SqlDbType.NVarChar, 50).Value = formasPago[i];
+
+            if (codigosComprobante != null)
+                for (int i = 0; i < codigosComprobante.Count; i++)
+                    p.Add("@cc" + i, SqlDbType.Int).Value = codigosComprobante[i];
+        }
+
+        // Trae una pagina de facturas ya filtradas por fecha/sucursal/cliente/vendedor/forma de
+        // pago/tipo de comprobante, en vez de traer todo el rango de una (ver docs/DECISIONS.md,
+        // entrada sobre paginacion de Facturas). Mismo patron de paginacion que
+        // Datos.CatalogoGlobalProducto.ObtenerCatalogoGlobalPagina: CTE con ROW_NUMBER() OVER(...),
+        // "cantidadExtra" filas de mas para que el caller detecte "hay mas pagina" sin un COUNT aparte.
+        public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            int pagina, int cantidad, int cantidadExtra)
+        {
+            pagina = pagina < 1 ? 1 : pagina;
+            cantidad = cantidad < 1 ? 1 : cantidad;
+            cantidadExtra = cantidadExtra < 0 ? 0 : cantidadExtra;
+            int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
+            int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
+
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+
+            string sql = $@"
+                ;WITH FacturasFiltradas AS
+                (
                     SELECT
-                        idVenta,
-                        SUM(cantKg * precioKg) AS totalImporteCalculado,
-                        COUNT(*) AS cantItemsCalculado
-                    FROM dbo.LineaVenta
-                    GROUP BY idVenta
-                ) lv ON lv.idVenta = v.idVenta
-                WHERE ISNULL(f.CAE, '') <> ''
-                  AND f.fechaEmisionAfip >= @fechaDesde
-                  AND f.fechaEmisionAfip < @fechaHastaMas1
-                  AND (@idSucursal = -1 OR v.idSucursal = @idSucursal)
-                ORDER BY f.fechaEmisionAfip DESC, f.id DESC;";
+                        f.*,
+                        -- v.idVenta y v.observaciones NO se listan aca: FacturaElectronica ya
+                        -- tiene columnas con esos mismos nombres (f.* las trae), y un CTE, a
+                        -- diferencia de un SELECT plano, no admite nombres de columna duplicados.
+                        -- El comportamiento de lectura no cambia: el mapeo por nombre de columna
+                        -- ya resolvia contra la primera coincidencia (f.*, que viene antes en la
+                        -- lista), asi que sacar el duplicado no altera que dato termina leyendo
+                        -- MapFacturaCompleta -- mismo valor que devolvia la query original.
+                        v.fechaVenta,
+                        v.turno,
+                        v.diaFestivo,
+                        v.nroRemito,
+                        v.estado,
+                        v.enCtaCte,
+                        v.cuit,
+                        v.email,
+                        v.formaPago AS ventaFormaPago,
+                        v.tipoComprobante,
+                        v.creado AS ventaCreado,
+                        v.actualizado AS ventaActualizado,
+                        v.pagoMixtoEfectivo,
+                        v.idVendedor,
+                        v.idSucursal,
+                        v.idPersona,
+                        ISNULL(lv.totalImporteCalculado, 0) AS totalImporteCalculado,
+                        ISNULL(lv.cantItemsCalculado, 0) AS cantItemsCalculado,
+                        u.nombre AS vendedorNombre,
+                        u.usuario AS vendedorUsuario,
+                        u.email AS vendedorEmail,
+                        u.idEmpresa AS vendedorIdEmpresa,
+                        s.sucursal AS sucursalNombre,
+                        s.idEmpresa AS sucursalIdEmpresa,
+                        s.codPuntoVentaAfip AS sucursalCodPuntoVentaAfip,
+                        s.direccion AS sucursalDireccion,
+                        s.localidad AS sucursalLocalidad,
+                        s.provincia AS sucursalProvincia,
+                        s.pais AS sucursalPais,
+                        p.razonSocial AS personaRazonSocial,
+                        p.identificacion AS personaIdentificacion,
+                        p.idIva AS personaIdIva,
+                        i.iva AS personaIva,
+                        p.cuit AS personaCuit,
+                        p.telefono AS personaTelefono,
+                        p.domicilio AS personaDomicilio,
+                        p.ciudad AS personaCiudad,
+                        p.ctaCte AS personaCtaCte,
+                        p.bonificacion AS personaBonificacion,
+                        ROW_NUMBER() OVER (ORDER BY f.fechaEmisionAfip DESC, f.id DESC) AS fila
+                    FROM FacturaElectronica f
+                    INNER JOIN Ventas v ON v.idVenta = f.idVenta
+                    LEFT JOIN Usuarios u ON u.id = v.idVendedor
+                    LEFT JOIN Sucursal s ON s.idSucursal = v.idSucursal
+                    LEFT JOIN Personas p ON p.idPersona = v.idPersona
+                    LEFT JOIN Iva i ON i.id = p.idIva
+                    LEFT JOIN (
+                        SELECT
+                            idVenta,
+                            SUM(cantKg * precioKg) AS totalImporteCalculado,
+                            COUNT(*) AS cantItemsCalculado
+                        FROM dbo.LineaVenta
+                        GROUP BY idVenta
+                    ) lv ON lv.idVenta = v.idVenta
+                    WHERE {where}
+                )
+                SELECT *
+                FROM FacturasFiltradas
+                WHERE fila BETWEEN @desdeFila AND @hastaFila
+                ORDER BY fila ASC;";
 
             return Db.Reader(
                 _empresa,
                 sql,
                 CommandType.Text,
-                dr =>
-                {
-                    var factura = new Entidades.FacturaElectronica
-                    {
-                        Id = Convert.ToInt32(dr["id"]),
-                        PtoVtaAfip = Convert.ToString(dr["ptoVtaAfip"]),
-                        FechaEmisionAfip = dr["fechaEmisionAfip"] == DBNull.Value ? null : (DateTime?)dr["fechaEmisionAfip"],
-                        DescTipoCbteAfip = Convert.ToString(dr["descTipoCbteAfip"]),
-                        CodTipoCbteAfip = dr["codTipoCbteAfip"] == DBNull.Value ? 0 : Convert.ToInt32(dr["codTipoCbteAfip"]),
-                        NroCbteAfip = Convert.ToString(dr["nroCbteAfip"]),
-                        TipoDocAfip = Convert.ToString(dr["tipoDocAfip"]),
-                        NroDocAfip = Convert.ToString(dr["nroDocAfip"]),
-                        RazonSocialAFIP = Convert.ToString(dr["razonSocialAFIP"]),
-                        CondicionIvaAFIP = Convert.ToString(dr["condicionIvaAFIP"]),
-                        DomicilioAFIP = Convert.ToString(dr["domicilioAFIP"]),
-                        CondicionVenta = Convert.ToString(dr["condicionVenta"]),
-                        FormaPago = Convert.ToString(dr["formaPago"]),
-                        CAE1 = Convert.ToString(dr["CAE"]),
-                        FecVtoCAE = Convert.ToString(dr["fecVtoCAE"]),
-                        ImporteNetoGravado = string.IsNullOrEmpty(dr["importeNetoGravado"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeNetoGravado"]),
-                        Iva = string.IsNullOrEmpty(dr["iva"]?.ToString()) ? 0 : Convert.ToSingle(dr["iva"]),
-                        ImporteTotal = string.IsNullOrEmpty(dr["importeTotal"]?.ToString()) ? 0 : Convert.ToSingle(dr["importeTotal"]),
-                        PorcentajeFacturacion = string.IsNullOrEmpty(dr["porcentajeFacturacion"]?.ToString()) ? 100 : Convert.ToSingle(dr["porcentajeFacturacion"]),
-                        DescItemUnitario = Convert.ToString(dr["descItemUnitario"]),
-                        Observaciones = ColumnaExiste(dr, "observaciones") ? Convert.ToString(dr["observaciones"]) : "",
-                        IdVenta = dr["idVenta"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idVenta"]),
-                        Error = dr["error"] != DBNull.Value && Convert.ToBoolean(dr["error"]),
-                        MensajeError = Convert.ToString(dr["mensajeError"]),
-                        FechaError = dr["fechaError"] == DBNull.Value ? null : (DateTime?)dr["fechaError"]
-                    };
-
-                    var venta = MapVenta(dr, false);
-                    if (string.IsNullOrWhiteSpace(factura.FormaPago))
-                        factura.FormaPago = venta.FormaPago;
-
-                    factura.Venta = venta;
-                    return factura;
-                },
+                MapFacturaCompleta,
                 p =>
                 {
-                    p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
-                    p.Add("@fechaHastaMas1", SqlDbType.DateTime).Value = fechaHasta.AddDays(1);
-                    p.Add("@idSucursal", SqlDbType.Int).Value = idSucursal ?? -1;
+                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+                    p.Add("@desdeFila", SqlDbType.Int).Value = desdeFila;
+                    p.Add("@hastaFila", SqlDbType.Int).Value = hastaFila;
                 }
             );
+        }
+
+        // Cantidad y total ($) del MISMO filtro completo (sin paginar) que BuscarFacturasPagina,
+        // para el resumen "Cant./Total" del header -- se pide aparte en vez de sumar solo lo ya
+        // cargado en el scroll, que seria el total de la pagina, no el del filtro completo.
+        public (int Cantidad, decimal Total) ObtenerFacturasResumen(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
+        {
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+
+            string sql = $@"
+                SELECT
+                    COUNT(*) AS Cantidad,
+                    ISNULL(SUM(
+                        CASE
+                            WHEN f.codTipoCbteAfip IN ({Entidades.FacturaElectronica.codNotaCreditoA_Afip}, {Entidades.FacturaElectronica.codNotaCreditoB_Afip}, {Entidades.FacturaElectronica.codNotaCreditoC_Afip})
+                            THEN -f.importeTotal
+                            ELSE f.importeTotal
+                        END
+                    ), 0) AS Total
+                FROM FacturaElectronica f
+                INNER JOIN Ventas v ON v.idVenta = f.idVenta
+                LEFT JOIN Usuarios u ON u.id = v.idVendedor
+                LEFT JOIN Personas p ON p.idPersona = v.idPersona
+                WHERE {where};";
+
+            var filas = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                dr => (Cantidad: Convert.ToInt32(dr["Cantidad"]), Total: Convert.ToDecimal(dr["Total"])),
+                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante)
+            );
+
+            return filas.Count > 0 ? filas[0] : (Cantidad: 0, Total: 0m);
         }
 
         public List<Entidades.AlicuotaIva> getAlicuotaIvaFactura(int idFacturaElectronica)

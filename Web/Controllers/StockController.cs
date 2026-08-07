@@ -338,6 +338,22 @@ namespace Web.Controllers
                 filtro.IdCorte = idCorte > 0 ? idCorte : 0;
                 filtro.SoloConStock = soloConStock;
 
+                // El limite ya se recalculo para el idSucursal correcto dentro de CrearFiltroExistencia
+                // -> AplicarUltimosCierres. El calculo de a_ExistenciaStockPorSucursales usa el ultimo
+                // cierre como punto de partida sin importar la fecha pedida, asi que pedir un FechaHasta
+                // anterior a ese cierre da un resultado incorrecto -- se rechaza aca en vez de dejarlo
+                // pasar (ver docs/DECISIONS.md).
+                if (filtro.FechaHasta.HasValue && filtro.FechaMinimaConsulta.HasValue
+                    && filtro.FechaHasta.Value < filtro.FechaMinimaConsulta.Value)
+                {
+                    model.Filtro = filtro;
+                    model.ConsultaRealizada = true;
+                    model.Mensaje = "No se puede consultar una fecha anterior al último cierre de stock (" +
+                        filtro.FechaMinimaConsulta.Value.ToString("dd/MM/yyyy HH:mm") +
+                        "). El cálculo siempre parte del último cierre registrado.";
+                    return PartialView("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", model);
+                }
+
                 model = oCorteN.ObtenerMatrizExistenciaPorSucursales(filtro);
                 model.Filtro = filtro;
             }
@@ -1271,7 +1287,51 @@ namespace Web.Controllers
             filtro.TiposDisponibles = ObtenerTiposExistencia();
             filtro.ProveedoresDisponibles = ObtenerProveedoresExistencia();
             filtro.MarcasDisponibles = ObtenerMarcasExistencia();
+            AplicarUltimosCierres(filtro, sucursales);
             return filtro;
+        }
+
+        // El calculo de existencia (a_ExistenciaStockPorSucursales) usa el ultimo cierre de stock
+        // registrado como punto de partida sin importar que FechaHasta se pida -- pedir una fecha
+        // anterior a ese cierre da un resultado invalido (ver docs/DECISIONS.md). Esto calcula ese
+        // limite para la/s sucursal/es relevantes del filtro actual, para mostrarlo en la pantalla y
+        // para que BuscarExistenciaPorSucursales pueda rechazar una consulta invalida.
+        private void AplicarUltimosCierres(Entidades.ExistenciaStockPorSucursalFiltroVm filtro, List<Entidades.Sucursal> sucursalesTodas)
+        {
+            var sucursalesRelevantes = (filtro.IdSucursal > 0
+                ? sucursalesTodas.Where(s => s != null && s.IdSucursal == filtro.IdSucursal)
+                : sucursalesTodas.Where(s => s != null && s.IdSucursal > 0))
+                .GroupBy(s => s.IdSucursal)
+                .Select(g => g.First())
+                .ToList();
+
+            filtro.UltimosCierresPorSucursal = oCorteN.ObtenerUltimosCierresPorSucursal(sucursalesRelevantes);
+            filtro.FechaMinimaConsulta = filtro.UltimosCierresPorSucursal.Any()
+                ? filtro.UltimosCierresPorSucursal.Max(x => x.FechaUltimoCierre)
+                : (DateTime?)null;
+        }
+
+        [HttpGet]
+        public JsonResult ObtenerFechaMinimaExistencia(int idSucursal = 0)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false }, JsonRequestBehavior.AllowGet);
+
+            var filtro = new Entidades.ExistenciaStockPorSucursalFiltroVm { IdSucursal = idSucursal };
+            List<Entidades.Sucursal> sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            AplicarUltimosCierres(filtro, sucursales);
+
+            return Json(new
+            {
+                ok = true,
+                fechaMinima = filtro.FechaMinimaConsulta.HasValue
+                    ? filtro.FechaMinimaConsulta.Value.ToString("yyyy-MM-ddTHH:mm")
+                    : (string)null,
+                detalle = filtro.UltimosCierresPorSucursal
+                    .OrderBy(x => x.Sucursal)
+                    .Select(x => new { x.Sucursal, fecha = x.FechaUltimoCierre.ToString("dd/MM/yyyy HH:mm") })
+            }, JsonRequestBehavior.AllowGet);
         }
 
         private List<string> ObtenerTiposExistencia()

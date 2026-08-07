@@ -22,6 +22,10 @@ namespace Web.Controllers
 {
     public class VentasController : BaseController
     {
+        // Tamano de pagina de la carga progresiva de Facturas (ver docs/DECISIONS.md) -- mismo
+        // criterio que ProductosController.CatalogoGlobalTamanoPagina.
+        private const int FacturasTamanoPagina = 50;
+
         private Negocio.Venta oVentaN;
         private Negocio.Sucursal oSucursalN;
         private Negocio.Usuario oUsuarioN;
@@ -106,7 +110,9 @@ namespace Web.Controllers
             return View(ventas);
         }
 
-        public ActionResult Facturas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
+        public ActionResult Facturas(
+            DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1,
+            string cliente = "", string vendedor = "", string formasPago = "", string tiposComprobante = "")
         {
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
@@ -130,20 +136,86 @@ namespace Web.Controllers
             ViewBag.IdSucursalSeleccionada = idSucursal;
             ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Venta.VerVentas);
 
-            var facturas = oVentaN.getFacturasRealizadas(desde, hasta, idSucursal) ?? new List<Entidades.FacturaElectronica>();
+            var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
+            var codigosComprobante = TipoComprobanteFacturas.ObtenerCodigos(SepararValoresCsv(tiposComprobante));
+
             var model = new FacturasIndexVm
             {
                 FechaDesde = desde,
                 FechaHasta = hasta,
                 IdSucursal = idSucursal,
-                TotalFacturado = facturas.Sum(x =>
-                    x == null
-                        ? 0m
-                        : (EsNotaCreditoAfip(x.CodTipoCbteAfip)
-                            ? -Convert.ToDecimal(x.ImporteTotal)
-                            : Convert.ToDecimal(x.ImporteTotal)))
+                Cliente = cliente ?? "",
+                Vendedor = vendedor ?? "",
+                FormasPagoCsv = formasPago ?? "",
+                TiposComprobanteCsv = tiposComprobante ?? ""
             };
 
+            CargarPaginaFacturas(model, formasPagoSeleccionadas, codigosComprobante, pagina: 1, incluirResumen: true);
+
+            return View("~/Views/Ventas/Facturas.cshtml", model);
+        }
+
+        // Endpoint AJAX de la carga progresiva (scroll infinito de 50 en 50, ver
+        // docs/DECISIONS.md). Mismo patron que ProductosController.BuscarGlobales: JSON con HTML
+        // pre-renderizado (RenderPartialViewToString) + "hayMas" calculado con peek-ahead (se
+        // pide FacturasTamanoPagina+1 filas, si vuelven de mas hay pagina siguiente) en vez de un
+        // COUNT aparte. El resumen (cantidad/total del filtro completo) solo se recalcula en la
+        // pagina 1 -- no cambia entre paginas del mismo filtro, pedirlo de nuevo en cada scroll
+        // seria una consulta de agregado redundante.
+        [HttpGet]
+        public JsonResult BuscarFacturas(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, string formasPago, string tiposComprobante,
+            int pagina = 1)
+        {
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, fechaDesde))
+                return Json(new { ok = false, mensaje = "No tenés permisos para ver ventas en esa fecha." }, JsonRequestBehavior.AllowGet);
+
+            var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
+            var codigosComprobante = TipoComprobanteFacturas.ObtenerCodigos(SepararValoresCsv(tiposComprobante));
+
+            var model = new FacturasIndexVm
+            {
+                FechaDesde = fechaDesde,
+                FechaHasta = fechaHasta,
+                IdSucursal = idSucursal,
+                Cliente = cliente ?? "",
+                Vendedor = vendedor ?? ""
+            };
+
+            CargarPaginaFacturas(model, formasPagoSeleccionadas, codigosComprobante, pagina, incluirResumen: pagina == 1);
+
+            string html = RenderPartialViewToString("~/Views/Ventas/_FacturasRows.cshtml", model.Facturas);
+
+            return Json(new
+            {
+                ok = true,
+                html,
+                pagina,
+                hayMas = model.HayMas,
+                cantidad = pagina == 1 ? (int?)model.Cantidad : null,
+                totalFacturado = pagina == 1 ? (decimal?)model.TotalFacturado : null
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        // Trae una pagina de facturas (BuscarFacturasPagina, con peek-ahead de 1 fila extra para
+        // "hayMas") y, si corresponde, el resumen del filtro completo (ObtenerFacturasResumen) --
+        // compartido entre la carga inicial de Facturas() y el scroll de BuscarFacturas para que
+        // los dos usen exactamente el mismo camino de datos.
+        private void CargarPaginaFacturas(
+            FacturasIndexVm model, List<string> formasPagoSeleccionadas, List<int> codigosComprobante,
+            int pagina, bool incluirResumen)
+        {
+            var facturas = oVentaN.BuscarFacturasPagina(
+                model.FechaDesde, model.FechaHasta, model.IdSucursal,
+                model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante,
+                pagina, FacturasTamanoPagina, cantidadExtra: 1) ?? new List<Entidades.FacturaElectronica>();
+
+            model.HayMas = facturas.Count > FacturasTamanoPagina;
+            if (model.HayMas)
+                facturas.RemoveAt(facturas.Count - 1);
+
+            model.Facturas = new List<FacturaListadoItemVm>();
             foreach (var factura in facturas.Where(x => x != null && x.Venta != null))
             {
                 model.Facturas.Add(new FacturaListadoItemVm
@@ -155,7 +227,14 @@ namespace Web.Controllers
                 });
             }
 
-            return View("~/Views/Ventas/Facturas.cshtml", model);
+            if (incluirResumen)
+            {
+                var resumen = oVentaN.ObtenerFacturasResumen(
+                    model.FechaDesde, model.FechaHasta, model.IdSucursal,
+                    model.Cliente, model.Vendedor, formasPagoSeleccionadas, codigosComprobante);
+                model.Cantidad = resumen.Cantidad;
+                model.TotalFacturado = resumen.Total;
+            }
         }
 
         public ActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
@@ -902,7 +981,8 @@ namespace Web.Controllers
                             vendedor = ToStr(row["vendedor"]),
                             idVenta = idVenta,
                             asignado = idVenta > 0 && idVenta != idExpendio,
-                            cargadoEnVentaActual = idsEnVentaActual.Contains(idExpendio)
+                            cargadoEnVentaActual = idsEnVentaActual.Contains(idExpendio),
+                            observaciones = ToStr(row["observaciones"])
                         };
                     })
                     .ToList();
@@ -960,7 +1040,8 @@ namespace Web.Controllers
                     sector = expendio.Sector ?? "",
                     vendedor = expendio.Vendedor != null ? expendio.Vendedor.Nombre : "",
                     idVenta = expendio.IdVenta,
-                    asignado = expendio.IdVenta > 0 && expendio.IdVenta != expendio.IdExpendio
+                    asignado = expendio.IdVenta > 0 && expendio.IdVenta != expendio.IdExpendio,
+                    observaciones = expendio.Observaciones ?? ""
                 },
                 lineas = (expendio.LineasVenta ?? new List<Entidades.LineaVenta>()).Select(l => new
                 {

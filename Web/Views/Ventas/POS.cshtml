@@ -1255,6 +1255,7 @@ else
 @Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
 @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
 @Html.Partial("~/Views/Ventas/_ModalExpendiosPOS.cshtml")
+@Html.Partial("~/Views/Ventas/_ModalObservacionesExpendio.cshtml")
 
 
 @section Scripts {
@@ -1271,7 +1272,7 @@ else
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3238")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=8")"></script>
+    <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=9")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=7")"></script>
     <script>
     window.EgresosCajaUrls = {
@@ -2103,7 +2104,8 @@ else
         updateCartSummary: function () { return posCart ? posCart.updateCartSummary?.() : null; },
         beep: beep,
         showWaiting: function () { return posProduct ? posProduct.showWaiting() : null; },
-        focusCodigo: function () { return posKeyboard.focusCodigo(); }
+        focusCodigo: function () { return posKeyboard.focusCodigo(); },
+        updateComentarioBadge: function () { return posComment ? posComment.updateButtonState() : null; }
     });
     window.POSExpendiosCurrent = posExpendios;
 

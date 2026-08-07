@@ -1,0 +1,41 @@
+<!-- INICIO OBSERVACIONES EXPENDIO -->
+<div class="modal fade" id="modalObservacionesExpendio" tabindex="-1" role="dialog" aria-labelledby="modalObservacionesExpendioTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalObservacionesExpendioTitle">
+                    <i class="fas fa-exclamation-triangle mr-2 text-warning"></i>Observación de expendio
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <label for="txtObservacionesExpendio" class="small text-muted">
+                    Este expendio (o alguno de los ya cargados en esta venta) trae una observación cargada desde Punto de Expendio.
+                </label>
+                <textarea id="txtObservacionesExpendio"
+                          class="form-control"
+                          rows="6"
+                          readonly></textarea>
+
+                <div class="custom-control custom-switch text-left mt-2">
+                    <input type="checkbox" class="custom-control-input" id="chkEditarObservacionesExpendio">
+                    <label class="custom-control-label" for="chkEditarObservacionesExpendio">Editar antes de agregar a la venta</label>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-outline-primary" id="btnAgregarObservacionExpendioAVenta">
+                    Agregar comentario a la venta
+                </button>
+
+                <button type="button" class="btn btn-light" id="btnCerrarObservacionesExpendio" data-dismiss="modal">
+                    Cerrar <span class="text-muted small">(Enter)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FIN OBSERVACIONES EXPENDIO -->

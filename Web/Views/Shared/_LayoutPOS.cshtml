@@ -96,9 +96,39 @@
                 font-size: 1.2rem;
             }
 
-        /* ===== TOPBAR: Dark Mode ===== */
-        body.dark-mode .card-header {
-            background-color: #1d293a !important;
+        /* ===== TOPBAR: color por modulo (modo claro) =====
+           Diferencia visualmente POS Venta de POS Punto de Expendio -- antes
+           las dos pantallas compartian el mismo header azul (bg-primary) y la
+           unica señal de en cual estaba el cajero era el texto. Venta reusa el
+           gradiente real del menu lateral (ui-refresh.css, --ui-sidebar-start/
+           --ui-sidebar-end) para reforzar un color que la app ya usa; Expendio
+           usa ambar, anclado en el mismo #b45309 que ya tiene la marca generica
+           del POS (.pos-brand-mark). */
+        .card-header.pos-header-venta {
+            background: linear-gradient(180deg, #3a4e67 0%, #243446 100%);
+        }
+
+        .card-header.pos-header-expendio {
+            background: linear-gradient(180deg, #b45309 0%, #92400e 100%);
+        }
+
+        /* ===== TOPBAR: color por modulo (modo oscuro) =====
+           Mismo criterio que en modo claro: Venta reusa el azul-noche real del
+           sidebar en dark mode (ui-refresh.css, dark-mode vars
+           --ui-sidebar-start/--ui-sidebar-end: #0d1f44 / #0b1730); Expendio usa
+           un ambar oscuro calibrado a la MISMA luminosidad que ese azul (no el
+           ambar de modo claro escalado sin mas) para que ningun modulo "pese"
+           mas que el otro visualmente -- solo cambia el matiz. Reemplaza la
+           regla unica anterior, que aplicaba el mismo gris-azulado (#1d293a) a
+           las dos pantallas. */
+        body.dark-mode .card-header.pos-header-venta {
+            background: linear-gradient(180deg, #0d1f44 0%, #0b1730 100%) !important;
+            color: #e6e6e6 !important;
+            border-bottom: 1px solid #3c3f45;
+        }
+
+        body.dark-mode .card-header.pos-header-expendio {
+            background: linear-gradient(180deg, #3a2410 0%, #241708 100%) !important;
             color: #e6e6e6 !important;
             border-bottom: 1px solid #3c3f45;
         }
@@ -246,7 +276,7 @@
             <div id="content">
 
                 <!-- Topbar -->
-                <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center @(controller == "PuntosExpendio" ? "pos-header-expendio" : "pos-header-venta")">
                     <div class="pos-layout-brand pos-layout-brand-main">
                         <div class="pos-brand-shell">
                             <div class="pos-brand-mark">

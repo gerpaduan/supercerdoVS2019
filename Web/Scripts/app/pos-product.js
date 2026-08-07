@@ -108,10 +108,10 @@
             productoSeleccionado = null;
             precioActual = 0;
 
-            $('#prodNombre').text('Info producto...').removeClass('fw-bold').addClass('text-muted');
-            $('#prodPrecio').text('');
+            $('#prodNombre').text('Info producto...').removeClass('fw-bold pos-campo-cargado').addClass('text-muted');
+            $('#prodPrecio').text('').removeClass('pos-campo-cargado');
             $('#prodSubtotal').text('$ 0,00');
-            $('#inputCantidad').prop('disabled', true).val('');
+            $('#inputCantidad').prop('disabled', true).val('').removeClass('pos-campo-cargado');
             $('#btnAgregarProducto').prop('disabled', true);
             if (typeof options.onProductoChanged === 'function') {
                 options.onProductoChanged(null);
@@ -137,10 +137,11 @@
             productoSeleccionado = null;
             precioActual = 0;
 
-            $('#prodNombre').text(message || 'Buscando...').removeClass('fw-bold').addClass('text-muted');
-            $('#prodPrecio').text('').addClass('text-muted');
+            $('#prodNombre').text(message || 'Buscando...').removeClass('fw-bold pos-campo-cargado').addClass('text-muted');
+            $('#prodPrecio').text('').addClass('text-muted').removeClass('pos-campo-cargado');
             $('#prodSubtotal').text('$ 0,00');
             $('#inputCantidad').prop('disabled', true).val(cantidadActual);
+            $('#inputCantidad').toggleClass('pos-campo-cargado', !!(cantidadActual && String(cantidadActual).trim()));
             $('#btnAgregarProducto').prop('disabled', true);
         }
 
@@ -150,10 +151,10 @@
             productoSeleccionado = null;
             precioActual = 0;
 
-            $('#prodNombre').text(message || 'Sin coincidencia').removeClass('fw-bold').addClass('text-muted');
-            $('#prodPrecio').text('').addClass('text-muted');
+            $('#prodNombre').text(message || 'Sin coincidencia').removeClass('fw-bold pos-campo-cargado').addClass('text-muted');
+            $('#prodPrecio').text('').addClass('text-muted').removeClass('pos-campo-cargado');
             $('#prodSubtotal').text('$ 0,00');
-            $('#inputCantidad').prop('disabled', true).val('');
+            $('#inputCantidad').prop('disabled', true).val('').removeClass('pos-campo-cargado');
             $('#btnAgregarProducto').prop('disabled', true);
             if (typeof options.onProductoChanged === 'function') {
                 options.onProductoChanged(null);
@@ -174,8 +175,8 @@
             producto.precioOriginal = precioBase;
             producto.precioKg = precioMostrado;
 
-            $('#prodNombre').text(producto.nombre).removeClass('text-muted').addClass('fw-bold');
-            $('#prodPrecio').text('$ ' + precioMostrado.toLocaleString('es-AR')).removeClass('text-muted').addClass('fw-bold');
+            $('#prodNombre').text(producto.nombre).removeClass('text-muted').addClass('fw-bold pos-campo-cargado');
+            $('#prodPrecio').text('$ ' + precioMostrado.toLocaleString('es-AR')).removeClass('text-muted').addClass('fw-bold pos-campo-cargado');
 
             const $precioManual = $('#inputPrecioManualExpendio');
             if ($precioManual.length && !$precioManual.prop('readonly')) {

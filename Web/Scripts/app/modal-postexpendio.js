@@ -2,11 +2,11 @@
     var KEY_TICKET_MM = 'postexpendio_ticket_mm';
 
     var state = {
+        idExpendio: 0,
         redirectUrl: '',
         imprimirUrl: '',
         imprimirPayloadUrl: '',
         pdfUrl: '',
-        whatsappTexto: '',
         ticketMmActual: null,
         returnModalSelector: '',
         titulo: '',
@@ -76,10 +76,98 @@
         window.open(url, '_blank', 'noopener');
     }
 
-    function abrirWhatsapp() {
-        var texto = state.whatsappTexto || '';
-        var url = 'https://wa.me/?text=' + encodeURIComponent(texto);
-        window.open(url, '_blank', 'noopener');
+    function esEmailValido(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+    }
+
+    function getEmailConfigUrl() {
+        var cfg = window.puntoExpendioPosConfig || {};
+        return cfg.urlEmailConfig || '';
+    }
+
+    function getEmailEnviarUrl() {
+        var cfg = window.puntoExpendioPosConfig || {};
+        return cfg.urlEmailEnviar || '';
+    }
+
+    function abrirModalEmail() {
+        var configUrl = getEmailConfigUrl();
+        if (!state.idExpendio || !configUrl) {
+            Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudo preparar el envío por email.' });
+            return;
+        }
+
+        $('#peEmailError').addClass('d-none').text('');
+        $('#peEmailDestino').val('');
+        $('#peEmailAsunto').val('');
+        $('#peEmailMensaje').val('');
+        $('#btnConfirmarEmailPuntoExpendio').prop('disabled', true);
+
+        $.getJSON(configUrl, { idExpendio: state.idExpendio })
+            .done(function (resp) {
+                if (!resp || !resp.ok) {
+                    Swal.fire({ icon: 'error', title: 'Email', text: (resp && resp.msg) || 'No se pudieron recuperar los datos del email.' });
+                    return;
+                }
+
+                $('#peEmailDestino').val(resp.email || '');
+                $('#peEmailAsunto').val(resp.asunto || '');
+                $('#peEmailMensaje').val(resp.mensaje || '');
+                $('#btnConfirmarEmailPuntoExpendio').prop('disabled', false);
+                $('#modalEmailPuntoExpendio').modal('show');
+            })
+            .fail(function () {
+                Swal.fire({ icon: 'error', title: 'Email', text: 'No se pudieron recuperar los datos del email.' });
+            });
+    }
+
+    function confirmarEmail() {
+        var sendUrl = getEmailEnviarUrl();
+        var payload = {
+            idExpendio: state.idExpendio,
+            emailDestino: ($('#peEmailDestino').val() || '').trim(),
+            asunto: ($('#peEmailAsunto').val() || '').trim(),
+            mensaje: ($('#peEmailMensaje').val() || '').trim()
+        };
+
+        if (!payload.emailDestino) {
+            $('#peEmailError').removeClass('d-none').text('Ingresá el email destino.');
+            return;
+        }
+
+        if (!esEmailValido(payload.emailDestino)) {
+            $('#peEmailError').removeClass('d-none').text('Ingresá un email válido.');
+            return;
+        }
+
+        if (!payload.asunto) {
+            $('#peEmailError').removeClass('d-none').text('Ingresá el asunto del email.');
+            return;
+        }
+
+        $('#peEmailError').addClass('d-none').text('');
+        $('#btnConfirmarEmailPuntoExpendio').prop('disabled', true);
+
+        $.ajax({
+            url: sendUrl,
+            type: 'POST',
+            dataType: 'json',
+            data: payload
+        }).done(function (resp) {
+            if (!resp || !resp.ok) {
+                $('#btnConfirmarEmailPuntoExpendio').prop('disabled', false);
+                $('#peEmailError').removeClass('d-none').text((resp && resp.msg) || 'No se pudo enviar el email.');
+                return;
+            }
+
+            $('#modalEmailPuntoExpendio').modal('hide');
+            Swal.fire({ icon: 'success', title: 'Email', text: resp.msg || 'El comprobante se envió correctamente.' });
+            cerrarYContinuar();
+        }).fail(function (xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.msg) || 'No se pudo enviar el email.';
+            $('#btnConfirmarEmailPuntoExpendio').prop('disabled', false);
+            $('#peEmailError').removeClass('d-none').text(msg);
+        });
     }
 
     function buildTicketUrl(mm) {
@@ -245,11 +333,11 @@
             resp = resp || {};
             options = options || {};
 
+            state.idExpendio = parseInt(resp.idExpendio, 10) || 0;
             state.redirectUrl = resp.redirectUrl || '';
             state.imprimirUrl = resp.imprimirUrl || '';
             state.imprimirPayloadUrl = resp.imprimirPayloadUrl || '';
             state.pdfUrl = resp.pdfUrl || '';
-            state.whatsappTexto = resp.whatsappTexto || '';
             state.ticketMmActual = null;
             state.returnModalSelector = options.returnModalSelector || '';
             state.titulo = options.titulo || 'Punto de expendio guardado';
@@ -362,19 +450,36 @@
             cerrarYContinuar();
         });
 
-        $('#btnPostPuntoExpendioWhatsapp').on('click', function () {
-            abrirWhatsapp();
-            cerrarYContinuar();
+        $('#btnPostPuntoExpendioEmail').on('click', function () {
+            abrirModalEmail();
+        });
+
+        $('#btnConfirmarEmailPuntoExpendio').on('click', function () {
+            confirmarEmail();
+        });
+
+        $('#peEmailDestino, #peEmailAsunto, #peEmailMensaje').on('input', function () {
+            $('#peEmailError').addClass('d-none').text('');
+        });
+
+        $('#modalEmailPuntoExpendio').on('shown.bs.modal', function () {
+            $('#peEmailDestino').trigger('focus');
         });
 
         $(document).on('keydown.postPuntoExpendioModal', function (e) {
             var $modal = $('#modalPostPuntoExpendio');
             if (!$modal.hasClass('show')) return;
 
+            // El modal de email (#modalEmailPuntoExpendio) se apila arriba de este sin
+            // cerrarlo, asi que sin este guard escribir "1234" en destino/asunto/mensaje
+            // dispara los atajos de abajo en vez de escribir el caracter.
+            var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea') return;
+
             if (e.key === '1') { e.preventDefault(); $('#btnPostPuntoExpendioNoImprimir').click(); return; }
             if (e.key === '2') { e.preventDefault(); $('#btnPostPuntoExpendioImprimir').click(); return; }
             if (e.key === '3') { e.preventDefault(); $('#btnPostPuntoExpendioPdf').click(); return; }
-            if (e.key === '4') { e.preventDefault(); $('#btnPostPuntoExpendioWhatsapp').click(); return; }
+            if (e.key === '4') { e.preventDefault(); $('#btnPostPuntoExpendioEmail').click(); return; }
 
             var ticketVisible = $('#bloqueTicketOpcionesPuntoExpendio').hasClass('show');
             if (!ticketVisible) return;

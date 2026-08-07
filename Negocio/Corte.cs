@@ -818,6 +818,34 @@ namespace Negocio
             return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
+        // Ultimo cierre de stock por cada sucursal recibida (reusa
+        // Datos.Corte.fechaUltimoCierreStock_Sucursal, ya usado internamente para el flujo viejo
+        // de CierreStock). Sucursales sin ningun cierre registrado se omiten -- no hay limite que
+        // aplicarles. Usado por Existencia por Sucursales para mostrar desde cuando se calcula el
+        // stock y no dejar pedir una FechaHasta anterior al ultimo cierre (ver docs/DECISIONS.md:
+        // el calculo de a_ExistenciaStockPorSucursales usa el ultimo cierre como punto de partida
+        // sin importar que FechaHasta se pida, asi que pedir algo anterior da un resultado invalido).
+        public List<Entidades.SucursalUltimoCierreVm> ObtenerUltimosCierresPorSucursal(IEnumerable<Entidades.Sucursal> sucursales)
+        {
+            var resultado = new List<Entidades.SucursalUltimoCierreVm>();
+
+            foreach (var sucursal in (sucursales ?? Enumerable.Empty<Entidades.Sucursal>()).Where(s => s != null && s.IdSucursal > 0))
+            {
+                DateTime fecha = oCorteD.fechaUltimoCierreStock_Sucursal(sucursal.IdSucursal);
+                if (fecha > DateTime.MinValue)
+                {
+                    resultado.Add(new Entidades.SucursalUltimoCierreVm
+                    {
+                        IdSucursal = sucursal.IdSucursal,
+                        Sucursal = sucursal.SucursalNombre,
+                        FechaUltimoCierre = fecha
+                    });
+                }
+            }
+
+            return resultado;
+        }
+
         public Entidades.ExistenciaPorSucursalesVm ObtenerMatrizExistenciaPorSucursales(Entidades.ExistenciaStockPorSucursalFiltroVm filtro)
         {
             if (filtro == null)

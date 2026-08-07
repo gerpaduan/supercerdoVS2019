@@ -7,6 +7,21 @@
         let visibleItems = [];
         let remoteFiltersDirty = false;
 
+        // Observaciones acumuladas de los expendios cargados en ESTA venta (mas
+        // antiguo primero). Vive en memoria mientras dura la venta actual, igual
+        // que POSState -- se resetea con cada venta nueva porque la instancia de
+        // este modulo se recrea por pagina.
+        let expendioObservaciones = [];
+        const MAX_COMENTARIO_VENTA = 200; // debe coincidir con MAX_LENGTH de pos-comment.js
+        // Recuerda el ultimo bloque de texto que este modulo agrego al comentario
+        // de la venta, para poder reemplazarlo (no duplicarlo) si el vendedor carga
+        // otro expendio con observacion y vuelve a tocar "Agregar comentario a la
+        // venta". No se usan marcadores visibles en el texto (ej. "[INICIO...]")
+        // porque el comentario de la venta se imprime en el ticket -- un marcador
+        // ahi quedaria feo. En cambio, se guarda el bloque exacto insertado y se
+        // busca/reemplaza por texto plano.
+        let ultimoBloqueObservacionesInsertado = null;
+
         function showMessage(type, text) {
             const $msg = $('#msgExpendiosPOS');
             if (!$msg.length) return;
@@ -146,7 +161,7 @@
             $tbody.empty();
 
             if (!items || !items.length) {
-                $tbody.append('<tr><td colspan="9" class="text-center text-muted py-4">No se encontraron expendios para esos filtros.</td></tr>');
+                $tbody.append('<tr><td colspan="10" class="text-center text-muted py-4">No se encontraron expendios para esos filtros.</td></tr>');
                 return;
             }
 
@@ -159,6 +174,13 @@
                 const btnClass = disabled ? 'btn-outline-secondary' : 'btn-outline-primary';
                 const btnLabel = item.cargadoEnVentaActual ? 'Cargado' : 'Cargar';
 
+                const tieneObservacion = !!(item.observaciones && String(item.observaciones).trim());
+                const celdaObservacion = tieneObservacion
+                    ? '<span class="btnVerObservacionExpendio" data-observacion="' + escapeHtml(item.observaciones) + '" ' +
+                      'title="Tiene una observacion -- click para leerla" ' +
+                      'style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#dc3545;cursor:pointer;"></span>'
+                    : '';
+
                 $tbody.append(
                     '<tr data-id-expendio="' + item.idExpendio + '">' +
                     '<td>' + formatDate(item.fechaExpendio) + '</td>' +
@@ -169,12 +191,22 @@
                     '<td><div><strong>' + (item.producto || '') + '</strong></div><div class="text-muted small">Cod. ' + (item.codigo || 0) + '</div></td>' +
                     '<td class="text-right">' + formatKg(item.cantKg) + '</td>' +
                     '<td>' + (item.vendedor || '') + '</td>' +
+                    '<td class="text-center">' + celdaObservacion + '</td>' +
                     '<td class="text-center">' +
                     '<button type="button" class="btn btn-sm ' + btnClass + ' btnCargarExpendioPOS" data-id-expendio="' + item.idExpendio + '"' + (disabled ? ' disabled' : '') + '>' + btnLabel + '</button>' +
                     '</td>' +
                     '</tr>'
                 );
             });
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         function collectRemoteFilters() {
@@ -377,13 +409,100 @@
                     options.showWaiting?.();
                     updateRemoveButton();
 
+                    const observacion = (expendio.observaciones || '').trim();
+                    if (observacion) {
+                        expendioObservaciones.push({ idExpendio: id, observacion: observacion });
+                    }
+
                     $('#modalExpendiosPOS').modal('hide');
-                    options.focusCodigo?.();
+
+                    if (observacion) {
+                        // Se dispara en CADA carga que traiga observacion, no solo
+                        // la primera de la venta -- el modal siempre muestra el
+                        // acumulado completo hasta este momento.
+                        abrirModalObservacionesExpendio();
+                    } else {
+                        options.focusCodigo?.();
+                    }
                 },
                 error: function (xhr) {
                     showMessage('danger', extractAjaxError(xhr, 'No se pudo cargar el expendio seleccionado.'));
                 }
             });
+        }
+
+        function buildTextoObservacionesAcumuladas() {
+            // Mas antiguo primero, una por linea -- el orden en que se fueron
+            // cargando los expendios a esta venta.
+            return expendioObservaciones.map(function (item) { return item.observacion; }).join('\n');
+        }
+
+        function abrirModalObservacionesExpendio() {
+            const $textarea = $('#txtObservacionesExpendio');
+            const $switch = $('#chkEditarObservacionesExpendio');
+
+            $switch.prop('checked', false);
+            $textarea.val(buildTextoObservacionesAcumuladas()).prop('readonly', true);
+
+            $('#modalObservacionesExpendio').modal('show');
+        }
+
+        function mergeObservacionesEnComentario(textoBloque) {
+            let base = POSState.getObservaciones() || '';
+
+            // Si ya habiamos agregado un bloque antes (ej. al cargar un expendio
+            // anterior en esta misma venta), lo sacamos primero para no duplicarlo
+            // -- el bloque nuevo (acumulado y actualizado) lo reemplaza.
+            if (ultimoBloqueObservacionesInsertado && base.indexOf(ultimoBloqueObservacionesInsertado) >= 0) {
+                base = base.replace(ultimoBloqueObservacionesInsertado, '').replace(/\n{3,}/g, '\n\n').trim();
+            }
+
+            const merged = base ? (base + '\n\n' + textoBloque) : textoBloque;
+            ultimoBloqueObservacionesInsertado = textoBloque;
+
+            return merged.slice(0, MAX_COMENTARIO_VENTA);
+        }
+
+        function agregarObservacionesAComentarioVenta() {
+            const textoBloque = ($('#txtObservacionesExpendio').val() || '').trim();
+            if (!textoBloque) {
+                $('#modalObservacionesExpendio').modal('hide');
+                return;
+            }
+
+            POSState.setObservaciones(mergeObservacionesEnComentario(textoBloque));
+            options.updateComentarioBadge?.();
+            $('#modalObservacionesExpendio').modal('hide');
+        }
+
+        function bindObservacionesModalEvents() {
+            $(document)
+                .off('change.posObsExpendioEditar', '#chkEditarObservacionesExpendio')
+                .on('change.posObsExpendioEditar', '#chkEditarObservacionesExpendio', function () {
+                    $('#txtObservacionesExpendio').prop('readonly', !this.checked);
+                })
+                .off('click.posObsExpendioAgregar', '#btnAgregarObservacionExpendioAVenta')
+                .on('click.posObsExpendioAgregar', '#btnAgregarObservacionExpendioAVenta', agregarObservacionesAComentarioVenta);
+
+            $('#modalObservacionesExpendio')
+                .off('keydown.posObsExpendio')
+                .on('keydown.posObsExpendio', function (e) {
+                    if (e.key !== 'Enter') return;
+                    // Si el vendedor esta editando el texto, Enter inserta un
+                    // salto de linea normal en vez de cerrar el modal.
+                    if (e.target && e.target.id === 'txtObservacionesExpendio' && !$('#txtObservacionesExpendio').prop('readonly')) {
+                        return;
+                    }
+
+                    e.preventDefault();
+                    $('#modalObservacionesExpendio').modal('hide');
+                })
+                .off('hidden.bs.modal.posObsExpendio')
+                .on('hidden.bs.modal.posObsExpendio', function () {
+                    if (!$('.modal.show').length) {
+                        options.focusCodigo?.();
+                    }
+                });
         }
 
         function quitarExpendios() {
@@ -465,6 +584,16 @@
                 .on('click.posExpendiosCargar', '.btnCargarExpendioPOS', function () {
                     cargarExpendio($(this).data('id-expendio'));
                 })
+                .off('click.posExpendiosVerObs', '.btnVerObservacionExpendio')
+                .on('click.posExpendiosVerObs', '.btnVerObservacionExpendio', function (e) {
+                    e.stopPropagation();
+                    const texto = $(this).data('observacion') || '';
+                    if (window.Swal) {
+                        window.Swal.fire({ icon: 'info', title: 'Observación del expendio', text: texto });
+                    } else {
+                        alert(texto);
+                    }
+                })
                 .off('click.posExpendiosQuitar', '#btnQuitarExpendiosPOS')
                 .on('click.posExpendiosQuitar', '#btnQuitarExpendiosPOS', quitarExpendios)
                 .off('keydown.posExpendiosFecha', '#expFiltroFechaDesde')
@@ -494,6 +623,7 @@
         const api = {
             init: function () {
                 bindEvents();
+                bindObservacionesModalEvents();
                 updateRemoveButton();
             },
             open: open,

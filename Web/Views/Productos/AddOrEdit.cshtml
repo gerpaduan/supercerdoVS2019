@@ -245,6 +245,7 @@
                             <small id="autocompleteCodigoMsg" class="text-success d-none"></small>
                             <div id="alertCodigoExiste" class="alert alert-warning py-2 px-2 mt-2 mb-0 d-none"></div>
                             <small id="msgCodigoReq" class="text-danger d-none">El campo codigo es obligatorio.</small>
+                            <small id="msgCodigoEanInvalido" class="text-danger d-none">El código de barras no es válido (dígito verificador incorrecto).</small>
                             @Html.ValidationMessageFor(m => m.Codigo, "", new { @class = "text-danger" })
                         </div>
 
@@ -608,11 +609,13 @@
     const $alertCodigoExiste = $("#alertCodigoExiste");
     const $autocompleteCodigoMsg = $("#autocompleteCodigoMsg");
     const $msgCodigoReq = $("#msgCodigoReq");
+    const $msgCodigoEanInvalido = $("#msgCodigoEanInvalido");
     const $msgNombreReq = $("#msgNombreReq");
     const $msgTipoReq = $("#msgTipoReq");
     const $msgIvaReq = $("#msgIvaReq");
 
     let codigoDuplicado = false;
+    let codigoEanInvalido = false;
     let xhrCodigo = null;
     let xhrAutocompleteCodigo = null;
     let debounceAutocompleteCodigo = null;
@@ -1644,15 +1647,30 @@
         return /^\d+$/.test(v); // permite 0
     }
 
+    // Chequea el digito verificador SOLO cuando el valor tiene pinta de EAN
+    // (8 o 13 digitos) -- este mismo campo tambien se usa para codigos
+    // internos cortos ("1", "999999"), que no son EAN y no deben rechazarse.
+    // La camara (mas abajo, BarcodeScanner) ya valida esto antes de completar
+    // el campo; esto cubre lo tipeado o pegado a mano, que hoy se guardaba
+    // sin ningun chequeo.
+    function actualizarEstadoBotonGuardar() {
+        $btnGuardar.prop("disabled", (codigoDuplicado && !esEdicion) || codigoEanInvalido);
+    }
+
     function validarCodigo() {
         const v = (($codigo.val() || "") + "").trim();
 
         // obligatorio + num�rico entero
         const ok = esEnteroNoNegativoTexto(v) && v !== "";
         $msgCodigoReq.toggleClass("d-none", ok);
-        $codigo.toggleClass("is-invalid", !ok);
 
-        return ok;
+        const digitos = onlyDigits(v);
+        codigoEanInvalido = (digitos.length === 8 || digitos.length === 13) && !isValidEAN(digitos);
+        $msgCodigoEanInvalido.toggleClass("d-none", !codigoEanInvalido);
+        $codigo.toggleClass("is-invalid", !ok || codigoEanInvalido);
+        actualizarEstadoBotonGuardar();
+
+        return ok && !codigoEanInvalido;
     }
 
     function validarNombre() {
@@ -1833,9 +1851,7 @@
         }
 
         // Deshabilitar/habilitar bot�n crear producto (solo alta)
-        if (!esEdicion) {
-            $btnGuardar.prop("disabled", codigoDuplicado);
-        }
+        actualizarEstadoBotonGuardar();
     }
 
     // =========================

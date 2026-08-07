@@ -29,8 +29,9 @@
             const fechaHastaResumen = document.getElementById('fechaHastaResumen');
             const btnFiltrar = document.getElementById('btnFiltrarFechas');
             const idSucursal = document.getElementById('idSucursal');
-            const alertaPendiente = document.getElementById('@(esVentas ? "alertaFiltrosPendientesVentas" : "alertaFiltrosPendientesVentas")');
-            const estadoBusqueda = document.getElementById('@(esVentas ? "estadoBusquedaVentas" : "estadoBusquedaVentas")');
+            const alertaPendiente = document.getElementById('@(esVentas ? "alertaFiltrosPendientesVentas" : "alertaFiltrosPendientesFacturas")');
+            const estadoBusqueda = document.getElementById('@(esVentas ? "estadoBusquedaVentas" : "estadoBusquedaFacturas")');
+            const esFacturas = @(esVentas ? "false" : "true");
             const btnFiltrarTexto = btnFiltrar ? btnFiltrar.querySelector('.btn-buscar-texto') : null;
             const nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
                 ? window.HTMLFormElement.prototype.submit
@@ -308,6 +309,120 @@
         const filtroTipoComprobanteBadge = document.getElementById("filtroTipoComprobanteBadge");
         const btnLimpiarTipoComprobante = document.getElementById("btnLimpiarTipoComprobante");
 
+        // ==== Carga progresiva de Facturas (scroll infinito de 50 en 50, ver docs/DECISIONS.md) ====
+        // Solo aplica en modo "facturas". Ventas/Index (modo "ventas") sigue con aplicarFiltros()
+        // (DOM, mas abajo) tal cual estaba -- no se toca su comportamiento.
+        const buscarFacturasUrl = '@Url.Action("BuscarFacturas", "Ventas")';
+        const hiddenFormasPago = document.getElementById("hiddenFormasPago");
+        const hiddenTiposComprobante = document.getElementById("hiddenTiposComprobante");
+        const listaFacturas = document.getElementById("listaFacturas");
+        const facturasCard = document.getElementById("facturasCardLista");
+        const facturasSpinner = document.getElementById("facturasCargandoMas");
+
+        let facturasPaginaActual = parseInt((facturasCard && facturasCard.dataset.pagina) || "1", 10);
+        let facturasHayMas = !!(facturasCard && facturasCard.dataset.hayMas === "true");
+        let facturasCargando = false;
+        let facturasSolicitudActual = 0; // descarta respuestas fuera de orden (mismo criterio que Catalogo Global)
+        let facturasDebounceTimer = null;
+
+        function csvSeleccionados(checks) {
+            return checks.filter(function (chk) { return chk.checked; }).map(function (chk) { return chk.value; }).join(",");
+        }
+
+        function eliminarEncabezadoFechaDuplicado(fragment) {
+            const primerEncabezadoNuevo = fragment.querySelector(".fecha-grupo");
+            if (!primerEncabezadoNuevo || !listaFacturas) return;
+
+            const encabezadosActuales = listaFacturas.querySelectorAll(".fecha-grupo");
+            if (encabezadosActuales.length === 0) return;
+
+            const ultimoActual = encabezadosActuales[encabezadosActuales.length - 1];
+            if (ultimoActual.dataset.fechaGrupo === primerEncabezadoNuevo.dataset.fechaGrupo) {
+                primerEncabezadoNuevo.remove();
+            }
+        }
+
+        function buscarFacturasServidor(reset) {
+            if (!listaFacturas) return;
+            // Un reset (cambio de filtro) siempre tiene prioridad y puede pisar un scroll-load en
+            // vuelo -- el chequeo de "solicitud" mas abajo descarta la respuesta vieja cuando
+            // llegue. Un scroll-load, en cambio, no debe pisar nada que ya este en curso.
+            if (!reset && (facturasCargando || !facturasHayMas)) return;
+
+            facturasCargando = true;
+            const solicitud = ++facturasSolicitudActual;
+            const pagina = reset ? 1 : facturasPaginaActual + 1;
+
+            if (!reset && facturasSpinner) facturasSpinner.classList.remove("d-none");
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", fechaDesde ? fechaDesde.value : "");
+            params.set("fechaHasta", fechaHasta ? fechaHasta.value : "");
+            params.set("idSucursal", (idSucursal && idSucursal.value) || "-1");
+            params.set("cliente", buscadorCliente ? buscadorCliente.value : "");
+            params.set("vendedor", buscadorVendedor ? buscadorVendedor.value : "");
+            params.set("formasPago", csvSeleccionados(filtroFormaPagoChecks));
+            params.set("tiposComprobante", csvSeleccionados(filtroTipoComprobanteChecks));
+            params.set("pagina", pagina.toString());
+
+            fetch(buscarFacturasUrl + "?" + params.toString(), { silentLoading: true })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (solicitud !== facturasSolicitudActual || !resp || !resp.ok) return;
+
+                    if (reset) {
+                        listaFacturas.innerHTML = "";
+                        if (resp.html && resp.html.trim()) {
+                            const plantilla = document.createElement("template");
+                            plantilla.innerHTML = resp.html;
+                            listaFacturas.appendChild(plantilla.content);
+                        } else {
+                            listaFacturas.innerHTML = '<li class="list-group-item text-center text-muted py-4">'
+                                + '<i class="fas fa-search fa-2x mb-2"></i><br />No hay coincidencias</li>';
+                        }
+                    } else if (resp.html) {
+                        const plantilla = document.createElement("template");
+                        plantilla.innerHTML = resp.html;
+                        eliminarEncabezadoFechaDuplicado(plantilla.content);
+                        listaFacturas.appendChild(plantilla.content);
+                    }
+
+                    facturasPaginaActual = pagina;
+                    facturasHayMas = !!resp.hayMas;
+
+                    if (reset && typeof resp.cantidad === "number") {
+                        const cantNode = document.getElementById("cantFiltrado");
+                        if (cantNode) cantNode.textContent = "Cant.: " + resp.cantidad;
+                    }
+                    if (reset && typeof resp.totalFacturado === "number") {
+                        const totalNode = document.getElementById("totalFiltrado");
+                        if (totalNode) totalNode.textContent = "Total: " + resp.totalFacturado.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+                    }
+                })
+                .catch(function () { /* silencioso: no bloquear la pantalla por un error de red puntual */ })
+                .finally(function () {
+                    if (solicitud === facturasSolicitudActual) {
+                        facturasCargando = false;
+                        if (facturasSpinner) facturasSpinner.classList.add("d-none");
+                    }
+                });
+        }
+
+        function dispararBusquedaFacturasDebounced() {
+            if (facturasDebounceTimer) window.clearTimeout(facturasDebounceTimer);
+            facturasDebounceTimer = window.setTimeout(function () { buscarFacturasServidor(true); }, 350);
+        }
+
+        if (esFacturas) {
+            window.addEventListener("scroll", function () {
+                if (!facturasHayMas || facturasCargando) return;
+                const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+                if (restante > 250) return;
+                buscarFacturasServidor(false);
+            });
+        }
+        // ==== Fin carga progresiva de Facturas ====
+
         function getSeleccionados(checks) {
             return checks.filter(chk => chk.checked).map(chk => (chk.value || "").toLowerCase());
         }
@@ -399,22 +514,37 @@
             filtroTipoComprobanteChecks.forEach(function (chk) {
                 chk.checked = (state.client.tiposComprobante || []).indexOf((chk.value || "").toLowerCase()) >= 0;
             });
+
+            if (esFacturas) {
+                if (hiddenFormasPago) hiddenFormasPago.value = csvSeleccionados(filtroFormaPagoChecks);
+                if (hiddenTiposComprobante) hiddenTiposComprobante.value = csvSeleccionados(filtroTipoComprobanteChecks);
+            }
         }
 
+        // El listado de Facturas filtra en el servidor (busqueda con debounce en Cliente/Vendedor,
+        // busqueda inmediata al tildar Forma de pago/Tipo de comprobante) en vez de esconder/mostrar
+        // <li> ya renderizados -- necesario para que el filtro combine bien con la paginacion (si no,
+        // al scrollear solo filtraria dentro de lo ya cargado). Ventas/Index (esFacturas=false) sigue
+        // con aplicarFiltros() (DOM) tal cual estaba.
         buscadorCliente?.addEventListener("input", function () {
             saveClientState();
-            aplicarFiltros();
+            if (esFacturas) { dispararBusquedaFacturasDebounced(); } else { aplicarFiltros(); }
         });
         buscadorVendedor?.addEventListener("input", function () {
             saveClientState();
-            aplicarFiltros();
+            if (esFacturas) { dispararBusquedaFacturasDebounced(); } else { aplicarFiltros(); }
         });
 
         filtroFormaPagoChecks.forEach(function (chk) {
             chk.addEventListener("change", function () {
                 actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
                 saveClientState();
-                aplicarFiltros();
+                if (esFacturas) {
+                    if (hiddenFormasPago) hiddenFormasPago.value = csvSeleccionados(filtroFormaPagoChecks);
+                    buscarFacturasServidor(true);
+                } else {
+                    aplicarFiltros();
+                }
             });
         });
 
@@ -422,7 +552,12 @@
             chk.addEventListener("change", function () {
                 actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
                 saveClientState();
-                aplicarFiltros();
+                if (esFacturas) {
+                    if (hiddenTiposComprobante) hiddenTiposComprobante.value = csvSeleccionados(filtroTipoComprobanteChecks);
+                    buscarFacturasServidor(true);
+                } else {
+                    aplicarFiltros();
+                }
             });
         });
 
@@ -431,7 +566,12 @@
             filtroFormaPagoChecks.forEach(function (chk) { chk.checked = false; });
             actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
             saveClientState();
-            aplicarFiltros();
+            if (esFacturas) {
+                if (hiddenFormasPago) hiddenFormasPago.value = "";
+                buscarFacturasServidor(true);
+            } else {
+                aplicarFiltros();
+            }
         });
 
         btnLimpiarTipoComprobante?.addEventListener("click", function (e) {
@@ -439,7 +579,12 @@
             filtroTipoComprobanteChecks.forEach(function (chk) { chk.checked = false; });
             actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
             saveClientState();
-            aplicarFiltros();
+            if (esFacturas) {
+                if (hiddenTiposComprobante) hiddenTiposComprobante.value = "";
+                buscarFacturasServidor(true);
+            } else {
+                aplicarFiltros();
+            }
         });
 
         document.querySelectorAll(".filtro-forma-pago-menu").forEach(function (menu) {
@@ -457,7 +602,15 @@
         actualizarResumenFecha(fechaHasta, fechaHastaResumen);
         actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
         actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
-        aplicarFiltros();
+        if (esFacturas) {
+            // El servidor ya renderizo la pagina 1 con el filtro de la URL -- esto solo vuelve a
+            // buscar si sessionStorage tenia guardado un filtro de cliente/vendedor/forma de
+            // pago/tipo de comprobante que la URL no traia (mismo criterio que restoreServerStateIfNeeded
+            // para fecha/sucursal, pero sin redirigir: acá alcanza con un fetch silencioso).
+            buscarFacturasServidor(true);
+        } else {
+            aplicarFiltros();
+        }
         saveClientState();
 
         document.getElementById("btnVerLineasVentas")?.addEventListener("click", function () {

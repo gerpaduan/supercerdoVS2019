@@ -92,7 +92,12 @@ namespace Entidades
             Qr,
 
             //[Display(Name = "Transferencia")]
-            Transferencia
+            Transferencia,
+
+            // Agregado: hay facturas reales con formaPago='Contado' que no matcheaba ninguna
+            // opcion existente (ver docs/DECISIONS.md) -- exclusivo de este enum (mayuscula, Web),
+            // no toca Entidades.Venta.formaPagoEnum (minuscula) que usa WinForms.
+            Contado
         }
 
 

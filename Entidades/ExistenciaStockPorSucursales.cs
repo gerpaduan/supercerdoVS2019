@@ -22,6 +22,16 @@ namespace Entidades
         public List<Persona> MarcasDisponibles { get; set; }
         public List<string> EstadosDisponibles { get; set; }
 
+        // Ultimo cierre de stock por sucursal (una o varias, segun IdSucursal=0/"Todas") y el
+        // limite resultante para FechaHasta: no tiene sentido pedir un stock "a una fecha" anterior
+        // al ultimo cierre fisico, porque el calculo (StockInicial + movimientos) usa ese cierre
+        // como punto de partida sin importar que fecha se pida -- pedir algo anterior daria un
+        // resultado incorrecto (ver docs/DECISIONS.md, entrada sobre a_ExistenciaStockPorSucursales
+        // y a_CierreStockWeb). Se expone aca para que la vista muestre el limite y lo aplique como
+        // "min" del selector de fecha.
+        public List<SucursalUltimoCierreVm> UltimosCierresPorSucursal { get; set; }
+        public DateTime? FechaMinimaConsulta { get; set; }
+
         public ExistenciaStockPorSucursalFiltroVm()
         {
             Texto = "";
@@ -33,7 +43,15 @@ namespace Entidades
             ProveedoresDisponibles = new List<Persona>();
             MarcasDisponibles = new List<Persona>();
             EstadosDisponibles = new List<string> { "Todos", "OK", "BAJO", "SIN STOCK", "NEGATIVO" };
+            UltimosCierresPorSucursal = new List<SucursalUltimoCierreVm>();
         }
+    }
+
+    public class SucursalUltimoCierreVm
+    {
+        public int IdSucursal { get; set; }
+        public string Sucursal { get; set; }
+        public DateTime FechaUltimoCierre { get; set; }
     }
 
     public class ExistenciaStockPorSucursalPlanoVm

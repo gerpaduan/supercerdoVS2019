@@ -10,6 +10,10 @@
     var usuario = Session["Usuario"] as Entidades.Usuario;
     bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
     bool permiteEditarPrecio = Model.PermiteEditarPrecio;
+    string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
+    string posInstanceId = ViewBag.PosInstanceId as string ?? Guid.NewGuid().ToString("N");
+    int idUsuarioPOS = usuario != null ? usuario.Id : 0;
+    int idSucursalPOS = usuario != null ? usuario.IdSucursal : 0;
 
     var vdBuscarProducto = new ViewDataDictionary(ViewData);
     vdBuscarProducto["ModalId"] = "modalBuscarProducto";
@@ -27,6 +31,7 @@
         <div class="pos-topbar-grid">
             <div class="pos-topbar-item pos-topbar-item-cliente">
                 <div class="pos-topbar-label">Cliente / Identificacion</div>
+                <input type="hidden" id="clienteIdentificacionValor" value="" />
                 <div class="input-group input-group-sm">
                     <input type="text"
                            id="razonSocial"
@@ -52,6 +57,10 @@
                         </button>
                     </div>
                 </div>
+                <div id="clienteIdentificacionWrap" class="pos-cliente-identificacion d-none" title="">
+                    <span class="pos-cliente-identificacion-label">Ident.:</span>
+                    <span id="clienteIdentificacionTexto"></span>
+                </div>
             </div>
 
             <div class="pos-topbar-item">
@@ -64,7 +73,17 @@
                 <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
             </div>
 
-            <div class="pos-topbar-item pos-topbar-item-action">
+            <div class="pos-topbar-item pos-topbar-item-action pos-topbar-item-actions-group">
+                <span id="posInstanceBadge" class="badge badge-pill @(posModoInstancia == "duplicado" ? "badge-warning" : "badge-info d-none")">
+                    @(posModoInstancia == "duplicado" ? "POS Duplicado" : "POS Original")
+                </span>
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm pos-btn-layout"
+                        id="btnDuplicarPOS"
+                        title="Abrir POS duplicado">
+                    <i class="fas fa-clone"></i>
+                    <span>Duplicar POS</span>
+                </button>
                 <a class="btn btn-light btn-sm pos-btn-layout"
                    href="@Url.Action("Index", "Home")"
                    title="Volver al sistema">
@@ -107,24 +126,10 @@
                                     <h2 class="m-0 pos-total-label">Total</h2>
                                     <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
                                 </div>
-                                <div id="posVentaResumen" class="pos-sale-summary text-muted">
-                                    Sin productos
-                                </div>
-
-                                <div class="zona-botones zona-botones-carrito mt-2">
-                                    <div class="row g-2">
-                                        <div class="col-4">
-                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>Cancelar</button>
-                                        </div>
-                                        <div class="col-4">
-                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
-                                                Comentario
-                                                <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
-                                            </button>
-                                        </div>
-                                        <div class="col-4">
-                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
-                                        </div>
+                                <div class="d-flex justify-content-between align-items-start pos-sale-summary-row">
+                                    <div id="posVentaItemsResumen" class="pos-sale-items text-muted"></div>
+                                    <div id="posVentaResumen" class="pos-sale-summary text-muted">
+                                        Sin productos
                                     </div>
                                 </div>
                             </div>
@@ -179,15 +184,15 @@
                                         <h4 id="prodNombre" class="fw-bold text-muted">
                                             Info producto...
                                         </h4>
-                                        <div class="mb-3">
+                                        <div class="mb-3 pos-product-metric">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-precio">Precio</label>
                                                 <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
                                             </div>
                                         </div>
-                                        <div class="mb-3">
+                                        <div class="mb-3 pos-product-metric pos-product-metric-cantidad">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <label class="lbl-cantidad">Cantidad</label>
+                                                <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                                 <input id="inputCantidad"
                                                        class="form-control"
                                                        autocomplete="off"
@@ -195,7 +200,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="mb-3">
+                                        <div class="mb-3 pos-product-metric">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <label class="lbl-subtotal">Subtotal</label>
                                                 <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
@@ -258,16 +263,35 @@
 
                             <div id="pos-bottom-anchor"></div>
 
-                            <div class="mt-auto">
-                                <small class="text-muted d-block">
-                                    Conexión balanza: <span id="estadoBalanza">Desconocida</span>
-                                </small>
-                                <div class="small text-muted mt-1">
-                                    Presione <strong>*</strong> para activar o desactivar la balanza.
+                            <div class="zona-botones zona-botones-carrito mt-2">
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-secondary w-100" id="btnCancelarItem" disabled>Cancelar</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
+                                            Comentario
+                                            <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                                    </div>
                                 </div>
-                                <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
-                                <div class="progress mt-1 mb-2" style="height:8px;">
-                                    <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
+
+                            <div class="mt-auto pos-footer-panel">
+                                <div class="pos-balanza-card">
+                                    <small class="text-muted d-block pos-balanza-caption">
+                                        Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                    </small>
+                                    <div class="small text-muted mt-1">
+                                        Presione <strong>*</strong> para activar o desactivar la balanza.
+                                    </div>
+                                    <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
+                                    <div class="progress mt-1 mb-2" style="height:8px;">
+                                        <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                    </div>
                                 </div>
                                 <small class="text-muted">
                                     Sector activo: <span id="estadoSectorPuntoExpendioFooter">@(string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector)</span>
@@ -441,7 +465,8 @@
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=10")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=11")"></script>
     <script>
         window.puntoExpendioPosConfig = {
             sectorSeleccionado: @Html.Raw(Json.Encode(Model.Sector ?? "")),
@@ -451,11 +476,29 @@
             urlBuscarProductoPos: '@Url.Action("BuscarProductoPOS", "PuntosExpendio")',
             urlMisExpendios: '@Url.Action("MisExpendiosPOS", "PuntosExpendio")',
             urlImprimirExpendio: '@Url.Action("ImprimirTicket", "PuntosExpendio")',
+            urlEmailConfig: '@Url.Action("ObtenerDatosEmailExpendio", "PuntosExpendio")',
+            urlEmailEnviar: '@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")',
             urlPersonaBuscar: '@Url.Action("Buscar", "Personas")',
             urlPersonaListar: '@Url.Action("Listar", "Personas")',
             idConsumidorFinal: @(ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0),
             puedeBonificar: @((ViewBag.PuedeBonificarPuntoExpendio != null && (bool)ViewBag.PuedeBonificarPuntoExpendio) ? "true" : "false"),
             mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.'
+        };
+        // Config del boton "Duplicar POS" (pos-multi-instance.js, mismo modulo que ya usa
+        // POS Venta). El sector va incluido en originalUrl/duplicateBaseUrl para que la
+        // ventana duplicada abra en el mismo sector, no en el selector de sectores.
+        window.POSMultiInstanceConfig = {
+            productKey: 'expendio',
+            role: @Html.Raw(Json.Encode(posModoInstancia)),
+            instanceId: @Html.Raw(Json.Encode(posInstanceId)),
+            userId: @idUsuarioPOS,
+            sucursalId: @idSucursalPOS,
+            homeUrl: @Html.Raw(Json.Encode(Url.Action("Index", "Home"))),
+            originalUrl: @Html.Raw(Json.Encode(Url.Action("POS", "PuntosExpendio", new { sector = Model.Sector, modoPos = "original" }))),
+            duplicateBaseUrl: @Html.Raw(Json.Encode(Url.Action("POS", "PuntosExpendio", new { sector = Model.Sector }))),
+            originalWindowName: @Html.Raw(Json.Encode("CarniSysPOSExpendio-" + idUsuarioPOS + "-" + idSucursalPOS + "-original")),
+            windowName: @Html.Raw(Json.Encode("CarniSysPOSExpendio-" + idUsuarioPOS + "-" + idSucursalPOS + "-" + posModoInstancia)),
+            duplicateWindowName: @Html.Raw(Json.Encode("CarniSysPOSExpendioDuplicado-" + idUsuarioPOS + "-" + idSucursalPOS))
         };
     </script>
 }
@@ -516,7 +559,7 @@
 
     .pos-topbar-grid {
         display: grid;
-        grid-template-columns: minmax(360px, 1.85fr) minmax(180px, .74fr) minmax(200px, .82fr) minmax(120px, .5fr);
+        grid-template-columns: minmax(360px, 1.7fr) minmax(180px, .68fr) minmax(200px, .76fr) minmax(240px, .86fr);
         gap: .4rem;
         align-items: stretch;
     }
@@ -531,17 +574,80 @@
         border-radius: 10px;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
+        transition: opacity .15s ease, filter .15s ease;
     }
 
     .pos-topbar-item-cliente {
         background: #fff;
         min-width: 0;
         padding: .32rem .46rem;
+        transition: box-shadow .15s ease, border-color .15s ease;
+    }
+
+    /* Foco en Cliente/Identificacion: resalta todo el bloque y atenua el resto
+       de la topbar (Sucursal/Fecha/Duplicar POS/Salir) para que sea obvio que
+       se esta cargando el cliente -- sin tocar producto/carrito/total, que el
+       cajero sigue necesitando ver mientras tipea. El combinador ~ alcanza a
+       los demas .pos-topbar-item porque .pos-topbar-item-cliente es el primer
+       hijo de .pos-topbar-grid en el markup actual. */
+    .pos-topbar-item-cliente:focus-within {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .18), 0 6px 16px rgba(15, 23, 42, .12);
+        z-index: 2;
+        position: relative;
+    }
+
+    .pos-topbar-item-cliente:focus-within ~ .pos-topbar-item {
+        opacity: .5;
+        filter: saturate(.7);
+    }
+
+    .pos-cliente-identificacion {
+        margin-top: .16rem;
+        min-height: 14px;
+        padding-left: .9rem;
+        padding-right: .35rem;
+        font-size: .76rem;
+        line-height: 1.12;
+        color: #1f2937;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: .92;
+    }
+
+    .pos-cliente-identificacion-label {
+        font-weight: 700;
+        color: #475569;
+        margin-right: .24rem;
     }
 
     .pos-topbar-item-action {
         padding: .22rem;
         justify-content: center;
+    }
+
+    .pos-topbar-item-actions-group {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .pos-expendio-page .pos-topbar-item-actions-group .pos-btn-layout {
+        /* Bug preexistente encontrado: esta regla y la base ".pos-expendio-page .pos-btn-layout"
+           (width:100%, mas abajo en el archivo) tenian la MISMA especificidad (0,2,0 vs 0,2,0)
+           -- por orden de aparicion en el CSS ganaba la base, asi que "Duplicar POS" y "Salir"
+           terminaban con width:100% en vez de width:auto, ocupando cada uno el ancho completo
+           de la fila y haciendo wrap (uno debajo del otro) en lugar de quedar lado a lado. La
+           celda no crecia para mostrar las dos lineas y "Salir" quedaba recortado por el
+           overflow:hidden de .pos-topbar-grid (>=992px) -- invisible en pantalla. Confirmado
+           con Chrome real (getBoundingClientRect: ambos botones con el mismo x/w que el
+           contenedor). Se sube la especificidad (0,3,0) agregando el prefijo de pagina que ya
+           usa la regla base, para que gane sin depender del orden de las reglas. */
+        width: auto;
+        flex: 0 0 auto;
     }
 
     .pos-topbar-label {
@@ -694,6 +800,14 @@
         font-size: .82rem;
     }
 
+    .pos-sale-items {
+        font-size: .82rem;
+        line-height: 1.2;
+        text-align: left;
+        margin-top: .12rem;
+        color: #6f8094;
+    }
+
     #producto-info {
         flex: 0 0 auto;
         border-radius: 16px !important;
@@ -706,6 +820,33 @@
         min-height: 40px;
         margin-bottom: .45rem;
         font-size: 1.1rem;
+    }
+
+    /* Tarjetas de Precio/Cantidad/Subtotal, copiado de Ventas/POS.cshtml
+       (.pos-product-metric / .pos-product-metric-cantidad). */
+    .pos-product-metric {
+        padding: .52rem .65rem;
+        border: 1px solid rgba(148, 163, 184, .20);
+        border-radius: 12px;
+        background: rgba(255,255,255,.72);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+    }
+
+    .pos-product-metric-cantidad {
+        background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(241,246,252,.98) 100%);
+        border-color: rgba(79, 121, 166, .24);
+        box-shadow: 0 10px 20px rgba(79, 121, 166, .10);
+    }
+
+    .lbl-precio,
+    .lbl-subtotal {
+        font-weight: 600;
+        color: #627489;
+    }
+
+    #prodPrecio,
+    #prodSubtotal {
+        color: #203449 !important;
     }
 
     #inputCantidad,
@@ -721,6 +862,19 @@
         -webkit-text-fill-color: #6e707e !important;
         opacity: 1 !important;
         box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25) !important;
+    }
+
+    /* Resalta con un color mas oscuro el producto/precio/cantidad ya cargados
+       (clase .pos-campo-cargado, agregada por JS en pos-product.js/pos-cart.js). */
+    #prodNombre.pos-campo-cargado,
+    #prodPrecio.pos-campo-cargado {
+        color: #0f172a;
+    }
+
+    #inputCantidad.pos-campo-cargado,
+    #inputCantidad.pos-campo-cargado:focus {
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
     }
 
     .pos-search-group .form-control,
@@ -835,27 +989,29 @@
     }
 
     @@media (min-width: 1400px) {
-        .pos-expendio-page .pos-topbar-expendio {
-            display: grid;
-            grid-template-columns: minmax(250px, 1.05fr) minmax(0, 3.95fr);
-            gap: .45rem;
-            align-items: stretch;
-        }
-
-        .pos-topbar-header {
-            min-width: 0;
-            height: 100%;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            padding: .45rem .65rem;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
+        /* Bug preexistente encontrado y corregido: esta regla convertia
+           .pos-topbar-expendio en una grilla de 2 columnas (250px + resto),
+           esperando que .pos-topbar-header ocupara la segunda columna -- pero
+           esa clase no existe en el markup actual de Expendio (0 usos en el
+           archivo). Sin ese segundo elemento, .pos-topbar-grid (el unico hijo
+           real) caia entero en la primera columna de ~250-320px, aplastando
+           sus propias 4 columnas (Cliente/Sucursal/Fecha/Acciones) contra ese
+           ancho angosto -- mientras el resto del espacio (~1200px en una
+           pantalla de 1536px) quedaba vacio. Confirmado con Chrome real
+           (getBoundingClientRect) en viewport >=1400px. Se saca el split de
+           2 columnas: .pos-topbar-expendio vuelve a su regla base
+           (flex-direction: column, linea ~515), dejando que .pos-topbar-grid
+           ocupe todo el ancho como ya hace correctamente en <1400px. */
 
         .pos-topbar-grid {
-            grid-template-columns: minmax(290px, 1.42fr) minmax(160px, .7fr) minmax(175px, .78fr) minmax(110px, .45fr);
+            /* Columna de acciones (4ta) ampliada de minmax(110px,.45fr) a minmax(400px,1fr):
+               con el ancho angosto original, "Duplicar POS" + "Salir" no entraban en una sola
+               linea, hacian wrap (via .pos-topbar-item-actions-group flex-wrap) y la segunda
+               linea quedaba fuera de la celda (min-height:50px) y se recortaba por este mismo
+               overflow:hidden -- "Salir" desaparecia visualmente. Confirmado con Chrome real
+               (getBoundingClientRect) en viewport 1536px. Se le resta ancho a sucursal/fecha
+               (sobraba: su contenido es corto y no lo necesitaba). */
+            grid-template-columns: minmax(290px, 1.1fr) minmax(150px, .5fr) minmax(165px, .55fr) minmax(400px, 1fr);
             gap: .35rem;
             height: 100%;
             overflow: hidden;
@@ -902,9 +1058,15 @@
         }
     }
 
-    @@media (max-width: 1399.98px) {
+    @@media (max-width: 1399.98px) and (min-width: 992px) {
         .pos-topbar-grid {
-            grid-template-columns: minmax(250px, 1.35fr) minmax(145px, .75fr) minmax(170px, .82fr) minmax(105px, .45fr);
+            /* Mismo ajuste que en el bloque >=1400px: la columna de acciones necesita
+               espacio real para "Duplicar POS" + "Salir" en una sola linea (ver comentario
+               de esa regla). Rango acotado a >=992px: por debajo de 992px este selector
+               ya no aplica (pisado por el @@media max-width:991.98px, que reordena todo a
+               una sola columna), pero se explicita el piso para que el rango de este bloque
+               no se solape con el de responsive por accidente si algo cambia mas adelante. */
+            grid-template-columns: minmax(250px, 1.05fr) minmax(135px, .5fr) minmax(155px, .55fr) minmax(380px, 1fr);
         }
     }
 
@@ -969,6 +1131,75 @@
             overflow: visible !important;
         }
 
+        /* Resumen de producto en grilla 2x2 (Nombre/Precio arriba,
+           Cantidad/Subtotal abajo), copiado de Ventas/POS.cshtml. */
+        .producto-resumen {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-areas:
+                "nombre  precio"
+                "cantidad subtotal";
+            align-items: center;
+            column-gap: .60rem;
+            row-gap: .45rem;
+            padding-bottom: .35rem;
+            margin-bottom: .35rem;
+            border-bottom: 1px solid rgba(0,0,0,.10);
+        }
+
+        .producto-resumen .lbl-precio,
+        .producto-resumen .lbl-cantidad,
+        .producto-resumen .lbl-subtotal {
+            display: none !important;
+        }
+
+        .producto-resumen > .mb-3 {
+            display: contents;
+            margin: 0 !important;
+        }
+
+        .producto-resumen > .mb-3 > .d-flex {
+            display: contents !important;
+        }
+
+        .producto-resumen #prodNombre {
+            grid-area: nombre;
+            margin: 0 !important;
+            height: auto !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: calc(1rem + 4px) !important;
+            font-weight: 100 !important;
+            line-height: 1.15 !important;
+        }
+
+        .producto-resumen #prodPrecio {
+            grid-area: precio;
+            justify-self: end;
+            font-size: 1.05rem;
+            line-height: 1.1;
+        }
+
+        .producto-resumen #inputCantidad {
+            grid-area: cantidad;
+            justify-self: start;
+            width: 100%;
+            margin-top: .10rem;
+        }
+
+        .producto-resumen #prodSubtotal {
+            grid-area: subtotal;
+            justify-self: end;
+            margin: 0 !important;
+            font-size: 1.15rem;
+            line-height: 1.1;
+        }
+
+        html.dark-mode .producto-resumen {
+            border-bottom-color: rgba(255,255,255,.14);
+        }
+
         .keyboard-grid {
             overflow: visible !important;
             max-height: none !important;
@@ -992,8 +1223,23 @@
             grid-template-columns: repeat(2, minmax(160px, 1fr));
         }
 
+        /* Mismo orden que POS Venta en responsive: arriba sucursal/fecha/acciones,
+           abajo el cliente (en vez del orden del DOM, que sigue siendo cliente primero). */
         .pos-topbar-item-cliente {
             grid-column: 1 / -1;
+            order: 4;
+        }
+
+        .pos-topbar-item-actions-group {
+            grid-column: 1 / -1;
+            order: 3;
+        }
+
+        /* Ocultar "Conexion Balanza" solo en responsive (pedido explicito) -- el JS de
+           posBalanza sigue corriendo igual, solo se deja de mostrar el texto/barra.
+           "Sector activo" queda fuera de este bloque y sigue visible. */
+        .pos-balanza-card {
+            display: none;
         }
 
         .pos-expendio-page .pos-panel {
@@ -1080,6 +1326,169 @@
         #btnFinalizar {
             min-height: 54px;
         }
+
+        /* Igualar tamano de los campos (codigo, cantidad, nombre de producto) al
+           de POS Venta en responsive -- ahi estos campos usan 20px consistentemente,
+           mas grandes que el 15-16px que traia Expendio por heredar el font-size
+           generico de .form-control. Solo responsive: no se toca el desktop. */
+        #inputCodigo,
+        #inputCantidad {
+            font-size: 1.25rem !important;
+        }
+
+        #inputCantidad,
+        #inputCantidad:focus,
+        #inputCantidad:disabled,
+        #inputCantidad[readonly] {
+            max-width: none !important;
+        }
+
+        #prodNombre {
+            font-size: 1.25rem;
+        }
+    }
+
+    /* =========================================================
+       Compactado adaptativo (clases en <html>, toggleadas por JS segun la
+       altura del viewport -- ver punto-expendio-pos.js). Valores identicos
+       a los de Ventas/POS.cshtml para que el teclado y el panel de producto
+       queden del mismo tamano en las dos vistas. El guard de ancho vive en
+       el JS: estas clases nunca se aplican por encima de 991px.
+       ========================================================= */
+    html.pos-compact .keyboard-grid {
+        gap: 5px !important;
+        grid-auto-rows: minmax(30px, 1fr) !important;
+    }
+
+    html.pos-compact .btn-key {
+        font-size: clamp(.85rem, .95vw, 1.10rem) !important;
+        padding: .25rem .15rem !important;
+    }
+
+    html.pos-compact #producto-info {
+        padding: .42rem !important;
+        margin-bottom: .28rem !important;
+    }
+
+        html.pos-compact #producto-info .mb-3 {
+            margin-bottom: .22rem !important;
+        }
+
+    /* Resto del bloque pos-compact que la ronda anterior no cubrio (esa fue
+       puntual sobre teclado/producto-info). Necesario para desktop: topbar y
+       footer tambien tienen que achicarse o siguen sin entrar en pantallas
+       bajitas. Valores identicos a Ventas/POS.cshtml.
+       Envuelto en @@media (min-width: 992px): el JS activa pos-compact/pos-tiny
+       en mobile igual que antes (sin cambios), y estas clases son las MISMAS
+       que ya estaban activas ahi -- sin este guard de ancho, el CSS nuevo se
+       filtraria a responsive por compartir clase, aunque el trigger sea
+       desktop-only. Confirmado con medicion real: sin el @@media, el total
+       pasaba de 24.8px a 44.8px tambien en 390x844. */
+    @@media (min-width: 992px) {
+        html.pos-compact .pos-topbar {
+            padding: .30rem .40rem !important;
+            margin-bottom: .35rem !important;
+        }
+
+        html.pos-compact .pos-topbar-grid {
+            gap: .3rem !important;
+        }
+
+        html.pos-compact #pos-app {
+            padding: .22rem !important;
+        }
+
+            html.pos-compact #pos-app .card-body {
+                padding: .32rem !important;
+            }
+
+        html.pos-compact .pos-footer-panel {
+            padding-top: .12rem !important;
+            margin-top: .12rem !important;
+        }
+
+        html.pos-compact .zona-botones {
+            padding: .42rem .48rem !important;
+            margin-bottom: .16rem !important;
+        }
+
+        html.pos-compact .pos-balanza-caption {
+            font-size: .82rem !important;
+            line-height: 1.15 !important;
+        }
+
+        html.pos-compact #msgBalanzaPOS {
+            min-height: 1rem !important;
+            font-size: .92rem !important;
+            margin-top: .18rem !important;
+        }
+
+        html.pos-compact .pos-total-value {
+            font-size: 2.8rem !important;
+            line-height: 1.05 !important;
+        }
+    }
+
+    html.pos-tiny .keyboard-grid {
+        gap: 4px !important;
+        grid-auto-rows: minmax(26px, 1fr) !important;
+    }
+
+    html.pos-tiny .btn-key {
+        font-size: clamp(.80rem, .90vw, 1.05rem) !important;
+        padding: .20rem .12rem !important;
+    }
+
+    html.pos-tiny #producto-info {
+        min-height: clamp(185px, 24vh, 280px) !important;
+    }
+
+    html.pos-tiny #btnFinalizar {
+        padding-top: .45rem !important;
+        padding-bottom: .45rem !important;
+    }
+
+    html.pos-footer-fit .zona-botones {
+        padding: .30rem .34rem !important;
+        margin-bottom: .12rem !important;
+    }
+
+    html.pos-footer-fit .zona-botones .btn {
+        min-height: 40px !important;
+        font-size: .90rem !important;
+        padding-top: .34rem !important;
+        padding-bottom: .34rem !important;
+    }
+
+    html.pos-footer-fit #btnFinalizar {
+        min-height: 48px !important;
+        gap: .4rem !important;
+    }
+
+    html.pos-footer-fit #btnFinalizar i {
+        font-size: 1.1rem !important;
+    }
+
+    html.pos-footer-fit #btnFinalizar small {
+        font-size: .66rem !important;
+    }
+
+    html.pos-footer-fit .pos-footer-panel {
+        padding-top: .08rem !important;
+        margin-top: .08rem !important;
+    }
+
+    html.pos-footer-fit .pos-balanza-card {
+        padding: .16rem .24rem !important;
+    }
+
+    html.pos-footer-tiny-fit .zona-botones .btn {
+        min-height: 36px !important;
+        font-size: .84rem !important;
+    }
+
+    html.pos-footer-tiny-fit #btnFinalizar {
+        min-height: 44px !important;
     }
 
     html.dark-mode .pos-expendio-page .pos-topbar-expendio {
@@ -1103,9 +1512,24 @@
         background: #162538 !important;
     }
 
+    html.dark-mode .pos-expendio-page .pos-topbar-item-cliente:focus-within {
+        border-color: #4f79a6 !important;
+        box-shadow: 0 0 0 3px rgba(79, 121, 166, .28), 0 6px 16px rgba(2, 6, 23, .4) !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-cliente-identificacion {
+        color: #e2e8f0;
+        opacity: .95;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-cliente-identificacion-label {
+        color: #cbd5e1;
+    }
+
     html.dark-mode .pos-expendio-page .pos-topbar-caption,
     html.dark-mode .pos-expendio-page .pos-topbar-label,
     html.dark-mode .pos-expendio-page .pos-sale-summary,
+    html.dark-mode .pos-expendio-page .pos-sale-items,
     html.dark-mode .pos-expendio-page .lbl-precio,
     html.dark-mode .pos-expendio-page .lbl-cantidad,
     html.dark-mode .pos-expendio-page .lbl-subtotal {
@@ -1114,6 +1538,18 @@
 
     html.dark-mode .pos-expendio-page #prodPrecio {
         color: #ecf2ff !important;
+    }
+
+    html.dark-mode .pos-expendio-page .pos-product-metric {
+        background: rgba(255,255,255,.035);
+        border-color: rgba(151, 167, 189, .18);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+    }
+
+    html.dark-mode .pos-expendio-page .pos-product-metric-cantidad {
+        background: linear-gradient(180deg, rgba(34, 63, 92, .68) 0%, rgba(24, 41, 61, .82) 100%);
+        border-color: rgba(111, 168, 254, .26);
+        box-shadow: 0 12px 24px rgba(2, 6, 23, .24);
     }
 
     html.dark-mode .pos-expendio-page .pos-topbar-heading,

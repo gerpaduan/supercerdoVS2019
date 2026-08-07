@@ -1,0 +1,101 @@
+@model List<Web.Models.FacturaListadoItemVm>
+@using System.Web
+@using System.Linq
+
+@* Filas de facturas agrupadas por fecha -- sin el <ul> envolvente, para poder incluirse tanto en
+   la carga inicial (_TablaFacturas.cshtml, que pone el <ul> + mensaje de "sin resultados") como en
+   la respuesta AJAX de VentasController.BuscarFacturas (que se appendea al <ul> ya existente en
+   cada scroll). Cada encabezado de grupo lleva data-fecha-grupo="yyyy-MM-dd" para que el JS pueda
+   detectar y descartar un encabezado duplicado cuando un dia queda partido justo en el limite de
+   una pagina (ver _VentasFacturasFiltrosScripts.cshtml). *@
+@if (Model != null)
+{
+    foreach (var facturaAgrupada in Model.GroupBy(x => (x.Factura != null && x.Factura.FechaEmisionAfip.HasValue ? x.Factura.FechaEmisionAfip.Value : DateTime.MinValue).Date))
+    {
+        if (facturaAgrupada.Any())
+        {
+            <li class="list-group-item bg-light font-weight-bold fecha-grupo" data-fecha-grupo="@facturaAgrupada.Key.ToString("yyyy-MM-dd")">
+                @facturaAgrupada.Key.ToString("dd/MM/yyyy")
+            </li>
+
+            foreach (var item in facturaAgrupada)
+            {
+                var factura = item.Factura;
+                var venta = item.Venta;
+                var detalleUrl = Url.Action("DetalleFactura", "Ventas", new { id = factura.Id, returnUrl = Request.RawUrl ?? "" });
+                var tipoComprobante = factura != null ? Web.Models.TipoComprobanteFacturas.ObtenerEtiqueta(factura.CodTipoCbteAfip) : "";
+                if (string.IsNullOrEmpty(tipoComprobante) && factura != null)
+                {
+                    tipoComprobante = factura.getLetraId_TipoCbte(factura.CodTipoCbteAfip).ToString();
+                }
+                var formaPago = !string.IsNullOrWhiteSpace(factura != null ? factura.FormaPago : "") ? factura.FormaPago : (venta != null ? venta.FormaPago : "");
+                var cliente = venta != null && venta.Persona != null ? venta.Persona.razonSocial : (factura != null ? factura.RazonSocialAFIP : "");
+                var identificacion = venta != null && venta.Persona != null ? venta.Persona.Identificacion : (factura != null ? factura.NroDocAfip : "");
+                var vendedor = venta != null && venta.Vendedor != null ? venta.Vendedor.Nombre : "";
+                var fechaFactura = factura != null && factura.FechaEmisionAfip.HasValue ? factura.FechaEmisionAfip.Value : DateTime.MinValue;
+                var numeroFactura = factura != null ? ((factura.PtoVtaAfip ?? "") + "-" + (factura.NroCbteAfip ?? "")) : "";
+                var esNotaCredito = factura != null && (
+                    factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoA_Afip ||
+                    factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoB_Afip ||
+                    factura.CodTipoCbteAfip == Entidades.FacturaElectronica.codNotaCreditoC_Afip);
+                var importeVisual = factura != null
+                    ? (esNotaCredito ? -factura.ImporteTotal : factura.ImporteTotal)
+                    : 0f;
+                var facturaAsociada = item.FacturaAsociada;
+                var notaCreditoAsociada = item.NotaCreditoAsociada;
+
+                <li class="list-group-item venta-item"
+                    data-forma-pago="@formaPago"
+                    data-tipo-comprobante="@tipoComprobante"
+                    data-cliente="@cliente"
+                    data-identificacion="@identificacion"
+                    data-vendedor="@vendedor"
+                    onclick="location.href='@detalleUrl'">
+                    <div class="venta-icono">
+                        <i class="fas fa-file-invoice-dollar fa-2x text-primary"></i>
+                    </div>
+
+                    <div class="venta-info">
+                        <div class="venta-tipo-persona font-weight-bold">
+                            @tipoComprobante - @formaPago
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(cliente))
+                        {
+                            <div class="venta-tipo-persona font-weight-bold">
+                                a @cliente
+                            </div>
+                        }
+                        <div class="venta-id">Nro: @numeroFactura</div>
+                        <div class="venta-id">Venta asociada: @factura.IdVenta</div>
+                        @if (facturaAsociada != null)
+                        {
+                            <div class="venta-id">Factura asociada: @(string.Format("{0}-{1}", facturaAsociada.PtoVtaAfip ?? "", facturaAsociada.NroCbteAfip ?? ""))</div>
+                        }
+                        @if (notaCreditoAsociada != null)
+                        {
+                            <div class="venta-id text-danger">NC asociada: @(string.Format("{0}-{1}", notaCreditoAsociada.PtoVtaAfip ?? "", notaCreditoAsociada.NroCbteAfip ?? ""))</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(factura.Observaciones))
+                        {
+                            <div class="venta-id">
+                                <span class="badge badge-pill badge-info" title="@factura.Observaciones">1</span>
+                                Observación del comprobante
+                            </div>
+                        }
+                    </div>
+
+                    <div class="venta-total">
+                        <div class="importe @(importeVisual < 0 ? "text-danger font-weight-bold" : "")"
+                             data-valor="@importeVisual">
+                            @((importeVisual > 0 ? "+ " : "") + importeVisual.ToString("C"))
+                        </div>
+
+                        <div class="text-muted small">
+                            @(fechaFactura == DateTime.MinValue ? "" : fechaFactura.ToString("HH:mm")) hs
+                        </div>
+                    </div>
+                </li>
+            }
+        }
+    }
+}
