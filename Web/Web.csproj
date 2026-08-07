@@ -77,6 +77,7 @@
     <Reference Include="System.Web.Abstractions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
+    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -156,6 +157,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\CierreCajaStepUpRateLimiter.cs" />
     <Compile Include="Helpers\EgresosCajaPolicy.cs" />
     <Compile Include="Helpers\LoginRateLimiter.cs" />
     <Compile Include="Helpers\PermisosHelper.cs" />
@@ -2180,6 +2182,7 @@
     <Content Include="Views\Parametros\Index.cshtml" />
     <Content Include="Views\WhatsApp\Index.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
+    <Content Include="Views\Shared\_ModalSeleccionUsuario.cshtml" />
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
@@ -2294,6 +2297,7 @@
     <Content Include="Scripts\app\ctasctes.js" />
     <Content Include="Scripts\app\pos-cart.js" />
     <Content Include="Scripts\app\pos-comment.js" />
+    <Content Include="Scripts\app\seleccion-usuario.js" />
     <Content Include="Scripts\app\pos-help.js" />
     <Content Include="Scripts\app\pos-keyboard.js" />
     <Content Include="Scripts\app\pos-product.js" />

@@ -1689,7 +1689,7 @@ else
     }
 
     window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
-    setClienteIdentificacionVisual("@(Model.Persona?.Identificacion ?? "")", "@(Model.Persona?.RazonSocial ?? "")");
+    setClienteIdentificacionVisual("@(Model?.Persona?.Identificacion ?? "")", "@(Model?.Persona?.RazonSocial ?? "")");
 
     function resolverIdentificacionClienteActual() {
         const idPersonaActual = parseInt($("#idPersona").val(), 10) || 0;
@@ -2480,10 +2480,22 @@ else
             return;
         }
 
-        if (!tieneLineasActivas) {
-            guardarVentaAnuladaDirectamente(!esEdicionVenta);
+        if (!tieneLineasActivas && !esEdicionVenta) {
+            // Venta nueva (nunca guardada): no hay nada que "editar a cero",
+            // se cancela/descarta el carrito en curso -- comportamiento
+            // preexistente, sin cambios.
+            guardarVentaAnuladaDirectamente(true);
             return;
         }
+
+        // Si es la edicion de una venta ya guardada y se borraron todos los
+        // productos, NO se cancela la venta ni se le cambia la forma de pago
+        // a la fuerza: las lineas ya quedan con su opuesto agregado (ver
+        // CompletarAnulacionesVenta en el controller -- ej. "Carre 5kg"
+        // anulado genera "Carre -5kg"), asi que el total de la venta ya da
+        // $0 solo. Se guarda como una edicion normal, pasando por el mismo
+        // modal de forma de pago de siempre (respeta/permite elegir la forma
+        // de pago actual, incluida CtaCte).
 
         const abierto = window.POSGuard
             ? window.POSGuard.requestModalOpen('formaPago', function () {

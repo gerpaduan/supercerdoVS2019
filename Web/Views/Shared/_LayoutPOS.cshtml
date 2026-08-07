@@ -329,6 +329,14 @@
 
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
+                                @* Mismo criterio que _LayoutBase.cshtml: el nombre de usuario esta
+                                   oculto en el topbar por debajo de "lg" (span de arriba, d-none
+                                   d-lg-inline) -- en responsive no se ve hasta desplegar el menu. *@
+                                <h6 class="dropdown-header d-lg-none">
+                                    @(Session["Usuario"] != null
+                                        ? ((Entidades.Usuario)Session["Usuario"]).Nombre
+                                        : "")
+                                </h6>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalSucursales">
                                     <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
                                     <strong id="lblSucursalActual">

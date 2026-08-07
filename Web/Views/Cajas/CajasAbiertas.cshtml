@@ -3,8 +3,13 @@
 @{
     ViewBag.Title = "Cajas Abiertas";
     var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
-    bool puedeCambiarSucursalCaja = ViewBag.PuedeCambiarSucursalCaja != null && (bool)ViewBag.PuedeCambiarSucursalCaja;
+    // "Cambiar sucursal" ahora se muestra por condicion de negocio (hay a donde
+    // mover la caja), no por permiso -- el permiso se resuelve al hacer click
+    // (autorizacion temporal si hace falta), igual que Ventas/Actividad/Cerrar.
+    bool hayVariasSucursales = ViewBag.HayVariasSucursales != null && (bool)ViewBag.HayVariasSucursales;
     bool puedeModificarCierres = ViewBag.PuedeModificarCierres != null && (bool)ViewBag.PuedeModificarCierres;
+    bool tienePermisoCerrarCaja = ViewBag.TienePermisoCerrarCaja != null && (bool)ViewBag.TienePermisoCerrarCaja;
+    var usuariosActivosEmpresa = ViewBag.UsuariosActivosEmpresa as List<object> ?? new List<object>();
     int? idSucursal = ViewBag.IdSucursal;
     string buscar = ViewBag.Buscar ?? "";
     DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today.AddDays(-7);
@@ -83,17 +88,20 @@
         </div>
     </div>
 
-    <div class="card shadow-sm cajas-panel-card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0">Historial de cierres</h6>
-                <div id="estadoBusquedaHistorialCajas" class="text-muted small">Resultados actualizados.</div>
-            </div>
-            <div id="tablaResultadoHistorial" class="cajas-resultado-wrap">
-                @Html.Partial("_TablaCierresDeCaja", historialCierres)
+    @if (tienePermisoCerrarCaja)
+    {
+        <div class="card shadow-sm cajas-panel-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Historial de cierres</h6>
+                    <div id="estadoBusquedaHistorialCajas" class="text-muted small">Resultados actualizados.</div>
+                </div>
+                <div id="tablaResultadoHistorial" class="cajas-resultado-wrap">
+                    @Html.Partial("_TablaCierresDeCaja", historialCierres)
+                </div>
             </div>
         </div>
-    </div>
+    }
 
     <style>
         .cajas-page h6 {
@@ -220,7 +228,7 @@
 
 </div>
 
-@if (puedeCambiarSucursalCaja)
+@if (hayVariasSucursales)
 {
     <div class="modal fade" id="modalCambioSucursalCaja" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -429,6 +437,8 @@
     </div>
 </div>
 
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
 <style>
     @@media (min-width: 992px) {
         #modalActividadesCaja .modal-dialog {
@@ -494,6 +504,7 @@
 </style>
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=1")"></script>
     <script>
         window.EgresosCajaUrls = {
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
@@ -510,6 +521,48 @@
             preview: '@Url.Action("PreviewCambioSucursalCaja", "Cajas")',
             guardar: '@Url.Action("CambiarSucursalCaja", "Cajas")'
         };
+        window.CajasStepUpUrls = {
+            autorizar: '@Url.Action("AutorizarAccionCierre", "Cajas")',
+            revocar: '@Url.Action("RevocarAutorizacionCierre", "Cajas")'
+        };
+        window.CajasStepUpUsuarios = @Html.Raw(Json.Encode(usuariosActivosEmpresa));
+        window.CajasStepUpTienePermisoDirecto = @(tienePermisoCerrarCaja ? "true" : "false");
+
+        // Autorizacion temporal de Cierre de Caja (step-up de credenciales) -----------
+        // Si el usuario logueado ya tiene el permiso de cerrar caja, o si ya autorizo
+        // hace menos de 5 minutos en esta misma vista, ejecuta la accion directo. Si no,
+        // abre el selector de usuario+contraseña (componente reusable, ver
+        // seleccion-usuario.js) y recien ejecuta la accion si la autorizacion vino bien.
+        var cierreCajaElevacionExpira = 0;
+        var CIERRE_CAJA_ELEVACION_MS = 5 * 60 * 1000;
+
+        function conAutorizacionCierre(accion) {
+            if (window.CajasStepUpTienePermisoDirecto || Date.now() < cierreCajaElevacionExpira) {
+                accion();
+                return;
+            }
+
+            window.SeleccionUsuario.abrir({
+                titulo: 'Autorizar accion de Cierre de Caja',
+                usuarios: window.CajasStepUpUsuarios,
+                requierePassword: true,
+                validarUrl: window.CajasStepUpUrls.autorizar
+            }).then(function (usuario) {
+                cierreCajaElevacionExpira = Date.now() + CIERRE_CAJA_ELEVACION_MS;
+                accion();
+            }).catch(function () {
+                // Modal cerrado sin autorizar (Cancelar/Esc/backdrop) -- no se ejecuta la accion.
+            });
+        }
+
+        // Revoca la autorizacion apenas se navega afuera de esta vista, en vez de esperar
+        // a que expire sola -- pedido explicito del usuario ("si cambia de URL... se anula
+        // este acceso"). sendBeacon no espera respuesta ni bloquea el unload.
+        window.addEventListener('beforeunload', function () {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(window.CajasStepUpUrls.revocar);
+            }
+        });
 
         function setBuscandoCajasAbiertas(buscando, mensaje) {
             const $btn = $("#btnBuscarCajasAbiertas");
@@ -538,9 +591,15 @@
             }
 
             setBuscandoCajasAbiertas(true);
-            setBuscandoHistorial(true);
             $("#tablaResultado").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
-            $("#tablaResultadoHistorial").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
+
+            // La tarjeta de historial ni siquiera se renderiza sin el permiso directo de
+            // cerrar caja (no vale la autorizacion temporal, ver CajasController) -- si no
+            // esta en el DOM, ni pedimos el refresco.
+            if (window.CajasStepUpTienePermisoDirecto) {
+                setBuscandoHistorial(true);
+                $("#tablaResultadoHistorial").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
+            }
 
             $.ajax({
                 url: '@Url.Action("CajasAbiertas", "Cajas")',
@@ -574,27 +633,29 @@
                 }
             });
 
-            $.ajax({
-                url: window.CajasHistorialUrls.listar,
-                type: 'GET',
-                data: {
-                    idSucursal: idSucursal,
-                    buscar: buscar,
-                    fechaDesde: fechaDesde
-                },
-                cache: false,
-                success: function (html) {
-                    $("#tablaResultadoHistorial").html(html);
-                },
-                error: function () {
-                    $("#tablaResultadoHistorial").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar el historial.</div>');
-                    $("#estadoBusquedaHistorialCajas").text("Ocurrió un error al actualizar el historial.");
-                },
-                complete: function () {
-                    const mensaje = $("#estadoBusquedaHistorialCajas").text();
-                    setBuscandoHistorial(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
-                }
-            });
+            if (window.CajasStepUpTienePermisoDirecto) {
+                $.ajax({
+                    url: window.CajasHistorialUrls.listar,
+                    type: 'GET',
+                    data: {
+                        idSucursal: idSucursal,
+                        buscar: buscar,
+                        fechaDesde: fechaDesde
+                    },
+                    cache: false,
+                    success: function (html) {
+                        $("#tablaResultadoHistorial").html(html);
+                    },
+                    error: function () {
+                        $("#tablaResultadoHistorial").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar el historial.</div>');
+                        $("#estadoBusquedaHistorialCajas").text("Ocurrió un error al actualizar el historial.");
+                    },
+                    complete: function () {
+                        const mensaje = $("#estadoBusquedaHistorialCajas").text();
+                        setBuscandoHistorial(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
+                    }
+                });
+            }
         }
 
         $(document).on('change', '#idSucursal', function () {

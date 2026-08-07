@@ -836,10 +836,25 @@
                 if (!window.lineaSeleccionada) return;
                 const linea = window.lineaSeleccionada;
 
-                // "Enter" ya confirma solo (SweetAlert2 enfoca "Sí" por
-                // default). "N" para cancelar no es un atajo nativo de la
-                // libreria, se agrega a mano scopeado a mientras este Swal
-                // esta abierto.
+                // "Enter" no confirma solo pese a que SweetAlert2 enfoca el
+                // boton "Si" por default: el modal Bootstrap de fondo
+                // (#modalLineaVenta) tiene su propio focus-trap que le roba
+                // el foco al boton de SweetAlert2 apenas se abre (Bootstrap
+                // fuerza el foco de vuelta al modal en cualquier "focusin"
+                // fuera de el), asi que el Enter nativo nunca le llega al
+                // boton. Por eso "Enter"/"N" se resuelven a mano llamando
+                // directo a la API (Swal.clickConfirm/clickCancel) en vez de
+                // depender del foco. Se escuchan en fase de captura (3er
+                // parametro "true"): SweetAlert2 ya tiene su propio listener
+                // de "keydown" en el document (fase de burbuja) que intercepta
+                // el Enter y corta la propagacion aunque su propio intento de
+                // confirmar falle por el robo de foco -- si este listener
+                // fuera tambien de burbuja, nunca llegaria a ejecutarse.
+                function onKeydownConfirmarConEnter(e) {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    Swal.clickConfirm();
+                }
                 function onKeydownCancelarConN(e) {
                     if (e.key.toLowerCase() !== "n") return;
                     e.preventDefault();
@@ -853,10 +868,12 @@
                     confirmButtonText: "Sí",
                     cancelButtonText: "No",
                     didOpen: function () {
-                        document.addEventListener("keydown", onKeydownCancelarConN);
+                        document.addEventListener("keydown", onKeydownConfirmarConEnter, true);
+                        document.addEventListener("keydown", onKeydownCancelarConN, true);
                     },
                     willClose: function () {
-                        document.removeEventListener("keydown", onKeydownCancelarConN);
+                        document.removeEventListener("keydown", onKeydownConfirmarConEnter, true);
+                        document.removeEventListener("keydown", onKeydownCancelarConN, true);
                     }
                 }).then(function (result) {
                     if (!result.isConfirmed) return;

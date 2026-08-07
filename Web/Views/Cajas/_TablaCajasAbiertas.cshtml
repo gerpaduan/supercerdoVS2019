@@ -1,7 +1,11 @@
 @model System.Data.DataTable
 
 @{
-    bool puedeCambiarSucursalCaja = ViewBag.PuedeCambiarSucursalCaja != null && (bool)ViewBag.PuedeCambiarSucursalCaja;
+    // "Cambiar sucursal" se muestra por condicion de negocio (hay mas de una
+    // sucursal a donde mover la caja), no por permiso -- el permiso se resuelve
+    // al hacer click (autorizacion temporal si hace falta), igual que las otras
+    // 3 acciones de la fila. Ver CajasController.CajasAbiertas.
+    bool hayVariasSucursales = ViewBag.HayVariasSucursales != null && (bool)ViewBag.HayVariasSucursales;
 }
 
 <div class="table-responsive">
@@ -25,24 +29,24 @@
                     <td>@row["cajaInicio"]</td>
                     <td class="text-nowrap">
                         <button class="btn btn-success btn-sm"
-                                onclick="abrirModalVentas(@row["id"])">
+                                onclick="conAutorizacionCierre(function () { abrirModalVentas(@row["id"]); })">
                             <i class="fas fa-shopping-cart"></i> Ventas
                         </button>
 
                         <button class="btn btn-info btn-sm"
-                                onclick="abrirModalActividades(@row["id"])">
+                                onclick="conAutorizacionCierre(function () { abrirModalActividades(@row["id"]); })">
                             <i class="fas fa-history"></i> Actividad
                         </button>
 
                         <button class="btn btn-danger btn-sm"
-                                onclick="abrirModalCerrarCaja(@row["id"])">
+                                onclick="conAutorizacionCierre(function () { abrirModalCerrarCaja(@row["id"]); })">
                             <i class="fas fa-lock"></i> Cerrar
                         </button>
 
-                        @if (puedeCambiarSucursalCaja)
+                        @if (hayVariasSucursales)
                         {
                             <button class="btn btn-warning btn-sm"
-                                    onclick="abrirModalCambioSucursal(@row["id"], @row["idSucursal"], '@System.Web.HttpUtility.JavaScriptStringEncode(Convert.ToString(row["sucursal"]))', '@System.Web.HttpUtility.JavaScriptStringEncode(Convert.ToString(row["vendedor"]))', '@System.Web.HttpUtility.JavaScriptStringEncode(Convert.ToString(row["fechaHoraInicio"]))')">
+                                    onclick="conAutorizacionCierre(function () { abrirModalCambioSucursal(@row["id"], @row["idSucursal"], '@System.Web.HttpUtility.JavaScriptStringEncode(Convert.ToString(row["sucursal"]))', '@System.Web.HttpUtility.JavaScriptStringEncode(Convert.ToString(row["vendedor"]))', '@System.Web.HttpUtility.JavaScriptStringEncode(Convert.ToString(row["fechaHoraInicio"]))'); })">
                                 <i class="fas fa-exchange-alt"></i> Cambiar sucursal
                             </button>
                         }

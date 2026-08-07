@@ -47,14 +47,17 @@ namespace Web.Controllers
         }
 
         // GET: Cajas/CajasAbiertas
+        //
+        // Antes bloqueaba toda la pantalla (AccesoDenegado) sin "formCierresDeCaja". Ahora
+        // cualquier usuario logueado entra y ve las cajas abiertas; el historial de cierres
+        // y las acciones por fila (Ventas/Actividad/Cerrar/Cambiar sucursal) se gatean aparte
+        // -- el historial requiere el permiso de cerrar caja en forma directa (no vale la
+        // autorizacion temporal), las acciones aceptan autorizacion temporal via step-up
+        // (ver PermisosHelper.ObtenerUsuarioAutorizadoCierre).
         public ActionResult CajasAbiertas(int? idSucursal, string buscar = "", DateTime? fechaDesde = null, bool ajax = false)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
-            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta))
-            {
-                ViewBag.Seccion = "Cierres de Caja";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
-            }
+            bool tienePermisoCerrarCaja = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja);
 
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             int? idSucursalSeleccionada = ResolverSucursalSeleccionada(sucursales, idSucursal);
@@ -63,12 +66,20 @@ namespace Web.Controllers
             AjustarFechaIndiceSegunLimiteYPermiso(PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             ViewBag.Sucursales = sucursales;
-            ViewBag.PuedeCambiarSucursalCaja = PuedeCambiarSucursalCaja(user, sucursales);
+            ViewBag.HayVariasSucursales = sucursales.Count > 1;
             ViewBag.IdSucursal = idSucursalSeleccionada;
             ViewBag.Buscar = buscar ?? "";
             ViewBag.FechaDesde = desde;
-            ViewBag.PuedeModificarCierres = user != null && user.Admin;
-            ViewBag.HistorialCierres = ObtenerHistorialCierresCaja(idSucursalSeleccionada, buscar ?? "", desde, sucursales);
+            // Modificar un cierre historico ya no es "solo Admin" -- cualquiera con
+            // formCierresDeCaja (Ver) otorgado puede, con o sin ser Admin (el bypass de
+            // Admin en tienePermiso sigue funcionando igual, esto solo suma el caso
+            // no-admin con el permiso explicito).
+            ViewBag.PuedeModificarCierres = user != null && PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta);
+            ViewBag.TienePermisoCerrarCaja = tienePermisoCerrarCaja;
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.HistorialCierres = tienePermisoCerrarCaja
+                ? ObtenerHistorialCierresCaja(idSucursalSeleccionada, buscar ?? "", desde, sucursales)
+                : new DataTable();
             ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo("fechaDesde", PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
             var dt = ObtenerCajasAbiertas(idSucursalSeleccionada, buscar ?? "");
@@ -148,7 +159,7 @@ namespace Web.Controllers
         public ActionResult ActividadesCaja(int idCierre, string filtroActividad = "todos")
         {
             var user = Session["Usuario"] as Entidades.Usuario;
-            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta))
+            if (PermisosHelper.ObtenerUsuarioAutorizadoCierre(Session) == null)
                 return new HttpStatusCodeResult(403, "No tiene permisos para ver actividades de caja.");
 
             if (idCierre <= 0)
@@ -586,11 +597,15 @@ namespace Web.Controllers
         public ActionResult ObtenerDatosCierre(int id, bool modoModificacion = false)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
-            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja))
+            var usuarioAutorizado = PermisosHelper.ObtenerUsuarioAutorizadoCierre(Session);
+            if (usuarioAutorizado == null)
                 return new HttpStatusCodeResult(403, "No tiene permisos para operar sobre cierres de caja.");
 
-            if (modoModificacion && (user == null || !user.Admin))
-                return new HttpStatusCodeResult(403, "Solo un administrador puede modificar un cierre de caja histórico.");
+            // Editar un cierre historico requiere formCierresDeCaja (Ver) otorgado -- ya no
+            // hardcodeado a "solo Admin" (los admins lo siguen teniendo igual, vía el bypass
+            // de tienePermiso).
+            if (modoModificacion && (user == null || !PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta)))
+                return new HttpStatusCodeResult(403, "No tiene permisos para modificar un cierre de caja histórico.");
 
             Entidades.CierreCaja oCierreE = new CierreCaja();
             oCierreE.Id = id;
@@ -613,7 +628,16 @@ namespace Web.Controllers
                 cajaInicial = caja.CajaInicio,
                 fechaApertura = caja.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm"),
                 fechaCierre = caja.FechaHoraCierre.HasValue ? caja.FechaHoraCierre.Value.ToString("dd/MM/yyyy HH:mm") : "",
-                usuario = caja.UsuarioCierre != null ? caja.UsuarioCierre.Nombre : "",
+                // Si la caja ya tiene un cierre historico (modoModificacion) se muestra quien
+                // la cerro en su momento; si es un cierre nuevo, se muestra el usuario
+                // habilitado a hacerlo AHORA (el logueado si tiene el permiso directo, o el
+                // que autorizo via step-up) -- para que "Usuario Cierre" sea visible en el
+                // modal antes de guardar, no solo despues. Mismo chequeo de "sin cierre
+                // todavia" que ya usa CajaSigueAbierta (UsuarioCierre no viene null en una
+                // caja abierta -- viene un objeto con Id=0).
+                usuario = (caja.UsuarioCierre != null && caja.UsuarioCierre.Id > 0)
+                    ? caja.UsuarioCierre.Nombre
+                    : usuarioAutorizado.Nombre,
                 ventas = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
                         oCierreE.FechaHoraInicio, fechaHastaVentas).ToString(),
                 egresosCaja = caja.EgresosCaja,
@@ -625,9 +649,13 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        // El historial NUNCA se desbloquea con la autorizacion temporal (step-up) -- solo
+        // con el permiso de cerrar caja en forma directa. El pedido del usuario listo
+        // explicitamente que se desbloquea con el step-up ("la pantalla, los modales,
+        // ventas, actividad o cambiar sucursal") y el historial no esta en esa lista.
         public ActionResult HistorialCierresCaja(int? idSucursal, string buscar = "", DateTime? fechaDesde = null)
         {
-            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta))
+            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja))
                 return new HttpStatusCodeResult(403, "No tiene permisos para ver cierres de caja.");
 
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
@@ -636,7 +664,7 @@ namespace Web.Controllers
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
             AjustarFechaIndiceSegunLimiteYPermiso(PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
 
-            ViewBag.PuedeModificarCierres = (Session["Usuario"] as Entidades.Usuario)?.Admin ?? false;
+            ViewBag.PuedeModificarCierres = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta);
             var dt = ObtenerHistorialCierresCaja(idSucursalSeleccionada, buscar ?? "", desde, sucursales);
             return PartialView("~/Views/Cajas/_TablaCierresDeCaja.cshtml", dt);
         }
@@ -715,14 +743,19 @@ namespace Web.Controllers
         {
 
             var user = Session["Usuario"] as Entidades.Usuario;
-            if (!PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja))
+            var usuarioAutorizado = PermisosHelper.ObtenerUsuarioAutorizadoCierre(Session);
+            if (usuarioAutorizado == null)
             {
-                ViewBag.Seccion = "Cierrar Caja";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                // Antes devolvia la vista AccesoDenegado (HTML) aunque esta accion se llama
+                // por $.ajax esperando JSON -- guardarCierreCaja() lee resp.ok/resp.error, asi
+                // que una respuesta HTML quedaba silenciosamente rota. Se corrige de paso al
+                // tocar este mismo chequeo: si la autorizacion (directa o por step-up) vencio
+                // justo antes de guardar, el usuario ahora ve un mensaje real en vez de nada.
+                return Json(new { ok = false, error = "No tiene permisos para cerrar caja. Volvé a autorizar e intentá de nuevo." });
             }
 
-            if (modoModificacion && (user == null || !user.Admin))
-                return Json(new { ok = false, error = "Solo un administrador puede modificar un cierre de caja histórico." });
+            if (modoModificacion && (user == null || !PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CajasAbiertasConsulta)))
+                return Json(new { ok = false, error = "No tiene permisos para modificar un cierre de caja histórico." });
 
             Entidades.CierreCaja model = oCierreN.findByIdOrLast(
                 new CierreCaja { Id = Id },
@@ -740,7 +773,10 @@ namespace Web.Controllers
             model.Diferencia = ParseFloat(Diferencia);
             model.ImporteRetirado = ParseFloat(ImporteRetirado);
             model.CajaInicioSiguiente = ParseFloat(CajaInicioSiguiente);
-            model.UsuarioCierre = user;
+            // El usuario que queda registrado como "quien cerro" es el AUTORIZADO, no
+            // necesariamente el logueado -- si el logueado no tiene el permiso directo pero
+            // otro usuario autorizo por step-up, se graba el ID de ese otro usuario.
+            model.UsuarioCierre = usuarioAutorizado;
             model.FechaHoraCierre = modoModificacion
                 ? model.FechaHoraCierre
                 : (model.FechaHoraCierre != null ? model.FechaHoraCierre : DateTime.Now);
@@ -758,6 +794,67 @@ namespace Web.Controllers
                 ok = true,
                 mensaje = modoModificacion ? "El cierre de caja se actualizó correctamente." : result.Mensaje
             });
+        }
+
+        // Step-up de credenciales: un usuario SIN permiso de cerrar caja elige a otro
+        // usuario (con permiso) del combo y tipea su contraseña. Si valida, se habilita
+        // una autorizacion temporal para las 4 acciones de la fila (Ventas/Actividad/
+        // Cerrar/Cambiar sucursal) -- ver PermisosHelper.ObtenerUsuarioAutorizadoCierre.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarAccionCierre(int idUsuario, string clave)
+        {
+            string sessionId = Session.SessionID;
+
+            TimeSpan retryAfter;
+            if (CierreCajaStepUpRateLimiter.IsBlocked(sessionId, out retryAfter))
+            {
+                return Json(new
+                {
+                    ok = false,
+                    bloqueado = true,
+                    segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds)
+                });
+            }
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos, o el usuario no tiene permiso para cerrar caja.";
+
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
+            {
+                CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            // Se resuelve el usuario elegido en el combo (id) a su nombre de login antes de
+            // validar -- el combo solo expone id+nombre (no el usuario de login) al cliente.
+            var candidato = oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo ||
+                !PermisosHelper.TienePermiso(validado, empresa, PermisosPantallasWeb.Cajas.CerrarCaja, DateTime.Now))
+            {
+                CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            CierreCajaStepUpRateLimiter.Reset(sessionId);
+            PermisosHelper.RegistrarElevacionCierre(Session, validado, TimeSpan.FromMinutes(5));
+
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        // Se llama al navegar afuera de Cierre de Caja (beforeunload, via sendBeacon) para
+        // que la autorizacion temporal no siga vigente hasta que expire sola.
+        [HttpPost]
+        public JsonResult RevocarAutorizacionCierre()
+        {
+            PermisosHelper.RevocarElevacionCierre(Session);
+            return Json(new { ok = true });
         }
 
         [HttpPost]
@@ -1185,7 +1282,10 @@ namespace Web.Controllers
             if (user == null)
                 return false;
 
-            bool tienePermiso = user.Admin || PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.Cajas.CerrarCaja);
+            // Acepta autorizacion temporal (step-up) igual que las otras 3 acciones de la
+            // fila -- gate real, no de visibilidad (el boton ahora se muestra siempre que
+            // haya mas de una sucursal, ver ViewBag.HayVariasSucursales en CajasAbiertas).
+            bool tienePermiso = user.Admin || PermisosHelper.ObtenerUsuarioAutorizadoCierre(Session) != null;
             int cantidadSucursales = sucursales != null ? sucursales.Count : oSucursalN.findAll().Count;
             return tienePermiso && cantidadSucursales > 1;
         }
@@ -1313,6 +1413,26 @@ namespace Web.Controllers
             ViewBag.IdsEgresosModificables = idsModificables;
             ViewBag.PagosModificables = pagosModificables;
             ViewBag.ComprasModificables = comprasModificables;
+        }
+
+        // Lista liviana (solo id + nombre, nada sensible) de usuarios activos de la
+        // empresa del usuario logueado, para el combo de autorizacion temporal de Cierre
+        // de Caja (ver _ModalSeleccionUsuario.cshtml / seleccion-usuario.js). Se renderiza
+        // SIEMPRE, no solo para quien le falta el permiso -- cualquiera que cargue la vista
+        // puede necesitar autorizar a otro.
+        private List<object> ObtenerUsuariosActivosEmpresaParaCombo()
+        {
+            var oUsuarioD = new Datos.Usuario(empresa);
+            var dt = oUsuarioD.obtenerUsuarios(true);
+            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
+                return new List<object>();
+
+            return dt.AsEnumerable()
+                .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
+                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>()
+                .ToList();
         }
 
         private DataTable ObtenerUsuariosFiltroEgresos()

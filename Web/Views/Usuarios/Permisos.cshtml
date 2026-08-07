@@ -211,8 +211,44 @@
 @section Scripts {
     <script>
         (function () {
+            // idForm del formulario "Cierres de Caja" -- mismo valor hardcodeado que en
+            // UsuariosController.GuardarPermisos (ahí esta el comentario completo de por
+            // que no hay forma de resolverlo por clave estable desde este modelo).
+            var ID_FORM_CIERRES_DE_CAJA = 9;
+
+            function idFormDeFila($row) {
+                return parseInt($row.find('input[name$=".IdForm"]').val(), 10);
+            }
+
             function syncRow($row) {
                 var puedeVer = $row.find('.js-puede-ver').is(':checked');
+
+                // Regla de negocio: en "Cierres de Caja", Ver el historial (con su ventana
+                // de dias atras) habilita tambien Editar (modificar un cierre historico),
+                // con los mismos dias -- no son dos permisos independientes para este
+                // formulario en particular. Se grisan Editar y Dias editar porque quedan
+                // derivados de Ver, no se cargan aparte -- pero "Alcance" (Propios/Todos)
+                // sigue siendo una eleccion real e independiente aunque Editar este
+                // derivado, asi que se deja editable igual que en cualquier fila con
+                // Editar tildado (si quedara disabled, un <select> disabled no se postea y
+                // el servidor terminaria guardando "Todos" por default en vez de respetar
+                // lo elegido). El server (GuardarPermisos) fuerza el mismo mirror de
+                // Ver->Editar al guardar, esto es solo para que la grilla no muestre
+                // temporalmente un estado que el guardado va a pisar.
+                if (idFormDeFila($row) === ID_FORM_CIERRES_DE_CAJA) {
+                    $row.find('.js-puede-editar').prop('checked', puedeVer).prop('disabled', true);
+                    $row.find('.js-dias-editar').val(puedeVer ? $row.find('.js-dias-ver').val() : 0).prop('disabled', true);
+                    $row.find('.js-alcance').prop('disabled', !puedeVer);
+                    $row.find('.js-dias-ver').prop('disabled', !puedeVer);
+
+                    if (!puedeVer) {
+                        $row.find('.js-dias-ver').val(0);
+                        $row.find('.js-alcance').val('true');
+                    }
+
+                    return;
+                }
+
                 var puedeEditar = $row.find('.js-puede-editar').is(':checked');
 
                 $row.find('.js-dias-ver').prop('disabled', !puedeVer);
@@ -235,6 +271,15 @@
 
             $(document).on('change', '.js-puede-ver, .js-puede-editar', function () {
                 syncRow($(this).closest('tr'));
+            });
+
+            // Para Cierres de Caja, "Dias editar" espeja "Dias ver" en vivo mientras se
+            // tipea, no solo al tildar/destildar el switch.
+            $(document).on('input change', '.js-dias-ver', function () {
+                var $row = $(this).closest('tr');
+                if (idFormDeFila($row) === ID_FORM_CIERRES_DE_CAJA) {
+                    syncRow($row);
+                }
             });
         })();
     </script>

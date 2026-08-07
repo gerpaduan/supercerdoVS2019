@@ -332,16 +332,34 @@ namespace Web.Controllers
 
             try
             {
+                // idForm del formulario "Cierres de Caja" (formCierresDeCaja) -- hardcodeado
+                // porque el modelo posteado desde Permisos.cshtml solo trae IdForm (int), no
+                // la clave estable ("formCierresDeCaja"); no hay una tabla/constante de
+                // mapeo idForm->clave en el proyecto para resolverlo sin una consulta nueva.
+                // Verificable con: SELECT idForm FROM Formularios WHERE formConsulta='formCierresDeCaja'.
+                // Si cambia en la base, hay que actualizar este valor.
+                const int idFormCierresDeCaja = 9;
+
                 var permisos = (model.Items ?? new List<UsuarioPermisoItemVm>())
                     .GroupBy(x => x.IdForm)
                     .Select(g => g.First())
-                    .Select(x => new PermisosUsuarios
+                    .Select(x =>
                     {
-                        IdUsuario = usuario.Id,
-                        IdForm = x.IdForm,
-                        DiasPermitidosVer = x.PuedeVer ? Math.Max(0, x.DiasVer) : -1,
-                        DiasPermitidosEditar = x.PuedeEditar ? Math.Max(0, x.DiasEditar) : -1,
-                        SoloRegistrosPropios = x.PuedeEditar ? x.SoloRegistrosPropios : true
+                        // Regla de negocio: en "Cierres de Caja", Ver el historial habilita
+                        // tambien editar un cierre historico (modoModificacion) -- se fuerza
+                        // acá server-side para que quede bien guardado aunque se salte el
+                        // auto-tilde del JS (ver Permisos.cshtml).
+                        bool puedeEditar = x.PuedeEditar || (x.IdForm == idFormCierresDeCaja && x.PuedeVer);
+                        int diasEditar = x.IdForm == idFormCierresDeCaja && x.PuedeVer ? x.DiasVer : x.DiasEditar;
+
+                        return new PermisosUsuarios
+                        {
+                            IdUsuario = usuario.Id,
+                            IdForm = x.IdForm,
+                            DiasPermitidosVer = x.PuedeVer ? Math.Max(0, x.DiasVer) : -1,
+                            DiasPermitidosEditar = puedeEditar ? Math.Max(0, diasEditar) : -1,
+                            SoloRegistrosPropios = puedeEditar ? x.SoloRegistrosPropios : true
+                        };
                     })
                     .ToList();
 

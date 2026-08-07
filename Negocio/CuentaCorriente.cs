@@ -95,7 +95,11 @@ namespace Negocio
 
                 ///-Si coincide Importe y tipo Mov y EnCtaCte es Falso Siginifica que se sacó la venta de Cta Cte
                 ///
-                if (!crearMovCtaCte && oMovCtaCte.Tipo.Equals(tipoMov.ToString()) &&
+                /// oMovCtaCte.Tipo puede ser null aca: si el bloque de arriba (tipo/importe
+                /// distintos) ya corrio, reseteo oMovCtaCte a una instancia en blanco (linea
+                /// de arriba) -- en ese caso el registro viejo ya quedo reversado por ese
+                /// bloque y este chequeo no aplica (nada que "sacar de cta cte", ya se sacó).
+                if (!crearMovCtaCte && oMovCtaCte.Tipo != null && oMovCtaCte.Tipo.Equals(tipoMov.ToString()) &&
                     oMovCtaCte.Importe.Equals(oMovCtaCte.getImporte(importe, tipoMov)))
                 {
                     oMovCtaCte.Id = 0;

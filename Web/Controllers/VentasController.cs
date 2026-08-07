@@ -344,6 +344,14 @@ namespace Web.Controllers
             if (user == null)
                 return new HttpStatusCodeResult(401, "Sesión inválida");
 
+            // Ver las ventas de OTRA caja (idCierre>0, boton "Ventas" desde Cierre de Caja)
+            // pasa a requerir el mismo gate que las otras 3 acciones de esa fila -- antes
+            // cualquier sesion valida podia ver las ventas de cualquier caja ajena abierta,
+            // sin ningun permiso. El caso de autoservicio (desdePos=true, idCierre=0, "mis
+            // propias ventas" desde el POS del propio cajero) no se toca.
+            if (idCierre > 0 && PermisosHelper.ObtenerUsuarioAutorizadoCierre(Session) == null)
+                return new HttpStatusCodeResult(403, "No tiene permisos para ver las ventas de esta caja.");
+
             var cierre = ObtenerCierreMisVentas(user, desdePos, idCierre);
             if (cierre == null)
             {

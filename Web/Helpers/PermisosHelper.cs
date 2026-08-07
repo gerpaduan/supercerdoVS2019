@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Web;
 using Utilidades;
 
@@ -7,6 +8,64 @@ namespace Web.Helpers
 {
     public static class PermisosHelper
     {
+        // ===== Autorizacion temporal de Cierre de Caja (step-up de credenciales) =====
+        //
+        // CajasController tiene [SessionState(SessionStateBehavior.ReadOnly)] (deliberado,
+        // evita que las varias llamadas AJAX concurrentes de esa pantalla se serialicen por
+        // el lock exclusivo de sesion de ASP.NET) -- escribir en Session[...] desde ahi no
+        // persiste de forma confiable entre requests. Por eso la elevacion temporal se guarda
+        // en MemoryCache (proceso, no session), con clave por Session.SessionID.
+        private const string PrefijoCacheElevacionCierre = "CierreCajaElevacion:";
+
+        private static string ClaveCacheElevacionCierre(string sessionId)
+        {
+            return PrefijoCacheElevacionCierre + (sessionId ?? "");
+        }
+
+        /// <summary>
+        /// Registra que, para esta sesion, un usuario CON permiso de cerrar caja autorizo
+        /// las acciones de Cierre de Caja por un tiempo limitado (step-up de credenciales).
+        /// </summary>
+        public static void RegistrarElevacionCierre(HttpSessionStateBase session, Entidades.Usuario usuarioAutorizado, TimeSpan duracion)
+        {
+            if (session == null || usuarioAutorizado == null)
+                return;
+
+            var policy = new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.UtcNow.Add(duracion) };
+            MemoryCache.Default.Set(ClaveCacheElevacionCierre(session.SessionID), usuarioAutorizado, policy);
+        }
+
+        /// <summary>
+        /// Revoca la elevacion temporal de Cierre de Caja de esta sesion -- se llama al
+        /// navegar afuera de la vista (antes de que expire el tope de tiempo).
+        /// </summary>
+        public static void RevocarElevacionCierre(HttpSessionStateBase session)
+        {
+            if (session == null)
+                return;
+
+            MemoryCache.Default.Remove(ClaveCacheElevacionCierre(session.SessionID));
+        }
+
+        /// <summary>
+        /// Usuario habilitado a operar sobre Cierre de Caja en esta sesion: el logueado si
+        /// ya tiene el permiso directo, o el que autorizo via step-up si hay una elevacion
+        /// vigente. Null si ninguna de las dos aplica. Es la unica fuente de verdad de "quien
+        /// puede actuar" para las acciones de Cierre de Caja -- tambien determina el
+        /// UsuarioCierre que se graba al cerrar la caja.
+        /// </summary>
+        public static Entidades.Usuario ObtenerUsuarioAutorizadoCierre(HttpSessionStateBase session)
+        {
+            var usuarioLogueado = ObtenerUsuario(session);
+            if (usuarioLogueado != null && TienePermisoVer(session, PermisosPantallasWeb.Cajas.CerrarCaja))
+                return usuarioLogueado;
+
+            if (session == null)
+                return null;
+
+            return MemoryCache.Default.Get(ClaveCacheElevacionCierre(session.SessionID)) as Entidades.Usuario;
+        }
+
         /// <summary>
         /// De aquí se llama a Negocio.Usuario
         /// Se valida si el oUsuario tiene permiso en el formulario, por defecto pasar Fecha Actual,

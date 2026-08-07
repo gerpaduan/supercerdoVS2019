@@ -1,0 +1,70 @@
+<!-- INICIO SELECCION DE USUARIO (reusable) -->
+<!--
+    Modal generico para elegir un usuario activo de la empresa, con o sin
+    verificacion de contraseña -- pensado para reusarse en cualquier vista que
+    necesite "autorizar" o "identificar" una accion con otro usuario, no es
+    exclusivo de Cierre de Caja (primer caso de uso, ver seleccion-usuario.js).
+-->
+<style>
+    .seleccion-usuario-lista {
+        max-height: 220px;
+        overflow-y: auto;
+        margin-top: .35rem;
+        border-radius: .4rem;
+    }
+
+    .seleccion-usuario-item.is-selected {
+        background-color: #4e73df;
+        color: #fff;
+        border-color: #4e73df;
+    }
+</style>
+
+<div class="modal fade" id="modalSeleccionUsuario" tabindex="-1" role="dialog" aria-labelledby="modalSeleccionUsuarioTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSeleccionUsuarioTitle">
+                    <i class="fas fa-user-shield mr-2"></i><span id="seleccionUsuarioTitulo">Seleccionar usuario</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="seleccionUsuarioFormulario">
+                    <label for="txtSeleccionUsuario" class="small text-muted">Usuario</label>
+                    <input type="text"
+                           id="txtSeleccionUsuario"
+                           class="form-control"
+                           autocomplete="off"
+                           placeholder="Escribí para filtrar o hacé click para ver todos..." />
+                    <div id="listaSeleccionUsuario" class="list-group seleccion-usuario-lista"></div>
+
+                    <div id="seleccionUsuarioPasswordWrap" class="mt-3 d-none">
+                        <label for="passSeleccionUsuario" class="small text-muted">Contraseña</label>
+                        <input type="password"
+                               id="passSeleccionUsuario"
+                               class="form-control"
+                               autocomplete="off" />
+                    </div>
+
+                    <div id="seleccionUsuarioError" class="alert alert-danger d-none mt-2 mb-0 py-2 small"></div>
+                </div>
+
+                <div id="seleccionUsuarioBloqueado" class="d-none text-center py-3">
+                    <i class="fas fa-lock fa-2x text-danger mb-2"></i>
+                    <div>Demasiados intentos fallidos.</div>
+                    <div>Reintentá en <strong id="seleccionUsuarioCountdown">--:--</strong></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmarSeleccionUsuario">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FIN SELECCION DE USUARIO -->
