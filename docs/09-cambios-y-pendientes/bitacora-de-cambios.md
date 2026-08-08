@@ -4,6 +4,17 @@
 
 Registrar cambios funcionales o tecnicos realizados sobre el sistema.
 
+## 2026-08-08 - Hotfix: `/Ventas/POS` roto en SM y San Lorenzo tras el deploy de ayer (`.cshtml` faltantes en `Web.csproj`)
+
+- Sintoma reportado por el usuario: `/Ventas/POS` tiraba `InvalidOperationException: No se encuentra la vista parcial '~/Views/Ventas/_ModalObservacionesExpendio.cshtml'` en SM y San Lorenzo, justo despues del deploy completo del 2026-08-07.
+- **Causa raiz**: `Web.csproj` es un proyecto old-style (sin globbing) -- `_FacturasRows.cshtml` y `_ModalObservacionesExpendio.cshtml` (creados el 2026-08-05 y 2026-08-06 respectivamente) nunca se agregaron como `<Content Include>`. En local no se notaba (IIS Express lee las vistas directo del filesystem), pero el publish precompilado (`AspNetCompileMerge`, el que se usa para SM/San Lorenzo) arma su lista de archivos a precompilar **desde el `.csproj`** -- ambos archivos quedaron afuera del build publicado en el deploy de ayer. Ver regla nueva en `docs/DECISIONS.md` (2026-08-08).
+- Fix: agregadas las 2 entradas faltantes a `Web.csproj`. Rebuild + republish confirmaron el problema (antes del fix, el publish generaba solo el "archivo marcador" de precompilacion para ambos -- comportamiento normal de MSDeploy -- pero el ensamblado compilado con la vista real nunca se generaba para ellos; despues del fix, la vista se compilo correctamente dentro de uno de los `bin\App_Web_*.dll`).
+- **Deploy de hotfix** (solo `bin/` + `Views/Ventas/`, sin re-tocar `Content/Scripts/fonts` que no cambiaron): backup previo de ambas carpetas en los 2 servidores, swap sin `/MIR` en `bin/` (para no borrar `bin/es/` y `bin/roslyn/`, subcarpetas estaticas de framework que no se re-subieron por no haber cambiado). San Lorenzo: mismo problema de corte de SFTP en transferencias grandes ya documentado el 2026-08-07 -- mitigado con el mismo patron (subida archivo por archivo con reintento).
+- Archivos o modulos afectados: `Web/Web.csproj` (2 lineas nuevas), sin cambios de codigo (los 2 `.cshtml` ya estaban commiteados desde antes, solo faltaba referenciarlos).
+- Motivo: bug de deploy reportado en vivo por el usuario, afectando produccion en 2 servidores.
+- Resultado: **verificado sin usar credenciales reales de produccion** (mismo criterio que el resto de la sesion) -- se confirmo por `dir`/`Test-Path` remoto que el archivo marcador de ambas vistas existe fisicamente en `Views\Ventas\` de los 2 servidores con timestamp del hotfix, y health checks (`curl -k .../Login/Index` -> `200`, sin Stack Trace) en ambos. No se pudo reproducir/confirmar el error original en si (requeria sesion logueada) ni confirmar el fix end-to-end con un login real -- pendiente que el usuario confirme que `/Ventas/POS` carga bien en ambos servidores.
+- **Pendiente / regla nueva**: antes de cualquier proximo deploy a un servidor real, correr la verificacion mecanica documentada en `docs/DECISIONS.md` (comparar archivos nuevos desde el ultimo deploy contra `Web.csproj`) para no repetir este bug con otros archivos nuevos que se hayan agregado por fuera de Visual Studio.
+
 ## Secciones
 
 - Fecha

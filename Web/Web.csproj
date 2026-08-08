@@ -2226,11 +2226,13 @@
     <Content Include="Views\Ventas\_ModalAyudaPOS.cshtml" />
     <Content Include="Views\Ventas\_ModalComentarioVenta.cshtml" />
     <Content Include="Views\Ventas\_ModalExpendiosPOS.cshtml" />
+    <Content Include="Views\Ventas\_ModalObservacionesExpendio.cshtml" />
     <Content Include="Views\Ventas\_ModalPostVenta.cshtml" />
     <Content Include="Views\Ventas\_TicketHTML.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronicaModal.cshtml" />
     <Content Include="Views\Ventas\_ModalIngresoBilletesPOS.cshtml" />
+    <Content Include="Views\Ventas\_FacturasRows.cshtml" />
     <Content Include="Views\Ventas\_TablaFacturas.cshtml" />
     <Content Include="Views\Ventas\_TablaVentas.cshtml" />
     <Content Include="Views\Ventas\_VentasFacturasFiltrosScripts.cshtml" />
