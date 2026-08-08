@@ -4,6 +4,23 @@
 
 Registrar cambios funcionales o tecnicos realizados sobre el sistema.
 
+## 2026-08-08 (continuacion) - Deploy de codigo a la VM de produccion (`carnisys.com`) + reemplazo completo de su base de datos por la local
+
+- Cambio: a pedido explicito del usuario, se llevo la VM de produccion (`carnisys.com`) al mismo commit ya desplegado en SM/San Lorenzo (`244dc6ad`, incluye el hotfix de `Web.csproj` del mismo dia) **y** se reemplazo por completo la base de datos `carnisys` de esa VM por la base local -- decision explicitamente confirmada por el usuario via pregunta directa (ver `docs/DECISIONS.md`, mismo dia).
+- **Deploy de codigo**: mismo procedimiento documentado (`docs/07-operacion-y-soporte/despliegue-y-publicacion.md`, seccion "VM Windows de produccion"), con un ajuste: subida por SFTP archivo por archivo (no zip) -- 2308 archivos (`bin`/`Content`/`Scripts`/`Views`/`fonts` + sueltos), sin cortes esta vez. `Web.config` ajustado a mano antes de subir (`Security:CookieRequireSsl`, `httpCookies requireSSL`, `forms requireSSL` -> `false`; `Security:EnforceHttps` se dejo en `true`) -- **verificado primero contra el `Web.config` real de la VM** (no asumido) que esos son exactamente los 4 valores que ya tenia, cero drift. Backup previo del sitio completo (`CarniSysWeb_20260808_prehotfix`, robocopy `/MIR`), swap con `Stop-WebAppPool` / `robocopy /MIR` de las 5 carpetas + sueltos / `Start-WebAppPool` (arranco bien al primer intento).
+- **Reemplazo de base de datos** (la parte de mayor riesgo de este pedido): 
+  1. Backup de seguridad de la base **actual de la VM** antes de tocar nada (`carnisys_PRE-REEMPLAZO-LOCAL_20260808.bak`, queda en el propio servidor, `MSSQL16.SQLEXPRESS\MSSQL\Backup\`) -- pedido explicito del usuario ("previo backup por las dudas").
+  2. Backup de la base local (`.\sqlexpress`/`carnisys`, 45.473.792 bytes, sin compresion -- Express no la soporta) y subida integra por SFTP a la VM (mismo tamano exacto verificado en origen y destino).
+  3. Mismos paths fisicos de datos en ambos servidores (`MSSQL16.SQLEXPRESS\MSSQL\DATA\`, misma version de SQL Server 16.0.1000.6 en los dos) -- no hizo falta `WITH MOVE`.
+  4. `ALTER DATABASE SET SINGLE_USER WITH ROLLBACK IMMEDIATE` (corta la conexion del App Pool y cualquier otra activa) -> `RESTORE DATABASE ... WITH REPLACE` -> `SET MULTI_USER`.
+- Archivos o modulos afectados: ninguno en el repo (deploy + operacion de base de datos sobre los 2 servidores).
+- Motivo: pedido explicito del usuario.
+- Resultado: **verificado en 3 niveles**:
+  1. Health checks: `https://carnisys.com/` -> `302` a Login, `/Login/Index` -> `200`, titulo correcto, sin Stack Trace/excepciones.
+  2. Confirmado que la base restaurada es efectivamente la local y no quedo a medio camino: `Ventas.idVenta=1714` (venta de prueba creada esta misma sesion, exclusiva del entorno local) existe en la VM con `formaPago=CtaCte`/`enCtaCte=1` identico a local; `COUNT(*)` de `Ventas`=710 (igual a local); texto de `Formularios.idForm=9` idéntico caracter por caracter (mismas tildes, sin corrupcion de encoding).
+  3. El backup de seguridad de la base original de la VM quedo integro en el propio servidor por si hiciera falta revertir (`carnisys_PRE-REEMPLAZO-LOCAL_20260808.bak`).
+- **No verificado**: login real con usuario de la VM (ya no aplica en el sentido tradicional -- la base ahora es la local, asi que cualquier usuario que exista ahi es de prueba, no de un cliente real). No se compararon filas fuera de los puntos de arriba (no se pidio una migracion de datos, sino un reemplazo total, asi que no corresponde un diff exhaustivo).
+
 ## 2026-08-08 - Hotfix: `/Ventas/POS` roto en SM y San Lorenzo tras el deploy de ayer (`.cshtml` faltantes en `Web.csproj`)
 
 - Sintoma reportado por el usuario: `/Ventas/POS` tiraba `InvalidOperationException: No se encuentra la vista parcial '~/Views/Ventas/_ModalObservacionesExpendio.cshtml'` en SM y San Lorenzo, justo despues del deploy completo del 2026-08-07.

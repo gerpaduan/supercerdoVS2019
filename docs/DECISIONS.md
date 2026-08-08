@@ -1,5 +1,13 @@
 # Decisiones de arquitectura
 
+## 2026-08-08 - Reemplazo completo de la base de datos de la VM de produccion (`carnisys.com`) por la base local
+
+- **Decidido**: la base `carnisys` de la VM de produccion se reemplazo integramente por la base local de desarrollo (no una migracion incremental, no un `ALTER`/sincronizacion de esquema como se hizo en SM/San Lorenzo -- un `RESTORE ... WITH REPLACE` completo). Cualquier dato que existiera solo en la base de la VM antes de este cambio se perdio.
+- **Por que**: pedido explicito del usuario. Dado el riesgo (irreversible, produccion, puede haber datos reales de negocio), se detuvo el trabajo y se pregunto de forma directa antes de tocar nada (`AskUserQuestion`, 3 opciones: reemplazo completo / solo igualar esquema como en SM-SL / explicar primero) -- el usuario confirmo explicitamente "si, quiero el reemplazo completo previo backup por las dudas".
+- **Salvaguarda aplicada**: backup completo de la base de la VM tomado ANTES de restaurar nada, guardado en el propio servidor (`carnisys_PRE-REEMPLAZO-LOCAL_20260808.bak`) -- si en algun momento se necesita recuperar algo de lo que habia antes del reemplazo, esta ahi. No se penso ni se pidio un plan de "recuperar datos especificos" mas alla de tener el backup disponible.
+- **Alternativa descartada**: aplicar solo los scripts SQL pendientes (mismo criterio que SM/San Lorenzo, ver entrada del deploy del 2026-08-07) sin tocar los datos existentes de la VM -- el usuario la tenia disponible como opcion en la pregunta y eligio explicitamente no usarla.
+- **Implicancia a futuro**: la VM de produccion ahora tiene datos de prueba/desarrollo, no datos reales de un cliente -- cualquier trabajo futuro contra esa base (deploys, verificaciones "con datos reales de produccion") debe tener esto en cuenta; ya no es representativa del uso real del sistema hasta que se vuelva a cargar con datos de negocio genuinos.
+
 ## Objetivo
 
 Registrar por que se eligio X y no Y, para proteger decisiones deliberadas de "correcciones" espontaneas de otra sesion/IA.
