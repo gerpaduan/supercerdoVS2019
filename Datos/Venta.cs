@@ -903,8 +903,8 @@ namespace Datos
                 LEFT JOIN dbo.Sucursal s ON e.idSucursal = s.idSucursal
                 LEFT JOIN dbo.LineaExpendio le ON e.idExpendio = le.idExpendio
                 WHERE e.idEmpresa = @idEmpresa
-                  AND (@fechaDesde IS NULL OR CONVERT(date, e.fechaExpendio) >= @fechaDesde)
-                  AND (@fechaHasta IS NULL OR CONVERT(date, e.fechaExpendio) <= @fechaHasta)
+                  AND (@fechaDesde IS NULL OR e.fechaExpendio >= @fechaDesde)
+                  AND (@fechaHasta IS NULL OR e.fechaExpendio <= @fechaHasta)
                 GROUP BY e.fechaExpendio,
                          e.idExpendio,
                          e.identificacionExpendio,
@@ -926,8 +926,8 @@ namespace Datos
                 {
                     p.AddWithValue("@top", top <= 0 ? 300 : top);
                     p.AddWithValue("@idEmpresa", _empresa.IdEmpresa);
-                    p.AddWithValue("@fechaDesde", fechaDesde.HasValue ? (object)fechaDesde.Value.Date : DBNull.Value);
-                    p.AddWithValue("@fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value.Date : DBNull.Value);
+                    p.AddWithValue("@fechaDesde", fechaDesde.HasValue ? (object)fechaDesde.Value : DBNull.Value);
+                    p.AddWithValue("@fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value : DBNull.Value);
                 }
             );
         }

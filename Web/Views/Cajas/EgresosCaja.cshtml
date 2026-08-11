@@ -79,12 +79,12 @@
                 <div class="egresos-filtros-row egresos-filtros-row-fechas">
                     <div class="form-group mb-0">
                         <label class="egresos-filtro-label">Desde</label>
-                        <input type="date" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                        <input type="datetime-local" step="1" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
                     </div>
 
                     <div class="form-group mb-0">
                         <label class="egresos-filtro-label">Hasta</label>
-                        <input type="date" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                        <input type="datetime-local" step="1" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
                     </div>
 
                     <div class="form-group mb-0 egresos-filtro-accion">

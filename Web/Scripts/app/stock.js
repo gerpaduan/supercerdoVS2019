@@ -93,7 +93,10 @@
             balanzaPolling: null,
             balanzaClientStarted: false,
             balanzaUltimaLectura: null,
-            focusAgregarPendiente: false
+            focusAgregarPendiente: false,
+            sortKey: 'creado',
+            sortDirection: 'asc',
+            searchText: ''
         };
     }
 
@@ -626,11 +629,99 @@
         $info.html(html).removeClass('d-none');
     }
 
+    function getSortValueLinea(linea, sortKey) {
+        switch (sortKey) {
+            case 'producto':
+                return String(linea.producto || '').toLowerCase();
+            case 'codigo':
+                return String(linea.codigo || '').toLowerCase();
+            case 'cantidad':
+                return toNumber(linea.cantKgs);
+            case 'creado':
+            default:
+                var fecha = parseCreadoTexto(linea.creadoTexto);
+                return fecha ? fecha.getTime() : null;
+        }
+    }
+
+    // Ordena una copia de state.lineas sin mutar el array original (a diferencia de la vieja sortLineasByCreado),
+    // para que el índice real de cada línea (indiceOriginal) se preserve aunque cambie el orden visual.
+    function getLineasOrdenadas($form) {
+        var state = getState($form);
+        return state.lineas
+            .map(function (linea, index) {
+                return { linea: linea, indiceOriginal: index };
+            })
+            .sort(function (a, b) {
+                var left = getSortValueLinea(a.linea, state.sortKey);
+                var right = getSortValueLinea(b.linea, state.sortKey);
+                var result;
+
+                if (left === null && right === null) {
+                    result = 0;
+                } else if (left === null) {
+                    result = -1;
+                } else if (right === null) {
+                    result = 1;
+                } else if (typeof left === 'string' || typeof right === 'string') {
+                    result = String(left).localeCompare(String(right), 'es', { numeric: true, sensitivity: 'base' });
+                } else {
+                    result = left === right ? 0 : (left > right ? 1 : -1);
+                }
+
+                if (result === 0) {
+                    result = a.indiceOriginal - b.indiceOriginal;
+                }
+
+                return state.sortDirection === 'desc' ? result * -1 : result;
+            });
+    }
+
+    function lineaMatchesBusqueda(linea, searchText) {
+        if (!searchText) return true;
+        var needle = searchText.toLowerCase();
+        return String(linea.producto || '').toLowerCase().indexOf(needle) !== -1
+            || String(linea.codigo || '').toLowerCase().indexOf(needle) !== -1;
+    }
+
+    function getLineasVisibles($form) {
+        var state = getState($form);
+        var needle = $.trim(state.searchText || '').toLowerCase();
+        return getLineasOrdenadas($form).filter(function (item) {
+            return lineaMatchesBusqueda(item.linea, needle);
+        });
+    }
+
+    function syncSortHeadersStock($form) {
+        var state = getState($form);
+        var $headers = $form.find('#tablaLineasStock thead [data-sort-key]');
+        $headers.css('cursor', 'pointer');
+        $headers.removeClass('stock-sort-active stock-sort-asc stock-sort-desc');
+
+        $headers.each(function () {
+            var $el = $(this);
+            var label = ($el.data('base-label') || $el.text() || '').trim();
+            var key = String($el.data('sort-key') || '');
+
+            if (!$el.data('base-label')) {
+                $el.data('base-label', label);
+            }
+
+            if (key === state.sortKey) {
+                $el.text(label + (state.sortDirection === 'desc' ? ' ↓' : ' ↑'));
+                $el.addClass('stock-sort-active ' + (state.sortDirection === 'desc' ? 'stock-sort-desc' : 'stock-sort-asc'));
+                $el.attr('title', 'Ordenado por ' + label + ' (' + (state.sortDirection === 'desc' ? 'descendente' : 'ascendente') + ')');
+            } else {
+                $el.text(label);
+                $el.attr('title', 'Ordenar por ' + label);
+            }
+        });
+    }
+
     function renderLineas($form) {
         var state = getState($form);
         var $tbody = $form.find('#tablaLineasStock tbody');
         var html = '';
-        sortLineasByCreado($form);
 
         // El detalle se vuelve a dibujar completo en cada cambio para mantener sincronizados grilla, totales e inputs hidden.
         if (!$tbody.length) return;
@@ -639,26 +730,39 @@
             $tbody.html('<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">Todavía no hay líneas cargadas.</td></tr>');
             recalculate($form);
             rebuildHiddenInputs($form);
+            syncSortHeadersStock($form);
             return;
         }
 
-        $.each(state.lineas, function (index, linea) {
+        var visibles = getLineasVisibles($form);
+
+        if (!visibles.length) {
+            $tbody.html('<tr class="js-empty-row"><td colspan="5" class="text-center text-muted">Sin resultados para la búsqueda.</td></tr>');
+            recalculate($form);
+            rebuildHiddenInputs($form);
+            syncSortHeadersStock($form);
+            return;
+        }
+
+        $.each(visibles, function (_, item) {
+            var linea = item.linea;
             var vinculoHtml = linea.idPesajeVinculado > 0
                 ? '<span class="badge badge-info mb-1">Pesaje vinculado #' + escapeHtml(linea.idPesajeVinculado) + '</span><br>'
                 : '';
 
-            html += '<tr data-index="' + index + '">'
+            html += '<tr data-index="' + item.indiceOriginal + '">'
                 + '<td><strong>' + escapeHtml(linea.producto || '') + '</strong><br><small class="text-muted">Código: ' + escapeHtml(linea.codigo || '') + '</small></td>'
                 + '<td class="text-right">' + formatNumber(linea.cantKgs, 3) + '</td>'
                 + '<td class="text-center">' + (linea.balanza ? '*' : '') + '</td>'
                 + '<td>' + (linea.noContado ? '<span class="badge badge-warning mb-1">No contado</span><br>' : '') + vinculoHtml + escapeHtml(linea.creadoTexto || '-') + '</td>'
-                + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + index + '"><i class="fas fa-trash"></i></button></td>'
+                + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" data-action="remove-line" data-index="' + item.indiceOriginal + '"><i class="fas fa-trash"></i></button></td>'
                 + '</tr>';
         });
 
         $tbody.html(html);
         recalculate($form);
         rebuildHiddenInputs($form);
+        syncSortHeadersStock($form);
     }
 
     function buildAcumulados($form) {
@@ -1127,22 +1231,6 @@
         var date = new Date(year, month, day, hour, minute, 0, 0);
 
         return isNaN(date.getTime()) ? null : date;
-    }
-
-    function sortLineasByCreado($form) {
-        var state = getState($form);
-        state.lineas.sort(function (a, b) {
-            var dateA = parseCreadoTexto(a.creadoTexto);
-            var dateB = parseCreadoTexto(b.creadoTexto);
-
-            if (dateA && dateB) {
-                return dateA.getTime() - dateB.getTime();
-            }
-
-            if (dateA) return -1;
-            if (dateB) return 1;
-            return 0;
-        });
     }
 
     function resetFiltrosPesajesVinculables() {
@@ -2362,6 +2450,40 @@
             state.lineas.splice(index, 1);
             renderLineas($form);
             scheduleDraft($form);
+        });
+
+        $form.on('click.stock', '.js-stock-sort, #tablaLineasStock thead th[data-sort-key]', function (e) {
+            e.preventDefault();
+            var key = String($(this).data('sort-key') || '');
+            if (!key) return;
+            if (state.sortKey === key) {
+                state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortKey = key;
+                state.sortDirection = 'asc';
+            }
+            renderLineas($form);
+        });
+
+        $form.on('click.stock', '#btnToggleBusquedaLineasStock', function () {
+            var $btn = $(this);
+            var $input = $form.find('#filtroLineasStock');
+            var mostrar = $input.hasClass('d-none');
+            $input.toggleClass('d-none', !mostrar);
+            $btn.attr('aria-expanded', mostrar ? 'true' : 'false');
+
+            if (mostrar) {
+                $input.focus();
+            } else {
+                $input.val('');
+                state.searchText = '';
+                renderLineas($form);
+            }
+        });
+
+        $form.on('input.stock', '#filtroLineasStock', function () {
+            state.searchText = $(this).val() || '';
+            renderLineas($form);
         });
 
         $form.on('change.stock', '#chkBalanzaLinea', function () {

@@ -203,9 +203,9 @@
                 <div class="col-lg-4 col-md-6 mb-2">
                     <label class="mb-1 font-weight-bold">Actualizado en período</label>
                     <div class="d-flex align-items-center">
-                        <input type="date" class="form-control" id="fFechaDesde" value="@filtroFechaDesdeActual">
+                        <input type="datetime-local" step="1" class="form-control" id="fFechaDesde" value="@filtroFechaDesdeActual">
                         <span class="px-2 text-muted font-weight-bold">/</span>
-                        <input type="date" class="form-control" id="fFechaHasta" value="@filtroFechaHastaActual">
+                        <input type="datetime-local" step="1" class="form-control" id="fFechaHasta" value="@filtroFechaHastaActual">
                     </div>
                     <small class="text-muted">Toma la fecha de modificación o, si no existe, la de creación.</small>
                 </div>
@@ -929,6 +929,15 @@
         if (!fila) return;
 
         if (event.target.closest(".td-acciones-producto, button, a, input, label")) {
+            return;
+        }
+
+        const chk = fila.querySelector(".chk-etiqueta");
+        if (chk) {
+            // Modo etiquetas activo: doble clic en la fila selecciona/deselecciona
+            // en vez de desplegar el detalle (pedido explicito del usuario).
+            chk.checked = !chk.checked;
+            chk.dispatchEvent(new Event("change", { bubbles: true }));
             return;
         }
 

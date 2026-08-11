@@ -180,6 +180,15 @@
 
                         </div>
 
+                        <div class="d-flex align-items-center mb-2 movimiento-search-toolbar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasMovimiento"
+                                    title="Buscar en la tabla" aria-expanded="false">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <input type="text" id="filtroLineasMovimiento" class="form-control form-control-sm ml-2 d-none"
+                                   placeholder="Buscar por producto o código..." autocomplete="off" style="max-width:280px;">
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm movimiento-table-compact" id="tablaLineasMovimiento">
                                 <thead class="thead-light">
@@ -650,7 +659,7 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=26")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=27")"></script>
     <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script>

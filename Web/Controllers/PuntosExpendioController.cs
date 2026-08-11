@@ -130,7 +130,7 @@ namespace Web.Controllers
 
             ViewBag.Title = "Expendios generados";
             ViewBag.Seccion = "Punto de expendio";
-            ViewBag.FechaHoy = DateTime.Today.ToString("yyyy-MM-dd");
+            ViewBag.FechaHoy = DateTime.Today.ToString("yyyy-MM-ddTHH:mm:ss");
             ViewBag.SectoresExpendio = (sectoresDt != null
                 ? sectoresDt.AsEnumerable()
                     .Select(r => Convert.ToString(r["sector"] ?? ""))
@@ -660,8 +660,14 @@ namespace Web.Controllers
             {
                 DateTime fechaDesdeValue;
                 DateTime fechaHastaValue;
-                DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue.Date : null;
-                DateTime? fechaHastaFiltro = DateTime.TryParse(fechaHasta, out fechaHastaValue) ? (DateTime?)fechaHastaValue.Date : null;
+                DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue : null;
+                DateTime? fechaHastaFiltro = null;
+                if (DateTime.TryParse(fechaHasta, out fechaHastaValue))
+                {
+                    fechaHastaFiltro = fechaHastaValue.TimeOfDay == TimeSpan.Zero
+                        ? fechaHastaValue.AddDays(1).AddSeconds(-1)
+                        : fechaHastaValue;
+                }
                 DataTable dt = oVentaN.obtenerExpendiosEmpresa(top <= 0 ? 300 : top, fechaDesdeFiltro, fechaHastaFiltro);
 
                 var items = dt.AsEnumerable()

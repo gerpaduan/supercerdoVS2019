@@ -559,3 +559,17 @@ body.app-shell.dark-mode .app-product-highlight:read-only {
         white-space: nowrap;
     }
 }
+
+/* Checkbox de seleccion en Productos/Index modo etiquetas (Views/Productos/
+   Index.cshtml, clase exclusiva -- confirmado por grep que no se reusa en
+   ningun otro lado). Antes era un checkbox nativo sin estilo, chico y poco
+   clickeable -- se agranda y se usa el azul de marca (--primary, ya definido
+   en sb-admin-2.css) via accent-color en vez de armar el custom-checkbox de
+   Bootstrap completo (ese patron necesita un <label> visible para dibujar el
+   check con pseudo-elementos, y acá no hay texto de label por fila). */
+.chk-etiqueta {
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: #4e73df;
+    cursor: pointer;
+}

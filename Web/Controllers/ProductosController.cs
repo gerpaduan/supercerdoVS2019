@@ -96,7 +96,7 @@ namespace Web.Controllers
 
             if (fechaDesde.HasValue)
             {
-                DateTime desde = fechaDesde.Value.Date;
+                DateTime desde = fechaDesde.Value;
                 productos = productos
                     .Where(x => ObtenerFechaFiltroProducto(x) >= desde)
                     .ToList();
@@ -104,9 +104,11 @@ namespace Web.Controllers
 
             if (fechaHasta.HasValue)
             {
-                DateTime hastaExclusivo = fechaHasta.Value.Date.AddDays(1);
+                DateTime hasta = fechaHasta.Value;
+                if (hasta.TimeOfDay == TimeSpan.Zero)
+                    hasta = hasta.AddDays(1).AddSeconds(-1);
                 productos = productos
-                    .Where(x => ObtenerFechaFiltroProducto(x) < hastaExclusivo)
+                    .Where(x => ObtenerFechaFiltroProducto(x) <= hasta)
                     .ToList();
             }
 

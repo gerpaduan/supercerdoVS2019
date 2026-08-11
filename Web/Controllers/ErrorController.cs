@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using System.Web.Mvc;
 
 namespace Web.Controllers
@@ -9,48 +8,40 @@ namespace Web.Controllers
     {
         public ActionResult NotFound()
         {
-            Response.StatusCode = 200;
             Response.TrySkipIisCustomErrors = true;
-            ViewBag.RequestedUrl = Request != null ? Request.RawUrl : "";
-            return View();
+            var rawUrl = Request != null ? Request.RawUrl : "";
+            if (EsRutaRaiz(rawUrl))
+            {
+                Response.StatusCode = 200;
+                return Content("No se pudo cargar la aplicacion. Volve a intentar en unos segundos.", "text/plain");
+            }
+            return RedirectToAction("Index", "Home");
         }
 
         public ActionResult General()
         {
-            Response.StatusCode = 200;
             Response.TrySkipIisCustomErrors = true;
-            ViewBag.RequestedUrl = Request != null ? Request.RawUrl : "";
+            var rawUrl = Request != null ? Request.RawUrl : "";
             var ex = Server != null ? Server.GetLastError() : null;
-            bool mostrarDetalles = DebeMostrarDetallesError();
-            ViewBag.MostrarDetallesError = mostrarDetalles;
-
-            if (mostrarDetalles && ex != null)
+            if (ex != null)
             {
-                ViewBag.ErrorMessage = ex.Message;
-                ViewBag.ErrorType = ex.GetType().FullName;
-                ViewBag.ErrorStack = ex.StackTrace;
-                ViewBag.InnerErrorMessage = ex.InnerException != null ? ex.InnerException.Message : "";
-                ViewBag.InnerErrorType = ex.InnerException != null ? ex.InnerException.GetType().FullName : "";
+                System.Diagnostics.Trace.TraceError("Error/General - url={0}: {1}", rawUrl, ex);
             }
-            return View();
+            if (EsRutaRaiz(rawUrl))
+            {
+                Response.StatusCode = 200;
+                return Content("No se pudo cargar la aplicacion. Volve a intentar en unos segundos.", "text/plain");
+            }
+            return RedirectToAction("Index", "Home");
         }
 
-        private bool DebeMostrarDetallesError()
+        // Evita un loop infinito de redirects si la excepcion ocurre en el Home mismo.
+        private static bool EsRutaRaiz(string rawUrl)
         {
-            try
-            {
-                if (Request != null && Request.IsLocal)
-                    return true;
-
-                return string.Equals(
-                    ConfigurationManager.AppSettings["MostrarDetallesError"],
-                    "true",
-                    StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(rawUrl)) return true;
+            var path = rawUrl.Split('?')[0].TrimEnd('/');
+            return path == "" || path.Equals("/Home", StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

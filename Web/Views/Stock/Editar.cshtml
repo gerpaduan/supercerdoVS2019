@@ -347,14 +347,27 @@
                         <div id="stockWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
                         <div id="stockPesajesVinculadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
 
+                        <div class="d-flex align-items-center mb-2 stock-search-toolbar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasStock"
+                                    title="Buscar en la tabla" aria-expanded="false">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <input type="text" id="filtroLineasStock" class="form-control form-control-sm ml-2 d-none"
+                                   placeholder="Buscar por producto o código..." autocomplete="off" style="max-width:280px;">
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm stock-table-compact" id="tablaLineasStock">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th>Producto</th>
-                                        <th class="text-right" style="width:120px;">Cantidad</th>
+                                        <th class="stock-th-producto">
+                                            <a href="#" class="js-stock-sort" data-sort-key="producto">Producto</a>
+                                            <span class="stock-th-sep">·</span>
+                                            <a href="#" class="js-stock-sort stock-th-codigo-link" data-sort-key="codigo">Código</a>
+                                        </th>
+                                        <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
                                         <th class="text-center" style="width:70px;">bal</th>
-                                        <th style="width:160px;">Creado</th>
+                                        <th style="width:160px;" data-sort-key="creado">Creado</th>
                                         <th style="width:70px;">Acción</th>
                                     </tr>
                                 </thead>
@@ -796,6 +809,46 @@
         font-size: .76rem;
     }
 
+    .stock-page #tablaLineasStock thead [data-sort-key] {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .stock-page #tablaLineasStock thead th[data-sort-key]:hover,
+    .stock-page #tablaLineasStock thead .js-stock-sort:hover {
+        background: rgba(0, 0, 0, .045);
+    }
+
+    .stock-page #tablaLineasStock thead th.stock-sort-active,
+    .stock-page #tablaLineasStock thead .js-stock-sort.stock-sort-active {
+        background: rgba(13, 110, 253, .12);
+        color: #0b57c0;
+        box-shadow: inset 0 -2px 0 rgba(13, 110, 253, .45);
+    }
+
+    .stock-page #tablaLineasStock .stock-th-producto .js-stock-sort {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .stock-page #tablaLineasStock .stock-th-producto .stock-th-sep {
+        opacity: .5;
+        padding: 0 .15rem;
+    }
+
+    .dark-mode .stock-page #tablaLineasStock thead [data-sort-key]:hover,
+    body.dark-mode .stock-page #tablaLineasStock thead [data-sort-key]:hover {
+        background: rgba(255, 255, 255, .08);
+    }
+
+    .dark-mode .stock-page #tablaLineasStock thead .stock-sort-active,
+    body.dark-mode .stock-page #tablaLineasStock thead .stock-sort-active {
+        background: rgba(84, 160, 255, .18);
+        color: #d9e9ff;
+        box-shadow: inset 0 -2px 0 rgba(149, 197, 255, .55);
+    }
+
     .stock-page .stock-action-highlight {
         background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%) !important;
         border-color: #7fb0ff !important;
@@ -966,7 +1019,7 @@
     <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=36")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=37")"></script>
     <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
@@ -1102,7 +1155,7 @@ else
             }
         </style>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-        <script src="@Url.Content("~/Scripts/app/stock.js?v=36")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=37")"></script>
         <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>

@@ -157,7 +157,8 @@
             readOnly: !!config.soloLecturaInicial,
             sortKey: 'ordenIngreso',
             sortDirection: 'asc',
-            lineSequence: 0
+            lineSequence: 0,
+            searchText: ''
         };
 
         var $codigo = $('#txtCodigoProducto');
@@ -380,6 +381,13 @@
 
                     return state.sortDirection === 'desc' ? result * -1 : result;
                 });
+        }
+
+        function lineMatchesSearch(line, searchText) {
+            var needle = $.trim(searchText || '').toLowerCase();
+            if (!needle) return true;
+            return String(line.Producto || '').toLowerCase().indexOf(needle) !== -1
+                || String(line.Codigo || '').toLowerCase().indexOf(needle) !== -1;
         }
 
         function syncSortHeaders() {
@@ -648,16 +656,19 @@
                 totalUnidades += toInt(line.CantUnidad);
                 totalKilos += toFloat(line.CantKg);
 
-                html += '<tr>'
-                    + '<td class="text-center font-weight-bold">' + toInt(line.__ordenIngreso) + '</td>'
-                    + '<td>' + line.Codigo + '</td>'
-                    + '<td>' + line.Producto + '</td>'
-                    + '<td class="text-right">' + mostrarCantUnidad + '</td>'
-                    + '<td class="text-right">' + mostrarKilos + '</td>'
-                    + '<td class="text-center">' + (line.PesoBalanza ? 'Sí' : 'No') + '</td>'
-                    + '<td class="text-center">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</td>'
-                    + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
-                    + '</tr>';
+                // La búsqueda solo afecta qué filas se ven: totales y hidden inputs siguen contemplando TODAS las líneas.
+                if (lineMatchesSearch(line, state.searchText)) {
+                    html += '<tr>'
+                        + '<td class="text-center font-weight-bold">' + toInt(line.__ordenIngreso) + '</td>'
+                        + '<td>' + line.Codigo + '</td>'
+                        + '<td>' + line.Producto + '</td>'
+                        + '<td class="text-right">' + mostrarCantUnidad + '</td>'
+                        + '<td class="text-right">' + mostrarKilos + '</td>'
+                        + '<td class="text-center">' + (line.PesoBalanza ? 'Sí' : 'No') + '</td>'
+                        + '<td class="text-center">' + (line.PermitirIngreso ? 'Sí' : 'No') + '</td>'
+                        + '<td><button type="button" class="btn btn-sm btn-outline-danger js-remove-line" data-index="' + item.originalIndex + '"' + (state.readOnly ? ' disabled="disabled"' : '') + '><i class="fas fa-trash"></i></button></td>'
+                        + '</tr>';
+                }
 
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorteMovimiento" value="' + (line.IdCorteMovimiento || 0) + '" />';
                 hidden += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (line.IdCorte || 0) + '" />';
@@ -672,7 +683,9 @@
             });
 
             if (!html) {
-                html = '<tr><td colspan="7" class="text-center text-muted">Todavía no agregaste productos al movimiento.</td></tr>';
+                html = state.lines.length
+                    ? '<tr><td colspan="7" class="text-center text-muted">Sin resultados para la búsqueda.</td></tr>'
+                    : '<tr><td colspan="7" class="text-center text-muted">Todavía no agregaste productos al movimiento.</td></tr>';
             }
 
             html = html.replace('colspan="7"', 'colspan="8"');
@@ -950,6 +963,27 @@
                 state.sortDirection = 'asc';
             }
 
+            renderLines();
+        });
+
+        $(document).on('click.movimientoSearchToggle', '#btnToggleBusquedaLineasMovimiento', function () {
+            var $btn = $(this);
+            var $input = $('#filtroLineasMovimiento');
+            var mostrar = $input.hasClass('d-none');
+            $input.toggleClass('d-none', !mostrar);
+            $btn.attr('aria-expanded', mostrar ? 'true' : 'false');
+
+            if (mostrar) {
+                $input.focus();
+            } else {
+                $input.val('');
+                state.searchText = '';
+                renderLines();
+            }
+        });
+
+        $(document).on('input.movimientoSearch', '#filtroLineasMovimiento', function () {
+            state.searchText = $(this).val() || '';
             renderLines();
         });
 

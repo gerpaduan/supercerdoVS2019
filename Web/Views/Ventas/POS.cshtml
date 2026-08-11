@@ -257,6 +257,7 @@
                         <!-- ===================== -->
                         <!-- COLUMNA DERECHA -->
                         <div class="col-12 col-md-6 d-flex flex-column pos-workbench pos-ventas-workbench-col">
+                            <div class="pos-workbench-scroll">
                             <!-- ?? BLOQUE SCANNER -->
                             <div class="row" id="scannerContainer" style="display:none;">
                                 <div class="col-12">
@@ -390,6 +391,8 @@
                                     </div>
 
                                 </div>
+                            </div>
+
                             </div>
 
                             <!-- BOTONES FINALES -->
@@ -4424,6 +4427,17 @@ else
     @@media (min-width: 992px) {
         #pos-app .col-md-6.d-flex.flex-column {
             min-height: 0;
+        }
+
+        /* Absorbe el alto sobrante del viewport (scroll propio si hace falta) -- mismo patron que
+           .zona-tabla en la columna del carrito. Adentro solo quedan scanner/buscador/#producto-info
+           (ninguno crece individualmente, por eso NO hace falta display:flex aca). Finalizar y
+           .pos-footer-panel quedan AFUERA de este wrapper, como hijos directos de la columna,
+           pegados uno al otro -- pedido explicito del usuario: "Finalizar quede siempre ARRIBA de
+           los botones Cancelar/Comentario/etc", sin hueco de por medio. */
+        .pos-workbench-scroll {
+            flex: 1 1 auto;
+            min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
             padding-right: 8px;
@@ -4436,7 +4450,6 @@ else
             }
 
         #producto-info {
-            flex: 1 1 auto;
             min-height: 0;
             overflow: hidden;
             padding: .55rem !important;
@@ -4454,6 +4467,13 @@ else
             height: 100%;
         }
 
+        .pos-workbench-scroll > .mb-3 {
+            flex: 0 0 auto;
+            margin-bottom: .35rem !important;
+        }
+
+        /* Finalizar volvio a ser hijo directo de la columna (ver markup): este selector
+           es el mismo que existia antes del wrapper, ahora tambien lo necesita. */
         #pos-app .col-md-6.d-flex.flex-column > .mb-3 {
             flex: 0 0 auto;
             margin-bottom: .35rem !important;
@@ -5024,14 +5044,73 @@ else
             min-height: 0;
         }
 
+        /* Pantalla completa / viewport muy alto: agrandar TODO el contenido de #producto-info en
+           proporcion (no solo dejar aire alrededor). El truco es que estos clamps son en vh
+           (alto de viewport) igual que --key-h de abajo -- al crecer las fuentes/alto de los
+           campos de la columna izquierda, su contenido natural se vuelve mas alto, y como
+           #producto-info no tiene flex-grow propio (ver incidencias-frecuentes.md, 2026-08-11),
+           su alto real pasa a ser el de este contenido -- eso es lo que despues estira el teclado
+           via align-items:stretch, manteniendo el alineado con "Agregar" en cualquier tamano.
+           !important en varias: hay reglas sin media query mas abajo en el archivo (#prodNombre,
+           #prodSubtotal, .pos-product-metric, #inputCantidad) que, por orden de aparicion, pisan
+           a esta con la misma especificidad -- mismo patron ya documentado con .pos-footer-panel. */
+        #prodNombre {
+            font-size: clamp(1.1rem, 2.4vh, 2rem) !important;
+        }
+
+        .lbl-precio,
+        .lbl-cantidad,
+        .lbl-subtotal {
+            font-size: clamp(.85rem, 1.6vh, 1.25rem);
+        }
+
+        #prodPrecio {
+            font-size: clamp(1.1rem, 2.2vh, 1.9rem);
+        }
+
+        #prodSubtotal {
+            font-size: clamp(1.15rem, 2.3vh, 2rem) !important;
+        }
+
+        .pos-product-metric {
+            padding: clamp(.4rem, 1.1vh, .9rem) clamp(.5rem, 1.3vh, 1rem) !important;
+        }
+
+        #inputCantidad {
+            font-size: clamp(1.3rem, 2.6vh, 2.2rem) !important;
+            min-height: clamp(48px, 7vh, 76px) !important;
+        }
+
+        .btn-agregar-pos {
+            min-height: clamp(52px, 7.5vh, 84px);
+        }
+
+        .btn-agregar-pos i {
+            font-size: clamp(1.1rem, 2.2vh, 1.7rem);
+        }
+
+        .btn-agregar-pos small {
+            font-size: clamp(.7rem, 1.3vh, .95rem);
+        }
+
         .keyboard-grid {
+            /* minmax(min, 1fr): las filas se estiran para llenar exactamente el alto de
+               #producto-info .row (align-items:stretch, ya existente) -- que ahora crece junto
+               con el contenido de la columna izquierda (arriba). Por eso el teclado termina
+               alineado con "Agregar" en cualquier tamano de pantalla.
+               --key-h se deja BAJO a proposito (piso, via .btn-key min-height mas abajo): si se
+               sube demasiado, ese min-height por boton compite con el 1fr y fuerza el grid a ser
+               MAS ALTO de lo que el stretch calculo, desalineando el teclado de "Agregar" de
+               nuevo. El crecimiento visual de las teclas ya lo da el font-size (mas abajo), no
+               hace falta que el piso de altura tambien crezca. */
             --key-h: clamp(42px, 5.2vh, 64px);
+            grid-auto-rows: minmax(42px, 1fr);
             gap: 6px;
         }
 
         .btn-key {
             padding: .28rem .16rem;
-            font-size: clamp(.9rem, .94vw, 1.08rem);
+            font-size: clamp(.9rem, 2.4vh, 1.7rem);
         }
 
         .zona-botones {
@@ -5349,8 +5428,16 @@ else
     }
 
     .pos-footer-panel {
+        /* Sticky en todos los anchos (antes solo aplicaba desde 992px): sin esto, en mobile/tablet
+           el panel quedaba en flujo normal y "saltaba" de posicion al entrar en pantalla completa,
+           porque el alto del viewport cambia y el layout se recalcula. */
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
         padding-top: .16rem;
         border-top: 1px solid rgba(148, 163, 184, .18);
+        background: linear-gradient(180deg, rgba(242, 246, 251, .72) 0%, rgba(242, 246, 251, .96) 18%, rgba(242, 246, 251, 1) 100%);
+        backdrop-filter: blur(2px);
     }
 
     .zona-botones {
