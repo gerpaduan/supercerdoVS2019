@@ -564,6 +564,9 @@ namespace Web.Controllers
                 TempData["ElaboradosSuccessMessage"] = model.IdFormula > 0
                     ? "La fórmula se guardó correctamente."
                     : "La fórmula se registró correctamente.";
+                TempData["AlertType"] = "success";
+                TempData["AlertTitle"] = "Elaborados";
+                TempData["AlertMsg"] = TempData["ElaboradosSuccessMessage"];
                 return RedirectToAction("Formulas");
             }
             catch (Exception ex)
@@ -694,6 +697,9 @@ namespace Web.Controllers
                 TempData["ElaboradosSuccessMessage"] = model.EsDesarme
                     ? "Se registró correctamente el desarme de " + FormatearCantidadMensaje(cantidad, elaborado.Pesable) + " " + unidad + " de " + (!string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte) + "."
                     : "Se guardó correctamente " + FormatearCantidadMensaje(cantidad, elaborado.Pesable) + " " + unidad + " de " + (!string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte) + ".";
+                TempData["AlertType"] = "success";
+                TempData["AlertTitle"] = "Elaborados";
+                TempData["AlertMsg"] = TempData["ElaboradosSuccessMessage"];
 
                 return Json(new { ok = true, redirectUrl = Url.Action("Index", "Elaborados") });
             }

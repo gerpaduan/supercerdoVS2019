@@ -222,8 +222,14 @@
                                 return;
                             }
 
-                            alert(resp.message || 'La marca se guardó correctamente.');
-                            window.location.reload();
+                            if (window.SaveSuccessAlert) {
+                                window.SaveSuccessAlert.show(resp.message || 'La marca se guardó correctamente.', {
+                                    then: function () { window.location.reload(); }
+                                });
+                            } else {
+                                alert(resp.message || 'La marca se guardó correctamente.');
+                                window.location.reload();
+                            }
                         },
                         error: function () {
                             $('#marcaAdminError').removeClass('d-none').text('No se pudo guardar la marca.');

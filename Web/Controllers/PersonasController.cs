@@ -161,6 +161,9 @@ namespace Web.Controllers
             TempData["PersonasSuccessMessage"] = model.EsEdicion
                 ? "La persona se guardó correctamente."
                 : "La persona se creó correctamente.";
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Personas";
+            TempData["AlertMsg"] = TempData["PersonasSuccessMessage"];
 
             return RedirectToAction("Index");
         }

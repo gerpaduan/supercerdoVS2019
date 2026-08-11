@@ -174,7 +174,6 @@
     <Compile Include="Models\CalcularComisionesElectronicasVm.cs" />
     <Compile Include="Models\ComisionElectronicaFormaVm.cs" />
     <Compile Include="Models\CalculadoraBilletesPrintVm.cs" />
-    <Compile Include="Models\AgregarProductoDesdeCodigoBarraVm.cs" />
     <Compile Include="Models\ElaboradosVm.cs" />
     <Compile Include="Models\FacturasVm.cs" />
     <Compile Include="Models\IngresoBilletesPrintVm.cs" />
@@ -248,6 +247,7 @@
     <Content Include="Scripts\app\pago-cheques.js" />
     <Content Include="Scripts\app\pago-ux.js" />
     <Content Include="Scripts\app\swal-single-confirm.js" />
+    <Content Include="Scripts\app\save-success-alert.js" />
     <Content Include="Scripts\app\modal-request-loading.js" />
     <Content Include="Scripts\app\calculadora-billetes.js" />
     <Content Include="Scripts\app\calculadora-billetes-targets.js" />

@@ -17,10 +17,9 @@
                 text: message || 'El elaborado se guardó correctamente.',
                 timer: 2000,
                 timerProgressBar: true,
-                showConfirmButton: false,
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
                 allowOutsideClick: false,
-                allowEscapeKey: false,
-                allowEnterKey: false,
                 returnFocus: false
             }).then(function () {
                 window.location.href = destination;

@@ -1,11 +1,14 @@
 ﻿using Datos;
 using Entidades;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 using Negocio;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -352,83 +355,6 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public JsonResult BuscarPorCodigoBarraGlobal(string codigoBarra)
-        {
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
-                return Json(new { ok = false, mensaje = "No tenés permisos para agregar productos." }, JsonRequestBehavior.AllowGet);
-
-            oCorteN.AsegurarTablaImportacionCatalogoGlobal();
-
-            long codigo = NormalizarCodigoBarra(codigoBarra);
-            if (codigo <= 0)
-                return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." }, JsonRequestBehavior.AllowGet);
-
-            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
-            var existenteEmpresa = idEmpresaSesion > 0
-                ? oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false)
-                : null;
-            if (existenteEmpresa != null)
-            {
-                return Json(new
-                {
-                    ok = false,
-                    mensaje = "El código ya existe en la empresa actual para \"" + existenteEmpresa.CorteDesc + "\"."
-                }, JsonRequestBehavior.AllowGet);
-            }
-
-            var catalogoGlobal = ObtenerGestorCatalogoGlobal();
-            var global = catalogoGlobal.findCorteGlobalByCodigo(codigo, true);
-            if (global == null)
-            {
-                return Json(new
-                {
-                    ok = false,
-                    mensaje = "No existe el producto en el catálogo global."
-                }, JsonRequestBehavior.AllowGet);
-            }
-
-            var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
-            var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
-            var importacionExistente = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.IdCorte }).FirstOrDefault();
-            if (importacionExistente != null)
-            {
-                Entidades.Corte productoImportado;
-                productosEmpresaPorId.TryGetValue(importacionExistente.IdProductoEmpresa, out productoImportado);
-                if (productoImportado != null)
-                {
-                    return Json(new
-                    {
-                        ok = false,
-                        mensaje = "Ese producto global ya fue importado como \"" + productoImportado.CorteDesc + "\" (código " + productoImportado.Codigo + ")."
-                    }, JsonRequestBehavior.AllowGet);
-                }
-            }
-
-            string mensajeBloqueo = null;
-            if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
-            {
-                var maestroImportado = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.CorteMaestro.IdCorte }).FirstOrDefault();
-                bool maestroValido = maestroImportado != null && productosEmpresaPorId.ContainsKey(maestroImportado.IdProductoEmpresa);
-                if (!maestroValido)
-                {
-                    mensajeBloqueo = "Para agregar " + global.CorteDesc + " primero debe importar " + global.CorteMaestro.CorteDesc + " desde el catálogo global.";
-                }
-            }
-
-            return Json(new
-            {
-                ok = true,
-                producto = new
-                {
-                    id = global.IdCorte,
-                    codigo = global.Codigo,
-                    descripcion = global.CorteDesc,
-                    mensajeBloqueo = mensajeBloqueo
-                }
-            }, JsonRequestBehavior.AllowGet);
-        }
-
-        [HttpGet]
         public JsonResult BuscarProductoGlobalParaAlta(string codigoBarra)
         {
             if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
@@ -480,89 +406,6 @@ namespace Web.Controllers
                     presentacionUnidades = global.Presentacion ? global.getCantPresentacion(global.PorcentajeHueso) : (float?)null
                 }
             }, JsonRequestBehavior.AllowGet);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public JsonResult AgregarDesdeCodigoBarra(AgregarProductoDesdeCodigoBarraVm model)
-        {
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
-                return Json(new { ok = false, mensaje = "No tenés permisos para agregar productos." });
-
-            oCorteN.AsegurarTablaImportacionCatalogoGlobal();
-
-            long codigo = NormalizarCodigoBarra(model != null ? model.CodigoBarra : null);
-            if (codigo <= 0)
-                return Json(new { ok = false, mensaje = "Ingrese un código de barra válido." });
-
-            int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
-            if (idEmpresaSesion > 0 && oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false) != null)
-                return Json(new { ok = false, mensaje = "El código ya existe en la empresa actual." });
-
-            string descripcion = (model != null ? model.Descripcion : null) ?? "";
-            descripcion = descripcion.Trim();
-            if (string.IsNullOrWhiteSpace(descripcion))
-                return Json(new { ok = false, mensaje = "La descripción no puede estar vacía." });
-
-            float precio;
-            if (!TryParseFloatFlexible(model != null ? model.Precio : null, out precio) || precio < 0)
-                return Json(new { ok = false, mensaje = "El precio debe ser mayor o igual a 0." });
-
-            var catalogoGlobal = ObtenerGestorCatalogoGlobal();
-            var global = catalogoGlobal.findCorteGlobalByCodigo(codigo, true);
-            if (global == null)
-                return Json(new { ok = false, mensaje = "No existe el producto en el catálogo global." });
-
-            var productosEmpresaActual = ObtenerProductosEmpresaSesionActual();
-            var productosEmpresaPorId = productosEmpresaActual.ToDictionary(x => x.IdCorte, x => x);
-            var importacionExistente = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.IdCorte }).FirstOrDefault();
-            if (importacionExistente != null)
-            {
-                Entidades.Corte productoImportado;
-                productosEmpresaPorId.TryGetValue(importacionExistente.IdProductoEmpresa, out productoImportado);
-                if (productoImportado != null)
-                    return Json(new { ok = false, mensaje = "Ese producto global ya fue importado previamente en esta empresa." });
-            }
-
-            int? idMaestroEmpresa = null;
-            if (global.CorteMaestro != null && global.CorteMaestro.IdCorte > 0)
-            {
-                var maestroImportado = oCorteN.ObtenerImportacionesCatalogoGlobal(new[] { global.CorteMaestro.IdCorte }).FirstOrDefault();
-                if (maestroImportado == null)
-                    return Json(new { ok = false, mensaje = "Para agregar " + global.CorteDesc + " primero debe importar " + global.CorteMaestro.CorteDesc + " desde el catálogo global." });
-
-                Entidades.Corte maestroEmpresa;
-                productosEmpresaPorId.TryGetValue(maestroImportado.IdProductoEmpresa, out maestroEmpresa);
-                if (maestroEmpresa == null)
-                    return Json(new { ok = false, mensaje = "No se encontró el producto maestro ya importado para completar la relación." });
-
-                idMaestroEmpresa = maestroEmpresa.IdCorte;
-            }
-
-            var usuario = Session["Usuario"] as Entidades.Usuario;
-            var nuevoProducto = ClonarProductoGlobal(global, codigo, precio);
-            nuevoProducto.CorteDesc = descripcion;
-            nuevoProducto.CorteMaestro = null;
-            if (idMaestroEmpresa.HasValue)
-                nuevoProducto.CorteMaestro = new Entidades.Corte { IdCorte = idMaestroEmpresa.Value };
-
-            int idInsertado = oCorteN.InsertarCorteEnEmpresa(nuevoProducto);
-            if (idInsertado <= 0)
-                return Json(new { ok = false, mensaje = "No se pudo guardar el producto en la empresa actual." });
-
-            var insertado = idEmpresaSesion > 0
-                ? oCorteN.findCorteByCodigoEmpresa(codigo, idEmpresaSesion, false)
-                : null;
-            if (insertado == null || insertado.IdCorte <= 0)
-                return Json(new { ok = false, mensaje = "El producto se guardó pero no se pudo recuperar el identificador generado." });
-
-            oCorteN.GuardarImportacionCatalogoGlobal(global.IdCorte, insertado.IdCorte, usuario != null ? (int?)usuario.Id : null);
-
-            return Json(new
-            {
-                ok = true,
-                mensaje = "Producto guardado correctamente"
-            });
         }
 
         // Acción para búsqueda en vivo usada por el modal POS
@@ -1209,6 +1052,9 @@ namespace Web.Controllers
             if (vm.IdCorte <= 0 && vm.CargaContinua)
             {
                 TempData["FlashSuccessContinuo"] = $"Se cargó exitosamente el producto \"{vm.CorteDesc}\".";
+                TempData["AlertType"] = "success";
+                TempData["AlertTitle"] = "Productos";
+                TempData["AlertMsg"] = TempData["FlashSuccessContinuo"];
                 return RedirectToAction("AddOrEdit", new
                 {
                     cargaContinua = true,
@@ -1221,6 +1067,9 @@ namespace Web.Controllers
             if (vm.IdCorte > 0 && vm.CargaContinua)
             {
                 TempData["FlashSuccessContinuo"] = $"Se guardó el producto \"{vm.CorteDesc}\".";
+                TempData["AlertType"] = "success";
+                TempData["AlertTitle"] = "Productos";
+                TempData["AlertMsg"] = TempData["FlashSuccessContinuo"];
 
                 if (flujoBase == "alta")
                 {
@@ -1250,10 +1099,16 @@ namespace Web.Controllers
                 }
 
                 TempData["FlashSuccess"] = $"El producto \"{vm.CorteDesc}\" guardó correctamente.";
+                TempData["AlertType"] = "success";
+                TempData["AlertTitle"] = "Productos";
+                TempData["AlertMsg"] = TempData["FlashSuccess"];
                 return RedirectToAction("Index");
             }
 
             TempData["FlashSuccess"] = $"El producto \"{vm.CorteDesc}\" guardó correctamente.";
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Productos";
+            TempData["AlertMsg"] = TempData["FlashSuccess"];
             return RedirectToAction("Index");
         }
         // ============================================
@@ -2269,6 +2124,382 @@ namespace Web.Controllers
             }
 
             return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+        // ============================================================
+        // ETIQUETAS (PDF) -- generación de etiquetas de precio para imprimir.
+        // Reemplaza al mecanismo equivalente de WinForms (Presentacion/Cortes/
+        // formEtiquetas.cs, iTextSharp). Rediseñado dos veces a pedido del
+        // usuario: primero agregando código de barras + 3 tamaños de hoja: mas
+        // adelante, con membrete (logo CarniSys) y fecha de emisión con hora,
+        // sobre una referencia visual que pasó el usuario. Layout dibujado con
+        // posicionamiento absoluto (ColumnText/PdfContentByte), no con
+        // PdfPTable -- ver docs/DECISIONS.md, 2026-08-08, por qué (PdfPCell con
+        // FixedHeight puede no dibujar contenido sin avisar en esta versión de
+        // iTextSharp).
+        // ============================================================
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult GenerarEtiquetasPdf(string ids, string tamano)
+        {
+            var idsList = (ids ?? "")
+                .Split(',')
+                .Select(s => { int id; return int.TryParse(s, out id) ? id : 0; })
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (idsList.Count == 0)
+                return HttpNotFound();
+
+            var productos = idsList
+                .Select(id => oCorteN.findCorteById(id, false))
+                .Where(c => c != null && c.IdCorte > 0)
+                .ToList();
+
+            if (productos.Count == 0)
+                return HttpNotFound();
+
+            byte[] bytes = GenerarPdfEtiquetas(productos, ResolverTamanoEtiqueta(tamano));
+            return File(bytes, "application/pdf", "Etiquetas.pdf");
+        }
+
+        // Presets de tamaño de etiqueta. "mediana" es el tamaño que ya usaba el
+        // WinForms (60x35mm); "chica" y "grande" son nuevas, pedidas para poder
+        // elegir según el uso (góndola vs. mostrador). En "chica" no entran
+        // cómodamente el logo ni la fecha -- se saltean por falta de espacio.
+        private class TamanoEtiqueta
+        {
+            public float AnchoMm;
+            public float AltoMm;
+            public bool MostrarLogo;
+            public bool MostrarFecha;
+            public float FuenteNombreGrande;
+            public float FuenteNombreMedia;
+            public float FuenteNombreChica;
+            public float FuentePrecio;
+            public float FuentePrecioLabel;
+            public float FuenteFecha;
+        }
+
+        private static TamanoEtiqueta ResolverTamanoEtiqueta(string tamano)
+        {
+            switch ((tamano ?? "").Trim().ToLowerInvariant())
+            {
+                case "chica":
+                    return new TamanoEtiqueta
+                    {
+                        AnchoMm = 40,
+                        AltoMm = 30,
+                        MostrarLogo = false,
+                        MostrarFecha = true,
+                        // Nombre reducido 30% (9/8/7 -> 6.3/5.6/4.9), "precio unitario"
+                        // y fecha 2pt mas chicas -- pedido explicito del usuario.
+                        FuenteNombreGrande = 6.3f,
+                        FuenteNombreMedia = 5.6f,
+                        FuenteNombreChica = 4.9f,
+                        FuentePrecio = 20,
+                        FuentePrecioLabel = 4,
+                        FuenteFecha = 3
+                    };
+                case "grande":
+                    return new TamanoEtiqueta
+                    {
+                        AnchoMm = 100,
+                        AltoMm = 50,
+                        MostrarLogo = true,
+                        MostrarFecha = true,
+                        FuenteNombreGrande = 14f,
+                        FuenteNombreMedia = 11.9f,
+                        FuenteNombreChica = 10.5f,
+                        FuentePrecio = 46,
+                        FuentePrecioLabel = 7,
+                        FuenteFecha = 6
+                    };
+                case "mediana":
+                default:
+                    return new TamanoEtiqueta
+                    {
+                        AnchoMm = 60,
+                        AltoMm = 35,
+                        MostrarLogo = true,
+                        MostrarFecha = true,
+                        FuenteNombreGrande = 9.1f,
+                        FuenteNombreMedia = 7.7f,
+                        FuenteNombreChica = 7f,
+                        FuentePrecio = 30,
+                        FuentePrecioLabel = 5,
+                        FuenteFecha = 4
+                    };
+            }
+        }
+
+        private const float MmAPuntos = 2.8346f;
+
+        private byte[] GenerarPdfEtiquetas(List<Entidades.Corte> productos, TamanoEtiqueta tam)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var document = new Document(PageSize.A4);
+                var writer = PdfWriter.GetInstance(document, ms);
+                document.Open();
+
+                float etiquetaAncho = tam.AnchoMm * MmAPuntos;
+                float etiquetaAlto = tam.AltoMm * MmAPuntos;
+                float margenIzquierdo = 10f * MmAPuntos;
+                float margenSuperior = 10f * MmAPuntos;
+                float espacioHorizontal = 2f * MmAPuntos;
+                float espacioVertical = 2f * MmAPuntos;
+
+                float hojaAncho = PageSize.A4.Width;
+                float hojaAlto = PageSize.A4.Height;
+
+                int etiquetasPorFila = Math.Max(1, (int)((hojaAncho - 2 * margenIzquierdo + espacioHorizontal) / (etiquetaAncho + espacioHorizontal)));
+                int etiquetasPorColumna = Math.Max(1, (int)((hojaAlto - 2 * margenSuperior + espacioVertical) / (etiquetaAlto + espacioVertical)));
+
+                var fontNombreGrande = new Font(Font.FontFamily.HELVETICA, tam.FuenteNombreGrande, Font.NORMAL);
+                var fontNombreMedia = new Font(Font.FontFamily.HELVETICA, tam.FuenteNombreMedia, Font.NORMAL);
+                var fontNombreChica = new Font(Font.FontFamily.HELVETICA, tam.FuenteNombreChica, Font.NORMAL);
+                var fontPrecio = new Font(Font.FontFamily.HELVETICA, tam.FuentePrecio, Font.BOLD);
+                var fontPrecioSimbolo = new Font(Font.FontFamily.HELVETICA, tam.FuentePrecio * 0.45f, Font.BOLD);
+                var fontPrecioLabel = new Font(Font.FontFamily.HELVETICA, tam.FuentePrecioLabel, Font.BOLD, BaseColor.DARK_GRAY);
+                var fontFechaLabel = new Font(Font.FontFamily.HELVETICA, tam.FuenteFecha, Font.BOLD, BaseColor.DARK_GRAY);
+                var fontFechaValor = new Font(Font.FontFamily.HELVETICA, tam.FuenteFecha, Font.NORMAL, BaseColor.DARK_GRAY);
+                var bfBarcode = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                float fuenteBarcodeTexto = Math.Max(6f, tam.FuentePrecioLabel - 1f);
+
+                // Logo cargado una sola vez y reusado en todas las etiquetas -- iTextSharp
+                // deduplica el XObject de imagen cuando se reusa la misma instancia de
+                // Image, así que no infla el tamaño del PDF por repetirlo. Si el archivo
+                // falta o no se puede leer, se sigue sin logo en vez de romper todo el PDF.
+                Image logo = null;
+                if (tam.MostrarLogo)
+                {
+                    try
+                    {
+                        logo = Image.GetInstance(Server.MapPath("~/Content/img/CarniSys_Logo_sinSlogan.png"));
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.TraceError("GenerarPdfEtiquetas - no se pudo cargar el logo: {0}", ex);
+                    }
+                }
+
+                string fechaImpresion = DateTime.Now.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+
+                int productoIndex = 0;
+                while (productoIndex < productos.Count)
+                {
+                    if (productoIndex > 0)
+                        document.NewPage();
+
+                    for (int fila = 0; fila < etiquetasPorColumna; fila++)
+                    {
+                        for (int columna = 0; columna < etiquetasPorFila; columna++)
+                        {
+                            if (productoIndex >= productos.Count)
+                                break;
+
+                            var producto = productos[productoIndex];
+                            float x = margenIzquierdo + columna * (etiquetaAncho + espacioHorizontal);
+                            float yTop = hojaAlto - margenSuperior - fila * (etiquetaAlto + espacioVertical);
+
+                            DibujarEtiqueta(
+                                producto, tam, writer.DirectContent, x, yTop, etiquetaAncho, etiquetaAlto, logo,
+                                fontNombreGrande, fontNombreMedia, fontNombreChica,
+                                fontPrecio, fontPrecioSimbolo, fontPrecioLabel,
+                                fontFechaLabel, fontFechaValor, bfBarcode, fuenteBarcodeTexto,
+                                fechaImpresion);
+
+                            productoIndex++;
+                        }
+                    }
+                }
+
+                document.Close();
+                return ms.ToArray();
+            }
+        }
+
+        // Dibuja una etiqueta completa por posicionamiento absoluto dentro del
+        // rectángulo (x, yTop) - (x+ancho, yTop-alto) -- yTop es el borde
+        // SUPERIOR (coordenadas PDF, Y crece hacia arriba). Estructura, de
+        // arriba hacia abajo: nombre + logo (misma fila) -> línea divisoria ->
+        // precio grande + etiqueta "precio por kg/unitario" -> código de barras
+        // + fecha de emisión (misma fila).
+        private void DibujarEtiqueta(
+            Entidades.Corte producto, TamanoEtiqueta tam, PdfContentByte cb,
+            float x, float yTop, float ancho, float alto, Image logo,
+            Font fontNombreGrande, Font fontNombreMedia, Font fontNombreChica,
+            Font fontPrecio, Font fontPrecioSimbolo, Font fontPrecioLabel,
+            Font fontFechaLabel, Font fontFechaValor, BaseFont bfBarcode, float fuenteBarcodeTexto,
+            string fechaImpresion)
+        {
+            float pad = ancho * 0.05f;
+            float contentLeft = x + pad;
+            float contentRight = x + ancho - pad;
+            float contentWidth = contentRight - contentLeft;
+
+            // Borde fino -- no es parte del diseño de referencia (esa era una sola
+            // etiqueta suelta, sin vecinas), pero en una hoja con varias etiquetas
+            // por página sirve de guía de corte.
+            cb.SetLineWidth(0.4f);
+            cb.SetColorStroke(new BaseColor(200, 200, 200));
+            cb.Rectangle(x, yTop - alto, ancho, alto);
+            cb.Stroke();
+
+            // --- Encabezado: nombre (izquierda) + logo (derecha) ---
+            // 0.30 en vez de un valor más ajustado: con nombres largos que
+            // wrappean a 2 líneas en el tamaño "chica" (fuente más chica, 7pt),
+            // una zona más angosta hacía que la segunda línea se superpusiera
+            // con la línea divisoria (visto en una captura real del PDF).
+            float headerH = alto * 0.30f;
+            float headerBottom = yTop - headerH;
+
+            // Ancho del logo calculado ANTES que el nombre, para reservarle el
+            // espacio -- el nombre se dibuja acotado a un ColumnText (con wrap
+            // real) en vez de ShowTextAligned sin límite de ancho: un nombre
+            // largo con ShowTextAligned se desborda encima de la etiqueta
+            // vecina en la grilla en vez de cortar o pasar a una segunda línea
+            // (encontrado y corregido al revisar una captura real del PDF).
+            float logoW = 0f, logoH = 0f;
+            if (tam.MostrarLogo && logo != null)
+            {
+                float logoMaxW = contentWidth * 0.30f;
+                float logoMaxH = headerH * 0.85f;
+                float escala = Math.Min(logoMaxW / logo.Width, logoMaxH / logo.Height);
+                logoW = logo.Width * escala;
+                logoH = logo.Height * escala;
+                logo.SetAbsolutePosition(contentRight - logoW, headerBottom + (headerH - logoH) / 2f);
+                logo.ScalePercent(escala * 100f);
+            }
+
+            string nombre = (producto.CorteDesc ?? "").ToUpperInvariant();
+            Font fontNombre = nombre.Length > 40 ? fontNombreChica : (nombre.Length > 25 ? fontNombreMedia : fontNombreGrande);
+            float nombreRight = contentRight - (logoW > 0 ? logoW + pad : 0f);
+            // Margen de seguridad real (15% de la zona de encabezado) entre el
+            // límite inferior de la columna de texto y la línea divisoria -- sin
+            // esto, un nombre que wrappea a 2 líneas puede calcular su segunda
+            // línea justo encima de donde se traza la línea, y el trazo termina
+            // cruzando las letras (visto en una captura real, tamaño "grande").
+            // Con este margen, si una segunda línea no entra ya ni se dibuja
+            // (ColumnText la descarta en vez de dibujarla superpuesta).
+            float nombreBottom = headerBottom + headerH * 0.15f;
+            var ctNombre = new ColumnText(cb) { UseAscender = true };
+            ctNombre.SetSimpleColumn(contentLeft, nombreBottom, nombreRight, yTop - pad * 0.5f);
+            ctNombre.AddElement(new Paragraph(nombre, fontNombre) { Alignment = Element.ALIGN_LEFT, Leading = fontNombre.Size * 1.08f });
+            ctNombre.Go();
+
+            if (tam.MostrarLogo && logo != null)
+                cb.AddImage(logo);
+
+            // --- Línea divisoria ---
+            cb.SetLineWidth(0.75f);
+            cb.SetColorStroke(BaseColor.DARK_GRAY);
+            cb.MoveTo(contentLeft, headerBottom);
+            cb.LineTo(contentRight, headerBottom);
+            cb.Stroke();
+
+            // --- Precio grande + etiqueta "precio por kg" / "precio unitario" ---
+            float precioH = alto * 0.40f;
+            float precioBottom = headerBottom - precioH;
+
+            var precioPhrase = new Phrase();
+            precioPhrase.Add(new Chunk("$", fontPrecioSimbolo));
+            precioPhrase.Add(new Chunk(string.Format(CultureInfo.InvariantCulture, "{0:#,0.00}", producto.PrecioKg), fontPrecio));
+            float precioBaseline = precioBottom + precioH * 0.42f;
+            ColumnText.ShowTextAligned(cb, Element.ALIGN_RIGHT, precioPhrase, contentRight, precioBaseline, 0);
+
+            string precioLabelTexto = producto.Pesable ? "PRECIO POR KG" : "PRECIO UNITARIO";
+            float precioLabelBaseline = precioBottom + precioH * 0.12f;
+            ColumnText.ShowTextAligned(cb, Element.ALIGN_RIGHT, new Phrase(precioLabelTexto, fontPrecioLabel), contentRight, precioLabelBaseline, 0);
+
+            // --- Pie: código de barras (izquierda) + fecha de emisión (derecha) ---
+            float footerTop = precioBottom;
+            float footerBottom = yTop - alto + pad;
+            float footerH = footerTop - footerBottom;
+
+            try
+            {
+                var barcode = GenerarImagenBarcode(producto.Codigo, cb, bfBarcode, fuenteBarcodeTexto);
+                float bw = contentWidth * (tam.MostrarFecha ? 0.56f : 0.85f);
+                float bh = footerH * 0.95f;
+                float escala = Math.Min(bw / barcode.Width, bh / barcode.Height);
+                barcode.SetAbsolutePosition(contentLeft, footerBottom);
+                barcode.ScalePercent(escala * 100f);
+                cb.AddImage(barcode);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("GenerarPdfEtiquetas - barcode idCorte={0}, codigo={1}: {2}", producto.IdCorte, producto.Codigo, ex);
+                ColumnText.ShowTextAligned(cb, Element.ALIGN_LEFT, new Phrase("Cód: " + producto.Codigo, fontFechaValor), contentLeft, footerBottom + footerH * 0.4f, 0);
+            }
+
+            if (tam.MostrarFecha)
+            {
+                ColumnText.ShowTextAligned(cb, Element.ALIGN_RIGHT, new Phrase("FECHA DE EMISIÓN", fontFechaLabel), contentRight, footerBottom + footerH * 0.62f, 0);
+                ColumnText.ShowTextAligned(cb, Element.ALIGN_RIGHT, new Phrase(fechaImpresion, fontFechaValor), contentRight, footerBottom + footerH * 0.30f, 0);
+            }
+        }
+
+        // Codifica item.Codigo como EAN-13/EAN-8 cuando el dígito verificador da
+        // válido (mismo criterio que isValidEAN13/isValidEAN8 en el JS de esta
+        // misma vista -- una sola definición de "EAN válido" en todo el proyecto,
+        // con padding de ceros a la izquierda porque Codigo se guarda como long y
+        // pierde el cero inicial de un EAN real). Si no valida como EAN, cae a
+        // Code128 (cualquier largo numérico) -- sigue siendo escaneable, y el POS
+        // ya busca por el valor numérico de Codigo, no por el tipo de símbolo.
+        private static Image GenerarImagenBarcode(long codigo, PdfContentByte cb, BaseFont bfBarcode, float size)
+        {
+            string digitos = codigo.ToString(CultureInfo.InvariantCulture);
+            string ean13 = digitos.PadLeft(13, '0');
+            string ean8 = digitos.PadLeft(8, '0');
+
+            if (digitos.Length <= 13 && EsEan13Valido(ean13))
+            {
+                var bc = new BarcodeEAN { CodeType = BarcodeEAN.EAN13, Code = ean13, Font = bfBarcode, Size = size };
+                return bc.CreateImageWithBarcode(cb, null, null);
+            }
+
+            if (digitos.Length <= 8 && EsEan8Valido(ean8))
+            {
+                var bc = new BarcodeEAN { CodeType = BarcodeEAN.EAN8, Code = ean8, Font = bfBarcode, Size = size };
+                return bc.CreateImageWithBarcode(cb, null, null);
+            }
+
+            var bc128 = new Barcode128 { Code = digitos, Font = bfBarcode, Size = size };
+            return bc128.CreateImageWithBarcode(cb, null, null);
+        }
+
+        private static bool EsEan13Valido(string code13)
+        {
+            if (code13 == null || code13.Length != 13 || !code13.All(char.IsDigit))
+                return false;
+
+            int suma = 0;
+            for (int i = 0; i < 12; i++)
+            {
+                int digito = code13[i] - '0';
+                suma += (i % 2 == 0) ? digito : digito * 3;
+            }
+            int check = (10 - (suma % 10)) % 10;
+            return check == (code13[12] - '0');
+        }
+
+        private static bool EsEan8Valido(string code8)
+        {
+            if (code8 == null || code8.Length != 8 || !code8.All(char.IsDigit))
+                return false;
+
+            int suma = 0;
+            for (int i = 0; i < 7; i++)
+            {
+                int digito = code8[i] - '0';
+                suma += (i % 2 == 0) ? digito * 3 : digito;
+            }
+            int check = (10 - (suma % 10)) % 10;
+            return check == (code8[7] - '0');
         }
 
     }

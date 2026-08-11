@@ -3,7 +3,6 @@
 @{
     ViewBag.Title = "Personas";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
-    string successMessage = TempData["PersonasSuccessMessage"] as string ?? "";
 }
 
 <div class="container-fluid personas-index-page">
@@ -102,16 +101,6 @@
             }
         }
     </style>
-
-    @if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div id="personasSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
-            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    }
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>

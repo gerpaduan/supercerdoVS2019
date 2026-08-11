@@ -402,8 +402,14 @@
                                 return;
                             }
 
-                            alert(resp.message || 'El tipo de producto se guardó correctamente.');
-                            window.location.reload();
+                            if (window.SaveSuccessAlert) {
+                                window.SaveSuccessAlert.show(resp.message || 'El tipo de producto se guardó correctamente.', {
+                                    then: function () { window.location.reload(); }
+                                });
+                            } else {
+                                alert(resp.message || 'El tipo de producto se guardó correctamente.');
+                                window.location.reload();
+                            }
                         },
                         error: function () {
                             $('#tipoProductoError').removeClass('d-none').text('No se pudo guardar el tipo de producto.');

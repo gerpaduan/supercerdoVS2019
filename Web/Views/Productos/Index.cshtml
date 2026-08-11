@@ -72,14 +72,6 @@
                     <i class="fas fa-globe-americas mr-1"></i> Ver catálogo global
                 </button>
 
-                <button type="button"
-                        id="btnAgregarCodigoGlobal"
-                        class="btn btn-outline-success"
-                        onclick="abrirModalCodigoGlobal()"
-                        @(puedeEditarProducto ? "" : "disabled")>
-                    <i class="fas fa-barcode mr-1"></i> Agregar por código de barra
-                </button>
-
                 @if (modoEtiquetas)
                 {
                     <a id="lnkVolver"
@@ -257,7 +249,14 @@
                     <span class="text-muted ml-2" id="lblSeleccionados">0 seleccionados</span>
                 </div>
 
-                <div class="d-flex gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <label for="selTamanoEtiqueta" class="text-muted mb-0 mr-1">Tamaño:</label>
+                    <select id="selTamanoEtiqueta" class="form-control form-control-sm" style="width:auto;">
+                        <option value="chica">Chica (40x30mm)</option>
+                        <option value="mediana" selected>Mediana (60x35mm)</option>
+                        <option value="grande">Grande (100x50mm)</option>
+                    </select>
+
                     <button type="button" class="btn btn-sm btn-success" onclick="generarEtiquetas()">
                         <i class="fas fa-file-pdf mr-1"></i> Generar etiquetas
                     </button>
@@ -267,18 +266,11 @@
             <form id="formEtiquetas" method="post" action="@Url.Action("GenerarEtiquetasPdf", "Productos")" class="d-none">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="ids" id="idsEtiquetas" />
+                <input type="hidden" name="tamano" id="tamanoEtiquetas" />
             </form>
         }
 
     <div class="card-body p-0">
-        @if (TempData["FlashSuccess"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                @TempData["FlashSuccess"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
-
         @if (TempData["FlashError"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -742,83 +734,6 @@
         </div>
     </div>
 
-    <form id="formAgregarCodigoGlobal">
-        @Html.AntiForgeryToken()
-        <div class="modal fade" id="modalAgregarCodigoGlobal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-barcode mr-1"></i> Agregar por código de barra
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="alertCodigoGlobal" class="alert alert-danger d-none py-2 px-3"></div>
-
-                        <div class="form-group">
-                            <label class="font-weight-bold">Código de barra</label>
-                            <div id="scannerCodigoGlobalContainer" class="mb-2" style="display:none;">
-                                <div class="card shadow-sm">
-                                    <div class="card-body p-2">
-                                        <div class="scanner-wrapper">
-                                            <video id="videoScannerCodigoGlobal" autoplay muted playsinline></video>
-                                            <div class="scanner-line"></div>
-                                        </div>
-
-                                        <div class="d-flex flex-wrap justify-content-between mt-2">
-                                            <button type="button" class="btn btn-secondary btn-sm" id="btnFlashScannerCodigoGlobal">Flash</button>
-                                            <button type="button" class="btn btn-warning btn-sm" id="btnLimpiarScannerCodigoGlobal">Limpiar</button>
-                                            <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScannerCodigoGlobal">Cerrar cámara</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="input-group">
-                                <button type="button" class="btn btn-outline-secondary" id="btnScannerCodigoGlobal" title="Escanear código">
-                                    <i class="fas fa-barcode"></i>
-                                </button>
-                                <input type="text"
-                                       id="codigoBarraGlobal"
-                                       class="form-control"
-                                       autocomplete="off"
-                                       inputmode="numeric"
-                                       placeholder="Escanee o escriba el código">
-                            </div>
-                            <small id="scannerCodigoGlobalMsg" class="text-danger d-none"></small>
-                            <small class="form-text text-muted">
-                                La búsqueda se realiza al completar 13 dígitos o al presionar Enter.
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="font-weight-bold">Descripción</label>
-                            <input type="text" id="descripcionCodigoGlobal" class="form-control" autocomplete="off">
-                        </div>
-
-                        <div class="form-group mb-0">
-                            <label class="font-weight-bold">Precio</label>
-                            <input type="text"
-                                   id="precioCodigoGlobal"
-                                   class="form-control"
-                                   autocomplete="off"
-                                   inputmode="decimal"
-                                   placeholder="Ingrese el precio">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-success" id="btnGuardarCodigoGlobal">
-                            <i class="fas fa-save mr-1"></i> Guardar
-                        </button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
 
     <!-- =========================
          FORM ELIMINAR (POST)
@@ -853,8 +768,6 @@
     const urlVerGlobalesProductos = '@Url.Action("VerGlobales", "Productos")';
     const urlBuscarGlobalesProductos = '@Url.Action("BuscarGlobales", "Productos")';
     const urlImportarGlobalesProductos = '@Url.Action("ImportarSeleccionados", "Productos")';
-    const urlBuscarPorCodigoBarraGlobal = '@Url.Action("BuscarPorCodigoBarraGlobal", "Productos")';
-    const urlAgregarDesdeCodigoBarra = '@Url.Action("AgregarDesdeCodigoBarra", "Productos")';
     const catalogoGlobalState = {
         selectedIds: {},
         codigoDestinoPorId: {},
@@ -866,22 +779,9 @@
         solicitudActual: 0
     };
     const tabla = document.getElementById("tablaProductos");
-    const codigoGlobalState = {
-        ultimoCodigoBuscado: "",
-        codigoActualValido: "",
-        bloqueoActual: ""
-    };
     const TIEMPO_PAUSA_LECTURA_SCANNER = 2000;
     let scannerCatalogoGlobal = null;
-    let scannerCodigoGlobal = null;
     const scannerCatalogoGlobalState = {
-        ultimoCodigoLeido: "",
-        tiempoUltimaLectura: 0,
-        pausaLecturaActiva: false,
-        pausaTimer: null,
-        camaraCerradaAutomaticamente: false
-    };
-    const scannerCodigoGlobalState = {
         ultimoCodigoLeido: "",
         tiempoUltimaLectura: 0,
         pausaLecturaActiva: false,
@@ -1470,35 +1370,8 @@
             });
     }
 
-    function setAlertCodigoGlobal(mensaje, tipo) {
-        const $alert = $("#alertCodigoGlobal");
-        if (!$alert.length) return;
-
-        if (!mensaje) {
-            $alert.removeClass("alert-danger alert-warning alert-success").addClass("d-none").text("");
-            return;
-        }
-
-        const clase = tipo === "success" ? "alert-success" : (tipo === "warning" ? "alert-warning" : "alert-danger");
-        $alert.removeClass("d-none alert-danger alert-warning alert-success").addClass(clase).text(mensaje);
-    }
-
     function setScannerCatalogoGlobalMsg(mensaje, tipo) {
         const $msg = $("#scannerCatalogoGlobalMsg");
-        if (!$msg.length) return;
-
-        if (!mensaje) {
-            $msg.addClass("d-none").removeClass("text-danger text-success").text("");
-            return;
-        }
-
-        $msg.removeClass("d-none text-danger text-success")
-            .addClass(tipo === "success" ? "text-success" : "text-danger")
-            .text(mensaje);
-    }
-
-    function setScannerCodigoGlobalMsg(mensaje, tipo) {
-        const $msg = $("#scannerCodigoGlobalMsg");
         if (!$msg.length) return;
 
         if (!mensaje) {
@@ -1529,28 +1402,11 @@
         syncFlashButton("#btnFlashCatalogoGlobal", false);
     }
 
-    function cerrarScannerCodigoGlobal(manual) {
-        if (manual) {
-            resetScannerDoubleReadState(scannerCodigoGlobalState, false);
-        }
-        if (scannerCodigoGlobal) {
-            try { scannerCodigoGlobal.cerrar(); } catch (e) { }
-        }
-        syncFlashButton("#btnFlashScannerCodigoGlobal", false);
-    }
-
     function limpiarScannerCatalogoGlobal() {
         resetScannerDoubleReadState(scannerCatalogoGlobalState, false);
         $("#txtBuscarCatalogoGlobal").val("").trigger("input");
         setScannerCatalogoGlobalMsg("");
         setAlertCatalogoGlobal("");
-    }
-
-    function limpiarScannerCodigoGlobal() {
-        resetScannerDoubleReadState(scannerCodigoGlobalState, false);
-        scannerCodigoGlobalState.camaraCerradaAutomaticamente = false;
-        limpiarFormularioCodigoGlobal();
-        setScannerCodigoGlobalMsg("");
     }
 
     function inicializarScannerCatalogoGlobal() {
@@ -1585,216 +1441,6 @@
         });
     }
 
-    function inicializarScannerCodigoGlobal() {
-        if (typeof BarcodeScanner === "undefined") {
-            scannerCodigoGlobal = null;
-            return;
-        }
-
-        scannerCodigoGlobal = new BarcodeScanner({
-            videoSelector: "#videoScannerCodigoGlobal",
-            containerSelector: "#scannerCodigoGlobalContainer",
-            onCodeDetected: function (codigoLeido) {
-                processDoubleReadCode(scannerCodigoGlobalState, codigoLeido, {
-                    preserveAutoCloseOnPause: true,
-                    onFirstRead: function () {
-                        setScannerCodigoGlobalMsg("Código detectado. Acerque nuevamente para confirmar.");
-                    },
-                    onDifferentRead: function () {
-                        setScannerCodigoGlobalMsg("La segunda lectura no coincidió. Se reinició la validación.");
-                    },
-                    onInvalidRead: function () {
-                        setScannerCodigoGlobalMsg("Código inválido (solo EAN-8 o EAN-13).");
-                    },
-                    onAcceptedRead: function (codigo) {
-                        $("#codigoBarraGlobal").val(codigo).trigger("input");
-                        setScannerCodigoGlobalMsg("Código leído correctamente.", "success");
-                        scannerCodigoGlobalState.camaraCerradaAutomaticamente = true;
-                        cerrarScannerCodigoGlobal(false);
-                    },
-                    onPauseEnd: function () {
-                        setScannerCodigoGlobalMsg("");
-                    }
-                });
-            }
-        });
-    }
-
-    function limpiarFormularioCodigoGlobal() {
-        codigoGlobalState.ultimoCodigoBuscado = "";
-        codigoGlobalState.codigoActualValido = "";
-        codigoGlobalState.bloqueoActual = "";
-
-        $("#codigoBarraGlobal").val("");
-        $("#descripcionCodigoGlobal").val("");
-        $("#precioCodigoGlobal").val("");
-        $("#btnGuardarCodigoGlobal").prop("disabled", true);
-        setAlertCodigoGlobal("");
-    }
-
-    function abrirModalCodigoGlobal() {
-        limpiarFormularioCodigoGlobal();
-        resetScannerDoubleReadState(scannerCodigoGlobalState, false);
-        setScannerCodigoGlobalMsg("");
-        $("#modalAgregarCodigoGlobal").modal("show");
-        window.setTimeout(function () {
-            $("#codigoBarraGlobal").trigger("focus");
-        }, 150);
-    }
-
-    function buscarCodigoGlobal(force) {
-        const codigo = ($("#codigoBarraGlobal").val() || "").replace(/\D/g, "");
-        if (!force && codigo.length < 13) return;
-        if (!force && codigo === codigoGlobalState.ultimoCodigoBuscado) return;
-
-        codigoGlobalState.ultimoCodigoBuscado = codigo;
-        codigoGlobalState.codigoActualValido = "";
-        codigoGlobalState.bloqueoActual = "";
-        $("#btnGuardarCodigoGlobal").prop("disabled", true);
-        $("#descripcionCodigoGlobal").val("");
-        $("#precioCodigoGlobal").val("");
-        setAlertCodigoGlobal("");
-
-        $.get(urlBuscarPorCodigoBarraGlobal, { codigoBarra: codigo })
-            .done(function (resp) {
-                if (!resp || resp.ok === false || !resp.producto) {
-                    setAlertCodigoGlobal(resp && resp.mensaje ? resp.mensaje : "No existe el producto en el catálogo global.");
-                    return;
-                }
-
-                codigoGlobalState.codigoActualValido = codigo;
-                codigoGlobalState.bloqueoActual = resp.producto.mensajeBloqueo || "";
-
-                $("#descripcionCodigoGlobal").val(resp.producto.descripcion || "");
-                $("#precioCodigoGlobal").val("");
-
-                if (codigoGlobalState.bloqueoActual) {
-                    setAlertCodigoGlobal(codigoGlobalState.bloqueoActual, "warning");
-                    $("#btnGuardarCodigoGlobal").prop("disabled", true);
-                    return;
-                }
-
-                $("#btnGuardarCodigoGlobal").prop("disabled", false);
-                setAlertCodigoGlobal("Producto encontrado. Ingrese el precio para guardar.", "success");
-                $("#precioCodigoGlobal").trigger("focus");
-            })
-            .fail(function () {
-                setAlertCodigoGlobal("No se pudo consultar el catálogo global.");
-            });
-    }
-
-    function guardarCodigoGlobal() {
-        const token = $("#formAgregarCodigoGlobal input[name='__RequestVerificationToken']").val();
-        const codigo = ($("#codigoBarraGlobal").val() || "").replace(/\D/g, "");
-
-        if (!codigoGlobalState.codigoActualValido || codigoGlobalState.codigoActualValido !== codigo) {
-            setAlertCodigoGlobal("Busque primero un producto válido del catálogo global.");
-            return;
-        }
-
-        if (codigoGlobalState.bloqueoActual) {
-            setAlertCodigoGlobal(codigoGlobalState.bloqueoActual, "warning");
-            return;
-        }
-
-        $.ajax({
-            url: urlAgregarDesdeCodigoBarra,
-            type: "POST",
-            data: {
-                __RequestVerificationToken: token,
-                CodigoBarra: codigo,
-                Descripcion: $("#descripcionCodigoGlobal").val(),
-                Precio: $("#precioCodigoGlobal").val()
-            }
-        }).done(function (resp) {
-            if (!resp || resp.ok === false) {
-                setAlertCodigoGlobal(resp && resp.mensaje ? resp.mensaje : "No se pudo guardar el producto.");
-                return;
-            }
-
-            const reabrirScanner = scannerCodigoGlobalState.camaraCerradaAutomaticamente;
-            limpiarFormularioCodigoGlobal();
-            resetScannerDoubleReadState(scannerCodigoGlobalState, false);
-            setScannerCodigoGlobalMsg("");
-            Swal.fire("Productos", resp.mensaje || "Producto guardado correctamente", "success")
-                .then(function () {
-                    $("#codigoBarraGlobal").trigger("focus");
-                    if (reabrirScanner && scannerCodigoGlobal) {
-                        scannerCodigoGlobal.iniciar().catch(function () {
-                            setScannerCodigoGlobalMsg("No se pudo iniciar la cámara.");
-                        });
-                    }
-                });
-        }).fail(function () {
-            setAlertCodigoGlobal("No se pudo guardar el producto.");
-        });
-    }
-
-    $("#codigoBarraGlobal").on("input", function () {
-        const codigo = (this.value || "").replace(/\D/g, "");
-        this.value = codigo;
-        setScannerCodigoGlobalMsg("");
-        if (codigo.length >= 13) {
-            buscarCodigoGlobal(false);
-        }
-    });
-
-    $("#codigoBarraGlobal").on("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            buscarCodigoGlobal(true);
-        }
-    });
-
-    $("#precioCodigoGlobal").on("keydown", function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            guardarCodigoGlobal();
-        }
-    });
-
-    $("#btnGuardarCodigoGlobal").on("click", function () {
-        guardarCodigoGlobal();
-    });
-
-    if (typeof BarcodeScanner !== "undefined") {
-        inicializarScannerCodigoGlobal();
-    }
-
-    $("#btnScannerCodigoGlobal").on("click", function () {
-        if (!scannerCodigoGlobal) {
-            setScannerCodigoGlobalMsg("Este navegador no soporta escaneo por cámara.");
-            return;
-        }
-        resetScannerDoubleReadState(scannerCodigoGlobalState, false);
-        setScannerCodigoGlobalMsg("");
-        scannerCodigoGlobal.iniciar().catch(function () {
-            setScannerCodigoGlobalMsg("No se pudo iniciar la cámara.");
-        });
-    });
-
-    $("#btnCerrarScannerCodigoGlobal").on("click", function () {
-        setScannerCodigoGlobalMsg("");
-        cerrarScannerCodigoGlobal(true);
-    });
-
-    $("#btnLimpiarScannerCodigoGlobal").on("click", function () {
-        limpiarScannerCodigoGlobal();
-    });
-
-    $("#btnFlashScannerCodigoGlobal").on("click", async function () {
-        if (!scannerCodigoGlobal) return;
-        try {
-            const estado = await scannerCodigoGlobal.toggleFlash();
-            syncFlashButton("#btnFlashScannerCodigoGlobal", estado);
-        } catch (e) { }
-    });
-
-    $("#modalAgregarCodigoGlobal").on("hidden.bs.modal", function () {
-        cerrarScannerCodigoGlobal(true);
-        limpiarFormularioCodigoGlobal();
-        setScannerCodigoGlobalMsg("");
-    });
 
     $("#modalCatalogoGlobal").on("hidden.bs.modal", function () {
         cerrarScannerCatalogoGlobal(true);
@@ -2174,6 +1820,7 @@
 
         const ids = checks.map(x => x.value).join(",");
         document.getElementById("idsEtiquetas").value = ids;
+        document.getElementById("tamanoEtiquetas").value = document.getElementById("selTamanoEtiqueta").value;
         document.getElementById("formEtiquetas").submit();
     }
 
@@ -3430,8 +3077,7 @@
     }
 
     #scannerPrecioContainer .card,
-    #scannerCatalogoGlobalContainer .card,
-    #scannerCodigoGlobalContainer .card {
+    #scannerCatalogoGlobalContainer .card {
         border: 1px solid #d7dce3;
     }
 
@@ -3445,8 +3091,7 @@
     }
 
     #videoScannerPrecio,
-    #videoScannerCatalogoGlobal,
-    #videoScannerCodigoGlobal {
+    #videoScannerCatalogoGlobal {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -3585,8 +3230,7 @@
     }
 
     html.dark-mode #scannerPrecioContainer .card,
-    html.dark-mode #scannerCatalogoGlobalContainer .card,
-    html.dark-mode #scannerCodigoGlobalContainer .card {
+    html.dark-mode #scannerCatalogoGlobalContainer .card {
         background: #182232;
         border-color: #314155;
     }

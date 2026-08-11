@@ -246,7 +246,12 @@
             url: cfg.listar,
             type: "GET",
             data: $.param(data),
-            cache: false
+            cache: false,
+            // Sin esto, el modal global "Cargando solicitud..." (modal-request-loading.js)
+            // puede pisar el cartel de "guardado correctamente" que se muestra justo
+            // despues de refrescar (ambos usan SweetAlert2, que no los apila -- el ultimo
+            // que se llama gana).
+            silentLoading: true
         }).done(function (html) {
             $("#tablaEgresosCaja").html(html);
             aplicarVistaCompleta();
@@ -492,7 +497,8 @@
             url: cfg.tiposOpciones,
             type: "GET",
             cache: false,
-            dataType: "json"
+            dataType: "json",
+            silentLoading: true
         }).done(function (resp) {
             if (!resp || !resp.ok || !$.isArray(resp.items)) return;
 
@@ -535,7 +541,8 @@
             url: cfg.tipos,
             type: "GET",
             data: { buscar: buscar || "" },
-            cache: false
+            cache: false,
+            silentLoading: true
         }).done(function (html) {
             renderConScripts(html, "#contenedorTiposEgresoCaja");
             aplicarTiposFiltroStateAUI();
@@ -607,8 +614,8 @@
 
                     refrescarComboTiposIndex();
                     cargarTipos(tiposFiltroState.buscar || "");
-                    if (window.Swal) {
-                        Swal.fire("Guardado", resp.mensaje || "El tipo de egreso se guardó correctamente.", "success");
+                    if (window.SaveSuccessAlert) {
+                        window.SaveSuccessAlert.show(resp.mensaje || "El tipo de egreso se guardó correctamente.");
                     }
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el tipo de egreso.");
@@ -718,8 +725,8 @@
                     $("#modalEgresoCaja").modal("hide");
                     filtrar();
 
-                    if (window.Swal) {
-                        Swal.fire("Guardado", resp.mensaje || "El egreso se guardo correctamente.", "success");
+                    if (window.SaveSuccessAlert) {
+                        window.SaveSuccessAlert.show(resp.mensaje || "El egreso se guardó correctamente.");
                     }
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el egreso de caja.");
@@ -880,8 +887,8 @@
                     $("#modalEgresoCaja").modal("hide");
                     filtrar();
 
-                    if (window.Swal) {
-                        Swal.fire("Guardado", resp.mensaje || "El egreso se guardo correctamente.", "success");
+                    if (window.SaveSuccessAlert) {
+                        window.SaveSuccessAlert.show(resp.mensaje || "El egreso se guardó correctamente.");
                     }
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el egreso por comisiones.");

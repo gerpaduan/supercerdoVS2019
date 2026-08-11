@@ -646,6 +646,10 @@ namespace Web.Controllers
                     ? "El movimiento de stock se guardó correctamente."
                     : "El movimiento de stock se registró correctamente.";
 
+                TempData["AlertType"] = "success";
+                TempData["AlertTitle"] = "Stock";
+                TempData["AlertMsg"] = TempData["StockSuccessMessage"];
+
                 return RedirectToAction("Index");
             }
             catch (Exception ex)

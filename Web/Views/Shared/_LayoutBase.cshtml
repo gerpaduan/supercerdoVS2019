@@ -139,7 +139,7 @@
     <!-- Custom styles for this template-->
     <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" type="text/css" />
     <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
-    <link href="@Url.Content("~/Content/css/custom.css?v=2")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/css/custom.css?v=4")" rel="stylesheet" />
     <link href="@Url.Content("~/Content/css/ui-refresh.css?v=7")" rel="stylesheet" />
     <link rel="manifest" href="@Url.Content("~/manifest.json")" />
     <meta name="theme-color" content="#0d6efd" />
@@ -597,6 +597,7 @@
     <script src="@Url.Content("~/Content/js/sb-admin-2.min.js")"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="@Url.Content("~/Scripts/app/swal-single-confirm.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/save-success-alert.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-request-loading.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-productos.js?v=7")"></script>
     <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
@@ -673,7 +674,14 @@
             const SIDEBAR_COLLAPSES_STORAGE_KEY = "carnisys-sidebar-collapses";
             let suppressCollapsePersistence = false;
 
-            function applySidebarState(collapsed) {
+            // restorePanels=false se usa SOLO en la carga inicial de pagina (ver
+            // bootstrap mas abajo) -- ahi el panel del controller actual ya viene
+            // expandido por el servidor (clase "show" condicional en el .cshtml) y
+            // no hay que pisarlo con el estado guardado en localStorage. En los
+            // demas casos (volver del modo iconos, fix de resize/orientacion)
+            // restorePanels queda en true: ahi sí hace falta reponer los paneles
+            // que estaban abiertos antes de colapsar el sidebar a iconos.
+            function applySidebarState(collapsed, restorePanels) {
                 var $body = $("body");
                 var $sidebar = $(".sidebar");
 
@@ -684,7 +692,7 @@
                     suppressCollapsePersistence = true;
                     $sidebar.find(".collapse").collapse("hide");
                     suppressCollapsePersistence = false;
-                } else {
+                } else if (restorePanels !== false) {
                     restoreSidebarCollapses();
                 }
             }
@@ -768,7 +776,13 @@
 
             $(function () {
                 ensureInitialSidebarCollapsesState();
-                applySidebarState(readSidebarState());
+                // false = no restaurar paneles guardados en esta carga -- el
+                // controller actual ya viene con su panel expandido desde el
+                // servidor. Restaurar acá pisaba eso con lo ultimo guardado en
+                // localStorage: un panel abierto en una visita anterior (a otra
+                // pantalla) quedaba reabriendose en TODAS las paginas futuras,
+                // sin importar el controller real. Bug reportado 2026-08-08.
+                applySidebarState(readSidebarState(), false);
 
                 $(".sidebar .collapse").on("shown.bs.collapse", function () {
                     if (suppressCollapsePersistence) return;
@@ -1048,14 +1062,35 @@
     {
         <script>
         (function () {
-            var type = '@(TempData["AlertType"] ?? "info")';
-            var title = '@(TempData["AlertTitle"] ?? "Aviso")';
-            var msg = '@TempData["AlertMsg"]';
+            var type = "@Html.Raw(HttpUtility.JavaScriptStringEncode(TempData["AlertType"] as string ?? "info"))";
+            var title = "@Html.Raw(HttpUtility.JavaScriptStringEncode(TempData["AlertTitle"] as string ?? "Aviso"))";
+            var msg = "@Html.Raw(HttpUtility.JavaScriptStringEncode(TempData["AlertMsg"] as string ?? ""))";
+
+            var opts = { icon: type, title: title, text: msg };
+            // Los mensajes de exito (guardado/creado/actualizado) se autocierran a
+            // los 2s -- el usuario puede cerrarlos antes con Enter o el boton OK
+            // (swal-single-confirm.js ya agrega ese comportamiento). Warnings/errores
+            // quedan sin timer, como siempre, hasta que el usuario los cierra.
+            if (type === 'success') {
+                opts.timer = 2000;
+                opts.timerProgressBar = true;
+                opts.showConfirmButton = true;
+            }
+
+            function avisarCerrado() {
+                // Hook para paginas que necesiten reaccionar a que este cartel
+                // se cerro (ej. AddOrEdit.cshtml de Productos en modo "carga
+                // continua", que recien ahi dispara su recarga automatica al
+                // siguiente formulario en blanco, en vez de competir con el
+                // timer de 2s de este cartel).
+                document.dispatchEvent(new CustomEvent('layoutAlertClosed'));
+            }
 
             if (window.Swal) {
-                Swal.fire({ icon: type, title: title, text: msg });
+                Swal.fire(opts).then(avisarCerrado);
             } else {
                 alert(title + "\n\n" + msg);
+                avisarCerrado();
             }
         })();
         </script>

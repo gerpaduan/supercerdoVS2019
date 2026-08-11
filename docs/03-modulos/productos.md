@@ -18,13 +18,13 @@ Dos caminos, conviven en `Web/Controllers/ProductosController.cs`:
 2. **Alta desde catalogo global** (el mecanismo relevante de este documento):
    - `VerGlobales`/`BuscarGlobales` abren y pueblan el modal (`_CatalogoGlobalModal.cshtml`/`_CatalogoGlobalRows.cshtml`), leyendo `Negocio.CatalogoGlobalProducto.ObtenerCatalogoGlobalPagina` (paginado) contra `dbo.CatalogoGlobalProducto`.
    - `ImportarSeleccionados` clona los productos elegidos (`ClonarProductoGlobal(Entidades.CatalogoGlobalProducto, codigoDestino, precio)`) e inserta cada uno en la empresa actual con `Negocio.Corte.InsertarCorteEnEmpresa` (INSERT crudo parametrizado a `dbo.Corte` con el `idEmpresa` de la sesion), y registra la trazabilidad en `CatalogoGlobalImportacionProductos`.
-   - `BuscarProductoGlobalParaAlta`/`AgregarDesdeCodigoBarra`: alta rapida por codigo de barra escaneado, mismo mecanismo de clonado.
+   - `BuscarProductoGlobalParaAlta`: autocompleta el formulario de alta manual (`AddOrEdit.cshtml`) al escanear un codigo de barra que existe en el catalogo global, mismo mecanismo de clonado. (El boton "Agregar por codigo de barra" de `Productos/Index` -- alta rapida sin pasar por el formulario -- se saco el 2026-08-08 por obsoleto; sus acciones `BuscarPorCodigoBarraGlobal`/`AgregarDesdeCodigoBarra` ya no existen.)
    - `Guardar`: si el codigo tipeado a mano coincide con uno del catalogo global (`Negocio.CatalogoGlobalProducto.findCorteGlobalByCodigo`), se marca `altaDesdeCatalogoGlobal=true` y se inserta via `InsertarCorteEnEmpresa` en vez de `addOrEditCorte` -- este chequeo es solo un existence-check (booleano), no clona campos; el usuario ya tipeo el formulario a mano.
    - `ClonarProductoGlobal` tiene un segundo overload que toma `Entidades.Corte` en vez de `Entidades.CatalogoGlobalProducto`: cubre el caso defensivo de editar (`vm.IdCorte > 0`) un producto que resulta tener `IdEmpresa == 0` -- residual de cuando el catalogo global vivia dentro de `Corte`. Deberia dejar de dispararse una vez que se corra el borrado de esas filas (`Datos/DB-Procedures/20260804-Delete_Corte_IdEmpresa0.sql`), pero se dejo sin retirar por las dudas.
 
 ## Dependencias
 
-- `Web/Models/CorteUpsertVM.cs`, `CatalogoGlobalProductosVm.cs`, `ProductoGlobalSeleccionVm.cs`, `ImportarProductosGlobalesRequest.cs`, `AgregarProductoDesdeCodigoBarraVm.cs`.
+- `Web/Models/CorteUpsertVM.cs`, `CatalogoGlobalProductosVm.cs`, `ProductoGlobalSeleccionVm.cs`, `ImportarProductosGlobalesRequest.cs`.
 - Mismo patron replicado para "Tipos de producto" (`dbo.TiposProducto`, catalogo global mezclado por `idEmpresa=0` dentro de la misma tabla) -- **no separado todavia**, queda pendiente si en el futuro se pide lo mismo para Tipos.
 - `Web/Controllers/StockController.cs`, `VentasController.cs`, `ReportesController.cs`, `MovimientosController.cs`, `ElaboradosController.cs`, `ComprasController.cs` leen `Negocio.Corte`/`dbo.Corte` (nunca `CatalogoGlobalProducto` directamente).
 

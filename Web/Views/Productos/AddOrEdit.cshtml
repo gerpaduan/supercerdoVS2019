@@ -6,7 +6,6 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
     bool esEdicion = Model != null && Model.IdCorte > 0;
     bool productoGuardadoContinuo = ViewBag.ProductoGuardadoContinuo != null && System.Convert.ToBoolean(ViewBag.ProductoGuardadoContinuo);
-    string flashSuccessContinuo = ViewBag.FlashSuccessContinuo as string;
     ViewBag.Title = esEdicion ? "Editar producto" : "Alta de producto";
 }
 
@@ -183,10 +182,14 @@
                 </div>
 
                 @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+                @* El mensaje de "guardado correctamente" ahora lo muestra el cartel
+                   generico de _LayoutBase.cshtml (SweetAlert2) -- este div ya no es
+                   un banner visual, solo lleva el flag data-recargar que lee el
+                   script de mas abajo para saber si toca avanzar solo al siguiente
+                   formulario en blanco (modo "carga continua"). *@
                 <div id="alertCargaContinua"
-                     class="alert alert-success py-2 px-3 mb-3 @( string.IsNullOrWhiteSpace(flashSuccessContinuo) ? "d-none" : "" )"
+                     class="d-none"
                      data-recargar="@(!esEdicion && productoGuardadoContinuo ? "1" : "0")">
-                    @flashSuccessContinuo
                 </div>
 
                 <!-- =========================
@@ -2233,11 +2236,15 @@
 
         const alertaCargaContinua = document.getElementById('alertCargaContinua');
         if (alertaCargaContinua && alertaCargaContinua.getAttribute('data-recargar') === '1') {
-            window.setTimeout(function () {
+            // La recarga al siguiente formulario en blanco espera a que se
+            // cierre el cartel de "guardado correctamente" (_LayoutBase.cshtml)
+            // en vez de tener su propio timer de 2s en paralelo -- evita que
+            // ambos compitan y corten el cartel a mitad de camino.
+            document.addEventListener('layoutAlertClosed', function () {
                 window.sessionStorage.setItem(STORAGE_FOCUS_CODIGO_KEY, "1");
                 mostrarCargaSolicitud();
                 window.location.replace('@Url.Action("AddOrEdit", "Productos", new { cargaContinua = true })');
-            }, 2000);
+            }, { once: true });
         }
     });
 

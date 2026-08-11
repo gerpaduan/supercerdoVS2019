@@ -996,6 +996,14 @@
         $cantUnidad.on('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                // Producto no pesable + cantidad cargada: Cant.Kg ya viene
+                // reflejado solo (mirror mas abajo, on input/change), asi que
+                // pasar por ese campo a mano es un paso de mas -- Enter agrega
+                // la linea directo. addCurrentLine() valida todo lo necesario.
+                if (!productoEsPesable() && toInt($cantUnidad.val()) !== 0) {
+                    addCurrentLine();
+                    return;
+                }
                 $cantKgs.focus().select();
             }
         });
