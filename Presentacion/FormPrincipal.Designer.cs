@@ -823,7 +823,7 @@
             // 
             this.celularToolStripMenuItem.Name = "celularToolStripMenuItem";
             this.celularToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
-            this.celularToolStripMenuItem.Text = "Celular: +54 9 341 339-6372";
+            this.celularToolStripMenuItem.Text = "Celular: +54 9 3482 547-897";
             // 
             // timerInactividadAdmin
             // 
