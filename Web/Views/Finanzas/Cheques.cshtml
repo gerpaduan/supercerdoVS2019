@@ -348,6 +348,10 @@
                             $icono.toggleClass("fa-chevron-up", expanded);
                         }.bind(this), 0);
                     })
+                    .on("dblclick.vistaCheques", "tr:has(.btn-detalles-cheque)", function (e) {
+                        if ($(e.target).closest("a, button").length) return;
+                        $(this).find(".btn-detalles-cheque").trigger("click");
+                    })
                     .on("cheque:guardado.vistaCheques", function () {
                         cargarCheques();
                     })
@@ -573,6 +577,10 @@ else
                                 $icono.toggleClass("fa-chevron-down", !expanded);
                                 $icono.toggleClass("fa-chevron-up", expanded);
                             }.bind(this), 0);
+                        })
+                        .on("dblclick.vistaCheques", "tr:has(.btn-detalles-cheque)", function (e) {
+                            if ($(e.target).closest("a, button").length) return;
+                            $(this).find(".btn-detalles-cheque").trigger("click");
                         })
                         .on("cheque:guardado.vistaCheques", function () {
                             cargarCheques();

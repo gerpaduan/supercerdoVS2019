@@ -126,7 +126,6 @@
         var $ingredientePromedio = $('#txtIngredientePromedio');
         var $ingredienteKg = $('#txtKgIngrediente');
         var $balanza = $('#chkBalanzaIngrediente');
-        var $feedback = $('#cargaFeedback');
         var $warning = $('#cargaWarning');
 
         function esAccionVisible($button) {
@@ -288,11 +287,6 @@
 
         function clearWarning() {
             $warning.addClass('d-none').text('');
-        }
-
-        function showFeedback(text) {
-            $feedback.html(text).removeClass('d-none');
-            setTimeout(function () { $feedback.addClass('d-none').text(''); }, 2200);
         }
 
         function focusIngredienteCodigo() {
@@ -696,7 +690,8 @@
             state.lineas.push(linea);
             renderLineas();
             clearIngrediente();
-            showFeedback('Agregado correctamente: <strong>' + linea.Producto + '</strong> | Cantidad <strong>' + formatKg(linea.CantKg) + '</strong>');
+            // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
+            // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
             window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
             scheduleDraft();
             focusIngredienteCodigo();

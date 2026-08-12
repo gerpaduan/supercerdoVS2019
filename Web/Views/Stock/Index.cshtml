@@ -698,6 +698,14 @@
                 syncIcon(btn, !expanded);
             });
 
+            document.addEventListener("dblclick", function (e) {
+                if (e.target.closest("a, button")) return;
+                const row = e.target.closest("tr");
+                if (!row) return;
+                const btnDetalle = row.querySelector(".btn-detalles-stock");
+                if (btnDetalle) btnDetalle.click();
+            });
+
             switchVista.addEventListener("change", function () {
                 const expandir = switchVista.checked;
                 document.querySelectorAll(".stock-detalle-collapse").forEach(function (detalle) {

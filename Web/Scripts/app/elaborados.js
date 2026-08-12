@@ -181,6 +181,14 @@
             syncIcon(btn, !expanded);
         });
 
+        document.addEventListener('dblclick', function (e) {
+            if (e.target.closest('a, button')) return;
+            var row = e.target.closest('tr.js-elaborado-row');
+            if (!row) return;
+            var btn = row.querySelector('.btn-detalles-elaborado');
+            if (btn) btn.click();
+        });
+
         switchVista.addEventListener('change', function () {
             var expandir = switchVista.checked;
             document.querySelectorAll('.elaborado-detalle-collapse').forEach(function (detalle) {

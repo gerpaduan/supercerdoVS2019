@@ -129,6 +129,11 @@
             else expandRow($btn);
         });
 
+        $(document).on('dblclick.movimientosIndex', 'tr[data-movimiento-row]', function (e) {
+            if ($(e.target).closest('a, button').length) return;
+            $(this).find('.js-toggle-detalle').trigger('click');
+        });
+
         $('#verDetalles').on('change.movimientosIndex', function () {
             var checked = $(this).is(':checked');
             $('.js-toggle-detalle').each(function () {
@@ -172,7 +177,6 @@
         var $balanza = $('#chkBalanzaLinea');
         var $permitirWrap = $('#wrapPermitirIngreso');
         var $permitir = $('#chkPermitirIngreso');
-        var $feedback = $('#movimientoFeedback');
         var $warning = $('#movimientoWarning');
         var $btnImprimirMovimiento = $('#btnImprimirMovimiento');
         var $observaciones = $('#Observaciones');
@@ -302,11 +306,6 @@
             state.draftTimer = window.setTimeout(function () {
                 saveDraft();
             }, 250);
-        }
-
-        function showFeedback(text) {
-            $feedback.text(text).removeClass('d-none');
-            setTimeout(function () { $feedback.addClass('d-none'); }, 2200);
         }
 
         function showWarning(text) {
@@ -816,7 +815,8 @@
             var line = buildCurrentLine();
             state.lines.push(line);
             renderLines();
-            showFeedback('Agregado correctamente: ' + line.Producto + ' | Cantidad ' + line.CantUnidad + ' | Kilos ' + formatKg(line.CantKg));
+            // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
+            // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
             window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
             clearProducto();
             scheduleDraft();

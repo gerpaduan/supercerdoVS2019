@@ -958,6 +958,20 @@
             .on("click.egresosNuevo", "#btnNuevoEgresoCaja", function () {
                 abrirNuevo();
             })
+            .off("keydown.egresosNuevoAtajo")
+            .on("keydown.egresosNuevoAtajo", function (e) {
+                if (!(e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && String(e.key || "").toLowerCase() === "enter")) return;
+                // este JS tambien se carga embebido en otras pantallas (ej. POS), donde el boton no existe
+                var $btnNuevo = $("#btnNuevoEgresoCaja");
+                if (!$btnNuevo.length || !$btnNuevo.is(":visible") || $btnNuevo.prop("disabled")) return;
+                e.preventDefault();
+                $btnNuevo.trigger("click");
+            })
+            .off("dblclick.egresosDetalle", "tr.egreso-row")
+            .on("dblclick.egresosDetalle", "tr.egreso-row", function (e) {
+                if ($(e.target).closest("a, button").length) return;
+                $(this).find(".btn-detalle-egreso").trigger("click");
+            })
             .off("click.egresosComisiones", "#btnCalcularComisionesElectronicas")
             .on("click.egresosComisiones", "#btnCalcularComisionesElectronicas", function () {
                 abrirCalculoComisiones();

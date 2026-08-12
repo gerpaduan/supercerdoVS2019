@@ -116,14 +116,6 @@
         }, 2200);
     }
 
-    function showFeedbackHtml($form, html) {
-        var $feedback = $form.find('#stockFeedback');
-        $feedback.html(html).removeClass('d-none');
-        window.setTimeout(function () {
-            $feedback.addClass('d-none').text('');
-        }, 2200);
-    }
-
     function focusCantidadManual($form) {
         window.setTimeout(function () {
             var $input = $form.find('#txtCantKgs');
@@ -2202,10 +2194,8 @@
         state.lineas.push(linea);
         renderLineas($form);
         scheduleDraft($form);
-        showFeedbackHtml(
-            $form,
-            'Agregado correctamente: <strong>' + escapeHtml(linea.producto) + '</strong> | Cantidad <strong>' + escapeHtml(formatNumber(linea.cantKgs, 3)) + '</strong>'
-        );
+        // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
+        // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
         clearProductoInputs($form);
         $form.find('#txtCodigoProducto').focus();

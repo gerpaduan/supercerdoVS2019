@@ -523,6 +523,36 @@
                 }
             }
 
+            function cargarDetalleCompra(detalle) {
+                if (!detalle) return;
+
+                const contenedor = detalle.querySelector(".compra-detalle-lazy");
+                if (!contenedor) return;
+
+                if (contenedor.getAttribute("data-loaded") === "true"
+                    || contenedor.getAttribute("data-loading") === "true") {
+                    return;
+                }
+
+                const url = contenedor.getAttribute("data-url");
+                if (!url) return;
+
+                contenedor.setAttribute("data-loading", "true");
+                contenedor.innerHTML = '<div class="text-muted">Cargando detalle...</div>';
+
+                $.get(url)
+                    .done(function (html) {
+                        contenedor.innerHTML = html;
+                        contenedor.setAttribute("data-loaded", "true");
+                    })
+                    .fail(function () {
+                        contenedor.innerHTML = '<div class="text-danger">No se pudo cargar el detalle de la compra.</div>';
+                    })
+                    .always(function () {
+                        contenedor.removeAttribute("data-loading");
+                    });
+            }
+
             document.addEventListener("click", function (e) {
                 const btn = e.target.closest(".btn-detalles-compra");
                 if (!btn) return;
@@ -532,14 +562,27 @@
                 const detalle = selector ? document.querySelector(selector) : null;
                 if (!detalle) return;
 
+                cargarDetalleCompra(detalle);
+
                 const expanded = detalle.classList.contains("show");
                 $(detalle).collapse(expanded ? "hide" : "show");
                 syncIcon(btn, !expanded);
             });
 
+            document.addEventListener("dblclick", function (e) {
+                if (e.target.closest("a, button")) return;
+                const row = e.target.closest("tr");
+                if (!row) return;
+                const btnDetalle = row.querySelector(".btn-detalles-compra");
+                if (btnDetalle) btnDetalle.click();
+            });
+
             switchVista.addEventListener("change", function () {
                 const expandir = switchVista.checked;
                 document.querySelectorAll(".compra-detalle-collapse").forEach(function (detalle) {
+                    if (expandir) {
+                        cargarDetalleCompra(detalle);
+                    }
                     $(detalle).collapse(expandir ? "show" : "hide");
                     const btn = document.querySelector('.btn-detalles-compra[data-target="#' + detalle.id + '"]');
                     syncIcon(btn, expandir);

@@ -1675,7 +1675,7 @@ namespace Web.Controllers
 
         private static DateTime NormalizarFechaDesde(DateTime fecha)
         {
-            return fecha.Date;
+            return fecha;
         }
 
         private int ObtenerIdEmpresaSesionActual()
@@ -1697,7 +1697,9 @@ namespace Web.Controllers
 
         private static DateTime NormalizarFechaHasta(DateTime fecha)
         {
-            return fecha.Date.AddDays(1).AddSeconds(-1);
+            // Si el usuario no tocó la hora (quedó en el default de medianoche), se interpreta
+            // como "todo ese día" y se extiende a 23:59:59; si especificó una hora real, se respeta tal cual.
+            return fecha.TimeOfDay == TimeSpan.Zero ? fecha.Date.AddDays(1).AddSeconds(-1) : fecha;
         }
 
         private static string FormatearFechaHora(DateTime? fecha)

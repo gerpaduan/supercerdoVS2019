@@ -271,6 +271,48 @@
         padding: .7rem .85rem !important;
     }
 
+    .egresos-page .egreso-detalle-meta-card {
+        border: 1px solid #dee2e6;
+        border-radius: .5rem;
+        background: #fff;
+        padding: .85rem .95rem;
+    }
+
+    .egresos-page .egreso-detalle-meta-row {
+        margin-bottom: .45rem;
+        line-height: 1.2;
+    }
+
+    .egresos-page .egreso-detalle-principal {
+        padding-bottom: .6rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .egresos-page .egreso-detalle-valor-principal {
+        display: block;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.3;
+        white-space: pre-wrap;
+    }
+
+    html.dark-mode .egresos-page .egreso-detalle-meta-card,
+    body.dark-mode .egresos-page .egreso-detalle-meta-card {
+        background: #111827;
+        border-color: #374151;
+        color: #f3f4f6;
+    }
+
+    html.dark-mode .egresos-page .egreso-detalle-meta-card .text-muted,
+    body.dark-mode .egresos-page .egreso-detalle-meta-card .text-muted {
+        color: #9ca3af !important;
+    }
+
+    html.dark-mode .egresos-page .egreso-detalle-principal,
+    body.dark-mode .egresos-page .egreso-detalle-principal {
+        border-bottom-color: #374151;
+    }
+
     @@media (min-width: 1200px) {
         .egresos-page .egresos-actions {
             margin-bottom: .75rem;
@@ -477,5 +519,5 @@
             usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))
         };
     </script>
-<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=9")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=10")"></script>
 }

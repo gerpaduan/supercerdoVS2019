@@ -1,47 +1,98 @@
 @model Web.Models.MovimientoDetalleVm
 
-<div class="mb-3">
-    @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
-    {
-        <div class="alert alert-info py-2 px-3 mb-3">
-            <strong>Observaciones:</strong> @Model.Observaciones
-        </div>
-    }
+@{
+    var observaciones = !string.IsNullOrWhiteSpace(Model.Observaciones) ? Model.Observaciones : "-";
+    var creadoPor = !string.IsNullOrWhiteSpace(Model.CreadoPor) ? Model.CreadoPor : "-";
+    var fechaCreacion = Model.Creado.HasValue ? Model.Creado.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+    var actualizadoPor = !string.IsNullOrWhiteSpace(Model.ActualizadoPor) ? Model.ActualizadoPor : "-";
+    var fechaActualizacion = Model.Actualizado.HasValue ? Model.Actualizado.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+}
 
-    <div class="table-responsive">
-        <table class="table table-sm table-bordered mb-0">
-            <thead class="thead-light">
-                <tr>
-                    <th style="width:110px;">Código</th>
-                    <th>Producto</th>
-                    <th class="text-right" style="width:110px;">Cantidad</th>
-                    <th class="text-right" style="width:110px;">Kilos</th>
-                    <th class="text-center" style="width:90px;">Balanza</th>
-                    <th class="text-center" style="width:120px;">Permitir ingreso</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Lineas == null || Model.Lineas.Count == 0)
-                {
+<div class="row movimiento-detalle-layout">
+    <div class="col-12 col-xl-8 order-2 order-xl-1">
+        <div class="table-responsive mt-3 mt-xl-0">
+            <table class="table table-sm table-bordered mb-0">
+                <thead class="thead-light">
                     <tr>
-                        <td colspan="6" class="text-center text-muted">No hay líneas para este movimiento.</td>
+                        <th style="width:110px;">Código</th>
+                        <th>Producto</th>
+                        <th class="text-right" style="width:110px;">Cantidad</th>
+                        <th class="text-right" style="width:110px;">Kilos</th>
+                        <th class="text-center" style="width:90px;">Balanza</th>
+                        <th class="text-center" style="width:120px;">Permitir ingreso</th>
                     </tr>
-                }
-                else
-                {
-                    foreach (var linea in Model.Lineas)
+                </thead>
+                <tbody>
+                    @if (Model.Lineas == null || Model.Lineas.Count == 0)
                     {
                         <tr>
-                            <td>@linea.Codigo</td>
-                            <td>@linea.Producto</td>
-                            <td class="text-right">@linea.CantUnidad</td>
-                            <td class="text-right">@linea.CantKg.ToString("N3")</td>
-                            <td class="text-center">@(linea.PesoBalanza ? "Sí" : "No")</td>
-                            <td class="text-center">@(linea.PermitirIngreso ? "Sí" : "No")</td>
+                            <td colspan="6" class="text-center text-muted">No hay líneas para este movimiento.</td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        foreach (var linea in Model.Lineas)
+                        {
+                            <tr>
+                                <td>@linea.Codigo</td>
+                                <td>@linea.Producto</td>
+                                <td class="text-right">@linea.CantUnidad</td>
+                                <td class="text-right">@linea.CantKg.ToString("N3")</td>
+                                <td class="text-center">@(linea.PesoBalanza ? "Sí" : "No")</td>
+                                <td class="text-center">@(linea.PermitirIngreso ? "Sí" : "No")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4 order-1 order-xl-2">
+        <div class="movimiento-detalle-meta-card">
+            <div class="movimiento-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.IdMovimiento</span></div>
+            <div class="movimiento-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
+            <div class="movimiento-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@creadoPor</span></div>
+            <div class="movimiento-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
+            <div class="movimiento-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@actualizadoPor</span></div>
+            <div class="movimiento-detalle-meta-row mb-0"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
+        </div>
     </div>
 </div>
+
+<style>
+    .movimiento-detalle-layout {
+        align-items: flex-start;
+    }
+
+    .movimiento-detalle-meta-card {
+        border: 1px solid #dee2e6;
+        border-radius: .5rem;
+        background: #fff;
+        padding: .85rem .95rem;
+    }
+
+    .movimiento-detalle-meta-row {
+        margin-bottom: .45rem;
+        line-height: 1.2;
+    }
+
+    html.dark-mode .movimiento-detalle-meta-card,
+    body.dark-mode .movimiento-detalle-meta-card {
+        background: #111827;
+        border-color: #374151;
+        color: #f3f4f6;
+    }
+
+    html.dark-mode .movimiento-detalle-meta-card .text-muted,
+    body.dark-mode .movimiento-detalle-meta-card .text-muted {
+        color: #9ca3af !important;
+    }
+
+    @@media (min-width: 1200px) {
+        .movimiento-detalle-meta-card {
+            position: sticky;
+            top: .25rem;
+        }
+    }
+</style>

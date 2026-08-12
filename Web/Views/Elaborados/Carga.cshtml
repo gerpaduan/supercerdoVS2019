@@ -185,7 +185,6 @@
                                 </div>
                             </div>
 
-                            <div id="cargaFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                             <div id="cargaWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
                             <div class="row align-items-end">
@@ -389,7 +388,7 @@
         };
     </script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=16")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=17")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script>
         // Solo en mobile: cada aviso de validacion queda entre su propio
@@ -400,7 +399,7 @@
             ".elaborado-col-codigo"
         );
         window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
-            "#cargaFeedback, #cargaWarning",
+            "#cargaWarning",
             ".ingrediente-col-codigo"
         );
     </script>

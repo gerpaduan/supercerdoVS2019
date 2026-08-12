@@ -63,8 +63,7 @@ namespace Web.Controllers
             DataTable dt = oCompraN.obtenerCompras(idSucursal, tipoFiltrado, texto ?? "", desde, hasta, null) ?? new DataTable();
             var model = new CompraIndexVm
             {
-                Compras = dt,
-                Detalles = ConstruirDetallesIndex(dt)
+                Compras = dt
             };
 
             ViewBag.Title = "Compras";
@@ -673,122 +672,87 @@ namespace Web.Controllers
             return total;
         }
 
-        private Dictionary<int, CompraIndexDetalleVm> ConstruirDetallesIndex(DataTable dt)
+        // Detalle de una compra (cabecera + lineas) para el expandible de Compras/Index.
+        // Se carga por AJAX solo cuando el usuario abre la fila (mismo patron que
+        // StockController.Detalle, ver docs/DECISIONS.md 2026-08-12): evita traer las lineas
+        // de TODAS las compras visibles en la lista de una sola vez.
+        public PartialViewResult Detalle(int idCompra)
         {
-            var detalles = new Dictionary<int, CompraIndexDetalleVm>();
-            if (dt == null)
-                return detalles;
-
-            foreach (DataRow row in dt.Rows)
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
             {
-                int idCompra = Convert.ToInt32(row["idCompra"]);
-                if (detalles.ContainsKey(idCompra))
-                    continue;
-
-                detalles[idCompra] = new CompraIndexDetalleVm
-                {
-                    IdCompra = idCompra,
-                    FechaCompra = LeerDateTimeNullable(row, "fechaCompra"),
-                    NumeroDocumento = LeerString(row, "nroRemito"),
-                    Proveedor = LeerString(row, "razonSocial"),
-                    TipoCompra = LeerString(row, "tipoCompra"),
-                    Cantidad = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]),
-                    CantidadMedias = LeerInt(row, "cantMedias"),
-                    Total = row["totalS"] == DBNull.Value ? 0f : Convert.ToSingle(row["totalS"]),
-                    Sucursal = LeerString(row, "sucursal", "Sucursal", "sucursalNombre"),
-                    Observaciones = LeerString(row, "observaciones"),
-                    Estado = LeerString(row, "estado"),
-                    EnCtaCte = LeerBool(row, "enCtaCte"),
-                    UsuarioCreacion = LeerString(row, "CreadoPor", "creadoPorNombre", "usuarioCreacion"),
-                    FechaCreacion = LeerDateTimeNullable(row, "creado", "fechaCreacion"),
-                    UsuarioActualizacion = LeerString(row, "ActualizadoPor", "actualizadoPorNombre", "usuarioActualizacion"),
-                    FechaActualizacion = LeerDateTimeNullable(row, "actualizado", "fechaActualizacion")
-                };
+                ViewBag.ComprasDetalleError = "La sesion expiró. Recargá la página para continuar.";
+                return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
             }
 
-            return detalles;
-        }
-
-        private static string LeerString(DataRow row, params string[] columnas)
-        {
-            if (row == null || row.Table == null || columnas == null)
-                return string.Empty;
-
-            foreach (var columna in columnas)
+            Entidades.Compra compra = oCompraN.findById_convertToCompra(idCompra);
+            if (compra == null || compra.IdCompra <= 0)
             {
-                if (!string.IsNullOrWhiteSpace(columna)
-                    && row.Table.Columns.Contains(columna)
-                    && row[columna] != DBNull.Value)
+                ViewBag.ComprasDetalleError = "No se encontraron los detalles de la compra.";
+                return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
+            }
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Compra.VerCompras, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                ViewBag.ComprasDetalleError = ConstruirMensajePermisoFecha(Permisos.Compra.VerCompras, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())
+                    ?? "No tiene permisos para consultar esta compra.";
+                return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
+            }
+
+            // compra.LineasCortes/LineasMediasReses (las del entity que arma findById_convertToCompra) NO
+            // quedan pobladas de forma confiable -- se vio en vivo que dan Cantidad/Total en 0. Se recalcula
+            // todo desde las MISMAS 2 fuentes que ya se usan en el resto del controller para este dato
+            // (convertCortesPorCompraToList para cortes, obtenerMediasPorCompra para medias -- ver linea ~520).
+            var cortes = oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>();
+            var lineas = cortes
+                .Select(corte => new StockLineaDetalleVm
                 {
-                    return Convert.ToString(row[columna]) ?? string.Empty;
+                    Codigo = corte.Corte != null ? corte.Corte.Codigo.ToString() : "-",
+                    Producto = corte.Corte != null ? corte.Corte.CorteDesc : "-",
+                    CantidadKgTexto = corte.CantKgs.ToString("N3"),
+                    Balanza = corte.Balanza,
+                    CreadoTexto = FormatearFechaHora(corte.Creado),
+                    CantidadKg = Convert.ToDecimal(corte.CantKgs)
+                })
+                .ToList();
+
+            float cantidadKg = cortes.Sum(c => c.CantKgs);
+            float totalImporte = cortes.Sum(c => c.CantKgs * c.precioKgs);
+
+            if (EsTipoMediaRes(compra.TipoCompra))
+            {
+                var medias = oCompraN.obtenerMediasPorCompra(compra.IdCompra);
+                foreach (DataRow mediaRow in medias.Rows)
+                {
+                    float kg = mediaRow["kgMedia"] != DBNull.Value ? Convert.ToSingle(mediaRow["kgMedia"]) : 0f;
+                    float precio = mediaRow["precioMedia"] != DBNull.Value ? Convert.ToSingle(mediaRow["precioMedia"]) : 0f;
+                    cantidadKg += kg;
+                    totalImporte += kg * precio;
                 }
             }
 
-            return string.Empty;
-        }
-
-        private static int LeerInt(DataRow row, params string[] columnas)
-        {
-            if (row == null || row.Table == null || columnas == null)
-                return 0;
-
-            foreach (var columna in columnas)
+            var detalle = new CompraIndexDetalleVm
             {
-                if (!string.IsNullOrWhiteSpace(columna)
-                    && row.Table.Columns.Contains(columna)
-                    && row[columna] != DBNull.Value)
-                {
-                    int valor;
-                    if (int.TryParse(Convert.ToString(row[columna]), out valor))
-                        return valor;
-                }
-            }
+                IdCompra = compra.IdCompra,
+                FechaCompra = compra.FechaCompra,
+                NumeroDocumento = compra.NroRemito ?? "",
+                Proveedor = compra.Proveedor != null ? compra.Proveedor.RazonSocial : "",
+                TipoCompra = compra.TipoCompra ?? "",
+                Cantidad = cantidadKg,
+                CantidadMedias = compra.CantMedias ?? 0,
+                Total = totalImporte,
+                Sucursal = compra.Sucursal != null ? compra.Sucursal.SucursalNombre : "",
+                Observaciones = compra.Observaciones ?? "",
+                Estado = compra.Estado ?? "",
+                EnCtaCte = compra.EnCtaCte,
+                UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
+                FechaCreacion = compra.Creado,
+                UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
+                FechaActualizacion = compra.Actualizado,
+                Lineas = lineas
+            };
 
-            return 0;
-        }
-
-        private static bool LeerBool(DataRow row, params string[] columnas)
-        {
-            if (row == null || row.Table == null || columnas == null)
-                return false;
-
-            foreach (var columna in columnas)
-            {
-                if (!string.IsNullOrWhiteSpace(columna)
-                    && row.Table.Columns.Contains(columna)
-                    && row[columna] != DBNull.Value)
-                {
-                    bool valor;
-                    if (bool.TryParse(Convert.ToString(row[columna]), out valor))
-                        return valor;
-
-                    int numero;
-                    if (int.TryParse(Convert.ToString(row[columna]), out numero))
-                        return numero != 0;
-                }
-            }
-
-            return false;
-        }
-
-        private static DateTime? LeerDateTimeNullable(DataRow row, params string[] columnas)
-        {
-            if (row == null || row.Table == null || columnas == null)
-                return null;
-
-            foreach (var columna in columnas)
-            {
-                if (!string.IsNullOrWhiteSpace(columna)
-                    && row.Table.Columns.Contains(columna)
-                    && row[columna] != DBNull.Value)
-                {
-                    DateTime valor;
-                    if (DateTime.TryParse(Convert.ToString(row[columna]), out valor))
-                        return valor;
-                }
-            }
-
-            return null;
+            return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", detalle);
         }
 
         private List<CompraLineaDetalleVm> ConstruirLineasCompra(Entidades.Compra compra)

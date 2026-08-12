@@ -288,6 +288,10 @@ namespace Web.Controllers
             {
                 IdMovimiento = id,
                 Observaciones = movimiento != null ? movimiento.Observaciones ?? "" : "",
+                Creado = movimiento != null ? movimiento.Creado : null,
+                CreadoPor = movimiento != null && movimiento.CreadoPor != null ? movimiento.CreadoPor.Nombre ?? "" : "",
+                Actualizado = movimiento != null ? movimiento.Actualizado : null,
+                ActualizadoPor = movimiento != null && movimiento.ActualizadoPor != null ? movimiento.ActualizadoPor.Nombre ?? "" : "",
                 Lineas = lineas.Select(MapLinea).ToList()
             };
 

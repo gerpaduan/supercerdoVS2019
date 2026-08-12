@@ -1,0 +1,118 @@
+@model Web.Models.CompraIndexDetalleVm
+@using System
+
+@{
+    string detalleError = ViewBag.ComprasDetalleError as string ?? "";
+}
+
+@if (!string.IsNullOrWhiteSpace(detalleError))
+{
+    <div class="text-danger">@detalleError</div>
+}
+else if (Model == null)
+{
+    <div class="text-muted">No se pudieron cargar los detalles de la compra.</div>
+}
+else
+{
+    var numeroDocumento = !string.IsNullOrWhiteSpace(Model.NumeroDocumento) ? Model.NumeroDocumento : "-";
+    var proveedor = !string.IsNullOrWhiteSpace(Model.Proveedor) ? Model.Proveedor : "-";
+    var tipoCompra = !string.IsNullOrWhiteSpace(Model.TipoCompra) ? Model.TipoCompra : "-";
+    var sucursal = !string.IsNullOrWhiteSpace(Model.Sucursal) ? Model.Sucursal : "-";
+    var observaciones = !string.IsNullOrWhiteSpace(Model.Observaciones) ? Model.Observaciones : "-";
+    var estado = !string.IsNullOrWhiteSpace(Model.Estado) ? Model.Estado : "-";
+    var usuarioCreacion = !string.IsNullOrWhiteSpace(Model.UsuarioCreacion) ? Model.UsuarioCreacion : "-";
+    var fechaCreacion = Model.FechaCreacion.HasValue ? Model.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+    var usuarioActualizacion = !string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) ? Model.UsuarioActualizacion : "-";
+    var fechaActualizacion = Model.FechaActualizacion.HasValue ? Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+
+    <div class="row compra-detalle-layout">
+        <div class="col-12 col-xl-8 order-2 order-xl-1">
+            <div class="table-responsive mt-3 mt-xl-0">
+                <table class="table table-sm table-hover mb-0 compra-detalle-tabla">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Codigo producto</th>
+                            <th>Producto</th>
+                            <th class="text-right">Cantidad / kg</th>
+                            <th class="text-center">Balanza</th>
+                            <th>Creado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Lineas == null || Model.Lineas.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No hay lineas para esta compra.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var linea in Model.Lineas)
+                            {
+                                <tr>
+                                    <td>@linea.Codigo</td>
+                                    <td>@linea.Producto</td>
+                                    <td class="text-right">@linea.CantidadKgTexto</td>
+                                    <td class="text-center">@(linea.Balanza ? "Si" : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(linea.CreadoTexto) ? linea.CreadoTexto : "-")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4 order-1 order-xl-2">
+            <div class="compra-detalle-meta-card">
+                <div class="compra-detalle-meta-row"><span class="text-muted">ID Compra:</span> <span class="font-weight-bold">@Model.IdCompra</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Nro.Remito/Factura:</span> <span class="font-weight-bold">@numeroDocumento</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Proveedor:</span> <span class="font-weight-bold">@proveedor</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">TipoCompra:</span> <span class="font-weight-bold">@tipoCompra</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Cantidad:</span> <span class="font-weight-bold">@Model.Cantidad.ToString("N2")</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">CantidadMedias:</span> <span class="font-weight-bold">@Model.CantidadMedias</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Total:</span> <span class="font-weight-bold">@Model.Total.ToString("N2")</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Cuenta corriente:</span> <span class="font-weight-bold">@(Model.EnCtaCte ? "Si" : "No")</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Estado:</span> <span class="font-weight-bold">@estado</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@sucursal</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
+                <div class="compra-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
+                <div class="compra-detalle-meta-row mb-0"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .compra-detalle-layout {
+            align-items: flex-start;
+        }
+
+        .compra-detalle-meta-card {
+            border: 1px solid #dee2e6;
+            border-radius: .5rem;
+            background: #fff;
+            padding: .85rem .95rem;
+        }
+
+        .compra-detalle-meta-row {
+            margin-bottom: .45rem;
+            line-height: 1.2;
+        }
+
+        .compra-detalle-tabla thead th {
+            font-size: .76rem;
+            padding-top: .3rem;
+            padding-bottom: .3rem;
+        }
+
+        @@media (min-width: 1200px) {
+            .compra-detalle-meta-card {
+                position: sticky;
+                top: .25rem;
+            }
+        }
+    </style>
+}

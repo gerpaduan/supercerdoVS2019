@@ -60,8 +60,7 @@
             personaTimer: null,
             productoTimer: null,
             draftTimer: null,
-            loadingPersonaModal: false,
-            ultimoAgregadoTimer: null
+            loadingPersonaModal: false
         };
     }
 
@@ -409,23 +408,6 @@
         setCurrentProductPrice($form, producto && producto.precio !== undefined && producto.precio !== null ? producto.precio : 0);
         $form.find('#txtPrecioKg').val('');
         syncPriceHelpers($form, 'producto');
-    }
-
-    function showUltimoAgregado($form, message, alertSelector) {
-        var state = getState($form);
-        var $alert = $form.find(alertSelector || '#alertUltimoAgregadoProducto');
-        if (!$alert.length) return;
-
-        window.clearTimeout(state.ultimoAgregadoTimer);
-        $alert.stop(true, true)
-            .removeClass('alert-info')
-            .addClass('alert-success')
-            .text(message)
-            .fadeIn(120);
-
-        state.ultimoAgregadoTimer = window.setTimeout(function () {
-            $alert.fadeOut(250);
-        }, 2600);
     }
 
     function recalculate($form) {
@@ -793,7 +775,8 @@
         state.lineas.push(linea);
         renderLineas($form);
         rebuildHiddenInputs($form);
-        showUltimoAgregado($form, 'Agregado correctamente: ' + linea.corteNombre + ' | Cantidad ' + formatNumber(linea.cantKgs) + ' | Precio ' + formatNumber(linea.precioKg), '#alertUltimoAgregadoProducto');
+        // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
+        // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
         scheduleDraft($form);
         if (isContinuousProductMode($form)) {
@@ -815,10 +798,12 @@
         };
 
         if (linea.kgMedia <= 0) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
             alert('Ingrese kilos mayores a cero.');
             return;
         }
         if (linea.precioMedia <= 0) {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
             alert('Ingrese un precio mayor a cero.');
             return;
         }
@@ -826,7 +811,9 @@
         state.lineas.push(linea);
         renderLineas($form);
         rebuildHiddenInputs($form);
-        showUltimoAgregado($form, 'Agregado correctamente: Media | Kg ' + formatNumber(linea.kgMedia) + ' | Precio ' + formatNumber(linea.precioMedia), '#alertUltimoAgregadoMedia');
+        // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
+        // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
+        window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
         scheduleDraft($form);
         if (isContinuousMediaMode($form)) {
             clearMediaResCantidadOnly($form);

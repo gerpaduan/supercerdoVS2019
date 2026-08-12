@@ -2317,6 +2317,7 @@
     <Content Include="Scripts\app\ventas-expendios-pos.js" />
     <Content Include="Scripts\carnisys.balanza.js" />
     <Content Include="Views\Compras\_ComprasTabla.cshtml" />
+    <Content Include="Views\Compras\_ComprasDetalle.cshtml" />
     <Content Include="Views\Compras\Index.cshtml" />
     <Content Include="Views\Compras\Editar.cshtml" />
     <Content Include="Views\Compras\Lineas.cshtml" />

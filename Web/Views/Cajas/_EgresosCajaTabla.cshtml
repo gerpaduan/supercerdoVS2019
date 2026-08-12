@@ -216,6 +216,8 @@
                 <th>Tipo</th>
                 <th>Descripcion</th>
                 <th class="text-right">Monto</th>
+                <th class="text-center" style="width:70px;">Detalle</th>
+                <th>Sucursal</th>
                 <th class="text-nowrap">Acciones</th>
             </tr>
         </thead>
@@ -223,7 +225,7 @@
             @if (Model == null || Model.Rows.Count == 0)
             {
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No se encontraron egresos.</td>
+                    <td colspan="7" class="text-center text-muted py-4">No se encontraron egresos.</td>
                 </tr>
             }
             else
@@ -273,6 +275,14 @@
                             }
                         </td>
                         <td class="text-right text-nowrap">$ @Monto(row)</td>
+                        <td class="text-center">
+                            @{ var detalleTexto = Valor(row, "Detalle"); }
+                            @if (!string.IsNullOrWhiteSpace(detalleTexto))
+                            {
+                                <span class="badge badge-pill badge-info" title="@detalleTexto">1</span>
+                            }
+                        </td>
+                        <td>@sucursalFila</td>
                         <td class="text-nowrap">
                             <button type="button"
                                     class="btn btn-sm btn-link text-decoration-none btn-detalle-egreso"
@@ -300,37 +310,39 @@
                         </td>
                     </tr>
                     <tr class="egreso-detalle-row">
-                        <td colspan="5" class="p-0">
+                        <td colspan="7" class="p-0">
                             <div id="@detalleId" class="collapse egreso-detalle-collapse">
-                                <div class="p-3 bg-light border-top">
-                                    <div class="row">
-                                        <div class="col-md-6 mb-2">
+                                <div class="p-3 border-top egreso-detalle-wrap">
+                                    <div class="egreso-detalle-meta-card">
+                                        <div class="egreso-detalle-meta-row egreso-detalle-principal">
                                             <span class="text-muted d-block">Detalle</span>
-                                            <strong>@Valor(row, "Detalle")</strong>
+                                            <span class="egreso-detalle-valor-principal">@(string.IsNullOrWhiteSpace(Valor(row, "Detalle")) ? "-" : Valor(row, "Detalle"))</span>
                                         </div>
-                                        <div class="col-md-3 mb-2">
-                                            <span class="text-muted d-block">Sucursal</span>
-                                            <strong>@sucursalFila</strong>
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <span class="text-muted d-block">Creado por</span>
-                                            <strong>@Valor(row, "Creado Por")</strong>
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <span class="text-muted d-block">Creado</span>
-                                            <strong>@Fecha(row, "Creado")</strong>
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <span class="text-muted d-block">Actualizado por</span>
-                                            <strong>@Valor(row, "Actualizado Por")</strong>
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <span class="text-muted d-block">Actualizado</span>
-                                            <strong>@Fecha(row, "Actualizado")</strong>
-                                        </div>
-                                        <div class="col-md-3 mb-2">
-                                            <span class="text-muted d-block">ID</span>
-                                            <strong>@id</strong>
+                                        <div class="row mt-2">
+                                            <div class="col-md-3 mb-2">
+                                                <span class="text-muted d-block">Sucursal</span>
+                                                <span class="font-weight-bold">@sucursalFila</span>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <span class="text-muted d-block">Creado por</span>
+                                                <span class="font-weight-bold">@Valor(row, "Creado Por")</span>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <span class="text-muted d-block">Creado</span>
+                                                <span class="font-weight-bold">@Fecha(row, "Creado")</span>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <span class="text-muted d-block">Actualizado por</span>
+                                                <span class="font-weight-bold">@Valor(row, "Actualizado Por")</span>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <span class="text-muted d-block">Actualizado</span>
+                                                <span class="font-weight-bold">@Fecha(row, "Actualizado")</span>
+                                            </div>
+                                            <div class="col-md-3 mb-2 mb-md-0">
+                                                <span class="text-muted d-block">ID</span>
+                                                <span class="font-weight-bold">@id</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

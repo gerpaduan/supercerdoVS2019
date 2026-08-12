@@ -112,7 +112,6 @@
                                 </div>
                             </div>
 
-                            <div id="movimientoFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
                             <div id="movimientoWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
 
                             @Html.Partial("~/Views/Shared/_ScannerCodigoBarra.cshtml")
@@ -659,7 +658,7 @@
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=27")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=29")"></script>
     <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script>
@@ -667,7 +666,7 @@
         // producto (a la vista del usuario, en vez de arriba de todo,
         // detras de la camara; en desktop no se mueve).
         window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
-            "#movimientoFeedback, #movimientoWarning",
+            "#movimientoWarning",
             ".movimiento-col-codigo"
         );
     </script>

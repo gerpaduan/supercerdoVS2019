@@ -34,17 +34,34 @@
 }
 
 <style>
-    #modalStockSucursales .modal-body { padding: .85rem 1rem; }
-    #modalStockSucursales .stock-header-linea { font-size: .95rem; }
+    #modalStockSucursales .modal-body { padding: .7rem .85rem; }
+
+    #modalStockSucursales .stock-header-producto {
+        background: #f8f9fa;
+        border-radius: .4rem;
+        padding: .5rem .7rem;
+    }
+    #modalStockSucursales .stock-header-nombre { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+    #modalStockSucursales .stock-header-codigo {
+        font-size: .76rem;
+        font-weight: 600;
+        padding: .3rem .55rem;
+        letter-spacing: .02em;
+    }
+    html.dark-mode #modalStockSucursales .stock-header-producto,
+    body.dark-mode #modalStockSucursales .stock-header-producto { background: #1f2937; }
+
     #modalStockSucursales .table-sm td,
-    #modalStockSucursales .table-sm th { padding: .3rem .5rem; font-size: .85rem; }
-    #modalStockSucursales .punto-stock-fila { padding: .35rem .6rem; font-size: .9rem; }
-    #modalStockSucursales #bloqueEditarPuntoStock { padding: .6rem .75rem; }
+    #modalStockSucursales .table-sm th { padding: .2rem .4rem; font-size: .78rem; }
+    #modalStockSucursales .punto-stock-fila { padding: .25rem .5rem; font-size: .82rem; }
+    #modalStockSucursales #bloqueEditarPuntoStock { padding: .5rem .65rem; }
+    #modalStockSucursales .js-input-punto-stock { max-width: 90px; padding: .18rem .4rem; }
+    #modalStockSucursales .custom-control-label { font-size: .85rem; }
 </style>
 
-<div class="d-flex align-items-baseline flex-wrap mb-2 stock-header-linea" style="gap:.5rem;">
-    <span class="h6 mb-0">@(!string.IsNullOrWhiteSpace(productoNombre) ? productoNombre : "-")</span>
-    <span class="text-muted">| Cód: @(!string.IsNullOrWhiteSpace(productoCodigo) ? productoCodigo : "-")</span>
+<div class="d-flex align-items-center flex-wrap mb-2 stock-header-linea stock-header-producto" style="gap:.6rem;">
+    <span class="stock-header-nombre">@(!string.IsNullOrWhiteSpace(productoNombre) ? productoNombre : "-")</span>
+    <span class="badge badge-secondary stock-header-codigo">Cód. @(!string.IsNullOrWhiteSpace(productoCodigo) ? productoCodigo : "-")</span>
 </div>
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -126,7 +143,7 @@ else
                 <div class="list-group-item d-flex align-items-center justify-content-between flex-wrap punto-stock-fila js-fila-punto-stock" data-id-sucursal="@detalle.IdSucursal">
                     <span class="mr-2">@detalle.Sucursal</span>
                     <input type="number" min="0" step="1" inputmode="numeric"
-                           class="form-control form-control-sm js-input-punto-stock" style="max-width: 120px;"
+                           class="form-control form-control-sm js-input-punto-stock"
                            value="@(detalle.PuntoStock.ToString("F0", CultureInfo.InvariantCulture))">
                 </div>
             }
@@ -137,6 +154,7 @@ else
         </button>
     </div>
 
+    <small class="text-muted d-block mb-1 text-uppercase font-weight-bold" style="font-size:.68rem; letter-spacing:.03em;">Detalle por sucursal</small>
     <div class="table-responsive js-sync-scroll-body">
         <table class="table table-sm table-bordered mb-0 js-sticky-first-col">
             <thead class="thead-light">
@@ -302,7 +320,8 @@ else
                         icon: "success",
                         title: "Se guardaron los puntos de stock",
                         timer: 2000,
-                        timerProgressBar: true
+                        timerProgressBar: true,
+                        showConfirmButton: false
                     });
 
                     if (window.modoLotePuntoStockActivo && typeof avanzarSiguienteProductoLotePuntoStock === "function") {

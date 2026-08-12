@@ -42,6 +42,10 @@ namespace Web.Models
 
         public int IdMovimiento { get; set; }
         public string Observaciones { get; set; }
+        public DateTime? Creado { get; set; }
+        public string CreadoPor { get; set; }
+        public DateTime? Actualizado { get; set; }
+        public string ActualizadoPor { get; set; }
         public List<MovimientoLineaVm> Lineas { get; set; }
     }
 }

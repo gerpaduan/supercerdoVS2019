@@ -280,6 +280,14 @@
                 }
             });
 
+            document.addEventListener('dblclick', function (e) {
+                if (e.target.closest('a, button')) return;
+                var row = e.target.closest('tr');
+                if (!row) return;
+                var btnDetalle = row.querySelector('.btn-detalles-formula');
+                if (btnDetalle) btnDetalle.click();
+            });
+
             var switchVista = document.getElementById('switchVistaCompletaFormulas');
             if (switchVista) {
                 switchVista.addEventListener('change', function () {
