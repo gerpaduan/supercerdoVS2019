@@ -35,12 +35,16 @@ namespace Web.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // Evita un loop infinito de redirects si la excepcion ocurre en el Home mismo.
+        // Evita un loop infinito de redirects si la excepcion ocurre en el destino del redirect
+        // (Home/Index) -- NO en la raiz del sitio en general: desde que existe la ruta "PublicHome"
+        // (RouteConfig.cs), "/" apunta a Landing/Index, no a Home/Index. Si se tratara "/" como
+        // loop, un error en Landing mostraria el texto de fallback en vez de poder redirigir a
+        // Home (que es una pagina distinta y probablemente funcional).
         private static bool EsRutaRaiz(string rawUrl)
         {
             if (string.IsNullOrWhiteSpace(rawUrl)) return true;
             var path = rawUrl.Split('?')[0].TrimEnd('/');
-            return path == "" || path.Equals("/Home", StringComparison.OrdinalIgnoreCase)
+            return path.Equals("/Home", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
         }
     }
