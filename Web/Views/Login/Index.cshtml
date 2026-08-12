@@ -1,4 +1,4 @@
-﻿@model Web.Models.LoginIndexVm
+@model Web.Models.LoginIndexVm
 @{
     Layout = null;
 }
@@ -8,110 +8,100 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>CarniSysWeb - Login</title>
+    <meta name="theme-color" content="#062d63">
+    <title>Ingresar a CARNISYS</title>
     <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
-    <style>
-        .login-logo {
-            width: 100%;
-            max-width: 100%;
-            display: block;
-            margin-bottom: 20px;
-        }
-
-        .login-links {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-            gap: .75rem;
-            flex-wrap: wrap;
-        }
-
-        .login-links a {
-            font-size: .9rem;
-        }
-
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="@Url.Content("~/Content/css/carnisys-login.css")" rel="stylesheet" />
 </head>
-<body class="bg-gradient-primary">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xl-6 col-lg-7 col-md-9">
-                <div class="card o-hidden border-0 shadow-lg my-5">
-                    <div class="card-body p-5">
-                        <img src="@Url.Content("~/Content/img/CarniSys_Login.png")" alt="Logo" class="login-logo" />
+<body class="carnisys-login">
+    <main class="login-page">
+        <section class="login-brand-panel" aria-label="Acerca de CARNISYS">
+            <a href="@Url.Action("Index", "Landing")" class="login-brand" aria-label="Volver al inicio de CARNISYS">
+                <img src="@Url.Content("~/Content/img/CarniSys_Login.png")" alt="CARNISYS" />
+            </a>
 
+            <div class="brand-content">
+                <span class="brand-eyebrow"><i class="fas fa-balance-scale" aria-hidden="true"></i> Gestión pensada para comercios</span>
+                <h1>Tu comercio,<br /><strong>más ágil</strong> cada día.</h1>
+                <p>CARNISYS conecta tu venta con la balanza para que trabajes rápido, con control y sin complicaciones.</p>
 
-                        @if (!string.IsNullOrWhiteSpace(Model.Success))
-                        {
-                            <div class="alert alert-success">
-                                @Model.Success
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(Model.Error))
-                        {
-                            <div class="alert alert-danger">
-                                @Model.Error
-                            </div>
-                        }
-
-                        @if (!ViewData.ModelState.IsValid)
-                        {
-                            <div class="alert alert-danger">
-                                @Html.ValidationSummary(false)
-                            </div>
-                        }
-
-                        @using (Html.BeginForm("Index", "Login", FormMethod.Post, new { @class = "user", novalidate = "novalidate" }))
-                        {
-                            @Html.AntiForgeryToken()
-                            @Html.HiddenFor(m => m.ReturnUrl)
-
-                            <div id="locationStatus" class="location-status warn" style="display:none;">
-
-                            </div>
-
-                            <div class="form-group">
-                                @Html.TextBoxFor(
-                                    m => m.Usuario,
-                                    new
-                                    {
-                                        @class = "form-control form-control-user",
-                                        placeholder = "Usuario o Email",
-                                        autocomplete = "username"
-                                    })
-                                @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "text-danger small d-block mt-1" })
-                            </div>
-
-                            <div class="form-group">
-                                @Html.PasswordFor(
-                                    m => m.Clave,
-                                    new
-                                    {
-                                        @class = "form-control form-control-user",
-
-                                        autocomplete = "current-password"
-                                    })
-                                @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "text-danger small d-block mt-1" })
-                            </div>
-
-                            <button type="submit" class="btn btn-primary btn-user btn-block">
-                                Ingresar
-                            </button>
-
-                            <div class="login-links">
-
-                                <span class="text-muted small">Acceso seguro</span>
-                            </div>
-                        }
-                    </div>
+                <div class="brand-points">
+                    <div><i class="fas fa-check-circle" aria-hidden="true"></i><span>Lectura automática del peso desde la computadora.</span></div>
+                    <div><i class="fas fa-check-circle" aria-hidden="true"></i><span>Más de 15 años acompañando comercios.</span></div>
+                    <div><i class="fas fa-check-circle" aria-hidden="true"></i><span>Simple de aprender, para personas de todas las edades.</span></div>
                 </div>
             </div>
-        </div>
-    </div>
+
+            <div class="brand-footer">
+                <i class="fas fa-store" aria-hidden="true"></i>
+                <span>Creado desde la experiencia real de comercio.</span>
+            </div>
+        </section>
+
+        <section class="login-form-panel" aria-labelledby="login-title">
+            <div class="login-form-wrap">
+                <a href="@Url.Action("Index", "Landing")" class="back-home"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver al inicio</a>
+
+                <div class="login-heading">
+                    <span class="login-kicker">Acceso al sistema</span>
+                    <h2 id="login-title">Bienvenido nuevamente</h2>
+                    <p>Ingresá con tus datos para continuar.</p>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Success))
+                {
+                    <div class="login-alert login-alert-success" role="status"><i class="fas fa-check-circle" aria-hidden="true"></i> @Model.Success</div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Error))
+                {
+                    <div class="login-alert login-alert-error" role="alert"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> @Model.Error</div>
+                }
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="login-alert login-alert-error" role="alert">
+                        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                        @Html.ValidationSummary(false)
+                    </div>
+                }
+
+                @using (Html.BeginForm("Index", "Login", FormMethod.Post, new { @class = "carnisys-login-form", novalidate = "novalidate" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.ReturnUrl)
+
+                    <div id="locationStatus" class="location-status" style="display:none;"></div>
+
+                    <div class="login-field">
+                        @Html.LabelFor(m => m.Usuario)
+                        <div class="input-shell">
+                            <i class="far fa-user" aria-hidden="true"></i>
+                            @Html.TextBoxFor(m => m.Usuario, new { placeholder = "Usuario o email", autocomplete = "username", autofocus = "autofocus" })
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "field-error" })
+                    </div>
+
+                    <div class="login-field">
+                        @Html.LabelFor(m => m.Clave)
+                        <div class="input-shell">
+                            <i class="fas fa-lock" aria-hidden="true"></i>
+                            @Html.PasswordFor(m => m.Clave, new { placeholder = "Contraseña", autocomplete = "current-password" })
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "field-error" })
+                    </div>
+
+                    <button type="submit" class="login-submit">Ingresar <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                }
+
+                <div class="login-support">
+                    <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                    <span>¿Necesitás ayuda? <a href="https://wa.me/5493482547897" target="_blank" rel="noopener">Escribinos por WhatsApp</a></span>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script src="@Url.Content("~/Scripts/jquery-3.4.1.min.js")"></script>
     <script src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
@@ -123,74 +113,19 @@
             var longitud = document.getElementById("Longitud");
             var precision = document.getElementById("PrecisionMetros");
 
-            if (!status || !latitud || !longitud || !precision) {
+            if (!status || !latitud || !longitud || !precision || !navigator.geolocation) {
                 return;
             }
 
-            function setStatus(css, message) {
-                if (!status) {
-                    return;
-                }
-
-                status.className = "location-status " + css;
-                status.textContent = message;
-            }
-
-            function setCoordinates(position) {
+            navigator.geolocation.getCurrentPosition(function (position) {
                 if (!position || !position.coords) {
-
                     return;
                 }
 
-                latitud.value = typeof position.coords.latitude === "number"
-                    ? position.coords.latitude.toFixed(7)
-                    : "";
-                longitud.value = typeof position.coords.longitude === "number"
-                    ? position.coords.longitude.toFixed(7)
-                    : "";
-                precision.value = typeof position.coords.accuracy === "number"
-                    ? position.coords.accuracy.toFixed(2)
-                    : "";
-
-
-                if (precision.value) {
-
-                }
-
-                setStatus("ok", mensaje);
-            }
-
-            function onError(error) {
-
-
-                if (error && error.code === 1) {
-
-                } else if (error && error.code === 2) {
-
-                } else if (error && error.code === 3) {
-
-                }
-
-                setStatus("error", mensaje);
-            }
-
-            if (!window.isSecureContext) {
-
-            }
-
-            if (!navigator.geolocation) {
-
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                setCoordinates,
-                onError,
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                });
+                latitud.value = typeof position.coords.latitude === "number" ? position.coords.latitude.toFixed(7) : "";
+                longitud.value = typeof position.coords.longitude === "number" ? position.coords.longitude.toFixed(7) : "";
+                precision.value = typeof position.coords.accuracy === "number" ? position.coords.accuracy.toFixed(2) : "";
+            }, function () { }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
         })();
     </script>
 </body>

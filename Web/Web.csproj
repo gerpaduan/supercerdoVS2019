@@ -137,6 +137,7 @@
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\FinanzasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\LandingController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\MovimientosController.cs" />
     <Compile Include="Controllers\ParametrosController.cs" />
@@ -220,7 +221,9 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\css\ctasctes.css" />
     <Content Include="Content\css\compras-editar.css" />
+    <Content Include="Content\css\carnisys-login.css" />
     <Content Include="Content\css\custom.css" />
+    <Content Include="Content\css\carnisys-home.css" />
     <Content Include="Content\css\dark-mode.css" />
     <Content Include="Content\downloads\Carnisys.Balanza.Agent.zip" />
     <Content Include="Content\downloads\CarniSys.PrintAgent.zip" />
@@ -229,6 +232,8 @@
     <Content Include="Content\css\sb-admin-2.min.css" />
     <Content Include="Content\img\CarniSys_Login.png" />
     <Content Include="Content\img\CarniSys_Logo_sinSlogan.png" />
+    <Content Include="Content\img\carnisys-home-experiencia.jpg" />
+    <Content Include="Content\img\carnisys-home-hero.jpg" />
     <Content Include="Content\img\undraw_posting_photo.svg" />
     <Content Include="Content\img\undraw_profile.svg" />
     <Content Include="Content\img\undraw_profile_1.svg" />
@@ -253,6 +258,7 @@
     <Content Include="Scripts\app\calculadora-billetes.js" />
     <Content Include="Scripts\app\calculadora-billetes-targets.js" />
     <Content Include="Scripts\app\home-dashboard.js" />
+    <Content Include="Scripts\app\carnisys-home.js" />
     <Content Include="Scripts\app\table-scroll-sync.js" />
     <Content Include="Content\sounds\focus-beep.wav" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js" />
@@ -2135,6 +2141,7 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Productos.cshtml" />
     <Content Include="Views\Home\Utilidades.cshtml" />
+    <Content Include="Views\Landing\Index.cshtml" />
     <Content Include="Views\Productos\Index.cshtml" />
     <Content Include="Views\Productos\Marcas.cshtml" />
     <Content Include="Views\Productos\Tipos.cshtml" />
