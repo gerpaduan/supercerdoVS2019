@@ -248,6 +248,10 @@
         };
 
         function addProduct() {
+            // Mismo motivo que el guard de handleEnter() en pos-product.js: con un modal abierto
+            // (ej. Compras) el backdrop bloquea el mouse pero no el teclado, y esta funcion es
+            // alcanzable tanto por Enter fisico como por el teclado virtual en pantalla.
+            if ($(".modal.show").length) return;
             if (soloFormaPago) return;
             if (!asegurarFormaPagoAntesDeAgregar()) return;
             const productoSeleccionado = options.getProductoSeleccionado();

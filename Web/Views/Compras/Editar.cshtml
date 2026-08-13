@@ -145,7 +145,17 @@
                 <hr />
 
                 <div id="panelLineaCorte" class="compra-linea-panel" @(mostrarMediaInicial ? new HtmlString("style=\"display:none;\"") : null)>
-                    <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar producto</h6>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h6 class="font-weight-bold text-uppercase text-muted mb-0">Agregar producto</h6>
+                        <div class="d-flex flex-wrap align-items-center gap-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
+                                <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
+                            </button>
+                            <span class="small text-muted d-none" id="lblCapturaRespaldoActiva" title="Se guarda una captura de la pantalla completa en tu carpeta elegida cada vez que agregás o quitás un producto">
+                                <i class="fas fa-shield-alt mr-1 text-success"></i> Respaldo automático activado
+                            </span>
+                        </div>
+                    </div>
                     <div class="row align-items-end mb-3">
                         <div class="col-12 col-lg-8">
                             <div class="custom-control custom-switch">
@@ -468,16 +478,34 @@
 @if (!Model.DesdePos)
 {
     @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+
+    <div class="modal fade" id="modalPersonaCrearCompra" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo proveedor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" id="modalPersonaCrearCompraBody">
+                    <div class="text-center text-muted py-4">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @if (Model.DesdePos)
 {
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/compras.js?v=25")"></script>
+    <script src="@Url.Content("~/Scripts/app/compras.js?v=27")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
     <script>
         (function () {
+            window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
             if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
                 return;
             }
@@ -495,6 +523,8 @@
                     guardar: "@Url.Action("Guardar", "Compras")",
                     personaBuscarModal: "@Url.Action("Buscar", "Personas")",
                     personaListar: "@Url.Action("Listar", "Personas")",
+                    personaCrear: "@Url.Action("PersonaModal", "Personas")",
+                    personaGuardarCrear: "@Url.Action("GuardarPersonaModal", "Personas")",
                     buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
                     editarLayout: "@Url.Action("Editar", "Compras")",
                         nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
@@ -519,10 +549,14 @@ else
 {
     @section Scripts {
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=25")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=27")"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+        <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+        <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
         <script>
             (function () {
+                window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
                 if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
                     return;
                 }
@@ -540,6 +574,8 @@ else
                         guardar: "@Url.Action("Guardar", "Compras")",
                         personaBuscarModal: "@Url.Action("Buscar", "Personas")",
                         personaListar: "@Url.Action("Listar", "Personas")",
+                        personaCrear: "@Url.Action("PersonaModal", "Personas")",
+                        personaGuardarCrear: "@Url.Action("GuardarPersonaModal", "Personas")",
                         buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
                         editarLayout: "@Url.Action("Editar", "Compras")",
                         nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"

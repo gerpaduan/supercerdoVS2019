@@ -2642,6 +2642,7 @@
 
                 $("#stockLoading").addClass("d-none");
                 $("#contenedorStockSucursalesProducto").html(html || '<div class="text-danger text-center py-4">No se pudo obtener el stock.</div>');
+                actualizarContadorLoteStock();
             },
             error: function () {
                 $("#stockLoading").addClass("d-none");
@@ -2656,6 +2657,31 @@
             const boton = fila.querySelector(".js-btn-stock-sucursales");
             return !!(boton && !boton.disabled);
         });
+    }
+
+    // Contador "Producto X de Y" en modo lote -- 100% client-side, no requiere que el partial ni
+    // el controller lo conozcan (ver docs/DECISIONS.md). Se inyecta desde afuera dentro de
+    // .stock-header-producto, que ya existe en _StockPorSucursalesProductoModal.cshtml.
+    function actualizarContadorLoteStock() {
+        const $header = $("#contenedorStockSucursalesProducto .stock-header-producto");
+        $header.find(".js-contador-lote-stock").remove();
+
+        if (!window.modoLotePuntoStockActivo || !$header.length) {
+            return;
+        }
+
+        const filas = getVisibleStockRows();
+        const idActual = Number(stockModalState.currentId);
+        const indexActual = filas.findIndex(fila => Number(fila.dataset.id) === idActual);
+        if (indexActual < 0) {
+            return;
+        }
+
+        $header.append(
+            $("<span>")
+                .addClass("badge badge-light ml-2 js-contador-lote-stock")
+                .text("Producto " + (indexActual + 1) + " de " + filas.length)
+        );
     }
 
     function avanzarSiguienteProductoLotePuntoStock() {

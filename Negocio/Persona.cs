@@ -32,9 +32,14 @@ namespace Negocio
             oPersonaD.addOrEditPersona(oPersonaE);
         }
 
+        public int addOrEditPersonaConId(Entidades.Persona oPersonaE)
+        {
+            return oPersonaD.addOrEditPersonaConId(oPersonaE);
+        }
+
         public void eliminarPersona(Entidades.Persona oPersonaE)
         {
-            
+
             oPersonaD.eliminarPersona(oPersonaE);
         }
 

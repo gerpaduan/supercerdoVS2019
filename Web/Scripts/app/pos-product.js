@@ -340,6 +340,11 @@
         // Si el foco esta en cantidad, agrega.
         // Si el foco esta en codigo, busca o intenta auto-agregado.
         function handleEnter() {
+            // Si hay un modal abierto (ej. Compras) el foco puede haber quedado en un input de
+            // esta pantalla de atras -- el backdrop de Bootstrap bloquea el mouse pero no el
+            // teclado. Sin este chequeo, Enter (fisico o del teclado virtual, que tambien pasa
+            // por aca) terminaba agregando un producto detras del modal.
+            if ($(".modal.show").length) return;
             if (soloFormaPago) return;
             const inputActivo = options.getInputActivo();
             if (!inputActivo) return;

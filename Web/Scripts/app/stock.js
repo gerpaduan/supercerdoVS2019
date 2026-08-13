@@ -2197,6 +2197,7 @@
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
         // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+        window.CapturaRespaldo && window.CapturaRespaldo.capturar('Stock');
         clearProductoInputs($form);
         $form.find('#txtCodigoProducto').focus();
     }
@@ -2439,6 +2440,7 @@
             if (isNaN(index)) return;
             state.lineas.splice(index, 1);
             renderLineas($form);
+            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Stock');
             scheduleDraft($form);
         });
 
@@ -2580,7 +2582,11 @@
             }
 
             if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
-                if ($(e.target).closest('.modal').length) return;
+                // Antes: $(e.target).closest('.modal') -- solo protegia si el evento se originaba
+                // DENTRO de un modal. No cubria el caso real (el foco quedo en un input de esta
+                // pantalla, fuera de cualquier modal, con el modal igual abierto encima) -- mismo
+                // bug que se encontro y corrigio en POS/Movimientos/Elaborados/Compras el mismo dia.
+                if ($(".modal.show").length) return;
                 if (window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible()) return;
 
                 var $primaryAction = getPrimaryActionButton($form);

@@ -5,6 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Net.Mail;
+using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
 using Web.Models;
@@ -219,8 +220,95 @@ namespace Web.Controllers
                 idPersona = persona.IdPersona,
                 razonSocial = persona.RazonSocial ?? "",
                 identificacion = persona.Identificacion ?? "",
-                cuit = persona.Cuit ?? ""
+                cuit = persona.Cuit ?? "",
+                ctaCte = persona.CtaCte
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        // GET: arma el formulario de alta vacio y lo devuelve como HTML para inyectar en un modal
+        // (mismo patron que ProductosController.MarcaModal). Siempre alta pura, nunca edicion.
+        [HttpGet]
+        public ActionResult PersonaModal()
+        {
+            try
+            {
+                var model = CrearViewModel(new Entidades.Persona(), false);
+                CargarIvas(model);
+
+                string html = RenderPartialViewToString("_AddOrEditPersonaModal", model);
+                return Content(html);
+            }
+            catch (Exception ex)
+            {
+                string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Content("<div class='alert alert-danger mb-0'>No se pudo abrir el formulario: " + HttpUtility.HtmlEncode(detalle) + "</div>");
+            }
+        }
+
+        // POST: guarda la persona creada desde el modal y devuelve su id para que el
+        // llamador (POS venta/expendios o compras) la adjunte automaticamente a la operacion
+        // en curso, sin recargar la pagina. Siempre crea (nunca edita una persona existente).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult GuardarPersonaModal(PersonaEditVm model)
+        {
+            model = model ?? new PersonaEditVm();
+            model.IdPersona = 0;
+            model.EsEdicion = false;
+
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+            bool esAdministrador = usuario != null && usuario.Admin;
+            bool puedeGestionarCuentaCorriente = PuedeGestionarCuentaCorriente(usuario);
+
+            float bonificacion;
+            ValidarPersona(model, new Entidades.Persona(), tieneMovimientos: false, esAdministrador: esAdministrador, out bonificacion);
+
+            if (!ModelState.IsValid)
+            {
+                string mensaje = string.Join(" ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Where(m => !string.IsNullOrWhiteSpace(m))
+                    .Distinct());
+
+                return Json(new { success = false, message = string.IsNullOrWhiteSpace(mensaje) ? "Revise los datos ingresados." : mensaje });
+            }
+
+            var personaGuardar = new Entidades.Persona
+            {
+                Identificacion = NormalizarTexto(model.Identificacion, true),
+                razonSocial = NormalizarTexto(model.RazonSocial, true),
+                IdIva = model.IdIva ?? 0,
+                Cuit = NormalizarCuit(model.Cuit),
+                Telefono = (model.Telefono ?? "").Trim(),
+                Email = (model.Email ?? "").Trim(),
+                Domicilio = NormalizarTexto(model.Domicilio, true),
+                Ciudad = NormalizarTexto(model.Ciudad, true),
+                otrosDatos = (model.OtrosDatos ?? "").Trim(),
+                CtaCte = puedeGestionarCuentaCorriente && model.CtaCte,
+                Bonificacion = bonificacion,
+                tipo = "",
+                Marca = false
+            };
+
+            try
+            {
+                int idPersona = oPersonaN.addOrEditPersonaConId(personaGuardar);
+                return Json(new
+                {
+                    success = true,
+                    message = "La persona se creó correctamente.",
+                    idPersona,
+                    razonSocial = personaGuardar.razonSocial,
+                    identificacion = personaGuardar.Identificacion,
+                    cuit = personaGuardar.Cuit
+                });
+            }
+            catch (Exception ex)
+            {
+                string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = "No se pudo guardar la persona: " + detalle });
+            }
         }
 
         private ActionResult BuscarDatosAfipDesdeGuardar(PersonaEditVm model)

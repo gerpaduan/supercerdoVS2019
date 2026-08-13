@@ -693,6 +693,7 @@
             // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
             // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
             window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Elaborado');
             scheduleDraft();
             focusIngredienteCodigo();
         }
@@ -782,6 +783,7 @@
             var index = toInt($(this).data('index'));
             state.lineas.splice(index, 1);
             renderLineas();
+            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Elaborado');
             scheduleDraft();
         });
 
@@ -956,6 +958,9 @@
             }
 
             if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
+                // Con un modal abierto, el backdrop bloquea el mouse pero no el teclado -- sin
+                // este chequeo el atajo dispara el boton primario de esta pantalla detras del modal.
+                if ($(".modal.show").length) return;
                 var $primaryAction = getPrimaryActionButton();
                 if (!$primaryAction.length || $primaryAction.prop('disabled')) return;
 

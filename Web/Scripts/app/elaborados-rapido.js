@@ -434,6 +434,9 @@
             var key = String(e.key || '').toLowerCase();
 
             if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && key === 'enter') {
+                // Con un modal abierto, el backdrop bloquea el mouse pero no el teclado -- sin
+                // este chequeo el atajo dispara el boton primario de esta pantalla detras del modal.
+                if ($(".modal.show").length) return;
                 var $primaryAction = getPrimaryActionButton();
                 if ($primaryAction.length && !$primaryAction.prop('disabled')) {
                     e.preventDefault();

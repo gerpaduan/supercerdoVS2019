@@ -1,0 +1,55 @@
+@model System.Collections.Generic.List<Web.Models.HistorialPrecioProductoVm>
+@using System.Globalization
+
+@{
+    string error = ViewBag.HistorialPreciosError as string ?? "";
+}
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-warning mb-0 py-2">@error</div>
+}
+else if (Model == null || Model.Count == 0)
+{
+    <div class="alert alert-info mb-0 py-2">Este cliente todavía no tiene compras registradas.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0 historial-precios-tabla">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width:90px;">Código</th>
+                    <th>Producto</th>
+                    <th class="text-right" style="width:110px;">Precio</th>
+                    <th class="text-nowrap" style="width:100px;">Fecha</th>
+                    <th class="text-center" style="width:60px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var precioTexto = item.PrecioKg.ToString("N2", new CultureInfo("es-AR"));
+                    <tr>
+                        <td>@item.Codigo</td>
+                        <td>@item.Producto</td>
+                        <td class="text-right font-weight-bold">$ @precioTexto</td>
+                        <td class="text-nowrap">@(item.FechaVenta.HasValue ? item.FechaVenta.Value.ToString("dd/MM/yyyy") : "-")</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary js-copiar-precio-historial"
+                                    data-precio="@(item.PrecioKg.ToString(CultureInfo.InvariantCulture))"
+                                    title="Copiar precio">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<style>
+    #modalFinanzasPOS .historial-precios-tabla td,
+    #modalFinanzasPOS .historial-precios-tabla th { padding: .3rem .5rem; font-size: .85rem; }
+</style>

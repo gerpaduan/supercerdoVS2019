@@ -627,10 +627,40 @@
     }
 
     function mostrarProveedorModal($form) {
+        var state = getState($form);
         window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
+
+        // Marca el origen de esta apertura para que persona-buscar.js (que puede
+        // estar cargado en la misma pagina cuando la compra esta embebida dentro
+        // de POS venta) sepa que la creacion de personas no aplica aca.
+        if (state.config.desdePos) {
+            $('#modalBuscarPersona').data('origen-persona-buscar', 'compra-embebida');
+        } else {
+            $('#modalBuscarPersona').removeData('origen-persona-buscar');
+        }
+
         $('#modalBuscarPersona').modal('show');
         $('#filtroPersona').val('');
         cargarProveedores($form, '');
+    }
+
+    function abrirCrearProveedorModal($form) {
+        var $modalBuscar = $('#modalBuscarPersona');
+        $modalBuscar.data('suprimir-foco-codigo', true);
+
+        $modalBuscar.one('hidden.bs.modal', function () {
+            $modalBuscar.removeData('suprimir-foco-codigo');
+            var state = getState($form);
+            $('#modalPersonaCrearCompra').modal('show');
+            $('#modalPersonaCrearCompraBody').html('<div class="text-center text-muted py-4">Cargando...</div>');
+            $.get(state.config.urls.personaCrear)
+                .done(function (html) { $('#modalPersonaCrearCompraBody').html(html); })
+                .fail(function () {
+                    $('#modalPersonaCrearCompraBody').html('<div class="alert alert-danger mb-0">No se pudo abrir el formulario de alta.</div>');
+                });
+        });
+
+        $modalBuscar.modal('hide');
     }
 
     function abrirProveedorModal($form) {
@@ -778,6 +808,7 @@
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
         // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+        window.CapturaRespaldo && window.CapturaRespaldo.capturar('Compra');
         scheduleDraft($form);
         if (isContinuousProductMode($form)) {
             clearProductoCantidadOnly($form);
@@ -814,6 +845,7 @@
         // El pitido de exito (abajo) reemplaza al alert de "Agregado correctamente" -- ya no se
         // muestra en exito, solo queda el feedback sonoro. Los warnings/errores si se siguen viendo.
         window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+        window.CapturaRespaldo && window.CapturaRespaldo.capturar('Compra');
         scheduleDraft($form);
         if (isContinuousMediaMode($form)) {
             clearMediaResCantidadOnly($form);
@@ -966,7 +998,61 @@
         $(document)
             .off('hidden.bs.modal.comprasPersona', '#modalBuscarPersona')
             .on('hidden.bs.modal.comprasPersona', '#modalBuscarPersona', function () {
+                if ($(this).data('suprimir-foco-codigo')) return;
                 $form.find('#NroRemito').focus().select();
+            });
+
+        $(document)
+            .off('click.comprasPersonaNueva', '#btnNuevaPersonaDesdeBuscar')
+            .on('click.comprasPersonaNueva', '#btnNuevaPersonaDesdeBuscar', function () {
+                if (state.config.desdePos) return; // deshabilitado: compra embebida dentro de POS venta
+                abrirCrearProveedorModal($form);
+            });
+
+        $(document)
+            .off('submit.comprasPersonaNueva', '#formPersonaModal')
+            .on('submit.comprasPersonaNueva', '#formPersonaModal', function (e) {
+                e.preventDefault();
+                var $formPersona = $(this);
+                var $btn = $('#btnGuardarPersonaModal');
+                $btn.prop('disabled', true);
+
+                $.ajax({
+                    url: state.config.urls.personaGuardarCrear,
+                    type: 'POST',
+                    data: $formPersona.serialize(),
+                    success: function (resp) {
+                        if (!resp || !resp.success) {
+                            $('#personaModalError').removeClass('d-none').text((resp && resp.message) || 'No se pudo guardar la persona.');
+                            $btn.prop('disabled', false);
+                            return;
+                        }
+                        $('#modalPersonaCrearCompra').modal('hide');
+                        setProveedor($form, { id: resp.idPersona, razon: resp.razonSocial, cuit: resp.cuit });
+                        scheduleDraft($form);
+
+                        var nombre = resp.razonSocial || 'La persona';
+                        if (window.Swal && typeof window.Swal.fire === 'function') {
+                            window.Swal.fire({
+                                icon: 'success',
+                                title: 'Persona agregada',
+                                text: nombre + ' se creó correctamente y quedó como proveedor de la compra.',
+                                timer: 2200,
+                                timerProgressBar: true,
+                                showConfirmButton: true,
+                                confirmButtonText: 'OK'
+                            }).then(function () {
+                                $form.find('#NroRemito').focus().select();
+                            });
+                        } else {
+                            $form.find('#NroRemito').focus().select();
+                        }
+                    },
+                    error: function () {
+                        $('#personaModalError').removeClass('d-none').text('No se pudo guardar la persona.');
+                        $btn.prop('disabled', false);
+                    }
+                });
             });
 
         $(document)
@@ -1166,6 +1252,7 @@
             state.lineas.splice(index, 1);
             renderLineas($form);
             rebuildHiddenInputs($form);
+            window.CapturaRespaldo && window.CapturaRespaldo.capturar('Compra');
             scheduleDraft($form);
         });
 
@@ -1217,6 +1304,9 @@
                 }
 
                 if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat && String(e.key || '').toLowerCase() === 'enter') {
+                    // Con un modal abierto, el backdrop bloquea el mouse pero no el teclado -- sin
+                    // este chequeo el atajo dispara el boton primario de esta pantalla detras del modal.
+                    if ($(".modal.show").length) return;
                     var $primaryAction = getPrimaryActionButton($form);
                     if (!$primaryAction.length || !$primaryAction.is(':visible') || $primaryAction.prop('disabled')) return;
 

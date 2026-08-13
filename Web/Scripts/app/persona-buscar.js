@@ -12,6 +12,93 @@ $(document).on('shown.bs.modal', '#modalBuscarPersona', function () {
     $('#filtroPersona').focus().select();
     // opcional: cargar listado inicial
     cargarPersonas();
+
+    // El boton "Nueva persona" se oculta cuando compras.js marco esta apertura
+    // como una compra embebida dentro de POS venta (feature deshabilitada ahi
+    // a proposito, ver compras.js).
+    if ($(this).data('origen-persona-buscar') === 'compra-embebida') {
+        $('#btnNuevaPersonaDesdeBuscar').addClass('d-none');
+        return;
+    }
+    $('#btnNuevaPersonaDesdeBuscar').removeClass('d-none');
+});
+
+// Click en "Nueva persona": cierra el buscador y abre el alta rapida.
+$(document).on('click', '#btnNuevaPersonaDesdeBuscar', function () {
+    if ($('#modalBuscarPersona').data('origen-persona-buscar') === 'compra-embebida') return;
+    abrirModalCrearPersonaVenta();
+});
+
+function abrirModalCrearPersonaVenta() {
+    var $modalBuscar = $('#modalBuscarPersona');
+    $modalBuscar.data('suprimir-foco-codigo', true);
+
+    $modalBuscar.one('hidden.bs.modal', function () {
+        $modalBuscar.removeData('suprimir-foco-codigo');
+        $('#modalPersonaCrearVentaBody').html('<div class="text-center text-muted py-4">Cargando...</div>');
+
+        var abrir = function () {
+            $('#modalPersonaCrearVenta').modal('show');
+            $.get(window.api.persona.crear)
+                .done(function (html) { $('#modalPersonaCrearVentaBody').html(html); })
+                .fail(function () {
+                    $('#modalPersonaCrearVentaBody').html('<div class="alert alert-danger mb-0">No se pudo abrir el formulario de alta.</div>');
+                });
+        };
+
+        if (window.POSGuard) {
+            if (!window.POSGuard.requestModalOpen('personaCrear', abrir)) return;
+        } else {
+            abrir();
+        }
+    });
+
+    $modalBuscar.modal('hide');
+}
+
+// Submit del alta rapida: guarda la persona y la adjunta automaticamente
+// como cliente de la venta en curso, sin recargar la pagina.
+$(document).on('submit', '#formPersonaModal', function (e) {
+    e.preventDefault();
+    var $form = $(this);
+    var $btn = $('#btnGuardarPersonaModal');
+    $btn.prop('disabled', true);
+
+    $.ajax({
+        url: window.api.persona.guardarCrear,
+        type: 'POST',
+        data: $form.serialize(),
+        success: function (resp) {
+            if (!resp || !resp.success) {
+                $('#personaModalError').removeClass('d-none').text((resp && resp.message) || 'No se pudo guardar la persona.');
+                $btn.prop('disabled', false);
+                return;
+            }
+            $('#modalPersonaCrearVenta').modal('hide');
+            seleccionarPersona(resp.idPersona, resp.razonSocial, resp.identificacion);
+
+            var nombre = resp.razonSocial || 'La persona';
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                window.Swal.fire({
+                    icon: 'success',
+                    title: 'Persona agregada',
+                    text: nombre + ' se creó correctamente y quedó como cliente de la venta.',
+                    timer: 2200,
+                    timerProgressBar: true,
+                    showConfirmButton: true,
+                    confirmButtonText: 'OK'
+                }).then(function () {
+                    $(document).trigger('pos:foco-codigo');
+                });
+            } else {
+                $(document).trigger('pos:foco-codigo');
+            }
+        },
+        error: function () {
+            $('#personaModalError').removeClass('d-none').text('No se pudo guardar la persona.');
+            $btn.prop('disabled', false);
+        }
+    });
 });
 
 // Navegación + Enter selecciona primera/seleccionada
@@ -118,6 +205,9 @@ function seleccionarPersona(idPersona, razonSocial, identificacion) {
     if (typeof window.setClienteIdentificacionVisual === 'function') {
         window.setClienteIdentificacionVisual(identificacion, razonSocial);
     }
+    if (typeof window.actualizarAccesoHistorialPreciosCliente === 'function') {
+        window.actualizarAccesoHistorialPreciosCliente(idPersona);
+    }
     // Marcamos que hubo una seleccion real para que el POS pueda decidir
     // acciones posteriores cuando el modal termine de cerrarse.
     $('#modalBuscarPersona').data('persona-seleccionada', true);
@@ -131,6 +221,11 @@ $(document).on('hidden.bs.modal', '#modalBuscarPersona', function () {
     $('#filtroPersona').val('');
     $('#tablaPersonas').empty();
     $(this).removeData('persona-seleccionada');
+
+    // El cierre es parte de la transicion hacia "Nueva persona": no devolvemos
+    // el foco al codigo de barras, el modal de alta enfoca su propio campo.
+    if ($(this).data('suprimir-foco-codigo')) return;
+
     $(document).trigger('pos:foco-codigo');
 
     // Refuerzo extra: cuando Bootstrap termina de devolver el foco,

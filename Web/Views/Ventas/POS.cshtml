@@ -100,6 +100,13 @@
                                     title="Consumidor Final">
                                 CF
                             </button>
+
+                            <button type="button"
+                                    class="btn btn-outline-primary d-none"
+                                    id="btnHistorialPreciosCliente"
+                                    title="Historial de precios (F8)">
+                                <i class="fas fa-history"></i>
+                            </button>
                         </div>
                     </div>
                     <div id="clienteIdentificacionWrap"
@@ -546,6 +553,9 @@
                                        class="form-control text-right"
                                        inputmode="decimal"
                                        autocomplete="off">
+                                <button type="button" id="btnPegarPrecioCopiado" class="btn btn-sm btn-outline-secondary btn-block mt-1 d-none" title="Pegar el precio copiado del historial">
+                                    <i class="fas fa-paste mr-1"></i> Pegar precio
+                                </button>
                             </div>
 
                             <div class="col-6">
@@ -632,6 +642,20 @@ else
 }
 
 <div id="contenedorModalPersona"></div>
+
+<div class="modal fade" id="modalPersonaCrearVenta" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva persona</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="modalPersonaCrearVentaBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="posModalLoading" class="pos-modal-loading" style="display:none;" aria-hidden="true">
     <div class="pos-modal-loading__box" role="status" aria-live="polite" aria-atomic="true">
@@ -856,6 +880,27 @@ else
     #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-body {
         padding: .75rem !important;
         background: #fff;
+    }
+
+    /* Historial de precios: mismo contenido (tabla angosta de 5 columnas), solo se reduce el
+       ancho del modal al 50% del que trae por defecto (clase modal-xl en el markup) -- se
+       espeja cada breakpoint propio de modal-xl (500px/800px/1140px) a la mitad. */
+    #modalFinanzasPOS.modal-historial-precios-pos-compacto .modal-dialog {
+        max-width: 250px;
+        width: calc(100% - 1rem);
+    }
+
+    @@media (min-width: 992px) {
+        #modalFinanzasPOS.modal-historial-precios-pos-compacto .modal-dialog {
+            max-width: 400px;
+            width: calc(100% - 2.5rem);
+        }
+    }
+
+    @@media (min-width: 1200px) {
+        #modalFinanzasPOS.modal-historial-precios-pos-compacto .modal-dialog {
+            max-width: 570px;
+        }
     }
 
     #modalFinanzasPOS:not(.modal-egreso-pos-compacto) #contenedorFinanzasPOS {
@@ -1270,7 +1315,7 @@ else
     <script src="@Url.Content("~/Scripts/app/pos-cart.js?v=28")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-keyboard.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-balanza.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/pos-help.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-comment.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3238")"></script>
@@ -1498,6 +1543,7 @@ else
     const requierePreseleccionFormaPago = @(ViewBag.RequierePreseleccionFormaPago != null && (bool)ViewBag.RequierePreseleccionFormaPago ? "true" : "false");
     const formasPagoConfigPOS = @Html.Raw(Json.Encode(ViewBag.FormasPagoConfig ?? new System.Collections.Generic.Dictionary<string, decimal>()));
     const empresaTieneCertificadoFacturaElectronica = @(Session["Usuario"] != null && !string.IsNullOrWhiteSpace(((Entidades.Usuario)Session["Usuario"]).Empresa != null ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreCertificado_pfx : "") ? "true" : "false");
+    const posCtaCtePermisoCompleto = @(ViewBag.PuedeVerCtaCteCompleta != null && (bool)ViewBag.PuedeVerCtaCteCompleta ? "true" : "false");
     POSState.setFechaVenta(new Date());
     POSState.setObservaciones(@Html.Raw(Json.Encode(Model != null ? Model.Observaciones ?? "" : "")));
     if (typeof POSState.setRequierePreseleccionFormaPago === 'function') {
@@ -1719,6 +1765,58 @@ else
             });
     }
 
+    // Gate del historial de precios por cliente (F8 / botón): mismo criterio de sensibilidad que
+    // Finanzas/CtaCtePersona -- se oculta con Consumidor Final y con clientes de cuenta corriente
+    // si el usuario no tiene permiso para ver cuentas corrientes completas. Este chequeo del lado
+    // del cliente es solo comodidad de UX; el límite real lo vuelve a aplicar el controller
+    // (VentasController.HistorialPreciosCliente) antes de devolver los precios.
+    function actualizarAccesoHistorialPreciosCliente(idPersona) {
+        const $btn = $("#btnHistorialPreciosCliente");
+        idPersona = parseInt(idPersona, 10) || 0;
+
+        // Un precio copiado es especifico del cliente del que se copio -- si cambia el cliente,
+        // no tiene sentido seguir ofreciendo "Pegar" con un precio de otro cliente.
+        window.POSPrecioCopiado = null;
+
+        function deshabilitar() {
+            window.POSHistorialPreciosHabilitado = false;
+            $btn.addClass("d-none");
+        }
+
+        function habilitar() {
+            window.POSHistorialPreciosHabilitado = true;
+            $btn.removeClass("d-none");
+        }
+
+        if (!idPersona || idPersona === @idConsumidorFinal) {
+            deshabilitar();
+            return;
+        }
+
+        if (!window.api || !window.api.persona || !window.api.persona.obtener) {
+            deshabilitar();
+            return;
+        }
+
+        $.get(window.api.persona.obtener, { id: idPersona })
+            .done(function (resp) {
+                if (!resp || !resp.ok) {
+                    deshabilitar();
+                    return;
+                }
+
+                const ocultarPorCtaCte = !!resp.ctaCte && !posCtaCtePermisoCompleto;
+                if (ocultarPorCtaCte) {
+                    deshabilitar();
+                } else {
+                    habilitar();
+                }
+            })
+            .fail(deshabilitar);
+    }
+
+    window.actualizarAccesoHistorialPreciosCliente = actualizarAccesoHistorialPreciosCliente;
+
     window.POSDraft = window.POSDraft || (function () {
         const keyBase = "carnisys-pos-venta-en-curso";
         const idSucursalActual = parseInt($("#idSucursalPOS").val(), 10) || 0;
@@ -1877,6 +1975,7 @@ else
 
     const ventaRestauradaPOS = esEdicionVenta ? false : window.POSDraft.restore();
     resolverIdentificacionClienteActual();
+    actualizarAccesoHistorialPreciosCliente($("#idPersona").val());
 
     (function () {
         const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -1913,12 +2012,17 @@ else
         window.POSGuard.bindModal('#modalFinanzasPOS', 'finanzas');
         window.POSGuard.bindModal('#modalPagoPOS', 'pagoPos');
         window.POSGuard.bindModal('#modalExpendiosPOS', 'expendios');
+        window.POSGuard.bindModal('#modalPersonaCrearVenta', 'personaCrear');
     }
 
     // BUSCAR PERSONA
     $(document).on('click', '#btnBuscarPersona', function () {
         const $btn = $(this);
         const $contenedor = $('#contenedorModalPersona');
+
+        // Limpieza defensiva: si la ultima apertura de este modal fue desde una
+        // compra embebida (ver compras.js), no debe arrastrarse esa marca aca.
+        $('#modalBuscarPersona').removeData('origen-persona-buscar');
 
         if ($contenedor.find('#modalBuscarPersona').length) {
             const abierto = window.POSGuard
@@ -1973,6 +2077,11 @@ else
         $('#idPersona').val(@idConsumidorFinal);
         $('#razonSocial').val('Consumidor Final');
         setClienteIdentificacionVisual('', 'Consumidor Final');
+        actualizarAccesoHistorialPreciosCliente(@idConsumidorFinal);
+    });
+
+    $('#btnHistorialPreciosCliente').on('click', function () {
+        window.POSFinanzas.abrirHistorialPreciosCliente($('#idPersona').val());
     });
 
     document.addEventListener("keydown", function (e) {
@@ -2630,7 +2739,9 @@ else
     window.api.persona = {
         listar: '@Url.Action("Listar", "Personas")',
         buscar: '@Url.Action("Buscar", "Personas")',
-        obtener: '@Url.Action("Obtener", "Personas")'
+        obtener: '@Url.Action("Obtener", "Personas")',
+        crear: '@Url.Action("PersonaModal", "Personas")',
+        guardarCrear: '@Url.Action("GuardarPersonaModal", "Personas")'
     };
     resolverIdentificacionClienteActual();
     window.VentasUrls = {
@@ -2930,15 +3041,17 @@ else
                 var esMisActividades = !!url && url.indexOf("/Cajas/MisEgresosCaja") >= 0;
                 var esCompra = !!url && url.indexOf("/Compras/Editar") >= 0;
                 var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
+                var esHistorialPrecios = !!url && url.indexOf("/Ventas/HistorialPreciosCliente") >= 0;
                 var inicioTotal = performance.now();
 
                 $("#modalFinanzasPOS")
-                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto modal-mis-actividades-pos-compacto modal-compra-pos-layout modal-ctasctes-pos-compacto")
+                    .removeClass("modal-egreso-pos-compacto modal-detalle-venta-pos-compacto modal-mis-ventas-pos-compacto modal-mis-actividades-pos-compacto modal-compra-pos-layout modal-ctasctes-pos-compacto modal-historial-precios-pos-compacto")
                     .toggleClass("modal-compra-pos-layout", esCompra)
                     .toggleClass("modal-ctasctes-pos-compacto", esCtasCtes)
                     .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades)
                     .toggleClass("modal-mis-ventas-pos-compacto", esMisVentas)
-                    .toggleClass("modal-detalle-venta-pos-compacto", esDetalleVenta);
+                    .toggleClass("modal-detalle-venta-pos-compacto", esDetalleVenta)
+                    .toggleClass("modal-historial-precios-pos-compacto", esHistorialPrecios);
                 $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                 $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
                 window.POSModalLoading?.show('Cargando solicitud...');
@@ -3056,6 +3169,18 @@ else
                 }
 
                 this.cargar(url, "Cuenta corriente");
+            },
+
+            abrirHistorialPreciosCliente: function (idPersona) {
+                if (!window.POSHistorialPreciosHabilitado) {
+                    return;
+                }
+
+                var url = '@Url.Action("HistorialPreciosCliente", "Ventas")'
+                    + '?idPersona=' + encodeURIComponent(idPersona);
+
+                window.POSPrecioCopiado = null;
+                this.cargar(url, "Historial de precios");
             },
 
             abrirPago: function (idPersona, returnUrl, idPago) {
@@ -3218,9 +3343,41 @@ else
             window.POSEgresos.abrirNuevo();
         };
 
+        window.posHotkeysHooks.F8 = function () {
+            window.POSFinanzas.abrirHistorialPreciosCliente($('#idPersona').val());
+        };
+
         window.posHotkeysHooks.AvPag = function () {
             window.POSExpendiosCurrent?.open?.();
         };
+
+        // Copiar/pegar precio del historial (ver docs/DECISIONS.md) -- en memoria JS, sin
+        // portapapeles del sistema operativo (algunos servidores corren sin HTTPS).
+        function actualizarBotonPegarPrecio() {
+            $("#btnPegarPrecioCopiado").toggleClass("d-none", window.POSPrecioCopiado == null);
+        }
+
+        $(document).on("click", "#modalFinanzasPOS .js-copiar-precio-historial", function () {
+            var $btn = $(this);
+            var precio = parseFloat($btn.data("precio"));
+            if (!isFinite(precio)) return;
+
+            window.POSPrecioCopiado = precio;
+            actualizarBotonPegarPrecio();
+
+            var $icono = $btn.find("i");
+            $icono.removeClass("fa-copy").addClass("fa-check text-success");
+            setTimeout(function () {
+                $icono.removeClass("fa-check text-success").addClass("fa-copy");
+            }, 1200);
+        });
+
+        $("#modalLineaVenta").on("shown.bs.modal", actualizarBotonPegarPrecio);
+
+        $("#btnPegarPrecioCopiado").on("click", function () {
+            if (window.POSPrecioCopiado == null) return;
+            $("#txtPrecioKg").val(window.POSPrecioCopiado.toFixed(2)).trigger("input");
+        });
 
         $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {
             e.preventDefault();

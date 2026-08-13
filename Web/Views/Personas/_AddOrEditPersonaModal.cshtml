@@ -1,0 +1,139 @@
+@model Web.Models.PersonaEditVm
+
+@using (Html.BeginForm("", "", FormMethod.Post, new { id = "formPersonaModal", novalidate = "novalidate" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.BonificacionTexto)
+
+    <div id="personaModalError" class="alert alert-danger d-none"></div>
+
+    <div class="row">
+        <div class="col-12 col-md-5">
+            <div class="form-group">
+                <label for="PersonaModalCuit">CUIT</label>
+                <div class="input-group">
+                    @Html.TextBoxFor(m => m.Cuit, new { @class = "form-control", id = "PersonaModalCuit", autocomplete = "off", maxlength = "20", placeholder = "00-00000000-0" })
+                    <div class="input-group-append">
+                        <button type="button"
+                                class="btn btn-outline-primary"
+                                id="btnBuscarAfipPersonaModal"
+                                formnovalidate="formnovalidate"
+                                title="Buscar en AFIP">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-7">
+            <div class="form-group">
+                <label for="PersonaModalRazonSocial">Razón social / nombre</label>
+                @Html.TextBoxFor(m => m.RazonSocial, new { @class = "form-control text-uppercase", id = "PersonaModalRazonSocial", autocomplete = "off", maxlength = "200" })
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <label for="PersonaModalIdentificacion">Identificación</label>
+                @Html.TextBoxFor(m => m.Identificacion, new { @class = "form-control text-uppercase", id = "PersonaModalIdentificacion", autocomplete = "off", maxlength = "150" })
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <label for="PersonaModalIdIva">Condición frente al IVA</label>
+                @Html.DropDownListFor(m => m.IdIva, Model.Ivas, "Seleccionar IVA", new { @class = "form-control", id = "PersonaModalIdIva" })
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-4">
+            <div class="form-group">
+                <label for="PersonaModalTelefono">Teléfono</label>
+                @Html.TextBoxFor(m => m.Telefono, new { @class = "form-control", id = "PersonaModalTelefono", autocomplete = "off", maxlength = "100" })
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="form-group">
+                <label for="PersonaModalEmail">Email</label>
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", id = "PersonaModalEmail", autocomplete = "off", maxlength = "200", type = "email" })
+            </div>
+        </div>
+        @if (Model.PuedeGestionarCuentaCorriente)
+        {
+            <div class="col-12 col-md-4">
+                <div class="form-group pt-md-4 mt-md-2">
+                    <div class="custom-control custom-switch">
+                        @Html.CheckBoxFor(m => m.CtaCte, new { @class = "custom-control-input", id = "PersonaModalCtaCte" })
+                        <label class="custom-control-label" for="PersonaModalCtaCte">Cuenta corriente</label>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <label for="PersonaModalDomicilio">Domicilio</label>
+                @Html.TextBoxFor(m => m.Domicilio, new { @class = "form-control text-uppercase", id = "PersonaModalDomicilio", autocomplete = "off", maxlength = "200" })
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <label for="PersonaModalCiudad">Ciudad</label>
+                @Html.TextBoxFor(m => m.Ciudad, new { @class = "form-control text-uppercase", id = "PersonaModalCiudad", autocomplete = "off", maxlength = "150" })
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-success" id="btnGuardarPersonaModal">
+            <i class="fas fa-save mr-1"></i> Guardar persona
+        </button>
+    </div>
+}
+
+<script>
+    (function () {
+        var urlBuscarAfip = '@Url.Action("BuscarPadronAfipAjax", "Personas")';
+        var $cuit = $('#PersonaModalCuit');
+
+        function limpiarCuit(v) { return (v || '').replace(/\D/g, ''); }
+
+        function consultarAfip() {
+            var cuit = limpiarCuit($cuit.val());
+            if (cuit.length !== 11) { alert('Ingrese un CUIT válido de 11 dígitos.'); return; }
+
+            $cuit.val(cuit);
+            $('#btnBuscarAfipPersonaModal').prop('disabled', true);
+
+            $.getJSON(urlBuscarAfip, { cuit: cuit })
+                .done(function (resp) {
+                    if (!resp || !resp.ok) { alert((resp && resp.msg) || 'No se pudo consultar AFIP/ARCA.'); return; }
+                    if (resp.identificacion) $('#PersonaModalIdentificacion').val(resp.identificacion);
+                    if (resp.razonSocial) $('#PersonaModalRazonSocial').val(resp.razonSocial);
+                    if (resp.domicilio) $('#PersonaModalDomicilio').val(resp.domicilio);
+                    if (resp.ciudad) $('#PersonaModalCiudad').val(resp.ciudad);
+                    if (resp.idIva && Number(resp.idIva) > 0) $('#PersonaModalIdIva').val(String(resp.idIva));
+                })
+                .fail(function () { alert('No se pudo conectar con AFIP/ARCA.'); })
+                .always(function () { $('#btnBuscarAfipPersonaModal').prop('disabled', false); });
+        }
+
+        $('#btnBuscarAfipPersonaModal').off('click').on('click', function (e) {
+            e.preventDefault();
+            consultarAfip();
+        });
+
+        // Enter en CUIT dispara AFIP en vez de enviar el form (igual que Personas/Editar.cshtml).
+        $cuit.off('keydown').on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); consultarAfip(); }
+        });
+
+        setTimeout(function () { $cuit.trigger('focus'); }, 50);
+    })();
+</script>

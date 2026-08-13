@@ -53,7 +53,9 @@
         window.api = window.api || {};
         window.api.persona = {
             listar: config.urlPersonaListar,
-            buscar: config.urlPersonaBuscar
+            buscar: config.urlPersonaBuscar,
+            crear: config.urlPersonaCrear,
+            guardarCrear: config.urlPersonaGuardarCrear
         };
 
         var POSState = window.POSState;
@@ -522,6 +524,10 @@
         $(document).on('click', '#btnBuscarPersona', function () {
             var $btn = $(this);
             var $contenedor = $('#contenedorModalPersona');
+
+            // Limpieza defensiva: si la ultima apertura de este modal fue desde una
+            // compra embebida (ver compras.js), no debe arrastrarse esa marca aca.
+            $('#modalBuscarPersona').removeData('origen-persona-buscar');
 
             if ($contenedor.find('#modalBuscarPersona').length) {
                 $('#modalBuscarPersona').modal('show');

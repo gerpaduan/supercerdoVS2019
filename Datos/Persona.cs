@@ -78,6 +78,44 @@ namespace Datos
             );
         }
 
+        // Variante de addOrEditPersona que devuelve el id de la persona creada o modificada.
+        // El SP ya hace SELECT @idPersona al final; alcanza con Db.Scalar en vez de Db.NonQuery.
+        // Metodo aditivo: no reemplaza a addOrEditPersona para no revisar todos sus llamadores actuales.
+        public int addOrEditPersonaConId(Entidades.Persona oPersonaE)
+        {
+            if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));
+
+            object resultado = Db.Scalar(
+                _empresa,
+                "addOrEditPersona",
+                CommandType.StoredProcedure,
+                setParams: p =>
+                {
+                    p.AddWithValue("@idPersona", oPersonaE.idPersona);
+                    p.AddWithValue("@identificacion", oPersonaE.Identificacion ?? "");
+                    p.AddWithValue("@razonSocial", oPersonaE.razonSocial ?? "");
+                    p.AddWithValue("@idIva", oPersonaE.IdIva);
+                    p.AddWithValue("@cuit", oPersonaE.Cuit ?? "");
+                    p.AddWithValue("@telefono", oPersonaE.Telefono ?? "");
+                    p.AddWithValue("@email", DbNullIfNull(string.IsNullOrWhiteSpace(oPersonaE.Email) ? null : oPersonaE.Email.Trim()));
+                    p.AddWithValue("@domicilio", oPersonaE.Domicilio ?? "");
+                    p.AddWithValue("@ciudad", oPersonaE.Ciudad ?? "");
+                    p.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
+                    p.AddWithValue("@tipo", oPersonaE.tipo ?? "");
+                    p.AddWithValue("@ctaCte", oPersonaE.CtaCte);
+                    p.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
+                    p.AddWithValue("@marca", oPersonaE.Marca);
+
+                    p.AddWithValue("@idPropietario",
+                        oPersonaE.Propietario != null
+                            ? (object)oPersonaE.Propietario.idPersona
+                            : DBNull.Value);
+                }
+            );
+
+            return (resultado == null || resultado == DBNull.Value) ? 0 : Convert.ToInt32(resultado);
+        }
+
         public void eliminarPersona(Entidades.Persona oPersonaE)
         {
             if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));

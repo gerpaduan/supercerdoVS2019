@@ -90,6 +90,7 @@
                     case 'F5':
                     case 'F6':
                     case 'F7':
+                    case 'F8':
                     case 'AvPag':
                         runHook(key);
                         break;
@@ -154,7 +155,7 @@
                     return;
                 }
 
-                if (key === 'F2' || key === 'F3' || key === 'F4' || key === 'F5' || key === 'F6' || key === 'F7' || key === 'PageDown') {
+                if (key === 'F2' || key === 'F3' || key === 'F4' || key === 'F5' || key === 'F6' || key === 'F7' || key === 'F8' || key === 'PageDown') {
                     e.preventDefault();
                     runAction(key === 'PageDown' ? 'AvPag' : key, false);
                     return;

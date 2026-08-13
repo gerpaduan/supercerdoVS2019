@@ -612,6 +612,45 @@ namespace Datos
             );
         }
 
+        // Ultimo precio cobrado por producto, sobre las ultimas @topVentas ventas del cliente
+        // (no un tope de productos distintos) -- para el historial de precios del POS.
+        // Consulta liviana y propia (no reusa getAllVentas con cargarLineas:true) para evitar
+        // el patron N+1 de esa ruta (1 SP por venta + 1 lookup de Corte por linea).
+        public DataTable obtenerUltimosPreciosPorCliente(int idPersona, int topVentas = 10)
+        {
+            const string sql = @"
+                ;WITH UltimasVentas AS (
+                    SELECT TOP (@topVentas) idVenta, fechaVenta
+                    FROM dbo.Ventas
+                    WHERE idPersona = @idPersona AND estado <> 'ANULADO'
+                    ORDER BY fechaVenta DESC
+                ),
+                LineasCliente AS (
+                    SELECT
+                        lv.idCorte, lv.precioKg, lv.cantKg, uv.fechaVenta,
+                        ROW_NUMBER() OVER (PARTITION BY lv.idCorte ORDER BY uv.fechaVenta DESC, lv.idLineaVenta DESC) AS rn
+                    FROM dbo.LineaVenta lv
+                    INNER JOIN UltimasVentas uv ON uv.idVenta = lv.idVenta
+                    WHERE lv.idLineaVentaAnulado = 0
+                )
+                SELECT c.codigo, c.corte AS producto, lc.precioKg, lc.cantKg, lc.fechaVenta
+                FROM LineasCliente lc
+                INNER JOIN dbo.Corte c ON c.idCorte = lc.idCorte
+                WHERE lc.rn = 1
+                ORDER BY lc.fechaVenta DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@idPersona", idPersona);
+                    p.AddWithValue("@topVentas", topVentas <= 0 ? 10 : topVentas);
+                }
+            );
+        }
+
         public void agregarStockVenta(Entidades.Venta oVentaE)
         {
             Db.NonQuery(

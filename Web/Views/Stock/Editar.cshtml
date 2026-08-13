@@ -279,6 +279,12 @@
                                     <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados">
                                         <i class="fas fa-list mr-1"></i> Productos no cargados
                                     </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
+                                        <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
+                                    </button>
+                                    <span class="small text-muted d-none" id="lblCapturaRespaldoActiva" title="Se guarda una captura de la pantalla completa en tu carpeta elegida cada vez que agregás o quitás un producto">
+                                        <i class="fas fa-shield-alt mr-1 text-success"></i> Respaldo automático activado
+                                    </span>
                                 </div>
                             </div>
 
@@ -1022,10 +1028,14 @@
     <script src="@Url.Content("~/Scripts/app/stock.js?v=38")"></script>
     <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
     <script>
         (function () {
+            window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
             if (!window.StockUI || typeof window.StockUI.init !== "function") {
                 return;
             }
@@ -1158,9 +1168,13 @@ else
         <script src="@Url.Content("~/Scripts/app/stock.js?v=38")"></script>
         <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+        <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+        <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
         <script>
             (function () {
+                window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
                 if (!window.StockUI || typeof window.StockUI.init !== "function") {
                     return;
                 }

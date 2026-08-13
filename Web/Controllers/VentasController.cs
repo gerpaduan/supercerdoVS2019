@@ -833,6 +833,7 @@ namespace Web.Controllers
 
             var oCliente = oPersonaN.getConsumidorFinal();
             ViewBag.IdConsumidorFinal = oCliente.idPersona;
+            ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(user);
 
             if (venta.Persona == null)
             {
@@ -852,6 +853,67 @@ namespace Web.Controllers
             Session["VentaActiva"] = venta;
 
             return View(venta);
+        }
+
+        // Mismo criterio que FinanzasController.PuedeVerSaldosCuentaCorriente: admin pasa siempre,
+        // si no, requiere el permiso de ver cuentas corrientes completas. Se replica acá (no se
+        // centraliza) siguiendo el mismo patrón ya usado en este repo para helpers cortos por controller.
+        private bool PuedeVerCtaCteCompleta(Entidades.Usuario usuario)
+        {
+            if (usuario == null)
+                return false;
+
+            if (usuario.Admin)
+                return true;
+
+            return PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtasCtes, null);
+        }
+
+        // GET: Ventas/HistorialPreciosCliente
+        // Historial de "último precio por producto" de un cliente, sobre sus últimas N ventas --
+        // para el botón/atajo F8 del POS (ver docs/DECISIONS.md, entrada de esta feature).
+        [HttpGet]
+        public PartialViewResult HistorialPreciosCliente(int idPersona, int topVentas = 10)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+            {
+                ViewBag.HistorialPreciosError = "La sesión expiró. Recargá la página para continuar.";
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", null);
+            }
+
+            var persona = oPersonaN.findById(idPersona);
+            if (persona == null || persona.IdPersona <= 0)
+            {
+                ViewBag.HistorialPreciosError = "No se encontró el cliente.";
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", null);
+            }
+
+            // Mismo gate de sensibilidad que Finanzas/CtaCtePersona: un cliente con cuenta corriente
+            // queda oculto para quien no tiene permiso de ver cuentas corrientes completas.
+            if (persona.CtaCte && !PuedeVerCtaCteCompleta(user))
+            {
+                ViewBag.HistorialPreciosError = "No tenés permiso para ver el historial de precios de este cliente.";
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", null);
+            }
+
+            DataTable dt = oVentaN.obtenerUltimosPreciosPorCliente(idPersona, topVentas);
+            var model = new List<HistorialPrecioProductoVm>();
+            if (dt != null)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    model.Add(new HistorialPrecioProductoVm
+                    {
+                        Codigo = row["codigo"] == DBNull.Value ? "" : Convert.ToString(row["codigo"]),
+                        Producto = row["producto"] == DBNull.Value ? "" : Convert.ToString(row["producto"]),
+                        PrecioKg = row["precioKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["precioKg"]),
+                        FechaVenta = row["fechaVenta"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaVenta"])
+                    });
+                }
+            }
+
+            return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", model);
         }
 
         private Dictionary<string, decimal> ObtenerConfiguracionFormaPagoPOS()

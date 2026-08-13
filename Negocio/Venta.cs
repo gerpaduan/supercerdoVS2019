@@ -294,6 +294,11 @@ namespace Negocio
             return oVentaD.obtenerLineasVenta(idVenta);
         }
 
+        public DataTable obtenerUltimosPreciosPorCliente(int idPersona, int topVentas = 10)
+        {
+            return oVentaD.obtenerUltimosPreciosPorCliente(idPersona, topVentas);
+        }
+
         public void agregarStockVenta(Entidades.Venta oVentaE)
         {
             oVentaD.agregarStockVenta(oVentaE);
