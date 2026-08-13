@@ -40,6 +40,14 @@ namespace CarniSys.PrintAgent
                 data.Add(new byte[] { 0x0A, 0x0A, 0x0A });
             }
 
+            // QR de AFIP (RG 4892/2020), debajo del ticket. request.QrValue ya viene armado por
+            // el server (VentasController.ImprimirTicketPayload -> GenerarDocs.GenerarQrUrl) con
+            // la URL completa a codificar; vacio si la venta no esta facturada.
+            if (!string.IsNullOrWhiteSpace(request.QrValue))
+            {
+                data.Add(BuildQrBlock(request.QrValue));
+            }
+
             data.Add(new byte[] { 0x1D, 0x56, 0x41, 0x00 });
 
             var raw = Combine(data);
@@ -75,6 +83,47 @@ namespace CarniSys.PrintAgent
 
             parts.Add(barcodeCommand);
             parts.Add(new byte[] { 0x0A, 0x0A, 0x0A });
+            return Combine(parts);
+        }
+
+        // Comandos ESC/POS nativos GS ( k para QR (familia estandar Epson, ampliamente
+        // soportada por impresoras termicas compatibles) -- la impresora arma el QR sola a
+        // partir del string, no hace falta generar ninguna imagen/bitmap del lado del agente.
+        // NOTA: no se pudo verificar contra una impresora fisica real (no disponible en este
+        // entorno); la secuencia de bytes sigue la especificacion publica estandar (misma que
+        // usan la gran mayoria de impresoras ESC/POS compatibles), pero queda pendiente de
+        // confirmar en un ticket impreso real antes de dar esto por definitivamente probado.
+        private static byte[] BuildQrBlock(string qrContent)
+        {
+            byte[] qrBytes = Encoding.ASCII.GetBytes(qrContent);
+
+            var parts = new List<byte[]>
+            {
+                new byte[] { 0x1B, 0x61, 0x01 }, // centrado, mismo criterio que el codigo de barras
+                new byte[] { 0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00 }, // modelo 2
+                new byte[] { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06 }, // tamano de modulo
+                new byte[] { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x31 }  // correccion de errores nivel M
+            };
+
+            // Comando "store data": guarda el contenido del QR en el buffer de la impresora.
+            // pL/pH = longitud de (cn + fn + m + datos) en little-endian, 2 bytes.
+            int storeLen = qrBytes.Length + 3;
+            var storeCommand = new byte[8 + qrBytes.Length];
+            storeCommand[0] = 0x1D;
+            storeCommand[1] = 0x28;
+            storeCommand[2] = 0x6B;
+            storeCommand[3] = (byte)(storeLen & 0xFF);
+            storeCommand[4] = (byte)((storeLen >> 8) & 0xFF);
+            storeCommand[5] = 0x31;
+            storeCommand[6] = 0x50;
+            storeCommand[7] = 0x30;
+            Array.Copy(qrBytes, 0, storeCommand, 8, qrBytes.Length);
+            parts.Add(storeCommand);
+
+            parts.Add(new byte[] { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30 }); // imprime el QR guardado
+            parts.Add(new byte[] { 0x1B, 0x61, 0x00 }); // vuelve a alineacion izquierda
+            parts.Add(new byte[] { 0x0A, 0x0A });
+
             return Combine(parts);
         }
 

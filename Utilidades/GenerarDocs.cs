@@ -945,12 +945,10 @@ namespace Utilidades
         {
             try
             {
-                string urlBase = "https://www.afip.gob.ar/fe/qr/";
-                string payload = GenerarJSON(factura, venta);
-                if (string.IsNullOrWhiteSpace(payload))
+                string data = GenerarQrUrl(factura, venta);
+                if (string.IsNullOrWhiteSpace(data))
                     return null;
 
-                string data = urlBase + "?p=" + payload;
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(data, QRCodeGenerator.ECCLevel.Q);
                 QRCode qrCode = new QRCode(qrCodeData);
@@ -965,6 +963,26 @@ namespace Utilidades
             catch
             {
                 return null;
+            }
+        }
+
+        // URL completa del QR oficial de AFIP (RG 4892/2020) para un comprobante ya autorizado.
+        // La usan tanto GenerateQRCode (que la convierte a imagen PNG para el PDF y el ticket
+        // HTML) como el ticket termico via PrintAgent, que manda este string tal cual para que
+        // la impresora lo imprima con su comando QR nativo (sin generar ninguna imagen).
+        public string GenerarQrUrl(Entidades.FacturaElectronica factura, Entidades.Venta venta = null)
+        {
+            try
+            {
+                string payload = GenerarJSON(factura, venta);
+                if (string.IsNullOrWhiteSpace(payload))
+                    return "";
+
+                return "https://www.afip.gob.ar/fe/qr/?p=" + payload;
+            }
+            catch
+            {
+                return "";
             }
         }
 
@@ -985,8 +1003,12 @@ namespace Utilidades
             if (_cuitEmisor <= 0 || _nroCmp <= 0 || _codAut <= 0 || _ptoVta <= 0)
                 return "";
 
-            int _tipoDocRec = factura.TipoDocAfip.Equals("CUIT") ? 80 :
-                factura.TipoDocAfip.Equals("DNI") ? 86 : 99;
+            // factura.TipoDocAfip guarda el codigo numerico de AFIP como string (ej. "80"=CUIT,
+            // "96"=DNI, "99"=consumidor final/sin identificar) -- NO las palabras "CUIT"/"DNI".
+            // Antes esto comparaba contra esas palabras (nunca coincidian) y siempre caia a 99.
+            int _tipoDocRec;
+            if (!int.TryParse(factura.TipoDocAfip, out _tipoDocRec) || _tipoDocRec <= 0)
+                _tipoDocRec = 99;
 
             decimal _importe = Convert.ToDecimal(factura.ImporteTotal);
 

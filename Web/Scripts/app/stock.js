@@ -569,10 +569,26 @@
         renderPesajesVinculadosInfo($form);
     }
 
+    // Devuelve TODOS los pesajes vinculados a este registro: los que ya estaban (cargados por el
+    // servidor en state.config.pesajesVinculadosExistentes, ver StockController.CrearViewModelEdicion)
+    // MAS los que se agregan en esta misma sesion de edicion (con id/texto propios, via las lineas
+    // que trae cada pesaje recien vinculado). Es clave incluir los existentes aca: SincronizarPesajesVinculados
+    // desvincula todo lo que NO este en esta lista al guardar -- si solo mirara las lineas de la sesion
+    // actual (que arrancan vacias en cada carga de pagina, ver linea 1490 de StockController.cs),
+    // cualquier guardado no relacionado desvinculaba en silencio los pesajes ya vinculados de antes
+    // (bug real encontrado en vivo el 2026-08-13, ver docs/DECISIONS.md).
     function getPesajesVinculados($form) {
         var state = getState($form);
         var map = {};
         var items = [];
+
+        $.each((state.config && state.config.pesajesVinculadosExistentes) || [], function (_, id) {
+            var idPesaje = parseInt(id, 10) || 0;
+            if (idPesaje <= 0 || map[idPesaje]) return;
+
+            map[idPesaje] = true;
+            items.push({ id: idPesaje, texto: '' });
+        });
 
         $.each(state.lineas || [], function (_, linea) {
             var idPesaje = parseInt(linea.idPesajeVinculado, 10) || 0;

@@ -1306,6 +1306,14 @@ namespace Web.Controllers
                 ViewBag.EmpresaSesion = (user != null ? user.Empresa : null) ?? (venta.Sucursal != null ? venta.Sucursal.Empresa : null);
                 var empresaTicket = (venta.Sucursal != null ? venta.Sucursal.Empresa : null) ?? (user != null ? user.Empresa : null);
 
+                // QR oficial de AFIP (RG 4892/2020) para el ticket -- solo si la venta esta
+                // facturada. GenerateQRCode devuelve null si falta algun dato obligatorio.
+                if (facturaTicket != null && facturaTicket.Id > 0)
+                {
+                    var qrBytes = new Utilidades.GenerarDocs().GenerateQRCode(facturaTicket, venta);
+                    ViewBag.QrTicketBase64 = qrBytes != null ? Convert.ToBase64String(qrBytes) : null;
+                }
+
                 string negocio = ConfigurationManager.AppSettings["Negocio"];
                 string negocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"];
                 string negocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"];
@@ -1351,11 +1359,19 @@ namespace Web.Controllers
                     ? BuildFacturaDTO(venta, facturaTicket)
                     : null;
 
+                // QR oficial de AFIP: el agente de impresion (PrintAgent) lo imprime con su
+                // comando ESC/POS nativo a partir de este string, sin que el server genere
+                // ninguna imagen. Vacio si la venta no esta facturada o falta algun dato.
+                string qrValue = (facturaTicket != null && facturaTicket.Id > 0)
+                    ? new Utilidades.GenerarDocs().GenerarQrUrl(facturaTicket, venta)
+                    : "";
+
                 return Json(new
                 {
                     ok = true,
                     ticketMm = ticketMm,
                     ticketLines = ConstruirLineasTicketVenta(venta, ticketMm, facturaDto, empresaSesion),
+                    qrValue = qrValue,
                     tieneFactura = facturaTicket != null && facturaTicket.Id > 0,
                     tieneNotaCredito = notaCreditoTicket != null && notaCreditoTicket.Id > 0,
                     facturaAgrupaItems = facturaTicket != null && !string.IsNullOrWhiteSpace(facturaTicket.DescItemUnitario)

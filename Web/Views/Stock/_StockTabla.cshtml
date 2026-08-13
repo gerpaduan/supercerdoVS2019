@@ -126,8 +126,26 @@
                             {
                                 if (detalle.EsPesaje && detalle.IdCompraVinculada.HasValue)
                                 {
+                                    if (detalle.CompraVinculadaEsPesaje)
+                                    {
+                                        <div class="mt-1">
+                                            <span class="badge badge-pill badge-warning">Pesaje padre #@detalle.IdCompraVinculada.Value</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mt-1">
+                                            <span class="badge badge-pill badge-primary">Compra #@detalle.IdCompraVinculada.Value</span>
+                                        </div>
+                                    }
+                                }
+
+                                if (detalle.EsPesaje && detalle.PesajesHijosVinculadosIds != null && detalle.PesajesHijosVinculadosIds.Count > 0)
+                                {
                                     <div class="mt-1">
-                                        <span class="badge badge-pill badge-primary">Compra #@detalle.IdCompraVinculada.Value</span>
+                                        <span class="badge badge-pill badge-secondary" title="@string.Join(", ", detalle.PesajesHijosVinculadosIds.ConvertAll(id => "#" + id))">
+                                            @detalle.PesajesHijosVinculadosIds.Count pesaje@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s") vinculado@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s")
+                                        </span>
                                     </div>
                                 }
 

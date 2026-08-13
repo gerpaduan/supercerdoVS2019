@@ -55,6 +55,8 @@ namespace Web.Models
 
         public string EstadoCompraVinculada { get; set; }
 
+        public bool CompraVinculadaEsPesaje { get; set; }
+
         public DateTime? FechaPesajeAjustado { get; set; }
 
         public string ProveedorPesajeAjustado { get; set; }

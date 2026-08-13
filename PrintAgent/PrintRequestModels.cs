@@ -20,6 +20,9 @@ namespace CarniSys.PrintAgent
 
         [DataMember(Name = "ticketLines")]
         public List<string> TicketLines { get; set; }
+
+        [DataMember(Name = "qrValue")]
+        public string QrValue { get; set; }
     }
 
     [DataContract]

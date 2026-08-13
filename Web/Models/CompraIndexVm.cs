@@ -22,6 +22,7 @@ namespace Web.Models
         public CompraIndexDetalleVm()
         {
             Lineas = new List<StockLineaDetalleVm>();
+            PesajesHijosVinculadosIds = new List<int>();
         }
 
         public int IdCompra { get; set; }
@@ -51,6 +52,8 @@ namespace Web.Models
         public string EstadoPesajeRelacionado { get; set; }
         public bool EsPesaje { get; set; }
         public bool EsAjuste { get; set; }
+        public bool CompraVinculadaEsPesaje { get; set; }        // true si IdCompraVinculada apunta a otro Pesaje (padre), no a Cortes/MediaRes
+        public List<int> PesajesHijosVinculadosIds { get; set; } // ids de Pesajes cuyo idPesajeAjustado apunta a este registro (solo si EsPesaje)
         public string UsuarioCreacion { get; set; }
         public DateTime? FechaCreacion { get; set; }
         public string UsuarioActualizacion { get; set; }

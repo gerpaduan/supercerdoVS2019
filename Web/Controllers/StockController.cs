@@ -1460,6 +1460,15 @@ namespace Web.Controllers
             CargarCompraVinculadaEnPesajeEdicion(model, compra);
             CargarPesajeAjustadoEnEdicion(model, compra);
 
+            // Precarga los pesajes ya vinculados a este (si es un Pesaje "destino") -- sin esto,
+            // SincronizarPesajesVinculados() los desvincula en silencio al guardar cualquier cambio
+            // no relacionado (idsActuales arranca vacio, y todo lo que no esta en idsActuales se
+            // trata como "a desvincular"). Bug real encontrado en vivo el 2026-08-13, ver DECISIONS.md.
+            if (EsPesaje(compra.TipoCompra))
+            {
+                model.PesajesVinculadosIds = oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
+            }
+
             var cortes = (oCompraN.convertCortesPorCompraToList(compra.IdCompra) ?? new List<Entidades.CortePorCompra>())
                 .OrderBy(c => c.Creado ?? DateTime.MinValue)
                 .ThenBy(c => c.IdCortePorCompra)
@@ -1512,6 +1521,7 @@ namespace Web.Controllers
                 .Where(x => x > 0)
                 .ToList();
             var ajustesPorPesaje = oCompraN.getIdsAjustePorPesajes(idsPesaje);
+            var pesajesHijosPorDestino = oCompraN.obtenerPesajesVinculadosPorDestinos(idsPesaje);
 
             foreach (DataRow row in dt.Rows)
             {
@@ -1519,13 +1529,13 @@ namespace Web.Controllers
                 if (detalles.ContainsKey(idCompra))
                     continue;
 
-                detalles[idCompra] = ConstruirDetalleIndexLiviano(row, filasPorIdCompra, ajustesPorPesaje);
+                detalles[idCompra] = ConstruirDetalleIndexLiviano(row, filasPorIdCompra, ajustesPorPesaje, pesajesHijosPorDestino);
             }
 
             return detalles;
         }
 
-        private CompraIndexDetalleVm ConstruirDetalleIndexLiviano(DataRow row, Dictionary<int, DataRow> filasPorIdCompra, Dictionary<int, int> ajustesPorPesaje)
+        private CompraIndexDetalleVm ConstruirDetalleIndexLiviano(DataRow row, Dictionary<int, DataRow> filasPorIdCompra, Dictionary<int, int> ajustesPorPesaje, Dictionary<int, List<int>> pesajesHijosPorDestino)
         {
             int idCompra = LeerInt(row, "idCompra");
             string tipoCompra = LeerString(row, "tipoCompra");
@@ -1546,6 +1556,15 @@ namespace Web.Controllers
             DataRow filaRelacionada = null;
             if (idPesajeRelacionado.HasValue && filasPorIdCompra != null)
                 filasPorIdCompra.TryGetValue(idPesajeRelacionado.Value, out filaRelacionada);
+
+            // El target vinculado de un Pesaje puede ser una Compra real (Cortes/MediaRes) o OTRO
+            // Pesaje (padre-hijo) -- mismo campo idPesajeAjustado para ambos casos, se distinguen
+            // mirando el tipoCompra de la fila relacionada.
+            bool compraVinculadaEsPesaje = esPesaje && filaRelacionada != null && EsPesaje(LeerString(filaRelacionada, "tipoCompra"));
+
+            List<int> pesajesHijos = null;
+            if (esPesaje && pesajesHijosPorDestino != null)
+                pesajesHijosPorDestino.TryGetValue(idCompra, out pesajesHijos);
 
             return new CompraIndexDetalleVm
             {
@@ -1572,6 +1591,8 @@ namespace Web.Controllers
                 EstadoPesajeRelacionado = "",
                 EsPesaje = esPesaje,
                 EsAjuste = esAjuste,
+                CompraVinculadaEsPesaje = compraVinculadaEsPesaje,
+                PesajesHijosVinculadosIds = pesajesHijos ?? new List<int>(),
                 UsuarioCreacion = LeerString(row, "CreadoPor", "creadoPorNombre", "usuarioCreacion"),
                 FechaCreacion = LeerDateTimeNullable(row, "creado", "fechaCreacion"),
                 UsuarioActualizacion = LeerString(row, "ActualizadoPor", "actualizadoPorNombre", "usuarioActualizacion"),
@@ -1604,6 +1625,9 @@ namespace Web.Controllers
                 })
                 .ToList();
 
+            bool compraVinculadaEsPesaje = false;
+            List<int> pesajesHijos = new List<int>();
+
             if (esPesaje)
             {
                 int ajusteRelacionado = oCompraN.getIdAjusteDelPesaje(compra.IdCompra);
@@ -1616,7 +1640,12 @@ namespace Web.Controllers
                     pesajeRelacionado = oCompraN.findById_convertToCompra(idPesajeRelacionado.Value);
                     if (pesajeRelacionado == null || pesajeRelacionado.IdCompra <= 0)
                         estadoPesajeRelacionado = "No se encontro la compra vinculada.";
+                    else
+                        compraVinculadaEsPesaje = EsPesaje(pesajeRelacionado.TipoCompra);
                 }
+
+                // Camino de una sola fila (detalle AJAX), no hace falta el batch de la grilla.
+                pesajesHijos = oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra) ?? new List<int>();
             }
             else if (esAjuste)
             {
@@ -1661,6 +1690,8 @@ namespace Web.Controllers
                 EstadoPesajeRelacionado = estadoPesajeRelacionado,
                 EsPesaje = esPesaje,
                 EsAjuste = esAjuste,
+                CompraVinculadaEsPesaje = compraVinculadaEsPesaje,
+                PesajesHijosVinculadosIds = pesajesHijos,
                 UsuarioCreacion = compra.CreadoPor != null ? compra.CreadoPor.Nombre : "",
                 FechaCreacion = compra.Creado,
                 UsuarioActualizacion = compra.ActualizadoPor != null ? compra.ActualizadoPor.Nombre : "",
@@ -1797,6 +1828,7 @@ namespace Web.Controllers
             model.ProveedorCompraVinculada = "";
             model.CantMediasCompraVinculada = null;
             model.KgsCompraVinculada = null;
+            model.CompraVinculadaEsPesaje = false;
             if (!compra.IdPesajeAjustado.HasValue || compra.IdPesajeAjustado.Value <= 0)
             {
                 model.EstadoCompraVinculada = "";
@@ -1815,6 +1847,7 @@ namespace Web.Controllers
             model.ProveedorCompraVinculada = compraVinculada.Proveedor != null ? compraVinculada.Proveedor.RazonSocial : "";
             model.CantMediasCompraVinculada = compraVinculada.CantMedias.HasValue ? compraVinculada.CantMedias : compra.CantMedias;
             model.KgsCompraVinculada = compraVinculada.KgsMedias.HasValue ? compraVinculada.KgsMedias : compra.KgsMedias;
+            model.CompraVinculadaEsPesaje = EsPesaje(compraVinculada.TipoCompra);
             model.EstadoCompraVinculada = "";
         }
 

@@ -492,9 +492,21 @@
             }
 
             document.querySelectorAll(".fecha-grupo").forEach(function (grupo) {
-                const tieneItems = Array.from(grupo.parentNode.children || []).some(function (li) {
-                    return li.classList && li.classList.contains("venta-item") && li.style.display !== "none";
-                });
+                // La lista es plana (.fecha-grupo y .venta-item son hermanos directos de <ul>,
+                // sin anidar por fecha -- ver _TablaVentas.cshtml) -- por eso hay que recorrer
+                // los hermanos siguientes hasta el proximo .fecha-grupo (o el final), no todos
+                // los hijos de la lista, o un item visible de OTRA fecha hacia que este
+                // encabezado quedara visible aunque su propio grupo este vacio tras filtrar.
+                let tieneItems = false;
+                let hermano = grupo.nextElementSibling;
+
+                while (hermano && !hermano.classList.contains("fecha-grupo")) {
+                    if (hermano.classList.contains("venta-item") && hermano.style.display !== "none") {
+                        tieneItems = true;
+                        break;
+                    }
+                    hermano = hermano.nextElementSibling;
+                }
 
                 grupo.style.display = tieneItems ? "" : "none";
             });

@@ -1,6 +1,65 @@
 # Decisiones de arquitectura
 
-## 2026-08-12 (la mas reciente) - POS: modal "Historial de precios" al 50% de ancho, sin tocar los demás usos del modal compartido
+## 2026-08-13 (la mas reciente) - Replicado el fix de `obtenerCompras` (idPesajeAjustado) en los 3 servidores remotos
+
+Pedido explícito del usuario: aplicar en producción **solo el cambio de base de datos** de hoy (el `ALTER PROCEDURE` sobre `obtenerCompras`, ver entrada anterior), no el código de la app -- eso no fue pedido y queda sin desplegar.
+
+**Investigación previa (solo lectura, contra los 3 servidores) antes de tocar nada**: confirmé que la migración de junio (`20260620-Alter_Compras_IdPesajeAjustado.sql` -- agrega la columna `idPesajeAjustado` + actualiza `addOrEditCompra`/`agregarCompra`/`modificarCompra`) **ya estaba aplicada en los 3** (columna presente, SPs de escritura ya actualizados; ServidorSM ya tenía 1778 filas reales usando el campo). Solo faltaba el `ALTER` de hoy sobre `obtenerCompras`. Verifiqué además, con `sp_helptext` + diff normalizado contra la versión local pre-cambio, que el cuerpo de `obtenerCompras` en los 3 servidores era byte-idéntico al que parcheé localmente -- sin eso no hubiera aplicado el script a ciegas.
+
+**Servidores y catálogos reales** (documentado para referencia futura, no estaba escrito en ningún lado):
+- **ServidorSM** (`192.168.0.151`, LAN): catálogo `supercerdo`, SQL Server 2008, alcanzable directo por red (`192.168.0.151\sqlexpress`).
+- **San Lorenzo** (`200.107.108.44`, IP pública): catálogo `supercerdo`, SQL Server 2008, puerto SQL expuesto directo a internet (sin túnel) -- alcanzable igual que ServidorSM.
+- **VM CarniSys** (`179.43.118.202:2222` SSH): catálogo `carnisys` (multi-tenant, RLS activo vía `SESSION_CONTEXT('IdEmpresa')`, mismo mecanismo que la base local). A diferencia de los otros dos, el puerto SQL **no** está expuesto a la red -- hubo que subir el script por SFTP y ejecutarlo con `sqlcmd` corriendo en la propia VM vía SSH.
+
+**Aplicado y verificado en los 3** (occurrences de `idPesajeAjustado` en la definición = 30, más un `EXEC obtenerCompras` de humo devolviendo filas reales sin error en cada uno). Sin backup completo de base -- justificado porque es un solo Stored Procedure sin tocar datos/tablas, con el `sp_helptext` original de cada servidor guardado de antemano como rollback inmediato si hiciera falta.
+
+**Deuda explícita, no resuelta**: el código C# de hoy (badges de vinculación en `/Stock`, fix del bug de desvinculación silenciosa) sigue sin desplegarse a ningún servidor remoto -- las bases ya tienen el dato disponible, pero ningún sitio real lo muestra todavía en la UI. Deploy de código pendiente, no pedido en este pase.
+
+## 2026-08-13 - /Stock: identificar vinculaciones Ajuste↔Pesaje↔Compra↔Pesaje-padre + fix de bug real de desvinculación silenciosa
+
+**Pedido**: poder identificar, mirando la tabla y el detalle de `/Stock`, cuándo un registro está vinculado a un pesaje -- Ajuste mostrando su Pesaje (y viceversa, que ya andaba), Pesaje vinculado a otro Pesaje (padre-hijo) distinguido de vinculado a una Compra real, y un Pesaje mostrando qué otros pesajes tiene vinculados a él.
+
+### Causa raíz #1 (bloqueaba todo lo demás): el SP `obtenerCompras` no proyectaba `idPesajeAjustado`
+
+El código para mostrar estos vínculos en la grilla YA EXISTÍA (`StockController.cs`, `_StockTabla.cshtml`) de un commit de junio, pero el Stored Procedure `[dbo].[obtenerCompras]` que alimenta la grilla principal **nunca seleccionaba la columna `idPesajeAjustado`** en ninguno de sus 14 `SELECT` (7 tipos de compra × 2 ramas `@idSucursal>0`/`ELSE`) -- verificado con `sqlcmd`/`sp_helptext` contra la base real, no supuesto. El helper `LeerIntNullable` tiene un guard `Columns.Contains(...)` que hacía fallar esto en silencio, sin excepción -- por eso el usuario veía el dato faltante en la tabla aunque el código para mostrarlo estuviera escrito. El detalle expandible AJAX y la pantalla de edición SÍ tenían el dato bien (usan `findById` = `SELECT * FROM Compras`, sin ese problema).
+
+**Fix**: nuevo `Datos/DB-Procedures/20260813-Alter_obtenerCompras_IdPesajeAjustado.sql` -- `ALTER PROCEDURE` con el cuerpo exacto extraído por `sp_helptext` antes del cambio, agregando `dbo.Compras.idPesajeAjustado` a cada uno de los 14 `SELECT` y su `GROUP BY` correspondiente. Verificado mecánicamente que no se alteró nada más: se normalizó el original y el nuevo (quitando la columna agregada) y se diffearon -- 0 diferencias de contenido, solo el rewrapping de líneas que hace `sp_helptext`.
+
+### Hallazgo no pedido: `SuperCerdo` (base separada, con datos reales de un cliente) nunca recibió la migración de junio
+
+Durante la verificación encontré que el servidor SQL local tiene una base `SuperCerdo` (10.922 compras reales, la que veníamos usando para pruebas de UI en sesiones anteriores) donde la columna `idPesajeAjustado` **no existía en absoluto** -- el ALTER de junio (`20260620-Alter_Compras_IdPesajeAjustado.sql`, agrega la columna + actualiza `addOrEditCompra`/`agregarCompra`/`modificarCompra`) nunca se había aplicado ahí. Confirmado con el usuario, apliqué ambos scripts (el de junio + el de hoy) contra `SuperCerdo` con su autorización explícita. **Después, el usuario pidió no seguir tocando `SuperCerdo`** y aclaró que el ambiente real de trabajo es `CarniSys` -- las migraciones ya aplicadas en `SuperCerdo` quedan (son aditivas, no se revierten), pero no se hicieron más cambios ahí.
+
+**Corrección de un error mío en el camino**: en un primer chequeo concluí que `CarniSys` estaba vacía (`SELECT COUNT(*) FROM Compras` = 0) -- error mío: `CarniSys` es la base multi-tenant real del producto (RLS activo, `RLS_Empresa`, sobre `Compras`/`Sucursal`/`Personas`, filtrando por `SESSION_CONTEXT('IdEmpresa')`), y una conexión sin ese contexto seteado ve 0 filas aunque haya datos reales. Con `EXEC sys.sp_set_session_context @key=N'IdEmpresa', @value=1` sí aparecieron 58 compras reales de esa empresa. Toda la verificación final de este pase se hizo contra estos datos reales de `CarniSys`, no contra datos sintéticos completos (solo se insertó 1 fila sintética puntual para el caso "pesaje padre + hijos vinculados", que no existía naturalmente en los datos, y se borró al terminar).
+
+### Diseño: nuevos campos y su uso
+
+- `CompraIndexDetalleVm`/`StockEditVm` -- nuevo `bool CompraVinculadaEsPesaje`: distingue si el target de `IdCompraVinculada`/`IdPesajeAjustado` (mismo campo físico `idPesajeAjustado`, reusado para 3 relaciones distintas) es otro Pesaje (padre) o una Compra real (Cortes/MediaRes) -- se resuelve comparando el `tipoCompra` de la fila/entidad relacionada con `EsPesaje(...)`, helper ya existente. Badge nuevo `badge-warning "Pesaje padre #X"` en la tabla y título condicional en el detalle/edición, sin tocar el caso ya-correcto `badge-primary "Compra #X"`.
+- `CompraIndexDetalleVm.PesajesHijosVinculadosIds` (`List<int>`) -- pesajes cuyo `idPesajeAjustado` apunta a este registro. Nuevo método batch `Datos/Compra.cs` `obtenerPesajesVinculadosPorDestinos(IEnumerable<int>)` (mismo patrón de lotes de 900 que `getIdsAjustePorPesajes`), usado una sola vez por toda la grilla (`ConstruirDetallesIndex`); el detalle AJAX (una sola fila) usa el método singular ya existente (`obtenerPesajesVinculadosPorDestino`). Badge nuevo `badge-secondary "N pesajes vinculados"` (tooltip con los ids) + sección propia en el detalle expandido.
+
+### Bug real encontrado en vivo por el usuario (no introducido hoy, mis badges lo hicieron visible): guardar un Pesaje destino desvinculaba en silencio TODOS sus hijos
+
+El usuario probó vincular una compra a un pesaje y notó que el badge "pesaje padre" de OTRO pesaje desapareció -- quedó huérfano. Causa: `StockController.cs` `SincronizarPesajesVinculados` corre en **cada guardado** de un Pesaje (no solo al usar el botón "Vincular pesajes"), y desvincula (`idPesajeAjustado = NULL`) todo id que esté en `idsPrevios` (los hijos reales, leídos de la base) pero no en `idsActuales` (`model.PesajesVinculadosIds`). El problema: `PesajesVinculadosIds` **nunca se precargaba desde el servidor** al abrir la pantalla de editar -- arrancaba vacío salvo que el usuario usara el modal "Vincular pesajes" en esa misma sesión. Resultado: abrir un Pesaje que ya tenía hijos y guardar por cualquier motivo no relacionado desvinculaba todos sus hijos existentes, en silencio.
+
+**Fix, con confirmación explícita del usuario dado el impacto** (3 capas, no alcanzaba con una sola):
+1. `StockController.CrearViewModelEdicion`: precarga `model.PesajesVinculadosIds = oCompraN.obtenerPesajesVinculadosPorDestino(compra.IdCompra)` cuando es un Pesaje.
+2. `Editar.cshtml`: pasa ese valor al JS como `pesajesVinculadosExistentes` en la config de `StockUI.init(...)` -- en LOS 2 bloques de init (AJAX-modal y layout completo; el primer intento solo tocó uno por una diferencia de indentación en el `old_string` del reemplazo, encontrado al verificar en vivo por navegación directa que usa el segundo bloque).
+3. `stock.js` `getPesajesVinculados()`: ahora es la UNIÓN de `state.config.pesajesVinculadosExistentes` (lo ya vinculado, servidor) con lo derivado de `state.lineas[].idPesajeVinculado` (lo vinculado en esta sesión) -- así `SincronizarPesajesVinculados` nunca encuentra hijos reales ausentes de `idsActuales`, sin importar si el usuario tocó el modal o no.
+
+**Por qué no alcanzaba con precargar solo el ViewModel**: el mecanismo de "vincular pesajes" existente NO vincula el registro en abstracto -- absorbe las líneas/cortes del pesaje origen dentro del destino (`vincularPesaje()` en `stock.js`), y el rastro de "qué línea vino de qué pesaje" (`IdPesajeVinculado` en `StockLineaVm`) es deliberadamente efímero: `StockController.cs` lo resetea a `null`/`""` en cada carga (no hay columna persistida para eso en `CortePorCompra`). Por eso `rebuildHiddenInputs()` (que corre en CADA render de líneas, incluida la carga inicial de página) recalculaba `PesajesVinculadosIds` desde cero en cada request y pisaba cualquier precarga que no pasara también por el JS.
+
+### Deuda/nota
+
+Regla de cache-busting (`docs/DECISIONS.md` 2026-08-10) aplicada: `stock.js` bumpeado a `?v=39` en `Editar.cshtml` (2 referencias) tras el cambio en `getPesajesVinculados()`. Faltó bumpearlo en el primer intento, encontrado y corregido al verificar en vivo (el navegador seguía sirviendo la versión vieja del script).
+
+## 2026-08-13 - Fix: /Ventas mostraba encabezados de fecha vacíos al filtrar (Tipo comprobante, Forma de pago, Cliente, Vendedor)
+
+- **Bug reportado por el usuario** (con captura): al filtrar en `/Ventas` (ej. Tipo comprobante = B), la lista mostraba TODOS los encabezados de fecha del rango buscado, aunque la mayoría no tuviera ningún registro que matcheara el filtro debajo.
+- **Causa**: `aplicarFiltros()` en `_VentasFacturasFiltrosScripts.cshtml` decide si mostrar/ocultar cada `.fecha-grupo` buscando un `.venta-item` visible entre `grupo.parentNode.children` -- pero `_TablaVentas.cshtml` renderiza la lista COMPLETA como una única `<ul>` plana, con `.fecha-grupo` y `.venta-item` como hermanos directos (no hay un contenedor por fecha). `parentNode.children` devuelve TODOS los hijos de la lista entera, no solo los de esa fecha -- entonces alcanzaba con que UN item de CUALQUIER fecha siguiera visible para que TODOS los encabezados de fecha se mostraran, sin importar si su propio grupo tenía 0 resultados.
+- **Fix**: en vez de mirar todos los hijos de la lista, recorrer los hermanos siguientes de cada `.fecha-grupo` (`nextElementSibling`) hasta toparse con el próximo `.fecha-grupo` (o el final de la lista) -- ese es el rango real de items de esa fecha en una lista plana.
+- **Alcance**: esta función (`aplicarFiltros()`, filtrado 100% client-side por DOM) solo se usa en modo Ventas (`esFacturas=false`); el modo Facturas filtra en servidor con paginación (`buscarFacturasServidor()`, comentario explícito en el mismo archivo) y no tiene este bug -- no se tocó esa rama.
+- **Verificado con Chrome real (CDP)**: reproducido el escenario exacto de la captura (rango 01/08 al 13/08, 26 ventas en 7 fechas) y tildado Tipo comprobante=B. Antes del fix: los 7 encabezados de fecha quedaban visibles. Después del fix: solo `06/08/2026` (la única fecha con un resultado que matchea) queda visible, las otras 6 se ocultan -- confirmado tanto por inspección del DOM (`style.display`) como por captura de pantalla.
+
+## 2026-08-12 - POS: modal "Historial de precios" al 50% de ancho, sin tocar los demás usos del modal compartido
 
 - **Pedido**: reducir el ancho del modal de historial de precios del cliente en Ventas/POS a la mitad.
 - `#modalFinanzasPOS` es un modal genérico reusado por Compras, CtasCtes, Mis Ventas, Detalle de Venta, Egresos e Historial de Precios -- cada uso alterna una clase CSS propia (`modal-compra-pos-layout`, `modal-ctasctes-pos-compacto`, etc.) según la URL que se carga (`POSFinanzas.cargar()`, `POS.cshtml`). El uso de "Historial de precios" (`/Ventas/HistorialPreciosCliente`) era el único, junto con `CtaCtePersona` (cuenta corriente de UN cliente puntual, distinto de `CtasCtes` general), que no tenía ninguna clase asociada -- caía en el ancho por defecto del markup (`modal-xl`, 1140px en desktop grande).

@@ -29,8 +29,8 @@ else
         <div class="col-12 col-xl-8 order-2 order-xl-1">
             @if (Model.EsPesaje && Model.IdCompraVinculada.HasValue && Model.IdCompraVinculada.Value > 0)
             {
-                <div class="stock-relacionado-box stock-relacionado-compra mt-3">
-                    <div class="small text-uppercase font-weight-bold mb-2">Compra vinculada #@Model.IdCompraVinculada.Value</div>
+                <div class="stock-relacionado-box @(Model.CompraVinculadaEsPesaje ? "stock-relacionado-pesaje-padre" : "stock-relacionado-compra") mt-3">
+                    <div class="small text-uppercase font-weight-bold mb-2">@(Model.CompraVinculadaEsPesaje ? "Pesaje padre vinculado #" : "Compra vinculada #")@Model.IdCompraVinculada.Value</div>
                     @if (!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada))
                     {
                         <div class="font-weight-bold">@Model.EstadoCompraVinculada</div>
@@ -88,6 +88,19 @@ else
                             </div>
                         </div>
                     }
+                </div>
+            }
+
+            @if (Model.EsPesaje && Model.PesajesHijosVinculadosIds != null && Model.PesajesHijosVinculadosIds.Count > 0)
+            {
+                <div class="stock-relacionado-box stock-relacionado-hijos mt-3">
+                    <div class="small text-uppercase font-weight-bold mb-2">Pesajes vinculados a este (@Model.PesajesHijosVinculadosIds.Count)</div>
+                    <div>
+                        @foreach (var idHijo in Model.PesajesHijosVinculadosIds)
+                        {
+                            <span class="badge badge-pill badge-secondary mr-1 mb-1">#@idHijo</span>
+                        }
+                    </div>
                 </div>
             }
 

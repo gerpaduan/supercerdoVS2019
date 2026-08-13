@@ -212,6 +212,68 @@ namespace Datos
             );
         }
 
+        // Version batch de obtenerPesajesVinculadosPorDestino, para no hacer N+1 queries al listar
+        // toda la grilla de /Stock -- mismo patron de lotes de 900 ids que getIdsAjustePorPesajes.
+        public Dictionary<int, List<int>> obtenerPesajesVinculadosPorDestinos(IEnumerable<int> idsDestino)
+        {
+            var resultado = new Dictionary<int, List<int>>();
+            if (idsDestino == null)
+                return resultado;
+
+            var ids = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Distinct(System.Linq.Enumerable.Where(idsDestino, x => x > 0)));
+            if (ids.Count == 0)
+                return resultado;
+
+            string tipoPesaje = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+            const int maxIdsPorLote = 900;
+
+            for (int offset = 0; offset < ids.Count; offset += maxIdsPorLote)
+            {
+                int cantidadLote = Math.Min(maxIdsPorLote, ids.Count - offset);
+                var idsLote = ids.GetRange(offset, cantidadLote);
+                var nombresId = new List<string>();
+
+                for (int i = 0; i < idsLote.Count; i++)
+                    nombresId.Add("@idDestino" + i);
+
+                string inIds = string.Join(", ", nombresId);
+                string sql =
+                    "SELECT idCompra, idPesajeAjustado " +
+                    "FROM Compras " +
+                    "WHERE tipoCompra = @tipo " +
+                    "  AND idPesajeAjustado IS NOT NULL " +
+                    "  AND idPesajeAjustado IN (" + inIds + ") " +
+                    "  AND idCompra <> idPesajeAjustado;";
+
+                DataTable dt = Db.DataTable(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    p =>
+                    {
+                        p.Add("@tipo", SqlDbType.NVarChar, 50).Value = tipoPesaje;
+                        for (int i = 0; i < idsLote.Count; i++)
+                            p.Add("@idDestino" + i, SqlDbType.Int).Value = idsLote[i];
+                    });
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    int idDestino = Convert.ToInt32(row["idPesajeAjustado"]);
+                    int idHijo = Convert.ToInt32(row["idCompra"]);
+
+                    if (!resultado.TryGetValue(idDestino, out var lista))
+                    {
+                        lista = new List<int>();
+                        resultado[idDestino] = lista;
+                    }
+
+                    lista.Add(idHijo);
+                }
+            }
+
+            return resultado;
+        }
+
         public void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, int actualizadoPor)
         {
             const string sql =

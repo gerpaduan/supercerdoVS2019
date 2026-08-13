@@ -61,10 +61,19 @@
         }
 
         function normalizarImportes() {
-            const importe = ($("#importe").val() || "").toString().trim();
+            // #importe se muestra con mascara "." de miles / "," decimal (money-input-mask.js).
+            // Antes de mandar el form hay que sacarle los puntos de miles: ParseFloat en el
+            // server ya sabe interpretar la coma como separador decimal, pero no sabe de miles.
+            const importe = window.MoneyInputMask
+                ? window.MoneyInputMask.getRawValue("#importe")
+                : ($("#importe").val() || "").toString().trim();
             $("#importe").val(importe);
 
-            const efectivo = ($("#Efectivo").val() || "").toString().trim();
+            // #Efectivo tiene la misma mascara que #importe (money-input-mask.js) -- mismo
+            // motivo: sacarle los puntos de miles antes de que ParseFloat lo interprete.
+            const efectivo = window.MoneyInputMask
+                ? window.MoneyInputMask.getRawValue("#Efectivo")
+                : ($("#Efectivo").val() || "").toString().trim();
             $("#Efectivo").val(efectivo || "0");
         }
 

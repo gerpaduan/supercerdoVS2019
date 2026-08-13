@@ -408,8 +408,15 @@
             }
         }
 
+        @if (esFacturada && !string.IsNullOrWhiteSpace(ViewBag.QrTicketBase64 as string))
+        {
+            <div style="text-align:center; margin-top:6px;">
+                <img src="data:image/png;base64,@ViewBag.QrTicketBase64" style="width:140px; max-width:100%; height:auto;" alt="QR AFIP" />
+            </div>
+        }
+
         @for (int i = 0; i < 10; i++)
-        {            
+        {
             <div class="ticket-line">&nbsp;</div>
         }
     </div>

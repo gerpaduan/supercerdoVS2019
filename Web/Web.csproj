@@ -251,6 +251,7 @@
     <Content Include="Scripts\app\captura-respaldo.js" />
     <Content Include="Scripts\app\lineas-agrupadas.js" />
     <Content Include="Scripts\app\modal-postmovimiento.js" />
+    <Content Include="Scripts\app\money-input-mask.js" />
     <Content Include="Scripts\app\movimientos.js" />
     <Content Include="Scripts\app\pago-cheques.js" />
     <Content Include="Scripts\app\pago-ux.js" />

@@ -201,6 +201,11 @@ namespace Negocio
             return oCompraD.obtenerPesajesVinculadosPorDestino(idPesajeDestino);
         }
 
+        public Dictionary<int, List<int>> obtenerPesajesVinculadosPorDestinos(IEnumerable<int> idsDestino)
+        {
+            return oCompraD.obtenerPesajesVinculadosPorDestinos(idsDestino);
+        }
+
         public void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, Entidades.Usuario actualizadoPor)
         {
             int idUsuario = actualizadoPor != null ? actualizadoPor.Id : 0;

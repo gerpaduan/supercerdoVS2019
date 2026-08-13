@@ -208,7 +208,7 @@
                                 <div class="input-group">
                                     @Html.TextBoxFor(m => m.Importe, new
                                     {
-                                        @class = "form-control solo-decimal",
+                                        @class = "form-control",
                                         id = "importe",
                                         type = "text",
                                         autocomplete = "off",
@@ -237,7 +237,7 @@
                                             Model.Efectivo.ToString("0.00", CultureInfo.InvariantCulture),
                                             new
                                             {
-                                                @class = "form-control solo-decimal",
+                                                @class = "form-control",
                                                 id = "Efectivo",
                                                 type = "text"
                                             }
@@ -499,7 +499,8 @@
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=8")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=11")"></script>
+    <script src="@Url.Content("~/Scripts/app/money-input-mask.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=13")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
@@ -509,6 +510,8 @@
             buscarChequePorNro: window.urls.buscarChequePorNro,
             getCheques: window.urls.getCheques
         });
+        window.MoneyInputMask && window.MoneyInputMask.attach("#importe");
+        window.MoneyInputMask && window.MoneyInputMask.attach("#Efectivo");
         window.PagoUX && window.PagoUX.init();
         window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
         window.EditPageGuard && window.EditPageGuard.init({
@@ -612,7 +615,8 @@ else
         <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
         <script src="@Url.Content("~/Scripts/app/modal-postpago.js?v=8")"></script>
         <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
-        <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=11")"></script>
+        <script src="@Url.Content("~/Scripts/app/money-input-mask.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=13")"></script>
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
         <script>
             window.PagoCheques && window.PagoCheques.init({
@@ -621,6 +625,8 @@ else
                 buscarChequePorNro: window.urls.buscarChequePorNro,
                 getCheques: window.urls.getCheques
             });
+            window.MoneyInputMask && window.MoneyInputMask.attach("#importe");
+            window.MoneyInputMask && window.MoneyInputMask.attach("#Efectivo");
             window.PagoUX && window.PagoUX.init();
             window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
             window.EditPageGuard && window.EditPageGuard.init({
