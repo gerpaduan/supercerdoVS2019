@@ -114,6 +114,7 @@ namespace Web.Controllers
                 model.Email = usuario.Email ?? "";
                 model.IdSucursalUser = usuario.IdSucursal;
                 model.PermitirLoginFueraSucursal = usuario.PermitirLoginFueraSucursal;
+                model.EsUsuarioProduccion = usuario.EsUsuarioProduccion;
                 model.IdEmpresa = usuario.IdEmpresa;
             }
 
@@ -180,6 +181,7 @@ namespace Web.Controllers
                     : "SteelBlue",
                 IdSucursal = model.IdSucursalUser,
                 PermitirLoginFueraSucursal = model.PermitirLoginFueraSucursal,
+                EsUsuarioProduccion = model.EsUsuarioProduccion,
                 IdEmpresa = empresa.IdEmpresa
             };
 
@@ -216,6 +218,12 @@ namespace Web.Controllers
                     {
                         Id = idUsuarioPersistido,
                         PermitirLoginFueraSucursal = model.PermitirLoginFueraSucursal
+                    });
+
+                    oUsuarioN.setEsUsuarioProduccion(new Entidades.Usuario
+                    {
+                        Id = idUsuarioPersistido,
+                        EsUsuarioProduccion = model.EsUsuarioProduccion
                     });
 
                     if (usuarioActual != null && usuarioActual.Id == idUsuarioPersistido)
@@ -340,11 +348,31 @@ namespace Web.Controllers
                 // Si cambia en la base, hay que actualizar este valor.
                 const int idFormCierresDeCaja = 9;
 
+                // Usuario de produccion: nunca puede quedar con permiso de Ventas, Finanzas ni
+                // Formulas, sin importar lo que haya llegado tildado en el POST -- este es el
+                // bloqueo REAL (server-side), la grilla de Permisos.cshtml no filtra estas filas
+                // visualmente todavia. Se resuelve por IdForm consultando Formularios porque
+                // UsuarioPermisoItemVm solo trae IdForm, no las claves FormConsulta/FormEdicion.
+                HashSet<int> idFormsBloqueados = null;
+                if (usuario.EsUsuarioProduccion)
+                {
+                    idFormsBloqueados = (oUsuarioN.getPermisosUsuario(usuario.Id) ?? new List<PermisosUsuarios>())
+                        .Where(p => p.Formulario != null && EsFormularioBloqueadoParaProduccion(p.Formulario))
+                        .Select(p => p.IdForm)
+                        .ToHashSet();
+                }
+
                 var permisos = (model.Items ?? new List<UsuarioPermisoItemVm>())
                     .GroupBy(x => x.IdForm)
                     .Select(g => g.First())
                     .Select(x =>
                     {
+                        if (idFormsBloqueados != null && idFormsBloqueados.Contains(x.IdForm))
+                        {
+                            x.PuedeVer = false;
+                            x.PuedeEditar = false;
+                        }
+
                         // Regla de negocio: en "Cierres de Caja", Ver el historial habilita
                         // tambien editar un cierre historico (modoModificacion) -- se fuerza
                         // acá server-side para que quede bien guardado aunque se salte el
@@ -465,6 +493,27 @@ namespace Web.Controllers
                 .ToList();
         }
 
+        // Claves de Formulario (FormConsulta/FormEdicion*) que un usuario de produccion nunca
+        // puede tener: toda Venta y Finanza (pedido explicito), mas Formulas dentro de Elaborados
+        // (a diferencia de Carga/Ingreso rapido, que si le corresponden).
+        private static readonly HashSet<string> ClavesBloqueadasUsuarioProduccion = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            Entidades.Permisos.Venta.Bonificar, Entidades.Permisos.Venta.VerVentas, Entidades.Permisos.Venta.VerBonificar,
+            Entidades.Permisos.Venta.VerVentasVendedor, Entidades.Permisos.Venta.VerGetAllLineaVenta, Entidades.Permisos.Venta.NuevaVenta,
+            Entidades.Permisos.Venta.UltimaVenta, Entidades.Permisos.Venta.GetAllLineaVenta,
+            Entidades.Permisos.Finanza.VerCheques, Entidades.Permisos.Finanza.VerPagos, Entidades.Permisos.Finanza.AddOrEditPago,
+            Entidades.Permisos.Finanza.VerCtasCtes, Entidades.Permisos.Finanza.VerCtaCtePersona,
+            Entidades.Permisos.Elaborado.VerFormulas, Entidades.Permisos.Elaborado.IngresoFormula
+        };
+
+        private static bool EsFormularioBloqueadoParaProduccion(Entidades.Formulario formulario)
+        {
+            return ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormConsulta ?? "")
+                || ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormEdicion ?? "")
+                || ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormEdicionExtra1 ?? "")
+                || ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormEdicionExtra2 ?? "");
+        }
+
         private void ValidarUsuario(UsuarioEditVm model, Entidades.Usuario usuarioOriginal)
         {
             if (model == null)
@@ -509,6 +558,11 @@ namespace Web.Controllers
             var sucursalValida = model.IdSucursalUser <= 0 || (oSucursalN.findAll() ?? new List<Sucursal>()).Any(s => s.IdSucursal == model.IdSucursalUser);
             if (!sucursalValida)
                 ModelState.AddModelError("IdSucursalUser", "La sucursal seleccionada no es válida.");
+
+            // Admin salteA todos los chequeos de permiso (Negocio.Usuario.tienePermiso), asi que
+            // un usuario de produccion Admin anularia la restriccion de acceso a Ventas/Finanzas.
+            if (model.EsUsuarioProduccion && model.Admin)
+                ModelState.AddModelError("", "Un usuario de producción no puede ser Admin.");
 
             oUsuarioN.obtenerUsuarios(false);
             var usuarios = (oUsuarioN.listaUsuario() ?? new List<Entidades.Usuario>())

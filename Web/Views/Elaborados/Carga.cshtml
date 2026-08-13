@@ -367,6 +367,7 @@
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalElaboradoData)
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalIngredienteData)
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <style>
     .js-auto-receta {
@@ -392,9 +393,13 @@
             initialLines: @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.ElaboradoCargaLineaVm>())),
             initialFormula: @Html.Raw(Json.Encode(Model.Formula ?? new List<Web.Models.ElaboradoFormulaLineaVm>()))
         };
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
     </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=17")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=18")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>

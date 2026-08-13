@@ -183,6 +183,26 @@
                             }
                         </div>
                     </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.EsUsuarioProduccion, new { @class = "custom-control-input", id = "EsUsuarioProduccion", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.EsUsuarioProduccion, new { @class = "custom-control-input", id = "EsUsuarioProduccion" })
+                                }
+                                <label class="custom-control-label" for="EsUsuarioProduccion">Usuario de producción</label>
+                            </div>
+                            <small class="form-text text-muted">Sin acceso a Ventas ni Finanzas. No puede ser Admin.</small>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.EsUsuarioProduccion)
+                            }
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-3 d-flex flex-wrap align-items-center">
@@ -217,5 +237,19 @@
         soloLecturaInicial: @((Model.EsEdicion && !Model.SoloLectura) ? "true" : "false"),
         modifyButtonSelector: "#btnHabilitarEdicionUsuario",
         saveButtonSelector: "#btnGuardarUsuario"
+    });
+
+    // Admin y Usuario de producción son mutuamente excluyentes (el server lo vuelve a validar
+    // igual en UsuariosController.ValidarUsuario) -- tildar uno destilda el otro, para que el
+    // usuario no se entere del conflicto recién al guardar.
+    // Nota: este bloque esta mas arriba en el HTML que el <script> de jquery.min.js (que carga
+    // al final del body) -- se difiere a DOMContentLoaded para asegurar que jQuery ya exista.
+    document.addEventListener("DOMContentLoaded", function () {
+        jQuery(document).on("change", "#Admin", function () {
+            if (jQuery(this).is(":checked")) jQuery("#EsUsuarioProduccion").prop("checked", false);
+        });
+        jQuery(document).on("change", "#EsUsuarioProduccion", function () {
+            if (jQuery(this).is(":checked")) jQuery("#Admin").prop("checked", false);
+        });
     });
 </script>

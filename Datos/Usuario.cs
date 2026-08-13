@@ -152,6 +152,29 @@ namespace Datos
             );
         }
 
+        public void setEsUsuarioProduccion(Entidades.Usuario oUsuario)
+        {
+            if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
+            if (!ExisteColumnaUsuarios("esUsuarioProduccion"))
+                return;
+
+            const string sql = @"
+                UPDATE Usuarios
+                SET esUsuarioProduccion = @esUsuarioProduccion
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@esUsuarioProduccion", SqlDbType.Bit).Value = oUsuario.EsUsuarioProduccion;
+                }
+            );
+        }
+
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {
             const string query = @"
@@ -538,7 +561,8 @@ namespace Datos
                 ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
                 IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
                 IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
-                PermitirLoginFueraSucursal = GetOptionalBool(dr, "PermitirLoginFueraSucursal")
+                PermitirLoginFueraSucursal = GetOptionalBool(dr, "PermitirLoginFueraSucursal"),
+                EsUsuarioProduccion = GetOptionalBool(dr, "esUsuarioProduccion")
             };
         }
 

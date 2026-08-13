@@ -254,6 +254,8 @@ namespace Web.Controllers
                 ViewBag.Seccion = "Elaborados";
                 ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
                 ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);
+                ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+                ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
                 return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", modelEdicion);
             }
 
@@ -291,6 +293,8 @@ namespace Web.Controllers
             ViewBag.Seccion = "Elaborados";
             ViewBag.Sucursales = oSucursalN.findAll() ?? new List<Sucursal>();
             ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
             return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", model);
         }
 
@@ -355,6 +359,8 @@ namespace Web.Controllers
             ViewBag.UrlObtenerFormula = Url.Action("ObtenerFormula", "Elaborados");
             ViewBag.UrlGuardar = Url.Action("GuardarCarga", "Elaborados");
             ConfigurarAdvertenciaFechaEnVivo("FechaEmbutido", Permisos.Elaborado.IngresoEmbutido, idCreadorPermiso);
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
 
             return View("~/Views/Elaborados/Carga.cshtml", model);
         }
@@ -612,13 +618,18 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult GuardarIngresoRapido(ElaboradoRapidoEditVm model)
+        public JsonResult GuardarIngresoRapido(ElaboradoRapidoEditVm model, int idUsuarioCreador = 0)
         {
             try
             {
                 var user = Session["Usuario"] as Usuario;
                 if (user == null)
                     return Json(new { ok = false, mensaje = "Sesion invalida." });
+
+                // Usuario de produccion: el creador real es el elegido del modal, no el usuario
+                // de sesion compartido. El chequeo de permiso de abajo sigue usando "user" (la
+                // sesion real) sin cambios.
+                var usuarioCreador = ResolverUsuarioCreador(idUsuarioCreador, user);
 
                 string error = ValidarIngresoRapido(model);
                 if (!string.IsNullOrWhiteSpace(error))
@@ -662,7 +673,7 @@ namespace Web.Controllers
                     if (string.Equals(embutidoOriginal.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
                         return Json(new { ok = false, mensaje = "El elaborado original ya se encuentra anulado." });
 
-                    embutidoOriginal.ActualizadoPor = user;
+                    embutidoOriginal.ActualizadoPor = usuarioCreador;
                     oCorteN.anularEmbutido(embutidoOriginal);
                 }
 
@@ -672,7 +683,7 @@ namespace Web.Controllers
                     corte = elaborado,
                     sucursal = new Sucursal { IdSucursal = model.IdSucursal },
                     observaciones = model.EsDesarme ? "Desarme" : "",
-                    CreadoPor = user
+                    CreadoPor = usuarioCreador
                 };
 
                 embutido.idEmbutido = oCorteN.agregarEmbutido(embutido);
@@ -711,13 +722,18 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult GuardarCarga(ElaboradoCargaVm model)
+        public JsonResult GuardarCarga(ElaboradoCargaVm model, int idUsuarioCreador = 0)
         {
             try
             {
                 var user = Session["Usuario"] as Usuario;
                 if (user == null)
                     return Json(new { ok = false, mensaje = "Sesion invalida." });
+
+                // Usuario de produccion: el creador real es el elegido del modal, no el usuario
+                // de sesion compartido. El chequeo de permiso de abajo sigue usando "user" (la
+                // sesion real) sin cambios.
+                var usuarioCreador = ResolverUsuarioCreador(idUsuarioCreador, user);
 
                 if (model == null)
                     return Json(new { ok = false, mensaje = "No se recibieron datos del elaborado." });
@@ -754,7 +770,7 @@ namespace Web.Controllers
                     if (string.Equals(embutidoOriginal.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
                         return Json(new { ok = false, mensaje = "El elaborado original ya se encuentra anulado." });
 
-                    embutidoOriginal.ActualizadoPor = user;
+                    embutidoOriginal.ActualizadoPor = usuarioCreador;
                     oCorteN.anularEmbutido(embutidoOriginal);
                 }
 
@@ -764,7 +780,7 @@ namespace Web.Controllers
                     Corte = corteElaborado,
                     Sucursal = new Entidades.Sucursal { IdSucursal = model.IdSucursal },
                     Observaciones = model.Observaciones ?? "",
-                    CreadoPor = user
+                    CreadoPor = usuarioCreador
                 };
 
                 int idEmbutido = oCorteN.agregarEmbutido(embutido);
@@ -1175,7 +1191,7 @@ namespace Web.Controllers
 
         private List<ElaboradoTabVm> BuildTabs(string activeAction)
         {
-            return new List<ElaboradoTabVm>
+            var tabs = new List<ElaboradoTabVm>
             {
                 new ElaboradoTabVm { Titulo = "Elaborados", Action = "Index", Activo = string.Equals(activeAction, "Index", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Lineas de elaborado", Action = "Lineas", Activo = string.Equals(activeAction, "Lineas", StringComparison.OrdinalIgnoreCase) },
@@ -1184,6 +1200,16 @@ namespace Web.Controllers
                 new ElaboradoTabVm { Titulo = "Formulas", Action = "Formulas", Activo = string.Equals(activeAction, "Formulas", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Desarme de elaborado", Action = "Desarme", Activo = string.Equals(activeAction, "Desarme", StringComparison.OrdinalIgnoreCase) },
             };
+
+            // Usuario de produccion: Formulas queda fuera junto con Ventas/Finanzas (pedido
+            // explicito). El bloqueo real ya lo da GuardarPermisos (nunca tiene VerFormulas/
+            // IngresoFormula) -- esto es solo para no mostrar una pestana que igual va a
+            // rechazar el acceso.
+            var usuarioSesion = Session["Usuario"] as Usuario;
+            if (usuarioSesion != null && usuarioSesion.EsUsuarioProduccion)
+                tabs.RemoveAll(t => string.Equals(t.Action, "Formulas", StringComparison.OrdinalIgnoreCase));
+
+            return tabs;
         }
 
         private object MapProductoBusqueda(Entidades.Corte p)

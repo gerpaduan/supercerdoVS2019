@@ -461,25 +461,37 @@
                 return;
             }
 
-            state.guardando = true;
-            $.ajax({
-                url: $form.attr('action'),
-                type: 'POST',
-                data: $form.serialize()
-            }).done(function (resp) {
-                state.guardando = false;
-                if (!resp || !resp.ok) {
-                    showAlert('error', config.esDesarme ? 'Desarme' : 'Ingreso rápido', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
-                    return;
-                }
+            function guardarIngresoRapidoReal() {
+                state.guardando = true;
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize()
+                }).done(function (resp) {
+                    state.guardando = false;
+                    if (!resp || !resp.ok) {
+                        showAlert('error', config.esDesarme ? 'Desarme' : 'Ingreso rápido', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
+                        return;
+                    }
 
-                window.location.href = resp.redirectUrl || config.redirectUrl || '/Elaborados';
-            }).fail(function (xhr) {
-                state.guardando = false;
-                var mensaje = 'No se pudo guardar el movimiento.';
-                if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
-                showAlert('error', config.esDesarme ? 'Desarme' : 'Ingreso rápido', mensaje);
-            });
+                    window.location.href = resp.redirectUrl || config.redirectUrl || '/Elaborados';
+                }).fail(function (xhr) {
+                    state.guardando = false;
+                    var mensaje = 'No se pudo guardar el movimiento.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
+                    showAlert('error', config.esDesarme ? 'Desarme' : 'Ingreso rápido', mensaje);
+                });
+            }
+
+            // Usuario de produccion (sala de piso): antes de guardar, se elige de un modal
+            // quien es el empleado real -- ver Web/Scripts/app/seleccion-usuario-produccion.js.
+            if (window.SeleccionUsuarioProduccion) {
+                window.SeleccionUsuarioProduccion.conSeleccionDeUsuario($form, guardarIngresoRapidoReal, {
+                    titulo: '¿Quién está haciendo esta carga?'
+                });
+            } else {
+                guardarIngresoRapidoReal();
+            }
         });
 
         autoResizeTextarea($receta);

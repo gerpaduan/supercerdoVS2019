@@ -304,6 +304,11 @@ namespace Negocio
             oUsuarioD.setPermitirLoginFueraSucursal(oUsuario);
         }
 
+        public void setEsUsuarioProduccion(Entidades.Usuario oUsuario)
+        {
+            oUsuarioD.setEsUsuarioProduccion(oUsuario);
+        }
+
         public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
         {
             oUsuarioD.RegistrarLoginUbicacion(log);

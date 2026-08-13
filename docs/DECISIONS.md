@@ -1,6 +1,16 @@
 # Decisiones de arquitectura
 
-## 2026-08-13 (la mas reciente) - Replicado el fix de `obtenerCompras` (idPesajeAjustado) en los 3 servidores remotos
+## 2026-08-13 (la mas reciente) - Usuario "de producción" compartido: sin password en el selector, y sin permiso para Ajuste de Stock
+
+**Contexto**: usuario compartido por empresa (`Usuario.EsUsuarioProduccion`) para la sala de producción, sin acceso a Ventas/Finanzas/Fórmulas, que al guardar en Movimientos/Stock/Elaborados abre un modal para elegir qué empleado real está actuando (ese usuario queda como `CreadoPor`, nunca el usuario de producción). Reusa el modal `_ModalSeleccionUsuario.cshtml`/`seleccion-usuario.js` ya creado para el step-up de Cierre de Caja, que ya soportaba `requierePassword:false`.
+
+**Decisión 1 -- sin contraseña en el selector, riesgo aceptado explícitamente por el usuario**: a diferencia del step-up de Cierre de Caja (que valida la contraseña real del usuario elegido), este selector no pide nada -- doble clic o Enter alcanza. Esto significa que cualquiera con la sesión de producción abierta puede atribuirse cualquier nombre de la lista de usuarios activos de la empresa, sin ninguna verificación de que sea realmente esa persona. Alternativa descartada: pedir contraseña como en Cajas -- explícitamente rechazada por el usuario porque el objetivo es evitar justamente que los empleados tipeen credenciales en cada carga. Se documenta como riesgo aceptado, no como bug pendiente.
+
+**Decisión 2 -- Ajuste de Stock queda fuera del alcance, sin resolver**: `StockController.cs` exige `user.Admin == true` para operar el tipo "Ajuste" (chequeo hardcodeado, no un permiso de formulario). Como un usuario de producción nunca puede ser Admin (se valida server-side, mutuamente excluyente), no puede hacer Ajustes de Stock aunque tenga el resto de los permisos de Stock. No estaba en el pedido explícito del usuario (que nombró Movimientos, Stock -- Ingreso/Egreso/Pesaje/Cierre -- y Elaborados); si en el futuro hace falta habilitarlo, hay que reemplazar ese chequeo de `Admin` por un permiso de formulario propio, no forma parte de este cambio.
+
+**Bloqueo real vs. cosmético**: el límite real de acceso a Ventas/Finanzas/Fórmulas es server-side, en `UsuariosController.GuardarPermisos` -- descarta cualquier permiso de esas categorías al guardar si el usuario destino es de producción, sin importar lo que llegue en el POST. Ocultar los links del menú y la pestaña "Formulas" es solo UX (evita clics muertos); si algún día se agrega una acción nueva sin pasar por ese guardado, el límite real sigue vigente porque cada acción de Ventas/Finanzas ya valida su propio permiso individualmente (no hay gate de clase en esos controllers, confirmado al investigar).
+
+## 2026-08-13 - Replicado el fix de `obtenerCompras` (idPesajeAjustado) en los 3 servidores remotos
 
 Pedido explícito del usuario: aplicar en producción **solo el cambio de base de datos** de hoy (el `ALTER PROCEDURE` sobre `obtenerCompras`, ver entrada anterior), no el código de la app -- eso no fue pedido y queda sin desplegar.
 

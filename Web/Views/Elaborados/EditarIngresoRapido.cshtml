@@ -225,6 +225,7 @@
 </div>
 
 @Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <style>
     .js-auto-receta {
@@ -251,9 +252,13 @@
             puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
             initialFormula: @Html.Raw(Json.Encode(Model.Formula ?? new List<Web.Models.ElaboradoFormulaLineaVm>()))
         };
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
     </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=9")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=10")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({

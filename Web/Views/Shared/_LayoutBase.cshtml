@@ -4,6 +4,7 @@
     var controller = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString();
     var action = HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString();
     bool esAdmin = user != null && user.Admin;
+    bool esUsuarioProduccionActual = user != null && user.EsUsuarioProduccion;
     bool puedeAdministrarUsuarios = esAdmin;
 
     if (!puedeAdministrarUsuarios && user != null && user.Permisos != null)
@@ -229,19 +230,22 @@
                 </a>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="@Url.Action("Index", "Ventas")">
-                    <i class="fas fa-fw fa-cash-register"></i>
-                    <span>Ventas</span>
-                </a>
-            </li>
+            @if (!esUsuarioProduccionActual)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("Index", "Ventas")">
+                        <i class="fas fa-fw fa-cash-register"></i>
+                        <span>Ventas</span>
+                    </a>
+                </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="@Url.Action("POS", "Ventas")">
-                    <i class="fas fa-fw fa-store"></i>
-                    <span>Punto de Venta</span>
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="@Url.Action("POS", "Ventas")">
+                        <i class="fas fa-fw fa-store"></i>
+                        <span>Punto de Venta</span>
+                    </a>
+                </li>
+            }
 
             <li class="nav-item">
                 <a class="nav-link" href="@Url.Action("CajasAbiertas", "Cajas")">
@@ -314,19 +318,22 @@
                 </a>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                   aria-expanded="@(controller == "Finanzas" ? "true" : "false")" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-cog"></i>
-                    <span>Finanzas</span>
-                </a>
-                <div id="collapseTwo" class="collapse @(controller == "Finanzas" ? "show" : "")" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item @(action == "CtasCtes" || action == "CtaCtePersona" ? "active" : "")" href="@Url.Action("CtasCtes","Finanzas")">Cuentas Corrientes</a>
-                        <a class="collapse-item @(action == "Cheques" ? "active" : "")" href="@Url.Action("Cheques","Finanzas")">Cheques</a>
+            @if (!esUsuarioProduccionActual)
+            {
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                       aria-expanded="@(controller == "Finanzas" ? "true" : "false")" aria-controls="collapseTwo">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Finanzas</span>
+                    </a>
+                    <div id="collapseTwo" class="collapse @(controller == "Finanzas" ? "show" : "")" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item @(action == "CtasCtes" || action == "CtaCtePersona" ? "active" : "")" href="@Url.Action("CtasCtes","Finanzas")">Cuentas Corrientes</a>
+                            <a class="collapse-item @(action == "Cheques" ? "active" : "")" href="@Url.Action("Cheques","Finanzas")">Cheques</a>
+                        </div>
                     </div>
-                </div>
-            </li>
+                </li>
+            }
 
             <li class="nav-item">
                 <a class="nav-link @(controller == "Reportes" ? "active" : "")" href="@Url.Action("Index","Reportes")">

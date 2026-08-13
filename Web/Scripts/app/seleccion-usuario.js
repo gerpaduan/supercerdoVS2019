@@ -234,6 +234,14 @@
                     marcarUsuario($(this));
                     if (requierePassword) $('#passSeleccionUsuario').trigger('focus');
                 })
+                .off('dblclick.seleccionUsuario', '.seleccion-usuario-item')
+                .on('dblclick.seleccionUsuario', '.seleccion-usuario-item', function () {
+                    // Doble clic selecciona y confirma en un solo gesto -- solo tiene sentido
+                    // sin password (con password igual hace falta tipearla, confirmar() lo
+                    // maneja solo: si requierePassword, no resuelve y enfoca el campo de clave).
+                    marcarUsuario($(this));
+                    confirmar();
+                })
                 .off('keydown.seleccionUsuario', '#txtSeleccionUsuario')
                 .on('keydown.seleccionUsuario', '#txtSeleccionUsuario', function (e) {
                     if (e.key === 'ArrowDown') { e.preventDefault(); navegarLista('down'); return; }

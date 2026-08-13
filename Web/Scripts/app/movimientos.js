@@ -1145,32 +1145,48 @@
             e.preventDefault();
             renderLines();
             clearWarning();
-            state.saving = true;
 
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: $(this).serialize()
-            }).done(function (resp) {
-                if (!resp || !resp.ok) {
+            var $form = $(this);
+
+            function guardarMovimientoReal() {
+                state.saving = true;
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize()
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        state.saving = false;
+                        showAlert('error', 'Movimiento', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
+                        return;
+                    }
+
+                    clearDraft();
+                    if (window.PostMovimientoModal && typeof window.PostMovimientoModal.open === 'function') {
+                        window.PostMovimientoModal.open(resp);
+                    } else {
+                        showAlert('success', 'Movimiento', resp.mensaje || 'El movimiento se guardó correctamente.');
+                        window.location.href = resp.redirectUrl || config.redirectUrl || '/Movimientos';
+                    }
+                }).fail(function (xhr) {
                     state.saving = false;
-                    showAlert('error', 'Movimiento', (resp && resp.mensaje) || 'No se pudo guardar el movimiento.');
-                    return;
-                }
+                    var mensaje = 'No se pudo guardar el movimiento.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
+                    showAlert('error', 'Movimiento', mensaje);
+                });
+            }
 
-                clearDraft();
-                if (window.PostMovimientoModal && typeof window.PostMovimientoModal.open === 'function') {
-                    window.PostMovimientoModal.open(resp);
-                } else {
-                    showAlert('success', 'Movimiento', resp.mensaje || 'El movimiento se guardó correctamente.');
-                    window.location.href = resp.redirectUrl || config.redirectUrl || '/Movimientos';
-                }
-            }).fail(function (xhr) {
-                state.saving = false;
-                var mensaje = 'No se pudo guardar el movimiento.';
-                if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
-                showAlert('error', 'Movimiento', mensaje);
-            });
+            // Usuario de produccion (sala de piso): antes de guardar, se elige de un modal
+            // quien es el empleado real -- ver Web/Scripts/app/seleccion-usuario-produccion.js.
+            // Para cualquier otro usuario, esto guarda directo (sin cambios de comportamiento).
+            if (window.SeleccionUsuarioProduccion) {
+                window.SeleccionUsuarioProduccion.conSeleccionDeUsuario($form, guardarMovimientoReal, {
+                    titulo: '¿Quién está cargando este movimiento?'
+                });
+            } else {
+                guardarMovimientoReal();
+            }
         });
 
         $page.on('click.movimientosDraft', '[data-action="restore-draft"]', function () {

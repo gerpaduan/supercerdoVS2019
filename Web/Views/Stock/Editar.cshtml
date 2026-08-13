@@ -713,6 +713,7 @@
 
 <div id="contenedorModalPersonaStock"></div>
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <style>
     .stock-page .stock-panel-card {
@@ -1025,8 +1026,14 @@
        igual que en el modo con layout completo. *@
     <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
+    <script>
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+    </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/stock.js?v=39")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=40")"></script>
     <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
@@ -1166,8 +1173,14 @@ else
                 border-color: rgba(23, 162, 184, 0.35);
             }
         </style>
+        <script>
+            window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+            window.UsuariosActivosEmpresa = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        </script>
+        <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+        <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=1")"></script>
         <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-        <script src="@Url.Content("~/Scripts/app/stock.js?v=39")"></script>
+        <script src="@Url.Content("~/Scripts/app/stock.js?v=40")"></script>
         <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>

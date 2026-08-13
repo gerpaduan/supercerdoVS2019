@@ -2312,6 +2312,7 @@
     <Content Include="Scripts\app\pos-cart.js" />
     <Content Include="Scripts\app\pos-comment.js" />
     <Content Include="Scripts\app\seleccion-usuario.js" />
+    <Content Include="Scripts\app\seleccion-usuario-produccion.js" />
     <Content Include="Scripts\app\pos-help.js" />
     <Content Include="Scripts\app\pos-keyboard.js" />
     <Content Include="Scripts\app\pos-product.js" />

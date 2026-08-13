@@ -2238,6 +2238,21 @@
             scheduleDraft($form);
         });
 
+        // Usuario de produccion (sala de piso): antes de guardar (submit nativo del form),
+        // se elige de un modal quien es el empleado real -- ver
+        // Web/Scripts/app/seleccion-usuario-produccion.js. Para cualquier otro usuario, el
+        // form se manda directo (sin cambios de comportamiento). form.submit() nativo (no
+        // $form.trigger('submit')) no vuelve a disparar este mismo handler, asi que no hace
+        // falta ningun guard contra loop infinito.
+        $form.on('submit.stock', function (e) {
+            if (!window.SeleccionUsuarioProduccion || !window.EsUsuarioProduccion) return;
+
+            e.preventDefault();
+            window.SeleccionUsuarioProduccion.conSeleccionDeUsuario($form, function () {
+                $form.get(0).submit();
+            }, { titulo: '¿Quién está haciendo esta carga de stock?' });
+        });
+
         $form.on('click.stock', '#btnHabilitarTipoCompra', function () {
             var $select = $form.find('#TipoCompraVisual');
             $select.prop('disabled', false).focus();

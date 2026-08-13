@@ -1290,22 +1290,8 @@ namespace Web.Controllers
             return tienePermiso && cantidadSucursales > 1;
         }
 
-        private int ValorInt(DataRow row, string columna)
-        {
-            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
-                return 0;
-
-            int valor;
-            return int.TryParse(Convert.ToString(row[columna]), out valor) ? valor : 0;
-        }
-
-        private string ValorString(DataRow row, string columna)
-        {
-            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
-                return "";
-
-            return Convert.ToString(row[columna]);
-        }
+        // ValorInt()/ValorString() ahora viven en BaseController (protected), reusadas por
+        // ObtenerUsuariosActivosEmpresaParaCombo() y disponibles para el resto de la clase.
 
         private void CargarPermisosEdicionEgresos(DataTable dt, bool desdePos, CierreCaja cierreContexto = null)
         {
@@ -1415,25 +1401,8 @@ namespace Web.Controllers
             ViewBag.ComprasModificables = comprasModificables;
         }
 
-        // Lista liviana (solo id + nombre, nada sensible) de usuarios activos de la
-        // empresa del usuario logueado, para el combo de autorizacion temporal de Cierre
-        // de Caja (ver _ModalSeleccionUsuario.cshtml / seleccion-usuario.js). Se renderiza
-        // SIEMPRE, no solo para quien le falta el permiso -- cualquiera que cargue la vista
-        // puede necesitar autorizar a otro.
-        private List<object> ObtenerUsuariosActivosEmpresaParaCombo()
-        {
-            var oUsuarioD = new Datos.Usuario(empresa);
-            var dt = oUsuarioD.obtenerUsuarios(true);
-            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
-                return new List<object>();
-
-            return dt.AsEnumerable()
-                .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
-                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
-                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
-                .Cast<object>()
-                .ToList();
-        }
+        // ObtenerUsuariosActivosEmpresaParaCombo() ahora vive en BaseController (protected) --
+        // reusada tambien por el selector de usuario sin password de la sala de produccion.
 
         private DataTable ObtenerUsuariosFiltroEgresos()
         {

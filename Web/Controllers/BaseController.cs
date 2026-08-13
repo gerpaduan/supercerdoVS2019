@@ -1,5 +1,7 @@
 using System;
+using System.Data;
 using System.IO;
+using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.SessionState;
@@ -203,6 +205,61 @@ namespace Web.Controllers
                 viewResult.ViewEngine.ReleaseView(ControllerContext, viewResult.View);
                 return sw.GetStringBuilder().ToString();
             }
+        }
+
+        // Lista liviana (solo id + nombre, nada sensible) de usuarios activos de la empresa
+        // actual, para el modal de seleccion de usuario (_ModalSeleccionUsuario.cshtml /
+        // seleccion-usuario.js) -- usado tanto por el step-up de Cierre de Caja (con password)
+        // como por el selector sin password de la sala de produccion.
+        protected List<object> ObtenerUsuariosActivosEmpresaParaCombo()
+        {
+            var oUsuarioD = new Datos.Usuario(empresa);
+            var dt = oUsuarioD.obtenerUsuarios(true);
+            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
+                return new List<object>();
+
+            return dt.AsEnumerable()
+                .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
+                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>()
+                .ToList();
+        }
+
+        // Resuelve quien queda como creador real de una operacion cuando el usuario logueado es
+        // el usuario compartido de sala de produccion: si llego un idUsuarioCreador valido
+        // (activo, misma empresa que la sesion -- nunca se confia ciegamente en lo que manda el
+        // cliente), se usa ese usuario en vez del de sesion. Para cualquier usuario normal, o si
+        // no llego el parametro, devuelve el usuario de sesion sin cambios -- cero impacto en el
+        // comportamiento actual fuera de la sala de produccion.
+        protected Entidades.Usuario ResolverUsuarioCreador(int idUsuarioCreador, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion || idUsuarioCreador <= 0)
+                return usuarioSesion;
+
+            var oUsuarioN = new Negocio.Usuario(empresa, param);
+            var candidato = oUsuarioN.getUsuarioById(idUsuarioCreador);
+            if (candidato == null || !candidato.Activo || candidato.IdEmpresa != usuarioSesion.IdEmpresa)
+                return usuarioSesion;
+
+            return candidato;
+        }
+
+        protected int ValorInt(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return 0;
+
+            int valor;
+            return int.TryParse(Convert.ToString(row[columna]), out valor) ? valor : 0;
+        }
+
+        protected string ValorString(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return "";
+
+            return Convert.ToString(row[columna]);
         }
 
         private static bool EsSesionSoloLectura(HttpContextBase httpContext)

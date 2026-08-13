@@ -995,26 +995,38 @@
                 return;
             }
 
-            state.guardando = true;
-            $.ajax({
-                url: $form.attr('action'),
-                type: 'POST',
-                data: $form.serialize()
-            }).done(function (resp) {
-                state.guardando = false;
-                if (!resp || !resp.ok) {
-                    showAlert('error', 'Elaborado', (resp && resp.mensaje) || 'No se pudo guardar el elaborado.');
-                    return;
-                }
+            function guardarElaboradoReal() {
+                state.guardando = true;
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize()
+                }).done(function (resp) {
+                    state.guardando = false;
+                    if (!resp || !resp.ok) {
+                        showAlert('error', 'Elaborado', (resp && resp.mensaje) || 'No se pudo guardar el elaborado.');
+                        return;
+                    }
 
-                clearDraft();
-                showSuccessAndRedirect(resp.mensaje, resp.redirectUrl || config.redirectUrl || '/Elaborados');
-            }).fail(function (xhr) {
-                state.guardando = false;
-                var mensaje = 'No se pudo guardar el elaborado.';
-                if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
-                showAlert('error', 'Elaborado', mensaje);
-            });
+                    clearDraft();
+                    showSuccessAndRedirect(resp.mensaje, resp.redirectUrl || config.redirectUrl || '/Elaborados');
+                }).fail(function (xhr) {
+                    state.guardando = false;
+                    var mensaje = 'No se pudo guardar el elaborado.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) mensaje = xhr.responseJSON.mensaje;
+                    showAlert('error', 'Elaborado', mensaje);
+                });
+            }
+
+            // Usuario de produccion (sala de piso): antes de guardar, se elige de un modal
+            // quien es el empleado real -- ver Web/Scripts/app/seleccion-usuario-produccion.js.
+            if (window.SeleccionUsuarioProduccion) {
+                window.SeleccionUsuarioProduccion.conSeleccionDeUsuario($form, guardarElaboradoReal, {
+                    titulo: '¿Quién está cargando este elaborado?'
+                });
+            } else {
+                guardarElaboradoReal();
+            }
         });
 
         renderLineas();

@@ -85,6 +85,13 @@ namespace Entidades
         public int IdSucursal { get; set; }
         public bool PermitirLoginFueraSucursal { get; set; }
 
+        // Usuario compartido de sala de produccion: sin acceso a Ventas ni Finanzas (bloqueado
+        // server-side en UsuariosController.GuardarPermisos), y nunca admin (validado al guardar
+        // en UsuariosController). Al guardar en Movimientos/Stock/Elaborados, el creador real no
+        // es este usuario sino el que se elige del modal de seleccion sin password -- ver
+        // BaseController.ResolverUsuarioCreador.
+        public bool EsUsuarioProduccion { get; set; }
+
         public Entidades.Sucursal Sucursal { get; set; }
         public string SucursalNombre { get; set; }
         public List<Entidades.Sucursal> ListaSucursales{ get; set; }

@@ -496,7 +496,7 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Guardar(StockEditVm model)
+        public ActionResult Guardar(StockEditVm model, int idUsuarioCreador = 0)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
@@ -553,6 +553,11 @@ namespace Web.Controllers
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
 
+            // Usuario de produccion: el creador/actualizador real es el elegido del modal
+            // (idUsuarioCreador), no el usuario de sesion compartido. Los chequeos de permiso de
+            // arriba siguen usando "user" (la sesion real) sin cambios.
+            var usuarioCreador = ResolverUsuarioCreador(idUsuarioCreador, user);
+
             Entidades.Sucursal sucursal = oSucursalN.findById(model.IdSucursal);
             if (sucursal == null || sucursal.IdSucursal <= 0)
             {
@@ -593,8 +598,8 @@ namespace Web.Controllers
             compra.IdPesajeAjustado = (EsPesaje(tipoOperacion) || EsAjuste(tipoOperacion))
                 ? model.IdPesajeAjustado
                 : (compraActual != null ? compraActual.IdPesajeAjustado : null);
-            compra.CreadoPor = compraActual != null ? compraActual.CreadoPor : user;
-            compra.ActualizadoPor = compraActual != null ? user : null;
+            compra.CreadoPor = compraActual != null ? compraActual.CreadoPor : usuarioCreador;
+            compra.ActualizadoPor = compraActual != null ? usuarioCreador : null;
 
             var lineas = new List<Entidades.CortePorCompra>();
             int index = 0;
@@ -633,14 +638,14 @@ namespace Web.Controllers
                     Balanza = linea.Balanza,
                     Sucursal = sucursal,
                     Creado = creadoLinea,
-                    CreadoPor = user
+                    CreadoPor = usuarioCreador
                 });
             }
 
             try
             {
                 oCompraN.AddOrEditCompra(compra, compra.TipoCompra, null, lineas, false, null);
-                SincronizarPesajesVinculados(compra, model.PesajesVinculadosIds, user);
+                SincronizarPesajesVinculados(compra, model.PesajesVinculadosIds, usuarioCreador);
                 TempData["StockDraftKeyToClear"] = model.DraftKey ?? "";
                 TempData["StockSuccessMessage"] = model.IdCompra > 0
                     ? "El movimiento de stock se guardó correctamente."
@@ -1503,6 +1508,10 @@ namespace Web.Controllers
             ViewBag.Sucursales = oSucursalN.findAll();
             ViewBag.UrlBuscarPersonaModal = Url.Action("Buscar", "Personas");
             ViewBag.UrlPersonaListar = Url.Action("Listar", "Personas");
+
+            var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
+            ViewBag.EsUsuarioProduccion = usuarioSesion != null && usuarioSesion.EsUsuarioProduccion;
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
         }
 
         private Dictionary<int, CompraIndexDetalleVm> ConstruirDetallesIndex(DataTable dt)

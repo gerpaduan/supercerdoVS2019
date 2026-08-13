@@ -210,6 +210,8 @@ namespace Web.Controllers
             ViewBag.UrlDetalle = Url.Action("Detalle", "Movimientos");
             ViewBag.UrlGuardar = Url.Action("Guardar", "Movimientos");
             ConfigurarAdvertenciaFechaEnVivo("FechaMovimiento", Permisos.Movimiento.NuevoMovimiento, user.Id);
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
 
             return View("~/Views/Movimientos/Editar.cshtml", model);
         }
@@ -300,7 +302,7 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult Guardar(MovimientoEditVm model)
+        public JsonResult Guardar(MovimientoEditVm model, int idUsuarioCreador = 0)
         {
             try
             {
@@ -310,6 +312,11 @@ namespace Web.Controllers
 
                 if (!PermisosHelper.TienePermiso(Session, Permisos.Movimiento.NuevoMovimiento, model != null ? model.FechaMovimiento : DateTime.Today, user.Id))
                     return Json(new { ok = false, mensaje = "No tiene permisos para guardar movimientos." });
+
+                // Usuario de produccion: el creador real es el elegido del modal (idUsuarioCreador),
+                // no el usuario de sesion compartido -- el chequeo de permiso de arriba sigue
+                // usando la sesion real (asi funciona SoloRegistrosPropios sin cambios).
+                user = ResolverUsuarioCreador(idUsuarioCreador, user);
 
                 if (model == null)
                     return Json(new { ok = false, mensaje = "No se recibieron datos del movimiento." });

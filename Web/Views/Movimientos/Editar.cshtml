@@ -331,6 +331,7 @@
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
 @Html.Partial("~/Views/Movimientos/_ModalPostMovimiento.cshtml")
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <style>
     .movimiento-page .movimiento-panel-card {
@@ -660,7 +661,11 @@
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false")
         };
         window.movimientoLineasIniciales = @Html.Raw(Json.Encode(Model.Lineas ?? new List<Web.Models.MovimientoLineaVm>()));
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
     </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=7")"></script>
