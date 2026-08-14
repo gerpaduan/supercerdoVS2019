@@ -1,0 +1,83 @@
+@model Web.Models.SucursalIndexVm
+
+@{
+    ViewBag.Title = "Mis Sucursales";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid sucursal-index-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Mis Sucursales</h1>
+            <p class="text-muted mb-0">Dirección y ubicación para la validación de login por espacio de trabajo.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Sucursal</th>
+                            <th>Dirección</th>
+                            <th>Localidad</th>
+                            <th class="text-center" style="width: 200px;">Validación de ubicación</th>
+                            <th style="width: 100px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No hay sucursales para mostrar.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td><strong>@item.SucursalNombre</strong></td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Direccion) ? item.Direccion : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Localidad) ? item.Localidad : "-")</td>
+                                    <td class="text-center">
+                                        @if (item.ValidarUbicacionLogin)
+                                        {
+                                            <span class="badge badge-success">Activa</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary">Apagada</span>
+                                        }
+                                    </td>
+                                    <td class="text-right">
+                                        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Sucursal", new { id = item.IdSucursal })">
+                                            <i class="fas @(Model.PuedeAdministrar ? "fa-edit" : "fa-eye") mr-1"></i>
+                                            @(Model.PuedeAdministrar ? "Editar" : "Ver")
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sucursal-index-page {
+        font-size: .9rem;
+    }
+
+    .sucursal-index-page .h3 {
+        font-size: 1.28rem;
+        line-height: 1.15;
+    }
+
+    .sucursal-index-page .table {
+        font-size: .87rem;
+    }
+</style>

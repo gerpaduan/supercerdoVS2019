@@ -25,6 +25,7 @@ namespace Web.Controllers
         private const decimal PrecisionMaximaLoginMetros = 150m;
         private Negocio.Usuario oUsuarioN;
         private Negocio.Sucursal oSucursalN;
+        private Negocio.Empresa oEmpresaN;
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
@@ -33,6 +34,7 @@ namespace Web.Controllers
             IEmpresaContext empresa = new EmpresaContextNulo();
             oUsuarioN = new Negocio.Usuario(empresa);
             oSucursalN = new Negocio.Sucursal(empresa);
+            oEmpresaN = new Negocio.Empresa(empresa);
         }
 
         [HttpGet]
@@ -63,8 +65,23 @@ namespace Web.Controllers
             if (!ModelState.IsValid)
                 return View("~/Views/Login/Index.cshtml", model);
 
+            // Resuelto ANTES del rate limiter por IP, para dos cosas: (a) decidir si este login
+            // viene de un dispositivo seguro y saltear el bloqueo por IP -- NO el bloqueo por
+            // cuenta, que sigue igual mas abajo, sin excepcion (decision explicita); (b) el
+            // chequeo de cuenta bloqueada, que ya usaba este mismo candidato.
+            var candidato = oUsuarioN.ObtenerUsuarioPorIdentificador(model.Usuario);
+
+            // El numero de serie es un campo de formulario comun, sin atadura criptografica al
+            // dispositivo real -- riesgo aceptado explicitamente (ver docs/DECISIONS.md). Es una
+            // conveniencia para reducir friccion en maquinas de oficina conocidas, no una barrera
+            // dura: por eso solo se saltea el bloqueo por IP, nunca el bloqueo por cuenta.
+            var oDispositivoN = new Negocio.DispositivoSeguro(new EmpresaContextNulo());
+            bool esDispositivoSeguro = candidato != null
+                && !string.IsNullOrWhiteSpace(model.NumeroSerieDispositivo)
+                && oDispositivoN.ExisteSerieSegura(model.NumeroSerieDispositivo, candidato.IdEmpresa);
+
             TimeSpan retryAfter;
-            if (LoginRateLimiter.IsBlocked(Request, model.Usuario, out retryAfter))
+            if (!esDispositivoSeguro && LoginRateLimiter.IsBlocked(Request, model.Usuario, out retryAfter))
             {
                 Response.StatusCode = 429;
                 model.Clave = "";
@@ -72,6 +89,18 @@ namespace Web.Controllers
                     CultureInfo.CurrentCulture,
                     "Se supero el maximo de intentos. Espera {0} minuto(s) y volve a intentar.",
                     Math.Max(1, (int)Math.Ceiling(retryAfter.TotalMinutes)));
+                return View("~/Views/Login/Index.cshtml", model);
+            }
+
+            // Cuenta bloqueada por intentos fallidos (distinto del rate limiter por IP de arriba,
+            // y NO afectado por dispositivo seguro): se chequea antes de validar la contraseña,
+            // para no seguir contando intentos contra una cuenta ya bloqueada ni reenviar el mail
+            // de desbloqueo en cada reintento.
+            if (candidato != null && candidato.Activo && candidato.Bloqueado)
+            {
+                LoginRateLimiter.RegisterFailure(Request, model.Usuario);
+                model.Clave = "";
+                model.Error = "Tu cuenta está bloqueada por intentos fallidos. Revisá tu email para el link de desbloqueo, o pedile a un administrador que la desbloquee.";
                 return View("~/Views/Login/Index.cshtml", model);
             }
 
@@ -83,10 +112,14 @@ namespace Web.Controllers
 
                 oUsuarioN = new Negocio.Usuario(empresa);
                 oSucursalN = new Negocio.Sucursal(empresa);
+                oEmpresaN = new Negocio.Empresa(empresa);
 
                 user = oUsuarioN.getUsuarioById(user.Id);
                 if (user != null)
                     user.Permisos = oUsuarioN.getPermisosUsuario(user.Id);
+
+                if (user != null)
+                    oUsuarioN.RegistrarLoginExitoso(user);
 
                 string sucNombre = user != null && user.Sucursal == null
                     ? "Seleccione Sucursal"
@@ -94,6 +127,21 @@ namespace Web.Controllers
 
                 if (user != null)
                     user.SucursalNombre = sucNombre ?? "";
+
+                // Horario laboral (a nivel empresa, ver Empresa.HorarioDiurno*/HorarioTarde*): un
+                // empleado no-admin que intenta loguearse fuera de las 2 jornadas configuradas
+                // queda bloqueado aca, ANTES de crear sesion -- no se toca el rate limiter (las
+                // credenciales eran correctas, no es un intento fallido de contrasena).
+                if (user != null && !user.Admin)
+                {
+                    Entidades.Empresa empresaActual = oEmpresaN.findById(user.IdEmpresa);
+                    if (!EstaDentroDelHorarioPermitido(empresaActual, DateTime.Now))
+                    {
+                        model.Clave = "";
+                        model.Error = "Fuera del horario laboral permitido para iniciar sesión.";
+                        return View("~/Views/Login/Index.cshtml", model);
+                    }
+                }
 
                 SessionSecurityHelper.RenewAuthenticatedSession(HttpContext, model.Usuario);
                 Session["Usuario"] = user;
@@ -111,7 +159,32 @@ namespace Web.Controllers
                 if (requiereValidacionUbicacion)
                     return RedirectToAction("ValidarUbicacion", "Login", new { returnUrl = model.ReturnUrl });
 
+                // Login exitoso sin geo-validacion requerida: igual queda registrado en
+                // LoginUbicacionLog (auditoria general de accesos, no solo del flujo de geo-validacion).
+                // Coordenadas: las que ya haya capturado en silencio el JS de Login/Index.cshtml -- pueden
+                // venir vacias si el navegador no dio permiso, se registra igual.
+                RegistrarLoginUbicacion(
+                    user,
+                    user.Sucursal,
+                    ParseNullableDecimal(model.Latitud),
+                    ParseNullableDecimal(model.Longitud),
+                    ParseNullableDecimal(model.PrecisionMetros),
+                    null,
+                    true,
+                    "Login exitoso (sin geo-validación requerida).",
+                    ObtenerDireccionIp());
+
                 return RedirigirPostLogin(model.ReturnUrl);
+            }
+
+            // Solo se cuenta contra el bloqueo persistente si el usuario/email existe y esta
+            // activo -- pedido explicito: no tiene sentido bloquear (ni mandar mail) por intentos
+            // contra una cuenta que no existe o esta inactiva.
+            if (candidato != null && candidato.Activo && !candidato.Bloqueado)
+            {
+                bool seAcabaDeBloquear = oUsuarioN.RegistrarIntentoFallido(candidato, GetAccountLockoutMaxAttempts());
+                if (seAcabaDeBloquear)
+                    EnviarMailDesbloqueo(candidato);
             }
 
             LoginRateLimiter.RegisterFailure(Request, model.Usuario);
@@ -249,7 +322,7 @@ namespace Web.Controllers
                 return View("~/Views/Login/ChangePassword.cshtml", model);
 
             oUsuarioN.ActualizarPasswordWebSeguro(usuarioActual.Id, model.NuevaClave);
-            oUsuarioN.InvalidarTokensPendientesUsuario(usuarioActual.Id);
+            oUsuarioN.InvalidarTokensPendientesUsuario(usuarioActual.Id, "reset");
 
             TempData["Success"] = "Tu contraseÃ±a fue actualizada correctamente.";
             return RedirectToAction("ChangePassword", "Login");
@@ -315,7 +388,7 @@ namespace Web.Controllers
             var model = new PasswordResetVm
             {
                 Token = token ?? "",
-                TokenValido = TokenEsValido(token)
+                TokenValido = TokenEsValido(token, "reset")
             };
 
             if (!model.TokenValido)
@@ -330,7 +403,7 @@ namespace Web.Controllers
         {
             model = model ?? new PasswordResetVm();
             model.Token = model.Token ?? "";
-            model.TokenValido = TokenEsValido(model.Token);
+            model.TokenValido = TokenEsValido(model.Token, "reset");
 
             ValidarNuevaClave(model);
 
@@ -342,7 +415,7 @@ namespace Web.Controllers
 
             string tokenHash = PasswordSecurity.ComputeSha256Base64(model.Token);
             var token = oUsuarioN.ObtenerTokenRecuperacion(tokenHash);
-            if (token == null || token.Usado || token.FechaExpiracionUtc < DateTime.UtcNow)
+            if (token == null || token.Usado || token.Proposito != "reset" || token.FechaExpiracionUtc < DateTime.UtcNow)
             {
                 model.TokenValido = false;
                 model.Mensaje = "El enlace de recuperación no es válido o ya venció.";
@@ -360,9 +433,58 @@ namespace Web.Controllers
 
             oUsuarioN.ActualizarPasswordWebSeguro(usuario.Id, model.NuevaClave);
             oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
-            oUsuarioN.InvalidarTokensPendientesUsuario(usuario.Id);
+            oUsuarioN.InvalidarTokensPendientesUsuario(usuario.Id, "reset");
 
             TempData["Success"] = "Tu contraseña fue actualizada correctamente. Ya podés iniciar sesión.";
+            return RedirectToAction("Index");
+        }
+
+        // Mismo patron de 2 pasos que ResetPassword (GET muestra, POST actua): evita que un link
+        // cargado pasivamente (ej. previsualizacion de un cliente de correo) dispare el
+        // desbloqueo solo -- hace falta un click explicito en el boton del POST.
+        [HttpGet]
+        public ActionResult UnlockAccount(string token = "")
+        {
+            var model = new UnlockAccountVm
+            {
+                Token = token ?? "",
+                TokenValido = TokenEsValido(token, "unlock")
+            };
+
+            if (!model.TokenValido)
+                model.Mensaje = "El enlace de desbloqueo no es válido o ya venció.";
+
+            return View("~/Views/Login/UnlockAccount.cshtml", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UnlockAccount(UnlockAccountVm model)
+        {
+            model = model ?? new UnlockAccountVm();
+            model.Token = model.Token ?? "";
+            model.TokenValido = TokenEsValido(model.Token, "unlock");
+
+            if (!model.TokenValido)
+            {
+                model.Mensaje = "El enlace de desbloqueo no es válido o ya venció.";
+                return View("~/Views/Login/UnlockAccount.cshtml", model);
+            }
+
+            string tokenHash = PasswordSecurity.ComputeSha256Base64(model.Token);
+            var token = oUsuarioN.ObtenerTokenRecuperacion(tokenHash);
+            if (token == null || token.Usado || token.Proposito != "unlock" || token.FechaExpiracionUtc < DateTime.UtcNow)
+            {
+                model.TokenValido = false;
+                model.Mensaje = "El enlace de desbloqueo no es válido o ya venció.";
+                return View("~/Views/Login/UnlockAccount.cshtml", model);
+            }
+
+            oUsuarioN.DesbloquearUsuario(token.IdUsuario);
+            oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
+            oUsuarioN.InvalidarTokensPendientesUsuario(token.IdUsuario, "unlock");
+
+            TempData["Success"] = "Tu cuenta fue desbloqueada correctamente. Ya podés iniciar sesión.";
             return RedirectToAction("Index");
         }
 
@@ -408,6 +530,27 @@ namespace Web.Controllers
             return sucursalesEmpresa.Any(s => s != null && s.ValidarUbicacionLogin);
         }
 
+        // Compara la hora actual del servidor contra las 2 jornadas configuradas en la empresa.
+        // Admin ya viene exceptuado por el caller (mismo criterio que la geo-validacion).
+        private static bool EstaDentroDelHorarioPermitido(Entidades.Empresa empresa, DateTime ahora)
+        {
+            if (empresa == null)
+                return true; // fail-open: no se pudo resolver la empresa, no bloquear por un dato faltante
+
+            TimeSpan horaActual = ahora.TimeOfDay;
+            return EstaEnJornada(horaActual, empresa.HorarioDiurnoDesde, empresa.HorarioDiurnoHasta)
+                || EstaEnJornada(horaActual, empresa.HorarioTardeDesde, empresa.HorarioTardeHasta);
+        }
+
+        private static bool EstaEnJornada(TimeSpan horaActual, TimeSpan desde, TimeSpan hasta)
+        {
+            if (desde <= hasta)
+                return horaActual >= desde && horaActual <= hasta;
+
+            // Jornada que cruza medianoche (ej. 22:00-02:00) -- no es el caso por defecto, pero se contempla.
+            return horaActual >= desde || horaActual <= hasta;
+        }
+
         [HttpPost]
         [SkipAppAntiForgeryValidation]
         public JsonResult CambiarSucursal(int idSucursal)
@@ -448,7 +591,7 @@ namespace Web.Controllers
             }
         }
 
-        private bool TokenEsValido(string tokenRaw)
+        private bool TokenEsValido(string tokenRaw, string proposito)
         {
             if (string.IsNullOrWhiteSpace(tokenRaw))
                 return false;
@@ -457,7 +600,7 @@ namespace Web.Controllers
             {
                 string tokenHash = PasswordSecurity.ComputeSha256Base64(tokenRaw);
                 var token = oUsuarioN.ObtenerTokenRecuperacion(tokenHash);
-                return token != null && !token.Usado && token.FechaExpiracionUtc >= DateTime.UtcNow;
+                return token != null && !token.Usado && token.Proposito == proposito && token.FechaExpiracionUtc >= DateTime.UtcNow;
             }
             catch
             {
@@ -472,6 +615,54 @@ namespace Web.Controllers
                 return minutes;
 
             return 60;
+        }
+
+        private int GetAccountLockoutMaxAttempts()
+        {
+            int intentos;
+            if (int.TryParse(ConfigurationManager.AppSettings["Security:AccountLockoutMaxAttempts"], out intentos) && intentos > 0)
+                return intentos;
+
+            return 5;
+        }
+
+        // Genera el token de desbloqueo (mismo mecanismo que ForgotPassword) y manda el mail, solo
+        // si SMTP esta configurado y el usuario tiene email cargado. Si no tiene email, no hay
+        // forma de mandarlo -- queda como deuda documentada, la unica via de desbloqueo pasa a ser
+        // un admin (UsuariosController.DesbloquearUsuario). No se propaga ninguna excepcion: un
+        // fallo de envio no debe romper el flujo de login (mismo criterio que ForgotPassword).
+        private void EnviarMailDesbloqueo(Entidades.Usuario usuario)
+        {
+            if (usuario == null || string.IsNullOrWhiteSpace(usuario.Email) || !SmtpMailHelper.IsConfigured())
+                return;
+
+            try
+            {
+                string rawToken = PasswordSecurity.GenerateToken();
+                string tokenHash = PasswordSecurity.ComputeSha256Base64(rawToken);
+                int expirationMinutes = GetPasswordResetExpirationMinutes();
+                DateTime nowUtc = DateTime.UtcNow;
+
+                oUsuarioN.CrearTokenRecuperacion(new UsuarioPasswordResetToken
+                {
+                    IdUsuario = usuario.Id,
+                    IdEmpresa = usuario.IdEmpresa,
+                    TokenHash = tokenHash,
+                    FechaCreacionUtc = nowUtc,
+                    FechaExpiracionUtc = nowUtc.AddMinutes(expirationMinutes),
+                    Usado = false,
+                    IdentificadorSolicitado = usuario.User ?? "",
+                    EmailDestino = usuario.Email ?? "",
+                    Proposito = "unlock"
+                });
+
+                string unlockUrl = Url.Action("UnlockAccount", "Login", new { token = rawToken }, Request != null && Request.Url != null ? Request.Url.Scheme : "http");
+                SmtpMailHelper.SendAccountUnlock(usuario.Email, usuario.Nombre, unlockUrl, expirationMinutes);
+            }
+            catch
+            {
+                // No debe romper el flujo de login por un fallo de envio de mail.
+            }
         }
 
         private void ValidarNuevaClave(string nuevaClave)

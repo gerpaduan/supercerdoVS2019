@@ -58,6 +58,11 @@ namespace Negocio
             return oSucursalD.findEmpresaByCuit(cuit);
         }
 
+        public void ActualizarDatosBasicos(Entidades.Sucursal oSucursalE)
+        {
+            oSucursalD.ActualizarDatosBasicos(oSucursalE);
+        }
+
         public DataTable obtenerSucursalSanMartin()
         {
             

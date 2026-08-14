@@ -130,10 +130,13 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AuditoriaLoginController.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\CajasController.cs" />
     <Compile Include="Controllers\ComprasController.cs" />
     <Compile Include="Controllers\ElaboradosController.cs" />
+    <Compile Include="Controllers\DispositivosSegurosController.cs" />
+    <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\FinanzasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -147,6 +150,7 @@
     <Compile Include="Controllers\ReportesController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\StockController.cs" />
+    <Compile Include="Controllers\SucursalController.cs" />
     <Compile Include="Controllers\SystemAdministrationController.cs" />
     <Compile Include="Controllers\UsuariosController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
@@ -169,6 +173,9 @@
     <Compile Include="Helpers\SystemAdministrationAccessHelper.cs" />
     <Compile Include="Helpers\SystemAdministrationRepository.cs" />
     <Compile Include="Helpers\SmtpMailHelper.cs" />
+    <Compile Include="Models\AuditoriaLoginVm.cs" />
+    <Compile Include="Models\EmpresaVm.cs" />
+    <Compile Include="Models\SucursalVm.cs" />
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\PuntoStockSucursalItemVm.cs" />
     <Compile Include="Models\CompraEditVm.cs" />
@@ -186,6 +193,7 @@
     <Compile Include="Models\MarcaEditVm.cs" />
     <Compile Include="Models\CatalogoGlobalTiposProductoVm.cs" />
     <Compile Include="Models\CatalogoGlobalProductosVm.cs" />
+    <Compile Include="Models\DispositivosSegurosVm.cs" />
     <Compile Include="Models\ImportarTiposProductoGlobalesRequest.cs" />
     <Compile Include="Models\ImportarProductosGlobalesRequest.cs" />
     <Compile Include="Models\ParametrosVm.cs" />
@@ -2158,6 +2166,7 @@
     <Content Include="Views\Login\ForgotPassword.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
     <Content Include="Views\Login\ResetPassword.cshtml" />
+    <Content Include="Views\Login\UnlockAccount.cshtml" />
     <Content Include="Views\Login\ChangePassword.cshtml" />
     <Content Include="Views\Login\ValidarUbicacion.cshtml" />
     <Content Include="Views\Shared\AccesoDenegado.cshtml" />
@@ -2192,6 +2201,11 @@
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
     <Content Include="Views\Personas\_AddOrEditPersonaModal.cshtml" />
     <Content Include="Views\Parametros\Index.cshtml" />
+    <Content Include="Views\DispositivosSeguros\Index.cshtml" />
+    <Content Include="Views\Empresa\Index.cshtml" />
+    <Content Include="Views\Sucursal\Index.cshtml" />
+    <Content Include="Views\Sucursal\Editar.cshtml" />
+    <Content Include="Views\AuditoriaLogin\Index.cshtml" />
     <Content Include="Views\WhatsApp\Index.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
     <Content Include="Views\Shared\_ModalSeleccionUsuario.cshtml" />

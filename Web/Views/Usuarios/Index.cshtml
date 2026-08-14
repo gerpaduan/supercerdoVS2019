@@ -47,6 +47,7 @@
                             <th>Usuario</th>
                             <th style="width:90px;">Admin</th>
                             <th style="width:90px;">Activo</th>
+                            <th style="width:100px;">Bloqueado</th>
                             <th>Email</th>
                             <th style="width:130px;">ID Sucursal User</th>
                             <th style="width:110px;">ID Empresa</th>
@@ -57,7 +58,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">No hay usuarios para mostrar.</td>
+                                <td colspan="10" class="text-center text-muted py-4">No hay usuarios para mostrar.</td>
                             </tr>
                         }
                         else
@@ -74,6 +75,16 @@
                                     </td>
                                     <td class="text-center">
                                         <span class="badge @(item.Activo ? "badge-primary" : "badge-dark")">@(item.Activo ? "Sí" : "No")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Bloqueado)
+                                        {
+                                            <span class="badge badge-danger">Sí</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary">No</span>
+                                        }
                                     </td>
                                     <td>@item.Email</td>
                                     <td>
@@ -93,6 +104,17 @@
                                             <a class="btn btn-sm btn-outline-secondary mb-1" href="@Url.Action("Permisos", "Usuarios", new { id = item.Id })">
                                                 Ver permisos
                                             </a>
+                                            if (item.Bloqueado)
+                                            {
+                                                using (Html.BeginForm("DesbloquearUsuario", "Usuarios", FormMethod.Post, new { @class = "d-inline" }))
+                                                {
+                                                    @Html.AntiForgeryToken()
+                                                    @Html.Hidden("id", item.Id)
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger mb-1" onclick="return confirm('¿Desbloquear esta cuenta?');">
+                                                        Desbloquear
+                                                    </button>
+                                                }
+                                            }
                                         }
                                     </td>
                                 </tr>

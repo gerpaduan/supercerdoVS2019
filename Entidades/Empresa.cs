@@ -30,6 +30,13 @@ namespace Entidades
         public string Entorno_HOMO_PROD { get; set; }
         public string BaseDatosNombre { get; set; }
         public byte Activa { get; set; }
+
+        // Horario laboral (2 jornadas diarias, ver LoginController.EstaDentroDelHorarioPermitido).
+        // Default 00:00-23:59 = sin restriccion real hasta que el admin de la empresa las acote.
+        public TimeSpan HorarioDiurnoDesde { get; set; }
+        public TimeSpan HorarioDiurnoHasta { get; set; }
+        public TimeSpan HorarioTardeDesde { get; set; }
+        public TimeSpan HorarioTardeHasta { get; set; }
     }
 
 }

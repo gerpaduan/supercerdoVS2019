@@ -1,0 +1,303 @@
+@model Web.Models.SucursalEditVm
+
+@{
+    ViewBag.Title = "Editar sucursal";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var mensajesValidacion = ViewData.ModelState.Values
+        .SelectMany(x => x.Errors)
+        .Select(x => x.ErrorMessage)
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .ToList();
+}
+
+<div class="container-fluid sucursal-editar-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">@Model.SucursalNombre</h1>
+            <p class="text-muted mb-0">Datos de la sucursal y validación de ubicación para el login.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (mensajesValidacion.Any())
+            {
+                <div class="alert alert-danger">
+                    <ul class="mb-0 pl-3">
+                        @foreach (var mensaje in mensajesValidacion)
+                        {
+                            <li>@mensaje</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.MensajePermiso))
+            {
+                <div class="alert @(Model.PuedeAdministrar ? "alert-info" : "alert-secondary")">
+                    @Model.MensajePermiso
+                </div>
+            }
+
+            @using (Html.BeginForm("Guardar", "Sucursal", FormMethod.Post, new { id = "formSucursal", novalidate = "novalidate" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IdSucursal)
+
+                <h2 class="h6 text-gray-700">Datos generales</h2>
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.SucursalNombre)
+                            @Html.TextBoxFor(m => m.SucursalNombre, new { @class = "form-control", autocomplete = "off" })
+                            @Html.ValidationMessageFor(m => m.SucursalNombre, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Direccion)
+                            @Html.TextBoxFor(m => m.Direccion, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Localidad)
+                            @Html.TextBoxFor(m => m.Localidad, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Provincia)
+                            @Html.TextBoxFor(m => m.Provincia, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Pais)
+                            @Html.TextBoxFor(m => m.Pais, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="h6 text-gray-700 mt-3">Espacio de trabajo (validación de ubicación al iniciar sesión)</h2>
+                <p class="text-muted small">
+                    Si la activás, los empleados (no administradores ni exceptuados) solo van a poder iniciar sesión estando físicamente dentro del radio indicado alrededor de estas coordenadas.
+                </p>
+
+                <div id="sucursalGeoEstado" class="small text-muted mb-2"></div>
+
+                <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Latitud)
+                            @Html.TextBoxFor(m => m.Latitud, new { @class = "form-control", autocomplete = "off", id = "sucursalLatitud" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Longitud)
+                            @Html.TextBoxFor(m => m.Longitud, new { @class = "form-control", autocomplete = "off", id = "sucursalLongitud" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.RadioLoginMetros)
+                            @Html.TextBoxFor(m => m.RadioLoginMetros, new { @class = "form-control", type = "number", min = "1", step = "1", autocomplete = "off" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <button type="button"
+                                class="btn btn-outline-primary mb-2"
+                                id="btnUsarUbicacionActual"
+                                data-edit-readonly-ignore="true">
+                            <i class="fas fa-map-marker-alt mr-1"></i> Usar mi ubicación actual
+                        </button>
+                        <small class="form-text text-muted">Parado en el local, presioná este botón para completar Latitud/Longitud automáticamente.</small>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="custom-control custom-switch mt-2">
+                            @Html.CheckBoxFor(m => m.ValidarUbicacionLogin, new { @class = "custom-control-input", id = "ValidarUbicacionLogin" })
+                            <label class="custom-control-label" for="ValidarUbicacionLogin">Validar ubicación al iniciar sesión</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-8">
+                        <div class="form-group mb-2">
+                            <label for="sucursalGeoPegado">O pegar un link o coordenadas de Google Maps</label>
+                            <div class="input-group">
+                                <input type="text"
+                                       id="sucursalGeoPegado"
+                                       class="form-control"
+                                       autocomplete="off"
+                                       placeholder="Link de Google Maps, o coordenadas: -34.6037, -58.3816" />
+                                <div class="input-group-append">
+                                    <button type="button"
+                                            class="btn btn-outline-primary"
+                                            id="btnUsarLinkMaps"
+                                            data-edit-readonly-ignore="true">
+                                        Usar este link
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                Buscá el local en Google Maps, copiá el link completo de la barra de direcciones (no el link corto de "Compartir") y pegalo acá.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.PuedeAdministrar)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionSucursal"
+                                data-edit-readonly-ignore="true">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-success mr-2 mb-2 @(Model.SoloLecturaInicial ? "d-none" : "")"
+                                id="btnGuardarSucursal">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                    }
+
+                    <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Sucursal")">
+                        Volver
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .sucursal-editar-page {
+        font-size: .9rem;
+    }
+
+    .sucursal-editar-page .h3 {
+        font-size: 1.28rem;
+        line-height: 1.15;
+    }
+
+    .sucursal-editar-page .form-control {
+        font-size: .87rem;
+        min-height: 2.3rem;
+        padding: .32rem .58rem;
+    }
+</style>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script>
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formSucursal",
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionSucursal",
+            saveButtonSelector: "#btnGuardarSucursal"
+        });
+
+        // Mismo patron de geolocalizacion que Web/Views/Login/Index.cshtml (enableHighAccuracy,
+        // timeout 15s, sin cache) -- pensado para que el admin lo presione parado en el local.
+        (function () {
+            var boton = document.getElementById("btnUsarUbicacionActual");
+            var estado = document.getElementById("sucursalGeoEstado");
+            var latitud = document.getElementById("sucursalLatitud");
+            var longitud = document.getElementById("sucursalLongitud");
+
+            if (!boton || !latitud || !longitud) return;
+
+            if (!navigator.geolocation) {
+                boton.disabled = true;
+                if (estado) estado.textContent = "Este navegador no soporta geolocalización.";
+                return;
+            }
+
+            boton.addEventListener("click", function () {
+                boton.disabled = true;
+                if (estado) estado.textContent = "Obteniendo ubicación actual...";
+
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    boton.disabled = false;
+                    if (!position || !position.coords) return;
+
+                    latitud.value = typeof position.coords.latitude === "number" ? position.coords.latitude.toFixed(7) : "";
+                    longitud.value = typeof position.coords.longitude === "number" ? position.coords.longitude.toFixed(7) : "";
+
+                    if (estado) {
+                        var precision = typeof position.coords.accuracy === "number" ? position.coords.accuracy.toFixed(0) : "?";
+                        estado.textContent = "Ubicación cargada (precisión aproximada: " + precision + " m).";
+                    }
+                }, function () {
+                    boton.disabled = false;
+                    if (estado) estado.textContent = "No se pudo obtener la ubicación. Revisá los permisos del navegador.";
+                }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+            });
+        })();
+
+        // Alternativa a la geolocalizacion del navegador (que depende de un permiso que no
+        // siempre se puede conceder): parsear un link de Google Maps pegado a mano. 100%
+        // client-side, sin API key ni costo. Prioridad de patrones (el primero que matchea gana):
+        // 1) !3d<lat>!4d<lng> -- coordenada exacta del pin en URLs de "place" de Google Maps.
+        // 2) @@<lat>,<lng>,<zoom>z -- centro del mapa en cualquier URL de Google Maps.
+        // 3) ?q=<lat>,<lng> / &q=<lat>,<lng> -- mismo formato que ya generamos nosotros en el link
+        //    "Ver en Maps" de AuditoriaLogin/Index.cshtml.
+        // 4) "<lat>, <lng>" pegado como texto plano, sin ningun link.
+        // Limite conocido (no resuelto aca): los links ACORTADOS de Google Maps
+        // (maps.app.goo.gl/..., goo.gl/maps/...) no traen las coordenadas en el propio link -- son
+        // un redirect que solo se resuelve pidiendole la URL real a un servidor. Este parser no
+        // los soporta; por eso la ayuda del campo pide el link completo de la barra de direcciones.
+        (function () {
+            var input = document.getElementById("sucursalGeoPegado");
+            var boton = document.getElementById("btnUsarLinkMaps");
+            var estado = document.getElementById("sucursalGeoEstado");
+            var latitud = document.getElementById("sucursalLatitud");
+            var longitud = document.getElementById("sucursalLongitud");
+
+            if (!input || !boton || !latitud || !longitud) return;
+
+            function extraerCoordenadasDeTexto(texto) {
+                texto = (texto || "").trim();
+                if (!texto) return null;
+
+                var patrones = [
+                    /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,
+                    /@@(-?\d+\.\d+),(-?\d+\.\d+)/,
+                    /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/,
+                    /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/
+                ];
+
+                for (var i = 0; i < patrones.length; i++) {
+                    var match = patrones[i].exec(texto);
+                    if (match) {
+                        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+                    }
+                }
+
+                return null;
+            }
+
+            boton.addEventListener("click", function () {
+                var coords = extraerCoordenadasDeTexto(input.value);
+
+                if (!coords || isNaN(coords.lat) || isNaN(coords.lng)) {
+                    if (estado) estado.textContent = "No se pudo reconocer un link o coordenadas de Google Maps en el texto pegado.";
+                    return;
+                }
+
+                latitud.value = coords.lat.toFixed(7);
+                longitud.value = coords.lng.toFixed(7);
+                if (estado) estado.textContent = "Ubicación cargada desde el link pegado.";
+            });
+        })();
+    </script>
+}

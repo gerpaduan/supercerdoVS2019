@@ -86,6 +86,10 @@ namespace Negocio
                                                         ? 0
                                                         : Convert.ToInt32(drUsuario["idEmpresa"]);
                     user.PermitirLoginFueraSucursal = GetOptionalBool(drUsuario, "PermitirLoginFueraSucursal");
+                    user.EsUsuarioProduccion = GetOptionalBool(drUsuario, "esUsuarioProduccion");
+                    user.IntentosFallidosLogin = GetOptionalInt(drUsuario, "intentosFallidosLogin");
+                    user.Bloqueado = GetOptionalBool(drUsuario, "bloqueado");
+                    user.FechaBloqueoUtc = GetOptionalDateTime(drUsuario, "fechaBloqueoUtc");
 
                     user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
 
@@ -200,6 +204,83 @@ namespace Negocio
             return userEncontrado;
         }
 
+        // Misma logica de matching que ValidarUsuarioWeb (CoincideIdentificador, mismo scope de
+        // empresa) pero SIN chequear contraseña -- necesario para poder mirar Bloqueado/Activo
+        // antes de intentar validar la clave en LoginController.
+        public Entidades.Usuario ObtenerUsuarioPorIdentificador(string usuario)
+        {
+            usuario = (usuario ?? "").Trim().ToLowerInvariant();
+
+            if (listUsuarios == null)
+            {
+                listUsuarios = convertDatatableToList();
+                if (listUsuarios == null)
+                    return null;
+            }
+
+            Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
+
+            foreach (Entidades.Usuario user in listUsuarios)
+            {
+                if (!CoincideIdentificador(user, usuario))
+                    continue;
+
+                var userEncontrado = user;
+                userEncontrado.Sucursal = userEncontrado.IdSucursal > 0
+                    ? oSucursalD.findById(userEncontrado.IdSucursal)
+                    : null;
+                userEncontrado.Empresa = userEncontrado.IdEmpresa > 0
+                    ? oSucursalD.findEmpresaById(userEncontrado.IdEmpresa)
+                    : null;
+                return userEncontrado;
+            }
+
+            return null;
+        }
+
+        // Incrementa el contador de intentos fallidos y, si llega a maxIntentos, bloquea la
+        // cuenta (Bloqueado=true + FechaBloqueoUtc). Devuelve true solo en el momento exacto de
+        // la transicion a bloqueado -- el caller usa eso para mandar el mail de desbloqueo UNA
+        // sola vez por bloqueo, no en cada reintento posterior (ver LoginController.Index POST).
+        public bool RegistrarIntentoFallido(Entidades.Usuario usuario, int maxIntentos)
+        {
+            if (usuario == null) return false;
+
+            usuario.IntentosFallidosLogin++;
+            bool seAcabaDeBoquear = usuario.IntentosFallidosLogin >= maxIntentos;
+
+            if (seAcabaDeBoquear)
+            {
+                usuario.Bloqueado = true;
+                usuario.FechaBloqueoUtc = DateTime.UtcNow;
+            }
+
+            oUsuarioD.ActualizarEstadoBloqueoLogin(usuario);
+            return seAcabaDeBoquear;
+        }
+
+        // Resetea el contador tras un login exitoso -- higiene, no se acarrean intentos viejos.
+        public void RegistrarLoginExitoso(Entidades.Usuario usuario)
+        {
+            if (usuario == null || usuario.IntentosFallidosLogin == 0) return;
+
+            usuario.IntentosFallidosLogin = 0;
+            oUsuarioD.ActualizarEstadoBloqueoLogin(usuario);
+        }
+
+        // Desbloquea una cuenta -- usado tanto por el link de email (LoginController.UnlockAccount)
+        // como por un admin (UsuariosController.DesbloquearUsuario).
+        public void DesbloquearUsuario(int idUsuario)
+        {
+            oUsuarioD.ActualizarEstadoBloqueoLogin(new Entidades.Usuario
+            {
+                Id = idUsuario,
+                IntentosFallidosLogin = 0,
+                Bloqueado = false,
+                FechaBloqueoUtc = null
+            });
+        }
+
         public Entidades.Usuario getUser(string usuario)
         {
             convertDatatableToList();
@@ -287,9 +368,9 @@ namespace Negocio
             oUsuarioD.MarcarTokenRecuperacionComoUsado(idToken);
         }
 
-        public void InvalidarTokensPendientesUsuario(int idUsuario)
+        public void InvalidarTokensPendientesUsuario(int idUsuario, string proposito)
         {
-            oUsuarioD.InvalidarTokensPendientesUsuario(idUsuario);
+            oUsuarioD.InvalidarTokensPendientesUsuario(idUsuario, proposito);
         }
 
 
@@ -312,6 +393,11 @@ namespace Negocio
         public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
         {
             oUsuarioD.RegistrarLoginUbicacion(log);
+        }
+
+        public DataTable obtenerLoginUbicacionLog(int idEmpresa, DateTime desde, DateTime hasta)
+        {
+            return oUsuarioD.obtenerLoginUbicacionLog(idEmpresa, desde, hasta);
         }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)

@@ -90,6 +90,53 @@ namespace Datos
             return (lista.Count > 0) ? lista[0] : null;
         }
 
+        // Actualiza los campos editables desde "Mis Sucursales" (admin de la propia empresa).
+        // Nunca toca codPuntoVentaAfip (unico campo AFIP de la entidad) ni idEmpresa -- la
+        // pertenencia a la empresa no se puede reasignar desde esta pantalla. Antes de esto, la
+        // clase Datos/Sucursal.cs no tenia NINGUN metodo de escritura.
+        public void ActualizarDatosBasicos(Entidades.Sucursal oSucursalE)
+        {
+            if (oSucursalE == null) throw new ArgumentNullException(nameof(oSucursalE));
+
+            const string sql = @"
+                UPDATE Sucursal
+                SET sucursal = @SucursalNombre,
+                    direccion = @Direccion,
+                    localidad = @Localidad,
+                    provincia = @Provincia,
+                    pais = @Pais,
+                    Latitud = @Latitud,
+                    Longitud = @Longitud,
+                    RadioLoginMetros = @RadioLoginMetros,
+                    ValidarUbicacionLogin = @ValidarUbicacionLogin
+                WHERE idSucursal = @IdSucursal AND idEmpresa = @IdEmpresa;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@IdSucursal", SqlDbType.Int).Value = oSucursalE.IdSucursal;
+                    p.Add("@IdEmpresa", SqlDbType.Int).Value = oSucursalE.IdEmpresa;
+                    p.Add("@SucursalNombre", SqlDbType.NVarChar).Value = (object)oSucursalE.SucursalNombre ?? DBNull.Value;
+                    p.Add("@Direccion", SqlDbType.NVarChar).Value = (object)oSucursalE.Direccion ?? DBNull.Value;
+                    p.Add("@Localidad", SqlDbType.NVarChar).Value = (object)oSucursalE.Localidad ?? DBNull.Value;
+                    p.Add("@Provincia", SqlDbType.NVarChar).Value = (object)oSucursalE.Provincia ?? DBNull.Value;
+                    p.Add("@Pais", SqlDbType.NVarChar).Value = (object)oSucursalE.Pais ?? DBNull.Value;
+                    p.Add("@Latitud", SqlDbType.Decimal).Value = (object)oSucursalE.Latitud ?? DBNull.Value;
+                    p.Add("@Longitud", SqlDbType.Decimal).Value = (object)oSucursalE.Longitud ?? DBNull.Value;
+                    p.Add("@RadioLoginMetros", SqlDbType.Int).Value = oSucursalE.RadioLoginMetros;
+                    p.Add("@ValidarUbicacionLogin", SqlDbType.Bit).Value = oSucursalE.ValidarUbicacionLogin;
+
+                    p["@Latitud"].Precision = 10;
+                    p["@Latitud"].Scale = 7;
+                    p["@Longitud"].Precision = 10;
+                    p["@Longitud"].Scale = 7;
+                }
+            );
+        }
+
         public DataTable obtenerSucursalSanMartin()
         {
             return Db.DataTable(

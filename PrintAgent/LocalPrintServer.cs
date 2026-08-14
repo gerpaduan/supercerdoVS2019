@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Json;
@@ -53,6 +54,31 @@ namespace CarniSys.PrintAgent
                 .OrderByDescending(x => x.IsDefault)
                 .ThenBy(x => x.Name)
                 .ToList();
+        }
+
+        // Mismo query WMI que Utilidades/Util_Form.cs (GetCPUId()) -- duplicado a proposito en vez
+        // de referenciar el proyecto Utilidades completo, para mantener este agente minimo (unica
+        // referencia extra hoy es System.Web.Extensions). Usado para "dispositivos seguros"
+        // (Web/Controllers/DispositivosSegurosController.cs): identifica la PC por el ProcessorId,
+        // no por IP (la IP cambia; el CPU ID no).
+        private static string GetCpuId()
+        {
+            try
+            {
+                var mc = new ManagementClass("Win32_Processor");
+                foreach (ManagementObject mo in mc.GetInstances())
+                {
+                    var value = mo.Properties["ProcessorId"].Value;
+                    if (value != null && !string.IsNullOrWhiteSpace(value.ToString()))
+                        return value.ToString();
+                }
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void ListenLoop()
@@ -163,6 +189,17 @@ namespace CarniSys.PrintAgent
                     app = "CarniSys.PrintAgent",
                     printerName = config != null ? config.PrinterName : "",
                     ticketMm = config != null ? config.TicketMm : 58
+                });
+                return;
+            }
+
+            if (path == "/device-id")
+            {
+                string deviceId = GetCpuId();
+                WriteJson(stream, new
+                {
+                    ok = !string.IsNullOrEmpty(deviceId),
+                    deviceId = deviceId ?? ""
                 });
                 return;
             }

@@ -93,6 +93,7 @@
     <Compile Include="StockCorteSucursal.cs" />
     <Compile Include="StockMaestroSucursal.cs" />
     <Compile Include="Sucursal.cs" />
+    <Compile Include="DispositivoSeguro.cs" />
     <Compile Include="Usuario.cs" />
     <Compile Include="UsuarioPasswordResetToken.cs" />
     <Compile Include="Venta.cs" />

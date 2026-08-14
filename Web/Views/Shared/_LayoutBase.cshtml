@@ -22,10 +22,30 @@
 
     bool puedeAdministrarSistema = Web.Helpers.SystemAdministrationAccessHelper.PuedeAdministrarSistema(Session);
 
+    // Mas estricto que puedeAdministrarUsuarios: ese tambien deja pasar con el permiso de
+    // solo-ver-usuarios (VerUsuarios), que NO debe dar acceso a la auditoria de accesos
+    // (pedido explicito: "solo para usuarios con permiso crear usuarios").
+    bool puedeVerAuditoriaLogin = esAdmin;
+    if (!puedeVerAuditoriaLogin && user != null && user.Permisos != null)
+    {
+        puedeVerAuditoriaLogin = user.Permisos.Any(p =>
+            p != null &&
+            p.Formulario != null &&
+            (
+                string.Equals(p.Formulario.FormEdicion ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicionExtra1 ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicionExtra2 ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase)
+            ));
+    }
+
     bool mostrarConfiguracion = esAdmin;
     bool configuracionActiva =
         controller == "Usuarios" ||
         controller == "Parametros" ||
+        controller == "Empresa" ||
+        controller == "Sucursal" ||
+        controller == "DispositivosSeguros" ||
+        controller == "AuditoriaLogin" ||
         (controller == "Home" && action == "Utilidades");
     bool administracionSistemaActiva = controller == "SystemAdministration";
 }
@@ -356,7 +376,15 @@
                             {
                                 <a class="collapse-item @(controller == "Usuarios" ? "active" : "")" href="@Url.Action("Index", "Usuarios")">Usuarios</a>
                             }
+                            @if (puedeVerAuditoriaLogin)
+                            {
+                                <a class="collapse-item @(controller == "AuditoriaLogin" ? "active" : "")" href="@Url.Action("Index", "AuditoriaLogin")">Auditoria de accesos</a>
+                            }
                             <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
+                            @* mostrarConfiguracion ya exige esAdmin, no hace falta re-chequearlo aca (mismo criterio que "Parametros" arriba) *@
+                            <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
+                            <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
+                            <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
                             <a class="collapse-item @((controller == "Home" && action == "Utilidades") ? "active" : "")" href="@Url.Action("Utilidades","Home")">Utilidades</a>
                         </div>
                     </div>
@@ -621,7 +649,7 @@
     <script src="@Url.Content("~/Scripts/app/modal-sucursales.js")"></script>
     <script src="@Url.Content("~/Content/js/scripts.js")"></script>
     <script src="@Url.Content("~/Scripts/app/table-scroll-sync.js?v=20260518-1")"></script>
-    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3238")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>

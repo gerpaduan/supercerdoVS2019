@@ -83,7 +83,12 @@ namespace Web.Helpers
                 "font-src 'self' data: https://fonts.gstatic.com; " +
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +
-                "connect-src 'self';";
+                // El agente local de impresion/hardware (CarniSysPrintAgent, Web/Scripts/app/print-agent.js)
+                // corre en 127.0.0.1:18777, un origen distinto al del sitio -- sin este permiso
+                // explicito, connect-src 'self' bloquea TODAS las llamadas al agente (impresion de
+                // tickets, dispositivos seguros), no solo las de un endpoint puntual. Hallazgo real
+                // durante la tarea de dispositivos seguros -- ver docs/DECISIONS.md.
+                "connect-src 'self' http://127.0.0.1:18777;";
             response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
             response.Headers.Remove("X-Powered-By");
             response.Headers.Remove("Server");

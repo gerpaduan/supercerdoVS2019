@@ -26,6 +26,7 @@ namespace Web.Models
         public int IdSucursalUser { get; set; }
         public string SucursalNombre { get; set; }
         public int IdEmpresa { get; set; }
+        public bool Bloqueado { get; set; }
     }
 
     public class UsuarioEditVm

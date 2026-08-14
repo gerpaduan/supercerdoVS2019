@@ -92,6 +92,15 @@ namespace Entidades
         // BaseController.ResolverUsuarioCreador.
         public bool EsUsuarioProduccion { get; set; }
 
+        // Bloqueo de cuenta tras N intentos fallidos de contraseña (ver
+        // Security:AccountLockoutMaxAttempts en Web.config). Se resetea a 0/false al desbloquear
+        // (por email o por un admin) o al lograr un login exitoso. Distinto de LoginRateLimiter
+        // (limite en memoria por IP, se auto-desbloquea por tiempo) -- esto es persistente y
+        // requiere desbloqueo explicito.
+        public int IntentosFallidosLogin { get; set; }
+        public bool Bloqueado { get; set; }
+        public DateTime? FechaBloqueoUtc { get; set; }
+
         public Entidades.Sucursal Sucursal { get; set; }
         public string SucursalNombre { get; set; }
         public List<Entidades.Sucursal> ListaSucursales{ get; set; }

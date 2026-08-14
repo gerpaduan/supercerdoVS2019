@@ -71,6 +71,7 @@
                 {
                     @Html.AntiForgeryToken()
                     @Html.HiddenFor(m => m.ReturnUrl)
+                    @Html.HiddenFor(m => m.NumeroSerieDispositivo)
 
                     <div id="locationStatus" class="location-status" style="display:none;"></div>
 
@@ -95,6 +96,10 @@
                     <button type="submit" class="login-submit">Ingresar <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
                 }
 
+                <div class="text-center mt-3">
+                    <a href="@Url.Action("ForgotPassword", "Login")">¿Olvidaste tu contraseña?</a>
+                </div>
+
                 <div class="login-support">
                     <i class="fab fa-whatsapp" aria-hidden="true"></i>
                     <span>¿Necesitás ayuda? <a href="https://wa.me/5493482547897" target="_blank" rel="noopener">Escribinos por WhatsApp</a></span>
@@ -106,7 +111,26 @@
     <script src="@Url.Content("~/Scripts/jquery-3.4.1.min.js")"></script>
     <script src="@Url.Content("~/Scripts/jquery.validate.min.js")"></script>
     <script src="@Url.Content("~/Scripts/jquery.validate.unobtrusive.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=4")"></script>
     <script>
+        // Completa en silencio el numero de serie del dispositivo (CPU ID) si el agente de
+        // impresion esta corriendo en esta maquina -- mismo criterio que la geolocalizacion de
+        // abajo: intento en segundo plano, sin bloquear el envio del form, sin mostrar nada si
+        // falla (no hay agente instalado en la mayoria de las PCs). Ver
+        // DispositivosSegurosController y LoginController.Index(POST).
+        (function () {
+            var numeroSerie = document.getElementById("NumeroSerieDispositivo");
+            if (!numeroSerie || !window.CarniSysPrintAgent) return;
+
+            window.CarniSysPrintAgent.getDeviceId()
+                .done(function (resp) {
+                    if (resp && resp.ok && resp.deviceId) {
+                        numeroSerie.value = resp.deviceId;
+                    }
+                })
+                .fail(function () { });
+        })();
+
         (function () {
             var status = document.getElementById("locationStatus");
             var latitud = document.getElementById("Latitud");

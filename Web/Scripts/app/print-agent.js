@@ -22,6 +22,9 @@
         getPrinters: function () {
             return ajax('/printers');
         },
+        getDeviceId: function () {
+            return ajax('/device-id');
+        },
         getConfig: function () {
             return ajax('/config');
         },

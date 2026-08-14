@@ -421,6 +421,36 @@ namespace Web.Controllers
             }
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult DesbloquearUsuario(int id)
+        {
+            var usuarioActual = ObtenerUsuarioActualConPermisos();
+            if (!PuedeAdministrarUsuarios(usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para desbloquear usuarios.";
+                return RedirectToAction("Index");
+            }
+
+            var usuario = ObtenerUsuarioSeguro(id);
+            if (usuario == null)
+            {
+                TempData["AlertType"] = "error";
+                TempData["AlertTitle"] = "No encontrado";
+                TempData["AlertMsg"] = "No se encontró el usuario seleccionado.";
+                return RedirectToAction("Index");
+            }
+
+            oUsuarioN.DesbloquearUsuario(usuario.Id);
+
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Usuarios";
+            TempData["AlertMsg"] = "La cuenta se desbloqueó correctamente.";
+            return RedirectToAction("Index");
+        }
+
         private bool PuedeVerUsuarios(Entidades.Usuario usuarioActual)
         {
             return TienePermisoUsuarios(usuarioActual, Entidades.Permisos.Usuario.VerUsuarios, false);
@@ -600,7 +630,8 @@ namespace Web.Controllers
                 Email = usuario.Email ?? "",
                 IdSucursalUser = usuario.IdSucursal,
                 SucursalNombre = usuario.Sucursal != null ? (usuario.Sucursal.SucursalNombre ?? "") : (usuario.SucursalNombre ?? ""),
-                IdEmpresa = usuario.IdEmpresa
+                IdEmpresa = usuario.IdEmpresa,
+                Bloqueado = usuario.Bloqueado
             };
         }
 

@@ -14,5 +14,10 @@ namespace Entidades
         public DateTime? FechaUsoUtc { get; set; }
         public string IdentificadorSolicitado { get; set; }
         public string EmailDestino { get; set; }
+
+        // "reset" (recuperación de contraseña) o "unlock" (desbloqueo de cuenta) -- misma tabla,
+        // mismo mecanismo de token hasheado + expiración + un solo uso, discriminado por
+        // propósito para que un token de un flujo no sirva para el otro.
+        public string Proposito { get; set; } = "reset";
     }
 }

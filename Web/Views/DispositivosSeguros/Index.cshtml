@@ -1,0 +1,128 @@
+@model Web.Models.DispositivosSegurosIndexVm
+@{
+    ViewBag.Title = "Dispositivos seguros";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h4 mb-1 text-gray-800">Dispositivos seguros</h1>
+            <p class="text-muted mb-0">
+                Los dispositivos de esta lista no quedan bloqueados por intentos fallidos de login desde su IP.
+                El bloqueo por cuenta (5 errores de contraseña) sigue aplicando igual.
+            </p>
+        </div>
+    </div>
+
+    @if (Model.PuedeAdministrar)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                @using (Html.BeginForm("Agregar", "DispositivosSeguros", FormMethod.Post, new { id = "formAgregarDispositivo" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="row align-items-end">
+                        <div class="col-12 col-md-4">
+                            <div class="form-group mb-2">
+                                <label for="NumeroSerie">Número de serie</label>
+                                <input type="text" class="form-control" id="NumeroSerie" name="numeroSerie" autocomplete="off" placeholder="Se completa solo si el agente de impresión está corriendo" />
+                                <small class="form-text text-muted" id="dispositivoAgenteEstado"></small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <div class="form-group mb-2">
+                                <label for="Descripcion">Descripción</label>
+                                <input type="text" class="form-control" id="Descripcion" name="descripcion" autocomplete="off" maxlength="200" placeholder="Ej: PC de administración, Notebook de Juan" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <div class="form-group mb-2">
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-plus mr-1"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Número de serie</th>
+                            <th>Descripción</th>
+                            <th style="width:160px;">Creado</th>
+                            <th style="width:160px;">Creado por</th>
+                            @if (Model.PuedeAdministrar)
+                            {
+                                <th style="width:110px;">Acciones</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No hay dispositivos seguros registrados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td><code>@item.NumeroSerie</code></td>
+                                    <td>@item.Descripcion</td>
+                                    <td>@item.CreadoUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@item.NombreUsuarioCreador</td>
+                                    @if (Model.PuedeAdministrar)
+                                    {
+                                        <td>
+                                            @using (Html.BeginForm("Eliminar", "DispositivosSeguros", FormMethod.Post, new { @class = "d-inline" }))
+                                            {
+                                                @Html.AntiForgeryToken()
+                                                @Html.Hidden("id", item.Id)
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este dispositivo de la lista de seguros?');">
+                                                    Eliminar
+                                                </button>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Los scripts de _LayoutBase.cshtml (jQuery incluido) se cargan al final del body, despues
+    // del contenido de esta vista -- si esto corriera inline ni jQuery ni window.CarniSysPrintAgent
+    // existirian todavia. window.onload espera a que termine de cargar/ejecutar todo lo anterior
+    // (no usa jQuery a proposito, para no depender de que ya haya cargado).
+    window.addEventListener('load', function () {
+        var $numeroSerie = document.getElementById('NumeroSerie');
+        var $estado = document.getElementById('dispositivoAgenteEstado');
+        if (!$numeroSerie || !window.CarniSysPrintAgent) return;
+
+        window.CarniSysPrintAgent.getDeviceId()
+            .done(function (resp) {
+                if (resp && resp.ok && resp.deviceId) {
+                    $numeroSerie.value = resp.deviceId;
+                    if ($estado) $estado.textContent = 'Detectado automáticamente desde el agente de impresión.';
+                }
+            })
+            .fail(function () {
+                // Silencioso: el agente no esta instalado/corriendo en esta maquina -- se completa a mano.
+            });
+    });
+</script>

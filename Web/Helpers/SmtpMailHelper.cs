@@ -63,6 +63,54 @@ namespace Web.Helpers
             }
         }
 
+        public static void SendAccountUnlock(string toEmail, string toName, string unlockUrl, int expirationMinutes)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail))
+                throw new ArgumentException("El email destino es obligatorio.", nameof(toEmail));
+
+            string host = ConfigurationManager.AppSettings["SmtpHost"];
+            string fromEmail = ConfigurationManager.AppSettings["SmtpFromEmail"];
+
+            if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(fromEmail))
+                throw new ConfigurationErrorsException("Falta configurar SMTP para desbloqueo de cuenta.");
+
+            string fromName = ConfigurationManager.AppSettings["SmtpFromName"] ?? "CarniSys";
+            string user = ConfigurationManager.AppSettings["SmtpUser"] ?? "";
+            string pass = NormalizeAppPassword(ConfigurationManager.AppSettings["SmtpPass"] ?? "");
+            bool enableSsl = ParseBool(ConfigurationManager.AppSettings["SmtpEnableSsl"], true);
+            int port = ParseInt(ConfigurationManager.AppSettings["SmtpPort"], 587);
+
+            string subject = "Tu cuenta fue bloqueada - CarniSys";
+            string safeName = string.IsNullOrWhiteSpace(toName) ? "usuario" : toName.Trim();
+            string bodyHtml =
+                "<p>Hola " + WebUtility.HtmlEncode(safeName) + ".</p>" +
+                "<p>Tu cuenta se bloqueó por varios intentos fallidos de contraseña.</p>" +
+                "<p><a href=\"" + WebUtility.HtmlEncode(unlockUrl) + "\">Hacé clic acá para desbloquear tu cuenta</a></p>" +
+                "<p>Este enlace vence en " + expirationMinutes + " minutos y solo puede usarse una vez.</p>" +
+                "<p>Si no fuiste vos, también podés pedirle a un administrador que la desbloquee.</p>";
+
+            using (var message = new MailMessage())
+            {
+                message.From = new MailAddress(fromEmail, fromName);
+                message.To.Add(new MailAddress(toEmail, safeName));
+                message.Subject = subject;
+                message.Body = bodyHtml;
+                message.IsBodyHtml = true;
+
+                using (var client = new SmtpClient(host, port))
+                {
+                    client.EnableSsl = enableSsl;
+                    client.UseDefaultCredentials = false;
+                    if (!string.IsNullOrWhiteSpace(user))
+                    {
+                        client.Credentials = new NetworkCredential(user, pass);
+                    }
+
+                    client.Send(message);
+                }
+            }
+        }
+
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

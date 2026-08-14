@@ -19,6 +19,11 @@ namespace Web.Models
         public string Latitud { get; set; }
         public string Longitud { get; set; }
         public string PrecisionMetros { get; set; }
+
+        // Numero de serie del dispositivo (CPU ID), completado en silencio por JS si el agente
+        // de impresion esta corriendo -- ver Web/Views/Login/Index.cshtml y
+        // LoginController.Index(POST). Vacio si no hay agente instalado, el login sigue igual.
+        public string NumeroSerieDispositivo { get; set; }
     }
 
     public class LoginUbicacionVm
@@ -56,6 +61,15 @@ namespace Web.Models
         [Display(Name = "Confirmar contraseña")]
         [Compare("NuevaClave", ErrorMessage = "La confirmación no coincide con la nueva contraseña.")]
         public string ConfirmarClave { get; set; }
+
+        public bool TokenValido { get; set; }
+        public string Mensaje { get; set; }
+    }
+
+    public class UnlockAccountVm
+    {
+        [Required]
+        public string Token { get; set; }
 
         public bool TokenValido { get; set; }
         public string Mensaje { get; set; }

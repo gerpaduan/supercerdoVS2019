@@ -1,0 +1,230 @@
+@model Web.Models.EmpresaIndexVm
+
+@{
+    ViewBag.Title = "Mi Empresa";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var mensajesValidacion = ViewData.ModelState.Values
+        .SelectMany(x => x.Errors)
+        .Select(x => x.ErrorMessage)
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .ToList();
+}
+
+<div class="container-fluid empresa-index-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Mi Empresa</h1>
+            <p class="text-muted mb-0">Datos generales y horario laboral de @(!string.IsNullOrWhiteSpace(Model.RazonSocialAfip) ? Model.RazonSocialAfip : "la empresa").</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (mensajesValidacion.Any())
+            {
+                <div class="alert alert-danger">
+                    <ul class="mb-0 pl-3">
+                        @foreach (var mensaje in mensajesValidacion)
+                        {
+                            <li>@mensaje</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.MensajePermiso))
+            {
+                <div class="alert @(Model.PuedeAdministrar ? "alert-info" : "alert-secondary")">
+                    @Model.MensajePermiso
+                </div>
+            }
+
+            @using (Html.BeginForm("Guardar", "Empresa", FormMethod.Post, new { id = "formEmpresa", novalidate = "novalidate" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="row mb-2">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label class="text-muted small mb-1">Razón social (AFIP)</label>
+                            <input type="text" class="form-control-plaintext" value="@Model.RazonSocialAfip" readonly />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label class="text-muted small mb-1">CUIT</label>
+                            <input type="text" class="form-control-plaintext" value="@Model.Cuit" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="h6 text-gray-700 mt-2">Datos generales</h2>
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.NombreFantasia)
+                            @Html.TextBoxFor(m => m.NombreFantasia, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Telefono)
+                            @Html.TextBoxFor(m => m.Telefono, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Email)
+                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Domicilio)
+                            @Html.TextBoxFor(m => m.Domicilio, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Ciudad)
+                            @Html.TextBoxFor(m => m.Ciudad, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Pais)
+                            @Html.TextBoxFor(m => m.Pais, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Slogan1)
+                            @Html.TextBoxFor(m => m.Slogan1, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Slogan2)
+                            @Html.TextBoxFor(m => m.Slogan2, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Slogan3)
+                            @Html.TextBoxFor(m => m.Slogan3, new { @class = "form-control", autocomplete = "off" })
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="h6 text-gray-700 mt-3">Horario laboral</h2>
+                <p class="text-muted small">
+                    Los empleados (no administradores) solo pueden iniciar sesión dentro de estas 2 jornadas. Por defecto cubren todo el día (00:00 a 23:59), sin restricción real.
+                </p>
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="form-row align-items-end">
+                            <div class="col-6">
+                                <div class="form-group mb-2">
+                                    @Html.LabelFor(m => m.HorarioDiurnoDesde)
+                                    @Html.TextBoxFor(m => m.HorarioDiurnoDesde, new { @class = "form-control", type = "time" })
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-2">
+                                    @Html.LabelFor(m => m.HorarioDiurnoHasta)
+                                    @Html.TextBoxFor(m => m.HorarioDiurnoHasta, new { @class = "form-control", type = "time" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-row align-items-end">
+                            <div class="col-6">
+                                <div class="form-group mb-2">
+                                    @Html.LabelFor(m => m.HorarioTardeDesde)
+                                    @Html.TextBoxFor(m => m.HorarioTardeDesde, new { @class = "form-control", type = "time" })
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-2">
+                                    @Html.LabelFor(m => m.HorarioTardeHasta)
+                                    @Html.TextBoxFor(m => m.HorarioTardeHasta, new { @class = "form-control", type = "time" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.PuedeAdministrar)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionEmpresa"
+                                data-edit-readonly-ignore="true">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-success mr-2 mb-2 @(Model.SoloLecturaInicial ? "d-none" : "")"
+                                id="btnGuardarEmpresa">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                    }
+
+                    <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Home")">
+                        Volver
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .empresa-index-page {
+        font-size: .9rem;
+    }
+
+    .empresa-index-page .h3 {
+        font-size: 1.28rem;
+        line-height: 1.15;
+    }
+
+    .empresa-index-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .empresa-index-page .alert,
+    .empresa-index-page .text-muted,
+    .empresa-index-page .form-text,
+    .empresa-index-page small {
+        font-size: .8rem;
+    }
+
+    .empresa-index-page .form-control,
+    .empresa-index-page .form-control-plaintext {
+        font-size: .87rem;
+        min-height: 2.3rem;
+        padding: .32rem .58rem;
+    }
+
+    .empresa-index-page .btn {
+        font-size: .83rem;
+        padding: .34rem .65rem;
+    }
+</style>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script>
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formEmpresa",
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionEmpresa",
+            saveButtonSelector: "#btnGuardarEmpresa"
+        });
+    </script>
+}

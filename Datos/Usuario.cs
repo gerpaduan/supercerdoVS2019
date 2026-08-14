@@ -175,6 +175,33 @@ namespace Datos
             );
         }
 
+        public void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario)
+        {
+            if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
+            if (!ExisteColumnaUsuarios("bloqueado"))
+                return;
+
+            const string sql = @"
+                UPDATE Usuarios
+                SET intentosFallidosLogin = @intentosFallidosLogin,
+                    bloqueado = @bloqueado,
+                    fechaBloqueoUtc = @fechaBloqueoUtc
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@intentosFallidosLogin", SqlDbType.Int).Value = oUsuario.IntentosFallidosLogin;
+                    p.Add("@bloqueado", SqlDbType.Bit).Value = oUsuario.Bloqueado;
+                    p.Add("@fechaBloqueoUtc", SqlDbType.DateTime2).Value = (object)oUsuario.FechaBloqueoUtc ?? DBNull.Value;
+                }
+            );
+        }
+
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {
             const string query = @"
@@ -383,7 +410,8 @@ namespace Datos
                     usado,
                     fechaUsoUtc,
                     identificadorSolicitado,
-                    emailDestino
+                    emailDestino,
+                    proposito
                 )
                 VALUES
                 (
@@ -395,7 +423,8 @@ namespace Datos
                     @usado,
                     @fechaUsoUtc,
                     @identificadorSolicitado,
-                    @emailDestino
+                    @emailDestino,
+                    @proposito
                 );";
 
             Db.NonQuery(
@@ -413,6 +442,7 @@ namespace Datos
                     p.Add("@fechaUsoUtc", SqlDbType.DateTime2).Value = (object)token.FechaUsoUtc ?? DBNull.Value;
                     p.Add("@identificadorSolicitado", SqlDbType.NVarChar, 120).Value = token.IdentificadorSolicitado ?? string.Empty;
                     p.Add("@emailDestino", SqlDbType.NVarChar, 120).Value = token.EmailDestino ?? string.Empty;
+                    p.Add("@proposito", SqlDbType.NVarChar, 20).Value = string.IsNullOrWhiteSpace(token.Proposito) ? "reset" : token.Proposito;
                 }
             );
         }
@@ -440,7 +470,8 @@ namespace Datos
                     Usado = dr["usado"] != DBNull.Value && Convert.ToBoolean(dr["usado"]),
                     FechaUsoUtc = dr["fechaUsoUtc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaUsoUtc"]),
                     IdentificadorSolicitado = dr["identificadorSolicitado"] == DBNull.Value ? "" : Convert.ToString(dr["identificadorSolicitado"]),
-                    EmailDestino = dr["emailDestino"] == DBNull.Value ? "" : Convert.ToString(dr["emailDestino"])
+                    EmailDestino = dr["emailDestino"] == DBNull.Value ? "" : Convert.ToString(dr["emailDestino"]),
+                    Proposito = HasColumn(dr, "proposito") && dr["proposito"] != DBNull.Value ? Convert.ToString(dr["proposito"]) : "reset"
                 },
                 setParams: p => p.Add("@tokenHash", SqlDbType.NVarChar, 128).Value = tokenHash ?? string.Empty
             );
@@ -464,13 +495,14 @@ namespace Datos
             );
         }
 
-        public void InvalidarTokensPendientesUsuario(int idUsuario)
+        public void InvalidarTokensPendientesUsuario(int idUsuario, string proposito)
         {
             const string sql = @"
                 UPDATE UsuarioPasswordResetTokens
                 SET usado = 1,
                     fechaUsoUtc = ISNULL(fechaUsoUtc, SYSUTCDATETIME())
                 WHERE idUsuario = @idUsuario
+                  AND proposito = @proposito
                   AND usado = 0
                   AND fechaExpiracionUtc >= SYSUTCDATETIME();";
 
@@ -478,7 +510,11 @@ namespace Datos
                 _empresa,
                 sql,
                 CommandType.Text,
-                setParams: p => p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+                    p.Add("@proposito", SqlDbType.NVarChar, 20).Value = string.IsNullOrWhiteSpace(proposito) ? "reset" : proposito;
+                }
             );
         }
 
@@ -543,6 +579,46 @@ namespace Datos
             );
         }
 
+        // Auditoria de accesos (pantalla "Auditoria de accesos", gateada por el permiso de crear
+        // usuarios -- ver AuditoriaLoginController). Antes de esto la tabla LoginUbicacionLog solo
+        // se escribia, nunca se leia desde ningun lado. TOP 500 como limite defensivo: es un
+        // listado de auditoria para revisar a ojo, no un reporte exportable sin paginar.
+        public DataTable obtenerLoginUbicacionLog(int idEmpresa, DateTime desde, DateTime hasta)
+        {
+            const string sql = @"
+                SELECT TOP 500
+                    l.IdUsuario,
+                    u.nombre AS UsuarioNombre,
+                    l.IdSucursal,
+                    s.sucursal AS SucursalNombre,
+                    l.FechaHora,
+                    l.Latitud,
+                    l.Longitud,
+                    l.PrecisionMetros,
+                    l.DistanciaMetros,
+                    l.Permitido,
+                    l.Motivo,
+                    l.Ip
+                FROM LoginUbicacionLog l
+                INNER JOIN Usuarios u ON u.id = l.IdUsuario
+                LEFT JOIN Sucursal s ON s.idSucursal = l.IdSucursal
+                WHERE u.idEmpresa = @idEmpresa
+                  AND l.FechaHora BETWEEN @desde AND @hasta
+                ORDER BY l.FechaHora DESC;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                    p.Add("@desde", SqlDbType.DateTime).Value = desde;
+                    p.Add("@hasta", SqlDbType.DateTime).Value = hasta;
+                }
+            );
+        }
+
         private Entidades.Usuario MapUsuario(SqlDataReader dr)
         {
             return new Entidades.Usuario
@@ -562,7 +638,10 @@ namespace Datos
                 IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
                 IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
                 PermitirLoginFueraSucursal = GetOptionalBool(dr, "PermitirLoginFueraSucursal"),
-                EsUsuarioProduccion = GetOptionalBool(dr, "esUsuarioProduccion")
+                EsUsuarioProduccion = GetOptionalBool(dr, "esUsuarioProduccion"),
+                IntentosFallidosLogin = GetOptionalInt(dr, "intentosFallidosLogin"),
+                Bloqueado = GetOptionalBool(dr, "bloqueado"),
+                FechaBloqueoUtc = GetOptionalDateTime(dr, "fechaBloqueoUtc")
             };
         }
 
