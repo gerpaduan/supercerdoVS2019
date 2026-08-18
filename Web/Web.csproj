@@ -142,6 +142,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LandingController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\MigracionPostgresController.cs" />
     <Compile Include="Controllers\MovimientosController.cs" />
     <Compile Include="Controllers\ParametrosController.cs" />
     <Compile Include="Controllers\PersonasController.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="Helpers\SystemAdministrationAccessHelper.cs" />
     <Compile Include="Helpers\SystemAdministrationRepository.cs" />
     <Compile Include="Helpers\SmtpMailHelper.cs" />
+    <Compile Include="Models\ComparacionPersonaVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />
