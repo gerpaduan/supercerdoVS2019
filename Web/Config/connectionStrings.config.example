@@ -3,8 +3,10 @@
   <add name="ConexionPrincipal"
        connectionString="Data Source=SERVER\\INSTANCE;Initial Catalog=DATABASE;User ID=USER;Password=PASSWORD;"
        providerName="System.Data.SqlClient" />
-  <!-- Piloto de la migracion a Postgres (Etapa 2). Password real en ~/hosts/postgres-local.env -->
+  <!-- Piloto de la migracion a Postgres (Etapa 2). Password real en ~/hosts/postgres-local.env.
+       Maximum Pool Size fijado explicito (default de Npgsql es 100, ver docs/06-datos-e-integraciones/rls-postgres.md
+       "Estrategia de pooling") -- ajustar segun trafico real, nunca dejar el default en produccion. -->
   <add name="ConexionPostgresPiloto"
-       connectionString="Host=HOST;Port=5432;Database=DATABASE;Username=USER;Password=PASSWORD;"
+       connectionString="Host=HOST;Port=5432;Database=DATABASE;Username=USER;Password=PASSWORD;Maximum Pool Size=30;"
        providerName="Npgsql" />
 </connectionStrings>

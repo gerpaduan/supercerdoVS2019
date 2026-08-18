@@ -75,8 +75,25 @@ Base descartable `rls_poc` en la instancia local (PostgreSQL 17.11), tabla `prod
 
 Los 5 resultados coinciden exactamente con el diseño. `rls_poc` es descartable — no se usa para nada más, no se toca `carnisys` real de Postgres (que todavía no existe).
 
-## Pendiente para la próxima etapa (no resuelto acá)
+## Pendiente
 
-- Estrategia real de pooling de conexiones desde .NET (Npgsql pooling nativo vs. pgbouncer en modo transacción) — el principio no negociable es que cualquier estrategia respete `SET LOCAL` dentro de transacción explícita, nunca `SET` de sesión desnudo.
 - Collation/case-insensitivity (ver arriba).
-- Aplicar este mismo diseño a las 32 tablas reales de `carnisys` (esto es solo el POC en `rls_poc`).
+- Aplicar este mismo diseño a las 32 tablas reales de `carnisys` (por ahora migradas: `personas`+`iva`, `sucursal`+`empresas` — ver `docs/DECISIONS.md`, Etapas 2 y 3).
+
+## Estrategia de pooling de conexiones (decidido 18/08/2026)
+
+**Contexto**: `DatosPostgres/ConexionPg.cs` abre una `NpgsqlConnection` nueva por operación (mismo patrón que `Utilidades/Conexion.cs` con SQL Server), ejecuta `SELECT set_config('app.id_empresa', @idEmpresa, true)` como primer statement de una transacción explícita, corre la operación real, y hace `COMMIT`/`ROLLBACK` — ver `DatosPostgres/DbPg.cs`. La pregunta pendiente era si esto es seguro con pooling de conexiones sin tener que agregar nada más.
+
+**Verificado contra la documentación oficial de Npgsql** (`Pooling`, `No Reset On Close`, `Maximum Pool Size` en `connection-string-parameters.html`), no de memoria:
+
+- `Pooling=true` es el default — Npgsql ya poolea conexiones físicas por debajo de cada `NpgsqlConnection`, sin que haga falta agregar nada (no se necesita PgBouncer solo para tener pooling).
+- `No Reset On Close=false` es el default — Npgsql **resetea el estado de la conexión al devolverla al pool**. Es una segunda capa de seguridad, redundante con la primera: `SET LOCAL` (vía `set_config(..., true)`) ya se deshace solo al `COMMIT`/`ROLLBACK` de la transacción, **antes** de que la conexión vuelva al pool — así que el diseño actual es seguro incluso si alguna vez se pusiera `No Reset On Close=true` por performance.
+- `Maximum Pool Size=100` es el default (era 20 antes de la versión 3.1). **Riesgo real a controlar en producción**: el `max_connections` default de PostgreSQL también es 100 — si el pool de la app sola puede llegar a 100 conexiones físicas, se come todo el presupuesto de conexiones del servidor, sin dejar margen para `psql`/pgAdmin/monitoreo/otros roles. **Decisión**: en el connection string de producción, fijar `Maximum Pool Size` explícito y conservador (ej. 20-30, a ajustar con tráfico real medido) en vez de confiar en el default de 100.
+
+**Decisión: no hace falta PgBouncer para el despliegue actual** (un solo servidor de aplicación/VM). Se revisita **solo si**:
+- Se escala a múltiples instancias del proceso de la app (cada una con su propio pool de Npgsql, sumando conexiones físicas), y el total se acerca a `max_connections` de Postgres.
+- Métricas reales (`pg_stat_activity`) muestran contención de conexiones.
+
+**Si se adopta PgBouncer más adelante, tiene que ser en modo `transaction`, nunca `session` ni `statement`**: `ConexionPg.AbrirConTenant` ejecuta 2 statements en la misma transacción (el `set_config` + la query real) — modo `statement` rompería esto enrutando cada statement a una conexión física distinta. Modo `transaction` preserva los límites de transacción por checkout de cliente, que es exactamente lo que necesita el patrón `SET LOCAL`.
+
+**Principio no negociable, vale para cualquier estrategia futura**: nunca `SET` de sesión desnudo fuera de una transacción explícita — solo `SET LOCAL`/`set_config(..., true)` dentro de una transacción que siempre termina en `COMMIT` o `ROLLBACK` antes de soltar la conexión.

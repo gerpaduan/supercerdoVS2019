@@ -1,6 +1,16 @@
 # Decisiones de arquitectura
 
-## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: segunda entidad, Sucursal (Etapa 3)
+## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: estrategia de pooling de conexiones Npgsql (cierre del ultimo pendiente)
+
+Ultimo pendiente de la lista original de la Etapa 2 (ver `docs/06-datos-e-integraciones/rls-postgres.md`, seccion "Estrategia de pooling de conexiones", con el detalle completo). Resumen:
+
+- Verificado contra la documentacion oficial de Npgsql (no de memoria): `Pooling=true` y `No Reset On Close=false` son los defaults -- Npgsql ya poolea conexiones y resetea su estado al devolverlas al pool. El diseno actual (`SET LOCAL` via `set_config(..., true)` dentro de una transaccion que siempre termina en COMMIT/ROLLBACK antes de soltar la conexion, en `DatosPostgres/ConexionPg.cs`) ya es seguro con el pooling nativo de Npgsql tal cual esta, sin agregar nada.
+- **Riesgo real encontrado**: `Maximum Pool Size` default de Npgsql es 100, igual que `max_connections` default de Postgres -- el pool de la app sola podria agotar todas las conexiones del servidor. Aplicado: `Maximum Pool Size=30` explicito en el connection string (`Web/Config/connectionStrings.config` y su `.example`), a ajustar con trafico real medido.
+- **No hace falta PgBouncer para el despliegue actual** (un solo servidor de aplicacion). Se revisita solo si se escala a multiples instancias del proceso o si `pg_stat_activity` muestra contencion real. Si se adopta, tiene que ser modo `transaction` (nunca `session` ni `statement` -- `ConexionPg.AbrirConTenant` corre 2 statements en la misma transaccion, `statement` lo rompe).
+
+Con esto se cierran los 3 pendientes que quedaban de la lista original de la migracion (Etapa 2): prueba end-to-end por HTTP, segunda entidad, y estrategia de pooling.
+
+## 2026-08-18 - Migracion SQL Server -> PostgreSQL: segunda entidad, Sucursal (Etapa 3)
 
 A pedido explicito del usuario, se repitio el patron de la Etapa 2 con una segunda entidad para confirmar que escala mas alla de un solo caso. `Sucursal` fue la otra candidata ya evaluada (menos SPs que `Persona` -- de hecho cero, todo SQL inline -- pero mas puntos de instanciacion: 53 `new Negocio.Sucursal(` + 4 `new Datos.Sucursal(` directos que saltean `Negocio.Sucursal`, ninguno de los dos grupos se toco).
 
