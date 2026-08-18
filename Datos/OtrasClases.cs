@@ -5,7 +5,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class OtrasClases
+    public class OtrasClases : Contratos.IOtrasClasesRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 

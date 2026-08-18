@@ -1,6 +1,16 @@
 # Decisiones de arquitectura
 
-## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: estrategia de pooling de conexiones Npgsql (cierre del ultimo pendiente)
+## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: triage de las 38 tablas RLS y exclusion de 2 tablas muertas
+
+A pedido del usuario ("repetir en las 32 tablas ahora mismo"), se hizo un relevamiento del resto de las tablas con RLS antes de asumir que se puede repetir el patron de Persona/Sucursal mecanicamente. Hallazgo: son **39 tablas RLS reales** (confirmado contra `sys.security_predicates` de la base viva, no contra un conteo manual previo que no cuadraba dos veces seguidas).
+
+**Triage**:
+- **3 candidatas reales de bajo riesgo, mismo patron ya probado 2 veces**: `Conexiones` (ya vive en `Datos/Sucursal.cs`, el archivo ya migrado, la interfaz ya la declaraba), `Licencias` + `VencimientosLicencia` (`Datos/OtrasClases.cs`, chico y acotado). Se migran a continuacion de esta entrada.
+- **`Formularios` diferida**: vive en `Datos/Usuario.cs` (30KB, clase multi-tabla que mezcla Usuarios/Formularios/PermisosUsuarios/tokens/login-log) con un solo metodo de lectura -- extraer una interfaz para toda esa clase ahora seria repetir el error de meterse en una clase grande sin plan dedicado. Queda para cuando se aborde `Usuario.cs` junto con las clases grandes.
+- **3 tablas excluidas de la migracion, confirmado sin uso real en todo el repo**: `Parametros_old`, `ActualizacionCorte` (unico SP que la toca, `modificarCorte`, invocado por nadie), y `Claves` (encontrada al leer `Datos/OtrasClases.cs`: el metodo `Login(string clave)` que la consulta no lo llama nadie -- ni `Negocio/OtrasClases.cs` lo expone, ni hay ningun otro caller en el repo). Verificado con grep sobre **todo** el repo (`Web/`, `Presentacion/`, `wsAFIPvs2008/`, `Datos/`, `Negocio/`, los 117 SPs relevados) buscando cada nombre de tabla/SP/metodo como string literal -- cero referencias reales en los 3 casos (el unico match aparente, `Presentacion/Cortes/formCortes.cs` metodo `modificarCorte()`, es un nombre de metodo de WinForms coincidente, sin relacion). **Decision**: las 3 quedan afuera de la migracion. Si en el futuro aparece un uso real de alguna, se migra en ese momento, no antes.
+- **~32 tablas restantes** viven mezcladas dentro de 5 clases grandes (`Datos/Corte.cs` 90KB/~15 tablas, `Datos/Venta.cs` 81KB/~13, `Datos/CierreCaja.cs` 55KB/~11, `Datos/CuentaCorriente.cs` 47KB/4, `Datos/Compra.cs` 30KB/3) mas `Formularios` en `Datos/Usuario.cs` -- **no es el mismo patron mecanico**, cada clase grande es su propio proyecto de scoping (comparable en esfuerzo a varias entidades como Persona juntas). Quedan para otra sesion, empezando por las menos entreveradas (`CuentaCorriente.cs`, `Compra.cs`) antes de las 3 peores (`Corte.cs`, `Venta.cs`, `CierreCaja.cs`). `StockCorteSucursal` es el caso mas extremo: sin un solo punto de entrada por nombre, repartida en SPs de stock invocados desde los 4 archivos grandes a la vez -- se planifica junto con esos 4, no aparte.
+
+## 2026-08-18 - Migracion SQL Server -> PostgreSQL: estrategia de pooling de conexiones Npgsql (cierre del ultimo pendiente)
 
 Ultimo pendiente de la lista original de la Etapa 2 (ver `docs/06-datos-e-integraciones/rls-postgres.md`, seccion "Estrategia de pooling de conexiones", con el detalle completo). Resumen:
 

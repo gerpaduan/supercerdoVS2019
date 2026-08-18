@@ -184,12 +184,31 @@ namespace DatosPostgres
 
         public DataTable obtenerConexiones(bool? mostrarEnPrincipal, bool? mostrarEnStockActual)
         {
-            throw new NotImplementedException("TODO(claude): la tabla Conexiones es parte de la topologia legacy de 3 servidores, no migrada.");
+            // Migrada de verdad en la Etapa 4 (docs/DECISIONS.md 2026-08-18) -- la tabla
+            // Conexiones en si no es exclusiva de la topologia legacy, solo lo eran los otros
+            // 2 metodos hardcodeados a San Martin/San Lorenzo (siguen NotImplementedException).
+            const string sql = @"
+                SELECT name, connectionstring, nombre, idsucursal, mostrarenprincipal, mostrarenstockactual, idempresa
+                FROM conexiones
+                WHERE (@mp::boolean IS NULL OR mostrarenprincipal = @mp)
+                  AND (@ms::boolean IS NULL OR mostrarenstockactual = @ms);";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("mp", (object)mostrarEnPrincipal ?? DBNull.Value);
+                p.AddWithValue("ms", (object)mostrarEnStockActual ?? DBNull.Value);
+            });
         }
 
         public int getIdSucursalByConexion(string nameConnString)
         {
-            throw new NotImplementedException("TODO(claude): la tabla Conexiones es parte de la topologia legacy de 3 servidores, no migrada.");
+            if (string.IsNullOrWhiteSpace(nameConnString)) return 0;
+
+            object result = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT idsucursal FROM conexiones WHERE name = @name LIMIT 1;",
+                p => p.AddWithValue("name", nameConnString.Trim()));
+
+            return (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
         }
     }
 }

@@ -11,13 +11,22 @@ namespace Negocio
 {
     public class OtrasClases
     {
-        private readonly Datos.OtrasClases oOtrasClasesD;
+        private readonly Contratos.IOtrasClasesRepository oOtrasClasesD;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        // Constructor existente: SIN CAMBIOS.
         public OtrasClases(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
             oOtrasClasesD = new Datos.OtrasClases(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de IOtrasClasesRepository
+        // (ej. DatosPostgres.OtrasClasesPg). Solo lo usa el controller de comparacion.
+        public OtrasClases(Contratos.IOtrasClasesRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oOtrasClasesD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
         }
 
         #region Licencia
