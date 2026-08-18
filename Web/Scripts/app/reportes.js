@@ -113,8 +113,6 @@
         var cierres = config.cierres || [];
         var chartInstances = {};
 
-        var $mainFilters = $form.find(".filtro-principal");
-        var $liveFilters = $form.find(".filtro-vivo");
         var $pendingCard = $("#cardAvisoPendienteReporte");
         var $tipoReporte = $("#tipoReporte");
         var $sucursal = $("#sucursalReporte");
@@ -144,7 +142,6 @@
             index: -1,
             direction: "asc"
         };
-        var $btnAgregarPeriodo = $("#btnAgregarPeriodoComparativo");
         var $listaPeriodos = $("#listaPeriodosComparativos");
         var $agrupacionTemporal = $("#agrupacionTemporalReporte");
 
@@ -810,6 +807,81 @@
             return result;
         }
 
+        var filtrosSecundariosSeq = 0;
+
+        // $listaPeriodos apunta a un nodo del DOM que refreshFiltrosSecundarios()
+        // reemplaza -- hay que volver a buscarlo despues de cada swap, si no
+        // addPeriodRow/recalculateAllPeriodRows quedan operando sobre el nodo viejo.
+        function refreshDynamicFilterRefs() {
+            $listaPeriodos = $("#listaPeriodosComparativos");
+        }
+
+        function restorePeriodRows(values) {
+            if (!$listaPeriodos.length || !values || !values.length) {
+                return;
+            }
+
+            $.each(values, function (_, v) {
+                addPeriodRow(v);
+            });
+        }
+
+        // Refresca por AJAX el panel de filtros secundarios (Producto/TipoProducto/Marca/
+        // EstadoStock/AgrupacionTemporal + switch Balance + Periodos comparativos) cuando
+        // cambia el tipo de reporte, sin esperar a que el usuario apriete "Buscar". Pega a
+        // ReportesController.FiltrosSecundarios, que reusa el mismo camino barato que Index
+        // usa cuando buscar=false (sin correr las queries pesadas del reporte).
+        function refreshFiltrosSecundarios() {
+            var $wrap = $("#reportesFiltrosSecundariosWrap");
+            if (!$wrap.length || !config.filtrosSecundariosUrl) {
+                return;
+            }
+
+            var seq = ++filtrosSecundariosSeq;
+            var periodosCapturados = serializeComparativePeriodsForGraph();
+
+            $wrap.addClass("is-loading-filtros");
+
+            $.ajax({
+                url: config.filtrosSecundariosUrl,
+                type: "GET",
+                dataType: "html",
+                silentLoading: true,
+                data: {
+                    tipoReporte: reportType(),
+                    fechaDesde: $fechaDesdeDate.hasClass("d-none") ? $fechaDesdeCierre.val() : $fechaDesdeDate.val(),
+                    fechaHasta: $fechaHastaDateWrap.hasClass("d-none") ? $fechaHastaCierre.val() : $fechaHastaDate.val(),
+                    idSucursal: $sucursal.val() || "0",
+                    busquedaProducto: $("#busquedaProductoReporte").val() || "",
+                    tipoProducto: $("#tipoProductoReporte").val() || "",
+                    marcaId: $("#marcaReporte").val() || "0",
+                    agrupacionTemporal: $("#agrupacionTemporalReporte").val() || "hora",
+                    estadoStock: $("#estadoStockReporte").val() || "Todos",
+                    incluirVentasCuentaCorrienteBalance: $("#incluirVentasCuentaCorrienteBalance").is(":checked")
+                }
+            }).done(function (html) {
+                if (seq !== filtrosSecundariosSeq) {
+                    return;
+                }
+
+                $wrap.html(html);
+                refreshDynamicFilterRefs();
+                restorePeriodRows(periodosCapturados);
+                recalculateAllPeriodRows();
+                applyLiveFilters();
+            }).fail(function () {
+                if (seq !== filtrosSecundariosSeq) {
+                    return;
+                }
+
+                console.error("No se pudo actualizar el panel de filtros de Reportes.");
+            }).always(function () {
+                if (seq === filtrosSecundariosSeq) {
+                    $wrap.removeClass("is-loading-filtros");
+                }
+            });
+        }
+
         function formatSignedNumber(value, decimals, suffix) {
             if (value === null || value === undefined || value === "") {
                 return "-";
@@ -1223,13 +1295,14 @@
             });
         }
 
-        $mainFilters.on("change input", function () {
+        $form.on("change input", ".filtro-principal", function () {
             showPending(true);
             recalculateAllPeriodRows();
         });
 
         $tipoReporte.on("change", function () {
             applyReportMode(true);
+            refreshFiltrosSecundarios();
         });
 
         $sucursal.on("change", function () {
@@ -1244,11 +1317,11 @@
             applyDetailsMode();
         });
 
-        $liveFilters.on("change input keyup", function () {
+        $form.on("change input keyup", ".filtro-vivo", function () {
             applyLiveFilters();
         });
 
-        $btnAgregarPeriodo.on("click", function () {
+        $form.on("click", "#btnAgregarPeriodoComparativo", function () {
             var duration = getMainDurationMs();
             var baseStart = getLastComparativeStart() || parseLocalDate($fechaDesdeDate.val());
             var defaultStart = baseStart && duration > 0

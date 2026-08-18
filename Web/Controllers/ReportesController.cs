@@ -152,6 +152,69 @@ namespace Web.Controllers
             return View("~/Views/Reportes/Index.cshtml", model);
         }
 
+        // Devuelve solo el panel de filtros secundarios (Producto/TipoProducto/Marca/EstadoStock/
+        // AgrupacionTemporal + switch de Balance + Periodos comparativos), sin correr las queries
+        // pesadas del reporte -- mismo camino "barato" que usa Index cuando buscar=false
+        // (CrearModeloBase sin CargarReporte*). La llama reportes.js por AJAX cada vez que cambia
+        // #tipoReporte, para que el panel refleje el tipo elegido sin esperar a "Buscar".
+        [HttpGet]
+        public PartialViewResult FiltrosSecundarios(
+            string tipoReporte = TipoReporteStockActual,
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null,
+            string busquedaProducto = "",
+            string tipoProducto = "",
+            int marcaId = 0,
+            string agrupacionTemporal = "hora",
+            string estadoStock = "Todos",
+            bool incluirVentasCuentaCorrienteBalance = false)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return PartialView("~/Views/Reportes/_FiltrosSecundarios.cshtml", new ReportesViewModel());
+
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
+            DateTime hasta = fechaHasta ?? DateTime.Now;
+
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.VerStock, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                if (AjustarFechaSiNoTienePermiso(Permisos.Stock.VerStock, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                    hasta = desde;
+                else
+                    return PartialView("~/Views/Reportes/_FiltrosSecundarios.cshtml", new ReportesViewModel());
+            }
+
+            int sucursalSeleccionada = idSucursal.HasValue
+                ? idSucursal.Value
+                : (user.IdSucursal > 0 ? user.IdSucursal : 0);
+
+            if (!idSucursal.HasValue &&
+                string.Equals(tipoReporte, TipoReporteVentasProducto, StringComparison.OrdinalIgnoreCase))
+            {
+                sucursalSeleccionada = 0;
+            }
+
+            sucursalSeleccionada = AjustarSucursalSegunReporte(tipoReporte, sucursalSeleccionada, user);
+
+            var model = CrearModeloBase(
+                user,
+                tipoReporte,
+                desde,
+                hasta,
+                sucursalSeleccionada,
+                busquedaProducto,
+                tipoProducto,
+                marcaId,
+                agrupacionTemporal,
+                estadoStock,
+                buscar: false);
+
+            model.IncluirVentasCuentaCorrienteBalance = incluirVentasCuentaCorrienteBalance;
+
+            return PartialView("~/Views/Reportes/_FiltrosSecundarios.cshtml", model);
+        }
+
         [HttpGet]
         public JsonResult VentasPorProductoSerie(
             int idCorte,

@@ -79,6 +79,9 @@ body.carnisys-login {
 .login-alert ul { margin: 0; padding-left: 16px; }
 .login-alert-error { color: #941e1e; background: #fff1f1; border: 1px solid #ffd4d4; }
 .login-alert-success { color: #12633b; background: #edfcf4; border: 1px solid #c9f1da; }
+.login-forgot-wrap { margin-top: 18px; text-align: center; }
+.login-forgot { color: var(--login-muted); font-size: 13px; font-weight: 700; text-decoration: none; transition: color .2s ease; }
+.login-forgot:hover, .login-forgot:focus { color: var(--login-orange); text-decoration: underline; }
 .login-support { display: flex; justify-content: center; gap: 8px; margin-top: 28px; color: var(--login-muted); font-size: 13px; text-align: center; }
 .login-support > i { color: #1d9c56; font-size: 17px; }
 .login-support a { color: var(--login-navy); font-weight: 800; text-decoration: none; }

@@ -56,6 +56,10 @@
         return $root().data('ya-emitida') === 1 || $root().data('ya-emitida') === "1";
     }
 
+    function esModoSinVenta() {
+        return $root().data('sin-venta') === 1 || $root().data('sin-venta') === "1";
+    }
+
     function normalizarFormaPagoFactura(valor) {
         const texto = String(valor || '').trim().toLowerCase();
         if (!texto) return '';
@@ -177,7 +181,9 @@
     }
 
     function actualizarEstadoAgruparItemUnitario() {
-        const forzarAgrupacion = esFacturacionParcial();
+        // En modo sin venta asociada agrupar en item individual es obligatorio (no
+        // se puede apagar), igual que ya pasa hoy con la facturacion parcial.
+        const forzarAgrupacion = esFacturacionParcial() || esModoSinVenta();
         const $check = $('#feAgruparItemUnitario');
 
         if (forzarAgrupacion) {
@@ -543,13 +549,44 @@
         if (window.Swal && Swal.isVisible && Swal.isVisible()) return;
 
         const esAsterisco = e.key === '*' || e.code === 'NumpadMultiply';
-        if (!esAsterisco) return;
+        if (esAsterisco) {
+            const $btnCerrarSinFacturar = $('#btnCerrarVentaSinFacturar');
+            if (!$btnCerrarSinFacturar.length || $btnCerrarSinFacturar.prop('disabled')) return;
 
-        const $btnCerrarSinFacturar = $('#btnCerrarVentaSinFacturar');
-        if (!$btnCerrarSinFacturar.length || $btnCerrarSinFacturar.prop('disabled')) return;
+            e.preventDefault();
+            $btnCerrarSinFacturar.trigger('click');
+            return;
+        }
 
-        e.preventDefault();
-        $btnCerrarSinFacturar.trigger('click');
+        // Atajos Alt+C (cerrar venta sin facturar) / Alt+R (registrar factura)
+        const esAtajoValido = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat;
+        if (!esAtajoValido) return;
+
+        const tecla = String(e.key || '').toLowerCase();
+        if (tecla === 'c') {
+            const $btnCerrarSinFacturar = $('#btnCerrarVentaSinFacturar');
+            if (!$btnCerrarSinFacturar.length || $btnCerrarSinFacturar.prop('disabled') || !$btnCerrarSinFacturar.is(':visible')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            $btnCerrarSinFacturar.trigger('click');
+        } else if (tecla === 'r') {
+            const $btnRegistrar = $('#btnRegistrarFactura');
+            if (!$btnRegistrar.length || $btnRegistrar.prop('disabled') || !$btnRegistrar.is(':visible')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            $btnRegistrar.trigger('click');
+        }
+    });
+
+    // Enter en un campo del formulario no debe disparar el submit (Registrar factura).
+    // Si el foco esta en el propio boton, el comportamiento nativo (Enter = click) sigue andando
+    // porque este handler solo escucha sobre input/select, nunca sobre el boton.
+    $(document).on('keydown', '#formFacturaElectronica input, #formFacturaElectronica select', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
     });
 
     $(document).on('change', '#feSwitchAjuste', function () {
@@ -647,21 +684,101 @@
     });
 
     // =========================
-    // Submit
+    // Facturación manual (sin venta asociada)
     // =========================
-    $(document).on('submit', '#formFacturaElectronica', function (e) {
+    function recalcularDesdeTotalManual() {
+        const total = toNum($('#feMontoTotalManual').val());
+        const alicuotaPct = toNum($('#feAlicuotaManual option:selected').data('pct'));
+        const neto = alicuotaPct > 0 ? total / (1 + alicuotaPct / 100) : total;
+        const iva = total - neto;
+
+        setTotales({ total: total, neto: neto, iva: iva });
+    }
+
+    $(document).on('input change', '#feMontoTotalManual, #feAlicuotaManual', function () {
+        if (!esModoSinVenta()) return;
+        recalcularDesdeTotalManual();
+    });
+
+    $(document).on('shown.bs.modal', '#modalFacturaElectronica', function () {
+        if (esModoSinVenta()) {
+            recalcularDesdeTotalManual();
+        }
+    });
+
+    // Buscar cliente: reusa la ventana _BuscarPersona.cshtml pero con logica propia
+    // (la de persona-buscar.js escribe en #idPersona/#razonSocial, ids del POS que no
+    // existen aca, y no expone el CUIT como data-attribute).
+    function cargarPersonasFactura(filtro) {
+        $.get(window.AppUrls.personaListar, { filtro: filtro || '' }, function (data) {
+            let html = '';
+            (data || []).forEach(function (p) {
+                html += '<tr class="fila-persona" data-id="' + p.idPersona + '" data-razon="' + (p.razonSocial || '') + '" data-cuit="' + (p.cuit || '') + '">'
+                    + '<td>' + (p.cuit || '') + '</td>'
+                    + '<td>' + (p.razonSocial || '') + '</td>'
+                    + '<td>' + (p.identificacion || '') + '</td>'
+                    + '</tr>';
+            });
+            $('#tablaPersonas').html(html);
+            $('#tablaPersonas tr.fila-persona:first').addClass('is-selected');
+        });
+    }
+
+    function seleccionarPersonaFactura($fila) {
+        const idPersona = $fila.data('id');
+        const razonSocial = $fila.data('razon') || '';
+        const cuit = ($fila.data('cuit') || '').toString().replace(/-/g, '');
+
+        $('#feIdPersonaSeleccionada').val(idPersona);
+        $('#feRazonSocialAFIP').val(razonSocial);
+        $('#NroDocAfip').val(cuit).trigger('input');
+        $('#feTipoDocAfip').val(cuit ? '80' : '99');
+
+        $('#modalBuscarPersona').modal('hide');
+    }
+
+    $(document).on('click', '#btnFeBuscarCliente', function () {
+        $('#modalBuscarPersona').modal('show');
+        $('#filtroPersona').val('');
+        cargarPersonasFactura('');
+    });
+
+    $(document).on('shown.bs.modal', '#modalBuscarPersona', function () {
+        if (!esModoSinVenta()) return;
+        $('#filtroPersona').trigger('focus');
+    });
+
+    $(document).on('input', '#filtroPersona', function () {
+        if (!esModoSinVenta()) return;
+        cargarPersonasFactura($(this).val());
+    });
+
+    $(document).on('click', '#tablaPersonas tr.fila-persona', function () {
+        if (!esModoSinVenta()) return;
+        $('#tablaPersonas tr.fila-persona').removeClass('is-selected');
+        $(this).addClass('is-selected');
+    });
+
+    $(document).on('dblclick', '#tablaPersonas tr.fila-persona', function () {
+        if (!esModoSinVenta()) return;
+        seleccionarPersonaFactura($(this));
+    });
+
+    $(document).on('keydown', '#filtroPersona', function (e) {
+        if (!esModoSinVenta() || e.key !== 'Enter') return;
         e.preventDefault();
 
-        const $form = $(this);
-        if (!$('#feAgruparItemUnitario').is(':checked') || $('#feDescItemUnitario').is(':disabled')) {
-            $('#feAgruparItemUnitarioHidden').val('false');
-            $('#feDescItemUnitario').val('');
-        }
-        if (!$('#feUsarObservaciones').is(':checked') || $('#feObservaciones').is(':disabled')) {
-            $('#feObservaciones').val('');
-        }
+        const $target = $('#tablaPersonas tr.fila-persona.is-selected').first().length
+            ? $('#tablaPersonas tr.fila-persona.is-selected').first()
+            : $('#tablaPersonas tr.fila-persona').first();
 
-        const $btn = $form.find('#btnRegistrarFactura').prop('disabled', true);
+        if ($target.length) seleccionarPersonaFactura($target);
+    });
+
+    // =========================
+    // Submit
+    // =========================
+    function enviarGenerarFactura($form, $btn, esSinVenta) {
         const datos = $form.serialize();
 
         $.post((window.AppUrls && window.AppUrls.ventasGenerarFactura) || '/Ventas/GenerarFactura', datos)
@@ -680,6 +797,15 @@
                     } else {
                         $(document).trigger('venta:facturada', [resp]);
                     }
+
+                    // La linea temporal de la venta manual ya cumplio su proposito
+                    // (la factura ya tiene CAE): se limpia sin bloquear el cierre del modal.
+                    if (esSinVenta) {
+                        const idVentaCreada = parseInt($('#feIdVenta').val() || '0', 10) || 0;
+                        if (idVentaCreada) {
+                            $.post(window.AppUrls.ventasLimpiarLineasVentaManual, { idVenta: idVentaCreada });
+                        }
+                    }
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -696,6 +822,66 @@
                 });
             })
             .always(function () {
+                $btn.prop('disabled', false);
+            });
+    }
+
+    $(document).on('submit', '#formFacturaElectronica', function (e) {
+        e.preventDefault();
+
+        const $form = $(this);
+        if (!$('#feAgruparItemUnitario').is(':checked') || $('#feDescItemUnitario').is(':disabled')) {
+            $('#feAgruparItemUnitarioHidden').val('false');
+            $('#feDescItemUnitario').val('');
+        }
+        if (!$('#feUsarObservaciones').is(':checked') || $('#feObservaciones').is(':disabled')) {
+            $('#feObservaciones').val('');
+        }
+
+        const $btn = $form.find('#btnRegistrarFactura').prop('disabled', true);
+        const esSinVenta = esModoSinVenta();
+
+        if (!esSinVenta) {
+            enviarGenerarFactura($form, $btn, false);
+            return;
+        }
+
+        // Modo sin venta asociada: primero se crea una venta real minima (Efectivo,
+        // 1 linea con el Total ingresado) para que GenerarFactura funcione sin cambios.
+        const idPersona = parseInt($('#feIdPersonaSeleccionada').val() || '0', 10) || 0;
+        const montoTotal = toNum($('#feMontoTotalManual').val());
+        const idAlicuota = parseInt($('#feAlicuotaManual').val() || '0', 10) || 0;
+        const alicuotaPct = toNum($('#feAlicuotaManual option:selected').data('pct'));
+
+        if (!idPersona) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Seleccioná un cliente.' });
+            $btn.prop('disabled', false);
+            return;
+        }
+        if (!montoTotal || montoTotal <= 0) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Ingresá el monto total a facturar.' });
+            $btn.prop('disabled', false);
+            return;
+        }
+
+        $.post(window.AppUrls.ventasCrearVentaManual, {
+            idPersona: idPersona,
+            montoTotal: toServerDec(montoTotal, 2),
+            idAlicuotaIva: idAlicuota,
+            alicuotaIva: alicuotaPct
+        })
+            .done(function (resp) {
+                if (!resp || !resp.ok) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: (resp && resp.msg) ? resp.msg : 'No se pudo crear la venta.' });
+                    $btn.prop('disabled', false);
+                    return;
+                }
+
+                $('#feIdVenta').val(resp.idVenta);
+                enviarGenerarFactura($form, $btn, true);
+            })
+            .fail(function () {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Error en la petición' });
                 $btn.prop('disabled', false);
             });
     });

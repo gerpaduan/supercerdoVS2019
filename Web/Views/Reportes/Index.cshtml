@@ -107,117 +107,9 @@
                     </div>
                 </div>
 
-                <div class="reportes-filtros-grid reportes-filtros-secundarios mt-3">
-                    @if (Model.MostrarFiltroBusquedaProducto)
-                    {
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="busquedaProductoReporte">Producto</label>
-                            <input type="text" id="busquedaProductoReporte" name="busquedaProducto" class="form-control filtro-vivo" value="@Model.BusquedaProducto" placeholder="Codigo o descripcion" />
-                        </div>
-                    }
-
-                    @if (Model.MostrarFiltroTipoProducto)
-                    {
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="tipoProductoReporte">Tipo de producto</label>
-                            @Html.DropDownList("tipoProducto", Model.TiposProducto, new { @class = "form-control filtro-vivo", id = "tipoProductoReporte" })
-                        </div>
-                    }
-
-                    @if (Model.MostrarFiltroMarca)
-                    {
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="marcaReporte">Marca</label>
-                            @Html.DropDownList("marcaId", Model.Marcas, new { @class = "form-control filtro-vivo", id = "marcaReporte" })
-                        </div>
-                    }
-
-                    @if (Model.MostrarFiltroEstadoStock)
-                    {
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="estadoStockReporte">Estado stock</label>
-                            @Html.DropDownList("estadoStock", Model.EstadosStock, new { @class = "form-control filtro-vivo", id = "estadoStockReporte" })
-                        </div>
-                    }
-
-                    @if (Model.MostrarFiltroAgrupacionTemporal)
-                    {
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label" for="agrupacionTemporalReporte">Agrupacion grafico</label>
-                            @Html.DropDownList("agrupacionTemporal", Model.AgrupacionesTemporales, new { @class = "form-control filtro-principal", id = "agrupacionTemporalReporte" })
-                        </div>
-                    }
-
-                    <div class="form-group mb-0 reportes-filtro-accion">
-                        <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
-                        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarReporte">
-                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
-                        </button>
-                    </div>
+                <div id="reportesFiltrosSecundariosWrap">
+                    @Html.Partial("~/Views/Reportes/_FiltrosSecundarios.cshtml", Model)
                 </div>
-
-                @if (esReporteBalance)
-                {
-                    <div class="border-top mt-3 pt-3">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox"
-                                   class="custom-control-input filtro-principal"
-                                   id="incluirVentasCuentaCorrienteBalance"
-                                   name="incluirVentasCuentaCorrienteBalance"
-                                   value="true"
-                                   @(Model.IncluirVentasCuentaCorrienteBalance ? "checked=\"checked\"" : "") />
-                            <label class="custom-control-label" for="incluirVentasCuentaCorrienteBalance">
-                                Incluir ventas en cuenta corriente en el balance
-                            </label>
-                        </div>
-                    </div>
-                }
-
-                @if (esReporteVentasProducto || esReporteProyeccion || esReporteBalance)
-                {
-                    <div class="border-top mt-3 pt-3">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                            <div>
-                                <div class="font-weight-semibold">Periodos comparativos</div>
-                                <div class="text-muted small">Cada periodo agregado toma exactamente la misma duracion que el periodo principal.</div>
-                            </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarPeriodoComparativo">
-                                <i class="fas fa-plus mr-1"></i>Agregar periodo
-                            </button>
-                        </div>
-
-                        <div id="listaPeriodosComparativos">
-                            @foreach (var periodo in (Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<Web.Models.ReportePeriodoComparativoVm>()).Where(x => !x.EsPrincipal))
-                            {
-                                <div class="reportes-periodo-comparativo card border-0 bg-light mb-2">
-                                    <div class="card-body py-2 px-3">
-                                        <div class="reportes-periodo-grid">
-                                            <div>
-                                                <label class="stock-filtro-label mb-1">Fecha comparativa</label>
-                                                <div class="input-group input-group-sm reportes-periodo-fecha-group">
-                                                    <input type="date" class="form-control filtro-principal periodo-comparativo-fecha" value="@periodo.FechaDesde.ToString("yyyy-MM-dd")" />
-                                                    <div class="input-group-append">
-                                                        <span class="input-group-text periodo-comparativo-hora">@periodo.FechaDesde.ToString("HH:mm")</span>
-                                                    </div>
-                                                </div>
-                                                <input type="hidden" name="periodoComparativoDesde" class="periodo-comparativo-desde" value="@periodo.FechaDesdeValor" />
-                                            </div>
-                                            <div>
-                                                <label class="stock-filtro-label mb-1">Rango calculado</label>
-                                                <input type="text" class="form-control form-control-sm periodo-comparativo-hasta" value="@periodo.FechaHasta.ToString("dd/MM/yyyy HH:mm")" readonly="readonly" />
-                                            </div>
-                                            <div class="reportes-periodo-accion">
-                                                <button type="button" class="btn btn-outline-danger btn-sm btn-quitar-periodo">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
             </form>
         </div>
     </div>
@@ -587,9 +479,12 @@
                                     var totalSortIndex = 1 + (sucursalesProyeccion.Count * (1 + (periodosProyeccion.Count * 2)));
                                     <tr class="reportes-proyeccion-head-group">
                                         <th rowspan="2" class="reporte-sortable-col" data-sort-scope="proyeccion" data-sort-key="producto" data-sort-type="text">Producto</th>
+                                        @{
+                                            var anchoSucursalHead = (1 + periodosProyeccion.Count * 2) * 15;
+                                        }
                                         @foreach (var sucursal in sucursalesProyeccion)
                                         {
-                                            <th colspan="@(1 + (periodosProyeccion.Count * 2))" class="text-center reportes-proyeccion-sucursal-head">@sucursal.Sucursal</th>
+                                            <th colspan="@(1 + (periodosProyeccion.Count * 2))" class="text-center reportes-proyeccion-sucursal-head" style="width:@(anchoSucursalHead)ch; min-width:@(anchoSucursalHead)ch; max-width:@(anchoSucursalHead)ch;">@sucursal.Sucursal</th>
                                         }
                                         @{
                                             var totalPeriodoSortIndex = totalSortIndex;
@@ -651,8 +546,10 @@
                                         data-totalventas="@totalVentasFila.ToString(CultureInfo.InvariantCulture)"
                                         data-totaldiferencia="@totalDiferenciaFila.ToString(CultureInfo.InvariantCulture)">
                                         <td>
-                                            <div class="font-weight-semibold">@item.Producto</div>
-                                            <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                            <div class="reporte-proyeccion-producto-wrap">
+                                                <div class="font-weight-semibold reporte-proyeccion-producto-texto" title="@item.Producto">@item.Producto</div>
+                                                <div class="text-muted small">Codigo: @(item.Codigo > 0 ? item.Codigo.ToString() : "-")</div>
+                                            </div>
                                         </td>
                                         @if (proyeccionMultiplesSucursales)
                                         {
@@ -1182,6 +1079,88 @@
         .reporte-stock-row {
             cursor: pointer;
         }
+    }
+
+    #reportesFiltrosSecundariosWrap.is-loading-filtros {
+        opacity: .55;
+        pointer-events: none;
+        transition: opacity .12s ease-in-out;
+    }
+
+    #tablaReporteVentasProducto {
+        table-layout: fixed;
+        width: max-content;
+    }
+
+    #tablaReporteVentasProducto th:first-child,
+    #tablaReporteVentasProducto td:first-child {
+        width: 20ch;
+        min-width: 20ch;
+        max-width: 20ch;
+    }
+
+    #tablaReporteVentasProducto th:not(:first-child),
+    #tablaReporteVentasProducto td:not(:first-child) {
+        width: 15ch;
+        min-width: 15ch;
+        max-width: 15ch;
+    }
+
+    .reporte-ventas-producto-wrap {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .reporte-ventas-producto-texto {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Con la columna Producto a 20ch fijos, "Mostrar grafico" no entra junto al
+       nombre -- mismo tratamiento de "solo icono" que ya usaba esta tabla en
+       mobile (ver @@media max-width: 767.98px mas abajo), ahora tambien en desktop. */
+    #tablaReporteVentasProducto .btn-toggle-grafico-texto {
+        display: none;
+    }
+
+    #tablaReporteVentasProducto .btn-toggle-grafico-ventas {
+        flex-shrink: 0;
+        padding: .25rem .5rem;
+    }
+
+    #tablaReporteProyeccionVentasStock {
+        table-layout: fixed;
+        width: max-content;
+    }
+
+    #tablaReporteProyeccionVentasStock th:first-child,
+    #tablaReporteProyeccionVentasStock td:first-child {
+        width: 20ch;
+        min-width: 20ch;
+        max-width: 20ch;
+    }
+
+    #tablaReporteProyeccionVentasStock th:not(:first-child),
+    #tablaReporteProyeccionVentasStock td:not(:first-child) {
+        width: 15ch;
+        min-width: 15ch;
+        max-width: 15ch;
+    }
+
+    .reporte-proyeccion-producto-wrap {
+        max-width: 100%;
+    }
+
+    .reporte-proyeccion-producto-texto {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     #tablaReporteStockActual tbody td {
@@ -1722,8 +1701,9 @@
             periodosComparativos: @Html.Raw(periodosComparativosJson),
             incluirVentasCuentaCorrienteBalance: @Model.IncluirVentasCuentaCorrienteBalance.ToString().ToLowerInvariant(),
             balanceCharts: @Html.Raw(balanceChartsJson),
-            ventasPorProductoSerieUrl: "@Url.Action("VentasPorProductoSerie", "Reportes")"
+            ventasPorProductoSerieUrl: "@Url.Action("VentasPorProductoSerie", "Reportes")",
+            filtrosSecundariosUrl: "@Url.Action("FiltrosSecundarios", "Reportes")"
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260801-1")"></script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260814-1")"></script>
 }

@@ -952,6 +952,7 @@ namespace Negocio
                         Sucursal = columna.Sucursal,
                         StockActual = filaSucursal != null ? filaSucursal.StockActual : 0f,
                         Promedio = filaSucursal != null ? filaSucursal.Promedio : productoPromedio,
+                        PuntoStock = filaSucursal != null ? filaSucursal.PuntoStock : 0f,
                         Pesable = filaSucursal != null ? filaSucursal.Pesable : productoPesable,
                         EstadoStock = filaSucursal != null
                             ? NormalizarEstadoStock(filaSucursal.EstadoStock)

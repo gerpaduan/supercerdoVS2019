@@ -551,6 +551,44 @@ namespace Datos
             return oLineaE;
         }
 
+        // Corrige la alicuota de una linea recien insertada: agregarLineaVenta siempre la toma
+        // del Corte usado (ver arriba), asi que para la factura manual sin venta (Corte placeholder)
+        // hace falta pisarla con la alicuota que efectivamente eligio el usuario.
+        public void actualizarAlicuotaLineaVenta(int idLineaVenta, int idAlicuotaIva, float alicuotaIva)
+        {
+            const string sql = @"
+                UPDATE LineaVenta
+                SET idAlicuotaIva = @idAlicuotaIva, alicuotaIva = @alicuotaIva
+                WHERE idLineaVenta = @idLineaVenta;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@idLineaVenta", idLineaVenta);
+                    p.AddWithValue("@idAlicuotaIva", idAlicuotaIva);
+                    p.AddWithValue("@alicuotaIva", alicuotaIva);
+                }
+            );
+        }
+
+        // Borrado minimo, sin efectos colaterales (no confundir con modificarVenta(eliminarLineas:true),
+        // que ademas reversa egresos de caja y resetea la cuenta corriente). Se usa solo para limpiar
+        // la linea temporal de una venta manual de factura sin venta asociada, despues de emitido el CAE.
+        public void eliminarLineasVenta(int idVenta)
+        {
+            const string sql = @"DELETE FROM LineaVenta WHERE idVenta = @idVenta;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p => p.AddWithValue("@idVenta", idVenta)
+            );
+        }
+
         public Entidades.Venta getUltimaVentaVendedor(Entidades.CierreCaja oCierreE)
         {
             const string sql = @"

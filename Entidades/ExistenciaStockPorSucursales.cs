@@ -132,6 +132,7 @@ namespace Entidades
         public string Sucursal { get; set; }
         public float StockActual { get; set; }
         public float Promedio { get; set; }
+        public float PuntoStock { get; set; }
         public bool Pesable { get; set; }
         public string EstadoStock { get; set; }
     }

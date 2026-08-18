@@ -3,6 +3,7 @@
 
 @{
     bool yaEmitida = (Model?.IdFactura ?? 0) > 0 && !string.IsNullOrWhiteSpace(Model?.CAE);
+    bool esSinVenta = ViewBag.EsSinVenta as bool? ?? false;
     int idNotaCreditoAsociada = ViewBag.NotaCreditoAsociadaId != null ? (int)ViewBag.NotaCreditoAsociadaId : 0;
     bool permiteNotaCredito = yaEmitida
         && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoA_Afip
@@ -383,12 +384,13 @@
       data-total-orig="@totalOrig.ToString(CultureInfo.InvariantCulture)"
       data-neto-orig="@Model.ImporteNetoGravado.ToString(CultureInfo.InvariantCulture)"
       data-iva-orig="@Model.Iva.ToString(CultureInfo.InvariantCulture)"
-      data-agrupar-item="@(Model.AgruparItemUnitario ? "1" : "0")">
+      data-agrupar-item="@(Model.AgruparItemUnitario ? "1" : "0")"
+      data-sin-venta="@(esSinVenta ? "1" : "0")">
 
     @* @Html.AntiForgeryToken() *@
 
     <!-- ===== Hidden base ===== -->
-    <input type="hidden" name="IdVenta" value="@Model.IdVenta" />
+    <input type="hidden" id="feIdVenta" name="IdVenta" value="@Model.IdVenta" />
     <input type="hidden" name="IdFactura" value="@Model.IdFactura" />
     <input type="hidden" name="NroCbteAfip" value="@Model.NroCbteAfip" />
     <input type="hidden" name="CAE" value="@Model.CAE" />
@@ -485,12 +487,25 @@
 
             <!-- Cliente -->
             <div class="fe-card-compact">
-                <div class="fe-card-title">Cliente</div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="fe-card-title mb-0">Cliente</div>
+                    @if (esSinVenta)
+                    {
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnFeBuscarCliente">
+                            <i class="fas fa-search"></i>
+                            Buscar cliente
+                        </button>
+                    }
+                </div>
+                @if (esSinVenta)
+                {
+                    <input type="hidden" id="feIdPersonaSeleccionada" value="0" />
+                }
 
                 <div class="form-row">
                     <div class="form-group col-6 col-md-2">
                         <label class="mb-1">Tipo Doc</label>
-                        <select name="TipoDocAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                        <select id="feTipoDocAfip" name="TipoDocAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
                             <option value="99" @(Model.TipoDocAfip == "99" ? "selected" : "")>Sin identificar</option>
                             <option value="80" @(Model.TipoDocAfip == "80" ? "selected" : "")>CUIT</option>
                             <option value="96" @(Model.TipoDocAfip == "96" ? "selected" : "")>DNI</option>
@@ -509,7 +524,7 @@
                                class="form-control form-control-sm"
                                value="@Model.NroDocAfip"
                                data-original="@Model.NroDocAfip"
-                               @(yaEmitida ? "readonly" : "") />
+                               readonly />
                     </div>
 
                     <div id="avisoCambioNroDoc"
@@ -521,7 +536,7 @@
 
                     <div class="form-group col-12 col-md-5">
                         <label class="mb-1">Razón Social</label>
-                        <input type="text" name="RazonSocialAFIP"
+                        <input type="text" id="feRazonSocialAFIP" name="RazonSocialAFIP"
                                class="form-control form-control-sm"
                                value="@Model.RazonSocialAFIP" @(yaEmitida ? "readonly" : "") />
                     </div>
@@ -557,8 +572,34 @@
                 </div>
             </div>
 
+            @if (esSinVenta)
+            {
+                <div class="fe-card-compact">
+                    <div class="fe-card-title">Facturación manual</div>
+                    <div class="form-row">
+                        <div class="form-group col-6 col-md-5">
+                            <label class="mb-1">Monto total</label>
+                            <input type="text" id="feMontoTotalManual" class="form-control form-control-sm" inputmode="decimal" placeholder="0,00" />
+                        </div>
+                        <div class="form-group col-6 col-md-7">
+                            <label class="mb-1">Alícuota IVA</label>
+                            <select id="feAlicuotaManual" class="form-control form-control-sm">
+                                @if (ViewBag.AlicuotasIva != null)
+                                {
+                                    foreach (System.Data.DataRow fila in ((System.Data.DataTable)ViewBag.AlicuotasIva).Rows)
+                                    {
+                                        <option value="@fila["idIva"]" data-pct="@fila["iva"]">@fila["iva"] %</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <small class="fe-muted d-block mt-1">El Neto y el IVA se calculan automáticamente a partir del Total y la alícuota elegida.</small>
+                </div>
+            }
+
             @* Toggle visible: activar/ocultar bloque de edición (siempre accesible) *@
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2 @(esSinVenta ? "d-none" : "")">
                 <div class="fe-card-title mb-0">Opciones</div>
                 <div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" id="feSwitchAjuste" @(yaEmitida ? "disabled" : "")>
@@ -566,9 +607,53 @@
                 </div>
             </div>
 
+            @* BLOQUE DE AJUSTE: aparece solo cuando se activa el switch, justo debajo de él *@
+            <div id="feAjusteBlock" class="fe-card-compact d-none @(yaEmitida || esSinVenta ? "d-none" : "")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="font-weight-bold text-success">Facturación parcial</div>
+                    <small class="fe-muted">Modifica % o Total para facturar</small>
+                </div>
+
+
+                <div class="form-row mt-2 fe-ajuste-row">
+                    <div class="form-group col-6 col-md-3 mb-2">
+                        <label class="mb-1">% a facturar</label>
+
+                        <!-- UI (sin name) -->
+                        <input type="text" id="feInputPorcentajeUI"
+                               class="form-control form-control-sm"
+                               value="@Model.PorcentajeFacturacion.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))"
+                               inputmode="decimal" />
+
+                        <div id="fePctWarning" role="alert">No puede ser mayor a 100%</div>
+
+                        <!-- POST (con name, id único) -->
+                        <input type="hidden" name="PorcentajeFacturacion" id="fePorcentajeFacturacion"
+                               value="@Model.PorcentajeFacturacion.ToString("0.####", CultureInfo.GetCultureInfo("es-AR"))" />
+                    </div>
+
+                    <div class="form-group col-6 col-md-4 mb-2">
+                        <label class="mb-1">Total a facturar</label>
+                        <input type="text" id="feInputTotalFacturar" class="form-control form-control-sm" value="@totalOrig.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" inputmode="decimal" />
+                        <small class="fe-muted d-block mt-1">Podés editar % o Total (cuando activás el switch).</small>
+                    </div>
+
+                    <div class="form-group col-12 col-md-5 mb-2 d-flex align-items-center">
+                        <div class="custom-control custom-radio mr-3">
+                            <input type="radio" id="feModoPorcentaje" name="feModo" class="custom-control-input" checked>
+                            <label class="custom-control-label" for="feModoPorcentaje">Editar %</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" id="feModoTotal" name="feModo" class="custom-control-input">
+                            <label class="custom-control-label" for="feModoTotal">Editar Total</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="fe-card-compact">
                 <div class="custom-control custom-switch mb-2">
-                    <input type="checkbox" class="custom-control-input" id="feAgruparItemUnitario" @(Model.AgruparItemUnitario ? "checked" : "")>
+                    <input type="checkbox" class="custom-control-input" id="feAgruparItemUnitario" @(Model.AgruparItemUnitario || esSinVenta ? "checked" : "") @(esSinVenta ? "disabled" : "")>
                     <label class="custom-control-label" for="feAgruparItemUnitario">Agrupar en ítem individual</label>
                 </div>
                 <div id="feAgruparItemWrap">
@@ -604,49 +689,6 @@
             </div>
 
         </div><!-- /fe-top -->
-        @* BLOQUE DE AJUSTE MOVIDO: aparece solo cuando se activa el switch *@
-        <div id="feAjusteBlock" class="fe-card-compact d-none @(yaEmitida ? "d-none" : "")">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="font-weight-bold text-success">Facturación parcial</div>
-                <small class="fe-muted">Modifica % o Total para facturar</small>
-            </div>
-
-
-            <div class="form-row mt-2 fe-ajuste-row">
-                <div class="form-group col-6 col-md-3 mb-2">
-                    <label class="mb-1">% a facturar</label>
-
-                    <!-- UI (sin name) -->
-                    <input type="text" id="feInputPorcentajeUI"
-                           class="form-control form-control-sm"
-                           value="@Model.PorcentajeFacturacion.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))"
-                           inputmode="decimal" />
-
-                    <div id="fePctWarning" role="alert">No puede ser mayor a 100%</div>
-
-                    <!-- POST (con name, id único) -->
-                    <input type="hidden" name="PorcentajeFacturacion" id="fePorcentajeFacturacion"
-                           value="@Model.PorcentajeFacturacion.ToString("0.####", CultureInfo.GetCultureInfo("es-AR"))" />
-                </div>
-
-                <div class="form-group col-6 col-md-4 mb-2">
-                    <label class="mb-1">Total a facturar</label>
-                    <input type="text" id="feInputTotalFacturar" class="form-control form-control-sm" value="@totalOrig.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" inputmode="decimal" />
-                    <small class="fe-muted d-block mt-1">Podés editar % o Total (cuando activás el switch).</small>
-                </div>
-
-                <div class="form-group col-12 col-md-5 mb-2 d-flex align-items-center">
-                    <div class="custom-control custom-radio mr-3">
-                        <input type="radio" id="feModoPorcentaje" name="feModo" class="custom-control-input" checked>
-                        <label class="custom-control-label" for="feModoPorcentaje">Editar %</label>
-                    </div>
-                    <div class="custom-control custom-radio">
-                        <input type="radio" id="feModoTotal" name="feModo" class="custom-control-input">
-                        <label class="custom-control-label" for="feModoTotal">Editar Total</label>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- ===== TOTALES + IVA DISCRIMINADO (NO SCROLLEA) ===== -->
         <div class="fe-summary fe-card-compact">
@@ -728,6 +770,9 @@
 
     <!-- FOOTER -->
     <div class="modal-footer">
+        <div class="w-100 text-muted mb-1" style="font-size:.7rem;">
+            Atajos: Alt+C cerrar sin facturar &middot; Alt+R registrar factura
+        </div>
         @if (permiteNotaCredito)
         {
             <button type="button" class="btn btn-outline-danger btn-sm mr-auto" id="btnGenerarNotaCredito">
@@ -747,7 +792,7 @@
             Cancelar
         </button>
 
-        @if (!yaEmitida)
+        @if (!yaEmitida && !esSinVenta)
         {
             <button type="button" class="btn btn-outline-warning btn-sm" id="btnCerrarVentaSinFacturar">
                 <i class="fas fa-times-circle"></i>
@@ -761,6 +806,11 @@
         </button>
     </div>
 </form>
+
+@if (esSinVenta)
+{
+    @Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
+}
 
 <script>
     $(document).off('input', '#NroDocAfip').on('input', '#NroDocAfip', function () {

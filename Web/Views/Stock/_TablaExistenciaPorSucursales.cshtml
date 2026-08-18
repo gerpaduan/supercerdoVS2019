@@ -19,7 +19,10 @@
     // Columna "Total" solo cuando el filtro de sucursal es "Todas" (idSucursal=0):
     // con una sola sucursal seleccionada no hay nada que sumar.
     bool mostrarTotal = Model != null && Model.Filtro != null && Model.Filtro.IdSucursal == 0;
-    int totalColumnas = 2 + columnas.Count + (mostrarTotal ? 1 : 0);
+    // *2: cada sucursal aporta 2 columnas (Stock + Dif.) al layout del <tr>, aunque la de Dif.
+    // arranque oculta con d-none -- sigue existiendo en el DOM y hay que contarla en el colspan
+    // de la fila de detalle expandible (ver mas abajo).
+    int totalColumnas = 2 + (columnas.Count * 2) + (mostrarTotal ? 1 : 0);
 }
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -269,6 +272,7 @@ else
                     @foreach (var columna in columnas)
                     {
                         <th class="text-right text-nowrap">@columna.Sucursal</th>
+                        <th class="text-right text-nowrap existencia-dif-col d-none" title="Stock actual menos punto de stock">Dif. @columna.Sucursal</th>
                     }
                     @if (mostrarTotal)
                     {
@@ -299,6 +303,7 @@ else
                                 IdSucursal = columna.IdSucursal,
                                 Sucursal = columna.Sucursal,
                                 StockActual = 0f,
+                                PuntoStock = 0f,
                                 EstadoStock = "SIN STOCK"
                             };
 
@@ -308,6 +313,22 @@ else
                                 @if (equivalenteUnidades != null)
                                 {
                                     <span class="existencia-producto-codigo">@equivalenteUnidades</span>
+                                }
+                            </td>
+
+                            // Dif. = stock actual menos punto de stock de esa sucursal (columna oculta por
+                            // defecto, la muestra el interruptor "Estado Stock"). Punto stock sin configurar
+                            // (0) no se distingue de "configurado en 0" -- decision explicita, mas simple.
+                            float dif = celda.StockActual - celda.PuntoStock;
+                            string claseDif = dif < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
+                            string signoDif = dif > 0 ? "+" : "";
+                            var equivalenteUnidadesDif = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)dif, (decimal)celda.Promedio, celda.Pesable);
+
+                            <td class="text-right text-nowrap existencia-dif-col d-none @claseDif" title="@("Punto stock: " + celda.PuntoStock.ToString("N3"))">
+                                @(signoDif + dif.ToString("N3"))
+                                @if (equivalenteUnidadesDif != null)
+                                {
+                                    <span class="existencia-producto-codigo">@equivalenteUnidadesDif</span>
                                 }
                             </td>
                         }

@@ -12,6 +12,9 @@
            href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
             <i class="fas fa-arrow-left mr-1"></i> Ventas
         </a>
+        <button type="button" class="btn btn-success" id="btnNuevaFacturaSinVenta">
+            <i class="fas fa-file-invoice mr-1"></i> Nueva factura
+        </button>
     </div>
 
     <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
@@ -157,4 +160,21 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="contenedorFacturaElectronica">
+        </div>
+    </div>
+</div>
+
 @Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "facturas")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=25")"></script>
+    <script src="@Url.Content("~/Scripts/app/factura-electronica.js?v=14")"></script>
+    <script>
+        $(document).on('click', '#btnNuevaFacturaSinVenta', function () {
+            window.VentasFacturaModal.abrirSinVenta();
+        });
+    </script>
+}

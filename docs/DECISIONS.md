@@ -1,6 +1,26 @@
 # Decisiones de arquitectura
 
-## 2026-08-14 (la mas reciente) - Dispositivos seguros por empresa: bypass del bloqueo de IP en login
+## 2026-08-15 (la mas reciente) - Facturar sin venta asociada: venta real minima en vez de una venta en memoria
+
+Pedido del usuario: poder generar una Factura Electronica desde `/Ventas/Facturas` sin tener una venta de productos real detras (solo Cliente + Total + Alicuota).
+
+**Por que no una venta 100% en memoria (propuesta inicial descartada)**: el calculo fiscal que se manda a AFIP (`AFIP/GenerarFacturaService.cs`, `CalcularFiscalAfipConPorcentaje`) siempre suma `CantKg*PrecioKg` de `Venta.LineasVenta`, agrupando por alicuota -- no hay forma de mandarle un Total+Alicuota sueltos sin pasar por una `LineaVenta` real perteneciente a una `Venta` real (con `IdVenta` valido). Reescribir esa logica para aceptar un modo alternativo tocaba codigo fiscal ya probado en produccion -- riesgo desproporcionado para el pedido.
+
+**Decision final, acordada con el usuario en 3 rondas de `AskUserQuestion`**: se crea una **venta real minima** (`FormaPago=Efectivo`, `EnCtaCte=false`) con **una sola linea real**, cuyo `PrecioKg` es el Total que el usuario ingreso a mano (no una linea en 0, eso mandaria una factura de $0 a AFIP). La linea se borra recien **despues** de que la factura ya tiene CAE -- nunca antes, porque `GenerarFacturaService` depende de ella durante la emision. La venta (sin lineas) queda en la base como registro permanente de esa factura.
+
+**Por que `FormaPago=Efectivo` + `EnCtaCte=false`, sin excepcion**: es lo que evita, por construccion, los 2 efectos colaterales peligrosos de las rutas existentes de venta -- `egresoCajaPagoTarjeta` (reversa un egreso de caja si la forma de pago fuera tarjeta) y `crearMovCtaCteVenta` (si `EnCtaCte=true`, un `modificarVenta` posterior con lineas en 0 fuerza el movimiento de cuenta corriente a $0, zanjando silenciosamente la deuda del cliente -- ver `Negocio/CuentaCorriente.cs`). Con Efectivo/sin CtaCte ambas ramas son no-op, sin tener que auditar ni modificar esos metodos.
+
+**Por que no se reusa `modificarVenta(eliminarLineas:true)` para el borrado post-emision**: ese metodo (via el SP `modificarVenta`) reversa egresos de caja y resetea cuenta corriente como side-effect del borrado de lineas -- exactamente lo que se queria evitar. Se escribio un metodo nuevo y minimo, `EliminarLineasVenta`, que solo hace `DELETE FROM LineaVenta WHERE idVenta=@id`.
+
+**Placeholder de producto para la linea temporal: primer producto de la empresa, no el "Corte generico"**. La opcion inicial (`Negocio/Corte.cs ObtenerProductoGenerico()`, ya usado en produccion para "precio libre") se descarto porque depende del parametro `codProdGenerico`, que no todas las empresas tienen configurado -- corregido explicitamente por el usuario durante la revision del plan. Se usa en cambio `ObtenerCortesPorEmpresa(idEmpresa, false).FirstOrDefault()` (metodo ya existente, sin query nueva). Como la alicuota de ese producto casi seguro no coincide con la que el usuario elige en el modal, hace falta un paso extra: ver el siguiente punto.
+
+**Correccion de alicuota post-insert, obligatoria**: verificado contra el SP real de la base local (`sp_helptext agregarLineaVenta`, no el `.sql` historico del repo) que el SP si acepta `@idAlicuotaIva`/`@alicuotaIva` como parametros propios de la linea, pero el wrapper C# (`Datos/Venta.cs agregarLineaVenta`) los hardcodea siempre desde `Corte.IdAlicuotaIva`/`.AlicuotaIva` del producto usado, ignorando cualquier valor puesto en el objeto `LineaVenta`. Por eso, despues de insertar la linea con la alicuota (incorrecta) del producto placeholder, se llama a un UPDATE nuevo y acotado (`ActualizarAlicuotaLineaVenta`) que la corrige a la elegida por el usuario en el modal.
+
+**Riesgo aceptado, no resuelto**: no hay lock especial contra 2 usuarios generando una factura manual al mismo tiempo -- mismo nivel de concurrencia que cualquier alta de venta hoy.
+
+**No probado**: el envio real a AFIP homologacion de punta a punta (se evito para no generar un comprobante fiscal de prueba real); la mecanica de venta+linea+correccion de alicuota+borrado si se verifico directo contra la base local (`docs/09-cambios-y-pendientes/bitacora-de-cambios.md`, entrada del mismo dia).
+
+## 2026-08-14 - Dispositivos seguros por empresa: bypass del bloqueo de IP en login
 
 Pedido del usuario: una pantalla de Configuración para marcar PCs de oficina como "dispositivos seguros" por número de serie, para que loguearse desde ellas no dispare el bloqueo por IP del login.
 

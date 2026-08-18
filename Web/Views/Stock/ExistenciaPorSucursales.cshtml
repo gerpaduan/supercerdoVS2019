@@ -144,6 +144,10 @@
                 </div>
                 <div class="existencia-estado-item existencia-estado-item-right">
                     <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="switchEstadoStockExistencia">
+                        <label class="custom-control-label" for="switchEstadoStockExistencia">Estado Stock</label>
+                    </div>
+                    <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" id="switchExpandirExistencia">
                         <label class="custom-control-label" for="switchExpandirExistencia">Expandir todos</label>
                     </div>
@@ -347,6 +351,7 @@
             var $lblPendiente = $("#lblAvisoPendienteExistencia");
             var $lblEstado = $("#lblEstadoConsultaExistencia");
             var $switchExpandir = $("#switchExpandirExistencia");
+            var $switchEstadoStock = $("#switchEstadoStockExistencia");
             var $switchAuto = $("#switchAutoActualizarExistencia");
             var $lblAuto = $("#lblAutoActualizarExistencia");
             var consultaAplicada = null;
@@ -426,6 +431,11 @@
                 });
 
                 $contenedor.find(".btn-toggle-existencia i").toggleClass("fa-minus-square", expandir).toggleClass("fa-plus-square", !expandir);
+            }
+
+            function aplicarEstadoStockExistencia() {
+                var mostrar = $switchEstadoStock.is(":checked");
+                $contenedor.find(".existencia-dif-col").toggleClass("d-none", !mostrar);
             }
 
             function toggleDetalleExistencia(target) {
@@ -624,6 +634,7 @@
                     actualizarUltimaActualizacion();
                     actualizarPendiente();
                     aplicarFiltrosVisuales();
+                    aplicarEstadoStockExistencia();
                     vincularScrollDetalles();
                     if ($switchAuto.is(":checked") && autoActualizacionDisparadaPorTimer) {
                         autoActualizacionesEjecutadas += 1;
@@ -685,6 +696,7 @@
             });
 
             $switchExpandir.on("change", aplicarExpandidoGlobal);
+            $switchEstadoStock.on("change", aplicarEstadoStockExistencia);
             $switchAuto.on("change", function () {
                 if ($(this).is(":checked")) {
                     autoActualizacionesEjecutadas = 0;
@@ -711,6 +723,7 @@
             $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
 
             aplicarFiltrosVisuales();
+            aplicarEstadoStockExistencia();
             vincularScrollDetalles();
             actualizarTextoAutoActualizacion();
         })();

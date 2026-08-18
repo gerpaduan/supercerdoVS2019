@@ -30,8 +30,9 @@ Acceso SSH de la VM: `~/hosts/carnisys-vm-windows.env` (fuera del repo). Sitio r
 
 ### Validaciones posteriores
 
-- `curl https://carnisys.com/` debe dar `302` a `/Login/Index`.
+- `curl https://carnisys.com/` debe dar `200` (landing de marketing publica, no redirige mas a `/Login/Index` desde que se agrego esa home -- desactualizado respecto a la version original de este runbook, 2026-07-29, que esperaba `302`).
 - `curl https://carnisys.com/Login/Index` debe dar `200`, sin `Stack Trace` / `Server Error` en el body.
+- Confirmado 2026-08-14 (deploy del commit `c9f60625`, feature de bloqueo/desbloqueo de cuenta y dispositivos seguros): ambas URLs devuelven `200`, headers de seguridad completos, y el `Content-Security-Policy` incluye `connect-src ... http://127.0.0.1:18777` (confirma que el build con el fix de CSP para el PrintAgent quedo efectivamente publicado).
 
 ### Rollback
 
@@ -103,8 +104,8 @@ El IIS/cert/binding de este servidor ya estaban configurados de antes (alta del 
 
 ### Validaciones posteriores
 
-- `curl http://200.107.108.44:8069/CarniSysWeb/` da `302` a `.../Login/Index?ReturnUrl=...` (no `301` a HTTPS como los otros dos destinos — este servidor no fuerza upgrade a HTTPS por Web.config, es el comportamiento esperado, no un bug).
-- `curl -k https://200.107.108.44/CarniSysWeb/Login/Index` debe dar `200`, titulo `CarniSysWeb - Login`, sin `Stack Trace`/`Server Error`. El `Set-Cookie` **no** trae `secure` (a diferencia de SM/VM) — tampoco es un bug: este `Web.config` no tiene `requireSSL`/`CookieRequireSsl` configurado, se deja como esta (no se toca `Web.config`). **Verificado 2026-08-03.**
+- `curl http://200.107.108.44:8069/CarniSysWeb/` da `200` sirviendo la home publica de marketing directo (no `302` a Login como documentaba esta seccion hasta el 2026-08-03: la ruta raiz cambio de comportamiento con el feature "home publica" -- commit `72abd98e` -- que la desacoplo del login; no forzar upgrade a HTTPS sigue siendo el comportamiento esperado de este servidor, eso no cambio). **Corregido 2026-08-14** tras notar la discrepancia doc-vs-codigo tras un deploy real (CLAUDE.md SS8.3: manda el codigo).
+- `curl -k https://200.107.108.44/CarniSysWeb/Login/Index` debe dar `200`, titulo `Ingresar a CARNISYS` (el texto del titulo tambien cambio desde `CarniSysWeb - Login`, mismo motivo), sin `Stack Trace`/`Server Error`. El `Set-Cookie` **no** trae `secure` (a diferencia de SM/VM) — tampoco es un bug: este `Web.config` no tiene `requireSSL`/`CookieRequireSsl` configurado, se deja como esta (no se toca `Web.config`). **Verificado 2026-08-03, re-verificado 2026-08-14.**
 - `Invoke-WebRequest` de PowerShell 5.1 **falla** contra el binding HTTPS de este servidor (error de renegociacion TLS) aunque `curl.exe` funciona bien — usar siempre `curl.exe`/`curl -k` para health checks aca, nunca `Invoke-WebRequest`.
 
 ### Rollback

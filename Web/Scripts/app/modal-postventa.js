@@ -1044,6 +1044,31 @@ $(document).ready(function () {
             });
     }
 
+    // Variante de abrirFacturaVentaModal para facturar sin tener una venta de
+    // productos real detras (factura manual): pega contra NuevaFacturaSinVenta en
+    // vez de ImprimirTicket, pero reusa el mismo wrapper #modalFacturaElectronica.
+    function abrirFacturaSinVentaModal() {
+        facturaOk = false;
+
+        $.get((window.AppUrls && window.AppUrls.ventasNuevaFacturaSinVenta) || '/Ventas/NuevaFacturaSinVenta')
+            .done(function (html) {
+                $('#contenedorFacturaElectronica').html(html);
+
+                const $modal = $('#modalFacturaElectronica');
+                $modal.data('volver-postventa', false);
+                $modal.data('factura-obligatoria', false);
+                $modal.find('.modal-dialog').removeClass('modal-fullscreen-dialog');
+
+                traerModalFacturaAlFrente($modal);
+                $modal.modal({ backdrop: true, keyboard: true, show: true });
+            })
+            .fail(function () {
+                if (window.Swal) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo abrir el formulario de factura manual.' });
+                }
+            });
+    }
+
     $('#btnPostVenta3').on('click', function () {
         if (pvGetContext() !== 'venta') return;
 
@@ -1185,6 +1210,7 @@ $(document).ready(function () {
 
     window.VentasFacturaModal = window.VentasFacturaModal || {
         abrir: abrirFacturaVentaModal,
+        abrirSinVenta: abrirFacturaSinVentaModal,
         empresaPuedeFacturar: pvEmpresaTieneCertificadoFacturaElectronica,
         requiereFacturaAutomatica: pvFacturaElectronicaRequeridaPorFormaPago
     };

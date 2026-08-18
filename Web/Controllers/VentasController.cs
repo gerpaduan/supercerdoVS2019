@@ -1974,6 +1974,156 @@ namespace Web.Controllers
             }
         }
 
+        // GET /Ventas/NuevaFacturaSinVenta
+        // Arma el modal de factura electronica "en blanco" para facturar sin tener
+        // una venta de productos real detras (ver docs/DECISIONS.md). Reusa BuildFacturaDTO
+        // tal cual con una Venta minima sin persistir (Sucursal real del usuario, Persona y
+        // LineasVenta vacias) para no duplicar el armado de los datos del emisor.
+        [HttpGet]
+        public ActionResult NuevaFacturaSinVenta()
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, msg = "Sesión expirada" }, JsonRequestBehavior.AllowGet);
+
+            var sucursal = oSucursalN.findById(user.IdSucursal);
+            if (sucursal == null)
+                return Json(new { ok = false, msg = "Sucursal inválida" }, JsonRequestBehavior.AllowGet);
+
+            var ventaVacia = new Entidades.Venta
+            {
+                IdVenta = 0,
+                Sucursal = sucursal,
+                Persona = new Entidades.Persona(),
+                LineasVenta = new List<Entidades.LineaVenta>(),
+                FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString(),
+                Observaciones = ""
+            };
+
+            var dto = BuildFacturaDTO(ventaVacia, new Entidades.FacturaElectronica());
+            dto.IdVenta = 0;
+            dto.NroDocAfip = "";
+            dto.RazonSocialAFIP = "";
+            dto.CondicionIvaAFIP = "Consumidor Final";
+            dto.DomicilioAFIP = "";
+            dto.AgruparItemUnitario = true;
+
+            ViewBag.SucursalNombreFactura = !string.IsNullOrWhiteSpace(sucursal.SucursalNombre) ? sucursal.SucursalNombre : sucursal.sucursal;
+            ViewBag.EsSinVenta = true;
+            ViewBag.AlicuotasIva = oCorteN.obtenerAlicuotasIva(false);
+
+            return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
+        }
+
+        // POST /Ventas/CrearVentaManualParaFactura
+        // Crea una venta real minima (Efectivo, sin cta.cte, 1 linea con el total ingresado
+        // a mano) para poder facturarla con el circuito normal de GenerarFactura sin tocarlo.
+        // La linea se borra despues, una vez que la factura ya tiene CAE (ver LimpiarLineasVentaManual).
+        [HttpPost]
+        public JsonResult CrearVentaManualParaFactura(int idPersona, decimal montoTotal, int idAlicuotaIva, float alicuotaIva)
+        {
+            try
+            {
+                if (idPersona <= 0)
+                    return Json(new { ok = false, msg = "Seleccioná un cliente." });
+
+                if (montoTotal <= 0)
+                    return Json(new { ok = false, msg = "El monto total debe ser mayor a cero." });
+
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (user == null)
+                    return Json(new { ok = false, msg = "Sesión expirada" });
+
+                var persona = oPersonaN.findById(idPersona);
+                if (persona == null)
+                    return Json(new { ok = false, msg = "Cliente inválido" });
+
+                var sucursal = oSucursalN.findById(user.IdSucursal);
+                if (sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida" });
+
+                // No se usa "Corte generico" (parametro codProdGenerico): no todas las empresas
+                // lo tienen configurado. Se usa el primer producto que encuentre la empresa.
+                var productoPlaceholder = oCorteN.ObtenerCortesPorEmpresa(user.IdEmpresa, false).FirstOrDefault();
+                if (productoPlaceholder == null)
+                    return Json(new { ok = false, msg = "No hay ningún producto cargado para esta empresa." });
+
+                var venta = new Entidades.Venta
+                {
+                    IdVenta = 0,
+                    Persona = persona,
+                    Sucursal = sucursal,
+                    TipoVenta = "Caja",
+                    FechaVenta = DateTime.Now,
+                    Turno = "",
+                    DiaFestivo = "",
+                    Observaciones = "Factura manual sin venta asociada",
+                    NroRemito = "",
+                    FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString(),
+                    EnCtaCte = false,
+                    TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
+                    Vendedor = user,
+                    LineasVenta = new List<Entidades.LineaVenta>
+                    {
+                        new Entidades.LineaVenta
+                        {
+                            Corte = productoPlaceholder,
+                            KgsTotalCalculado = 1,
+                            CantKg = 1,
+                            PrecioKg = (float)montoTotal,
+                            Bonificacion = 0,
+                            Estado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado),
+                            IndexAnulado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado),
+                            PesoBalanza = false,
+                            IdExpendio = 0
+                        }
+                    }
+                };
+
+                int idVenta = oVentaN.agregarVenta(venta);
+
+                oVentaN.actualizarAlicuotaLineaVenta(venta.LineasVenta[0].IdLineaVenta, idAlicuotaIva, alicuotaIva);
+
+                return Json(new { ok = true, idVenta });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error creando la venta manual: " + ex.Message });
+            }
+        }
+
+        // POST /Ventas/LimpiarLineasVentaManual
+        // Borra la linea temporal de una venta manual, una vez que la factura ya fue
+        // emitida (tiene CAE) y por lo tanto ya no depende de esa linea para nada.
+        // Valida defensivamente que sea una venta Efectivo/sin cta.cte (el unico tipo
+        // que crea CrearVentaManualParaFactura) para no usarse por error sobre otra venta.
+        [HttpPost]
+        public JsonResult LimpiarLineasVentaManual(int idVenta)
+        {
+            try
+            {
+                if (idVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta inválida" });
+
+                var venta = oVentaN.getVentaById(idVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                if (venta.EnCtaCte || venta.FormaPago != Entidades.Venta.formaPagoEnum.Efectivo.ToString())
+                    return Json(new { ok = false, msg = "Esta venta no corresponde a una factura manual." });
+
+                oVentaN.eliminarLineasVenta(idVenta);
+
+                return Json(new { ok = true });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error limpiando la venta manual: " + ex.Message });
+            }
+        }
+
         [HttpPost]
         public JsonResult CerrarVentaSinFacturar(int idVenta)
         {

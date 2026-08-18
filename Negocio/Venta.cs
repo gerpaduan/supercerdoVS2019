@@ -167,6 +167,18 @@ namespace Negocio
             }
         }
 
+        // Corrige la alicuota de una linea ya insertada (agregarLineaVenta la hardcodea desde el Corte usado).
+        public void actualizarAlicuotaLineaVenta(int idLineaVenta, int idAlicuotaIva, float alicuotaIva)
+        {
+            oVentaD.actualizarAlicuotaLineaVenta(idLineaVenta, idAlicuotaIva, alicuotaIva);
+        }
+
+        // Borrado minimo de lineas, sin los efectos colaterales de modificarVenta(eliminarLineas:true).
+        public void eliminarLineasVenta(int idVenta)
+        {
+            oVentaD.eliminarLineasVenta(idVenta);
+        }
+
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas, List<Entidades.LineaVenta> lineaNuevosAnulados)
         {
             ////Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
