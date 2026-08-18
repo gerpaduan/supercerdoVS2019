@@ -13,13 +13,23 @@ namespace Negocio
 {
     public class CuentaCorriente
     {
-        private readonly Datos.CuentaCorriente oCtaCteD;
+        private readonly Contratos.ICuentaCorrienteRepository oCtaCteD;
 
         IEmpresaContext _empresa;private readonly IParametrosContext _param;
+
+        // Constructor existente: SIN CAMBIOS. Los 11 puntos de instanciacion actuales siguen igual.
         public CuentaCorriente(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
             oCtaCteD = new Datos.CuentaCorriente(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICuentaCorrienteRepository
+        // (ej. DatosPostgres.CuentaCorrientePg). Solo lo usa el controller de comparacion.
+        public CuentaCorriente(Contratos.ICuentaCorrienteRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oCtaCteD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
         }
 
         public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona, string ordenSaldo = "DESC")

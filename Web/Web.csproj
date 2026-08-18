@@ -176,6 +176,7 @@
     <Compile Include="Helpers\SmtpMailHelper.cs" />
     <Compile Include="Models\ComparacionPersonaVm.cs" />
     <Compile Include="Models\ComparacionSucursalVm.cs" />
+    <Compile Include="Models\ComparacionPagoVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />

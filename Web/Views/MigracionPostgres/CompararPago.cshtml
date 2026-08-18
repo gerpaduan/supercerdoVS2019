@@ -1,0 +1,96 @@
+@model Web.Models.ComparacionPagoVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Pago #@ViewBag.IdPagoBuscado</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto (Etapa 5) -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null)
+                {
+                    <p class="text-muted mb-0">No se encontro (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>Id</th><td>@Model.SqlServer.Id</td></tr>
+                        <tr><th>Fecha</th><td>@Model.SqlServer.Fecha</td></tr>
+                        <tr><th>NroRecibo</th><td>@Model.SqlServer.NroRecibo</td></tr>
+                        <tr><th>AProveedor</th><td>@Model.SqlServer.AProveedor</td></tr>
+                        <tr><th>FormaPago</th><td>@Model.SqlServer.FormaPago (@Model.SqlServer.FormaPago_)</td></tr>
+                        <tr><th>Importe</th><td>@Model.SqlServer.Importe</td></tr>
+                        <tr><th>Efectivo</th><td>@Model.SqlServer.Efectivo</td></tr>
+                        <tr><th>Persona</th><td>@(Model.SqlServer.Persona?.razonSocial) (id @Model.SqlServer.IdPersona)</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.SqlServer.Sucursal?.SucursalNombre)</td></tr>
+                        <tr><th>CreadoPor</th><td>@(Model.SqlServer.CreadoPor?.Nombre)</td></tr>
+                        <tr><th>Cheques</th><td>@(Model.SqlServer.Cheques?.Count ?? 0)</td></tr>
+                    </table>
+                    if (Model.SqlServer.Cheques != null && Model.SqlServer.Cheques.Count > 0)
+                    {
+                        <table class="table table-sm mb-0 mt-2">
+                            <tr><th>Id</th><th>NroCheque</th><th>Banco</th><th>Importe</th><th>Estado</th></tr>
+                            @foreach (var c in Model.SqlServer.Cheques)
+                            {
+                                <tr><td>@c.Id</td><td>@c.NroCheque</td><td>@c.Banco</td><td>@c.Importe</td><td>@c.Estado</td></tr>
+                            }
+                        </table>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null)
+                {
+                    <p class="text-muted mb-0">No se encontro (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>Id</th><td>@Model.Postgres.Id</td></tr>
+                        <tr><th>Fecha</th><td>@Model.Postgres.Fecha</td></tr>
+                        <tr><th>NroRecibo</th><td>@Model.Postgres.NroRecibo</td></tr>
+                        <tr><th>AProveedor</th><td>@Model.Postgres.AProveedor</td></tr>
+                        <tr><th>FormaPago</th><td>@Model.Postgres.FormaPago (@Model.Postgres.FormaPago_)</td></tr>
+                        <tr><th>Importe</th><td>@Model.Postgres.Importe</td></tr>
+                        <tr><th>Efectivo</th><td>@Model.Postgres.Efectivo</td></tr>
+                        <tr><th>Persona</th><td>@(Model.Postgres.Persona?.razonSocial) (id @Model.Postgres.IdPersona)</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.Postgres.Sucursal?.SucursalNombre)</td></tr>
+                        <tr><th>CreadoPor</th><td>@(Model.Postgres.CreadoPor?.Nombre)</td></tr>
+                        <tr><th>Cheques</th><td>@(Model.Postgres.Cheques?.Count ?? 0)</td></tr>
+                    </table>
+                    if (Model.Postgres.Cheques != null && Model.Postgres.Cheques.Count > 0)
+                    {
+                        <table class="table table-sm mb-0 mt-2">
+                            <tr><th>Id</th><th>NroCheque</th><th>Banco</th><th>Importe</th><th>Estado</th></tr>
+                            @foreach (var c in Model.Postgres.Cheques)
+                            {
+                                <tr><td>@c.Id</td><td>@c.NroCheque</td><td>@c.Banco</td><td>@c.Importe</td><td>@c.Estado</td></tr>
+                            }
+                        </table>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Probar otro idPago:</label>
+    <input type="number" name="idPago" class="form-control mr-2" style="width:120px" value="@ViewBag.IdPagoBuscado" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

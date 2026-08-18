@@ -99,5 +99,44 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararPago(int idPago)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var pagoSqlServer = new Negocio.CuentaCorriente(empresa, param);
+            var resultadoSqlServer = pagoSqlServer.getPagoById(idPago);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CuentaCorrientePg
+            // (que a su vez recibe PersonaPg para resolver la Persona relacionada).
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.CuentaCorrientePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var pagoPostgres = new Negocio.CuentaCorriente(repoPostgres, empresa, param);
+
+            Entidades.Pago resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = pagoPostgres.getPagoById(idPago);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Pago #" + idPago;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdPagoBuscado = idPago;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararPago.cshtml", new Web.Models.ComparacionPagoVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

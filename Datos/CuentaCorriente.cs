@@ -7,7 +7,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class CuentaCorriente
+    public class CuentaCorriente : Contratos.ICuentaCorrienteRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
