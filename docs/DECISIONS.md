@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: piloto real de Persona (Etapa 2)
+## 2026-08-18 (la mas reciente) - Intento de prueba end-to-end via HTTP de /MigracionPostgres/Comparar: bloqueado, gap real documentado
+
+Continuacion inmediata de la entrada siguiente (piloto de Persona, Etapa 2). Se intento probar `/MigracionPostgres/Comparar` de punta a punta con IIS Express + login real simulado por HTTP (usuario de prueba descartable `test_piloto_pg`, id=9999, creado y borrado en la base local -- nunca se toco la cuenta real `ger`). Login funciono (200, dashboard real). La ruta a `MigracionPostgresController` devolvia 404 sistematicamente, incluso en una accion trivial (`Ping()`) sin ninguna dependencia de Postgres -- confirmando que la clase entera del controller no lograba cargar como tipo en el runtime de ASP.NET clasico, no un problema del codigo de la accion en si.
+
+**Causa raiz identificada (parcialmente)**: `Web.csproj` es un proyecto clasico (`packages.config`) que no resuelve el grafo de dependencias transitivas de un `ProjectReference` a un proyecto SDK-style con `PackageReference` (`DatosPostgres` -> `Npgsql` y sus ~13 dependencias transitivas). A diferencia de `dotnet build`/`dotnet run` (que si resuelven y copian todo, confirmado con el harness descartable de la entrada anterior), IIS Express + el compilador de vistas clasico de ASP.NET no copian ni bindean estos ensamblados automaticamente.
+
+**Arreglado de verdad en el camino** (quedan en `Web.config`, son necesarios independientemente de que el 404 se resuelva):
+- Referencia a `netstandard, Version=2.0.0.0` en `<compilation><assemblies>` -- sin esto, Razor no compila ninguna vista que use tipos de `Entidades`/`Contratos`/`DatosPostgres` (netstandard2.0), tira `CS0012`.
+- `bindingRedirect` para las ~13 dependencias transitivas de Npgsql (`System.Runtime.CompilerServices.Unsafe`, `Microsoft.Bcl.AsyncInterfaces`, `System.Text.Json`, etc.) en `<runtime><assemblyBinding>`, con las versiones que efectivamente se pudieron copiar a `Web/bin/` (via `dotnet publish DatosPostgres.csproj` a una carpeta temporal, despues copiadas a mano -- `Web/bin/` esta gitignoreado, no se versiona).
+
+**No resuelto**: pese a lo anterior, el controller sigue sin cargar. La `ReflectionTypeLoadException` real (que confirmaria exactamente que ensamblado/version sigue faltando) no se pudo capturar: el visor de fusion log de Windows requiere permisos de administrador (`HKLM\Software\Microsoft\Fusion`), que esta sesion no tiene (mismo limite que ya se documento en la Etapa 1 para instalar Postgres). Una prueba de reflection manual desde PowerShell (`Assembly.LoadFrom` con resolver laxo por nombre simple) cargo los 538 tipos de `Web.dll` sin problema -- pero esa prueba es mas permisiva que el binder real del CLR (ignora version/binding), asi que no descarta el problema, solo confirma que los archivos existen con los nombres correctos.
+
+**Alcance de esta limitacion**: es un problema de **despliegue/empaquetado** de la capa Postgres dentro de un host ASP.NET clasico, no del diseño ni de la logica -- ya verificada exhaustivamente por fuera de la capa web (ver entrada anterior: aislamiento por tenant, fila global, alta con idEmpresa correcto, los 4+3 casos dieron el resultado esperado con el codigo real). Queda pendiente para quien tenga Visual Studio a mano: abrirlo y dejar que su analizador de NuGet agregue los binding redirects automaticamente (funcion nativa del IDE), o repetir este diagnostico con permisos de administrador para leer el fusion log.
+
+**Limpieza**: usuario de prueba `test_piloto_pg` (id=9999) borrado de la base local. IIS Express detenido. Accion diagnostica `Ping()` removida del controller (no formaba parte del diseño real).
+
+## 2026-08-18 - Migracion SQL Server -> PostgreSQL: piloto real de Persona (Etapa 2)
 
 Continuacion de la Etapa 1 (ver entrada siguiente). Objetivo: llevar el diseno a codigo real con una sola entidad piloto (`Persona`, elegida por representar mejor el patron -- mezcla SP + SQL inline + logica de negocio real, ver razones completas en el plan de la sesion), validando de punta a punta que `Negocio -> IRepository -> (Datos | DatosPostgres)` funciona con RLS incluido, sin tocar ningun llamador existente.
 
