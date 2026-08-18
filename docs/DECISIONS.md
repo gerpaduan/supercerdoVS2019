@@ -1,6 +1,25 @@
 # Decisiones de arquitectura
 
-## 2026-08-15 (la mas reciente) - Facturar sin venta asociada: venta real minima en vez de una venta en memoria
+## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: instalacion local + diseno de RLS (Etapa 1)
+
+Pedido del usuario: empezar a migrar de SQL Server Express a PostgreSQL manteniendo las dos capas de datos coexistiendo desde `Web/` (la actual contra SQL Server, intacta; una nueva contra Postgres), sin tocar `Presentacion/` ni reescribir `Negocio/`. Preocupacion explicita: no romper el multitenant (RLS). Alcance de esta etapa: solo instalacion local + diseno documentado, nada de produccion tocado, ninguna tabla migrada.
+
+**Rama de trabajo**: se sigue trabajando en `codex_ia` (la rama activa real, 772 commits por delante del ancestro comun con `master`, que quedo vieja). Tag de resguardo `pre-postgres-migration-20260818` creado sobre el commit previo a esta etapa.
+
+**Limpieza previa**: se eliminaron del disco `tests/CarniSys.NG.UnitTests/` y `tests/CarniSys.NG.IntegrationTests/` (huerfanos, el `.sln` ya no los referenciaba) -- confirmado con el usuario, quien aclaro que el abandono de CarniSys.NG fue una decision de foco ("no lo iba a utilizar, empezar de cero"), no un problema tecnico de fondo.
+
+**RLS real relevado contra la base viva** (no contra el script desactualizado del repo, `Datos/DB-Procedures/20260521-Create_RLS_Personas_IdEmpresa.sql`, que quedo con el nombre viejo `RLS_Personas_IdEmpresa`): la politica real se llama `RLS_Empresa`, cubre 32 tablas, con FILTER+BLOCK via `fn_rls_empresa_o_global_v2`/`fn_rls_block_empresa_o_global_v2` -- fail-closed, con bypass de superadmin por login (`cs_admin`) y por flag de sesion (`EsAdminCarniSys`, usado de verdad en `SystemAdministrationRepository.cs`). Detalle completo y mapeo a Postgres en `docs/06-datos-e-integraciones/rls-postgres.md` (nuevo).
+
+**Decisiones tomadas con el usuario**:
+- Solo la base multi-tenant `carnisys` (RLS activo) migra. Los servidores legacy SQL Server 2008 sin RLS (San Martin, San Lorenzo) quedan fuera.
+- Postgres instalado nativo en Windows (installer EDB 17.11, modo unattended), no Docker.
+- El `WITH CHECK` de las policies de Postgres queda **endurecido** respecto al BLOCK actual de SQL Server: una sesion de tenant normal no puede insertar una fila `idEmpresa=0` (hoy en SQL Server el BLOCK lo permitiria, pero no hay ninguna fila asi en uso). Verificado con una prueba de 5 pasos en la base descartable `rls_poc` -- ver `docs/06-datos-e-integraciones/rls-postgres.md`.
+- Las 11 tablas con `idEmpresa` pero sin RLS (`Usuarios`, `Empresas`, `PermisosUsuarios`, etc.) quedan sin RLS tambien en Postgres -- son tablas maestras/meta, confirmado sin revision caso por caso.
+- **Correccion de diseno importante**: la primera propuesta (controller -> Postgres directo, saltando `Negocio`) fue rechazada por el usuario -- `Negocio` contiene logica de negocio fundamental y nunca se saltea. Diseno corregido: `Negocio` sigue llamando por interfaz (`IRepository` por entidad, patron "extraer interfaz"), y quien varia es la implementacion detras (`Datos` SQL Server o `DatosPostgres` nuevo) -- `Negocio` no sabe ni le importa que motor hay detras. Se hace entidad por entidad, recien cuando esa entidad entre en migracion (no en esta etapa).
+
+**Pendiente para la proxima etapa**: extraccion real de las interfaces (`Contratos`), proyecto `DatosPostgres`, estrategia de pooling de conexiones, y el DDL completo + clasificacion de los 117 SPs (Fase 4 del plan). Ver plan completo en el historial de la sesion -- resumen y detalle tecnico quedan en `docs/06-datos-e-integraciones/rls-postgres.md`.
+
+## 2026-08-15 - Facturar sin venta asociada: venta real minima en vez de una venta en memoria
 
 Pedido del usuario: poder generar una Factura Electronica desde `/Ventas/Facturas` sin tener una venta de productos real detras (solo Cliente + Total + Alicuota).
 
