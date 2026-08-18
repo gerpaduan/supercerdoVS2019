@@ -2316,6 +2316,10 @@
       <Project>{E7D28FAE-F2DE-4D2D-8CF2-87C978B3FA4B}</Project>
       <Name>Contratos</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DatosPostgres\DatosPostgres.csproj">
+      <Project>{B9E976E7-BB63-4202-8C2A-5EA0B40105D0}</Project>
+      <Name>DatosPostgres</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
