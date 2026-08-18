@@ -1,0 +1,120 @@
+tabla|indice|is_unique|is_primary_key|columnas
+-----|------|---------|--------------|--------
+ActualizacionCorte|IX_ActualizacionCorte_idEmpresa|0|0|idEmpresa
+AlicuotaIvaPorFactura|IX_AlicuotaIvaPorFactura_idEmpresa|0|0|idEmpresa
+AlicuotaIvaPorFactura|PK_AlicuotaIvaPorFactura|1|1|idAlicuotaIvaFactura
+AuditoriaCambioSucursalCaja|PK__Auditori__3213E83FE9525BB6|1|1|id
+Bancos|IX_Bancos_idEmpresa|0|0|idEmpresa
+CatalogoGlobalImportacionProductos|PK__Catalogo__FC67862566E4DD64|1|1|IdCatalogoGlobalImportacionProducto
+CatalogoGlobalImportacionProductos|UX_CatalogoGlobalImportacionProductos_Empresa_EmpresaProducto|1|0|IdEmpresa, IdProductoEmpresa
+CatalogoGlobalImportacionProductos|UX_CatalogoGlobalImportacionProductos_Empresa_Global|1|0|IdEmpresa, IdProductoGlobal
+CatalogoGlobalProducto|IX_CatalogoGlobalProducto_Codigo|0|0|codigo
+CatalogoGlobalProducto|IX_CatalogoGlobalProducto_IdCorteMaestro|0|0|idCorteMaestro
+CatalogoGlobalProducto|PK_CatalogoGlobalProducto|1|1|idCorte
+Cheques|IX_Cheques_idEmpresa|0|0|idEmpresa
+CierreCaja|IX_CierreCaja_idEmpresa|0|0|idEmpresa
+CierreCaja|PK_CierreCaja|1|1|id
+Claves|IX_Claves_idEmpresa|0|0|idEmpresa
+Compras|idx_Compras_fechaCompra|0|0|fechaCompra
+Compras|IX_Compras_idEmpresa|0|0|idEmpresa
+Compras|PK_Compras|1|1|idCompra
+Conexiones|IX_Conexiones_idEmpresa|0|0|idEmpresa
+Conexiones|PK_Conexiones|1|1|name
+ConfiguracionWhatsApp|PK__Configur__D258675C287B9701|1|1|IdConfiguracionWhatsApp
+ConfiguracionWhatsApp|UX_ConfiguracionWhatsApp_IdEmpresa|1|0|IdEmpresa
+Corte|IX_Corte_Codigo_IdEmpresa|0|0|codigo, idEmpresa
+Corte|IX_Corte_idCorteMaestro|0|0|idEmpresa, independiente, codigo, corte, idCorteMaestro
+Corte|IX_Corte_IdCorteMaestro_Solo|0|0|idCorteMaestro, idCorte
+Corte|IX_Corte_idEmpresa|0|0|idEmpresa
+Corte|PK_Corte|1|1|idCorte
+CortePorCompra|idx_CortePorCompra_Compras_Corte|0|0|idCompra, idCorte
+CortePorCompra|IX_CortePorCompra_idEmpresa|0|0|idEmpresa
+CortePorCompra|PK_CortePorCompra|1|1|idCortePorCompra
+CortePorEmbutido|idx_CortePorEmbutido_Embutidos_Corte|0|0|idEmbutido, idCorte
+CortePorEmbutido|IX_CortePorEmbutido_idEmpresa|0|0|idEmpresa
+CortePorEmbutido|PK_CortePorEmbutido_1|1|1|idCorteEmbutido
+CortePorFormula|IX_CortePorFormula_idEmpresa|0|0|idEmpresa
+CortePorFormula|PK_CortePorFormula|1|1|idCortePorFormula
+CortePorMovimiento|idx_CortePorMovimiento_Movimiento_Corte|0|0|idMovimientos, idCorte
+CortePorMovimiento|IX_CortePorMovimiento_idEmpresa|0|0|idEmpresa
+CortePorMovimiento|PK_CortePorMovimiento|1|1|idCorteMovimiento
+CorteProveedor|IX_CorteProveedor_idEmpresa|0|0|idEmpresa
+CorteProveedor|PK_CorteProveedor|1|1|idCorteProveedor
+CortePuntoStockSucursal|IX_CortePuntoStockSucursal_Sucursal|0|0|idCorte, puntoStock, idSucursal
+CortePuntoStockSucursal|PK_CortePuntoStockSucursal|1|1|idCortePuntoStockSucursal
+CortePuntoStockSucursal|UX_CortePuntoStockSucursal_Empresa_Corte_Sucursal|1|0|idEmpresa, idCorte, idSucursal
+DispositivosSeguros|PK__Disposit__3214EC0740F58551|1|1|Id
+DispositivosSeguros|UQ_DispositivosSeguros_Empresa_Serie|1|0|IdEmpresa, NumeroSerie
+EgresosCaja|idx_EgresosCaja_fechaHora_idTipoEgresoCaja|0|0|fechaHora, idTipoEgresoCaja
+EgresosCaja|IX_EgresosCaja_idEmpresa|0|0|idEmpresa
+EgresosCaja|PK_EgresosCaja|1|1|id
+Embutidos|idx_Embutidos_fechaEmbutido|0|0|fechaEmbutido
+Embutidos|IX_Embutidos_idEmpresa|0|0|idEmpresa
+Embutidos|PK_Embutidos|1|1|idEmbutido
+EmpresaParametros|IX_EmpresaParametros_IdEmpresa|0|0|idEmpresa
+EmpresaParametros|PK_EmpresaParametros|1|1|idEmpresa, idParametro
+Empresas|PK_Empresas|1|1|idEmpresa
+Empresas|UQ_Empresas_Cuit|1|0|cuit
+Expendios|IX_Expendios_idEmpresa|0|0|idEmpresa
+Expendios|PK_Expendios|1|1|idExpendio
+FacturaElectronica|IX_FacturaElectronica_FechaEmisionAfip|0|0|CAE, idVenta, fechaEmisionAfip
+FacturaElectronica|IX_FacturaElectronica_idEmpresa|0|0|idEmpresa
+FacturaElectronica|PK_FacturaElectronica|1|1|id
+Feriados|IX_Feriados_idEmpresa|0|0|idEmpresa
+Feriados|PK_Feriados|1|1|id
+Formularios|IX_Formularios_idEmpresa|0|0|idEmpresa
+Formularios|PK_Formularios1|1|1|idForm
+Formulas|IX_Formulas_idEmpresa|0|0|idEmpresa
+Formulas|PK_Formulas|1|1|idFormula
+Licencias|IX_Licencias_idEmpresa|0|0|idEmpresa
+LineaExpendio|IX_LineaExpendio_idEmpresa|0|0|idEmpresa
+LineaExpendio|PK_LineaExpendio|1|1|idLineaExpendio
+LineaVenta|idx_LineaVenta_Venta_Corte|0|0|idVenta, idCorte
+LineaVenta|IX_LineaVenta_idEmpresa|0|0|idEmpresa
+LineaVenta|IX_LineaVenta_IdVenta|0|0|cantKg, precioKg, ajustePrecio, kgsAjusteTarj, idVenta
+LineaVenta|PK_LineaVenta_1|1|1|idLineaVenta
+LoginUbicacionLog|IX_LoginUbicacionLog_IdSucursal_FechaHora|0|0|IdSucursal, FechaHora
+LoginUbicacionLog|IX_LoginUbicacionLog_IdUsuario_FechaHora|0|0|IdUsuario, FechaHora
+LoginUbicacionLog|PK__LoginUbi__3214EC078F1634E4|1|1|Id
+MediaRes|IX_MediaRes_idEmpresa|0|0|idEmpresa
+MediaRes|PK_MediaRes|1|1|idMedia
+MovCtaCte|IX_MovCtaCte_idEmpresa|0|0|idEmpresa
+MovCtaCte|PK_MovCtaCte|1|1|id
+Movimiento|idx_Movimiento_fechaMovimiento|0|0|fechaMovimiento
+Movimiento|IX_Movimiento_idEmpresa|0|0|idEmpresa
+Movimiento|PK_Movimiento|1|1|idMovimiento
+MovimientoHistorial|IX_MovimientoHistorial_idEmpresa|0|0|idEmpresa
+Pagos|IX_Pagos_idEmpresa|0|0|idEmpresa
+Pagos|PK_Pagos|1|1|id
+Parametros|PK_Parametros1|1|1|idParametro
+Parametros|UX_Parametros_Nombre|1|0|nombre
+Parametros_old|IX_Parametros_idEmpresa|0|0|idEmpresa
+Parametros_old|PK_Parametros|1|1|id
+PermisosUsuarios|IX_PermisosUsuarios_idEmpresa|0|0|idEmpresa
+PermisosUsuarios|PK__Permisos__62CAB39AF1419D4B|1|1|idUsuario, idForm
+Personas|IX_Personas_idEmpresa|0|0|idEmpresa
+Personas|PK_Personas|1|1|idPersona
+Sectores|IX_Sectores_idEmpresa|0|0|idEmpresa
+Sectores|PK_Sectores|1|1|sector
+StockCorteSucursal|IX_StockCorteSucursal_idEmpresa|0|0|idEmpresa
+StockCorteSucursal|PK_StockCorteSucursal|1|1|idCorte, idSucursal
+Sucursal|IX_Sucursal_idEmpresa|0|0|idEmpresa
+Sucursal|PK_Sucursal|1|1|idSucursal
+TemporalLineaVenta|IX_TemporalLineaVenta_idEmpresa|0|0|idEmpresa
+TemporalLineaVenta|PK_TemporalLineaVenta|1|1|id
+TiposEgresoCaja|IX_TiposEgresoCaja_idEmpresa|0|0|idEmpresa
+TiposEgresoCaja|PK_TiposEgresoCaja|1|1|id
+TiposProducto|IX_TiposProducto_idEmpresa|0|0|idEmpresa
+UsuarioPasswordResetTokens|IX_UsuarioPasswordResetTokens_TokenHash|1|0|tokenHash
+UsuarioPasswordResetTokens|IX_UsuarioPasswordResetTokens_UsuarioEstado|0|0|idUsuario, usado, fechaExpiracionUtc
+UsuarioPasswordResetTokens|PK__UsuarioP__3213E83F0ABA8A85|1|1|id
+Usuarios|IX_Usuarios_idEmpresa|0|0|idEmpresa
+Usuarios|PK_usuarios|1|1|id
+VencimientosLicencia|IX_VencimientosLicencia_idEmpresa|0|0|idEmpresa
+Ventas|idx_venta_fechaVenta|0|0|fechaVenta
+Ventas|idx_venta_idPersona|0|0|idPersona
+Ventas|IX_Ventas_FechaSucursalVendedorCliente|0|0|idVenta, nroRemito, tipoComprobante, enCtaCte, formaPago, comisionTarjeta, turno, diaFestivo, observaciones, creado, actualizado, estado, fechaVenta, idSucursal, idVendedor, idPersona
+Ventas|IX_Ventas_idEmpresa|0|0|idEmpresa
+Ventas|PK_Ventas|1|1|idVenta
+WhatsAppEnvios|IX_WhatsAppEnvios_IdEmpresa_FechaAlta|0|0|IdEmpresa, FechaAlta
+WhatsAppEnvios|PK__WhatsApp__A53D505C73280F9B|1|1|IdWhatsAppEnvio

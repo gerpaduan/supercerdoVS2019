@@ -1,0 +1,12 @@
+fk_name|tabla_origen|columna_origen|tabla_referenciada|columna_referenciada|delete_referential_action_desc|update_referential_action_desc
+-------|------------|--------------|------------------|--------------------|------------------------------|------------------------------
+FK_CortePorMovimiento_Cortes|CortePorMovimiento|idCorte|Corte|idCorte|NO_ACTION|NO_ACTION
+FK_EgresosCaja_TiposEgresoCaja|EgresosCaja|idTipoEgresoCaja|TiposEgresoCaja|id|NO_ACTION|NO_ACTION
+FK_EmpresaParametros_Empresas|EmpresaParametros|idEmpresa|Empresas|idEmpresa|NO_ACTION|NO_ACTION
+FK_EmpresaParametros_Parametros|EmpresaParametros|idParametro|Parametros|idParametro|NO_ACTION|NO_ACTION
+FK_LineaVenta_Cortes|LineaVenta|idCorte|Corte|idCorte|NO_ACTION|NO_ACTION
+FK_LineaVenta_Ventas|LineaVenta|idVenta|Ventas|idVenta|NO_ACTION|NO_ACTION
+FK__PermisosU__idUsu__6DCC4D03|PermisosUsuarios|idUsuario|Usuarios|id|NO_ACTION|NO_ACTION
+FK_Personas_Propietario|Personas|idPropietario|Personas|idPersona|NO_ACTION|NO_ACTION
+FK_UsuarioPasswordResetTokens_Usuarios|UsuarioPasswordResetTokens|idUsuario|Usuarios|id|NO_ACTION|NO_ACTION
+FK_Ventas_Personas|Ventas|idPersona|Personas|idPersona|NO_ACTION|NO_ACTION
