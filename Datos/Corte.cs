@@ -9,7 +9,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class Corte
+    public class Corte : Contratos.ICorteRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 

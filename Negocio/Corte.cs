@@ -10,14 +10,36 @@ namespace Negocio
 {
     public class Corte
     {
-        private readonly Datos.Corte oCorteD;
+        // oCorteD: bloque CRUD/referencia migrado a la interfaz (Corte, Formulas, AlicuotaIva,
+        // TiposProducto, CatalogoGlobalImportacionProductos) -- puede ser SQL Server o Postgres.
+        // oCorteDSqlServer: el resto de la clase (Embutido, Movimiento, reportes, cascade de
+        // stock) que todavia NO esta migrado -- siempre SQL Server, en las dos constructores.
+        // Ver docs/DECISIONS.md, Etapa 6.
+        private readonly Contratos.ICorteRepository oCorteD;
+        private readonly Datos.Corte oCorteDSqlServer;
         private readonly Datos.CortePuntoStockSucursal oCortePuntoStockSucursalD;
 
         IEmpresaContext _empresa;private readonly IParametrosContext _param;
+
+        // Constructor existente: SIN CAMBIOS de comportamiento. Los call-sites actuales siguen
+        // igual (misma instancia de Datos.Corte detras de las dos referencias).
         public Corte(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCorteD = new Datos.Corte(empresa, param);
+            var datosCorte = new Datos.Corte(empresa, param);
+            oCorteD = datosCorte;
+            oCorteDSqlServer = datosCorte;
+            oCortePuntoStockSucursalD = new Datos.CortePuntoStockSucursal(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICorteRepository
+        // (ej. DatosPostgres.CortePg) para el bloque migrado. Solo lo usa el controller de
+        // comparacion. El resto de la clase sigue yendo por SQL Server (oCorteDSqlServer).
+        public Corte(Contratos.ICorteRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oCorteD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            oCorteDSqlServer = new Datos.Corte(empresa, param);
             oCortePuntoStockSucursalD = new Datos.CortePuntoStockSucursal(empresa, param);
         }
 
@@ -53,7 +75,7 @@ namespace Negocio
 
             if (idSucursal > 0)
             {
-                DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
+                DateTime fechaUltimoCierreStock = oCorteDSqlServer.fechaUltimoCierreStock_Sucursal(idSucursal);
                 DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);
                 var dictStocks = dtCortesStock.AsEnumerable()
                     .ToDictionary(
@@ -115,7 +137,7 @@ namespace Negocio
             List<Entidades.Corte> listaCortes = oCorteD.findAllCortes(buscarMaestro);
             if (idSucursal > 0)
             {
-                DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
+                DateTime fechaUltimoCierreStock = oCorteDSqlServer.fechaUltimoCierreStock_Sucursal(idSucursal);
                 DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);
                 // Crear diccionario: id -> stock
                 var dictStocks = dtCortesStock.AsEnumerable()
@@ -310,7 +332,7 @@ namespace Negocio
         {
             DataTable dtCorte = new DataTable();
             
-            dtCorte = oCorteD.obtenerInfoCorte(idCorte);
+            dtCorte = oCorteDSqlServer.obtenerInfoCorte(idCorte);
 
             return dtCorte;
         }
@@ -318,11 +340,11 @@ namespace Negocio
 
         public DataTable obtenerCorteProveedor(int idCorte)
         {
-            return oCorteD.obtenerCorteProveedor(idCorte);
+            return oCorteDSqlServer.obtenerCorteProveedor(idCorte);
         }
         public DataTable obtenerCortesPorProveedor(int idProveedor)
         {
-            return oCorteD.obtenerCortesPorProveedor(idProveedor);
+            return oCorteDSqlServer.obtenerCortesPorProveedor(idProveedor);
         }
         public DataTable obtenerTiposProducto(bool mostrarTodos)
         {
@@ -347,14 +369,14 @@ namespace Negocio
 
         public Entidades.Embutido findEmbutidoById(int idEmbutido)
         {
-            return oCorteD.findEmbutidoById(idEmbutido);
+            return oCorteDSqlServer.findEmbutidoById(idEmbutido);
         }
 
         public DataTable obtenerEmbutidos(string txtBusqueda)
         {
             DataTable dtCorte = new DataTable();
             
-            dtCorte = oCorteD.obtenerEmbutidos(txtBusqueda);
+            dtCorte = oCorteDSqlServer.obtenerEmbutidos(txtBusqueda);
 
             return dtCorte;
         }
@@ -363,7 +385,7 @@ namespace Negocio
         {
             DataTable dtCorte = new DataTable();
             
-            dtCorte = oCorteD.getListaElegirEmbutido();
+            dtCorte = oCorteDSqlServer.getListaElegirEmbutido();
 
             return dtCorte;
         }
@@ -371,45 +393,45 @@ namespace Negocio
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             
-            return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
         public DataTable obtenerUltimosElaboradosDashboard(int cantidad, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            return oCorteD.obtenerUltimosElaboradosDashboard(cantidad, idSucursal, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.obtenerUltimosElaboradosDashboard(cantidad, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             
-            return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
         public HashSet<int> ObtenerIdsEmbutidosIngresoRapido(IEnumerable<int> idsEmbutidos)
         {
-            return oCorteD.ObtenerIdsEmbutidosIngresoRapido(idsEmbutidos);
+            return oCorteDSqlServer.ObtenerIdsEmbutidosIngresoRapido(idsEmbutidos);
         }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
              
-             return oCorteD.agregarEmbutido(oEmbutido);         
+             return oCorteDSqlServer.agregarEmbutido(oEmbutido);         
          }
 
          public void anularEmbutido(Entidades.Embutido oEmbutidoE)
          {
-             oCorteD.anularEmbutido(oEmbutidoE);
+             oCorteDSqlServer.anularEmbutido(oEmbutidoE);
          }
 
          public DataTable obtenerCortesPorEmbutidos(Entidades.Embutido oEmbutidoE)
          {
-             return oCorteD.obtenerCortesPorEmbutidos(oEmbutidoE);
+             return oCorteDSqlServer.obtenerCortesPorEmbutidos(oEmbutidoE);
          }
 
          public void agregarCortePorEmbutido(Entidades.CortePorEmbutido oCortePorEmbutido)
          {
              
-             oCorteD.agregarCortePorEmbutido(oCortePorEmbutido);
+             oCorteDSqlServer.agregarCortePorEmbutido(oCortePorEmbutido);
          }
 
         #region Formulas
@@ -517,79 +539,79 @@ namespace Negocio
 
             public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
          {
-             return oCorteD.addOrEditMovimiento(oMovimientoE);
+             return oCorteDSqlServer.addOrEditMovimiento(oMovimientoE);
          }
 
          public void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento)
          {
-             oCorteD.agregarCortePorMovimiento(cortePorMovimiento);
+             oCorteDSqlServer.agregarCortePorMovimiento(cortePorMovimiento);
          }
 
          //public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
          //{
-         //    oCorteD.modificarMovimiento(oMovimientoE);
+         //    oCorteDSqlServer.modificarMovimiento(oMovimientoE);
          //}
 
          public void eliminarMovimiento(int idMovimiento, Entidades.Usuario oUsuario)
          {
-             oCorteD.eliminarMovimiento(idMovimiento, oUsuario);
+             oCorteDSqlServer.eliminarMovimiento(idMovimiento, oUsuario);
          }
 
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
              
-             return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
+             return oCorteDSqlServer.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 
          public DataTable obtenerUltimosMovimientosDashboard(int cantidad)
          {
-             return oCorteD.obtenerUltimosMovimientosDashboard(cantidad);
+             return oCorteDSqlServer.obtenerUltimosMovimientosDashboard(cantidad);
          }
 
          public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
              
-             return oCorteD.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
+             return oCorteDSqlServer.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
          }
 
          public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
          {
              
-             return oCorteD.cargarMovimiento(idMovimiento, acumulado);
+             return oCorteDSqlServer.cargarMovimiento(idMovimiento, acumulado);
          }
 
          //public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
          //{
          //    
-         //    oCorteD.quitarCortesPorMovimiento(oMovimientoE);
+         //    oCorteDSqlServer.quitarCortesPorMovimiento(oMovimientoE);
          //}
 
          public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
          {
              
-             return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
+             return oCorteDSqlServer.cargarCortesPorMovimiento(idMovimiento, acumulado);
          }
 
          public Dictionary<int, Tuple<decimal, decimal>> ObtenerTotalesPorMovimiento(IEnumerable<int> idsMovimiento)
          {
-             return oCorteD.ObtenerTotalesPorMovimiento(idsMovimiento);
+             return oCorteDSqlServer.ObtenerTotalesPorMovimiento(idsMovimiento);
          }
 
          public void reiniciarStockReal(int idSucursal)
          {
-             oCorteD.reiniciarStockReal(idSucursal);
+             oCorteDSqlServer.reiniciarStockReal(idSucursal);
          }
 
          public void reiniciarStockTeorico(int idSucursal)
         {
             
-            oCorteD.reiniciarStockTeorico(idSucursal);
+            oCorteDSqlServer.reiniciarStockTeorico(idSucursal);
         }
 
          public DataTable reporteTeoricoReal(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
              
-             return oCorteD.reporteTeoricoReal(texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteDSqlServer.reporteTeoricoReal(texto, idSucursal, fechaDesde, fechaHasta);
 
          }
 
@@ -597,7 +619,7 @@ namespace Negocio
          public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal, string tipo, int idProveedor, int idMarca)
          {
              
-             DataTable dtGrillaReporte = oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal, tipo, idProveedor, idMarca);
+             DataTable dtGrillaReporte = oCorteDSqlServer.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal, tipo, idProveedor, idMarca);
 
             // El SP a_CierreStock devuelve Pto.Stock leyendo Corte.puntoStock (valor global,
             // no por sucursal). Se sobrescribe aca con el valor real de la tabla intermedia
@@ -741,7 +763,7 @@ namespace Negocio
         // se agrupa por la columna idSucursal del resultado en vez de un solo idSucursal fijo.
         public DataTable CierreStockWeb(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
         {
-            DataTable dtGrillaReporte = oCorteD.CierreStockWeb(texto, _empresa.IdEmpresa, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+            DataTable dtGrillaReporte = oCorteDSqlServer.CierreStockWeb(texto, _empresa.IdEmpresa, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
 
             var idsSucursalesEnResultado = dtGrillaReporte.Rows
                 .Cast<DataRow>()
@@ -774,48 +796,48 @@ namespace Negocio
          public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo , int idProveedor, int idMarca)
          {
              
-             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+             return oCorteDSqlServer.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
              
-             return oCorteD.StockIngresoEgreso(texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteDSqlServer.StockIngresoEgreso(texto, idSucursal, fechaDesde, fechaHasta);
          }
 
          public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
          {
              
-             return oCorteD.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+             return oCorteDSqlServer.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
          public DataTable ObtenerSerieVentasPorCorte(int idCorte, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idMarca, string agrupacionTemporal)
          {
-             return oCorteD.ObtenerSerieVentasPorCorte(idCorte, idSucursal, fechaDesde, fechaHasta, tipo, idMarca, agrupacionTemporal);
+             return oCorteDSqlServer.ObtenerSerieVentasPorCorte(idCorte, idSucursal, fechaDesde, fechaHasta, tipo, idMarca, agrupacionTemporal);
          }
 
         public DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             
-            return oCorteD.imprimirTeoricoReal(dtTeoricoReal, texto, idSucursal, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.imprimirTeoricoReal(dtTeoricoReal, texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable TotalKgsCortePorCompra(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             
-            return oCorteD.TotalKgsCortePorCompra(texto, idSucursal, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.TotalKgsCortePorCompra(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable TotalMovimientosPorCorte(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             
-            return oCorteD.TotalMovimientosPorCorte(texto, idSucursal, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.TotalMovimientosPorCorte(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable Balance(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             
-            return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
+            return oCorteDSqlServer.Balance(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         // Ultimo cierre de stock por cada sucursal recibida (reusa
@@ -831,7 +853,7 @@ namespace Negocio
 
             foreach (var sucursal in (sucursales ?? Enumerable.Empty<Entidades.Sucursal>()).Where(s => s != null && s.IdSucursal > 0))
             {
-                DateTime fecha = oCorteD.fechaUltimoCierreStock_Sucursal(sucursal.IdSucursal);
+                DateTime fecha = oCorteDSqlServer.fechaUltimoCierreStock_Sucursal(sucursal.IdSucursal);
                 if (fecha > DateTime.MinValue)
                 {
                     resultado.Add(new Entidades.SucursalUltimoCierreVm
@@ -855,7 +877,7 @@ namespace Negocio
             resultado.Filtro = filtro;
             resultado.ConsultaRealizada = true;
 
-            var plano = oCorteD.ObtenerExistenciaPorSucursalesPlano(
+            var plano = oCorteDSqlServer.ObtenerExistenciaPorSucursalesPlano(
                 filtro.Texto ?? "",
                 filtro.IdSucursal,
                 filtro.FechaHasta,

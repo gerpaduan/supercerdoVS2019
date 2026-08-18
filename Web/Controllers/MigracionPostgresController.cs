@@ -138,5 +138,45 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararCorte(int idCorte)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var corteSqlServer = new Negocio.Corte(empresa, param);
+            var resultadoSqlServer = corteSqlServer.findCorteById(idCorte, true);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CortePg (que a su vez
+            // recibe PersonaPg para resolver la Marca relacionada). Cubre solo el bloque
+            // CRUD/referencia migrado -- el resto de Negocio.Corte sigue yendo por SQL Server.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var cortePostgres = new Negocio.Corte(repoPostgres, empresa, param);
+
+            Entidades.Corte resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = cortePostgres.findCorteById(idCorte, true);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Corte #" + idCorte;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdCorteBuscado = idCorte;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararCorte.cshtml", new Web.Models.ComparacionCorteVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
