@@ -6,13 +6,26 @@ namespace Negocio
 {
     public class Persona
     {
-        private readonly Datos.Persona oPersonaD;
+        private readonly Contratos.IPersonaRepository oPersonaD;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        // Constructor existente: SIN CAMBIOS de comportamiento. Sigue usando SQL Server
+        // (Datos.Persona) tal como siempre -- todos los llamadores actuales de Web y
+        // Presentacion/wsAFIP quedan intactos.
         public Persona(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
             oPersonaD = new Datos.Persona(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: permite inyectar cualquier implementacion de
+        // IPersonaRepository (ej. DatosPostgres.PersonaPg). Usado unicamente por el
+        // controller de comparacion de la migracion a Postgres (Etapa 2) -- ningun
+        // llamador existente lo usa todavia.
+        public Persona(Contratos.IPersonaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oPersonaD = repositorio ?? throw new System.ArgumentNullException(nameof(repositorio));
         }
         public void agregarPersona(Entidades.Persona oPersonaE)
         {

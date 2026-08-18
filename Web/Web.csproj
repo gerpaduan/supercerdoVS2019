@@ -2312,6 +2312,10 @@
       <Project>{5b716a48-0166-494f-a0f5-2dc93b38ac03}</Project>
       <Name>wsAFIPvs2008</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Contratos\Contratos.csproj">
+      <Project>{E7D28FAE-F2DE-4D2D-8CF2-87C978B3FA4B}</Project>
+      <Name>Contratos</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
