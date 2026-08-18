@@ -7,7 +7,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class Sucursal
+    public class Sucursal : Contratos.ISucursalRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 

@@ -9,15 +9,27 @@ namespace Negocio
 {
     public class Sucursal
     {
-        private readonly Datos.Sucursal oSucursalD;
+        private readonly Contratos.ISucursalRepository oSucursalD;
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
+        // Constructor existente: SIN CAMBIOS. Los 53 puntos de instanciacion actuales
+        // (8 controllers de Web + ~44 formularios de Presentacion) siguen igual.
         public Sucursal(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;
             _param = param;
             oSucursalD = new Datos.Sucursal(empresa);
+        }
+
+        // Constructor nuevo, aditivo: permite inyectar cualquier implementacion de
+        // ISucursalRepository (ej. DatosPostgres.SucursalPg). Usado unicamente por el
+        // controller de comparacion de la migracion a Postgres (Etapa 3).
+        public Sucursal(Contratos.ISucursalRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;
+            _param = param;
+            oSucursalD = repositorio ?? throw new System.ArgumentNullException(nameof(repositorio));
         }
         public DataTable obtenerSucursales()
         {            

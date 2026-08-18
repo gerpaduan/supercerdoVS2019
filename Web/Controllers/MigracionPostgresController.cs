@@ -62,5 +62,42 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararSucursal(int idSucursal)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var sucursalSqlServer = new Negocio.Sucursal(empresa, param);
+            var resultadoSqlServer = sucursalSqlServer.findById(idSucursal);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.SucursalPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var sucursalPostgres = new Negocio.Sucursal(repoPostgres, empresa, param);
+
+            Entidades.Sucursal resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = sucursalPostgres.findById(idSucursal);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Sucursal #" + idSucursal;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdSucursalBuscada = idSucursal;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararSucursal.cshtml", new Web.Models.ComparacionSucursalVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

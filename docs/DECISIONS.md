@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-18 (la mas reciente) - Prueba end-to-end via HTTP de /MigracionPostgres/Comparar: resuelta, causa raiz era otra
+## 2026-08-18 (la mas reciente) - Migracion SQL Server -> PostgreSQL: segunda entidad, Sucursal (Etapa 3)
+
+A pedido explicito del usuario, se repitio el patron de la Etapa 2 con una segunda entidad para confirmar que escala mas alla de un solo caso. `Sucursal` fue la otra candidata ya evaluada (menos SPs que `Persona` -- de hecho cero, todo SQL inline -- pero mas puntos de instanciacion: 53 `new Negocio.Sucursal(` + 4 `new Datos.Sucursal(` directos que saltean `Negocio.Sucursal`, ninguno de los dos grupos se toco).
+
+**Mismo patron mecanico que Persona**: `Contratos/ISucursalRepository.cs` (10 metodos, espeja `Datos.Sucursal` exacto) -> `Datos.Sucursal : ISucursalRepository` (cero cambios de comportamiento) -> constructor aditivo en `Negocio.Sucursal` (el viejo queda intacto, los 53+4 call-sites existentes no cambian) -> `DatosPostgres/SucursalPg.cs` (6 metodos reales + 4 `NotImplementedException`).
+
+**Alcance de `SucursalPg`**: reales `obtenerSucursales`, `findAll`, `findById` (con el join a `Empresas` para la propiedad `.Empresa`, igual que `Persona.findById` con `Iva`), `findEmpresaById`, `findEmpresaByCuit`, `ActualizarDatosBasicos`. Marcados `NotImplementedException`: `obtenerSucursalSanMartin`/`obtenerSucursalSanLorenzo` (hardcodean `idSucursal=2`/`idSucursal=1` -- confirmado en `Entidades/Sucursal.cs` que esos IDs mapean a los puntos de venta AFIP de los servidores legacy San Martin/San Lorenzo) y `obtenerConexiones`/`getIdSucursalByConexion` (tabla `Conexiones`, misma topologia legacy) -- los 4 estan atados a los 3 servidores excluidos desde la Etapa 1, no se inventa nada.
+
+**`Empresas` entra como tabla de apoyo** (igual que `Iva` con `Persona`), sin RLS (confirmado desde la Etapa 1, tabla maestra). Sin FK `sucursal.idempresa -> empresas.idempresa` en el schema Postgres: SQL Server tampoco la tiene (fidelidad al esquema real). Migracion de datos real: 7 filas de `Empresas` + 9 de `Sucursal` desde la base local, IDs preservados -- confirmado antes de migrar que ninguna fila de `Sucursal` tiene `idEmpresa=0` (no aplica la convencion de "fila global" en esta tabla, a diferencia de `Personas`).
+
+**Verificado de punta a punta por HTTP con login real** (mismo procedimiento que Persona: usuario de prueba descartable creado y borrado, nunca la cuenta real): `idSucursal=1` (tenant correcto) devuelve exactamente los mismos campos en SQL Server y Postgres, **incluida la empresa relacionada cargada via join** (`Empresa.NombreFantasia` = "SuperCerdo" en ambos lados); `idSucursal=3` (otro tenant) queda bloqueada por RLS en los dos motores por igual.
+
+**Aprendizaje de la Etapa 2 aplicado sin tropiezos**: se agregaron `Models\ComparacionSucursalVm.cs` al `<Compile Include>` explicito de `Web.csproj` en el mismo paso en que se creo el archivo (no se repitio el error del 404 por archivo faltante en la lista).
+
+Con esto, el patron `Negocio -> IRepository -> (Datos | DatosPostgres)` queda probado con 2 entidades de perfil bien distinto (una con SPs y logica de negocio real, otra sin SPs pero con muchos mas puntos de instanciacion) -- ambas funcionando identico en SQL Server y Postgres, RLS incluido.
+
+## 2026-08-18 - Prueba end-to-end via HTTP de /MigracionPostgres/Comparar: resuelta, causa raiz era otra
 
 Continuacion inmediata de la entrada siguiente (piloto de Persona, Etapa 2). Se probo `/MigracionPostgres/Comparar` de punta a punta con IIS Express + login real por HTTP (usuario de prueba descartable `test_piloto_pg`, id=9999, creado y borrado en la base local -- nunca se toco la cuenta real `ger`).
 
