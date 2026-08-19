@@ -1,0 +1,98 @@
+@model Web.Models.ComparacionEmbutidoVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Embutido #@ViewBag.IdEmbutidoBuscado</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto (Etapa 11a) -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null || Model.SqlServer.IdEmbutido == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdEmbutido</th><td>@Model.SqlServer.IdEmbutido</td></tr>
+                        <tr><th>FechaEmbutido</th><td>@Model.SqlServer.FechaEmbutido</td></tr>
+                        <tr><th>Corte</th><td>@(Model.SqlServer.Corte?.CorteDesc) (codigo @(Model.SqlServer.Corte?.Codigo))</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.SqlServer.Sucursal?.SucursalNombre) (id @(Model.SqlServer.Sucursal?.idSucursal))</td></tr>
+                        <tr><th>Observaciones</th><td>@Model.SqlServer.Observaciones</td></tr>
+                        <tr><th>Estado</th><td>@Model.SqlServer.Estado</td></tr>
+                        <tr><th>Creado</th><td>@Model.SqlServer.Creado</td></tr>
+                        <tr><th>Actualizado</th><td>@Model.SqlServer.Actualizado</td></tr>
+                        <tr><th>CreadoPor</th><td>@(Model.SqlServer.CreadoPor?.Nombre)</td></tr>
+                        <tr><th>ActualizadoPor</th><td>@(Model.SqlServer.ActualizadoPor?.Nombre)</td></tr>
+                        <tr>
+                            <th>CortesEnEmbutido</th>
+                            <td>
+                                @if (Model.SqlServer.CortesEnEmbutido != null)
+                                {
+                                    foreach (var c in Model.SqlServer.CortesEnEmbutido)
+                                    {
+                                        <div>@(c.Corte?.CorteDesc): @c.KgUtilizado kg @(c.PesoBalanza ? "(balanza)" : "")</div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null || Model.Postgres.IdEmbutido == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdEmbutido</th><td>@Model.Postgres.IdEmbutido</td></tr>
+                        <tr><th>FechaEmbutido</th><td>@Model.Postgres.FechaEmbutido</td></tr>
+                        <tr><th>Corte</th><td>@(Model.Postgres.Corte?.CorteDesc) (codigo @(Model.Postgres.Corte?.Codigo))</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.Postgres.Sucursal?.SucursalNombre) (id @(Model.Postgres.Sucursal?.idSucursal))</td></tr>
+                        <tr><th>Observaciones</th><td>@Model.Postgres.Observaciones</td></tr>
+                        <tr><th>Estado</th><td>@Model.Postgres.Estado</td></tr>
+                        <tr><th>Creado</th><td>@Model.Postgres.Creado</td></tr>
+                        <tr><th>Actualizado</th><td>@Model.Postgres.Actualizado</td></tr>
+                        <tr><th>CreadoPor</th><td>@(Model.Postgres.CreadoPor?.Nombre)</td></tr>
+                        <tr><th>ActualizadoPor</th><td>@(Model.Postgres.ActualizadoPor?.Nombre)</td></tr>
+                        <tr>
+                            <th>CortesEnEmbutido</th>
+                            <td>
+                                @if (Model.Postgres.CortesEnEmbutido != null)
+                                {
+                                    foreach (var c in Model.Postgres.CortesEnEmbutido)
+                                    {
+                                        <div>@(c.Corte?.CorteDesc): @c.KgUtilizado kg @(c.PesoBalanza ? "(balanza)" : "")</div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Probar otro idEmbutido:</label>
+    <input type="number" name="idEmbutido" class="form-control mr-2" style="width:120px" value="@ViewBag.IdEmbutidoBuscado" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

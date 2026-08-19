@@ -4,11 +4,14 @@ using System.Data;
 
 namespace Contratos
 {
-    // Espeja SOLO el bloque CRUD/referencia de Datos.Corte (Corte, ActualizacionCorte,
-    // CatalogoGlobalImportacionProductos, Formulas/CortePorFormula, AlicuotasIva, TiposProducto).
-    // El resto de la clase (Embutido, Movimiento, cascade de StockCorteSucursal, reportes,
-    // obtenerCorteProveedor/obtenerCortesPorProveedor) queda fuera de esta interfaz -- se agrega
-    // en una etapa futura cuando se aborde ese bloque. Ver docs/DECISIONS.md, Etapa 6.
+    // Espeja el bloque CRUD/referencia de Datos.Corte (Corte, ActualizacionCorte,
+    // CatalogoGlobalImportacionProductos, Formulas/CortePorFormula, AlicuotasIva, TiposProducto,
+    // Etapa 6) mas el bloque Embutido (Etapa 11a). Movimiento y Stock/Reportes (el resto de
+    // Datos.Corte) quedan fuera de esta interfaz -- se agregan en etapas futuras dedicadas.
+    // obtenerEmbutidos NO esta en esta interfaz a proposito: el SP real hace INNER JOIN contra
+    // StockCorteSucursal (tabla obsoleta, 0 filas reales) y por eso siempre devuelve 0 filas en
+    // SQL Server hoy, ademas de no tener ningun caller real (verificado por grep) -- codigo
+    // muerto y ya roto, no se porta. Ver docs/DECISIONS.md.
     public interface ICorteRepository
     {
         List<Entidades.Corte> findAllCortes(bool buscarMaestro);
@@ -52,5 +55,19 @@ namespace Contratos
         string importarTiposProductoGlobales(IEnumerable<string> tiposProducto, int? idUsuarioAlta);
         string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate);
         string eliminarTipoProducto(string tiposProducto);
+
+        DataTable getListaElegirEmbutido();
+        DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta);
+        DataTable obtenerUltimosElaboradosDashboard(int cantidad, int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
+        DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta);
+        HashSet<int> ObtenerIdsEmbutidosIngresoRapido(IEnumerable<int> idsEmbutidos);
+        DataTable obtenerInfoCorte(int idCorte);
+        DataTable obtenerCorteProveedor(int idCorte);
+        DataTable obtenerCortesPorProveedor(int idProveedor);
+        Entidades.Embutido findEmbutidoById(int idEmbutido);
+        int agregarEmbutido(Entidades.Embutido oEmbutido);
+        void anularEmbutido(Entidades.Embutido oEmbutidoE);
+        DataTable obtenerCortesPorEmbutidos(Entidades.Embutido oEmbutidoE);
+        void agregarCortePorEmbutido(Entidades.CortePorEmbutido oCortePorEmbutido);
     }
 }

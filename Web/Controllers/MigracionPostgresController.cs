@@ -342,5 +342,45 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararEmbutido(int idEmbutido)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var corteSqlServer = new Negocio.Corte(empresa, param);
+            var resultadoSqlServer = corteSqlServer.findEmbutidoById(idEmbutido);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CortePg. Cubre el bloque
+            // Embutido migrado (Etapa 11a) -- Movimiento y Stock/Reportes siguen yendo por SQL
+            // Server.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var cortePostgres = new Negocio.Corte(repoPostgres, empresa, param);
+
+            Entidades.Embutido resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = cortePostgres.findEmbutidoById(idEmbutido);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Embutido #" + idEmbutido;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEmbutidoBuscado = idEmbutido;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararEmbutido.cshtml", new Web.Models.ComparacionEmbutidoVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

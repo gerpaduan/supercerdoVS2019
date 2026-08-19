@@ -10,11 +10,12 @@ namespace Negocio
 {
     public class Corte
     {
-        // oCorteD: bloque CRUD/referencia migrado a la interfaz (Corte, Formulas, AlicuotaIva,
-        // TiposProducto, CatalogoGlobalImportacionProductos) -- puede ser SQL Server o Postgres.
-        // oCorteDSqlServer: el resto de la clase (Embutido, Movimiento, reportes, cascade de
-        // stock) que todavia NO esta migrado -- siempre SQL Server, en las dos constructores.
-        // Ver docs/DECISIONS.md, Etapa 6.
+        // oCorteD: bloque CRUD/referencia (Corte, Formulas, AlicuotaIva, TiposProducto,
+        // CatalogoGlobalImportacionProductos, Etapa 6) mas el bloque Embutido (Etapa 11a)
+        // migrado a la interfaz -- puede ser SQL Server o Postgres. oCorteDSqlServer:
+        // obtenerEmbutidos (excluido, ver mas abajo) y el resto de la clase (Movimiento,
+        // Stock/Reportes) que todavia NO esta migrado -- siempre SQL Server, en las dos
+        // constructores. Ver docs/DECISIONS.md.
         private readonly Contratos.ICorteRepository oCorteD;
         private readonly Datos.Corte oCorteDSqlServer;
         private readonly Datos.CortePuntoStockSucursal oCortePuntoStockSucursalD;
@@ -331,8 +332,8 @@ namespace Negocio
         public DataTable obtenerInfoCorte(int idCorte)
         {
             DataTable dtCorte = new DataTable();
-            
-            dtCorte = oCorteDSqlServer.obtenerInfoCorte(idCorte);
+
+            dtCorte = oCorteD.obtenerInfoCorte(idCorte);
 
             return dtCorte;
         }
@@ -340,11 +341,11 @@ namespace Negocio
 
         public DataTable obtenerCorteProveedor(int idCorte)
         {
-            return oCorteDSqlServer.obtenerCorteProveedor(idCorte);
+            return oCorteD.obtenerCorteProveedor(idCorte);
         }
         public DataTable obtenerCortesPorProveedor(int idProveedor)
         {
-            return oCorteDSqlServer.obtenerCortesPorProveedor(idProveedor);
+            return oCorteD.obtenerCortesPorProveedor(idProveedor);
         }
         public DataTable obtenerTiposProducto(bool mostrarTodos)
         {
@@ -369,13 +370,18 @@ namespace Negocio
 
         public Entidades.Embutido findEmbutidoById(int idEmbutido)
         {
-            return oCorteDSqlServer.findEmbutidoById(idEmbutido);
+            return oCorteD.findEmbutidoById(idEmbutido);
         }
 
+        // obtenerEmbutidos queda deliberadamente en oCorteDSqlServer, sin migrar: el SP real
+        // hace INNER JOIN contra StockCorteSucursal (0 filas reales) y por eso siempre devuelve
+        // 0 filas hoy en SQL Server, ademas de no tener ningun caller real (verificado por
+        // grep). No se agrego a ICorteRepository -- ver Contratos/ICorteRepository.cs y
+        // docs/DECISIONS.md, Etapa 11a.
         public DataTable obtenerEmbutidos(string txtBusqueda)
         {
             DataTable dtCorte = new DataTable();
-            
+
             dtCorte = oCorteDSqlServer.obtenerEmbutidos(txtBusqueda);
 
             return dtCorte;
@@ -384,54 +390,54 @@ namespace Negocio
         public DataTable getListaElegirEmbutido()
         {
             DataTable dtCorte = new DataTable();
-            
-            dtCorte = oCorteDSqlServer.getListaElegirEmbutido();
+
+            dtCorte = oCorteD.getListaElegirEmbutido();
 
             return dtCorte;
         }
 
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            
-            return oCorteDSqlServer.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
+
+            return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
         public DataTable obtenerUltimosElaboradosDashboard(int cantidad, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            return oCorteDSqlServer.obtenerUltimosElaboradosDashboard(cantidad, idSucursal, fechaDesde, fechaHasta);
+            return oCorteD.obtenerUltimosElaboradosDashboard(cantidad, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            
-            return oCorteDSqlServer.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
+
+            return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
         public HashSet<int> ObtenerIdsEmbutidosIngresoRapido(IEnumerable<int> idsEmbutidos)
         {
-            return oCorteDSqlServer.ObtenerIdsEmbutidosIngresoRapido(idsEmbutidos);
+            return oCorteD.ObtenerIdsEmbutidosIngresoRapido(idsEmbutidos);
         }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
-             
-             return oCorteDSqlServer.agregarEmbutido(oEmbutido);         
+
+             return oCorteD.agregarEmbutido(oEmbutido);
          }
 
          public void anularEmbutido(Entidades.Embutido oEmbutidoE)
          {
-             oCorteDSqlServer.anularEmbutido(oEmbutidoE);
+             oCorteD.anularEmbutido(oEmbutidoE);
          }
 
          public DataTable obtenerCortesPorEmbutidos(Entidades.Embutido oEmbutidoE)
          {
-             return oCorteDSqlServer.obtenerCortesPorEmbutidos(oEmbutidoE);
+             return oCorteD.obtenerCortesPorEmbutidos(oEmbutidoE);
          }
 
          public void agregarCortePorEmbutido(Entidades.CortePorEmbutido oCortePorEmbutido)
          {
-             
-             oCorteDSqlServer.agregarCortePorEmbutido(oCortePorEmbutido);
+
+             oCorteD.agregarCortePorEmbutido(oCortePorEmbutido);
          }
 
         #region Formulas

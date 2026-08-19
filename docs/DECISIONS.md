@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: cambiarSucursalCaja / obtenerPreviewCambioSucursalCaja (Etapa 10)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Corte.cs, bloque Embutido (Etapa 11a)
+
+Primera de 3 sub-etapas en las que se dividió el resto de `Corte.cs` (38 métodos, 29 SPs reales, varios de más de 1000 líneas — mucho más grande de lo esperado al scopearlo). **Decisión confirmada con el usuario**: dividir en Embutido → Movimiento → Stock/Reportes, en ese orden. Esta etapa cubre solo Embutido (14 métodos relevados, 13 migrados).
+
+**Hallazgo: `obtenerEmbutidos` excluido, documentado, no un descuido.** Confirmado con `sp_helptext` contra la base viva (no el snapshot): el SP hace `INNER JOIN` contra `StockCorteSucursal` dos veces — como esa tabla tiene 0 filas reales (confirmado de nuevo), el `JOIN` nunca matchea y el SP **siempre devuelve 0 filas hoy en SQL Server**, para cualquier dato. Además filtra sucursales hardcodeadas (`idSucursal = 2` y `= 1`, un quirk de un setup viejo de 2 sucursales). Verificado por grep en todo el repo: el wrapper `Negocio.Corte.obtenerEmbutidos` no tiene ningún caller real (ni Web ni Presentacion) — código muerto y ya roto en origen. No se agregó a `ICorteRepository`; mismo criterio que `backup`/`restaurarBD` (Etapa 9).
+
+**Tablas nuevas**: `embutidos` (49 filas) y `corteporembutido` (180 filas), ambas con RLS estándar (4 predicados), verificadas contra la base viva antes de escribir el schema. `obtenerCorteProveedor`/`obtenerCortesPorProveedor` (2 de los 13 métodos) ya no necesitaron tablas nuevas — leen `corteproveedor`/`compras`/`corteporcompra`, migradas en la Etapa 9.
+
+**No-op documentado**: `agregarCortePorEmbutido` — se replica solo el `INSERT INTO CortePorEmbutido` real; las 8 `UPDATE StockCorteSucursal` (cascada de stock del corte usado en el embutido) son no-op, mismo criterio de siempre (Etapa 6).
+
+**`CortePg.cs` resuelve `Sucursal` con un helper liviano nuevo (`GetSucursalLiviana`)**, mismo patrón ya usado ahí mismo para `Usuario` (`GetUsuarioLiviano`) — se evitó agregar una dependencia `ISucursalRepository` al constructor de `CortePg` (que hubiera sido una firma pública nueva, tocando todos los call-sites existentes) para resolver un solo campo de un solo método.
+
+**Verificado de punta a punta**: build de la solución completa sin errores. Harness `psql`+`ROLLBACK` para `agregarEmbutido` (incluido el `RETURNING idembutido` equivalente al `SELECT TOP 1 ... ORDER BY idEmbutido DESC` del SP original), `agregarCortePorEmbutido` y `anularEmbutido`, sin dejar datos de prueba. Los otros métodos de solo lectura (`buscarEmbutido`, `obtenerLineasEmb`, `obtenerInfoCorte`, `obtenerCorteProveedor`, `obtenerCortesPorProveedor`) se ejecutaron directo contra datos reales sin errores. HTTP con login real (2 usuarios descartables, creados y borrados): `/MigracionPostgres/CompararEmbutido?idEmbutido=1` (tenant 1, con línea de `CortePorEmbutido`) devuelve los mismos campos en ambos motores; logueado como tenant 2, el mismo `idEmbutido=1` (tenant 1) da "no encontrado" en **ambos** motores por igual (RLS).
+
+Sigue pendiente: Movimiento (Etapa 11b) y Stock/Reportes (Etapa 11c) de `Corte.cs`, y el resto de `Venta.cs` (Expendios/Sectores/FacturaElectronica).
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: cambiarSucursalCaja / obtenerPreviewCambioSucursalCaja (Etapa 10)
 
 Última pieza diferida de `CierreCaja.cs` (excluida explícitamente en la Etapa 8 porque dependía de tablas que todavía no estaban migradas). A diferencia de toda la migración anterior, esta operación **no usa stored procedures**: está escrita 100% en C# (`Datos/CierreCaja.cs`) con SQL parametrizado directo — el propio código fue la fuente de verdad, leído completo, sin riesgo de `sp_helptext`/snapshot stale.
 

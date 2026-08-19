@@ -1047,5 +1047,305 @@ namespace DatosPostgres
         }
 
         #endregion
+
+        #region Embutido (Etapa 11a)
+
+        // obtenerEmbutidos NO se implementa aca: no esta en ICorteRepository (ver el comentario
+        // de cabecera del archivo y Contratos/ICorteRepository.cs) -- codigo muerto y el SP real
+        // siempre devuelve 0 filas en SQL Server (INNER JOIN contra StockCorteSucursal, vacia).
+
+        private Sucursal GetSucursalLiviana(int idSucursal)
+        {
+            if (idSucursal <= 0) return null;
+
+            var lista = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT idsucursal, sucursal FROM sucursal WHERE idsucursal = @idSucursal;",
+                dr => new Sucursal
+                {
+                    idSucursal = Convert.ToInt32(dr["idsucursal"]),
+                    SucursalNombre = dr["sucursal"] as string
+                },
+                p => p.AddWithValue("idSucursal", idSucursal));
+
+            return lista.Count > 0 ? lista[0] : null;
+        }
+
+        public DataTable getListaElegirEmbutido()
+        {
+            const string sql = @"
+                SELECT idcorte AS idcorteembutido, codigo AS codigoembutido, corte AS corteembutido
+                FROM corte WHERE ingresorapidoembutido = true ORDER BY codigo;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql);
+        }
+
+        public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql = @"
+                SELECT e.idembutido AS ""Id"", e.fechaembutido AS ""Fecha"", ce.codigo AS ""Codigo"", ce.corte AS ""Corte"",
+                       SUM(cpe.kgutilizados) AS ""Kgs"", s.sucursal AS ""Sucursal"", e.estado AS ""Estado"",
+                       (CASE WHEN length(COALESCE(e.observaciones, '')) <= 20 THEN e.observaciones
+                             ELSE substring(e.observaciones from 1 for 20) || '...' END) AS ""Observaciones"",
+                       e.creado AS ""Creado"", cp.nombre AS ""Creado Por"", e.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por""
+                FROM corte c
+                INNER JOIN corteporembutido cpe ON c.idcorte = cpe.idcorte
+                INNER JOIN embutidos e ON cpe.idembutido = e.idembutido
+                INNER JOIN corte ce ON e.idcorte = ce.idcorte
+                INNER JOIN sucursal s ON e.idsucursal = s.idsucursal
+                LEFT JOIN usuarios cp ON e.creadopor = cp.id
+                LEFT JOIN usuarios ap ON e.actualizadopor = ap.id
+                WHERE e.fechaembutido BETWEEN @fechaDesde AND @fechaHasta
+                  AND ((@idSucursal > 0 AND s.idsucursal = @idSucursal) OR (@idSucursal <= 0 AND e.idsucursal > 0))
+                  AND (ce.codigo::text = @texto OR ce.corte ILIKE '%' || @texto || '%'
+                       OR cp.nombre ILIKE '%' || @texto || '%' OR ap.nombre ILIKE '%' || @texto || '%')
+                GROUP BY e.idembutido, e.fechaembutido, ce.codigo, ce.corte, s.sucursal, e.creado, cp.nombre,
+                         e.actualizado, ap.nombre, e.estado, e.observaciones
+                ORDER BY e.fechaembutido, e.creado DESC;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("idSucursal", idSucursal);
+                p.AddWithValue("texto", texto ?? "");
+                p.AddWithValue("fechaDesde", fechaDesde);
+                p.AddWithValue("fechaHasta", fechaHasta);
+            });
+        }
+
+        public DataTable obtenerUltimosElaboradosDashboard(int cantidad, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql = @"
+                SELECT e.idembutido AS ""Id"", e.fechaembutido AS ""Fecha"", ce.corte AS ""Corte"",
+                       SUM(cpe.kgutilizados) AS ""Kgs"", s.sucursal AS ""Sucursal"", uc.nombre AS ""Usuario""
+                FROM embutidos e
+                INNER JOIN corteporembutido cpe ON cpe.idembutido = e.idembutido
+                INNER JOIN corte ce ON ce.idcorte = e.idcorte
+                INNER JOIN sucursal s ON s.idsucursal = e.idsucursal
+                LEFT JOIN usuarios uc ON uc.id = e.creadopor
+                WHERE e.fechaembutido BETWEEN @fechaDesde AND @fechaHasta
+                  AND ((@idSucursal > 0 AND e.idsucursal = @idSucursal) OR (@idSucursal <= 0 AND e.idsucursal > 0))
+                GROUP BY e.idembutido, e.fechaembutido, ce.corte, s.sucursal, uc.nombre
+                ORDER BY e.fechaembutido DESC, e.idembutido DESC
+                LIMIT @cantidad;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("cantidad", cantidad);
+                p.AddWithValue("idSucursal", idSucursal);
+                p.AddWithValue("fechaDesde", fechaDesde);
+                p.AddWithValue("fechaHasta", fechaHasta);
+            });
+        }
+
+        public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            const string sql = @"
+                SELECT e.idembutido AS ""Id"", e.fechaembutido AS ""Fecha"", ce.codigo AS ""Cod.Emb"", ce.corte AS ""Embutido"",
+                       c.codigo AS ""Codigo"", c.corte AS ""Corte"", cpe.kgutilizados AS ""Kgs"", cpe.pesobalanza AS ""Balanza"",
+                       s.sucursal AS ""Sucursal"", e.estado AS ""Estado"",
+                       (CASE WHEN length(COALESCE(e.observaciones, '')) <= 20 THEN e.observaciones
+                             ELSE substring(e.observaciones from 1 for 20) || '...' END) AS ""Observaciones"",
+                       e.creado AS ""Creado"", cp.nombre AS ""Creado Por"", e.actualizado AS ""Actualizado"", ap.nombre AS ""Actualizado Por""
+                FROM corte c
+                INNER JOIN corteporembutido cpe ON c.idcorte = cpe.idcorte
+                INNER JOIN embutidos e ON cpe.idembutido = e.idembutido
+                INNER JOIN corte ce ON e.idcorte = ce.idcorte
+                INNER JOIN sucursal s ON e.idsucursal = s.idsucursal
+                LEFT JOIN usuarios cp ON e.creadopor = cp.id
+                LEFT JOIN usuarios ap ON e.actualizadopor = ap.id
+                WHERE e.fechaembutido BETWEEN @fechaDesde AND @fechaHasta
+                  AND ((@idSucursal > 0 AND s.idsucursal = @idSucursal) OR e.idsucursal > 0)
+                  AND (e.idembutido::text = @texto OR ce.codigo::text = @texto OR ce.corte ILIKE '%' || @texto || '%'
+                       OR c.codigo::text = @texto OR c.corte ILIKE '%' || @texto || '%'
+                       OR cp.nombre ILIKE '%' || @texto || '%' OR ap.nombre ILIKE '%' || @texto || '%')
+                ORDER BY e.fechaembutido DESC;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("idSucursal", idSucursal);
+                p.AddWithValue("texto", texto ?? "");
+                p.AddWithValue("fechaDesde", fechaDesde);
+                p.AddWithValue("fechaHasta", fechaHasta);
+            });
+        }
+
+        // Sin trocear en lotes de 500 (arrays nativos de Postgres, mismo criterio ya aplicado en
+        // Etapa 9 con obtenerPesajesVinculadosPorDestinos).
+        public HashSet<int> ObtenerIdsEmbutidosIngresoRapido(IEnumerable<int> idsEmbutidos)
+        {
+            var resultado = new HashSet<int>();
+            var ids = (idsEmbutidos ?? Enumerable.Empty<int>()).Where(x => x > 0).Distinct().ToArray();
+            if (ids.Length == 0) return resultado;
+
+            var filas = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT e.idembutido FROM embutidos e INNER JOIN corte c ON c.idcorte = e.idcorte " +
+                "WHERE c.ingresorapidoembutido = true AND e.idembutido = ANY(@ids);",
+                dr => Convert.ToInt32(dr["idembutido"]),
+                p => p.AddWithValue("ids", ids));
+
+            foreach (int id in filas) resultado.Add(id);
+            return resultado;
+        }
+
+        public DataTable obtenerInfoCorte(int idCorte)
+        {
+            const string sql = @"
+                SELECT cp.idcorte, cp.codigo, cp.corte, cp.preciokg, cp.nivel, cp.independiente, cp.ingresorapidoembutido,
+                       cp.habilitado, cp.encierrestock, cp.tipo, cp.idcortemaestro, cm.corte AS cortemaestro, cp.porcentaje,
+                       cp.porcentajehueso, cp.desvioestandar, cp.promedio, cp.alicuotaiva, cp.idmarca, p.identificacion AS marca
+                FROM corte cp
+                LEFT JOIN personas p ON cp.idmarca = p.idpersona
+                LEFT JOIN corte cm ON cp.idcortemaestro = cm.idcorte
+                WHERE cp.idcorte = @idCorte;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idCorte", idCorte));
+        }
+
+        public DataTable obtenerCorteProveedor(int idCorte)
+        {
+            const string sql = @"
+                SELECT p.razonsocial, cpr.ultimoprecio, cpr.fechaultimacompra
+                FROM corte c
+                INNER JOIN corteproveedor cpr ON c.idcorte = cpr.idcorte
+                INNER JOIN personas p ON cpr.idproveedor = p.idpersona
+                WHERE cpr.idcorte = @idCorte
+                ORDER BY cpr.fechaultimacompra DESC;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idCorte", idCorte));
+        }
+
+        public DataTable obtenerCortesPorProveedor(int idProveedor)
+        {
+            const string sql = @"
+                SELECT DISTINCT cpc.idcorte
+                FROM compras c
+                INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
+                WHERE c.idproveedor = @idProveedor AND COALESCE(c.estado, '') = '';";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idProveedor", idProveedor));
+        }
+
+        public Embutido findEmbutidoById(int idEmbutido)
+        {
+            var lista = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT * FROM embutidos WHERE idembutido = @idEmbutido;",
+                dr =>
+                {
+                    var o = new Embutido();
+                    o.IdEmbutido = Convert.ToInt32(dr["idembutido"]);
+                    o.FechaEmbutido = Convert.ToDateTime(dr["fechaembutido"]);
+                    o.Corte = findCorteById(Convert.ToInt32(dr["idcorte"]), true);
+                    o.Sucursal = GetSucursalLiviana(Convert.ToInt32(dr["idsucursal"]));
+                    o.Observaciones = GetString(dr, "observaciones");
+                    o.Estado = GetString(dr, "estado");
+                    o.Creado = Convert.ToDateTime(dr["creado"]);
+                    o.Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]);
+
+                    int idCreadoPor = dr["creadopor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["creadopor"]);
+                    int idActualizadoPor = dr["actualizadopor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["actualizadopor"]);
+                    o.CreadoPor = idCreadoPor > 0 ? GetUsuarioLiviano(idCreadoPor) : null;
+                    o.ActualizadoPor = idActualizadoPor > 0 ? GetUsuarioLiviano(idActualizadoPor) : null;
+
+                    return o;
+                },
+                p => p.AddWithValue("idEmbutido", idEmbutido));
+
+            if (lista.Count == 0) return null;
+
+            var emb = lista[0];
+            emb.CortesEnEmbutido = ObtenerCortesEnEmbutido(emb);
+            return emb;
+        }
+
+        private List<CortePorEmbutido> ObtenerCortesEnEmbutido(Embutido oEmbutidoParam)
+        {
+            return DbPg.Reader(_connectionString, _idEmpresa,
+                @"SELECT cpe.idcorteembutido, cpe.idembutido, cpe.idcorte, cpe.kgutilizados, cpe.pesobalanza, c.codigo, c.corte, c.tipo
+                  FROM corteporembutido cpe
+                  INNER JOIN corte c ON c.idcorte = cpe.idcorte
+                  WHERE cpe.idembutido = @idEmbutido;",
+                dr => new CortePorEmbutido
+                {
+                    IdCorteEmbutido = Convert.ToInt32(dr["idcorteembutido"]),
+                    Embutido = oEmbutidoParam,
+                    Corte = new Corte
+                    {
+                        IdCorte = Convert.ToInt32(dr["idcorte"]),
+                        Codigo = dr["codigo"] == DBNull.Value ? 0L : Convert.ToInt64(dr["codigo"]),
+                        CorteDesc = GetString(dr, "corte"),
+                        Tipo = GetString(dr, "tipo")
+                    },
+                    KgUtilizado = GetFloat(dr, "kgutilizados"),
+                    PesoBalanza = GetBool(dr, "pesobalanza")
+                },
+                p => p.AddWithValue("idEmbutido", oEmbutidoParam.idEmbutido));
+        }
+
+        public int agregarEmbutido(Embutido oEmbutido)
+        {
+            if (oEmbutido == null) throw new ArgumentNullException(nameof(oEmbutido));
+
+            const string sql = @"
+                INSERT INTO embutidos (fechaembutido, idcorte, idsucursal, estado, observaciones, creado, creadopor, idempresa)
+                VALUES (@fechaEmbutido, @idCorte, @idSucursal, '', @observaciones, now(), @creadoPor, @idEmpresa)
+                RETURNING idembutido;";
+
+            object obj = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("fechaEmbutido", oEmbutido.fechaEmbutido);
+                p.AddWithValue("idCorte", oEmbutido.corte.idCorte);
+                p.AddWithValue("idSucursal", oEmbutido.sucursal.IdSucursal);
+                p.AddWithValue("creadoPor", oEmbutido.CreadoPor.Id);
+                p.AddWithValue("observaciones", oEmbutido.observaciones ?? "");
+                p.AddWithValue("idEmpresa", _idEmpresa);
+            });
+
+            return obj == null || obj == DBNull.Value ? 0 : Convert.ToInt32(obj);
+        }
+
+        public void anularEmbutido(Embutido oEmbutidoE)
+        {
+            if (oEmbutidoE == null) throw new ArgumentNullException(nameof(oEmbutidoE));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE embutidos SET estado = 'Anulado', actualizado = now(), actualizadopor = @actualizadoPor WHERE idembutido = @idEmbutido;",
+                p =>
+                {
+                    p.AddWithValue("idEmbutido", oEmbutidoE.idEmbutido);
+                    p.AddWithValue("actualizadoPor", oEmbutidoE.ActualizadoPor.Id);
+                });
+        }
+
+        public DataTable obtenerCortesPorEmbutidos(Embutido oEmbutidoE)
+        {
+            const string sql = @"
+                SELECT cpe.idembutido, cpe.idcorte, c.codigo, c.corte, cpe.kgutilizados, cpe.pesobalanza
+                FROM corte c
+                INNER JOIN corteporembutido cpe ON c.idcorte = cpe.idcorte
+                INNER JOIN embutidos e ON cpe.idembutido = e.idembutido
+                WHERE e.idembutido = @idEmbutido;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("idEmbutido", oEmbutidoE.idEmbutido));
+        }
+
+        // Solo replica la parte real del SP (INSERT INTO CortePorEmbutido) -- las 8 UPDATE
+        // StockCorteSucursal (cascada de stock del corte usado en el embutido) son no-op,
+        // StockCorteSucursal nunca se porta a Postgres (Etapa 6).
+        public void agregarCortePorEmbutido(CortePorEmbutido oCortePorEmbutido)
+        {
+            if (oCortePorEmbutido == null) throw new ArgumentNullException(nameof(oCortePorEmbutido));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO corteporembutido (idembutido, idcorte, kgutilizados, pesobalanza, idempresa)
+                VALUES (@idEmbutido, @idCorte, @kgUtilizados, @pesoBalanza, @idEmpresa);", p =>
+            {
+                p.AddWithValue("idEmbutido", oCortePorEmbutido.embutido.idEmbutido);
+                p.AddWithValue("idCorte", oCortePorEmbutido.corte.idCorte);
+                p.AddWithValue("kgUtilizados", oCortePorEmbutido.kgUtilizado);
+                p.AddWithValue("pesoBalanza", oCortePorEmbutido.PesoBalanza);
+                p.AddWithValue("idEmpresa", _idEmpresa);
+            });
+        }
+
+        #endregion
     }
 }
