@@ -1,0 +1,90 @@
+@model Web.Models.ComparacionPreviewCambioSucursalCajaVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar preview cambio de sucursal, CierreCaja #@ViewBag.IdCierreBuscado</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto (Etapa 10) -- solo lectura, no muta datos. Sucursal nueva probada: @ViewBag.IdSucursalNuevaBuscada. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null)
+                {
+                    <p class="text-muted mb-0">No se encontro la caja (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>PuedeEjecutar</th><td>@Model.SqlServer.PuedeEjecutar</td></tr>
+                        <tr><th>Mensaje</th><td>@Model.SqlServer.Mensaje</td></tr>
+                        <tr><th>IdCierreCaja</th><td>@Model.SqlServer.IdCierreCaja</td></tr>
+                        <tr><th>IdCierreCajaNuevo</th><td>@Model.SqlServer.IdCierreCajaNuevo</td></tr>
+                        <tr><th>SucursalActual</th><td>@Model.SqlServer.SucursalActual (id @Model.SqlServer.IdSucursalActual)</td></tr>
+                        <tr><th>SucursalNueva</th><td>@Model.SqlServer.SucursalNueva (id @Model.SqlServer.IdSucursalNueva)</td></tr>
+                        <tr><th>UsuarioCaja</th><td>@Model.SqlServer.UsuarioCaja (id @Model.SqlServer.IdUsuarioCaja)</td></tr>
+                        <tr><th>TieneCajaAbiertaEnDestino</th><td>@Model.SqlServer.TieneCajaAbiertaEnDestino</td></tr>
+                        <tr>
+                            <th>Tablas</th>
+                            <td>
+                                @foreach (var t in Model.SqlServer.Tablas)
+                                {
+                                    <div>@t.Tabla: @t.Cantidad</div>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null)
+                {
+                    <p class="text-muted mb-0">No se encontro la caja (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>PuedeEjecutar</th><td>@Model.Postgres.PuedeEjecutar</td></tr>
+                        <tr><th>Mensaje</th><td>@Model.Postgres.Mensaje</td></tr>
+                        <tr><th>IdCierreCaja</th><td>@Model.Postgres.IdCierreCaja</td></tr>
+                        <tr><th>IdCierreCajaNuevo</th><td>@Model.Postgres.IdCierreCajaNuevo</td></tr>
+                        <tr><th>SucursalActual</th><td>@Model.Postgres.SucursalActual (id @Model.Postgres.IdSucursalActual)</td></tr>
+                        <tr><th>SucursalNueva</th><td>@Model.Postgres.SucursalNueva (id @Model.Postgres.IdSucursalNueva)</td></tr>
+                        <tr><th>UsuarioCaja</th><td>@Model.Postgres.UsuarioCaja (id @Model.Postgres.IdUsuarioCaja)</td></tr>
+                        <tr><th>TieneCajaAbiertaEnDestino</th><td>@Model.Postgres.TieneCajaAbiertaEnDestino</td></tr>
+                        <tr>
+                            <th>Tablas</th>
+                            <td>
+                                @foreach (var t in Model.Postgres.Tablas)
+                                {
+                                    <div>@t.Tabla: @t.Cantidad</div>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">IdCierre:</label>
+    <input type="number" name="idCierre" class="form-control mr-2" style="width:120px" value="@ViewBag.IdCierreBuscado" />
+    <label class="mr-2">Sucursal nueva:</label>
+    <input type="number" name="idSucursalNueva" class="form-control mr-2" style="width:120px" value="@ViewBag.IdSucursalNuevaBuscada" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

@@ -4,10 +4,10 @@ using System.Data;
 
 namespace Contratos
 {
-    // Espeja SOLO el bloque CierreCaja/EgresosCaja/TiposEgresoCaja de Datos.CierreCaja.
-    // cambiarSucursalCaja/obtenerPreviewCambioSucursalCaja (operacion cross-cutting que toca
-    // Ventas/Compras/Pagos/MovCtaCte/Expendios/TemporalLineaVenta a la vez) quedan fuera de
-    // esta interfaz -- se agregan en una etapa futura. Ver docs/DECISIONS.md, Etapa 8.
+    // Espeja Datos.CierreCaja completo: CierreCaja/EgresosCaja/TiposEgresoCaja (Etapa 8) mas
+    // cambiarSucursalCaja/obtenerPreviewCambioSucursalCaja (Etapa 10, operacion cross-cutting
+    // que toca Ventas/Compras/CortePorCompra/MediaRes/Pagos/MovCtaCte/Expendios/
+    // TemporalLineaVenta ademas de CierreCaja). Ver docs/DECISIONS.md.
     public interface ICierreCajaRepository
     {
         DataTable findCierreCaja(Entidades.CierreCaja oCierreParam, Entidades.CierreCaja.tipoBusqueda tipoBusquedaParam, string texto, DateTime? fechaDesde);
@@ -27,5 +27,8 @@ namespace Contratos
         Entidades.EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID);
         float getMontoEgresosCajaVendedor(Entidades.CierreCaja oCierre);
         DataTable getEgresosCajaVendedor(Entidades.CierreCaja oCierre);
+
+        CambioSucursalCajaPreview obtenerPreviewCambioSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva);
+        CambioSucursalCajaResultado cambiarSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva, int idUsuarioEjecutor, string usuarioEjecutor);
     }
 }

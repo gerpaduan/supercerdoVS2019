@@ -597,5 +597,393 @@ namespace DatosPostgres
         }
 
         #endregion
+
+        #region CambioSucursalCaja (Etapa 10)
+
+        // Traduccion mecanica de Datos.CierreCaja.ConstruirPlanCambioSucursalCaja/
+        // cambiarSucursalCaja/obtenerPreviewCambioSucursalCaja -- codigo C# puro en el original
+        // (sin SPs), asi que este archivo es la fuente de verdad, ya leida completa.
+        //
+        // Unica divergencia de comportamiento (decidida en la Etapa 8, se concreta aca):
+        // cierrecaja.id en Postgres es autoincremental, no namespaced por sucursal como en SQL
+        // Server -- no hay nada que recalcular. Esta version solo actualiza idsucursal en
+        // cierrecaja, nunca toca id. IdCierreCajaNuevo en el preview es siempre el mismo
+        // IdCierreCaja (no hay renumeracion del lado Postgres).
+        //
+        // AuditoriaCambioSucursalCaja: en SQL Server el original la crea de forma perezosa (DDL
+        // idempotente) la primera vez que se ejecuta un cambio real. En Postgres se provisiona
+        // de entrada en la migracion de schema de esta etapa -- mismo estado final, sin DDL en
+        // tiempo de ejecucion.
+        private sealed class CambioSucursalCajaPlan
+        {
+            public Contratos.CambioSucursalCajaPreview Preview { get; set; }
+            public List<int> VentasIds { get; set; } = new List<int>();
+            public List<int> ComprasIds { get; set; } = new List<int>();
+            public List<int> PagosIds { get; set; } = new List<int>();
+            public List<int> EgresosIds { get; set; } = new List<int>();
+            public List<int> MovimientosIds { get; set; } = new List<int>();
+            public List<int> ExpendiosIds { get; set; } = new List<int>();
+            public List<int> TemporalesIds { get; set; } = new List<int>();
+            public int CortePorCompraCantidad { get; set; }
+            public int MediaResCantidad { get; set; }
+        }
+
+        public Contratos.CambioSucursalCajaPreview obtenerPreviewCambioSucursalCaja(CierreCaja cierreCaja, int idSucursalNueva)
+        {
+            if (cierreCaja == null) throw new ArgumentNullException(nameof(cierreCaja));
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    var plan = ConstruirPlanCambioSucursalCaja(con, tx, cierreCaja, idSucursalNueva);
+                    tx.Commit();
+                    return plan.Preview;
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        public Contratos.CambioSucursalCajaResultado cambiarSucursalCaja(CierreCaja cierreCaja, int idSucursalNueva, int idUsuarioEjecutor, string usuarioEjecutor)
+        {
+            if (cierreCaja == null) throw new ArgumentNullException(nameof(cierreCaja));
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    var plan = ConstruirPlanCambioSucursalCaja(con, tx, cierreCaja, idSucursalNueva);
+                    if (!plan.Preview.PuedeEjecutar)
+                    {
+                        tx.Rollback();
+                        return new Contratos.CambioSucursalCajaResultado
+                        {
+                            Ok = false,
+                            Mensaje = plan.Preview.Mensaje,
+                            Tablas = plan.Preview.Tablas
+                        };
+                    }
+
+                    var counts = new List<Contratos.CambioSucursalCajaTabla>
+                    {
+                        new Contratos.CambioSucursalCajaTabla
+                        {
+                            Tabla = "CierreCaja",
+                            Cantidad = EjecutarNonQueryCambioSucursal(con, tx,
+                                "UPDATE cierrecaja SET idsucursal = @nuevaSucursal WHERE idempresa = @idEmpresa AND id = @idCierre AND idsucursal = @sucursalActual;",
+                                cmd =>
+                                {
+                                    cmd.Parameters.AddWithValue("nuevaSucursal", plan.Preview.IdSucursalNueva);
+                                    cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                                    cmd.Parameters.AddWithValue("idCierre", plan.Preview.IdCierreCaja);
+                                    cmd.Parameters.AddWithValue("sucursalActual", plan.Preview.IdSucursalActual);
+                                })
+                        }
+                    };
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "Ventas", Cantidad = ActualizarIdsCambioSucursal(con, tx, "ventas", "idventa", plan.VentasIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "Compras", Cantidad = ActualizarIdsCambioSucursal(con, tx, "compras", "idcompra", plan.ComprasIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "CortePorCompra", Cantidad = ActualizarPorComprasCambioSucursal(con, tx, "corteporcompra", plan.ComprasIds, plan.Preview.IdSucursalNueva, plan.Preview.IdSucursalActual) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "MediaRes", Cantidad = ActualizarPorComprasCambioSucursal(con, tx, "mediares", plan.ComprasIds, plan.Preview.IdSucursalNueva, plan.Preview.IdSucursalActual) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "Pagos", Cantidad = ActualizarIdsCambioSucursal(con, tx, "pagos", "id", plan.PagosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "EgresosCaja", Cantidad = ActualizarIdsCambioSucursal(con, tx, "egresoscaja", "id", plan.EgresosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "MovCtaCte", Cantidad = ActualizarIdsCambioSucursal(con, tx, "movctacte", "id", plan.MovimientosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "Expendios", Cantidad = ActualizarIdsCambioSucursal(con, tx, "expendios", "idexpendio", plan.ExpendiosIds, plan.Preview.IdSucursalNueva) });
+                    counts.Add(new Contratos.CambioSucursalCajaTabla { Tabla = "TemporalLineaVenta", Cantidad = ActualizarIdsCambioSucursal(con, tx, "temporallineaventa", "id", plan.TemporalesIds, plan.Preview.IdSucursalNueva) });
+
+                    InsertarAuditoriaCambioSucursalCaja(con, tx, plan, counts, idUsuarioEjecutor, usuarioEjecutor);
+
+                    tx.Commit();
+
+                    return new Contratos.CambioSucursalCajaResultado
+                    {
+                        Ok = true,
+                        Mensaje = "La sucursal de la caja y sus operaciones asociadas se actualizó correctamente.",
+                        Tablas = counts
+                    };
+                }
+                catch (Exception ex)
+                {
+                    try { tx.Rollback(); } catch { }
+                    return new Contratos.CambioSucursalCajaResultado { Ok = false, Mensaje = ex.Message };
+                }
+            }
+        }
+
+        private CambioSucursalCajaPlan ConstruirPlanCambioSucursalCaja(NpgsqlConnection con, NpgsqlTransaction tx, CierreCaja cierreCaja, int idSucursalNueva)
+        {
+            var preview = new Contratos.CambioSucursalCajaPreview
+            {
+                PuedeEjecutar = false,
+                Mensaje = "",
+                IdCierreCaja = cierreCaja.Id,
+                IdSucursalActual = cierreCaja.Sucursal != null ? cierreCaja.Sucursal.IdSucursal : 0,
+                SucursalActual = cierreCaja.Sucursal != null ? cierreCaja.Sucursal.SucursalNombre : "",
+                IdSucursalNueva = idSucursalNueva,
+                IdUsuarioCaja = cierreCaja.UsuarioInicio != null ? cierreCaja.UsuarioInicio.Id : 0,
+                UsuarioCaja = cierreCaja.UsuarioInicio != null ? cierreCaja.UsuarioInicio.Nombre : "",
+                FechaDesde = cierreCaja.FechaHoraInicio ?? DateTime.Now,
+                FechaHasta = cierreCaja.FechaHoraCierre ?? DateTime.Now
+            };
+
+            var plan = new CambioSucursalCajaPlan { Preview = preview };
+
+            if (preview.IdCierreCaja <= 0 || preview.IdSucursalActual <= 0 || preview.IdUsuarioCaja <= 0)
+            {
+                preview.Mensaje = "No se pudo determinar la caja seleccionada.";
+                return plan;
+            }
+
+            if (preview.IdSucursalNueva <= 0)
+            {
+                preview.Mensaje = "Seleccione la nueva sucursal.";
+                return plan;
+            }
+
+            if (preview.IdSucursalNueva == preview.IdSucursalActual)
+            {
+                preview.Mensaje = "La sucursal nueva debe ser distinta de la sucursal actual.";
+                return plan;
+            }
+
+            // Sin renumeracion en Postgres (id autoincremental, ver cabecera de la region).
+            preview.IdCierreCajaNuevo = preview.IdCierreCaja;
+
+            preview.SucursalNueva = ObtenerTextoCambioSucursal(con, tx,
+                "SELECT sucursal FROM sucursal WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal LIMIT 1;",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                    cmd.Parameters.AddWithValue("idSucursal", preview.IdSucursalNueva);
+                });
+
+            if (string.IsNullOrWhiteSpace(preview.SucursalNueva))
+            {
+                preview.Mensaje = "La sucursal destino no existe.";
+                return plan;
+            }
+
+            int idCajaAbiertaDestino = ObtenerEnteroCambioSucursal(con, tx,
+                "SELECT id FROM cierrecaja WHERE idempresa = @idEmpresa AND usuarioinicio = @usuarioInicio AND idsucursal = @idSucursal AND usuariocierre = '0' AND id <> @idCierre ORDER BY id DESC LIMIT 1;",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                    cmd.Parameters.AddWithValue("usuarioInicio", preview.IdUsuarioCaja.ToString());
+                    cmd.Parameters.AddWithValue("idSucursal", preview.IdSucursalNueva);
+                    cmd.Parameters.AddWithValue("idCierre", preview.IdCierreCaja);
+                });
+
+            if (idCajaAbiertaDestino > 0)
+            {
+                preview.TieneCajaAbiertaEnDestino = true;
+                preview.Mensaje = "El usuario ya tiene una caja abierta en la sucursal seleccionada. Debe cerrarla antes de mover los datos de la caja cargada en la sucursal incorrecta.";
+                return plan;
+            }
+
+            plan.VentasIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT idventa FROM ventas WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND idvendedor = @idUsuario AND fechaventa BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.ComprasIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT idcompra FROM compras WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND creadopor = @idUsuario AND fechacompra BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.PagosIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT id FROM pagos WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND creadopor = @idUsuario AND fecha BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.ExpendiosIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT idexpendio FROM expendios WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND idvendedor = @idUsuario AND fechaexpendio BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.TemporalesIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT id FROM temporallineaventa WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND idvendedor = @idUsuario AND fechainiciopesada BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));
+
+            plan.EgresosIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT DISTINCT id FROM egresoscaja WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND fechahora BETWEEN @fechaDesde AND @fechaHasta " +
+                "AND (creadopor = @idUsuario OR idcompra = ANY(@comprasIds) OR (tabla = 'Ventas' AND idtabla = ANY(@ventasIds)) OR (tabla = 'Compras' AND idtabla = ANY(@comprasIds)) OR (tabla = 'Pagos' AND idtabla = ANY(@pagosIds)));",
+                cmd =>
+                {
+                    AgregarParametrosBaseCambioSucursal(cmd, preview);
+                    cmd.Parameters.AddWithValue("comprasIds", plan.ComprasIds.ToArray());
+                    cmd.Parameters.AddWithValue("ventasIds", plan.VentasIds.ToArray());
+                    cmd.Parameters.AddWithValue("pagosIds", plan.PagosIds.ToArray());
+                });
+
+            plan.MovimientosIds = ObtenerIdsCambioSucursal(con, tx,
+                "SELECT DISTINCT id FROM movctacte WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND fecha BETWEEN @fechaDesde AND @fechaHasta " +
+                "AND (creadopor = @idUsuario OR (tabla = 'Ventas' AND idtabla = ANY(@ventasIds)) OR (tabla = 'Compras' AND idtabla = ANY(@comprasIds)) OR (tabla = 'Pagos' AND idtabla = ANY(@pagosIds)));",
+                cmd =>
+                {
+                    AgregarParametrosBaseCambioSucursal(cmd, preview);
+                    cmd.Parameters.AddWithValue("ventasIds", plan.VentasIds.ToArray());
+                    cmd.Parameters.AddWithValue("comprasIds", plan.ComprasIds.ToArray());
+                    cmd.Parameters.AddWithValue("pagosIds", plan.PagosIds.ToArray());
+                });
+
+            plan.CortePorCompraCantidad = ObtenerCantidadPorComprasCambioSucursal(con, tx, "corteporcompra", plan.ComprasIds, preview.IdSucursalActual);
+            plan.MediaResCantidad = ObtenerCantidadPorComprasCambioSucursal(con, tx, "mediares", plan.ComprasIds, preview.IdSucursalActual);
+
+            preview.Tablas = new List<Contratos.CambioSucursalCajaTabla>
+            {
+                new Contratos.CambioSucursalCajaTabla { Tabla = "CierreCaja", Cantidad = 1 },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "Ventas", Cantidad = plan.VentasIds.Count },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "Compras", Cantidad = plan.ComprasIds.Count },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "CortePorCompra", Cantidad = plan.CortePorCompraCantidad },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "MediaRes", Cantidad = plan.MediaResCantidad },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "Pagos", Cantidad = plan.PagosIds.Count },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "EgresosCaja", Cantidad = plan.EgresosIds.Count },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "MovCtaCte", Cantidad = plan.MovimientosIds.Count },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "Expendios", Cantidad = plan.ExpendiosIds.Count },
+                new Contratos.CambioSucursalCajaTabla { Tabla = "TemporalLineaVenta", Cantidad = plan.TemporalesIds.Count }
+            };
+
+            preview.PuedeEjecutar = true;
+            preview.Mensaje = "Vista previa generada correctamente.";
+            return plan;
+        }
+
+        private void AgregarParametrosBaseCambioSucursal(NpgsqlCommand cmd, Contratos.CambioSucursalCajaPreview preview)
+        {
+            cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+            cmd.Parameters.AddWithValue("idSucursal", preview.IdSucursalActual);
+            cmd.Parameters.AddWithValue("idUsuario", preview.IdUsuarioCaja);
+            cmd.Parameters.AddWithValue("fechaDesde", preview.FechaDesde);
+            cmd.Parameters.AddWithValue("fechaHasta", preview.FechaHasta);
+        }
+
+        private List<int> ObtenerIdsCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string sql, Action<NpgsqlCommand> setParams)
+        {
+            var ids = new List<int>();
+            using (var cmd = new NpgsqlCommand(sql, con, tx))
+            {
+                setParams?.Invoke(cmd);
+                using (var dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        if (dr[0] != DBNull.Value)
+                            ids.Add(Convert.ToInt32(dr[0]));
+                    }
+                }
+            }
+            return ids;
+        }
+
+        private int ObtenerEnteroCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string sql, Action<NpgsqlCommand> setParams)
+        {
+            using (var cmd = new NpgsqlCommand(sql, con, tx))
+            {
+                setParams?.Invoke(cmd);
+                object obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? 0 : Convert.ToInt32(obj);
+            }
+        }
+
+        private string ObtenerTextoCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string sql, Action<NpgsqlCommand> setParams)
+        {
+            using (var cmd = new NpgsqlCommand(sql, con, tx))
+            {
+                setParams?.Invoke(cmd);
+                object obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? "" : Convert.ToString(obj);
+            }
+        }
+
+        private int EjecutarNonQueryCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string sql, Action<NpgsqlCommand> setParams)
+        {
+            using (var cmd = new NpgsqlCommand(sql, con, tx))
+            {
+                setParams?.Invoke(cmd);
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private int ActualizarIdsCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string tabla, string campoId, List<int> ids, int idSucursalNueva)
+        {
+            if (ids == null || ids.Count == 0) return 0;
+
+            using (var cmd = new NpgsqlCommand(
+                "UPDATE " + tabla + " SET idsucursal = @idSucursalNueva WHERE idempresa = @idEmpresa AND " + campoId + " = ANY(@ids);", con, tx))
+            {
+                cmd.Parameters.AddWithValue("idSucursalNueva", idSucursalNueva);
+                cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                cmd.Parameters.AddWithValue("ids", ids.ToArray());
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private int ActualizarPorComprasCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string tabla, List<int> comprasIds, int idSucursalNueva, int idSucursalActual)
+        {
+            if (comprasIds == null || comprasIds.Count == 0) return 0;
+
+            using (var cmd = new NpgsqlCommand(
+                "UPDATE " + tabla + " SET idsucursal = @idSucursalNueva WHERE idempresa = @idEmpresa AND idsucursal = @idSucursalActual AND idcompra = ANY(@ids);", con, tx))
+            {
+                cmd.Parameters.AddWithValue("idSucursalNueva", idSucursalNueva);
+                cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                cmd.Parameters.AddWithValue("idSucursalActual", idSucursalActual);
+                cmd.Parameters.AddWithValue("ids", comprasIds.ToArray());
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
+        private int ObtenerCantidadPorComprasCambioSucursal(NpgsqlConnection con, NpgsqlTransaction tx, string tabla, List<int> comprasIds, int idSucursalActual)
+        {
+            if (comprasIds == null || comprasIds.Count == 0) return 0;
+
+            using (var cmd = new NpgsqlCommand(
+                "SELECT COUNT(1) FROM " + tabla + " WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND idcompra = ANY(@ids);", con, tx))
+            {
+                cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                cmd.Parameters.AddWithValue("idSucursal", idSucursalActual);
+                cmd.Parameters.AddWithValue("ids", comprasIds.ToArray());
+                object obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? 0 : Convert.ToInt32(obj);
+            }
+        }
+
+        private void InsertarAuditoriaCambioSucursalCaja(NpgsqlConnection con, NpgsqlTransaction tx, CambioSucursalCajaPlan plan, List<Contratos.CambioSucursalCajaTabla> counts, int idUsuarioEjecutor, string usuarioEjecutor)
+        {
+            string detalle = "Esta accion corrigio la sucursal de la caja y de las operaciones asociadas." + Environment.NewLine +
+                             "Caja anterior: " + plan.Preview.IdCierreCaja + Environment.NewLine +
+                             "Caja nueva: " + plan.Preview.IdCierreCajaNuevo + Environment.NewLine +
+                             "Sucursal anterior: " + plan.Preview.SucursalActual + " (" + plan.Preview.IdSucursalActual + ")" + Environment.NewLine +
+                             "Sucursal nueva: " + plan.Preview.SucursalNueva + " (" + plan.Preview.IdSucursalNueva + ")" + Environment.NewLine +
+                             "Usuario caja: " + plan.Preview.UsuarioCaja + " (" + plan.Preview.IdUsuarioCaja + ")" + Environment.NewLine +
+                             "Rango: " + plan.Preview.FechaDesde.ToString("dd/MM/yyyy HH:mm:ss") + " - " + plan.Preview.FechaHasta.ToString("dd/MM/yyyy HH:mm:ss");
+
+            foreach (var item in counts)
+                detalle += Environment.NewLine + item.Tabla + ": " + item.Cantidad;
+
+            using (var cmd = new NpgsqlCommand(@"
+                INSERT INTO auditoriacambiosucursalcaja (idempresa, idcierrecaja, idusuarioejecutor, usuarioejecutor, idusuariocaja, usuariocaja,
+                    idsucursalanterior, sucursalanterior, idsucursalnueva, sucursalnueva, fechadesde, fechahasta, fechacambio, detalle)
+                VALUES (@idEmpresa, @idCierreCaja, @idUsuarioEjecutor, @usuarioEjecutor, @idUsuarioCaja, @usuarioCaja,
+                    @idSucursalAnterior, @sucursalAnterior, @idSucursalNueva, @sucursalNueva, @fechaDesde, @fechaHasta, @fechaCambio, @detalle);", con, tx))
+            {
+                cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                cmd.Parameters.AddWithValue("idCierreCaja", plan.Preview.IdCierreCaja);
+                cmd.Parameters.AddWithValue("idUsuarioEjecutor", idUsuarioEjecutor);
+                cmd.Parameters.AddWithValue("usuarioEjecutor", usuarioEjecutor ?? "");
+                cmd.Parameters.AddWithValue("idUsuarioCaja", plan.Preview.IdUsuarioCaja);
+                cmd.Parameters.AddWithValue("usuarioCaja", plan.Preview.UsuarioCaja ?? "");
+                cmd.Parameters.AddWithValue("idSucursalAnterior", plan.Preview.IdSucursalActual);
+                cmd.Parameters.AddWithValue("sucursalAnterior", plan.Preview.SucursalActual ?? "");
+                cmd.Parameters.AddWithValue("idSucursalNueva", plan.Preview.IdSucursalNueva);
+                cmd.Parameters.AddWithValue("sucursalNueva", plan.Preview.SucursalNueva ?? "");
+                cmd.Parameters.AddWithValue("fechaDesde", plan.Preview.FechaDesde);
+                cmd.Parameters.AddWithValue("fechaHasta", plan.Preview.FechaHasta);
+                cmd.Parameters.AddWithValue("fechaCambio", DateTime.Now);
+                cmd.Parameters.AddWithValue("detalle", detalle);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        #endregion
     }
 }

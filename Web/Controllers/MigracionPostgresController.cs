@@ -298,5 +298,49 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararPreviewCambioSucursalCaja(int idCierre, int idSucursalNueva)
+        {
+            // Solo compara obtenerPreviewCambioSucursalCaja (de solo lectura). cambiarSucursalCaja
+            // en si NO se compara aca -- es una operacion mutante (mueve datos reales de
+            // sucursal), verificada exclusivamente con harness psql+ROLLBACK (Etapa 10).
+            var cierreSqlServer = new Negocio.CierreCaja(empresa, param);
+            var cajaSqlServer = cierreSqlServer.findByIdOrLast(new Entidades.CierreCaja { Id = idCierre }, Entidades.CierreCaja.tipoBusqueda.FindById, "");
+            var resultadoSqlServer = cajaSqlServer != null && cajaSqlServer.Id > 0
+                ? cierreSqlServer.obtenerPreviewCambioSucursalCaja(cajaSqlServer, idSucursalNueva)
+                : null;
+
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgres = new DatosPostgres.CierreCajaPg(connString, empresa.IdEmpresa);
+            var cierrePostgres = new Negocio.CierreCaja(repoPostgres, empresa, param);
+
+            Contratos.CambioSucursalCajaPreview resultadoPostgres = null;
+            string errorPostgres = null;
+            try
+            {
+                var cajaPostgres = cierrePostgres.findByIdOrLast(new Entidades.CierreCaja { Id = idCierre }, Entidades.CierreCaja.tipoBusqueda.FindById, "");
+                if (cajaPostgres != null && cajaPostgres.Id > 0)
+                    resultadoPostgres = cierrePostgres.obtenerPreviewCambioSucursalCaja(cajaPostgres, idSucursalNueva);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar preview cambio de sucursal, CierreCaja #" + idCierre;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdCierreBuscado = idCierre;
+            ViewBag.IdSucursalNuevaBuscada = idSucursalNueva;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararPreviewCambioSucursalCaja.cshtml", new Web.Models.ComparacionPreviewCambioSucursalCajaVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

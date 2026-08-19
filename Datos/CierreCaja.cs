@@ -4,6 +4,9 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using Utilidades;
+using CambioSucursalCajaTabla = Contratos.CambioSucursalCajaTabla;
+using CambioSucursalCajaPreview = Contratos.CambioSucursalCajaPreview;
+using CambioSucursalCajaResultado = Contratos.CambioSucursalCajaResultado;
 
 namespace Datos
 {
@@ -11,37 +14,8 @@ namespace Datos
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public sealed class CambioSucursalCajaTabla
-        {
-            public string Tabla { get; set; }
-            public int Cantidad { get; set; }
-        }
-
-        public sealed class CambioSucursalCajaPreview
-        {
-            public bool PuedeEjecutar { get; set; }
-            public string Mensaje { get; set; }
-            public int IdCierreCaja { get; set; }
-            public int IdCierreCajaNuevo { get; set; }
-            public int IdSucursalActual { get; set; }
-            public string SucursalActual { get; set; }
-            public int IdSucursalNueva { get; set; }
-            public string SucursalNueva { get; set; }
-            public int IdUsuarioCaja { get; set; }
-            public string UsuarioCaja { get; set; }
-            public DateTime FechaDesde { get; set; }
-            public DateTime FechaHasta { get; set; }
-            public bool TieneCajaAbiertaEnDestino { get; set; }
-            public List<CambioSucursalCajaTabla> Tablas { get; set; } = new List<CambioSucursalCajaTabla>();
-        }
-
-        public sealed class CambioSucursalCajaResultado
-        {
-            public bool Ok { get; set; }
-            public string Mensaje { get; set; }
-            public List<CambioSucursalCajaTabla> Tablas { get; set; } = new List<CambioSucursalCajaTabla>();
-        }
-
+        // CambioSucursalCajaTabla/Preview/Resultado viven en Contratos (Etapa 10) -- son el
+        // tipo de retorno de la interfaz, compartido con DatosPostgres.CierreCajaPg.
         private sealed class CambioSucursalCajaPlan
         {
             public CambioSucursalCajaPreview Preview { get; set; }
