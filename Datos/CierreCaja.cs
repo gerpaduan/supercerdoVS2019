@@ -906,8 +906,12 @@ namespace Datos
 
         private int CalcularNuevoIdCierreCaja(SqlConnection cn, SqlTransaction tx, int idCierreActual, int idSucursalNueva)
         {
-            int baseSucursalNueva = idSucursalNueva * 100000000;
-            int sufijoActual = idCierreActual % 100000000;
+            // Base corregida a 10_000_000 para que coincida con el esquema real que usa
+            // addOrEditCierreCaja al generar ids de cajas nuevas -- antes usaba 100_000_000
+            // (un cero de mas), inconsistente con la base real. Fix confirmado, no cambia
+            // ningun id ya persistido, solo los ids nuevos calculados de aqui en adelante.
+            int baseSucursalNueva = idSucursalNueva * 10000000;
+            int sufijoActual = idCierreActual % 10000000;
             if (sufijoActual <= 0)
                 sufijoActual = 1;
 
@@ -933,7 +937,7 @@ namespace Datos
                 {
                     cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
                     cmd.Parameters.Add("@desde", SqlDbType.Int).Value = baseSucursalNueva;
-                    cmd.Parameters.Add("@hasta", SqlDbType.Int).Value = baseSucursalNueva + 100000000;
+                    cmd.Parameters.Add("@hasta", SqlDbType.Int).Value = baseSucursalNueva + 10000000;
                 });
 
             if (maxIdDestino < baseSucursalNueva)
