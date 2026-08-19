@@ -4,9 +4,8 @@ using System.Data;
 
 namespace Contratos
 {
-    // Espeja el bloque CRUD/login core (Etapa 13a) + Permisos (Etapa 13b) + Recuperacion de
-    // contrasena (Etapa 13c) de Datos.Usuario. RegistrarLoginUbicacion/obtenerLoginUbicacionLog
-    // (auditoria de ubicacion) quedan fuera de esta interfaz -- se agregan en la Etapa 13d.
+    // Espeja Datos.Usuario completo (19/19 metodos): CRUD/login core (Etapa 13a), Permisos
+    // (Etapa 13b), Recuperacion de contrasena (Etapa 13c), Auditoria de ubicacion (Etapa 13d).
     // Ver docs/DECISIONS.md.
     public interface IUsuarioRepository
     {
@@ -27,5 +26,7 @@ namespace Contratos
         Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash);
         void MarcarTokenRecuperacionComoUsado(int idToken);
         void InvalidarTokensPendientesUsuario(int idUsuario, string proposito);
+        void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log);
+        DataTable obtenerLoginUbicacionLog(int idEmpresa, DateTime desde, DateTime hasta);
     }
 }

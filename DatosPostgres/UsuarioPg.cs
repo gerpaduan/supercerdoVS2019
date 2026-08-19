@@ -513,5 +513,63 @@ namespace DatosPostgres
                     p.AddWithValue("proposito", string.IsNullOrWhiteSpace(proposito) ? "reset" : proposito);
                 });
         }
+
+        // loginubicacionlog no tiene idempresa propio (verificado contra el schema real de SQL
+        // Server) -- el filtro por tenant en obtenerLoginUbicacionLog es via JOIN a usuarios
+        // (que a su vez no tiene RLS, Etapa 13a), igual que el original.
+        public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
+        {
+            if (log == null) throw new ArgumentNullException(nameof(log));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO loginubicacionlog
+                (idusuario, idsucursal, fechahora, latitud, longitud, precisionmetros, distanciametros, permitido, motivo, ip)
+                VALUES
+                (@idUsuario, @idSucursal, @fechaHora, @latitud, @longitud, @precisionMetros, @distanciaMetros, @permitido, @motivo, @ip);",
+                p =>
+                {
+                    p.AddWithValue("idUsuario", log.IdUsuario);
+                    p.AddWithValue("idSucursal", log.IdSucursal);
+                    p.AddWithValue("fechaHora", log.FechaHora);
+                    p.AddWithValue("latitud", (object)log.Latitud ?? DBNull.Value);
+                    p.AddWithValue("longitud", (object)log.Longitud ?? DBNull.Value);
+                    p.AddWithValue("precisionMetros", (object)log.PrecisionMetros ?? DBNull.Value);
+                    p.AddWithValue("distanciaMetros", (object)log.DistanciaMetros ?? DBNull.Value);
+                    p.AddWithValue("permitido", log.Permitido);
+                    p.AddWithValue("motivo", log.Motivo ?? string.Empty);
+                    p.AddWithValue("ip", log.Ip ?? string.Empty);
+                });
+        }
+
+        public DataTable obtenerLoginUbicacionLog(int idEmpresa, DateTime desde, DateTime hasta)
+        {
+            return DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT
+                    l.idusuario AS ""IdUsuario"",
+                    u.nombre AS ""UsuarioNombre"",
+                    l.idsucursal AS ""IdSucursal"",
+                    s.sucursal AS ""SucursalNombre"",
+                    l.fechahora AS ""FechaHora"",
+                    l.latitud AS ""Latitud"",
+                    l.longitud AS ""Longitud"",
+                    l.precisionmetros AS ""PrecisionMetros"",
+                    l.distanciametros AS ""DistanciaMetros"",
+                    l.permitido AS ""Permitido"",
+                    l.motivo AS ""Motivo"",
+                    l.ip AS ""Ip""
+                FROM loginubicacionlog l
+                INNER JOIN usuarios u ON u.id = l.idusuario
+                LEFT JOIN sucursal s ON s.idsucursal = l.idsucursal
+                WHERE u.idempresa = @idEmpresa
+                  AND l.fechahora BETWEEN @desde AND @hasta
+                ORDER BY l.fechahora DESC
+                LIMIT 500;",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", idEmpresa);
+                    p.AddWithValue("desde", desde);
+                    p.AddWithValue("hasta", hasta);
+                });
+        }
     }
 }

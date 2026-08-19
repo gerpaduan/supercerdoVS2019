@@ -13,30 +13,24 @@ namespace Negocio
         public DataTable dtUsuarios;
         List<Entidades.Usuario> listUsuarios;
 
-        // oUsuarioD: bloque CRUD/login core migrado a la interfaz (Etapa 13a) -- puede ser SQL
-        // Server o Postgres. oUsuarioDSqlServer: Permisos, recuperacion de contrasena y
-        // auditoria de ubicacion, todavia sin migrar -- siempre SQL Server. Ver docs/DECISIONS.md.
+        // Datos.Usuario (19/19 metodos) implementa Contratos.IUsuarioRepository completo desde
+        // la Etapa 13d -- oUsuarioD puede ser SQL Server o Postgres. Ver docs/DECISIONS.md.
         private readonly Contratos.IUsuarioRepository oUsuarioD;
-        private readonly Datos.Usuario oUsuarioDSqlServer;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
         // Constructor existente: SIN CAMBIOS de comportamiento.
         public Usuario(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            var datosUsuario = new Datos.Usuario(empresa);
-            oUsuarioD = datosUsuario;
-            oUsuarioDSqlServer = datosUsuario;
+            oUsuarioD = new Datos.Usuario(empresa);
         }
 
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de IUsuarioRepository
-        // (ej. DatosPostgres.UsuarioPg) para el bloque migrado. Solo lo usa el controller de
-        // comparacion. El resto de la clase sigue yendo por SQL Server (oUsuarioDSqlServer).
+        // (ej. DatosPostgres.UsuarioPg). Solo lo usa el controller de comparacion.
         public Usuario(Contratos.IUsuarioRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa; _param = param;
             oUsuarioD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
-            oUsuarioDSqlServer = new Datos.Usuario(empresa);
         }
 
         public DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false)
@@ -409,12 +403,12 @@ namespace Negocio
 
         public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
         {
-            oUsuarioDSqlServer.RegistrarLoginUbicacion(log);
+            oUsuarioD.RegistrarLoginUbicacion(log);
         }
 
         public DataTable obtenerLoginUbicacionLog(int idEmpresa, DateTime desde, DateTime hasta)
         {
-            return oUsuarioDSqlServer.obtenerLoginUbicacionLog(idEmpresa, desde, hasta);
+            return oUsuarioD.obtenerLoginUbicacionLog(idEmpresa, desde, hasta);
         }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)

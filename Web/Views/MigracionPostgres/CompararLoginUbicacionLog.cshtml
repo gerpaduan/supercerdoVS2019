@@ -1,0 +1,74 @@
+@model Web.Models.ComparacionLoginUbicacionLogVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    // Helper local: vuelca un DataTable a una tabla HTML cruda (mismo patron que
+    // CompararStockReportes.cshtml, Etapa 11c).
+    Func<System.Data.DataTable, object> renderGrid = dt =>
+    {
+        if (dt == null || dt.Rows.Count == 0)
+        {
+            return new MvcHtmlString("<p class=\"text-muted mb-0\">Sin filas.</p>");
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class=\"table-responsive\"><table class=\"table table-sm table-bordered\"><thead><tr>");
+        foreach (System.Data.DataColumn col in dt.Columns)
+            sb.Append("<th>").Append(System.Net.WebUtility.HtmlEncode(col.ColumnName)).Append("</th>");
+        sb.Append("</tr></thead><tbody>");
+        foreach (System.Data.DataRow row in dt.Rows)
+        {
+            sb.Append("<tr>");
+            foreach (System.Data.DataColumn col in dt.Columns)
+            {
+                var valor = row[col] == DBNull.Value ? "" : Convert.ToString(row[col]);
+                sb.Append("<td>").Append(System.Net.WebUtility.HtmlEncode(valor)).Append("</td>");
+            }
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table></div>");
+        return new MvcHtmlString(sb.ToString());
+    };
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar LoginUbicacionLog (Etapa 13d)</h4>
+    <p class="text-muted mb-0">
+        Herramienta de verificacion del piloto -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.
+        @ViewBag.FechaDesdeBuscada.ToString("yyyy-MM-dd HH:mm") a @ViewBag.FechaHastaBuscada.ToString("yyyy-MM-dd HH:mm").
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual) -- @(Model.SqlServer?.Rows.Count ?? 0) filas</div>
+            <div class="card-body">
+                @renderGrid(Model.SqlServer)
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo) -- @(Model.Postgres?.Rows.Count ?? 0) filas</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else
+                {
+                    @renderGrid(Model.Postgres)
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Desde:</label>
+    <input type="text" name="fechaDesde" class="form-control mr-2" style="width:160px" value="@ViewBag.FechaDesdeBuscada.ToString("yyyy-MM-dd HH:mm:ss")" />
+    <label class="mr-2">Hasta:</label>
+    <input type="text" name="fechaHasta" class="form-control mr-2" style="width:160px" value="@ViewBag.FechaHastaBuscada.ToString("yyyy-MM-dd HH:mm:ss")" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

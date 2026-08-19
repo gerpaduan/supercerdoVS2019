@@ -727,5 +727,47 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararLoginUbicacionLog(DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-30);
+            DateTime hasta = fechaHasta ?? DateTime.Today.AddDays(1).AddSeconds(-1);
+
+            // SQL Server: constructor de siempre, sin cambios.
+            var usuarioSqlServer = new Negocio.Usuario(empresa, param);
+            var resultadoSqlServer = usuarioSqlServer.obtenerLoginUbicacionLog(empresa.IdEmpresa, desde, hasta);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.UsuarioPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.UsuarioPg(connString, empresa.IdEmpresa, sucursalRepoPostgres);
+            var usuarioPostgres = new Negocio.Usuario(repoPostgres, empresa, param);
+
+            System.Data.DataTable resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = usuarioPostgres.obtenerLoginUbicacionLog(empresa.IdEmpresa, desde, hasta);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar LoginUbicacionLog";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.FechaDesdeBuscada = desde;
+            ViewBag.FechaHastaBuscada = hasta;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararLoginUbicacionLog.cshtml", new Web.Models.ComparacionLoginUbicacionLogVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
