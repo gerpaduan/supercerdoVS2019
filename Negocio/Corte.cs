@@ -545,62 +545,65 @@ namespace Negocio
 
             public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
          {
-             return oCorteDSqlServer.addOrEditMovimiento(oMovimientoE);
+             return oCorteD.addOrEditMovimiento(oMovimientoE);
          }
 
          public void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento)
          {
-             oCorteDSqlServer.agregarCortePorMovimiento(cortePorMovimiento);
+             oCorteD.agregarCortePorMovimiento(cortePorMovimiento);
          }
 
+         // modificarMovimiento/quitarCortesPorMovimiento: sin wrapper vivo (comentado antes de
+         // la Etapa 11b tambien) -- Datos.Corte/CortePg ya los implementan (interfaz completa),
+         // pero no hay caller real hoy. Ver docs/DECISIONS.md, Etapa 11b.
          //public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
          //{
-         //    oCorteDSqlServer.modificarMovimiento(oMovimientoE);
+         //    oCorteD.modificarMovimiento(oMovimientoE);
          //}
 
          public void eliminarMovimiento(int idMovimiento, Entidades.Usuario oUsuario)
          {
-             oCorteDSqlServer.eliminarMovimiento(idMovimiento, oUsuario);
+             oCorteD.eliminarMovimiento(idMovimiento, oUsuario);
          }
 
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
-             
-             return oCorteDSqlServer.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
+
+             return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 
          public DataTable obtenerUltimosMovimientosDashboard(int cantidad)
          {
-             return oCorteDSqlServer.obtenerUltimosMovimientosDashboard(cantidad);
+             return oCorteD.obtenerUltimosMovimientosDashboard(cantidad);
          }
 
          public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
-             
-             return oCorteDSqlServer.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
+
+             return oCorteD.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
          }
 
          public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
          {
-             
-             return oCorteDSqlServer.cargarMovimiento(idMovimiento, acumulado);
+
+             return oCorteD.cargarMovimiento(idMovimiento, acumulado);
          }
 
          //public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
          //{
-         //    
-         //    oCorteDSqlServer.quitarCortesPorMovimiento(oMovimientoE);
+         //
+         //    oCorteD.quitarCortesPorMovimiento(oMovimientoE);
          //}
 
          public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
          {
-             
-             return oCorteDSqlServer.cargarCortesPorMovimiento(idMovimiento, acumulado);
+
+             return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
          }
 
          public Dictionary<int, Tuple<decimal, decimal>> ObtenerTotalesPorMovimiento(IEnumerable<int> idsMovimiento)
          {
-             return oCorteDSqlServer.ObtenerTotalesPorMovimiento(idsMovimiento);
+             return oCorteD.ObtenerTotalesPorMovimiento(idsMovimiento);
          }
 
          public void reiniciarStockReal(int idSucursal)

@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Corte.cs, bloque Embutido (Etapa 11a)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Corte.cs, bloque Movimiento (Etapa 11b)
+
+Segunda de las 3 sub-etapas del resto de `Corte.cs`. 11 métodos: transferencias de stock entre sucursales (`Movimiento`/`CortePorMovimiento`), más `MovimientoHistorial` (tabla nueva, hallazgo al leer los SPs reales — auditoría insert-only, **sin PK ni identity** en el original, replicada igual en Postgres).
+
+**Fix real, commit separado, confirmado por el usuario (SQL Server, no forma parte de la migración mecánica)**: `Datos/Corte.cs`, `obtenerUltimosMovimientosDashboard` consultaba `dbo.Movimientos` (plural, no existe) con columnas `idOrigen`/`idDestino` (no existen) — la tabla real es `Movimiento` (singular) con `sucursalOrigen`/`sucursalDestino`. El widget del dashboard (`HomeController.cs`) está envuelto en `try/catch` y fallaba en silencio en producción. Corregido en `Datos/Corte.cs`; `CortePg.cs` implementa la versión correcta desde el inicio.
+
+**`modificarMovimiento`/`quitarCortesPorMovimiento` migrados aunque sin caller vivo hoy** (sus wrappers en `Negocio/Corte.cs` ya estaban comentados antes de esta etapa) — a diferencia de `obtenerEmbutidos` (Etapa 11a), estos SPs no están rotos, solo sin uso actual, así que se migran igual (costo bajo, interfaz completa) en vez de excluirlos.
+
+**No-ops documentados**: `agregarCortePorMovimiento` (solo el `INSERT` real; la cascada `StockCorteSucursal` del SP ya viene **comentada en el propio SP de origen**, deshabilitada desde antes de esta migración) y `quitarCortesPorMovimiento` (cascada `StockCorteSucursal` no-op + `DELETE FROM CortePorMovimiento` real).
+
+**Hallazgo al verificar por HTTP, no es un bug — mismo patrón que la Etapa 7**: `cargarCortesPorMovimiento(idMovimiento=2, acumulado=false)` devuelve 1 línea en vez de 3 bajo el tenant 1 real, en **ambos motores por igual**: 2 de las 3 filas de `CortePorMovimiento` referencian un `idCorte` que pertenece a otro tenant (`idEmpresa=3`), un artefacto de datos cruzados real. El `INNER JOIN` a `Corte`, protegido por RLS, excluye esas líneas silenciosamente en SQL Server (RLS por `SESSION_CONTEXT`) igual que en Postgres (RLS por `app.id_empresa`) — comportamiento fiel, no un gap. (Nota metodológica: verificado inicialmente con una consulta `psql` que bypaseaba RLS sin querer — vía el rol dueño de las tablas y sin transacción explícita, ambos casos evitan el chequeo de RLS. Repetido con el rol real de la app (`carnisys_user`) y una transacción explícita, coincide exacto con SQL Server. El chequeo por HTTP de esta etapa, que sí usa el camino real, nunca estuvo mal.)
+
+**Verificado de punta a punta**: build de la solución completa sin errores. Harness `psql`+`ROLLBACK` para `addOrEditMovimiento` (alta con `RETURNING`, y edición completa: snapshot en `MovimientoHistorial` + `UPDATE` + ajuste de `actualizacionCompleta` + limpieza de líneas), `agregarCortePorMovimiento` y `eliminarMovimiento`, sin dejar datos de prueba. Las consultas de solo lectura (`obtenerMovimientos`, `obtenerLineasMov`, `obtenerUltimosMovimientosDashboard` ya corregido, `ObtenerTotalesPorMovimiento`) corridas contra datos reales sin errores. HTTP con login real (2 usuarios descartables, creados y borrados): `/MigracionPostgres/CompararMovimiento?idMovimiento=2` coincide exacto en ambos motores (incluida la línea de `CortePorMovimiento` visible bajo RLS); logueado como tenant 2, el mismo `idMovimiento=2` (tenant 1) da "no encontrado" en ambos motores por igual.
+
+Con esto, `Corte.cs` queda con una sola sub-etapa pendiente: Stock/Reportes (Etapa 11c — los SPs más grandes, `a_CierreStock` ~2050 líneas, `StockCierre_2` ~1250, `StockIngresoEgreso` ~1050, todos con cascadas extensas de `StockCorteSucursal`). También sigue pendiente el resto de `Venta.cs` (CRUD completo de `Expendios`, `Sectores`, `FacturaElectronica`).
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Corte.cs, bloque Embutido (Etapa 11a)
 
 Primera de 3 sub-etapas en las que se dividió el resto de `Corte.cs` (38 métodos, 29 SPs reales, varios de más de 1000 líneas — mucho más grande de lo esperado al scopearlo). **Decisión confirmada con el usuario**: dividir en Embutido → Movimiento → Stock/Reportes, en ese orden. Esta etapa cubre solo Embutido (14 métodos relevados, 13 migrados).
 

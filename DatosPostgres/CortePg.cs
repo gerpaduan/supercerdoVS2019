@@ -1347,5 +1347,395 @@ namespace DatosPostgres
         }
 
         #endregion
+
+        #region Movimiento (Etapa 11b)
+
+        // EstadoPendiente_valor: el SP real addOrEditMovimiento recibe este parametro con
+        // default 2, y Datos.Corte nunca lo pasa explicito -- siempre usa el default. Se
+        // hardcodea aca, mismo comportamiento real observado.
+        private const int EstadoPendienteValor = 2;
+
+        public int addOrEditMovimiento(Movimiento oMovimientoE)
+        {
+            if (oMovimientoE == null) throw new ArgumentNullException(nameof(oMovimientoE));
+
+            if (oMovimientoE.IdMovimiento == 0)
+            {
+                const string sqlInsert = @"
+                    INSERT INTO movimiento (fechamovimiento, sucursalorigen, sucursaldestino, actualizacioncompleta, observaciones, creado, creadopor, idempresa)
+                    VALUES (@fechaMovimiento, @sucursalOrigen, @sucursalDestino, @estadoPendiente, @observaciones, now(), @creadoPor, @idEmpresa)
+                    RETURNING idmovimiento;";
+
+                object obj = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, p =>
+                {
+                    p.AddWithValue("fechaMovimiento", oMovimientoE.FechaMovimiento);
+                    p.AddWithValue("sucursalOrigen", oMovimientoE.SucursalOrigen.idSucursal);
+                    p.AddWithValue("sucursalDestino", oMovimientoE.SucursalDestino.idSucursal);
+                    p.AddWithValue("estadoPendiente", EstadoPendienteValor);
+                    p.AddWithValue("observaciones", oMovimientoE.Observaciones ?? "");
+                    p.AddWithValue("creadoPor", oMovimientoE.CreadoPor.Id);
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                });
+
+                oMovimientoE.IdMovimiento = obj == null || obj == DBNull.Value ? 0 : Convert.ToInt32(obj);
+                return oMovimientoE.IdMovimiento;
+            }
+
+            // Edicion real: snapshot en MovimientoHistorial (una fila por linea actual) + UPDATE
+            // + ajuste de actualizacionCompleta (solo si es un movimiento raiz) + limpieza de
+            // CortePorMovimiento (el caller vuelve a cargar las lineas) -- misma secuencia de 4
+            // statements que el SP original, en una transaccion.
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    using (var cmdHist = new NpgsqlCommand(@"
+                        INSERT INTO movimientohistorial (idmovimiento, fechamovimiento, idsucorigen, idsucdestino, idcorte, cantkg, cantunidad, pesobalanza, actualizadopor, actualizado, observaciones, idempresa)
+                        SELECT m.idmovimiento, m.fechamovimiento, m.sucursalorigen, m.sucursaldestino, cpm.idcorte, cpm.cantkg, cpm.cantunidad, cpm.pesobalanza, @actualizadoPor, now(), m.observaciones, @idEmpresa
+                        FROM movimiento m
+                        INNER JOIN cortepormovimiento cpm ON m.idmovimiento = cpm.idmovimientos
+                        WHERE m.idmovimiento = @idMovimiento;", con, tx))
+                    {
+                        cmdHist.Parameters.AddWithValue("actualizadoPor", oMovimientoE.ActualizadoPor.Id);
+                        cmdHist.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        cmdHist.Parameters.AddWithValue("idMovimiento", oMovimientoE.IdMovimiento);
+                        cmdHist.ExecuteNonQuery();
+                    }
+
+                    using (var cmdUpd = new NpgsqlCommand(@"
+                        UPDATE movimiento SET fechamovimiento=@fechaMovimiento, sucursalorigen=@sucursalOrigen, sucursaldestino=@sucursalDestino,
+                            observaciones=@observaciones, actualizado=now(), actualizadopor=@actualizadoPor
+                        WHERE idmovimiento=@idMovimiento;", con, tx))
+                    {
+                        cmdUpd.Parameters.AddWithValue("fechaMovimiento", oMovimientoE.FechaMovimiento);
+                        cmdUpd.Parameters.AddWithValue("sucursalOrigen", oMovimientoE.SucursalOrigen.idSucursal);
+                        cmdUpd.Parameters.AddWithValue("sucursalDestino", oMovimientoE.SucursalDestino.idSucursal);
+                        cmdUpd.Parameters.AddWithValue("observaciones", oMovimientoE.Observaciones ?? "");
+                        cmdUpd.Parameters.AddWithValue("actualizadoPor", oMovimientoE.ActualizadoPor.Id);
+                        cmdUpd.Parameters.AddWithValue("idMovimiento", oMovimientoE.IdMovimiento);
+                        cmdUpd.ExecuteNonQuery();
+                    }
+
+                    using (var cmdEstado = new NpgsqlCommand(
+                        "UPDATE movimiento SET actualizacioncompleta = @estadoPendiente WHERE idmovimiento = @idMovimiento AND idmovorigen IS NULL;", con, tx))
+                    {
+                        cmdEstado.Parameters.AddWithValue("estadoPendiente", EstadoPendienteValor);
+                        cmdEstado.Parameters.AddWithValue("idMovimiento", oMovimientoE.IdMovimiento);
+                        cmdEstado.ExecuteNonQuery();
+                    }
+
+                    using (var cmdDel = new NpgsqlCommand("DELETE FROM cortepormovimiento WHERE idmovimientos = @idMovimiento;", con, tx))
+                    {
+                        cmdDel.Parameters.AddWithValue("idMovimiento", oMovimientoE.IdMovimiento);
+                        cmdDel.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+
+            return oMovimientoE.IdMovimiento;
+        }
+
+        // Sin caller vivo hoy (wrapper comentado en Negocio/Corte.cs), pero real y sin StockCorteSucursal.
+        public void modificarMovimiento(Movimiento oMovimientoE)
+        {
+            if (oMovimientoE == null) throw new ArgumentNullException(nameof(oMovimientoE));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE movimiento SET fechamovimiento=@fechaMovimiento, sucursalorigen=@sucursalOrigen, sucursaldestino=@sucursalDestino,
+                    observaciones=@observaciones, actualizado=now(), actualizadopor=@actualizadoPor
+                WHERE idmovimiento=@idMovimiento;", p =>
+            {
+                p.AddWithValue("idMovimiento", oMovimientoE.IdMovimiento);
+                p.AddWithValue("fechaMovimiento", oMovimientoE.FechaMovimiento);
+                p.AddWithValue("sucursalOrigen", oMovimientoE.SucursalOrigen.idSucursal);
+                p.AddWithValue("sucursalDestino", oMovimientoE.SucursalDestino.idSucursal);
+                p.AddWithValue("observaciones", oMovimientoE.Observaciones ?? "");
+                p.AddWithValue("actualizadoPor", oMovimientoE.ActualizadoPor.Id);
+            });
+        }
+
+        public void eliminarMovimiento(int idMovimiento, Usuario oUsuario)
+        {
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    using (var cmdHist = new NpgsqlCommand(@"
+                        INSERT INTO movimientohistorial (idmovimiento, fechamovimiento, idsucorigen, idsucdestino, idcorte, cantkg, cantunidad, pesobalanza, actualizadopor, actualizado, observaciones, idempresa)
+                        SELECT m.idmovimiento, m.fechamovimiento, m.sucursalorigen, m.sucursaldestino, cpm.idcorte, cpm.cantkg, cpm.cantunidad, cpm.pesobalanza, @actualizadoPor, now(), m.observaciones, @idEmpresa
+                        FROM movimiento m
+                        INNER JOIN cortepormovimiento cpm ON m.idmovimiento = cpm.idmovimientos
+                        WHERE m.idmovimiento = @idMovimiento;", con, tx))
+                    {
+                        cmdHist.Parameters.AddWithValue("actualizadoPor", oUsuario.Id);
+                        cmdHist.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        cmdHist.Parameters.AddWithValue("idMovimiento", idMovimiento);
+                        cmdHist.ExecuteNonQuery();
+                    }
+
+                    using (var cmdDelLineas = new NpgsqlCommand("DELETE FROM cortepormovimiento WHERE idmovimientos = @idMovimiento;", con, tx))
+                    {
+                        cmdDelLineas.Parameters.AddWithValue("idMovimiento", idMovimiento);
+                        cmdDelLineas.ExecuteNonQuery();
+                    }
+
+                    using (var cmdDelMov = new NpgsqlCommand("DELETE FROM movimiento WHERE idmovimiento = @idMovimiento;", con, tx))
+                    {
+                        cmdDelMov.Parameters.AddWithValue("idMovimiento", idMovimiento);
+                        cmdDelMov.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        // Solo replica la parte real del SP (INSERT). El resto (cascada StockCorteSucursal) ya
+        // esta comentado en el propio SP de SQL Server -- no-op ya deshabilitado en origen.
+        public void agregarCortePorMovimiento(CortePorMovimiento cortePorMovimiento)
+        {
+            if (cortePorMovimiento == null) throw new ArgumentNullException(nameof(cortePorMovimiento));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO cortepormovimiento (idmovimientos, idcorte, cantkg, cantunidad, pesobalanza, permitiringreso, idempresa)
+                VALUES (@idMovimiento, @idCorte, @cantKg, @cantUnidad, @pesoBalanza, @permitirIngreso, @idEmpresa);", p =>
+            {
+                p.AddWithValue("idMovimiento", cortePorMovimiento.Movimientos.IdMovimiento);
+                p.AddWithValue("idCorte", cortePorMovimiento.Corte.IdCorte);
+                p.AddWithValue("cantKg", cortePorMovimiento.CantKg);
+                p.AddWithValue("cantUnidad", cortePorMovimiento.CantUnidad);
+                p.AddWithValue("pesoBalanza", cortePorMovimiento.PesoBalanza);
+                p.AddWithValue("permitirIngreso", cortePorMovimiento.PermitirIngreso ? 1 : 0);
+                p.AddWithValue("idEmpresa", _idEmpresa);
+            });
+        }
+
+        // Sin caller vivo hoy (wrapper comentado en Negocio/Corte.cs). Solo replica la parte
+        // real del SP (DELETE final); el resto (cascada StockCorteSucursal) es no-op, Etapa 6.
+        public void quitarCortesPorMovimiento(Movimiento oMovimientoE)
+        {
+            if (oMovimientoE == null) throw new ArgumentNullException(nameof(oMovimientoE));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "DELETE FROM cortepormovimiento WHERE idmovimientos = @idMovimiento;",
+                p => p.AddWithValue("idMovimiento", oMovimientoE.IdMovimiento));
+        }
+
+        public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        {
+            // Precedencia AND/OR preservada tal cual el SP original en las dos ramas (no es un
+            // reformateo cosmetico): en la rama 1 el filtro de texto es independiente del rango
+            // de fecha/sucursales; en la rama 2 el "sin lineas" (count=0) esta agrupado con
+            // fecha/sucursales, y esa agrupacion completa se OR-ea con el filtro de texto.
+            const string sql = @"
+                (SELECT m.idmovimiento AS ""Id Movimiento"", m.fechamovimiento AS ""Fecha Movimiento"", so.sucursal AS ""Origen"", m.idmovorigen AS ""Id Origen"",
+                        (CASE WHEN m.actualizacioncompleta = 2 THEN 'PENDIENTE'
+                              WHEN (m.idmovorigen > 0 AND m.actualizacioncompleta = 1) OR m.idmovorigen IS NULL THEN 'OK'
+                              ELSE 'ERROR' END) AS ""Estado"",
+                        sd.sucursal AS ""Destino"", SUM(cpm.cantunidad) AS ""Total Un."", CAST(SUM(cpm.cantkg) AS numeric(10,3)) AS ""Total Kg"",
+                        m.observaciones, m.creado, cp.nombre AS ""creado por"", m.actualizado, ap.nombre AS ""actualizado por""
+                 FROM cortepormovimiento cpm
+                 INNER JOIN movimiento m ON cpm.idmovimientos = m.idmovimiento
+                 INNER JOIN sucursal so ON so.idsucursal = m.sucursalorigen
+                 INNER JOIN sucursal sd ON m.sucursaldestino = sd.idsucursal
+                 LEFT JOIN usuarios ap ON m.actualizadopor = ap.id
+                 LEFT JOIN usuarios cp ON m.creadopor = cp.id
+                 WHERE (m.fechamovimiento BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
+                        AND so.sucursal ILIKE '%' || @sucOrigen || '%' AND sd.sucursal ILIKE '%' || @sucDestino || '%')
+                    OR (m.idmovimiento::text ILIKE @texto)
+                 GROUP BY m.idmovimiento, m.fechamovimiento, so.sucursal, m.idmovorigen, m.actualizacioncompleta, sd.sucursal,
+                          m.observaciones, m.creado, cp.nombre, m.actualizado, ap.nombre)
+
+                UNION
+
+                (SELECT m.idmovimiento AS ""Id Movimiento"", m.fechamovimiento AS ""Fecha Movimiento"", so.sucursal AS ""Origen"", m.idmovorigen AS ""Id Origen"",
+                        (CASE WHEN m.idmovorigen > 0 AND m.actualizacioncompleta = 0 THEN 'Error' ELSE 'OK' END) AS ""Estado"",
+                        sd.sucursal AS ""Destino"", 0 AS ""Total Un."", 0 AS ""Total Kg"",
+                        m.observaciones, m.creado, cp.nombre AS ""creado por"", m.actualizado, ap.nombre AS ""actualizado por""
+                 FROM movimiento m
+                 INNER JOIN sucursal so ON so.idsucursal = m.sucursalorigen
+                 INNER JOIN sucursal sd ON m.sucursaldestino = sd.idsucursal
+                 LEFT JOIN usuarios ap ON m.actualizadopor = ap.id
+                 LEFT JOIN usuarios cp ON m.creadopor = cp.id
+                 WHERE ((SELECT COUNT(*) FROM cortepormovimiento cpm2 WHERE cpm2.idmovimientos = m.idmovimiento) = 0
+                        AND m.fechamovimiento BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
+                        AND so.sucursal ILIKE '%' || @sucOrigen || '%' AND sd.sucursal ILIKE '%' || @sucDestino || '%')
+                    OR (m.idmovimiento::text ILIKE @texto))
+
+                ORDER BY ""Fecha Movimiento"" DESC;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("texto", texto ?? "");
+                p.AddWithValue("sucOrigen", sucOrigen ?? "");
+                p.AddWithValue("sucDestino", sucDestino ?? "");
+                p.AddWithValue("fechaDesde", fechaDesde);
+                p.AddWithValue("fechaHasta", fechaHasta);
+            });
+        }
+
+        public DataTable obtenerUltimosMovimientosDashboard(int cantidad)
+        {
+            const string sql = @"
+                SELECT m.fechamovimiento AS ""Fecha Movimiento"", so.sucursal AS ""Origen"", sd.sucursal AS ""Destino""
+                FROM movimiento m
+                INNER JOIN sucursal so ON so.idsucursal = m.sucursalorigen
+                INNER JOIN sucursal sd ON sd.idsucursal = m.sucursaldestino
+                ORDER BY m.fechamovimiento DESC, m.idmovimiento DESC
+                LIMIT @cantidad;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p => p.AddWithValue("cantidad", cantidad));
+        }
+
+        public Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
+        {
+            var lista = DbPg.Reader(_connectionString, _idEmpresa, @"
+                SELECT m.idmovimiento, m.fechamovimiento, m.sucursalorigen AS idorigen, so.sucursal AS origen, m.idmovorigen,
+                       m.sucursaldestino AS iddestino, sd.sucursal AS destino, m.observaciones, m.creado, m.actualizado, m.creadopor, m.actualizadopor
+                FROM sucursal so
+                INNER JOIN movimiento m ON so.idsucursal = m.sucursalorigen
+                INNER JOIN sucursal sd ON m.sucursaldestino = sd.idsucursal
+                WHERE m.idmovimiento = @idMovimiento;",
+                dr =>
+                {
+                    var oMovimiento = new Movimiento();
+                    oMovimiento.IdMovimiento = Convert.ToInt32(dr["idmovimiento"]);
+                    oMovimiento.FechaMovimiento = Convert.ToDateTime(dr["fechamovimiento"]);
+
+                    oMovimiento.SucursalOrigen = new Sucursal { idSucursal = Convert.ToInt32(dr["idorigen"]), sucursal = dr["origen"] as string };
+                    oMovimiento.IdMovOrigen = dr["idmovorigen"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idmovorigen"]);
+                    oMovimiento.SucursalDestino = new Sucursal { idSucursal = Convert.ToInt32(dr["iddestino"]), sucursal = dr["destino"] as string };
+                    oMovimiento.Observaciones = GetString(dr, "observaciones");
+                    oMovimiento.Creado = Convert.ToDateTime(dr["creado"]);
+                    oMovimiento.Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]);
+
+                    int idCreadoPor = dr["creadopor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["creadopor"]);
+                    int idActualizadoPor = dr["actualizadopor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["actualizadopor"]);
+                    oMovimiento.CreadoPor = idCreadoPor > 0 ? GetUsuarioLiviano(idCreadoPor) : null;
+                    oMovimiento.ActualizadoPor = idActualizadoPor > 0 ? GetUsuarioLiviano(idActualizadoPor) : null;
+
+                    return oMovimiento;
+                },
+                p => p.AddWithValue("idMovimiento", idMovimiento));
+
+            if (lista.Count == 0) return new Movimiento();
+
+            var mov = lista[0];
+            mov.ListaCortesPorMov = cargarCortesPorMovimiento(mov.IdMovimiento, acumulado);
+            return mov;
+        }
+
+        public List<CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
+        {
+            if (!acumulado)
+            {
+                return DbPg.Reader(_connectionString, _idEmpresa, @"
+                    SELECT cpm.idcortemovimiento, c.idcorte, c.codigo, c.corte, cpm.cantkg, cpm.cantunidad, cpm.pesobalanza, cpm.permitiringreso
+                    FROM cortepormovimiento cpm
+                    INNER JOIN corte c ON cpm.idcorte = c.idcorte
+                    WHERE cpm.idmovimientos = @idMovimiento;",
+                    dr => new CortePorMovimiento
+                    {
+                        IdCorteMovimiento = Convert.ToInt32(dr["idcortemovimiento"]),
+                        Corte = new Corte { idCorte = Convert.ToInt32(dr["idcorte"]), codigo = GetLong(dr, "codigo"), corte = GetString(dr, "corte") },
+                        CantKg = GetFloat(dr, "cantkg"),
+                        CantUnidad = (int)GetLong(dr, "cantunidad"),
+                        PesoBalanza = GetBool(dr, "pesobalanza"),
+                        PermitirIngreso = GetBool(dr, "permitiringreso")
+                    },
+                    p => p.AddWithValue("idMovimiento", idMovimiento));
+            }
+
+            // Acumulado: agrupado por corte, sin pesoBalanza/permitirIngreso (igual que el original).
+            return DbPg.Reader(_connectionString, _idEmpresa, @"
+                SELECT c.codigo, c.corte, SUM(cpm.cantunidad) AS cantunidad, SUM(cpm.cantkg) AS cantkg, cpm.idcorte, cpm.idmovimientos
+                FROM cortepormovimiento cpm
+                INNER JOIN corte c ON cpm.idcorte = c.idcorte
+                WHERE cpm.idmovimientos = @idMovimiento
+                GROUP BY c.codigo, c.corte, cpm.idcorte, cpm.idmovimientos
+                ORDER BY c.codigo;",
+                dr => new CortePorMovimiento
+                {
+                    IdCorteMovimiento = 0,
+                    Corte = new Corte { idCorte = Convert.ToInt32(dr["idcorte"]), codigo = GetLong(dr, "codigo"), corte = GetString(dr, "corte") },
+                    CantKg = GetFloat(dr, "cantkg"),
+                    CantUnidad = (int)GetLong(dr, "cantunidad")
+                },
+                p => p.AddWithValue("idMovimiento", idMovimiento));
+        }
+
+        // Sin trocear en lotes de 500 (arrays nativos de Postgres, mismo criterio de siempre).
+        public Dictionary<int, Tuple<decimal, decimal>> ObtenerTotalesPorMovimiento(IEnumerable<int> idsMovimiento)
+        {
+            var resultado = new Dictionary<int, Tuple<decimal, decimal>>();
+            var ids = (idsMovimiento ?? Enumerable.Empty<int>()).Where(x => x > 0).Distinct().ToArray();
+            if (ids.Length == 0) return resultado;
+
+            var filas = DbPg.Reader(_connectionString, _idEmpresa, @"
+                SELECT idmovimientos AS idmovimiento, SUM(COALESCE(cantunidad, 0)) AS totalunidad, SUM(COALESCE(cantkg, 0)) AS totalkilos
+                FROM cortepormovimiento
+                WHERE idmovimientos = ANY(@ids)
+                GROUP BY idmovimientos;",
+                dr => new
+                {
+                    IdMovimiento = Convert.ToInt32(dr["idmovimiento"]),
+                    TotalUnidad = dr["totalunidad"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["totalunidad"]),
+                    TotalKilos = dr["totalkilos"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["totalkilos"])
+                },
+                p => p.AddWithValue("ids", ids));
+
+            foreach (var item in filas)
+                resultado[item.IdMovimiento] = Tuple.Create(item.TotalUnidad, item.TotalKilos);
+
+            return resultado;
+        }
+
+        public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        {
+            const string sql = @"
+                SELECT m.idmovimiento AS ""Id Movimiento"", m.fechamovimiento AS ""Fecha Movimiento"", c.codigo AS ""Codigo"", c.corte AS ""Corte"",
+                       cpm.cantunidad AS ""Total Un."", CAST(cpm.cantkg AS numeric(10,3)) AS ""Total Kg"", (cpm.permitiringreso <> 0) AS ""Permitir Ingr."",
+                       cpm.pesobalanza AS ""Balanza"",
+                       (CASE WHEN m.actualizacioncompleta = 2 THEN 'PENDIENTE'
+                             WHEN (m.idmovorigen > 0 AND m.actualizacioncompleta = 1) OR m.idmovorigen IS NULL THEN 'OK'
+                             ELSE 'ERROR' END) AS ""Estado"",
+                       so.sucursal AS ""Origen"", m.idmovorigen AS ""Id Origen"", sd.sucursal AS ""Destino"",
+                       m.observaciones, m.creado, cp.nombre AS ""creado por"", m.actualizado, ap.nombre AS ""actualizado por""
+                FROM cortepormovimiento cpm
+                INNER JOIN movimiento m ON cpm.idmovimientos = m.idmovimiento
+                INNER JOIN sucursal so ON so.idsucursal = m.sucursalorigen
+                INNER JOIN sucursal sd ON m.sucursaldestino = sd.idsucursal
+                INNER JOIN corte c ON cpm.idcorte = c.idcorte
+                LEFT JOIN usuarios ap ON m.actualizadopor = ap.id
+                LEFT JOIN usuarios cp ON m.creadopor = cp.id
+                WHERE m.fechamovimiento BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
+                  AND so.sucursal ILIKE '%' || @sucOrigen || '%'
+                  AND sd.sucursal ILIKE '%' || @sucDestino || '%'
+                  AND (m.idmovimiento::text = @texto OR c.codigo::text = @texto OR c.corte ILIKE '%' || @texto || '%')
+                ORDER BY m.fechamovimiento DESC;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("sucOrigen", sucOrigen ?? "");
+                p.AddWithValue("sucDestino", sucDestino ?? "");
+                p.AddWithValue("fechaDesde", fechaDesde);
+                p.AddWithValue("fechaHasta", fechaHasta);
+                p.AddWithValue("texto", texto ?? "");
+            });
+        }
+
+        #endregion
     }
 }

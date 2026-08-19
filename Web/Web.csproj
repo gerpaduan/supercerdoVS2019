@@ -183,6 +183,7 @@
     <Compile Include="Models\ComparacionCompraVm.cs" />
     <Compile Include="Models\ComparacionPreviewCambioSucursalCajaVm.cs" />
     <Compile Include="Models\ComparacionEmbutidoVm.cs" />
+    <Compile Include="Models\ComparacionMovimientoVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />

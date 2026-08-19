@@ -382,5 +382,44 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararMovimiento(int idMovimiento)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var corteSqlServer = new Negocio.Corte(empresa, param);
+            var resultadoSqlServer = corteSqlServer.cargarMovimiento(idMovimiento, false);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CortePg. Cubre el bloque
+            // Movimiento migrado (Etapa 11b) -- Stock/Reportes sigue yendo por SQL Server.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var cortePostgres = new Negocio.Corte(repoPostgres, empresa, param);
+
+            Entidades.Movimiento resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = cortePostgres.cargarMovimiento(idMovimiento, false);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Movimiento #" + idMovimiento;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdMovimientoBuscado = idMovimiento;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararMovimiento.cshtml", new Web.Models.ComparacionMovimientoVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
