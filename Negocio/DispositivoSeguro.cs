@@ -6,11 +6,18 @@ namespace Negocio
 {
     public class DispositivoSeguro
     {
-        private readonly Datos.DispositivoSeguro oDispositivoD;
+        private readonly Contratos.IDispositivoSeguroRepository oDispositivoD;
 
         public DispositivoSeguro(IEmpresaContext empresa)
         {
             oDispositivoD = new Datos.DispositivoSeguro(empresa);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de
+        // IDispositivoSeguroRepository (ej. DatosPostgres.DispositivoSeguroPg).
+        public DispositivoSeguro(Contratos.IDispositivoSeguroRepository repositorio)
+        {
+            oDispositivoD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
         }
 
         public List<Entidades.DispositivoSeguro> Listar(int idEmpresa)

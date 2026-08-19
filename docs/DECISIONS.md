@@ -1,6 +1,20 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Empresa.cs completo + fix de drift de schema en `empresas` (horario laboral)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: DispositivoSeguro.cs completo
+
+Cuarto de los módulos chicos 0%-migrados (tras `Parametros.cs`, `CortePuntoStockSucursal.cs`, `Empresa.cs`). 4/4 métodos: `Listar`, `Agregar`, `Eliminar`, `ExisteSerieSegura` -- dispositivos con número de serie que saltean `LoginRateLimiter` en el login. `dbo.DispositivosSeguros` está **vacía en SQL Server** (0 filas reales), sin datos que migrar.
+
+**`dispositivosseguros` es la 3ra tabla de esta ronda con `idEmpresa` pero sin RLS en SQL Server** (mismo patrón ya encontrado en `empresaparametros` y `cortepuntostocksucursal`) -- se agrega RLS estándar en Postgres como mejora deliberada, mismo criterio ya confirmado con el usuario, sin volver a preguntar dado el precedente ya establecido dos veces en esta misma ronda de módulos.
+
+**`ExisteSerieSegura` se usa en el login antes de autenticar** (para decidir si se saltea el rate limiter por IP) pero el `idEmpresa` ya se conoce en ese punto (resuelto del candidato por usuario/email) -- a diferencia de `usuarios` (Etapa 13a), acá no hay problema de "tenant todavía no conocido", así que RLS estándar no genera ningún conflicto.
+
+**Verificación distinta al resto de la migración, por la tabla vacía**: sin datos reales para comparar, se armó una acción de self-test (`CompararDispositivoSeguro`) que ejercita `Agregar`→`ExisteSerieSegura`→`Listar`→`Eliminar` contra los 2 motores con un número de serie descartable generado en cada request, comparando que ambos den el mismo resultado (en vez de comparar contra datos preexistentes). Complementa el harness `psql` (rol real, transacción, `ROLLBACK`), que ya había verificado los 4 métodos por separado.
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql`: alta, `ExisteSerieSegura`, `Listar` (con `JOIN` a `usuarios`), baja -- sin residuo tras el rollback. HTTP end-to-end con login real (`ger`/idEmpresa=1): self-test `CompararDispositivoSeguro` da `False`/`False` antes de `Agregar` y `True`/`True` después, en ambos motores, sin residuo en ninguna de las 2 bases tras la request (confirmado con `COUNT(*)` directo post-request).
+
+**Nota operativa, no un bug de esta etapa**: SQL Server Express local mostró un patrón de intermitencia más severo que lo habitual esta vez -- respondía, volvía a colgarse en segundos, varias veces seguidas. Se resolvió esperando confirmación de estabilidad sostenida (3 chequeos exitosos seguidos) antes de reintentar, en vez de reintentar contra una ventana de disponibilidad efímera.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Empresa.cs completo + fix de drift de schema en `empresas` (horario laboral)
 
 Tercero de los módulos chicos 0%-migrados (tras `Parametros.cs`, `CortePuntoStockSucursal.cs`). 2/2 métodos: `findById`, `ActualizarDatosBasicos` (pantalla "Mi Empresa" -- edición de datos no-fiscales por el propio tenant, distinto del CRUD cross-tenant de `SystemAdministrationRepository`).
 

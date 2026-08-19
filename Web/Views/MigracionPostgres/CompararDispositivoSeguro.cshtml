@@ -1,0 +1,25 @@
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar DispositivoSeguro (self-test)</h4>
+    <p class="text-muted mb-0">
+        Herramienta de verificacion del piloto -- no es una pantalla de producto. `dispositivosseguros` esta vacia en produccion,
+        asi que esta accion ejercita Agregar/ExisteSerieSegura/Listar/Eliminar contra ambos motores con un numero de serie
+        descartable (@ViewBag.NumeroSerie) y compara los resultados. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.
+    </p>
+</div>
+
+@if (ViewBag.ErrorPostgres != null)
+{
+    <p class="text-danger"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+}
+
+<table class="table table-sm table-bordered" style="max-width:500px">
+    <tr><th></th><th>SQL Server</th><th>Postgres</th></tr>
+    <tr><td>ExisteSerieSegura (antes de Agregar)</td><td>@ViewBag.ExisteAntesSqlServer</td><td>@ViewBag.ExisteAntesPostgres</td></tr>
+    <tr><td>ExisteSerieSegura (despues de Agregar)</td><td>@ViewBag.ExisteDespuesSqlServer</td><td>@ViewBag.ExisteDespuesPostgres</td></tr>
+</table>
+
+<p class="text-muted">Esperado: false/false antes, true/true despues. El registro se elimina al final de la misma request (no queda residuo).</p>

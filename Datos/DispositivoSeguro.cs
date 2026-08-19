@@ -6,7 +6,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class DispositivoSeguro
+    public class DispositivoSeguro : Contratos.IDispositivoSeguroRepository
     {
         private readonly IEmpresaContext _empresa;
 

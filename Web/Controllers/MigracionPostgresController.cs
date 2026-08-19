@@ -882,5 +882,63 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        // dispositivosseguros esta vacia en SQL Server (0 filas reales) -- esta accion no
+        // compara datos preexistentes, sino que ejercita Agregar+Listar+ExisteSerieSegura+
+        // Eliminar contra los 2 motores con un registro descartable, comparando que ambos
+        // produzcan el mismo resultado para la misma entrada.
+        [HttpGet]
+        public ActionResult CompararDispositivoSeguro()
+        {
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgresConcreto = new DatosPostgres.DispositivoSeguroPg(connString, empresa.IdEmpresa);
+
+            var dispositivoSqlServer = new Negocio.DispositivoSeguro(empresa);
+            var dispositivoPostgres = new Negocio.DispositivoSeguro(repoPostgresConcreto);
+
+            string numeroSerie = "HTTP-TEST-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            string errorPostgres = null;
+
+            bool existeAntesSqlServer = dispositivoSqlServer.ExisteSerieSegura(numeroSerie, empresa.IdEmpresa);
+            bool existeAntesPostgres = false;
+            bool existeDespuesSqlServer = false;
+            bool existeDespuesPostgres = false;
+
+            try
+            {
+                existeAntesPostgres = dispositivoPostgres.ExisteSerieSegura(numeroSerie, empresa.IdEmpresa);
+
+                dispositivoSqlServer.Agregar(new Entidades.DispositivoSeguro { IdEmpresa = empresa.IdEmpresa, NumeroSerie = numeroSerie, Descripcion = "Prueba HTTP de comparacion" });
+                dispositivoPostgres.Agregar(new Entidades.DispositivoSeguro { IdEmpresa = empresa.IdEmpresa, NumeroSerie = numeroSerie, Descripcion = "Prueba HTTP de comparacion" });
+
+                existeDespuesSqlServer = dispositivoSqlServer.ExisteSerieSegura(numeroSerie, empresa.IdEmpresa);
+                existeDespuesPostgres = dispositivoPostgres.ExisteSerieSegura(numeroSerie, empresa.IdEmpresa);
+
+                var listaSqlServer = dispositivoSqlServer.Listar(empresa.IdEmpresa);
+                var listaPostgres = dispositivoPostgres.Listar(empresa.IdEmpresa);
+
+                var creadoSqlServer = listaSqlServer.Find(d => d.NumeroSerie == numeroSerie);
+                var creadoPostgres = listaPostgres.Find(d => d.NumeroSerie == numeroSerie);
+
+                if (creadoSqlServer != null) dispositivoSqlServer.Eliminar(creadoSqlServer.Id, empresa.IdEmpresa);
+                if (creadoPostgres != null) dispositivoPostgres.Eliminar(creadoPostgres.Id, empresa.IdEmpresa);
+            }
+            catch (Exception ex)
+            {
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar DispositivoSeguro (self-test)";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.NumeroSerie = numeroSerie;
+            ViewBag.ExisteAntesSqlServer = existeAntesSqlServer;
+            ViewBag.ExisteAntesPostgres = existeAntesPostgres;
+            ViewBag.ExisteDespuesSqlServer = existeDespuesSqlServer;
+            ViewBag.ExisteDespuesPostgres = existeDespuesPostgres;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararDispositivoSeguro.cshtml");
+        }
     }
 }
