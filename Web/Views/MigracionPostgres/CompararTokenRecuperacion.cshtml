@@ -1,0 +1,76 @@
+@model Web.Models.ComparacionTokenRecuperacionVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Token de Recuperacion</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto (Etapa 13c) -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null || Model.SqlServer.Id == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>Id</th><td>@Model.SqlServer.Id</td></tr>
+                        <tr><th>IdUsuario</th><td>@Model.SqlServer.IdUsuario</td></tr>
+                        <tr><th>IdEmpresa</th><td>@Model.SqlServer.IdEmpresa</td></tr>
+                        <tr><th>TokenHash</th><td>@Model.SqlServer.TokenHash</td></tr>
+                        <tr><th>FechaCreacionUtc</th><td>@Model.SqlServer.FechaCreacionUtc</td></tr>
+                        <tr><th>FechaExpiracionUtc</th><td>@Model.SqlServer.FechaExpiracionUtc</td></tr>
+                        <tr><th>Usado</th><td>@Model.SqlServer.Usado</td></tr>
+                        <tr><th>FechaUsoUtc</th><td>@Model.SqlServer.FechaUsoUtc</td></tr>
+                        <tr><th>IdentificadorSolicitado</th><td>@Model.SqlServer.IdentificadorSolicitado</td></tr>
+                        <tr><th>EmailDestino</th><td>@Model.SqlServer.EmailDestino</td></tr>
+                        <tr><th>Proposito</th><td>@Model.SqlServer.Proposito</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null || Model.Postgres.Id == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>Id</th><td>@Model.Postgres.Id</td></tr>
+                        <tr><th>IdUsuario</th><td>@Model.Postgres.IdUsuario</td></tr>
+                        <tr><th>IdEmpresa</th><td>@Model.Postgres.IdEmpresa</td></tr>
+                        <tr><th>TokenHash</th><td>@Model.Postgres.TokenHash</td></tr>
+                        <tr><th>FechaCreacionUtc</th><td>@Model.Postgres.FechaCreacionUtc</td></tr>
+                        <tr><th>FechaExpiracionUtc</th><td>@Model.Postgres.FechaExpiracionUtc</td></tr>
+                        <tr><th>Usado</th><td>@Model.Postgres.Usado</td></tr>
+                        <tr><th>FechaUsoUtc</th><td>@Model.Postgres.FechaUsoUtc</td></tr>
+                        <tr><th>IdentificadorSolicitado</th><td>@Model.Postgres.IdentificadorSolicitado</td></tr>
+                        <tr><th>EmailDestino</th><td>@Model.Postgres.EmailDestino</td></tr>
+                        <tr><th>Proposito</th><td>@Model.Postgres.Proposito</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Probar otro tokenHash:</label>
+    <input type="text" name="tokenHash" class="form-control mr-2" style="width:320px" value="@ViewBag.TokenHashBuscado" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

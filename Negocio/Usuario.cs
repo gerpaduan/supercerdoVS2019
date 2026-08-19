@@ -372,22 +372,22 @@ namespace Negocio
 
         public void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token)
         {
-            oUsuarioDSqlServer.CrearTokenRecuperacion(token);
+            oUsuarioD.CrearTokenRecuperacion(token);
         }
 
         public Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash)
         {
-            return oUsuarioDSqlServer.ObtenerTokenRecuperacion(tokenHash);
+            return oUsuarioD.ObtenerTokenRecuperacion(tokenHash);
         }
 
         public void MarcarTokenRecuperacionComoUsado(int idToken)
         {
-            oUsuarioDSqlServer.MarcarTokenRecuperacionComoUsado(idToken);
+            oUsuarioD.MarcarTokenRecuperacionComoUsado(idToken);
         }
 
         public void InvalidarTokensPendientesUsuario(int idUsuario, string proposito)
         {
-            oUsuarioDSqlServer.InvalidarTokensPendientesUsuario(idUsuario, proposito);
+            oUsuarioD.InvalidarTokensPendientesUsuario(idUsuario, proposito);
         }
 
 

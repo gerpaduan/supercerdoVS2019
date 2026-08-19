@@ -689,5 +689,43 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararTokenRecuperacion(string tokenHash)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var usuarioSqlServer = new Negocio.Usuario(empresa, param);
+            var resultadoSqlServer = usuarioSqlServer.ObtenerTokenRecuperacion(tokenHash);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.UsuarioPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.UsuarioPg(connString, empresa.IdEmpresa, sucursalRepoPostgres);
+            var usuarioPostgres = new Negocio.Usuario(repoPostgres, empresa, param);
+
+            Entidades.UsuarioPasswordResetToken resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = usuarioPostgres.ObtenerTokenRecuperacion(tokenHash);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Token de Recuperacion";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.TokenHashBuscado = tokenHash;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararTokenRecuperacion.cshtml", new Web.Models.ComparacionTokenRecuperacionVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

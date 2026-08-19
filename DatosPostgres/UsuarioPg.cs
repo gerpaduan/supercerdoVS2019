@@ -434,5 +434,84 @@ namespace DatosPostgres
                 }
             }
         }
+
+        // usuariopasswordresettokens NO tiene RLS (mismo motivo que "usuarios", ver comentario
+        // de clase y el script de creacion de la tabla): ObtenerTokenRecuperacion busca por
+        // tokenhash desde un link de mail anonimo, sin tenant conocido todavia. Ninguno de
+        // estos 4 metodos filtra por idempresa, igual que el original.
+        public void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token)
+        {
+            if (token == null) throw new ArgumentNullException(nameof(token));
+
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                INSERT INTO usuariopasswordresettokens
+                (idusuario, idempresa, tokenhash, fechacreacionutc, fechaexpiracionutc, usado, fechausoutc, identificadorsolicitado, emaildestino, proposito)
+                VALUES
+                (@idUsuario, @idEmpresa, @tokenHash, @fechaCreacionUtc, @fechaExpiracionUtc, @usado, @fechaUsoUtc, @identificadorSolicitado, @emailDestino, @proposito);",
+                p =>
+                {
+                    p.AddWithValue("idUsuario", token.IdUsuario);
+                    p.AddWithValue("idEmpresa", token.IdEmpresa);
+                    p.AddWithValue("tokenHash", token.TokenHash ?? string.Empty);
+                    p.AddWithValue("fechaCreacionUtc", token.FechaCreacionUtc);
+                    p.AddWithValue("fechaExpiracionUtc", token.FechaExpiracionUtc);
+                    p.AddWithValue("usado", token.Usado);
+                    p.AddWithValue("fechaUsoUtc", (object)token.FechaUsoUtc ?? DBNull.Value);
+                    p.AddWithValue("identificadorSolicitado", token.IdentificadorSolicitado ?? string.Empty);
+                    p.AddWithValue("emailDestino", token.EmailDestino ?? string.Empty);
+                    p.AddWithValue("proposito", string.IsNullOrWhiteSpace(token.Proposito) ? "reset" : token.Proposito);
+                });
+        }
+
+        public Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash)
+        {
+            var list = DbPg.Reader(_connectionString, _idEmpresa, @"
+                SELECT *
+                FROM usuariopasswordresettokens
+                WHERE tokenhash = @tokenHash
+                ORDER BY id DESC
+                LIMIT 1;",
+                dr => new Entidades.UsuarioPasswordResetToken
+                {
+                    Id = Convert.ToInt32(dr["id"]),
+                    IdUsuario = Convert.ToInt32(dr["idusuario"]),
+                    IdEmpresa = dr["idempresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idempresa"]),
+                    TokenHash = Convert.ToString(dr["tokenhash"]),
+                    FechaCreacionUtc = Convert.ToDateTime(dr["fechacreacionutc"]),
+                    FechaExpiracionUtc = Convert.ToDateTime(dr["fechaexpiracionutc"]),
+                    Usado = dr["usado"] != DBNull.Value && Convert.ToBoolean(dr["usado"]),
+                    FechaUsoUtc = dr["fechausoutc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechausoutc"]),
+                    IdentificadorSolicitado = GetString(dr, "identificadorsolicitado"),
+                    EmailDestino = GetString(dr, "emaildestino"),
+                    Proposito = ColumnaExiste(dr, "proposito") && dr["proposito"] != DBNull.Value ? Convert.ToString(dr["proposito"]) : "reset"
+                },
+                p => p.AddWithValue("tokenHash", tokenHash ?? string.Empty));
+
+            return list.Count > 0 ? list[0] : null;
+        }
+
+        public void MarcarTokenRecuperacionComoUsado(int idToken)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE usuariopasswordresettokens SET usado = true, fechausoutc = now() WHERE id = @idToken;",
+                p => p.AddWithValue("idToken", idToken));
+        }
+
+        public void InvalidarTokensPendientesUsuario(int idUsuario, string proposito)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa, @"
+                UPDATE usuariopasswordresettokens
+                SET usado = true,
+                    fechausoutc = COALESCE(fechausoutc, now())
+                WHERE idusuario = @idUsuario
+                  AND proposito = @proposito
+                  AND usado = false
+                  AND fechaexpiracionutc >= now();",
+                p =>
+                {
+                    p.AddWithValue("idUsuario", idUsuario);
+                    p.AddWithValue("proposito", string.IsNullOrWhiteSpace(proposito) ? "reset" : proposito);
+                });
+        }
     }
 }

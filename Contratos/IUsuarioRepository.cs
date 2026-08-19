@@ -4,11 +4,10 @@ using System.Data;
 
 namespace Contratos
 {
-    // Espeja el bloque CRUD/login core (Etapa 13a) + Permisos (Etapa 13b) de Datos.Usuario.
-    // CrearTokenRecuperacion/ObtenerTokenRecuperacion/MarcarTokenRecuperacionComoUsado/
-    // InvalidarTokensPendientesUsuario (recuperacion de contrasena) y
-    // RegistrarLoginUbicacion/obtenerLoginUbicacionLog (auditoria de ubicacion) quedan fuera
-    // de esta interfaz -- se agregan en etapas futuras (13c/13d). Ver docs/DECISIONS.md.
+    // Espeja el bloque CRUD/login core (Etapa 13a) + Permisos (Etapa 13b) + Recuperacion de
+    // contrasena (Etapa 13c) de Datos.Usuario. RegistrarLoginUbicacion/obtenerLoginUbicacionLog
+    // (auditoria de ubicacion) quedan fuera de esta interfaz -- se agregan en la Etapa 13d.
+    // Ver docs/DECISIONS.md.
     public interface IUsuarioRepository
     {
         DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false);
@@ -24,5 +23,9 @@ namespace Contratos
         void ActualizarPasswordWebSeguro(int idUsuario, string passwordHash, string passwordSalt, int passwordHashIterations);
         List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario);
         void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos);
+        void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token);
+        Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash);
+        void MarcarTokenRecuperacionComoUsado(int idToken);
+        void InvalidarTokensPendientesUsuario(int idUsuario, string proposito);
     }
 }

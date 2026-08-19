@@ -1,6 +1,18 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque Permisos (Etapa 13b)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque Recuperacion de contrasena (Etapa 13c)
+
+Tercera de las 4 sub-etapas de `Usuario.cs` (CRUD/login core, Etapa 13a, `23f38358`; Permisos, Etapa 13b, `97f8ba93`; **Recuperación de contraseña** -> Auditoría de ubicación). 4 métodos de `Datos/Usuario.cs` (líneas 398-519): `CrearTokenRecuperacion`, `ObtenerTokenRecuperacion`, `MarcarTokenRecuperacionComoUsado`, `InvalidarTokensPendientesUsuario`.
+
+**`usuariopasswordresettokens` (tabla nueva, 11 columnas, identity nativa, 6 filas reales) queda SIN RLS, por el mismo motivo raíz que `usuarios` (Etapa 13a) -- confirmado con el usuario antes de implementar**: `ObtenerTokenRecuperacion` busca por `tokenHash` sin filtrar por `idEmpresa` -- el link de recuperación de contraseña llega por mail a un usuario anónimo (sin sesión, sin tenant conocido) que hace click y cae directo en `ResetPassword` con el token en la URL; con RLS, esa consulta no podría encontrar la fila. Verificado contra la base real: `dbo.UsuarioPasswordResetTokens` tampoco tiene RLS (`sys.security_policies`, 0 filas) pese a tener `idEmpresa`. El aislamiento real para esta tabla no es por tenant sino por el token en sí (hash aleatorio, un solo uso, con expiración).
+
+**Ningún método de este bloque filtra por `idEmpresa`** -- réplica exacta del SQL original (`CrearTokenRecuperacion` inserta el valor que le pasan, el resto opera solo por `id`/`tokenHash`/`idUsuario`).
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` (rol real `carnisys_user`, transacción explícita, `ROLLBACK`): alta de token + lectura por `tokenHash`, marcar como usado, e invalidar un token pendiente distinto del mismo usuario -- sin residuo. HTTP end-to-end con login real (`ger`/idEmpresa=1) contra la nueva acción `CompararTokenRecuperacion`: token real #1 (migrado de SQL Server) idéntico campo a campo en ambos motores, incluido el `tokenHash` con caracteres especiales de base64 (`+`, `/`, `=`).
+
+**`tokenHash` no es un secreto reversible** (hash de un solo sentido, igual que las contraseñas hasheadas) -- se muestra en la vista de comparación sin problema, a diferencia de `clave`/`passwordHash`/`passwordSalt` (Etapa 13a), que sí se ocultan.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque Permisos (Etapa 13b)
 
 Segunda de las 4 sub-etapas de `Usuario.cs` (CRUD/login core, Etapa 13a, commit `23f38358` -> **Permisos** -> Recuperación de contraseña -> Auditoría de ubicación). La más chica del módulo: 2 métodos de `Datos/Usuario.cs` (líneas 205-299), `getPermisosUsuario` (LEFT JOIN `Formularios`/`PermisosUsuarios` con defaults `-1/-1/true` cuando no hay fila propia) y `AddOrEditPermisos` (upsert por fila). Sin tablas nuevas -- `formularios`/`permisosusuarios` ya existían desde la Etapa 13a.
 
