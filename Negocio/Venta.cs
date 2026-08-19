@@ -108,7 +108,7 @@ namespace Negocio
                     if (oVentaE.ListaExpendios != null)
                     {
                         foreach (int item in oVentaE.ListaExpendios)
-                            oVentaDSqlServer.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+                            oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
                     }
 
                     /////para no repetir lineas, se multiplica por el multiplicador 
@@ -467,23 +467,23 @@ namespace Negocio
         #region EXPENDIO
         public int agregarExpendio(Entidades.Venta oVentaE)
         {
-           return oVentaDSqlServer.agregarExpendio(oVentaE);
+           return oVentaD.agregarExpendio(oVentaE);
         }
         public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
         {
-            return oVentaDSqlServer.agregarLineaExprendio(oLineaE);
+            return oVentaD.agregarLineaExprendio(oLineaE);
         }
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
         {
-            return oVentaDSqlServer.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
+            return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
         }
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
-            return oVentaDSqlServer.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top, fechaDesde, fechaHasta);
+            return oVentaD.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top, fechaDesde, fechaHasta);
         }
         public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
-            return oVentaDSqlServer.obtenerExpendiosEmpresa(top, fechaDesde, fechaHasta);
+            return oVentaD.obtenerExpendiosEmpresa(top, fechaDesde, fechaHasta);
         }
         public DataTable obtenerSectores()
         {
@@ -539,8 +539,8 @@ namespace Negocio
         }
 
         public Entidades.Venta getExpedioById(int idExpendio)
-        { 
-            return oVentaDSqlServer.getExpedioById((int)idExpendio);
+        {
+            return oVentaD.getExpedioById((int)idExpendio);
         }
         #endregion
 

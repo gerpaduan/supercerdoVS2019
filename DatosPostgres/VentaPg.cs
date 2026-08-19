@@ -946,5 +946,240 @@ namespace DatosPostgres
         }
 
         #endregion
+
+        #region Expendios (Etapa 12b)
+
+        // Traduccion de agregarExpendio (SP real, via sp_helptext -- la firma C# no deja ver
+        // que el SP tambien actualiza Licencias.sector antes de insertar en Expendios). El
+        // parametro @idExpendio del SP original nunca se usa (dead param); el id real sale de
+        // un SELECT TOP 1 ORDER BY idExpendio DESC, no de SCOPE_IDENTITY() -- se replica igual,
+        // no se "arregla" la carrera teorica bajo concurrencia (no es peor que el original).
+        public int agregarExpendio(Entidades.Venta oVentaE)
+        {
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    using (var cmd = new NpgsqlCommand("UPDATE licencias SET sector = @sector WHERE nrolicencia = @serialCPU;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("sector", oVentaE.Sector ?? "");
+                        cmd.Parameters.AddWithValue("serialCPU", oVentaE.SerialCPU ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (var cmd = new NpgsqlCommand(@"
+                        INSERT INTO expendios (idvendedor, fechaexpendio, idsucursal, identificacionexpendio, sector, cantitems, importe, creado, observaciones, idempresa)
+                        VALUES (@idVendedor, @fechaExpendio, @idSucursal, @identificacionExpendio, @sector, @cantItems, @importe, now(), @observaciones, @idEmpresa);", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("idVendedor", oVentaE.Vendedor.Id);
+                        cmd.Parameters.AddWithValue("fechaExpendio", oVentaE.FechaVenta);
+                        cmd.Parameters.AddWithValue("idSucursal", oVentaE.Sucursal.idSucursal);
+                        cmd.Parameters.AddWithValue("identificacionExpendio", oVentaE.IdentificacionExpendio ?? "");
+                        cmd.Parameters.AddWithValue("sector", oVentaE.Sector ?? "");
+                        cmd.Parameters.AddWithValue("cantItems", int.TryParse(oVentaE.CantItems, out int cantItems) ? cantItems : 0);
+                        cmd.Parameters.AddWithValue("importe", oVentaE.TotalImporte);
+                        cmd.Parameters.AddWithValue("observaciones", oVentaE.Observaciones ?? "");
+                        cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    object idExpendioObj;
+                    using (var cmd = new NpgsqlCommand(
+                        "SELECT idexpendio FROM expendios WHERE idsucursal = @idSucursal ORDER BY idexpendio DESC LIMIT 1;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("idSucursal", oVentaE.Sucursal.idSucursal);
+                        idExpendioObj = cmd.ExecuteScalar();
+                    }
+
+                    tx.Commit();
+
+                    return (idExpendioObj == null || idExpendioObj == DBNull.Value) ? 0 : Convert.ToInt32(idExpendioObj);
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa, @"
+                INSERT INTO lineaexpendio (idexpendio, idcorte, cantkg, preciokg, pesobalanza, idempresa)
+                VALUES (@idExpendio, @idCorte, @cantKg, @precioKg, @pesoBalanza, @idEmpresa)
+                RETURNING idlineaexpendio;",
+                p =>
+                {
+                    p.AddWithValue("idExpendio", oLineaE.Venta.IdVenta);
+                    p.AddWithValue("idCorte", oLineaE.Corte.idCorte);
+                    p.AddWithValue("cantKg", Math.Round(oLineaE.CantKg, 3));
+                    p.AddWithValue("precioKg", Math.Round(oLineaE.PrecioKg, 2));
+                    p.AddWithValue("pesoBalanza", oLineaE.PesoBalanza);
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                });
+
+            oLineaE.IdLineaVenta = (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
+            return oLineaE;
+        }
+
+        public void asignarVentaEnExpendio(int idVenta, int idExpendio)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE expendios SET idventa = @idVenta WHERE idexpendio = @idExpendio;",
+                p =>
+                {
+                    p.AddWithValue("idVenta", idVenta);
+                    p.AddWithValue("idExpendio", idExpendio);
+                });
+        }
+
+        public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
+        {
+            DateTime fechaDesde = DateTime.Now.AddMinutes(-ultimosMinutos);
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT fechaexpendio,
+                       e.idexpendio,
+                       identificacionexpendio,
+                       sector,
+                       c.codigo,
+                       c.corte,
+                       le.cantkg,
+                       le.preciokg,
+                       (le.cantkg * le.preciokg) AS total,
+                       idventa,
+                       u.nombre AS vendedor,
+                       e.observaciones
+                FROM expendios e
+                INNER JOIN lineaexpendio le ON e.idexpendio = le.idexpendio
+                INNER JOIN corte c ON le.idcorte = c.idcorte
+                INNER JOIN usuarios u ON e.idvendedor = u.id
+                WHERE fechaexpendio > @fechaDesde AND e.idsucursal = @idSucursal
+                ORDER BY fechaexpendio;",
+                p =>
+                {
+                    p.AddWithValue("fechaDesde", fechaDesde);
+                    p.AddWithValue("idSucursal", idSucursal);
+                });
+        }
+
+        public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            return DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT e.fechaexpendio,
+                       e.idexpendio,
+                       e.identificacionexpendio,
+                       e.sector,
+                       e.cantitems,
+                       e.importe,
+                       e.idventa,
+                       u.nombre AS vendedor,
+                       COALESCE(SUM(le.cantkg), 0) AS totalkg
+                FROM expendios e
+                INNER JOIN usuarios u ON e.idvendedor = u.id
+                LEFT JOIN lineaexpendio le ON e.idexpendio = le.idexpendio
+                WHERE e.idsucursal = @idSucursal
+                  AND e.idvendedor = @idVendedor
+                  AND (@fechaDesde::date IS NULL OR e.fechaexpendio::date >= @fechaDesde::date)
+                  AND (@fechaHasta::date IS NULL OR e.fechaexpendio::date <= @fechaHasta::date)
+                GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector,
+                         e.cantitems, e.importe, e.idventa, u.nombre
+                ORDER BY e.fechaexpendio DESC, e.idexpendio DESC
+                LIMIT @top;",
+                p =>
+                {
+                    p.AddWithValue("idSucursal", idSucursal);
+                    p.AddWithValue("idVendedor", idVendedor);
+                    p.AddWithValue("fechaDesde", fechaDesde.HasValue ? (object)fechaDesde.Value.Date : DBNull.Value);
+                    p.AddWithValue("fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value.Date : DBNull.Value);
+                    p.AddWithValue("top", top <= 0 ? 100 : top);
+                });
+        }
+
+        public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+        {
+            return DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT e.fechaexpendio,
+                       e.idexpendio,
+                       e.identificacionexpendio,
+                       e.sector,
+                       e.cantitems,
+                       e.importe,
+                       e.idventa,
+                       e.idsucursal,
+                       e.idvendedor,
+                       u.nombre AS vendedor,
+                       s.sucursal AS sucursal,
+                       COALESCE(SUM(le.cantkg), 0) AS totalkg
+                FROM expendios e
+                INNER JOIN usuarios u ON e.idvendedor = u.id
+                LEFT JOIN sucursal s ON e.idsucursal = s.idsucursal
+                LEFT JOIN lineaexpendio le ON e.idexpendio = le.idexpendio
+                WHERE e.idempresa = @idEmpresa
+                  AND (@fechaDesde::timestamp IS NULL OR e.fechaexpendio >= @fechaDesde)
+                  AND (@fechaHasta::timestamp IS NULL OR e.fechaexpendio <= @fechaHasta)
+                GROUP BY e.fechaexpendio, e.idexpendio, e.identificacionexpendio, e.sector,
+                         e.cantitems, e.importe, e.idventa, e.idsucursal, e.idvendedor, u.nombre, s.sucursal
+                ORDER BY e.fechaexpendio DESC, e.idexpendio DESC
+                LIMIT @top;",
+                p =>
+                {
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("fechaDesde", fechaDesde.HasValue ? (object)fechaDesde.Value : DBNull.Value);
+                    p.AddWithValue("fechaHasta", fechaHasta.HasValue ? (object)fechaHasta.Value : DBNull.Value);
+                    p.AddWithValue("top", top <= 0 ? 300 : top);
+                });
+        }
+
+        // Sin wrapper propio en Negocio.Venta -- solo se usa dentro de getExpedioById (mismo
+        // patron que Datos.Venta.obtenerLineasExpendio).
+        private List<Entidades.LineaVenta> GetLineasExpendio(int idExpendio)
+        {
+            return DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT idlineaexpendio, idcorte, cantkg, preciokg, pesobalanza FROM lineaexpendio WHERE idexpendio = @idExpendio;",
+                dr => new Entidades.LineaVenta
+                {
+                    IdLineaVenta = Convert.ToInt32(dr["idlineaexpendio"]),
+                    Corte = _corteRepo.findCorteById(Convert.ToInt32(dr["idcorte"]), false),
+                    CantKg = dr["cantkg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantkg"]),
+                    PrecioKg = dr["preciokg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["preciokg"]),
+                    PesoBalanza = GetBool(dr, "pesobalanza")
+                },
+                p => p.AddWithValue("idExpendio", idExpendio));
+        }
+
+        public Entidades.Venta getExpedioById(int idExpendio)
+        {
+            var list = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT * FROM expendios WHERE idexpendio = @idExpendio;",
+                dr =>
+                {
+                    var oExpendioE = new Entidades.Venta
+                    {
+                        IdExpendio = Convert.ToInt32(dr["idexpendio"]),
+                        IdVenta = dr["idventa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idventa"]),
+                        FechaVenta = Convert.ToDateTime(dr["fechaexpendio"]),
+                        IdentificacionExpendio = GetString(dr, "identificacionexpendio"),
+                        Sector = GetString(dr, "sector"),
+                        CantItems = GetString(dr, "cantitems"),
+                        TotalImporte = GetFloat(dr, "importe"),
+                        Observaciones = GetString(dr, "observaciones"),
+                        Vendedor = GetUsuarioLiviano(Convert.ToInt32(dr["idvendedor"])),
+                        Sucursal = _sucursalRepo.findById(Convert.ToInt32(dr["idsucursal"]))
+                    };
+
+                    return oExpendioE;
+                },
+                p => p.AddWithValue("idExpendio", idExpendio));
+
+            if (list.Count == 0) return null;
+
+            var oExpendioE = list[0];
+            oExpendioE.LineasVenta = GetLineasExpendio(oExpendioE.IdExpendio);
+            return oExpendioE;
+        }
+
+        #endregion
     }
 }

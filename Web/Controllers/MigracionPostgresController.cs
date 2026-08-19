@@ -525,5 +525,48 @@ namespace Web.Controllers
                 Postgres = sectoresPostgres
             });
         }
+
+        // Compara el bloque Expendios/LineaExpendio (Etapa 12b) -- getExpedioById (entidad
+        // completa con sus lineas). Las escrituras (agregarExpendio/agregarLineaExprendio/
+        // asignarVentaEnExpendio) se verifican aparte con harness psql/ROLLBACK, no HTTP.
+        [HttpGet]
+        public ActionResult CompararExpendio(int idExpendio)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var ventaSqlServer = new Negocio.Venta(empresa, param);
+            var resultadoSqlServer = ventaSqlServer.getExpedioById(idExpendio);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.VentaPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var corteRepoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var repoPostgres = new DatosPostgres.VentaPg(connString, empresa.IdEmpresa, personaRepoPostgres, sucursalRepoPostgres, corteRepoPostgres);
+            var ventaPostgres = new Negocio.Venta(repoPostgres, empresa, param);
+
+            Entidades.Venta resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = ventaPostgres.getExpedioById(idExpendio);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Expendio #" + idExpendio;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdExpendioBuscado = idExpendio;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararExpendio.cshtml", new Web.Models.ComparacionExpendioVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

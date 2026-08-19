@@ -5,8 +5,10 @@ using System.Data;
 namespace Contratos
 {
     // Espeja el bloque Ventas/LineaVenta/TemporalLineaVenta de Datos.Venta (Etapa 7) mas
-    // Sectores/Licencias (Etapa 12a). Expendios/LineaExpendio y FacturaElectronica quedan
-    // fuera de esta interfaz -- se agregan en etapas futuras. Ver docs/DECISIONS.md.
+    // Sectores/Licencias (Etapa 12a) y Expendios/LineaExpendio (Etapa 12b). FacturaElectronica
+    // queda fuera de esta interfaz -- se agrega en una etapa futura. Ver docs/DECISIONS.md.
+    // obtenerLineasExpendio NO esta en esta interfaz a proposito: sin caller externo, solo se
+    // usa internamente dentro de getExpedioById (mismo patron que Datos.Venta).
     public interface IVentaRepository
     {
         Entidades.Venta getVentaById(int idVenta);
@@ -51,5 +53,13 @@ namespace Contratos
         bool sectorEstaEnUso(string sector);
         void eliminarSector(string sector);
         string getUltimoSectorSelect(string serialCPU);
+
+        int agregarExpendio(Entidades.Venta oVentaE);
+        Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE);
+        void asignarVentaEnExpendio(int idVenta, int idExpendio);
+        DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal);
+        DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
+        DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
+        Entidades.Venta getExpedioById(int idExpendio);
     }
 }

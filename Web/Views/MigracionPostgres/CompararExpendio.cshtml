@@ -1,0 +1,98 @@
+@model Web.Models.ComparacionExpendioVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Expendio #@ViewBag.IdExpendioBuscado</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto (Etapa 12b) -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null || Model.SqlServer.IdExpendio == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdExpendio</th><td>@Model.SqlServer.IdExpendio</td></tr>
+                        <tr><th>IdVenta</th><td>@Model.SqlServer.IdVenta</td></tr>
+                        <tr><th>FechaVenta</th><td>@Model.SqlServer.FechaVenta</td></tr>
+                        <tr><th>IdentificacionExpendio</th><td>@Model.SqlServer.IdentificacionExpendio</td></tr>
+                        <tr><th>Sector</th><td>@Model.SqlServer.Sector</td></tr>
+                        <tr><th>CantItems</th><td>@Model.SqlServer.CantItems</td></tr>
+                        <tr><th>TotalImporte</th><td>@Model.SqlServer.TotalImporte</td></tr>
+                        <tr><th>Observaciones</th><td>@Model.SqlServer.Observaciones</td></tr>
+                        <tr><th>Vendedor</th><td>@(Model.SqlServer.Vendedor?.Nombre)</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.SqlServer.Sucursal?.SucursalNombre)</td></tr>
+                        <tr>
+                            <th>LineasVenta</th>
+                            <td>
+                                @if (Model.SqlServer.LineasVenta != null)
+                                {
+                                    foreach (var l in Model.SqlServer.LineasVenta)
+                                    {
+                                        <div>@(l.Corte?.corte): @l.CantKg kg x @l.PrecioKg @(l.PesoBalanza ? "(balanza)" : "")</div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null || Model.Postgres.IdExpendio == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro (o RLS no lo deja ver a este tenant).</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdExpendio</th><td>@Model.Postgres.IdExpendio</td></tr>
+                        <tr><th>IdVenta</th><td>@Model.Postgres.IdVenta</td></tr>
+                        <tr><th>FechaVenta</th><td>@Model.Postgres.FechaVenta</td></tr>
+                        <tr><th>IdentificacionExpendio</th><td>@Model.Postgres.IdentificacionExpendio</td></tr>
+                        <tr><th>Sector</th><td>@Model.Postgres.Sector</td></tr>
+                        <tr><th>CantItems</th><td>@Model.Postgres.CantItems</td></tr>
+                        <tr><th>TotalImporte</th><td>@Model.Postgres.TotalImporte</td></tr>
+                        <tr><th>Observaciones</th><td>@Model.Postgres.Observaciones</td></tr>
+                        <tr><th>Vendedor</th><td>@(Model.Postgres.Vendedor?.Nombre)</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.Postgres.Sucursal?.SucursalNombre)</td></tr>
+                        <tr>
+                            <th>LineasVenta</th>
+                            <td>
+                                @if (Model.Postgres.LineasVenta != null)
+                                {
+                                    foreach (var l in Model.Postgres.LineasVenta)
+                                    {
+                                        <div>@(l.Corte?.corte): @l.CantKg kg x @l.PrecioKg @(l.PesoBalanza ? "(balanza)" : "")</div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Probar otro idExpendio:</label>
+    <input type="number" name="idExpendio" class="form-control mr-2" style="width:120px" value="@ViewBag.IdExpendioBuscado" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>
