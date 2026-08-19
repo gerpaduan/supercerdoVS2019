@@ -438,11 +438,14 @@ namespace Web.Controllers
             var resultadoSqlServer = corteSqlServer.CierreStockWeb("", idSucursal, desde, hasta, "", 0, 0);
 
             // Postgres: constructor nuevo, inyectando DatosPostgres.CortePg. Cubre el bloque
-            // Stock/Reportes migrado (Etapa 11c).
+            // Stock/Reportes migrado (Etapa 11c). puntoStockRepoPostgres cierra un gap
+            // encontrado al migrar CortePuntoStockSucursal.cs: antes, FindPorSucursal siempre
+            // leia de SQL Server aca aunque el resto de Corte corriera contra Postgres.
             string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
             var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
             var repoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
-            var cortePostgres = new Negocio.Corte(repoPostgres, empresa, param);
+            var puntoStockRepoPostgres = new DatosPostgres.CortePuntoStockSucursalPg(connString, empresa.IdEmpresa);
+            var cortePostgres = new Negocio.Corte(repoPostgres, empresa, param, puntoStockRepoPostgres);
 
             System.Data.DataTable resultadoPostgres;
             string errorPostgres = null;
@@ -800,6 +803,43 @@ namespace Web.Controllers
             ViewBag.ErrorPostgres = errorPostgres;
 
             return View("~/Views/MigracionPostgres/CompararParametros.cshtml", new Web.Models.ComparacionParametrosVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
+
+        [HttpGet]
+        public ActionResult CompararPuntoStockSucursal(int idSucursal)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var repoSqlServer = new Negocio.CortePuntoStockSucursal(empresa, param);
+            var resultadoSqlServer = repoSqlServer.FindPorSucursal(idSucursal);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CortePuntoStockSucursalPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgresConcreto = new DatosPostgres.CortePuntoStockSucursalPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new Negocio.CortePuntoStockSucursal(repoPostgresConcreto);
+
+            System.Collections.Generic.Dictionary<int, int> resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = repoPostgres.FindPorSucursal(idSucursal);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar CortePuntoStockSucursal, sucursal #" + idSucursal;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdSucursalBuscada = idSucursal;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararPuntoStockSucursal.cshtml", new Web.Models.ComparacionPuntoStockSucursalVm
             {
                 SqlServer = resultadoSqlServer,
                 Postgres = resultadoPostgres

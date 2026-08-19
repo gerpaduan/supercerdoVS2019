@@ -1,0 +1,65 @@
+@model Web.Models.ComparacionPuntoStockSucursalVm
+@using System.Linq
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar CortePuntoStockSucursal, sucursal #@ViewBag.IdSucursalBuscada</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual) -- @(Model.SqlServer?.Count ?? 0) productos</div>
+            <div class="card-body" style="max-height:500px; overflow-y:auto;">
+                @if (Model.SqlServer == null || Model.SqlServer.Count == 0)
+                {
+                    <p class="text-muted mb-0">Sin filas.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdCorte</th><th>PuntoStock</th></tr>
+                        @foreach (var kv in Model.SqlServer.OrderBy(x => x.Key))
+                        {
+                            <tr><td>@kv.Key</td><td>@kv.Value</td></tr>
+                        }
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo) -- @(Model.Postgres?.Count ?? 0) productos</div>
+            <div class="card-body" style="max-height:500px; overflow-y:auto;">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null || Model.Postgres.Count == 0)
+                {
+                    <p class="text-muted mb-0">Sin filas.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdCorte</th><th>PuntoStock</th></tr>
+                        @foreach (var kv in Model.Postgres.OrderBy(x => x.Key))
+                        {
+                            <tr><td>@kv.Key</td><td>@kv.Value</td></tr>
+                        }
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">idSucursal:</label>
+    <input type="number" name="idSucursal" class="form-control mr-2" style="width:120px" value="@ViewBag.IdSucursalBuscada" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

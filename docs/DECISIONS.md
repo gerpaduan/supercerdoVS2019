@@ -1,6 +1,20 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Parametros.cs completo
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: CortePuntoStockSucursal.cs completo + cierre de gap en Corte.cs
+
+Segundo de los módulos chicos 0%-migrados (tras `Parametros.cs`). 3/3 métodos: `CrearParaTodasLasSucursales`, `GuardarPuntosStockLote`, `FindPorSucursal` -- punto de stock por combinación Producto (Corte) x Sucursal.
+
+**Hallazgo real antes de migrar, confirmado con el usuario y resuelto en el mismo cambio**: `Negocio/Corte.cs` (ya migrado a Postgres en la Etapa 11c) tenía `Datos.CortePuntoStockSucursal` **hardcodeado a SQL Server en sus 2 constructores**, incluido el que recibe `ICorteRepository` de Postgres -- los reportes de stock (`FindPorSucursal`, usado en `CierreStockWeb`/`ObtenerExistenciaPorSucursalesPlano`) siempre leían puntos de stock desde SQL Server, nunca desde Postgres, aunque el resto de `Corte.cs` corriera contra Postgres. No estaba documentado como deuda conocida -- se encontró al revisar los callers antes de migrar este módulo.
+
+**Resuelto sin romper compatibilidad**: el 2do constructor de `Negocio.Corte` ahora acepta un 4to parámetro opcional `Contratos.ICortePuntoStockSucursalRepository puntoStockRepositorio = null` (default `null` → mismo comportamiento SQL Server de siempre). Los 4 call-sites existentes de ese constructor (en `MigracionPostgresController`) no pasan el nuevo parámetro y no cambian de comportamiento. Solo `CompararStockReportes` se actualizó para pasar `CortePuntoStockSucursalPg`, cerrando el gap específicamente donde se puede verificar (reportes de stock).
+
+**`cortepuntostocksucursal` (128 filas) tiene `idEmpresa` pero en SQL Server no tiene RLS** -- mismo patrón ya encontrado y resuelto en `empresaparametros` (etapa anterior): no es un caso "usuarios" (el tenant siempre se conoce al llamar), simplemente nunca se le agregó RLS en el original. Se agrega RLS estándar en Postgres como mejora deliberada, mismo criterio ya confirmado con el usuario.
+
+**`GuardarPuntosStockLote` usa `INSERT ... ON CONFLICT (idempresa, idcorte, idsucursal) DO UPDATE`** en vez del `MERGE` original -- mismo patrón ya usado en `AddOrEditPermisos`/`Parametros.SetValor`, dentro de una transacción explícita (mismo criterio del original: todas las sucursales de un producto se guardan atómicamente).
+
+**Verificado**: `CarniSys.sln` completo compila limpio (incluido el cambio de firma en `Negocio/Corte.cs`, sin romper ningún caller existente). Harness `psql` (rol real, transacción explícita, `ROLLBACK`): upsert sin duplicar la constraint única, alta idempotente por sucursal (`CrearParaTodasLasSucursales` re-ejecutado no duplica) -- sin residuo. HTTP end-to-end con login real (`ger`/idEmpresa=1): `CompararPuntoStockSucursal` (55/55 productos, 110/110 celdas idénticas) y, reverificando el gap cerrado, `CompararStockReportes` (8/8 filas, idénticas salvo el mismo ruido de formato decimal ya documentado en la Etapa 11c -- `14,3000000000` vs `14,30`, mismo valor numérico).
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Parametros.cs completo
 
 Con `Corte.cs`/`Venta.cs`/`Usuario.cs` cerrados, se retoma el relevamiento de módulos 0%-migrados: quedaban 6 chicos (`CatalogoGlobalProducto`, `CortePuntoStockSucursal`, `DispositivoSeguro`, `Empresa`, `Parametros`, `WhatsApp`). El usuario eligió `Parametros.cs` por ser el más transversal (`Negocio.Parametros` implementa `IParametrosContext`, usado en toda la app para leer configuración por empresa). 5/5 métodos migrados de una sola vez (sin dos-campos intermedio, dado el tamaño): `ObtenerGrid`, `GuardarGrid`, `ObtenerDiccionario`, `ObtenerValor`, `SetValor` -- los últimos 2 sin caller real hoy (solo `Negocio.Parametros` usa los primeros 3), migrados igual por completitud de la interfaz.
 

@@ -9,7 +9,7 @@ namespace Datos
     // Acceso a dbo.CortePuntoStockSucursal: punto de stock propio por combinacion
     // Producto (Corte) x Sucursal. Reemplaza la lectura del campo unico Corte.puntoStock
     // para el calculo de faltantes por sucursal.
-    public class CortePuntoStockSucursal
+    public class CortePuntoStockSucursal : Contratos.ICortePuntoStockSucursalRepository
     {
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;

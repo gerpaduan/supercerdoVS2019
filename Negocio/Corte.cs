@@ -19,7 +19,7 @@ namespace Negocio
         // constructores. Ver docs/DECISIONS.md.
         private readonly Contratos.ICorteRepository oCorteD;
         private readonly Datos.Corte oCorteDSqlServer;
-        private readonly Datos.CortePuntoStockSucursal oCortePuntoStockSucursalD;
+        private readonly Contratos.ICortePuntoStockSucursalRepository oCortePuntoStockSucursalD;
 
         IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
@@ -37,12 +37,18 @@ namespace Negocio
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICorteRepository
         // (ej. DatosPostgres.CortePg) para el bloque migrado. Solo lo usa el controller de
         // comparacion. El resto de la clase sigue yendo por SQL Server (oCorteDSqlServer).
-        public Corte(Contratos.ICorteRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        // puntoStockRepositorio es opcional (default null -> SQL Server, mismo comportamiento
+        // de siempre) -- antes de esto, los reportes de stock (FindPorSucursal) SIEMPRE leian
+        // de SQL Server aunque el resto de Corte corriera contra Postgres (gap encontrado y
+        // cerrado al migrar CortePuntoStockSucursal.cs, ver docs/DECISIONS.md). Los 4 call-sites
+        // existentes de este constructor no pasan el 4to parametro -- sin cambio de comportamiento
+        // para ellos.
+        public Corte(Contratos.ICorteRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null, Contratos.ICortePuntoStockSucursalRepository puntoStockRepositorio = null)
         {
             _empresa = empresa; _param = param;
             oCorteD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
             oCorteDSqlServer = new Datos.Corte(empresa, param);
-            oCortePuntoStockSucursalD = new Datos.CortePuntoStockSucursal(empresa, param);
+            oCortePuntoStockSucursalD = puntoStockRepositorio ?? new Datos.CortePuntoStockSucursal(empresa, param);
         }
 
         //Mantuve el metodo con este nombre getCorteById para no modificar toda la capa presentacion
