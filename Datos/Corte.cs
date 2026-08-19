@@ -1273,14 +1273,18 @@ namespace Datos
 
         public DataTable obtenerUltimosMovimientosDashboard(int cantidad)
         {
+            // Fix real: la tabla real es Movimiento (singular), con columnas sucursalOrigen/
+            // sucursalDestino -- antes referenciaba dbo.Movimientos (no existe) e idOrigen/
+            // idDestino (no existen), asi que este widget del dashboard fallaba en silencio
+            // (try/catch en HomeController.cs). Confirmado con el usuario, commit separado.
             const string sql = @"
                 SELECT TOP (@cantidad)
                     m.fechaMovimiento AS [Fecha Movimiento],
                     so.sucursal AS Origen,
                     sd.sucursal AS Destino
-                FROM dbo.Movimientos m
-                INNER JOIN dbo.Sucursal so ON so.idSucursal = m.idOrigen
-                INNER JOIN dbo.Sucursal sd ON sd.idSucursal = m.idDestino
+                FROM dbo.Movimiento m
+                INNER JOIN dbo.Sucursal so ON so.idSucursal = m.sucursalOrigen
+                INNER JOIN dbo.Sucursal sd ON sd.idSucursal = m.sucursalDestino
                 ORDER BY m.fechaMovimiento DESC, m.idMovimiento DESC;";
 
             return Db.DataTable(
