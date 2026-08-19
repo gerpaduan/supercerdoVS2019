@@ -7,7 +7,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class CierreCaja
+    public class CierreCaja : Contratos.ICierreCajaRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 

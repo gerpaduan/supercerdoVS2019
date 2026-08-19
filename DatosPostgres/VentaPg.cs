@@ -384,10 +384,35 @@ namespace DatosPostgres
                         cmd.ExecuteNonQuery();
                     }
 
-                    // TODO(claude): el SP real (modificarVenta) ademas genera un asiento inverso
-                    // en EgresosCaja cuando hay un egreso previo ligado a esta venta cta-cte --
-                    // no implementado, depende de EgresosCaja/TiposEgresoCaja (dominio de
-                    // CierreCaja.cs, sin migrar). Ver docs/GAPS.md.
+                    // Reverso de EgresosCaja (gap cerrado en la Etapa 8, ver docs/DECISIONS.md):
+                    // espeja exacto el SP real modificarVenta -- busca el ultimo EgresosCaja con
+                    // tabla='Ventas' AND idtabla=@idVenta, y si su monto es positivo, copia toda
+                    // la fila a un registro nuevo con el monto negado y la descripcion prefijada
+                    // "Anulado:". Misma transaccion que el resto del metodo.
+                    object montoObj;
+                    using (var cmdMonto = new NpgsqlCommand(
+                        "SELECT monto FROM egresoscaja WHERE tabla = 'Ventas' AND idtabla = @idVenta ORDER BY id DESC LIMIT 1;", con, tx))
+                    {
+                        cmdMonto.Parameters.AddWithValue("idVenta", oVentaE.IdVenta);
+                        montoObj = cmdMonto.ExecuteScalar();
+                    }
+
+                    double monto = montoObj == null || montoObj == DBNull.Value ? 0 : Convert.ToDouble(montoObj);
+                    if (monto > 0)
+                    {
+                        using (var cmdReverso = new NpgsqlCommand(@"
+                            INSERT INTO egresoscaja (fechahora, idtipoegresocaja, descripcion, detalle, monto, idsucursal,
+                                creado, creadopor, actualizado, actualizadopor, idcompra, esgasto, tabla, idtabla, idempresa)
+                            SELECT fechahora, idtipoegresocaja, '' || 'Anulado:' || descripcion, detalle, -1 * monto, idsucursal,
+                                now(), creadopor, NULL, NULL, idcompra, esgasto, tabla, idtabla, idempresa
+                            FROM egresoscaja
+                            WHERE tabla = 'Ventas' AND idtabla = @idVenta
+                            ORDER BY id DESC LIMIT 1;", con, tx))
+                        {
+                            cmdReverso.Parameters.AddWithValue("idVenta", oVentaE.IdVenta);
+                            cmdReverso.ExecuteNonQuery();
+                        }
+                    }
 
                     tx.Commit();
                 }

@@ -11,13 +11,32 @@ namespace Negocio
     {
         Negocio.Venta oVentaN;
 
-        private readonly Datos.CierreCaja oCierreD;
+        // oCierreD: bloque CierreCaja/EgresosCaja/TiposEgresoCaja migrado a la interfaz -- puede
+        // ser SQL Server o Postgres. oCierreDSqlServer: cambiarSucursalCaja/
+        // obtenerPreviewCambioSucursalCaja, todavia sin migrar -- siempre SQL Server.
+        // Ver docs/DECISIONS.md, Etapa 8.
+        private readonly Contratos.ICierreCajaRepository oCierreD;
+        private readonly Datos.CierreCaja oCierreDSqlServer;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        // Constructor existente: SIN CAMBIOS de comportamiento.
         public CierreCaja(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCierreD = new Datos.CierreCaja(empresa, param);
+            var datosCierre = new Datos.CierreCaja(empresa, param);
+            oCierreD = datosCierre;
+            oCierreDSqlServer = datosCierre;
+            oVentaN = new Negocio.Venta(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICierreCajaRepository
+        // (ej. DatosPostgres.CierreCajaPg) para el bloque migrado. Solo lo usa el controller de
+        // comparacion. cambiarSucursalCaja sigue yendo por SQL Server (oCierreDSqlServer).
+        public CierreCaja(Contratos.ICierreCajaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oCierreD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            oCierreDSqlServer = new Datos.CierreCaja(empresa, param);
             oVentaN = new Negocio.Venta(empresa, param);
         }
 
@@ -208,12 +227,12 @@ namespace Negocio
 
         public Datos.CierreCaja.CambioSucursalCajaPreview obtenerPreviewCambioSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva)
         {
-            return oCierreD.obtenerPreviewCambioSucursalCaja(cierreCaja, idSucursalNueva);
+            return oCierreDSqlServer.obtenerPreviewCambioSucursalCaja(cierreCaja, idSucursalNueva);
         }
 
         public Datos.CierreCaja.CambioSucursalCajaResultado cambiarSucursalCaja(Entidades.CierreCaja cierreCaja, int idSucursalNueva, int idUsuarioEjecutor, string usuarioEjecutor)
         {
-            return oCierreD.cambiarSucursalCaja(cierreCaja, idSucursalNueva, idUsuarioEjecutor, usuarioEjecutor);
+            return oCierreDSqlServer.cambiarSucursalCaja(cierreCaja, idSucursalNueva, idUsuarioEjecutor, usuarioEjecutor);
         }
 
         public bool validarCajaAbiertaVendedor(DateTime fechaHoraRegistro, Entidades.Sucursal oSucursalE, Entidades.Usuario oUsuario)

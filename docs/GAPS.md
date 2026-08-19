@@ -11,31 +11,6 @@ no acá. Este archivo es solo para comportamiento real pendiente de portar.
 
 ---
 
-## `VentaPg.modificarVenta` — reverso de `EgresosCaja` no implementado
-
-**Origen**: `docs/DECISIONS.md`, Etapa 7 (2026-08-19).
-
-**Comportamiento real en SQL Server** (SP `dbo.modificarVenta`, verificado con `sp_helptext`
-contra la base viva): cuando se edita una venta con `eliminarLineas=true` y existe un
-`EgresosCaja` previo ligado a esa venta (`tabla='Ventas' AND idTabla=@idVenta`, típico de una
-venta en cuenta corriente que generó un egreso), el SP inserta un registro inverso en
-`EgresosCaja` (mismo monto en negativo, descripción prefijada `"Anulado:"`) para revertir el
-efecto contable del egreso original.
-
-**Por qué no está en Postgres**: `EgresosCaja`/`TiposEgresoCaja` son dominio de `CierreCaja.cs`,
-todavía sin migrar. `VentaPg.modificarVenta` implementa el resto del método (borrado de líneas +
-`UPDATE Ventas`) pero omite este paso — marcado con `TODO(claude)` en el código.
-
-**Impacto real si no se resuelve**: al comparar SQL Server vs Postgres para una venta cta-cte
-editada con líneas eliminadas y egreso previo, `EgresosCaja` queda desincronizada entre motores
-(SQL Server tiene el reverso, Postgres no). No afecta ningún otro flujo.
-
-**Confirmado con el usuario (2026-08-19)**: este gap es importante y **debe resolverse
-obligatoriamente** cuando se aborde `CierreCaja.cs` — no es opcional, no se puede dejar así
-indefinidamente.
-
-**Para resolverlo**: migrar `EgresosCaja`/`TiposEgresoCaja` (schema + RLS + datos), agregar el
-paso equivalente en `VentaPg.modificarVenta` dentro de la misma transacción que ya usa
-(`ConexionPg.AbrirConTenant`), y extender el harness de comparación (`CompararVenta` o uno
-dedicado) para ejercitar el caso: venta cta-cte con egreso previo → editar con `eliminarLineas`
-→ confirmar el reverso en ambos motores.
+Sin gaps abiertos por ahora. El último (reverso de `EgresosCaja` en `VentaPg.modificarVenta`,
+abierto en la Etapa 7) se resolvió en la Etapa 8 al migrar `EgresosCaja`/`TiposEgresoCaja` —
+ver `docs/DECISIONS.md`.

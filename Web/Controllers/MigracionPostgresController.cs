@@ -220,5 +220,44 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararEgresoCaja(int idEgresoCaja)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var cierreCajaSqlServer = new Negocio.CierreCaja(empresa, param);
+            var resultadoSqlServer = cierreCajaSqlServer.getEgresoCajaById(idEgresoCaja);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CierreCajaPg. Cubre solo el
+            // bloque CierreCaja/EgresosCaja/TiposEgresoCaja migrado -- cambiarSucursalCaja sigue
+            // yendo por SQL Server.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgres = new DatosPostgres.CierreCajaPg(connString, empresa.IdEmpresa);
+            var cierreCajaPostgres = new Negocio.CierreCaja(repoPostgres, empresa, param);
+
+            Entidades.EgresoCaja resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = cierreCajaPostgres.getEgresoCajaById(idEgresoCaja);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar EgresoCaja #" + idEgresoCaja;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEgresoCajaBuscado = idEgresoCaja;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararEgresoCaja.cshtml", new Web.Models.ComparacionEgresoCajaVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
