@@ -1,3 +1,4 @@
+using System;
 using Utilidades;
 
 namespace Negocio
@@ -7,11 +8,18 @@ namespace Negocio
     // (Web/Controllers/EmpresaController.cs), no aca.
     public class Empresa
     {
-        private readonly Datos.Empresa oEmpresaD;
+        private readonly Contratos.IEmpresaRepository oEmpresaD;
 
         public Empresa(IEmpresaContext empresa)
         {
             oEmpresaD = new Datos.Empresa(empresa);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de IEmpresaRepository
+        // (ej. DatosPostgres.EmpresaPg).
+        public Empresa(Contratos.IEmpresaRepository repositorio)
+        {
+            oEmpresaD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
         }
 
         public Entidades.Empresa findById(int idEmpresa)

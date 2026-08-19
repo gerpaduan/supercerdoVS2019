@@ -70,7 +70,11 @@ namespace DatosPostgres
                 NombreCertificado_pfx = dr["nombrecertificado_pfx"] as string,
                 Entorno_HOMO_PROD = dr["entorno_homo_prod"] as string,
                 BaseDatosNombre = dr["basedatosnombre"] as string,
-                Activa = dr["activa"] == DBNull.Value ? (byte)0 : Convert.ToByte(dr["activa"])
+                Activa = dr["activa"] == DBNull.Value ? (byte)0 : Convert.ToByte(dr["activa"]),
+                HorarioDiurnoDesde = dr["horariodiurnodesde"] == DBNull.Value ? TimeSpan.Zero : (TimeSpan)dr["horariodiurnodesde"],
+                HorarioDiurnoHasta = dr["horariodiurnohasta"] == DBNull.Value ? new TimeSpan(23, 59, 59) : (TimeSpan)dr["horariodiurnohasta"],
+                HorarioTardeDesde = dr["horariotardedesde"] == DBNull.Value ? TimeSpan.Zero : (TimeSpan)dr["horariotardedesde"],
+                HorarioTardeHasta = dr["horariotardehasta"] == DBNull.Value ? new TimeSpan(23, 59, 59) : (TimeSpan)dr["horariotardehasta"]
             };
         }
 
@@ -112,7 +116,8 @@ namespace DatosPostgres
                 SELECT idempresa, razonsocialafip, cuit, nombrefantasia, slogan1, slogan2, slogan3,
                        iibb, condicioniva, inicioactividad, tenantslug, domicilio, ciudad, pais,
                        telefono, email, basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod,
-                       basedatosnombre, activa
+                       basedatosnombre, activa, horariodiurnodesde, horariodiurnohasta,
+                       horariotardedesde, horariotardehasta
                 FROM empresas WHERE idempresa = @id;";
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa, sql, MapEmpresa,
@@ -127,7 +132,8 @@ namespace DatosPostgres
                 SELECT idempresa, razonsocialafip, cuit, nombrefantasia, slogan1, slogan2, slogan3,
                        iibb, condicioniva, inicioactividad, tenantslug, domicilio, ciudad, pais,
                        telefono, email, basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod,
-                       basedatosnombre, activa
+                       basedatosnombre, activa, horariodiurnodesde, horariodiurnohasta,
+                       horariotardedesde, horariotardehasta
                 FROM empresas WHERE cuit = @cuit;";
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa, sql, MapEmpresa,

@@ -1,0 +1,82 @@
+@model Web.Models.ComparacionEmpresaVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Empresa #@ViewBag.IdEmpresaBuscada</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null)
+                {
+                    <p class="text-muted mb-0">No se encontro.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdEmpresa</th><td>@Model.SqlServer.IdEmpresa</td></tr>
+                        <tr><th>NombreFantasia</th><td>@Model.SqlServer.NombreFantasia</td></tr>
+                        <tr><th>Slogan1</th><td>@Model.SqlServer.Slogan1</td></tr>
+                        <tr><th>Slogan2</th><td>@Model.SqlServer.Slogan2</td></tr>
+                        <tr><th>Slogan3</th><td>@Model.SqlServer.Slogan3</td></tr>
+                        <tr><th>Domicilio</th><td>@Model.SqlServer.Domicilio</td></tr>
+                        <tr><th>Ciudad</th><td>@Model.SqlServer.Ciudad</td></tr>
+                        <tr><th>Pais</th><td>@Model.SqlServer.Pais</td></tr>
+                        <tr><th>Telefono</th><td>@Model.SqlServer.Telefono</td></tr>
+                        <tr><th>Email</th><td>@Model.SqlServer.Email</td></tr>
+                        <tr><th>HorarioDiurnoDesde</th><td>@Model.SqlServer.HorarioDiurnoDesde</td></tr>
+                        <tr><th>HorarioDiurnoHasta</th><td>@Model.SqlServer.HorarioDiurnoHasta</td></tr>
+                        <tr><th>HorarioTardeDesde</th><td>@Model.SqlServer.HorarioTardeDesde</td></tr>
+                        <tr><th>HorarioTardeHasta</th><td>@Model.SqlServer.HorarioTardeHasta</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null)
+                {
+                    <p class="text-muted mb-0">No se encontro.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>IdEmpresa</th><td>@Model.Postgres.IdEmpresa</td></tr>
+                        <tr><th>NombreFantasia</th><td>@Model.Postgres.NombreFantasia</td></tr>
+                        <tr><th>Slogan1</th><td>@Model.Postgres.Slogan1</td></tr>
+                        <tr><th>Slogan2</th><td>@Model.Postgres.Slogan2</td></tr>
+                        <tr><th>Slogan3</th><td>@Model.Postgres.Slogan3</td></tr>
+                        <tr><th>Domicilio</th><td>@Model.Postgres.Domicilio</td></tr>
+                        <tr><th>Ciudad</th><td>@Model.Postgres.Ciudad</td></tr>
+                        <tr><th>Pais</th><td>@Model.Postgres.Pais</td></tr>
+                        <tr><th>Telefono</th><td>@Model.Postgres.Telefono</td></tr>
+                        <tr><th>Email</th><td>@Model.Postgres.Email</td></tr>
+                        <tr><th>HorarioDiurnoDesde</th><td>@Model.Postgres.HorarioDiurnoDesde</td></tr>
+                        <tr><th>HorarioDiurnoHasta</th><td>@Model.Postgres.HorarioDiurnoHasta</td></tr>
+                        <tr><th>HorarioTardeDesde</th><td>@Model.Postgres.HorarioTardeDesde</td></tr>
+                        <tr><th>HorarioTardeHasta</th><td>@Model.Postgres.HorarioTardeHasta</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Probar otro idEmpresa:</label>
+    <input type="number" name="idEmpresa" class="form-control mr-2" style="width:120px" value="@ViewBag.IdEmpresaBuscada" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

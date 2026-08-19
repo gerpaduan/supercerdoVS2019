@@ -845,5 +845,42 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararEmpresa(int idEmpresa)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var empresaSqlServer = new Negocio.Empresa(empresa);
+            var resultadoSqlServer = empresaSqlServer.findById(idEmpresa);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.EmpresaPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgres = new DatosPostgres.EmpresaPg(connString, this.empresa.IdEmpresa);
+            var empresaPostgres = new Negocio.Empresa(repoPostgres);
+
+            Entidades.Empresa resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = empresaPostgres.findById(idEmpresa);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Empresa #" + idEmpresa;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEmpresaBuscada = idEmpresa;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararEmpresa.cshtml", new Web.Models.ComparacionEmpresaVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

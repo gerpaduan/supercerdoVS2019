@@ -11,7 +11,7 @@ namespace Datos
     // super-admin de la plataforma). Antes de esto no existia ningun metodo de ESCRITURA sobre
     // Empresas fuera de ese repositorio -- la unica lectura existente era
     // Datos/Sucursal.cs:findEmpresaById, que se deja intacta.
-    public class Empresa
+    public class Empresa : Contratos.IEmpresaRepository
     {
         private readonly IEmpresaContext _empresa;
 

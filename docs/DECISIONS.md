@@ -1,6 +1,16 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: CortePuntoStockSucursal.cs completo + cierre de gap en Corte.cs
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Empresa.cs completo + fix de drift de schema en `empresas` (horario laboral)
+
+Tercero de los módulos chicos 0%-migrados (tras `Parametros.cs`, `CortePuntoStockSucursal.cs`). 2/2 métodos: `findById`, `ActualizarDatosBasicos` (pantalla "Mi Empresa" -- edición de datos no-fiscales por el propio tenant, distinto del CRUD cross-tenant de `SystemAdministrationRepository`).
+
+**Hallazgo real antes de migrar, confirmado con el usuario y resuelto en el mismo cambio**: la tabla `empresas` en Postgres ya existía desde la Etapa 3 (creada para `ISucursalRepository.findEmpresaById`), pero le faltaban las **4 columnas de horario laboral** (`HorarioDiurnoDesde/Hasta`, `HorarioTardeDesde/Hasta`) agregadas en SQL Server el 2026-08-14 (feature de restricciones de login) -- drift de schema entre las dos bases, sin detectar hasta ahora. Se agregaron con `ALTER TABLE` + se migraron los valores reales de las 7 filas existentes (incluida `idEmpresa=-1`, mismo patrón "template" ya visto en `EmpresaParametros`).
+
+**Segundo hallazgo relacionado**: `SucursalPg.MapEmpresa` (ya en uso por el controller de comparación) tampoco mapeaba esas 4 columnas -- no podía, porque no existían. Corregido en el mismo cambio (los 2 `SELECT` de `findEmpresaById`/`findEmpresaByCuit` en `SucursalPg.cs` ahora incluyen las 4 columnas, y `MapEmpresa` las mapea con los mismos defaults que el original -- `00:00:00`/`23:59:59` si vinieran nulas).
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` (rol real, transacción explícita, `ROLLBACK`): `findById` y `ActualizarDatosBasicos` sobre una empresa real -- sin residuo. HTTP end-to-end con login real (`ger`/idEmpresa=1) contra la nueva acción `CompararEmpresa`: **14/14 celdas idénticas**, incluidos los horarios reales (`23:59:00`, valor distinto al default -- confirma que tanto la migración de datos como el fix de `SucursalPg.MapEmpresa` funcionan).
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: CortePuntoStockSucursal.cs completo + cierre de gap en Corte.cs
 
 Segundo de los módulos chicos 0%-migrados (tras `Parametros.cs`). 3/3 métodos: `CrearParaTodasLasSucursales`, `GuardarPuntosStockLote`, `FindPorSucursal` -- punto de stock por combinación Producto (Corte) x Sucursal.
 
