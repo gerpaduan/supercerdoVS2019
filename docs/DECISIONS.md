@@ -1,6 +1,20 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque Auditoria de ubicacion (Etapa 13d) -- Usuario.cs queda 19/19 migrado
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Parametros.cs completo
+
+Con `Corte.cs`/`Venta.cs`/`Usuario.cs` cerrados, se retoma el relevamiento de módulos 0%-migrados: quedaban 6 chicos (`CatalogoGlobalProducto`, `CortePuntoStockSucursal`, `DispositivoSeguro`, `Empresa`, `Parametros`, `WhatsApp`). El usuario eligió `Parametros.cs` por ser el más transversal (`Negocio.Parametros` implementa `IParametrosContext`, usado en toda la app para leer configuración por empresa). 5/5 métodos migrados de una sola vez (sin dos-campos intermedio, dado el tamaño): `ObtenerGrid`, `GuardarGrid`, `ObtenerDiccionario`, `ObtenerValor`, `SetValor` -- los últimos 2 sin caller real hoy (solo `Negocio.Parametros` usa los primeros 3), migrados igual por completitud de la interfaz.
+
+**Decisión importante, confirmada con el usuario -- mejora deliberada, no réplica 1:1**: `empresaparametros` (147 filas) tiene `idEmpresa` pero en SQL Server **no tiene RLS** (verificado, 0 filas en `sys.security_policies`) -- a diferencia de las ~39 tablas RLS ya trianguladas en la Etapa 4. No es un caso como `usuarios` (no hay problema de tenant-todavía-no-conocido); simplemente nunca se le agregó RLS en el original, y el aislamiento hoy depende solo del filtro explícito de aplicación (`WHERE idEmpresa=@idEmpresa` en cada query). En Postgres se agregó RLS estándar como backstop adicional, documentado como mejora explícita.
+
+**Hallazgo en los datos**: `EmpresaParametros` tiene 21 filas con `idEmpresa=-1` (mismo total que `Parametros`, sugiere un set "template" nunca usado) -- el código original hace *match exacto* de `idEmpresa` (nunca `-1` en producción real), así que esas filas son inalcanzables por cualquiera de los 5 métodos tanto en el original como en la traducción. Se migraron igual (fidelidad), y quedan igual de inalcanzables bajo RLS en Postgres (ningún tenant real tiene `idEmpresa=-1`).
+
+**Nueva regla operativa aplicada, ya anticipada en la Etapa 13d**: exportación de datos con texto libre vía `System.Data.SqlClient`/PowerShell directo (Unicode de punta a punta) en vez de `sqlcmd -f 65001`, que había resultado no confiable (encoding inconsistente fila por fila). Funcionó sin problemas para las 2 tablas de esta etapa.
+
+**Mismo trade-off ya documentado en la Etapa 12c** (`FacturaElectronica`): 4 de 21 filas de `parametros.descripcion` contienen un `|` literal (texto explicativo tipo "1 : Si | 0: No"), reemplazado por `/` en el export para no romper el delimitador del pipeline -- pérdida de fidelidad mínima, confinada a texto descriptivo/documentación, no a ningún valor de negocio (`nombre`, `valor`, `tipo` idénticos en ambos motores).
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` (rol real `carnisys_user`, transacción explícita, `ROLLBACK`): upsert sobre una fila ya existente y sobre una nueva -- sin duplicar la PK compuesta, sin residuo. HTTP end-to-end con login real (`ger`/idEmpresa=1) contra la nueva acción `CompararParametros`: 21/21 filas, 101/105 celdas idénticas exactas, las 4 restantes con la sustitución `|`→`/` ya explicada y aceptada.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque Auditoria de ubicacion (Etapa 13d) -- Usuario.cs queda 19/19 migrado
 
 Ultima de las 4 sub-etapas de `Usuario.cs` (CRUD/login core, `23f38358`; Permisos, `97f8ba93`; Recuperación de contraseña, `e70e6283`; **Auditoría de ubicación**). 2 métodos de `Datos/Usuario.cs` (líneas 521-620): `RegistrarLoginUbicacion` (insert) y `obtenerLoginUbicacionLog` (lectura, `JOIN` con `Usuarios`/`Sucursal`, `TOP 500`, devuelve `DataTable` consumido por `AuditoriaLoginController` leyendo columnas por nombre exacto -- se replicaron los mismos alias `AS "IdUsuario"`, `"UsuarioNombre"`, etc. en Postgres).
 

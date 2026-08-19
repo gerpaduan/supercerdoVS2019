@@ -192,6 +192,7 @@
     <Compile Include="Models\ComparacionPermisosUsuarioVm.cs" />
     <Compile Include="Models\ComparacionTokenRecuperacionVm.cs" />
     <Compile Include="Models\ComparacionLoginUbicacionLogVm.cs" />
+    <Compile Include="Models\ComparacionParametrosVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />

@@ -769,5 +769,41 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararParametros()
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var parametrosSqlServer = new Negocio.Parametros(empresa);
+            var resultadoSqlServer = parametrosSqlServer.ObtenerGrid();
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.ParametrosPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgres = new DatosPostgres.ParametrosPg(connString, empresa.IdEmpresa);
+            var parametrosPostgres = new Negocio.Parametros(repoPostgres, empresa);
+
+            System.Data.DataTable resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = parametrosPostgres.ObtenerGrid();
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Parametros";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararParametros.cshtml", new Web.Models.ComparacionParametrosVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

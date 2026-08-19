@@ -9,7 +9,7 @@ namespace Negocio
     public class Parametros : IParametrosContext
     {
         private readonly IEmpresaContext empresa;
-        private readonly Datos.Parametros datos;
+        private readonly Contratos.IParametrosRepository datos;
 
         // Cache por empresa: evita mezclar
         private readonly Dictionary<int, Dictionary<string, string>> cache
@@ -20,6 +20,15 @@ namespace Negocio
             if (empresaContext == null) throw new ArgumentNullException("empresaContext");
             empresa = empresaContext;
             datos = new Datos.Parametros(empresa);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de IParametrosRepository
+        // (ej. DatosPostgres.ParametrosPg). Solo lo usa el controller de comparacion.
+        public Parametros(Contratos.IParametrosRepository repositorio, IEmpresaContext empresaContext)
+        {
+            if (empresaContext == null) throw new ArgumentNullException("empresaContext");
+            empresa = empresaContext;
+            datos = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
         }
 
         // ==========================================================
