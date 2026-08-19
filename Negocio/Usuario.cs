@@ -108,7 +108,7 @@ namespace Negocio
                     user.Bloqueado = GetOptionalBool(drUsuario, "bloqueado");
                     user.FechaBloqueoUtc = GetOptionalDateTime(drUsuario, "fechaBloqueoUtc");
 
-                    user.Permisos = oUsuarioDSqlServer.getPermisosUsuario(user.Id);
+                    user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
 
                     listUsuarios.Add(user);
                 }
@@ -419,11 +419,11 @@ namespace Negocio
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {
-            return oUsuarioDSqlServer.getPermisosUsuario(idUsuario);
+            return oUsuarioD.getPermisosUsuario(idUsuario);
         }
         public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
         {
-            oUsuarioDSqlServer.AddOrEditPermisos(permisos);
+            oUsuarioD.AddOrEditPermisos(permisos);
         }
 
         /// <summary>

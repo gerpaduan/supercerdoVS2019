@@ -5,9 +5,9 @@ using Npgsql;
 
 namespace DatosPostgres
 {
-    // Implementacion Postgres del bloque CRUD/login core de Contratos.IUsuarioRepository
-    // (Etapa 13a). Permisos, recuperacion de contrasena y auditoria de ubicacion quedan fuera
-    // -- se agregan en etapas futuras (13b/13c/13d). Ver docs/DECISIONS.md.
+    // Implementacion Postgres del bloque CRUD/login core (Etapa 13a) + Permisos (Etapa 13b) de
+    // Contratos.IUsuarioRepository. Recuperacion de contrasena y auditoria de ubicacion quedan
+    // fuera -- se agregan en etapas futuras (13c/13d). Ver docs/DECISIONS.md.
     //
     // "usuarios" NO tiene RLS (decision deliberada, confirmada con el usuario): en el momento
     // del login todavia no se sabe a que empresa pertenece el usuario, asi que filtrar por
@@ -342,6 +342,97 @@ namespace DatosPostgres
                     p.AddWithValue("passwordSalt", passwordSalt ?? string.Empty);
                     p.AddWithValue("passwordHashIterations", passwordHashIterations);
                 });
+        }
+
+        public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
+        {
+            return DbPg.Reader(_connectionString, _idEmpresa, @"
+                SELECT
+                    f.idform,
+                    f.nombreform,
+                    f.descripcion,
+                    f.formconsulta,
+                    f.formedicion,
+                    f.formedicionextra1,
+                    f.formedicionextra2,
+                    COALESCE(p.diaspermitidosver, -1) AS diaspermitidosver,
+                    COALESCE(p.diaspermitidoseditar, -1) AS diaspermitidoseditar,
+                    COALESCE(p.soloregistrospropios, true) AS soloregistrospropios
+                FROM formularios f
+                LEFT JOIN permisosusuarios p
+                    ON f.idform = p.idform AND p.idusuario = @idUsuario
+                ORDER BY f.idform;",
+                dr => new Entidades.PermisosUsuarios
+                {
+                    IdUsuario = idUsuario,
+                    IdForm = Convert.ToInt32(dr["idform"]),
+                    DiasPermitidosVer = Convert.ToInt32(dr["diaspermitidosver"]),
+                    DiasPermitidosEditar = Convert.ToInt32(dr["diaspermitidoseditar"]),
+                    SoloRegistrosPropios = Convert.ToBoolean(dr["soloregistrospropios"]),
+                    Formulario = new Entidades.Formulario
+                    {
+                        IdForm = Convert.ToInt32(dr["idform"]),
+                        NombreForm = GetString(dr, "nombreform"),
+                        Descripcion = GetString(dr, "descripcion"),
+                        FormConsulta = GetString(dr, "formconsulta"),
+                        FormEdicion = GetString(dr, "formedicion"),
+                        FormEdicionExtra1 = GetString(dr, "formedicionextra1"),
+                        FormEdicionExtra2 = GetString(dr, "formedicionextra2")
+                    }
+                },
+                p => p.AddWithValue("idUsuario", idUsuario));
+        }
+
+        // Upsert nativo de Postgres (ON CONFLICT) en vez del IF EXISTS/UPDATE/INSERT del
+        // original -- mismo efecto, una sola sentencia por fila en vez de un SELECT + UPDATE/
+        // INSERT. PermisosUsuarios.idEmpresa tiene DEFAULT atado a SESSION_CONTEXT en SQL
+        // Server (verificado con sys.default_constraints, mismo patron que Sectores en la
+        // Etapa 12a) -- no hay equivalente en Postgres, se bindea @idEmpresa explicito.
+        public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
+        {
+            if (permisos == null) throw new ArgumentNullException(nameof(permisos));
+            if (permisos.Count == 0) return;
+
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    using (var cmd = new NpgsqlCommand(@"
+                        INSERT INTO permisosusuarios (idusuario, idform, diaspermitidosver, diaspermitidoseditar, soloregistrospropios, idempresa)
+                        VALUES (@idUsuario, @idForm, @diasVer, @diasEditar, @soloPropios, @idEmpresa)
+                        ON CONFLICT (idusuario, idform) DO UPDATE SET
+                            diaspermitidosver = EXCLUDED.diaspermitidosver,
+                            diaspermitidoseditar = EXCLUDED.diaspermitidoseditar,
+                            soloregistrospropios = EXCLUDED.soloregistrospropios;", con, tx))
+                    {
+                        cmd.Parameters.Add("idUsuario", NpgsqlTypes.NpgsqlDbType.Integer);
+                        cmd.Parameters.Add("idForm", NpgsqlTypes.NpgsqlDbType.Integer);
+                        cmd.Parameters.Add("diasVer", NpgsqlTypes.NpgsqlDbType.Integer);
+                        cmd.Parameters.Add("diasEditar", NpgsqlTypes.NpgsqlDbType.Integer);
+                        cmd.Parameters.Add("soloPropios", NpgsqlTypes.NpgsqlDbType.Boolean);
+                        cmd.Parameters.Add("idEmpresa", NpgsqlTypes.NpgsqlDbType.Integer);
+                        cmd.Prepare();
+
+                        foreach (var permiso in permisos)
+                        {
+                            cmd.Parameters["idUsuario"].Value = permiso.IdUsuario;
+                            cmd.Parameters["idForm"].Value = permiso.IdForm;
+                            cmd.Parameters["diasVer"].Value = permiso.DiasPermitidosVer;
+                            cmd.Parameters["diasEditar"].Value = permiso.DiasPermitidosEditar;
+                            cmd.Parameters["soloPropios"].Value = permiso.SoloRegistrosPropios;
+                            cmd.Parameters["idEmpresa"].Value = _idEmpresa;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
         }
     }
 }

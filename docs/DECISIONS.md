@@ -1,6 +1,20 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque CRUD/login core (Etapa 13a)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque Permisos (Etapa 13b)
+
+Segunda de las 4 sub-etapas de `Usuario.cs` (CRUD/login core, Etapa 13a, commit `23f38358` -> **Permisos** -> Recuperación de contraseña -> Auditoría de ubicación). La más chica del módulo: 2 métodos de `Datos/Usuario.cs` (líneas 205-299), `getPermisosUsuario` (LEFT JOIN `Formularios`/`PermisosUsuarios` con defaults `-1/-1/true` cuando no hay fila propia) y `AddOrEditPermisos` (upsert por fila). Sin tablas nuevas -- `formularios`/`permisosusuarios` ya existían desde la Etapa 13a.
+
+**`AddOrEditPermisos` usa `INSERT ... ON CONFLICT (idusuario, idform) DO UPDATE` nativo de Postgres** en vez del `IF EXISTS ... UPDATE ELSE INSERT` del SP original -- mismo efecto (upsert), una sola sentencia por fila en vez de un `SELECT` + rama condicional. La PK compuesta `(idusuario, idform)` de `permisosusuarios` (definida en la Etapa 13a) es lo que habilita el `ON CONFLICT` directo.
+
+**`PermisosUsuarios.idEmpresa` tiene el mismo patrón de `DEFAULT` atado a `SESSION_CONTEXT('IdEmpresa')`** que ya se había encontrado en `Sectores` (Etapa 12a) -- confirmado con `sys.default_constraints`. El INSERT original no lo pasa explícito; en Postgres se bindea `idempresa=@idEmpresa` explícito, mismo criterio ya usado ahí.
+
+**3 call sites redirigidos** en `Negocio/Usuario.cs`: el wrapper directo de `getPermisosUsuario`, el de `AddOrEditPermisos`, y una tercera llamada embebida dentro de `convertDatatableToList` (enriquece `Usuario.Permisos` al listar usuarios) -- las 3 pasaron de `oUsuarioDSqlServer` a `oUsuarioD`.
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` (rol real `carnisys_user`, transacción explícita, `ROLLBACK`): alta y edición sobre la misma fila (`idusuario=2, idform=3`) vía `ON CONFLICT`, confirmando que no duplica la PK y que los valores se actualizan correctamente; verificación adicional del `LEFT JOIN`/`COALESCE` de `getPermisosUsuario` para un formulario con fila propia y uno sin ella -- sin residuo tras el rollback (una comprobación posterior sin `app.id_empresa` seteado dio 0 filas por RLS, no por un fallo real del rollback -- mismo tipo de falso positivo ya documentado en la Etapa 11b, ahora también en Postgres). HTTP end-to-end con login real (`ger`/idEmpresa=1) contra la nueva acción `CompararPermisosUsuario`: **30/30 permisos idénticos campo a campo** (IdForm, Formulario, DiasVer, DiasEditar, SoloPropios) entre SQL Server y Postgres para el usuario #2.
+
+**Nota operativa, no un bug de esta etapa**: la verificación HTTP encontró SQL Server Express genuinamente no-responsivo por varios minutos (incluso un `SELECT 1` directo tardó ~58s), sin `MSBuild.exe`/`VBCSCompiler.exe` corriendo -- a diferencia de las flakiness anteriores de esta sesión (causadas por *worker nodes* de compilación), esta vez coincidió con carga general alta de la máquina (múltiples procesos VS Code/Claude). Se resolvió esperando y reintentando; no requirió ninguna acción sobre el código o la base.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Usuario.cs, bloque CRUD/login core (Etapa 13a)
 
 Con `Corte.cs` y `Venta.cs` completos, se releva el resto de `Datos/` (7 módulos 0% migrados) y se elige `Usuario.cs` (19 métodos, el más grande e importante -- login/permisos/sucursal asignada), dividido en 4 sub-etapas por sub-dominio: **CRUD/login core** (esta etapa) → Permisos → Recuperación de contraseña → Auditoría de ubicación. 11 métodos cubiertos: `obtenerUsuarios`, `getUsuarioActivos`, `getUsuarioById`, `addOrEditUser`, `setSucursalUsuario`, `setPermitirLoginFueraSucursal`, `setEsUsuarioProduccion`, `ActualizarEstadoBloqueoLogin`, `BuscarUsuariosPorIdentificador`, `ActualizarPasswordSeguro`, `ActualizarPasswordWebSeguro`.
 

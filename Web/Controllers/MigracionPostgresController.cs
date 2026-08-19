@@ -651,5 +651,43 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararPermisosUsuario(int idUsuario)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var usuarioSqlServer = new Negocio.Usuario(empresa, param);
+            var resultadoSqlServer = usuarioSqlServer.getPermisosUsuario(idUsuario);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.UsuarioPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.UsuarioPg(connString, empresa.IdEmpresa, sucursalRepoPostgres);
+            var usuarioPostgres = new Negocio.Usuario(repoPostgres, empresa, param);
+
+            System.Collections.Generic.List<Entidades.PermisosUsuarios> resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = usuarioPostgres.getPermisosUsuario(idUsuario);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Permisos de Usuario #" + idUsuario;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdUsuarioBuscado = idUsuario;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararPermisosUsuario.cshtml", new Web.Models.ComparacionPermisosUsuarioVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
