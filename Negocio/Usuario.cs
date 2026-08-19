@@ -13,13 +13,30 @@ namespace Negocio
         public DataTable dtUsuarios;
         List<Entidades.Usuario> listUsuarios;
 
-        private readonly Datos.Usuario oUsuarioD; 
+        // oUsuarioD: bloque CRUD/login core migrado a la interfaz (Etapa 13a) -- puede ser SQL
+        // Server o Postgres. oUsuarioDSqlServer: Permisos, recuperacion de contrasena y
+        // auditoria de ubicacion, todavia sin migrar -- siempre SQL Server. Ver docs/DECISIONS.md.
+        private readonly Contratos.IUsuarioRepository oUsuarioD;
+        private readonly Datos.Usuario oUsuarioDSqlServer;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        // Constructor existente: SIN CAMBIOS de comportamiento.
         public Usuario(IEmpresaContext empresa, IParametrosContext param = null)
-        {   
+        {
             _empresa = empresa;_param = param;
-            oUsuarioD = new Datos.Usuario(empresa);
+            var datosUsuario = new Datos.Usuario(empresa);
+            oUsuarioD = datosUsuario;
+            oUsuarioDSqlServer = datosUsuario;
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de IUsuarioRepository
+        // (ej. DatosPostgres.UsuarioPg) para el bloque migrado. Solo lo usa el controller de
+        // comparacion. El resto de la clase sigue yendo por SQL Server (oUsuarioDSqlServer).
+        public Usuario(Contratos.IUsuarioRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oUsuarioD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            oUsuarioDSqlServer = new Datos.Usuario(empresa);
         }
 
         public DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false)
@@ -91,7 +108,7 @@ namespace Negocio
                     user.Bloqueado = GetOptionalBool(drUsuario, "bloqueado");
                     user.FechaBloqueoUtc = GetOptionalDateTime(drUsuario, "fechaBloqueoUtc");
 
-                    user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
+                    user.Permisos = oUsuarioDSqlServer.getPermisosUsuario(user.Id);
 
                     listUsuarios.Add(user);
                 }
@@ -355,22 +372,22 @@ namespace Negocio
 
         public void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token)
         {
-            oUsuarioD.CrearTokenRecuperacion(token);
+            oUsuarioDSqlServer.CrearTokenRecuperacion(token);
         }
 
         public Entidades.UsuarioPasswordResetToken ObtenerTokenRecuperacion(string tokenHash)
         {
-            return oUsuarioD.ObtenerTokenRecuperacion(tokenHash);
+            return oUsuarioDSqlServer.ObtenerTokenRecuperacion(tokenHash);
         }
 
         public void MarcarTokenRecuperacionComoUsado(int idToken)
         {
-            oUsuarioD.MarcarTokenRecuperacionComoUsado(idToken);
+            oUsuarioDSqlServer.MarcarTokenRecuperacionComoUsado(idToken);
         }
 
         public void InvalidarTokensPendientesUsuario(int idUsuario, string proposito)
         {
-            oUsuarioD.InvalidarTokensPendientesUsuario(idUsuario, proposito);
+            oUsuarioDSqlServer.InvalidarTokensPendientesUsuario(idUsuario, proposito);
         }
 
 
@@ -392,21 +409,21 @@ namespace Negocio
 
         public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)
         {
-            oUsuarioD.RegistrarLoginUbicacion(log);
+            oUsuarioDSqlServer.RegistrarLoginUbicacion(log);
         }
 
         public DataTable obtenerLoginUbicacionLog(int idEmpresa, DateTime desde, DateTime hasta)
         {
-            return oUsuarioD.obtenerLoginUbicacionLog(idEmpresa, desde, hasta);
+            return oUsuarioDSqlServer.obtenerLoginUbicacionLog(idEmpresa, desde, hasta);
         }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {
-            return oUsuarioD.getPermisosUsuario(idUsuario);
+            return oUsuarioDSqlServer.getPermisosUsuario(idUsuario);
         }
         public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
         {
-            oUsuarioD.AddOrEditPermisos(permisos);
+            oUsuarioDSqlServer.AddOrEditPermisos(permisos);
         }
 
         /// <summary>

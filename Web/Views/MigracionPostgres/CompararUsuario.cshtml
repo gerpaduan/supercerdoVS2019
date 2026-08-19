@@ -1,0 +1,90 @@
+@model Web.Models.ComparacionUsuarioVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Usuario #@ViewBag.IdUsuarioBuscado</h4>
+    <p class="text-muted mb-0">Herramienta de verificacion del piloto (Etapa 13a) -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.</p>
+</div>
+
+@* No se muestran clave/passwordHash/passwordSalt: son credenciales, nunca van en un output (CLAUDE.md 4). *@
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual)</div>
+            <div class="card-body">
+                @if (Model.SqlServer == null || Model.SqlServer.Id == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>Id</th><td>@Model.SqlServer.Id</td></tr>
+                        <tr><th>Nombre</th><td>@Model.SqlServer.Nombre</td></tr>
+                        <tr><th>User</th><td>@Model.SqlServer.User</td></tr>
+                        <tr><th>Email</th><td>@Model.SqlServer.Email</td></tr>
+                        <tr><th>Admin</th><td>@Model.SqlServer.Admin</td></tr>
+                        <tr><th>Activo</th><td>@Model.SqlServer.Activo</td></tr>
+                        <tr><th>ColorForm</th><td>@Model.SqlServer.ColorForm</td></tr>
+                        <tr><th>IdSucursal</th><td>@Model.SqlServer.IdSucursal</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.SqlServer.Sucursal?.SucursalNombre)</td></tr>
+                        <tr><th>IdEmpresa</th><td>@Model.SqlServer.IdEmpresa</td></tr>
+                        <tr><th>Empresa</th><td>@(Model.SqlServer.Empresa?.RazonSocialAfip)</td></tr>
+                        <tr><th>PermitirLoginFueraSucursal</th><td>@Model.SqlServer.PermitirLoginFueraSucursal</td></tr>
+                        <tr><th>EsUsuarioProduccion</th><td>@Model.SqlServer.EsUsuarioProduccion</td></tr>
+                        <tr><th>IntentosFallidosLogin</th><td>@Model.SqlServer.IntentosFallidosLogin</td></tr>
+                        <tr><th>Bloqueado</th><td>@Model.SqlServer.Bloqueado</td></tr>
+                        <tr><th>FechaBloqueoUtc</th><td>@Model.SqlServer.FechaBloqueoUtc</td></tr>
+                        <tr><th>PasswordUpdatedAtUtc</th><td>@Model.SqlServer.PasswordUpdatedAtUtc</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo)</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else if (Model.Postgres == null || Model.Postgres.Id == 0)
+                {
+                    <p class="text-muted mb-0">No se encontro.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <tr><th>Id</th><td>@Model.Postgres.Id</td></tr>
+                        <tr><th>Nombre</th><td>@Model.Postgres.Nombre</td></tr>
+                        <tr><th>User</th><td>@Model.Postgres.User</td></tr>
+                        <tr><th>Email</th><td>@Model.Postgres.Email</td></tr>
+                        <tr><th>Admin</th><td>@Model.Postgres.Admin</td></tr>
+                        <tr><th>Activo</th><td>@Model.Postgres.Activo</td></tr>
+                        <tr><th>ColorForm</th><td>@Model.Postgres.ColorForm</td></tr>
+                        <tr><th>IdSucursal</th><td>@Model.Postgres.IdSucursal</td></tr>
+                        <tr><th>Sucursal</th><td>@(Model.Postgres.Sucursal?.SucursalNombre)</td></tr>
+                        <tr><th>IdEmpresa</th><td>@Model.Postgres.IdEmpresa</td></tr>
+                        <tr><th>Empresa</th><td>@(Model.Postgres.Empresa?.RazonSocialAfip)</td></tr>
+                        <tr><th>PermitirLoginFueraSucursal</th><td>@Model.Postgres.PermitirLoginFueraSucursal</td></tr>
+                        <tr><th>EsUsuarioProduccion</th><td>@Model.Postgres.EsUsuarioProduccion</td></tr>
+                        <tr><th>IntentosFallidosLogin</th><td>@Model.Postgres.IntentosFallidosLogin</td></tr>
+                        <tr><th>Bloqueado</th><td>@Model.Postgres.Bloqueado</td></tr>
+                        <tr><th>FechaBloqueoUtc</th><td>@Model.Postgres.FechaBloqueoUtc</td></tr>
+                        <tr><th>PasswordUpdatedAtUtc</th><td>@Model.Postgres.PasswordUpdatedAtUtc</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Probar otro idUsuario:</label>
+    <input type="number" name="idUsuario" class="form-control mr-2" style="width:120px" value="@ViewBag.IdUsuarioBuscado" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

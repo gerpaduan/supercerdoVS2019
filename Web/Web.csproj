@@ -188,6 +188,7 @@
     <Compile Include="Models\ComparacionSectoresVm.cs" />
     <Compile Include="Models\ComparacionExpendioVm.cs" />
     <Compile Include="Models\ComparacionFacturaVm.cs" />
+    <Compile Include="Models\ComparacionUsuarioVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />

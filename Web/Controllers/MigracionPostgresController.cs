@@ -611,5 +611,45 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararUsuario(int idUsuario)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var usuarioSqlServer = new Negocio.Usuario(empresa, param);
+            var resultadoSqlServer = usuarioSqlServer.getUsuarioById(idUsuario);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.UsuarioPg (que a su vez
+            // depende de SucursalPg para resolver Sucursal/Empresa, igual que el original
+            // depende de Datos.Sucursal).
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.UsuarioPg(connString, empresa.IdEmpresa, sucursalRepoPostgres);
+            var usuarioPostgres = new Negocio.Usuario(repoPostgres, empresa, param);
+
+            Entidades.Usuario resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = usuarioPostgres.getUsuarioById(idUsuario);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Usuario #" + idUsuario;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdUsuarioBuscado = idUsuario;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararUsuario.cshtml", new Web.Models.ComparacionUsuarioVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
