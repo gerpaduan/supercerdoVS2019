@@ -16,7 +16,7 @@ namespace Datos
     /// ObtenerCatalogoGlobalPorIds, ObtenerTiposCatalogoGlobal), para minimizar el cambio
     /// en los call sites de ProductosController.
     /// </summary>
-    public class CatalogoGlobalProducto
+    public class CatalogoGlobalProducto : Contratos.ICatalogoGlobalProductoRepository
     {
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;

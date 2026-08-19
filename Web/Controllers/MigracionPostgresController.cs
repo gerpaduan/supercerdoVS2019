@@ -940,5 +940,46 @@ namespace Web.Controllers
 
             return View("~/Views/MigracionPostgres/CompararDispositivoSeguro.cshtml");
         }
+
+        [HttpGet]
+        public ActionResult CompararCatalogoGlobal(string busqueda, string tipo, int pagina = 1, int cantidad = 20)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var catalogoSqlServer = new Negocio.CatalogoGlobalProducto(empresa, param);
+            var resultadoSqlServer = catalogoSqlServer.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, cantidad, 0);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CatalogoGlobalProductoPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.CatalogoGlobalProductoPg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var catalogoPostgres = new Negocio.CatalogoGlobalProducto(repoPostgres);
+
+            System.Collections.Generic.List<Entidades.CatalogoGlobalProducto> resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = catalogoPostgres.ObtenerCatalogoGlobalPagina(busqueda, tipo, pagina, cantidad, 0);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar CatalogoGlobalProducto";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.Busqueda = busqueda ?? "";
+            ViewBag.Tipo = tipo ?? "";
+            ViewBag.Pagina = pagina;
+            ViewBag.Cantidad = cantidad;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararCatalogoGlobal.cshtml", new Web.Models.ComparacionCatalogoGlobalVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

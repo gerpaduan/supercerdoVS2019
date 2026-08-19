@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: DispositivoSeguro.cs completo
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: CatalogoGlobalProducto.cs completo
+
+Quinto de los módulos chicos 0%-migrados (tras `Parametros.cs`, `CortePuntoStockSucursal.cs`, `Empresa.cs`, `DispositivoSeguro.cs`). 4/4 métodos públicos: `findCorteGlobalByCodigo`, `ObtenerCatalogoGlobalPagina`, `ObtenerTiposCatalogoGlobal`, `ObtenerCatalogoGlobalPorIds`. Catálogo global de productos (compartido entre todas las empresas, sin `idEmpresa`, sin RLS -- mismo criterio que `formularios`/`alicuotasiva`).
+
+**El más grande en volumen de datos de toda esta ronda**: `dbo.CatalogoGlobalProducto` tiene **101.943 filas reales** (vs. decenas/cientos del resto). Confirmado con el usuario antes de arrancar, dado el cambio de escala respecto a los módulos anteriores. `idcorte` **no es identity** (valores fijos preasignados desde el catálogo origen) -- se replica igual en Postgres, sin autoincremental.
+
+**Simplificación deliberada en `ObtenerCatalogoGlobalPorIds`**: el original batchea los ids de a 2000 (límite de parámetros de `SqlCommand` en SQL Server). En Postgres se usa `idcorte = ANY(@ids)` con un array nativo (mismo patrón ya usado en `CortePg`) -- sin el límite de SQL Server, no hace falta el batching. Mismo resultado, una sola consulta en vez de N.
+
+**`LIKE` → `ILIKE`** en la búsqueda de texto (`ObtenerCatalogoGlobalPagina`): SQL Server usa `LIKE` case-insensitive por la collation de la base (sin `LOWER()`/`UPPER()` explícito en el código original). Postgres's `LIKE` es case-sensitive por defecto -- se tradujo a `ILIKE` para preservar el comportamiento real observado, no el literal del texto del operador. Verificado con búsqueda real (`yerba` en minúscula encuentra `YERBA LA MERCED...` en mayúsculas, mismo resultado en ambos motores).
+
+**Hallazgo en la exportación de datos**: un nombre de producto real contiene una comilla doble literal (`"nestum® Listo Para Tomar...`), que rompe el parser CSV de Postgres (el formato CSV trata `"` como carácter de cita incluso con delimitador `|`). Se reemplazó por `'` en el export, mismo criterio ya usado para `|`/CR/LF en etapas anteriores -- pérdida de fidelidad mínima en un nombre de producto, no en ningún campo de negocio (`código`, `precio`, etc.).
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` (sin transacción, todo de solo lectura): los 4 métodos verificados directamente, incluida la búsqueda `ILIKE`. HTTP end-to-end con login real (`ger`/idEmpresa=1) contra la nueva acción `CompararCatalogoGlobal`: página 1 (20/20 filas, 160/160 celdas idénticas) y búsqueda por texto (`yerba`, 10/10 filas idénticas).
+
+**Nota operativa, no un bug de esta etapa -- incidente real de infraestructura durante la verificación**: en medio de la prueba HTTP, la base `CarniSys` de SQL Server Express local quedó en estado `RECOVERY_PENDING` (motor no pudo completar la recuperación tras la contención de recursos ya documentada en etapas anteriores de esta sesión) -- ningún login podía abrirla, ni siquiera `sa`. Detenido todo intento de "arreglarlo" automáticamente (riesgo de pérdida de datos reales); se avisó al usuario y se esperó a que el servicio se recuperara (reinicio del servicio `MSSQL$SQLEXPRESS`, fuera del alcance de esta sesión por permisos) antes de continuar. Sin impacto en Postgres ni en el código migrado -- una vez la base volvió a responder, la verificación dio resultados idénticos sin cambios.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: DispositivoSeguro.cs completo
 
 Cuarto de los módulos chicos 0%-migrados (tras `Parametros.cs`, `CortePuntoStockSucursal.cs`, `Empresa.cs`). 4/4 métodos: `Listar`, `Agregar`, `Eliminar`, `ExisteSerieSegura` -- dispositivos con número de serie que saltean `LoginRateLimiter` en el login. `dbo.DispositivosSeguros` está **vacía en SQL Server** (0 filas reales), sin datos que migrar.
 

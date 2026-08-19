@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Utilidades;
 
@@ -8,11 +9,18 @@ namespace Negocio
     /// </summary>
     public class CatalogoGlobalProducto
     {
-        private readonly Datos.CatalogoGlobalProducto oCatalogoGlobalD;
+        private readonly Contratos.ICatalogoGlobalProductoRepository oCatalogoGlobalD;
 
         public CatalogoGlobalProducto(IEmpresaContext empresa, IParametrosContext param = null)
         {
             oCatalogoGlobalD = new Datos.CatalogoGlobalProducto(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de
+        // ICatalogoGlobalProductoRepository (ej. DatosPostgres.CatalogoGlobalProductoPg).
+        public CatalogoGlobalProducto(Contratos.ICatalogoGlobalProductoRepository repositorio)
+        {
+            oCatalogoGlobalD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
         }
 
         public Entidades.CatalogoGlobalProducto findCorteGlobalByCodigo(long codigo, bool buscarMaestro)
