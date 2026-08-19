@@ -6,12 +6,22 @@ namespace Contratos
 {
     // Espeja el bloque CRUD/referencia de Datos.Corte (Corte, ActualizacionCorte,
     // CatalogoGlobalImportacionProductos, Formulas/CortePorFormula, AlicuotasIva, TiposProducto,
-    // Etapa 6) mas Embutido (Etapa 11a) y Movimiento (Etapa 11b). Stock/Reportes (el resto de
-    // Datos.Corte) queda fuera de esta interfaz -- se agrega en una etapa futura dedicada.
+    // Etapa 6) mas Embutido (Etapa 11a), Movimiento (Etapa 11b) y Stock/Reportes (Etapa 11c).
     // obtenerEmbutidos NO esta en esta interfaz a proposito: el SP real hace INNER JOIN contra
     // StockCorteSucursal (tabla obsoleta, 0 filas reales) y por eso siempre devuelve 0 filas en
     // SQL Server hoy, ademas de no tener ningun caller real (verificado por grep) -- codigo
     // muerto y ya roto, no se porta. Ver docs/DECISIONS.md.
+    //
+    // Tampoco estan en esta interfaz (Etapa 11c, quedan solo en Datos.Corte/SQL Server via
+    // oCorteDSqlServer en Negocio.Corte): reiniciarStockReal/reiniciarStockTeorico (no-ops,
+    // cascada StockCorteSucursal muerta, Etapa 6), CierreStock (dispatcher a StockCierre_2/
+    // a_CierreStock), TotalKgsCortePorCompra (llama a a_CierreStock), y StockIngresoEgreso
+    // (el SP referencia dbo.ActualizacionStock/ActualizacionStockPorCorte, que NO EXISTEN en la
+    // base -- tira "Invalid object name" siempre que se ejecuta, confirmado con sp_helptext +
+    // sys.tables contra la base viva; unico caller es WinForms, sin caller Web). Los SPs
+    // StockCierre_2/a_CierreStock en si tampoco se portan: complejidad/riesgo muy por encima del
+    // resto (+1000 lineas c/u, cascadas UNION multi-nivel de jerarquia Corte). Las 3 exclusiones
+    // son decision explicita del usuario, no default del proceso. Ver docs/DECISIONS.md.
     public interface ICorteRepository
     {
         List<Entidades.Corte> findAllCortes(bool buscarMaestro);
@@ -81,5 +91,16 @@ namespace Contratos
         List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado);
         Dictionary<int, Tuple<decimal, decimal>> ObtenerTotalesPorMovimiento(IEnumerable<int> idsMovimiento);
         DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto);
+
+        DataTable reporteTeoricoReal(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
+        DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
+        DateTime fechaUltimoCierreStock_Sucursal(int idSucursal);
+        DataTable CierreStockWeb(string texto, int idEmpresa, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca);
+        DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca);
+        DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca);
+        DataTable TotalMovimientosPorCorte(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
+        DataTable ObtenerSerieVentasPorCorte(int idCorte, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idMarca, string agrupacionTemporal);
+        DataTable Balance(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
+        List<Entidades.ExistenciaStockPorSucursalPlanoVm> ObtenerExistenciaPorSucursalesPlano(string texto, int idSucursal, DateTime? fechaHasta, string tipo, int idProveedor, int idMarca, int idCorte, bool soloConStock);
     }
 }

@@ -421,5 +421,54 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        // Compara CierreStockWeb (Etapa 11c) -- el reporte de stock mas complejo migrado en
+        // esta etapa (CTE recursiva de jerarquia madre/hija). No es una entidad con PK, es un
+        // reporte calculado: la comparacion es la grilla completa lado a lado, columna por
+        // columna, no un "encontrado/no encontrado". idSucursal=0 trae todas las sucursales
+        // de la empresa (igual que el original).
+        [HttpGet]
+        public ActionResult CompararStockReportes(int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            DateTime desde = fechaDesde ?? DateTime.Now.AddDays(-30);
+            DateTime hasta = fechaHasta ?? DateTime.Now;
+
+            // SQL Server: constructor de siempre, sin cambios.
+            var corteSqlServer = new Negocio.Corte(empresa, param);
+            var resultadoSqlServer = corteSqlServer.CierreStockWeb("", idSucursal, desde, hasta, "", 0, 0);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CortePg. Cubre el bloque
+            // Stock/Reportes migrado (Etapa 11c).
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var repoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var cortePostgres = new Negocio.Corte(repoPostgres, empresa, param);
+
+            System.Data.DataTable resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = cortePostgres.CierreStockWeb("", idSucursal, desde, hasta, "", 0, 0);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar CierreStockWeb (Stock/Reportes)";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdSucursalBuscada = idSucursal;
+            ViewBag.FechaDesdeBuscada = desde;
+            ViewBag.FechaHastaBuscada = hasta;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararStockReportes.cshtml", new Web.Models.ComparacionStockReportesVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

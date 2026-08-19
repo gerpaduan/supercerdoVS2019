@@ -11,10 +11,11 @@ namespace Negocio
     public class Corte
     {
         // oCorteD: bloque CRUD/referencia (Corte, Formulas, AlicuotaIva, TiposProducto,
-        // CatalogoGlobalImportacionProductos, Etapa 6) mas el bloque Embutido (Etapa 11a)
-        // migrado a la interfaz -- puede ser SQL Server o Postgres. oCorteDSqlServer:
-        // obtenerEmbutidos (excluido, ver mas abajo) y el resto de la clase (Movimiento,
-        // Stock/Reportes) que todavia NO esta migrado -- siempre SQL Server, en las dos
+        // CatalogoGlobalImportacionProductos, Etapa 6) mas Embutido (Etapa 11a), Movimiento
+        // (Etapa 11b) y Stock/Reportes (Etapa 11c) migrados a la interfaz -- puede ser SQL
+        // Server o Postgres. oCorteDSqlServer: obtenerEmbutidos, reiniciarStockReal/
+        // reiniciarStockTeorico, CierreStock, TotalKgsCortePorCompra y StockIngresoEgreso
+        // (excluidos, ver ICorteRepository.cs) -- siempre SQL Server, en las dos
         // constructores. Ver docs/DECISIONS.md.
         private readonly Contratos.ICorteRepository oCorteD;
         private readonly Datos.Corte oCorteDSqlServer;
@@ -76,7 +77,7 @@ namespace Negocio
 
             if (idSucursal > 0)
             {
-                DateTime fechaUltimoCierreStock = oCorteDSqlServer.fechaUltimoCierreStock_Sucursal(idSucursal);
+                DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
                 DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);
                 var dictStocks = dtCortesStock.AsEnumerable()
                     .ToDictionary(
@@ -138,7 +139,7 @@ namespace Negocio
             List<Entidades.Corte> listaCortes = oCorteD.findAllCortes(buscarMaestro);
             if (idSucursal > 0)
             {
-                DateTime fechaUltimoCierreStock = oCorteDSqlServer.fechaUltimoCierreStock_Sucursal(idSucursal);
+                DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
                 DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);
                 // Crear diccionario: id -> stock
                 var dictStocks = dtCortesStock.AsEnumerable()
@@ -619,8 +620,8 @@ namespace Negocio
 
          public DataTable reporteTeoricoReal(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
-             
-             return oCorteDSqlServer.reporteTeoricoReal(texto, idSucursal, fechaDesde, fechaHasta);
+
+             return oCorteD.reporteTeoricoReal(texto, idSucursal, fechaDesde, fechaHasta);
 
          }
 
@@ -772,7 +773,7 @@ namespace Negocio
         // se agrupa por la columna idSucursal del resultado en vez de un solo idSucursal fijo.
         public DataTable CierreStockWeb(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
         {
-            DataTable dtGrillaReporte = oCorteDSqlServer.CierreStockWeb(texto, _empresa.IdEmpresa, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+            DataTable dtGrillaReporte = oCorteD.CierreStockWeb(texto, _empresa.IdEmpresa, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
 
             var idsSucursalesEnResultado = dtGrillaReporte.Rows
                 .Cast<DataRow>()
@@ -804,49 +805,54 @@ namespace Negocio
 
          public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo , int idProveedor, int idMarca)
          {
-             
-             return oCorteDSqlServer.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+
+             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
+        // StockIngresoEgreso NO se migra (Etapa 11c): el SP referencia dbo.ActualizacionStock/
+        // ActualizacionStockPorCorte, que no existen en la base -- tira "Invalid object name"
+        // siempre que se ejecuta. Sin caller Web (solo formReporteStock.cs en WinForms). Ver
+        // docs/DECISIONS.md.
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
-             
+
              return oCorteDSqlServer.StockIngresoEgreso(texto, idSucursal, fechaDesde, fechaHasta);
          }
 
          public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
          {
-             
-             return oCorteDSqlServer.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
+
+             return oCorteD.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
          public DataTable ObtenerSerieVentasPorCorte(int idCorte, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idMarca, string agrupacionTemporal)
          {
-             return oCorteDSqlServer.ObtenerSerieVentasPorCorte(idCorte, idSucursal, fechaDesde, fechaHasta, tipo, idMarca, agrupacionTemporal);
+             return oCorteD.ObtenerSerieVentasPorCorte(idCorte, idSucursal, fechaDesde, fechaHasta, tipo, idMarca, agrupacionTemporal);
          }
 
         public DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            
-            return oCorteDSqlServer.imprimirTeoricoReal(dtTeoricoReal, texto, idSucursal, fechaDesde, fechaHasta);
+
+            return oCorteD.imprimirTeoricoReal(dtTeoricoReal, texto, idSucursal, fechaDesde, fechaHasta);
         }
 
+        // TotalKgsCortePorCompra NO se migra (Etapa 11c): llama directo a a_CierreStock, excluido.
         public DataTable TotalKgsCortePorCompra(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            
+
             return oCorteDSqlServer.TotalKgsCortePorCompra(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable TotalMovimientosPorCorte(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            
-            return oCorteDSqlServer.TotalMovimientosPorCorte(texto, idSucursal, fechaDesde, fechaHasta);
+
+            return oCorteD.TotalMovimientosPorCorte(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable Balance(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            
-            return oCorteDSqlServer.Balance(texto, idSucursal, fechaDesde, fechaHasta);
+
+            return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         // Ultimo cierre de stock por cada sucursal recibida (reusa
@@ -862,7 +868,7 @@ namespace Negocio
 
             foreach (var sucursal in (sucursales ?? Enumerable.Empty<Entidades.Sucursal>()).Where(s => s != null && s.IdSucursal > 0))
             {
-                DateTime fecha = oCorteDSqlServer.fechaUltimoCierreStock_Sucursal(sucursal.IdSucursal);
+                DateTime fecha = oCorteD.fechaUltimoCierreStock_Sucursal(sucursal.IdSucursal);
                 if (fecha > DateTime.MinValue)
                 {
                     resultado.Add(new Entidades.SucursalUltimoCierreVm
@@ -886,7 +892,7 @@ namespace Negocio
             resultado.Filtro = filtro;
             resultado.ConsultaRealizada = true;
 
-            var plano = oCorteDSqlServer.ObtenerExistenciaPorSucursalesPlano(
+            var plano = oCorteD.ObtenerExistenciaPorSucursalesPlano(
                 filtro.Texto ?? "",
                 filtro.IdSucursal,
                 filtro.FechaHasta,
