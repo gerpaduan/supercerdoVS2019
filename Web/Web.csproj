@@ -180,6 +180,7 @@
     <Compile Include="Models\ComparacionCorteVm.cs" />
     <Compile Include="Models\ComparacionVentaVm.cs" />
     <Compile Include="Models\ComparacionEgresoCajaVm.cs" />
+    <Compile Include="Models\ComparacionCompraVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />

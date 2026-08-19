@@ -10,7 +10,11 @@ namespace Negocio
 {
     public class Compra
     {
-        private readonly Datos.Compra oCompraD;
+        // oCompraD: bloque real (Compras/CortePorCompra/MediaRes) migrado a la interfaz -- puede
+        // ser SQL Server o Postgres. oCompraDSqlServer: backup/restaurarBD, sin equivalente en
+        // Postgres, siempre SQL Server. Ver docs/DECISIONS.md, Etapa 9.
+        private readonly Contratos.ICompraRepository oCompraD;
+        private readonly Datos.Compra oCompraDSqlServer;
         Negocio.Corte oCorteN;
         Negocio.Sucursal oSucN;
         Negocio.Usuario oUsuarioN;
@@ -19,10 +23,30 @@ namespace Negocio
         Negocio.CuentaCorriente oCtaCteN;
 
         IEmpresaContext _empresa;private readonly IParametrosContext _param;
+
+        // Constructor existente: SIN CAMBIOS de comportamiento.
         public Compra(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCompraD = new Datos.Compra(empresa, param);
+            var datosCompra = new Datos.Compra(empresa, param);
+            oCompraD = datosCompra;
+            oCompraDSqlServer = datosCompra;
+            oCorteN = new Corte(empresa, param);
+            oSucN = new Negocio.Sucursal(empresa, param);
+            oUsuarioN = new Usuario(empresa, param);
+            oCierreN = new Negocio.CierreCaja(empresa, param);
+            oPersonaN = new Persona(empresa, param);
+            oCtaCteN = new Negocio.CuentaCorriente(empresa, param);
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICompraRepository
+        // (ej. DatosPostgres.CompraPg) para el bloque migrado. Solo lo usa el controller de
+        // comparacion. backup/restaurarBD siguen yendo por SQL Server (oCompraDSqlServer).
+        public Compra(Contratos.ICompraRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa; _param = param;
+            oCompraD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            oCompraDSqlServer = new Datos.Compra(empresa, param);
             oCorteN = new Corte(empresa, param);
             oSucN = new Negocio.Sucursal(empresa, param);
             oUsuarioN = new Usuario(empresa, param);
@@ -430,12 +454,12 @@ namespace Negocio
 
         public void backup(string destino)
         {
-            oCompraD.backup(destino);
+            oCompraDSqlServer.backup(destino);
         }
 
         public void restaurarBD(string dataSource ,string bdAuxiliar, string rutaOrigen)
         {
-            oCompraD.restaurarBD(dataSource,bdAuxiliar, rutaOrigen);
+            oCompraDSqlServer.restaurarBD(dataSource,bdAuxiliar, rutaOrigen);
         }
     }
 }

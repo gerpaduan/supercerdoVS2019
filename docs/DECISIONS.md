@@ -1,6 +1,32 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: CierreCaja.cs, bloque CierreCaja/EgresosCaja/TiposEgresoCaja (Etapa 8)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Compra.cs completo (Etapa 9)
+
+Última entidad núcleo del negocio: 30 métodos de 32 en `Datos/Compra.cs` (`Compras`, `CortePorCompra`, `MediaRes`, y `CorteProveedor` — tabla nueva encontrada leyendo los SPs reales, ver abajo). Mismo patrón mecánico: `Contratos/ICompraRepository.cs` -> `Datos.Compra : ICompraRepository` (cero cambios) -> patrón de dos campos en `Negocio/Compra.cs` (`oCompraD` interfaz para el batch, `oCompraDSqlServer` concreto solo para `backup`/`restaurarBD`) -> `DatosPostgres/CompraPg.cs`.
+
+**`backup`/`restaurarBD` fuera de `ICompraRepository`**: `BACKUP DATABASE [SuperCerdo]` / `RESTORE DATABASE [SuperCerdo]`, herramientas administrativas de SQL Server sin equivalente 1:1 en Postgres (que usa `pg_dump`/`pg_basebackup`, mecanismo de otro motor). No es un olvido — quedan siempre en SQL Server vía `oCompraDSqlServer`.
+
+**Hallazgo nuevo, no anticipado en el plan**: `agregarCortePorCompra` (verificado con `sp_helptext`) no es solo el `INSERT` en `CortePorCompra` — cuando la compra es tipo `'Cortes'`, además hace un upsert condicional en `CorteProveedor` (último precio y fecha de última compra por proveedor+corte). Esa tabla no estaba en el batch de la Etapa 6 (se había dejado fuera junto con `obtenerCorteProveedor`/`obtenerCortesPorProveedor`, que siguen sin migrar). Se agregó al schema de esta etapa (24 filas, RLS activo, verificado contra la base viva) e implementado con una transacción explícita (`ConexionPg.AbrirConTenant`) en `CompraPg.agregarCortePorCompra`, igual que el SP real: INSERT en `CortePorCompra`, luego si la compra es `'Cortes'` y ya existe fila en `CorteProveedor` para ese proveedor+corte hace `UPDATE` (solo si la fecha nueva es más reciente), si no `INSERT`. Verificado con harness `psql` + `ROLLBACK` (ambas ramas, update e insert).
+
+**No-ops confirmados con `sp_helptext` (mismo criterio que Etapa 6: `StockCorteSucursal` nunca se porta a Postgres)**:
+- `anularCompra`: de 9 statements del SP real, 1 es real (`UPDATE Compras SET estado='Anulado'`), 8 son cascadas `StockCorteSucursal` con `SuperCerdo.dbo.` hardcodeado — no-op.
+- `quitarStockMedia`: 3 `UPDATE StockCorteSucursal` — no-op total, `CompraPg.quitarStockMedia` es un método vacío documentado.
+- `quitarStockTeoricoMedia`: se replica solo la parte real (`DELETE FROM MediaRes WHERE idMedia=@`), el resto (3 `UPDATE StockCorteSucursal.stockTeorico`) es no-op.
+- `agregarMediaRes`: se replica solo el `INSERT INTO MediaRes` real; las 6 `UPDATE StockCorteSucursal` (stock y stockTeorico, cascada de 3 niveles cada una) son no-op.
+- `quitarStockCorte` no tiene parte no-op: siempre fue puro `DELETE FROM CortePorCompra`, se migró completo.
+
+**Bug real, no inventado — `modificarCortePorCompra`**: el SP `dbo.modificarCortePorCompra` **no existe** en la base SQL Server real (confirmado con `sp_helptext`: *"The object 'dbo.modificarCortePorCompra' does not exist in database 'CarniSys'"*). `Datos/Compra.cs` lo invoca igual (dead code preexistente), pero no tiene ningún caller real en `Web/` (verificado por grep en toda la solución). Hoy mismo, en SQL Server, llamar a este método tira excepción. Por regla de incertidumbre (no inventar un UPDATE plausible para un SP que no existe), `CompraPg.modificarCortePorCompra` lanza `NotSupportedException` documentando el hallazgo — misma clase de falla que produce el original, sin adivinar comportamiento.
+
+**Simplificaciones deliberadas, sin cambio de comportamiento observable**:
+- `obtenerCompras`/`getLineasCompras`: el SP real duplica la query completa en dos ramas (`IF @idSucursal > 0` / `ELSE`), idénticas salvo el filtro de sucursal. En Postgres se unificó en una sola query con `(@idSucursal = 0 OR idsucursal = @idSucursal)` — mismo resultado para ambos casos, ya usado en `CierreCajaPg` (Etapa 8).
+- `obtenerPesajesVinculadosPorDestinos`/`getIdsAjustePorPesajes`: el original trocea en lotes de 900 ids por el límite de parámetros de SQL Server; Postgres soporta arrays nativos (`= ANY(@ids)`) sin ese límite, así que no hace falta trocear.
+- `conexionSucursal` (ruteo a sucursales remotas San Martín/San Lorenzo vía otra conexión SQL Server): ignorado en `CompraPg`, siempre consulta la base local — mismo tratamiento que `SucursalPg` con esas sucursales (fuera de alcance de toda la migración desde la Etapa 1).
+
+**Verificado de punta a punta**: build de la solución completa sin errores. Harness directo (`psql` + `ROLLBACK`): `agregarCortePorCompra` (insert en `CortePorCompra` + ambas ramas del upsert de `CorteProveedor`) y `addOrEditCompra` en edición (update + limpieza de `CortePorCompra`/`MediaRes`), sin dejar datos de prueba. Los 3 reportes (`porcentajeCortesPorCompra`, `getPromMedias`, `getPorcCortesEnMedias`) y la query completa de `obtenerCompras` (68 filas, una por compra real, sin duplicados) se ejecutaron directo contra la base con datos reales sin errores. HTTP con login real (2 usuarios descartables, idEmpresa 1 y 2, creados y borrados): `/MigracionPostgres/CompararCompra?idCompra=5` (tenant 2, tipo Cortes) y `?idCompra=1` (tenant 1, tipo Ingreso Stock) devuelven los mismos campos en SQL Server y Postgres; logueado como tenant 1, `idCompra=5` (tenant 2) da "no encontrado" en **ambos** motores por igual (RLS).
+
+Con esto, `Compra.cs` completo (salvo `backup`/`restaurarBD`, fuera de alcance por diseño) queda migrado. Trabajo pendiente de la migración: `cambiarSucursalCaja`/`obtenerPreviewCambioSucursalCaja` (Etapa 8), resto de `Corte.cs` (Embutido/Movimiento/reportes, Etapa 6), resto de `Venta.cs` (Expendios/Sectores/FacturaElectronica, Etapa 7).
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: CierreCaja.cs, bloque CierreCaja/EgresosCaja/TiposEgresoCaja (Etapa 8)
 
 Bloque priorizado explícitamente para cerrar el gap de `docs/GAPS.md` dejado por la Etapa 7 (reverso de `EgresosCaja` en `modificarVenta`). 15 métodos de 13 en `Datos/CierreCaja.cs`: CierreCaja (`findCierreCaja`, `addOrEditCierreCaja`, `findCierreCajaMultiples`), TiposEgresoCaja (CRUD chico), EgresosCaja (9 métodos, el movimiento de caja real). Mismo patrón mecánico: `Contratos/ICierreCajaRepository.cs` -> `Datos.CierreCaja : ICierreCajaRepository` (cero cambios) -> patrón de dos campos en `Negocio/CierreCaja.cs` (`oCierreD` interfaz, `oCierreDSqlServer` para `cambiarSucursalCaja`/`obtenerPreviewCambioSucursalCaja`, sin migrar) -> `DatosPostgres/CierreCajaPg.cs`.
 

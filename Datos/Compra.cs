@@ -6,7 +6,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class Compra
+    public class Compra : Contratos.ICompraRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 

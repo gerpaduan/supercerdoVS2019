@@ -259,5 +259,44 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararCompra(int idCompra)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var compraSqlServer = new Negocio.Compra(empresa, param);
+            var resultadoSqlServer = compraSqlServer.findById_convertToCompra(idCompra);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.CompraPg. Cubre el bloque
+            // Compras/CortePorCompra/MediaRes/CorteProveedor migrado -- backup/restaurarBD
+            // siguen yendo por SQL Server (no tienen equivalente en Postgres).
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var repoPostgres = new DatosPostgres.CompraPg(connString, empresa.IdEmpresa);
+            var compraPostgres = new Negocio.Compra(repoPostgres, empresa, param);
+
+            Entidades.Compra resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = compraPostgres.findById_convertToCompra(idCompra);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Compra #" + idCompra;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdCompraBuscada = idCompra;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararCompra.cshtml", new Web.Models.ComparacionCompraVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }
