@@ -178,5 +178,47 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        [HttpGet]
+        public ActionResult CompararVenta(int idVenta)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var ventaSqlServer = new Negocio.Venta(empresa, param);
+            var resultadoSqlServer = ventaSqlServer.getVentaById(idVenta);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.VentaPg (que a su vez
+            // recibe PersonaPg/SucursalPg/CortePg para resolver Persona/Sucursal/Corte
+            // relacionados). Cubre solo el bloque Ventas/LineaVenta/TemporalLineaVenta migrado.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var corteRepoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var repoPostgres = new DatosPostgres.VentaPg(connString, empresa.IdEmpresa, personaRepoPostgres, sucursalRepoPostgres, corteRepoPostgres);
+            var ventaPostgres = new Negocio.Venta(repoPostgres, empresa, param);
+
+            Entidades.Venta resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = ventaPostgres.getVentaById(idVenta);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Venta #" + idVenta;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdVentaBuscada = idVenta;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararVenta.cshtml", new Web.Models.ComparacionVentaVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Corte.cs, bloque CRUD/referencia (Etapa 6)
+## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: Venta.cs, bloque Ventas/LineaVenta (Etapa 7)
+
+Bloque núcleo transaccional del POS (24 métodos de 41 totales): `Ventas`, `LineaVenta`, `TemporalLineaVenta`. Mismo patrón mecánico: `Contratos/IVentaRepository.cs` -> `Datos.Venta : IVentaRepository` (cero cambios) -> **patrón de dos campos** en `Negocio/Venta.cs` (`oVentaD` interfaz para el batch, `oVentaDSqlServer` concreto para Expendios/Sectores/FacturaElectronica, todavía sin migrar) -> `DatosPostgres/VentaPg.cs`.
+
+**Dos dependencias nuevas encontradas leyendo los SPs reales, no anticipadas en el plan**:
+- `agregarVenta` calculaba `diaFestivo` contra la tabla `Feriados`. **Confirmado con el usuario: `Feriados` está obsoleta** (0 filas reales, sin ninguna referencia en el código C#, solo la toca el SP). Se excluye del todo — `VentaPg.agregarVenta` usa `diafestivo = NULL` directo, mismo resultado observable que produce SQL Server hoy (la tabla vacía siempre resuelve NULL ahí también).
+- `modificarVenta` genera un asiento inverso en `EgresosCaja` cuando se editan (con `eliminarLineas=true`) las líneas de una venta cta-cte que tenía un egreso previo ligado. `EgresosCaja`/`TiposEgresoCaja` son dominio de `CierreCaja.cs`, sin migrar. **Confirmado con el usuario: este gap es real e importante, no opcional** — queda documentado en `docs/GAPS.md` (nuevo, primer uso de ese archivo en este proyecto) con instrucciones concretas de cómo resolverlo cuando se aborde `CierreCaja.cs`. El resto de `modificarVenta` (borrado de líneas + `UPDATE Ventas`) sí está completo.
+
+**`agregarStockVenta`**: verificado con `sp_helptext` que el SP real solo actualiza `StockCorteSucursal` (cascada de stock del corte vendido, con un bloque "PUCHERO" ya comentado/muerto en el propio SP de origen). Como `StockCorteSucursal` nunca se porta (decisión de la Etapa 6), queda como no-op documentado — mismo criterio ya aplicado, no una improvisación nueva.
+
+**Bug real propio encontrado y corregido antes de cerrar la etapa**: mi primer `VentaPg.obtenerLineasVenta` no replicaba el `INNER JOIN` a `Corte` que tiene el SP real (verificado con `sp_helptext`, no visto en la primera lectura superficial). Descubierto comparando datos reales por HTTP: Venta #23 (tenant 1) tenía 2 líneas (`idLineaVenta` 61 y 64) cuyo `idCorte=3` pertenece a `idEmpresa=3` (dato cruzado/viejo de otro tenant) — SQL Server las excluye silenciosamente porque el `INNER JOIN` a `Corte` queda vacío para ese `idCorte` bajo RLS del tenant 1; mi primera versión las incluía igual con `Corte=null`. Corregido agregando el mismo `INNER JOIN` (con el mismo efecto de exclusión automática vía RLS de Postgres). Verificado tras el fix: conteos y contenido idénticos en ambos motores para las 2 ventas de prueba.
+
+**Verificado de punta a punta por HTTP con login real** (2 usuarios de prueba descartables, idEmpresa 1 y 2, creados y borrados): `/MigracionPostgres/CompararVenta?idVenta=23` (15 líneas tras excluir las 2 cruzadas) y `?idVenta=18` (15 líneas, incluye cantidades negativas de anulación) devuelven exactamente los mismos campos en SQL Server y Postgres; logueado como tenant 2, la misma `idVenta=23` (tenant 1) da "no encontrado" en **ambos** motores por igual (RLS). Harness directo (`psql`, transacción con `ROLLBACK`) confirmó el camino de escritura de `agregarVenta`+`agregarLineaVenta` (INSERT multi-statement + `agregarLineaVenta` con `RETURNING`) sin dejar datos de prueba.
+
+Con esto, `Venta.cs` (Expendios/LineaExpendio, Sectores, FacturaElectronica), el resto de `Corte.cs`, `CierreCaja.cs` y `Compra.cs` completos quedan como trabajo pendiente. `docs/GAPS.md` queda como inventario vivo del reverso de `EgresosCaja`, a resolver obligatoriamente en la etapa de `CierreCaja.cs`.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: Corte.cs, bloque CRUD/referencia (Etapa 6)
 
 Primera clase "grande" abordada, solo el bloque CRUD/referencia (24 de los ~78 metodos de `Datos/Corte.cs`): Corte (find/add/edit/delete/buscar), `ActualizacionCorte` (historial, ver correccion mas abajo), `CatalogoGlobalImportacionProductos` (staging de importacion), `Formulas`/`CortePorFormula`, `AlicuotasIva`, `TiposProducto`. Mismo patron mecanico: `Contratos/ICorteRepository.cs` (solo el batch, no las ~78 metodos totales) -> `Datos.Corte : ICorteRepository` (cero cambios) -> constructor aditivo en `Negocio.Corte` -> `DatosPostgres/CortePg.cs`.
 

@@ -8,7 +8,7 @@ using Utilidades;
 
 namespace Datos
 {
-    public class Venta
+    public class Venta : Contratos.IVentaRepository
     {
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 

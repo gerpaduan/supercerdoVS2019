@@ -13,15 +13,34 @@ namespace Negocio
 {
     public class Venta
     {
-        private readonly Datos.Venta oVentaD;
+        // oVentaD: bloque Ventas/LineaVenta/TemporalLineaVenta migrado a la interfaz -- puede
+        // ser SQL Server o Postgres. oVentaDSqlServer: el resto de la clase (Expendios,
+        // Sectores, FacturaElectronica) que todavia no esta migrado -- siempre SQL Server.
+        // Ver docs/DECISIONS.md, Etapa 7.
+        private readonly Contratos.IVentaRepository oVentaD;
+        private readonly Datos.Venta oVentaDSqlServer;
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
+        // Constructor existente: SIN CAMBIOS de comportamiento.
         public Venta(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;
             _param = param;
-            oVentaD = new Datos.Venta(empresa, param);
+            var datosVenta = new Datos.Venta(empresa, param);
+            oVentaD = datosVenta;
+            oVentaDSqlServer = datosVenta;
+        }
+
+        // Constructor nuevo, aditivo: inyecta cualquier implementacion de IVentaRepository
+        // (ej. DatosPostgres.VentaPg) para el bloque migrado. Solo lo usa el controller de
+        // comparacion. El resto de la clase sigue yendo por SQL Server (oVentaDSqlServer).
+        public Venta(Contratos.IVentaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;
+            _param = param;
+            oVentaD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            oVentaDSqlServer = new Datos.Venta(empresa, param);
         }
 
 
@@ -89,7 +108,7 @@ namespace Negocio
                     if (oVentaE.ListaExpendios != null)
                     {
                         foreach (int item in oVentaE.ListaExpendios)
-                            oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+                            oVentaDSqlServer.asignarVentaEnExpendio(oVentaE.IdVenta, item);
                     }
 
                     /////para no repetir lineas, se multiplica por el multiplicador 
@@ -448,52 +467,52 @@ namespace Negocio
         #region EXPENDIO
         public int agregarExpendio(Entidades.Venta oVentaE)
         {
-           return oVentaD.agregarExpendio(oVentaE);
+           return oVentaDSqlServer.agregarExpendio(oVentaE);
         }
         public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
         {
-            return oVentaD.agregarLineaExprendio(oLineaE);
+            return oVentaDSqlServer.agregarLineaExprendio(oLineaE);
         }
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
         {
-            return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
+            return oVentaDSqlServer.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
         }
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
-            return oVentaD.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top, fechaDesde, fechaHasta);
+            return oVentaDSqlServer.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top, fechaDesde, fechaHasta);
         }
         public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
-            return oVentaD.obtenerExpendiosEmpresa(top, fechaDesde, fechaHasta);
+            return oVentaDSqlServer.obtenerExpendiosEmpresa(top, fechaDesde, fechaHasta);
         }
         public DataTable obtenerSectores()
         {
-            return oVentaD.obtenerSectores();
+            return oVentaDSqlServer.obtenerSectores();
         }
 
         public bool existeSector(string sector, string sectorActual = "")
         {
-            return oVentaD.existeSector(sector, sectorActual);
+            return oVentaDSqlServer.existeSector(sector, sectorActual);
         }
 
         public void agregarSector(string sector)
         {
-            oVentaD.agregarSector(sector);
+            oVentaDSqlServer.agregarSector(sector);
         }
 
         public void modificarSector(string sectorActual, string sectorNuevo)
         {
-            oVentaD.modificarSector(sectorActual, sectorNuevo);
+            oVentaDSqlServer.modificarSector(sectorActual, sectorNuevo);
         }
 
         public bool sectorEstaEnUso(string sector)
         {
-            return oVentaD.sectorEstaEnUso(sector);
+            return oVentaDSqlServer.sectorEstaEnUso(sector);
         }
 
         public void eliminarSector(string sector)
         {
-            oVentaD.eliminarSector(sector);
+            oVentaDSqlServer.eliminarSector(sector);
         }
 
         public DataTable obtenerSectoresConTodos()
@@ -516,12 +535,12 @@ namespace Negocio
 
         public string getUltimoSectorSelect(string serialCPU)
         {
-            return oVentaD.getUltimoSectorSelect(serialCPU);
+            return oVentaDSqlServer.getUltimoSectorSelect(serialCPU);
         }
 
         public Entidades.Venta getExpedioById(int idExpendio)
         { 
-            return oVentaD.getExpedioById((int)idExpendio);
+            return oVentaDSqlServer.getExpedioById((int)idExpendio);
         }
         #endregion
 
@@ -535,7 +554,7 @@ namespace Negocio
         /// <returns></returns>
             public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
         {
-            return oVentaD.esVentaSinFacturar(idVenta, esNotaCredito);
+            return oVentaDSqlServer.esVentaSinFacturar(idVenta, esNotaCredito);
         }
         
         /// <summary>
@@ -545,18 +564,18 @@ namespace Negocio
         /// <returns></returns>
         public int existeFactuElectParaVenta(int idVenta)
         {
-            int idFactuElec = oVentaD.existeFacturaElect(idVenta);
+            int idFactuElec = oVentaDSqlServer.existeFacturaElect(idVenta);
             return idFactuElec;
         }
 
         public int existeNotaCreditoParaVenta(int idVenta)
         {
-            return oVentaD.existeNotaCreditoElect(idVenta);
+            return oVentaDSqlServer.existeNotaCreditoElect(idVenta);
         }
 
         public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
         {
-            oVentaD.addOrEditFactuElec(oFacturaElectronicaE);
+            oVentaDSqlServer.addOrEditFactuElec(oFacturaElectronicaE);
 
             char letraId_TipoCbte = oFacturaElectronicaE.getLetraId_TipoCbte(oFacturaElectronicaE.CodTipoCbteAfip);
 
@@ -585,7 +604,7 @@ namespace Negocio
 
         public Entidades.FacturaElectronica getFactuElecById(int idFactuElec)
         {
-            return oVentaD.getFactuElecById(idFactuElec);
+            return oVentaDSqlServer.getFactuElecById(idFactuElec);
         }
 
         public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
@@ -593,14 +612,14 @@ namespace Negocio
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
             int pagina, int cantidad, int cantidadExtra)
         {
-            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra);
+            return oVentaDSqlServer.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra);
         }
 
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
         {
-            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+            return oVentaDSqlServer.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
         }
 
         #endregion
