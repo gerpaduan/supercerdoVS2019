@@ -568,5 +568,48 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        // Compara el bloque FacturaElectronica (Etapa 12c, ultima sub-etapa de Venta.cs) --
+        // getFactuElecById (cabecera + alicuotas + Venta relacionada). Las escrituras
+        // (addOrEditFactuElec) se verifican aparte con harness psql/ROLLBACK, no HTTP.
+        [HttpGet]
+        public ActionResult CompararFactura(int idFactuElec)
+        {
+            // SQL Server: constructor de siempre, sin cambios.
+            var ventaSqlServer = new Negocio.Venta(empresa, param);
+            var resultadoSqlServer = ventaSqlServer.getFactuElecById(idFactuElec);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.VentaPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var corteRepoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var repoPostgres = new DatosPostgres.VentaPg(connString, empresa.IdEmpresa, personaRepoPostgres, sucursalRepoPostgres, corteRepoPostgres);
+            var ventaPostgres = new Negocio.Venta(repoPostgres, empresa, param);
+
+            Entidades.FacturaElectronica resultadoPostgres;
+            string errorPostgres = null;
+            try
+            {
+                resultadoPostgres = ventaPostgres.getFactuElecById(idFactuElec);
+            }
+            catch (Exception ex)
+            {
+                resultadoPostgres = null;
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Factura #" + idFactuElec;
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.IdFactuElecBuscado = idFactuElec;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararFactura.cshtml", new Web.Models.ComparacionFacturaVm
+            {
+                SqlServer = resultadoSqlServer,
+                Postgres = resultadoPostgres
+            });
+        }
     }
 }

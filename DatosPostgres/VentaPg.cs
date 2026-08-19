@@ -1181,5 +1181,505 @@ namespace DatosPostgres
         }
 
         #endregion
+
+        #region FacturaElectronica (Etapa 12c)
+
+        public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
+        {
+            string validarComprobantes = esNotaCredito
+                ? $"(codtipocbteafip = {FacturaElectronica.codNotaCreditoA_Afip} OR codtipocbteafip = {FacturaElectronica.codNotaCreditoB_Afip} OR codtipocbteafip = {FacturaElectronica.codNotaCreditoC_Afip})"
+                : $"(codtipocbteafip = {FacturaElectronica.codFacturaA_Afip} OR codtipocbteafip = {FacturaElectronica.codFacturaB_Afip} OR codtipocbteafip = {FacturaElectronica.codFacturaC_Afip})";
+
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa, $@"
+                SELECT id
+                FROM facturaelectronica
+                WHERE idventa = @idVenta
+                  AND cae IS NOT NULL
+                  AND {validarComprobantes}
+                ORDER BY id DESC
+                LIMIT 1;",
+                p => p.AddWithValue("idVenta", idVenta));
+
+            return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
+        }
+
+        public int existeFacturaElect(int idVenta)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa, $@"
+                SELECT id
+                FROM facturaelectronica
+                WHERE cae <> ''
+                  AND idventa = @idVenta
+                  AND (codtipocbteafip = {FacturaElectronica.codFacturaA_Afip}
+                    OR codtipocbteafip = {FacturaElectronica.codFacturaB_Afip}
+                    OR codtipocbteafip = {FacturaElectronica.codFacturaC_Afip})
+                ORDER BY id DESC
+                LIMIT 1;",
+                p => p.AddWithValue("idVenta", idVenta));
+
+            return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
+        }
+
+        public int existeNotaCreditoElect(int idVenta)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa, $@"
+                SELECT id
+                FROM facturaelectronica
+                WHERE cae <> ''
+                  AND idventa = @idVenta
+                  AND (codtipocbteafip = {FacturaElectronica.codNotaCreditoA_Afip}
+                    OR codtipocbteafip = {FacturaElectronica.codNotaCreditoB_Afip}
+                    OR codtipocbteafip = {FacturaElectronica.codNotaCreditoC_Afip})
+                ORDER BY id DESC
+                LIMIT 1;",
+                p => p.AddWithValue("idVenta", idVenta));
+
+            return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
+        }
+
+        // Transaccion explicita cabecera + alicuotas (mejora deliberada respecto al original
+        // SQL Server, que no envuelve esto -- confirmado con el usuario, ver docs/DECISIONS.md).
+        // fechaemisionafip NO se incluye en el UPDATE de la rama de edicion: una vez que AFIP
+        // emite el CAE esa fecha queda legalmente inmutable (confirmado con el usuario -- el SP
+        // original hace "fechaEmisionAfip = fechaEmisionAfip", auto-asignacion intencional, no
+        // un bug de falta de @).
+        public void addOrEditFactuElec(FacturaElectronica oFacturaElectronicaE)
+        {
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    if (oFacturaElectronicaE.Id == 0)
+                    {
+                        using (var cmd = new NpgsqlCommand(@"
+                            INSERT INTO facturaelectronica
+                                (ptovtaafip, fechaemisionafip, desctipocbteafip, codtipocbteafip, nrocbteafip, tipodocafip, nrodocafip,
+                                 razonsocialafip, condicionivaafip, domicilioafip, condicionventa, formapago, cae, fecvtocae,
+                                 importenetogravado, iva, importetotal, porcentajefacturacion, descitemunitario, observaciones,
+                                 idventa, creado, error, mensajeerror, fechaerror, canterrores, idempresa)
+                            VALUES
+                                (@ptoVtaAfip, @fechaEmisionAfip, @descTipoCbteAfip, @codTipoCbteAfip, @nroCbteAfip, @tipoDocAfip, @nroDocAfip,
+                                 @razonSocialAFIP, @condicionIvaAFIP, @domicilioAFIP, @condicionVenta, @formaPago, @CAE, @fecVtoCAE,
+                                 @importeNetoGravado, @iva, @importeTotal, @porcentajeFacturacion, @descItemUnitario, @observaciones,
+                                 @idVenta, now(), @error, @mensajeError, @fechaError, 0, @idEmpresa)
+                            RETURNING id;", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip ?? "");
+                            cmd.Parameters.AddWithValue("fechaEmisionAfip", oFacturaElectronicaE.FechaEmisionAfip < DateTime.Today.AddYears(-100) ? (object)DBNull.Value : (object)oFacturaElectronicaE.FechaEmisionAfip);
+                            cmd.Parameters.AddWithValue("descTipoCbteAfip", oFacturaElectronicaE.DescTipoCbteAfip ?? "");
+                            cmd.Parameters.AddWithValue("codTipoCbteAfip", oFacturaElectronicaE.CodTipoCbteAfip);
+                            cmd.Parameters.AddWithValue("nroCbteAfip", oFacturaElectronicaE.NroCbteAfip ?? "");
+                            cmd.Parameters.AddWithValue("tipoDocAfip", oFacturaElectronicaE.TipoDocAfip ?? "");
+                            cmd.Parameters.AddWithValue("nroDocAfip", oFacturaElectronicaE.NroDocAfip ?? "");
+                            cmd.Parameters.AddWithValue("razonSocialAFIP", oFacturaElectronicaE.RazonSocialAFIP ?? "");
+                            cmd.Parameters.AddWithValue("condicionIvaAFIP", oFacturaElectronicaE.CondicionIvaAFIP ?? "");
+                            cmd.Parameters.AddWithValue("domicilioAFIP", oFacturaElectronicaE.DomicilioAFIP ?? "");
+                            cmd.Parameters.AddWithValue("condicionVenta", oFacturaElectronicaE.CondicionVenta ?? "");
+                            cmd.Parameters.AddWithValue("formaPago", oFacturaElectronicaE.FormaPago ?? "");
+                            cmd.Parameters.AddWithValue("CAE", oFacturaElectronicaE.CAE1 ?? "");
+                            cmd.Parameters.AddWithValue("fecVtoCAE", oFacturaElectronicaE.FecVtoCAE ?? "");
+                            cmd.Parameters.AddWithValue("importeNetoGravado", oFacturaElectronicaE.ImporteNetoGravado);
+                            cmd.Parameters.AddWithValue("iva", oFacturaElectronicaE.Iva);
+                            cmd.Parameters.AddWithValue("importeTotal", oFacturaElectronicaE.ImporteTotal);
+                            cmd.Parameters.AddWithValue("porcentajeFacturacion", oFacturaElectronicaE.PorcentajeFacturacion);
+                            cmd.Parameters.AddWithValue("descItemUnitario", oFacturaElectronicaE.DescItemUnitario ?? "");
+                            cmd.Parameters.AddWithValue("observaciones", oFacturaElectronicaE.Observaciones ?? "");
+                            cmd.Parameters.AddWithValue("idVenta", oFacturaElectronicaE.IdVenta);
+                            cmd.Parameters.AddWithValue("error", oFacturaElectronicaE.Error);
+                            cmd.Parameters.AddWithValue("mensajeError", oFacturaElectronicaE.MensajeError ?? "");
+                            cmd.Parameters.AddWithValue("fechaError", (oFacturaElectronicaE.FechaError == null || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100)) ? (object)DBNull.Value : (object)oFacturaElectronicaE.FechaError);
+                            cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+
+                            oFacturaElectronicaE.Id = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+                    }
+                    else
+                    {
+                        int cantErrores = 0;
+                        if (string.IsNullOrEmpty(oFacturaElectronicaE.CAE1))
+                        {
+                            using (var cmdCant = new NpgsqlCommand("SELECT canterrores + 1 FROM facturaelectronica WHERE id = @id;", con, tx))
+                            {
+                                cmdCant.Parameters.AddWithValue("id", oFacturaElectronicaE.Id);
+                                object cantObj = cmdCant.ExecuteScalar();
+                                cantErrores = (cantObj == null || cantObj == DBNull.Value) ? 0 : Convert.ToInt32(cantObj);
+                            }
+                        }
+
+                        using (var cmd = new NpgsqlCommand(@"
+                            UPDATE facturaelectronica SET
+                                ptovtaafip = @ptoVtaAfip,
+                                desctipocbteafip = @descTipoCbteAfip,
+                                codtipocbteafip = @codTipoCbteAfip,
+                                nrocbteafip = @nroCbteAfip,
+                                tipodocafip = @tipoDocAfip,
+                                nrodocafip = @nroDocAfip,
+                                razonsocialafip = @razonSocialAFIP,
+                                condicionivaafip = @condicionIvaAFIP,
+                                domicilioafip = @domicilioAFIP,
+                                condicionventa = @condicionVenta,
+                                formapago = @formaPago,
+                                cae = @CAE,
+                                fecvtocae = @fecVtoCAE,
+                                importenetogravado = @importeNetoGravado,
+                                iva = @iva,
+                                importetotal = @importeTotal,
+                                porcentajefacturacion = @porcentajeFacturacion,
+                                descitemunitario = @descItemUnitario,
+                                observaciones = @observaciones,
+                                idventa = @idVenta,
+                                error = @error,
+                                mensajeerror = @mensajeError,
+                                fechaerror = @fechaError,
+                                canterrores = @cantErrores
+                            WHERE id = @id;", con, tx))
+                        {
+                            cmd.Parameters.AddWithValue("ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip ?? "");
+                            cmd.Parameters.AddWithValue("descTipoCbteAfip", oFacturaElectronicaE.DescTipoCbteAfip ?? "");
+                            cmd.Parameters.AddWithValue("codTipoCbteAfip", oFacturaElectronicaE.CodTipoCbteAfip);
+                            cmd.Parameters.AddWithValue("nroCbteAfip", oFacturaElectronicaE.NroCbteAfip ?? "");
+                            cmd.Parameters.AddWithValue("tipoDocAfip", oFacturaElectronicaE.TipoDocAfip ?? "");
+                            cmd.Parameters.AddWithValue("nroDocAfip", oFacturaElectronicaE.NroDocAfip ?? "");
+                            cmd.Parameters.AddWithValue("razonSocialAFIP", oFacturaElectronicaE.RazonSocialAFIP ?? "");
+                            cmd.Parameters.AddWithValue("condicionIvaAFIP", oFacturaElectronicaE.CondicionIvaAFIP ?? "");
+                            cmd.Parameters.AddWithValue("domicilioAFIP", oFacturaElectronicaE.DomicilioAFIP ?? "");
+                            cmd.Parameters.AddWithValue("condicionVenta", oFacturaElectronicaE.CondicionVenta ?? "");
+                            cmd.Parameters.AddWithValue("formaPago", oFacturaElectronicaE.FormaPago ?? "");
+                            cmd.Parameters.AddWithValue("CAE", oFacturaElectronicaE.CAE1 ?? "");
+                            cmd.Parameters.AddWithValue("fecVtoCAE", oFacturaElectronicaE.FecVtoCAE ?? "");
+                            cmd.Parameters.AddWithValue("importeNetoGravado", oFacturaElectronicaE.ImporteNetoGravado);
+                            cmd.Parameters.AddWithValue("iva", oFacturaElectronicaE.Iva);
+                            cmd.Parameters.AddWithValue("importeTotal", oFacturaElectronicaE.ImporteTotal);
+                            cmd.Parameters.AddWithValue("porcentajeFacturacion", oFacturaElectronicaE.PorcentajeFacturacion);
+                            cmd.Parameters.AddWithValue("descItemUnitario", oFacturaElectronicaE.DescItemUnitario ?? "");
+                            cmd.Parameters.AddWithValue("observaciones", oFacturaElectronicaE.Observaciones ?? "");
+                            cmd.Parameters.AddWithValue("idVenta", oFacturaElectronicaE.IdVenta);
+                            cmd.Parameters.AddWithValue("error", oFacturaElectronicaE.Error);
+                            cmd.Parameters.AddWithValue("mensajeError", oFacturaElectronicaE.MensajeError ?? "");
+                            cmd.Parameters.AddWithValue("fechaError", (oFacturaElectronicaE.FechaError == null || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100)) ? (object)DBNull.Value : (object)oFacturaElectronicaE.FechaError);
+                            cmd.Parameters.AddWithValue("cantErrores", cantErrores);
+                            cmd.Parameters.AddWithValue("id", oFacturaElectronicaE.Id);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    if (oFacturaElectronicaE.ListaAlicuota != null && oFacturaElectronicaE.ListaAlicuota.Count > 0)
+                    {
+                        foreach (var a in oFacturaElectronicaE.ListaAlicuota)
+                        {
+                            using (var cmdA = new NpgsqlCommand(@"
+                                INSERT INTO alicuotaivaporfactura (idfacturaelectronica, idiva, baseimponible, importe, idempresa)
+                                VALUES (@idFacturaElectronica, @idIva, @baseImponible, @importe, @idEmpresa);", con, tx))
+                            {
+                                cmdA.Parameters.AddWithValue("idFacturaElectronica", oFacturaElectronicaE.Id);
+                                cmdA.Parameters.AddWithValue("idIva", a.IdIva);
+                                cmdA.Parameters.AddWithValue("baseImponible", a.BaseImponible);
+                                cmdA.Parameters.AddWithValue("importe", a.Importe);
+                                cmdA.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                                cmdA.ExecuteNonQuery();
+                            }
+                        }
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        public FacturaElectronica getFactuElecById(int idFactuElec)
+        {
+            var list = DbPg.Reader(_connectionString, _idEmpresa,
+                "SELECT * FROM facturaelectronica WHERE id = @id;",
+                dr => new FacturaElectronica
+                {
+                    Id = Convert.ToInt32(dr["id"]),
+                    PtoVtaAfip = GetString(dr, "ptovtaafip"),
+                    FechaEmisionAfip = dr["fechaemisionafip"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaemisionafip"]),
+                    DescTipoCbteAfip = GetString(dr, "desctipocbteafip"),
+                    CodTipoCbteAfip = dr["codtipocbteafip"] == DBNull.Value ? 0 : Convert.ToInt32(dr["codtipocbteafip"]),
+                    NroCbteAfip = GetString(dr, "nrocbteafip"),
+                    TipoDocAfip = GetString(dr, "tipodocafip"),
+                    NroDocAfip = GetString(dr, "nrodocafip"),
+                    RazonSocialAFIP = GetString(dr, "razonsocialafip"),
+                    CondicionIvaAFIP = GetString(dr, "condicionivaafip"),
+                    DomicilioAFIP = GetString(dr, "domicilioafip"),
+                    CondicionVenta = GetString(dr, "condicionventa"),
+                    FormaPago = GetString(dr, "formapago"),
+                    CAE1 = GetString(dr, "cae"),
+                    FecVtoCAE = GetString(dr, "fecvtocae"),
+                    ImporteNetoGravado = GetFloat(dr, "importenetogravado"),
+                    Iva = GetFloat(dr, "iva"),
+                    ImporteTotal = GetFloat(dr, "importetotal"),
+                    PorcentajeFacturacion = dr["porcentajefacturacion"] == DBNull.Value ? 100f : Convert.ToSingle(dr["porcentajefacturacion"]),
+                    DescItemUnitario = GetString(dr, "descitemunitario"),
+                    Observaciones = GetString(dr, "observaciones"),
+                    IdVenta = dr["idventa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idventa"]),
+                    Error = GetBool(dr, "error"),
+                    MensajeError = GetString(dr, "mensajeerror"),
+                    FechaError = dr["fechaerror"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaerror"])
+                },
+                p => p.AddWithValue("id", idFactuElec));
+
+            if (list.Count == 0) return null;
+
+            var fact = list[0];
+            fact.ListaAlicuota = GetAlicuotaIvaFactura(fact.Id);
+            fact.Venta = getVentaById(fact.IdVenta);
+            return fact;
+        }
+
+        // Sin wrapper propio en Negocio.Venta -- solo se usa dentro de getFactuElecById (mismo
+        // patron que GetLineasExpendio en la Etapa 12b).
+        private List<AlicuotaIva> GetAlicuotaIvaFactura(int idFacturaElectronica)
+        {
+            return DbPg.Reader(_connectionString, _idEmpresa, @"
+                SELECT a.idiva, ai.iva, a.baseimponible, a.importe
+                FROM alicuotaivaporfactura a
+                INNER JOIN alicuotasiva ai ON a.idiva = ai.idiva
+                WHERE a.idfacturaelectronica = @idFacturaElectronica;",
+                dr => new AlicuotaIva
+                {
+                    IdIva = Convert.ToInt32(dr["idiva"]),
+                    Iva = dr["iva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["iva"]),
+                    BaseImponible = dr["baseimponible"] == DBNull.Value ? 0 : Convert.ToSingle(dr["baseimponible"]),
+                    Importe = dr["importe"] == DBNull.Value ? 0 : Convert.ToSingle(dr["importe"])
+                },
+                p => p.AddWithValue("idFacturaElectronica", idFacturaElectronica));
+        }
+
+        // Mismo WHERE dinamico que el original (Datos/Venta.cs:ConstruirWhereFacturas),
+        // compartido entre BuscarFacturasPagina y ObtenerFacturasResumen para que las dos
+        // consultas filtren exactamente igual. Placeholders numerados para los IN(...), nunca
+        // concatenados directo.
+        private static string ConstruirWhereFacturas(List<string> formasPago, List<int> codigosComprobante)
+        {
+            string whereFormaPago = "1 = 1";
+            if (formasPago != null && formasPago.Count > 0)
+            {
+                string placeholders = "";
+                for (int i = 0; i < formasPago.Count; i++)
+                {
+                    if (i > 0) placeholders += ", ";
+                    placeholders += "@fp" + i;
+                }
+                whereFormaPago = "COALESCE(NULLIF(f.formapago, ''), v.formapago) IN (" + placeholders + ")";
+            }
+
+            string whereComprobante = "1 = 1";
+            if (codigosComprobante != null && codigosComprobante.Count > 0)
+            {
+                string placeholders = "";
+                for (int i = 0; i < codigosComprobante.Count; i++)
+                {
+                    if (i > 0) placeholders += ", ";
+                    placeholders += "@cc" + i;
+                }
+                whereComprobante = "f.codtipocbteafip IN (" + placeholders + ")";
+            }
+
+            return $@"
+                COALESCE(f.cae, '') <> ''
+                AND f.fechaemisionafip >= @fechaDesde
+                AND f.fechaemisionafip < @fechaHastaMas1
+                AND (@idSucursal = -1 OR v.idsucursal = @idSucursal)
+                AND (@cliente = '' OR p.razonsocial ILIKE @clienteBuscar OR p.identificacion ILIKE @clienteBuscar OR f.razonsocialafip ILIKE @clienteBuscar OR f.nrodocafip ILIKE @clienteBuscar)
+                AND (@vendedor = '' OR u.nombre ILIKE @vendedorBuscar)
+                AND ({whereFormaPago})
+                AND ({whereComprobante})";
+        }
+
+        private static void AgregarParametrosFacturas(
+            NpgsqlParameterCollection p,
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor,
+            List<string> formasPago, List<int> codigosComprobante)
+        {
+            string clienteLimpio = (cliente ?? "").Trim();
+            string vendedorLimpio = (vendedor ?? "").Trim();
+
+            p.AddWithValue("fechaDesde", fechaDesde);
+            p.AddWithValue("fechaHastaMas1", fechaHasta.AddDays(1));
+            p.AddWithValue("idSucursal", idSucursal);
+            p.AddWithValue("cliente", clienteLimpio);
+            p.AddWithValue("clienteBuscar", "%" + clienteLimpio + "%");
+            p.AddWithValue("vendedor", vendedorLimpio);
+            p.AddWithValue("vendedorBuscar", "%" + vendedorLimpio + "%");
+
+            if (formasPago != null)
+                for (int i = 0; i < formasPago.Count; i++)
+                    p.AddWithValue("fp" + i, formasPago[i]);
+
+            if (codigosComprobante != null)
+                for (int i = 0; i < codigosComprobante.Count; i++)
+                    p.AddWithValue("cc" + i, codigosComprobante[i]);
+        }
+
+        // Mismo patron de paginacion CTE+ROW_NUMBER() que Datos.CatalogoGlobalProducto.
+        // ObtenerCatalogoGlobalPagina. Los alias de columna (vendedornombre, sucursalnombre,
+        // personarazonsocial, etc.) coinciden exactamente con los que ya reconoce
+        // CargarRelacionesVenta -- MapFacturaCompleta reusa MapVenta/CargarRelacionesVenta tal
+        // cual, igual que el original SQL Server. v.idventa/v.observaciones NO se listan aca a
+        // proposito (facturaelectronica ya tiene columnas con esos nombres via f.*), mismo
+        // criterio que el original.
+        public List<FacturaElectronica> BuscarFacturasPagina(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            int pagina, int cantidad, int cantidadExtra)
+        {
+            pagina = pagina < 1 ? 1 : pagina;
+            cantidad = cantidad < 1 ? 1 : cantidad;
+            cantidadExtra = cantidadExtra < 0 ? 0 : cantidadExtra;
+            int desdeFila = (int)Math.Min(((long)(pagina - 1) * cantidad) + 1, int.MaxValue);
+            int hastaFila = (int)Math.Min((long)desdeFila + cantidad + cantidadExtra - 1, int.MaxValue);
+
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+
+            string sql = $@"
+                WITH facturasfiltradas AS
+                (
+                    SELECT
+                        f.*,
+                        v.fechaventa,
+                        v.turno,
+                        v.diafestivo,
+                        v.nroremito,
+                        v.estado,
+                        v.enctacte,
+                        v.cuit,
+                        v.email,
+                        v.formapago AS ventaformapago,
+                        v.tipocomprobante,
+                        v.creado AS ventacreado,
+                        v.actualizado AS ventaactualizado,
+                        v.pagomixtoefectivo,
+                        v.idvendedor,
+                        v.idsucursal,
+                        v.idpersona,
+                        COALESCE(lv.totalimportecalculado, 0) AS totalimportecalculado,
+                        COALESCE(lv.cantitemscalculado, 0) AS cantitemscalculado,
+                        u.nombre AS vendedornombre,
+                        u.usuario AS vendedorusuario,
+                        u.email AS vendedoremail,
+                        u.idempresa AS vendedoridempresa,
+                        s.sucursal AS sucursalnombre,
+                        s.idempresa AS sucursalidempresa,
+                        s.codpuntoventaafip AS sucursalcodpuntoventaafip,
+                        s.direccion AS sucursaldireccion,
+                        s.localidad AS sucursallocalidad,
+                        s.provincia AS sucursalprovincia,
+                        s.pais AS sucursalpais,
+                        p.razonsocial AS personarazonsocial,
+                        p.identificacion AS personaidentificacion,
+                        p.idiva AS personaidiva,
+                        i.iva AS personaiva,
+                        p.cuit AS personacuit,
+                        p.telefono AS personatelefono,
+                        p.domicilio AS personadomicilio,
+                        p.ciudad AS personaciudad,
+                        p.ctacte AS personactacte,
+                        p.bonificacion AS personabonificacion,
+                        ROW_NUMBER() OVER (ORDER BY f.fechaemisionafip DESC, f.id DESC) AS fila
+                    FROM facturaelectronica f
+                    INNER JOIN ventas v ON v.idventa = f.idventa
+                    LEFT JOIN usuarios u ON u.id = v.idvendedor
+                    LEFT JOIN sucursal s ON s.idsucursal = v.idsucursal
+                    LEFT JOIN personas p ON p.idpersona = v.idpersona
+                    LEFT JOIN iva i ON i.id = p.idiva
+                    LEFT JOIN (
+                        SELECT idventa, SUM(cantkg * preciokg) AS totalimportecalculado, COUNT(*) AS cantitemscalculado
+                        FROM lineaventa
+                        GROUP BY idventa
+                    ) lv ON lv.idventa = v.idventa
+                    WHERE {where}
+                )
+                SELECT *
+                FROM facturasfiltradas
+                WHERE fila BETWEEN @desdeFila AND @hastaFila
+                ORDER BY fila ASC;";
+
+            return DbPg.Reader(_connectionString, _idEmpresa, sql, MapFacturaCompleta,
+                p =>
+                {
+                    AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+                    p.AddWithValue("desdeFila", desdeFila);
+                    p.AddWithValue("hastaFila", hastaFila);
+                });
+        }
+
+        private FacturaElectronica MapFacturaCompleta(NpgsqlDataReader dr)
+        {
+            var factura = new FacturaElectronica
+            {
+                Id = Convert.ToInt32(dr["id"]),
+                PtoVtaAfip = GetString(dr, "ptovtaafip"),
+                FechaEmisionAfip = dr["fechaemisionafip"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaemisionafip"]),
+                DescTipoCbteAfip = GetString(dr, "desctipocbteafip"),
+                CodTipoCbteAfip = dr["codtipocbteafip"] == DBNull.Value ? 0 : Convert.ToInt32(dr["codtipocbteafip"]),
+                NroCbteAfip = GetString(dr, "nrocbteafip"),
+                TipoDocAfip = GetString(dr, "tipodocafip"),
+                NroDocAfip = GetString(dr, "nrodocafip"),
+                RazonSocialAFIP = GetString(dr, "razonsocialafip"),
+                CondicionIvaAFIP = GetString(dr, "condicionivaafip"),
+                DomicilioAFIP = GetString(dr, "domicilioafip"),
+                CondicionVenta = GetString(dr, "condicionventa"),
+                FormaPago = GetString(dr, "formapago"),
+                CAE1 = GetString(dr, "cae"),
+                FecVtoCAE = GetString(dr, "fecvtocae"),
+                ImporteNetoGravado = GetFloat(dr, "importenetogravado"),
+                Iva = GetFloat(dr, "iva"),
+                ImporteTotal = GetFloat(dr, "importetotal"),
+                PorcentajeFacturacion = dr["porcentajefacturacion"] == DBNull.Value ? 100f : Convert.ToSingle(dr["porcentajefacturacion"]),
+                DescItemUnitario = GetString(dr, "descitemunitario"),
+                Observaciones = GetString(dr, "observaciones"),
+                IdVenta = dr["idventa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idventa"]),
+                Error = GetBool(dr, "error"),
+                MensajeError = GetString(dr, "mensajeerror"),
+                FechaError = dr["fechaerror"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechaerror"])
+            };
+
+            var venta = MapVenta(dr, false);
+            if (string.IsNullOrWhiteSpace(factura.FormaPago))
+                factura.FormaPago = venta.FormaPago;
+
+            factura.Venta = venta;
+            return factura;
+        }
+
+        public (int Cantidad, decimal Total) ObtenerFacturasResumen(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
+        {
+            string where = ConstruirWhereFacturas(formasPago, codigosComprobante);
+
+            string sql = $@"
+                SELECT
+                    COUNT(*) AS cantidad,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN f.codtipocbteafip IN ({FacturaElectronica.codNotaCreditoA_Afip}, {FacturaElectronica.codNotaCreditoB_Afip}, {FacturaElectronica.codNotaCreditoC_Afip})
+                            THEN -f.importetotal
+                            ELSE f.importetotal
+                        END
+                    ), 0) AS total
+                FROM facturaelectronica f
+                INNER JOIN ventas v ON v.idventa = f.idventa
+                LEFT JOIN usuarios u ON u.id = v.idvendedor
+                LEFT JOIN personas p ON p.idpersona = v.idpersona
+                WHERE {where};";
+
+            var filas = DbPg.Reader(_connectionString, _idEmpresa, sql,
+                dr => (Cantidad: Convert.ToInt32(dr["cantidad"]), Total: Convert.ToDecimal(dr["total"])),
+                p => AgregarParametrosFacturas(p, fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante));
+
+            return filas.Count > 0 ? filas[0] : (Cantidad: 0, Total: 0m);
+        }
+
+        #endregion
     }
 }

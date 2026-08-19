@@ -4,11 +4,12 @@ using System.Data;
 
 namespace Contratos
 {
-    // Espeja el bloque Ventas/LineaVenta/TemporalLineaVenta de Datos.Venta (Etapa 7) mas
-    // Sectores/Licencias (Etapa 12a) y Expendios/LineaExpendio (Etapa 12b). FacturaElectronica
-    // queda fuera de esta interfaz -- se agrega en una etapa futura. Ver docs/DECISIONS.md.
-    // obtenerLineasExpendio NO esta en esta interfaz a proposito: sin caller externo, solo se
-    // usa internamente dentro de getExpedioById (mismo patron que Datos.Venta).
+    // Espeja la totalidad de Datos.Venta (47 metodos): Ventas/LineaVenta/TemporalLineaVenta
+    // (Etapa 7), Sectores/Licencias (Etapa 12a), Expendios/LineaExpendio (Etapa 12b) y
+    // FacturaElectronica (Etapa 12c). Ver docs/DECISIONS.md.
+    // obtenerLineasExpendio y getAlicuotaIvaFactura NO estan en esta interfaz a proposito: sin
+    // caller externo, solo se usan internamente dentro de getExpedioById/getFactuElecById
+    // (mismo patron que Datos.Venta).
     public interface IVentaRepository
     {
         Entidades.Venta getVentaById(int idVenta);
@@ -61,5 +62,18 @@ namespace Contratos
         DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         Entidades.Venta getExpedioById(int idExpendio);
+
+        int esVentaSinFacturar(int idVenta, bool esNotaCredito);
+        int existeFacturaElect(int idVenta);
+        int existeNotaCreditoElect(int idVenta);
+        void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE);
+        Entidades.FacturaElectronica getFactuElecById(int idFactuElec);
+        List<Entidades.FacturaElectronica> BuscarFacturasPagina(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
+            int pagina, int cantidad, int cantidadExtra);
+        (int Cantidad, decimal Total) ObtenerFacturasResumen(
+            DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
+            string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante);
     }
 }

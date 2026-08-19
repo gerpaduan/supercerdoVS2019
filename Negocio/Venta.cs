@@ -13,12 +13,11 @@ namespace Negocio
 {
     public class Venta
     {
-        // oVentaD: bloque Ventas/LineaVenta/TemporalLineaVenta migrado a la interfaz -- puede
-        // ser SQL Server o Postgres. oVentaDSqlServer: el resto de la clase (Expendios,
-        // Sectores, FacturaElectronica) que todavia no esta migrado -- siempre SQL Server.
-        // Ver docs/DECISIONS.md, Etapa 7.
+        // Datos.Venta (47/47 metodos) esta completo en Contratos.IVentaRepository desde la
+        // Etapa 12c -- oVentaD puede ser SQL Server o Postgres segun el constructor usado. Ya
+        // no hace falta un segundo campo SQL-Server-siempre (colapsado, mismo criterio que
+        // CierreCaja en la Etapa 10). Ver docs/DECISIONS.md.
         private readonly Contratos.IVentaRepository oVentaD;
-        private readonly Datos.Venta oVentaDSqlServer;
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
@@ -27,20 +26,16 @@ namespace Negocio
         {
             _empresa = empresa;
             _param = param;
-            var datosVenta = new Datos.Venta(empresa, param);
-            oVentaD = datosVenta;
-            oVentaDSqlServer = datosVenta;
+            oVentaD = new Datos.Venta(empresa, param);
         }
 
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de IVentaRepository
-        // (ej. DatosPostgres.VentaPg) para el bloque migrado. Solo lo usa el controller de
-        // comparacion. El resto de la clase sigue yendo por SQL Server (oVentaDSqlServer).
+        // (ej. DatosPostgres.VentaPg). Solo lo usa el controller de comparacion.
         public Venta(Contratos.IVentaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;
             _param = param;
             oVentaD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
-            oVentaDSqlServer = new Datos.Venta(empresa, param);
         }
 
 
@@ -554,9 +549,9 @@ namespace Negocio
         /// <returns></returns>
             public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
         {
-            return oVentaDSqlServer.esVentaSinFacturar(idVenta, esNotaCredito);
+            return oVentaD.esVentaSinFacturar(idVenta, esNotaCredito);
         }
-        
+
         /// <summary>
         /// Retorna ID factura electronica para el idVenta. Cero si no existe.
         /// </summary>
@@ -564,18 +559,18 @@ namespace Negocio
         /// <returns></returns>
         public int existeFactuElectParaVenta(int idVenta)
         {
-            int idFactuElec = oVentaDSqlServer.existeFacturaElect(idVenta);
+            int idFactuElec = oVentaD.existeFacturaElect(idVenta);
             return idFactuElec;
         }
 
         public int existeNotaCreditoParaVenta(int idVenta)
         {
-            return oVentaDSqlServer.existeNotaCreditoElect(idVenta);
+            return oVentaD.existeNotaCreditoElect(idVenta);
         }
 
         public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
         {
-            oVentaDSqlServer.addOrEditFactuElec(oFacturaElectronicaE);
+            oVentaD.addOrEditFactuElec(oFacturaElectronicaE);
 
             char letraId_TipoCbte = oFacturaElectronicaE.getLetraId_TipoCbte(oFacturaElectronicaE.CodTipoCbteAfip);
 
@@ -604,7 +599,7 @@ namespace Negocio
 
         public Entidades.FacturaElectronica getFactuElecById(int idFactuElec)
         {
-            return oVentaDSqlServer.getFactuElecById(idFactuElec);
+            return oVentaD.getFactuElecById(idFactuElec);
         }
 
         public List<Entidades.FacturaElectronica> BuscarFacturasPagina(
@@ -612,14 +607,14 @@ namespace Negocio
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante,
             int pagina, int cantidad, int cantidadExtra)
         {
-            return oVentaDSqlServer.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra);
+            return oVentaD.BuscarFacturasPagina(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante, pagina, cantidad, cantidadExtra);
         }
 
         public (int Cantidad, decimal Total) ObtenerFacturasResumen(
             DateTime fechaDesde, DateTime fechaHasta, int idSucursal,
             string cliente, string vendedor, List<string> formasPago, List<int> codigosComprobante)
         {
-            return oVentaDSqlServer.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
+            return oVentaD.ObtenerFacturasResumen(fechaDesde, fechaHasta, idSucursal, cliente, vendedor, formasPago, codigosComprobante);
         }
 
         #endregion
