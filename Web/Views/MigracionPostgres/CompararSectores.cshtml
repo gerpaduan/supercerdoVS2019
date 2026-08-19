@@ -1,0 +1,76 @@
+@model Web.Models.ComparacionSectoresVm
+@{
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    Func<System.Data.DataTable, object> renderGrid = dt =>
+    {
+        if (dt == null || dt.Rows.Count == 0)
+        {
+            return new MvcHtmlString("<p class=\"text-muted mb-0\">Sin filas.</p>");
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class=\"table-responsive\"><table class=\"table table-sm table-bordered\"><thead><tr>");
+        foreach (System.Data.DataColumn col in dt.Columns)
+            sb.Append("<th>").Append(System.Net.WebUtility.HtmlEncode(col.ColumnName)).Append("</th>");
+        sb.Append("</tr></thead><tbody>");
+        foreach (System.Data.DataRow row in dt.Rows)
+        {
+            sb.Append("<tr>");
+            foreach (System.Data.DataColumn col in dt.Columns)
+            {
+                var valor = row[col] == DBNull.Value ? "" : Convert.ToString(row[col]);
+                sb.Append("<td>").Append(System.Net.WebUtility.HtmlEncode(valor)).Append("</td>");
+            }
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table></div>");
+        return new MvcHtmlString(sb.ToString());
+    };
+}
+
+<div class="mb-3">
+    <h4 class="mb-1">Migracion Postgres: comparar Sectores/Licencias (Etapa 12a)</h4>
+    <p class="text-muted mb-0">
+        Herramienta de verificacion del piloto -- no es una pantalla de producto. Tenant de la sesion actual: @ViewBag.IdEmpresaSesion.
+        Sector probado para existeSector/sectorEstaEnUso: "@ViewBag.SectorBuscado".
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">SQL Server (capa actual) -- @(Model.SqlServer?.Rows.Count ?? 0) sectores</div>
+            <div class="card-body">
+                @renderGrid(Model.SqlServer)
+                <hr />
+                <p class="mb-1"><strong>existeSector:</strong> @ViewBag.ExisteSqlServer</p>
+                <p class="mb-0"><strong>sectorEstaEnUso:</strong> @ViewBag.EnUsoSqlServer</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Postgres (piloto nuevo) -- @(Model.Postgres?.Rows.Count ?? 0) sectores</div>
+            <div class="card-body">
+                @if (ViewBag.ErrorPostgres != null)
+                {
+                    <p class="text-danger mb-0"><strong>Error:</strong> @ViewBag.ErrorPostgres</p>
+                }
+                else
+                {
+                    @renderGrid(Model.Postgres)
+                    <hr />
+                    <p class="mb-1"><strong>existeSector:</strong> @ViewBag.ExistePostgres</p>
+                    <p class="mb-0"><strong>sectorEstaEnUso:</strong> @ViewBag.EnUsoPostgres</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="form-inline">
+    <label class="mr-2">Sector a probar:</label>
+    <input type="text" name="sector" class="form-control mr-2" style="width:200px" value="@ViewBag.SectorBuscado" />
+    <button type="submit" class="btn btn-primary">Comparar</button>
+</form>

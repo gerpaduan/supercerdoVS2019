@@ -487,32 +487,32 @@ namespace Negocio
         }
         public DataTable obtenerSectores()
         {
-            return oVentaDSqlServer.obtenerSectores();
+            return oVentaD.obtenerSectores();
         }
 
         public bool existeSector(string sector, string sectorActual = "")
         {
-            return oVentaDSqlServer.existeSector(sector, sectorActual);
+            return oVentaD.existeSector(sector, sectorActual);
         }
 
         public void agregarSector(string sector)
         {
-            oVentaDSqlServer.agregarSector(sector);
+            oVentaD.agregarSector(sector);
         }
 
         public void modificarSector(string sectorActual, string sectorNuevo)
         {
-            oVentaDSqlServer.modificarSector(sectorActual, sectorNuevo);
+            oVentaD.modificarSector(sectorActual, sectorNuevo);
         }
 
         public bool sectorEstaEnUso(string sector)
         {
-            return oVentaDSqlServer.sectorEstaEnUso(sector);
+            return oVentaD.sectorEstaEnUso(sector);
         }
 
         public void eliminarSector(string sector)
         {
-            oVentaDSqlServer.eliminarSector(sector);
+            oVentaD.eliminarSector(sector);
         }
 
         public DataTable obtenerSectoresConTodos()
@@ -535,7 +535,7 @@ namespace Negocio
 
         public string getUltimoSectorSelect(string serialCPU)
         {
-            return oVentaDSqlServer.getUltimoSectorSelect(serialCPU);
+            return oVentaD.getUltimoSectorSelect(serialCPU);
         }
 
         public Entidades.Venta getExpedioById(int idExpendio)

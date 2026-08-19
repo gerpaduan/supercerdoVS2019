@@ -821,5 +821,130 @@ namespace DatosPostgres
         }
 
         #endregion
+
+        #region Sectores (Etapa 12a)
+
+        // Sin filtro explicito de idempresa en el WHERE -- igual que el original SQL Server
+        // (Datos/Venta.cs:1012), se apoya solo en la RLS de tabla.
+        public DataTable obtenerSectores()
+        {
+            return DbPg.DataTable(_connectionString, _idEmpresa, "SELECT sector FROM sectores;");
+        }
+
+        public bool existeSector(string sector, string sectorActual = "")
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa, @"
+                SELECT COUNT(1)
+                FROM sectores
+                WHERE UPPER(TRIM(sector)) = UPPER(TRIM(@sector))
+                  AND (@sectorActual = '' OR UPPER(TRIM(sector)) <> UPPER(TRIM(@sectorActual)));",
+                p =>
+                {
+                    p.AddWithValue("sector", sector ?? "");
+                    p.AddWithValue("sectorActual", sectorActual ?? "");
+                });
+
+            return scalar != null && scalar != DBNull.Value && Convert.ToInt32(scalar) > 0;
+        }
+
+        // idempresa bindeado explicito -- el original SQL Server lo resuelve con un DEFAULT
+        // atado a SESSION_CONTEXT('IdEmpresa') (confirmado con sys.default_constraints), sin
+        // pasarlo en el INSERT; en Postgres no hay equivalente de DEFAULT por sesion, se
+        // bindea directo (mismo criterio que el resto de VentaPg.cs/CortePg.cs).
+        public void agregarSector(string sector)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "INSERT INTO sectores (sector, idempresa) VALUES (@sector, @idEmpresa);",
+                p =>
+                {
+                    p.AddWithValue("sector", sector ?? "");
+                    p.AddWithValue("idEmpresa", _idEmpresa);
+                });
+        }
+
+        public void modificarSector(string sectorActual, string sectorNuevo)
+        {
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    using (var cmd = new NpgsqlCommand("UPDATE sectores SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("sectorNuevo", sectorNuevo ?? "");
+                        cmd.Parameters.AddWithValue("sectorActual", sectorActual ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (var cmd = new NpgsqlCommand("UPDATE expendios SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("sectorNuevo", sectorNuevo ?? "");
+                        cmd.Parameters.AddWithValue("sectorActual", sectorActual ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (var cmd = new NpgsqlCommand("UPDATE licencias SET sector = @sectorNuevo WHERE sector = @sectorActual;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("sectorNuevo", sectorNuevo ?? "");
+                        cmd.Parameters.AddWithValue("sectorActual", sectorActual ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        public bool sectorEstaEnUso(string sector)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT COUNT(1) FROM expendios WHERE sector = @sector;",
+                p => p.AddWithValue("sector", sector ?? ""));
+
+            return scalar != null && scalar != DBNull.Value && Convert.ToInt32(scalar) > 0;
+        }
+
+        public void eliminarSector(string sector)
+        {
+            using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
+            {
+                try
+                {
+                    using (var cmd = new NpgsqlCommand("DELETE FROM sectores WHERE sector = @sector;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("sector", sector ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (var cmd = new NpgsqlCommand("UPDATE licencias SET sector = '' WHERE sector = @sector;", con, tx))
+                    {
+                        cmd.Parameters.AddWithValue("sector", sector ?? "");
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    try { tx.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        public string getUltimoSectorSelect(string serialCPU)
+        {
+            object scalar = DbPg.Scalar(_connectionString, _idEmpresa,
+                "SELECT sector FROM licencias WHERE nrolicencia = @nroLicencia LIMIT 1;",
+                p => p.AddWithValue("nroLicencia", serialCPU ?? ""));
+
+            return (scalar == null || scalar == DBNull.Value) ? "" : scalar.ToString().Trim();
+        }
+
+        #endregion
     }
 }

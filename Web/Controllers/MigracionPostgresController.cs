@@ -470,5 +470,60 @@ namespace Web.Controllers
                 Postgres = resultadoPostgres
             });
         }
+
+        // Compara el bloque Sectores/Licencias (Etapa 12a) -- obtenerSectores (grilla) +
+        // existeSector/sectorEstaEnUso (escalares) para un sector real, lado a lado. Las
+        // escrituras (agregarSector/modificarSector/eliminarSector) se verifican aparte con
+        // harness psql/ROLLBACK, no HTTP (mismo criterio que addOrEditMovimiento en 11b).
+        [HttpGet]
+        public ActionResult CompararSectores(string sector)
+        {
+            string sectorBuscado = string.IsNullOrWhiteSpace(sector) ? "Carniceria" : sector;
+
+            // SQL Server: constructor de siempre, sin cambios.
+            var ventaSqlServer = new Negocio.Venta(empresa, param);
+            var sectoresSqlServer = ventaSqlServer.obtenerSectores();
+            bool existeSqlServer = ventaSqlServer.existeSector(sectorBuscado);
+            bool enUsoSqlServer = ventaSqlServer.sectorEstaEnUso(sectorBuscado);
+
+            // Postgres: constructor nuevo, inyectando DatosPostgres.VentaPg.
+            string connString = ConfigurationManager.ConnectionStrings["ConexionPostgresPiloto"].ConnectionString;
+            var personaRepoPostgres = new DatosPostgres.PersonaPg(connString, empresa.IdEmpresa);
+            var sucursalRepoPostgres = new DatosPostgres.SucursalPg(connString, empresa.IdEmpresa);
+            var corteRepoPostgres = new DatosPostgres.CortePg(connString, empresa.IdEmpresa, personaRepoPostgres);
+            var repoPostgres = new DatosPostgres.VentaPg(connString, empresa.IdEmpresa, personaRepoPostgres, sucursalRepoPostgres, corteRepoPostgres);
+            var ventaPostgres = new Negocio.Venta(repoPostgres, empresa, param);
+
+            System.Data.DataTable sectoresPostgres = null;
+            bool existePostgres = false;
+            bool enUsoPostgres = false;
+            string errorPostgres = null;
+            try
+            {
+                sectoresPostgres = ventaPostgres.obtenerSectores();
+                existePostgres = ventaPostgres.existeSector(sectorBuscado);
+                enUsoPostgres = ventaPostgres.sectorEstaEnUso(sectorBuscado);
+            }
+            catch (Exception ex)
+            {
+                errorPostgres = ex.Message;
+            }
+
+            ViewBag.Title = "Migracion Postgres: comparar Sectores/Licencias (Etapa 12a)";
+            ViewBag.Seccion = "Administracion del sistema";
+            ViewBag.SectorBuscado = sectorBuscado;
+            ViewBag.IdEmpresaSesion = empresa.IdEmpresa;
+            ViewBag.ExisteSqlServer = existeSqlServer;
+            ViewBag.EnUsoSqlServer = enUsoSqlServer;
+            ViewBag.ExistePostgres = existePostgres;
+            ViewBag.EnUsoPostgres = enUsoPostgres;
+            ViewBag.ErrorPostgres = errorPostgres;
+
+            return View("~/Views/MigracionPostgres/CompararSectores.cshtml", new Web.Models.ComparacionSectoresVm
+            {
+                SqlServer = sectoresSqlServer,
+                Postgres = sectoresPostgres
+            });
+        }
     }
 }

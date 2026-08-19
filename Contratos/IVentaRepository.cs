@@ -4,9 +4,9 @@ using System.Data;
 
 namespace Contratos
 {
-    // Espeja SOLO el bloque Ventas/LineaVenta/TemporalLineaVenta de Datos.Venta. El resto de
-    // la clase (Expendios/LineaExpendio, Sectores, FacturaElectronica) queda fuera de esta
-    // interfaz -- se agrega en una etapa futura. Ver docs/DECISIONS.md, Etapa 7.
+    // Espeja el bloque Ventas/LineaVenta/TemporalLineaVenta de Datos.Venta (Etapa 7) mas
+    // Sectores/Licencias (Etapa 12a). Expendios/LineaExpendio y FacturaElectronica quedan
+    // fuera de esta interfaz -- se agregan en etapas futuras. Ver docs/DECISIONS.md.
     public interface IVentaRepository
     {
         Entidades.Venta getVentaById(int idVenta);
@@ -43,5 +43,13 @@ namespace Contratos
         DataTable ultimasVentasCliente(int idSucursal, int idPersona);
         void actualizarLetraId_TipoCbte(int idVenta, char letraId_tipoCbte);
         void actualizarCliente(int idVenta, int idPersona);
+
+        DataTable obtenerSectores();
+        bool existeSector(string sector, string sectorActual = "");
+        void agregarSector(string sector);
+        void modificarSector(string sectorActual, string sectorNuevo);
+        bool sectorEstaEnUso(string sector);
+        void eliminarSector(string sector);
+        string getUltimoSectorSelect(string serialCPU);
     }
 }
