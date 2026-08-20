@@ -35,11 +35,11 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oCorteN = new Negocio.Corte(empresa, param);
-            oUsuarioN = new Negocio.Usuario(empresa, param);
-            oPersonaN = new Negocio.Persona(empresa, param);
-            oCortePuntoStockSucursalN = new Negocio.CortePuntoStockSucursal(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            oPersonaN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
+            oCortePuntoStockSucursalN = Web.Infrastructure.NegocioFactory.CrearCortePuntoStockSucursal(empresa, param);
         }
 
         public ActionResult Index(
@@ -454,7 +454,7 @@ namespace Web.Controllers
 
         private Negocio.CatalogoGlobalProducto ObtenerGestorCatalogoGlobal()
         {
-            return new Negocio.CatalogoGlobalProducto(new EmpresaContextNulo(), null);
+            return Web.Infrastructure.NegocioFactory.CrearCatalogoGlobalProducto(new EmpresaContextNulo(), null);
         }
 
         private CatalogoGlobalProductosVm ConstruirCatalogoGlobalVm(string busqueda, string tipo, int pagina, bool incluirTipos)

@@ -873,7 +873,7 @@ namespace DatosPostgres
                 SELECT tipo, orden, creado AS ""Creado"", actualizado AS ""Actualizado"", reservadosistema AS ""Reservado""
                 FROM tiposproducto
                 WHERE (reservadosistema = true OR idempresa = @idEmpresa)
-                  AND (@buscar IS NULL OR tipo ILIKE @buscar)
+                  AND (@buscar::text IS NULL OR tipo ILIKE @buscar::text)
                 ORDER BY orden, tipo;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
@@ -889,7 +889,7 @@ namespace DatosPostgres
                 SELECT tipo, orden
                 FROM tiposproducto
                 WHERE idempresa = 0 AND reservadosistema = false
-                  AND (@buscar IS NULL OR tipo ILIKE @buscar)
+                  AND (@buscar::text IS NULL OR tipo ILIKE @buscar::text)
                 ORDER BY orden, tipo;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>

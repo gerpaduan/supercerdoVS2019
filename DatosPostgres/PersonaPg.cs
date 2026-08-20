@@ -4,13 +4,13 @@ using Npgsql;
 
 namespace DatosPostgres
 {
-    // Implementacion Postgres de Contratos.IPersonaRepository -- piloto de la Etapa 2
-    // de la migracion (ver docs/DECISIONS.md, entrada 2026-08-18, y el plan de la sesion).
+    // Implementacion Postgres de Contratos.IPersonaRepository -- arranco como piloto de la
+    // Etapa 2 (ver docs/DECISIONS.md, entrada 2026-08-18) y se fue cerrando a medida que se
+    // cableo cada controller real (PersonasController, ProductosController).
     //
-    // Alcance deliberadamente acotado: de los 12 metodos de Datos.Persona (SQL Server),
-    // solo se implementan de verdad los 6 que tocan unicamente Personas/Iva (sin joins a
-    // Compras/Ventas, que quedan fuera de este piloto de una tabla). Los otros 6 quedan
-    // marcados con NotImplementedException -- no se inventa un resultado plausible.
+    // De los 12 metodos de Datos.Persona (SQL Server), 10 estan implementados. Quedan sin
+    // implementar `buscarProveedor` y `obtenerProveedores`: sin caller en ningun controller
+    // ya cableado a NegocioFactory (los usa StockController, todavia no cableado).
     public class PersonaPg : Contratos.IPersonaRepository
     {
         private readonly string _connectionString;
@@ -278,29 +278,58 @@ namespace DatosPostgres
             return result != null && result != DBNull.Value && Convert.ToBoolean(result);
         }
 
-        // --- Fuera de alcance del piloto de una tabla (dependen del problema de collation
-        //     case-insensitive/accent-insensitive todavia pendiente -- ver
-        //     docs/06-datos-e-integraciones/rls-postgres.md). Sin caller todavia cableado
-        //     (StockController/ProductosController, no cableados a NegocioFactory aun). ---
+        // --- Sin implementar: sin caller en ningun controller ya cableado a NegocioFactory
+        //     (StockController, no cableado todavia). Cuando StockController se cablee, resolver
+        //     con el mismo patron ILIKE/unaccent ya usado en el resto de esta clase. ---
 
         public DataTable buscarProveedor(string buscarTexto)
         {
-            throw new NotImplementedException("TODO(claude): requiere resolver collation case-insensitive (LIKE), fuera de alcance del piloto de una tabla.");
+            throw new NotImplementedException("TODO(claude): sin caller todavia (StockController, no cableado a NegocioFactory). Resolver con el patron ILIKE ya usado en buscarPersona.");
         }
 
         public DataTable obtenerProveedores()
         {
-            throw new NotImplementedException("TODO(claude): requiere resolver collation case-insensitive (LIKE), fuera de alcance del piloto de una tabla.");
+            throw new NotImplementedException("TODO(claude): sin caller todavia (StockController, no cableado a NegocioFactory).");
         }
 
         public DataTable obtenerProveedoresConCompras()
         {
-            throw new NotImplementedException("TODO(claude): requiere la tabla Compras migrada a Postgres, fuera de alcance del piloto de una tabla.");
+            const string sql = @"
+                SELECT DISTINCT
+                    p.idpersona AS ""idPersona"",
+                    p.razonsocial AS ""razonSocial""
+                FROM compras c
+                INNER JOIN personas p ON p.idpersona = c.idproveedor
+                WHERE COALESCE(c.estado, '') = ''
+                ORDER BY p.razonsocial;";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql);
         }
 
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
         {
-            throw new NotImplementedException("TODO(claude): requiere resolver collation case-insensitive (LIKE), fuera de alcance del piloto de una tabla.");
+            // SQL Server usa COLLATE Latin1_General_CI_AI (case- Y accent-insensitive) --
+            // distinto del resto de esta clase, que traduce LIKE a ILIKE (solo case-insensitive,
+            // acorde a la collation default Modern_Spanish_CI_AS de la base). Para igualar el
+            // accent-insensitive puntual de este metodo se usa la extension unaccent()
+            // (requiere CREATE EXTENSION unaccent, ya instalada en la base -- ver docs/DECISIONS.md).
+            const string sql = @"
+                SELECT
+                    p.idpersona AS ""idPersona"",
+                    p.razonsocial AS ""Marca"",
+                    p.otrosdatos AS ""otrosDatos"",
+                    prop.razonsocial AS ""Propietario""
+                FROM personas p
+                LEFT JOIN personas prop ON p.idpropietario = prop.idpersona
+                WHERE p.idpersona <> @idMarca
+                  AND p.marca = true
+                  AND unaccent(p.razonsocial) ILIKE unaccent(@texto);";
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
+            {
+                p.AddWithValue("texto", LikePattern(buscarTexto));
+                p.AddWithValue("idMarca", idMarca);
+            });
         }
     }
 }
