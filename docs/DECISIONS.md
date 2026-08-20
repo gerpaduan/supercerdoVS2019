@@ -1,6 +1,16 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Modo dual: sexto módulo cableado (CuentaCorriente, 3 controllers) + cierre de gaps reales en CuentaCorrientePg
+## 2026-08-20 (la mas reciente) - Modo dual: séptimo módulo cableado (CierreCaja, 5 controllers)
+
+Continuación de la serie (piloto `352f7537`, y los 6 anteriores hasta `9dd132dc`). `CierreCaja` se usa en 5 controllers reales, cada uno con exactamente un call site en `OnActionExecuting`: `CajasController` (home natural del módulo -- cierres de caja, egresos de caja, tipos de egreso, cambio de sucursal de caja), `ComprasController`, `FinanzasController`, `ReportesController` y `VentasController` (el de mayor tráfico de los cinco). Los 5 call sites cambiados a `NegocioFactory.CrearCierreCaja(empresa)` / `NegocioFactory.CrearCierreCaja(empresa, param)` según la firma que ya tenía cada uno.
+
+**Decisión de alcance**: se cablearon los 5 de una sola vez, no de a uno como en etapas con gaps reales (`Persona`, `CuentaCorriente`). Razón: a diferencia de esos dos casos, `CierreCajaPg.cs` **no traía ningún `TODO(claude)` ni advertencia pendiente** de etapas anteriores -- ya había sido cerrado y verificado sin deuda conocida. Con la clase 100% cubierta y sin cobertura parcial (a diferencia de `Compra`/`Corte`), cablear los 5 controllers que la usan es el mismo caso que `CuentaCorriente` (3 controllers, mismo criterio), solo que con más call sites.
+
+**Verificado**: `CarniSys.sln` completo compila limpio (solo warnings preexistentes de `Presentacion`, sin relación). HTTP end-to-end con login real (credenciales de prueba en `~/hosts/carnisys-web-local.env`): regresión en `SqlServer` sobre `/Home`, `/Cajas/CajasAbiertas`, `/Cajas/TiposEgresoCaja`, `/Compras/Index`, `/Finanzas/CtasCtes`, `/Finanzas/Cheques`, `/Reportes/Index`, `/Ventas/Index` -- las 8 rutas devolvieron 200 sin contenido de error. Con `Postgres`, mismas 8 rutas, mismo resultado. **Escritura real**: alta de un tipo de egreso de caja de prueba (`/Cajas/GuardarTipoEgresoCaja`, POST reconstruido desde el form real servido) con `DataEngine=Postgres`, confirmado por SQL directo que el registro apareció **solo en Postgres** (`tiposegresocaja`, id 304) y que SQL Server siguió en 0 filas para ese valor; restaurado por la vía real (`/Cajas/EliminarTipoEgresoCaja`), confirmado por SQL directo que quedó en 0 filas en ambos motores. Regresión final en `SqlServer` sobre las mismas 8 rutas, sin rastro del dato de prueba.
+
+**Nota operativa**: los archivos `.env` de `~/hosts/` no son shell-safe para `source` directo (algunos valores rompen el parseo de bash por caracteres especiales en `NOTES`) -- se extraen con `grep '^VAR=' archivo.env | cut -d'=' -f2- | tr -d '\r'` en vez de `source`, más robusto contra ese formato simple de "una variable por línea" que no es sintaxis de shell.
+
+## 2026-08-19 - Modo dual: sexto módulo cableado (CuentaCorriente, 3 controllers) + cierre de gaps reales en CuentaCorrientePg
 
 Continuación de la serie (piloto `352f7537`, y los 5 anteriores hasta `9b93a626`). `CuentaCorriente` se usa en 3 controllers reales (`HomeController` -- dashboard, `FinanzasController` -- CtasCtes/Cheques, `ReportesController`), 3 call sites cambiados a `NegocioFactory.CrearCuentaCorriente`.
 

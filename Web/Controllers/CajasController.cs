@@ -40,7 +40,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oCierreN = new Negocio.CierreCaja(empresa);
+            oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa);
             oSucursalN = new Negocio.Sucursal(empresa);
             oUsuarioN = new Negocio.Usuario(empresa);
             oVentaN = new Negocio.Venta(empresa, param);

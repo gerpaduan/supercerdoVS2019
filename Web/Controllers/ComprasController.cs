@@ -32,7 +32,7 @@ namespace Web.Controllers
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oPersonaN = new Negocio.Persona(empresa, param);
             oCorteN = new Negocio.Corte(empresa, param);
-            oCierreN = new Negocio.CierreCaja(empresa, param);
+            oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa, param);
         }
 
         public ActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)

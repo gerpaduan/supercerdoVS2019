@@ -37,7 +37,7 @@ namespace Web.Controllers
             oCorteN = new Negocio.Corte(empresa, param);
             oCompraN = new Negocio.Compra(empresa, param);
             oVentaN = new Negocio.Venta(empresa, param);
-            oCierreN = new Negocio.CierreCaja(empresa, param);
+            oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa, param);
             oCuentaCorrienteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
         }
 

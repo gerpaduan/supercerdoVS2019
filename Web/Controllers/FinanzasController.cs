@@ -38,7 +38,7 @@ namespace Web.Controllers
             if (filterContext.Result != null) return;
 
             oCtaCteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
-            oCierreN = new Negocio.CierreCaja(empresa);
+            oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa);
             oSucursalN = new Negocio.Sucursal(empresa, param);
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oPersonasN = new Negocio.Persona(empresa, param);

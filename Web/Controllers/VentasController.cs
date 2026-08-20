@@ -46,7 +46,7 @@ namespace Web.Controllers
             oSucursalN = new Negocio.Sucursal(empresa, param);
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oPersonaN = new Negocio.Persona(empresa, param);
-            oCierreN = new Negocio.CierreCaja(empresa, param);
+            oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa, param);
             oCorteN = new Negocio.Corte(empresa, param);
         }
 
