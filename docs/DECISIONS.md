@@ -1,6 +1,12 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Modo dual: tercer controller cableado (ParametrosController)
+## 2026-08-19 (la mas reciente) - Modo dual: cuarto controller cableado (SucursalController)
+
+Continuación de la serie (piloto `352f7537`, `DispositivosSegurosController` `ed7685e3`, `ParametrosController` `710c390d`). `SucursalController` ("Mis Sucursales"): un solo call site (`oSucursalN = new Negocio.Sucursal(empresa);`), cambiado a `NegocioFactory.CrearSucursal(empresa)`.
+
+**Verificado con edición real de una sucursal**: con `DataEngine=Postgres`, se cargó `/Sucursal/Editar/2` (San Lorenzo), se posteó `/Sucursal/Guardar` cambiando `Direccion` a un valor de prueba, se confirmó por SQL directo que **solo Postgres cambió** (SQL Server siguió con la dirección real), y se restauró por el mismo camino real. Regresión con `DataEngine=SqlServer` antes y después (incluye el menú de sucursales que arma `BaseController` en cada request, ya ejercitado desde el piloto).
+
+## 2026-08-19 - Modo dual: tercer controller cableado (ParametrosController)
 
 Continuación de la serie (piloto `352f7537`, `DispositivosSegurosController` en `ed7685e3`). `ParametrosController` ("Parámetros" en Configuración): un solo call site (`oParametrosN = new Negocio.Parametros(empresa);`), cambiado a `NegocioFactory.CrearParametros(empresa)`.
 

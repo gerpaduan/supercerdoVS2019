@@ -23,7 +23,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oSucursalN = new Negocio.Sucursal(empresa);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
         }
 
         [HttpGet]
