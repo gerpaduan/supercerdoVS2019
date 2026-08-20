@@ -1,6 +1,22 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Modo dual: cuarto controller cableado (SucursalController)
+## 2026-08-19 (la mas reciente) - Modo dual: quinto controller cableado (PersonasController) + cierre de 2 gaps reales en PersonaPg
+
+Continuación de la serie (piloto `352f7537`, `DispositivosSegurosController` `ed7685e3`, `ParametrosController` `710c390d`, `SucursalController` `bf694ef5`). `PersonasController` ("Personas"/proveedores/clientes): 3 call sites (`oPersonaN` + 2 `Negocio.Sucursal` embebidos), cambiados a `NegocioFactory.CrearPersona`/`CrearSucursal`.
+
+**Hallazgo real al probar, no un bug de esta etapa**: `PersonaPg.buscarPersona` y `personaTieneCompras_Ventas` estaban sin implementar (`throw NotImplementedException("TODO(claude)...")`) desde una sesión anterior (piloto de una sola tabla, Etapa 2, 2026-08-18) -- en ese momento `Compras`/`Ventas` no existían en Postgres y quedó pendiente resolver `LIKE` case-insensitive. **Ambos bloqueos ya no aplican**: `CompraPg`/`VentaPg` están migradas desde hace varias etapas, y el patrón `LIKE`→`ILIKE` ya se usó y verificó esta sesión en `CatalogoGlobalProductoPg`. Confirmado con el usuario, se implementaron los 2 métodos (los únicos que `PersonasController` usa realmente) -- los otros 4 (`buscarProveedor`, `obtenerProveedores`, `obtenerProveedoresConCompras`, `existenMarcasParecidas`) quedan sin implementar a propósito: no tienen caller en ningún controller ya cableado (`StockController`/`ProductosController` los usan, pero mezclan `Corte`, que tiene cobertura parcial -- no cableados todavía).
+
+**Verificado que la collation es compatible antes de traducir**: la base tiene collation default `Modern_Spanish_CI_AS` (case-insensitive, **accent-sensitive**) -- `ILIKE` de Postgres es exactamente eso, sin necesidad de `unaccent` ni normalización extra. (`existenMarcasParecidas`, fuera de este alcance, usa `COLLATE ... CI_AI` -- accent-*insensitive* explícito, un caso distinto que si se implementa en el futuro sí necesitaría resolver ese matiz aparte, ej. con la extensión `unaccent`.)
+
+**Bug real encontrado y corregido durante la verificación HTTP**: mi primera traducción de `buscarPersona` seleccionaba `i.iva` (nombre completo, "Consumidor Final") en vez de `i.abrev` (abreviatura, "Cons.Final") -- el original de SQL Server selecciona `abrev`. Corregido antes de cerrar la etapa; confirmado con diff completo de la grilla real (`/Personas/Index`) contra SQL Server.
+
+**Nota, no un bug de esta etapa**: un registro de prueba (`JUANCITO PEREZ`, id=25) tiene un carácter suelto distinto entre SQL Server y Postgres en `identificacion` -- dato ya migrado en una etapa anterior a esta sesión, con un byte ambiguo/corrupto en el original; no se investiga más a fondo (no es un valor de negocio real).
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` directo: búsqueda case-insensitive y `personaTieneCompras_Ventas` contra datos reales. HTTP end-to-end con login real: regresión en `SqlServer`; con `Postgres`, `/Personas/Index` **idéntico celda a celda** contra SQL Server (salvo el carácter suelto ya explicado), `/Personas/Editar/23` idéntico, y **escritura real** (`/Personas/Guardar` cambiando `Telefono`) confirmando aislamiento por SQL directo y restaurada por la misma vía. Regresión final en `SqlServer`.
+
+**Nota operativa**: IIS Express volvió a caerse dos veces durante esta etapa (mismo patrón de inestabilidad ya documentado en etapas anteriores) -- resuelto reiniciando el proceso, sin relación con el código.
+
+## 2026-08-19 - Modo dual: cuarto controller cableado (SucursalController)
 
 Continuación de la serie (piloto `352f7537`, `DispositivosSegurosController` `ed7685e3`, `ParametrosController` `710c390d`). `SucursalController` ("Mis Sucursales"): un solo call site (`oSucursalN = new Negocio.Sucursal(empresa);`), cambiado a `NegocioFactory.CrearSucursal(empresa)`.
 

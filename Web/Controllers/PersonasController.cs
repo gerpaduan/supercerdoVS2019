@@ -22,7 +22,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oPersonaN = new Negocio.Persona(empresa, param);
+            oPersonaN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
         }
 
         [HttpGet]
@@ -382,7 +382,7 @@ namespace Web.Controllers
 
                 if ((empresaAfip == null || empresaAfip.Cuit <= 0 || string.IsNullOrWhiteSpace(empresaAfip.NombreCertificado_pfx)) && idEmpresa > 0)
                 {
-                    var sucursalN = new Negocio.Sucursal(empresa, param);
+                    var sucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
                     empresaAfip = sucursalN.findEmpresaById(idEmpresa);
                 }
 
@@ -469,7 +469,7 @@ namespace Web.Controllers
 
             if ((empresaAfip == null || empresaAfip.Cuit <= 0 || string.IsNullOrWhiteSpace(empresaAfip.NombreCertificado_pfx)) && idEmpresa > 0)
             {
-                var sucursalN = new Negocio.Sucursal(empresa, param);
+                var sucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
                 empresaAfip = sucursalN.findEmpresaById(idEmpresa);
             }
 

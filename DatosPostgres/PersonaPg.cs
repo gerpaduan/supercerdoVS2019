@@ -194,23 +194,98 @@ namespace DatosPostgres
             return DbPg.DataTable(_connectionString, _idEmpresa, "SELECT * FROM iva;");
         }
 
-        // --- Fuera de alcance del piloto de una tabla (requieren Compras/Ventas, que no
-        //     estan migradas, o dependen del problema de collation case-insensitive
-        //     todavia pendiente -- ver docs/06-datos-e-integraciones/rls-postgres.md) ---
+        // Mismo escapado que Datos/Persona.cs (EscapeLike/LikePattern): % _ [ y la barra
+        // invertida, con ESCAPE '\' -- Postgres soporta ESCAPE en ILIKE identico a SQL Server.
+        private static string EscapeLike(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            return text
+                .Replace(@"\", @"\\")
+                .Replace("%", @"\%")
+                .Replace("_", @"\_")
+                .Replace("[", @"\[");
+        }
+
+        private static string LikePattern(string text) => "%" + EscapeLike((text ?? "").Trim()) + "%";
+
+        // Cerrado (ver docs/DECISIONS.md): el bloqueo original ("Compras/Ventas sin migrar")
+        // ya no aplica -- CompraPg/VentaPg existen. LIKE -> ILIKE, mismo patron ya usado y
+        // verificado en CatalogoGlobalProductoPg.
+        public DataTable buscarPersona(string buscarTexto, bool? marca)
+        {
+            string sql;
+
+            if (marca.HasValue && marca.Value)
+            {
+                sql = @"
+                    SELECT
+                        p.idpersona AS ""idPersona"",
+                        p.idempresa AS ""idEmpresa"",
+                        p.razonsocial AS ""Marca"",
+                        p.otrosdatos AS ""otrosDatos"",
+                        prop.razonsocial AS ""Propietario"",
+                        prop.cuit AS ""cuit"",
+                        prop.telefono AS ""telefono"",
+                        prop.domicilio AS ""domicilio"",
+                        prop.ciudad AS ""ciudad""
+                    FROM personas p
+                    LEFT JOIN personas prop ON p.idpropietario = prop.idpersona
+                    WHERE p.marca = true
+                      AND (p.identificacion ILIKE @texto ESCAPE '\' OR p.razonsocial ILIKE @texto ESCAPE '\');";
+            }
+            else
+            {
+                sql = @"
+                    SELECT
+                        p.idpersona AS ""idPersona"",
+                        p.idempresa AS ""idEmpresa"",
+                        p.identificacion AS ""nombreIdentif"",
+                        p.razonsocial AS ""razonSocial"",
+                        i.abrev AS ""iva"",
+                        p.cuit AS ""cuit"",
+                        p.telefono AS ""telefono"",
+                        p.ctacte AS ""ctaCte"",
+                        p.bonificacion AS ""bonificacion"",
+                        p.domicilio AS ""domicilio"",
+                        p.ciudad AS ""ciudad"",
+                        p.otrosdatos AS ""otrosDatos""
+                    FROM personas p
+                    LEFT JOIN iva i ON i.id = p.idiva
+                    WHERE p.marca = false
+                      AND (
+                            p.identificacion ILIKE @texto ESCAPE '\'
+                         OR p.razonsocial    ILIKE @texto ESCAPE '\'
+                         OR p.cuit           ILIKE @texto ESCAPE '\'
+                      );";
+            }
+
+            return DbPg.DataTable(_connectionString, _idEmpresa, sql,
+                p => p.AddWithValue("texto", LikePattern(buscarTexto)));
+        }
+
+        // Cerrado (ver docs/DECISIONS.md): compras/ventas ya existen en Postgres.
+        public bool personaTieneCompras_Ventas(int idPersona)
+        {
+            object result = DbPg.Scalar(_connectionString, _idEmpresa, @"
+                SELECT
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM ventas WHERE idpersona = @idPersona)
+                          OR EXISTS (SELECT 1 FROM compras WHERE idproveedor = @idPersona)
+                        THEN true ELSE false
+                    END;",
+                p => p.AddWithValue("idPersona", idPersona));
+
+            return result != null && result != DBNull.Value && Convert.ToBoolean(result);
+        }
+
+        // --- Fuera de alcance del piloto de una tabla (dependen del problema de collation
+        //     case-insensitive/accent-insensitive todavia pendiente -- ver
+        //     docs/06-datos-e-integraciones/rls-postgres.md). Sin caller todavia cableado
+        //     (StockController/ProductosController, no cableados a NegocioFactory aun). ---
 
         public DataTable buscarProveedor(string buscarTexto)
         {
             throw new NotImplementedException("TODO(claude): requiere resolver collation case-insensitive (LIKE), fuera de alcance del piloto de una tabla.");
-        }
-
-        public DataTable buscarPersona(string buscarTexto, bool? marca)
-        {
-            throw new NotImplementedException("TODO(claude): requiere resolver collation case-insensitive (LIKE), fuera de alcance del piloto de una tabla.");
-        }
-
-        public bool personaTieneCompras_Ventas(int idPersona)
-        {
-            throw new NotImplementedException("TODO(claude): requiere las tablas Compras/Ventas migradas a Postgres, fuera de alcance del piloto de una tabla.");
         }
 
         public DataTable obtenerProveedores()
