@@ -40,130 +40,160 @@ namespace Negocio
         }
 
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICompraRepository
-        // (ej. DatosPostgres.CompraPg) para el bloque migrado. Solo lo usa el controller de
-        // comparacion. backup/restaurarBD siguen yendo por SQL Server (oCompraDSqlServer).
-        public Compra(Contratos.ICompraRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        // (ej. DatosPostgres.CompraPg) para el bloque migrado. backup/restaurarBD siguen yendo
+        // por SQL Server (oCompraDSqlServer).
+        //
+        // Las 6 dependencias internas (corteN..ctaCteN) son opcionales, default null -- si no
+        // se pasan, caen al constructor SQL-Server-only de siempre (mismo patron ya usado en
+        // Negocio.Corte para CortePuntoStockSucursal y en Negocio.Usuario para Sucursal). Sin
+        // esto, una operacion de Compra en modo Postgres solo escribia Compras/CortePorCompra/
+        // MediaRes en Postgres, pero crearMovCtaCteCompra (siempre se llama) seguia escribiendo
+        // en SQL Server -- dos motores mezclados en la misma operacion de negocio, y la causa
+        // real del choque de TransactionScope contra Npgsql (Etapa de testeo profundo,
+        // 2026-08-20, ver docs/DECISIONS.md). NegocioFactory.CrearCompra pasa las 6 ya
+        // cableadas a Postgres cuando corresponde.
+        public Compra(
+            Contratos.ICompraRepository repositorio,
+            IEmpresaContext empresa,
+            IParametrosContext param = null,
+            Negocio.Corte corteN = null,
+            Negocio.Sucursal sucursalN = null,
+            Negocio.Usuario usuarioN = null,
+            Negocio.CierreCaja cierreCajaN = null,
+            Negocio.Persona personaN = null,
+            Negocio.CuentaCorriente ctaCteN = null)
         {
             _empresa = empresa; _param = param;
             oCompraD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
             oCompraDSqlServer = new Datos.Compra(empresa, param);
-            oCorteN = new Corte(empresa, param);
-            oSucN = new Negocio.Sucursal(empresa, param);
-            oUsuarioN = new Usuario(empresa, param);
-            oCierreN = new Negocio.CierreCaja(empresa, param);
-            oPersonaN = new Persona(empresa, param);
-            oCtaCteN = new Negocio.CuentaCorriente(empresa, param);
+            oCorteN = corteN ?? new Corte(empresa, param);
+            oSucN = sucursalN ?? new Negocio.Sucursal(empresa, param);
+            oUsuarioN = usuarioN ?? new Usuario(empresa, param);
+            oCierreN = cierreCajaN ?? new Negocio.CierreCaja(empresa, param);
+            oPersonaN = personaN ?? new Persona(empresa, param);
+            oCtaCteN = ctaCteN ?? new Negocio.CuentaCorriente(empresa, param);
         }
 
-        public int AddOrEditCompra(Entidades.Compra oCompraE, string tipoCompra,List<Entidades.MediaRes> listaMediaRes, 
+        public int AddOrEditCompra(Entidades.Compra oCompraE, string tipoCompra,List<Entidades.MediaRes> listaMediaRes,
             List<Entidades.CortePorCompra> listaCortePorCompra, bool esEgresoCaja, Entidades.EgresoCaja oEgresoCajaE)
         {
-            using (TransactionScope scope = new TransactionScope())
+            // Mismo mecanismo que Negocio.Venta.agregarVenta: TransactionScope para SQL Server
+            // (sin cambios), IUnitOfWork explicito para Postgres (ver docs/DECISIONS.md,
+            // 2026-08-20). oCorteN.editPrecioCorte y actualizarEstadoPesaje (mas abajo) NO
+            // participan de la unidad de trabajo compartida todavia -- caminos condicionales,
+            // no exercitados por el testeo real hecho hasta ahora (ActualizarPrecioVenta y
+            // PesajeCortes). Si alguna vez fallan en modo Postgres, aplicar el mismo patron.
+            var unitOfWork = oCompraD.IniciarUnitOfWork();
+            if (unitOfWork == null)
             {
-                try
+                using (TransactionScope scope = new TransactionScope())
                 {
-                    oCompraE.LineasMediasReses = listaMediaRes;
-                    oCompraE.LineasCortes = listaCortePorCompra;
-
-                    //if (oCompraE != null && oCompraE.IdCompra > 0)
-                    //{
-                    //    modificarCompra(oCompraE);
-                    //}
-                    //else
-                    //{
-                    //    oCompraE.IdCompra = oCompraD.agregarCompra(oCompraE);
-                    //}
-
-                    oCompraE.IdCompra = oCompraD.addOrEditCompra(oCompraE);
-
-                    if (tipoCompra == Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))
+                    try
                     {
-                        foreach (Entidades.MediaRes mediaRes in listaMediaRes)
-                        {
-                            mediaRes.sucursal = oCompraE.Sucursal;
-                            agregarMedias(mediaRes);
-                        }
+                        int id = EjecutarAddOrEditCompra(oCompraE, tipoCompra, listaMediaRes, listaCortePorCompra, esEgresoCaja, oEgresoCajaE, null);
+                        scope.Complete();
+                        return id;
                     }
-
-                    /// 03-10-2025: comenté el IF xq no cargaba cuando era pesaje o ajuste
-                    /// No se porque ponía esta condición antes de pasar todo a esta capa Negocio
-                    //if (tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                    //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                    //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                    //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
-                    
-                    
-                    foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
+                    catch (Exception ex)
                     {
-                        cortePorCompra.Sucursal = oCompraE.Sucursal;
-                        agregarCortePorCompra(cortePorCompra);
-
-                        //se actualiza el precio del corte
-                        if (cortePorCompra.ActualizarPrecioVenta && cortePorCompra.PrecioVenta > 0)
-                        {
-                            cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
-                            oCorteN.editPrecioCorte(cortePorCompra.Corte);
-                        }
+                        throw new Exception("Error en registrar la compra: \n" + ex.Message, ex);
                     }
-
-                    //Se actualiza el estado del Pesaje
-                    if (oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
-                    {
-                        //se verifica que el pesaje sea de medias
-                        if ((!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) &&
-                            (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
-                        {
-                            actualizarEstadoPesaje(oCompraE.IdCompra, estadoAjusteStock(oCompraE.IdCompra, 0));
-                        }
-                    }
-
-                    //Cuenta Corriente
-                    crearMovCtaCteCompra(oCompraE);
-
-                    if (esEgresoCaja)
-                    {
-                        if (oEgresoCajaE == null)
-                            oEgresoCajaE = new Entidades.EgresoCaja();
-
-                        ///si la compra es en CTA CTE, 
-                        ///se informa en egresos pero el monto será 0 porque no salió el dinero de la caja
-                        string descripcionEgreso = "Compra a ";
-                        string detalleEgreso = string.Empty;
-                        float montoEgreso = oCompraE.getImporteCompra(oCompraE, listaMediaRes, listaCortePorCompra);
-                        if (oCompraE.EnCtaCte)
-                        {
-                            descripcionEgreso = "Compra CTA CTE a ";
-                            detalleEgreso = " | $" + montoEgreso.ToString("F2");
-                            montoEgreso = 0;
-                        }
-                        descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
-
-                        oEgresoCajaE.Fecha = oCompraE.FechaCompra;
-                        oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCompraEgresoCaja;// oCierreN.getIdEgresoCajaPorCompra();
-                        oEgresoCajaE.Descripcion = descripcionEgreso;
-                        oEgresoCajaE.Monto = montoEgreso;
-                        oEgresoCajaE.Detalle = oCompraE.Observaciones;
-                        oEgresoCajaE.Sucursal = oCompraE.Sucursal;
-                        oEgresoCajaE.IdCompra = oCompraE.IdCompra;
-                        oEgresoCajaE.CreadoPor =  oCompraE.CreadoPor.Id;
-                        oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCompraE.ActualizadoPor.Id : 0;
-
-                        
-                        oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
-                    }
-
-                    // si todo salió bien, confirmamos
-                    scope.Complete();
-
-                    return oCompraE.IdCompra;
-                }
-                catch (Exception ex)
-                {
-                    // si algo falla NO llamamos a scope.Complete()
-                    // y automáticamente se hace rollback
-                    throw new Exception("Error en registrar la compra: \n" + ex.Message, ex);
                 }
             }
+            else
+            {
+                using (unitOfWork)
+                {
+                    try
+                    {
+                        int id = EjecutarAddOrEditCompra(oCompraE, tipoCompra, listaMediaRes, listaCortePorCompra, esEgresoCaja, oEgresoCajaE, unitOfWork);
+                        unitOfWork.Completar();
+                        return id;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error en registrar la compra: \n" + ex.Message, ex);
+                    }
+                }
+            }
+        }
+
+        private int EjecutarAddOrEditCompra(Entidades.Compra oCompraE, string tipoCompra, List<Entidades.MediaRes> listaMediaRes,
+            List<Entidades.CortePorCompra> listaCortePorCompra, bool esEgresoCaja, Entidades.EgresoCaja oEgresoCajaE, Contratos.IUnitOfWork unitOfWork)
+        {
+            oCompraE.LineasMediasReses = listaMediaRes;
+            oCompraE.LineasCortes = listaCortePorCompra;
+
+            oCompraE.IdCompra = oCompraD.addOrEditCompra(oCompraE, unitOfWork);
+
+            if (tipoCompra == Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))
+            {
+                foreach (Entidades.MediaRes mediaRes in listaMediaRes)
+                {
+                    mediaRes.sucursal = oCompraE.Sucursal;
+                    agregarMedias(mediaRes, unitOfWork);
+                }
+            }
+
+            foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
+            {
+                cortePorCompra.Sucursal = oCompraE.Sucursal;
+                agregarCortePorCompra(cortePorCompra, unitOfWork);
+
+                //se actualiza el precio del corte
+                if (cortePorCompra.ActualizarPrecioVenta && cortePorCompra.PrecioVenta > 0)
+                {
+                    cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
+                    oCorteN.editPrecioCorte(cortePorCompra.Corte);
+                }
+            }
+
+            //Se actualiza el estado del Pesaje
+            if (oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
+            {
+                //se verifica que el pesaje sea de medias
+                if ((!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) &&
+                    (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
+                {
+                    actualizarEstadoPesaje(oCompraE.IdCompra, estadoAjusteStock(oCompraE.IdCompra, 0));
+                }
+            }
+
+            //Cuenta Corriente
+            crearMovCtaCteCompra(oCompraE, unitOfWork);
+
+            if (esEgresoCaja)
+            {
+                if (oEgresoCajaE == null)
+                    oEgresoCajaE = new Entidades.EgresoCaja();
+
+                ///si la compra es en CTA CTE,
+                ///se informa en egresos pero el monto será 0 porque no salió el dinero de la caja
+                string descripcionEgreso = "Compra a ";
+                string detalleEgreso = string.Empty;
+                float montoEgreso = oCompraE.getImporteCompra(oCompraE, listaMediaRes, listaCortePorCompra);
+                if (oCompraE.EnCtaCte)
+                {
+                    descripcionEgreso = "Compra CTA CTE a ";
+                    detalleEgreso = " | $" + montoEgreso.ToString("F2");
+                    montoEgreso = 0;
+                }
+                descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
+
+                oEgresoCajaE.Fecha = oCompraE.FechaCompra;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCompraEgresoCaja;// oCierreN.getIdEgresoCajaPorCompra();
+                oEgresoCajaE.Descripcion = descripcionEgreso;
+                oEgresoCajaE.Monto = montoEgreso;
+                oEgresoCajaE.Detalle = oCompraE.Observaciones;
+                oEgresoCajaE.Sucursal = oCompraE.Sucursal;
+                oEgresoCajaE.IdCompra = oCompraE.IdCompra;
+                oEgresoCajaE.CreadoPor = oCompraE.CreadoPor.Id;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCompraE.ActualizadoPor.Id : 0;
+
+                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE, unitOfWork);
+            }
+
+            return oCompraE.IdCompra;
         }
         public int agregarCompra(Entidades.Compra oCompraE)
         {
@@ -236,32 +266,32 @@ namespace Negocio
             oCompraD.actualizarIdPesajeAjustado(idCompra, idPesajeAjustado, idUsuario);
         }
         
-        public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
+        public void crearMovCtaCteCompra(Entidades.Compra oCompraE, Contratos.IUnitOfWork unitOfWork = null)
         {
             //oCompraE = findById_convertToCompra(oCompraE.IdCompra);
-            
+
             string detalle = "\'" + oCompraE.TipoCompra + "\'" + " | Kgs: " + oCompraE.KgsMedias.ToString()
                 + " | " + "Cant: " + oCompraE.CantMedias.ToString();
             oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra, oCompraE.NroRemito,
                 //detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
                 detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraE.getImporteCompra(oCompraE, oCompraE.LineasMediasReses, oCompraE.LineasCortes), oCompraE.Sucursal,
-                oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte, null, null, null);
+                oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte, null, null, null, unitOfWork);
         }
 
         public void modificarPrecioMedia(int idCompra, float precioKg)
         {
             oCompraD.modificarPrecioMedia(idCompra, precioKg);
         }
-        
-        public void agregarMedias(Entidades.MediaRes oMediaResE)
+
+        public void agregarMedias(Entidades.MediaRes oMediaResE, Contratos.IUnitOfWork unitOfWork = null)
         {
-            oCompraD.agregarMediaRes(oMediaResE);
+            oCompraD.agregarMediaRes(oMediaResE, unitOfWork);
 
         }
 
-        public void agregarCortePorCompra(Entidades.CortePorCompra oCortePorCompraE)
+        public void agregarCortePorCompra(Entidades.CortePorCompra oCortePorCompraE, Contratos.IUnitOfWork unitOfWork = null)
         {
-            oCompraD.agregarCortePorCompra(oCortePorCompraE);
+            oCompraD.agregarCortePorCompra(oCortePorCompraE, unitOfWork);
         }
 
         public void limpiarCortesPorCompra(int idCompra)

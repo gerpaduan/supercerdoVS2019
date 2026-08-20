@@ -292,11 +292,11 @@ namespace DatosPostgres
                         }
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -422,7 +422,7 @@ namespace DatosPostgres
             });
         }
 
-        public EgresoCaja addOrEditEgresoCaja(EgresoCaja oEgresoCaja)
+        public EgresoCaja addOrEditEgresoCaja(EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oEgresoCaja == null) throw new ArgumentNullException(nameof(oEgresoCaja));
 
@@ -430,7 +430,7 @@ namespace DatosPostgres
             {
                 object esGastoObj = DbPg.Scalar(_connectionString, _idEmpresa,
                     "SELECT esgasto FROM tiposegresocaja WHERE id = @idTipoEgresoCaja;",
-                    p => p.AddWithValue("idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja));
+                    p => p.AddWithValue("idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja), unitOfWork);
                 bool esGasto = esGastoObj != null && esGastoObj != DBNull.Value && Convert.ToBoolean(esGastoObj);
 
                 const string sqlInsert = @"
@@ -452,7 +452,7 @@ namespace DatosPostgres
                     p.AddWithValue("idSucursal", oEgresoCaja.Sucursal.idSucursal);
                     p.AddWithValue("creadoPor", oEgresoCaja.CreadoPor);
                     p.AddWithValue("idEmpresa", _idEmpresa);
-                });
+                }, unitOfWork);
 
                 oEgresoCaja.Id = Convert.ToInt32(nuevoId);
             }
@@ -463,7 +463,7 @@ namespace DatosPostgres
                 {
                     object esGastoObj = DbPg.Scalar(_connectionString, _idEmpresa,
                         "SELECT esgasto FROM tiposegresocaja WHERE id = @idTipoEgresoCaja;",
-                        p => p.AddWithValue("idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja));
+                        p => p.AddWithValue("idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja), unitOfWork);
                     esGasto = esGastoObj != null && esGastoObj != DBNull.Value && Convert.ToBoolean(esGastoObj);
                 }
 
@@ -487,7 +487,7 @@ namespace DatosPostgres
                     p.AddWithValue("idSucursal", oEgresoCaja.Sucursal.idSucursal);
                     p.AddWithValue("actualizadoPor", oEgresoCaja.ActualizadoPor);
                     p.AddWithValue("id", oEgresoCaja.Id);
-                });
+                }, unitOfWork);
             }
 
             return oEgresoCaja;
@@ -637,12 +637,12 @@ namespace DatosPostgres
                 try
                 {
                     var plan = ConstruirPlanCambioSucursalCaja(con, tx, cierreCaja, idSucursalNueva);
-                    tx.Commit();
+                    tx?.Commit();
                     return plan.Preview;
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -659,7 +659,7 @@ namespace DatosPostgres
                     var plan = ConstruirPlanCambioSucursalCaja(con, tx, cierreCaja, idSucursalNueva);
                     if (!plan.Preview.PuedeEjecutar)
                     {
-                        tx.Rollback();
+                        tx?.Rollback();
                         return new Contratos.CambioSucursalCajaResultado
                         {
                             Ok = false,
@@ -696,7 +696,7 @@ namespace DatosPostgres
 
                     InsertarAuditoriaCambioSucursalCaja(con, tx, plan, counts, idUsuarioEjecutor, usuarioEjecutor);
 
-                    tx.Commit();
+                    tx?.Commit();
 
                     return new Contratos.CambioSucursalCajaResultado
                     {
@@ -707,7 +707,7 @@ namespace DatosPostgres
                 }
                 catch (Exception ex)
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     return new Contratos.CambioSucursalCajaResultado { Ok = false, Mensaje = ex.Message };
                 }
             }

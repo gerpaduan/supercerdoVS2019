@@ -15,6 +15,10 @@ namespace Datos
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
+        // SQL Server no necesita unidad de trabajo compartida -- TransactionScope enlista las
+        // conexiones ADO.NET sin problemas. Ver Contratos/IUnitOfWork.cs.
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => null;
+
         public void anularCompra(int idCompra)
         {
             Db.NonQuery(
@@ -75,7 +79,7 @@ namespace Datos
             );
         }
 
-        public int addOrEditCompra(Entidades.Compra oCompraE)
+        public int addOrEditCompra(Entidades.Compra oCompraE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oCompraE == null) throw new ArgumentNullException(nameof(oCompraE));
 
@@ -344,7 +348,7 @@ namespace Datos
             );
         }
 
-        public void agregarCortePorCompra(Entidades.CortePorCompra oCorteE)
+        public void agregarCortePorCompra(Entidades.CortePorCompra oCorteE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oCorteE == null) throw new ArgumentNullException(nameof(oCorteE));
 
@@ -378,7 +382,7 @@ namespace Datos
             );
         }
 
-        public void agregarMediaRes(Entidades.MediaRes oMediaResE)
+        public void agregarMediaRes(Entidades.MediaRes oMediaResE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oMediaResE == null) throw new ArgumentNullException(nameof(oMediaResE));
 

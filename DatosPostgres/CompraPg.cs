@@ -27,6 +27,8 @@ namespace DatosPostgres
             _idEmpresa = idEmpresa;
         }
 
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => UnitOfWorkPg.Iniciar(_connectionString, _idEmpresa);
+
         #region Compras
 
         public void anularCompra(int idCompra)
@@ -244,7 +246,7 @@ namespace DatosPostgres
                 p => p.AddWithValue("idCompra", idCompra));
         }
 
-        public int addOrEditCompra(Compra oCompraE)
+        public int addOrEditCompra(Compra oCompraE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oCompraE == null) throw new ArgumentNullException(nameof(oCompraE));
 
@@ -257,7 +259,7 @@ namespace DatosPostgres
                         @idPesajeAjustado, @enCtaCte, @idSucursal, now(), @creadoPor, @idEmpresa)
                     RETURNING idcompra;";
 
-                object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, p =>
+                Action<NpgsqlParameterCollection> setParamsInsert = p =>
                 {
                     p.AddWithValue("nroRemito", oCompraE.NroRemito ?? "");
                     p.AddWithValue("fechaCompra", oCompraE.FechaCompra);
@@ -272,7 +274,9 @@ namespace DatosPostgres
                     p.AddWithValue("idSucursal", oCompraE.Sucursal.idSucursal);
                     p.AddWithValue("creadoPor", oCompraE.CreadoPor.Id);
                     p.AddWithValue("idEmpresa", _idEmpresa);
-                });
+                };
+
+                object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, setParamsInsert, unitOfWork);
 
                 oCompraE.IdCompra = Convert.ToInt32(nuevoId);
                 return oCompraE.IdCompra;
@@ -299,14 +303,14 @@ namespace DatosPostgres
                 p.AddWithValue("enCtaCte", oCompraE.EnCtaCte);
                 p.AddWithValue("idSucursal", oCompraE.Sucursal.idSucursal);
                 p.AddWithValue("actualizadoPor", oCompraE.ActualizadoPor != null ? oCompraE.ActualizadoPor.Id : 0);
-            });
+            }, unitOfWork);
 
             // addOrEditCompra (edicion) real: limpia CortePorCompra/MediaRes para que el caller
             // vuelva a cargar las lineas -- mismo patron que addOrEditFormula de Corte.cs.
             DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM corteporcompra WHERE idcompra = @idCompra;",
-                p => p.AddWithValue("idCompra", oCompraE.IdCompra));
+                p => p.AddWithValue("idCompra", oCompraE.IdCompra), unitOfWork);
             DbPg.NonQuery(_connectionString, _idEmpresa, "DELETE FROM mediares WHERE idcompra = @idCompra;",
-                p => p.AddWithValue("idCompra", oCompraE.IdCompra));
+                p => p.AddWithValue("idCompra", oCompraE.IdCompra), unitOfWork);
 
             return oCompraE.IdCompra;
         }
@@ -480,14 +484,34 @@ namespace DatosPostgres
         // CortePorCompra, y -- hallazgo nuevo de esta etapa -- si la compra es tipo 'Cortes',
         // un upsert condicional en CorteProveedor (ultimo precio/fecha por proveedor+corte).
         // Ambas van en una sola transaccion.
-        public void agregarCortePorCompra(CortePorCompra oCorteE)
+        public void agregarCortePorCompra(CortePorCompra oCorteE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oCorteE == null) throw new ArgumentNullException(nameof(oCorteE));
+
+            var uowCompartida = unitOfWork as UnitOfWorkPg;
+            if (uowCompartida != null)
+            {
+                EjecutarAgregarCortePorCompra(oCorteE, uowCompartida.Connection, uowCompartida.Transaction);
+                return;
+            }
 
             using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
             {
                 try
                 {
+                    EjecutarAgregarCortePorCompra(oCorteE, con, tx);
+                    tx?.Commit();
+                }
+                catch
+                {
+                    try { tx?.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        private void EjecutarAgregarCortePorCompra(CortePorCompra oCorteE, NpgsqlConnection con, NpgsqlTransaction tx)
+        {
                     using (var cmdIns = new NpgsqlCommand(@"
                         INSERT INTO corteporcompra (idcompra, idcorte, idsucursal, preciokg, cantkg, balanza, creado, creadopor, idempresa)
                         VALUES (@idCompra, @idCorte, @idSucursal, @precioKg, @cantKg, @balanza, @creado, @creadoPor, @idEmpresa);", con, tx))
@@ -562,15 +586,6 @@ namespace DatosPostgres
                             }
                         }
                     }
-
-                    tx.Commit();
-                }
-                catch
-                {
-                    try { tx.Rollback(); } catch { }
-                    throw;
-                }
-            }
         }
 
         public void limpiarCortesPorCompra(int idCompra)
@@ -625,7 +640,7 @@ namespace DatosPostgres
 
         #region MediaRes
 
-        public void agregarMediaRes(MediaRes oMediaResE)
+        public void agregarMediaRes(MediaRes oMediaResE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oMediaResE == null) throw new ArgumentNullException(nameof(oMediaResE));
 
@@ -639,7 +654,7 @@ namespace DatosPostgres
                 p.AddWithValue("precioMedia", oMediaResE.precioMedia);
                 p.AddWithValue("kgMedia", oMediaResE.kgMedia);
                 p.AddWithValue("idEmpresa", _idEmpresa);
-            });
+            }, unitOfWork);
         }
 
         public DataTable obtenerMediasPorCompra(int idCompra)

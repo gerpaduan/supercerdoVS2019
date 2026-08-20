@@ -1,4 +1,5 @@
 using System;
+using System.Transactions;
 using Npgsql;
 
 namespace DatosPostgres
@@ -16,7 +17,17 @@ namespace DatosPostgres
 
             var cn = new NpgsqlConnection(connectionString);
             cn.Open();
-            transaccion = cn.BeginTransaction();
+
+            // Si ya hay un TransactionScope ambiente (ej. Negocio.Compra/Venta/CuentaCorriente,
+            // pensados para SQL Server), NO abrimos una transaccion explicita propia -- Npgsql
+            // se auto-enlista en la ambiente. Abrir cn.BeginTransaction() ademas del enlistment
+            // automatico produce "A transaction is already in progress" (encontrado en el
+            // testeo profundo de escritura real, 2026-08-20, ver docs/DECISIONS.md). Sin
+            // TransactionScope ambiente (el caso normal de un request web), comportamiento
+            // identico a siempre: transaccion explicita propia.
+            transaccion = System.Transactions.Transaction.Current == null
+                ? cn.BeginTransaction()
+                : null;
 
             // set_config(..., is_local=true) es el equivalente parametrizable de SET LOCAL
             // (SET LOCAL no acepta bind parameters). El valor vive y muere con la transaccion,

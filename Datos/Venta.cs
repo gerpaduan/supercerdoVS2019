@@ -17,6 +17,10 @@ namespace Datos
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
+        // SQL Server no necesita una unidad de trabajo compartida -- TransactionScope enlista
+        // las conexiones ADO.NET sin problemas. Ver Contratos/IUnitOfWork.cs.
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => null;
+
         #region Helpers
 
         private static bool ColumnaExiste(SqlDataReader dr, string columna)
@@ -367,7 +371,7 @@ namespace Datos
                 : Convert.ToDecimal(scalar);
         }
 
-        public int agregarVenta(Entidades.Venta oVentaE)
+        public int agregarVenta(Entidades.Venta oVentaE, Contratos.IUnitOfWork unitOfWork = null)
         {
             object scalar = Db.Scalar(
                 _empresa,
@@ -400,7 +404,7 @@ namespace Datos
             return (scalar == null || scalar == DBNull.Value) ? 0 : Convert.ToInt32(scalar);
         }
 
-        public void modificarVenta(Entidades.Venta oVentaE, int sucAnterior, bool eliminarLineas)
+        public void modificarVenta(Entidades.Venta oVentaE, int sucAnterior, bool eliminarLineas, Contratos.IUnitOfWork unitOfWork = null)
         {
             Db.NonQuery(
                 _empresa,
@@ -523,7 +527,7 @@ namespace Datos
             return string.IsNullOrEmpty(dt.Rows[0]["totalS"]?.ToString()) ? 0f : Convert.ToSingle(dt.Rows[0]["totalS"]);
         }
 
-        public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE)
+        public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE, Contratos.IUnitOfWork unitOfWork = null)
         {
             object scalar = Db.Scalar(
                 _empresa,
@@ -862,7 +866,7 @@ namespace Datos
             return oLineaE;
         }
 
-        public void asignarVentaEnExpendio(int idVenta, int idExpendio)
+        public void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null)
         {
             const string sql = "UPDATE Expendios SET idVenta = @idVenta WHERE idExpendio = @idExpendio;";
 

@@ -80,11 +80,11 @@ namespace DatosPostgres
                         }
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }

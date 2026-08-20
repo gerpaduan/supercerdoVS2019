@@ -54,12 +54,18 @@ namespace Negocio
             return dtMovCtaCte;
         }
 
+        // unitOfWork opcional: ver Contratos/IUnitOfWork.cs. Solo se propaga a los llamados a
+        // oCtaCteD -- CargarEgresoCajaPorPago (mas abajo) sigue sin compartir la transaccion,
+        // pero para el camino de Venta es un no-op real (oCierreCajaE siempre llega null desde
+        // crearMovCtaCteVenta), asi que no bloquea el fix de Venta. Pendiente si algun dia se
+        // necesita atomicidad completa tambien para el flujo de Pagos/Cheques.
         public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha,
             Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
-            Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE, Entidades.Pago oPagoAnterior)
+            Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE, Entidades.Pago oPagoAnterior,
+            Contratos.IUnitOfWork unitOfWork = null)
         {
-            Entidades.MovCtaCte oMovCtaCte = oCtaCteD.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
+            Entidades.MovCtaCte oMovCtaCte = oCtaCteD.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId, unitOfWork);
 
             ///si no tiene oMovCtaCte o Tiene y fue quitado de la cta se la crea 
             if ((oMovCtaCte == null || oMovCtaCte.Id.Equals(0)) || oMovCtaCte.QuitadoCtaCta)
@@ -80,7 +86,7 @@ namespace Negocio
                     oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     //se registra el registro opuesto
-                    oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+                    oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
 
                     ///se crea la nueva instancia para el nuevo registro
                     ///**Solo si el nuevo registro tiene distinto tipoMov (p/que no se registre 2 veces el mov cta cte)**
@@ -118,7 +124,7 @@ namespace Negocio
                     oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     //se registra el registro opuesto
-                    oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+                    oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
                     CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, false);
 
                     //se crea la nueva instancia para el nuevo registro
@@ -143,7 +149,7 @@ namespace Negocio
             oMovCtaCte.Actualizado = actualizado;
             oMovCtaCte.ActualizadoPor = actualizadoPor;
 
-            oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+            oCtaCteD.addOrEditMovCtaCte(oMovCtaCte, unitOfWork);
             CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, false);
         }
 
@@ -199,40 +205,69 @@ namespace Negocio
             return oPagoE;
         }
 
+        // unitOfWork: ver Contratos/IUnitOfWork.cs. En SQL Server oCtaCteD.IniciarUnitOfWork()
+        // devuelve null y el metodo sigue con TransactionScope de siempre. En Postgres arma un
+        // UnitOfWorkPg real y lo threadea a getChequesPorPago/resetearChequesAsignados/addOrEditPago/
+        // crearMovCtaCtePago para que Pagos+Cheques+MovCtaCte queden en una sola transaccion
+        // (mismo bug que Venta/Compra: el auto-enlistment ambiente de Npgsql con TransactionScope
+        // no preserva el tenant de RLS entre las distintas conexiones que abre cada llamado).
         public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoSinMod)
         {
-            using (TransactionScope scope = new TransactionScope())
+            var unitOfWork = oCtaCteD.IniciarUnitOfWork();
+            if (unitOfWork == null)
             {
-                try
+                using (TransactionScope scope = new TransactionScope())
                 {
-                    // obtener los cheques del pago antes de modificar
-                    List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id);
-                    foreach (Cheque cheque in listaCheques)
+                    try
                     {
-                        bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
-
-                        if (!yaExiste)
-                            oCtaCteD.resetearChequesAsignados(oPagoE.Id);
+                        var resultado = EjecutarAddOrEditPago(oPagoE, oCierreCajaE, oPagoSinMod, null);
+                        scope.Complete();
+                        return resultado;
                     }
-
-                    // guardar o editar el pago
-                    oPagoE = oCtaCteD.addOrEditPago(oPagoE);
-
-                    // crear movimiento y egreso de caja
-                    crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
-
-                    // si todo salió bien, confirmamos
-                    scope.Complete();
-
-                    return oPagoE;
-                }
-                catch (Exception ex)
-                {
-                    // si algo falla NO llamamos a scope.Complete()
-                    // y automáticamente se hace rollback
-                    throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
+                    }
                 }
             }
+            else
+            {
+                using (unitOfWork)
+                {
+                    try
+                    {
+                        var resultado = EjecutarAddOrEditPago(oPagoE, oCierreCajaE, oPagoSinMod, unitOfWork);
+                        unitOfWork.Completar();
+                        return resultado;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
+                    }
+                }
+            }
+        }
+
+        private Entidades.Pago EjecutarAddOrEditPago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE,
+            Entidades.Pago oPagoSinMod, Contratos.IUnitOfWork unitOfWork)
+        {
+            // obtener los cheques del pago antes de modificar
+            List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id, true, unitOfWork);
+            foreach (Cheque cheque in listaCheques)
+            {
+                bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
+
+                if (!yaExiste)
+                    oCtaCteD.resetearChequesAsignados(oPagoE.Id, unitOfWork);
+            }
+
+            // guardar o editar el pago
+            oPagoE = oCtaCteD.addOrEditPago(oPagoE, unitOfWork);
+
+            // crear movimiento y egreso de caja
+            crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod, unitOfWork);
+
+            return oPagoE;
         }
 
         public void eliminarPago(Entidades.Pago oPagoE)
@@ -260,13 +295,14 @@ namespace Negocio
             return oCtaCteD.obtenerChequesPendientesDashboard(cantidad, fechaActual);
         }
 
-        public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoAnterior)
+        public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoAnterior,
+            Contratos.IUnitOfWork unitOfWork = null)
         {
             //oPagoE = oCtaCteD.getPagoById(oPagoE.Id); COMENTADO XQ YA ENVIO EL OBJETO POR PARAMETRO
-            
+
             crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
-                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior);
+                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior, unitOfWork);
         }
 
         private void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE, 

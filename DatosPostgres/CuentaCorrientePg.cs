@@ -41,6 +41,8 @@ namespace DatosPostgres
             _personaRepo = personaRepo ?? throw new ArgumentNullException(nameof(personaRepo));
         }
 
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => UnitOfWorkPg.Iniciar(_connectionString, _idEmpresa);
+
         #region Helpers de mapeo (livianos, con prefijo de columna)
 
         private static bool ColumnaExiste(NpgsqlDataReader dr, string columna)
@@ -255,7 +257,7 @@ namespace DatosPostgres
             });
         }
 
-        public MovCtaCte getMovCtaCteBy(int id, MovCtaCte.tablas tabla, int idTabla, MovCtaCte.getBy getBy)
+        public MovCtaCte getMovCtaCteBy(int id, MovCtaCte.tablas tabla, int idTabla, MovCtaCte.getBy getBy, Contratos.IUnitOfWork unitOfWork = null)
         {
             string where = (getBy == MovCtaCte.getBy.Id) ? "m.id = @id" : "m.tabla = @tabla AND m.idtabla = @idTabla";
 
@@ -306,12 +308,12 @@ namespace DatosPostgres
                 p.AddWithValue("id", id);
                 p.AddWithValue("tabla", tabla.ToString());
                 p.AddWithValue("idTabla", idTabla);
-            });
+            }, unitOfWork);
 
             return lista.Count > 0 ? lista[0] : null;
         }
 
-        public MovCtaCte addOrEditMovCtaCte(MovCtaCte oMovCtaCteE)
+        public MovCtaCte addOrEditMovCtaCte(MovCtaCte oMovCtaCteE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oMovCtaCteE == null) throw new ArgumentNullException(nameof(oMovCtaCteE));
             if (oMovCtaCteE.Persona == null) throw new ArgumentException("MovCtaCte.Persona no puede ser null");
@@ -342,7 +344,7 @@ namespace DatosPostgres
                     p.AddWithValue("idSucursal", oMovCtaCteE.Sucursal.idSucursal);
                     p.AddWithValue("creadoPor", oMovCtaCteE.CreadoPor.Id);
                     p.AddWithValue("idEmpresa", _idEmpresa);
-                });
+                }, unitOfWork);
                 oMovCtaCteE.Id = Convert.ToInt32(nuevoId);
             }
             else
@@ -368,7 +370,7 @@ namespace DatosPostgres
                     p.AddWithValue("quitadoCtaCte", oMovCtaCteE.QuitadoCtaCta);
                     p.AddWithValue("idSucursal", oMovCtaCteE.Sucursal.idSucursal);
                     p.AddWithValue("actualizadoPor", oMovCtaCteE.ActualizadoPor != null ? oMovCtaCteE.ActualizadoPor.Id : -1);
-                });
+                }, unitOfWork);
             }
 
             return oMovCtaCteE;
@@ -463,14 +465,14 @@ namespace DatosPostgres
             IdActualizadoPor = r["actualizadopor"] == DBNull.Value ? (int?)null : Convert.ToInt32(r["actualizadopor"])
         };
 
-        public List<Cheque> getChequesPorPago(int idPago, bool conPagos = true)
+        public List<Cheque> getChequesPorPago(int idPago, bool conPagos = true, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (idPago <= 0) return new List<Cheque>();
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
                 "SELECT * FROM cheques WHERE recibidode = @idPago OR entregadoa = @idPago;",
                 MapCheque,
-                p => p.AddWithValue("idPago", idPago));
+                p => p.AddWithValue("idPago", idPago), unitOfWork);
 
             for (int i = 0; i < lista.Count; i++)
             {
@@ -537,10 +539,10 @@ namespace DatosPostgres
                 try
                 {
                     AddOrEditChequeEnTransaccion(con, tx, oCheque);
-                    tx.Commit();
+                    tx?.Commit();
                     return true;
                 }
-                catch { tx.Rollback(); throw; }
+                catch { tx?.Rollback(); throw; }
             }
         }
 
@@ -551,27 +553,39 @@ namespace DatosPostgres
             return filas > 0;
         }
 
-        public bool resetearChequesAsignados(int idPago)
+        public bool resetearChequesAsignados(int idPago, Contratos.IUnitOfWork unitOfWork = null)
         {
+            var uowCompartida = unitOfWork as UnitOfWorkPg;
+            if (uowCompartida != null)
+            {
+                EjecutarResetearChequesAsignados(idPago, uowCompartida.Connection, uowCompartida.Transaction);
+                return true;
+            }
+
             using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
             {
                 try
                 {
-                    using (var cmd1 = new NpgsqlCommand("UPDATE cheques SET recibidode = 0 WHERE recibidode = @idPago;", con, tx))
-                    {
-                        cmd1.Parameters.AddWithValue("idPago", idPago);
-                        cmd1.ExecuteNonQuery();
-                    }
-                    using (var cmd2 = new NpgsqlCommand("UPDATE cheques SET entregadoa = 0, estado = @estadoReset WHERE entregadoa = @idPago;", con, tx))
-                    {
-                        cmd2.Parameters.AddWithValue("idPago", idPago);
-                        cmd2.Parameters.AddWithValue("estadoReset", "PENDIENTE");
-                        cmd2.ExecuteNonQuery();
-                    }
-                    tx.Commit();
+                    EjecutarResetearChequesAsignados(idPago, con, tx);
+                    tx?.Commit();
                     return true;
                 }
-                catch { tx.Rollback(); throw; }
+                catch { tx?.Rollback(); throw; }
+            }
+        }
+
+        private void EjecutarResetearChequesAsignados(int idPago, NpgsqlConnection con, NpgsqlTransaction tx)
+        {
+            using (var cmd1 = new NpgsqlCommand("UPDATE cheques SET recibidode = 0 WHERE recibidode = @idPago;", con, tx))
+            {
+                cmd1.Parameters.AddWithValue("idPago", idPago);
+                cmd1.ExecuteNonQuery();
+            }
+            using (var cmd2 = new NpgsqlCommand("UPDATE cheques SET entregadoa = 0, estado = @estadoReset WHERE entregadoa = @idPago;", con, tx))
+            {
+                cmd2.Parameters.AddWithValue("idPago", idPago);
+                cmd2.Parameters.AddWithValue("estadoReset", "PENDIENTE");
+                cmd2.ExecuteNonQuery();
             }
         }
 
@@ -591,7 +605,7 @@ namespace DatosPostgres
             return (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
         }
 
-        public Pago addOrEditPago(Pago oPagoE)
+        public Pago addOrEditPago(Pago oPagoE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oPagoE == null) throw new ArgumentNullException(nameof(oPagoE));
             if (oPagoE.Persona == null) throw new ArgumentException("Pago.Persona no puede ser null");
@@ -599,74 +613,85 @@ namespace DatosPostgres
             if (oPagoE.CreadoPor == null) throw new ArgumentException("Pago.CreadoPor no puede ser null");
             if (oPagoE.Cheques == null) oPagoE.Cheques = new List<Cheque>();
 
+            var uowCompartida = unitOfWork as UnitOfWorkPg;
+            if (uowCompartida != null)
+            {
+                EjecutarAddOrEditPago(oPagoE, uowCompartida.Connection, uowCompartida.Transaction);
+                return oPagoE;
+            }
+
             using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
             {
                 try
                 {
-                    // 1) Guardar Pago (siempre alta en este piloto -- ver nota mas abajo)
-                    const string sqlInsert = @"
-                        INSERT INTO pagos (nrorecibo, fecha, idpersona, aproveedor, formapago, banco, nrocheque,
-                            titularcheque, importe, efectivo, observaciones, idsucursal, creado, creadopor, idempresa)
-                        VALUES (@nroRecibo, @fecha, @idPersona, @aProveedor, @formaPago, @banco, @nroCheque,
-                            @titularCheque, @importe, @efectivo, @observaciones, @idSucursal, now(), @creadoPor, @idEmpresa)
-                        RETURNING id;";
-
-                    const string sqlUpdate = @"
-                        UPDATE pagos SET nrorecibo=@nroRecibo, fecha=@fecha, idpersona=@idPersona, aproveedor=@aProveedor,
-                            formapago=@formaPago, banco=@banco, nrocheque=@nroCheque, titularcheque=@titularCheque,
-                            importe=@importe, efectivo=@efectivo, observaciones=@observaciones, idsucursal=@idSucursal,
-                            actualizado=now(), actualizadopor=@actualizadoPor
-                        WHERE id=@id;";
-
-                    using (var cmd = new NpgsqlCommand(oPagoE.Id == 0 ? sqlInsert : sqlUpdate, con, tx))
-                    {
-                        cmd.Parameters.AddWithValue("nroRecibo", oPagoE.NroRecibo ?? "");
-                        cmd.Parameters.AddWithValue("fecha", oPagoE.Fecha);
-                        cmd.Parameters.AddWithValue("idPersona", oPagoE.Persona.idPersona);
-                        cmd.Parameters.AddWithValue("aProveedor", oPagoE.AProveedor);
-                        cmd.Parameters.AddWithValue("formaPago", oPagoE.FormaPago ?? "");
-                        cmd.Parameters.AddWithValue("banco", oPagoE.Banco ?? "");
-                        cmd.Parameters.AddWithValue("nroCheque", oPagoE.NroCheque ?? "");
-                        cmd.Parameters.AddWithValue("titularCheque", oPagoE.TitularCheque ?? "");
-                        cmd.Parameters.AddWithValue("importe", oPagoE.Importe);
-                        cmd.Parameters.AddWithValue("efectivo", oPagoE.Efectivo);
-                        cmd.Parameters.AddWithValue("observaciones", oPagoE.Observaciones ?? "");
-                        cmd.Parameters.AddWithValue("idSucursal", oPagoE.Sucursal.idSucursal);
-
-                        if (oPagoE.Id == 0)
-                        {
-                            cmd.Parameters.AddWithValue("creadoPor", oPagoE.CreadoPor.Id);
-                            cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
-                            oPagoE.Id = Convert.ToInt32(cmd.ExecuteScalar());
-                        }
-                        else
-                        {
-                            cmd.Parameters.AddWithValue("actualizadoPor", oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.Id : 0);
-                            cmd.Parameters.AddWithValue("id", oPagoE.Id);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-
-                    // 2) Asignar cheques al pago, misma transaccion
-                    foreach (Cheque itemBase in oPagoE.Cheques)
-                    {
-                        var item = itemBase;
-                        if (oPagoE.AProveedor)
-                        {
-                            item.EntregadoA = oPagoE.Id;
-                            item.Estado = Cheque.EstadoEnum.ENTREGADO.ToString();
-                        }
-                        else
-                        {
-                            item.RecibidoDe = oPagoE.Id;
-                        }
-                        AddOrEditChequeEnTransaccion(con, tx, item);
-                    }
-
-                    tx.Commit();
+                    EjecutarAddOrEditPago(oPagoE, con, tx);
+                    tx?.Commit();
                     return oPagoE;
                 }
-                catch { tx.Rollback(); throw; }
+                catch { tx?.Rollback(); throw; }
+            }
+        }
+
+        private void EjecutarAddOrEditPago(Pago oPagoE, NpgsqlConnection con, NpgsqlTransaction tx)
+        {
+            // 1) Guardar Pago (siempre alta en este piloto -- ver nota mas abajo)
+            const string sqlInsert = @"
+                INSERT INTO pagos (nrorecibo, fecha, idpersona, aproveedor, formapago, banco, nrocheque,
+                    titularcheque, importe, efectivo, observaciones, idsucursal, creado, creadopor, idempresa)
+                VALUES (@nroRecibo, @fecha, @idPersona, @aProveedor, @formaPago, @banco, @nroCheque,
+                    @titularCheque, @importe, @efectivo, @observaciones, @idSucursal, now(), @creadoPor, @idEmpresa)
+                RETURNING id;";
+
+            const string sqlUpdate = @"
+                UPDATE pagos SET nrorecibo=@nroRecibo, fecha=@fecha, idpersona=@idPersona, aproveedor=@aProveedor,
+                    formapago=@formaPago, banco=@banco, nrocheque=@nroCheque, titularcheque=@titularCheque,
+                    importe=@importe, efectivo=@efectivo, observaciones=@observaciones, idsucursal=@idSucursal,
+                    actualizado=now(), actualizadopor=@actualizadoPor
+                WHERE id=@id;";
+
+            using (var cmd = new NpgsqlCommand(oPagoE.Id == 0 ? sqlInsert : sqlUpdate, con, tx))
+            {
+                cmd.Parameters.AddWithValue("nroRecibo", oPagoE.NroRecibo ?? "");
+                cmd.Parameters.AddWithValue("fecha", oPagoE.Fecha);
+                cmd.Parameters.AddWithValue("idPersona", oPagoE.Persona.idPersona);
+                cmd.Parameters.AddWithValue("aProveedor", oPagoE.AProveedor);
+                cmd.Parameters.AddWithValue("formaPago", oPagoE.FormaPago ?? "");
+                cmd.Parameters.AddWithValue("banco", oPagoE.Banco ?? "");
+                cmd.Parameters.AddWithValue("nroCheque", oPagoE.NroCheque ?? "");
+                cmd.Parameters.AddWithValue("titularCheque", oPagoE.TitularCheque ?? "");
+                cmd.Parameters.AddWithValue("importe", oPagoE.Importe);
+                cmd.Parameters.AddWithValue("efectivo", oPagoE.Efectivo);
+                cmd.Parameters.AddWithValue("observaciones", oPagoE.Observaciones ?? "");
+                cmd.Parameters.AddWithValue("idSucursal", oPagoE.Sucursal.idSucursal);
+
+                if (oPagoE.Id == 0)
+                {
+                    cmd.Parameters.AddWithValue("creadoPor", oPagoE.CreadoPor.Id);
+                    cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                    oPagoE.Id = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("actualizadoPor", oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.Id : 0);
+                    cmd.Parameters.AddWithValue("id", oPagoE.Id);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // 2) Asignar cheques al pago, misma transaccion
+            foreach (Cheque itemBase in oPagoE.Cheques)
+            {
+                var item = itemBase;
+                if (oPagoE.AProveedor)
+                {
+                    item.EntregadoA = oPagoE.Id;
+                    item.Estado = Cheque.EstadoEnum.ENTREGADO.ToString();
+                }
+                else
+                {
+                    item.RecibidoDe = oPagoE.Id;
+                }
+                AddOrEditChequeEnTransaccion(con, tx, item);
             }
         }
 

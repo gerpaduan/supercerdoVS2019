@@ -181,9 +181,9 @@ namespace Negocio
             return oCierreD.obtenerGastosAgrupadosBalance(fechaDesde, fechaHasta, idSucursal);
         }
 
-        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
+        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null)
         {
-            return oCierreD.addOrEditEgresoCaja(oEgresoCaja);
+            return oCierreD.addOrEditEgresoCaja(oEgresoCaja, unitOfWork);
         }
 
         public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)
@@ -234,11 +234,14 @@ namespace Negocio
         public bool validarCajaAbiertaVendedor(DateTime fechaHoraRegistro, Entidades.Sucursal oSucursalE, Entidades.Usuario oUsuario)
         {
             bool resp = true;
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(_empresa);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;
-            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            // Antes creaba una Negocio.CierreCaja nueva (siempre SQL Server) en vez de usar
+            // this -- bug real encontrado en el testeo profundo de escritura (2026-08-20, ver
+            // docs/DECISIONS.md): en modo Postgres, validarCajaAbiertaVendedor terminaba
+            // consultando la caja abierta contra el motor equivocado.
+            oCierreE = findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
             if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0) || oCierreE.FechaHoraInicio > fechaHoraRegistro || fechaHoraRegistro > DateTime.Now)
             {
                 resp = false;

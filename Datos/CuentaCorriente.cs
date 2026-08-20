@@ -16,6 +16,10 @@ namespace Datos
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
+        // SQL Server no necesita unidad de trabajo compartida -- TransactionScope enlista las
+        // conexiones ADO.NET sin problemas. Ver Contratos/IUnitOfWork.cs.
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => null;
+
         #region Helpers (LIKE seguro + DBNull)
 
         private static object DbNullIfNull(object value) => value ?? DBNull.Value;
@@ -223,7 +227,8 @@ namespace Datos
             int id,
             Entidades.MovCtaCte.tablas tabla,
             int idTabla,
-            Entidades.MovCtaCte.getBy getBy)
+            Entidades.MovCtaCte.getBy getBy,
+            Contratos.IUnitOfWork unitOfWork = null)
         {
             string sql = (getBy == Entidades.MovCtaCte.getBy.Id)
                 ? @"
@@ -349,7 +354,7 @@ namespace Datos
             }
         }
 
-        public Entidades.MovCtaCte addOrEditMovCtaCte(Entidades.MovCtaCte oMovCtaCteE)
+        public Entidades.MovCtaCte addOrEditMovCtaCte(Entidades.MovCtaCte oMovCtaCteE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oMovCtaCteE == null) throw new ArgumentNullException(nameof(oMovCtaCteE));
             if (oMovCtaCteE.Persona == null) throw new ArgumentException("MovCtaCte.Persona no puede ser null");
@@ -502,7 +507,7 @@ namespace Datos
             return cheque;
         }
 
-        public List<Entidades.Cheque> getChequesPorPago(int idPago, bool conPagos = true)
+        public List<Entidades.Cheque> getChequesPorPago(int idPago, bool conPagos = true, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (idPago <= 0) return new List<Cheque>();
 
@@ -651,7 +656,7 @@ namespace Datos
             return rows > 0;
         }
 
-        public bool resetearChequesAsignados(int idPago)
+        public bool resetearChequesAsignados(int idPago, Contratos.IUnitOfWork unitOfWork = null)
         {
             using (var con = Db.Open(_empresa))
             using (var tx = con.BeginTransaction())
@@ -711,7 +716,7 @@ namespace Datos
             return (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
         }
 
-        public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE)
+        public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oPagoE == null) throw new ArgumentNullException(nameof(oPagoE));
             if (oPagoE.Persona == null) throw new ArgumentException("Pago.Persona no puede ser null");

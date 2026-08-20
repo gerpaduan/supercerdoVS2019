@@ -938,18 +938,18 @@ namespace DatosPostgres
                             int insertados = cmdInsert.ExecuteNonQuery();
                             if (insertados <= 0)
                             {
-                                tx.Rollback();
+                                tx?.Rollback();
                                 return "No se pudo importar el tipo de producto \"" + tipo + "\" desde el catálogo global.";
                             }
                         }
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                     return "";
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -971,7 +971,7 @@ namespace DatosPostgres
                             int existe = Convert.ToInt32(cmdDup.ExecuteScalar());
                             if (existe != 0)
                             {
-                                tx.Rollback();
+                                tx?.Rollback();
                                 return "Ya existe un Tipo con el mismo nombre.";
                             }
                         }
@@ -1010,12 +1010,12 @@ namespace DatosPostgres
                         }
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                     return "";
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -1430,11 +1430,11 @@ namespace DatosPostgres
                         cmdDel.ExecuteNonQuery();
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -1492,11 +1492,11 @@ namespace DatosPostgres
                         cmdDelMov.ExecuteNonQuery();
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }

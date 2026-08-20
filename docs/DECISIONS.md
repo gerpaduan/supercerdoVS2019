@@ -1,6 +1,237 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - CuentaCorrientePg.obtenerPagos: alias corregidos, ultimo gap abierto cerrado
+## 2026-08-20 (la mas reciente) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+
+Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
+modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
+la persona de un pago -- verificando en los 3 casos que se anule el `MovCtaCte` viejo y se cree
+uno nuevo.
+
+**Fix de plomeria, mismo patron que Venta/Compra**: `FinanzasController.OnActionExecuting`
+tenia `oSucursalN`/`oUsuarioN`/`oPersonasN` sin cablear a `NegocioFactory` (mismo hallazgo de
+cableado parcial que las etapas anteriores; `oCtaCteN`/`oCierreN` ya estaban bien). Corregido.
+`Contratos.ICuentaCorrienteRepository.IniciarUnitOfWork()` agregado (`Datos.CuentaCorriente`:
+null; `CuentaCorrientePg`: `UnitOfWorkPg` real); parametro opcional `IUnitOfWork` agregado a
+`getChequesPorPago`, `resetearChequesAsignados`, `addOrEditPago`. `CuentaCorrientePg.addOrEditPago`
+reestructurado igual que `agregarVenta`/`AddOrEditCompra` (`EjecutarAddOrEditPago` extraido,
+rama unica por motor). `Negocio.CuentaCorriente.addOrEditPago` reescrito con el mismo wrapper
+`TransactionScope`-vs-`IUnitOfWork`; `crearMovCtaCtePago` ahora threadea el `unitOfWork` hacia
+`crearMovCtaCte` (que ya lo aceptaba desde el fix de Venta).
+
+**Hallazgo real, sin relacion con la plomeria de transacciones**: el escenario "corregir la
+persona de un pago -> debe anularse y crearse en la nueva persona" **no se cumple** -- y esto
+es comportamiento preexistente de `crearMovCtaCte` (`Negocio/CuentaCorriente.cs`), sin cambios
+en esta etapa, no un bug introducido por el fix. La logica de anulacion solo se dispara cuando
+difieren **Tipo o Importe** del `MovCtaCte` encontrado (`getMovCtaCteBy` busca por
+`Tabla+IdTabla`, sin filtrar por persona); si un pago cambia solo de persona (mismo tipo, mismo
+importe), el registro existente se **actualiza in-place** (mismo `Id`, nuevo `IdPersona`) en vez
+de anularse y recrearse. Verificado identico en ambos motores (ver abajo) -- confirma que es
+logica de negocio heredada, no una regresion de la migracion. Marcado como hallazgo para
+decision del usuario: si se quiere el comportamiento pedido (anular+recrear tambien por cambio
+de persona), es un cambio de logica de negocio en `crearMovCtaCte` compartida por Venta/Compra/
+Pagos, fuera del alcance de este fix de plomeria -- requiere confirmacion explicita antes de
+tocarla (afecta los 3 modulos).
+
+**Verificado con escrituras reales, ambos motores, pago Id=61 en cada uno**:
+- Escenario A (importe 100 -> 150): registro original (`Debito -100`) intacto, `ANULACION`
+  (`Credito +100`) + nuevo registro (`Debito -150`) creados. Identico en Postgres y SQL Server.
+- Escenario B (Pago -> Cobro, `AProveedor` true -> false, mismo importe 150): registro anterior
+  (`Debito -150`) intacto, `ANULACION` (`Credito +150`) + nuevo registro (`Credito +150`, sin
+  "ANULACION" en el detalle) creados. Identico en ambos motores.
+- Escenario C (persona 13 -> 19, mismo tipo/importe): **sin anulacion** -- el ultimo `MovCtaCte`
+  (mismo `Id`) paso de `IdPersona=13` a `IdPersona=19` in-place. Comportamiento identico,
+  registro por registro, en Postgres y SQL Server (confirma que no es una regresion).
+
+**Estado final**: `DataEngine=SqlServer` (confirmado). `CarniSys.sln` compila limpio. Pago
+`Id=61` (`NroRecibo=TEST-PG-A` en Postgres, `TEST-SQL-A` en SQL Server) queda como dato de
+prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
+preexistente, ver Etapa 5).
+
+## 2026-08-20 (2) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+
+Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
+verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.
+
+**1) `Negocio.Compra.AddOrEditCompra` tenia el mismo `TransactionScope` sin resolver** que
+`Venta`/`modificarVenta` (arreglados en las 2 entradas anteriores) -- nunca se habia migrado a
+`IUnitOfWork` porque el primer test de Compra (Ingreso Stock, via `StockController`) tenia
+`EnCtaCte` hardcodeado a `false`, asi que nunca ejercito el camino de CuentaCorriente que
+rompe con multiples conexiones Postgres dentro del mismo TransactionScope. Mismo fix aplicado:
+`Contratos.ICompraRepository.IniciarUnitOfWork()` (`Datos.Compra`: null: `CompraPg`:
+`UnitOfWorkPg` real), parametro opcional `IUnitOfWork` en `addOrEditCompra`,
+`agregarCortePorCompra`, `agregarMediaRes`; `Negocio.Compra.AddOrEditCompra` reestructurado
+igual que `agregarVenta` (`EjecutarAddOrEditCompra` extraido, rama unica por motor).
+**Limite documentado**: `oCorteN.editPrecioCorte` y `actualizarEstadoPesaje` (dentro del mismo
+metodo) siguen sin participar de la unidad de trabajo compartida -- caminos condicionales
+(`ActualizarPrecioVenta`, tipo `PesajeCortes`) no exercitados por ningun test real hasta ahora.
+Si alguna vez fallan en Postgres, aplicar el mismo patron ahi tambien.
+
+**2) Hallazgo mayor, sin relacion con transacciones**: al probar el flujo real de "compra a
+proveedor" (`ComprasController`, distinto de `StockController`), la escritura fue a **SQL
+Server incluso con `DataEngine=Postgres`** -- `ComprasController.OnActionExecuting` nunca habia
+sido cableado a `NegocioFactory` salvo el campo `oCierreN` (tocado de pasada en la etapa de
+`CierreCaja`). Los otros 5 campos (`oCompraN`, `oSucursalN`, `oUsuarioN`, `oPersonaN`,
+`oCorteN`) seguian en el constructor plano SQL-Server-only. Corregido, cableados los 5 a
+`NegocioFactory`. **Confirmado por barrido completo (`grep -rn "= new Negocio\." Web/Controllers`)
+que el mismo patron -- controllers con algun campo cableado de una etapa puntual, pero otros
+campos del mismo controller todavia sin tocar -- se repite en `CajasController`,
+`FinanzasController`, `HomeController`, `ReportesController`, `MovimientosController`,
+`PuntosExpendioController`, `UsuariosController`, `AuditoriaLoginController`, `ElaboradosController`**.
+No se corrigen en esta etapa (fuera del pedido puntual de Compra) -- queda como hallazgo
+importante para una etapa dedicada aparte, con el mismo criterio de "un controller/clase por
+vez" ya usado toda la migracion.
+
+**Verificado con escrituras reales, ambos motores, ciclo completo carga+anulacion**:
+- Postgres (`ComprasController`, ya cableado): compra `Cortes`, `EnCtaCte=true`, proveedor real
+  -- `idcompra=9034`, linea en `corteporcompra`, `movctacte` con `Tipo=Credito, Importe=160,
+  QuitadoCtaCta=false`. Modificada la misma compra a `EnCtaCte=false` -- confirmado por SQL
+  directo: registro original **intacto**, mas un segundo registro real y opuesto
+  (`Tipo=Debito, Importe=-160, QuitadoCtaCta=true, Detalle="Quitado de Cta.Cte."`). SQL Server
+  en 0 para esa observacion.
+- SQL Server, mismo ciclo completo (`idcompra=9035`): resultado **identico** (mismos montos,
+  mismo texto de detalle) -- cero divergencia de comportamiento entre motores.
+- Regresion final en `SqlServer` sobre `/Home`, `/Compras/Index`, `/Ventas/Index`,
+  `/Stock/Index`, `/Productos/Index`, `/Finanzas/CtasCtes` -- limpia.
+
+**Estado final**: `DataEngine=SqlServer` (confirmado). `CarniSys.sln` compila limpio. Datos de
+prueba (compras 9034 en Postgres, 9033/9035 en SQL Server local de dev, observaciones
+`TEST_COMPRA_CTACTE_ANULACION*`) quedan documentados, sin via real de la app para eliminar
+compras.
+
+## 2026-08-20 - modificarVenta: mismo fix de IUnitOfWork, verificado el ciclo completo de anulacion en Cuenta Corriente
+
+Pedido del usuario: modificar una venta en Cuenta Corriente y confirmar que el movimiento se
+anula correctamente. `Negocio.Venta.modificarVenta` tenia el mismo `TransactionScope` sin
+resolver que `agregarVenta` (arreglado en la entrada anterior) -- mismo fix aplicado aca:
+`VentaPg.modificarVenta` ahora acepta `Contratos.IUnitOfWork` (reusa la conexion/transaccion
+compartida en vez de abrir la propia via `AbrirConTenant`), `Datos.Venta.modificarVenta` la
+ignora (SQL Server sigue con `TransactionScope`), y `Negocio.Venta.modificarVenta` se reestructuro
+igual que `agregarVenta` (cuerpo extraido a `EjecutarModificarVenta`, rama unica por motor).
+De paso se corrigio un comentario desactualizado en `Contratos/IVentaRepository.cs` que decia
+que el reverso de EgresosCaja no estaba implementado -- si lo esta, desde la Etapa 8.
+
+**Test real pedido por el usuario, verificado de punta a punta en los dos motores**:
+1. Se crea una venta real en CtaCte (`FormaPago=CtaCte`, persona real no-Consumidor-Final) --
+   confirmado por SQL directo: `movctacte` con `Tipo=Debito, Importe=-150, QuitadoCtaCta=false`.
+2. Se modifica la misma venta sacandola de CtaCte (`FormaPago=Efectivo`, `SoloFormaPago=true`)
+   via un POST real a `/Ventas/ModificarVenta`.
+3. Verificado por SQL directo: el registro original de `movctacte` **queda intacto** (historial),
+   y se crea un **segundo registro real, opuesto**: `Tipo=Credito, Importe=+150,
+   QuitadoCtaCta=true, Detalle="Quitado de Cta.Cte."` -- saldo neto de la cuenta corriente del
+   cliente vuelve a 0. Mismo resultado exacto (mismos montos, mismo texto de detalle) en
+   Postgres (venta 1739) y en SQL Server (venta 1734) -- cero divergencia de comportamiento
+   entre motores tras el fix.
+
+**Verificado**: `CarniSys.sln` compila limpio. Regresion final en `SqlServer` sobre
+`/Home`, `/Ventas/Index`, `/Ventas/POS`, `/Ventas/MisVentas`, `/Finanzas/CtasCtes`, limpia.
+`DataEngine=SqlServer` (confirmado). Datos de prueba (ventas 1739 en Postgres y 1734 en SQL
+Server, observaciones `TEST_CTACTE_ANULACION`/`TEST_CTACTE_ANULACION_SS`) quedan documentados,
+sin via real de la app para eliminar ventas.
+
+## 2026-08-20 - Venta resuelta de fondo: IUnitOfWork explicito reemplaza TransactionScope en el camino Postgres
+
+Cierre de la deuda de `Venta` dejada abierta en la entrada anterior. Implementada la "Opcion 2"
+(conexion+transaccion explicita compartida, en vez de depender de `TransactionScope`+auto-
+enlistment de Npgsql, que ya habia demostrado ser end poco confiable para el aislamiento RLS).
+
+**Diseno implementado** (~10 archivos, todo aditivo):
+- `Contratos.IUnitOfWork` (interfaz nueva, sin depender de Npgsql): `Completar()` + `IDisposable`.
+- `DatosPostgres.UnitOfWorkPg` (implementacion real): abre una conexion+transaccion explicita
+  una sola vez, fija `app.id_empresa` una vez, y la expone para reusar.
+- `Contratos.IVentaRepository.IniciarUnitOfWork()`: `Datos.Venta` (SQL Server) devuelve `null`
+  (sigue con `TransactionScope`, sin cambios); `VentaPg` devuelve una `UnitOfWorkPg` real.
+- Parametro opcional `Contratos.IUnitOfWork unitOfWork = null` agregado a los 6 metodos que
+  necesitaban compartir la transaccion: `IVentaRepository.agregarVenta/asignarVentaEnExpendio/
+  agregarLineaVenta`, `ICierreCajaRepository.addOrEditEgresoCaja`,
+  `ICuentaCorrienteRepository.getMovCtaCteBy/addOrEditMovCtaCte`. Las implementaciones SQL
+  Server (`Datos.Venta/CierreCaja/CuentaCorriente`) ignoran el parametro -- cero cambio de
+  comportamiento. `DbPg.cs` gano 3 overloads (`NonQuery`/`Scalar`/`Reader`) que aceptan
+  `IUnitOfWork` directamente, centralizando la rama "usar la conexion compartida vs abrir la
+  propia" en un solo lugar en vez de repetirla en cada metodo Postgres.
+- `Negocio.Venta.agregarVenta` reescrito: pide `oVentaD.IniciarUnitOfWork()`; si es null usa
+  `TransactionScope` exactamente como antes (extraido a un metodo privado `EjecutarAgregarVenta`
+  para no duplicar el cuerpo); si no es null, envuelve la misma logica en `using (unitOfWork)`
+  y la completa/descarta en vez de usar `scope.Complete()`. `crearMovCtaCteVenta`,
+  `egresoCajaPagoTarjeta` y `agregarLineaVenta` (los 3 metodos internos de `Negocio.Venta`)
+  propagan `unitOfWork` hacia sus repos.
+
+**Un segundo bug real encontrado en el camino, sin relacion con transacciones**:
+`VentaPg.agregarVenta` nunca incluia `idempresa` en la lista de columnas del INSERT a
+`ventas` -- la columna cae al `DEFAULT 0`, y la politica RLS de escritura
+(`WITH CHECK (idempresa = current_setting(...)::integer)`, sin la excepcion de `idempresa = 0`
+que si tiene la politica de lectura) rechazaba el insert con `42501`. Este era el error real
+detras del mensaje de RLS que parecia (pero no era) un problema del `IUnitOfWork` -- confirmado
+recreando el error incluso con la transaccion compartida funcionando perfectamente. Revisado el
+resto de `VentaPg.cs`/`CuentaCorrientePg.cs`/`CierreCajaPg.cs`/`CompraPg.cs`: ningun otro INSERT
+tiene el mismo problema, caso aislado.
+
+**Verificado con escrituras reales, ambos motores**:
+- Postgres, venta en efectivo: POST real a `/Ventas/FinalizarVenta` -- 200, `ventaId=1737`.
+  Confirmado por SQL directo: venta + linea en Postgres con `idempresa=1` correcto, **sin**
+  movimiento de cuenta corriente (correcto -- `FormaPago=Efectivo` no es CtaCte), SQL Server
+  en 0 para esa observacion.
+- Postgres, venta con tarjeta de debito (ejercita `egresoCajaPagoTarjeta`/`CierreCajaPg`, no
+  probado hasta ahora): POST real -- 200, `ventaId=1738`. Confirmado por SQL directo: venta +
+  egreso de caja ("Venta Debito - ID:1738") ambos en Postgres, compartiendo la misma unidad de
+  trabajo con la venta.
+- SQL Server, venta en efectivo (para confirmar cero regresion en el camino TransactionScope
+  tras la reestructuracion): POST real -- 200, `ventaId=1733`, confirmado en SQL Server directo.
+- Regresion completa (10 rutas de Ventas/Stock/Productos/Cajas/Finanzas) en ambos motores,
+  limpia, sin excepciones ni caidas de IIS Express.
+
+**Datos de prueba dejados en Postgres, documentados** (sin via real de la app para
+eliminar ventas -- mismo criterio que la compra de prueba de la entrada anterior):
+`ventas.idventa` 1737 y 1738 (observaciones `TEST_DUAL_MODE_VENTA_3` /
+`TEST_DUAL_MODE_VENTA_TARJETA`), mas su linea de venta y egreso de caja asociados.
+
+**Estado final**: `DataEngine=SqlServer`. `CarniSys.sln` compila limpio. Con esto, `Compra` y
+`Venta` quedan con escritura real verificada de punta a punta en ambos motores, con las
+garantias de concurrencia ya confirmadas en la entrada anterior (el `IUnitOfWork` reusa
+exactamente el mismo patron de conexion+transaccion explicita que esos tests validaron).
+
+## 2026-08-20 - Verificacion de concurrencia real: aislamiento por tenant confirmado con evidencia (no solo lectura de docs)
+
+Pregunta del usuario, antes de seguir con el fix de `Venta`: ¿los mecanismos de aislamiento (RLS + `set_config('app.id_empresa', ..., true)` + pool de conexiones Npgsql) soportan de verdad múltiples conexiones simultáneas -- mismo usuario desde 2 terminales, varios usuarios del mismo tenant, y varios tenants en paralelo -- sin mezclar datos? Toda la verificación de esta sesión hasta ahora fue **secuencial** (un curl a la vez) -- pregunta legítima, sin responder todavía con evidencia real.
+
+**3 tests reales corridos, todos con resultado correcto:**
+
+1. **Reset de `SET LOCAL` al terminar la transacción** (con el rol real de la app, `carnisys_user`, sujeto a RLS): dentro de una transacción con `app.id_empresa='1'` seteado, `corte` devuelve 57 filas (correcto). Fuera de esa transacción, en la **misma sesión/conexión física** -- sin volver a setear nada --, `current_setting('app.id_empresa', true)` da vacío, y cualquier query que dependa de convertirlo a entero **falla con un error duro** (`la sintaxis de entrada no es válida para tipo integer`), no devuelve datos de otro tenant ni de forma silenciosa. Confirma que una conexión reciclada por el pool nunca puede heredar el tenant de un uso anterior.
+
+2. **2 conexiones Postgres genuinamente concurrentes, tenants distintos, superpuestas en el tiempo**: conexión A (tenant 1) abre transacción y duerme 3 segundos a mitad de camino; conexión B (tenant 2) arranca 1 segundo después, **mientras A todavía está "adentro"**. Resultado: A ve 57 filas (su propio `corte`), B ve 8 filas (el suyo) -- cero mezcla, verificado con los dos procesos corriendo en paralelo de verdad (`psql &`, no secuencial).
+
+3. **8 escrituras HTTP reales, genuinamente simultáneas, mismo tenant/sesión** (simulando "el mismo usuario desde varias terminales" o varios usuarios del mismo tenant escribiendo a la vez): 8 POSTs concurrentes a `/Cajas/GuardarTipoEgresoCaja` bajo Postgres -- las 8 devolvieron éxito, las 8 quedaron en la base con IDs únicos sin colisión ni pérdida (304-311), limpiado por la vía real (delete real, no SQL manual).
+
+**Conclusión, con alcance explícito**: el mecanismo de aislamiento (RLS + `SET LOCAL` transaccional) es seguro bajo concurrencia real para **todo el código que pasa por una transacción explícita** -- que es el 100% de lo verificado en las 10 etapas de cableado del modo dual más los 4 bugs recién cerrados de `Compra`. **No cubre** el camino roto de `Venta` (`TransactionScope` ambiente sin transacción explícita, ver entrada anterior) -- ese sigue sin verificar para concurrencia porque todavía ni siquiera funciona en el caso secuencial simple. La Opción 2 (conexión+transacción explícita compartida) hereda automáticamente estas garantías de concurrencia ya verificadas, porque vuelve a usar el mismo patrón de transacción explícita que estos 3 tests confirmaron seguro.
+
+## 2026-08-20 - Testeo profundo de escritura real: Compra funciona en Postgres, Venta bloqueada por un problema de fondo con TransactionScope+RLS
+
+Pedido del usuario: probar `Compra` y `Venta` con una escritura real vía HTTP en modo Postgres (deuda explícita dejada en las etapas de `StockController`/`VentasController`). Se encontraron y corrigieron **4 bugs de arquitectura reales**, y quedó **1 problema de fondo sin resolver**, documentado abajo.
+
+### Bugs encontrados y corregidos
+
+1. **`Negocio.Compra` (constructor Postgres) tenía 6 dependencias internas hardcodeadas a SQL Server** (`Corte`, `Sucursal`, `Usuario`, `CierreCaja`, `Persona`, `CuentaCorriente`) -- mismo patrón que el gap de `Negocio.Usuario` cerrado en la etapa de `LoginController`, pero mucho más extendido. Corregido con 6 parámetros opcionales nuevos en el constructor (default null = comportamiento de siempre), `NegocioFactory.CrearCompra` ahora los pasa ya cableados a Postgres reutilizando los `Crear*` que ya existían.
+
+2. **`ConexionPg.AbrirConTenant` y `DbPg.cs` no eran compatibles con `TransactionScope` ambiente** (usado por `Compra`/`Venta`/`CuentaCorriente`, pensado para SQL Server): cada llamada abría su propia conexión Npgsql **y** su propia transacción explícita, chocando con el auto-enlistment de Npgsql en la transacción ambiente -- error real reproducido: `"A transaction is already in progress; nested/concurrent transactions aren't supported"`. Corregido: `AbrirConTenant` detecta `System.Transactions.Transaction.Current` y solo abre transacción explícita si NO hay una ambiente. `DbPg.cs` y los 8 archivos `DatosPostgres/*.cs` que llaman `tx.Commit()`/`tx.Rollback()` directo se corrigieron a `tx?.Commit()`/`tx?.Rollback()` (43 ocurrencias) -- sin esto, con `tx=null` tiraba `NullReferenceException`.
+
+3. **`Negocio.CierreCaja.validarCajaAbiertaVendedor` creaba una instancia nueva de sí misma** (`new Negocio.CierreCaja(_empresa)`, siempre SQL Server) en vez de usar `this` -- mismo patrón de dependencia hardcodeada, encontrado al intentar probar `Venta` (la caja abierta se validaba contra el motor equivocado). Corregido usando `this.findByIdOrLast(...)` directo. Barrido del mismo anti-patrón (`new Negocio.<ClasePropia>(...)` dentro de la propia clase) en el resto de `Negocio/*.cs`: sin otras instancias.
+
+4. **Bug introducido y corregido en el mismo commit**: al cablear las 3 dependencias internas de `Venta` (`CuentaCorriente`, `CierreCaja`, `Persona`, mismo patrón que Compra), agregar `new Negocio.CierreCaja(empresa)` como default eager en el constructor plano de `Venta` creó un ciclo real -- `Negocio.CierreCaja` ya construye su propio `Negocio.Venta` en el constructor (existente desde antes, sin relación con esta sesión), así que `Venta → CierreCaja → Venta → ...` es recursión infinita. Resultado: `StackOverflowException`, que termina el proceso de IIS Express sin poder capturarse (**tiró abajo IIS Express 2 veces** durante la verificación). Corregido: las 3 dependencias de `Venta` quedan `null` por default y cada uno de los 3 métodos que las usa construye la suya al vuelo si no fue inyectada -- mismo comportamiento exacto que tenía el código antes de tocarlo.
+
+### Verificado con una escritura real
+
+**`Compra` (Ingreso Stock) -- funciona end-to-end en Postgres**: POST real a `/Stock/Guardar` (formulario reconstruido desde el servido real), `TipoCompra=Ingreso Stock`, 1 línea de producto. Resultado: 302 (éxito), confirmado por SQL directo que la compra (`idcompra=9033`) y su línea (`corteporcompra`) quedaron en Postgres; SQL Server siguió en 0 para esa observación. `crearMovCtaCteCompra` correctamente NO generó movimiento de cuenta corriente (`AddOrEditCompra` fija `EnCtaCte=false` para movimientos de stock simples -- comportamiento esperado, no un gap). El dato de prueba queda en Postgres, sin vía real de la app para eliminarlo (`StockController` no tiene acción de eliminar/anular) -- decisión del usuario: dejarlo documentado, no borrar por SQL directo.
+
+### Problema de fondo sin resolver: `Venta` sigue bloqueada
+
+Con los 4 bugs de arriba corregidos, un POST real a `/Ventas/FinalizarVenta` (venta simple, forma de pago Efectivo, 1 línea) **ya no crashea ni tira el error de transacción anidada**, pero falla con un error distinto: `"42501: el nuevo registro viola la política de seguridad de registros para la tabla «ventas»"` -- RLS de Postgres rechazando el INSERT.
+
+**Causa probable**: el fix de `ConexionPg.AbrirConTenant` (que evita abrir una transacción explícita propia cuando hay un `TransactionScope` ambiente, confiando en el auto-enlistment de Npgsql) no está preservando `app.id_empresa` de forma confiable entre los múltiples `AbrirConTenant` de una sola operación de venta -- cada uno abre una conexión nueva, y si Npgsql no la enlista de verdad en la transacción ambiente (o el auto-enlistment no cubre bien el patrón `SET LOCAL` vía `set_config`), el contexto de tenant se pierde antes del INSERT real. Sin dato huérfano: verificado por SQL directo que no quedó ninguna fila parcial en `ventas`.
+
+**Diagnóstico, no una decisión tomada todavía**: la opción probada (auto-enlistment ambiente, "Opción 1" del análisis original) resolvió el choque de transacciones pero no garantiza que el aislamiento por tenant (RLS) se mantenga correcto a través de múltiples conexiones dentro de una misma operación -- necesita la alternativa más robusta ("Opción 2": una única conexión+transacción explícita compartida a través de toda la cadena de llamadas, sin depender del comportamiento de `TransactionScope`+Npgsql). Es un cambio más grande, que toca varios métodos de `VentaPg`/`CuentaCorrientePg`/`CierreCajaPg`. Queda pendiente, a definir con el usuario antes de continuar.
+
+**Estado dejado**: `DataEngine=SqlServer` (confirmado). `CarniSys.sln` compila limpio. Regresión completa en `SqlServer` sobre `/Home`, `/Ventas/Index`, `/Ventas/POS`, `/Stock/Index`, `/Productos/Index`, `/Cajas/CajasAbiertas` -- todas 200, sin excepciones, confirmando que ninguno de los 4 fixes de arriba afectó el camino SQL Server (todos son aditivos/con fallback).
+
+## 2026-08-20 - CuentaCorrientePg.obtenerPagos: alias corregidos, ultimo gap abierto cerrado
 
 Pedido explícito del usuario: cerrar el único gap que seguía en la sección "Abiertos" de
 `docs/GAPS.md`. Mismo bug de alias que los otros 5 métodos de esta clase (etapa

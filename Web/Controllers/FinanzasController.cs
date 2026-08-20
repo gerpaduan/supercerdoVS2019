@@ -39,9 +39,9 @@ namespace Web.Controllers
 
             oCtaCteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
             oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oUsuarioN = new Negocio.Usuario(empresa, param);
-            oPersonasN = new Negocio.Persona(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            oPersonasN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
         }
 
         // ***********************************************************

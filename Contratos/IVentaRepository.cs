@@ -12,24 +12,35 @@ namespace Contratos
     // (mismo patron que Datos.Venta).
     public interface IVentaRepository
     {
+        // Ver Contratos/IUnitOfWork.cs. Implementacion SQL Server: devuelve null (agregarVenta
+        // sigue usando TransactionScope como siempre). Implementacion Postgres: abre una
+        // DatosPostgres.UnitOfWorkPg real, que Negocio.Venta.agregarVenta comparte con
+        // CierreCajaPg/CuentaCorrientePg en vez de usar TransactionScope (incompatible con el
+        // patron de conexion-por-metodo de Npgsql, ver docs/DECISIONS.md 2026-08-20).
+        Contratos.IUnitOfWork IniciarUnitOfWork();
+
         Entidades.Venta getVentaById(int idVenta);
         List<Entidades.Venta> getAllVentas(DateTime fechaDesde, DateTime fechaHasta, string texto, int? idVendedor, int? idCliente, int? idSucursal, bool soloAnulados, bool cargarLineas);
         List<Entidades.Venta> getVentasBalancePeriodo(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal);
         decimal getTotalKgsPesablesBalancePeriodo(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal, bool incluirVentasCuentaCorriente);
-        int agregarVenta(Entidades.Venta oVentaE);
+        // unitOfWork opcional: ver Contratos/IUnitOfWork.cs. Si se pasa, la implementacion
+        // Postgres reusa esa conexion/transaccion compartida en vez de abrir la suya propia
+        // (necesario para que agregarVenta/asignarVentaEnExpendio/agregarLineaVenta,
+        // CierreCajaPg.addOrEditEgresoCaja y CuentaCorrientePg.*MovCtaCte* sean atomicos entre
+        // si). Ignorado por la implementacion SQL Server (TransactionScope sigue como siempre).
+        int agregarVenta(Entidades.Venta oVentaE, Contratos.IUnitOfWork unitOfWork = null);
 
-        // El efecto colateral real de modificarVenta (reverso en EgresosCaja cuando la venta
-        // cta-cte tenia un egreso previo y se borran sus lineas) NO esta implementado -- depende
-        // de EgresosCaja/TiposEgresoCaja, dominio de CierreCaja.cs, todavia sin migrar. Ver
-        // docs/GAPS.md. El resto del metodo (borrar lineas + update Ventas) SI esta completo.
-        void modificarVenta(Entidades.Venta oVentaE, int sucAnterior, bool eliminarLineas);
+        // El reverso en EgresosCaja (venta con egreso previo cuyo monto cambia) esta
+        // implementado desde la Etapa 8 (EgresosCaja/TiposEgresoCaja ya migrados). unitOfWork
+        // opcional: ver Contratos/IUnitOfWork.cs.
+        void modificarVenta(Entidades.Venta oVentaE, int sucAnterior, bool eliminarLineas, Contratos.IUnitOfWork unitOfWork = null);
 
         DataTable obtenerVentas(int idSucursal, int idCliente, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados);
         DataTable getVentasVendedorCierreCaja(Entidades.CierreCaja oCierreE, bool soloAnulados);
         float getTotalVenta(int idVenta);
         float getTotalKgsVenta(int idVenta);
         float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta);
-        Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE);
+        Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE, Contratos.IUnitOfWork unitOfWork = null);
         void actualizarAlicuotaLineaVenta(int idLineaVenta, int idAlicuotaIva, float alicuotaIva);
         void eliminarLineasVenta(int idVenta);
         Entidades.Venta getUltimaVentaVendedor(Entidades.CierreCaja oCierreE);
@@ -57,7 +68,7 @@ namespace Contratos
 
         int agregarExpendio(Entidades.Venta oVentaE);
         Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE);
-        void asignarVentaEnExpendio(int idVenta, int idExpendio);
+        void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null);
         DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal);
         DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null);

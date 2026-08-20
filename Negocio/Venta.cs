@@ -21,6 +21,23 @@ namespace Negocio
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
+        // 3 dependencias internas usadas en crearMovCtaCteVenta/egresoCajaPagoTarjeta/
+        // addOrEditFactuElec. Opcionales, default null -- si no se pasan, cada metodo que las
+        // usa construye la suya al vuelo (mismo comportamiento de siempre, ver los 3 usos mas
+        // abajo). Sin esto, una venta en modo Postgres escribia Ventas/LineaVenta en Postgres
+        // pero el movimiento de cuenta corriente, el egreso de caja por tarjeta y la resolucion
+        // de persona para factura electronica seguian pegando a SQL Server -- mismo gap
+        // encontrado y cerrado en Compra (testeo profundo, 2026-08-20, ver docs/DECISIONS.md).
+        //
+        // IMPORTANTE: NO default-construir estos 3 campos aca en el constructor (ni siquiera
+        // el SQL-Server-only) -- Negocio.CierreCaja ya construye su propio Negocio.Venta en SU
+        // constructor, asi que un new Negocio.CierreCaja(...) eager aca crea un ciclo
+        // Venta->CierreCaja->Venta->... infinito (StackOverflowException real, encontrado en
+        // este mismo testeo). Quedan null salvo que NegocioFactory.CrearVenta los pase.
+        private readonly Negocio.CuentaCorriente _ctaCteN;
+        private readonly Negocio.CierreCaja _cierreCajaN;
+        private readonly Negocio.Persona _personaN;
+
         // Constructor existente: SIN CAMBIOS de comportamiento.
         public Venta(IEmpresaContext empresa, IParametrosContext param = null)
         {
@@ -30,12 +47,22 @@ namespace Negocio
         }
 
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de IVentaRepository
-        // (ej. DatosPostgres.VentaPg). Solo lo usa el controller de comparacion.
-        public Venta(Contratos.IVentaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        // (ej. DatosPostgres.VentaPg), mas opcionalmente las 3 dependencias internas ya
+        // cableadas a Postgres. NegocioFactory.CrearVenta las pasa cuando corresponde.
+        public Venta(
+            Contratos.IVentaRepository repositorio,
+            IEmpresaContext empresa,
+            IParametrosContext param = null,
+            Negocio.CuentaCorriente ctaCteN = null,
+            Negocio.CierreCaja cierreCajaN = null,
+            Negocio.Persona personaN = null)
         {
             _empresa = empresa;
             _param = param;
             oVentaD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            _ctaCteN = ctaCteN;
+            _cierreCajaN = cierreCajaN;
+            _personaN = personaN;
         }
 
 
@@ -76,109 +103,106 @@ namespace Negocio
 
         public int agregarVenta(Entidades.Venta oVentaE, bool esNotaCredito = false)
         {
-            using (TransactionScope scope = new TransactionScope())
+            // oVentaD.IniciarUnitOfWork() devuelve null para SQL Server (sigue usando
+            // TransactionScope, sin cambios) y una DatosPostgres.UnitOfWorkPg real para Postgres
+            // -- TransactionScope no es compatible con el patron de conexion-por-metodo de
+            // Npgsql (testeo profundo de escritura real, 2026-08-20, ver docs/DECISIONS.md).
+            var unitOfWork = oVentaD.IniciarUnitOfWork();
+            if (unitOfWork == null)
             {
-                try
+                using (TransactionScope scope = new TransactionScope())
                 {
-                    //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
-                    switch (oVentaE.FormaPago.ToString())
+                    try
                     {
-                        case "Efectivo":
-                            oVentaE.ComisionTarjeta = 0;
-                            break;
-                        case "Debito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionDebito, 0f);
-                            break;
-                        case "Credito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionCredito, 0f);
-                            break;
-                        default:
-                            oVentaE.ComisionTarjeta = 0;
-                            break;
+                        EjecutarAgregarVenta(oVentaE, esNotaCredito, null);
+                        // si todo salió bien, confirmamos
+                        scope.Complete();
+                        return oVentaE.IdVenta;
                     }
-                    oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
-
-                    ///llama al metodo para asinar el idVenta a la tabla Expendios
-                    ///
-                    if (oVentaE.ListaExpendios != null)
+                    catch (Exception ex)
                     {
-                        foreach (int item in oVentaE.ListaExpendios)
-                            oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+                        // si algo falla NO llamamos a scope.Complete()
+                        // y automáticamente se hace rollback
+                        throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
                     }
-
-                    /////para no repetir lineas, se multiplica por el multiplicador 
-                    /////esto cuando es NC, lo hace el signo inverso
-                    /////
-                    //int multiplicador = esNotaCredito ? -1 : 1;
-
-                    //if (esNotaCredito)
-                    //{
-                    //    for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
-                    //    {
-                    //        oVentaE.LineasVenta[i].Venta = oVentaE;
-                    //        oVentaE.LineasVenta[i].CantKg *= -1;
-                    //        oVentaE.LineasVenta[i].KgsTotalCalculado *= -1;
-                    //        oVentaE.LineasVenta[i] = agregarLineaVenta(oVentaE.LineasVenta[i]);
-                    //    }
-                    //}
-                    //else
-                    //{
-
-                    //    for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
-                    //    {
-                    //        Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
-                    //        //setear por cada linea cantKg <- KgsTotalCalculado
-                    //        linea.CantKg = linea.KgsTotalCalculado;
-
-                    //        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
-                    //        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
-                    //            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
-
-                    //        oVentaE.LineasVenta[index] = agregarLineaVenta(linea);
-                    //    }
-                    //}
-
-                    for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
-                    {
-                        var linea = oVentaE.LineasVenta[i];
-                        linea.Venta = oVentaE;
-
-                        if (esNotaCredito)
-                        {
-                            linea.CantKg *= -1;
-                            linea.KgsTotalCalculado *= -1;
-                        }
-                        else
-                        {
-                            // setear por cada línea cantKg <- KgsTotalCalculado
-                            linea.CantKg = linea.KgsTotalCalculado;
-
-                            // si está anulada la línea se asigna el IdLineaVenta del corte anulado
-                            linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado)
-                                ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta
-                                : Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
-                        }
-
-                        oVentaE.LineasVenta[i] = agregarLineaVenta(linea);
-                    }
-
-
-                    egresoCajaPagoTarjeta(oVentaE);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
-
-                    crearMovCtaCteVenta(oVentaE);
-
-                    // si todo salió bien, confirmamos
-                    scope.Complete();
-
-                    return oVentaE.IdVenta;
-                }
-                catch (Exception ex)
-                {
-                    // si algo falla NO llamamos a scope.Complete()
-                    // y automáticamente se hace rollback
-                    throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
                 }
             }
+            else
+            {
+                using (unitOfWork)
+                {
+                    try
+                    {
+                        EjecutarAgregarVenta(oVentaE, esNotaCredito, unitOfWork);
+                        unitOfWork.Completar();
+                        return oVentaE.IdVenta;
+                    }
+                    catch (Exception ex)
+                    {
+                        // sin Completar(): Dispose() hace rollback automatico
+                        throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
+                    }
+                }
+            }
+        }
+
+        // Cuerpo real de agregarVenta, compartido entre el camino SQL Server (TransactionScope,
+        // unitOfWork=null) y el camino Postgres (unitOfWork real, propagado a cada sub-llamada).
+        private void EjecutarAgregarVenta(Entidades.Venta oVentaE, bool esNotaCredito, Contratos.IUnitOfWork unitOfWork)
+        {
+            //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
+            switch (oVentaE.FormaPago.ToString())
+            {
+                case "Efectivo":
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+                case "Debito":
+                    oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionDebito, 0f);
+                    break;
+                case "Credito":
+                    oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionCredito, 0f);
+                    break;
+                default:
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+            }
+            oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE, unitOfWork);
+
+            ///llama al metodo para asinar el idVenta a la tabla Expendios
+            ///
+            if (oVentaE.ListaExpendios != null)
+            {
+                foreach (int item in oVentaE.ListaExpendios)
+                    oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item, unitOfWork);
+            }
+
+            for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
+            {
+                var linea = oVentaE.LineasVenta[i];
+                linea.Venta = oVentaE;
+
+                if (esNotaCredito)
+                {
+                    linea.CantKg *= -1;
+                    linea.KgsTotalCalculado *= -1;
+                }
+                else
+                {
+                    // setear por cada línea cantKg <- KgsTotalCalculado
+                    linea.CantKg = linea.KgsTotalCalculado;
+
+                    // si está anulada la línea se asigna el IdLineaVenta del corte anulado
+                    linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado)
+                        ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta
+                        : Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+                }
+
+                oVentaE.LineasVenta[i] = agregarLineaVenta(linea, unitOfWork);
+            }
+
+            egresoCajaPagoTarjeta(oVentaE, unitOfWork);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
+
+            crearMovCtaCteVenta(oVentaE, unitOfWork);
         }
 
         // Corrige la alicuota de una linea ya insertada (agregarLineaVenta la hardcodea desde el Corte usado).
@@ -195,92 +219,96 @@ namespace Negocio
 
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas, List<Entidades.LineaVenta> lineaNuevosAnulados)
         {
-            ////Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
-            //switch (oVentaE.FormaPago.ToString())
-            //{
-            //    case "Efectivo":
-            //        oVentaE.ComisionTarjeta = 0;
-            //        break;
-            //    case "Debito":
-            //        oVentaE.ComisionTarjeta = Entidades.ParamKeys.comisionDebito;
-            //        break;
-            //    case "Credito":
-            //        oVentaE.ComisionTarjeta = Entidades.ParamKeys.comisionCredito;
-            //        break;
-            //    default:
-            //        oVentaE.ComisionTarjeta = 0;
-            //        break;
-            //}
-            //oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
-
-            using (TransactionScope scope = new TransactionScope())
+            // Mismo mecanismo que agregarVenta: TransactionScope para SQL Server (sin cambios),
+            // IUnitOfWork explicito para Postgres (ver docs/DECISIONS.md, 2026-08-20).
+            var unitOfWork = oVentaD.IniciarUnitOfWork();
+            if (unitOfWork == null)
             {
-                try
+                using (TransactionScope scope = new TransactionScope())
                 {
-                    //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
-                    switch (oVentaE.FormaPago.ToString())
+                    try
                     {
-                        case "Efectivo":
-                            oVentaE.ComisionTarjeta = 0;
-                            break;
-                        case "Debito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionDebito, 0f);
-                            break;
-                        case "Credito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionCredito, 0f);
-                            break;
-                        default:
-                            oVentaE.ComisionTarjeta = 0;
-                            break;
+                        EjecutarModificarVenta(oVentaE, SucAnterior, eliminarLineas, lineaNuevosAnulados, null);
+                        scope.Complete();
                     }
-                    oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
-
-                    if (lineaNuevosAnulados != null)
+                    catch (Exception ex)
                     {
-                        foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
-                        {
-                            agregarLineaVenta(lineaNuevoAnulado);
-                        }
+                        throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
                     }
-                    ///Si se llema a eliminar lineas - Desde FormUltimaVenta no se eliminan pero sí en formModificarVenta
-                    if (eliminarLineas)
-                    {
-                        for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
-                        {
-                            var linea = oVentaE.LineasVenta[i];
-                            linea.Venta = oVentaE;
-                            linea.CantKg = linea.KgsTotalCalculado;
-                            linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado)
-                                ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta
-                                : Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
-
-                            oVentaE.LineasVenta[i] = agregarLineaVenta(linea);
-                        }
-                    }
-
-                    egresoCajaPagoTarjeta(oVentaE);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
-
-                    crearMovCtaCteVenta(oVentaE);
-
-                    // si todo salió bien, confirmamos
-                    scope.Complete();
                 }
-                catch (Exception ex)
+            }
+            else
+            {
+                using (unitOfWork)
                 {
-                    // si algo falla NO llamamos a scope.Complete()
-                    // y automáticamente se hace rollback
-                    throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
+                    try
+                    {
+                        EjecutarModificarVenta(oVentaE, SucAnterior, eliminarLineas, lineaNuevosAnulados, unitOfWork);
+                        unitOfWork.Completar();
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
+                    }
                 }
             }
         }
-        public void crearMovCtaCteVenta(Entidades.Venta oVentaE)
+
+        private void EjecutarModificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas, List<Entidades.LineaVenta> lineaNuevosAnulados, Contratos.IUnitOfWork unitOfWork)
+        {
+            //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
+            switch (oVentaE.FormaPago.ToString())
+            {
+                case "Efectivo":
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+                case "Debito":
+                    oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionDebito, 0f);
+                    break;
+                case "Credito":
+                    oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionCredito, 0f);
+                    break;
+                default:
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+            }
+            oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas, unitOfWork);
+
+            if (lineaNuevosAnulados != null)
+            {
+                foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
+                {
+                    agregarLineaVenta(lineaNuevoAnulado, unitOfWork);
+                }
+            }
+            ///Si se llema a eliminar lineas - Desde FormUltimaVenta no se eliminan pero sí en formModificarVenta
+            if (eliminarLineas)
+            {
+                for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
+                {
+                    var linea = oVentaE.LineasVenta[i];
+                    linea.Venta = oVentaE;
+                    linea.CantKg = linea.KgsTotalCalculado;
+                    linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado)
+                        ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta
+                        : Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                    oVentaE.LineasVenta[i] = agregarLineaVenta(linea, unitOfWork);
+                }
+            }
+
+            egresoCajaPagoTarjeta(oVentaE, unitOfWork);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
+
+            crearMovCtaCteVenta(oVentaE, unitOfWork);
+        }
+        public void crearMovCtaCteVenta(Entidades.Venta oVentaE, Contratos.IUnitOfWork unitOfWork = null)
         {
             //oVentaE = oVentaD.getVentaById(oVentaE.IdVenta);
-            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(_empresa);
-            oCtaCteN.crearMovCtaCte(oVentaE.Persona, oVentaE.FechaVenta, Entidades.MovCtaCte.tablas.Ventas, oVentaE.IdVenta, oVentaE.NroRemito,
+            var ctaCteN = _ctaCteN ?? new Negocio.CuentaCorriente(_empresa);
+            ctaCteN.crearMovCtaCte(oVentaE.Persona, oVentaE.FechaVenta, Entidades.MovCtaCte.tablas.Ventas, oVentaE.IdVenta, oVentaE.NroRemito,
                 //"", Entidades.MovCtaCte.tipoMov.Debito, oVentaE.LineasVenta.Count == 0 ? 0 : Entidades.Venta. oVentaD.getTotalVenta(oVentaE.IdVenta), oVentaE.Sucursal,
                 "", Entidades.MovCtaCte.tipoMov.Debito, oVentaE.LineasVenta.Count == 0 ? 0 : oVentaE.getImporteVenta(oVentaE), oVentaE.Sucursal,
-                oVentaE.Creado, oVentaE.Vendedor, oVentaE.Actualizado, null, oVentaE.EnCtaCte, null, null, null);      
+                oVentaE.Creado, oVentaE.Vendedor, oVentaE.Actualizado, null, oVentaE.EnCtaCte, null, null, null, unitOfWork);
         }
 
         public float getTotalVenta(int idVenta)
@@ -309,10 +337,10 @@ namespace Negocio
             return oVentaD.obtenerTotalVentas(idVendedor, idSucursal, fechaDesde, fechaHasta);
         } 
 
-        public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE)
+        public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE, Contratos.IUnitOfWork unitOfWork = null)
         {
             oLineaE.AjustePrecio = oLineaE.PrecioKg - oLineaE.Corte.precioKgReferencia;
-            return oVentaD.agregarLineaVenta(oLineaE);
+            return oVentaD.agregarLineaVenta(oLineaE, unitOfWork);
         }
 
         public  List<Entidades.LineaVenta> obtenerLineasVenta(int idVenta)
@@ -355,7 +383,7 @@ namespace Negocio
             return oVentaD.ultimasVentasCliente(idSucursal, idPersona);
         }
 
-        public void egresoCajaPagoTarjeta(Entidades.Venta oVentaConEgresoCaja)//(int idVenta, Entidades.Usuario oUsuario, float pagoMixtoEfectivo)
+        public void egresoCajaPagoTarjeta(Entidades.Venta oVentaConEgresoCaja, Contratos.IUnitOfWork unitOfWork = null)//(int idVenta, Entidades.Usuario oUsuario, float pagoMixtoEfectivo)
         {
             //Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
 
@@ -399,8 +427,8 @@ namespace Negocio
                 oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
                 oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oVentaConEgresoCaja.Vendedor != null ? oVentaConEgresoCaja.Vendedor.Id : -1) : -1;
 
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(_empresa);
-                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                var cierreCajaN = _cierreCajaN ?? new Negocio.CierreCaja(_empresa);
+                oEgresoCajaE = cierreCajaN.addOrEditEgresoCaja(oEgresoCajaE, unitOfWork);
             }
         }
 
@@ -589,7 +617,7 @@ namespace Negocio
                 if (oFacturaElectronicaE.Venta != null &&
                     oFacturaElectronicaE.NroDocAfip != oFacturaElectronicaE.Venta.Persona.Cuit)
                 {
-                    Negocio.Persona personaN = new Negocio.Persona(_empresa, _param);
+                    var personaN = _personaN ?? new Negocio.Persona(_empresa, _param);
                     int idPersona = personaN.existeCuit(oFacturaElectronicaE.NroDocAfip.ToString());
                     if (idPersona > 0)
                         oVentaD.actualizarCliente(oFacturaElectronicaE.Venta.IdVenta, idPersona);

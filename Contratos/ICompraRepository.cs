@@ -9,11 +9,18 @@ namespace Contratos
     // Postgres) quedan fuera de esta interfaz -- no es un olvido. Ver docs/DECISIONS.md, Etapa 9.
     public interface ICompraRepository
     {
+        // Ver Contratos/IUnitOfWork.cs. Implementacion SQL Server: null (AddOrEditCompra sigue
+        // con TransactionScope). Implementacion Postgres: UnitOfWorkPg real -- necesario porque
+        // AddOrEditCompra toca esta interfaz + ICuentaCorrienteRepository + ICierreCajaRepository
+        // dentro de la misma operacion (testeo profundo, 2026-08-20, ver docs/DECISIONS.md).
+        Contratos.IUnitOfWork IniciarUnitOfWork();
+
         void anularCompra(int idCompra);
         DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal);
         DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal);
         DataTable findById(int idCompra);
-        int addOrEditCompra(Entidades.Compra oCompraE);
+        // unitOfWork opcional: ver Contratos/IUnitOfWork.cs.
+        int addOrEditCompra(Entidades.Compra oCompraE, Contratos.IUnitOfWork unitOfWork = null);
         int agregarCompra(Entidades.Compra oCompraE);
         void ModificarCompra(Entidades.Compra oCompraE);
         void actualizarObservacionesCompra(int idCompra, string observaciones, int actualizadoPor);
@@ -22,9 +29,9 @@ namespace Contratos
         void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, int actualizadoPor);
         float getTotalCompra(int idCompra, string tipoCompra);
         void modificarPrecioMedia(int idCompra, float precioKg);
-        void agregarCortePorCompra(Entidades.CortePorCompra oCorteE);
+        void agregarCortePorCompra(Entidades.CortePorCompra oCorteE, Contratos.IUnitOfWork unitOfWork = null);
         void limpiarCortesPorCompra(int idCompra);
-        void agregarMediaRes(Entidades.MediaRes oMediaResE);
+        void agregarMediaRes(Entidades.MediaRes oMediaResE, Contratos.IUnitOfWork unitOfWork = null);
         int obtenerIdUltimaCompra();
         DataTable obtenerCortesPorCompra(int idCompra);
         DataTable obtenerMediasPorCompra(int idCompra);

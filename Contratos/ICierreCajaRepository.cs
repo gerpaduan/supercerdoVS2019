@@ -21,7 +21,8 @@ namespace Contratos
         DataTable obtenerEgresosCaja(int idSucursal, int idUsuario, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta);
         DataTable obtenerEgresosCajaGastosBalance(int idSucursal, DateTime fechaDesde, DateTime fechaHasta);
         DataTable obtenerGastosAgrupadosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal);
-        Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja);
+        // unitOfWork opcional: ver Contratos/IUnitOfWork.cs.
+        Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null);
         Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja);
         List<Entidades.EgresoCaja> getEgresosCajaByIds(List<int> ids);
         Entidades.EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID);

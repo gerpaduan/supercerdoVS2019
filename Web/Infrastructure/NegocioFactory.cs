@@ -46,7 +46,19 @@ namespace Web.Infrastructure
             if (!UsarPostgres) return new Negocio.Compra(empresa, param);
 
             var repo = new DatosPostgres.CompraPg(PgConnString, empresa.IdEmpresa);
-            return new Negocio.Compra(repo, empresa, param);
+            // Las 6 dependencias internas de Compra (Corte, Sucursal, Usuario, CierreCaja,
+            // Persona, CuentaCorriente) se pasan ya cableadas a Postgres -- sin esto, Compra
+            // solo escribia su propio bloque en Postgres pero crearMovCtaCteCompra (siempre se
+            // llama) seguia pegando a SQL Server. Ver docs/DECISIONS.md, testeo profundo
+            // 2026-08-20.
+            return new Negocio.Compra(
+                repo, empresa, param,
+                corteN: CrearCorte(empresa, param),
+                sucursalN: CrearSucursal(empresa, param),
+                usuarioN: CrearUsuario(empresa, param),
+                cierreCajaN: CrearCierreCaja(empresa, param),
+                personaN: CrearPersona(empresa, param),
+                ctaCteN: CrearCuentaCorriente(empresa, param));
         }
 
         public static Negocio.Corte CrearCorte(IEmpresaContext empresa, IParametrosContext param = null)
@@ -141,7 +153,13 @@ namespace Web.Infrastructure
             var sucursalRepo = new DatosPostgres.SucursalPg(PgConnString, empresa.IdEmpresa);
             var corteRepo = new DatosPostgres.CortePg(PgConnString, empresa.IdEmpresa, personaRepo);
             var repo = new DatosPostgres.VentaPg(PgConnString, empresa.IdEmpresa, personaRepo, sucursalRepo, corteRepo);
-            return new Negocio.Venta(repo, empresa, param);
+            // Mismo motivo que en CrearCompra: las 3 dependencias internas de Venta
+            // (CuentaCorriente, CierreCaja, Persona) se pasan ya cableadas a Postgres.
+            return new Negocio.Venta(
+                repo, empresa, param,
+                ctaCteN: CrearCuentaCorriente(empresa, param),
+                cierreCajaN: CrearCierreCaja(empresa, param),
+                personaN: CrearPersona(empresa, param));
         }
     }
 }

@@ -371,7 +371,7 @@ namespace Datos
             );
         }
 
-        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
+        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null)
         {
             if (oEgresoCaja == null) throw new ArgumentNullException(nameof(oEgresoCaja));
 

@@ -27,11 +27,11 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oCompraN = new Negocio.Compra(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oUsuarioN = new Negocio.Usuario(empresa, param);
-            oPersonaN = new Negocio.Persona(empresa, param);
-            oCorteN = new Negocio.Corte(empresa, param);
+            oCompraN = Web.Infrastructure.NegocioFactory.CrearCompra(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            oPersonaN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
             oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa, param);
         }
 

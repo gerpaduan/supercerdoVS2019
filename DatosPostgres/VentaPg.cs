@@ -43,6 +43,8 @@ namespace DatosPostgres
             _corteRepo = corteRepo ?? throw new ArgumentNullException(nameof(corteRepo));
         }
 
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => UnitOfWorkPg.Iniciar(_connectionString, _idEmpresa);
+
         #region Helpers
 
         private static bool ColumnaExiste(NpgsqlDataReader dr, string columna)
@@ -306,18 +308,18 @@ namespace DatosPostgres
             return result == null || result == DBNull.Value ? 0m : Convert.ToDecimal(result);
         }
 
-        public int agregarVenta(Venta oVentaE)
+        public int agregarVenta(Venta oVentaE, Contratos.IUnitOfWork unitOfWork = null)
         {
             const string sql = @"
                 INSERT INTO ventas (idvendedor, fechaventa, idsucursal, turno, diafestivo, observaciones, idpersona,
                     nroremito, estado, enctacte, formapago, tipocomprobante, cuit, email, acumredondeokgs,
-                    acumredondeoimporte, comisiontarjeta, pagomixtoefectivo, creado)
+                    acumredondeoimporte, comisiontarjeta, pagomixtoefectivo, creado, idempresa)
                 VALUES (@idVendedor, @fechaVenta, @idSucursal, @turno, NULL, @observaciones, @idPersona,
                     @nroRemito, '', @enCtaCte, @formaPago, @tipoComprobante, @cuit, @email, @acumRedondeoKgs,
-                    @acumRedondeoImporte, @comisionTarjeta, @pagoMixtoEfectivo, now());
+                    @acumRedondeoImporte, @comisionTarjeta, @pagoMixtoEfectivo, now(), @idEmpresa);
                 SELECT idventa FROM ventas WHERE idsucursal = @idSucursal ORDER BY idventa DESC LIMIT 1;";
 
-            object result = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
+            Action<NpgsqlParameterCollection> setParams = p =>
             {
                 p.AddWithValue("idVendedor", oVentaE.Vendedor.Id);
                 p.AddWithValue("fechaVenta", oVentaE.FechaVenta);
@@ -334,18 +336,54 @@ namespace DatosPostgres
                 p.AddWithValue("acumRedondeoKgs", oVentaE.AcumRedondeoKgs);
                 p.AddWithValue("acumRedondeoImporte", oVentaE.AcumRedondeoImporte);
                 p.AddWithValue("comisionTarjeta", oVentaE.ComisionTarjeta);
+                p.AddWithValue("idEmpresa", _idEmpresa);
                 p.AddWithValue("pagoMixtoEfectivo", oVentaE.PagoMixtoEfectivo);
-            });
+            };
+
+            object result;
+            var uow = unitOfWork as UnitOfWorkPg;
+            if (uow != null)
+            {
+                using (var cmd = new NpgsqlCommand(sql, uow.Connection, uow.Transaction))
+                {
+                    setParams(cmd.Parameters);
+                    result = cmd.ExecuteScalar();
+                }
+            }
+            else
+            {
+                result = DbPg.Scalar(_connectionString, _idEmpresa, sql, setParams);
+            }
 
             return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
         }
 
-        public void modificarVenta(Venta oVentaE, int sucAnterior, bool eliminarLineas)
+        public void modificarVenta(Venta oVentaE, int sucAnterior, bool eliminarLineas, Contratos.IUnitOfWork unitOfWork = null)
         {
+            var uowCompartida = unitOfWork as UnitOfWorkPg;
+            if (uowCompartida != null)
+            {
+                EjecutarModificarVenta(oVentaE, eliminarLineas, uowCompartida.Connection, uowCompartida.Transaction);
+                return;
+            }
+
             using (var con = ConexionPg.AbrirConTenant(_connectionString, _idEmpresa, out var tx))
             {
                 try
                 {
+                    EjecutarModificarVenta(oVentaE, eliminarLineas, con, tx);
+                    tx?.Commit();
+                }
+                catch
+                {
+                    try { tx?.Rollback(); } catch { }
+                    throw;
+                }
+            }
+        }
+
+        private void EjecutarModificarVenta(Venta oVentaE, bool eliminarLineas, NpgsqlConnection con, NpgsqlTransaction tx)
+        {
                     if (eliminarLineas)
                     {
                         using (var cmdDel = new NpgsqlCommand("DELETE FROM lineaventa WHERE idventa = @idVenta;", con, tx))
@@ -413,15 +451,6 @@ namespace DatosPostgres
                             cmdReverso.ExecuteNonQuery();
                         }
                     }
-
-                    tx.Commit();
-                }
-                catch
-                {
-                    try { tx.Rollback(); } catch { }
-                    throw;
-                }
-            }
         }
 
         public DataTable obtenerVentas(int idSucursal, int idCliente, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
@@ -546,7 +575,7 @@ namespace DatosPostgres
             return result == null || result == DBNull.Value ? 0f : Convert.ToSingle(result);
         }
 
-        public LineaVenta agregarLineaVenta(LineaVenta oLineaE)
+        public LineaVenta agregarLineaVenta(LineaVenta oLineaE, Contratos.IUnitOfWork unitOfWork = null)
         {
             const string sql = @"
                 INSERT INTO lineaventa (idventa, idcorte, idanulado, idlineaventaanulado, cantkg, kgsajustetarj,
@@ -555,7 +584,7 @@ namespace DatosPostgres
                     @porcKgsAjusteTarj, @idAlicuotaIva, @alicuotaIva, @precioKg, @ajustePrecio, @pesoBalanza, @bonificacion, @idEmpresa)
                 RETURNING idlineaventa;";
 
-            object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sql, p =>
+            Action<NpgsqlParameterCollection> setParams = p =>
             {
                 p.AddWithValue("idVenta", oLineaE.Venta.IdVenta);
                 p.AddWithValue("idCorte", oLineaE.Corte.idCorte);
@@ -571,7 +600,22 @@ namespace DatosPostgres
                 p.AddWithValue("pesoBalanza", oLineaE.PesoBalanza);
                 p.AddWithValue("bonificacion", oLineaE.Bonificacion);
                 p.AddWithValue("idEmpresa", _idEmpresa);
-            });
+            };
+
+            object nuevoId;
+            var uow = unitOfWork as UnitOfWorkPg;
+            if (uow != null)
+            {
+                using (var cmd = new NpgsqlCommand(sql, uow.Connection, uow.Transaction))
+                {
+                    setParams(cmd.Parameters);
+                    nuevoId = cmd.ExecuteScalar();
+                }
+            }
+            else
+            {
+                nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sql, setParams);
+            }
 
             oLineaE.IdLineaVenta = Convert.ToInt32(nuevoId);
             return oLineaE;
@@ -889,11 +933,11 @@ namespace DatosPostgres
                         cmd.ExecuteNonQuery();
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -926,11 +970,11 @@ namespace DatosPostgres
                         cmd.ExecuteNonQuery();
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -991,13 +1035,13 @@ namespace DatosPostgres
                         idExpendioObj = cmd.ExecuteScalar();
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
 
                     return (idExpendioObj == null || idExpendioObj == DBNull.Value) ? 0 : Convert.ToInt32(idExpendioObj);
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
@@ -1023,15 +1067,28 @@ namespace DatosPostgres
             return oLineaE;
         }
 
-        public void asignarVentaEnExpendio(int idVenta, int idExpendio)
+        public void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null)
         {
-            DbPg.NonQuery(_connectionString, _idEmpresa,
-                "UPDATE expendios SET idventa = @idVenta WHERE idexpendio = @idExpendio;",
-                p =>
+            const string sql = "UPDATE expendios SET idventa = @idVenta WHERE idexpendio = @idExpendio;";
+            Action<NpgsqlParameterCollection> setParams = p =>
+            {
+                p.AddWithValue("idVenta", idVenta);
+                p.AddWithValue("idExpendio", idExpendio);
+            };
+
+            var uow = unitOfWork as UnitOfWorkPg;
+            if (uow != null)
+            {
+                using (var cmd = new NpgsqlCommand(sql, uow.Connection, uow.Transaction))
                 {
-                    p.AddWithValue("idVenta", idVenta);
-                    p.AddWithValue("idExpendio", idExpendio);
-                });
+                    setParams(cmd.Parameters);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            else
+            {
+                DbPg.NonQuery(_connectionString, _idEmpresa, sql, setParams);
+            }
         }
 
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
@@ -1382,11 +1439,11 @@ namespace DatosPostgres
                         }
                     }
 
-                    tx.Commit();
+                    tx?.Commit();
                 }
                 catch
                 {
-                    try { tx.Rollback(); } catch { }
+                    try { tx?.Rollback(); } catch { }
                     throw;
                 }
             }
