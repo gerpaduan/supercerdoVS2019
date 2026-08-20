@@ -679,11 +679,11 @@ namespace DatosPostgres
         {
             const string sql = @"
                 SELECT
-                    p.id, p.fecha, per.razonsocial,
-                    p.nrorecibo, p.importe, p.aproveedor,
-                    CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS operacion,
-                    p.formapago, p.efectivo, p.observaciones, p.creado, creadopor.nombre AS creadopor,
-                    p.actualizado, actualizadopor.nombre AS actualizadopor
+                    p.id, p.fecha, per.razonsocial AS ""razonSocial"",
+                    p.nrorecibo AS ""nroRecibo"", p.importe, p.aproveedor AS ""aProveedor"",
+                    CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS ""Operacion"",
+                    p.formapago AS ""formaPago"", p.efectivo, p.observaciones, p.creado, creadopor.nombre AS ""CreadoPor"",
+                    p.actualizado, actualizadopor.nombre AS ""ActualizadoPor""
                 FROM pagos p
                 INNER JOIN personas per ON p.idpersona = per.idpersona
                 LEFT JOIN usuarios actualizadopor ON p.actualizadopor = actualizadopor.id

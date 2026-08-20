@@ -1,6 +1,36 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Auditoria de production-readiness: 2 gaps de RLS cerrados, GAPS.md actualizado
+## 2026-08-20 (la mas reciente) - CuentaCorrientePg.obtenerPagos: alias corregidos, ultimo gap abierto cerrado
+
+Pedido explícito del usuario: cerrar el único gap que seguía en la sección "Abiertos" de
+`docs/GAPS.md`. Mismo bug de alias que los otros 5 métodos de esta clase (etapa
+`CuentaCorriente`, `9dd132dc`) -- alias en minúsculas sin comillas (`razonsocial`,
+`nrorecibo`, `aproveedor`, `operacion`, `formapago`, `creadopor`, `actualizadopor`) en vez de
+los originales de SQL Server (`razonSocial`, `nroRecibo`, `aProveedor`, `Operacion`,
+`formaPago`, `CreadoPor`, `ActualizadoPor`). Corregido citando los alias exactos entre comillas
+dobles, mismo patrón que el resto de la clase.
+
+**Nota sobre el caller real**: `obtenerPagos` no lo llama ningún controller de `Web/` --
+su único caller es `Presentacion/Pagos/formPagos.cs` (WinForms), que nunca toca Postgres por
+diseño. El fix es por consistencia/fidelidad con el resto de la clase ya cerrada, no porque
+haya un riesgo activo hoy.
+
+**Verificado**: `CarniSys.sln` compila limpio. Sin caller real en Web, se verificó con `psql`
+directo (`SELECT` completo con `set_config('app.id_empresa', '1', false)` simulando el
+contexto de tenant) -- los 14 alias devueltos coinciden exactamente con los de SQL Server.
+
+## 2026-08-20 - GAPS.md: 3 entradas movidas a "fuera de alcance"
+
+Decisión del usuario: no se migran datos a `ServidorSM`/`San Lorenzo` hasta que lo pida
+explícitamente -- ninguno de los 3 gaps que dependían de esa decisión (confirmar
+`buscarProveedor` contra producción real, o esperar un caller real en `StockController` para
+`obtenerProveedores`/topología legacy de `SucursalPg`) tiene una acción disponible hoy. Se
+movieron de "Abiertos" a "Fuera de alcance" en `docs/GAPS.md`, con la razón documentada en cada
+entrada, en vez de implementarlos sin caller real (violaría §2.7, no inventar) o borrarlos sin
+dejar rastro. Queda solo 1 entrada en "Abiertos": `CuentaCorrientePg.obtenerPagos` (alias sin
+verificar, sin caller todavía).
+
+## 2026-08-20 - Auditoria de production-readiness: 2 gaps de RLS cerrados, GAPS.md actualizado
 
 Tras cerrar los 10 módulos del modo dual (`LoginController`, `328d1b55`), auditoría completa
 pedida por el usuario para responder "¿está usable la migración a Postgres para largar a
