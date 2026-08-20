@@ -26,11 +26,15 @@ difieren **Tipo o Importe** del `MovCtaCte` encontrado (`getMovCtaCteBy` busca p
 `Tabla+IdTabla`, sin filtrar por persona); si un pago cambia solo de persona (mismo tipo, mismo
 importe), el registro existente se **actualiza in-place** (mismo `Id`, nuevo `IdPersona`) en vez
 de anularse y recrearse. Verificado identico en ambos motores (ver abajo) -- confirma que es
-logica de negocio heredada, no una regresion de la migracion. Marcado como hallazgo para
-decision del usuario: si se quiere el comportamiento pedido (anular+recrear tambien por cambio
-de persona), es un cambio de logica de negocio en `crearMovCtaCte` compartida por Venta/Compra/
-Pagos, fuera del alcance de este fix de plomeria -- requiere confirmacion explicita antes de
-tocarla (afecta los 3 modulos).
+logica de negocio heredada, no una regresion de la migracion.
+
+**Decision del usuario (2026-08-20, mismo dia)**: retira el pedido de que el cambio de persona
+tambien anule+recree. El comportamiento actual (mover el `MovCtaCte` existente a la persona
+correcta, in-place, sin anulacion) queda confirmado como el deseado -- un pago sigue siendo
+"el mismo movimiento", solo corregido de persona, no una operacion nueva. Alternativa descartada:
+anular+recrear por cambio de persona (lo pedido originalmente) -- se descarta porque duplicaria
+el historial de movimientos sin necesidad real, dado que Tipo/Importe no cambiaron. Sin cambios
+de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 
 **Verificado con escrituras reales, ambos motores, pago Id=61 en cada uno**:
 - Escenario A (importe 100 -> 150): registro original (`Debito -100`) intacto, `ANULACION`
