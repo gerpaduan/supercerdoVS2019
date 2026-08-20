@@ -1,6 +1,55 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Modo dual: LoginController cableado (ultimo modulo pendiente) + fix real en Negocio/Usuario.cs (gap de Sucursal/Empresa hardcodeado a SQL Server)
+## 2026-08-20 (la mas reciente) - Auditoria de production-readiness: 2 gaps de RLS cerrados, GAPS.md actualizado
+
+Tras cerrar los 10 módulos del modo dual (`LoginController`, `328d1b55`), auditoría completa
+pedida por el usuario para responder "¿está usable la migración a Postgres para largar a
+producción?". Contexto clave aclarado por el usuario en esta etapa: **por ahora no se migran
+datos de `ServidorSM`/`San Lorenzo` (SQL Server, producción real) -- eso queda para más
+adelante**. El foco actual es que la base `carnisys` de Postgres local quede completamente
+correcta y equivalente a SQL Server, porque **esa base (multi-tenant) es la que eventualmente
+se lanza a producción**, no un simple espejo de una sola empresa.
+
+**Hallazgo de la auditoría, 2 gaps de RLS sin documentar**: `auditoriacambiosucursalcaja`
+(tabla de auditoría, solo-escritura desde la app) y `catalogoglobalimportacionproductos`
+(tracking de qué producto global importó cada empresa) tienen columna `idempresa` pero
+**no tenían política RLS** -- rompía el principio de "aislamiento a nivel de fila desde el
+día 1" del stack estándar. No eran una fuga activa (el código ya filtra por `_idEmpresa` a
+mano en ambas, y todo query pasa por `ConexionPg.AbrirConTenant`, que ya fija
+`app.id_empresa` en la sesión), pero quedaban sin el respaldo a nivel de base que sí tiene el
+resto de las tablas multi-tenant.
+
+**Fix**: mismo patrón de política ya usado en el resto de la base (`<tabla>_rls`, `USING`
+sobre `current_setting('app.id_empresa', true)` con fallback a `idempresa = 0`, `WITH CHECK`
+exigiendo `idempresa = current_setting(...)`). Aplicado con el rol dueño de las tablas
+(`carnisys_admin`), no con el rol de bypass RLS. Verificado que el rol real de la app
+(`carnisys_user`, el que usa `ConexionPostgresPiloto`) **no es superusuario, no tiene
+`BYPASSRLS` y no es dueño de ninguna tabla** -- confirma que el aislamiento por RLS en toda
+la base es real, no cosmético.
+
+**`docs/GAPS.md` corregido**: decía "sin gaps abiertos" desde la Etapa 8 (2026-08-18), lo cual
+ya no reflejaba el código -- corregido con el inventario real de 4 `TODO(claude)` vigentes
+(`PersonaPg.buscarProveedor`/`obtenerProveedores`, `SucursalPg` x2 de topología legacy,
+`CuentaCorrientePg.obtenerPagos` con alias sin verificar) más 1 ítem documentado como
+explícitamente fuera de alcance (`CuentaCorrientePg.eliminarPago`, SP inexistente en SQL
+Server, solo alcanzable desde WinForms).
+
+**Verificado**: regresión HTTP completa con `DataEngine=Postgres` sobre las 2 rutas que tocan
+las tablas modificadas (`/Productos/Index`, `/Productos/VerGlobales`,
+`/Productos/VerGlobalesTiposProducto`, que ejercitan lectura de
+`catalogoglobalimportacionproductos`) -- 200 limpio, sin cambio de comportamiento (esperado,
+ya filtraban bien a mano). Regresión final en `SqlServer`, limpia.
+
+**Pendientes reales para un cutover de producción, listados sin resolver en esta etapa** (ver
+respuesta completa al usuario, no repetida acá para no duplicar): falta mecanismo de
+sincronización de datos SQL Server → Postgres, falta infraestructura de red entre
+`ServidorSM`/`San Lorenzo` y un Postgres accesible, cero tests automatizados en toda la
+solución, no existe `docs/RUNBOOK.md` con el procedimiento del toggle `DataEngine` ni de
+rollback, `Compra`/`Venta` nunca se probaron con una escritura real vía HTTP en modo dual. El
+`RUNBOOK.md` queda en pausa por decisión del usuario -- no es prioridad mientras no se planee
+el cutover real de `ServidorSM`/`San Lorenzo`.
+
+## 2026-08-20 - Modo dual: LoginController cableado (ultimo modulo pendiente) + fix real en Negocio/Usuario.cs (gap de Sucursal/Empresa hardcodeado a SQL Server)
 
 Continuación y cierre de la serie de wiring iniciada en el piloto `352f7537` (hasta `VentasController` `c0022081`). `LoginController` -- el controller de mayor riesgo del plan original, toca cada login de la app -- tenía 5 bloques repetidos en distintas acciones (`OnActionExecuting`, `Index` POST tras validar contraseña, `ChangePassword`, `CambiarSucursal`) más `ForgotPassword`/`ValidarUbicacion` (usan `Parametros`/`DispositivoSeguro`), todos cambiados a `NegocioFactory.Crear*`.
 
