@@ -34,7 +34,7 @@ namespace Web.Controllers
             oUsuarioN = new Negocio.Usuario(empresa, param);
             oSucursalN = new Negocio.Sucursal(empresa, param);
             oVentaN = new Negocio.Venta(empresa, param);
-            oCuentaCorrienteN = new Negocio.CuentaCorriente(empresa, param);
+            oCuentaCorrienteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
             oCorteN = new Negocio.Corte(empresa, param);
         }
 

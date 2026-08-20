@@ -1,6 +1,20 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Modo dual: quinto controller cableado (PersonasController) + cierre de 2 gaps reales en PersonaPg
+## 2026-08-19 (la mas reciente) - Modo dual: sexto módulo cableado (CuentaCorriente, 3 controllers) + cierre de gaps reales en CuentaCorrientePg
+
+Continuación de la serie (piloto `352f7537`, y los 5 anteriores hasta `9b93a626`). `CuentaCorriente` se usa en 3 controllers reales (`HomeController` -- dashboard, `FinanzasController` -- CtasCtes/Cheques, `ReportesController`), 3 call sites cambiados a `NegocioFactory.CrearCuentaCorriente`.
+
+**Hallazgo real al probar, más grande que los anteriores**: `CuentaCorrientePg.cs` traía su propio `TODO(claude)` desde el piloto original (Etapa 5) advirtiendo que 6 métodos con `DataTable` crudo tenían alias en minúsculas/snake_case **sin verificar** contra los nombres reales de `Datos/CuentaCorriente.cs` (que usa alias con espacios y mayúsculas, ej. `[Nombre Identif.]`, `[Razon Social]`, `[obs.]`) -- el propio comentario decía "si en el futuro se conecta una View real hay que re-verificar los alias antes de usarlos". Justo eso pasó al cablear estos 3 controllers. Confirmado con el usuario, se revisaron y corrigieron los 5 métodos que sí tienen caller en los controllers ya cableados (`obtenerCtasCtes`, `obtenerResumenDashboard`, `obtenerCheques`, `obtenerTotalesPagosBalance`, `obtenerUltimosPagosDashboard`) -- `obtenerChequesPendientesDashboard` no necesitó cambios (sin alias multi-palabra en el original) y `obtenerPagos` queda sin verificar (sin caller todavía).
+
+**Dos bugs reales corregidos**:
+1. **Alias de columna**: se citaron los alias exactos entre comillas dobles de Postgres (`AS "Nombre Identif."`, `AS "Razon Social"`, `AS "Recibido_De"`, `AS "Entregado_A"`, `AS "obs."`, etc.), byte a byte iguales al original -- necesario porque algunos callers (`FinanzasController.GetCheques`) leen la fila por indexer directo (`row["Recibido_De"]`), sin fallback, así que un alias que no matchea exactamente tira una excepción, no un valor vacío.
+2. **Tipo de parámetro Npgsql sin inferir**: `obtenerCtasCtes` recibe `idPersona` como `int?`; al ser `null`, `AddWithValue(..., DBNull.Value)` no le da a Npgsql ningún tipo para inferir, y la consulta fallaba con `42P08: no se pudo determinar el tipo del parámetro $1`. Mismo patrón ya resuelto antes esta sesión (Etapa 12b, `VentaPg`) -- se cast explícito (`@idPersona::int`) en cada uso dentro del SQL.
+
+**Nota, no un bug**: el campo `Propio` de `GetCheques` (JSON) se serializa como `"1"`/`"0"` en SQL Server (`bit`) vs `"True"`/`"False"` en Postgres (`boolean`) -- mismo tipo de diferencia de representación ya documentada varias veces esta sesión (`.ToString()` de tipos distintos). Sin uso real en las Views (`Propio` no se lee en ningún lado del lado cliente), no se corrige.
+
+**Verificado**: `CarniSys.sln` completo compila limpio. Harness `psql` directo (rol real): `obtenerCtasCtes` con el cast explícito y parámetro nulo. HTTP end-to-end con login real: regresión en `SqlServer` (3 controllers); con `Postgres`, `/Finanzas/CtasCtes` **idéntico celda a celda** contra SQL Server, `/Home` (dashboard) idéntico, y `/Finanzas/GetCheques` idéntico salvo la representación de `Propio` ya explicada. Regresión final en `SqlServer`.
+
+## 2026-08-19 - Modo dual: quinto controller cableado (PersonasController) + cierre de 2 gaps reales en PersonaPg
 
 Continuación de la serie (piloto `352f7537`, `DispositivosSegurosController` `ed7685e3`, `ParametrosController` `710c390d`, `SucursalController` `bf694ef5`). `PersonasController` ("Personas"/proveedores/clientes): 3 call sites (`oPersonaN` + 2 `Negocio.Sucursal` embebidos), cambiados a `NegocioFactory.CrearPersona`/`CrearSucursal`.
 

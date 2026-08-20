@@ -38,7 +38,7 @@ namespace Web.Controllers
             oCompraN = new Negocio.Compra(empresa, param);
             oVentaN = new Negocio.Venta(empresa, param);
             oCierreN = new Negocio.CierreCaja(empresa, param);
-            oCuentaCorrienteN = new Negocio.CuentaCorriente(empresa, param);
+            oCuentaCorrienteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
         }
 
         // Mismo patron que ya usan StockController/PuntosExpendioController/etc. para

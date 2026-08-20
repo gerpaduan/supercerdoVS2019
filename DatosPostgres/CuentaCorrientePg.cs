@@ -19,14 +19,14 @@ namespace DatosPostgres
     // eliminarPago: NotImplementedException -- el SP real no existe en SQL Server (bug
     // preexistente confirmado, fuera de alcance, ver ICuentaCorrienteRepository).
     //
-    // TODO(claude): los alias de columna de los metodos que devuelven DataTable crudo
-    // (obtenerCtasCtes, obtenerResumenDashboard, obtenerCheques, obtenerPagos,
-    // obtenerTotalesPagosBalance, obtenerUltimosPagosDashboard, obtenerChequesPendientesDashboard)
-    // quedaron en minusculas/snake_case, NO verificados contra el nombre exacto (con espacios y
-    // mayusculas, ej. "Nombre Identif.", "Razon Social", "obs.") que devuelve el SQL Server
-    // original. No importa para el harness de comparacion de esta etapa (compara getPagoById,
-    // no estos DataTable), pero si en el futuro se conecta una View real a CuentaCorrientePg
-    // hay que re-verificar los alias contra Datos/CuentaCorriente.cs antes de usarlos.
+    // Cerrado (ver docs/DECISIONS.md): los alias de columna de obtenerCtasCtes/
+    // obtenerResumenDashboard/obtenerCheques/obtenerTotalesPagosBalance/
+    // obtenerUltimosPagosDashboard se verificaron y corrigieron contra Datos/CuentaCorriente.cs
+    // (algunos con espacios/puntos, ej. "Nombre Identif.", "Razon Social", "obs.", citados
+    // entre comillas dobles) al conectar HomeController/FinanzasController/ReportesController
+    // via NegocioFactory. obtenerChequesPendientesDashboard no necesito cambios (sin alias
+    // multi-palabra en el original). obtenerPagos sigue sin verificar -- sin caller en los
+    // controllers ya cableados.
     public class CuentaCorrientePg : Contratos.ICuentaCorrienteRepository
     {
         private readonly string _connectionString;
@@ -136,11 +136,18 @@ namespace DatosPostgres
 
         #region Cuenta Corriente
 
+        // Alias EXACTOS de Datos/CuentaCorriente.cs (con espacios/puntos donde corresponda,
+        // entre comillas dobles) -- HomeController/FinanzasController leen algunos por
+        // indexer directo (row["Recibido_De"]), sin fallback, asi que tienen que matchear
+        // byte a byte (case-insensitive, Postgres respeta la mayuscula/espacio si se cita).
         public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona, string ordenSaldo = "DESC")
         {
             string orden = string.Equals(ordenSaldo, "ASC", StringComparison.OrdinalIgnoreCase) ? "ASC" : "DESC";
             string texto = "%" + (txtBusqueda ?? "").Trim() + "%";
 
+            // @idPersona se castea explicito (::int) en cada uso: Npgsql no puede inferir el
+            // tipo de un parametro DBNull sin contexto cuando idPersona es null (mismo patron
+            // ya resuelto en VentaPg esta sesion).
             string sql = $@"
                 WITH saldos AS (
                     SELECT m.idpersona, SUM(m.importe) AS saldo
@@ -148,16 +155,16 @@ namespace DatosPostgres
                     GROUP BY m.idpersona
                 )
                 SELECT
-                    p.idpersona AS idpersona,
-                    p.identificacion AS nombre_identif,
-                    p.razonsocial AS razon_social,
-                    s.saldo AS saldo
+                    p.idpersona AS ""IdPersona"",
+                    p.identificacion AS ""Nombre Identif."",
+                    p.razonsocial AS ""Razon Social"",
+                    s.saldo AS ""Saldo""
                 FROM saldos s
                 INNER JOIN personas p ON p.idpersona = s.idpersona
                 WHERE
-                    (@idPersona IS NOT NULL AND @idPersona <> 0 AND p.idpersona = @idPersona)
+                    (@idPersona::int IS NOT NULL AND @idPersona::int <> 0 AND p.idpersona = @idPersona::int)
                     OR (
-                        (@idPersona IS NULL OR @idPersona = 0)
+                        (@idPersona::int IS NULL OR @idPersona::int = 0)
                         AND (@textoBusqueda = '' OR p.identificacion ILIKE @texto OR p.razonsocial ILIKE @texto)
                     )
                 ORDER BY
@@ -181,11 +188,11 @@ namespace DatosPostgres
                     SELECT m.idpersona, SUM(m.importe) AS saldo FROM movctacte m GROUP BY m.idpersona
                 )
                 SELECT
-                    COUNT(CASE WHEN s.saldo <> 0 THEN 1 END) AS cantidadconsaldo,
-                    COUNT(CASE WHEN s.saldo < -100 THEN 1 END) AS cantidaddeudores,
-                    COUNT(CASE WHEN s.saldo > 0 THEN 1 END) AS cantidadacreedores,
-                    SUM(CASE WHEN s.saldo < -100 THEN ABS(s.saldo) ELSE 0 END) AS totalacobrar,
-                    SUM(CASE WHEN s.saldo > 0 THEN s.saldo ELSE 0 END) AS totalapagar
+                    COUNT(CASE WHEN s.saldo <> 0 THEN 1 END) AS ""CantidadConSaldo"",
+                    COUNT(CASE WHEN s.saldo < -100 THEN 1 END) AS ""CantidadDeudores"",
+                    COUNT(CASE WHEN s.saldo > 0 THEN 1 END) AS ""CantidadAcreedores"",
+                    SUM(CASE WHEN s.saldo < -100 THEN ABS(s.saldo) ELSE 0 END) AS ""TotalACobrar"",
+                    SUM(CASE WHEN s.saldo > 0 THEN s.saldo ELSE 0 END) AS ""TotalAPagar""
                 FROM saldos s
                 INNER JOIN personas p ON p.idpersona = s.idpersona;";
 
@@ -376,14 +383,14 @@ namespace DatosPostgres
             const string sql = @"
                 SELECT
                     c.id, c.nrocheque, c.banco, c.propio,
-                    CASE c.propio WHEN true THEN 'Propio' ELSE '3ro' END AS origen,
+                    CASE c.propio WHEN true THEN 'Propio' ELSE '3ro' END AS ""Origen"",
                     c.fechaemision, c.fechapago, c.importe, c.estado, c.titular, c.recibidode,
-                    recibidopor.identificacion AS recibido_de,
-                    c.entregadoa, entregadopor.identificacion AS entregado_a,
+                    recibidopor.identificacion AS ""Recibido_De"",
+                    c.entregadoa, entregadopor.identificacion AS ""Entregado_A"",
                     c.observaciones,
-                    CASE WHEN LENGTH(c.observaciones) > 30 THEN LEFT(c.observaciones, 30) || '...' ELSE c.observaciones END AS obs,
-                    c.creado, creadopor.nombre AS creadopor,
-                    c.actualizado, actualizadopor.nombre AS actualizadopor
+                    CASE WHEN LENGTH(c.observaciones) > 30 THEN LEFT(c.observaciones, 30) || '...' ELSE c.observaciones END AS ""obs."",
+                    c.creado, creadopor.nombre AS ""CreadoPor"",
+                    c.actualizado, actualizadopor.nombre AS ""ActualizadoPor""
                 FROM cheques c
                 LEFT JOIN pagos pagoentregado ON pagoentregado.id = c.entregadoa
                 LEFT JOIN personas entregadopor ON entregadopor.idpersona = pagoentregado.idpersona
@@ -697,8 +704,8 @@ namespace DatosPostgres
         {
             const string sql = @"
                 SELECT
-                    SUM(CASE WHEN p.aproveedor = false THEN p.importe ELSE 0 END) AS totalcobros,
-                    SUM(CASE WHEN p.aproveedor = true THEN p.importe ELSE 0 END) AS totalpagos
+                    SUM(CASE WHEN p.aproveedor = false THEN p.importe ELSE 0 END) AS ""TotalCobros"",
+                    SUM(CASE WHEN p.aproveedor = true THEN p.importe ELSE 0 END) AS ""TotalPagos""
                 FROM pagos p
                 WHERE p.fecha >= @fechaDesde AND p.fecha < @fechaHasta
                   AND (@idSucursal = -1 OR p.idsucursal = @idSucursal);";
@@ -717,9 +724,9 @@ namespace DatosPostgres
                 SELECT
                     p.id, p.fecha, per.razonsocial,
                     p.nrorecibo, p.importe, p.aproveedor,
-                    CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS operacion,
+                    CASE p.aproveedor WHEN false THEN 'Cobro' ELSE 'Pago' END AS ""Operacion"",
                     p.formapago, p.efectivo, p.observaciones,
-                    s.sucursal AS sucursal
+                    s.sucursal AS ""Sucursal""
                 FROM pagos p
                 INNER JOIN personas per ON p.idpersona = per.idpersona
                 LEFT JOIN sucursal s ON s.idsucursal = p.idsucursal
