@@ -55,7 +55,7 @@ namespace Web.Controllers
             param = Session["PARAM_CTX"] as IParametrosContext;
             if (param == null)
             {
-                param = new Negocio.Parametros(empresa);
+                param = Web.Infrastructure.NegocioFactory.CrearParametros(empresa);
                 param.Reload();
 
                 if (!sesionSoloLectura)
@@ -65,7 +65,7 @@ namespace Web.Controllers
             var usuario = Session["Usuario"] as Usuario;
             if (usuario != null)
             {
-                var sucursalN = new Negocio.Sucursal(empresa, param);
+                var sucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
                 var sucursales = sucursalN.findAll() ?? new List<Sucursal>();
                 ViewBag.Sucursales = sucursales;
 

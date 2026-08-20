@@ -164,6 +164,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Infrastructure\NegocioFactory.cs" />
     <Compile Include="Helpers\CierreCajaStepUpRateLimiter.cs" />
     <Compile Include="Helpers\EgresosCajaPolicy.cs" />
     <Compile Include="Helpers\LoginRateLimiter.cs" />

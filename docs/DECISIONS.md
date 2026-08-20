@@ -1,6 +1,31 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Migracion SQL Server -> PostgreSQL: CatalogoGlobalProducto.cs completo
+## 2026-08-19 (la mas reciente) - Modo dual SQL Server / PostgreSQL en trafico real (piloto: BaseController + EmpresaController)
+
+Hasta acá, toda la migración a Postgres (14/15 clases `Negocio/*.cs`, `WhatsApp.cs` descartado) quedó construida y verificada en paralelo, pero **nunca conectada a tráfico real** -- todo controller de producto seguía usando el constructor SQL Server de siempre. El usuario pidió el siguiente paso: activar el modo dual en código real, con un parámetro que decida el motor, pensando en un cutover futuro por-deploy (hoy hay 2 bases de producción SQL Server single-tenant, `ServidorSM` y `San Lorenzo`, cada una un deploy físico separado; Postgres será la futura base multi-tenant).
+
+**Decisiones de diseño, confirmadas con el usuario (3 preguntas, esta sesión)**:
+1. **El switch es un `appSetting` en `Web.config`** (`DataEngine`, valores `SqlServer`/`Postgres`, default `SqlServer`), no una columna por-empresa. Cada deploy ya tiene su propio `Web.config` físicamente separado -- cambiar el motor de un servidor entero es editar una línea, sin tocar código ni recompilar.
+2. **La lógica de armado de los objetos Postgres vive en `Web/Infrastructure/NegocioFactory.cs`** (archivo nuevo), no adentro de `Negocio/*.cs`. Con esto, `Negocio.dll` y WinForms (`Presentacion/`, `wsAFIPvs2008/`) quedan con **cero dependencia nueva de `DatosPostgres.dll`** -- por diseño, WinForms nunca puede terminar en modo Postgres, ni por accidente. Coherente con la regla ya vigente de este repo: "solo se trabaja en Web/, nunca WinForms".
+3. **Alcance de esta etapa: un piloto de bajo riesgo**, no los ~20 controllers reales de una sola vez. Se cableó `BaseController` (que corre en *todo* request autenticado: arma `IParametrosContext` y el menú de sucursales) + `EmpresaController` ("Mi Empresa") -- 3 clases 100% migradas y sin ningún caso de cobertura parcial (`Parametros`, `Sucursal`, `Empresa`). El resto de los controllers reales quedan para etapas siguientes, un módulo por vez, mismo criterio del resto de esta migración.
+
+**`NegocioFactory` tiene los 14 métodos completos** (`Crear<X>` por cada clase migrada), aunque el piloto solo cablea 3 -- para que la próxima etapa (cablear el siguiente controller real) no tenga que repetir el trabajo de reconstruir el grafo de dependencias (`PersonaPg` → `SucursalPg` → `CortePg` → `VentaPg`, etc., el mismo orden que ya usaba `MigracionPostgresController`).
+
+**`Compra`/`Corte` en modo Postgres**: los métodos sin equivalente Postgres (`backup`/`restaurarBD` de `Compra`; `obtenerEmbutidos`, `reiniciarStockReal/Teorico`, `CierreStock`, `StockIngresoEgreso`, `TotalKgsCortePorCompra` de `Corte`) siguen golpeando SQL Server siempre, vía el mismo campo `oXDSqlServer` que ya existía -- limitación conocida y documentada, no un bug nuevo introducido por el toggle.
+
+**Supuestos y límites explícitos (fuera de alcance de esta etapa)**:
+- **Freshness de datos**: activar `DataEngine=Postgres` en un deploy asume que Postgres ya tiene los datos de esa empresa al día -- no hay ningún mecanismo de sincronización continua todavía. Los datos en Postgres son las fotos ya migradas durante esta sesión.
+- **Solo funciona hoy en dev**: `ConexionPostgresPiloto` apunta a `localhost`. `ServidorSM`/`San Lorenzo` no tienen red hacia ningún Postgres -- no se aprovisionó infraestructura nueva en esta etapa.
+
+**Convención para etapas futuras**: cada vez que se cablee un controller real nuevo, cambiar sus `new Negocio.X(...)` por `NegocioFactory.CrearX(...)` en el mismo commit (el método ya existe en la factory para las 14 clases migradas).
+
+**Verificado -- primera vez que tráfico HTTP real (no `MigracionPostgresController`) sirve datos desde Postgres**:
+- `CarniSys.sln` completo compila limpio.
+- **Regresión con `DataEngine=SqlServer`** (default): login real + `/Empresa/Index` (datos de "Mi Empresa", horarios, menú de sucursales San Martín/San Lorenzo) -- idéntico a como era antes de este cambio.
+- **Con `DataEngine=Postgres`**: mismo flujo completo contra Postgres real -- `/Empresa/Index` muestra los mismos datos (`SuperCerdo`, horarios, sucursales), y **`/Empresa/Guardar` (escritura real) se probó de punta a punta**: se cambió `Slogan2` a un valor de prueba vía POST real, se confirmó que **solo Postgres cambió** (`SELECT` directo a ambas bases: Postgres con el valor de prueba, SQL Server intacto) -- aislamiento entre motores funcionando como se diseñó -- y se restauró el valor original por el mismo camino (POST real, no edición manual).
+- Vuelto a `DataEngine=SqlServer`: regresión final confirmada, nada roto.
+
+## 2026-08-19 - Migracion SQL Server -> PostgreSQL: CatalogoGlobalProducto.cs completo
 
 Quinto de los módulos chicos 0%-migrados (tras `Parametros.cs`, `CortePuntoStockSucursal.cs`, `Empresa.cs`, `DispositivoSeguro.cs`). 4/4 métodos públicos: `findCorteGlobalByCodigo`, `ObtenerCatalogoGlobalPagina`, `ObtenerTiposCatalogoGlobal`, `ObtenerCatalogoGlobalPorIds`. Catálogo global de productos (compartido entre todas las empresas, sin `idEmpresa`, sin RLS -- mismo criterio que `formularios`/`alicuotasiva`).
 

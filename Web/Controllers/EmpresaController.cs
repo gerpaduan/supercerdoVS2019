@@ -17,7 +17,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oEmpresaN = new Negocio.Empresa(empresa);
+            oEmpresaN = Web.Infrastructure.NegocioFactory.CrearEmpresa(empresa);
         }
 
         [HttpGet]
