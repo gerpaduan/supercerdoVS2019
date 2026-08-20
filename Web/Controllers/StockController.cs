@@ -103,11 +103,11 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oCompraN = new Negocio.Compra(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oUsuarioN = new Negocio.Usuario(empresa, param);
-            oCorteN = new Negocio.Corte(empresa, param);
-            oPersonaN = new Negocio.Persona(empresa, param);
+            oCompraN = Web.Infrastructure.NegocioFactory.CrearCompra(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oPersonaN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
         }
 
         public ActionResult Index(int? idSucursal = null, string tipoCompra = "Ver Todos", DateTime? fechaDesde = null, DateTime? fechaHasta = null)

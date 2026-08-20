@@ -858,7 +858,7 @@ namespace DatosPostgres
             const string sql = @"
                 SELECT tipo, orden, creado AS ""Creado"", actualizado AS ""Actualizado"", reservadosistema AS ""Reservado""
                 FROM tiposproducto
-                WHERE (@buscar IS NULL OR tipo ILIKE @buscar)
+                WHERE (@buscar::text IS NULL OR tipo ILIKE @buscar::text)
                 ORDER BY orden, tipo;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>

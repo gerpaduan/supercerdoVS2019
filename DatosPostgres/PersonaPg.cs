@@ -278,13 +278,15 @@ namespace DatosPostgres
             return result != null && result != DBNull.Value && Convert.ToBoolean(result);
         }
 
-        // --- Sin implementar: sin caller en ningun controller ya cableado a NegocioFactory
-        //     (StockController, no cableado todavia). Cuando StockController se cablee, resolver
-        //     con el mismo patron ILIKE/unaccent ya usado en el resto de esta clase. ---
-
         public DataTable buscarProveedor(string buscarTexto)
         {
-            throw new NotImplementedException("TODO(claude): sin caller todavia (StockController, no cableado a NegocioFactory). Resolver con el patron ILIKE ya usado en buscarPersona.");
+            // Original SQL Server: EXEC buscarProveedor (stored procedure). El SP no existe en
+            // la base local de dev (sp_helptext confirma "no existe") -- no hay definicion
+            // verificada para traducir. Decision del usuario 2026-08-20: dejar sin implementar
+            // en vez de adivinar. El unico caller (StockController.ObtenerProveedoresExistencia)
+            // ya envuelve la llamada en try/catch y devuelve lista vacia ante cualquier error --
+            // mismo comportamiento degradado que ya tiene SqlServer en esta base local hoy.
+            throw new NotImplementedException("TODO(claude): el SP 'buscarProveedor' de SQL Server no existe en la base local de dev -- sin definicion verificada para traducir. Si se confirma que existe en ServidorSM/San Lorenzo, traducir desde ahi.");
         }
 
         public DataTable obtenerProveedores()
