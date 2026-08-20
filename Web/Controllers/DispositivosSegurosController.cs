@@ -20,7 +20,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oDispositivoN = new Negocio.DispositivoSeguro(empresa);
+            oDispositivoN = Web.Infrastructure.NegocioFactory.CrearDispositivoSeguro(empresa);
         }
 
         [HttpGet]

@@ -1,6 +1,14 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Modo dual SQL Server / PostgreSQL en trafico real (piloto: BaseController + EmpresaController)
+## 2026-08-19 (la mas reciente) - Modo dual: segundo controller cableado (DispositivosSegurosController)
+
+Continuación de la etapa anterior (piloto `BaseController`+`EmpresaController`, commit `352f7537`). Siguiente controller de bajo riesgo, mismo criterio de a-uno-por-vez: `DispositivosSegurosController` ("Dispositivos seguros" en Configuración) -- un solo call site (`oDispositivoN = new Negocio.DispositivoSeguro(empresa);` en `OnActionExecuting`), cambiado a `NegocioFactory.CrearDispositivoSeguro(empresa)`.
+
+**Verificado con datos reales de alta/baja, no solo lectura** (la tabla origen está vacía en ambos motores, así que la prueba significativa es el ciclo completo de escritura): con `DataEngine=Postgres`, se agregó un dispositivo de prueba vía `/DispositivosSeguros/Agregar` (POST real), se confirmó por SQL directo que **solo apareció en Postgres** (SQL Server siguió en 0 filas), se confirmó que la lista HTTP real lo mostraba, y se eliminó vía `/DispositivosSeguros/Eliminar` (POST real, no edición manual) -- Postgres quedó en 0 filas otra vez. Regresión con `DataEngine=SqlServer` antes y después, sin cambios de comportamiento.
+
+**Nota operativa**: IIS Express se cayó solo entre la etapa anterior y esta (sin causa identificada, posiblemente por los múltiples recycles de `Web.config` al alternar el switch) -- se reinició sin drama, no relacionado con el código de esta etapa.
+
+## 2026-08-19 - Modo dual SQL Server / PostgreSQL en trafico real (piloto: BaseController + EmpresaController)
 
 Hasta acá, toda la migración a Postgres (14/15 clases `Negocio/*.cs`, `WhatsApp.cs` descartado) quedó construida y verificada en paralelo, pero **nunca conectada a tráfico real** -- todo controller de producto seguía usando el constructor SQL Server de siempre. El usuario pidió el siguiente paso: activar el modo dual en código real, con un parámetro que decida el motor, pensando en un cutover futuro por-deploy (hoy hay 2 bases de producción SQL Server single-tenant, `ServidorSM` y `San Lorenzo`, cada una un deploy físico separado; Postgres será la futura base multi-tenant).
 
