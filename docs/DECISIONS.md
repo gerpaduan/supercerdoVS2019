@@ -1,6 +1,16 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Modo dual: StockController cableado (5 clases, incluye Compra por primera vez)
+## 2026-08-20 (la mas reciente) - Modo dual: VentasController cableado (6 clases, incluye Venta por primera vez)
+
+Continuación de la serie (hasta `StockController` `ff4a600b`). `VentasController` (POS/ventas -- el controller de mayor tráfico de la app): 6 call sites en `OnActionExecuting` (`Venta`, `Sucursal`, `Usuario`, `Persona`, `Corte` cambiados a `NegocioFactory.Crear*`; `CierreCaja` ya estaba cableado desde la etapa de `CierreCaja`). Primera vez que `Venta` pasa por la factory con tráfico real -- `VentaPg.cs` no tenía ningún `TODO(claude)` pendiente, cerrado sin deuda desde su propia etapa de migración.
+
+**Chequeo de riesgo antes de cablear**: revisados los métodos reales que `VentasController` llama sobre `oCorteN` (ninguno de los 6 SQL-Server-only) y sobre `oPersonaN` (`findById`, `getConsumidorFinal` -- ambos ya migrados, `getConsumidorFinal` es un método compuesto de `Negocio.Persona` que solo llama a `findById` internamente, sin SQL propio). `oUsuarioN` no tiene ningún caller real en este controller (mismo patrón "campo cableado sin uso" que en `ProductosController`/`StockController`).
+
+**Verificación de escritura, misma nota honesta que la etapa anterior**: no se hizo una venta real de prueba -- `FinalizarVenta` tiene aún más validación de negocio que una compra (descuento de stock, vínculo con caja abierta, medios de pago), y fabricar un POST sintético fiel sería más riesgoso que informativo. En su lugar, verificación de lectura reforzada: diff completo (no solo status 200) de `/Ventas/Index`, `/Ventas/Facturas`, `/Ventas/Lineas`, `/Ventas/MisVentas` entre ambos motores -- **contenido de grilla idéntico byte a byte** en las 4 rutas, más `/Ventas/POS` (pantalla del punto de venta) sin errores en ningún motor. El path de escritura de `VentaPg` queda respaldado por la verificación de su propia etapa de migración, no por una prueba fresca en este commit -- misma deuda explícita que `CompraPg`.
+
+**Verificado**: `CarniSys.sln` completo compila limpio. HTTP end-to-end con login real: regresión en `SqlServer` y `Postgres` sobre las 5 rutas -- 200 limpio en ambos motores, grillas idénticas. Regresión final en `SqlServer` (+ rutas de `Stock`/`Productos` de etapas anteriores), limpia.
+
+## 2026-08-20 - Modo dual: StockController cableado (5 clases, incluye Compra por primera vez)
 
 Continuación de la serie (hasta `ProductosController` `7794d967`). `StockController` ("Stock"/existencias, pesajes, ajustes): 5 call sites en `OnActionExecuting` (`Compra`, `Sucursal`, `Usuario`, `Corte`, `Persona`) cambiados a `NegocioFactory.Crear*`. Primera vez que `Compra` pasa por la factory con tráfico real (antes solo se había verificado con el harness `psql` de su propia etapa de migración).
 
