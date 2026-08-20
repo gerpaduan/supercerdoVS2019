@@ -32,9 +32,9 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
 
             IEmpresaContext empresa = new EmpresaContextNulo();
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
-            oEmpresaN = new Negocio.Empresa(empresa);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
+            oEmpresaN = Web.Infrastructure.NegocioFactory.CrearEmpresa(empresa);
         }
 
         [HttpGet]
@@ -75,7 +75,7 @@ namespace Web.Controllers
             // dispositivo real -- riesgo aceptado explicitamente (ver docs/DECISIONS.md). Es una
             // conveniencia para reducir friccion en maquinas de oficina conocidas, no una barrera
             // dura: por eso solo se saltea el bloqueo por IP, nunca el bloqueo por cuenta.
-            var oDispositivoN = new Negocio.DispositivoSeguro(new EmpresaContextNulo());
+            var oDispositivoN = Web.Infrastructure.NegocioFactory.CrearDispositivoSeguro(new EmpresaContextNulo());
             bool esDispositivoSeguro = candidato != null
                 && !string.IsNullOrWhiteSpace(model.NumeroSerieDispositivo)
                 && oDispositivoN.ExisteSerieSegura(model.NumeroSerieDispositivo, candidato.IdEmpresa);
@@ -110,9 +110,9 @@ namespace Web.Controllers
             {
                 IEmpresaContext empresa = new EmpresaContextWin(user.IdEmpresa);
 
-                oUsuarioN = new Negocio.Usuario(empresa);
-                oSucursalN = new Negocio.Sucursal(empresa);
-                oEmpresaN = new Negocio.Empresa(empresa);
+                oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+                oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
+                oEmpresaN = Web.Infrastructure.NegocioFactory.CrearEmpresa(empresa);
 
                 user = oUsuarioN.getUsuarioById(user.Id);
                 if (user != null)
@@ -148,7 +148,7 @@ namespace Web.Controllers
                 Session["IdEmpresa"] = user != null ? user.IdEmpresa : 0;
                 Session.Remove("PARAM_CTX");
 
-                IParametrosContext paramCtx = new Negocio.Parametros(new EmpresaContextWeb());
+                IParametrosContext paramCtx = Web.Infrastructure.NegocioFactory.CrearParametros(new EmpresaContextWeb());
                 paramCtx.Reload();
                 Session["PARAM_CTX"] = paramCtx;
                 LoginRateLimiter.Reset(Request, model.Usuario);
@@ -243,8 +243,8 @@ namespace Web.Controllers
                 return RedirectToAction("Index", "Login", new { returnUrl = model.ReturnUrl });
 
             IEmpresaContext empresa = new EmpresaContextWin(usuarioSesion.IdEmpresa);
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
 
             var user = oUsuarioN.getUsuarioById(usuarioSesion.Id);
             if (user != null)
@@ -307,8 +307,8 @@ namespace Web.Controllers
             model = model ?? new ChangePasswordVm();
 
             IEmpresaContext empresa = new EmpresaContextWin(usuarioSesion.IdEmpresa);
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
 
             ValidarNuevaClave(model.NuevaClave);
 
@@ -564,8 +564,8 @@ namespace Web.Controllers
 
                 IEmpresaContext empresa = new EmpresaContextWin(usuario.IdEmpresa);
 
-                oUsuarioN = new Negocio.Usuario(empresa);
-                oSucursalN = new Negocio.Sucursal(empresa);
+                oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+                oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
 
                 var sucursal = oSucursalN.findById(idSucursal);
                 if (sucursal == null)

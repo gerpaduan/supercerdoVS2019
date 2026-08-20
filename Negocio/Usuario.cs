@@ -18,6 +18,15 @@ namespace Negocio
         private readonly Contratos.IUsuarioRepository oUsuarioD;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        // Repo de Sucursal usado SOLO para enriquecer user.Sucursal/user.Empresa en
+        // validarUsuario/ValidarUsuarioWeb/ObtenerUsuarioPorIdentificador (login). Optativo,
+        // default null -- si no se inyecta, cae a Datos.Sucursal (SQL Server) como siempre,
+        // mismo patron ya usado en Negocio.Corte para CortePuntoStockSucursal. Se agrego al
+        // cablear LoginController (gap real encontrado: sin esto, el enriquecimiento de
+        // Sucursal/Empresa post-login siempre pegaba a SQL Server aunque oUsuarioD fuera
+        // Postgres). Ver docs/DECISIONS.md.
+        private readonly Contratos.ISucursalRepository _sucursalRepo;
+
         // Constructor existente: SIN CAMBIOS de comportamiento.
         public Usuario(IEmpresaContext empresa, IParametrosContext param = null)
         {
@@ -26,11 +35,18 @@ namespace Negocio
         }
 
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de IUsuarioRepository
-        // (ej. DatosPostgres.UsuarioPg). Solo lo usa el controller de comparacion.
-        public Usuario(Contratos.IUsuarioRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        // (ej. DatosPostgres.UsuarioPg), mas opcionalmente el repo de Sucursal que usan los 3
+        // metodos de login para resolver Sucursal/Empresa del usuario encontrado.
+        public Usuario(Contratos.IUsuarioRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null, Contratos.ISucursalRepository sucursalRepositorio = null)
         {
             _empresa = empresa; _param = param;
             oUsuarioD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
+            _sucursalRepo = sucursalRepositorio;
+        }
+
+        private Contratos.ISucursalRepository ObtenerSucursalRepo()
+        {
+            return _sucursalRepo ?? new Datos.Sucursal(_empresa);
         }
 
         public DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false)
@@ -138,7 +154,7 @@ namespace Negocio
             }
 
 
-            Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
+            Contratos.ISucursalRepository oSucursalD = ObtenerSucursalRepo();
 
             foreach (Entidades.Usuario user in listUsuarios)
             {
@@ -191,7 +207,7 @@ namespace Negocio
                     return userEncontrado;
             }
 
-            Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
+            Contratos.ISucursalRepository oSucursalD = ObtenerSucursalRepo();
 
             foreach (Entidades.Usuario user in listUsuarios)
             {
@@ -229,7 +245,7 @@ namespace Negocio
                     return null;
             }
 
-            Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
+            Contratos.ISucursalRepository oSucursalD = ObtenerSucursalRepo();
 
             foreach (Entidades.Usuario user in listUsuarios)
             {

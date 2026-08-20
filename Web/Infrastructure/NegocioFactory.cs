@@ -130,7 +130,7 @@ namespace Web.Infrastructure
 
             var sucursalRepo = new DatosPostgres.SucursalPg(PgConnString, empresa.IdEmpresa);
             var repo = new DatosPostgres.UsuarioPg(PgConnString, empresa.IdEmpresa, sucursalRepo);
-            return new Negocio.Usuario(repo, empresa, param);
+            return new Negocio.Usuario(repo, empresa, param, sucursalRepo);
         }
 
         public static Negocio.Venta CrearVenta(IEmpresaContext empresa, IParametrosContext param = null)
