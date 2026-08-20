@@ -1,6 +1,12 @@
 # Decisiones de arquitectura
 
-## 2026-08-19 (la mas reciente) - Modo dual: segundo controller cableado (DispositivosSegurosController)
+## 2026-08-19 (la mas reciente) - Modo dual: tercer controller cableado (ParametrosController)
+
+Continuación de la serie (piloto `352f7537`, `DispositivosSegurosController` en `ed7685e3`). `ParametrosController` ("Parámetros" en Configuración): un solo call site (`oParametrosN = new Negocio.Parametros(empresa);`), cambiado a `NegocioFactory.CrearParametros(empresa)`.
+
+**Verificado con escritura real de grilla completa**: a diferencia de `DispositivosSeguros` (alta/baja de una fila), `Parametros/Guardar` postea la grilla completa (15 parámetros visibles para el CUIT de prueba, mezcla de texto/decimal/booleano vía checkbox). Con `DataEngine=Postgres`, se reconstruyó el POST real completo (extrayendo todos los campos del HTML servido, preservando orden y tipos) cambiando un solo valor (`codProdGenerico`, `999999` → `777777`), confirmando por SQL directo que **solo Postgres cambió** (SQL Server siguió en `999999`), y se restauró el valor original por el mismo camino real. Regresión con `DataEngine=SqlServer` antes y después.
+
+## 2026-08-19 - Modo dual: segundo controller cableado (DispositivosSegurosController)
 
 Continuación de la etapa anterior (piloto `BaseController`+`EmpresaController`, commit `352f7537`). Siguiente controller de bajo riesgo, mismo criterio de a-uno-por-vez: `DispositivosSegurosController` ("Dispositivos seguros" en Configuración) -- un solo call site (`oDispositivoN = new Negocio.DispositivoSeguro(empresa);` en `OnActionExecuting`), cambiado a `NegocioFactory.CrearDispositivoSeguro(empresa)`.
 

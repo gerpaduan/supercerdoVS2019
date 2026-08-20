@@ -23,7 +23,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oParametrosN = new Negocio.Parametros(empresa);
+            oParametrosN = Web.Infrastructure.NegocioFactory.CrearParametros(empresa);
         }
 
         [HttpGet]
