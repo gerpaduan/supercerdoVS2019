@@ -1,6 +1,35 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Negocio.Tests: VentaLineaAnuladaTests -- loop de procesamiento de lineas (nota de credito y anulacion)
+## 2026-08-20 (la mas reciente) - Negocio.Tests: CuentaCorrienteValidarPagoTests -- validacion pura, sin tocar ningun repositorio, y hallazgo real sobre FormaPago=Otro
+
+Cubre `Negocio.CuentaCorriente.ValidarPago` en su camino sin cheques -- validacion de negocio
+pura (persona valida y distinta de Consumidor Final, fecha no futura, sucursal, forma de pago,
+importe) que **no toca el repositorio en ningun momento** (el camino con cheques si, via
+`getChequePorIDorNro`, fuera de alcance de esta entrada). Primer archivo de la suite donde ni
+siquiera hace falta que el repo inyectado tenga metodos reales -- confirma el valor de haber
+separado la validacion de la persistencia en el codigo original.
+
+**Hallazgo real leyendo el codigo, confirmado con un test**: el primer chequeo de importe
+(`"Ingrese un importe mayor a 0."`) tiene una excepcion explicita para `FormaPago="Otro"`
+(`if FormaPago != Otro && Importe<=0`), que sugiere que un pago "Otro" con `Importe=0` deberia
+pasar la validacion. **No es asi**: el bloque posterior de "campos obligatorios" vuelve a exigir
+`Importe>0` sin esa misma excepcion, asi que un pago "Otro" con importe 0 termina fallando
+igual -- solo que con un mensaje distinto ("Complete los siguientes campos: Importe" en vez de
+"Ingrese un importe mayor a 0."). No es un bug corregido en esta entrada (cambiar el mensaje
+que ve el usuario es una decision de UX, no un fix de plomeria) -- queda documentado con un test
+para que la proxima persona que lea el primer chequeo no asuma que la excepcion de "Otro"
+tiene efecto real.
+
+**`FakeParametrosContext` extendido**: agrega `.ConInt(key, valor)` (antes solo soportaba
+`GetFloat`) -- necesario para `_param.GetInt(ParamKeys.IdConsumidorFinal, 0)`.
+
+**9 tests nuevos, los 9 pasan al primer intento**: `PagoValido_Pasa`, `PagoNulo_NoPasa`,
+`SinPersona_NoPasa`, `PersonaEsConsumidorFinal_NoPasa`, `FechaEnElFuturo_NoPasa`,
+`SinSucursal_NoPasa`, `SinFormaDePago_NoPasa`, `ImporteCero_ConFormaDePagoNormal_NoPasaPorElImporte`,
+`ImporteCero_ConFormaDePagoOtro_TampocoPasa_PeroConMensajeDistinto`. Suite completa: **38/38**.
+Solucion completa sigue compilando limpio.
+
+## 2026-08-20 (2) - Negocio.Tests: VentaLineaAnuladaTests -- loop de procesamiento de lineas (nota de credito y anulacion)
 
 Cubre el loop de `EjecutarAgregarVenta` que procesa cada `LineaVenta` antes de persistirla,
 3 ramas segun `esNotaCredito`/`Estado`:
@@ -20,7 +49,7 @@ sin extensiones nuevas): `NotaDeCredito_InvierteElSignoDeLaCantidad`,
 `LineaAnulada_IndexAnuladoPasaDeIndiceEnLaListaAIdLineaVentaReal`. Suite completa: **29/29**.
 Solucion completa sigue compilando limpio.
 
-## 2026-08-20 (2) - Negocio.Tests: CompraEgresoCajaTests -- equivalente en Compra al egreso de caja de Venta
+## 2026-08-20 (3) - Negocio.Tests: CompraEgresoCajaTests -- equivalente en Compra al egreso de caja de Venta
 
 Mismo espiritu que `VentaEgresoCajaPagoTarjetaTests` (entrada de mas abajo), para el bloque
 `esEgresoCaja` de `Negocio.Compra.AddOrEditCompra`: cuando la compra es CTA CTE, no sale plata
@@ -40,7 +69,7 @@ sin sorpresas -- el patron ya estaba probado con Venta): `EsEgresoCajaFalse_NoGe
 `CompraCtaCte_MontoQuedaEnCeroPeroElImporteRealQuedaEnLaDescripcion`. Suite completa: **26/26**.
 Solucion completa sigue compilando limpio.
 
-## 2026-08-20 (3) - Negocio.Tests: egresoCajaPagoTarjeta -- Monto/IdTipoEgresoCaja/Descripcion, y hallazgo real sobre CantKg vs KgsTotalCalculado
+## 2026-08-20 (4) - Negocio.Tests: egresoCajaPagoTarjeta -- Monto/IdTipoEgresoCaja/Descripcion, y hallazgo real sobre CantKg vs KgsTotalCalculado
 
 Extiende la cobertura de `Negocio.Venta.egresoCajaPagoTarjeta` (ya ejercitado indirectamente
 por los tests de `ComisionTarjeta`, pero sin verificar sus valores): 4 escenarios --
@@ -67,7 +96,7 @@ con `UltimoEgresoCajaRecibido` para poder assertar sobre el objeto real que se i
 `Credito_ConPagoMixto_DescuentaLoPagadoEnEfectivoDelMonto`. Suite completa: **23/23**.
 Solucion completa sigue compilando limpio.
 
-## 2026-08-20 (4) - Negocio.Tests: primer test de logica de negocio ajena a IUnitOfWork (ComisionTarjeta)
+## 2026-08-20 (5) - Negocio.Tests: primer test de logica de negocio ajena a IUnitOfWork (ComisionTarjeta)
 
 Cerrada la ronda de contrato `IUnitOfWork` (entrada de mas abajo), este es el primer test que
 cubre una regla de negocio real distinta: el calculo de `ComisionTarjeta` dentro de
@@ -95,7 +124,7 @@ mano por clave via `.ConFloat(key, valor)`).
 `ModificarVenta_TambienCalculaLaComision`. Suite completa: **19/19**. Solucion completa sigue
 compilando limpio.
 
-## 2026-08-20 (5) - Negocio.Tests: Negocio.Venta.modificarVenta, y cierre de la ronda de contrato IUnitOfWork
+## 2026-08-20 (6) - Negocio.Tests: Negocio.Venta.modificarVenta, y cierre de la ronda de contrato IUnitOfWork
 
 `modificarVenta` es un metodo separado de `agregarVenta` en `Negocio.Venta` (a diferencia de
 Compra, donde `AddOrEditCompra` cubre alta y edicion en uno solo -- confirmado leyendo el
@@ -120,7 +149,7 @@ futuro: tests de integracion real contra Postgres (fuera del alcance de "unitari
 falsos", la estrategia elegida al arrancar esta suite), y logica de negocio no relacionada a
 `IUnitOfWork` (ej. calculo de `ComisionTarjeta`, egresos de caja por tarjeta).
 
-## 2026-08-20 (6) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.CuentaCorriente.addOrEditPago, ultimo de los 3 callers reales
+## 2026-08-20 (7) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.CuentaCorriente.addOrEditPago, ultimo de los 3 callers reales
 
 Cierra la cobertura del contrato `IUnitOfWork` en sus 3 callers reales de esta migracion
 (`Negocio.Venta.agregarVenta`, `Negocio.Compra.AddOrEditCompra`, y ahora
@@ -147,7 +176,7 @@ si `addOrEditPago` (paso 1) falla, `crearMovCtaCtePago` (paso 2) nunca se ejecut
 contrato `IUnitOfWork` en los 3 callers reales (Venta/Compra/Pagos). Pendiente, si se quiere
 seguir: las ramas de edicion (`modificarVenta`, edicion de Compra).
 
-## 2026-08-20 (7) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.Compra
+## 2026-08-20 (8) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.Compra
 
 Mismo patron que `VentaIUnitOfWorkTests` (entrada de mas abajo), aplicado a
 `Negocio.Compra.AddOrEditCompra` -- el contrato de `IUnitOfWork` (`Completar()` solo si toda la
@@ -170,7 +199,7 @@ callers reales (`Negocio.Venta`, `Negocio.Compra`). Pendiente, si se quiere segu
 contrato sobre `Negocio.CuentaCorriente.addOrEditPago` (Pagos tambien lo usa, no probado
 todavia en aislamiento) y `Negocio.Venta.modificarVenta`/`Negocio.Compra` en su rama de edicion.
 
-## 2026-08-20 (8) - Negocio.Tests: primer test directo sobre Negocio.Venta -- contrato de IUnitOfWork
+## 2026-08-20 (9) - Negocio.Tests: primer test directo sobre Negocio.Venta -- contrato de IUnitOfWork
 
 Primer test que instancia `Negocio.Venta` directamente (los anteriores probaban
 `Negocio.CuentaCorriente` en aislamiento). Cubre el contrato central de la arquitectura
@@ -200,7 +229,7 @@ real) -- sigue siendo el mecanismo de siempre, sin cambios de esta migracion.
 
 Suite completa: **8/8**. Solucion completa sigue compilando limpio.
 
-## 2026-08-20 (9) - Negocio.Tests: cubre tambien la rama "sacar de cta cte" (Venta/Compra)
+## 2026-08-20 (10) - Negocio.Tests: cubre tambien la rama "sacar de cta cte" (Venta/Compra)
 
 Continua la entrada de mas abajo (arranque de `Negocio.Tests`). `CuentaCorrienteAnulacionTests`
 cubria la rama de `crearMovCtaCte` que usa Pagos (cambio de tipo/importe -> anula y crea uno
@@ -222,7 +251,7 @@ Solucion completa sigue compilando limpio.
 clases `Negocio.*` directamente (mas alla de la logica compartida de `CuentaCorriente` que ya
 queda cubierta), y la decision de si en algun momento se suma integracion real contra Postgres.
 
-## 2026-08-20 (10) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
+## 2026-08-20 (11) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
 
 Hasta ahora, cero tests automatizados en el repo -- toda la verificacion de esta migracion fue
 manual (HTTP + SQL directo). El usuario pidio arrancar la suite. Decisiones tomadas (con
@@ -273,7 +302,7 @@ el MSBuild de Visual Studio.
 **Pendiente, no en el alcance de esta entrada**: extender la suite a Venta/Compra (mismo patron
 de fake, otros repos), y decidir si en algun momento se suma integracion real contra Postgres.
 
-## 2026-08-20 (11) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
+## 2026-08-20 (12) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
 
 Durante la auditoria de que falta para el modo dual, encontre que `Negocio.Corte` tiene 5
 metodos que quedan 100% en SQL Server sin importar `DataEngine` (`obtenerEmbutidos`,
@@ -308,7 +337,7 @@ un error mio -- ya estaba decidido y confirmado por el usuario (ver las entradas
 13a, mas abajo: "usuarios en Postgres NO lleva RLS... El usuario señalo la razon antes de que
 se implementara"). No era una decision nueva, la saco de la lista de pendientes.
 
-## 2026-08-20 (12) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
+## 2026-08-20 (13) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
 
 Cierra el hallazgo documentado en la entrada de Compra (mas abajo): un barrido con
 `grep -rln "= new Negocio\." Web/Controllers/*.cs` habia encontrado controllers con cableado
@@ -348,7 +377,7 @@ ninguno de los dos.
 sin `docs/RUNBOOK.md`; sin sincronizacion de datos ni red hacia Postgres desde `ServidorSM`/
 `San Lorenzo`.
 
-## 2026-08-20 (13) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+## 2026-08-20 (14) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
 
 Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
 modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
@@ -399,7 +428,7 @@ de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
 preexistente, ver Etapa 5).
 
-## 2026-08-20 (14) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+## 2026-08-20 (15) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
 
 Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
 verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.

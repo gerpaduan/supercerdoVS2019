@@ -9,6 +9,7 @@ namespace NegocioTests.Fakes
     public sealed class FakeParametrosContext : IParametrosContext
     {
         private readonly Dictionary<string, float> _floats = new Dictionary<string, float>();
+        private readonly Dictionary<string, int> _ints = new Dictionary<string, int>();
 
         public FakeParametrosContext ConFloat(string key, float valor)
         {
@@ -16,13 +17,19 @@ namespace NegocioTests.Fakes
             return this;
         }
 
+        public FakeParametrosContext ConInt(string key, int valor)
+        {
+            _ints[key] = valor;
+            return this;
+        }
+
         public void Reload() { }
 
         public float GetFloat(string key, float def) => _floats.TryGetValue(key, out var v) ? v : def;
+        public int GetInt(string key, int def) => _ints.TryGetValue(key, out var v) ? v : def;
 
         public string GetString(string key, string def) => def;
         public decimal GetDecimal(string key, decimal def) => def;
-        public int GetInt(string key, int def) => def;
         public long GetLong(string key, long def) => def;
         public bool GetBool01(string key, bool def) => def;
     }
