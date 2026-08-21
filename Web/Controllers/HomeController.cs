@@ -31,11 +31,11 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oUsuarioN = new Negocio.Usuario(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oVentaN = new Negocio.Venta(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oVentaN = Web.Infrastructure.NegocioFactory.CrearVenta(empresa, param);
             oCuentaCorrienteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
-            oCorteN = new Negocio.Corte(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
         }
 
         public ActionResult Index()

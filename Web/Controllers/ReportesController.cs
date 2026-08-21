@@ -33,10 +33,10 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oCorteN = new Negocio.Corte(empresa, param);
-            oCompraN = new Negocio.Compra(empresa, param);
-            oVentaN = new Negocio.Venta(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oCompraN = Web.Infrastructure.NegocioFactory.CrearCompra(empresa, param);
+            oVentaN = Web.Infrastructure.NegocioFactory.CrearVenta(empresa, param);
             oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa, param);
             oCuentaCorrienteN = Web.Infrastructure.NegocioFactory.CrearCuentaCorriente(empresa, param);
         }

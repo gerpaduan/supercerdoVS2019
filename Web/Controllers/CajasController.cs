@@ -41,9 +41,9 @@ namespace Web.Controllers
             if (filterContext.Result != null) return;
 
             oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oVentaN = new Negocio.Venta(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+            oVentaN = Web.Infrastructure.NegocioFactory.CrearVenta(empresa, param);
         }
 
         // GET: Cajas/CajasAbiertas

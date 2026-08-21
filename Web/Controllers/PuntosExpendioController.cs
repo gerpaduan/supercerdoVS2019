@@ -27,10 +27,10 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oVentaN = new Negocio.Venta(empresa, param);
-            oCorteN = new Negocio.Corte(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oPersonaN = new Negocio.Persona(empresa, param);
+            oVentaN = Web.Infrastructure.NegocioFactory.CrearVenta(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oPersonaN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
         }
 
         public ActionResult Abrir(int id = 0, string sector = "")
@@ -119,7 +119,7 @@ namespace Web.Controllers
 
             AsegurarSucursalUsuario(user);
 
-            var oUsuarioN = new Negocio.Usuario(empresa, param);
+            var oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
             var sectoresDt = oVentaN.obtenerSectores();
             var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             oUsuarioN.obtenerUsuarios(true);

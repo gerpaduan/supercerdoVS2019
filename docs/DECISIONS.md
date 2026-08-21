@@ -1,6 +1,46 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+## 2026-08-20 (la mas reciente) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
+
+Cierra el hallazgo documentado en la entrada de Compra (mas abajo): un barrido con
+`grep -rln "= new Negocio\." Web/Controllers/*.cs` habia encontrado controllers con cableado
+parcial (algunos campos a `NegocioFactory`, otros en el constructor plano SQL-Server-only) o
+directamente sin cablear. Corregidos los 9 que quedaban:
+
+- **Cableado parcial** (un campo suelto seguia en SQL Server aunque el resto del controller ya
+  usaba `NegocioFactory`): `BaseController` (`ResolverUsuarioCreador`, un `Negocio.Usuario`
+  local usado solo para resolver el usuario real detras de la sesion compartida de sala de
+  produccion), `CajasController` (`oSucursalN`/`oUsuarioN`/`oVentaN`), `HomeController`
+  (`oUsuarioN`/`oSucursalN`/`oVentaN`/`oCorteN`), `ReportesController`
+  (`oSucursalN`/`oCorteN`/`oCompraN`/`oVentaN`).
+- **Sin cablear ningun campo**: `AuditoriaLoginController`, `ElaboradosController`,
+  `MovimientosController`, `PuntosExpendioController` (incluye un `Negocio.Usuario` local en
+  `ExpendiosGenerados`), `UsuariosController` (incluye un `Negocio.Usuario` local en
+  `GuardarUsuario` usado solo para re-consultar el Id tras un alta).
+
+Mismo patron que el resto de la migracion: cada `new Negocio.X(...)` reemplazado 1:1 por
+`Web.Infrastructure.NegocioFactory.CrearX(...)`, preservando los argumentos exactos que ya
+tenia cada caller (algunos pasaban `param`, otros no -- se respeto tal cual). Sin cambios de
+logica, solo de que motor decide `DataEngine`.
+
+**Con esto, `grep -rln "= new Negocio\." Web/Controllers/*.cs` da solo 2 resultados, ambos
+deliberados**: `MigracionPostgresController` (herramienta de comparacion, no de producto, arma
+ambos motores a proposito) y `WhatsAppController` (feature sin migrar, ver memoria del usuario
+2026-07-29). Todos los controllers de producto quedan cableados.
+
+**Verificado**: `CarniSys.sln` compila limpio. Barrido HTTP de los 9 controllers tocados (mas
+`/Home`), login real, en **ambos motores** -- 200 en los 8 con accion `Index`/default, y en
+`PuntosExpendioController` (sin accion `Index`) contra `ExpendiosGenerados` -- sin errores en
+ninguno de los dos.
+
+**Lo que sigue sin resolver, fuera de alcance de esta entrada** (ver reporte de estado
+2026-08-20): `usuarios`/`usuariopasswordresettokens` sin RLS en Postgres pese a tener
+`idempresa` (requiere decision explicita, es dato de auth/PII); metodos de `Corte.cs`/
+`Compra.cs` que siguen 100% en SQL Server (documentado, no bug); cero tests automatizados;
+sin `docs/RUNBOOK.md`; sin sincronizacion de datos ni red hacia Postgres desde `ServidorSM`/
+`San Lorenzo`.
+
+## 2026-08-20 (2) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
 
 Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
 modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
@@ -51,7 +91,7 @@ de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
 preexistente, ver Etapa 5).
 
-## 2026-08-20 (2) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+## 2026-08-20 (3) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
 
 Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
 verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.

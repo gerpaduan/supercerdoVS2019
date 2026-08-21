@@ -18,8 +18,8 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oUsuarioN = new Negocio.Usuario(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
         }
 
         public ActionResult Index()
@@ -192,7 +192,7 @@ namespace Web.Controllers
                 int idUsuarioPersistido = usuarioGuardar.Id;
                 if (idUsuarioPersistido <= 0)
                 {
-                    var usuarioBusqueda = new Negocio.Usuario(empresa, param);
+                    var usuarioBusqueda = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
                     usuarioBusqueda.obtenerUsuarios(false);
                     idUsuarioPersistido = (usuarioBusqueda.listaUsuario() ?? new List<Entidades.Usuario>())
                         .Where(u => u != null && u.IdEmpresa == empresa.IdEmpresa)

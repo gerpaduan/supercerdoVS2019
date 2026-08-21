@@ -28,9 +28,9 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oCorteN = new Negocio.Corte(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
-            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
         }
 
         public ActionResult Index(int idSucursalOrigen = 0, int idSucursalDestino = 0, DateTime? fechaDesde = null, DateTime? fechaHasta = null, bool verDetalles = false)

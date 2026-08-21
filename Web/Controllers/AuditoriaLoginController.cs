@@ -20,7 +20,7 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
         }
 
         [HttpGet]

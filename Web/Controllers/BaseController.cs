@@ -237,7 +237,7 @@ namespace Web.Controllers
             if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion || idUsuarioCreador <= 0)
                 return usuarioSesion;
 
-            var oUsuarioN = new Negocio.Usuario(empresa, param);
+            var oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
             var candidato = oUsuarioN.getUsuarioById(idUsuarioCreador);
             if (candidato == null || !candidato.Activo || candidato.IdEmpresa != usuarioSesion.IdEmpresa)
                 return usuarioSesion;

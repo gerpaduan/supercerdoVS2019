@@ -21,8 +21,8 @@ namespace Web.Controllers
             base.OnActionExecuting(filterContext);
             if (filterContext.Result != null) return;
 
-            oCorteN = new Negocio.Corte(empresa, param);
-            oSucursalN = new Negocio.Sucursal(empresa, param);
+            oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oSucursalN = Web.Infrastructure.NegocioFactory.CrearSucursal(empresa, param);
         }
 
         public ActionResult Index(int? idSucursal = null, string elaborado = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
