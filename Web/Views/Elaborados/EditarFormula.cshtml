@@ -128,7 +128,7 @@
                                 <div class="col-12 col-md-3">
                                     <div class="form-group">
                                         <label for="txtCodigoIngredienteFormula">Codigo</label>
-                                        <input type="number" id="txtCodigoIngredienteFormula" class="form-control" min="0" step="1" autocomplete="off" />
+                                        <input type="number" id="txtCodigoIngredienteFormula" class="form-control" step="1" autocomplete="off" />
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-5">
@@ -484,7 +484,10 @@
                     return;
                 }
 
-                $.get('@Url.Action("BuscarProductoPorCodigo", "Elaborados")', { codigo: codigo })
+                // El codigo de ingrediente admite productos con codigo negativo; el de
+                // elaborado (producto principal) sigue exigiendo codigo positivo, sin cambios.
+                var esIngrediente = $codigo.is('#txtCodigoIngredienteFormula');
+                $.get('@Url.Action("BuscarProductoPorCodigo", "Elaborados")', { codigo: codigo, permitirCodigoNegativo: esIngrediente })
                     .done(function (resp) {
                         if (!resp || !resp.ok) {
                             if (window.Swal) Swal.fire('Producto', (resp && resp.mensaje) || 'No se encontro el producto.', 'warning');
@@ -632,6 +635,26 @@
 
                 e.preventDefault();
                 $action.trigger('click');
+            });
+
+            // F9 abre el buscador de Elaborado, F10 el de Ingrediente -- mismo patron ya
+            // usado en elaborados-carga.js/compras.js/movimientos.js (deteccion directa de
+            // e.key, sin libreria de atajos compartida).
+            $(document).on('keydown.formulaFxHotkeys', function (e) {
+                if (state.soloLectura) return;
+                var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+                if (tag === 'textarea') return;
+
+                if (e.key === 'F9') {
+                    e.preventDefault();
+                    abrirModalElaborado();
+                    return;
+                }
+
+                if (e.key === 'F10') {
+                    e.preventDefault();
+                    abrirModalIngrediente();
+                }
             });
 
             state.pasos = parsearPasosReceta($recetaHidden.val());

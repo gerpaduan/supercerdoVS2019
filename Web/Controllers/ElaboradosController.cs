@@ -395,9 +395,14 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public JsonResult BuscarProductoPorCodigo(long? codigo)
+        public JsonResult BuscarProductoPorCodigo(long? codigo, bool permitirCodigoNegativo = false)
         {
-            if (!codigo.HasValue || codigo.Value <= 0)
+            // permitirCodigoNegativo: por defecto false para no cambiar el comportamiento de
+            // los demas usos de este endpoint (ej. Carga.cshtml) -- EditarFormula.cshtml lo
+            // pasa en true solo para el campo de codigo de ingrediente, que permite productos
+            // con codigo negativo.
+            bool codigoInvalido = !codigo.HasValue || codigo.Value == 0 || (codigo.Value < 0 && !permitirCodigoNegativo);
+            if (codigoInvalido)
                 return Json(new { ok = false, mensaje = "Codigo invalido." }, JsonRequestBehavior.AllowGet);
 
             int idEmpresaSesion = ObtenerIdEmpresaSesionActual();
@@ -1194,11 +1199,11 @@ namespace Web.Controllers
             var tabs = new List<ElaboradoTabVm>
             {
                 new ElaboradoTabVm { Titulo = "Elaborados", Action = "Index", Activo = string.Equals(activeAction, "Index", StringComparison.OrdinalIgnoreCase) },
-                new ElaboradoTabVm { Titulo = "Lineas de elaborado", Action = "Lineas", Activo = string.Equals(activeAction, "Lineas", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Carga / ingreso", Action = "Carga", Activo = string.Equals(activeAction, "Carga", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Ingreso rapido", Action = "IngresoRapido", Activo = string.Equals(activeAction, "IngresoRapido", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Formulas", Action = "Formulas", Activo = string.Equals(activeAction, "Formulas", StringComparison.OrdinalIgnoreCase) },
                 new ElaboradoTabVm { Titulo = "Desarme de elaborado", Action = "Desarme", Activo = string.Equals(activeAction, "Desarme", StringComparison.OrdinalIgnoreCase) },
+                new ElaboradoTabVm { Titulo = "Lineas de elaborado", Action = "Lineas", Activo = string.Equals(activeAction, "Lineas", StringComparison.OrdinalIgnoreCase) },
             };
 
             // Usuario de produccion: Formulas queda fuera junto con Ventas/Finanzas (pedido
