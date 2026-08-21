@@ -1,6 +1,28 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
+## 2026-08-20 (la mas reciente) - Negocio.Tests: cubre tambien la rama "sacar de cta cte" (Venta/Compra)
+
+Continua la entrada de mas abajo (arranque de `Negocio.Tests`). `CuentaCorrienteAnulacionTests`
+cubria la rama de `crearMovCtaCte` que usa Pagos (cambio de tipo/importe -> anula y crea uno
+nuevo). Faltaba la rama que usan Venta/Compra: sacar algo de cta cte (`crearMovCtaCte=false`
+via `oVentaE.EnCtaCte`/`oCompraE.EnCtaCte`) -- deja el original intacto y crea un opuesto con
+`QuitadoCtaCta=true`, **sin** insertar un registro nuevo despues (a diferencia de Pagos). Nuevo
+archivo `CuentaCorrienteQuitarDeCtaCteTests.cs`, mismo `FakeCuentaCorrienteRepository` (la
+logica de `crearMovCtaCte` no distingue por tabla, alcanza con probarla una vez con
+`tabla=Ventas`). Replica el resultado verificado a mano para Compra (entrada "Compra: mismo fix
+de IUnitOfWork...", mas abajo): registro original intacto + opuesto
+(`Tipo=Debito,Importe=-160,QuitadoCtaCta=true,Detalle="Quitado de Cta.Cte."`).
+
+2 tests nuevos, los 2 pasan al primer intento (el fake ya estaba corregido de la entrada
+anterior): `SacarVentaDeCtaCte_DejaElOriginalIntactoYCreaUnOpuesto`,
+`VolverAPonerEnCtaCte_TrasHaberlaSacado_CreaUnNuevoRegistroActivo`. Suite completa: **6/6**.
+Solucion completa sigue compilando limpio.
+
+**Sigue pendiente, no en el alcance de esta entrada**: extender a Venta/Compra sus propias
+clases `Negocio.*` directamente (mas alla de la logica compartida de `CuentaCorriente` que ya
+queda cubierta), y la decision de si en algun momento se suma integracion real contra Postgres.
+
+## 2026-08-20 (2) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
 
 Hasta ahora, cero tests automatizados en el repo -- toda la verificacion de esta migracion fue
 manual (HTTP + SQL directo). El usuario pidio arrancar la suite. Decisiones tomadas (con
@@ -51,7 +73,7 @@ el MSBuild de Visual Studio.
 **Pendiente, no en el alcance de esta entrada**: extender la suite a Venta/Compra (mismo patron
 de fake, otros repos), y decidir si en algun momento se suma integracion real contra Postgres.
 
-## 2026-08-20 (2) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
+## 2026-08-20 (3) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
 
 Durante la auditoria de que falta para el modo dual, encontre que `Negocio.Corte` tiene 5
 metodos que quedan 100% en SQL Server sin importar `DataEngine` (`obtenerEmbutidos`,
@@ -86,7 +108,7 @@ un error mio -- ya estaba decidido y confirmado por el usuario (ver las entradas
 13a, mas abajo: "usuarios en Postgres NO lleva RLS... El usuario señalo la razon antes de que
 se implementara"). No era una decision nueva, la saco de la lista de pendientes.
 
-## 2026-08-20 (3) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
+## 2026-08-20 (4) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
 
 Cierra el hallazgo documentado en la entrada de Compra (mas abajo): un barrido con
 `grep -rln "= new Negocio\." Web/Controllers/*.cs` habia encontrado controllers con cableado
@@ -126,7 +148,7 @@ ninguno de los dos.
 sin `docs/RUNBOOK.md`; sin sincronizacion de datos ni red hacia Postgres desde `ServidorSM`/
 `San Lorenzo`.
 
-## 2026-08-20 (4) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+## 2026-08-20 (5) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
 
 Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
 modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
@@ -177,7 +199,7 @@ de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
 preexistente, ver Etapa 5).
 
-## 2026-08-20 (5) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+## 2026-08-20 (6) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
 
 Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
 verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.
