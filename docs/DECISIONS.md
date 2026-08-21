@@ -1,6 +1,31 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.CuentaCorriente.addOrEditPago, ultimo de los 3 callers reales
+## 2026-08-20 (la mas reciente) - Negocio.Tests: Negocio.Venta.modificarVenta, y cierre de la ronda de contrato IUnitOfWork
+
+`modificarVenta` es un metodo separado de `agregarVenta` en `Negocio.Venta` (a diferencia de
+Compra, donde `AddOrEditCompra` cubre alta y edicion en uno solo -- confirmado leyendo el
+codigo: `modificarCompra` existe pero es un passthrough liviano sin `TransactionScope`/
+`IUnitOfWork`, no participa de este contrato). Por eso `modificarVenta` necesitaba su propio
+test, con su propio wrapper `TransactionScope`-vs-`IUnitOfWork`.
+
+**`FakeVentaRepository` extendido**: `modificarVenta` ahora tiene cuerpo real (antes tiraba
+`NotImplementedException`), con una excepcion configurable independiente de la de
+`agregarVenta` (`excepcionAlModificar`), para poder probar los 2 metodos con casos de falla
+propios sin que se pisen.
+
+**2 tests nuevos, los 2 pasan al primer intento**:
+`ModificarVenta_ConIUnitOfWork_CompletaLaTransaccionSiTodoSaleBien`,
+`ModificarVenta_ConIUnitOfWork_NoCompletaLaTransaccionSiFalla`. Suite completa: **14/14**.
+Solucion completa sigue compilando limpio.
+
+**Con esto se cierra la ronda de contrato `IUnitOfWork`**: cubierto en los 3 callers reales
+(`agregarVenta`, `modificarVenta`, `AddOrEditCompra`, `addOrEditPago` -- 4 metodos, 3 clases)
+mas la logica de anulacion de `crearMovCtaCte` (2 ramas). Lo que quedaria, si se retoma en el
+futuro: tests de integracion real contra Postgres (fuera del alcance de "unitarios con repos
+falsos", la estrategia elegida al arrancar esta suite), y logica de negocio no relacionada a
+`IUnitOfWork` (ej. calculo de `ComisionTarjeta`, egresos de caja por tarjeta).
+
+## 2026-08-20 (2) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.CuentaCorriente.addOrEditPago, ultimo de los 3 callers reales
 
 Cierra la cobertura del contrato `IUnitOfWork` en sus 3 callers reales de esta migracion
 (`Negocio.Venta.agregarVenta`, `Negocio.Compra.AddOrEditCompra`, y ahora
@@ -27,7 +52,7 @@ si `addOrEditPago` (paso 1) falla, `crearMovCtaCtePago` (paso 2) nunca se ejecut
 contrato `IUnitOfWork` en los 3 callers reales (Venta/Compra/Pagos). Pendiente, si se quiere
 seguir: las ramas de edicion (`modificarVenta`, edicion de Compra).
 
-## 2026-08-20 (2) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.Compra
+## 2026-08-20 (3) - Negocio.Tests: mismo contrato de IUnitOfWork sobre Negocio.Compra
 
 Mismo patron que `VentaIUnitOfWorkTests` (entrada de mas abajo), aplicado a
 `Negocio.Compra.AddOrEditCompra` -- el contrato de `IUnitOfWork` (`Completar()` solo si toda la
@@ -50,7 +75,7 @@ callers reales (`Negocio.Venta`, `Negocio.Compra`). Pendiente, si se quiere segu
 contrato sobre `Negocio.CuentaCorriente.addOrEditPago` (Pagos tambien lo usa, no probado
 todavia en aislamiento) y `Negocio.Venta.modificarVenta`/`Negocio.Compra` en su rama de edicion.
 
-## 2026-08-20 (3) - Negocio.Tests: primer test directo sobre Negocio.Venta -- contrato de IUnitOfWork
+## 2026-08-20 (4) - Negocio.Tests: primer test directo sobre Negocio.Venta -- contrato de IUnitOfWork
 
 Primer test que instancia `Negocio.Venta` directamente (los anteriores probaban
 `Negocio.CuentaCorriente` en aislamiento). Cubre el contrato central de la arquitectura
@@ -80,7 +105,7 @@ real) -- sigue siendo el mecanismo de siempre, sin cambios de esta migracion.
 
 Suite completa: **8/8**. Solucion completa sigue compilando limpio.
 
-## 2026-08-20 (4) - Negocio.Tests: cubre tambien la rama "sacar de cta cte" (Venta/Compra)
+## 2026-08-20 (5) - Negocio.Tests: cubre tambien la rama "sacar de cta cte" (Venta/Compra)
 
 Continua la entrada de mas abajo (arranque de `Negocio.Tests`). `CuentaCorrienteAnulacionTests`
 cubria la rama de `crearMovCtaCte` que usa Pagos (cambio de tipo/importe -> anula y crea uno
@@ -102,7 +127,7 @@ Solucion completa sigue compilando limpio.
 clases `Negocio.*` directamente (mas alla de la logica compartida de `CuentaCorriente` que ya
 queda cubierta), y la decision de si en algun momento se suma integracion real contra Postgres.
 
-## 2026-08-20 (5) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
+## 2026-08-20 (6) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
 
 Hasta ahora, cero tests automatizados en el repo -- toda la verificacion de esta migracion fue
 manual (HTTP + SQL directo). El usuario pidio arrancar la suite. Decisiones tomadas (con
@@ -153,7 +178,7 @@ el MSBuild de Visual Studio.
 **Pendiente, no en el alcance de esta entrada**: extender la suite a Venta/Compra (mismo patron
 de fake, otros repos), y decidir si en algun momento se suma integracion real contra Postgres.
 
-## 2026-08-20 (6) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
+## 2026-08-20 (7) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
 
 Durante la auditoria de que falta para el modo dual, encontre que `Negocio.Corte` tiene 5
 metodos que quedan 100% en SQL Server sin importar `DataEngine` (`obtenerEmbutidos`,
@@ -188,7 +213,7 @@ un error mio -- ya estaba decidido y confirmado por el usuario (ver las entradas
 13a, mas abajo: "usuarios en Postgres NO lleva RLS... El usuario señalo la razon antes de que
 se implementara"). No era una decision nueva, la saco de la lista de pendientes.
 
-## 2026-08-20 (7) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
+## 2026-08-20 (8) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
 
 Cierra el hallazgo documentado en la entrada de Compra (mas abajo): un barrido con
 `grep -rln "= new Negocio\." Web/Controllers/*.cs` habia encontrado controllers con cableado
@@ -228,7 +253,7 @@ ninguno de los dos.
 sin `docs/RUNBOOK.md`; sin sincronizacion de datos ni red hacia Postgres desde `ServidorSM`/
 `San Lorenzo`.
 
-## 2026-08-20 (8) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+## 2026-08-20 (9) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
 
 Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
 modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
@@ -279,7 +304,7 @@ de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
 preexistente, ver Etapa 5).
 
-## 2026-08-20 (9) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+## 2026-08-20 (10) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
 
 Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
 verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.

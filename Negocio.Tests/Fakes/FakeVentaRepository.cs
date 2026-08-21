@@ -5,21 +5,25 @@ using Entidades;
 
 namespace NegocioTests.Fakes
 {
-    // Fake minimo de IVentaRepository -- solo implementa los 2 metodos que un escenario
-    // "Efectivo, sin lineas, sin expendios" de Negocio.Venta.agregarVenta realmente llama
-    // (IniciarUnitOfWork, agregarVenta). El resto queda sin implementar (NotImplementedException):
-    // si un test futuro necesita mas cobertura, se extiende ahi, no antes.
+    // Fake minimo de IVentaRepository -- solo implementa los metodos que un escenario
+    // "Efectivo, sin lineas, sin expendios" de agregarVenta/modificarVenta realmente llama
+    // (IniciarUnitOfWork, agregarVenta, modificarVenta). El resto queda sin implementar
+    // (NotImplementedException): si un test futuro necesita mas cobertura, se extiende ahi,
+    // no antes.
     public sealed class FakeVentaRepository : Contratos.IVentaRepository
     {
         private readonly Contratos.IUnitOfWork _unitOfWorkAEntregar;
         private readonly Exception _excepcionAlAgregar;
+        private readonly Exception _excepcionAlModificar;
         public int IdVentaAAsignar { get; set; } = 1;
         public bool AgregarVentaFueLlamado { get; private set; }
+        public bool ModificarVentaFueLlamado { get; private set; }
 
-        public FakeVentaRepository(Contratos.IUnitOfWork unitOfWorkAEntregar = null, Exception excepcionAlAgregar = null)
+        public FakeVentaRepository(Contratos.IUnitOfWork unitOfWorkAEntregar = null, Exception excepcionAlAgregar = null, Exception excepcionAlModificar = null)
         {
             _unitOfWorkAEntregar = unitOfWorkAEntregar;
             _excepcionAlAgregar = excepcionAlAgregar;
+            _excepcionAlModificar = excepcionAlModificar;
         }
 
         public Contratos.IUnitOfWork IniciarUnitOfWork() => _unitOfWorkAEntregar;
@@ -31,11 +35,16 @@ namespace NegocioTests.Fakes
             return IdVentaAAsignar;
         }
 
+        public void modificarVenta(Venta oVentaE, int sucAnterior, bool eliminarLineas, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            ModificarVentaFueLlamado = true;
+            if (_excepcionAlModificar != null) throw _excepcionAlModificar;
+        }
+
         public Venta getVentaById(int idVenta) => throw new NotImplementedException();
         public List<Venta> getAllVentas(DateTime fechaDesde, DateTime fechaHasta, string texto, int? idVendedor, int? idCliente, int? idSucursal, bool soloAnulados, bool cargarLineas) => throw new NotImplementedException();
         public List<Venta> getVentasBalancePeriodo(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal) => throw new NotImplementedException();
         public decimal getTotalKgsPesablesBalancePeriodo(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal, bool incluirVentasCuentaCorriente) => throw new NotImplementedException();
-        public void modificarVenta(Venta oVentaE, int sucAnterior, bool eliminarLineas, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
         public DataTable obtenerVentas(int idSucursal, int idCliente, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados) => throw new NotImplementedException();
         public DataTable getVentasVendedorCierreCaja(CierreCaja oCierreE, bool soloAnulados) => throw new NotImplementedException();
         public float getTotalVenta(int idVenta) => throw new NotImplementedException();
