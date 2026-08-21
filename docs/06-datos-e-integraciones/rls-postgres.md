@@ -55,7 +55,9 @@ CREATE POLICY <tabla>_rls ON <tabla>
 
 ### Tablas con `idEmpresa` sin RLS
 
-Las 11 tablas maestras/meta (`Usuarios`, `Empresas`, `PermisosUsuarios`, `EmpresaParametros`, `CortePuntoStockSucursal`, `CatalogoGlobalImportacionProductos`, `ConfiguracionWhatsApp`, `DispositivosSeguros`, `UsuarioPasswordResetTokens`, `WhatsAppEnvios`, `AuditoriaCambioSucursalCaja`) quedan **sin RLS también en Postgres** — confirmado con el usuario, sin revisión caso por caso.
+Las 9 tablas maestras/meta restantes (`Empresas`, `PermisosUsuarios`, `EmpresaParametros`, `CortePuntoStockSucursal`, `CatalogoGlobalImportacionProductos`, `ConfiguracionWhatsApp`, `DispositivosSeguros`, `WhatsAppEnvios`) quedan **sin RLS también en Postgres** — decisión original sin revisión caso por caso, no reevaluada desde entonces.
+
+**`Usuarios`/`UsuarioPasswordResetTokens` reclasificadas (2026-08-21, ver `docs/DECISIONS.md`)**: la decisión de arriba se revirtió para estas dos -- sin RLS, cualquier consulta que se olvidara del `WHERE idempresa` filtraba usuarios (y `passwordhash`) de otro tenant, dependiendo 100% de que cada caller se acordara de chequear a mano. Ahora tienen RLS habilitado (sin la excepción `OR idempresa=0`, mas estricto que el resto de las tablas). Los pocos metodos que legitimamente necesitan cruzar todas las empresas (login, "olvide mi contraseña", reseteo por token, desbloqueo de cuenta -- tenant desconocido hasta resolver quien es el usuario) usan `SET LOCAL ROLE carnisys_usuarios_bypass` (rol `NOLOGIN BYPASSRLS`, otorgado como membresia a `carnisys_user`, ver `DatosPostgres/UsuarioPg.cs` y migracion `20260821b`) -- **no** `SET LOCAL row_security=off`: Postgres rechaza esa sentencia (`42501`) si el rol no tiene ya `BYPASSRLS`, no hay forma de desactivar RLS "por esta vez" sin el privilegio real. Verificado a mano que la membresia por si sola no habilita el bypass fuera de un `SET ROLE` explicito -- el resto de las consultas de `carnisys_user` sigue protegido por RLS sin cambios.
 
 ### Collation (pendiente para la Fase 4)
 

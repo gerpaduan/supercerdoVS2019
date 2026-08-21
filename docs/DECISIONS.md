@@ -1,6 +1,77 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Negocio.Tests: CuentaCorrienteValidarPagoTests -- validacion pura, sin tocar ningun repositorio, y hallazgo real sobre FormaPago=Otro
+## 2026-08-21 (la mas reciente) - RLS en usuarios/usuariopasswordresettokens: cierre del gap de seguridad, unicidad global de usuario, y correccion de rumbo sobre el mecanismo de bypass
+
+Cierra el gap de seguridad detectado en la auditoria de production-readiness (ver entrada
+"Auditoria de production-readiness", mas abajo): `usuarios`/`usuariopasswordresettokens` tenian
+`idempresa` pero sin RLS, y el rol de la app (`carnisys_user`) no tiene `BYPASSRLS` -- cualquier
+consulta que se olvidara del `WHERE idempresa` filtraba usuarios de otro tenant, `passwordhash`
+incluido. Verificado que ningun endpoint expone hoy ese objeto crudo al cliente (`ResolverUsuarioCreador`,
+`ObtenerUsuarioSeguro`, etc. ya rechequean `IdEmpresa` a mano antes de usar el resultado) -- sin
+exposicion activa, pero fragil: dependia de que cada caller futuro se acordara del chequeo, sin
+ninguna red de seguridad si alguien se olvidaba.
+
+**Rastreo completo antes de tocar nada**: el login necesita buscar usuario/email **cruzando
+todas las empresas**, porque todavia no sabe a que empresa pertenece quien esta entrando
+(`LoginController` arma `Negocio.Usuario` con `EmpresaContextNulo()`, `idEmpresa=0`, antes de
+autenticar). Se rastreo cada caller real de los 19 metodos de `IUsuarioRepository` para separar
+los pocos que necesitan cruzar tenants de los que no. Terminaron siendo 9: `obtenerUsuarios`
+(rama sin filtro, usada por el armado de la lista de login), `BuscarUsuariosPorIdentificador`
+("olvide mi contraseña"), `CrearTokenRecuperacion`/`ObtenerTokenRecuperacion`/
+`MarcarTokenRecuperacionComoUsado`/`InvalidarTokensPendientesUsuario` (ciclo de vida del token
+de reseteo/desbloqueo, siempre sin tenant conocido), y 3 dual-uso que necesitan un flag explicito
+porque tienen un caller autenticado (tenant ya conocido, sigue protegido por RLS) y otro
+pre-auth: `getUsuarioById`, `ActualizarPasswordWebSeguro`, `ActualizarEstadoBloqueoLogin` (via
+`RegistrarIntentoFallido`/`DesbloquearUsuario` en `Negocio/Usuario.cs`). Nuevo parametro aditivo
+`sinRestriccionDeTenant = false` en la interfaz (default seguro: cualquier caller nuevo que no
+lo mencione queda protegido por RLS sin acordarse de nada) -- mismo patron ya usado para
+`IUnitOfWork unitOfWork = null` en el resto de la migracion.
+
+**Correccion de rumbo real, encontrada probando el login de verdad**: el diseño aprobado
+originalmente (`SET LOCAL row_security = off`, mismo rol `carnisys_user` de siempre) **no
+funciona** -- Postgres rechaza esa sentencia con `42501` si el rol no tiene ya `BYPASSRLS`, no
+existe forma de desactivar RLS "por esta consulta" sin el privilegio real. Descartado a favor de
+un rol dedicado (`carnisys_usuarios_bypass`, `NOLOGIN BYPASSRLS`, migracion `20260821b`), que
+`carnisys_user` puede asumir con `SET LOCAL ROLE` **solo** dentro de la transaccion puntual de
+esos 9 metodos (`DatosPostgres/UsuarioPg.cs`, helpers `AbrirSinRLS`/`NonQuerySinRLS`/
+`ReaderSinRLS`/`DataTableSinRLS`) -- revierte solo al `COMMIT`/`ROLLBACK`, igual que
+`app.id_empresa` en `ConexionPg.AbrirConTenant`. Verificado a mano con `psql` que la sola
+membresia de `carnisys_user` en el rol de bypass **no** habilita nada por si sola (`BYPASSRLS`
+es un atributo de rol, no un privilegio heredable via `INHERIT`) -- hace falta el `SET LOCAL
+ROLE` explicito, asi que el resto de las ~40 tablas con RLS de la migracion sigue exactamente
+tan protegido como antes. Se descarto la alternativa de darle `BYPASSRLS` directo a
+`carnisys_user` (mas simple operativamente, pero apaga RLS para *toda* la app en *todas* las
+tablas, no solo en el login -- reintroduce el mismo problema que se esta cerrando, a escala
+completa) y la de funciones `SECURITY DEFINER` (mas idiomatico de Postgres, pero un patron que
+este proyecto no usa en ningun otro lado).
+
+**Unicidad global de nombre de usuario**: como el login busca cruzando todas las empresas, dos
+tenants con el mismo nombre de usuario hacen el login ambiguo -- no era hipotetico, se encontro
+una colision real en los datos migrados (`admin_tercer` en 2 empresas: `id=8, idempresa=0` --
+verificado sin ninguna referencia en el resto del esquema, borrado con confirmacion del usuario;
+`id=9, idempresa=3`, el real). Candado real: `CREATE UNIQUE INDEX ux_usuarios_usuario_global ON
+usuarios (lower(usuario))` (migracion `20260821`). Mensaje legible antes de llegar a esa
+excepcion cruda: `Negocio.Usuario.addOrEditUser` chequea con `existeUsuario` (nuevo, en
+`IUsuarioRepository`) antes de guardar. En SQL Server "global" es trivialmente "esta
+instalacion" (una empresa por base) -- mismo codigo en `Negocio`, sin necesidad de logica
+especial en `Datos/Usuario.cs`.
+
+**"Olvide mi contraseña" -- ajuste de UX pedido por el usuario**: si el usuario encontrado no
+tiene mail asignado, hoy se lo salta en silencio (mismo mensaje generico para todos, a
+proposito: evita que alguien pueda enumerar que usuarios/mails existen probando el formulario).
+En vez de un mensaje distinto para ese caso puntual (revelaria que la cuenta existe, exactamente
+la fuga que el mensaje generico evita), se le agrego una linea fija al mensaje generico, sin
+distinguir nada: *"...Si no te llega el mail, comunicate con el administrador de tu empresa."*
+
+**Verificado con escrituras/lecturas reales, no solo con build**: login exitoso, login fallido
+(contador de intentos incrementa via el bypass), alta de usuario duplicado rechazada (sin fila
+creada), alta de usuario nueva (sin duplicado) exitosa, "olvide mi contraseña" crea el token
+real, reseteo de contraseña por token completo (login posterior con la clave nueva confirmado),
+desbloqueo de cuenta por token completo. Reconfirmado con `psql` (rol `carnisys_user` real, sin
+bypass) que un tenant sigue sin poder ver usuarios de otro. Regresion en SQL Server: login sigue
+funcionando sin cambios. Solucion completa compila limpio.
+
+## 2026-08-20 - Negocio.Tests: CuentaCorrienteValidarPagoTests -- validacion pura, sin tocar ningun repositorio, y hallazgo real sobre FormaPago=Otro
 
 Cubre `Negocio.CuentaCorriente.ValidarPago` en su camino sin cheques -- validacion de negocio
 pura (persona valida y distinta de Consumidor Final, fecha no futura, sucursal, forma de pago,

@@ -64,9 +64,9 @@ namespace Negocio
             return dtUserActivos;
         }
 
-        public Entidades.Usuario getUsuarioById(int idUsuario)
+        public Entidades.Usuario getUsuarioById(int idUsuario, bool sinRestriccionDeTenant = false)
         {
-            return oUsuarioD.getUsuarioById(idUsuario);
+            return oUsuarioD.getUsuarioById(idUsuario, sinRestriccionDeTenant);
         }
 
         public DataTable obtenerUsuariosConTodos(bool soloActivos, bool filtroEmpresa = true)
@@ -269,7 +269,10 @@ namespace Negocio
         // cuenta (Bloqueado=true + FechaBloqueoUtc). Devuelve true solo en el momento exacto de
         // la transicion a bloqueado -- el caller usa eso para mandar el mail de desbloqueo UNA
         // sola vez por bloqueo, no en cada reintento posterior (ver LoginController.Index POST).
-        public bool RegistrarIntentoFallido(Entidades.Usuario usuario, int maxIntentos)
+        // sinRestriccionDeTenant=true: LoginController lo llama tras un intento fallido, con
+        // oUsuarioN todavia sin re-escopear a la empresa real del candidato (ver
+        // Contratos/IUsuarioRepository.cs).
+        public bool RegistrarIntentoFallido(Entidades.Usuario usuario, int maxIntentos, bool sinRestriccionDeTenant = false)
         {
             if (usuario == null) return false;
 
@@ -282,11 +285,12 @@ namespace Negocio
                 usuario.FechaBloqueoUtc = DateTime.UtcNow;
             }
 
-            oUsuarioD.ActualizarEstadoBloqueoLogin(usuario);
+            oUsuarioD.ActualizarEstadoBloqueoLogin(usuario, sinRestriccionDeTenant);
             return seAcabaDeBoquear;
         }
 
         // Resetea el contador tras un login exitoso -- higiene, no se acarrean intentos viejos.
+        // Sin sinRestriccionDeTenant: se llama despues de re-escopear oUsuarioN a la empresa real.
         public void RegistrarLoginExitoso(Entidades.Usuario usuario)
         {
             if (usuario == null || usuario.IntentosFallidosLogin == 0) return;
@@ -295,9 +299,10 @@ namespace Negocio
             oUsuarioD.ActualizarEstadoBloqueoLogin(usuario);
         }
 
-        // Desbloquea una cuenta -- usado tanto por el link de email (LoginController.UnlockAccount)
-        // como por un admin (UsuariosController.DesbloquearUsuario).
-        public void DesbloquearUsuario(int idUsuario)
+        // Desbloquea una cuenta -- usado tanto por el link de email (LoginController.UnlockAccount,
+        // sinRestriccionDeTenant=true: tenant desconocido hasta resolver el token) como por un
+        // admin (UsuariosController.DesbloquearUsuario, empresa ya conocida).
+        public void DesbloquearUsuario(int idUsuario, bool sinRestriccionDeTenant = false)
         {
             oUsuarioD.ActualizarEstadoBloqueoLogin(new Entidades.Usuario
             {
@@ -305,7 +310,7 @@ namespace Negocio
                 IntentosFallidosLogin = 0,
                 Bloqueado = false,
                 FechaBloqueoUtc = null
-            });
+            }, sinRestriccionDeTenant);
         }
 
         public Entidades.Usuario getUser(string usuario)
@@ -346,8 +351,24 @@ namespace Negocio
             return userEncontrado;
         }
 
+        public bool existeUsuario(string usuario, int idExcluir)
+        {
+            return oUsuarioD.existeUsuario(usuario, idExcluir);
+        }
+
+        // Chequeo global de unicidad antes de guardar -- mensaje legible; el candado de verdad
+        // es el indice unico de Postgres (migracion 20260821) mas la restriccion natural de
+        // "una sola empresa por base" en SQL Server. Necesario porque el login busca por
+        // usuario/email cruzando todas las empresas (ver Contratos/IUsuarioRepository.cs): dos
+        // empresas con el mismo nombre de usuario hacen que el login sea ambiguo.
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
+            if (oUsuarioE == null) throw new ArgumentNullException(nameof(oUsuarioE));
+
+            if (existeUsuario(oUsuarioE.User, oUsuarioE.Id))
+                throw new InvalidOperationException(
+                    $"Ya existe un usuario con el nombre \"{oUsuarioE.User}\" (en esta empresa o en otra). Elegí otro nombre de usuario.");
+
             oUsuarioD.addOrEditUser(oUsuarioE);
         }
 
@@ -368,7 +389,7 @@ namespace Negocio
             oUsuarioD.ActualizarPasswordSeguro(idUsuario, nuevaClave.Trim(), hashResult.Hash, hashResult.Salt, hashResult.Iterations);
         }
 
-        public void ActualizarPasswordWebSeguro(int idUsuario, string nuevaClave)
+        public void ActualizarPasswordWebSeguro(int idUsuario, string nuevaClave, bool sinRestriccionDeTenant = false)
         {
             if (idUsuario <= 0)
                 throw new ArgumentException("Usuario inválido.", nameof(idUsuario));
@@ -377,7 +398,7 @@ namespace Negocio
                 throw new ArgumentException("La nueva clave es obligatoria.", nameof(nuevaClave));
 
             var hashResult = PasswordSecurity.HashPassword(nuevaClave.Trim());
-            oUsuarioD.ActualizarPasswordWebSeguro(idUsuario, hashResult.Hash, hashResult.Salt, hashResult.Iterations);
+            oUsuarioD.ActualizarPasswordWebSeguro(idUsuario, hashResult.Hash, hashResult.Salt, hashResult.Iterations, sinRestriccionDeTenant);
         }
 
         public void CrearTokenRecuperacion(Entidades.UsuarioPasswordResetToken token)

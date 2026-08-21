@@ -53,7 +53,9 @@ namespace Datos
             return Db.DataTable(_empresa, sql, CommandType.Text, setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
         }
 
-        public Entidades.Usuario getUsuarioById(int idUsuario)
+        // sinRestriccionDeTenant: ignorado -- cada instalacion de SQL Server es de una sola
+        // empresa, no hay "otro tenant" del que aislarse (ver Contratos/IUsuarioRepository.cs).
+        public Entidades.Usuario getUsuarioById(int idUsuario, bool sinRestriccionDeTenant = false)
         {
             const string sql = "SELECT * FROM Usuarios WHERE id = @id";
 
@@ -84,6 +86,22 @@ namespace Datos
             usuario.Empresa = idEmpresa > 0 ? oSucursalD.findEmpresaById(idEmpresa) : null;
 
             return usuario;
+        }
+
+        // Chequeo global de unicidad de usuario -- en SQL Server "global" es trivialmente "esta
+        // instalacion" (una sola empresa por base), asi que alcanza con un SELECT normal.
+        public bool existeUsuario(string usuario, int idExcluir)
+        {
+            usuario = (usuario ?? "").Trim();
+            if (usuario.Length == 0) return false;
+
+            const string sql = "SELECT COUNT(*) FROM Usuarios WHERE LOWER(usuario) = LOWER(@usuario) AND id <> @idExcluir";
+            object resultado = Db.Scalar(_empresa, sql, CommandType.Text, setParams: p =>
+            {
+                p.Add("@usuario", SqlDbType.NVarChar, 50).Value = usuario;
+                p.Add("@idExcluir", SqlDbType.Int).Value = idExcluir;
+            });
+            return Convert.ToInt32(resultado) > 0;
         }
 
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
@@ -175,7 +193,8 @@ namespace Datos
             );
         }
 
-        public void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario)
+        // sinRestriccionDeTenant: ignorado, ver getUsuarioById.
+        public void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario, bool sinRestriccionDeTenant = false)
         {
             if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
             if (!ExisteColumnaUsuarios("bloqueado"))
@@ -360,7 +379,8 @@ namespace Datos
             );
         }
 
-        public void ActualizarPasswordWebSeguro(int idUsuario, string passwordHash, string passwordSalt, int passwordHashIterations)
+        // sinRestriccionDeTenant: ignorado, ver getUsuarioById.
+        public void ActualizarPasswordWebSeguro(int idUsuario, string passwordHash, string passwordSalt, int passwordHashIterations, bool sinRestriccionDeTenant = false)
         {
             var setClauses = new List<string>();
 

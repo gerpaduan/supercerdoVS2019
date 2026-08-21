@@ -19,7 +19,7 @@ namespace Web.Controllers
     [AllowAnonymous]
     public class LoginController : Controller
     {
-        private const string GenericRecoveryMessage = "Si los datos ingresados corresponden a un usuario registrado, recibirás instrucciones para recuperar tu contraseña.";
+        private const string GenericRecoveryMessage = "Si los datos ingresados corresponden a un usuario registrado, recibirás instrucciones para recuperar tu contraseña. Si no te llega el mail, comunicate con el administrador de tu empresa.";
 
         private const string SessionKeyUbicacionLoginValidada = "UbicacionLoginValidada";
         private const decimal PrecisionMaximaLoginMetros = 150m;
@@ -182,7 +182,7 @@ namespace Web.Controllers
             // contra una cuenta que no existe o esta inactiva.
             if (candidato != null && candidato.Activo && !candidato.Bloqueado)
             {
-                bool seAcabaDeBloquear = oUsuarioN.RegistrarIntentoFallido(candidato, GetAccountLockoutMaxAttempts());
+                bool seAcabaDeBloquear = oUsuarioN.RegistrarIntentoFallido(candidato, GetAccountLockoutMaxAttempts(), sinRestriccionDeTenant: true);
                 if (seAcabaDeBloquear)
                     EnviarMailDesbloqueo(candidato);
             }
@@ -423,7 +423,7 @@ namespace Web.Controllers
                 return View("~/Views/Login/ResetPassword.cshtml", model);
             }
 
-            var usuario = oUsuarioN.getUsuarioById(token.IdUsuario);
+            var usuario = oUsuarioN.getUsuarioById(token.IdUsuario, sinRestriccionDeTenant: true);
             if (usuario == null || !usuario.Activo)
             {
                 model.TokenValido = false;
@@ -431,7 +431,7 @@ namespace Web.Controllers
                 return View("~/Views/Login/ResetPassword.cshtml", model);
             }
 
-            oUsuarioN.ActualizarPasswordWebSeguro(usuario.Id, model.NuevaClave);
+            oUsuarioN.ActualizarPasswordWebSeguro(usuario.Id, model.NuevaClave, sinRestriccionDeTenant: true);
             oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
             oUsuarioN.InvalidarTokensPendientesUsuario(usuario.Id, "reset");
 
@@ -480,7 +480,7 @@ namespace Web.Controllers
                 return View("~/Views/Login/UnlockAccount.cshtml", model);
             }
 
-            oUsuarioN.DesbloquearUsuario(token.IdUsuario);
+            oUsuarioN.DesbloquearUsuario(token.IdUsuario, sinRestriccionDeTenant: true);
             oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
             oUsuarioN.InvalidarTokensPendientesUsuario(token.IdUsuario, "unlock");
 
