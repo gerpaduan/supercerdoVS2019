@@ -5,11 +5,11 @@ using Entidades;
 
 namespace NegocioTests.Fakes
 {
-    // Fake minimo de IVentaRepository -- solo implementa los metodos que un escenario
-    // "Efectivo, sin lineas, sin expendios" de agregarVenta/modificarVenta realmente llama
-    // (IniciarUnitOfWork, agregarVenta, modificarVenta). El resto queda sin implementar
-    // (NotImplementedException): si un test futuro necesita mas cobertura, se extiende ahi,
-    // no antes.
+    // Fake minimo de IVentaRepository -- solo implementa los metodos que agregarVenta/
+    // modificarVenta realmente llaman (IniciarUnitOfWork, agregarVenta, modificarVenta,
+    // agregarLineaVenta -- este ultimo devuelve la linea tal cual, sin persistir nada real).
+    // El resto queda sin implementar (NotImplementedException): si un test futuro necesita mas
+    // cobertura, se extiende ahi, no antes.
     public sealed class FakeVentaRepository : Contratos.IVentaRepository
     {
         private readonly Contratos.IUnitOfWork _unitOfWorkAEntregar;
@@ -41,6 +41,8 @@ namespace NegocioTests.Fakes
             if (_excepcionAlModificar != null) throw _excepcionAlModificar;
         }
 
+        public LineaVenta agregarLineaVenta(LineaVenta oLineaE, Contratos.IUnitOfWork unitOfWork = null) => oLineaE;
+
         public Venta getVentaById(int idVenta) => throw new NotImplementedException();
         public List<Venta> getAllVentas(DateTime fechaDesde, DateTime fechaHasta, string texto, int? idVendedor, int? idCliente, int? idSucursal, bool soloAnulados, bool cargarLineas) => throw new NotImplementedException();
         public List<Venta> getVentasBalancePeriodo(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal) => throw new NotImplementedException();
@@ -50,7 +52,6 @@ namespace NegocioTests.Fakes
         public float getTotalVenta(int idVenta) => throw new NotImplementedException();
         public float getTotalKgsVenta(int idVenta) => throw new NotImplementedException();
         public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta) => throw new NotImplementedException();
-        public LineaVenta agregarLineaVenta(LineaVenta oLineaE, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
         public void actualizarAlicuotaLineaVenta(int idLineaVenta, int idAlicuotaIva, float alicuotaIva) => throw new NotImplementedException();
         public void eliminarLineasVenta(int idVenta) => throw new NotImplementedException();
         public Venta getUltimaVentaVendedor(CierreCaja oCierreE) => throw new NotImplementedException();

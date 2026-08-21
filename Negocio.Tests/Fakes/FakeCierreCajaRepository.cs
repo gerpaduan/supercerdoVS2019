@@ -11,10 +11,12 @@ namespace NegocioTests.Fakes
     public sealed class FakeCierreCajaRepository : Contratos.ICierreCajaRepository
     {
         public bool AddOrEditEgresoCajaFueLlamado { get; private set; }
+        public EgresoCaja UltimoEgresoCajaRecibido { get; private set; }
 
         public EgresoCaja addOrEditEgresoCaja(EgresoCaja oEgresoCaja, Contratos.IUnitOfWork unitOfWork = null)
         {
             AddOrEditEgresoCajaFueLlamado = true;
+            UltimoEgresoCajaRecibido = oEgresoCaja;
             return oEgresoCaja;
         }
 
