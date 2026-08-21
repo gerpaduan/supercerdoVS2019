@@ -5,10 +5,10 @@ using Entidades;
 
 namespace NegocioTests.Fakes
 {
-    // Fake minimo de ICompraRepository, mismo criterio que FakeVentaRepository: solo
-    // IniciarUnitOfWork/addOrEditCompra tienen cuerpo real -- lo unico que un escenario "sin
-    // medias, sin cortes, sin egreso de caja" de Negocio.Compra.AddOrEditCompra llama. El resto
-    // tira NotImplementedException.
+    // Fake minimo de ICompraRepository, mismo criterio que FakeVentaRepository: solo los
+    // metodos que Negocio.Compra.AddOrEditCompra realmente llama tienen cuerpo real
+    // (IniciarUnitOfWork, addOrEditCompra, agregarCortePorCompra -- este ultimo no persiste
+    // nada, solo registra la llamada). El resto tira NotImplementedException.
     public sealed class FakeCompraRepository : Contratos.ICompraRepository
     {
         private readonly Contratos.IUnitOfWork _unitOfWorkAEntregar;
@@ -43,7 +43,7 @@ namespace NegocioTests.Fakes
         public void actualizarIdPesajeAjustado(int idCompra, int? idPesajeAjustado, int actualizadoPor) => throw new NotImplementedException();
         public float getTotalCompra(int idCompra, string tipoCompra) => throw new NotImplementedException();
         public void modificarPrecioMedia(int idCompra, float precioKg) => throw new NotImplementedException();
-        public void agregarCortePorCompra(CortePorCompra oCorteE, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
+        public void agregarCortePorCompra(CortePorCompra oCorteE, Contratos.IUnitOfWork unitOfWork = null) { }
         public void limpiarCortesPorCompra(int idCompra) => throw new NotImplementedException();
         public void agregarMediaRes(MediaRes oMediaResE, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
         public int obtenerIdUltimaCompra() => throw new NotImplementedException();
