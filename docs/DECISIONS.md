@@ -1,6 +1,57 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
+## 2026-08-20 (la mas reciente) - Arranca la suite de tests automatizados: proyecto Negocio.Tests, xUnit, unitarios con repos falsos
+
+Hasta ahora, cero tests automatizados en el repo -- toda la verificacion de esta migracion fue
+manual (HTTP + SQL directo). El usuario pidio arrancar la suite. Decisiones tomadas (con
+confirmacion explicita via preguntas):
+
+- **Framework: xUnit.** Alternativas descartadas: NUnit (equivalente, sin ventaja concreta
+  para este proyecto), MSTest (mas verboso para casos parametrizados).
+- **Estrategia: unitarios con repos falsos, sin tocar SQL Server ni Postgres.** Gracias al
+  patron de constructor aditivo que ya tienen `Negocio.CuentaCorriente`/`Venta`/`Compra`
+  (inyectan cualquier `Contratos.I*Repository`, real o falso), se puede testear la logica de
+  negocio pura sin una base levantada. Integracion contra Postgres real queda para una etapa
+  aparte, si se decide mas adelante.
+- **`Negocio.Tests/Negocio.Tests.csproj` (nuevo, agregado a `CarniSys.sln`)**: SDK-style,
+  **`net472`** (no `net10.0`, el default del template `dotnet new xunit`) -- `Negocio`/`Datos`/
+  `Utilidades`/`Entidades` son .NET Framework 4.7.2; referenciar un TFM moderno arriesgaba
+  incompatibilidades reales. `Utilidades.csproj` tiene referencias COM (`ResolveComReference`)
+  que **`dotnet build` no puede resolver** (task no soportada en MSBuild de .NET Core) -- el
+  proyecto de tests se compila y corre con el MSBuild de Visual Studio (el mismo binario que ya
+  se usa para toda la solucion), no con `dotnet build`/`dotnet test`. Runner: `vstest.console.exe`
+  (bundjob con VS) contra el `.dll` compilado.
+- **Namespace del proyecto: `NegocioTests`, no `Negocio.Tests`.** `Negocio.Tests` como namespace
+  quedaria anidado dentro de `Negocio` -- la resolucion de nombres de C# hace que tipos del
+  namespace contenedor (`Negocio.Persona`, `Negocio.Sucursal`, `Negocio.Usuario`, las clases de
+  logica de negocio) tapen a los `using Entidades;` (`Entidades.Persona`, etc.), rompiendo la
+  compilacion con errores confusos. Se descubrio por error de compilacion real, no de antemano.
+
+**Primer target elegido**: la logica de anulacion de `Negocio.CuentaCorriente.crearMovCtaCte`
+(usada por Venta/Compra/Pagos), replicando con asserts los 3 escenarios de Pagos verificados a
+mano en la entrada de mas abajo (modificar importe, Pago->Cobro, cambiar persona). El fake
+(`Fakes/FakeCuentaCorrienteRepository.cs`) replica la semantica EXACTA de
+`CuentaCorrientePg.getMovCtaCteBy`/`addOrEditMovCtaCte` (leida de su SQL real, no inventada):
+ultimo registro por Tabla+IdTabla, insert si Id==0, update in-place si no.
+
+**Bug real encontrado en el fake durante el primer corrida** (no en `Negocio.CuentaCorriente`):
+`getMovCtaCteBy` devolvia la referencia viva al objeto guardado en la lista en memoria, no una
+copia -- una lectura real de ADO.NET siempre materializa un objeto nuevo por fila. Como
+`crearMovCtaCte` muta el objeto que recibe (`oMovCtaCte.Id = 0`, etc.) antes de "reinsertarlo",
+la mutacion corrompia el registro ya persistido in-place. Corregido devolviendo una copia
+(`Clonar`). Confirma el valor de este tipo de test: agarro un bug real, aunque estaba en el
+fake y no en el codigo de produccion.
+
+**4 tests, los 4 pasan** (`vstest.console.exe`, target net472):
+`PrimerPago_CreaUnSoloMovimiento`, `ModificarImporte_AnulaElViejoYCreaUnoNuevo`,
+`PagoAConvertidoEnCobro_AnulaElViejoYCreaUnoNuevo`, `CambiarSoloLaPersona_ActualizaElMovimientoExistenteSinAnular`.
+Solucion completa (`CarniSys.sln`, con `Negocio.Tests` agregado) sigue compilando limpio con
+el MSBuild de Visual Studio.
+
+**Pendiente, no en el alcance de esta entrada**: extender la suite a Venta/Compra (mismo patron
+de fake, otros repos), y decidir si en algun momento se suma integracion real contra Postgres.
+
+## 2026-08-20 (2) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
 
 Durante la auditoria de que falta para el modo dual, encontre que `Negocio.Corte` tiene 5
 metodos que quedan 100% en SQL Server sin importar `DataEngine` (`obtenerEmbutidos`,
@@ -35,7 +86,7 @@ un error mio -- ya estaba decidido y confirmado por el usuario (ver las entradas
 13a, mas abajo: "usuarios en Postgres NO lleva RLS... El usuario señalo la razon antes de que
 se implementara"). No era una decision nueva, la saco de la lista de pendientes.
 
-## 2026-08-20 (2) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
+## 2026-08-20 (3) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
 
 Cierra el hallazgo documentado en la entrada de Compra (mas abajo): un barrido con
 `grep -rln "= new Negocio\." Web/Controllers/*.cs` habia encontrado controllers con cableado
@@ -75,7 +126,7 @@ ninguno de los dos.
 sin `docs/RUNBOOK.md`; sin sincronizacion de datos ni red hacia Postgres desde `ServidorSM`/
 `San Lorenzo`.
 
-## 2026-08-20 (3) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+## 2026-08-20 (4) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
 
 Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
 modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
@@ -126,7 +177,7 @@ de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
 preexistente, ver Etapa 5).
 
-## 2026-08-20 (4) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+## 2026-08-20 (5) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
 
 Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
 verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.
