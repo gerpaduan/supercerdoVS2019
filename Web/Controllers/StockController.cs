@@ -1914,7 +1914,12 @@ namespace Web.Controllers
             if (dtInicioStock.Rows.Count > rowIndex)
                 desde = Convert.ToDateTime(dtInicioStock.Rows[rowIndex]["fechaCompra"]);
 
-            DataTable dtStockActual = oCorteN.CierreStock(1, "", idSucursal, desde, fechaCompra, null, "", 0, 0) ?? new DataTable();
+            // CierreStock (a_CierreStock) es el SP de WinForms -- este controller es Web, corresponde
+            // CierreStockWeb (a_CierreStockWeb), que ademas ya esta migrado a Postgres (CortePg).
+            // Bug preexistente encontrado en esta migracion: usaba el SP equivocado, cuya columna
+            // DIF da siempre .00 para este caso de uso (confirmado corriendo ambos SPs contra la
+            // base real). Ver docs/DECISIONS.md.
+            DataTable dtStockActual = oCorteN.CierreStockWeb("", idSucursal, desde, fechaCompra, "", 0, 0) ?? new DataTable();
             var stockPorCodigo = new Dictionary<long, float>();
             if (dtStockActual.Columns.Contains("Codigo"))
             {

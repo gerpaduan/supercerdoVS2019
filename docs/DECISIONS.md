@@ -1,6 +1,41 @@
 # Decisiones de arquitectura
 
-## 2026-08-20 (la mas reciente) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
+## 2026-08-20 (la mas reciente) - Bug real preexistente encontrado y corregido: StockController usaba el SP de WinForms en vez del de Web
+
+Durante la auditoria de que falta para el modo dual, encontre que `Negocio.Corte` tiene 5
+metodos que quedan 100% en SQL Server sin importar `DataEngine` (`obtenerEmbutidos`,
+`reiniciarStockReal/Teorico`, `CierreStock`, `StockIngresoEgreso`, `TotalKgsCortePorCompra`,
+via el campo `oCorteDSqlServer`). De los 5, solo `CierreStock` tenia un caller real en `Web/`:
+`StockController.ObtenerProductosNoCargadosCierre` (parte del flujo de Cierre de Stock al
+cargar una compra).
+
+Mi primer instinto fue reemplazar el llamado por `CierreStockWeb` (ya migrada a Postgres, usada
+en `ReportesController`) asumiendo que era el mismo dato con otro nombre de SP. **Verifique
+antes de tocar codigo, corriendo `a_CierreStock` y `a_CierreStockWeb` contra la base real con
+los mismos parametros**: la columna `DIF` (la que lee `StockController`) da `.00` en **todos**
+los casos en `a_CierreStock`, contra valores reales no-cero en `a_CierreStockWeb` -- no son la
+misma columna pese al nombre igual.
+
+**El usuario confirmo la causa real**: `a_CierreStock` es el SP de WinForms; en Web corresponde
+usar siempre `a_CierreStockWeb`. `StockController` (codigo Web) estaba llamando al SP
+equivocado -- un **bug preexistente de la aplicacion original, no un gap de la migracion a
+Postgres** (aunque lo encontre por estar auditando esa migracion). Corregido: el llamado ahora
+usa `oCorteN.CierreStockWeb(...)`, que ya esta migrada a Postgres via `Contratos.ICorteRepository`
+-- de paso, cierra tambien el ultimo gap real de Postgres en `Corte.cs` (los otros 4 metodos de
+`oCorteDSqlServer` no tienen ningun caller en `Web/`).
+
+**Verificado con HTTP real, login real, ambos motores**: `POST /Stock/ProductosNoCargadosCierre`
+(idSucursal=1, fechaCompra=2026-08-20) devuelve la lista completa de productos con
+`stockActual` real (ej. CARRE=229.319, Chorizo=-1.25, Costilla=36.76 -- antes del fix, todos
+daban 0 por el bug de SP) -- **respuesta identica byte a byte en SQL Server y Postgres**.
+
+**Correccion a la entrada anterior sobre RLS**: en el reporte de estado de esta misma sesion
+dije que `usuarios`/`usuariopasswordresettokens` sin RLS era un gap pendiente de decision. Era
+un error mio -- ya estaba decidido y confirmado por el usuario (ver las entradas de la Etapa
+13a, mas abajo: "usuarios en Postgres NO lleva RLS... El usuario señalo la razon antes de que
+se implementara"). No era una decision nueva, la saco de la lista de pendientes.
+
+## 2026-08-20 (2) - Cierre del cableado a NegocioFactory: los 9 controllers que quedaban pendientes
 
 Cierra el hallazgo documentado en la entrada de Compra (mas abajo): un barrido con
 `grep -rln "= new Negocio\." Web/Controllers/*.cs` habia encontrado controllers con cableado
@@ -40,7 +75,7 @@ ninguno de los dos.
 sin `docs/RUNBOOK.md`; sin sincronizacion de datos ni red hacia Postgres desde `ServidorSM`/
 `San Lorenzo`.
 
-## 2026-08-20 (2) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
+## 2026-08-20 (3) - Pagos/Cobros: mismo fix de IUnitOfWork; hallazgo de negocio preexistente (no bug) sobre cuando se anula un MovCtaCte
 
 Pedido del usuario: 3 escenarios sobre `CuentaCorrientePg.addOrEditPago` (Pagos/Cobros) --
 modificar el importe de un pago, convertir un Pago en Cobro (toggle `AProveedor`), y corregir
@@ -91,7 +126,7 @@ de codigo: `crearMovCtaCte` (Venta/Compra/Pagos) queda como esta.
 prueba, sin via real de la app para eliminar pagos (`eliminarPago` es `NotImplementedException`
 preexistente, ver Etapa 5).
 
-## 2026-08-20 (3) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
+## 2026-08-20 (4) - Compra: mismo fix de IUnitOfWork + ComprasController nunca habia sido cableado a NegocioFactory
 
 Pedido del usuario: repetir para `Compra` el mismo test que `Venta` (cargar en CtaCte, sacarla,
 verificar la anulacion en cuenta corriente). Se encontraron y corrigieron **2 problemas reales**.
