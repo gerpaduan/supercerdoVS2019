@@ -20,10 +20,20 @@ namespace NegocioTests.Fakes
     // ahi, no antes.
     public sealed class FakeCuentaCorrienteRepository : Contratos.ICuentaCorrienteRepository
     {
+        private readonly Contratos.IUnitOfWork _unitOfWorkAEntregar;
+        private readonly Exception _excepcionAlAddOrEditPago;
         public List<MovCtaCte> Movimientos { get; } = new List<MovCtaCte>();
         private int _nextId = 1;
+        private int _nextIdPago = 1;
+        public bool AddOrEditPagoFueLlamado { get; private set; }
 
-        public Contratos.IUnitOfWork IniciarUnitOfWork() => null;
+        public FakeCuentaCorrienteRepository(Contratos.IUnitOfWork unitOfWorkAEntregar = null, Exception excepcionAlAddOrEditPago = null)
+        {
+            _unitOfWorkAEntregar = unitOfWorkAEntregar;
+            _excepcionAlAddOrEditPago = excepcionAlAddOrEditPago;
+        }
+
+        public Contratos.IUnitOfWork IniciarUnitOfWork() => _unitOfWorkAEntregar;
 
         public MovCtaCte getMovCtaCteBy(int id, MovCtaCte.tablas tabla, int idTabla, MovCtaCte.getBy getBy, Contratos.IUnitOfWork unitOfWork = null)
         {
@@ -88,13 +98,23 @@ namespace NegocioTests.Fakes
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde) => throw new NotImplementedException();
         public DataTable obtenerCheques(string texto, DateTime fechaDesde, DateTime fechaHasta, bool soloPropios, string estado) => throw new NotImplementedException();
         public Cheque getChequePorIDorNro(int id, string nroCheque) => throw new NotImplementedException();
-        public List<Cheque> getChequesPorPago(int idPago, bool conPagos = true, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
+        // Fiel al real: idPago<=0 (pago nuevo, sin persistir todavia) no tiene cheques que buscar.
+        public List<Cheque> getChequesPorPago(int idPago, bool conPagos = true, Contratos.IUnitOfWork unitOfWork = null) =>
+            idPago <= 0 ? new List<Cheque>() : throw new NotImplementedException();
+
         public bool AddOrEditCheque(Cheque oCheque) => throw new NotImplementedException();
         public bool EliminarCheque(int id) => throw new NotImplementedException();
-        public bool resetearChequesAsignados(int idPago, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
+        public bool resetearChequesAsignados(int idPago, Contratos.IUnitOfWork unitOfWork = null) => true;
         public List<string> getBancos() => throw new NotImplementedException();
         public int getUltimoIdPago() => throw new NotImplementedException();
-        public Pago addOrEditPago(Pago oPagoE, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
+
+        public Pago addOrEditPago(Pago oPagoE, Contratos.IUnitOfWork unitOfWork = null)
+        {
+            AddOrEditPagoFueLlamado = true;
+            if (_excepcionAlAddOrEditPago != null) throw _excepcionAlAddOrEditPago;
+            if (oPagoE.Id == 0) oPagoE.Id = _nextIdPago++;
+            return oPagoE;
+        }
         public void eliminarPago(Pago oPagoE) => throw new NotImplementedException();
         public DataTable obtenerPagos(string texto, DateTime fechaDesde, DateTime fechaHasta) => throw new NotImplementedException();
         public DataTable obtenerTotalesPagosBalance(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal) => throw new NotImplementedException();
