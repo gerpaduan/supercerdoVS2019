@@ -1,5 +1,20 @@
 ﻿(function () {
 
+    // El auto-inject de modal-request-loading.js (ajaxSend global) no siempre llega a tiempo en
+    // los flujos de modal del POS -- mismo problema ya encontrado y resuelto en forma-pago.js
+    // para FinalizarVenta/ModificarVenta (ver ese archivo). _FacturaElectronica.cshtml ademas
+    // tiene su propio @Html.AntiForgeryToken() comentado, asi que el $.post de este modulo
+    // dependia 100% del fallback global -- si ese timing fallaba, el filtro antiforgery global
+    // (Web/Filters/ValidateAppAntiForgeryTokenAttribute) rechazaba el POST con 400 y el jQuery
+    // .fail() mostraba "Error en la peticion", dejando la venta colgada (bug real reportado
+    // probando "Cerrar sin facturar", 2026-08-21, ver docs/DECISIONS.md). Mismo fix en los 5
+    // $.post de este archivo: leer el token a mano y mandarlo siempre por header.
+    function tokenAntiForgery() {
+        const input = document.querySelector('#globalAntiForgeryToken input[name="__RequestVerificationToken"]')
+            || document.querySelector('input[name="__RequestVerificationToken"]');
+        return (input && input.value) || '';
+    }
+
     // =========================
     // Helpers formato
     // =========================
@@ -239,9 +254,14 @@
 
         const $btn = $('#btnGenerarNotaCredito').prop('disabled', true);
 
-        $.post((window.AppUrls && window.AppUrls.ventasGenerarNotaCredito) || '/Ventas/GenerarNotaCredito', {
-            idFactura: idFactura,
-            anularVenta: !!anularVenta
+        $.ajax({
+            url: (window.AppUrls && window.AppUrls.ventasGenerarNotaCredito) || '/Ventas/GenerarNotaCredito',
+            type: 'POST',
+            headers: { RequestVerificationToken: tokenAntiForgery() },
+            data: {
+                idFactura: idFactura,
+                anularVenta: !!anularVenta
+            }
         })
             .done(function (resp) {
                 if (resp && resp.ok) {
@@ -781,7 +801,12 @@
     function enviarGenerarFactura($form, $btn, esSinVenta) {
         const datos = $form.serialize();
 
-        $.post((window.AppUrls && window.AppUrls.ventasGenerarFactura) || '/Ventas/GenerarFactura', datos)
+        $.ajax({
+            url: (window.AppUrls && window.AppUrls.ventasGenerarFactura) || '/Ventas/GenerarFactura',
+            type: 'POST',
+            headers: { RequestVerificationToken: tokenAntiForgery() },
+            data: datos
+        })
             .done(function (resp) {
                 if (resp && resp.ok) {
                     const esActualizacion = isYaEmitida() || resp.updated === true;
@@ -803,7 +828,12 @@
                     if (esSinVenta) {
                         const idVentaCreada = parseInt($('#feIdVenta').val() || '0', 10) || 0;
                         if (idVentaCreada) {
-                            $.post(window.AppUrls.ventasLimpiarLineasVentaManual, { idVenta: idVentaCreada });
+                            $.ajax({
+                                url: window.AppUrls.ventasLimpiarLineasVentaManual,
+                                type: 'POST',
+                                headers: { RequestVerificationToken: tokenAntiForgery() },
+                                data: { idVenta: idVentaCreada }
+                            });
                         }
                     }
                 } else {
@@ -864,11 +894,16 @@
             return;
         }
 
-        $.post(window.AppUrls.ventasCrearVentaManual, {
-            idPersona: idPersona,
-            montoTotal: toServerDec(montoTotal, 2),
-            idAlicuotaIva: idAlicuota,
-            alicuotaIva: alicuotaPct
+        $.ajax({
+            url: window.AppUrls.ventasCrearVentaManual,
+            type: 'POST',
+            headers: { RequestVerificationToken: tokenAntiForgery() },
+            data: {
+                idPersona: idPersona,
+                montoTotal: toServerDec(montoTotal, 2),
+                idAlicuotaIva: idAlicuota,
+                alicuotaIva: alicuotaPct
+            }
         })
             .done(function (resp) {
                 if (!resp || !resp.ok) {
@@ -922,7 +957,12 @@
             $btn.prop('disabled', true);
             $('#btnRegistrarFactura').prop('disabled', true);
 
-            $.post((window.AppUrls && window.AppUrls.ventasCerrarSinFacturar) || '/Ventas/CerrarVentaSinFacturar', { idVenta: idVenta })
+            $.ajax({
+                url: (window.AppUrls && window.AppUrls.ventasCerrarSinFacturar) || '/Ventas/CerrarVentaSinFacturar',
+                type: 'POST',
+                headers: { RequestVerificationToken: tokenAntiForgery() },
+                data: { idVenta: idVenta }
+            })
                 .done(function (resp) {
                     if (resp && resp.ok) {
                         $('#modalFacturaElectronica').modal('hide');

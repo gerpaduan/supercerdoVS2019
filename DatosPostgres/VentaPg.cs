@@ -61,6 +61,70 @@ namespace DatosPostgres
         private static float GetFloat(NpgsqlDataReader dr, string columna) =>
             ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value ? Convert.ToSingle(dr[columna]) : 0f;
 
+        private static long GetLong(NpgsqlDataReader dr, string columna) =>
+            ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value ? Convert.ToInt64(dr[columna]) : 0L;
+
+        // Arma un Corte completo a partir de columnas ya joineadas con alias "co_*" (ver
+        // obtenerLineasVenta/GetLineasExpendio: ambas hacen INNER JOIN corte c ... LEFT JOIN
+        // personas mk ON c.idmarca = mk.idpersona con esos mismos alias). Evita el
+        // findCorteById() por fila que antes pagaba una conexion+transaccion completa por cada
+        // linea -- mismo patron ya usado en CortePg.MapCorteListado. CorteMaestro nunca se
+        // resuelve aca (ninguno de los dos callers lo necesitaba: ambos llamaban
+        // findCorteById(id, buscarMaestro: false)).
+        private static Corte MapCorteDesdeJoin(NpgsqlDataReader dr, int idCorte)
+        {
+            var corte = new Corte
+            {
+                IdCorte = idCorte,
+                Codigo = GetLong(dr, "co_codigo"),
+                CorteDesc = GetString(dr, "co_corte"),
+                Tipo = GetString(dr, "co_tipo"),
+                Promedio = GetFloat(dr, "co_promedio"),
+                PuntoStock = GetInt(dr, "co_puntostock"),
+                Nivel = GetInt(dr, "co_nivel"),
+                IdEmpresa = GetInt(dr, "co_idempresa"),
+                Porcentaje = GetFloat(dr, "co_porcentaje"),
+                PrecioKg = GetFloat(dr, "co_preciokg"),
+                PrecioKgReferencia = GetFloat(dr, "co_preciokg"),
+                IngresoRapidoEmbutido = GetBool(dr, "co_ingresorapidoembutido"),
+                Habilitado = GetBool(dr, "co_habilitado"),
+                EnCierreStock = ColumnaExiste(dr, "co_encierrestock") && dr["co_encierrestock"] != DBNull.Value
+                    ? Convert.ToBoolean(dr["co_encierrestock"]) : true,
+                PorcentajeHueso = GetFloat(dr, "co_porcentajehueso"),
+                Independiente = GetInt(dr, "co_independiente"),
+                DesvioEstandar = GetFloat(dr, "co_desvioestandar"),
+                Creado = dr["co_creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["co_creado"]),
+                Actualizado = dr["co_actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["co_actualizado"]),
+                IdAlicuotaIva = GetInt(dr, "co_idalicuotaiva"),
+                AlicuotaIva = GetFloat(dr, "co_alicuotaiva"),
+                Pesable = GetBool(dr, "co_pesable")
+            };
+
+            int idMarcaCorte = GetInt(dr, "co_idmarca");
+            if (idMarcaCorte > 0)
+                corte.Marca = new Persona { IdPersona = idMarcaCorte, RazonSocial = GetString(dr, "co_marcanombre") };
+
+            corte.Presentacion = corte.EsPresentacion(corte.PorcentajeHueso);
+            if (corte.Presentacion)
+                corte.Porcentaje = corte.getCantPresentacion(corte.PorcentajeHueso);
+
+            return corte;
+        }
+
+        // Columnas de corte + LEFT JOIN de marca a agregar al SELECT de cualquier query que ya
+        // haga "... JOIN corte c ..." y quiera evitar el findCorteById() por fila -- usar junto
+        // con MapCorteDesdeJoin(dr, idCorte). Los alias co_* evitan choque con columnas de la
+        // tabla principal que se llaman igual (preciokg/idalicuotaiva/alicuotaiva/idempresa
+        // existen tanto en lineaventa/lineaexpendio como en corte).
+        private const string ColumnasCorteJoin = @"c.codigo AS co_codigo, c.corte AS co_corte, c.tipo AS co_tipo, c.promedio AS co_promedio,
+                    c.puntostock AS co_puntostock, c.nivel AS co_nivel, c.porcentaje AS co_porcentaje,
+                    c.preciokg AS co_preciokg, c.ingresorapidoembutido AS co_ingresorapidoembutido,
+                    c.habilitado AS co_habilitado, c.encierrestock AS co_encierrestock,
+                    c.porcentajehueso AS co_porcentajehueso, c.independiente AS co_independiente,
+                    c.desvioestandar AS co_desvioestandar, c.creado AS co_creado, c.actualizado AS co_actualizado,
+                    c.idalicuotaiva AS co_idalicuotaiva, c.alicuotaiva AS co_alicuotaiva, c.pesable AS co_pesable,
+                    c.idmarca AS co_idmarca, c.idempresa AS co_idempresa, mk.razonsocial AS co_marcanombre";
+
         private static bool GetBool(NpgsqlDataReader dr, string columna) =>
             ColumnaExiste(dr, columna) && dr[columna] != DBNull.Value && Convert.ToBoolean(dr[columna]);
 
@@ -204,8 +268,40 @@ namespace DatosPostgres
 
         public Venta getVentaById(int idVenta)
         {
+            // Mismos JOINs que getAllVentas (vendedor/sucursal/persona+iva/total calculado) --
+            // antes esta consulta era un SELECT * sin joins, asi que CargarRelacionesVenta caia
+            // siempre en el fallback de _sucursalRepo.findById/_personaRepo.findById/
+            // GetUsuarioLiviano (3 conexiones+transacciones extra) y ademas TotalImporte pegaba
+            // otra vez a getTotalVenta() -- 4 queries de mas en cada carga de una sola venta
+            // (DetalleVenta, "Modificar venta" del POS). Bug de performance real, no de motor
+            // (getAllVentas ya evitaba esto por tener los joins) -- ver docs/DECISIONS.md,
+            // 2026-08-21. El subquery de totalimportecalculado es la misma formula exacta que
+            // getTotalVenta (SUM(cantkg*preciokg) sobre lineaventa, sin filtrar anuladas) --
+            // mismo resultado, sin la query aparte.
+            const string sql = @"
+                SELECT
+                    v.*,
+                    COALESCE(lvt.totalimportecalculado, 0) AS totalimportecalculado,
+                    COALESCE(lvt.cantitemscalculado, 0) AS cantitemscalculado,
+                    u.nombre AS vendedornombre, u.usuario AS vendedorusuario, u.email AS vendedoremail, u.idempresa AS vendedoridempresa,
+                    s.sucursal AS sucursalnombre, s.idempresa AS sucursalidempresa, s.codpuntoventaafip AS sucursalcodpuntoventaafip,
+                    s.direccion AS sucursaldireccion, s.localidad AS sucursallocalidad, s.provincia AS sucursalprovincia, s.pais AS sucursalpais,
+                    p.razonsocial AS personarazonsocial, p.identificacion AS personaidentificacion, p.idiva AS personaidiva, iv.iva AS personaiva,
+                    p.cuit AS personacuit, p.telefono AS personatelefono, p.domicilio AS personadomicilio, p.ciudad AS personaciudad,
+                    p.ctacte AS personactacte, p.bonificacion AS personabonificacion
+                FROM ventas v
+                LEFT JOIN usuarios u ON u.id = v.idvendedor
+                LEFT JOIN sucursal s ON s.idsucursal = v.idsucursal
+                LEFT JOIN personas p ON p.idpersona = v.idpersona
+                LEFT JOIN iva iv ON iv.id = p.idiva
+                LEFT JOIN (
+                    SELECT idventa, SUM(cantkg * preciokg) AS totalimportecalculado, COUNT(*) AS cantitemscalculado
+                    FROM lineaventa GROUP BY idventa
+                ) lvt ON lvt.idventa = v.idventa
+                WHERE v.idventa = @idVenta;";
+
             var lista = DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT * FROM ventas WHERE idventa = @idVenta;",
+                sql,
                 dr => MapVenta(dr, true),
                 p => p.AddWithValue("idVenta", idVenta));
 
@@ -656,17 +752,32 @@ namespace DatosPostgres
 
         public List<LineaVenta> obtenerLineasVenta(int idVenta)
         {
-            // INNER JOIN a corte a proposito (aunque no se consuman sus columnas): el SP real
-            // (obtenerLineasVenta, verificado con sp_helptext) hace el mismo INNER JOIN, asi que
-            // una linea cuyo idCorte no es visible para el tenant actual (RLS de Corte, ej. un
-            // idCorte de otra empresa por un dato viejo/cruzado) queda excluida del resultado --
-            // no solo con Corte=null. Confirmado con datos reales (Venta #23, idEmpresa=1, 2
-            // lineas con idCorte=3 que pertenece a idEmpresa=3).
+            // INNER JOIN a corte a proposito: el SP real (obtenerLineasVenta, verificado con
+            // sp_helptext) hace el mismo INNER JOIN, asi que una linea cuyo idCorte no es
+            // visible para el tenant actual (RLS de Corte, ej. un idCorte de otra empresa por
+            // un dato viejo/cruzado) queda excluida del resultado -- no solo con Corte=null.
+            // Confirmado con datos reales (Venta #23, idEmpresa=1, 2 lineas con idCorte=3 que
+            // pertenece a idEmpresa=3).
+            //
+            // Antes este JOIN se usaba solo para ese filtro y las columnas de corte se
+            // descartaban -- Corte se hidrataba con un _corteRepo.findCorteById() (conexion +
+            // transaccion propia) POR CADA LINEA. Bug de performance real (no de motor):
+            // confirmado con datos reales que una venta de 12 lineas tardaba varios cientos de
+            // ms de mas por esto solo -- ver docs/DECISIONS.md, 2026-08-21. Fix: se agregan las
+            // columnas de corte (con alias co_* para no chocar con columnas de lineaventa que
+            // se llaman igual: preciokg, idalicuotaiva, alicuotaiva, idempresa) al mismo SELECT
+            // que ya hacia el JOIN, y se arma el Corte directo de la fila -- mismo patron ya
+            // usado en CortePg.MapCorteListado/ObtenerCortesPorEmpresaListado para el mismo
+            // problema. Marca se resuelve con un LEFT JOIN liviano (igual que alli) en vez de
+            // buscarCorteById con maestro (que ya venia en false aca, asi que CorteMaestro
+            // nunca se poblaba -- sin cambio de comportamiento en ese punto).
             return DbPg.Reader(_connectionString, _idEmpresa,
                 @"SELECT lv.idlineaventa, lv.idventa, lv.idcorte, lv.cantkg, lv.idalicuotaiva, lv.alicuotaiva, lv.preciokg,
-                    lv.kgsajustetarj, lv.bonificacion, lv.idlineaventaanulado, lv.pesobalanza, lv.idanulado
+                    lv.kgsajustetarj, lv.bonificacion, lv.idlineaventaanulado, lv.pesobalanza, lv.idanulado,
+                    " + ColumnasCorteJoin + @"
                   FROM lineaventa lv
                   INNER JOIN corte c ON lv.idcorte = c.idcorte
+                  LEFT JOIN personas mk ON c.idmarca = mk.idpersona
                   WHERE lv.idventa = @idVenta
                   ORDER BY c.codigo;",
                 dr =>
@@ -675,7 +786,7 @@ namespace DatosPostgres
                     {
                         IdLineaVenta = Convert.ToInt32(dr["idlineaventa"]),
                         Venta = new Venta { IdVenta = Convert.ToInt32(dr["idventa"]) },
-                        Corte = _corteRepo.findCorteById(Convert.ToInt32(dr["idcorte"]), false),
+                        Corte = MapCorteDesdeJoin(dr, Convert.ToInt32(dr["idcorte"])),
                         CantKg = dr["cantkg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantkg"]),
                         IdAlicuotaIva = dr["idalicuotaiva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["idalicuotaiva"]),
                         AlicuotaIva = dr["alicuotaiva"] == DBNull.Value ? 0 : Convert.ToSingle(dr["alicuotaiva"]),
@@ -688,7 +799,14 @@ namespace DatosPostgres
                     oLinea.KgsTotalCalculado = oLinea.CantKg;
                     oLinea.PrecioKgOriginal = oLinea.PrecioKg;
                     oLinea.PesoBalanza = dr["pesobalanza"] != DBNull.Value && Convert.ToBoolean(dr["pesobalanza"]);
-                    oLinea.Estado = dr["idanulado"] == DBNull.Value ? 0 : 1;
+                    // idanulado GUARDA el Estado tal cual (agregarLineaVenta hace
+                    // AddWithValue("idAnulado", oLineaE.Estado) -- 0=activa, 1=anulada, ver
+                    // Entidades.LineaVenta.estados). Antes se leia "no es NULL -> 1", lo que
+                    // marcaba TODA linea activa (idanulado=0, un valor real, no NULL) como
+                    // anulada -- bug real encontrado probando "modificar venta" desde el POS:
+                    // el carrito se abria vacio porque la vista filtra por esAnulado(Estado).
+                    // Ver docs/DECISIONS.md.
+                    oLinea.Estado = dr["idanulado"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idanulado"]);
 
                     return oLinea;
                 },
@@ -1190,15 +1308,31 @@ namespace DatosPostgres
         }
 
         // Sin wrapper propio en Negocio.Venta -- solo se usa dentro de getExpedioById (mismo
-        // patron que Datos.Venta.obtenerLineasExpendio).
+        // patron que Datos.Venta.obtenerLineasExpendio). Mismo fix de N+1 que
+        // obtenerLineasVenta (ver ese comentario, docs/DECISIONS.md 2026-08-21): antes hacia
+        // un findCorteById() por linea, ahora se joinea corte en la misma query.
+        //
+        // A diferencia de obtenerLineasVenta, el JOIN a corte aca es LEFT, no INNER: verificado
+        // contra el original de SQL Server (Datos/Venta.cs.obtenerLineasExpendio) que hace
+        // "SELECT * FROM LineaExpendio" sin ningun JOIN y deja Corte=null si findCorteById no
+        // encuentra nada -- ninguna fila se descarta por eso. Un INNER JOIN aca hubiera sido un
+        // cambio de comportamiento real (filtrar lineas de expendio con corte no visible), no
+        // solo una optimizacion.
         private List<Entidades.LineaVenta> GetLineasExpendio(int idExpendio)
         {
             return DbPg.Reader(_connectionString, _idEmpresa,
-                "SELECT idlineaexpendio, idcorte, cantkg, preciokg, pesobalanza FROM lineaexpendio WHERE idexpendio = @idExpendio;",
+                @"SELECT le.idlineaexpendio, le.idcorte, le.cantkg, le.preciokg, le.pesobalanza,
+                    " + ColumnasCorteJoin + @"
+                  FROM lineaexpendio le
+                  LEFT JOIN corte c ON le.idcorte = c.idcorte
+                  LEFT JOIN personas mk ON c.idmarca = mk.idpersona
+                  WHERE le.idexpendio = @idExpendio;",
                 dr => new Entidades.LineaVenta
                 {
                     IdLineaVenta = Convert.ToInt32(dr["idlineaexpendio"]),
-                    Corte = _corteRepo.findCorteById(Convert.ToInt32(dr["idcorte"]), false),
+                    Corte = dr["idcorte"] != DBNull.Value && ColumnaExiste(dr, "co_codigo") && dr["co_codigo"] != DBNull.Value
+                        ? MapCorteDesdeJoin(dr, Convert.ToInt32(dr["idcorte"]))
+                        : null,
                     CantKg = dr["cantkg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["cantkg"]),
                     PrecioKg = dr["preciokg"] == DBNull.Value ? 0 : Convert.ToSingle(dr["preciokg"]),
                     PesoBalanza = GetBool(dr, "pesobalanza")
@@ -1322,7 +1456,17 @@ namespace DatosPostgres
                             RETURNING id;", con, tx))
                         {
                             cmd.Parameters.AddWithValue("ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip ?? "");
-                            cmd.Parameters.AddWithValue("fechaEmisionAfip", oFacturaElectronicaE.FechaEmisionAfip < DateTime.Today.AddYears(-100) ? (object)DBNull.Value : (object)oFacturaElectronicaE.FechaEmisionAfip);
+                            // FechaEmisionAfip es DateTime? -- "x < fecha" con x nulo evalua false
+                            // en C# (los operadores relacionales de Nullable<T> nunca son true si
+                            // un operando es null), asi que el ternario de abajo caia SIEMPRE en
+                            // la rama "no nulo" cuando FechaEmisionAfip era null, boxeando un
+                            // DateTime? sin valor a un object null desnudo -- Npgsql lo rechaza
+                            // (mismo bug ya encontrado y cerrado en CierreCajaPg.addOrEditCierreCaja,
+                            // ver docs/DECISIONS.md). Hay que chequear HasValue antes de comparar.
+                            cmd.Parameters.AddWithValue("fechaEmisionAfip",
+                                (!oFacturaElectronicaE.FechaEmisionAfip.HasValue || oFacturaElectronicaE.FechaEmisionAfip.Value < DateTime.Today.AddYears(-100))
+                                    ? (object)DBNull.Value
+                                    : (object)oFacturaElectronicaE.FechaEmisionAfip.Value);
                             cmd.Parameters.AddWithValue("descTipoCbteAfip", oFacturaElectronicaE.DescTipoCbteAfip ?? "");
                             cmd.Parameters.AddWithValue("codTipoCbteAfip", oFacturaElectronicaE.CodTipoCbteAfip);
                             cmd.Parameters.AddWithValue("nroCbteAfip", oFacturaElectronicaE.NroCbteAfip ?? "");
