@@ -8,6 +8,13 @@ namespace Web.Models
     {
         public int IdCompra { get; set; }
 
+        // Generado fresco en cada GET de Editar.cshtml (nunca reutilizado entre cargas de
+        // pagina). ComprasController.Guardar lo usa como clave de deduplicacion -- cualquier
+        // reintento de ESTE mismo formulario (doble click, reintento manual, o lo que sea que
+        // dispare un segundo POST) queda bloqueado sin importar cuanto tiempo pase entre uno y
+        // otro. Ver docs/DECISIONS.md.
+        public string SubmissionToken { get; set; }
+
         public string Origen { get; set; }
 
         public bool DesdePos { get; set; }

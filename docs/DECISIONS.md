@@ -1,6 +1,543 @@
 # Decisiones de arquitectura
 
-## 2026-08-21 (la mas reciente) - RLS en usuarios/usuariopasswordresettokens: cierre del gap de seguridad, unicidad global de usuario, y correccion de rumbo sobre el mecanismo de bypass
+## 2026-08-21 (la mas reciente) - N+1 real en VentaPg cerrado: JOIN de corte en vez de findCorteById por fila (con permiso explicito del usuario para tocar las queries)
+
+Cierre del hallazgo secundario dejado pendiente en la entrada de mas abajo (Keepalive). Con
+permiso explicito del usuario ("dandote permiso para modificar los sp de pg si es necesario"),
+se resolvio el N+1 real en `DatosPostgres/VentaPg.cs` -- ya no quedaba oculto por el problema
+de conexion, asi que ahora si era el cuello de botella medible (405ms en una venta de 12
+lineas, contra <30ms de una venta simple).
+
+**Dos focos, mismo patron**:
+1. `obtenerLineasVenta` (venta -> lineas): el `INNER JOIN corte c ON lv.idcorte = c.idcorte` ya
+   existia, pero solo se usaba para el filtro de RLS (una linea con idCorte de otra empresa
+   queda excluida -- comportamiento del SP original de SQL Server, verificado con
+   sp_helptext, preservado sin cambios). Las columnas de `corte` se descartaban y Corte se
+   hidrataba con `_corteRepo.findCorteById()` -- conexion+transaccion propia POR CADA LINEA.
+2. `getVentaById`: `SELECT * FROM ventas WHERE idventa=@id` sin ningun JOIN, a diferencia de
+   `getAllVentas` que si los tiene -- `CargarRelacionesVenta` caia siempre en el fallback
+   (`_sucursalRepo.findById`/`_personaRepo.findById`/`GetUsuarioLiviano`, 3 queries extra) y
+   `MapVenta` pegaba una cuarta vez a `getTotalVenta()` porque la columna `totalimportecalculado`
+   no venia en el SELECT.
+
+**Fix**: se agregaron las columnas necesarias (con alias `co_*`/`vendedor*`/`sucursal*`/
+`persona*` para no chocar con columnas del mismo nombre en la tabla principal -- `preciokg`,
+`idalicuotaiva`, `alicuotaiva` e `idempresa` existen tanto en `lineaventa`/`lineaexpendio` como
+en `corte`) al mismo SELECT que ya hacia el JOIN, armando las entidades directo de la fila --
+mismo patron que ya usaba `CortePg.MapCorteListado`/`ObtenerCortesPorEmpresaListado` para este
+problema exacto en otro archivo. Se extrajo un helper compartido `MapCorteDesdeJoin` (antes
+duplicado inline) para `obtenerLineasVenta` y `GetLineasExpendio` (mismo N+1, mismo fix, en el
+flujo de Puntos de Expendio).
+
+**Cuidado real, no solo optimizacion ciega**: `GetLineasExpendio` NO uso `INNER JOIN` como
+`obtenerLineasVenta` -- se verifico el original de SQL Server
+(`Datos/Venta.cs.obtenerLineasExpendio`, `SELECT * FROM LineaExpendio` sin ningun JOIN, Corte
+queda `null` si `findCorteById` no encuentra nada) antes de decidir. Un `INNER JOIN` ahi hubiera
+sido un cambio de comportamiento real (descartar lineas de expendio con corte no visible en vez
+de dejarlas con `Corte=null`) -- se uso `LEFT JOIN` en su lugar, exactamente para preservar el
+comportamiento original.
+
+**Verificado, no solo "compila"**: `DetalleVenta?id=18` (12 lineas activas) paso de 405ms a
+28-37ms consistentes -- 91% menos, y esto YA es con el fix de Keepalive puesto (sin el, esto
+mismo tardaba 14-20 SEGUNDOS). Contenido de la pagina comparado byte a byte contra la version
+anterior: mismo producto (`PROD SC 01` x15), mismo cliente (`CONSUMIDOR FINAL`), mismo total
+(`$ 1.332,00`, verificado tambien contra `SUM(cantkg*preciokg)` corrido a mano en la base). La
+query de `GetLineasExpendio` se corrio a mano contra datos reales (expendio #78, 8 lineas) --
+sin errores de columna ambigua, mismos valores que antes.
+
+**No se toco** (evaluado y descartado por bajo impacto/alto riesgo relativo): `getPagoById`
+(`CuentaCorrientePg.cs`) y `findCorteGlobalById` (`CatalogoGlobalProductoPg.cs`) tienen el mismo
+patron pero en carga de una sola entidad (una query extra, no N por fila) -- el ahorro es
+minimo y tocarlos arriesga perder campos que el `findById` completo trae y el join liviano no
+(Cuit, Telefono, Domicilio, etc. de Persona). `Productos/Index` y el catalogo global paginado
+(`ObtenerCatalogoGlobalPagina`) ya estaban bien -- confirmado que usan sus propios metodos
+`*Listado` con JOIN, sin N+1, desde antes de esta sesion.
+
+**Archivos tocados**: `DatosPostgres/VentaPg.cs`.
+
+## 2026-08-21 - Vistas "lentas" en Postgres: causa raiz encontrada y cerrada -- conexiones pooled quedando medio-muertas tras inactividad (faltaba Keepalive)
+
+El usuario reporto que TODA la app se siente lenta contra Postgres, "incluso en PWA" (uso real,
+no solo en dev). Se midio de punta a punta antes de tocar nada.
+
+**Primera pista, resultó ser un desvio (no el root cause)**: `DetalleVenta?id=18` (venta con 12
+lineas activas) tardaba 14-20 SEGUNDOS, contra 30ms de una venta de 1 linea -- eso hizo
+sospechar N+1 real (confirmado que existe: `VentaPg.obtenerLineasVenta` hace un
+`findCorteById` por cada linea, `MapVenta` hace `findById` de Sucursal/Persona cuando la query
+no trae esos JOINs -- afecta a `getVentaById` pero no a `getAllVentas`, que si joinea). Se seria
+un problema real de performance a mediano plazo (cientos de round-trips extra en listas
+grandes), **pero no explicaba los tiempos medidos**: `/Ventas/DetalleVenta?id=1741` (1 sola
+linea) tambien tardaba 14-15s de forma intermitente, y hasta `/Home/Index` (sin ninguna
+relacion con ventas) mostraba el mismo patron. Documentado como hallazgo secundario, no
+descartado (ver "Pendiente" mas abajo), pero no es la causa de la lentitud reportada.
+
+**Aislamiento real**: la instrumentacion propia de la app (`PerformanceInstrumentation`,
+`X-CarniSys-*` headers + `App_Data/perf-web.log`, ya estaba prendida en Web.config) mostro que
+la LOGICA del controller `DetalleVenta` corria en ~10-200ms (su propio Stopwatch interno,
+`cargaVenta`+`preparar`) mientras el tiempo total del request (wrapper de
+`Application_BeginRequest`/`EndRequest`) llegaba a 14000-20000ms -- la diferencia esta FUERA
+del controller. Se probo `modal=true` (salta el layout completo) -> rapido (0.35s). Se probo
+`/Home/Index` (pagina sin relacion) -> mismo patron intermitente. Se probo
+`/Session/KeepAlive` (no toca la base) -> **siempre rapido**, con o sin hueco de inactividad
+previo. Esa ultima comparacion aislo la causa: el cuelgue ocurre especificamente cuando el
+request necesita hablar con Postgres **despues de un hueco de inactividad** (~15-60s de
+requests previos sin actividad) -- nunca en requests seguidos.
+
+**Causa raiz confirmada**: `Web/Config/connectionStrings.config` (`ConexionPostgresPiloto`) no
+tenia `Keepalive` ni `Tcp Keepalive` configurados -- ambos son `off`/`0` por default en Npgsql.
+Una conexion del pool que queda idle un rato puede quedar "medio muerta" (el pool la sigue
+creyendo viva, pero nadie -- ni Npgsql ni el SO -- revalido el socket real): el primer intento
+de usarla se cuelga hasta que la pila TCP de Windows agota sus reintentos de retransmision y
+recien ahi detecta la falla (~15s, consistente con el timeout de retransmision TCP tipico) --
+recien en ese momento Npgsql abre una conexion nueva y el request, ya tarde, se completa igual
+(por eso el usuario nunca vio un error, solo lentitud). Confirmado que **no** era un problema
+de Postgres en si: `pg_stat_activity` durante un request "colgado" mostraba las 4 conexiones
+existentes **idle**, sin ninguna query corriendo ni bloqueo -- el cuelgue pasaba antes de que
+la query llegara a Postgres.
+
+**Por que esto explica "incluso en PWA" y probablemente sea PEOR ahi**: en `localhost` esto ya
+se reproducia (a traves de un firewall/AV/stack de red de Windows que corta sockets idle sin
+avisar), y en un despliegue real -- con NAT, firewalls corporativos, o simplemente mas saltos de
+red entre la app y Postgres -- las tablas de conexion de esos dispositivos intermedios suelen
+tener timeouts de inactividad AUN MAS agresivos que el propio SO, asi que el mismo problema
+aparece con mas frecuencia, no menos.
+
+**Fix**: `Keepalive=30;Tcp Keepalive=true;` agregado a la connection string.
+- `Keepalive=30` (nivel Npgsql/app): cada conexion idle del pool manda un `SELECT 1` cada 30s
+  -- si el socket esta realmente muerto, Npgsql lo detecta y lo descarta del pool de forma
+  proactiva, antes de que un request real la agarre.
+- `Tcp Keepalive=true` (nivel SO): habilita keepalive TCP nativo en el socket, misma logica un
+  nivel mas abajo.
+- No requiere rebuild -- `connectionStrings.config` se lee via `configSource`, ASP.NET detecta
+  el cambio y recicla el AppDomain solo.
+
+**Verificado exhaustivamente, no solo una vez**: antes del fix, el patron "request lento tras
+hueco de inactividad" se reprodujo el 100% de las veces probado (multiples paginas, multiples
+huecos de 2-60s, sesion nueva y sesion vieja, con AppDomain fresco y no). Despues del fix: 3
+huecos de 25s + 2 huecos de 60s consecutivos, **cero requests lentos** (todos <15ms), incluida
+la venta de 12 lineas que antes tardaba 14-20s.
+
+**Confirmado por el usuario en su propio uso real** (no solo mis mediciones por curl): pidio
+activar SQL Server para comparar motor contra motor ("en sql el despliegue es rapido" -- dato
+esperado, nunca se sospecho que el computo de las queries en si fuera el problema). Se volvio a
+Postgres con el fix ya puesto y confirmo: "ahora funciona rapido". Cierra el reporte.
+
+**Pendiente (hallazgo secundario, real pero no la causa de este reporte)**: patron N+1 en
+`DatosPostgres/*.cs` para hydratacion de entidades relacionadas cuando la query no trae los
+JOINs necesarios -- confirmado en `VentaPg.obtenerLineasVenta` (un `findCorteById` por linea),
+`VentaPg.MapVenta` (fallback a `findById` de Sucursal/Persona si la query no las joinea, el
+caso de `getVentaById`), y el mismo patron aparece en `CortePg`/`CuentaCorrientePg`/
+`CatalogoGlobalProductoPg` para `Marca`/`Persona`. No afecta notablemente hoy (las queries
+tardan bien por debajo de 100ms incluso con el N+1, una vez resuelto el problema de keepalive),
+pero escala mal: cada linea/fila extra sigue siendo una conexion+transaccion completa
+adicional. Quedaria para una pasada de optimizacion aparte si el volumen de datos crece.
+
+**Otro hallazgo secundario, no arreglado en esta pasada**: `DatosPostgres/DbPg.cs` nunca llama
+a `Utilidades.PerformanceInstrumentation.MeasureDb` (a diferencia de `Utilidades/Db.cs`, el
+lado SQL Server, que si instrumenta cada llamada) -- por eso todo el `perf-web.log` muestra
+`db=0 ms/0 calls` para requests en modo Postgres, aunque hayan hecho decenas de queries reales.
+Instrumentar `DbPg` (mismo patron que `Db.cs`) dejaria el `X-CarniSys-Db-Calls` util tambien en
+modo Postgres, y hubiera acortado mucho esta investigacion. Recomendado para una proxima tarea.
+
+**Archivos tocados**: `Web/Config/connectionStrings.config`.
+
+## 2026-08-21 - Compras en cta.cte seguia duplicandose: el lock de 4s no alcanzaba, se reemplazo por token de un solo uso
+
+El usuario confirmo que el bug de "doble registro al guardar" (entrada de mas abajo) seguia
+pasando en cta.cte pese al lock por sesion recien agregado. Se re-audito todo el flujo de
+escritura de punta a punta (`ComprasController.Guardar`, `Negocio.Compra.EjecutarAddOrEditCompra`,
+`crearMovCtaCteCompra`, `Negocio.CuentaCorriente.crearMovCtaCte`, `CuentaCorrientePg.
+getMovCtaCteBy`/`addOrEditMovCtaCte`) linea por linea contra la logica original de SQL Server
+(`Datos/Compra.cs`, `Datos/CuentaCorriente.cs`) -- **ningun POST unico enviado a mano (alta
+nueva, edicion/re-guardado, modo POS, con y sin cta.cte) produjo mas de una fila**, ni en
+`compras` ni en `movctacte`, en ningun escenario probado. El codigo de escritura en si esta bien.
+
+**El dato que destrabo esto**: se miraron los `creado` timestamps de las compras reales
+(no de prueba) que el propio usuario genero probando -- **4 pares separados, cada uno con
+~15-16 segundos exactos de diferencia** (9036/9037, 9038 solo, 9047/9048, 9051/9052, 9053/9054).
+Una brecha tan consistente entre incidentes independientes no es variacion humana de doble-click
+(eso da milisegundos a 1-2s, no 15s clavados) -- apunta a algun mecanismo con un timer fijo.
+Se encontro `MODAL_LOAD_STALE_MS = 15000` en `Web/Scripts/app/pos-guard.js` (recupera un lock de
+apertura de modal si queda "colgado" mas de 15s) -- coincide sospechosamente con el patron, pero
+**no se pudo confirmar con certeza** que sea la causa exacta: `compras.js` no llama a `POSGuard`
+para el boton Guardar (solo `POSFinanzas.cargar`, que abre el modal, lo usa). No se siguio
+persiguiendo la causa exacta del lado cliente mas alla de este punto.
+
+**Decision**: en vez de seguir adivinando el trigger del lado cliente, cerrar la puerta del
+lado servidor de forma que no dependa de acertarle a la causa. El lock anterior (por sesion,
+4 segundos, entrada de mas abajo) se **reemplaza** por un **token de un solo uso por carga de
+formulario**:
+
+- `CompraEditVm.SubmissionToken` -- nuevo campo, `Guid.NewGuid()` generado una sola vez en
+  `ComprasController.Editar` (GET), nunca reutilizado entre cargas de pagina.
+- `Views/Compras/Editar.cshtml` -- `@Html.HiddenFor(m => m.SubmissionToken)`, viaja con el form.
+- `ComprasController.Guardar` -- la clave del lock en `MemoryCache` ahora es el token (con
+  fallback a `Session.SessionID` si por algun motivo no llega, ej. un form cacheado de antes de
+  este cambio). TTL largo (30 minutos, contra los 4 segundos de antes) porque ya no hace falta
+  liberarlo pronto: al ser de un solo uso, jamas bloquea una compra legitima distinta (esa trae
+  su propio token nuevo).
+
+**Por que esto es estrictamente mejor que ensanchar la ventana de tiempo**: una ventana de
+tiempo (aunque sea de 30s o 1 minuto) sigue siendo una apuesta a que la brecha real nunca supere
+ese valor -- y ya vimos que "15s" resulto ser mas largo que los "4s" que parecian generosos al
+principio. El token no depende de ninguna suposicion de tiempo: bloquea CUALQUIER reintento del
+mismo formulario, sin importar si son 200ms o 20 minutos despues, y jamas bloquea un formulario
+distinto aunque se guarde un segundo despues del primero.
+
+**Verificado con requests reales**: mismo token reenviado 16 segundos despues del primer
+guardado exitoso -> rechazado (`"Esta compra ya se guardó..."`), sin tocar la base. Un
+formulario nuevo (token distinto) guarda sin problema aunque se mande casi en simultaneo con
+el anterior. Confirmado en la base: exactamente una fila por token usado, ninguna por el
+intento bloqueado.
+
+**Archivos tocados**: `Web/Models/CompraEditVm.cs`, `Web/Views/Compras/Editar.cshtml`,
+`Web/Controllers/ComprasController.cs`.
+
+## 2026-08-21 - Compras: Index no mostraba nada en Postgres (bug de motor real) + doble-submit real duplicaba compras
+
+**Bug 1 -- `Compras/Index` vacio en Postgres, de motor, confirmado NO reproducible en SQL Server**:
+el usuario reporto que la pantalla de Compras no mostraba ninguna compra en modo Postgres,
+aunque en SQL Server siempre funciono. Reproducido: `GET /Compras/Index` con cualquier rango de
+fechas (incluso un año entero) devolvia "No se encontraron", pese a haber compras reales de hoy
+en la base (confirmado corriendo la misma consulta a mano por `psql`, con y sin RLS -- ambas
+devuelven filas correctas). Causa real: `DatosPostgres/CompraPg.obtenerCompras` (las 5 ramas
+UNION) y `getLineasCompras` usan `@idSucursal = 0` como wildcard para "todas las sucursales",
+pero `ComprasController.Index`/`Lineas` tienen `idSucursal = -1` como default del parametro de
+la accion (mismo convenio de "todas" que usan Venta/CierreCaja en otros archivos de este mismo
+proyecto) -- con `-1`, la condicion `@idSucursal = 0` nunca matcheaba y el filtro de sucursal
+descartaba **todas** las filas, sin importar la fecha. Confirmado que `StockController`/
+`ReportesController` SI llaman este mismo metodo pasando `0` como wildcard (por eso Stock/
+Reportes no mostraban el mismo sintoma) -- **fix**: `@idSucursal <= 0` en las 9 clausulas
+afectadas de `CompraPg.cs`, que cubre los dos convenios sin romper a ningun caller existente.
+Verificado: con el fix, `/Compras/Index` muestra las compras reales de Postgres.
+
+**Nota para revisiones futuras**: el mismo desajuste "controller usa -1, query Postgres espera
+0" (o viceversa) puede existir en otros archivos -- se vio la misma inconsistencia de convenio
+(algunos `= 0`, algunos `= -1`, algunos `<= 0`) dispersa en `CierreCajaPg.cs`/`CortePg.cs`/
+`VentaPg.cs`/`CuentaCorrientePg.cs`. No se audito todo el proyecto por este patron especifico
+(fuera del alcance de este reporte puntual) -- si aparece otro caso de "pantalla vacia sin
+error" en Postgres, revisar primero el valor default de `idSucursal` del action contra el
+literal exacto que compara la clausula `WHERE` de la query Postgres correspondiente.
+
+**Bug 2 -- doble-submit real en Compras, duplica la compra completa (y su movimiento de cta.cte
+si aplica)**: confirmado en los datos reales que dejo el propio testing del usuario -- pares de
+compras con mismo proveedor/importe/sucursal creadas en el mismo minuto (ids 9036/9037,
+9041/9042). El guard de `compras.js` (`state.saving` + boton disabled) esta bien escrito pero
+no alcanza a cubrir el caso real: dos POST *secuenciales* (no simultaneos) donde el primero ya
+termino de procesarse antes de que el segundo se dispare. **Fix de dos capas**:
+- Cliente (`compras.js`): segunda guarda independiente en `submitForm` -- ademas de
+  `state.saving`, chequea el `disabled` real del boton en el DOM (`$btn.prop('disabled')`);
+  si cualquiera de los dos esta activo, no hace nada.
+- Servidor (`ComprasController.Guardar`, la garantia real): lock por sesion via
+  `MemoryCache.Default.Add` (atomico, sin ventana de carrera entre chequear y marcar), ventana
+  de 4 segundos. **A proposito NO se libera en el camino de exito** -- si se liberara apenas
+  termina de procesar, un segundo click que llega despues (el caso real, mas comun que dos
+  requests literalmente simultaneos) pasaria sin trabas; se deja expirar solo, cubriendo toda la
+  ventana del "guardar rapido dos veces". Solo se libera antes de tiempo en el camino de error,
+  para que el usuario pueda reintentar de inmediato si la compra no se guardo.
+
+**Verificado con requests reales** (no solo leyendo el codigo): primer POST guarda ok
+(`idCompra` nuevo), segundo POST inmediatamente despues devuelve
+`{"ok":false,"mensaje":"La compra ya se está guardando..."}` sin tocar la base, y un tercer POST
+pasados los 4s guarda una compra nueva sin problema (la ventana no deja al usuario trabado).
+
+**Limitacion aceptada**: el lock es por `Session.SessionID`, no por formulario -- dos pestañas
+del mismo navegador/sesion guardando compras *distintas* en la misma ventana de 4s se
+bloquearian entre si (falso positivo raro, preferible al bug real de duplicacion).
+
+**Archivos tocados**: `DatosPostgres/CompraPg.cs`, `Web/Controllers/ComprasController.cs`,
+`Web/Scripts/app/compras.js`.
+
+## 2026-08-21 - "Cerrar venta sin facturar" colgado: 2 bugs reales (token antiforgery faltante + parametro null), ninguno de motor
+
+A pedido del usuario, se probo el modal de factura electronica, boton "Cerrar sin facturar"
+(usado cuando se quiere cerrar una venta del POS sin emitir comprobante). Reporto "error de
+peticion" y la venta quedaba colgada (modal no cierra).
+
+**Bug 1 -- token antiforgery ausente, 100% reproducible, afecta a los 5 `$.post` del modulo**:
+`Web/Scripts/app/factura-electronica.js` manda sus 5 llamadas (`GenerarNotaCredito`,
+`GenerarFactura`, `LimpiarLineasVentaManual`, `CrearVentaManual`, `CerrarVentaSinFacturar`) con
+`$.post(url, datosPlanos)`, sin adjuntar el token nunca. Dependian 100% del auto-inject global
+de `modal-request-loading.js` (hookeado a `ajaxSend`) -- el mismo mecanismo que ya se habia
+encontrado poco confiable en flujos de modal del POS y corregido a mano en
+`forma-pago.js`/`FinalizarVenta` (ver mas abajo, entrada del testing de escritura). Agravante
+especifico de este modulo: `Views/Ventas/_FacturaElectronica.cshtml` tiene su propio
+`@Html.AntiForgeryToken()` **comentado** (linea 390), asi que ni siquiera tenia un token propio
+de respaldo dentro del formulario -- dependia enteramente del token de la pagina POS por
+detras, y del timing del auto-inject. Cuando fallaba, el filtro global
+(`ValidateAppAntiForgeryTokenAttribute`) rechazaba con 400 y el jQuery `.fail()` mostraba
+"Error en la peticion" -- exactamente el sintoma reportado. **Fix**: agregado un helper
+`tokenAntiForgery()` al modulo (mismo patron ya usado en `forma-pago.js`) y las 5 llamadas
+`$.post` pasadas a `$.ajax` con el token explicito por header `RequestVerificationToken`. Se
+corrigieron las 5, no solo la reportada (CLAUDE.md §5.1: mismo patron repetido, se arregla una
+vez para todo el archivo, no caso por caso conforme se vayan reportando).
+
+**Regla nueva para `docs/DECISIONS.md`/futuros modulos POS**: cualquier `$.post`/`$.ajax` nuevo
+en pantallas de modal del POS (Ventas, Cajas, PuntosExpendio) tiene que mandar el token
+antiforgery **a mano** por header (`tokenAntiForgery()`-style), nunca confiar solo en el
+auto-inject de `modal-request-loading.js` -- confirmado 2 veces ahora (`FinalizarVenta` y este
+modulo) que el timing falla en este contexto especifico.
+
+**Bug 2 -- de motor, encontrado al destrabar el bug 1**: con el token puesto a mano se pudo ver
+el error real por primera vez -- `DatosPostgres/VentaPg.addOrEditFactuElec` (rama INSERT)
+tiraba `Parameter 'fechaEmisionAfip' must have either its NpgsqlDbType or its DataTypeName or
+its Value set.`. Mismo bug de familia que el ya cerrado en `CierreCajaPg` (parametro `null`
+desnudo sin `DBNull.Value`), pero con una causa mas sutil: el guard existente
+(`FechaEmisionAfip < DateTime.Today.AddYears(-100) ? DBNull.Value : FechaEmisionAfip`) parece
+chequear null pero no lo hace -- en C#, los operadores relacionales de `Nullable<T>`
+(`<`, `>`, etc.) **siempre devuelven `false`** si alguno de los operandos es null, nunca lanzan
+ni son true. Con `FechaEmisionAfip == null` (caso real: cerrar sin facturar nunca la asigna), la
+comparacion da `false` -> cae en la rama "no nulo" -> bombea un `DateTime?` sin valor
+boxeado a `object`, que es un `null` desnudo. Fix: chequear `.HasValue` antes de comparar.
+**Auditoria**: se greppeo todo `DatosPostgres/*.cs` buscando el mismo patron
+(`< DateTime.` / `> DateTime.` sin `HasValue`/`== null ||` cerca) -- sin mas casos, los otros 2
+usos de `fechaError` en el mismo archivo ya tenian el `== null ||` correcto.
+
+**Verificado end-to-end**: `POST /Ventas/CerrarVentaSinFacturar` (con token) devuelve
+`{"ok":true,"forcedClose":true}`, y la fila en `facturaelectronica` queda bien
+(`error=true`, `mensajeerror` correcto, `fechaemisionafip` NULL como corresponde).
+
+**Archivos tocados**: `Web/Scripts/app/factura-electronica.js`, `DatosPostgres/VentaPg.cs`.
+
+## 2026-08-21 - Bug real: toda linea de venta se leia como "Anulada" en Postgres (POS de edicion se abria vacio)
+
+**Correccion de rumbo**: la entrada anterior de esta misma fecha (mas abajo, "Testing de
+modificacion de venta") habia concluido "sin bugs" -- estaba mal. Verifique que
+`POST /Ventas/ModificarVenta` guardaba bien contra la base (una sola fila en `lineaventa`, sin
+duplicados), pero **nunca verifique que la vista de edicion mostrara la linea al recargarla** --
+solo el campo `idVentaEditar`. El usuario probo a mano el flujo real (reabrir el POS para
+modificar una venta) y encontro que **el carrito se abria vacio**, mostrando solo el cliente
+original. Repetir el mismo `GET /Ventas/POS?idVentaEditar=1741` e inspeccionar el array
+`lineasEdicionPos` embebido en la pagina (no solo el campo `idVentaEditar`) confirmo el bug:
+`const lineasEdicionPos = [];` -- vacio, pese a que la venta 1741 tiene una linea real en
+`lineaventa`.
+
+**Causa real**: `DatosPostgres/VentaPg.obtenerLineasVenta` interpretaba la columna `idanulado`
+al reves. `agregarLineaVenta` graba ahi el `Estado` de la linea tal cual (`0`=activa,
+`1`=anulada, ver `Entidades.LineaVenta.estados`) -- un valor entero real, **nunca NULL**. La
+lectura hacia `dr["idanulado"] == DBNull.Value ? 0 : 1` -- como el valor real (`0`) nunca es
+NULL, **toda linea activa se leia como `Estado=1` (Anulada)**. La vista de edicion del POS
+filtra explicitamente `lineasActivas = Model.LineasVenta.Where(l =>
+!Entidades.LineaVenta.esAnulado(l.Estado))` -- con todas las lineas marcadas como anuladas,
+el filtro las descartaba todas, de ahi el carrito vacio.
+
+Confirmado contra la logica original de SQL Server (`Datos/Venta.cs`, mismo metodo): el SP real
+expone un `estado` **calculado** (no la columna `idAnulado` cruda) que resulta vacio para
+lineas activas -- el chequeo `IsNullOrEmpty` de SQL Server es correcto ahi porque opera sobre
+ese campo calculado, no sobre `idAnulado` directo. El puerto a Postgres copio el patron
+`IsNullOrEmpty->NULL check` pero aplicandolo a la columna cruda `idanulado`, que nunca es NULL
+-- error de traduccion, no una decision deliberada.
+
+**Impacto real, mas amplio que solo "modificar venta"**: `obtenerLineasVenta` es el unico punto
+de carga de lineas para `getVentaById`/`getAllVentas(cargarLineas:true)` -- afecta a **toda
+venta ya finalizada, vista o editada en modo Postgres**: `/Ventas/DetalleVenta` (confirmado:
+antes del fix mostraba la venta sin sus lineas/como si estuvieran anuladas), reimpresion de
+tickets, y cualquier reporte que dependa de lineas activas. No solo el flujo de "modificar
+venta" que disparo el reporte del usuario.
+
+**Fix**: `oLinea.Estado = dr["idanulado"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idanulado"]);`
+-- lee el valor real grabado en vez de colapsar todo no-NULL a `1`.
+
+**Verificado tras el fix**: `GET /Ventas/POS?idVentaEditar=1741` -> `lineasEdicionPos` con la
+linea real (`producto`, `cant`, `subtotal` correctos, `anulado:false`). `GET
+/Ventas/DetalleVenta?id=1741` -> muestra el producto real, sin marca de anulado. El resto del
+flujo de modificacion (ya probado antes) seguia guardando bien.
+
+**Leccion para el resto del testing de este dia**: verificar solo el "ok:true" de una escritura
+y la fila cruda en la base **no alcanza** -- hay que releer el dato por el mismo camino que usa
+la UI real (la vista, no una query SQL directa) para detectar bugs de lectura/interpretacion
+como este. Aplica retroactivamente a los otros modulos ya dados por buenos en la entrada de mas
+abajo ("Testing de escritura real") -- quedan con menor confianza de la que se penso en su
+momento, ya que ahi tampoco se releyo por la UI real en todos los casos.
+
+Caja de prueba cerrada y `admin` del usuario de prueba revertido a `false` al terminar.
+
+**Archivos tocados**: `DatosPostgres/VentaPg.cs`.
+
+## 2026-08-21 - Testing de modificacion de venta (POS): primer intento, escritura verificada pero lectura no (ver correccion arriba)
+
+A pedido del usuario, se probo especificamente el flujo de **modificar una venta existente**
+reabriendo el POS: `GET /Ventas/POS?idVentaEditar=<id>` (debe cargar la venta real para editar,
+no una venta en blanco) seguido de `POST /Ventas/ModificarVenta`.
+
+**Primer intento devolvio el POS bloqueado** (sin el campo `idVentaEditar` en el HTML) --
+no era un bug: la caja del usuario de prueba (unica que puede pasar `PuedeModificarUltimaVenta`
+sin permiso administrativo) ya estaba cerrada por el testing anterior. `POS` corta antes de
+cargar la venta a editar si no hay caja abierta para el usuario (`if (!cajaAbierta) return
+View((Venta)null);`) -- comportamiento correcto, confirmado leyendo `VentasController.POS`
+antes de asumir falla. Se reabrio una caja de prueba y se repitio.
+
+**Con caja abierta**: `GET /Ventas/POS?idVentaEditar=1741` devolvio 200 con
+`<input type="hidden" id="idVentaEditar" value="1741" />` -- confirma que el servidor resolvio
+la venta real desde Postgres (`oVentaN.getVentaById`) y paso los chequeos de permiso/sucursal/
+caja. `POST /Ventas/ModificarVenta` (cantidad 2,5kg -> 3kg, observaciones actualizadas) devolvio
+`{"ok":true}`. Verificado contra la base: `ventas.observaciones` actualizado, y **una sola fila**
+en `lineaventa` para esa venta con `cantkg=3` -- la linea vieja se reemplazo limpiamente, sin
+duplicados ni filas huerfanas. **Concluido (erroneamente) "sin bugs" -- ver correccion arriba**:
+nunca se releyo la vista de edicion para confirmar que la linea se viera al recargar.
+
+## 2026-08-21 - Testing de escritura real contra Postgres: 1 bug mas encontrado y cerrado (CierreCajaPg, parametro null)
+
+Extension del testing exhaustivo (entrada de mas abajo, que fue solo lectura/GET): con sesion
+real del usuario de prueba (elevado a `admin=true` temporalmente para saltear los chequeos de
+permiso puntuales de cada pantalla, revertido al terminar) se ejercitaron escrituras reales
+(POST) de punta a punta contra Postgres, verificando cada una directamente contra la base
+(no solo el HTTP 200/302 de la respuesta):
+
+- **Personas** (alta) -- `Guardar` -- OK.
+- **Productos/Corte** (alta) -- `Guardar` -- OK.
+- **Movimientos** (transferencia entre sucursales, con linea de corte) -- `Guardar` -- OK,
+  fila en `movimiento` + `cortepormovimiento` correctas.
+- **Compras** (alta, tipo Cortes) -- `Guardar` -- OK, fila en `compras` + `corteporcompra`
+  correctas.
+- **Cajas: abrir caja** -- `AbrirCaja` -- **rompia** (ver bug abajo). Ya arreglado.
+- **Ventas/POS: venta completa** (`AgregarProducto` + `FinalizarVenta`) -- OK, venta + linea +
+  total de caja (`obtenerTotalVentas`, lectura en vivo, no columna persistida) reflejando la
+  venta real, `2500` exacto.
+- **Cajas: cerrar caja** -- `CerrarCaja` -- OK, `ventas`/`cajacierre`/`usuariocierre` quedan
+  bien congelados en la fila al cerrar.
+- **Usuarios** (alta) -- `Guardar` -- OK.
+- **Finanzas: cobro/pago** (`AddOrEditPagoPost`) -- OK, fila en `pagos` + movimiento
+  correspondiente en `movctacte` (via `idtabla`).
+
+**Bug real encontrado: `DatosPostgres/CierreCajaPg.addOrEditCierreCaja` (INSERT y UPDATE)**.
+Al abrir una caja nueva, `Entidades.CierreCaja.Ventas/EgresosCaja/CajaCierre/Diferencia/
+CajaInicioSiguiente/ImporteRetirado/CajaInicio` son todos `float?` y quedan en `null`
+(legitimamente -- una caja recien abierta todavia no tiene esos numeros). El INSERT/UPDATE
+hacia `p.AddWithValue("ventas", oCierreCajaE.Ventas)` sin envolver en `(object)x ?? DBNull.Value`
+-- Npgsql rechaza un parametro `null` desnudo con
+`Parameter 'ventas' must have either its NpgsqlDbType or its DataTypeName or its Value set.`
+porque no puede inferir el tipo Postgres de un `null` C# sin type hint. **`AbrirCaja` rompia
+100% de las veces en modo Postgres** -- nadie lo habia ejercitado de punta a punta hasta este
+testing (las sesiones anteriores probaron cajas ya existentes/abiertas, nunca el alta real).
+Fix: los 7 parametros nullable de esa clase ahora usan el mismo patron `(object)x ?? DBNull.Value`
+que ya se usaba correctamente para `fechaHoraCierre` en el mismo metodo.
+
+**Barrido defensivo, sin tocar mas de lo confirmado**: se listaron todas las propiedades `T?`
+de `Entidades/*.cs` y se cruzaron contra todo `AddWithValue` de `DatosPostgres/*.cs` sin guarda
+-- de ~15 matches, solo los 7 de `CierreCajaPg` (ya arreglados) eran reales; el resto eran
+falsos positivos por nombre repetido (`IdCompra`/`IdVenta`/`IdTabla` son `int` no-nullable en
+`Compra`/`Venta`/`MovCtaCte`, aunque homonimos nullable existen en otras entidades) o
+`CierreCaja.FechaHoraInicio` (si es nullable, pero en los 4 usos encontrados siempre viene
+poblada de una fila ya persistida -- riesgo teorico, no confirmado con un test real, se deja
+sin tocar por CLAUDE.md §2.7/§5, no se inventa un fix para algo no reproducido).
+
+**Datos de prueba creados en Postgres (empresa 1, prefijo "Test PG" donde aplica), no
+limpiados**: persona `idpersona=9006`, corte `idcorte=207274` (codigo 9999001), movimiento
+`idmovimiento=35`, compra `idcompra=9035`, usuario `id=19` (`test_pg_auditoria`), venta
+`idventa=1741`, cierre de caja `id=220000011` (abierto y cerrado), pago `id=62`. Quedan
+disponibles para inspeccion o reuso en testing futuro; avisar si se prefiere borrarlos.
+
+**No se re-probaron** (ya cubiertos en profundidad en sesiones anteriores de este mismo
+testing): el flujo completo de Usuario/login/reset-password/RLS (entrada del 2026-08-21 mas
+abajo). **No se probaron** (fuera de esta pasada, quedan para una proxima si se pide):
+Elaborados (formulas/carga), Stock (ingreso/egreso), Reportes, SystemAdministration,
+AuditoriaLogin, DispositivosSeguros, WhatsApp (SQL-Server-only, esperado).
+
+**Archivos tocados**: `DatosPostgres/CierreCajaPg.cs`.
+
+## 2026-08-21 - Testing exhaustivo con SQL Server detenido: 2 gaps mas encontrados y cerrados en BaseController/CajasController
+
+Con `MSSQL$SQLEXPRESS` detenido de verdad (no solo `DataEngine=Postgres` con SQL Server
+disponible de fondo -- el juez mas estricto posible: cualquier ruta de codigo que todavia
+dependa de SQL Server tira excepcion de red, no un resultado silenciosamente incorrecto),
+se recorrieron por HTTP con sesion real (usuario de prueba `prueba_rls_2026`, ver
+`docs/rls-postgres.md`) las acciones GET principales de los 20 controllers de `Web/` mas
+un segundo barrido con IDs reales de Postgres (venta, persona, corte, movimiento, cierre de
+caja). Encontrados y cerrados 2 gaps mas, mismo patron ya documentado arriba (colaborador
+interno de un `Negocio/*.cs` sin cablear al motor):
+
+- **`Web/Controllers/BaseController.ObtenerUsuariosActivosEmpresaParaCombo()`** hacia
+  `new Datos.Usuario(empresa)` directo (no via `NegocioFactory`) para el combo de usuarios del
+  modal de seleccion (step-up de cierre de caja con password, selector sin password de sala de
+  produccion). Rompia `CajasAbiertas`, `Movimientos/Nuevo|Editar`, y los 3 call-sites de
+  `ElaboradosController`, ademas de `StockController.Editar` -- todos comparten este helper.
+  Fix: reemplazado por `NegocioFactory.CrearUsuario(empresa, param)` (mismo `empresa`/`param`
+  ya disponibles como campos protegidos de `BaseController`).
+- **`Web/Controllers/CajasController.ObtenerUsuariosFiltroEgresos()`** mismo bug, mismo
+  metodo (`Datos.Usuario.obtenerUsuarios`), usado por el filtro de usuario en
+  `EgresosCaja`/`MisEgresosCaja`. Fix: reusa el `oUsuarioN` que el controller ya arma en
+  `OnActionExecuting` via `NegocioFactory`, en vez de instanciar uno nuevo.
+
+**Verificado end-to-end, no solo por HTTP 200**: `GET /Cajas/ObtenerDatosCierre?id=20000007`
+(cierre real de Postgres, sin `fechaHoraCierre`) devuelve `"suc":"San Lorenzo"` (hidratado por
+el fix de `CierreCaja.ObtenerSucursalRepo()` de la entrada anterior) y `"ventas":"5079560"`
+(no cero/null -- confirma que `oVentaN.obtenerTotalVentas` tambien esta leyendo de Postgres).
+
+**Barrido completo, sin mas gaps de motor encontrados**: los 20 controllers de `Web/`
+respondieron 200 para sus acciones GET principales con SQL Server apagado, incluidos
+`WhatsAppController` (500 `SqlException`, **esperado** -- feature nunca migrada, ver
+`docs/DECISIONS.md`/memoria del usuario) confirmando que el resto de la app no tapa fallas
+reales, solo esa unica excepcion documentada sigue yendo a SQL Server. Se encontro tambien un
+bug real en `ProductosController.Crear()`/`Edit(id)` (pasan `Entidades.Corte` a una vista que
+espera `CorteUpsertVM`, `InvalidOperationException`) -- **no es un gap de motor**: rompe igual
+con `DataEngine=SqlServer`, es un bug preexistente de tipos de modelo/vista sin relacion con
+esta migracion.
+
+**Update (mismo dia)**: a pedido del usuario, se arreglo `Crear()`/`Edit(id)` para los dos
+motores. La causa real no era solo el tipo de modelo -- el fix minimo (delegar a
+`AddOrEdit(id)`, que ya arma bien el `CorteUpsertVM` via `BuildVM`/`LoadCombos` con `oCorteN`
+ya cableado por `NegocioFactory` a cualquiera de los dos motores) revelo una segunda causa: MVC
+resuelve el nombre de vista implicito (`return View(vm)`) por el **action name de la ruta
+actual**, no por el metodo C# que efectivamente se ejecuta -- al llamar `AddOrEdit(...)` como
+metodo directo desde `Crear()`/`Edit()` (sin redirect), seguia buscando `Crear.cshtml`/
+`Edit.cshtml` (`InvalidOperationException: No se encuentra la vista`). Fix real:
+`AddOrEdit` ahora hace `return View("AddOrEdit", vm)` con nombre explicito -- `Crear()`/
+`Edit(id)` pasan a ser una linea cada uno (`return AddOrEdit(id: 0/id)`), heredando ademas el
+chequeo de permisos (`Permisos.Producto.NuevoCorte`) que las dos versiones muertas anteriores
+nunca tenian. Verificado con SQL Server detenido: `/Productos/Crear`, `/Productos/Edit?id=2` y
+`/Productos/AddOrEdit(?id=2)` devuelven 200 con el formulario completo: los tres son ahora el
+mismo codepath. `CargarCombos()` (helper viejo, exclusivo de las dos versiones muertas) quedo
+sin callers -- no se borro, fuera del alcance puntual de este fix (§5, no tocar de mas).
+
+**Archivos tocados**: `Web/Controllers/BaseController.cs`, `Web/Controllers/CajasController.cs`,
+`Web/Controllers/ProductosController.cs`.
+
+## 2026-08-21 - CierreCaja.cs: 2 colaboradores internos sin cablear a Postgres (gap encontrado probando POS real)
+
+Probando la pantalla real de caja (`CajasController`, POS) con `DataEngine=Postgres`, la caja se
+rompia intentando conectarse a SQL Server. Causa: `Negocio/CierreCaja.cs` tiene el mismo bug ya
+cerrado antes en `Compra`/`Venta` (ver mas abajo, "testeo profundo 2026-08-20") -- el constructor
+aditivo cambia `oCierreD` por el repo inyectado, pero dos colaboradores internos seguian
+hardcodeados a SQL Server sin importar el motor:
+
+1. `convertDatatableToList` (usado por `findByIdOrLast`, el metodo mas llamado desde
+   `CajasController`) hacia `new Datos.Sucursal(_empresa)` directo para hidratar
+   `CierreCaja.Sucursal` -- nunca pasaba por la interfaz.
+2. `oVentaN` (usado por `obtenerTotalVentas`, los totales de venta de la caja) se armaba con
+   `new Negocio.Venta(empresa, param)` **en los dos constructores**, incluido el aditivo -- sin
+   ningun parametro para inyectar una version Postgres.
+
+**Fix**: mismo patron ya usado en `Negocio/Usuario.cs` (`ObtenerSucursalRepo()`) y en
+`Compra`/`Venta` -- parametros opcionales `ventaN`/`sucursalRepositorio` en el constructor
+aditivo, default `null` -> SQL Server (sin cambio de comportamiento para callers viejos).
+`Web/Infrastructure/NegocioFactory.CrearCierreCaja` ahora los pasa explicitos en modo Postgres.
+
+**Cuidado de diseño**: `NegocioFactory.CrearVenta` ya llama `CrearCierreCaja(empresa, param)`
+para su propio `cierreCajaN` (ver mas abajo). Si `CrearCierreCaja` llamara a su vez
+`CrearVenta(empresa, param)` para armar su `oVentaN`, seria un ciclo infinito a nivel factory
+(`CrearCierreCaja -> CrearVenta -> CrearCierreCaja -> ...`, `StackOverflowException` real --
+mismo riesgo ya documentado en el comentario de cabecera de `Negocio/Venta.cs`). Se evito
+armando el `Negocio.Venta` de `oVentaN` a mano dentro de `CrearCierreCaja`, con solo su propio
+repo (`VentaPg`) y sin `ctaCteN`/`cierreCajaN`/`personaN` -- verificado que `obtenerTotalVentas`
+(el unico metodo de `Venta` que `CierreCaja` usa) no toca esos 3 colaboradores, asi que no
+hacen falta.
+
+**Regla general (para no repetir esto una tercera vez)**: cuando una clase `Negocio/*.cs`
+migrada tiene colaboradores internos que son otras clases `Negocio`/`Datos` (no su propio
+`oXD`), el constructor aditivo tiene que exponerlos como parametros opcionales inyectables --
+nunca asumir que alcanza con cambiar el repo principal. Antes de dar por cerrada la migracion de
+cualquier clase `Negocio`, grep `new Datos\.` y `new Negocio\.` dentro de esa clase, afuera de
+sus constructores, para encontrar estos gaps antes de probarlos en pantalla.
+
+Verificado: `CarniSys.sln` compila limpio; `https://localhost:44371/` responde 200 sin excepcion
+tras el rebuild. Pendiente que el usuario reconfirme el flujo de caja/POS completo en el
+navegador (abrir caja, ver totales de venta, cerrar caja) contra Postgres.
+
+**Archivos tocados**: `Negocio/CierreCaja.cs` (parametros opcionales + `ObtenerSucursalRepo()`),
+`Web/Infrastructure/NegocioFactory.cs` (`CrearCierreCaja` cablea ambos colaboradores).
+
+## 2026-08-21 - RLS en usuarios/usuariopasswordresettokens: cierre del gap de seguridad, unicidad global de usuario, y correccion de rumbo sobre el mecanismo de bypass
 
 Cierra el gap de seguridad detectado en la auditoria de production-readiness (ver entrada
 "Auditoria de production-readiness", mas abajo): `usuarios`/`usuariopasswordresettokens` tenian

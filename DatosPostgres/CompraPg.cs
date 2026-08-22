@@ -41,6 +41,14 @@ namespace DatosPostgres
         // conexionSucursal (ruteo a otra conexion SQL Server para sucursales remotas San
         // Martin/San Lorenzo, ver Utilidades/Db.cs) no tiene equivalente en Postgres -- se ignora,
         // siempre consulta la base local. Mismo tratamiento que SucursalPg con esas sucursales.
+        //
+        // idSucursal <= 0 = "todas las sucursales" en las 9 clausulas OR de este metodo y de
+        // getLineasCompras (bug real encontrado 2026-08-21, ver docs/DECISIONS.md): estaban
+        // escritas como "@idSucursal = 0", pero ComprasController.Index/Lineas usan -1 como
+        // default (mismo convenio que Venta/CierreCaja en otros archivos de este mismo proyecto)
+        // -- con -1 la condicion nunca matcheaba y la pantalla de Compras quedaba siempre vacia,
+        // sin importar el rango de fechas. StockController/ReportesController llaman este mismo
+        // metodo con 0 como wildcard -- "<= 0" cubre a los dos convenios sin romper ninguno.
         public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
             const string sql = @"
@@ -57,7 +65,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios ap ON c.actualizadopor = ap.id
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE (c.tipocompra ILIKE '%' || @tipoCompra || '%' OR @tipoCompra ILIKE 'Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                       AND (p.razonsocial ILIKE '%' || @texto || '%' OR c.nroremito ILIKE '%' || @texto || '%')
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
@@ -76,7 +84,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE c.tipocompra ILIKE 'Cortes'
                       AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Cortes' OR @tipoCompra ILIKE 'Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                       AND (p.razonsocial ILIKE '%' || @texto || '%' OR c.nroremito ILIKE '%' || @texto || '%')
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
@@ -95,7 +103,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE c.tipocompra ILIKE 'Ingreso Stock'
                       AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Ingreso Stock' OR @tipoCompra ILIKE 'Ver Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
                              c.idsucursal, s.sucursal, c.cantmedias, c.estado, c.observaciones, c.creado, cp.nombre, ap.nombre, c.actualizado
@@ -113,7 +121,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE c.tipocompra ILIKE 'Egreso Stock'
                       AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Egreso Stock' OR @tipoCompra ILIKE 'Ver Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
                              c.idsucursal, s.sucursal, c.cantmedias, c.estado, c.observaciones, c.creado, cp.nombre, ap.nombre, c.actualizado
@@ -131,7 +139,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE c.tipocompra ILIKE 'Cierre Stock'
                       AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Cierre Stock' OR @tipoCompra ILIKE 'Ver Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
                              c.idsucursal, s.sucursal, c.cantmedias, c.estado, c.observaciones, c.creado, cp.nombre, ap.nombre, c.actualizado
@@ -151,7 +159,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE c.tipocompra ILIKE 'Pesaje Cortes'
                       AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Pesaje Cortes' OR @tipoCompra ILIKE 'Ver Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
                              c.idsucursal, s.sucursal, c.cantmedias, c.estado, c.kgsmedias, c.observaciones, c.creado, cp.nombre, ap.nombre, c.actualizado
@@ -172,7 +180,7 @@ namespace DatosPostgres
                     LEFT JOIN usuarios cp ON c.creadopor = cp.id
                     WHERE c.tipocompra ILIKE 'Ajuste Stock'
                       AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Ajuste Stock' OR @tipoCompra ILIKE 'Ver Todos')
-                      AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                      AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                       AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                     GROUP BY c.idcompra, c.idpesajeajustado, c.nroremito, c.fechacompra, c.idproveedor, p.razonsocial, c.tipocompra,
                              c.idsucursal, s.sucursal, c.cantmedias, c.estado, c.observaciones, c.creado, cp.nombre, ap.nombre, c.actualizado
@@ -202,7 +210,7 @@ namespace DatosPostgres
                  LEFT JOIN usuarios ap ON c.actualizadopor = ap.id
                  LEFT JOIN usuarios cp ON c.creadopor = cp.id
                  WHERE (c.tipocompra ILIKE '%' || @tipoCompra || '%' OR @tipoCompra ILIKE 'Todos')
-                   AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                   AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                    AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                    AND (p.razonsocial ILIKE '%' || @texto || '%' OR c.nroremito ILIKE '%' || @texto || '%')
 
@@ -220,7 +228,7 @@ namespace DatosPostgres
                  LEFT JOIN usuarios cp ON c.creadopor = cp.id
                  WHERE c.tipocompra ILIKE 'Cortes'
                    AND (@tipoCompra ILIKE '' OR @tipoCompra ILIKE 'Cortes' OR @tipoCompra ILIKE 'Todos')
-                   AND (@idSucursal = 0 OR c.idsucursal = @idSucursal)
+                   AND (@idSucursal <= 0 OR c.idsucursal = @idSucursal)
                    AND c.fechacompra BETWEEN @fechaDesde AND @fechaHasta + interval '1 day'
                    AND (p.razonsocial ILIKE '%' || @texto || '%' OR c.nroremito ILIKE '%' || @texto || '%')
                    AND co.codigo::text ILIKE '%' || @codigo || '%'

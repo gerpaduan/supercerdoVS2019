@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Web.Mvc;
 using Utilidades;
 using Web.Helpers;
@@ -211,6 +212,7 @@ namespace Web.Controllers
                 ? CrearViewModelEdicion(compra, user, origenNormalizado)
                 : CrearViewModelNuevo(user, origenNormalizado);
 
+            model.SubmissionToken = Guid.NewGuid().ToString("N");
             CargarViewBags(model, user);
             ConfigurarAdvertenciaFechaEnVivo("FechaCompra", permiso, idCreador);
 
@@ -290,10 +292,42 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        // Guarda contra doble-submit real: se vio en produccion (datos reales del usuario, no
+        // solo el guard de boton) que la MISMA compra en cuenta corriente se registraba dos
+        // veces con ~15s de diferencia -- demasiado consistente entre varios incidentes
+        // separados para ser variacion humana de doble-click. No se pudo confirmar con certeza
+        // el disparador exacto del lado cliente (compras.js no usa POSGuard para el boton
+        // Guardar; MODAL_LOAD_STALE_MS=15000 en pos-guard.js es sospechoso por la coincidencia
+        // de tiempo pero gobierna la apertura del modal, no el guardado) -- en vez de perseguir
+        // mas la causa exacta del lado cliente, se cierra la puerta del lado servidor de forma
+        // definitiva: SubmissionToken (CompraEditVm) se genera una sola vez por carga de pagina
+        // (GET Editar) y viaja en el form. Cualquier reintento de ESTE mismo formulario -- sin
+        // importar cuanto tiempo pase entre uno y otro, cubriendo tanto el doble-click rapido
+        // como el caso real de ~15s -- comparte el mismo token y queda bloqueado. Un formulario
+        // nuevo (F5, o "Nueva Compra" de nuevo) trae un token distinto, asi que nunca bloquea
+        // una compra legitima distinta. MemoryCache.Add es atomico (a diferencia de Get+Set):
+        // no hay ventana de carrera entre chequear y marcar el lock en si. TTL largo (30 min)
+        // porque el token es de un solo uso -- no hace falta liberarlo pronto para no molestar
+        // a otro guardado, ya que ese otro guardado siempre trae un token diferente.
+        private static string ClaveLockGuardarCompra(string sessionId, string submissionToken)
+        {
+            return !string.IsNullOrWhiteSpace(submissionToken)
+                ? "ComprasGuardarLock:token:" + submissionToken.Trim()
+                : "ComprasGuardarLock:session:" + (sessionId ?? "");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public JsonResult Guardar(CompraEditVm model)
         {
+            string claveLock = ClaveLockGuardarCompra(
+                Session != null ? Session.SessionID : null,
+                model != null ? model.SubmissionToken : null);
+            if (!MemoryCache.Default.Add(claveLock, true, DateTimeOffset.UtcNow.AddMinutes(30)))
+            {
+                return Json(new { ok = false, mensaje = "Esta compra ya se guardó (o se está guardando). Si necesitás registrar otra, volvé a abrir el formulario." });
+            }
+
             try
             {
                 var user = Session["Usuario"] as Entidades.Usuario;
@@ -446,6 +480,13 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
+                // Solo se libera el lock en error: el usuario tiene que poder reintentar de
+                // inmediato si la compra no se guardo. En el camino de exito NO se libera antes
+                // de tiempo -- si se liberara aca, un segundo click que llega despues de que el
+                // primer POST ya termino (el caso real y mas comun de "guardar rapido dos veces",
+                // no dos requests literalmente simultaneos) pasaria sin trabas. Se deja expirar
+                // solo, cubriendo toda la ventana de 4s desde el primer submit.
+                MemoryCache.Default.Remove(claveLock);
                 return Json(new { ok = false, mensaje = "Error al guardar la compra. " + ex.Message });
             }
         }

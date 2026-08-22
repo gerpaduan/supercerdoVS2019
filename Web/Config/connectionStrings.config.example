@@ -5,8 +5,12 @@
        providerName="System.Data.SqlClient" />
   <!-- Piloto de la migracion a Postgres (Etapa 2). Password real en ~/hosts/postgres-local.env.
        Maximum Pool Size fijado explicito (default de Npgsql es 100, ver docs/06-datos-e-integraciones/rls-postgres.md
-       "Estrategia de pooling") -- ajustar segun trafico real, nunca dejar el default en produccion. -->
+       "Estrategia de pooling") -- ajustar segun trafico real, nunca dejar el default en produccion.
+       Keepalive=30 + Tcp Keepalive=true son obligatorios, no opcionales -- sin esto una conexion
+       pooled que queda idle un rato puede quedar "medio muerta" y el primer request tras un
+       hueco de inactividad se cuelga ~15s hasta que TCP detecta la falla (bug real, encontrado
+       y verificado en produccion, ver docs/DECISIONS.md 2026-08-21). -->
   <add name="ConexionPostgresPiloto"
-       connectionString="Host=HOST;Port=5432;Database=DATABASE;Username=USER;Password=PASSWORD;Maximum Pool Size=30;"
+       connectionString="Host=HOST;Port=5432;Database=DATABASE;Username=USER;Password=PASSWORD;Maximum Pool Size=30;Keepalive=30;Tcp Keepalive=true;"
        providerName="Npgsql" />
 </connectionStrings>

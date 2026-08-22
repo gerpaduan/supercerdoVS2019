@@ -899,11 +899,17 @@
 
     function submitForm($form) {
         var state = getState($form);
-        if (state.saving) return;
+        var $btn = $form.find('#btnGuardarCompra');
+        // Doble guarda independiente: state.saving (logico) + disabled real del boton en el DOM.
+        // Si por lo que sea uno de los dos quedo desincronizado (ej. el server tardo, el usuario
+        // reabrio el formulario), el otro sigue bloqueando -- reportado en produccion: guardar
+        // rapido dos o mas veces duplicaba la compra y su movimiento de cta.cte. El servidor
+        // tiene ademas su propio lock (ver ComprasController.Guardar) como garantia final.
+        if (state.saving || $btn.prop('disabled')) return;
 
         rebuildHiddenInputs($form);
         state.saving = true;
-        $form.find('#btnGuardarCompra').prop('disabled', true);
+        $btn.prop('disabled', true);
 
         $.ajax({
             url: $form.attr('action'),
@@ -941,7 +947,7 @@
             },
             complete: function () {
                 state.saving = false;
-                $form.find('#btnGuardarCompra').prop('disabled', false);
+                $btn.prop('disabled', false);
             }
         });
     }

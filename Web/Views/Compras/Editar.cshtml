@@ -34,6 +34,7 @@
         <div class="card-body">
             <form id="formCompra" method="post" action="@Url.Action("Guardar", "Compras")" novalidate>
                 @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.SubmissionToken)
                 @Html.HiddenFor(m => m.IdCompra)
                 @Html.HiddenFor(m => m.Origen)
                 @Html.HiddenFor(m => m.DraftKey)
