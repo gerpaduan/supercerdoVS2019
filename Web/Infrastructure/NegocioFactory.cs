@@ -38,7 +38,18 @@ namespace Web.Infrastructure
             if (!UsarPostgres) return new Negocio.CierreCaja(empresa, param);
 
             var repo = new DatosPostgres.CierreCajaPg(PgConnString, empresa.IdEmpresa);
-            return new Negocio.CierreCaja(repo, empresa, param);
+            var sucursalRepo = new DatosPostgres.SucursalPg(PgConnString, empresa.IdEmpresa);
+            // Venta minimo, solo para obtenerTotalVentas (unico metodo que CierreCaja usa de
+            // Venta) -- NO se arma via CrearVenta(): CrearVenta ya llama CrearCierreCaja() para
+            // su propio cierreCajaN, así que recursar aca (CrearCierreCaja->CrearVenta->
+            // CrearCierreCaja->...) produciria un StackOverflowException real (mismo ciclo
+            // documentado en Negocio/Venta.cs). ctaCteN/cierreCajaN/personaN quedan en null a
+            // proposito: obtenerTotalVentas no los usa.
+            var personaRepo = new DatosPostgres.PersonaPg(PgConnString, empresa.IdEmpresa);
+            var corteRepo = new DatosPostgres.CortePg(PgConnString, empresa.IdEmpresa, personaRepo);
+            var ventaRepo = new DatosPostgres.VentaPg(PgConnString, empresa.IdEmpresa, personaRepo, sucursalRepo, corteRepo);
+            var ventaN = new Negocio.Venta(ventaRepo, empresa, param);
+            return new Negocio.CierreCaja(repo, empresa, param, ventaN: ventaN, sucursalRepositorio: sucursalRepo);
         }
 
         public static Negocio.Compra CrearCompra(IEmpresaContext empresa, IParametrosContext param = null)

@@ -19,6 +19,13 @@ namespace Negocio
         private readonly Contratos.ICierreCajaRepository oCierreD;
         private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        // Repo de Sucursal usado SOLO para hidratar CierreCaja.Sucursal en convertDatatableToList.
+        // Optativo, default null -- si no se inyecta, cae a Datos.Sucursal (SQL Server), mismo
+        // patron que Negocio.Usuario.ObtenerSucursalRepo(). Gap real encontrado probando POS
+        // contra Postgres (2026-08-21): sin esto, la sucursal del cierre de caja siempre se
+        // resolvia contra SQL Server aunque oCierreD fuera Postgres. Ver docs/DECISIONS.md.
+        private readonly Contratos.ISucursalRepository _sucursalRepo;
+
         // Constructor existente: SIN CAMBIOS de comportamiento.
         public CierreCaja(IEmpresaContext empresa, IParametrosContext param = null)
         {
@@ -28,12 +35,24 @@ namespace Negocio
         }
 
         // Constructor nuevo, aditivo: inyecta cualquier implementacion de ICierreCajaRepository
-        // (ej. DatosPostgres.CierreCajaPg). Solo lo usa el controller de comparacion.
-        public CierreCaja(Contratos.ICierreCajaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null)
+        // (ej. DatosPostgres.CierreCajaPg). ventaN y sucursalRepositorio son opcionales (default
+        // null -> SQL Server, mismo comportamiento de siempre) -- mismo gap que el ya cerrado en
+        // NegocioFactory.CrearCompra/CrearVenta (colaborador interno sin cablear al motor
+        // inyectado). obtenerTotalVentas es el unico metodo de Negocio.Venta que este oVentaN
+        // usa, asi que NegocioFactory arma un Venta minimo (solo su propio repo, sin
+        // ctaCteN/cierreCajaN/personaN) en vez de llamar CrearVenta -- evita el ciclo
+        // CrearVenta->CrearCierreCaja->CrearVenta ya documentado en Negocio/Venta.cs.
+        public CierreCaja(Contratos.ICierreCajaRepository repositorio, IEmpresaContext empresa, IParametrosContext param = null, Negocio.Venta ventaN = null, Contratos.ISucursalRepository sucursalRepositorio = null)
         {
             _empresa = empresa; _param = param;
             oCierreD = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
-            oVentaN = new Negocio.Venta(empresa, param);
+            oVentaN = ventaN ?? new Negocio.Venta(empresa, param);
+            _sucursalRepo = sucursalRepositorio;
+        }
+
+        private Contratos.ISucursalRepository ObtenerSucursalRepo()
+        {
+            return _sucursalRepo ?? new Datos.Sucursal(_empresa);
         }
 
         public Entidades.CierreCaja findByIdOrLast(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)
@@ -50,8 +69,7 @@ namespace Negocio
             Entidades.CierreCaja oCierreE = null;
             if (dtCierreCaja.Rows.Count > 0)
             {
-                Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
-                Entidades.Sucursal oSucursalE = oSucursalD.findById(Convert.ToInt32(dtCierreCaja.Rows[0]["idSucursal"]));
+                Entidades.Sucursal oSucursalE = ObtenerSucursalRepo().findById(Convert.ToInt32(dtCierreCaja.Rows[0]["idSucursal"]));
 
                 foreach (DataRow drCierreCaja in dtCierreCaja.Rows)
                 {

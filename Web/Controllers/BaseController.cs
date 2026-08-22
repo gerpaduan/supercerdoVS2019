@@ -213,8 +213,8 @@ namespace Web.Controllers
         // como por el selector sin password de la sala de produccion.
         protected List<object> ObtenerUsuariosActivosEmpresaParaCombo()
         {
-            var oUsuarioD = new Datos.Usuario(empresa);
-            var dt = oUsuarioD.obtenerUsuarios(true);
+            var oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            var dt = oUsuarioN.obtenerUsuarios(true);
             if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
                 return new List<object>();
 

@@ -745,26 +745,23 @@ namespace Web.Controllers
         }
 
         // ===============================
-        // GET: CREAR
+        // GET: CREAR / EDITAR
         // ===============================
+        // Antes armaban un Entidades.Corte crudo y lo pasaban a la vista AddOrEdit.cshtml, que
+        // espera CorteUpsertVM -- rompian con InvalidOperationException (tipo de modelo
+        // incorrecto) para los dos motores por igual, bug preexistente sin relacion con la
+        // migracion a Postgres (encontrado en el testing exhaustivo del 2026-08-21, ver
+        // docs/DECISIONS.md). Fix: delegar directo a AddOrEdit(id), que ya arma el VM correcto
+        // (BuildVM/LoadCombos) via oCorteN, ya cableado a SQL Server o Postgres por
+        // NegocioFactory -- sin necesidad de tocar nada especifico de motor aca.
         public ActionResult Crear()
         {
-            var model = new Entidades.Corte();
-
-            CargarCombos(model.IdCorte);
-            return View("AddOrEdit", model);
+            return AddOrEdit(id: 0);
         }
 
-        // ===============================
-        // GET: EDITAR
-        // ===============================
         public ActionResult Edit(int id)
         {
-            var model = oCorteN.findCorteById(id, true);
-            if (model == null) return HttpNotFound();
-
-            CargarCombos(id);
-            return View("AddOrEdit", model);
+            return AddOrEdit(id: id);
         }
 
         #region ADDorEDIT
@@ -901,7 +898,10 @@ namespace Web.Controllers
             ViewBag.ProductoGuardadoContinuo = productoGuardado;
             ViewBag.FlashSuccessContinuo = TempData["FlashSuccessContinuo"] as string;
 
-            return View(vm);
+            // Nombre de vista explicito: Crear()/Edit(id) llaman este metodo directo en C#
+            // (no via redirect), asi que la resolucion implicita por action name de la ruta
+            // actual buscaria "Crear.cshtml"/"Edit.cshtml" en vez de "AddOrEdit.cshtml".
+            return View("AddOrEdit", vm);
         }
 
         // ===============================

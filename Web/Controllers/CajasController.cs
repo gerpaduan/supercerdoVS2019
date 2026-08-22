@@ -1406,8 +1406,7 @@ namespace Web.Controllers
 
         private DataTable ObtenerUsuariosFiltroEgresos()
         {
-            var oUsuarioD = new Datos.Usuario(empresa);
-            var dtUsuarios = oUsuarioD.obtenerUsuarios(true);
+            var dtUsuarios = oUsuarioN.obtenerUsuarios(true);
 
             if (dtUsuarios != null && dtUsuarios.Columns.Contains("id") && dtUsuarios.Columns.Contains("nombre"))
             {
