@@ -1997,7 +1997,13 @@ namespace Web.Controllers
                 Persona = new Entidades.Persona(),
                 LineasVenta = new List<Entidades.LineaVenta>(),
                 FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString(),
-                Observaciones = ""
+                Observaciones = "",
+                // Sin esto FechaVenta queda en el default de DateTime (01/01/0001): BuildFacturaDTO
+                // usa venta.FechaVenta como default de FechaEmisionAfip cuando no hay factura ya
+                // generada -- la fecha de facturacion arrancaba en blanco/01/01/0001 en vez de hoy.
+                // Bug real, encontrado probando el modal "Nueva factura sin venta" (2026-08-22, ver
+                // docs/DECISIONS.md).
+                FechaVenta = DateTime.Now
             };
 
             var dto = BuildFacturaDTO(ventaVacia, new Entidades.FacturaElectronica());
@@ -2664,7 +2670,7 @@ namespace Web.Controllers
             dto.IdVenta = venta.IdVenta;
             dto.IdFactura = factuElec.Id;
 
-            dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip == 0 ? 
+            dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip == 0 ?
                 factuElec.getCodTipoCbteAFIP(venta.Sucursal.Empresa.EsRRII, venta.Persona.EsRRII(venta.Persona.IdIva), false) : 
                 factuElec.CodTipoCbteAfip;
             dto.DescTipoCbteAfip = factuElec.DescTipoCbteAfip;

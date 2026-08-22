@@ -578,19 +578,29 @@
             return;
         }
 
-        // Atajos Alt+C (cerrar venta sin facturar) / Alt+R (registrar factura)
-        const esAtajoValido = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat;
-        if (!esAtajoValido) return;
+        // Supr (antes Alt+C, cambiado a pedido del usuario 2026-08-22): cerrar venta sin
+        // facturar. Sin modificador, asi que a diferencia de Alt+C hay que ignorar el foco en
+        // campos de texto -- si no, borrar texto seleccionado con Supr en Razon Social,
+        // Observaciones, etc. dispararia el cierre en vez de borrar.
+        if (e.key === 'Delete' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat) {
+            const tagName = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+            if (tagName === 'input' || tagName === 'select' || tagName === 'textarea') return;
 
-        const tecla = String(e.key || '').toLowerCase();
-        if (tecla === 'c') {
             const $btnCerrarSinFacturar = $('#btnCerrarVentaSinFacturar');
             if (!$btnCerrarSinFacturar.length || $btnCerrarSinFacturar.prop('disabled') || !$btnCerrarSinFacturar.is(':visible')) return;
 
             e.preventDefault();
             e.stopPropagation();
             $btnCerrarSinFacturar.trigger('click');
-        } else if (tecla === 'r') {
+            return;
+        }
+
+        // Atajo Alt+R (registrar factura)
+        const esAtajoValido = e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.repeat;
+        if (!esAtajoValido) return;
+
+        const tecla = String(e.key || '').toLowerCase();
+        if (tecla === 'r') {
             const $btnRegistrar = $('#btnRegistrarFactura');
             if (!$btnRegistrar.length || $btnRegistrar.prop('disabled') || !$btnRegistrar.is(':visible')) return;
 
@@ -730,10 +740,14 @@
     // (la de persona-buscar.js escribe en #idPersona/#razonSocial, ids del POS que no
     // existen aca, y no expone el CUIT como data-attribute).
     function cargarPersonasFactura(filtro) {
+        // PersonasController.Listar ya devuelve iva/domicilio/ciudad por persona (no hace
+        // falta un endpoint aparte) -- se agregan como data-* para no pedirlos de nuevo al
+        // seleccionar. Ver docs/DECISIONS.md, 2026-08-22.
         $.get(window.AppUrls.personaListar, { filtro: filtro || '' }, function (data) {
             let html = '';
             (data || []).forEach(function (p) {
-                html += '<tr class="fila-persona" data-id="' + p.idPersona + '" data-razon="' + (p.razonSocial || '') + '" data-cuit="' + (p.cuit || '') + '">'
+                html += '<tr class="fila-persona" data-id="' + p.idPersona + '" data-razon="' + (p.razonSocial || '') + '" data-cuit="' + (p.cuit || '') + '"'
+                    + ' data-iva="' + (p.iva || '') + '" data-domicilio="' + (p.domicilio || '') + '" data-ciudad="' + (p.ciudad || '') + '">'
                     + '<td>' + (p.cuit || '') + '</td>'
                     + '<td>' + (p.razonSocial || '') + '</td>'
                     + '<td>' + (p.identificacion || '') + '</td>'
@@ -748,14 +762,37 @@
         const idPersona = $fila.data('id');
         const razonSocial = $fila.data('razon') || '';
         const cuit = ($fila.data('cuit') || '').toString().replace(/-/g, '');
+        const iva = $fila.data('iva') || '';
+        const domicilio = $fila.data('domicilio') || '';
+        const ciudad = $fila.data('ciudad') || '';
 
         $('#feIdPersonaSeleccionada').val(idPersona);
         $('#feRazonSocialAFIP').val(razonSocial);
         $('#NroDocAfip').val(cuit).trigger('input');
         $('#feTipoDocAfip').val(cuit ? '80' : '99');
 
+        // Antes quedaban fijos en "Consumidor Final" / vacio sin importar el cliente elegido
+        // (bug real, encontrado probando "Nueva factura sin venta" -- ver docs/DECISIONS.md,
+        // 2026-08-22). El formato del domicilio replica el que arma BuildFacturaDTO
+        // (VentasController.cs) para una venta real: "Domicilio - Ciudad".
+        if (iva) {
+            $('select[name="CondicionIvaAFIP"]').val(iva).trigger('change');
+        }
+        $('input[name="DomicilioAFIP"]').val(domicilio ? (domicilio + (ciudad ? ' - ' + ciudad : '')) : '');
+
         $('#modalBuscarPersona').modal('hide');
     }
+
+    // A pedido del usuario (2026-08-22, ver docs/DECISIONS.md): elegir "Responsable Inscripto"
+    // fuerza Tipo de Factura = A. Corre tanto al elegir cliente (seleccionarPersonaFactura
+    // dispara "change" a mano) como si el usuario cambia el select de Cond. IVA directamente --
+    // no interfiere con el calculo server-side (FacturaElectronica.getCodTipoCbteAFIP), que solo
+    // corre una vez al abrir el modal; esto es puramente reactividad dentro del modal ya abierto.
+    $(document).on('change', 'select[name="CondicionIvaAFIP"]', function () {
+        if ($(this).val() === 'Responsable Inscripto') {
+            $('select[name="CodTipoCbteAfip"]').val('1');
+        }
+    });
 
     $(document).on('click', '#btnFeBuscarCliente', function () {
         $('#modalBuscarPersona').modal('show');
@@ -944,12 +981,20 @@
             confirmButtonText: 'Sí, cerrar venta',
             cancelButtonText: 'Cancelar',
             didOpen: function () {
-                setTimeout(function () {
-                    var confirmButton = Swal.getConfirmButton ? Swal.getConfirmButton() : null;
-                    if (confirmButton && confirmButton.focus) {
-                        confirmButton.focus();
-                    }
-                }, 0);
+                // Este Swal se abre encima del modal Bootstrap _FacturaElectronica, ya abierto.
+                // Bootstrap 4 reafirma el foco dentro de SU modal via un handler global de
+                // "focusin" en document (_enforceFocus, Content/vendor/bootstrap/js/bootstrap.js)
+                // que le devuelve el foco a su propio elemento apenas detecta que se movio a algo
+                // que no es descendiente suyo -- como el boton de SweetAlert2 cuelga de <body>,
+                // por fuera del modal Bootstrap, le ganaba la pulseada al .focus() de aca abajo y
+                // el usuario nunca veia el foco puesto en "Si, cerrar venta". Se desactiva ese
+                // handler mientras este Swal esta abierto; no hace falta restaurarlo a mano,
+                // Bootstrap ya lo desactiva el solo al cerrar el modal (_hideModal).
+                $(document).off('focusin.bs.modal');
+                var confirmButton = Swal.getConfirmButton ? Swal.getConfirmButton() : null;
+                if (confirmButton && confirmButton.focus) {
+                    confirmButton.focus();
+                }
             }
         }).then(function (result) {
             if (!result.isConfirmed) return;

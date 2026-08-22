@@ -2674,6 +2674,14 @@ else
             posKeyboard?.focusCodigo?.();
         }, 50);
     });
+    $(document).on('hidden.bs.modal.posFocoCodigo', '#modalLineaVenta', function () {
+        if ($('.modal.show').length > 0) return;
+
+        setTimeout(function () {
+            if ($('.modal.show').length > 0) return;
+            posKeyboard?.focusCodigo?.();
+        }, 50);
+    });
     $(document).on('hidden.bs.modal.posSoloFormaPago', '#modalFormaPago', function () {
         if (!soloFormaPago) return;
         if (window.POSSoloFormaPagoGuardado) return;

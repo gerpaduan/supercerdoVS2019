@@ -981,8 +981,35 @@ $(document).ready(function () {
 
         facturaOk = false;
 
-        $.get((window.AppUrls && window.AppUrls.ventasImprimir) || (window.api && window.api.venta && window.api.venta.imprimir) || '', { id: ventaId, mm: 0 })
+        // dataType:'html' fuerza a jQuery a NO auto-parsear la respuesta como JSON aunque el
+        // Content-Type sea application/json (el catch generico de ImprimirTicket devuelve
+        // {ok:false,msg:...} con ese content-type ante cualquier excepcion) -- sin esto, "html"
+        // llegaba como objeto, no string, y $('#contenedorFacturaElectronica').html(html) fallaba
+        // en silencio (sintoma real: "el modal no abre", bug encontrado y cerrado 2026-08-22,
+        // ver docs/DECISIONS.md). Se chequea igual la forma {ok:false} por si acaso, y se agrega
+        // .fail() para errores de transporte reales (antes no habia ninguno).
+        $.ajax({
+            url: (window.AppUrls && window.AppUrls.ventasImprimir) || (window.api && window.api.venta && window.api.venta.imprimir) || '',
+            type: 'GET',
+            data: { id: ventaId, mm: 0 },
+            dataType: 'html'
+        })
+            .fail(function () {
+                if (window.Swal) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo abrir la factura electrónica.' });
+                }
+            })
             .done(function (html) {
+                const pareceError = typeof html === 'string' && /^\s*\{\s*"ok"\s*:\s*false/.test(html);
+                if (pareceError) {
+                    let msg = 'No se pudo abrir la factura electrónica.';
+                    try { msg = JSON.parse(html).msg || msg; } catch (e) { }
+                    if (window.Swal) {
+                        Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                    }
+                    return;
+                }
+
                 $('#contenedorFacturaElectronica').html(html);
 
                 const $modal = $('#modalFacturaElectronica');
@@ -1033,6 +1060,15 @@ $(document).ready(function () {
                         $('body').addClass('modal-open');
                     }
                     $modal.off('.factura');
+
+                    // Cubre el "Cancelar" simple (cierre nativo Bootstrap, sin pasar por
+                    // CerrarVentaSinFacturar porque la forma de pago no lo exige -- ver
+                    // requiereConfirmacionCancelarSinFacturar en factura-electronica.js). Los
+                    // otros dos cierres (factura generada, o forzado "cerrar sin facturar") ya
+                    // dejan facturaOk=true antes de que este handler corra, asi que no duplica.
+                    if (!facturaOk) {
+                        window.mostrarModalPostVenta(ventaId);
+                    }
                 });
 
                 traerModalFacturaAlFrente($modal);
@@ -1203,9 +1239,13 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on('venta:cerradaSinFacturar', function () {
+    $(document).on('venta:cerradaSinFacturar', function (e, resp) {
         facturaOk = true;
-        cerrarPostVentaSegunOrigen();
+        // Antes solo cerraba (cerrarPostVentaSegunOrigen) -- a pedido del usuario, tambien
+        // ofrece imprimir/enviar el ticket de la venta aunque no se haya facturado (mismo modal
+        // que se abre al finalizar cualquier venta). Ver docs/DECISIONS.md, 2026-08-22.
+        resp = resp || {};
+        window.mostrarModalPostVenta(resp.ventaId || resp.idVenta || pvGetVentaId());
     });
 
     window.VentasFacturaModal = window.VentasFacturaModal || {

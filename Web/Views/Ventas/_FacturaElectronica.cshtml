@@ -572,32 +572,6 @@
                 </div>
             </div>
 
-            @if (esSinVenta)
-            {
-                <div class="fe-card-compact">
-                    <div class="fe-card-title">Facturación manual</div>
-                    <div class="form-row">
-                        <div class="form-group col-6 col-md-5">
-                            <label class="mb-1">Monto total</label>
-                            <input type="text" id="feMontoTotalManual" class="form-control form-control-sm" inputmode="decimal" placeholder="0,00" />
-                        </div>
-                        <div class="form-group col-6 col-md-7">
-                            <label class="mb-1">Alícuota IVA</label>
-                            <select id="feAlicuotaManual" class="form-control form-control-sm">
-                                @if (ViewBag.AlicuotasIva != null)
-                                {
-                                    foreach (System.Data.DataRow fila in ((System.Data.DataTable)ViewBag.AlicuotasIva).Rows)
-                                    {
-                                        <option value="@fila["idIva"]" data-pct="@fila["iva"]">@fila["iva"] %</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-                    </div>
-                    <small class="fe-muted d-block mt-1">El Neto y el IVA se calculan automáticamente a partir del Total y la alícuota elegida.</small>
-                </div>
-            }
-
             @* Toggle visible: activar/ocultar bloque de edición (siempre accesible) *@
             <div class="d-flex justify-content-between align-items-center mb-2 @(esSinVenta ? "d-none" : "")">
                 <div class="fe-card-title mb-0">Opciones</div>
@@ -688,6 +662,34 @@
                 </div>
             </div>
 
+            @* Ubicada aca (despues de Observacion, antes de Totales) a pedido del usuario --
+               antes estaba justo debajo de la card Cliente. Ver docs/DECISIONS.md, 2026-08-22. *@
+            @if (esSinVenta)
+            {
+                <div class="fe-card-compact">
+                    <div class="fe-card-title">Facturación manual</div>
+                    <div class="form-row">
+                        <div class="form-group col-6 col-md-5">
+                            <label class="mb-1">Monto total</label>
+                            <input type="text" id="feMontoTotalManual" class="form-control form-control-sm" inputmode="decimal" placeholder="0,00" />
+                        </div>
+                        <div class="form-group col-6 col-md-7">
+                            <label class="mb-1">Alícuota IVA</label>
+                            <select id="feAlicuotaManual" class="form-control form-control-sm">
+                                @if (ViewBag.AlicuotasIva != null)
+                                {
+                                    foreach (System.Data.DataRow fila in ((System.Data.DataTable)ViewBag.AlicuotasIva).Rows)
+                                    {
+                                        <option value="@fila["idIva"]" data-pct="@fila["iva"]">@fila["iva"] %</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <small class="fe-muted d-block mt-1">El Neto y el IVA se calculan automáticamente a partir del Total y la alícuota elegida.</small>
+                </div>
+            }
+
         </div><!-- /fe-top -->
 
         <!-- ===== TOTALES + IVA DISCRIMINADO (NO SCROLLEA) ===== -->
@@ -771,7 +773,7 @@
     <!-- FOOTER -->
     <div class="modal-footer">
         <div class="w-100 text-muted mb-1" style="font-size:.7rem;">
-            Atajos: Alt+C cerrar sin facturar &middot; Alt+R registrar factura
+            Atajos: Supr cerrar sin facturar &middot; Alt+R registrar factura
         </div>
         @if (permiteNotaCredito)
         {

@@ -30,6 +30,10 @@ namespace DatosPostgres
         private readonly Contratos.ISucursalRepository _sucursalRepo;
         private readonly Contratos.ICorteRepository _corteRepo;
 
+        // Cache de instancia (una VentaPg vive el alcance de un solo request, ver
+        // NegocioFactory.CrearVenta) para CargarRelacionesVenta -- ver comentario ahi.
+        private Entidades.Empresa _empresaCache;
+
         public VentaPg(string connectionString, int idEmpresa,
             Contratos.IPersonaRepository personaRepo,
             Contratos.ISucursalRepository sucursalRepo,
@@ -166,8 +170,9 @@ namespace DatosPostgres
                 }
                 : GetUsuarioLiviano(oVentaE.IdVendedor);
 
-            oVentaE.Sucursal = tieneJoinSucursal
-                ? new Sucursal
+            if (tieneJoinSucursal)
+            {
+                oVentaE.Sucursal = new Sucursal
                 {
                     IdSucursal = oVentaE.IdSucursal,
                     SucursalNombre = GetString(dr, "sucursalnombre"),
@@ -177,8 +182,27 @@ namespace DatosPostgres
                     Localidad = GetString(dr, "sucursallocalidad"),
                     Provincia = GetString(dr, "sucursalprovincia"),
                     Pais = GetString(dr, "sucursalpais")
-                }
-                : _sucursalRepo.findById(oVentaE.IdSucursal);
+                };
+                // Bug real encontrado probando el modal de Factura Electronica desde el POS
+                // (2026-08-22, ver docs/DECISIONS.md): esta rama arma la Sucursal a mano desde
+                // las columnas ya joineadas (evita el N+1 de _sucursalRepo.findById -- ver el
+                // comentario de getVentaById mas arriba), pero nunca seteaba Sucursal.Empresa,
+                // a diferencia del fallback de abajo (_sucursalRepo.findById SI la puebla).
+                // BuildFacturaDTO (Web/Controllers/VentasController.cs) usa
+                // venta.Sucursal.Empresa.EsRRII/RazonSocialAfip/etc. -- con Empresa=null tiraba
+                // NullReferenceException, atrapada por el catch generico de ImprimirTicket, que
+                // devolvia {ok:false} sin abrir el modal (sintoma: "no abre"). Fix: reusar
+                // ObtenerEmpresaCacheada en vez de duplicar el mapeo de 24 columnas de Empresa
+                // en este JOIN -- se cachea por instancia porque getAllVentas puede llamar esto
+                // por cada fila de una lista, y todas las filas de una misma conexion/tenant
+                // comparten la misma Empresa (un tenant = una empresa).
+                if (oVentaE.Sucursal.IdEmpresa > 0)
+                    oVentaE.Sucursal.Empresa = ObtenerEmpresaCacheada(oVentaE.Sucursal.IdEmpresa);
+            }
+            else
+            {
+                oVentaE.Sucursal = _sucursalRepo.findById(oVentaE.IdSucursal);
+            }
 
             if (tieneJoinPersona)
             {
@@ -201,6 +225,18 @@ namespace DatosPostgres
             {
                 oVentaE.Persona = _personaRepo.findById(oVentaE.IdPersona);
             }
+        }
+
+        // Ver comentario en CargarRelacionesVenta. Memoiza por idEmpresa (no solo un bool "ya
+        // cacheado") por prolijidad, aunque en la practica esta VentaPg nunca ve mas de un
+        // idEmpresa distinto en su vida (una instancia = un tenant, ver NegocioFactory).
+        private Entidades.Empresa ObtenerEmpresaCacheada(int idEmpresa)
+        {
+            if (_empresaCache != null && _empresaCache.IdEmpresa == idEmpresa)
+                return _empresaCache;
+
+            _empresaCache = _sucursalRepo.findEmpresaById(idEmpresa);
+            return _empresaCache;
         }
 
         private Venta MapVenta(NpgsqlDataReader dr, bool cargarLineas = true)
