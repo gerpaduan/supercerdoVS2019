@@ -162,11 +162,13 @@
         guard.markClean = function () {
             guard.allowExit = false;
             guard.initialSnapshot = buildSnapshot(guard.$form);
+            guard.pendingSubmitToken = null;
             syncGlobalProtection();
         };
 
         guard.allowNavigation = function () {
             guard.allowExit = true;
+            guard.pendingSubmitToken = null;
             syncGlobalProtection();
         };
 
@@ -178,7 +180,18 @@
             guard.allowExit = true;
             syncGlobalProtection();
 
+            // Red de seguridad para el caso en que el submit NO termine navegando (falla la
+            // request, queda un modal de exito abierto varios segundos, etc.): a los 1500ms
+            // reactivamos la proteccion sola, sin que la pantalla tenga que llamar a nada.
+            // Pero si mientras tanto la pantalla YA aviso explicitamente que el guardado fue
+            // exitoso (markClean/allowNavigation), ese aviso no puede quedar pisado por este
+            // timer generico -- por eso se identifica cada submit con un token propio y el
+            // timer se auto-cancela si markClean/allowNavigation ya lo invalidaron.
+            var submitToken = {};
+            guard.pendingSubmitToken = submitToken;
+
             window.setTimeout(function () {
+                if (guard.pendingSubmitToken !== submitToken) return;
                 if (!document.body.contains(guard.$form[0])) return;
                 guard.allowExit = false;
                 syncGlobalProtection();

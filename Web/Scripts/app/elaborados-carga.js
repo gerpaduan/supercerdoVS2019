@@ -7,8 +7,21 @@
         }
     }
 
+    function permitirSalidaSinAdvertencia() {
+        var guardApi = $('#formCargaElaborado').data('editPageGuardApi');
+        if (guardApi && typeof guardApi.allowNavigation === 'function') {
+            guardApi.allowNavigation();
+        }
+        if (typeof window.desactivarProteccionSalida === 'function') {
+            window.desactivarProteccionSalida();
+        } else {
+            window.__protegerSalida = false;
+        }
+    }
+
     function showSuccessAndRedirect(message, redirectUrl) {
         var destination = redirectUrl || '/Elaborados';
+        permitirSalidaSinAdvertencia();
 
         if (window.Swal && typeof window.Swal.fire === 'function') {
             Swal.fire({
@@ -406,6 +419,11 @@
 
             $('#tablaLineasElaborado tbody').html(html);
             $('#lineasHiddenContainer').html(hidden);
+            // Este reemplazo de DOM no dispara input/change -- sin este sync explicito,
+            // edit-page-guard.js recien detecta la linea nueva en su polling de 700ms
+            // (attachSyncTimer), dejando una ventana angosta donde __protegerSalida podria
+            // seguir en false justo despues de agregar un ingrediente.
+            window.EditPageGuard && window.EditPageGuard.sync();
             $('#lblTotalManual').text(formatKg(totalManual));
             recalcularFormula();
         }

@@ -41,6 +41,24 @@
         marcarTicketSeleccionado(preseleccionarMm || getUltimoTicketMm() || 58);
     }
 
+    function permitirSalidaSinAdvertencia() {
+        // El guardado ya se confirmo exitoso antes de que este modal se abra (PostMovimientoModal.open
+        // solo se llama tras un resp.ok del submit) -- no se sabe de antemano en que formulario de la
+        // pagina vive el guard (este modal se reusa desde mas de una pantalla de movimientos), asi que
+        // se liberan todos los que esten registrados en la pagina actual.
+        $('form').each(function () {
+            var guardApi = $(this).data('editPageGuardApi');
+            if (guardApi && typeof guardApi.allowNavigation === 'function') {
+                guardApi.allowNavigation();
+            }
+        });
+        if (typeof window.desactivarProteccionSalida === 'function') {
+            window.desactivarProteccionSalida();
+        } else {
+            window.__protegerSalida = false;
+        }
+    }
+
     function cerrarModal() {
         $('#modalPostMovimiento').modal('hide');
     }
@@ -232,6 +250,7 @@
 
     window.PostMovimientoModal = {
         open: function (resp) {
+            permitirSalidaSinAdvertencia();
             state.redirectUrl = resp.redirectUrl || '';
             state.imprimirUrl = resp.imprimirUrl || '';
             state.imprimirPayloadUrl = resp.imprimirPayloadUrl || '';

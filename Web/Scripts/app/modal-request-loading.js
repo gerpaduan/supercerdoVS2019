@@ -8,8 +8,12 @@
     var trackedRequests = {};
     var fetchWrapped = false;
     var AUTO_DELAY_MS = 1000;
+    var NAV_DELAY_MS = 2000; // navegacion completa de pagina (click en un link) -- mas laxo que AJAX
+                              // porque incluye el armado de la vista Razor en el servidor, no solo la query
     var stylesInjected = false;
     var navigationTimer = 0;
+    var navigationWatchdogTimer = 0;
+    var NAV_WATCHDOG_MS = 12000; // ver comentario en trackNavigation
     var csrfTokenCache = null;
 
     function hasOwn(obj, key) {
@@ -199,6 +203,10 @@
             window.clearTimeout(navigationTimer);
             navigationTimer = 0;
         }
+        if (navigationWatchdogTimer) {
+            window.clearTimeout(navigationWatchdogTimer);
+            navigationWatchdogTimer = 0;
+        }
 
         if (!active) return;
         active = false;
@@ -236,11 +244,65 @@
         if (navigationTimer) {
             window.clearTimeout(navigationTimer);
         }
+        if (navigationWatchdogTimer) {
+            window.clearTimeout(navigationWatchdogTimer);
+            navigationWatchdogTimer = 0;
+        }
 
         navigationTimer = window.setTimeout(function () {
             navigationTimer = 0;
+
+            // Chequeo en el momento del DISPARO, no solo al armar el timer (wireGlobalNavigationHandler
+            // ya chequea __protegerSalida al hacer click, pero eso no alcanza): el flag puede cambiar
+            // durante los 2s de espera -- si el usuario cancela el dialogo nativo "¿Desea abandonar el
+            // sitio?" o el "Salir sin guardar" custom, sigue en true y esta funcion NO se entera de que
+            // la navegacion nunca paso. Sin este chequeo, el spinner aparecia igual y quedaba trabado
+            // hasta el watchdog de mas abajo. Ademas protege por igual a cualquier caller de
+            // trackNavigation() que no chequee el flag por su cuenta (ej. _Tabs.cshtml en Elaborados),
+            // sin tener que auditar cada uno de los ~20 call sites existentes en el resto de la app.
+            if (window.__protegerSalida) {
+                return;
+            }
+
             show(message || 'Cargando solicitud...');
-        }, AUTO_DELAY_MS);
+
+            // Nadie llama a endTrackedRequest para una navegacion (no es una request
+            // trackeada como el AJAX/fetch): el modal se supone que desaparece solo porque
+            // la pagina vieja se destruye al llegar la nueva. Pero si la navegacion en
+            // realidad se cancela -- tipico caso: el usuario le dice "no" al dialogo NATIVO
+            // "¿Desea abandonar el sitio?" que dispara el propio navegador cuando hay un
+            // beforeunload activo -- seguimos parados en el mismo documento y este modal
+            // queda trabado para siempre (allowOutsideClick/allowEscapeKey estan en false).
+            // Nos autorecuperamos: si a los 12s segimos aca (nunca se disparo un unload real),
+            // lo cerramos solos en vez de obligar a recargar la pagina.
+            navigationWatchdogTimer = window.setTimeout(function () {
+                navigationWatchdogTimer = 0;
+                hide();
+            }, NAV_WATCHDOG_MS);
+        }, NAV_DELAY_MS);
+    }
+
+    // Dispara el "Cargando..." (via trackNavigation) para cualquier click en un link que vaya a
+    // navegar la pagina entera -- antes solo lo llamaban a mano un puñado de vistas para acciones
+    // puntuales (atajos de teclado, etc.), nunca el menu lateral. Se excluyen los casos donde en
+    // realidad NO hay navegacion de la pagina actual (target=_blank, ctrl/cmd/shift/click del medio,
+    // anclas, links no-http) y el caso donde el guard de "salir sin guardar" ya se encarga (si el
+    // usuario cancela ahi, no debe quedar un spinner sin cerrar).
+    function wireGlobalNavigationHandler() {
+        $(document).on('click.modalRequestLoadingNav', 'a[href]', function (e) {
+            if (window.__protegerSalida) return;
+            if (e.which !== 1 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+            var $link = $(this);
+            if ($link.attr('target') === '_blank') return;
+            if ($link.is('[data-no-loading]')) return;
+
+            var href = $link.attr('href') || '';
+            if (!href || href.charAt(0) === '#') return;
+            if (/^(javascript:|mailto:|tel:)/i.test(href)) return;
+
+            trackNavigation();
+        });
     }
 
     function endTrackedRequest(id) {
@@ -409,6 +471,9 @@
 
     wireGlobalAjaxHandlers();
     wireFetchWrapper();
+    if (isLayoutBasePage()) {
+        wireGlobalNavigationHandler();
+    }
 
     window.ModalRequestLoading = window.ModalRequestLoading || {
         show: show,

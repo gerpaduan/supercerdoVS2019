@@ -7,6 +7,44 @@
         }
     }
 
+    function permitirSalidaSinAdvertencia() {
+        var guardApi = $('#formIngresoRapidoElaborado').data('editPageGuardApi');
+        if (guardApi && typeof guardApi.allowNavigation === 'function') {
+            guardApi.allowNavigation();
+        }
+        if (typeof window.desactivarProteccionSalida === 'function') {
+            window.desactivarProteccionSalida();
+        } else {
+            window.__protegerSalida = false;
+        }
+    }
+
+    function showSuccessAndRedirect(message, redirectUrl, esDesarme) {
+        var destination = redirectUrl || '/Elaborados';
+        permitirSalidaSinAdvertencia();
+
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            Swal.fire({
+                icon: 'success',
+                title: esDesarme ? 'Desarme guardado correctamente' : 'Ingreso rápido guardado correctamente',
+                text: message || 'El movimiento se guardó correctamente.',
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                allowOutsideClick: false,
+                returnFocus: false
+            }).then(function () {
+                window.location.href = destination;
+            });
+            return;
+        }
+
+        window.setTimeout(function () {
+            window.location.href = destination;
+        }, 2000);
+    }
+
     function parseDecimal(value) {
         if (value === null || value === undefined) return { ok: false, value: 0 };
         var text = String(value).trim();
@@ -474,7 +512,7 @@
                         return;
                     }
 
-                    window.location.href = resp.redirectUrl || config.redirectUrl || '/Elaborados';
+                    showSuccessAndRedirect(resp.mensaje, resp.redirectUrl || config.redirectUrl || '/Elaborados', config.esDesarme);
                 }).fail(function (xhr) {
                     state.guardando = false;
                     var mensaje = 'No se pudo guardar el movimiento.';

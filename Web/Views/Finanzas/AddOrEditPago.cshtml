@@ -501,7 +501,7 @@
     <script src="@Url.Content("~/Scripts/app/pago-cheques.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/money-input-mask.js?v=1")"></script>
     <script src="@Url.Content("~/Scripts/app/pago-ux.js?v=13")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
     <script>
         window.PagoCheques && window.PagoCheques.init({
@@ -514,11 +514,11 @@
         window.MoneyInputMask && window.MoneyInputMask.attach("#Efectivo");
         window.PagoUX && window.PagoUX.init();
         window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
-        window.EditPageGuard && window.EditPageGuard.init({
-            formSelector: "#formPago",
-            saveButtonSelector: "#btnGuardarPago",
-            modifyButtonSelector: "#btnHabilitarEdicionPago"
-        });
+        // EditPageGuard se wirea desde adentro de EditReadOnly.init (edit-readonly.js), despues de
+        // aplicar el estado de solo-lectura -- si se llamara a mano aca antes, tomaria la foto inicial
+        // del formulario con los campos todavia habilitados y quedaria "sucio" apenas EditReadOnly los
+        // deshabilita un instante despues, mostrando el aviso de "salir sin guardar" en modo lectura
+        // sin que el usuario haya tocado nada.
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formPago",
             soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
@@ -629,11 +629,8 @@ else
             window.MoneyInputMask && window.MoneyInputMask.attach("#Efectivo");
             window.PagoUX && window.PagoUX.init();
             window.CalculadoraBilletesTargets && window.CalculadoraBilletesTargets.syncPago();
-            window.EditPageGuard && window.EditPageGuard.init({
-                formSelector: "#formPago",
-                saveButtonSelector: "#btnGuardarPago",
-                modifyButtonSelector: "#btnHabilitarEdicionPago"
-            });
+            // EditPageGuard se wirea desde adentro de EditReadOnly.init (edit-readonly.js), despues de
+            // aplicar el estado de solo-lectura -- ver comentario equivalente en la rama renderComoModal.
             window.EditReadOnly && window.EditReadOnly.init({
                 formSelector: "#formPago",
                 soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
