@@ -2417,6 +2417,48 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
   </Target>
+  <!--
+    Este proyecto (Web.csproj) es clasico, con packages.config: NO resuelve transitivamente las
+    dependencias NuGet de un ProjectReference SDK-style (PackageReference) como DatosPostgres.csproj.
+    Es un gap conocido de interoperabilidad MSBuild/NuGet entre los dos estilos de proyecto: cada
+    proyecto packages.config solo restaura sus propias referencias directas, nunca las de un proyecto
+    referenciado que usa PackageReference. Sin este target, cualquier "clean" completo de Web\bin deja
+    el piloto Postgres roto (FileNotFoundException de Npgsql en runtime al pegarle a /Login) hasta que
+    alguien copie los DLLs a mano: fue justo lo que paso el 2026-08-22 (ver
+    docs/07-operacion-y-soporte/incidencias-frecuentes.md). Este target copia, despues de cada build,
+    los ensamblados en runtime que Npgsql 8.0.8 necesita bajo netstandard2.0, version pinneada junto
+    al PackageReference real en DatosPostgres.csproj, que es la fuente de verdad de las versiones.
+    Si se sube esa version ahi, hay que actualizar tambien la lista de abajo.
+  -->
+  <ItemGroup>
+    <NpgsqlRuntimeDependency Include="npgsql\8.0.8\lib\netstandard2.0\Npgsql.dll" />
+    <NpgsqlRuntimeDependency Include="microsoft.bcl.asyncinterfaces\8.0.0\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll" />
+    <NpgsqlRuntimeDependency Include="microsoft.bcl.hashcode\1.1.1\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" />
+    <NpgsqlRuntimeDependency Include="microsoft.extensions.dependencyinjection.abstractions\8.0.0\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
+    <NpgsqlRuntimeDependency Include="microsoft.extensions.logging.abstractions\8.0.0\lib\netstandard2.0\Microsoft.Extensions.Logging.Abstractions.dll" />
+    <NpgsqlRuntimeDependency Include="system.buffers\4.5.1\lib\netstandard2.0\System.Buffers.dll" />
+    <NpgsqlRuntimeDependency Include="system.collections.immutable\8.0.0\lib\netstandard2.0\System.Collections.Immutable.dll" />
+    <NpgsqlRuntimeDependency Include="system.componentmodel.annotations\5.0.0\lib\netstandard2.0\System.ComponentModel.Annotations.dll" />
+    <NpgsqlRuntimeDependency Include="system.diagnostics.diagnosticsource\8.0.0\lib\netstandard2.0\System.Diagnostics.DiagnosticSource.dll" />
+    <NpgsqlRuntimeDependency Include="system.memory\4.5.5\lib\netstandard2.0\System.Memory.dll" />
+    <NpgsqlRuntimeDependency Include="system.numerics.vectors\4.4.0\lib\netstandard2.0\System.Numerics.Vectors.dll" />
+    <NpgsqlRuntimeDependency Include="system.runtime.compilerservices.unsafe\6.0.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll" />
+    <NpgsqlRuntimeDependency Include="system.text.encodings.web\8.0.0\lib\netstandard2.0\System.Text.Encodings.Web.dll" />
+    <NpgsqlRuntimeDependency Include="system.text.json\8.0.5\lib\netstandard2.0\System.Text.Json.dll" />
+    <NpgsqlRuntimeDependency Include="system.threading.channels\8.0.0\lib\netstandard2.0\System.Threading.Channels.dll" />
+    <NpgsqlRuntimeDependency Include="system.threading.tasks.extensions\4.5.4\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll" />
+  </ItemGroup>
+  <Target Name="CopyNpgsqlRuntimeDependencies" AfterTargets="Build;AfterBuild">
+    <PropertyGroup>
+      <NpgsqlDepsPackagesRoot Condition="'$(NuGetPackageRoot)' != ''">$(NuGetPackageRoot)</NpgsqlDepsPackagesRoot>
+      <NpgsqlDepsPackagesRoot Condition="'$(NpgsqlDepsPackagesRoot)' == ''">$(UserProfile)\.nuget\packages\</NpgsqlDepsPackagesRoot>
+    </PropertyGroup>
+    <ItemGroup>
+      <NpgsqlRuntimeDependencyFullPath Include="$(NpgsqlDepsPackagesRoot)%(NpgsqlRuntimeDependency.Identity)" />
+    </ItemGroup>
+    <Copy SourceFiles="@(NpgsqlRuntimeDependencyFullPath)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('%(NpgsqlRuntimeDependencyFullPath.Identity)')" />
+    <Warning Condition="!Exists('%(NpgsqlRuntimeDependencyFullPath.Identity)')" Text="No se encontro la dependencia de Npgsql '%(NpgsqlRuntimeDependencyFullPath.Identity)' en la cache de NuGet -- el piloto Postgres puede fallar en runtime. Corre 'msbuild CarniSys.sln /t:Restore' o abri la solucion en Visual Studio para restaurarla." />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

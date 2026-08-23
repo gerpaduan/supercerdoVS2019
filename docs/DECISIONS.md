@@ -1,6 +1,102 @@
 # Decisiones de arquitectura
 
-## 2026-08-21 (la mas reciente) - N+1 real en VentaPg cerrado: JOIN de corte en vez de findCorteById por fila (con permiso explicito del usuario para tocar las queries)
+## 2026-08-22 (la mas reciente) - Modal Factura Electronica: causa real de "no abre" era una regresion propia + ajustes de UX en "Nueva factura sin venta"
+
+Usuario reporto 6 problemas del modal de Factura Electronica. Con permiso explicito para tocar
+las queries de Postgres si hacia falta. Investigacion previa: Explore agent + lectura directa,
+plan escrito y aprobado (AskUserQuestion para precisar alcance de los puntos 2 y 3 antes de
+tocar codigo). Reproducido en vivo antes de fixear (no se asumio la causa).
+
+**Punto 2 -- el modal no abria (automatico tras cobrar, y al tocar "Factura" en post-venta)**:
+causa real confirmada reproduciendo `GET /Ventas/ImprimirTicket?id=<x>&mm=0` en vivo (con
+diagnostico temporal de stack trace, revertido despues): `NullReferenceException` en
+`VentasController.BuildFacturaDTO`, linea `venta.Sucursal.Empresa.EsRRII` -- `Sucursal.Empresa`
+llegaba `null`. Atrapada por el catch generico de `ImprimirTicket`, devolvia
+`{ok:false,msg:...}` con HTTP 200 sin abrir nada.
+
+**Es una regresion propia**, no un bug preexistente: la entrada anterior de este mismo archivo
+(2026-08-21, "N+1 real en VentaPg cerrado") agrego JOINs a `getVentaById` para evitar el N+1 de
+`_sucursalRepo.findById` por venta -- pero la rama que arma `Sucursal` a mano desde las columnas
+ya joineadas (`CargarRelacionesVenta`, `tieneJoinSucursal=true`) nunca seteaba
+`Sucursal.Empresa` (a diferencia del fallback `_sucursalRepo.findById`, que si lo hace). Nadie
+lo noto antes porque `DetalleVenta`/el resto de las vistas no tocan ese nivel anidado --
+`BuildFacturaDTO` fue el primer consumidor real que lo necesitaba.
+
+Fix (`DatosPostgres/VentaPg.cs`): en vez de duplicar el mapeo de las 24 columnas de `Empresa`
+en un JOIN nuevo (mas superficie de error, dos lugares con la misma logica), se reusa
+`_sucursalRepo.findEmpresaById` (ya correcto) con una cache de instancia
+(`ObtenerEmpresaCacheada`, keyed por `idEmpresa`) -- evita reintroducir N+1 en `getAllVentas`
+(list query): todas las filas de una misma conexion/tenant comparten la misma Empresa (un
+tenant = una empresa), asi que solo hace falta una consulta por request, no una por fila.
+
+**Blindaje adicional, independiente de la causa** (`Web/Scripts/app/modal-postventa.js`,
+`abrirFacturaVentaModal`): el `$.get` no tenia `.fail()`, y como `ImprimirTicket` devuelve
+`Content-Type: application/json` en el catch generico, jQuery auto-parseaba la respuesta de
+error como objeto (no string) -- `$('#contenedorFacturaElectronica').html(html)` fallaba en
+silencio con un objeto. Se cambio a `$.ajax({..., dataType:'html'})` (fuerza string siempre) +
+deteccion de la forma `{"ok":false,...}` (muestra un Swal de error en vez de abrir con basura) +
+`.fail()` real para errores de transporte. Verificado: ambos casos (con y sin el fix de
+`Sucursal.Empresa`) ahora se comportan como se espera.
+
+**Punto 3 (modal "Nueva factura sin venta")**:
+- 3a) Fecha arrancaba en `01/01/0001`: `NuevaFacturaSinVenta` armaba la `Venta` en memoria sin
+  `FechaVenta` (el campo nunca inicializado cae en el default de `DateTime`). Fix: seteo
+  explicito `FechaVenta = DateTime.Now`.
+- 3a) Cond. IVA / Domicilio quedaban fijos en "Consumidor Final"/vacio sin importar el cliente
+  elegido: `PersonasController.Listar` ya devolvia `iva`/`domicilio`/`ciudad` por persona (no
+  hizo falta endpoint nuevo) pero `seleccionarPersonaFactura` (`factura-electronica.js`) nunca
+  los usaba. Fix: se agregan como `data-*` en cada fila y se escriben en el form al elegir
+  cliente (mismo formato de domicilio que ya arma `BuildFacturaDTO`: "Domicilio - Ciudad").
+- 3b) Switch "Editar facturación" oculto en este modo: **ya estaba correcto en el codigo**
+  (`d-none` condicional a `esSinVenta`) -- confirmado releyendo el HTML servido
+  (`class="... d-none"` presente). No se toco nada; si el usuario lo sigue viendo visible en el
+  navegador, es un problema de cache de sesion/pagina vieja (cada rebuild recicla el AppDomain),
+  no de este codigo.
+- 3c) Bloque "Facturación manual" reposicionado (precisado por el usuario): antes estaba justo
+  despues de la card "Cliente"; ahora va despues de "Observación del comprobante" y antes de
+  "Totales del comprobante" (la ultima card del modal). Cambio puramente de posicion en el HTML,
+  sin tocar contenido/logica del bloque.
+
+**Punto 4 -- auto Factura A para Responsable Inscripto**: agregado listener `change` sobre
+`select[name="CondicionIvaAFIP"]` (`factura-electronica.js`) que fuerza
+`CodTipoCbteAfip=1` (Factura A) cuando el valor es "Responsable Inscripto". Corre tanto al
+elegir cliente (el fix del punto 3a dispara `change` a mano) como si el usuario cambia el
+select directamente. No toca el calculo server-side existente
+(`FacturaElectronica.getCodTipoCbteAFIP`, que solo corre una vez al abrir el modal) -- es
+reactividad adicional puramente cliente-side.
+
+**Punto 5 -- mostrar "imprimir venta" al cancelar/cerrar sin facturar**: antes, "Cerrar sin
+facturar" solo cerraba `#modalPostVenta` si ya estaba abierto (`cerrarPostVentaSegunOrigen`), y
+el "Cancelar" simple (forma de pago que no exige confirmacion) no mostraba nada. Fix
+(`modal-postventa.js`): el handler `venta:cerradaSinFacturar` ahora llama
+`window.mostrarModalPostVenta(ventaId)` (mismo modal de Ticket/Factura/PDF/WhatsApp que se abre
+al finalizar cualquier venta) en vez de solo cerrar. Para el "Cancelar" simple (cierre nativo
+Bootstrap, sin round-trip al servidor) se engancho el `hidden.bs.modal.factura` ya existente:
+si `!facturaOk` al cerrarse (ninguno de los otros dos caminos -- factura generada o cerrado sin
+facturar -- ya seteo `facturaOk=true` antes), abre el mismo modal. Un solo punto de enganche
+para los dos botones, sin duplicar logica.
+
+**Punto 6 -- atajo Alt+C -> Supr**: confirmado (busqueda dedicada) que no hay ningun atajo de
+negocio existente atado a Delete/Supr en el POS ni en el modal. Cambio real necesario: a
+diferencia de Alt+C, Supr sin modificador puede chocar con edicion de texto normal -- se agrego
+guard de `tagName` (ignora si el foco esta en `input`/`select`/`textarea`), mismo patron ya
+usado para el atajo Enter en este archivo. Texto del footer del modal actualizado.
+
+**Verificado**: `CarniSys.sln` compila limpio, 38/38 tests de `Negocio.Tests` pasan.
+`GET /Ventas/ImprimirTicket?id=1741&mm=0` y `?id=18&mm=0` devuelven HTML real (antes:
+`{"ok":false}`). `GET /Ventas/NuevaFacturaSinVenta` confirma en el HTML servido: fecha = hoy,
+switch con `d-none`, orden Observacion -> Facturación manual -> Totales. `DetalleVenta`/
+`Ventas/Index`/`Home` sin regresion tras el cambio en `VentaPg.cs`. Los comportamientos
+puramente cliente-side que dependen de interaccion real en el navegador (actualizacion de
+Cond.IVA/Domicilio al elegir cliente, auto-Factura-A, apertura del modal post-venta al cancelar,
+atajo Supr) se verificaron por lectura/trazado de codigo, no con un click real en el navegador
+-- pendiente que el usuario los confirme en uso real.
+
+**Archivos tocados**: `DatosPostgres/VentaPg.cs`, `Web/Controllers/VentasController.cs`,
+`Web/Scripts/app/modal-postventa.js`, `Web/Scripts/app/factura-electronica.js`,
+`Web/Views/Ventas/_FacturaElectronica.cshtml`.
+
+## 2026-08-21 - N+1 real en VentaPg cerrado: JOIN de corte en vez de findCorteById por fila (con permiso explicito del usuario para tocar las queries)
 
 Cierre del hallazgo secundario dejado pendiente en la entrada de mas abajo (Keepalive). Con
 permiso explicito del usuario ("dandote permiso para modificar los sp de pg si es necesario"),
@@ -2316,3 +2412,20 @@ Ultima de las 3 sub-etapas del resto de `Venta.cs` (Sectores/Licencias, `2e555fc
 - **`Negocio/Venta.cs` colapsado a un solo campo** (`oVentaD`, sin `oVentaDSqlServer`) -- mismo criterio que `CierreCaja` en la Etapa 10: con los 47/47 metodos de `Datos.Venta` ya en `IVentaRepository`, el segundo campo "siempre SQL Server" quedo sin ningun uso real.
 - **Verificado**: `Web.csproj`/solucion completa compilan limpio. Harness `psql` (rol real `carnisys_user`, transaccion explicita, `ROLLBACK`): alta de una factura + su alicuota (atomico, mejora del Hallazgo 2) y edicion de una factura real confirmando que `fechaemisionafip` no cambia (Hallazgo 1) -- sin residuo. HTTP end-to-end con login real (usuario descartable `test_etapa12c`/idEmpresa=1, borrado al final) contra la nueva accion `CompararFactura`: factura #33 identica en ambos motores (CAE, RazonSocialAFIP, ImporteTotal, IdVenta, y su alicuota de IVA).
 - **Cierre de modulo**: con esta etapa, `Venta.cs` (47/47 metodos) queda completamente migrado a `Contratos.IVentaRepository`/`DatosPostgres.VentaPg`. Igual que el resto de la migracion, el codigo queda listo y verificado pero **no en produccion** -- ningun constructor real fuera de `MigracionPostgresController` instancia `VentaPg` todavia; el cutover de trafico real es una decision aparte, no incluida en el alcance de esta migracion.
+
+## 2026-08-22 - Web.csproj copia a mano las dependencias runtime de Npgsql despues de cada build (target MSBuild)
+
+Encontrado al pedir un clean+rebuild completo de la solucion para probar sin codigo viejo colgado: al borrar `Web/bin` por completo, el login empezo a tirar 500 (`FileNotFoundException: Npgsql`). Causa: `Web.csproj` es un proyecto clasico con `packages.config`; `DatosPostgres.csproj` (piloto Postgres) es SDK-style con `PackageReference`. Un proyecto `packages.config` **no resuelve transitivamente** las dependencias NuGet de un `ProjectReference` SDK-style -- gap conocido de interoperabilidad MSBuild/NuGet entre los dos estilos, no un bug de este repo puntual. Antes funcionaba porque los 16 DLLs (Npgsql + su cadena de dependencias: `Microsoft.Bcl.*`, `Microsoft.Extensions.*.Abstractions`, `System.Text.Json`, etc.) habian sido copiados a mano en algun momento y ese `bin/` nunca se habia vuelto a borrar del todo.
+
+- **Alternativas consideradas**: (1) target MSBuild que copia las dependencias despues de cada build -- elegida; (2) migrar `Web.csproj` a SDK-style para que el restore de NuGet funcione nativo -- descartada por ahora, cambio estructural al proyecto principal con mas superficie de riesgo que resolver un problema puntual de un piloto que todavia no esta en produccion; (3) dejarlo como parche manual sin automatizar -- descartada, se vuelve a romper en el proximo clean.
+- **Resolucion**: `Web.csproj` agrega un `Target Name="CopyNpgsqlRuntimeDependencies" AfterTargets="Build;AfterBuild"` que copia los 16 ensamblados runtime de Npgsql 8.0.8 (netstandard2.0) desde la cache global de NuGet (`$(NuGetPackageRoot)`, o `$(UserProfile)\.nuget\packages\` si esa property no esta definida) hacia `$(OutDir)`. La lista de paquetes+version esta hardcodeada en el `ItemGroup` del target, con un comentario explicito de que hay que actualizarla si cambia la version de Npgsql en `DatosPostgres.csproj` (fuente de verdad real de la version). Si falta algun DLL en la cache, el target tira un `Warning` (no rompe el build) para que quede visible en vez de fallar silenciosamente en runtime.
+- **Verificado**: borrado completo de `Web/bin` + `Web/obj`, `msbuild Web.csproj /t:Restore,Build` sin ningun paso manual, confirmado que `Npgsql.dll` y el resto aparecen solos en `Web/bin`. Repetido a nivel de solucion completa (`CarniSys.sln /t:Clean` + `Restore` + `Build`, 0 errores) y con IIS Express relanzado: login real (`ger`/`a`) funciona, dashboard carga.
+- **Deuda conocida**: la version de Npgsql esta duplicada en dos lugares (`DatosPostgres.csproj` y la lista de `Web.csproj`) -- aceptado a proposito en vez de parsear `project.assets.json` desde MSBuild XML plano (mas complejo, mas fragil, para un pilar que no esta en produccion todavia). Si este piloto Postgres pasa a produccion real, revisar si conviene la migracion completa de `Web.csproj` a SDK-style en ese momento.
+
+## 2026-08-22 - `trackNavigation()` centraliza el chequeo de `__protegerSalida` en vez de auditar cada caller
+
+Continuacion del bug de "Cargando solicitud" fantasma (ver `docs/07-operacion-y-soporte/incidencias-frecuentes.md`, misma fecha): la causa real era `Web/Views/Elaborados/_Tabs.cshtml`, un caller de `trackNavigation()` en fase de captura que nunca chequeaba `window.__protegerSalida`. Hay ~21 call sites de `trackNavigation()` en el resto de la app.
+
+- **Alternativas consideradas**: (1) agregar el chequeo de `__protegerSalida` en `_Tabs.cshtml` puntualmente -- descartada, no protege contra el mismo error en otro caller futuro ni contra los que ya existen sin auditar; (2) auditar y parchear los ~21 call sites uno por uno -- descartada, exactamente el patron que CLAUDE.md §5.1 pide evitar (parches caso por caso en vez de una regla central); (3) centralizar el chequeo dentro de `trackNavigation()` mismo -- elegida.
+- **Resolucion**: `modal-request-loading.js`, `trackNavigation()` ahora chequea `window.__protegerSalida` **dentro del callback del `setTimeout`** (al disparar, no solo quien la llama), justo antes de `show()`. Se audito que ninguno de los ~21 callers existentes dependa de que el spinner se muestre con el flag en `true` -- ninguno regresiona.
+- **Por que al disparar y no solo al llamar**: `__protegerSalida` puede cambiar de estado durante los 2s de espera (el usuario puede confirmar la salida a mitad de camino) -- chequear solo al llamar dejaria pasar casos donde el flag se puso en `true` DESPUES del click pero ANTES del disparo.
