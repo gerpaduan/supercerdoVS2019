@@ -2183,6 +2183,7 @@
     <Content Include="Views\Productos\Tipos.cshtml" />
     <Content Include="Views\Productos\_StockPorSucursalesProductoModal.cshtml" />
     <Content Include="Views\Reportes\Index.cshtml" />
+    <Content Include="Views\Reportes\_FiltrosSecundarios.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Shared\_CalculadoraBilletesModal.cshtml" />
     <Content Include="Views\Shared\_ScannerCodigoBarra.cshtml" />

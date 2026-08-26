@@ -486,9 +486,14 @@
             saveState();
 
             if (form) {
+                // No llamar a showNavigationLoading() aca: egresos-caja.js intercepta este
+                // submit con preventDefault() y busca por AJAX (filtrar(), silentLoading:true),
+                // nunca hay navegacion real. Antes se asumia postback de pagina completa; al
+                // reescribirse a AJAX quedo este armado del timer de 2s de trackNavigation()
+                // sin que nada lo cancele, mostrando "Cargando solicitud..." fantasma a los 2s
+                // con los resultados ya cargados.
                 form.addEventListener("submit", function () {
                     saveState();
-                    showNavigationLoading("Cargando solicitud...");
                 });
                 form.querySelectorAll("input, select").forEach(function (el) {
                     el.addEventListener("change", saveState);

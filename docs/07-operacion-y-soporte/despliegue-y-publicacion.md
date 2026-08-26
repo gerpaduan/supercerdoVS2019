@@ -67,19 +67,19 @@ Al momento del primer deploy (2026-07-30) el servidor no tenia SSH, la cuenta de
 
 1. Publish Release precompilado a una carpeta local, igual que el paso 1 de la VM (mismo `msbuild ... /p:PublishProfile=FolderProfile /p:publishUrl=<carpeta_local> ...`). A diferencia de la VM, **no hace falta tocar `requireSSL`**: el transform de `Web.Release.config` (`true`) ya es el valor correcto para este servidor.
 2. Backup del sitio actual: mapear el share con `net use Z: \\192.168.0.151\carnisysweb /user:ServidorSM\carnisys-deploy <password>` y `robocopy Z:\ <carpeta_local_backup> /MIR`.
-3. Copiar el build nuevo con `robocopy <publish>\<carpeta> Z:\<carpeta> /MIR` para `bin`, `Content`, `Scripts`, `Views`, `fonts`, y los sueltos (`Web.config`, `favicon.ico`, `libman.json`, `manifest.json`, `sw.js`, `PrecompiledApp.config`) con `Copy-Item -Force`.
-4. **Nunca tocar** `Config\`, `AFIP\`, `App_Data\` del share (mismo motivo que en la VM: estado vivo, no build).
+3. Copiar el build nuevo con `robocopy <publish>\<carpeta> Z:\<carpeta> /MIR` para `bin`, `Content`, `Scripts`, `Views`, `fonts`, y los sueltos (`favicon.ico`, `libman.json`, `manifest.json`, `sw.js`, `PrecompiledApp.config`) con `Copy-Item -Force`. **Nunca `Web.config`** (ver punto 4).
+4. **Nunca tocar** `Web.config`, `Config\`, `AFIP\`, `App_Data\` del share (`Web.config`: incidente real 2026-08-26, ver `docs/DECISIONS.md` -- el `Web.config` local de dev trae `appSettings` propios del entorno, ej. `DataEngine=Postgres`, que no aplican a este servidor SQL Server y rompen la app en produccion; `Config\`/`AFIP\`/`App_Data\`: mismo motivo que en la VM, estado vivo, no build).
 5. `net use Z: /delete` al terminar.
 6. No hay pipeline ni acceso remoto para reciclar el App Pool a mano; IIS/ASP.NET recicla el AppDomain solo al detectar cambios en `bin\` o `Web.config`, asi que no hace falta paso manual.
 
 ### Validaciones posteriores
 
 - `curl http://192.168.0.151:8069/CarniSysWeb/` debe dar `301` a `https://192.168.0.151/CarniSysWeb/` con los headers de seguridad (`Content-Security-Policy`, `X-Frame-Options`) del `Web.config` publicado.
-- `curl -k https://192.168.0.151/CarniSysWeb/Login/Index` debe dar `200`, titulo `CarniSysWeb - Login`, sin `Stack Trace`/`Server Error` en el body, y `Set-Cookie` con `secure`/`HttpOnly` (confirma que `requireSSL="true"` esta funcionando con el binding). El `-k` es porque el certificado es autofirmado. **Verificado 2026-07-31.**
+- `curl -k https://192.168.0.151/CarniSysWeb/Login/Index` debe dar `200`, titulo `Ingresar a CARNISYS` (el texto del titulo cambio de `CarniSysWeb - Login`, desactualizado en este runbook hasta hoy -- CLAUDE.md SS8.3, manda el codigo, mismo motivo ya corregido en la seccion de San Lorenzo mas abajo), sin `Stack Trace`/`Server Error` en el body, y `Set-Cookie` con `secure`/`HttpOnly` (confirma que `requireSSL="true"` esta funcionando con el binding). El `-k` es porque el certificado es autofirmado. **Verificado 2026-07-31, re-verificado 2026-08-26 (deploy commit `7eb5547f`, tras excluir `Web.config` del swap -- ver `docs/DECISIONS.md`).**
 
 ### Rollback
 
-Restaurar el backup local (paso 2 de arriba) con `robocopy <backup> Z:\ /MIR`, respetando no tocar `Config\`/`AFIP\`/`App_Data\`. No hay snapshot historico en el propio servidor (a diferencia de la VM, que tiene `web\backups\`) — el backup queda en la maquina donde se corrio el deploy, PENDIENTE definir si conviene subirlo tambien a un `backups\` dentro del server.
+Restaurar el backup local (paso 2 de arriba) con `robocopy <backup> Z:\ /MIR`, respetando no tocar `Web.config`/`Config\`/`AFIP\`/`App_Data\`. No hay snapshot historico en el propio servidor (a diferencia de la VM, que tiene `web\backups\`) — el backup queda en la maquina donde se corrio el deploy, PENDIENTE definir si conviene subirlo tambien a un `backups\` dentro del server. **Usado en un caso real 2026-08-26**: swap con `Web.config` incluido rompio el login (ver `docs/DECISIONS.md`), rollback completo con este mismo procedimiento resolvio en <1 minuto.
 
 ## Tercer destino: "San Lorenzo" (`200.107.108.44`) -> IP publica, sin SMB, sin carpeta `Config\`
 
@@ -105,7 +105,7 @@ El IIS/cert/binding de este servidor ya estaban configurados de antes (alta del 
 ### Validaciones posteriores
 
 - `curl http://200.107.108.44:8069/CarniSysWeb/` da `200` sirviendo la home publica de marketing directo (no `302` a Login como documentaba esta seccion hasta el 2026-08-03: la ruta raiz cambio de comportamiento con el feature "home publica" -- commit `72abd98e` -- que la desacoplo del login; no forzar upgrade a HTTPS sigue siendo el comportamiento esperado de este servidor, eso no cambio). **Corregido 2026-08-14** tras notar la discrepancia doc-vs-codigo tras un deploy real (CLAUDE.md SS8.3: manda el codigo).
-- `curl -k https://200.107.108.44/CarniSysWeb/Login/Index` debe dar `200`, titulo `Ingresar a CARNISYS` (el texto del titulo tambien cambio desde `CarniSysWeb - Login`, mismo motivo), sin `Stack Trace`/`Server Error`. El `Set-Cookie` **no** trae `secure` (a diferencia de SM/VM) — tampoco es un bug: este `Web.config` no tiene `requireSSL`/`CookieRequireSsl` configurado, se deja como esta (no se toca `Web.config`). **Verificado 2026-08-03, re-verificado 2026-08-14.**
+- `curl -k https://200.107.108.44/CarniSysWeb/Login/Index` debe dar `200`, titulo `Ingresar a CARNISYS` (el texto del titulo tambien cambio desde `CarniSysWeb - Login`, mismo motivo), sin `Stack Trace`/`Server Error`. El `Set-Cookie` **no** trae `secure` (a diferencia de SM/VM) — tampoco es un bug: este `Web.config` no tiene `requireSSL`/`CookieRequireSsl` configurado, se deja como esta (no se toca `Web.config`). **Verificado 2026-08-03, re-verificado 2026-08-14 y 2026-08-26 (deploy commit `7eb5547f`).**
 - `Invoke-WebRequest` de PowerShell 5.1 **falla** contra el binding HTTPS de este servidor (error de renegociacion TLS) aunque `curl.exe` funciona bien — usar siempre `curl.exe`/`curl -k` para health checks aca, nunca `Invoke-WebRequest`.
 
 ### Rollback
