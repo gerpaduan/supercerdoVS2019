@@ -36,7 +36,7 @@
                    data-hotkey="n"
                    class="btn btn-primary"
                    href="@Url.Action("AddOrEdit", "Productos")"
-                   title="Atajo: Shift + N">
+                   title="Atajo: Alt + N (o Alt + +)">
                     <i class="fas fa-plus mr-1"></i> <span class="atajo-letra">N</span>uevo
                 </a>
 
@@ -44,7 +44,7 @@
                    data-hotkey="t"
                    class="btn btn-outline-secondary"
                    href="@Url.Action("Tipos", "Productos")"
-                   title="Atajo: Shift + T">
+                   title="Atajo: Alt + T">
                     <i class="fas fa-tags mr-1"></i> <span class="atajo-letra">T</span>ipos
                 </a>
 
@@ -52,7 +52,7 @@
                    data-hotkey="m"
                    class="btn btn-outline-secondary"
                    href="@Url.Action("Marcas", "Productos")"
-                   title="Atajo: Shift + M">
+                   title="Atajo: Alt + M">
                     <i class="fas fa-industry mr-1"></i> <span class="atajo-letra">M</span>arcas
                 </a>
 
@@ -60,7 +60,7 @@
                    data-hotkey="e"
                    class="btn btn-outline-secondary"
                    href="@Url.Action("Index", "Productos", new { modo = "etiquetas" })"
-                   title="Atajo: Shift + E">
+                   title="Atajo: Alt + E">
                     <i class="fas fa-barcode mr-1"></i> <span class="atajo-letra">E</span>tiquetas (PDF)
                 </a>
 
@@ -78,7 +78,7 @@
                        data-hotkey="v"
                        class="btn btn-outline-dark"
                        href="@Url.Action("Index", "Productos")"
-                       title="Atajo: Shift + V">
+                       title="Atajo: Alt + V">
                         <i class="fas fa-arrow-left mr-1"></i> <span class="atajo-letra">V</span>olver
                     </a>
                 }
@@ -2803,8 +2803,9 @@
 
             (function () {
                 document.addEventListener('keydown', function (e) {
-                    // Solo atajos con SHIFT (sin Ctrl / Alt / Meta)
-                    if (!e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+                    // Solo atajos con ALT (sin Ctrl / Meta) -- antes era Shift, cambiado para ser
+                    // consistente con el resto de la app (AddOrEdit/EditarFormula ya usan Alt).
+                    if (!e.altKey || e.ctrlKey || e.metaKey) return;
 
                     // No activar si el usuario está escribiendo en un input/textarea/select o contenido editable
                     const target = e.target;
@@ -2817,9 +2818,12 @@
 
                     if (isEditable) return;
 
-                    // Obtener letra presionada (ej: Shift+N => "n")
-                    const key = (e.key || '').toLowerCase();
+                    // Obtener letra presionada (ej: Alt+N => "n")
+                    let key = (e.key || '').toLowerCase();
                     if (!key || key.length !== 1) return;
+
+                    // Alt + "+" es un atajo alternativo para "Nuevo" (pedido explicito), junto a Alt + N.
+                    if (key === '+') key = 'n';
 
                     // Buscar botón/link con data-hotkey igual a la tecla
                     const selector = `[data-hotkey="${key}"]`;

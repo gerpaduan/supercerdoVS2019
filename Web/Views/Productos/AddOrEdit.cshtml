@@ -283,10 +283,11 @@
                             <div class="input-group">
                                 <input type="text" class="form-control" id="txtMarcaNombre"
                                        value="@(Model?.MarcaNombre ?? "")" readonly placeholder="Sin marca" tabindex="-1" />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca" tabindex="-1"><i class="fas fa-search"></i></button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca (F9)" tabindex="-1">
+                                    <i class="fas fa-search"></i><span class="d-none d-md-inline ml-1 small">F9</span>
+                                </button>
                                 <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca"><i class="fas fa-times"></i></button>
                             </div>
-                            <small class="text-muted d-block mt-1">Presione F9 para abrir marcas.</small>
                         </div>
                     </div>
                 </div>
@@ -311,7 +312,11 @@
                                 <label class="form-check-label" for="swHabilitado">Habilitado</label>
                             </div>
 
-                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                            <!-- Oculto a proposito: este flag ahora se activa/desactiva solo desde
+                                 /Elaborados/EditarFormula (interruptor "Ingreso Rapido", ver
+                                 docs/DECISIONS.md 2026-08-22) -- se sigue posteando su valor actual
+                                 sin cambios al guardar el producto desde esta pantalla. -->
+                            <div class="form-check form-switch mb-2 producto-focus-switch d-none">
                                 @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
                                 <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
                             </div>
@@ -320,17 +325,19 @@
                                 @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
                                 <label class="form-check-label" for="swCierre">En cierre stock</label>
                             </div>
+                            <small id="avisoCierreStockSinIndependiente" class="text-warning mt-n1 mb-2 d-none">
+                                Este producto no va a aparecer en el reporte de Cierre de Stock hasta que actives "Independiente" (sección Producto Maestro / Presentación).
+                            </small>
                         </div>
 
                         <div class="col-12 col-md-6 @(esEdicion ? "d-none" : "")">
-                            <label class="form-label">Punto Stock (número entero)</label>
+                            <label class="form-label">
+                                Punto Stock (número entero)
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoPuntoStock" title="¿Para qué sirve este valor?">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </label>
                             @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
-                            @if (!esEdicion)
-                            {
-                                <small class="form-text text-muted">
-                                    Este valor se va a cargar como punto de stock inicial en todas las sucursales existentes al crear el producto. Después se administra por sucursal desde "Ver stock por sucursales".
-                                </small>
-                            }
                         </div>
 
                         <div class="col-12 col-md-6">
@@ -358,7 +365,7 @@
                  3) CORTE MAESTRO / PRESENTACIÓN (debajo)
                  ========================= -->
                 <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
-                    <h5 class="mb-3 producto-edit-section-title">Corte maestro / Presentación</h5>
+                    <h5 class="mb-3 producto-edit-section-title">Producto maestro / Presentación</h5>
 
                     <div class="row g-3 align-items-end">
                         <div class="col-12 col-md-4">
@@ -366,19 +373,21 @@
                             @Html.DropDownListFor(m => m.ModoCorte,
                                 new List<SelectListItem> {
                                     new SelectListItem{ Text="Ninguno", Value="Ninguno" },
-                                    new SelectListItem{ Text="Corte maestro", Value="CorteMaestro" },
+                                    new SelectListItem{ Text="Producto maestro", Value="CorteMaestro" },
                                     new SelectListItem{ Text="Presentación", Value="Presentacion" },
                                 },
                                 new { @class = "form-control", id = "ddlModo" })
                         </div>
 
                         <div class="col-12 col-md-8" id="boxCorteMaestro">
-                            <label class="form-label">Corte maestro</label>
+                            <label class="form-label">Producto maestro</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="txtCorteMaestroNombre"
                                        value="@(Model?.CorteMaestroNombre ?? "")"
-                                       readonly placeholder="Seleccione un corte maestro..." />
-                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro"><i class="fas fa-search"></i></button>
+                                       readonly placeholder="Seleccione un producto maestro..." />
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro" title="Buscar producto maestro (F10)">
+                                    <i class="fas fa-search"></i><span class="d-none d-md-inline ml-1 small">F10</span>
+                                </button>
                                 <button type="button" class="btn btn-outline-danger" id="btnLimpiarCorteMaestro"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
@@ -416,10 +425,13 @@
 
 
                         <div class="col-12" id="boxIndependiente">
-                            <div class="form-check form-switch producto-focus-switch">
+                            <div class="form-check form-switch producto-focus-switch d-inline-block">
                                 @Html.CheckBoxFor(m => m.Independiente, new { @class = "form-check-input", id = "swIndependiente" })
                                 <label class="form-check-label" for="swIndependiente">Independiente</label>
                             </div>
+                            <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoIndependiente" title="¿Qué significa 'Independiente'?">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
                         </div>
 
                     </div>
@@ -525,6 +537,64 @@
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
+
+<!-- MODAL INFO: que significa "Independiente" -->
+<div class="modal fade" id="modalInfoIndependiente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Qué significa "Independiente"?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Este producto es derivado de un Producto Maestro (o forma parte de una presentación).
+                    El interruptor define si este producto lleva su <strong>propio renglón de stock</strong>,
+                    separado del maestro.
+                </p>
+                <ul>
+                    <li>
+                        <strong>Activado</strong>: cuando el maestro se vende/consume, a este producto se le
+                        descuenta automáticamente su parte según el % que le corresponde (ej. el maestro
+                        reparte 40%/60% entre dos derivados — si el maestro consume 10, a este le descuenta 4).
+                        Y si vendés este producto directamente, también le resta al maestro.
+                    </li>
+                    <li>
+                        <strong>Desactivado</strong>: este producto no lleva stock propio — todo lo que vendas
+                        de él se descuenta directo del maestro, sin quedar registrado acá.
+                    </li>
+                </ul>
+                <p>
+                    Dos productos derivados del mismo maestro (hermanos) <strong>nunca se afectan entre sí</strong>,
+                    tenga cada uno "Independiente" activado o no. El movimiento siempre pasa por el maestro,
+                    nunca de un hermano a otro.
+                </p>
+                <p class="mb-0">
+                    Para que este producto aparezca como renglón en el reporte de "Cierre de Stock" necesita
+                    <strong>"Independiente" Y "En cierre stock" activados los dos</strong> — con uno solo no alcanza.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INFO: para que sirve el Punto Stock -->
+<div class="modal fade" id="modalInfoPuntoStock" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Para qué sirve el Punto Stock?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    Este valor se va a cargar como punto de stock inicial en todas las sucursales existentes al
+                    crear el producto. Después se administra por sucursal desde "Ver stock por sucursales".
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     (function () {
@@ -1104,6 +1174,33 @@
         }
     }
 
+    // Variante de moverFocoComoTab anclada a la posicion DOM de un elemento de referencia, no a
+    // document.activeElement -- necesaria para volver de un modal (ej. Marcas, Producto Maestro),
+    // donde el boton/input que lo abrio tiene tabindex="-1" (excluido a proposito del tabulado) y
+    // por eso nunca aparece en obtenerElementosTabulables(); buscar "el siguiente despues del
+    // activeElement" ahi no da un resultado util. En cambio, esto busca el primer elemento
+    // tabulable que este DESPUES de la referencia en el orden real del documento.
+    function moverFocoDespuesDe($referencia) {
+        if (!$referencia || !$referencia.length) return;
+
+        const referenciaEl = $referencia.get(0);
+        const $elementos = obtenerElementosTabulables();
+
+        for (let i = 0; i < $elementos.length; i++) {
+            const el = $elementos.get(i);
+            if (referenciaEl.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                el.focus();
+                if ((el.tagName || "").toLowerCase() === "input" && typeof el.select === "function") {
+                    const type = (el.type || "").toLowerCase();
+                    if (type !== "checkbox" && type !== "radio" && type !== "button" && type !== "submit") {
+                        el.select();
+                    }
+                }
+                return;
+            }
+        }
+    }
+
     // =========================
     // Decimales flexibles (coma o punto)
     // - Mientras escribe: muestra con punto (si escribe coma, se convierte a punto)
@@ -1153,6 +1250,25 @@
     normalizarCampoFloatVisible($desperdicio);
     normalizarCampoFloatVisible($presentacionUnidades);
 
+    // Capitaliza solo la primera letra de cada palabra nueva (despues de
+    // espacio o al inicio) mientras se tipea -- no fuerza minuscula el resto,
+    // para no pelear con siglas tipeadas a proposito (ej. "IVA").
+    function capitalizarPrimeraLetraCadaPalabra($input) {
+        if (!$input || !$input.length) return;
+        $input.on("input", function () {
+            const el = this;
+            const cursorPos = el.selectionStart;
+            const original = el.value;
+            const transformado = original.replace(/(^|\s)([a-záéíóúñü])/gi, (m, sep, letra) => sep + letra.toUpperCase());
+            if (transformado !== original) {
+                el.value = transformado;
+                try { el.setSelectionRange(cursorPos, cursorPos); } catch (_) { }
+            }
+        });
+    }
+
+    capitalizarPrimeraLetraCadaPalabra($nombre);
+
     // =========================
     // UI: mostrar/ocultar secciones (Modo)
     // =========================
@@ -1196,7 +1312,34 @@
         }
     }
 
-    $ddlModo.on("change", aplicarModo);
+    // Aviso: "En cierre stock" solo tiene efecto si el producto tambien es "Independiente" (el
+    // reporte de Cierre de Stock filtra WHERE independiente=1 AND enCierreStock=true, ver
+    // Datos/DB-Procedures/20260805-Alter_a_CierreStockWeb_SignoEgresoStockYFechaInicial.sql /
+    // DatosPostgres/CortePg.cs::CierreStockWeb). Un producto sin maestro (modo="Ninguno") no
+    // muestra el interruptor "Independiente" y se considera independiente implicito -- no
+    // corresponde avisar en ese caso.
+    function actualizarAvisoCierreStockIndependiente() {
+        const tieneMaestro = ($ddlModo.val() || "Ninguno") !== "Ninguno";
+        const esIndependiente = !tieneMaestro || $("#swIndependiente").is(":checked");
+        const enCierreStock = $("#swCierre").is(":checked");
+        const mostrarAviso = enCierreStock && !esIndependiente;
+        // d-none y d-block no pueden convivir en el mismo elemento (ambos usan !important, gana
+        // el que este despues en la hoja de Bootstrap) -- se togglean los dos, nunca queda uno
+        // "residual" del render inicial.
+        $("#avisoCierreStockSinIndependiente").toggleClass("d-none", !mostrarAviso).toggleClass("d-block", mostrarAviso);
+    }
+
+    $ddlModo.on("change", function () {
+        aplicarModo();
+        actualizarAvisoCierreStockIndependiente();
+    });
+    $("#swCierre, #swIndependiente").on("change", actualizarAvisoCierreStockIndependiente);
+    $("#btnInfoIndependiente").on("click", function () {
+        $("#modalInfoIndependiente").modal("show");
+    });
+    $("#btnInfoPuntoStock").on("click", function () {
+        $("#modalInfoPuntoStock").modal("show");
+    });
 
     function aplicarProductoGlobalEnFormulario(producto) {
         if (!producto) return;
@@ -1317,6 +1460,15 @@
             return;
         }
 
+        if (e.key === "F10" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            if ($(e.target).closest(".modal").length) return;
+            if (!esElementoAccion($("#btnBuscarCorteMaestro"))) return;
+
+            e.preventDefault();
+            $("#btnBuscarCorteMaestro").trigger("click");
+            return;
+        }
+
         if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
         if (document.body.classList.contains("swal2-shown")) return;
 
@@ -1382,8 +1534,9 @@
     // =========================
     let debounceMarcaTimer = null;
 
-    // ?? guardar el bot�n que abri� el modal
+    // Guardar el boton que abrio el modal (para devolver el foco si se cancela sin seleccionar).
     let $triggerModalMarcas = null;
+    let marcaSeleccionada = false;
 
     function seleccionarMarcaDesdeFila($row) {
         if (!$row || !$row.length) return;
@@ -1393,12 +1546,13 @@
 
         $("input[name='IdMarca']").val(id || "");
         $("#txtMarcaNombre").val(nombre || "");
+        marcaSeleccionada = true;
         $("#modalMarcas").modal("hide");
     }
 
     $("#btnBuscarMarca").on("click", function () {
-        // ?? GUARDO el bot�n que abri�
         $triggerModalMarcas = $(this);
+        marcaSeleccionada = false;
         mostrarCargaSolicitud();
         $("#modalMarcas").modal("show");
     });
@@ -1461,10 +1615,16 @@
     });
 
 
-    // al cerrar, devolver foco al bot�n que lo abri�
+    // Si se selecciono una marca, el foco avanza al siguiente control (como si se hubiese
+    // presionado Tab desde el boton "Buscar marca"). Si se cancelo (Esc/X), vuelve al boton que
+    // abrio el modal.
     $("#modalMarcas").on("hidden.bs.modal", function () {
         setTimeout(function () {
-            if ($pesable.length && $pesable.is(":visible") && !$pesable.is(":disabled")) {
+            if (marcaSeleccionada) {
+                moverFocoDespuesDe($("#btnBuscarMarca"));
+            } else if ($triggerModalMarcas && $triggerModalMarcas.length) {
+                $triggerModalMarcas.focus();
+            } else if ($pesable.length && $pesable.is(":visible") && !$pesable.is(":disabled")) {
                 $pesable.focus();
             }
         }, 0);
@@ -1535,6 +1695,13 @@
             onSelect: function (producto) {
                 $("input[name='IdCorteMaestro']").val(producto.id || "");
                 $("#txtCorteMaestroNombre").val(producto.nombre || "");
+                // El handler hidden.bs.modal de mas abajo (foco al trigger) envuelve su .focus()
+                // en setTimeout(fn,0). Dos setTimeout(0) corren en el orden en que se programaron,
+                // no en el orden de los handlers -- como ese ya se programo antes de que onSelect
+                // llegue aca, hay que envolver esto tambien para programarse despues y ganar.
+                setTimeout(function () {
+                    moverFocoDespuesDe($("#btnBuscarCorteMaestro"));
+                }, 0);
             }
         });
     });
@@ -1589,6 +1756,7 @@
 
     initModoFallback();
     aplicarModo();
+    actualizarAvisoCierreStockIndependiente();
 
     // =========================
     // ALTA: iniciar c�digo y precio vac�os
@@ -2103,6 +2271,14 @@
             $("input[name='PorcentajeHueso']").val("0");
         }
 
+        // Unico punto donde se sabe con certeza que el submit va a navegar de
+        // verdad (ya pasaron Paso 1 -codigo duplicado- y Paso 2 -validaciones
+        // sync- y la logica de modo). Antes esto se mostraba sin condicion en
+        // CUALQUIER evento submit (ver mas abajo, handler eliminado) y quedaba
+        // trabado para siempre si alguna validacion fallaba, porque ninguna
+        // rama de fallo lo cerraba.
+        mostrarCargaSolicitud();
+
         return true;
     });
 
@@ -2343,9 +2519,12 @@
 
     window.setTimeout(actualizarTextoAtajosAcciones, 0);
 
-    $frm.on("submit.productosLoader", function () {
-        mostrarCargaSolicitud();
-    });
+    // El aviso de carga para el submit del form vive en el handler de
+    // #frmCorte de mas arriba (justo antes del "return true;" final) -- ahi
+    // se sabe con certeza que el submit va a navegar. Un handler separado acá
+    // (bindeado sin condicion a CUALQUIER evento submit, incluido el
+    // "preflight" que ese mismo handler intercepta con preventDefault) dejaba
+    // el modal trabado para siempre si alguna validacion fallaba.
 
     $btnVolver.on("click.productosLoader", function (e) {
         e.preventDefault();
