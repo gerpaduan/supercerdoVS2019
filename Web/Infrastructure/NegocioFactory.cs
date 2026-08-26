@@ -172,5 +172,20 @@ namespace Web.Infrastructure
                 cierreCajaN: CrearCierreCaja(empresa, param),
                 personaN: CrearPersona(empresa, param));
         }
+
+        // Modulo de administracion de plataforma (alta/edicion de Empresas, Sucursales, Usuarios
+        // cruzando todos los tenants, gate de superadmin) -- ultimo modulo 100% SQL Server hasta
+        // 2026-08-25 (ver docs/DECISIONS.md). Sin IEmpresaContext (a diferencia de los 14 metodos
+        // de arriba): el modulo es cross-tenant por diseno, igual que Web/Helpers/
+        // SystemAdministrationRepository.cs usa EmpresaContextNulo internamente. Devuelve la
+        // interfaz directo (no un Negocio.*): no existe capa Negocio intermedia para este modulo,
+        // el propio Web/Helpers/SystemAdministrationRepository.cs siempre fue repositorio+
+        // VM-mapper sin capa de dominio aparte.
+        public static Web.Helpers.ISystemAdministrationRepository CrearSystemAdministrationRepository()
+        {
+            if (!UsarPostgres) return new Web.Helpers.SystemAdministrationRepository();
+
+            return new Web.Helpers.SystemAdministrationRepositoryPg(new DatosPostgres.SystemAdministrationPg(PgConnString));
+        }
     }
 }

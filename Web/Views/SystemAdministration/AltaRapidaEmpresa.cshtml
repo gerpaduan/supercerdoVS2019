@@ -1,4 +1,5 @@
 @model Web.Models.SystemAdministrationAltaRapidaVm
+@using System.Linq
 @{
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
@@ -44,7 +45,13 @@
                     </div>
                     <div class="form-group col-md-4">
                         <label>Condicion IVA</label>
-                        @Html.TextBoxFor(m => m.Empresa.CondicionIVA, new { @class = "form-control" })
+                        @Html.TextBoxFor(m => m.Empresa.CondicionIVA, new { @class = "form-control", list = "condicionesIvaList", autocomplete = "off" })
+                        <datalist id="condicionesIvaList">
+                            @foreach (var condicionIva in (System.Collections.Generic.List<Web.Models.SystemAdministrationCondicionIvaVm>)ViewBag.CondicionesIva)
+                            {
+                                <option value="@condicionIva.Descripcion"></option>
+                            }
+                        </datalist>
                     </div>
                 </div>
                 <div class="form-row">
@@ -151,6 +158,28 @@
                             @Html.CheckBoxFor(m => m.Usuario.Activo, new { @class = "custom-control-input" })
                             <label class="custom-control-label" for="Usuario_Activo">Usuario activo</label>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="font-weight-bold text-primary mb-1">Producto &quot;Codigo Generico&quot;</h6>
+                <p class="text-muted small mb-3">Se crea junto con la empresa. Usalo para vender algo sin un codigo especifico cargado en el catalogo.</p>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Codigo</label>
+                        @Html.TextBoxFor(m => m.Empresa.CodigoGenericoCodigo, new { @class = "form-control", type = "number" })
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Nombre</label>
+                        @Html.TextBoxFor(m => m.Empresa.CodigoGenericoNombre, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>IVA</label>
+                        @Html.DropDownListFor(m => m.Empresa.CodigoGenericoIdAlicuotaIva,
+                            ((System.Collections.Generic.List<Web.Models.SystemAdministrationAlicuotaIvaVm>)ViewBag.AlicuotasIva)
+                                .Select(a => new SelectListItem { Value = a.IdAlicuotaIva.ToString(), Text = a.Alicuota.ToString("0.##") + "%" }),
+                            new { @class = "form-control" })
                     </div>
                 </div>
             </div>

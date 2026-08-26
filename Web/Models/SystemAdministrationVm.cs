@@ -61,6 +61,25 @@ namespace Web.Models
         public string BaseDatosNombre { get; set; }
         public bool Activa { get; set; }
         public string Observaciones { get; set; }
+
+        // Producto "Codigo Generico" precargado en el alta de empresa (editable). Se ignora en
+        // modo edicion (EsEdicion=true) -- solo aplica al crear la empresa. Ver
+        // SystemAdministrationRepository.CrearProductoCodigoGenericoInterna.
+        public long CodigoGenericoCodigo { get; set; } = 999999;
+        public string CodigoGenericoNombre { get; set; } = "Codigo Generico";
+        public int CodigoGenericoIdAlicuotaIva { get; set; } = 4; // 10,5%
+    }
+
+    public class SystemAdministrationAlicuotaIvaVm
+    {
+        public int IdAlicuotaIva { get; set; }
+        public double Alicuota { get; set; }
+    }
+
+    public class SystemAdministrationCondicionIvaVm
+    {
+        public int Id { get; set; }
+        public string Descripcion { get; set; }
     }
 
     public class SystemAdministrationSucursalResumenVm

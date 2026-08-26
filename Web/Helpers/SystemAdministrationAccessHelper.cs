@@ -14,7 +14,7 @@ namespace Web.Helpers
 
             try
             {
-                var repo = new SystemAdministrationRepository();
+                var repo = Web.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository();
                 return repo.EsSuperAdmin(usuario.Id);
             }
             catch

@@ -8,7 +8,7 @@ namespace Web.Controllers
 {
     public class SystemAdministrationController : BaseController
     {
-        private SystemAdministrationRepository _repo;
+        private ISystemAdministrationRepository _repo;
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
@@ -16,14 +16,25 @@ namespace Web.Controllers
             if (filterContext.Result != null)
                 return;
 
-            _repo = new SystemAdministrationRepository();
+            _repo = Web.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository();
 
             if (!SystemAdministrationAccessHelper.PuedeAdministrarSistema(Session))
             {
                 ViewBag.Title = "Administracion del sistema";
                 ViewBag.Seccion = "Administracion del sistema";
                 filterContext.Result = View("~/Views/Shared/AccesoDenegado.cshtml");
+                return;
             }
+
+            // Usado por el combo de IVA del producto "Codigo Generico" en EditarEmpresa.cshtml y
+            // AltaRapidaEmpresa.cshtml -- se puebla para todas las acciones del controller (lista
+            // chica, sin costo real) en vez de repetirlo en cada action/fallback que renderiza esas 2 vistas.
+            ViewBag.AlicuotasIva = _repo.ObtenerAlicuotasIva();
+
+            // Sugerencias (datalist) para el input de "Condicion IVA" de AltaRapidaEmpresa.cshtml,
+            // mismo catalogo que el combo de /Personas. Misma logica de "poblar para todo el
+            // controller" que AlicuotasIva de arriba.
+            ViewBag.CondicionesIva = _repo.ObtenerCondicionesIva();
         }
 
         public ActionResult Empresas()

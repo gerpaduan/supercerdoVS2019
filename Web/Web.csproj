@@ -172,8 +172,10 @@
     <Compile Include="Helpers\PermisosPantallasWeb.cs" />
     <Compile Include="Helpers\SecurityRuntime.cs" />
     <Compile Include="Helpers\SessionSecurityHelper.cs" />
+    <Compile Include="Helpers\ISystemAdministrationRepository.cs" />
     <Compile Include="Helpers\SystemAdministrationAccessHelper.cs" />
     <Compile Include="Helpers\SystemAdministrationRepository.cs" />
+    <Compile Include="Helpers\SystemAdministrationRepositoryPg.cs" />
     <Compile Include="Helpers\SmtpMailHelper.cs" />
     <Compile Include="Models\ComparacionPersonaVm.cs" />
     <Compile Include="Models\ComparacionSucursalVm.cs" />

@@ -10,7 +10,7 @@ using Web.Models;
 
 namespace Web.Helpers
 {
-    public class SystemAdministrationRepository
+    public class SystemAdministrationRepository : ISystemAdministrationRepository
     {
         private readonly IEmpresaContext _empresaRaiz;
 
@@ -653,6 +653,8 @@ namespace Web.Helpers
 
         private int CrearEmpresaInterna(SqlConnection con, SqlTransaction tx, SystemAdministrationEmpresaEditVm model)
         {
+            int idEmpresa;
+
             using (var cmd = new SqlCommand("dbo.AA_AltaEmpresa", con, tx))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
@@ -664,8 +666,112 @@ namespace Web.Helpers
 
                 cmd.ExecuteNonQuery();
 
-                return output.Value == null || output.Value == DBNull.Value ? 0 : Convert.ToInt32(output.Value);
+                idEmpresa = output.Value == null || output.Value == DBNull.Value ? 0 : Convert.ToInt32(output.Value);
             }
+
+            if (idEmpresa > 0)
+            {
+                CrearProductoAjusteFormulaInterna(con, tx, idEmpresa);
+                CrearProductoCodigoGenericoInterna(con, tx, idEmpresa, model);
+            }
+
+            return idEmpresa;
+        }
+
+        // Producto de ajuste de formula (codigo -1): no es un producto generico de venta, existe
+        // solo para que Negocio.Corte.NormalizarFormulaElaborado (via ObtenerProductoAjusteFormula,
+        // que busca directo por este codigo fijo -1, SIN pasar por ningun parametro) tenga siempre
+        // un producto real al que apuntar. Deliberadamente separado del parametro codProdGenerico
+        // (usado para "precio libre" en Ventas/POS, ya en produccion, sin relacion con esto -- ver
+        // docs/DECISIONS.md 2026-08-22) para no pisar ese mecanismo existente. Fijo, no editable
+        // desde el alta de empresa: el usuario pidio explicitamente que no se lo marque como
+        // "generico".
+        private void CrearProductoAjusteFormulaInterna(SqlConnection con, SqlTransaction tx, int idEmpresa)
+        {
+            const string sql = @"
+                INSERT INTO dbo.Corte
+                (idEmpresa, codigo, corte, tipo, precioKg, habilitado, enCierreStock,
+                 independiente, ingresoRapidoEmbutido, pesable, porcentaje, porcentajeHueso,
+                 desvioEstandar, creado)
+                VALUES
+                (@idEmpresa, -1, N'Ajuste de Formula', N'Ajuste de Formula', 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, GETDATE());";
+
+            using (var cmd = new SqlCommand(sql, con, tx))
+            {
+                cmd.CommandTimeout = Conexion.timeOut;
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        // Producto "Codigo Generico" (codigo 999999 por defecto): a diferencia del de ajuste de
+        // formula, este SI es un producto de venta real -- se precarga editable en el alta de
+        // empresa (nombre/codigo/IVA, ver EditarEmpresa.cshtml/AltaRapidaEmpresa.cshtml) porque ya
+        // existia el mismo patron armado a mano para una empresa real (idCorte=9, empresa 1: codigo
+        // 999999, "GENERICO IVA 10.50", habilitado, independiente=1) -- se replican esos mismos
+        // valores como default. enCierreStock queda en false a pedido explicito del usuario (el
+        // producto real existente lo tiene en true, pero se decidio distinto para los nuevos).
+        private void CrearProductoCodigoGenericoInterna(SqlConnection con, SqlTransaction tx, int idEmpresa, SystemAdministrationEmpresaEditVm model)
+        {
+            long codigo = model != null && model.CodigoGenericoCodigo > 0 ? model.CodigoGenericoCodigo : 999999;
+            string nombre = model != null && !string.IsNullOrWhiteSpace(model.CodigoGenericoNombre) ? model.CodigoGenericoNombre : "Codigo Generico";
+            int idAlicuotaIva = model != null && model.CodigoGenericoIdAlicuotaIva > 0 ? model.CodigoGenericoIdAlicuotaIva : 4; // 10,5% (dbo.AlicuotasIva)
+
+            const string sql = @"
+                INSERT INTO dbo.Corte
+                (idEmpresa, codigo, corte, tipo, precioKg, habilitado, enCierreStock,
+                 independiente, ingresoRapidoEmbutido, pesable, idAlicuotaIva, porcentaje,
+                 porcentajeHueso, desvioEstandar, creado)
+                VALUES
+                (@idEmpresa, @codigo, @nombre, N'Producto Generico', 0, 1, 0,
+                 1, 0, 0, @idAlicuotaIva, 0, 0, 0, GETDATE());";
+
+            using (var cmd = new SqlCommand(sql, con, tx))
+            {
+                cmd.CommandTimeout = Conexion.timeOut;
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa;
+                cmd.Parameters.Add("@codigo", SqlDbType.BigInt).Value = codigo;
+                cmd.Parameters.Add("@nombre", SqlDbType.NVarChar, 200).Value = nombre;
+                cmd.Parameters.Add("@idAlicuotaIva", SqlDbType.Int).Value = idAlicuotaIva;
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public System.Collections.Generic.List<SystemAdministrationAlicuotaIvaVm> ObtenerAlicuotasIva()
+        {
+            const string sql = "SELECT idIva, iva FROM dbo.AlicuotasIva WHERE mostrar = 1 ORDER BY iva;";
+
+            return Db.Reader(
+                _empresaRaiz,
+                sql,
+                CommandType.Text,
+                dr => new SystemAdministrationAlicuotaIvaVm
+                {
+                    IdAlicuotaIva = Convert.ToInt32(dr["idIva"]),
+                    Alicuota = Convert.ToDouble(dr["iva"])
+                },
+                openConnection: Db.OpenAdmin
+            );
+        }
+
+        // Mismo catalogo (tabla Iva) que Datos/Persona.cs::getIva() usa para el combo de
+        // /Personas -- sin WHERE porque esa consulta tampoco filtra (ver Datos/Persona.cs).
+        public System.Collections.Generic.List<SystemAdministrationCondicionIvaVm> ObtenerCondicionesIva()
+        {
+            const string sql = "SELECT id, iva FROM dbo.Iva ORDER BY iva;";
+
+            return Db.Reader(
+                _empresaRaiz,
+                sql,
+                CommandType.Text,
+                dr => new SystemAdministrationCondicionIvaVm
+                {
+                    Id = Convert.ToInt32(dr["id"]),
+                    Descripcion = Convert.ToString(dr["iva"])
+                },
+                openConnection: Db.OpenAdmin
+            );
         }
 
         private int ObtenerSucursalDefaultEmpresa(SqlConnection con, SqlTransaction tx, int idEmpresa)

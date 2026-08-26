@@ -21,6 +21,8 @@ namespace Entidades
         public decimal? Longitud { get; set; }
         public int RadioLoginMetros { get; set; }
         public bool ValidarUbicacionLogin { get; set; }
+        public DateTime? Creado { get; set; }
+        public string Observaciones { get; set; }
 
         public Entidades.Empresa Empresa { get; set; }
 
