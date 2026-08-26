@@ -464,6 +464,10 @@
         state.config.esEgreso = esEgreso;
         state.config.permiteCantidadNegativa = permiteCantidadNegativa;
 
+        // Habilita/deshabilita el signo "-" en el input (ver regla global .solo-decimal en
+        // _LayoutBase.cshtml) cuando se cambia la Accion sin recargar la pagina.
+        $form.find('#txtCantKgs').attr('data-permite-negativo', permiteCantidadNegativa ? 'true' : 'false');
+
         $form.find('#TipoCompraVisual').val(tipoCompra);
         $form.find('#stockAccionActual').text(tipoCompra);
         $form.find('#bloquePesajeStock').toggleClass('d-none', !esPesaje);

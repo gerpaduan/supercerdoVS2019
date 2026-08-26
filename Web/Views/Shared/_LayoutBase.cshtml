@@ -999,6 +999,11 @@
         $(document).on("input", ".solo-decimal", function () {
             let v = $(this).val();
 
+            // Signo negativo: solo si el input lo habilita explícitamente (data-permite-negativo="true",
+            // ej. Cantidad en Ajuste/Egreso de Stock) y solo como primer caracter (numero con signo).
+            let permiteNegativo = $(this).attr("data-permite-negativo") === "true";
+            let esNegativo = permiteNegativo && v.trim().charAt(0) === "-";
+
             // 1) Quitar todo excepto números, puntos y comas
             v = v.replace(/[^0-9.,]/g, "");
 
@@ -1016,6 +1021,8 @@
                 v = partes[0] + "." + partes.slice(1).join("");
             }
 
+            if (esNegativo) v = "-" + v;
+
             $(this).val(v);
         });
 
@@ -1026,7 +1033,10 @@
         $(document).on("paste", ".solo-decimal", function (e) {
             let t = (e.originalEvent || e).clipboardData.getData("text");
 
-            // misma lógica del input
+            // misma lógica del input (ver handler de arriba para el porque de data-permite-negativo)
+            let permiteNegativo = $(this).attr("data-permite-negativo") === "true";
+            let esNegativo = permiteNegativo && t.trim().charAt(0) === "-";
+
             t = t.replace(/[^0-9.,]/g, "");
 
             if (t.includes(",") && t.includes(".")) {
@@ -1039,6 +1049,8 @@
             if (partes.length > 2) {
                 t = partes[0] + "." + partes.slice(1).join("");
             }
+
+            if (esNegativo) t = "-" + t;
 
             // Reemplaza el pegado con contenido limpio
             e.preventDefault();
