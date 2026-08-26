@@ -480,34 +480,67 @@ namespace Negocio
             return oCorteD.getFormulaEmbutido(idEmbutido);
         }
 
+        // Usado solo para calcular el valor por defecto del interruptor manual Unidad/Porcentaje
+        // en EditarFormula.cshtml al inicializar la pantalla (Web/Models/ElaboradosVm.cs,
+        // ElaboradoFormulaEditVm.EscalaUnidad). Los calculos de conversion en si (metodos de abajo)
+        // ya NO miran Pesable -- reciben la escala explicita, elegida por el usuario.
         public bool FormulaUsaUnidades(Entidades.Corte elaborado)
         {
             return elaborado != null && !elaborado.Pesable;
         }
 
-        public float ConvertirFormulaParaVisualizacion(Entidades.Corte elaborado, float valorGuardado)
+        public float ConvertirFormulaParaVisualizacion(bool escalaUnidad, float valorGuardado)
         {
-            return FormulaUsaUnidades(elaborado) ? (valorGuardado / 100f) : valorGuardado;
+            return escalaUnidad ? (valorGuardado / 100f) : valorGuardado;
         }
 
-        public float ConvertirFormulaParaPersistencia(Entidades.Corte elaborado, float valorVisual)
+        public float ConvertirFormulaParaPersistencia(bool escalaUnidad, float valorVisual)
         {
-            return FormulaUsaUnidades(elaborado) ? (valorVisual * 100f) : valorVisual;
+            return escalaUnidad ? (valorVisual * 100f) : valorVisual;
         }
 
+        // Usado por "precio libre" en Ventas/POS (ya existente en produccion, no tocar) --
+        // resuelve el producto configurado en el parametro codProdGenerico por-empresa. Sin
+        // relacion con el Ajuste de Formula (ver ObtenerProductoAjusteFormula mas abajo): son
+        // 2 mecanismos independientes, cada uno con su propio producto -- no compartir uno para
+        // el otro (docs/DECISIONS.md 2026-08-22: codProdGenerico ya esta en uso para otra cosa
+        // en produccion, repurpose-arlo para el ajuste de formula hubiera sido una regresion real).
         public Entidades.Corte ObtenerProductoGenerico()
         {
             long codigoGenerico = _param != null ? _param.GetLong(Entidades.ParamKeys.CodProdGenerico, 0L) : 0L;
             return codigoGenerico > 0 ? findCorteByCodigo(codigoGenerico, false) : null;
         }
 
-        public List<Entidades.CortePorFormula> NormalizarFormulaElaborado(Entidades.Corte elaborado, List<Entidades.CortePorFormula> lineas)
+        // Producto "Ajuste de Formula": codigo fijo -1, igual en todas las empresas, auto-creado
+        // al dar de alta la empresa (Web/Helpers/SystemAdministrationRepository.cs). Se resuelve
+        // por codigo directo, sin pasar por ningun parametro -- a diferencia de
+        // ObtenerProductoGenerico (arriba), que es un mecanismo distinto para otra cosa.
+        public Entidades.Corte ObtenerProductoAjusteFormula()
+        {
+            return findCorteByCodigo(-1, false);
+        }
+
+        // Arma la fila de "Ajuste de Formula" (codigo -1, ObtenerProductoAjusteFormula) segun el
+        // modo que corresponda -- ver docs/DECISIONS.md (2026-08-22) para el detalle de los 2 modos:
+        //
+        //  - Modo A ("ajustar a la unidad"): activo si el elaborado es de Ingreso Rapido o si
+        //    formula.AjustarUnidad esta tildado. El ajuste se calcula para que la formula sume
+        //    exactamente 100% (1 unidad) -- caso de uso: un combo de 2 productos al 100% cada
+        //    uno, el ajuste resta el excedente.
+        //  - Modo B (tildado por ingrediente): si el Modo A no esta activo pero alguna linea tiene
+        //    NoSumaPeso=true, el ajuste es la resta de esas lineas puntuales -- caso de uso: una
+        //    formula de chorizo (no unitaria) donde solo la tripa (sin peso especifico) se resta,
+        //    el resto de los ingredientes (sal, pimienta, etc.) sigue sumando al peso normalmente.
+        //  - Si ninguno de los dos modos aplica (Interruptor 1 "apagado" en EditarFormula.cshtml,
+        //    inferido por la ausencia de lineas NoSumaPeso y AjustarUnidad en false), no se agrega
+        //    ninguna fila de ajuste -- la formula queda como el usuario la cargo, sin tocar nada.
+        public List<Entidades.CortePorFormula> NormalizarFormulaElaborado(Entidades.Corte elaborado, Entidades.Formula formula, List<Entidades.CortePorFormula> lineas, bool escalaUnidad)
         {
             if (elaborado == null) throw new ArgumentNullException(nameof(elaborado));
             if (lineas == null) lineas = new List<Entidades.CortePorFormula>();
 
             var resultado = new List<Entidades.CortePorFormula>();
-            var productoGenerico = ObtenerProductoGenerico();
+            var productoGenerico = ObtenerProductoAjusteFormula();
 
             foreach (var item in lineas)
             {
@@ -523,17 +556,22 @@ namespace Negocio
                     Formula = item.Formula,
                     CorteEnFormula = item.CorteEnFormula,
                     AgregarAuto = item.AgregarAuto,
-                    Porcentaje = ConvertirFormulaParaPersistencia(elaborado, item.Porcentaje)
+                    NoSumaPeso = item.NoSumaPeso,
+                    Porcentaje = ConvertirFormulaParaPersistencia(escalaUnidad, item.Porcentaje)
                 });
             }
 
-            if (elaborado.IngresoRapidoEmbutido)
+            bool modoUnidad = elaborado.IngresoRapidoEmbutido || (formula != null && formula.AjustarUnidad);
+            var lineasNoSumanPeso = resultado.Where(x => x.NoSumaPeso).ToList();
+
+            if (modoUnidad || lineasNoSumanPeso.Count > 0)
             {
                 if (productoGenerico == null || productoGenerico.IdCorte <= 0)
-                    throw new InvalidOperationException("No existe el código genérico configurado para realizar el ajuste de fórmula.");
+                    throw new InvalidOperationException("No existe el código de Ajuste de Fórmula configurado para esta empresa.");
 
-                float total = resultado.Sum(x => x.Porcentaje);
-                float ajuste = 100f - total;
+                float ajuste = modoUnidad
+                    ? 100f - resultado.Sum(x => x.Porcentaje)
+                    : -lineasNoSumanPeso.Sum(x => x.Porcentaje);
 
                 resultado.Insert(0, new Entidades.CortePorFormula
                 {

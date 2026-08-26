@@ -678,7 +678,8 @@ namespace DatosPostgres
                     Embutido = findCorteById(Convert.ToInt32(dr["idembutido"]), false),
                     Receta = dr["receta"] == DBNull.Value ? "" : Convert.ToString(dr["receta"]),
                     Creado = dr["creado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["creado"]),
-                    Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"])
+                    Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
+                    AjustarUnidad = dr["ajustarunidad"] != DBNull.Value && Convert.ToBoolean(dr["ajustarunidad"])
                 };
 
                 int idCreadoPor = dr["creadopor"] == DBNull.Value ? 0 : Convert.ToInt32(dr["creadopor"]);
@@ -712,7 +713,8 @@ namespace DatosPostgres
                     Formula = oFormula,
                     CorteEnFormula = findCorteById(Convert.ToInt32(dr["idcorte"]), false),
                     Porcentaje = Convert.ToSingle(dr["porcentaje"]),
-                    AgregarAuto = dr["agregarauto"] != DBNull.Value && Convert.ToBoolean(dr["agregarauto"])
+                    AgregarAuto = dr["agregarauto"] != DBNull.Value && Convert.ToBoolean(dr["agregarauto"]),
+                    NoSumaPeso = dr["nosumapeso"] != DBNull.Value && Convert.ToBoolean(dr["nosumapeso"])
                 },
                 p => p.AddWithValue("idFormula", oFormula.IdFormula));
         }
@@ -736,8 +738,8 @@ namespace DatosPostgres
             if (idFormula == 0)
             {
                 const string sqlInsert = @"
-                    INSERT INTO formulas (idembutido, receta, creado, creadopor, idempresa)
-                    VALUES (@idEmbutido, @receta, now(), @creadoPor, @idEmpresa)
+                    INSERT INTO formulas (idembutido, receta, creado, creadopor, idempresa, ajustarunidad)
+                    VALUES (@idEmbutido, @receta, now(), @creadoPor, @idEmpresa, @ajustarUnidad)
                     RETURNING idformula;";
 
                 object nuevoId = DbPg.Scalar(_connectionString, _idEmpresa, sqlInsert, p =>
@@ -746,13 +748,14 @@ namespace DatosPostgres
                     p.AddWithValue("receta", oFormula.Receta ?? "");
                     p.AddWithValue("creadoPor", oFormula.CreadoPor.Id);
                     p.AddWithValue("idEmpresa", _idEmpresa);
+                    p.AddWithValue("ajustarUnidad", oFormula.AjustarUnidad);
                 });
                 idFormula = Convert.ToInt32(nuevoId);
             }
             else
             {
                 const string sqlUpdate = @"
-                    UPDATE formulas SET idembutido = @idEmbutido, receta = @receta, actualizado = now(), actualizadopor = @actualizadoPor
+                    UPDATE formulas SET idembutido = @idEmbutido, receta = @receta, actualizado = now(), actualizadopor = @actualizadoPor, ajustarunidad = @ajustarUnidad
                     WHERE idformula = @idFormula;";
 
                 DbPg.NonQuery(_connectionString, _idEmpresa, sqlUpdate, p =>
@@ -760,6 +763,7 @@ namespace DatosPostgres
                     p.AddWithValue("idEmbutido", oFormula.Embutido.idCorte);
                     p.AddWithValue("receta", oFormula.Receta ?? "");
                     p.AddWithValue("actualizadoPor", oFormula.ActualizadoPor != null ? oFormula.ActualizadoPor.Id : 0);
+                    p.AddWithValue("ajustarUnidad", oFormula.AjustarUnidad);
                     p.AddWithValue("idFormula", idFormula);
                 });
 
@@ -775,7 +779,7 @@ namespace DatosPostgres
             foreach (var item in listaCortesPorFormula)
             {
                 DbPg.NonQuery(_connectionString, _idEmpresa,
-                    "INSERT INTO corteporformula (idformula, idcorte, porcentaje, agregarauto, idempresa) VALUES (@idFormula, @idCorte, @porcentaje, @agregarAuto, @idEmpresa);",
+                    "INSERT INTO corteporformula (idformula, idcorte, porcentaje, agregarauto, idempresa, nosumapeso) VALUES (@idFormula, @idCorte, @porcentaje, @agregarAuto, @idEmpresa, @noSumaPeso);",
                     p =>
                     {
                         p.AddWithValue("idFormula", idFormula);
@@ -783,6 +787,7 @@ namespace DatosPostgres
                         p.AddWithValue("porcentaje", item.Porcentaje);
                         p.AddWithValue("agregarAuto", item.AgregarAuto);
                         p.AddWithValue("idEmpresa", _idEmpresa);
+                        p.AddWithValue("noSumaPeso", item.NoSumaPeso);
                     });
             }
 

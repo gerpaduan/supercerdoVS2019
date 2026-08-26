@@ -183,11 +183,12 @@ namespace Web.Controllers
             }
             else
             {
-                var productoGenerico = oCorteN.ObtenerProductoGenerico();
+                var productoGenerico = oCorteN.ObtenerProductoAjusteFormula();
                 model = new ElaboradoFormulaEditVm
                 {
                     UsuarioNombre = user.Nombre ?? "",
                     EtiquetaValorFormula = "Porcentaje",
+                    EscalaUnidad = false,
                     CodigoProductoGenerico = productoGenerico != null ? productoGenerico.Codigo : 0,
                     NombreProductoGenerico = productoGenerico != null ? (!string.IsNullOrWhiteSpace(productoGenerico.CorteDesc) ? productoGenerico.CorteDesc : productoGenerico.corte) : "",
                     Tabs = BuildTabs("Formulas")
@@ -395,7 +396,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public JsonResult BuscarProductoPorCodigo(long? codigo, bool permitirCodigoNegativo = false)
+        public JsonResult BuscarProductoPorCodigo(long? codigo, bool permitirCodigoNegativo = false, int idFormulaActual = 0)
         {
             // permitirCodigoNegativo: por defecto false para no cambiar el comportamiento de
             // los demas usos de este endpoint (ej. Carga.cshtml) -- EditarFormula.cshtml lo
@@ -413,6 +414,14 @@ namespace Web.Controllers
             if (corte == null || corte.IdCorte <= 0)
                 return Json(new { ok = false, mensaje = "No se encontro el producto." }, JsonRequestBehavior.AllowGet);
 
+            // idFormulaActual: 0 para una formula nueva; en edicion, el IdFormula que se esta
+            // editando, para no bloquearse a si mismo si se re-selecciona el mismo elaborado.
+            // Mismo chequeo que ya hace GuardarFormula al guardar -- este es solo un aviso
+            // temprano, EditarFormula.cshtml lo usa para avisar antes de que el usuario cargue
+            // ingredientes para un elaborado que ya tiene formula.
+            var formulaExistente = oCorteN.findFormulaByID(0, corte.IdCorte);
+            bool tieneOtraFormula = formulaExistente != null && formulaExistente.IdFormula > 0 && formulaExistente.IdFormula != idFormulaActual;
+
             return Json(new
             {
                 ok = true,
@@ -422,7 +431,8 @@ namespace Web.Controllers
                 tipo = corte.Tipo ?? "",
                 promedio = corte.Promedio,
                 ingresoRapido = corte.IngresoRapidoEmbutido,
-                pesable = corte.Pesable
+                pesable = corte.Pesable,
+                tieneFormula = tieneOtraFormula
             }, JsonRequestBehavior.AllowGet);
         }
 
@@ -538,12 +548,22 @@ namespace Web.Controllers
                     return View("~/Views/Elaborados/EditarFormula.cshtml", model);
                 }
 
+                // Parte 4: interruptor "Ingreso Rapido" del producto en EditarFormula.cshtml --
+                // refleja/edita Corte.IngresoRapidoEmbutido, se persiste con el mismo camino de
+                // guardado de Producto ya existente (addOrEditCorte), no un endpoint nuevo.
+                if (embutido.IngresoRapidoEmbutido != model.EsIngresoRapidoElaborado)
+                {
+                    embutido.IngresoRapidoEmbutido = model.EsIngresoRapidoElaborado;
+                    oCorteN.addOrEditCorte(embutido);
+                }
+
                 var formula = formulaActual ?? new Entidades.Formula();
                 formula.IdFormula = model.IdFormula;
                 formula.Embutido = embutido;
                 formula.Receta = (model.Receta ?? "").Trim();
                 formula.CreadoPor = formulaActual != null ? formulaActual.CreadoPor : user;
                 formula.ActualizadoPor = formulaActual != null ? user : null;
+                formula.AjustarUnidad = model.AjustarUnidad;
 
                 var lineasVisuales = new List<Entidades.CortePorFormula>();
                 foreach (var linea in model.Lineas ?? new List<ElaboradoFormulaEditLineaVm>())
@@ -566,11 +586,12 @@ namespace Web.Controllers
                         Formula = formula,
                         CorteEnFormula = corte,
                         Porcentaje = linea.Porcentaje,
-                        AgregarAuto = linea.AgregarAuto
+                        AgregarAuto = linea.AgregarAuto,
+                        NoSumaPeso = linea.NoSumaPeso
                     });
                 }
 
-                var lineas = oCorteN.NormalizarFormulaElaborado(embutido, lineasVisuales);
+                var lineas = oCorteN.NormalizarFormulaElaborado(embutido, formula, lineasVisuales, model.EscalaUnidad);
                 formula.IdFormula = oCorteN.addOrEditFormula(formula, lineas);
                 TempData["ElaboradosSuccessMessage"] = model.IdFormula > 0
                     ? "La fórmula se guardó correctamente."
@@ -1178,7 +1199,7 @@ namespace Web.Controllers
                         IdCorte = item.CorteEnFormula.IdCorte,
                         Codigo = item.CorteEnFormula.Codigo,
                         Producto = !string.IsNullOrWhiteSpace(item.CorteEnFormula.CorteDesc) ? item.CorteEnFormula.CorteDesc : item.CorteEnFormula.corte,
-                        Porcentaje = oCorteN.ConvertirFormulaParaVisualizacion(formula.Embutido, item.Porcentaje),
+                        Porcentaje = oCorteN.ConvertirFormulaParaVisualizacion(oCorteN.FormulaUsaUnidades(formula.Embutido), item.Porcentaje),
                         AgregarAuto = item.AgregarAuto,
                         EsAjusteFormula = EsProductoGenerico(item.CorteEnFormula)
                     });
@@ -1234,6 +1255,8 @@ namespace Web.Controllers
 
         private ElaboradoFormulaEditVm CrearViewModelFormulaEdicion(Entidades.Formula formula, Usuario user)
         {
+            bool escalaUnidad = oCorteN.FormulaUsaUnidades(formula.Embutido);
+
             var model = new ElaboradoFormulaEditVm
             {
                 IdFormula = formula.IdFormula,
@@ -1244,7 +1267,9 @@ namespace Web.Controllers
                 Elaborado = formula.Embutido != null ? formula.Embutido.CorteDesc : "",
                 EsPesableElaborado = formula.Embutido != null && formula.Embutido.Pesable,
                 EsIngresoRapidoElaborado = formula.Embutido != null && formula.Embutido.IngresoRapidoEmbutido,
-                EtiquetaValorFormula = formula.Embutido != null && !formula.Embutido.Pesable ? "Unidad" : "Porcentaje",
+                EtiquetaValorFormula = escalaUnidad ? "Unidad" : "Porcentaje",
+                EscalaUnidad = escalaUnidad,
+                AjustarUnidad = formula.AjustarUnidad,
                 Receta = formula.Receta ?? "",
                 UsuarioNombre = user != null ? (user.Nombre ?? "") : "",
                 Creado = FormatearFechaHora(formula.Creado),
@@ -1264,9 +1289,10 @@ namespace Web.Controllers
                     IdCorte = item.CorteEnFormula.IdCorte,
                     Codigo = item.CorteEnFormula.Codigo,
                     Producto = !string.IsNullOrWhiteSpace(item.CorteEnFormula.CorteDesc) ? item.CorteEnFormula.CorteDesc : item.CorteEnFormula.corte,
-                    Porcentaje = oCorteN.ConvertirFormulaParaVisualizacion(formula.Embutido, item.Porcentaje),
+                    Porcentaje = oCorteN.ConvertirFormulaParaVisualizacion(escalaUnidad, item.Porcentaje),
                     AgregarAuto = item.AgregarAuto,
-                    EsAjusteFormula = EsProductoGenerico(item.CorteEnFormula)
+                    EsAjusteFormula = EsProductoGenerico(item.CorteEnFormula),
+                    NoSumaPeso = item.NoSumaPeso
                 });
             }
 
@@ -1371,7 +1397,7 @@ namespace Web.Controllers
 
         private void AplicarProductoGenericoFormula(ElaboradoFormulaEditVm model)
         {
-            var productoGenerico = oCorteN.ObtenerProductoGenerico();
+            var productoGenerico = oCorteN.ObtenerProductoAjusteFormula();
             model.CodigoProductoGenerico = productoGenerico != null ? productoGenerico.Codigo : 0;
             model.NombreProductoGenerico = productoGenerico != null
                 ? (!string.IsNullOrWhiteSpace(productoGenerico.CorteDesc) ? productoGenerico.CorteDesc : productoGenerico.corte)
@@ -1383,7 +1409,7 @@ namespace Web.Controllers
             if (corte == null || corte.IdCorte <= 0)
                 return false;
 
-            var productoGenerico = oCorteN.ObtenerProductoGenerico();
+            var productoGenerico = oCorteN.ObtenerProductoAjusteFormula();
             return productoGenerico != null && productoGenerico.IdCorte == corte.IdCorte;
         }
 
@@ -1411,7 +1437,10 @@ namespace Web.Controllers
             model.Elaborado = !string.IsNullOrWhiteSpace(elaborado.CorteDesc) ? elaborado.CorteDesc : elaborado.corte;
             model.EsPesableElaborado = elaborado.Pesable;
             model.EsIngresoRapidoElaborado = elaborado.IngresoRapidoEmbutido;
-            model.EtiquetaValorFormula = elaborado.Pesable ? "Porcentaje" : "Unidad";
+            // Ojo: NO se recalcula desde elaborado.Pesable -- se usa model.EscalaUnidad tal como
+            // vino del POST (el interruptor manual del usuario), para no pisar su eleccion al
+            // re-renderizar la pantalla tras un error de validacion.
+            model.EtiquetaValorFormula = model.EscalaUnidad ? "Unidad" : "Porcentaje";
         }
 
         private List<ElaboradoFormulaLineaVm> MapFormula(DataTable dtFormula)
@@ -1752,9 +1781,9 @@ namespace Web.Controllers
                 model.TotalPorcentaje += linea.Porcentaje;
             }
 
-            model.TotalUnidades = model.EsPesableElaborado
-                ? (model.TotalPorcentaje / 100f)
-                : model.TotalPorcentaje;
+            model.TotalUnidades = model.EscalaUnidad
+                ? model.TotalPorcentaje
+                : (model.TotalPorcentaje / 100f);
         }
 
         private float CalcularCantidadRegistrada(ElaboradoCargaVm model, Entidades.Corte corteElaborado)

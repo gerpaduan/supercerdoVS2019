@@ -76,10 +76,23 @@ namespace Web.Models
         public long CodigoElaborado { get; set; }
         public string Elaborado { get; set; }
         public bool EsPesableElaborado { get; set; }
+        // Doble uso: al cargar la vista, refleja Corte.IngresoRapidoEmbutido del elaborado
+        // seleccionado; al guardar, es lo que el usuario dejo en el interruptor "Ingreso Rapido"
+        // de EditarFormula.cshtml -- si cambio, ElaboradosController.GuardarFormula lo persiste
+        // de vuelta en Corte (Parte 4, ver docs/DECISIONS.md 2026-08-22).
         public bool EsIngresoRapidoElaborado { get; set; }
         public string EtiquetaValorFormula { get; set; }
+        // Interruptor manual Unidad/Porcentaje (independiente de AjustarUnidad, que es el Modo A
+        // del Ajuste de Formula). Al inicializar toma el default segun Corte.Pesable del
+        // elaborado (Negocio.Corte.FormulaUsaUnidades); de ahi en mas lo controla el usuario. No
+        // se persiste: el valor guardado internamente siempre esta en base 100, este flag solo
+        // afecta como se muestra/tipea en esta sesion de edicion.
+        public bool EscalaUnidad { get; set; }
         public long CodigoProductoGenerico { get; set; }
         public string NombreProductoGenerico { get; set; }
+        // Interruptor 2 (Modo A, "ajustar a formula unitaria") -- ver Negocio/Corte.cs,
+        // NormalizarFormulaElaborado.
+        public bool AjustarUnidad { get; set; }
         public string Receta { get; set; }
         public string UsuarioNombre { get; set; }
         public string Creado { get; set; }
@@ -100,6 +113,9 @@ namespace Web.Models
         public float Porcentaje { get; set; }
         public bool AgregarAuto { get; set; }
         public bool EsAjusteFormula { get; set; }
+        // Modo B del Ajuste de Formula (tildado por ingrediente) -- ver Negocio/Corte.cs,
+        // NormalizarFormulaElaborado.
+        public bool NoSumaPeso { get; set; }
     }
 
     public class ElaboradoPlaceholderVm

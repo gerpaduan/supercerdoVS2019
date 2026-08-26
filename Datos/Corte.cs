@@ -783,6 +783,7 @@ namespace Datos
                     oFormula.IdFormula = Convert.ToInt32(dr["idFormula"]);
                     oFormula.Embutido = findCorteById(Convert.ToInt32(dr["idEmbutido"]), false);
                     oFormula.Receta = dr["receta"].ToString();
+                    oFormula.AjustarUnidad = dr["AjustarUnidad"] != DBNull.Value && Convert.ToBoolean(dr["AjustarUnidad"]);
 
                     oFormula.Creado = Convert.ToDateTime(dr["creado"]);
                     oFormula.Actualizado = dr["actualizado"] == DBNull.Value ? null : (DateTime?)dr["actualizado"];
@@ -829,6 +830,7 @@ namespace Datos
                     item.CorteEnFormula = findCorteById(Convert.ToInt32(dr["idCorte"]), false);
                     item.Porcentaje = float.Parse(dr["porcentaje"].ToString());
                     item.AgregarAuto = Convert.ToBoolean(dr["agregarAuto"]);
+                    item.NoSumaPeso = dr["NoSumaPeso"] != DBNull.Value && Convert.ToBoolean(dr["NoSumaPeso"]);
                     return item;
                 },
                 p => p.Add("@idFormula", SqlDbType.Int).Value = oFormula.IdFormula
@@ -864,6 +866,7 @@ namespace Datos
                     p.AddWithValue("@receta", oFormula.Receta ?? "");
                     p.AddWithValue("@creadoPor", oFormula.CreadoPor.Id);
                     p.AddWithValue("@actualizadoPor", oFormula.ActualizadoPor != null ? oFormula.ActualizadoPor.Id : 0);
+                    p.AddWithValue("@ajustarUnidad", oFormula.AjustarUnidad);
                 }
             );
 
@@ -883,6 +886,7 @@ namespace Datos
                         p.AddWithValue("@idCorte", item.CorteEnFormula1.idCorte);
                         p.AddWithValue("@porcentaje", item.Porcentaje);
                         p.AddWithValue("@agregarAuto", item.AgregarAuto);
+                        p.AddWithValue("@noSumaPeso", item.NoSumaPeso);
                     }
                 );
             }
