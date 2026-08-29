@@ -5,7 +5,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
-<div class="container-fluid">
+<div class="container-fluid usuarios-permisos-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h2 class="h5 mb-0 text-muted">@Model.UsuarioNombre</h2>
@@ -207,6 +207,66 @@
         </div>
     </div>
 </div>
+
+<style>
+    .usuarios-permisos-page {
+        font-size: .9rem;
+    }
+
+    .usuarios-permisos-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .usuarios-permisos-page .form-control,
+    .usuarios-permisos-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .usuarios-permisos-page .alert,
+    .usuarios-permisos-page .small,
+    .usuarios-permisos-page .text-muted,
+    .usuarios-permisos-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    .usuarios-permisos-page .table {
+        font-size: .84rem;
+    }
+
+    .usuarios-permisos-page .table th,
+    .usuarios-permisos-page .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .usuarios-permisos-page .table thead th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .usuarios-permisos-page .form-control,
+        .usuarios-permisos-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+
+        .usuarios-permisos-page .table {
+            font-size: .81rem;
+        }
+
+        .usuarios-permisos-page .table thead th {
+            font-size: .69rem !important;
+        }
+    }
+</style>
 
 @section Scripts {
     <script>

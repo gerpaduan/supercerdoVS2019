@@ -567,7 +567,8 @@ function finalizarVenta(data) {
         soloFormaPago: !!window.POSModo?.soloFormaPago,
         Observaciones: window.POSState?.getObservaciones?.() || '',
         listaExpendios: window.POSState?.getListaExpendios?.() || [],
-        lineasVenta: lineasPayload
+        lineasVenta: lineasPayload,
+        posInstanceId: window.POSModo?.instanceId || ''
     };
 
     // El filtro global de antiforgery (Web/Filters/ValidateAppAntiForgeryTokenAttribute.cs) exige el token

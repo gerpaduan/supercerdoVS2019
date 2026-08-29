@@ -13,6 +13,12 @@ namespace Web.Controllers
         private Negocio.Usuario oUsuarioN;
         private Negocio.Sucursal oSucursalN;
 
+        // idForm del formulario "Ventas" (formConsulta='formVentas', formEdicion='formNuevaVenta')
+        // -- hardcodeado por el mismo motivo que idFormCierresDeCaja en GuardarPermisos: no hay
+        // una tabla de mapeo clave->idform en el proyecto. Verificable con:
+        // SELECT idform FROM formularios WHERE formconsulta='formVentas'.
+        private const int IdFormVentas = 7;
+
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
@@ -116,6 +122,8 @@ namespace Web.Controllers
                 model.PermitirLoginFueraSucursal = usuario.PermitirLoginFueraSucursal;
                 model.EsUsuarioProduccion = usuario.EsUsuarioProduccion;
                 model.IdEmpresa = usuario.IdEmpresa;
+                model.PuedeOperarPOS = (oUsuarioN.getPermisosUsuario(usuario.Id) ?? new List<PermisosUsuarios>())
+                    .Any(p => p.IdForm == IdFormVentas && p.DiasPermitidosEditar >= 0);
             }
 
             CargarSucursales(model);
@@ -225,6 +233,8 @@ namespace Web.Controllers
                         Id = idUsuarioPersistido,
                         EsUsuarioProduccion = model.EsUsuarioProduccion
                     });
+
+                    AplicarPuedeOperarPOS(idUsuarioPersistido, model.EsUsuarioProduccion, model.PuedeOperarPOS);
 
                     if (usuarioActual != null && usuarioActual.Id == idUsuarioPersistido)
                     {
@@ -542,6 +552,44 @@ namespace Web.Controllers
                 || ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormEdicion ?? "")
                 || ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormEdicionExtra1 ?? "")
                 || ClavesBloqueadasUsuarioProduccion.Contains(formulario.FormEdicionExtra2 ?? "");
+        }
+
+        // Atajo del switch "Puede operar POS" en Usuarios/Editar.cshtml -- otorga/revoca
+        // "Ventas > Editar" (Permisos.Venta.NuevaVenta, idform=7) sin pasar por la grilla
+        // completa de Usuarios/Permisos.cshtml. Reusa oUsuarioN.AddOrEditPermisos, el mismo
+        // metodo de negocio que usa GuardarPermisos.
+        private void AplicarPuedeOperarPOS(int idUsuario, bool esUsuarioProduccion, bool puedeOperarPOS)
+        {
+            // Refuerzo server-side, igual al que ya aplica GuardarPermisos via
+            // EsFormularioBloqueadoParaProduccion -- una cuenta de produccion nunca debe quedar
+            // con "Ventas > Editar", sea cual sea el valor posteado del switch.
+            if (esUsuarioProduccion)
+                puedeOperarPOS = false;
+
+            var permisoActual = (oUsuarioN.getPermisosUsuario(idUsuario) ?? new List<PermisosUsuarios>())
+                .FirstOrDefault(p => p.IdForm == IdFormVentas);
+
+            bool yaOtorgado = permisoActual != null && permisoActual.DiasPermitidosEditar >= 0;
+
+            // Si ya estaba otorgado (por este mismo switch o por la grilla completa, con
+            // cualquier rango de dias), no se toca -- el switch no debe angostar un permiso mas
+            // amplio que ya tenia. Solo actua cuando hay que otorgar desde cero o revocar.
+            if (puedeOperarPOS == yaOtorgado)
+                return;
+
+            oUsuarioN.AddOrEditPermisos(new List<PermisosUsuarios>
+            {
+                new PermisosUsuarios
+                {
+                    IdUsuario = idUsuario,
+                    IdForm = IdFormVentas,
+                    // No se toca "Ver" (DiasPermitidosVer) -- columna independiente que gatilla
+                    // el Index/listado de Ventas, ver docs/DECISIONS.md.
+                    DiasPermitidosVer = permisoActual != null ? permisoActual.DiasPermitidosVer : -1,
+                    DiasPermitidosEditar = puedeOperarPOS ? 0 : -1,
+                    SoloRegistrosPropios = permisoActual != null ? permisoActual.SoloRegistrosPropios : true
+                }
+            });
         }
 
         private void ValidarUsuario(UsuarioEditVm model, Entidades.Usuario usuarioOriginal)

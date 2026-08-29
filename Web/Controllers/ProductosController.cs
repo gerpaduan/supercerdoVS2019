@@ -54,7 +54,10 @@ namespace Web.Controllers
         {
             int idEmpresaSesion = empresa != null ? empresa.IdEmpresa : 0;
             var productos = (oCorteN.ObtenerCortesListado(idEmpresaSesion, SucursalId) ?? new List<Entidades.Corte>())
-                .Where(x => x != null)
+                // Codigo < 0 son marcadores internos (ej. -1 "Ajuste de Formula", creado junto con
+                // toda empresa nueva, ver docs/03-modulos/administracion-sistema.md) sin sentido para
+                // que el usuario los vea o elija: nunca son productos reales de venta/stock.
+                .Where(x => x != null && x.Codigo >= 0)
                 .ToList();
 
             if (!string.IsNullOrWhiteSpace(tipo))
@@ -420,6 +423,10 @@ namespace Web.Controllers
                 var productos = idEmpresaSesion > 0
                     ? (oCorteN.ObtenerCortesPorEmpresa(idEmpresaSesion, false) ?? new List<Entidades.Corte>())
                     : (oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>());
+
+                // Mismo criterio que Index(): los codigos negativos son marcadores internos
+                // (ej. -1 "Ajuste de Formula"), nunca productos elegibles desde este buscador.
+                productos = productos.Where(p => p != null && p.codigo >= 0).ToList();
 
                 if (!string.IsNullOrWhiteSpace(q))
                 {

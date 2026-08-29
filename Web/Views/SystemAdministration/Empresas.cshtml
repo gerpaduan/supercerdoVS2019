@@ -3,6 +3,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
+<div class="sysadmin-empresas-page">
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
     <div>
         <h4 class="mb-1">Empresas</h4>
@@ -11,6 +12,17 @@
     <a class="btn btn-primary mt-3 mt-md-0" href="@Url.Action("EditarEmpresa", "SystemAdministration")">
         <i class="fas fa-plus mr-1"></i>Nueva empresa
     </a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="form-row align-items-end">
+            <div class="form-group col-md-5 mb-0">
+                <label>Buscar</label>
+                <input type="text" class="form-control" id="filtroEmpresaTexto" placeholder="Buscar por empresa, fantasia o CUIT..." autocomplete="off" />
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="card shadow-sm">
@@ -40,7 +52,7 @@
                     {
                         foreach (var item in Model.Items)
                         {
-                            <tr>
+                            <tr data-buscar="@((item.RazonSocialAfip + " " + item.NombreFantasia + " " + item.Cuit).ToLowerInvariant())">
                                 <td>@item.RazonSocialAfip</td>
                                 <td>@item.NombreFantasia</td>
                                 <td>@item.Cuit</td>
@@ -65,3 +77,102 @@
         </div>
     </div>
 </div>
+</div>
+
+<style>
+    .sysadmin-empresas-page {
+        font-size: .9rem;
+    }
+
+    .sysadmin-empresas-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .sysadmin-empresas-page .form-control,
+    .sysadmin-empresas-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .sysadmin-empresas-page label,
+    .sysadmin-empresas-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .sysadmin-empresas-page .alert,
+    .sysadmin-empresas-page .small,
+    .sysadmin-empresas-page .text-muted,
+    .sysadmin-empresas-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    .sysadmin-empresas-page .table {
+        font-size: .84rem;
+    }
+
+    .sysadmin-empresas-page .table th,
+    .sysadmin-empresas-page .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .sysadmin-empresas-page .table thead th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .sysadmin-empresas-page .form-control,
+        .sysadmin-empresas-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+
+        .sysadmin-empresas-page .table {
+            font-size: .81rem;
+        }
+
+        .sysadmin-empresas-page .table thead th {
+            font-size: .69rem !important;
+        }
+    }
+</style>
+
+@section Scripts {
+<script>
+    (function () {
+        // Filtro de texto 100% en vivo (cliente): compara contra data-buscar (razon social +
+        // fantasia + CUIT, ya en minusculas) de cada fila -- sin ida al servidor.
+        // Va en la seccion Scripts (se renderiza despues de jquery.min.js en _LayoutBase.cshtml) --
+        // si fuera un script suelto mas arriba en el body, $ todavia no existiria al ejecutarse.
+        var $texto = $("#filtroEmpresaTexto");
+        var $tbody = $(".sysadmin-empresas-page tbody").first();
+
+        function aplicarFiltro() {
+            var texto = ($texto.val() || "").toLowerCase().trim();
+            var visibles = 0;
+
+            $tbody.find("tr[data-buscar]").each(function () {
+                var $fila = $(this);
+                var visible = !texto || $fila.attr("data-buscar").indexOf(texto) >= 0;
+                $fila.toggleClass("d-none", !visible);
+                if (visible) visibles += 1;
+            });
+
+            $tbody.find(".sysadmin-empresas-empty-filter").remove();
+            if (visibles === 0 && $tbody.find("tr[data-buscar]").length > 0) {
+                $tbody.append('<tr class="sysadmin-empresas-empty-filter"><td colspan="8" class="text-center text-muted py-4">No hay empresas para el filtro seleccionado.</td></tr>');
+            }
+        }
+
+        $texto.on("input", aplicarFiltro);
+        aplicarFiltro();
+    })();
+</script>
+}

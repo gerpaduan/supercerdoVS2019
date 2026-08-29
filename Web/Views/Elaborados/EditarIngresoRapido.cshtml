@@ -254,9 +254,10 @@
         };
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
         window.UsuariosActivosEmpresa = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=11")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>

@@ -10,5 +10,6 @@ namespace Web.Models.DTO
         public string IdentificacionCliente { get; set; }
         public string Observaciones { get; set; }
         public List<LineaVentaDto> LineasVenta { get; set; }
+        public string PosInstanceId { get; set; }
     }
 }

@@ -57,12 +57,25 @@ namespace Web.Controllers
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
             var user = Session["Usuario"] as Entidades.Usuario;
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, desde))
+
+            // Usuario de produccion: exige autorizar con un operador real antes de entrar (ver
+            // docs/DECISIONS.md, "Login de operador para el modulo Ventas"). Redirige a una
+            // pantalla dedicada; para cualquier usuario normal ObtenerOperadorModulo nunca
+            // aplica (EsUsuarioProduccion es false), cero cambio de comportamiento.
+            if (user != null && user.EsUsuarioProduccion && PermisosHelper.ObtenerOperadorModulo(Session, "Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.RawUrl });
+
+            // El permiso se calcula contra el operador resuelto, no contra la sesion -- para un
+            // usuario normal ResolverOperadorModulo devuelve el mismo `user` de siempre (mismo
+            // objeto que ya resolvia PermisosHelper.TienePermiso(Session,...) internamente),
+            // asi que esto es identico a lo que habia antes salvo para produccion.
+            var operador = ResolverOperadorModulo("Ventas", user);
+            if (!PermisosHelper.TienePermiso(operador, empresa, Permisos.Venta.VerVentas, desde))
             {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Venta.VerVentas, ref desde) && hasta < desde)
+                if (AjustarFechaSiNoTienePermiso(operador, Permisos.Venta.VerVentas, ref desde) && hasta < desde)
                     hasta = desde;
                 else
-                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde);
+                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde, operador);
             }
 
 
@@ -77,7 +90,7 @@ namespace Web.Controllers
 
             ViewBag.Sucursales = sucursales;
             ViewBag.IdSucursalSeleccionada = idSucursal;
-            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Venta.VerVentas);
+            ConfigurarAdvertenciaFechaEnVivo(operador, "fechaDesde", Permisos.Venta.VerVentas);
 
             // 1️⃣ Enum → lista (sin Nulo)
             var formasPago = Enum.GetValues(typeof(formaPagoEnum))
@@ -242,12 +255,17 @@ namespace Web.Controllers
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, desde))
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user != null && user.EsUsuarioProduccion && PermisosHelper.ObtenerOperadorModulo(Session, "Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.RawUrl });
+
+            var operador = ResolverOperadorModulo("Ventas", user);
+            if (!PermisosHelper.TienePermiso(operador, empresa, Permisos.Venta.VerVentas, desde))
             {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Venta.VerVentas, ref desde) && hasta < desde)
+                if (AjustarFechaSiNoTienePermiso(operador, Permisos.Venta.VerVentas, ref desde) && hasta < desde)
                     hasta = desde;
                 else
-                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde);
+                    return VistaAccesoDenegado("Ventas", Permisos.Venta.VerVentas, desde, operador);
             }
 
             if (hasta < desde)
@@ -379,6 +397,15 @@ namespace Web.Controllers
         // GET: Ventas/DetalleVenta/5
         public ActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "")
         {
+            // Usuario de produccion: exige operador autorizado SOLO en la pantalla completa --
+            // no en el modo "modal" (embebido dentro de POS u otras vistas), donde ya hay un
+            // operador de POS propio autenticado y no corresponde pedir uno nuevo para el
+            // mismo contenido. DetalleVenta no chequea ningun permiso puntual hoy, para nadie
+            // -- esto no le agrega uno, solo exige identificarse cuando es produccion.
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!modal && user != null && user.EsUsuarioProduccion && PermisosHelper.ObtenerOperadorModulo(Session, "Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.RawUrl });
+
             var swTotal = Stopwatch.StartNew();
             long msCargaVenta = 0;
             long msPreparacion = 0;
@@ -509,6 +536,8 @@ namespace Web.Controllers
                 if (user == null)
                     return Json(new { ok = false, msg = "Sesión expirada" });
 
+                var operador = ResolverOperadorPOS(request != null ? request.PosInstanceId : null, user);
+
                 if (venta == null)
                     return Json(new { ok = false, msg = "No hay venta activa" });
 
@@ -562,7 +591,7 @@ namespace Web.Controllers
                 }
 
                 //VALIDAR CAJA ABIERTA
-                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, user);
+                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, operador);
                 if (!cajaAbierta)
                 {
                     string msg_ = "La caja ha sido cerrada.";
@@ -619,17 +648,18 @@ namespace Web.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "La venta no existe." });
 
+                var operador = ResolverOperadorPOS(request.PosInstanceId, user);
                 var cierreActual = ObtenerCierreCajaActual(user);
-                bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, user);
+                bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, operador);
 
                 if (soloFormaPago)
                 {
-                    if (!PuedeCambiarFormaPago(venta, user, cierreActual))
-                        return Json(new { ok = false, msg = ObtenerMotivoNoPuedeCambiarFormaPago(venta, user, cierreActual) });
+                    if (!PuedeCambiarFormaPago(venta, operador, cierreActual))
+                        return Json(new { ok = false, msg = ObtenerMotivoNoPuedeCambiarFormaPago(venta, operador, cierreActual) });
                 }
                 else
                 {
-                    if (!PuedeModificarUltimaVenta(venta, user, cierreActual))
+                    if (!PuedeModificarUltimaVenta(venta, operador, cierreActual))
                         return Json(new { ok = false, msg = "No tiene permisos para modificar esta venta." });
                 }
 
@@ -671,7 +701,7 @@ namespace Web.Controllers
 
                 if (!soloFormaPago && request.FechaVenta.HasValue && request.FechaVenta.Value != venta.FechaVenta)
                 {
-                    if (!PuedeEditarFechaVenta(venta, request.FechaVenta.Value))
+                    if (!PuedeEditarFechaVenta(venta, request.FechaVenta.Value, operador))
                         return Json(new { ok = false, msg = "No tiene permisos para modificar la venta con la fecha seleccionada." });
 
                     venta.FechaVenta = request.FechaVenta.Value;
@@ -747,6 +777,34 @@ namespace Web.Controllers
             user.SucursalNombre = user.Sucursal.SucursalNombre;
             Session["Usuario"] = user;
 
+            // Usuario de produccion (cuenta compartida): se pide autorizar con usuario+
+            // contraseña real de un empleado antes de poder operar -- la vista muestra el
+            // modal de login si RequiereOperadorPOS viene en true. El operador autorizado
+            // (BaseController.ResolverOperadorPOS) gobierna despues Vendedor y los permisos
+            // finos (Bonificar, editar/anular ultima venta, etc.) dentro de esta instancia de
+            // POS. La sucursal/caja siguen siendo las del puesto (cuenta de produccion), no
+            // las del operador.
+            Entidades.Usuario operador = user;
+            bool requiereOperadorPOS = false;
+            if (user.EsUsuarioProduccion)
+            {
+                operador = PermisosHelper.ObtenerOperadorPOS(Session, posInstanceIdNormalizado);
+                requiereOperadorPOS = operador == null;
+                ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            }
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.RequiereOperadorPOS = requiereOperadorPOS;
+            ViewBag.PosModoInstancia = modoPosNormalizado;
+            ViewBag.PosInstanceId = posInstanceIdNormalizado;
+            // Para que el topbar (_LayoutPOS.cshtml) muestre quien esta operando realmente,
+            // ademas de "User Produccion" -- null para cualquier usuario normal.
+            ViewBag.OperadorPOSNombre = (user.EsUsuarioProduccion && !requiereOperadorPOS) ? operador.Nombre : null;
+
+            // Sin operador autorizado todavia: se corta aca, antes de tocar caja/venta -- la
+            // vista solo muestra el modal de login (ver punto 4 del feature en DECISIONS.md).
+            if (requiereOperadorPOS)
+                return View((Venta)null);
+
             // Inicializo cierre
             var cierre = new Entidades.CierreCaja
             {
@@ -802,8 +860,8 @@ namespace Web.Controllers
                     return RedirectToAction("POS");
                 }
 
-                bool puedeEditarVenta = !soloFormaPago && PuedeModificarUltimaVenta(venta, user, cierre);
-                bool puedeCambiarPago = soloFormaPago && PuedeCambiarFormaPago(venta, user, cierre);
+                bool puedeEditarVenta = !soloFormaPago && PuedeModificarUltimaVenta(venta, operador, cierre);
+                bool puedeCambiarPago = soloFormaPago && PuedeCambiarFormaPago(venta, operador, cierre);
 
                 if (!puedeEditarVenta && !puedeCambiarPago)
                 {
@@ -833,7 +891,7 @@ namespace Web.Controllers
 
             var oCliente = oPersonaN.getConsumidorFinal();
             ViewBag.IdConsumidorFinal = oCliente.idPersona;
-            ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(user);
+            ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(operador);
 
             if (venta.Persona == null)
             {
@@ -841,18 +899,64 @@ namespace Web.Controllers
                 venta.IdPersona = oCliente.idPersona;
             }
 
-            venta.Vendedor = user;
+            venta.Vendedor = operador;
             if (venta.FechaVenta == DateTime.MinValue)
                 venta.FechaVenta = DateTime.Now;
 
             ViewBag.EsEdicionVenta = esEdicionVenta;
             ViewBag.IdVentaEditar = idVentaEditar;
-            ViewBag.PuedeEditarFechaVenta = esEdicionVenta && PuedeModificarUltimaVenta(venta, user, cierre) && PuedeEditarFechaVenta(venta);
+            ViewBag.PuedeEditarFechaVenta = esEdicionVenta && PuedeModificarUltimaVenta(venta, operador, cierre) && PuedeEditarFechaVenta(venta, null, operador);
             ViewBag.VentaFacturadaNoEditableImporte = esEdicionVenta && EsVentaFacturadaConComprobante(venta);
 
             Session["VentaActiva"] = venta;
 
             return View(venta);
+        }
+
+        // Step-up de credenciales del operador real (ver BaseController.ValidarOperadorPOS).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorPOS(int idUsuario, string clave, string posInstanceId)
+        {
+            return ValidarOperadorPOS(idUsuario, clave, posInstanceId);
+        }
+
+        // Se llama al cerrar la vista de POS (beforeunload/pagehide, via sendBeacon) para no
+        // dejar la identidad del operador colgada en Session -- higiene, no la garantia real
+        // de "vuelve a pedir credenciales" (ver PermisosHelper.LimpiarOperadorPOS).
+        [HttpPost]
+        public JsonResult CerrarOperadorPOS(string posInstanceId)
+        {
+            PermisosHelper.LimpiarOperadorPOS(Session, posInstanceId);
+            return Json(new { ok = true });
+        }
+
+        // Pantalla dedicada de login del operador para el modulo "Ventas" (Index/Lineas/
+        // DetalleVenta, ver docs/DECISIONS.md) -- usuario de produccion sin operador autorizado
+        // todavia. Se redirige aca en vez de tapar el contenido con un @if (como en POS) porque
+        // esas tres vistas no fueron diseñadas para tolerar un Model nulo -- una pantalla
+        // dedicada, chica y separada, no corre ese riesgo. Al autorizar, vuelve a returnUrl.
+        [HttpGet]
+        public ActionResult AutorizarModuloVentas(string returnUrl)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.ReturnUrlModuloVentas = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Home");
+            ViewBag.Title = "Autorizar operador";
+            ViewBag.Seccion = "Ventas";
+            return View("~/Views/Ventas/AutorizarModulo.cshtml");
+        }
+
+        // Step-up de credenciales del operador real para el modulo (ver
+        // BaseController.ValidarOperadorModulo).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorModuloVentas(int idUsuario, string clave)
+        {
+            return ValidarOperadorModulo(idUsuario, clave, "Ventas");
         }
 
         // Mismo criterio que FinanzasController.PuedeVerSaldosCuentaCorriente: admin pasa siempre,
@@ -866,7 +970,7 @@ namespace Web.Controllers
             if (usuario.Admin)
                 return true;
 
-            return PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtasCtes, null);
+            return PermisosHelper.TienePermiso(usuario, empresa, Permisos.Finanza.VerCtasCtes, DateTime.Today);
         }
 
         // GET: Ventas/HistorialPreciosCliente
@@ -2411,7 +2515,7 @@ namespace Web.Controllers
             if (ultimaVenta == null || ultimaVenta.IdVenta != venta.IdVenta)
                 return false;
 
-            return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
+            return PermisosHelper.TienePermiso(user, empresa, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
         }
 
         private static List<string> SepararValoresCsv(string csv)
@@ -2468,20 +2572,24 @@ namespace Web.Controllers
             if (ultimaVenta.IdVenta != venta.IdVenta)
                 return "La venta visible no es la última venta del cajero.";
 
-            bool tienePermiso = PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
+            bool tienePermiso = PermisosHelper.TienePermiso(user, empresa, Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
             if (!tienePermiso)
                 return "El usuario no tiene permiso vigente para formUltimaVenta.";
 
             return "";
         }
 
-        private bool PuedeEditarFechaVenta(Entidades.Venta venta, DateTime? fechaSeleccionada = null)
+        private bool PuedeEditarFechaVenta(Entidades.Venta venta, DateTime? fechaSeleccionada = null, Entidades.Usuario user = null)
         {
             if (venta == null)
                 return false;
 
+            user = user ?? (Session["Usuario"] as Entidades.Usuario);
+            if (user == null)
+                return false;
+
             int vendedorId = venta.Vendedor != null ? venta.Vendedor.Id : -1;
-            return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.NuevaVenta, fechaSeleccionada ?? venta.FechaVenta, vendedorId);
+            return PermisosHelper.TienePermiso(user, empresa, Permisos.Venta.NuevaVenta, fechaSeleccionada ?? venta.FechaVenta, vendedorId);
         }
 
         private bool PuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
@@ -2551,7 +2659,7 @@ namespace Web.Controllers
                 return false;
 
             int idCreador = venta.Vendedor != null ? venta.Vendedor.Id : -1;
-            return PermisosHelper.TienePermisoEditar(Session, Permisos.Venta.UltimaVenta, venta.FechaVenta, idCreador);
+            return PermisosHelper.TienePermiso(user, empresa, Permisos.Venta.UltimaVenta, venta.FechaVenta, idCreador);
         }
 
         private List<Entidades.LineaVenta> ConstruirLineasVentaDesdeRequest(FinalizarVentaRequest request)

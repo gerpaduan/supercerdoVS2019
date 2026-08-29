@@ -1,0 +1,62 @@
+/* Grid del teclado numerico en pantalla (Web/Views/Shared/_NumericKeypad.cshtml +
+   Web/Scripts/app/numeric-keypad.js). Generico, pensado para reusarse en varias
+   vistas (Elaborados, y a futuro Movimientos/Stock) -- no le pongas nombres
+   especificos de una sola pantalla a las clases de este archivo. */
+
+.numeric-keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 3rem;
+    gap: .4rem;
+}
+
+.numeric-keypad-grid .btn-key,
+.numeric-keypad-grid .btn-enter {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Enter ocupa las dos ultimas filas (se ubica solo via auto-flow despues de 1,2,3);
+   "0" ocupa dos columnas en la ultima fila -- son los dos unicos overrides que hacen
+   falta, el resto de las teclas se acomoda en el orden natural del HTML. */
+.numeric-keypad-key-enter {
+    grid-row: span 2;
+}
+
+.numeric-keypad-key-zero {
+    grid-column: span 2;
+}
+
+/* Estado "desplegado" de un contenedor .numeric-keypad-toggle-layout -- usado hoy en
+   Elaborados/Carga.cshtml, Movimientos/Editar.cshtml y Stock/Editar.cshtml (mismas
+   clases genericas en las 3, cada vista solo pone sus propios ids de layout/boton).
+   Sin la clase teclado-desplegado, el bloque se ve exactamente igual que si el
+   teclado no existiera -- el teclado queda oculto y los inputs en su fila Bootstrap
+   normal. */
+.numeric-keypad-toggle-layout.teclado-desplegado {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+/* Las columnas Bootstrap (col-md-4 col-lg-3, etc.) pasan a apilarse una por fila --
+   se pisa su ancho fijo en vez de tocar sus clases originales, para no duplicar HTML
+   ni arriesgar que Bootstrap las reponga en un resize. */
+.numeric-keypad-toggle-layout.teclado-desplegado .numeric-keypad-toggle-fields .row > [class*="col-"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+/* !important necesario en los dos: _NumericKeypad.cshtml envuelve el teclado en
+   "d-none d-lg-block" (utilidad de Bootstrap, que en >=992px aplica "display:block
+   !important"), asi que sin !important ese !important de Bootstrap le ganaba siempre
+   a este display:none -- el teclado quedaba visible en desktop aunque no estuviera
+   desplegado. */
+.numeric-keypad-toggle-layout .numeric-keypad-wrap {
+    display: none !important;
+}
+
+.numeric-keypad-toggle-layout.teclado-desplegado .numeric-keypad-wrap {
+    display: block !important;
+}

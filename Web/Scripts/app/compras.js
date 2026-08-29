@@ -925,19 +925,28 @@
 
                 if (state.config.desdePos) {
                     if (window.Swal) {
-                        Swal.fire({ icon: 'success', title: 'Compra registrada', text: res.mensaje || 'La compra se guardó correctamente.', timer: 1800, showConfirmButton: false });
+                        Swal.fire({ icon: 'success', title: 'Compra registrada', text: res.mensaje || 'La compra se guardó correctamente.', timer: 1800, timerProgressBar: true, showConfirmButton: false });
                     }
                     $('#modalFinanzasPOS').modal('hide');
                     return;
                 }
 
                 if (res.redirectUrl) {
-                    window.location.href = res.redirectUrl;
+                    // Cartel breve antes de navegar: sin esto, el usuario solo ve un redirect
+                    // instantaneo a Compras/Index y no hay confirmacion clara de que se guardo.
+                    if (window.Swal) {
+                        Swal.fire({ icon: 'success', title: 'Compra guardada', text: res.mensaje || 'La compra se guardó correctamente.', timer: 1800, timerProgressBar: true, showConfirmButton: false })
+                            .then(function () {
+                                window.location.href = res.redirectUrl;
+                            });
+                    } else {
+                        window.location.href = res.redirectUrl;
+                    }
                     return;
                 }
 
                 if (window.Swal) {
-                    Swal.fire({ icon: 'success', title: 'Compra guardada', text: res.mensaje || 'La compra se guardó correctamente.' });
+                    Swal.fire({ icon: 'success', title: 'Compra guardada', text: res.mensaje || 'La compra se guardó correctamente.', timer: 1800, timerProgressBar: true, showConfirmButton: false });
                 } else {
                     alert(res.mensaje || 'La compra se guardó correctamente.');
                 }

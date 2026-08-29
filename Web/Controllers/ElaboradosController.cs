@@ -210,11 +210,31 @@ namespace Web.Controllers
             return VistaIngresoRapido(true);
         }
 
-        public ActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false)
+        public ActionResult EditarIngresoRapido(int idElaborado = 0, int id = 0, bool esDesarme = false, int idUsuarioCreador = 0)
         {
             var user = Session["Usuario"] as Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+
+            // Usuario de produccion: la seleccion de "quien esta haciendo esto" se pide ANTES de
+            // entrar a la vista (no al guardar como era antes, ver docs/DECISIONS.md, "Mover la
+            // seleccion de usuario..."). Sin contraseña -- mismo mecanismo que ya existia al
+            // guardar (BaseController.ResolverUsuarioCreador), solo que ahora el id viaja en la
+            // URL de entrada en vez de resolverse recien en el POST.
+            if (user.EsUsuarioProduccion && idUsuarioCreador <= 0)
+            {
+                return RedirectToAction("Index", "SeleccionUsuario", new
+                {
+                    returnUrl = Request.RawUrl,
+                    cancelUrl = Url.Action("Index", "Elaborados")
+                });
+            }
+
+            // Resuelto una sola vez: se usa tanto para precargar el campo oculto del guardado
+            // como para mostrar el nombre real en el campo "Usuario" (antes mostraba "User
+            // Produccion", ver docs/DECISIONS.md).
+            var operadorResuelto = user.EsUsuarioProduccion ? ResolverUsuarioCreador(idUsuarioCreador, user) : null;
+            int idUsuarioCreadorResuelto = operadorResuelto != null ? operadorResuelto.Id : 0;
             int idCreadorPermiso = user.Id;
 
             if (id <= 0 && !PermisosHelper.TienePermiso(Session, Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
@@ -250,6 +270,8 @@ namespace Web.Controllers
                 modelEdicion.PuedeHabilitarEdicion = puedeModificar;
                 if (!puedeModificar)
                     modelEdicion.PuedeAnular = false;
+                if (operadorResuelto != null)
+                    modelEdicion.UsuarioNombre = operadorResuelto.Nombre;
 
                 ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rápido";
                 ViewBag.Seccion = "Elaborados";
@@ -257,6 +279,7 @@ namespace Web.Controllers
                 ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);
                 ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
                 ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+                ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
                 return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", modelEdicion);
             }
 
@@ -277,7 +300,7 @@ namespace Web.Controllers
                 EsDesarme = esDesarme,
                 IdSucursal = user.IdSucursal > 0 ? user.IdSucursal : 0,
                 FechaEmbutido = DateTime.Now,
-                UsuarioNombre = user.Nombre ?? "",
+                UsuarioNombre = operadorResuelto != null ? operadorResuelto.Nombre : (user.Nombre ?? ""),
                 IdElaborado = corte.IdCorte,
                 CodigoElaborado = corte.Codigo,
                 Elaborado = !string.IsNullOrWhiteSpace(corte.CorteDesc) ? corte.CorteDesc : corte.corte,
@@ -296,14 +319,35 @@ namespace Web.Controllers
             ConfigurarAdvertenciaFechaEnVivo("FechaEmbutidoRapido", Permisos.Elaborado.IngresoEmbutidoRapido, idCreadorPermiso);
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
             return View("~/Views/Elaborados/EditarIngresoRapido.cshtml", model);
         }
 
-        public ActionResult Carga(int id = 0)
+        public ActionResult Carga(int id = 0, int idUsuarioCreador = 0)
         {
             var user = Session["Usuario"] as Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+
+            // Usuario de produccion: la seleccion de "quien esta haciendo esto" se pide ANTES de
+            // entrar a la vista (no al guardar como era antes, ver docs/DECISIONS.md, "Mover la
+            // seleccion de usuario..."). Sin contraseña -- mismo mecanismo que ya existia al
+            // guardar (BaseController.ResolverUsuarioCreador), solo que ahora el id viaja en la
+            // URL de entrada en vez de resolverse recien en el POST.
+            if (user.EsUsuarioProduccion && idUsuarioCreador <= 0)
+            {
+                return RedirectToAction("Index", "SeleccionUsuario", new
+                {
+                    returnUrl = Request.RawUrl,
+                    cancelUrl = Url.Action("Index", "Elaborados")
+                });
+            }
+
+            // Resuelto una sola vez: se usa tanto para precargar el campo oculto del guardado
+            // como para mostrar el nombre real en el campo "Usuario" (antes mostraba "User
+            // Produccion", ver docs/DECISIONS.md).
+            var operadorResuelto = user.EsUsuarioProduccion ? ResolverUsuarioCreador(idUsuarioCreador, user) : null;
+            int idUsuarioCreadorResuelto = operadorResuelto != null ? operadorResuelto.Id : 0;
             int idCreadorPermiso = user.Id;
 
             ElaboradoCargaVm model;
@@ -330,6 +374,8 @@ namespace Web.Controllers
                 model.PermiteGuardarEdicion = puedeModificar;
                 if (!puedeModificar)
                     model.PuedeAnular = false;
+                if (operadorResuelto != null)
+                    model.UsuarioNombre = operadorResuelto.Nombre;
             }
             else
             {
@@ -345,7 +391,7 @@ namespace Web.Controllers
                 {
                     IdSucursal = user.IdSucursal > 0 ? user.IdSucursal : 0,
                     FechaEmbutido = DateTime.Now,
-                    UsuarioNombre = user.Nombre ?? "",
+                    UsuarioNombre = operadorResuelto != null ? operadorResuelto.Nombre : (user.Nombre ?? ""),
                     Tabs = BuildTabs("Carga"),
                     PermiteGuardarEdicion = true,
                     PuedeHabilitarEdicion = true
@@ -362,6 +408,7 @@ namespace Web.Controllers
             ConfigurarAdvertenciaFechaEnVivo("FechaEmbutido", Permisos.Elaborado.IngresoEmbutido, idCreadorPermiso);
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
 
             return View("~/Views/Elaborados/Carga.cshtml", model);
         }

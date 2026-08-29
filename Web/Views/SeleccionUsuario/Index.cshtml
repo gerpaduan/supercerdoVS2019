@@ -1,0 +1,69 @@
+@{
+    // Pantalla compartida: "quien esta haciendo esto" para la cuenta de produccion, usada por
+    // Movimientos/Stock/Elaborados ANTES de entrar a la vista de edicion (ver
+    // SeleccionUsuarioController.Index y docs/DECISIONS.md, "Mover la seleccion de usuario...").
+    // Sin contraseña -- misma logica de negocio que ya usaba el selector al guardar (solo cambia
+    // CUANDO se pregunta). Al elegir, vuelve a returnUrl con idUsuarioCreador agregado; al
+    // cancelar, vuelve a cancelUrl (el Index del modulo que la llamo).
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Seleccionar usuario";
+    string returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("Index", "Home");
+    string cancelUrl = ViewBag.CancelUrl as string ?? Url.Action("Index", "Home");
+}
+
+<div class="container-fluid mt-5">
+    <div class="text-center">
+        <h4 class="text-primary"><i class="fas fa-user-shield mr-1"></i> ¿Quién está haciendo esto?</h4>
+        <p class="text-gray-500 mb-4">Esta sesión usa la cuenta de producción -- elegí tu nombre para continuar.</p>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script>
+        (function () {
+            var usuariosActivos = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa as System.Collections.Generic.List<object> ?? new System.Collections.Generic.List<object>()));
+            var returnUrl = @Html.Raw(Json.Encode(returnUrl));
+            var cancelUrl = @Html.Raw(Json.Encode(cancelUrl));
+
+            // BUG real encontrado (Stock/Nuevo): returnUrl puede llegar con "idUsuarioCreador=0"
+            // ya incluido en la URL (ej. StockController.Nuevo hace un RedirectToAction que lo
+            // agrega explicito, aunque valga 0) -- concatenar "&idUsuarioCreador=X" a mano
+            // duplicaba el parametro, y el model binder de MVC toma el primer valor (0),
+            // volviendo a mostrar el login en loop. new URL(...).searchParams.set(...)
+            // reemplaza el valor existente en vez de agregar uno nuevo.
+            function volverCon(idUsuario) {
+                var url = new URL(returnUrl, window.location.origin);
+                url.searchParams.set('idUsuarioCreador', idUsuario);
+                window.location.href = url.toString();
+            }
+
+            function pedirUsuario() {
+                window.SeleccionUsuario.abrir({
+                    titulo: '¿Quién está haciendo esto?',
+                    usuarios: usuariosActivos,
+                    requierePassword: false
+                }).then(function (usuario) {
+                    volverCon(usuario.id);
+                }).catch(function () {
+                    // Cancelo (Escape/backdrop/"Cancelar"): vuelve al Index del modulo, sin
+                    // mostrar la vista de edicion.
+                    window.location.href = cancelUrl;
+                });
+            }
+
+            // Red de seguridad: si el modal se cierra sin resolver, el Promise de .abrir() no se
+            // resuelve NI se rechaza (ver seleccion-usuario.js, su propio hidden.bs.modal) -- sin
+            // esto el .catch() no correria nunca y la pantalla quedaria colgada.
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (!$(this).data('resuelto')) {
+                    window.location.href = cancelUrl;
+                }
+            });
+
+            pedirUsuario();
+        })();
+    </script>
+}

@@ -14,7 +14,7 @@
     string descripcion = ViewBag.Descripcion ?? "";
     DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today;
     DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today.AddDays(1).AddSeconds(-1);
-    bool soloGastos = ViewBag.SoloGastos != null && (bool)ViewBag.SoloGastos;
+    string filtroGasto = ViewBag.FiltroGasto as string ?? "todos";
     bool sinPermiso = ViewBag.SinPermiso != null && (bool)ViewBag.SinPermiso;
     string mensajePermiso = ViewBag.MensajePermiso as string ?? "No tiene permisos para acceder a esta pantalla.";
     bool puedeVerTipos = ViewBag.PuedeVerTiposEgreso != null && (bool)ViewBag.PuedeVerTiposEgreso;
@@ -46,7 +46,7 @@
 
         <form id="formFiltrosEgresos" class="egresos-filtros egresos-filtros-card">
             <div class="egresos-filtros-stack">
-                <div class="egresos-filtros-row egresos-filtros-row-principal">
+                <div class="egresos-filtros-grid">
                     <div class="form-group mb-0">
                         <label class="egresos-filtro-label">Sucursal</label>
                         <select name="idSucursal" id="filtroSucursalEgreso" class="form-control">
@@ -62,6 +62,16 @@
                     </div>
 
                     <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Desde</label>
+                        <input type="datetime-local" step="1" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Hasta</label>
+                        <input type="datetime-local" step="1" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
+                    </div>
+
+                    <div class="form-group mb-0">
                         <label class="egresos-filtro-label">Usuario</label>
                         <select name="idUsuario" id="filtroUsuarioEgreso" class="form-control">
                             @if (usuarios != null)
@@ -74,17 +84,39 @@
                             }
                         </select>
                     </div>
-                </div>
 
-                <div class="egresos-filtros-row egresos-filtros-row-fechas">
                     <div class="form-group mb-0">
-                        <label class="egresos-filtro-label">Desde</label>
-                        <input type="datetime-local" step="1" name="fechaDesde" id="filtroDesdeEgreso" value="@fechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
+                        <label class="egresos-filtro-label">Tipo</label>
+                        <select name="idTipoEgresoCaja" id="filtroTipoEgreso" class="form-control">
+                            <option value="0">Todos</option>
+                            @if (tipos != null)
+                            {
+                                foreach (DataRow row in tipos.Rows)
+                                {
+                                    int id = Convert.ToInt32(row["id"]);
+                                    // 0 = sentinel "Todos"; 100/200 = Cta Cte/Pago Electronico, tipos
+                                    // reservados que el controller excluye siempre del listado -- si
+                                    // quedaran elegibles acá, elegirlas daría una lista vacía sin
+                                    // explicación.
+                                    if (id == 0 || id == 100 || id == 200) { continue; }
+                                    <option value="@id" @(id == idTipo ? "selected" : "")>@row["tipoEgresoCaja"]</option>
+                                }
+                            }
+                        </select>
                     </div>
 
                     <div class="form-group mb-0">
-                        <label class="egresos-filtro-label">Hasta</label>
-                        <input type="datetime-local" step="1" name="fechaHasta" id="filtroHastaEgreso" value="@fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" class="form-control" />
+                        <label class="egresos-filtro-label">Descripcion</label>
+                        <input type="text" name="descripcion" id="filtroDescripcionEgreso" value="@descripcion" class="form-control" autocomplete="off" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="egresos-filtro-label">Gasto</label>
+                        <select name="filtroGasto" id="filtroGastoEgreso" class="form-control">
+                            <option value="todos" @(filtroGasto == "todos" ? "selected" : "")>Todos</option>
+                            <option value="gastos" @(filtroGasto == "gastos" ? "selected" : "")>Solo gastos</option>
+                            <option value="no-gastos" @(filtroGasto == "no-gastos" ? "selected" : "")>No gastos</option>
+                        </select>
                     </div>
 
                     <div class="form-group mb-0 egresos-filtro-accion">
@@ -103,37 +135,6 @@
 
                 <div class="egresos-filtros-row">
                     <div id="estadoBusquedaEgresos" class="text-muted small">Resultados actualizados.</div>
-                </div>
-
-                <div class="egresos-filtros-row egresos-filtros-row-busqueda">
-                    <div class="form-group mb-0">
-                        <label class="egresos-filtro-label">Tipo</label>
-                        <select name="idTipoEgresoCaja" id="filtroTipoEgreso" class="form-control">
-                            <option value="0">Todos</option>
-                            @if (tipos != null)
-                            {
-                                foreach (DataRow row in tipos.Rows)
-                                {
-                                    int id = Convert.ToInt32(row["id"]);
-                                    if (id == 0) { continue; }
-                                    <option value="@id" @(id == idTipo ? "selected" : "")>@row["tipoEgresoCaja"]</option>
-                                }
-                            }
-                        </select>
-                    </div>
-
-                    <div class="form-group mb-0">
-                        <label class="egresos-filtro-label">Descripcion</label>
-                        <input type="text" name="descripcion" id="filtroDescripcionEgreso" value="@descripcion" class="form-control" autocomplete="off" />
-                    </div>
-
-                    <div class="form-group mb-0 egresos-filtro-check">
-                        <label class="egresos-filtro-label d-block">Opciones</label>
-                        <div class="custom-control custom-checkbox pt-2">
-                            <input type="checkbox" class="custom-control-input" id="soloGastos" name="soloGastos" value="true" @(soloGastos ? "checked" : "")>
-                            <label class="custom-control-label" for="soloGastos">Solo gastos</label>
-                        </div>
-                    </div>
                 </div>
             </div>
         </form>
@@ -173,7 +174,8 @@
         gap: .65rem;
     }
 
-    .egresos-filtros-row {
+    .egresos-filtros-row,
+    .egresos-filtros-grid {
         display: grid;
         gap: .65rem;
     }
@@ -250,10 +252,9 @@
 
     .egresos-page .egresos-tabla-desktop .table thead th,
     .egresos-page .egresos-tabla-desktop .table > thead > tr > th {
-        font-size: .73rem;
-        font-weight: 700;
-        letter-spacing: .02em;
-        text-transform: uppercase;
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding: .38rem .5rem;
     }
 
     .egresos-page .egresos-tabla-desktop .btn {
@@ -322,17 +323,8 @@
             padding: .65rem .8rem;
         }
 
-        .egresos-filtros-row-principal {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .egresos-filtros-row-fechas {
-            grid-template-columns: 1.15fr 1.15fr 140px;
-            align-items: end;
-        }
-
-        .egresos-filtros-row-busqueda {
-            grid-template-columns: 1fr 1.4fr .9fr;
+        .egresos-filtros-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             align-items: end;
         }
 
@@ -357,24 +349,20 @@
 
         .egresos-page .egresos-tabla-desktop .table thead th,
         .egresos-page .egresos-tabla-desktop .table > thead > tr > th {
-            font-size: .68rem;
+            font-size: .69rem !important;
         }
     }
 
     @@media (min-width: 768px) and (max-width: 1199.98px) {
-        .egresos-filtros-row-principal,
-        .egresos-filtros-row-fechas,
-        .egresos-filtros-row-busqueda {
+        .egresos-filtros-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .egresos-filtro-accion {
-            grid-column: 2;
+            align-items: end;
         }
     }
 
     @@media (max-width: 767.98px) {
-        .egresos-filtros-row {
+        .egresos-filtros-row,
+        .egresos-filtros-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -437,7 +425,6 @@
             var inputUsuario = document.getElementById('filtroUsuarioEgreso');
             var inputTipo = document.getElementById('filtroTipoEgreso');
             var inputDescripcion = document.getElementById('filtroDescripcionEgreso');
-            var inputSoloGastos = document.getElementById('soloGastos');
 
             function buildState() {
                 return {
@@ -446,8 +433,7 @@
                     idSucursal: inputSucursal ? inputSucursal.value : "",
                     idUsuario: inputUsuario ? inputUsuario.value : "",
                     idTipoEgresoCaja: inputTipo ? inputTipo.value : "",
-                    descripcion: inputDescripcion ? inputDescripcion.value : "",
-                    soloGastos: inputSoloGastos ? inputSoloGastos.checked : false
+                    descripcion: inputDescripcion ? inputDescripcion.value : ""
                 };
             }
 
@@ -471,7 +457,6 @@
                     if (state.descripcion) params.set("descripcion", state.descripcion);
                     if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
                     if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
-                    if (state.soloGastos) params.set("soloGastos", "true");
 
                     var query = params.toString();
                     if (query) {

@@ -54,6 +54,10 @@
         }
 
         if (state.redirectUrl) {
+            // Vuelve a la misma instancia de POS Expendio (mismo posInstanceId, ver
+            // PuntosExpendioController.FinalizarPOS) -- no debe disparar la limpieza del
+            // operador de produccion via pagehide (ver punto-expendio-pos.js / POS.cshtml).
+            window.PosNavegandoInternoPOS = true;
             window.location.href = state.redirectUrl;
         }
     }

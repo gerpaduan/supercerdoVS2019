@@ -14,6 +14,20 @@
 
             <div class="modal-body">
 
+                @if (usuario != null)
+                {
+                    <p class="mb-3">
+                        @if (usuario.Sucursal != null)
+                        {
+                            <text>Usted está operando en la sucursal <strong>@usuario.SucursalNombre</strong>. Puede <a href="#" id="lnkContinuarSucursalActual" class="link-quedarse-aqui">quedarse aquí</a> o seleccionar otra:</text>
+                        }
+                        else
+                        {
+                            <text>Seleccione la sucursal en la que va a operar:</text>
+                        }
+                    </p>
+                }
+
                 @if (ViewBag.Sucursales != null && usuario != null && usuario.IdSucursal != null)
                 {
                     foreach (var s in ViewBag.Sucursales as List<Entidades.Sucursal>)
@@ -23,9 +37,8 @@
                         <button class="btn btn-block mb-2 btnSucursal
                                  @(activa ? "btn-primary" : "btn-outline-secondary")"
                                 data-id="@s.IdSucursal"
-                                data-nombre="@s.SucursalNombre"
-                                @(activa ? "disabled" : "")>
-                            @s.SucursalNombre
+                                data-nombre="@s.SucursalNombre">
+                            @s.SucursalNombre@(activa ? " (seguir acá)" : "")
                         </button>
                     }
                 }
@@ -35,3 +48,17 @@
         </div>
     </div>
 </div>
+
+<style>
+    .link-quedarse-aqui {
+        color: var(--ui-primary, #2d5b8f);
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 1px dashed var(--ui-primary, #2d5b8f);
+    }
+
+    .link-quedarse-aqui:hover {
+        color: var(--ui-primary, #2d5b8f);
+        border-bottom-style: solid;
+    }
+</style>

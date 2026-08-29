@@ -20,6 +20,11 @@
     var esReporteBalance =
         string.Equals(Model.TipoReporteSeleccionado, "Balance Economico", StringComparison.OrdinalIgnoreCase);
     var proyeccionMultiplesSucursales = esReporteProyeccion && Model.SucursalId <= 0;
+    var cantidadRegistrosVisibles = esReporteVentasProducto
+        ? Model.FilasVentasProducto.Count
+        : esReporteProyeccion
+            ? Model.FilasProyeccionVentasStock.Count
+            : Model.Totales.CantidadRegistros;
     var balancePrincipal = (Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>())
         .FirstOrDefault(x => x.EsPrincipal)
         ?? (Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>()).FirstOrDefault();
@@ -107,16 +112,14 @@
                     </div>
                 </div>
 
+                <div class="alert alert-warning py-2 px-3 mb-0 mt-2 d-none" id="cardAvisoPendienteReporte">
+                    <span class="font-weight-semibold">Se modificaron filtros principales. Presiona Buscar para actualizar el reporte con los filtros.</span>
+                </div>
+
                 <div id="reportesFiltrosSecundariosWrap">
                     @Html.Partial("~/Views/Reportes/_FiltrosSecundarios.cshtml", Model)
                 </div>
             </form>
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-3 d-none" id="cardAvisoPendienteReporte">
-        <div class="card-body py-3">
-            <span class="text-warning font-weight-semibold">Se modificaron filtros principales. Presiona Buscar para actualizar el reporte.</span>
         </div>
     </div>
 
@@ -127,11 +130,19 @@
         </div>
     }*@
 
+    <div class="d-flex align-items-center mb-3">
+        <div class="custom-control custom-switch mr-3">
+            <input type="checkbox" class="custom-control-input" id="switchMostrarTotalesReporte" />
+            <label class="custom-control-label" for="switchMostrarTotalesReporte">Mostrar totales</label>
+        </div>
+        <span class="text-muted" id="lblTotalRegistrosCompacto">@cantidadRegistrosVisibles registros visibles</span>
+    </div>
+
     @if (esReporteBalance)
     {
         if ((Model.PeriodosBalance ?? new System.Collections.Generic.List<Web.Models.ReporteBalancePeriodoVm>()).Count <= 1)
         {
-            <div class="reportes-totales-grid reportes-totales-grid-balance mb-3">
+            <div class="reportes-totales-grid reportes-totales-grid-balance mb-3 d-none">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="text-muted small">Total ventas periodo principal</div>
@@ -179,7 +190,7 @@
     }
     else
     {
-        <div class="reportes-totales-grid mb-3">
+        <div class="reportes-totales-grid mb-3 d-none">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <div class="text-muted small">@(esReporteVentasProducto ? "Total kg periodos visibles" : esReporteProyeccion ? "Stock actual visible" : "Total kg visibles")</div>
@@ -213,15 +224,19 @@
         </div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body py-3">
-            <span class="text-muted">Estado:</span>
-            <strong id="estadoReporteTexto">@(!string.IsNullOrWhiteSpace(Model.Mensaje) ? Model.Mensaje : "Presiona Buscar para cargar datos.")</strong>
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-3">
+    <div class="card shadow-sm mb-3 reportes-resultado-card">
         <div class="card-body p-0">
+            @if (Model.MostrarFiltroBusquedaProducto)
+            {
+                <div class="d-flex align-items-center px-3 pt-3 reportes-search-toolbar">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaProductoReporte"
+                            title="Buscar producto" aria-expanded="false">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <input type="text" id="busquedaProductoReporte" name="busquedaProducto" class="form-control form-control-sm ml-2 d-none filtro-vivo"
+                           value="@Model.BusquedaProducto" placeholder="Codigo o descripcion" autocomplete="off" style="max-width:280px;" />
+                </div>
+            }
             @if (!Model.ConsultaRealizada)
             {
                 <div class="p-4 text-center text-muted">Presiona Buscar para cargar el reporte.</div>
@@ -247,7 +262,11 @@
                             <table class="table table-bordered table-hover mb-0 reportes-tabla js-sticky-first-col" id="tablaReporteStockActual">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th>Producto</th>
+                                        <th>
+                                            <a href="#" class="reporte-sortable-col" data-sort-key="producto" data-sort-type="text">Producto</a>
+                                            ·
+                                            <a href="#" class="reporte-sortable-col" data-sort-key="codigo" data-sort-type="number">Código</a>
+                                        </th>
                                         <th class="text-right reporte-detalle-col d-none">St. inicial</th>
                                         <th class="text-right reporte-detalle-col d-none">Ingr. compra</th>
                                         <th class="text-right reporte-detalle-col d-none">Ingr. elab.</th>
@@ -961,6 +980,21 @@
     .reportes-page .reportes-totales-grid-balance .h4 {
         font-size: 1rem;
         line-height: 1.05;
+    }
+
+    /* El submenu del sidebar (.sidebar .nav-item .collapse, sb-admin-2.min.css) es
+       position:absolute con z-index:1 y flota sobre el contenido cuando el sidebar esta
+       angosto/colapsado. Esta card es position:static por default -- un elemento no
+       posicionado siempre pinta por debajo de cualquier elemento posicionado del mismo
+       contexto de apilamiento, sin importar el orden en el DOM. Con position:relative +
+       z-index:2 la card entera pasa a competir (y ganar) esa comparacion. */
+    .reportes-resultado-card {
+        position: relative;
+        z-index: 2;
+    }
+
+    .reportes-search-toolbar #busquedaProductoReporte {
+        max-width: 280px;
     }
 
     .reportes-tabla {

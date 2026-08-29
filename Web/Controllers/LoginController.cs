@@ -148,6 +148,14 @@ namespace Web.Controllers
                 Session["IdEmpresa"] = user != null ? user.IdEmpresa : 0;
                 Session.Remove("PARAM_CTX");
 
+                // Empresas con 2+ sucursales: se avisa siempre al loguear en que sucursal va a
+                // operar (pedido explicito, evita cargar ventas/expendios en la sucursal
+                // equivocada). Se guarda en sesion en vez de mostrar el modal aca porque el login
+                // puede derivar a geo-validacion (ValidarUbicacion, Layout = null) antes de llegar
+                // a una pagina con _LayoutBase -- el modal se dispara recien ahi.
+                var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+                Session["MostrarModalSucursalPostLogin"] = sucursalesEmpresa.Count >= 2;
+
                 IParametrosContext paramCtx = Web.Infrastructure.NegocioFactory.CrearParametros(new EmpresaContextWeb());
                 paramCtx.Reload();
                 Session["PARAM_CTX"] = paramCtx;

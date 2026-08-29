@@ -34,9 +34,21 @@ self.addEventListener("fetch", (event) => {
 
     // No cachear endpoints típicos de tu app (ajustá si querés)
     // Ej: acciones que devuelven JSON, listar productos, finalizar venta, etc.
+    // BUG real encontrado: /Stock/ no estaba en esta lista -- el service worker servia una
+    // copia cacheada de /Stock/Index (cache-first) en vez de pedirla de nuevo al servidor, asi
+    // que el cartel de "guardado con exito" (que viaja via TempData en la respuesta de ESE
+    // request puntual, nunca dos veces igual) nunca se llegaba a ver -- se mostraba la version
+    // vieja, cacheada de una visita anterior sin ese aviso. Mismo riesgo (no solo el cartel --
+    // datos de negocio desactualizados) se confirmo en Movimientos/Elaborados/Compras/Finanzas,
+    // se agregaron los 4 por el mismo motivo. Ver docs/DECISIONS.md.
     if (url.pathname.includes("/Ventas/") ||
         url.pathname.includes("/Productos/") ||
         url.pathname.includes("/Personas/") ||
+        url.pathname.includes("/Stock/") ||
+        url.pathname.includes("/Movimientos/") ||
+        url.pathname.includes("/Elaborados/") ||
+        url.pathname.includes("/Compras/") ||
+        url.pathname.includes("/Finanzas/") ||
         url.pathname.includes("/Scripts/app/pos-") ||
         url.pathname.includes("/Scripts/app/ventas-expendios-pos.js") ||
         url.pathname.includes("/Scripts/app/punto-expendio-pos.js")) {

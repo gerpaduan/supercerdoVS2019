@@ -116,11 +116,16 @@ namespace Web.Controllers
 
         public ActionResult Sucursales(int idEmpresa = 0)
         {
+            // El filtro por empresa es 100% client-side (ver Sucursales.cshtml) -- siempre se
+            // trae el listado completo (idEmpresa=0) y el JS lo filtra en vivo por data-id-empresa.
+            // idEmpresa solo se usa para preseleccionar el combo (deep-link desde GuardarSucursal
+            // o el boton "Nueva sucursal"). Volumen esperado (todas las sucursales de todas las
+            // empresas de la plataforma): decenas, no amerita paginado ni filtro server-side.
             var model = new SystemAdministrationSucursalIndexVm
             {
                 FiltroEmpresaId = idEmpresa,
                 Empresas = _repo.ObtenerEmpresasSelectList(idEmpresa, true),
-                Items = _repo.ObtenerSucursales(idEmpresa),
+                Items = _repo.ObtenerSucursales(0),
                 TieneTelefono = _repo.TablaSucursalTieneTelefono(),
                 TieneActiva = _repo.TablaSucursalTieneActiva()
             };
@@ -221,11 +226,13 @@ namespace Web.Controllers
 
         public ActionResult Usuarios(int idEmpresa = 0)
         {
+            // Mismo criterio que Sucursales(...): filtro por empresa 100% client-side, siempre
+            // se trae el listado completo y el JS lo filtra en vivo por data-id-empresa.
             var model = new SystemAdministrationUsuarioIndexVm
             {
                 FiltroEmpresaId = idEmpresa,
                 Empresas = _repo.ObtenerEmpresasSelectList(idEmpresa, true),
-                Items = _repo.ObtenerUsuarios(idEmpresa)
+                Items = _repo.ObtenerUsuarios(0)
             };
 
             ViewBag.Title = "Usuarios";

@@ -8,6 +8,10 @@
     ViewBag.PosBrandName = string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector;
 
     var usuario = Session["Usuario"] as Entidades.Usuario;
+    // Usuario de produccion sin operador autorizado todavia: no se emite del lado del servidor
+    // ni una linea del HTML funcional (buscador, carrito, Finalizar) -- el modal de login
+    // (_ModalSeleccionUsuario.cshtml, mas abajo) es lo unico que se ve. Ver DECISIONS.md.
+    bool requiereOperadorPOS = ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS;
     bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
     bool permiteEditarPrecio = Model.PermiteEditarPrecio;
     string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
@@ -21,6 +25,8 @@
     vdBuscarProducto["Titulo"] = "Buscar producto para Punto de Expendio";
 }
 
+@if (!requiereOperadorPOS)
+{
 <div class="pos-page pos-expendio-page">
     <div class="pos-topbar pos-topbar-expendio mb-2">
         <input type="hidden" id="idPersona" value="0" />
@@ -31,7 +37,7 @@
         <div class="pos-topbar-grid">
             <div class="pos-topbar-item pos-topbar-item-cliente">
                 <div class="pos-topbar-label">Cliente / Identificacion</div>
-                <input type="hidden" id="clienteIdentificacionValor" value="" />
+                <input type="hidden" id="clienteRazonSocialValor" value="" />
                 <div class="input-group input-group-sm">
                     <input type="text"
                            id="razonSocial"
@@ -57,9 +63,9 @@
                         </button>
                     </div>
                 </div>
-                <div id="clienteIdentificacionWrap" class="pos-cliente-identificacion d-none" title="">
-                    <span class="pos-cliente-identificacion-label">Ident.:</span>
-                    <span id="clienteIdentificacionTexto"></span>
+                <div id="clienteRazonSocialWrap" class="pos-cliente-identificacion d-none" title="">
+                    <span class="pos-cliente-identificacion-label">Raz. social:</span>
+                    <span id="clienteRazonSocialTexto"></span>
                 </div>
             </div>
 
@@ -84,6 +90,16 @@
                     <i class="fas fa-clone"></i>
                     <span>Duplicar POS</span>
                 </button>
+                @if (usuario != null && usuario.EsUsuarioProduccion)
+                {
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm pos-btn-layout"
+                            id="btnCambiarOperadorPOS"
+                            title="Cambiar el empleado que está operando este POS">
+                        <i class="fas fa-user-clock"></i>
+                        <span>Cambiar operario</span>
+                    </button>
+                }
                 <a class="btn btn-light btn-sm pos-btn-layout"
                    href="@Url.Action("Index", "Home")"
                    title="Volver al sistema">
@@ -304,6 +320,7 @@
         }
     </div>
 </div>
+}
 
 <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -462,6 +479,7 @@
     Html.RenderPartial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml");
     Html.RenderPartial("~/Views/PuntosExpendio/_ModalMisExpendiosPuntoExpendio.cshtml");
     Html.RenderPartial("~/Views/PuntosExpendio/_ModalPostPuntoExpendio.cshtml");
+    Html.RenderPartial("~/Views/Shared/_ModalSeleccionUsuario.cshtml");
 }
 
 <form id="formFinalizarPuntoExpendio" class="d-none">
@@ -480,6 +498,7 @@
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=4")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-postexpendio.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/pos-multi-instance.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/punto-expendio-pos.js?v=12")"></script>
     <script>
         window.puntoExpendioPosConfig = {
@@ -498,7 +517,8 @@
             urlPersonaGuardarCrear: '@Url.Action("GuardarPersonaModal", "Personas")',
             idConsumidorFinal: @(ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0),
             puedeBonificar: @((ViewBag.PuedeBonificarPuntoExpendio != null && (bool)ViewBag.PuedeBonificarPuntoExpendio) ? "true" : "false"),
-            mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.'
+            mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.',
+            posInstanceId: @Html.Raw(Json.Encode(posInstanceId))
         };
         // Config del boton "Duplicar POS" (pos-multi-instance.js, mismo modulo que ya usa
         // POS Venta). El sector va incluido en originalUrl/duplicateBaseUrl para que la
@@ -516,6 +536,102 @@
             windowName: @Html.Raw(Json.Encode("CarniSysPOSExpendio-" + idUsuarioPOS + "-" + idSucursalPOS + "-" + posModoInstancia)),
             duplicateWindowName: @Html.Raw(Json.Encode("CarniSysPOSExpendioDuplicado-" + idUsuarioPOS + "-" + idSucursalPOS))
         };
+
+        // Usuario de produccion (cuenta compartida): pide autorizar con usuario+contraseña
+        // real de un empleado antes de poder operar este POS (ver BaseController.
+        // ValidarOperadorPOS). Reusa el modal generico _ModalSeleccionUsuario.cshtml /
+        // seleccion-usuario.js, igual que el step-up de Cierre de Caja.
+        window.PosOperadorConfig = {
+            esUsuarioProduccion: @((usuario != null && usuario.EsUsuarioProduccion) ? "true" : "false"),
+            requiereOperadorPOS: @((ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS) ? "true" : "false"),
+            posInstanceId: @Html.Raw(Json.Encode(posInstanceId)),
+            urlAutorizar: '@Url.Action("AutorizarOperadorPOS", "PuntosExpendio")',
+            urlCerrar: '@Url.Action("CerrarOperadorPOS", "PuntosExpendio")',
+            usuariosActivos: @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa as List<object> ?? new List<object>()))
+        };
+
+        (function () {
+            var cfg = window.PosOperadorConfig;
+            if (!cfg.esUsuarioProduccion) return;
+
+            var loginObligatorioPendiente = false;
+
+            // No confiar en que pos-multi-instance.js ya haya sincronizado posInstanceId a la
+            // URL (ensureUrlParams, dentro de su init()) -- mientras requiereOperadorPOS es true,
+            // punto-expendio-pos.js ni siquiera llega a llamar a ese init (corta antes, sin
+            // #pos-app en el DOM), asi que un location.reload() plano perdia el posInstanceId y
+            // el servidor generaba uno nuevo en cada vuelta -- login en loop infinito, nunca
+            // llegaba al modal de sector. Se arma la URL a mano, explicita.
+            function recargarConOperadorAutorizado() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('posInstanceId', cfg.posInstanceId);
+                window.PosNavegandoInternoPOS = true;
+                window.location.href = url.toString();
+            }
+
+            function pedirOperador(esInicial) {
+                loginObligatorioPendiente = esInicial;
+                window.SeleccionUsuario.abrir({
+                    titulo: esInicial ? 'Autorizate para operar este Punto de Expendio' : 'Cambiar operario',
+                    usuarios: cfg.usuariosActivos,
+                    requierePassword: true,
+                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId)
+                }).then(function () {
+                    loginObligatorioPendiente = false;
+                    // Recarga para que los permisos del nuevo operador (ej. puedeBonificar)
+                    // se recalculen server-side -- no se intenta sincronizar eso solo con JS.
+                    recargarConOperadorAutorizado();
+                }).catch(function () {
+                    // Cancelo el login: sin operador no se puede usar este POS.
+                    if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+
+            // Red de seguridad: si el login era obligatorio y el modal se cierra sin resolver
+            // (Escape/backdrop/"Cancelar"/X), el Promise de SeleccionUsuario.abrir() nunca se
+            // resuelve NI se rechaza (ver seleccion-usuario.js, hidden.bs.modal propio) -- sin
+            // esto, .catch() nunca corre y el usuario quedaria sin redirigir. Aca ademas el
+            // contenido funcional ya esta completamente ausente del HTML mientras
+            // requiereOperadorPOS sea true (server-side, ver arriba en la vista), asi que esto es
+            // un refuerzo de UX, no la unica proteccion.
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (loginObligatorioPendiente && !$(this).data('resuelto')) {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                }
+            });
+
+            if (cfg.requiereOperadorPOS) {
+                pedirOperador(true);
+            }
+
+            $(document).on('click', '#btnCambiarOperadorPOS', function () {
+                pedirOperador(false);
+            });
+
+            // Best-effort: limpia el operador de esta instancia al cerrar la pestaña/vista,
+            // para no dejarlo colgado en Session (ver PermisosHelper.LimpiarOperadorPOS). No es
+            // la garantia real de "vuelve a pedir credenciales" -- esa la da que cada apertura
+            // nueva de POS usa un posInstanceId distinto.
+            //
+            // BUG real encontrado: 'pagehide' dispara con CUALQUIER navegacion, incluida una
+            // vuelta a esta misma instancia de POS (reload post-login, elegir sector, cancelar,
+            // redirect post-finalizar, cambio de sucursal). El sendBeacon de limpieza corria
+            // igual en esos casos y competia en paralelo con el GET de la pagina siguiente por
+            // el mismo Session -- si el beacon ganaba la carrera, el operador ya autorizado
+            // desaparecia de Session justo antes de que la pagina nueva lo buscara, y volvia a
+            // pedir el login (intermitente, no siempre). Por eso las funciones que navegan DE
+            // VUELTA a esta misma instancia (mismo posInstanceId) marcan
+            // window.PosNavegandoInternoPOS = true antes de navegar -- el beacon se saltea en
+            // ese caso, la limpieza real solo pasa cuando se sale de POS de verdad (cerrar
+            // pestaña, ir a Home, cancelar el login inicial).
+            window.addEventListener('pagehide', function () {
+                if (window.PosNavegandoInternoPOS) return;
+                if (navigator.sendBeacon) {
+                    var data = new Blob([JSON.stringify({ posInstanceId: cfg.posInstanceId })], { type: 'application/json' });
+                    navigator.sendBeacon(cfg.urlCerrar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId), data);
+                }
+            });
+        })();
     </script>
 }
 

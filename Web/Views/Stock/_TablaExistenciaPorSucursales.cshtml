@@ -14,6 +14,7 @@
 }
 
 @{
+    var filtro = Model != null && Model.Filtro != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
     var columnas = Model != null ? Model.Columnas : new System.Collections.Generic.List<Entidades.SucursalColumnaStockVm>();
     var productos = Model != null ? Model.Productos : new System.Collections.Generic.List<Entidades.ProductoStockPorSucursalVm>();
     // Columna "Total" solo cuando el filtro de sucursal es "Todas" (idSucursal=0):
@@ -21,8 +22,9 @@
     bool mostrarTotal = Model != null && Model.Filtro != null && Model.Filtro.IdSucursal == 0;
     // *2: cada sucursal aporta 2 columnas (Stock + Dif.) al layout del <tr>, aunque la de Dif.
     // arranque oculta con d-none -- sigue existiendo en el DOM y hay que contarla en el colspan
-    // de la fila de detalle expandible (ver mas abajo).
-    int totalColumnas = 2 + (columnas.Count * 2) + (mostrarTotal ? 1 : 0);
+    // de la fila de detalle expandible (ver mas abajo). +1 fijo: columna "Estado Stock", tambien
+    // siempre presente en el DOM (oculta con d-none), igual criterio que las columnas Dif.
+    int totalColumnas = 2 + (columnas.Count * 2) + (mostrarTotal ? 1 : 0) + 1;
 }
 
 @if (Model == null || !Model.ConsultaRealizada)
@@ -264,6 +266,15 @@ else
         }
     </style>
 
+    <div class="d-flex align-items-center mb-2 px-3 pt-3 existencia-search-toolbar">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaExistencia"
+                title="Buscar producto" aria-expanded="false">
+            <i class="fas fa-search"></i>
+        </button>
+        <input type="text" id="filtroTextoExistencia" name="texto" class="form-control form-control-sm ml-2 d-none"
+               value="@filtro.Texto" placeholder="Producto / texto" autocomplete="off" style="max-width:280px;" />
+    </div>
+
     <div class="table-responsive tabla-full js-sync-scroll-body">
         <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales js-sticky-first-col">
             <thead class="thead-light">
@@ -278,6 +289,7 @@ else
                     {
                         <th class="text-right text-nowrap existencia-col-total">Total</th>
                     }
+                    <th class="text-right text-nowrap existencia-col-estadostock d-none">Estado Stock</th>
                     <th class="existencia-col-toggle"></th>
                 </tr>
             </thead>
@@ -285,11 +297,14 @@ else
                 @foreach (var producto in productos)
                 {
                     string detailId = "detalleExistencia_" + producto.IdCorte;
+                    float totalStockProducto = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.StockActual ?? 0f);
+                    float totalPuntoStockProducto = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.PuntoStock ?? 0f);
+                    float estadoStockValor = totalStockProducto - totalPuntoStockProducto;
+                    string claseEstadoStock = estadoStockValor < 0 ? "text-danger font-weight-bold" : estadoStockValor > 0 ? "text-success font-weight-bold" : "text-warning font-weight-bold";
                     <tr class="existencia-producto-row"
                         data-detail-target="#@detailId"
                         data-texto="@producto.TextoBusqueda"
-                        data-estados="@producto.EstadosFila"
-                        data-tienestock="@(producto.TieneStockPositivo ? "1" : "0")">
+                        data-estados="@producto.EstadosFila">
                         <td class="existencia-col-producto-cell">
                             <div class="existencia-producto-wrap">
                                 <div class="existencia-producto-desc" title="@producto.Corte">@producto.Corte</div>
@@ -328,17 +343,23 @@ else
                                 @(signoDif + dif.ToString("N3"))
                                 @if (equivalenteUnidadesDif != null)
                                 {
-                                    <span class="existencia-producto-codigo">@equivalenteUnidadesDif</span>
+                                    <span class="existencia-producto-codigo">@equivalenteUnidadesDif (pto: @celda.PuntoStock.ToString("N3"))</span>
                                 }
                             </td>
                         }
                         @if (mostrarTotal)
                         {
-                            float totalStock = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.StockActual ?? 0f);
                             <td class="text-right text-nowrap existencia-col-total" title="Suma de stock en todas las sucursales">
-                                @totalStock.ToString("N3")
+                                @totalStockProducto.ToString("N3")
                             </td>
                         }
+                        <td class="text-right text-nowrap existencia-col-estadostock d-none @claseEstadoStock" title="Total menos punto de stock (sucursales visibles)">
+                            @estadoStockValor.ToString("N3")
+                            @if (estadoStockValor < 0)
+                            {
+                                <span class="existencia-producto-codigo">Faltante</span>
+                            }
+                        </td>
                         <td class="text-center existencia-col-toggle-cell">
                             <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
                                 <i class="far fa-plus-square"></i>

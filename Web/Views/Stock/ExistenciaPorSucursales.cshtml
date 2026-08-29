@@ -9,12 +9,6 @@
     var filtro = Model != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
     string fechaHasta = filtro.FechaHasta.HasValue ? filtro.FechaHasta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
     string fechaMinima = filtro.FechaMinimaConsulta.HasValue ? filtro.FechaMinimaConsulta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
-    string fechaMinimaCorta = filtro.FechaMinimaConsulta.HasValue ? filtro.FechaMinimaConsulta.Value.ToString("dd/MM/yyyy") : "";
-    string detalleUltimosCierres = filtro.UltimosCierresPorSucursal != null && filtro.UltimosCierresPorSucursal.Any()
-        ? string.Join(" · ", filtro.UltimosCierresPorSucursal
-            .OrderBy(x => x.Sucursal)
-            .Select(x => x.Sucursal + ": " + x.FechaUltimoCierre.ToString("dd/MM/yyyy HH:mm")))
-        : "";
     var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
     long empresaCuit = usuarioSesion != null && usuarioSesion.Empresa != null ? usuarioSesion.Empresa.Cuit : 0;
     int intervaloAutoMinutos = empresaCuit == 20306210786 ? 15 : 30;
@@ -36,6 +30,28 @@
                             </select>
                         </div>
 
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
+                            <!-- Fecha hasta ya no se elige a mano: siempre se recalcula a la fecha/hora
+                                 exacta del momento de la busqueda (manual o autoactualizada, ver el
+                                 submit del form en el script). El datepicker/label visibles ya no
+                                 aportan nada, asi que se saca de la vista -- sigue viajando oculto
+                                 para no romper el resto de la logica (min de fecha, serialize del form). -->
+                            <input type="hidden" id="filtroFechaHastaExistencia" name="fechaHasta" value="@fechaHasta" min="@fechaMinima" />
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarExistencia">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+                            </button>
+                        </div>
+
+                        <div class="form-group mb-0 existencia-check-wrap">
+                            <div class="custom-control custom-switch existencia-check">
+                                <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosExistencia">
+                                <label class="custom-control-label" for="switchFiltrosAvanzadosExistencia">Filtros avanzados</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="existencia-filtros-avanzados-grid d-none" id="panelFiltrosAvanzadosExistencia">
                         <div class="form-group mb-0">
                             <label class="stock-filtro-label" for="filtroTipoExistencia">Tipo</label>
                             <select id="filtroTipoExistencia" name="tipo" class="form-control">
@@ -77,46 +93,6 @@
                                     <option value="@estado" @(string.Equals(estado, filtro.EstadoStock, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@estado</option>
                                 }
                             </select>
-                        </div>
-
-                        <div class="form-group mb-0 existencia-check-wrap">
-                            <div class="custom-control custom-switch existencia-check">
-                                <input type="checkbox" class="custom-control-input" id="filtroSoloConStockExistencia" name="soloConStock" @(filtro.SoloConStock ? "checked" : "")>
-                                <label class="custom-control-label" for="filtroSoloConStockExistencia">Solo con stock</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stock-filtros-row existencia-filtros-row-bottom">
-                        <div class="form-group mb-0">
-                            <input type="text" id="filtroTextoExistencia" name="texto" class="form-control" value="@filtro.Texto" placeholder="Producto / texto" />
-                        </div>
-
-                        <div class="form-group mb-0">
-                            <label class="stock-filtro-label existencia-label-fecha-hasta" for="filtroFechaHastaExistencia">
-                                Fecha hasta
-                                <small class="text-muted existencia-fecha-minima-inline" id="lblFechaMinimaExistencia" title="@detalleUltimosCierres">
-                                    @if (filtro.FechaMinimaConsulta.HasValue)
-                                    {
-                                        <text>— Cálculo desde @fechaMinimaCorta</text>
-                                    }
-                                    else
-                                    {
-                                        <text>— sin cierre de stock registrado</text>
-                                    }
-                                </small>
-                            </label>
-                            <div class="input-group">
-                                <input type="datetime-local" id="filtroFechaHastaExistencia" name="fechaHasta" class="form-control" value="@fechaHasta" min="@fechaMinima" />
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-outline-secondary" id="btnAhoraExistencia">
-                                        <i class="fas fa-clock mr-1"></i>Ahora
-                                    </button>
-                                    <button type="submit" class="btn btn-primary existencia-btn-buscar-inline" id="btnBuscarExistencia">
-                                        <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -169,10 +145,14 @@
     }
 
     .existencia-filtros-row-top,
-    .existencia-filtros-row-bottom,
+    .existencia-filtros-avanzados-grid,
     .existencia-estado-grid {
         display: grid;
         gap: .65rem;
+    }
+
+    .existencia-filtros-avanzados-grid {
+        margin-top: .65rem;
     }
 
     .existencia-check-wrap {
@@ -222,18 +202,6 @@
         font-size: .76rem;
     }
 
-    .existencia-label-fecha-hasta {
-        display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: .3rem;
-    }
-
-    .existencia-fecha-minima-inline {
-        font-weight: 400;
-        font-size: .72rem;
-    }
-
     .existencia-sucursales-page .existencia-estado-card .card-body {
         padding: .62rem .82rem !important;
     }
@@ -248,12 +216,6 @@
 
     .existencia-sucursales-page .existencia-estado-item strong {
         font-size: .84rem;
-    }
-
-    .input-group-append .existencia-btn-buscar-inline {
-        margin-left: .45rem !important;
-        border-top-left-radius: .25rem !important;
-        border-bottom-left-radius: .25rem !important;
     }
 
     @@media (min-width: 1200px) {
@@ -293,12 +255,12 @@
         }
 
         .existencia-filtros-row-top {
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-columns: 2fr 1fr auto;
+            align-items: end;
         }
 
-        .existencia-filtros-row-bottom {
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: end;
+        .existencia-filtros-avanzados-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
         .existencia-estado-grid {
@@ -308,20 +270,23 @@
     }
 
     @@media (min-width: 768px) and (max-width: 1199.98px) {
-        .existencia-filtros-row-top,
+        .existencia-filtros-row-top {
+            grid-template-columns: 2fr 1fr auto;
+            align-items: end;
+        }
+
         .existencia-estado-grid {
             grid-template-columns: 1fr 1.5fr auto;
         }
 
-        .existencia-filtros-row-bottom {
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: end;
+        .existencia-filtros-avanzados-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
     @@media (max-width: 767.98px) {
         .existencia-filtros-row-top,
-        .existencia-filtros-row-bottom,
+        .existencia-filtros-avanzados-grid,
         .existencia-estado-grid {
             grid-template-columns: 1fr;
         }
@@ -372,8 +337,7 @@
                     fechaHasta: $("#filtroFechaHastaExistencia").val() || "",
                     tipo: $("#filtroTipoExistencia").val() || "",
                     idProveedor: $("#filtroProveedorExistencia").val() || "0",
-                    idMarca: $("#filtroMarcaExistencia").val() || "0",
-                    soloConStock: $("#filtroSoloConStockExistencia").is(":checked") ? "1" : "0"
+                    idMarca: $("#filtroMarcaExistencia").val() || "0"
                 };
             }
 
@@ -435,7 +399,7 @@
 
             function aplicarEstadoStockExistencia() {
                 var mostrar = $switchEstadoStock.is(":checked");
-                $contenedor.find(".existencia-dif-col").toggleClass("d-none", !mostrar);
+                $contenedor.find(".existencia-dif-col, .existencia-col-estadostock").toggleClass("d-none", !mostrar);
             }
 
             function toggleDetalleExistencia(target) {
@@ -452,17 +416,14 @@
             function aplicarFiltrosVisuales() {
                 var texto = ($("#filtroTextoExistencia").val() || "").trim().toUpperCase();
                 var estado = ($("#filtroEstadoExistencia").val() || "Todos").trim().toUpperCase();
-                var soloConStock = $("#filtroSoloConStockExistencia").is(":checked");
 
                 $contenedor.find(".existencia-producto-row").each(function () {
                     var $row = $(this);
                     var textoRow = ($row.attr("data-texto") || "").toUpperCase();
                     var estados = ($row.attr("data-estados") || "").toUpperCase().split("|");
-                    var tieneStock = ($row.attr("data-tienestock") || "") === "1";
                     var coincideTexto = !texto || textoRow.indexOf(texto) >= 0;
                     var coincideEstado = estado === "TODOS" || estados.indexOf(estado) >= 0;
-                    var coincideStock = !soloConStock || tieneStock;
-                    var visible = coincideTexto && coincideEstado && coincideStock;
+                    var visible = coincideTexto && coincideEstado;
                     var target = $row.attr("data-detail-target");
                     var $detalle = target ? $(target) : $();
 
@@ -574,7 +535,6 @@
                     }
 
                     autoActualizacionDisparadaPorTimer = true;
-                    $("#filtroFechaHastaExistencia").val(ahoraLocalInput()).trigger("change");
                     $form.trigger("submit");
                 }, intervaloAutoMinutos * 60 * 1000);
 
@@ -621,13 +581,20 @@
 
             $form.on("submit", function (e) {
                 e.preventDefault();
+                // Fecha hasta siempre se recalcula al momento exacto de la busqueda (manual o
+                // autoactualizada) -- unico punto de entrada para ambos triggers, ya que la
+                // autoactualizacion tambien dispara este mismo submit.
+                $("#filtroFechaHastaExistencia").val(ahoraLocalInput());
                 setBuscando(true);
                 $lblEstado.text("Consultando stock...");
 
                 $.ajax({
                     url: buscarUrl,
                     type: "GET",
-                    data: $form.serialize()
+                    // #filtroTextoExistencia ya no es descendiente de $form (vive arriba de la
+                    // tabla) -- $form.serialize() no lo incluiria, y el servidor si lo usa como
+                    // filtro real (LIKE en el SP), asi que se agrega a mano.
+                    data: $form.serialize() + "&texto=" + encodeURIComponent($("#filtroTextoExistencia").val() || "")
                 }).done(function (html) {
                     $contenedor.html(html);
                     consultaAplicada = obtenerEstadoConsulta();
@@ -691,10 +658,6 @@
                 ultimoToqueDetalle = { target: "", time: 0 };
             });
 
-            $("#btnAhoraExistencia").on("click", function () {
-                $("#filtroFechaHastaExistencia").val(ahoraLocalInput()).trigger("change");
-            });
-
             $switchExpandir.on("change", aplicarExpandidoGlobal);
             $switchEstadoStock.on("change", aplicarEstadoStockExistencia);
             $switchAuto.on("change", function () {
@@ -712,15 +675,46 @@
                 }
             });
 
-            $("#filtroTextoExistencia, #filtroSucursalExistencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia, #filtroSoloConStockExistencia")
+            $("#filtroSucursalExistencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia")
                 .on("input change", function () {
                     actualizarPendiente();
                     aplicarFiltrosVisuales();
                 });
 
+            // #filtroTextoExistencia vive dentro del contenedor que se reemplaza entero por AJAX
+            // en cada Buscar (ver el "done" del submit mas abajo) -- un binding directo como el de
+            // arriba quedaria huerfano despues del primer refresh. Delegado sobre $contenedor, que
+            // si persiste (solo se le reemplaza el innerHTML).
+            $contenedor.on("input change", "#filtroTextoExistencia", function () {
+                actualizarPendiente();
+                aplicarFiltrosVisuales();
+            });
+
+            // Mismo patron toggle+input colapsable que #btnToggleBusquedaLineasStock en
+            // Stock/Editar -- tambien delegado sobre $contenedor por la misma razon de arriba.
+            $contenedor.on("click", "#btnToggleBusquedaExistencia", function () {
+                var $btn = $(this);
+                var $input = $contenedor.find("#filtroTextoExistencia");
+                var mostrar = $input.hasClass("d-none");
+                $input.toggleClass("d-none", !mostrar);
+                $btn.attr("aria-expanded", mostrar ? "true" : "false");
+
+                if (mostrar) {
+                    $input.focus();
+                } else {
+                    $input.val("");
+                    actualizarPendiente();
+                    aplicarFiltrosVisuales();
+                }
+            });
+
             $("#filtroSucursalExistencia").on("change", actualizarFechaMinimaExistencia);
 
             $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
+
+            $("#switchFiltrosAvanzadosExistencia").on("change", function () {
+                $("#panelFiltrosAvanzadosExistencia").toggleClass("d-none", !$(this).is(":checked"));
+            });
 
             aplicarFiltrosVisuales();
             aplicarEstadoStockExistencia();

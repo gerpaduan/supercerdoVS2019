@@ -68,16 +68,6 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
-            {
-                TempData["AlertType"] = "warning";
-                TempData["AlertTitle"] = "Permisos";
-                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(Permisos.Venta.NuevaVenta, DateTime.Today, user.Id) ?? "No tiene permisos para abrir puntos de expendio.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            AsegurarSucursalUsuario(user);
-
             // Mismo patron que VentasController.POS: "duplicado" habilita abrir una segunda
             // ventana del mismo POS (boton "Duplicar POS", pos-multi-instance.js), cada una
             // con su propio posInstanceId para que el heartbeat entre pestanas las distinga.
@@ -88,10 +78,32 @@ namespace Web.Controllers
                 ? Guid.NewGuid().ToString("N")
                 : posInstanceId.Trim();
 
+            // Acceso a POS Expendio: sin permiso especifico, cualquier usuario logueado puede
+            // entrar y operarlo (decision del usuario, ver DECISIONS.md) -- la unica excepcion es
+            // la cuenta compartida de produccion, que en vez de un permiso pide autorizar con
+            // usuario+contraseña real de un empleado. La vista muestra el modal de login si
+            // RequiereOperadorPOS viene en true. El operador autorizado (BaseController.
+            // ResolverOperadorPOS) gobierna despues los permisos finos (ej. Bonificar abajo)
+            // dentro de esta instancia de POS.
+            Entidades.Usuario operador = user;
+            bool requiereOperadorPOS = false;
+            if (user.EsUsuarioProduccion)
+            {
+                operador = PermisosHelper.ObtenerOperadorPOS(Session, posInstanceIdNormalizado);
+                requiereOperadorPOS = operador == null;
+                ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            }
+            // Para que el topbar (_LayoutPOS.cshtml) muestre quien esta operando realmente,
+            // ademas de "User Produccion" -- null para cualquier usuario normal.
+            ViewBag.OperadorPOSNombre = (user.EsUsuarioProduccion && !requiereOperadorPOS) ? operador.Nombre : null;
+
+            AsegurarSucursalUsuario(user);
+
             var model = CrearModeloNuevo(user, sector);
             ViewBag.IdConsumidorFinal = oPersonaN.getConsumidorFinal() != null ? oPersonaN.getConsumidorFinal().IdPersona : 0;
-            ViewBag.PuedeBonificarPuntoExpendio = PermisosHelper.TienePermiso(
-                Session,
+            ViewBag.PuedeBonificarPuntoExpendio = !requiereOperadorPOS && PermisosHelper.TienePermiso(
+                operador,
+                empresa,
                 Permisos.Venta.Bonificar,
                 DateTime.Today,
                 Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
@@ -99,8 +111,28 @@ namespace Web.Controllers
             ViewBag.Seccion = "Punto de expendio";
             ViewBag.PosModoInstancia = modoPosNormalizado;
             ViewBag.PosInstanceId = posInstanceIdNormalizado;
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.RequiereOperadorPOS = requiereOperadorPOS;
 
             return View("~/Views/PuntosExpendio/POS.cshtml", model);
+        }
+
+        // Step-up de credenciales del operador real (ver BaseController.ValidarOperadorPOS).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorPOS(int idUsuario, string clave, string posInstanceId)
+        {
+            return ValidarOperadorPOS(idUsuario, clave, posInstanceId, exigirPermisoVentas: false);
+        }
+
+        // Se llama al cerrar la vista de POS (beforeunload/pagehide, via sendBeacon) para no
+        // dejar la identidad del operador colgada en Session -- higiene, no la garantia real
+        // de "vuelve a pedir credenciales" (ver PermisosHelper.LimpiarOperadorPOS).
+        [HttpPost]
+        public JsonResult CerrarOperadorPOS(string posInstanceId)
+        {
+            PermisosHelper.LimpiarOperadorPOS(Session, posInstanceId);
+            return Json(new { ok = true });
         }
 
         public ActionResult ExpendiosGenerados()
@@ -401,14 +433,11 @@ namespace Web.Controllers
                 return Json(new { ok = false, mensaje = "La sesión expiró. Vuelva a ingresar." });
 
             DateTime fecha = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Today;
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.NuevaVenta, fecha, user.Id))
-            {
-                return Json(new
-                {
-                    ok = false,
-                    mensaje = ConstruirMensajePermisoFecha(Permisos.Venta.NuevaVenta, fecha, user.Id) ?? "No tiene permisos para guardar puntos de expendio."
-                });
-            }
+            // POS Expendio no exige "Ventas > Editar" a nadie -- ni para entrar, ni para
+            // autorizar como operador (ValidarOperadorPOS, exigirPermisoVentas: false), ni para
+            // guardar aca -- decision del usuario, ver DECISIONS.md. Cualquier usuario activo
+            // (o el operador que autorizo a la cuenta de produccion) puede finalizar un expendio.
+            var operador = ResolverOperadorPOS(request != null ? request.PosInstanceId : null, user);
 
             AsegurarSucursalUsuario(user);
 
@@ -470,7 +499,7 @@ namespace Web.Controllers
                 Observaciones = model.Observaciones ?? "",
                 NroRemito = "",
                 SerialCPU = "",
-                Vendedor = user
+                Vendedor = operador
             };
 
             try
@@ -515,7 +544,9 @@ namespace Web.Controllers
                 {
                     ok = true,
                     idExpendio = expendio.IdExpendio,
-                    redirectUrl = Url.Action("POS", "PuntosExpendio", new { sector = expendio.Sector }),
+                    // posInstanceId es obligatorio aca -- sin el, el operador de produccion ya
+                    // autorizado se pierde al volver a POS y se le vuelve a pedir el login.
+                    redirectUrl = Url.Action("POS", "PuntosExpendio", new { sector = expendio.Sector, posInstanceId = request != null ? request.PosInstanceId : null }),
                     imprimirUrl = Url.Action("ImprimirTicket", "PuntosExpendio", new { id = expendio.IdExpendio }),
                     imprimirPayloadUrl = Url.Action("ImprimirTicketPayload", "PuntosExpendio", new { id = expendio.IdExpendio }),
                     pdfUrl = pdfUrl,
@@ -568,13 +599,14 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public JsonResult MisExpendiosPOS(string fechaDesde = null, string fechaHasta = null, int top = 100)
+        public JsonResult MisExpendiosPOS(string fechaDesde = null, string fechaHasta = null, int top = 100, string posInstanceId = null)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null || user.IdSucursal == 0)
                 return Json(new { ok = false, mensaje = "Sesión inválida o sucursal no seleccionada." }, JsonRequestBehavior.AllowGet);
 
             AsegurarSucursalUsuario(user);
+            var operador = ResolverOperadorPOS(posInstanceId, user);
 
             try
             {
@@ -582,7 +614,7 @@ namespace Web.Controllers
                 DateTime fechaHastaValue;
                 DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out fechaDesdeValue) ? (DateTime?)fechaDesdeValue.Date : null;
                 DateTime? fechaHastaFiltro = DateTime.TryParse(fechaHasta, out fechaHastaValue) ? (DateTime?)fechaHastaValue.Date : null;
-                DataTable dt = oVentaN.obtenerExpendiosPorUsuario(user.IdSucursal, user.Id, top <= 0 ? 100 : top, fechaDesdeFiltro, fechaHastaFiltro);
+                DataTable dt = oVentaN.obtenerExpendiosPorUsuario(user.IdSucursal, operador.Id, top <= 0 ? 100 : top, fechaDesdeFiltro, fechaHastaFiltro);
                 string sucursalNombre = user.Sucursal != null ? user.Sucursal.SucursalNombre : "";
 
                 var items = dt.AsEnumerable()

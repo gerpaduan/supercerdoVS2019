@@ -4,7 +4,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
-<div class="container-fluid">
+<div class="container-fluid dispositivos-seguros-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h1 class="h4 mb-1 text-gray-800">Dispositivos seguros</h1>
@@ -103,6 +103,71 @@
         </div>
     </div>
 </div>
+
+<style>
+    .dispositivos-seguros-page {
+        font-size: .9rem;
+    }
+
+    .dispositivos-seguros-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .dispositivos-seguros-page .form-control,
+    .dispositivos-seguros-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .dispositivos-seguros-page label,
+    .dispositivos-seguros-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .dispositivos-seguros-page .alert,
+    .dispositivos-seguros-page .small,
+    .dispositivos-seguros-page .text-muted,
+    .dispositivos-seguros-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    .dispositivos-seguros-page .table {
+        font-size: .84rem;
+    }
+
+    .dispositivos-seguros-page .table th,
+    .dispositivos-seguros-page .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .dispositivos-seguros-page .table thead th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .dispositivos-seguros-page .form-control,
+        .dispositivos-seguros-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+
+        .dispositivos-seguros-page .table {
+            font-size: .81rem;
+        }
+
+        .dispositivos-seguros-page .table thead th {
+            font-size: .69rem !important;
+        }
+    }
+</style>
 
 <script>
     // Los scripts de _LayoutBase.cshtml (jQuery incluido) se cargan al final del body, despues

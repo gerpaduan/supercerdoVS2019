@@ -407,7 +407,8 @@
                 type: 'GET',
                 data: {
                     fechaDesde: fechaDesde,
-                    fechaHasta: fechaHasta
+                    fechaHasta: fechaHasta,
+                    posInstanceId: config.posInstanceId || ''
                 },
                 dataType: 'json',
                 cache: false
@@ -645,28 +646,34 @@
             clickIfEnabled('#btnFinalizar');
         });
 
-        // Muestra la identificacion del cliente debajo del input, igual que POS
-        // Venta (Views/Ventas/POS.cshtml), solo cuando difiere de la razon social
+        // El input principal de cliente carga la identificacion (CUIT/DNI) cuando
+        // el cliente seleccionado tiene una cargada; si no tiene, se deja la razon
+        // social (comportamiento previo). Debajo se muestra la razon social como
+        // dato secundario, solo cuando difiere de lo que quedo en el input
         // (si son iguales o no hay identificacion, no aporta nada mostrarla).
         function setClienteIdentificacionVisual(identificacion, razonSocial) {
-            var razon = (razonSocial || $('#razonSocial').val() || '').toString().trim();
+            var razon = (razonSocial || '').toString().trim();
             var identificacionNormalizada = (identificacion || '').toString().trim();
-            var $wrap = $('#clienteIdentificacionWrap');
-            var $texto = $('#clienteIdentificacionTexto');
-            var $valor = $('#clienteIdentificacionValor');
+            var $wrap = $('#clienteRazonSocialWrap');
+            var $texto = $('#clienteRazonSocialTexto');
+            var $valor = $('#clienteRazonSocialValor');
 
             if (!$wrap.length || !$texto.length) return;
+
+            if (identificacionNormalizada) {
+                $('#razonSocial').val(identificacionNormalizada);
+            }
 
             var mostrar = !!identificacionNormalizada &&
                 !!razon &&
                 identificacionNormalizada.localeCompare(razon, undefined, { sensitivity: 'accent' }) !== 0;
 
             if ($valor.length) {
-                $valor.val(identificacionNormalizada);
+                $valor.val(razon);
             }
 
-            $texto.text(identificacionNormalizada);
-            $wrap.attr('title', identificacionNormalizada);
+            $texto.text(razon);
+            $wrap.attr('title', razon);
             $wrap.toggleClass('d-none', !mostrar);
         }
         window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
@@ -693,15 +700,33 @@
             });
         });
 
+        // Siempre incluye posInstanceId al navegar de vuelta a POS -- si se arma la URL a mano
+        // sin el (como pasaba antes en los dos lugares de abajo), el servidor genera un
+        // posInstanceId nuevo, no encuentra al operador ya autorizado (cuenta de produccion) y
+        // vuelve a pedir el login sin necesidad.
+        function urlPosConSector(sector) {
+            var params = [];
+            if (sector) params.push('sector=' + encodeURIComponent(sector));
+            if (config.posInstanceId) params.push('posInstanceId=' + encodeURIComponent(config.posInstanceId));
+            return config.urlPos + (params.length ? ('?' + params.join('&')) : '');
+        }
+
         $(document).on('click', '.js-sector-item', function () {
             var sector = $(this).data('sector');
             if (!sector) return;
-            window.location.href = config.urlPos + '?sector=' + encodeURIComponent(sector);
+            window.PosNavegandoInternoPOS = true;
+            window.location.href = urlPosConSector(sector);
         });
 
-        if (!config.sectorSeleccionado) {
+        // Usuario de produccion sin operador autorizado todavia: el modal de login (ver
+        // PosOperadorConfig en PuntosExpendio/POS.cshtml) va primero -- recien cuando se
+        // autoriza y la pagina se recarga corresponde mostrar el de sector (si sigue sin
+        // elegirse). Bootstrap no apila bien dos modales abiertos a la vez.
+        var esperandoOperadorPOS = !!(window.PosOperadorConfig && window.PosOperadorConfig.requiereOperadorPOS);
+
+        if (!config.sectorSeleccionado && !esperandoOperadorPOS) {
             openSectorModal();
-        } else {
+        } else if (config.sectorSeleccionado) {
             actualizarSectorUI(config.sectorSeleccionado);
         }
 
@@ -726,7 +751,8 @@
                 Sector: $('#sectorPuntoExpendio').val(),
                 IdentificacionCliente: ($('#razonSocial').val() || '').trim(),
                 Observaciones: POSState.getObservaciones(),
-                LineasVenta: lineas
+                LineasVenta: lineas,
+                PosInstanceId: config.posInstanceId || ''
             };
         }
 
@@ -786,7 +812,8 @@
         $('#btnCancelarItem').on('click', function () {
             var lineas = POSState.getLineas().filter(function (linea) { return !!linea; });
             if (!lineas.length) {
-                window.location.href = config.urlPos + ($('#sectorPuntoExpendio').val() ? ('?sector=' + encodeURIComponent($('#sectorPuntoExpendio').val())) : '');
+                window.PosNavegandoInternoPOS = true;
+                window.location.href = urlPosConSector($('#sectorPuntoExpendio').val());
                 return;
             }
 

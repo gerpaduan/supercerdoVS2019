@@ -1,8 +1,23 @@
 ﻿@{
     var user = Session["Usuario"] as Entidades.Usuario;
-    
+
+    // Se lee y se limpia en el mismo request: el modal de sucursal post-login se dispara una
+    // sola vez, en la primera pagina con _LayoutBase despues de loguearse (el flag lo setea
+    // LoginController.Index cuando la empresa tiene 2+ sucursales), y no vuelve a aparecer en
+    // navegaciones posteriores de la misma sesion.
+    bool mostrarModalSucursalPostLogin = Session["MostrarModalSucursalPostLogin"] as bool? == true;
+    Session["MostrarModalSucursalPostLogin"] = null;
+
     var controller = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString();
     var action = HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString();
+
+    // Login de operador para modulos de consulta (Ventas/Index, DetalleVenta, Lineas -- ver
+    // docs/DECISIONS.md): asi es como el operador autorizado "pierde el permiso al hacer clic
+    // afuera" -- este layout se renderiza en TODA la app, asi que en cada request que no sea al
+    // modulo Ventas, si hay un operador de modulo activo en Session se limpia aca mismo. Server
+    // side, sin beacon/pagehide -- no depende de que el navegador dispare nada a tiempo.
+    Web.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Session, controller);
+
     bool esAdmin = user != null && user.Admin;
     bool esUsuarioProduccionActual = user != null && user.EsUsuarioProduccion;
     bool puedeAdministrarUsuarios = esAdmin;
@@ -254,22 +269,27 @@
                 </a>
             </li>
 
-            @if (!esUsuarioProduccionActual)
-            {
-                <li class="nav-item">
-                    <a class="nav-link" href="@Url.Action("Index", "Ventas")">
-                        <i class="fas fa-fw fa-cash-register"></i>
-                        <span>Ventas</span>
-                    </a>
-                </li>
+            @* Ventas (listado/reportes): visible tambien para produccion desde que Index/Lineas/
+               DetalleVenta piden autorizar con un operador real -- ver DECISIONS.md "Login de
+               operador para el modulo Ventas". El control de acceso real ya no es la
+               visibilidad de este link, es el gate dentro de cada accion. *@
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("Index", "Ventas")">
+                    <i class="fas fa-fw fa-cash-register"></i>
+                    <span>Ventas</span>
+                </a>
+            </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="@Url.Action("POS", "Ventas")">
-                        <i class="fas fa-fw fa-store"></i>
-                        <span>Punto de Venta</span>
-                    </a>
-                </li>
-            }
+            @* Punto de Venta: mismo criterio que "Ventas" arriba -- autoriza con user+contraseña
+               real de un empleado (ver DECISIONS.md "Usuario de produccion puede abrir POS
+               Venta / POS Expendio") -- igual que "Punto de Expendio", que ya se mostraba
+               siempre. *@
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("POS", "Ventas")">
+                    <i class="fas fa-fw fa-store"></i>
+                    <span>Punto de Venta</span>
+                </a>
+            </li>
 
             <li class="nav-item">
                 <a class="nav-link" href="@Url.Action("CajasAbiertas", "Cajas")">
@@ -637,7 +657,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="@Url.Content("~/Scripts/app/swal-single-confirm.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/app/save-success-alert.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-request-loading.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-request-loading.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-productos.js?v=7")"></script>
     <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
     <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
@@ -651,6 +671,14 @@
     </script>
 
     <script src="@Url.Content("~/Scripts/app/modal-sucursales.js")"></script>
+    @if (mostrarModalSucursalPostLogin)
+    {
+        <script>
+            $(function () {
+                $('#modalSucursales').modal('show');
+            });
+        </script>
+    }
     <script src="@Url.Content("~/Content/js/scripts.js")"></script>
     <script src="@Url.Content("~/Scripts/app/table-scroll-sync.js?v=20260518-1")"></script>
     <script src="@Url.Content("~/Scripts/app/print-agent.js?v=4")"></script>

@@ -506,6 +506,17 @@ body.app-shell .btn-outline-danger {
     background: transparent;
 }
 
+/* El selector de arriba (con "body" antepuesto) tiene mas especificidad que el
+   ":hover" propio de Bootstrap, asi que le gana y el fondo se queda transparente
+   al pasar el mouse -- pero el texto de Bootstrap si pasa a blanco en hover, sin
+   competencia. Resultado: texto blanco sobre fondo transparente (blanco de la
+   tarjeta/modal) = invisible. Sin este override explicito el hover queda roto. */
+body.app-shell .btn-outline-secondary:hover {
+    background: var(--ui-surface-strong);
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text);
+}
+
 body.app-shell .btn-outline-danger {
     color: #9e4b35;
     border-color: #d7b0a3;

@@ -1,0 +1,58 @@
+@{
+    // Pantalla dedicada de login del operador para el modulo "Compras" -- ver
+    // ComprasController.AutorizarModuloCompras y docs/DECISIONS.md ("Login de operador para el
+    // modulo Compras"). Usuario de produccion sin operador autorizado todavia: se lo trae aca en
+    // vez de tapar el contenido real de Index/Editar con un @@if -- esas vistas no fueron
+    // diseñadas para tolerar un Model nulo. Al autorizar, vuelve directo a returnUrl.
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    ViewBag.Title = "Autorizar operador";
+    ViewBag.Seccion = "Compras";
+    string returnUrlModulo = ViewBag.ReturnUrlModuloCompras as string ?? Url.Action("Index", "Home");
+}
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid mt-5">
+    <div class="text-center">
+        <h4 class="text-primary"><i class="fas fa-user-shield mr-1"></i> Autorizate para continuar</h4>
+        <p class="text-gray-500 mb-4">Esta sesión usa la cuenta de producción -- identificate con tu usuario y contraseña para ver Compras.</p>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script>
+        (function () {
+            var usuariosActivos = @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa as System.Collections.Generic.List<object> ?? new System.Collections.Generic.List<object>()));
+            var urlAutorizar = '@Url.Action("AutorizarOperadorModuloCompras", "Compras")';
+            var returnUrlModulo = @Html.Raw(Json.Encode(returnUrlModulo));
+
+            function pedirOperador() {
+                window.SeleccionUsuario.abrir({
+                    titulo: 'Autorizate para operar en Compras',
+                    usuarios: usuariosActivos,
+                    requierePassword: true,
+                    validarUrl: urlAutorizar
+                }).then(function () {
+                    window.location.href = returnUrlModulo;
+                }).catch(function () {
+                    // Cancelo el login (Escape/backdrop/"Cancelar"): sin operador no hay Compras.
+                    window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+
+            // Red de seguridad: si el modal se cierra sin resolver (ver seleccion-usuario.js,
+            // su propio hidden.bs.modal), el Promise de .abrir() no se resuelve NI se rechaza --
+            // sin esto el .catch() no correria nunca y la pantalla quedaria colgada.
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (!$(this).data('resuelto')) {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                }
+            });
+
+            pedirOperador();
+        })();
+    </script>
+}

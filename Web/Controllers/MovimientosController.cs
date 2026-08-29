@@ -155,16 +155,30 @@ namespace Web.Controllers
             return View("~/Views/Movimientos/Lineas.cshtml", model);
         }
 
-        public ActionResult Nuevo()
+        public ActionResult Nuevo(int idUsuarioCreador = 0)
         {
-            return Editar(0);
+            return Editar(0, idUsuarioCreador);
         }
 
-        public ActionResult Editar(int id = 0)
+        public ActionResult Editar(int id = 0, int idUsuarioCreador = 0)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+
+            // Usuario de produccion: la seleccion de "quien esta haciendo esto" se pide ANTES de
+            // entrar a la vista (no al guardar como era antes, ver docs/DECISIONS.md, "Mover la
+            // seleccion de usuario..."). Sin contraseña -- mismo mecanismo que ya existia al
+            // guardar (BaseController.ResolverUsuarioCreador), solo que ahora el id viaja en la
+            // URL de entrada en vez de resolverse recien en el POST.
+            if (user.EsUsuarioProduccion && idUsuarioCreador <= 0)
+            {
+                return RedirectToAction("Index", "SeleccionUsuario", new
+                {
+                    returnUrl = Request.RawUrl,
+                    cancelUrl = Url.Action("Index", "Movimientos")
+                });
+            }
 
             MovimientoEditVm model;
             bool puedeModificar = true;
@@ -212,6 +226,20 @@ namespace Web.Controllers
             ConfigurarAdvertenciaFechaEnVivo("FechaMovimiento", Permisos.Movimiento.NuevoMovimiento, user.Id);
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+
+            if (user.EsUsuarioProduccion)
+            {
+                // Ya se selecciono antes de entrar (gate de arriba) -- se precarga para que el JS
+                // no vuelva a preguntar al guardar, y se muestra el nombre del operador real en
+                // el campo "Usuario" en vez de "User Produccion" (ver docs/DECISIONS.md).
+                var operador = ResolverUsuarioCreador(idUsuarioCreador, user);
+                ViewBag.IdUsuarioCreadorPreseleccionado = operador.Id;
+                model.UsuarioNombre = operador.Nombre;
+            }
+            else
+            {
+                ViewBag.IdUsuarioCreadorPreseleccionado = 0;
+            }
 
             return View("~/Views/Movimientos/Editar.cshtml", model);
         }

@@ -35,6 +35,7 @@ namespace Web.Models
         {
             Sucursales = new List<SelectListItem>();
             Activo = true;
+            PuedeOperarPOS = true;
         }
 
         public int Id { get; set; }
@@ -54,6 +55,9 @@ namespace Web.Models
         public int IdSucursalUser { get; set; }
         public bool PermitirLoginFueraSucursal { get; set; }
         public bool EsUsuarioProduccion { get; set; }
+        // Atajo de UI para otorgar "Ventas > Editar" (Permisos.Venta.NuevaVenta) sin pasar por
+        // la grilla completa de Usuarios/Permisos.cshtml -- ver UsuariosController.Guardar.
+        public bool PuedeOperarPOS { get; set; }
         public int IdEmpresa { get; set; }
         public List<SelectListItem> Sucursales { get; set; }
     }

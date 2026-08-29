@@ -10,6 +10,10 @@
     {
         Response.Redirect("~/Login/Index");
     }
+
+    // Entrar a POS tambien cuenta como "salir de Ventas" para el operador de modulo -- ver
+    // docs/DECISIONS.md y el mismo chequeo en _LayoutBase.cshtml.
+    Web.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Session, controller);
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -322,6 +326,10 @@
                                     @(Session["Usuario"] != null
                                         ? ((Entidades.Usuario)Session["Usuario"]).Nombre
                                         : "")
+                                    @if (ViewBag.OperadorPOSNombre != null)
+                                    {
+                                        <text>&middot; Operador: @ViewBag.OperadorPOSNombre</text>
+                                    }
                                 </span>
 
                                 <i class="fas fa-user-circle fa-2x text-light"></i>
@@ -331,20 +339,29 @@
                                  aria-labelledby="userDropdown">
                                 @* Mismo criterio que _LayoutBase.cshtml: el nombre de usuario esta
                                    oculto en el topbar por debajo de "lg" (span de arriba, d-none
-                                   d-lg-inline) -- en responsive no se ve hasta desplegar el menu. *@
+                                   d-lg-inline) -- en responsive no se ve hasta desplegar el menu.
+                                   OperadorPOSNombre (ViewBag, seteado por VentasController.POS /
+                                   PuntosExpendioController.POS) solo viene con valor cuando la
+                                   sesion es la cuenta compartida de produccion y ya hay un
+                                   operador real autorizado -- para cualquier usuario normal
+                                   siempre es null. *@
                                 <h6 class="dropdown-header d-lg-none">
                                     @(Session["Usuario"] != null
                                         ? ((Entidades.Usuario)Session["Usuario"]).Nombre
                                         : "")
+                                    @if (ViewBag.OperadorPOSNombre != null)
+                                    {
+                                        <br /><small class="font-weight-normal">Operador: @ViewBag.OperadorPOSNombre</small>
+                                    }
                                 </h6>
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalSucursales">
+                                <span class="dropdown-item disabled" title="Para cambiar de sucursal, cierre el punto de venta y hágalo desde el menú principal.">
                                     <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
                                     <strong id="lblSucursalActual">
                                         @(Session["Usuario"] != null
                                             ? ((Entidades.Usuario)Session["Usuario"]).SucursalNombre
                                             : "")
                                     </strong>
-                                </a>
+                                </span>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
                                     <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -374,8 +391,6 @@
     <div id="globalAntiForgeryToken" style="display:none;">
         @Html.AntiForgeryToken()
     </div>
-
-    @Html.Partial("_ModalSucursales")
 
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
@@ -451,7 +466,7 @@
     <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=25")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-sucursales.js")"></script>
 <script src="@Url.Content("~/Scripts/app/forma-pago.js?v=30")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-request-loading.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-request-loading.js?v=5")"></script>
     <script src="@Url.Content("~/Scripts/app/modal-productos.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/factura-electronica.js?v=15")"></script>
     <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>

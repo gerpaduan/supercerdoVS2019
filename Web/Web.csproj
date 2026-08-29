@@ -149,6 +149,7 @@
     <Compile Include="Controllers\PuntosExpendioController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\ReportesController.cs" />
+    <Compile Include="Controllers\SeleccionUsuarioController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\StockController.cs" />
     <Compile Include="Controllers\SucursalController.cs" />
@@ -166,6 +167,7 @@
     </Compile>
     <Compile Include="Infrastructure\NegocioFactory.cs" />
     <Compile Include="Helpers\CierreCajaStepUpRateLimiter.cs" />
+    <Compile Include="Helpers\PosOperadorStepUpRateLimiter.cs" />
     <Compile Include="Helpers\EgresosCajaPolicy.cs" />
     <Compile Include="Helpers\LoginRateLimiter.cs" />
     <Compile Include="Helpers\PermisosHelper.cs" />

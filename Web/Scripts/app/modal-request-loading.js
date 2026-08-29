@@ -469,6 +469,18 @@
             hide();
         });
 
+    // Si el navegador restaura esta pagina desde bfcache (event.persisted), cualquier
+    // timer de trackNavigation() que haya quedado armado antes de salir no se cancelo:
+    // quedo congelado, no destruido. Al resucitar puede dispararse mostrando el modal
+    // sin ninguna solicitud real en curso (bug: "Cargando solicitud" fantasma al volver
+    // con el boton atras del navegador). Tambien se limpian requests trackeados que
+    // pudieran haber quedado a mitad de camino.
+    window.addEventListener('pageshow', function (e) {
+        if (!e.persisted) return;
+        trackedRequests = {};
+        hide();
+    });
+
     wireGlobalAjaxHandlers();
     wireFetchWrapper();
     if (isLayoutBasePage()) {

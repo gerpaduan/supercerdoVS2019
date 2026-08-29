@@ -18,6 +18,7 @@ namespace Web.Models.DTO
         public string Observaciones { get; set; }
         public List<LineaVentaDto> LineasVenta { get; set; }
         public List<int> ListaExpendios { get; set; }
+        public string PosInstanceId { get; set; }
     }
 
 }

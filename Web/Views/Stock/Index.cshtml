@@ -432,6 +432,14 @@
 @section Scripts {
     <script>
         (function () {
+            // BUG real encontrado: restoreStateIfNeeded() (mas abajo) navega solo si la URL
+            // actual no tiene querystring -- pero el redirect de Guardar() tras un guardado
+            // exitoso ("/Stock", sin parametros) tambien cae en ese caso, asi que la restauracion
+            // de filtros pisaba esa pagina (y el TempData del cartel de exito) antes de que el
+            // usuario llegara a verla. Este flag corta la restauracion cuando hay un aviso
+            // pendiente. Ver docs/DECISIONS.md.
+            var hayAlertaPendiente = @Html.Raw((TempData["AlertMsg"] != null) ? "true" : "false");
+
             var draftKeyToClear = "@Html.Raw(HttpUtility.JavaScriptStringEncode(stockDraftKeyToClear))";
             if (draftKeyToClear && window.localStorage) {
                 try {
@@ -544,7 +552,7 @@
             }
 
             function restoreStateIfNeeded() {
-                if (!form || !window.sessionStorage || window.location.search) return;
+                if (!form || !window.sessionStorage || window.location.search || hayAlertaPendiente) return;
 
                 var raw = window.sessionStorage.getItem(storageKey);
                 if (!raw) return;

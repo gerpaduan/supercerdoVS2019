@@ -96,12 +96,38 @@ namespace Web.Controllers
             return View("~/Views/Shared/AccesoDenegado.cshtml");
         }
 
+        // Overload explicito, para cuando "quien opera" no es Session["Usuario"] (ej. el
+        // operador resuelto para el modulo Ventas de la cuenta de produccion, ver
+        // BaseController.ResolverOperadorModulo). Para un usuario normal, pasar ese mismo
+        // usuario acá es identico a la version basada en Session.
+        protected ActionResult VistaAccesoDenegado(string seccion, string permiso, System.DateTime? fecha, Entidades.Usuario usuarioExplicito, int idCreador = -1)
+        {
+            ViewBag.Title = seccion;
+            ViewBag.Seccion = seccion;
+            ViewBag.MensajePermiso = ConstruirMensajePermisoFecha(usuarioExplicito, permiso, fecha, idCreador);
+            return View("~/Views/Shared/AccesoDenegado.cshtml");
+        }
+
         protected string ConstruirMensajePermisoFecha(string permiso, System.DateTime? fecha, int idCreador = -1)
         {
             if (string.IsNullOrWhiteSpace(permiso) || !fecha.HasValue)
                 return null;
 
             var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
+            if (!fechaMinima.HasValue || fecha.Value.Date >= fechaMinima.Value.Date)
+                return null;
+
+            return idCreador >= 0
+                ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+        }
+
+        protected string ConstruirMensajePermisoFecha(Entidades.Usuario usuarioExplicito, string permiso, System.DateTime? fecha, int idCreador = -1)
+        {
+            if (string.IsNullOrWhiteSpace(permiso) || !fecha.HasValue)
+                return null;
+
+            var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(usuarioExplicito, permiso, idCreador);
             if (!fechaMinima.HasValue || fecha.Value.Date >= fechaMinima.Value.Date)
                 return null;
 
@@ -128,7 +154,25 @@ namespace Web.Controllers
             return true;
         }
 
-        protected bool AjustarFechaIndiceSegunLimiteYPermiso(string permiso, ref System.DateTime fecha, System.DateTime fechaLimiteSinPermiso, int idCreador = -1)
+        protected bool AjustarFechaSiNoTienePermiso(Entidades.Usuario usuarioExplicito, string permiso, ref System.DateTime fecha, int idCreador = -1)
+        {
+            var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(usuarioExplicito, permiso, idCreador);
+            if (!fechaMinima.HasValue || fecha.Date >= fechaMinima.Value.Date)
+                return false;
+
+            fecha = fechaMinima.Value.Date;
+            if (!EsSesionSoloLectura(HttpContext))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = idCreador >= 0
+                    ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                    : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+            }
+            return true;
+        }
+
+        protected bool AjustarFechaIndiceSegunLimiteYPermiso(string permiso, ref System.DateTime fecha, System.DateTime fechaLimiteSinPermiso, int idCreador = -1, bool mostrarAviso = true)
         {
             var limite = fechaLimiteSinPermiso.Date;
             var fechaAdvertencia = ObtenerFechaAdvertenciaIndice(permiso, fechaLimiteSinPermiso, idCreador);
@@ -139,7 +183,7 @@ namespace Web.Controllers
                 return false;
 
             fecha = fechaAdvertencia;
-            if (!EsSesionSoloLectura(HttpContext))
+            if (mostrarAviso && !EsSesionSoloLectura(HttpContext))
             {
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Permisos";
@@ -152,6 +196,20 @@ namespace Web.Controllers
         protected void ConfigurarAdvertenciaFechaEnVivo(string inputId, string permiso, int idCreador = -1)
         {
             var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(Session, permiso, idCreador);
+            if (!fechaMinima.HasValue)
+                return;
+
+            ViewBag.PermisoFechaInputId = inputId;
+            ViewBag.PermisoFechaMinimaIso = fechaMinima.Value.ToString("yyyy-MM-dd");
+            ViewBag.PermisoFechaMinimaIsoDateTime = fechaMinima.Value.ToString("yyyy-MM-ddT00:00:00");
+            ViewBag.PermisoFechaMensaje = idCreador >= 0
+                ? "No tiene permiso para crear o modificar registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + "."
+                : "No tiene permiso para ver registros anteriores a " + fechaMinima.Value.ToString("dd/MM/yyyy") + ".";
+        }
+
+        protected void ConfigurarAdvertenciaFechaEnVivo(Entidades.Usuario usuarioExplicito, string inputId, string permiso, int idCreador = -1)
+        {
+            var fechaMinima = PermisosHelper.ObtenerFechaMinimaPermitida(usuarioExplicito, permiso, idCreador);
             if (!fechaMinima.HasValue)
                 return;
 
@@ -243,6 +301,147 @@ namespace Web.Controllers
                 return usuarioSesion;
 
             return candidato;
+        }
+
+        // Resuelve quien opera realmente dentro de una instancia de POS (posInstanceId) cuando
+        // el usuario logueado es la cuenta compartida de produccion: si ya se autoriz un
+        // operador real para esta instancia (ver PermisosHelper.RegistrarOperadorPOS), se usa
+        // ese en vez del de sesion -- gobierna tanto la atribucion (Vendedor/UsuarioInicio/
+        // UsuarioCierre) como los permisos finos dentro de POS (Bonificar, anular, etc.), que
+        // se chequean pasando el resultado de esto al overload de PermisosHelper.TienePermiso
+        // que recibe el usuario explicito. Para cualquier usuario normal devuelve el mismo
+        // usuario de sesion sin cambios -- cero impacto fuera de la cuenta de produccion.
+        protected Entidades.Usuario ResolverOperadorPOS(string posInstanceId, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion)
+                return usuarioSesion;
+
+            return PermisosHelper.ObtenerOperadorPOS(Session, posInstanceId) ?? usuarioSesion;
+        }
+
+        // Step-up de credenciales para que la cuenta compartida de produccion pueda operar
+        // POS Venta / POS Expendio: un usuario real tipea su propia contraseña. Mismo patron que
+        // CajasController.AutorizarAccionCierre, pero guardado en Session (VentasController/
+        // PuntosExpendioController no tienen [SessionState(ReadOnly)]) y sin expiracion por
+        // tiempo -- dura hasta que se cierre la vista de POS (posInstanceId nuevo en cada
+        // apertura fresca, ver PermisosHelper).
+        // exigirPermisoVentas: false en POS Expendio (decision del usuario, ver DECISIONS.md --
+        // cualquier usuario activo puede operar Expendio, no solo quien tiene "Ventas > Editar").
+        // POS Venta sigue exigiendolo (true, default) -- ahi si implica una venta real.
+        protected JsonResult ValidarOperadorPOS(int idUsuario, string clave, string posInstanceId, bool exigirPermisoVentas = true)
+        {
+            string sessionId = Session.SessionID;
+
+            TimeSpan retryAfter;
+            if (PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out retryAfter))
+            {
+                return Json(new
+                {
+                    ok = false,
+                    bloqueado = true,
+                    segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds)
+                });
+            }
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos, o el usuario no tiene permiso de Ventas.";
+
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(posInstanceId))
+            {
+                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            var candidato = oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            // BUG real encontrado: sin el 5to parametro (idCreador), Negocio.Usuario.tienePermiso
+            // toma el default -1 y entra a la rama que chequea "Ver" (FormConsulta) en vez de
+            // "Editar" (FormEdicion) -- para el formulario "Ventas", FormConsulta="formVentas" y
+            // FormEdicion="formNuevaVenta" nunca son iguales, asi que esta llamada SIEMPRE daba
+            // false sin importar el permiso que tuviera el usuario (salvo Admin, que tiene
+            // bypass total). Pasando validado.Id (>= 0) se fuerza la rama de "Editar", que es la
+            // que corresponde. Ver docs/DECISIONS.md.
+            bool tienePermiso = !exigirPermisoVentas ||
+                (validado != null && PermisosHelper.TienePermiso(validado, empresa, Permisos.Venta.NuevaVenta, DateTime.Now, validado.Id));
+            if (validado == null || !validado.Activo || !tienePermiso)
+            {
+                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            PosOperadorStepUpRateLimiter.Reset(sessionId);
+            PermisosHelper.RegistrarOperadorPOS(Session, posInstanceId, validado);
+
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        // Igual que ResolverOperadorPOS pero para el operador de modulo (Ventas/Index,
+        // DetalleVenta, Lineas) -- sin posInstanceId, una sola clave por sesion (ver
+        // PermisosHelper.ObtenerOperadorModulo). Para cualquier usuario normal devuelve el
+        // mismo usuario de sesion sin cambios -- cero impacto fuera de la cuenta de produccion.
+        protected Entidades.Usuario ResolverOperadorModulo(string modulo, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion)
+                return usuarioSesion;
+
+            return PermisosHelper.ObtenerOperadorModulo(Session, modulo) ?? usuarioSesion;
+        }
+
+        // Step-up de credenciales para que la cuenta compartida de produccion pueda navegar un
+        // modulo de consulta (hoy solo "Ventas": Index, DetalleVenta, Lineas). A diferencia de
+        // ValidarOperadorPOS, esto SOLO valida identidad+contraseña -- no exige ningun permiso
+        // puntual aca, porque los chequeos de permiso que ya existen en esas pantallas
+        // (Permisos.Venta.VerVentas), una vez que apuntan al operador resuelto en vez de a
+        // Session, son los que de verdad deciden que puede ver (mismo criterio que se uso para
+        // relajar el paso de autorizar operador en POS Expendio, ver docs/DECISIONS.md).
+        protected JsonResult ValidarOperadorModulo(int idUsuario, string clave, string modulo)
+        {
+            string sessionId = Session.SessionID;
+
+            TimeSpan retryAfter;
+            if (PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out retryAfter))
+            {
+                return Json(new
+                {
+                    ok = false,
+                    bloqueado = true,
+                    segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds)
+                });
+            }
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(modulo))
+            {
+                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var oUsuarioN = Web.Infrastructure.NegocioFactory.CrearUsuario(empresa, param);
+            var candidato = oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo)
+            {
+                PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            PosOperadorStepUpRateLimiter.Reset(sessionId);
+            PermisosHelper.RegistrarOperadorModulo(Session, modulo, validado);
+
+            return Json(new { ok = true, nombre = validado.Nombre });
         }
 
         protected int ValorInt(DataRow row, string columna)

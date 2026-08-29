@@ -13,56 +13,64 @@
         string.Equals(Model.TipoReporteSeleccionado, "Proyeccion Ventas vs Stock", StringComparison.OrdinalIgnoreCase);
     var esReporteBalance =
         string.Equals(Model.TipoReporteSeleccionado, "Balance Economico", StringComparison.OrdinalIgnoreCase);
+    // Los 4 filtros de abajo viven detras del switch "Filtros avanzados" (oculto por defecto,
+    // ver reportes.js). El filtro de Producto (codigo/descripcion) se movio arriba de la tabla
+    // de resultados, estilo /Stock/Editar -- ya no vive en este partial.
+    var hayFiltrosAvanzados = Model.MostrarFiltroTipoProducto || Model.MostrarFiltroMarca
+        || Model.MostrarFiltroEstadoStock || Model.MostrarFiltroAgrupacionTemporal;
 }
 
-<div class="reportes-filtros-grid reportes-filtros-secundarios mt-3">
-    @if (Model.MostrarFiltroBusquedaProducto)
-    {
-        <div class="form-group mb-0">
-            <label class="stock-filtro-label" for="busquedaProductoReporte">Producto</label>
-            <input type="text" id="busquedaProductoReporte" name="busquedaProducto" class="form-control filtro-vivo" value="@Model.BusquedaProducto" placeholder="Codigo o descripcion" />
-        </div>
-    }
-
-    @if (Model.MostrarFiltroTipoProducto)
-    {
-        <div class="form-group mb-0">
-            <label class="stock-filtro-label" for="tipoProductoReporte">Tipo de producto</label>
-            @Html.DropDownList("tipoProducto", Model.TiposProducto, new { @class = "form-control filtro-vivo", id = "tipoProductoReporte" })
-        </div>
-    }
-
-    @if (Model.MostrarFiltroMarca)
-    {
-        <div class="form-group mb-0">
-            <label class="stock-filtro-label" for="marcaReporte">Marca</label>
-            @Html.DropDownList("marcaId", Model.Marcas, new { @class = "form-control filtro-vivo", id = "marcaReporte" })
-        </div>
-    }
-
-    @if (Model.MostrarFiltroEstadoStock)
-    {
-        <div class="form-group mb-0">
-            <label class="stock-filtro-label" for="estadoStockReporte">Estado stock</label>
-            @Html.DropDownList("estadoStock", Model.EstadosStock, new { @class = "form-control filtro-vivo", id = "estadoStockReporte" })
-        </div>
-    }
-
-    @if (Model.MostrarFiltroAgrupacionTemporal)
-    {
-        <div class="form-group mb-0">
-            <label class="stock-filtro-label" for="agrupacionTemporalReporte">Agrupacion grafico</label>
-            @Html.DropDownList("agrupacionTemporal", Model.AgrupacionesTemporales, new { @class = "form-control filtro-principal", id = "agrupacionTemporalReporte" })
-        </div>
-    }
-
-    <div class="form-group mb-0 reportes-filtro-accion">
-        <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
-        <button type="submit" class="btn btn-primary btn-block" id="btnBuscarReporte">
-            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
-        </button>
+<div class="d-flex flex-wrap align-items-center justify-content-between mt-3">
+    <div>
+        @if (hayFiltrosAvanzados)
+        {
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosReporte" />
+                <label class="custom-control-label" for="switchFiltrosAvanzadosReporte">Filtros avanzados</label>
+            </div>
+        }
     </div>
+    <button type="submit" class="btn btn-primary" id="btnBuscarReporte">
+        <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+    </button>
 </div>
+
+@if (hayFiltrosAvanzados)
+{
+    <div class="reportes-filtros-grid reportes-filtros-secundarios mt-2 d-none" id="panelFiltrosAvanzadosReporte">
+        @if (Model.MostrarFiltroTipoProducto)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="tipoProductoReporte">Tipo de producto</label>
+                @Html.DropDownList("tipoProducto", Model.TiposProducto, new { @class = "form-control filtro-vivo", id = "tipoProductoReporte" })
+            </div>
+        }
+
+        @if (Model.MostrarFiltroMarca)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="marcaReporte">Marca</label>
+                @Html.DropDownList("marcaId", Model.Marcas, new { @class = "form-control filtro-vivo", id = "marcaReporte" })
+            </div>
+        }
+
+        @if (Model.MostrarFiltroEstadoStock)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="estadoStockReporte">Estado stock</label>
+                @Html.DropDownList("estadoStock", Model.EstadosStock, new { @class = "form-control filtro-vivo", id = "estadoStockReporte" })
+            </div>
+        }
+
+        @if (Model.MostrarFiltroAgrupacionTemporal)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="agrupacionTemporalReporte">Agrupacion grafico</label>
+                @Html.DropDownList("agrupacionTemporal", Model.AgrupacionesTemporales, new { @class = "form-control filtro-principal", id = "agrupacionTemporalReporte" })
+            </div>
+        }
+    </div>
+}
 
 @if (esReporteBalance)
 {

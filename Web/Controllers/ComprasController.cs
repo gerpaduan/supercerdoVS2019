@@ -45,12 +45,20 @@ namespace Web.Controllers
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            // Usuario de produccion: exige autorizar con un operador real antes de entrar --
+            // mismo mecanismo que Ventas/Index (ver docs/DECISIONS.md, "Login de operador para
+            // el modulo Compras"). Para cualquier usuario normal ObtenerOperadorModulo nunca
+            // aplica (EsUsuarioProduccion es false), cero cambio de comportamiento.
+            if (user.EsUsuarioProduccion && PermisosHelper.ObtenerOperadorModulo(Session, "Compras") == null)
+                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.RawUrl });
+
+            var operador = ResolverOperadorModulo("Compras", user);
+            if (!PermisosHelper.TienePermiso(operador, empresa, Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                if (AjustarFechaSiNoTienePermiso(Permisos.Compra.VerCompras, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+                if (AjustarFechaSiNoTienePermiso(operador, Permisos.Compra.VerCompras, ref desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
                     hasta = desde;
                 else
-                    return VistaAccesoDenegado("Compras", Permisos.Compra.VerCompras, desde, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+                    return VistaAccesoDenegado("Compras", Permisos.Compra.VerCompras, desde, operador, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             }
 
             bool permiteMediaRes = PermiteMediaRes(user);
@@ -75,7 +83,7 @@ namespace Web.Controllers
             ViewBag.Texto = texto ?? "";
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
-            ConfigurarAdvertenciaFechaEnVivo("fechaDesde", Permisos.Compra.VerCompras, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            ConfigurarAdvertenciaFechaEnVivo(operador, "fechaDesde", Permisos.Compra.VerCompras, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
             ViewBag.PermiteMediaRes = permiteMediaRes;
             ViewBag.TotalCantMedias = CalcularTotalCantMedias(dt);
             ViewBag.TotalKg = CalcularTotalKg(dt);
@@ -182,8 +190,20 @@ namespace Web.Controllers
             string origenNormalizado = NormalizarOrigen(origen);
             bool desdePos = EsOrigenPos(origenNormalizado);
 
+            // Usuario de produccion: exige autorizar con un operador real antes de entrar --
+            // solo en la pantalla completa, no en el modo embebido en POS (desdePos), que ya
+            // tiene su propio operador de POS autenticado (mismo criterio que DetalleVenta con
+            // !modal, ver docs/DECISIONS.md).
+            if (!desdePos && user.EsUsuarioProduccion && PermisosHelper.ObtenerOperadorModulo(Session, "Compras") == null)
+                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.RawUrl });
+
+            var operador = ResolverOperadorModulo("Compras", user);
+
             string permiso = id > 0 ? Permisos.Compra.ModificarCompra : Permisos.Compra.NuevaCompra;
-            int idCreador = user.Id;
+            // idCreador para "compra nueva" es el operador que efectivamente va a figurar como
+            // creador (ver Guardar) -- para un usuario normal, operador.Id == user.Id, identico
+            // a lo que habia antes.
+            int idCreador = operador.Id;
             Entidades.Compra compra = null;
 
             if (id > 0)
@@ -192,11 +212,11 @@ namespace Web.Controllers
                 if (compra == null || compra.IdCompra == 0)
                     return HttpNotFound("No se encontró la compra solicitada.");
 
-                idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
+                idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : operador.Id;
             }
 
             DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
-            bool puedeEditar = PermisosHelper.TienePermiso(Session, permiso, fechaPermiso, idCreador);
+            bool puedeEditar = PermisosHelper.TienePermiso(operador, empresa, permiso, fechaPermiso, idCreador);
             if (!puedeEditar)
             {
                 if (desdePos)
@@ -204,7 +224,7 @@ namespace Web.Controllers
 
                 TempData["AlertType"] = "warning";
                 TempData["AlertTitle"] = "Permisos";
-                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(permiso, fechaPermiso, idCreador) ?? "No tiene permisos para operar compras.";
+                TempData["AlertMsg"] = ConstruirMensajePermisoFecha(operador, permiso, fechaPermiso, idCreador) ?? "No tiene permisos para operar compras.";
                 return RedirectToAction("Index");
             }
 
@@ -214,7 +234,7 @@ namespace Web.Controllers
 
             model.SubmissionToken = Guid.NewGuid().ToString("N");
             CargarViewBags(model, user);
-            ConfigurarAdvertenciaFechaEnVivo("FechaCompra", permiso, idCreador);
+            ConfigurarAdvertenciaFechaEnVivo(operador, "FechaCompra", permiso, idCreador);
 
             if (desdePos)
                 return PartialView("~/Views/Compras/Editar.cshtml", model);
@@ -230,6 +250,34 @@ namespace Web.Controllers
         public ActionResult ModificarCompra(int id, string origen = "layout")
         {
             return RedirectToAction("Editar", new { id = id, origen = origen });
+        }
+
+        // Pantalla dedicada de login del operador para el modulo "Compras" (Index/Detalle/
+        // Editar/Guardar, ver docs/DECISIONS.md) -- usuario de produccion sin operador
+        // autorizado todavia. Mismo patron que VentasController.AutorizarModuloVentas: se
+        // redirige aca en vez de tapar el contenido con un @if porque Editar.cshtml no fue
+        // diseñada para tolerar un Model nulo. Al autorizar, vuelve a returnUrl.
+        [HttpGet]
+        public ActionResult AutorizarModuloCompras(string returnUrl)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Index", "Login");
+
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.ReturnUrlModuloCompras = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "Home");
+            ViewBag.Title = "Autorizar operador";
+            ViewBag.Seccion = "Compras";
+            return View("~/Views/Compras/AutorizarModulo.cshtml");
+        }
+
+        // Step-up de credenciales del operador real para el modulo (ver
+        // BaseController.ValidarOperadorModulo).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorModuloCompras(int idUsuario, string clave)
+        {
+            return ValidarOperadorModulo(idUsuario, clave, "Compras");
         }
 
         [HttpGet]
@@ -328,17 +376,35 @@ namespace Web.Controllers
                 return Json(new { ok = false, mensaje = "Esta compra ya se guardó (o se está guardando). Si necesitás registrar otra, volvé a abrir el formulario." });
             }
 
+            // Libera el lock antes de devolver cualquier falla de validacion/negocio -- el lock
+            // solo debe seguir tomado cuando la compra SE GUARDO de verdad (para frenar el
+            // doble-click real de after-success, ver comentario de ClaveLockGuardarCompra). Antes
+            // de este fix, una falla de validacion (proveedor invalido, linea sin producto, caja
+            // no abierta, etc.) dejaba el lock tomado 30 minutos igual, y el reintento -- incluso
+            // ya corregido el dato que fallaba -- se topaba con el mensaje de "ya se guardo" en vez
+            // del error real.
+            JsonResult Fallo(string mensaje)
+            {
+                MemoryCache.Default.Remove(claveLock);
+                return Json(new { ok = false, mensaje = mensaje });
+            }
+
             try
             {
                 var user = Session["Usuario"] as Entidades.Usuario;
                 if (user == null)
-                    return Json(new { ok = false, mensaje = "Sesión inválida." });
+                    return Fallo("Sesión inválida.");
+
+                // Operador real resuelto para produccion (ver docs/DECISIONS.md, "Login de
+                // operador para el modulo Compras") -- para un usuario normal es el mismo
+                // objeto que `user`, cero cambio de comportamiento.
+                var operador = ResolverOperadorModulo("Compras", user);
 
                 string origenNormalizado = NormalizarOrigen(model != null ? model.Origen : null);
                 bool desdePos = EsOrigenPos(origenNormalizado);
 
                 if (model == null)
-                    return Json(new { ok = false, mensaje = "No se recibieron datos de la compra." });
+                    return Fallo("No se recibieron datos de la compra.");
 
                 if (desdePos)
                 {
@@ -347,29 +413,29 @@ namespace Web.Controllers
 
                 string errorValidacion = ValidarModelo(model, user, desdePos);
                 if (!string.IsNullOrWhiteSpace(errorValidacion))
-                    return Json(new { ok = false, mensaje = errorValidacion });
+                    return Fallo(errorValidacion);
 
                 Entidades.Compra compraActual = null;
                 if (model.IdCompra > 0)
                 {
                     compraActual = oCompraN.findById_convertToCompra(model.IdCompra);
                     if (compraActual == null || compraActual.IdCompra == 0)
-                        return Json(new { ok = false, mensaje = "No se encontró la compra a modificar." });
+                        return Fallo("No se encontró la compra a modificar.");
                 }
 
                 string permiso = model.IdCompra > 0 ? Permisos.Compra.ModificarCompra : Permisos.Compra.NuevaCompra;
                 DateTime fechaPermiso = model.FechaCompra;
-                int idCreador = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
-                if (!PermisosHelper.TienePermiso(Session, permiso, fechaPermiso, idCreador))
-                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar esta compra." });
+                int idCreador = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : operador.Id;
+                if (!PermisosHelper.TienePermiso(operador, empresa, permiso, fechaPermiso, idCreador))
+                    return Fallo("No tiene permisos para guardar esta compra.");
 
                 Entidades.Persona proveedor = oPersonaN.findById(model.IdProveedor);
                 if (proveedor == null || proveedor.IdPersona <= 0)
-                    return Json(new { ok = false, mensaje = "Seleccione un proveedor válido." });
+                    return Fallo("Seleccione un proveedor válido.");
 
                 Entidades.Sucursal sucursal = oSucursalN.findById(model.IdSucursal);
                 if (sucursal == null || sucursal.IdSucursal <= 0)
-                    return Json(new { ok = false, mensaje = "Seleccione una sucursal válida." });
+                    return Fallo("Seleccione una sucursal válida.");
 
                 var compra = compraActual ?? new Entidades.Compra();
                 compra.IdCompra = model.IdCompra;
@@ -383,8 +449,10 @@ namespace Web.Controllers
                 compra.Sucursal = sucursal;
                 compra.EnCtaCte = model.EnCtaCte;
                 compra.Estado = compraActual != null ? compraActual.Estado ?? "" : "";
-                compra.CreadoPor = compraActual != null ? compraActual.CreadoPor : user;
-                compra.ActualizadoPor = compraActual != null ? user : null;
+                // Atribucion al operador real, no a la cuenta de produccion -- mismo criterio
+                // que Vendedor/UsuarioInicio en POS (ver docs/DECISIONS.md).
+                compra.CreadoPor = compraActual != null ? compraActual.CreadoPor : operador;
+                compra.ActualizadoPor = compraActual != null ? operador : null;
 
                 var lineasMediaRes = new List<Entidades.MediaRes>();
                 var lineasCortes = new List<Entidades.CortePorCompra>();
@@ -412,7 +480,7 @@ namespace Web.Controllers
                             ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
                             : (empresa != null ? empresa.IdEmpresa : 0);
                         if (corte == null || corte.IdCorte <= 0 || (idEmpresaSesionLinea > 0 && corte.IdEmpresa != idEmpresaSesionLinea))
-                            return Json(new { ok = false, mensaje = "No se encontró el producto de la línea " + index + "." });
+                            return Fallo("No se encontró el producto de la línea " + index + ".");
 
                         lineasCortes.Add(new Entidades.CortePorCompra
                         {
@@ -437,7 +505,7 @@ namespace Web.Controllers
                 if (desdePos)
                 {
                     if (!oCierreN.validarCajaAbiertaVendedor(compra.FechaCompra, sucursal, user))
-                        return Json(new { ok = false, mensaje = "La fecha y hora de la compra debe corresponder a una caja abierta del vendedor." });
+                        return Fallo("La fecha y hora de la compra debe corresponder a una caja abierta del vendedor.");
 
                     if (model.IdCompra > 0)
                     {
@@ -480,14 +548,13 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                // Solo se libera el lock en error: el usuario tiene que poder reintentar de
-                // inmediato si la compra no se guardo. En el camino de exito NO se libera antes
-                // de tiempo -- si se liberara aca, un segundo click que llega despues de que el
-                // primer POST ya termino (el caso real y mas comun de "guardar rapido dos veces",
-                // no dos requests literalmente simultaneos) pasaria sin trabas. Se deja expirar
-                // solo, cubriendo toda la ventana de 4s desde el primer submit.
-                MemoryCache.Default.Remove(claveLock);
-                return Json(new { ok = false, mensaje = "Error al guardar la compra. " + ex.Message });
+                // Igual que cualquier otra falla (ver Fallo() arriba): el lock se libera porque
+                // la compra no se guardo. En el camino de exito NO se libera antes de tiempo --
+                // si se liberara ahi, un segundo click que llega despues de que el primer POST ya
+                // termino (el caso real y mas comun de "guardar rapido dos veces", no dos
+                // requests literalmente simultaneos) pasaria sin trabas. Se deja expirar solo,
+                // cubriendo toda la ventana de 4s desde el primer submit.
+                return Fallo("Error al guardar la compra. " + ex.Message);
             }
         }
 
@@ -733,9 +800,13 @@ namespace Web.Controllers
                 return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
             }
 
-            if (!PermisosHelper.TienePermiso(Session, Permisos.Compra.VerCompras, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            // Chequeo contra el operador resuelto, no contra Session directamente -- sin esto,
+            // expandir una fila fallaria para el operador de produccion aunque Index ya lo haya
+            // dejado entrar (ver docs/DECISIONS.md, "Login de operador para el modulo Compras").
+            var operadorDetalle = ResolverOperadorModulo("Compras", user);
+            if (!PermisosHelper.TienePermiso(operadorDetalle, empresa, Permisos.Compra.VerCompras, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
-                ViewBag.ComprasDetalleError = ConstruirMensajePermisoFecha(Permisos.Compra.VerCompras, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())
+                ViewBag.ComprasDetalleError = ConstruirMensajePermisoFecha(operadorDetalle, Permisos.Compra.VerCompras, compra.FechaCompra, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())
                     ?? "No tiene permisos para consultar esta compra.";
                 return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
             }

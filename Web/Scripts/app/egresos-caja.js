@@ -256,6 +256,7 @@
             $("#tablaEgresosCaja").html(html);
             aplicarVistaCompleta();
             actualizarAvisoCambioFechas();
+            aplicarFiltroGastoEgresos();
         }).fail(function (xhr) {
             if (xhr && xhr.status === 403) {
                 mostrarPermisoPopup((xhr.responseText || xhr.statusText || "").replace(/<[^>]+>/g, "").trim());
@@ -484,6 +485,27 @@
         if (visibles === 0 && $("#tablaTiposEgresoCaja .tipo-egreso-row").length > 0) {
             $tbody.append('<tr class="tipos-egreso-empty-filter"><td colspan="5" class="text-center text-muted py-4">No hay tipos de egreso para el filtro seleccionado.</td></tr>');
         }
+    }
+
+    // Filtro Gasto/No-gasto de /Cajas/EgresosCaja -- 100% en vivo (cliente), sin ida al
+    // servidor: compara el data-esgasto que ya trae cada fila/tarjeta (ver EsGasto en
+    // _EgresosCajaTabla.cshtml) contra el valor elegido en #filtroGastoEgreso. Se llama al
+    // iniciar la pagina y despues de cada refresh de #tablaEgresosCaja (filtrar().done), para
+    // que el filtro elegido se mantenga aplicado sobre los resultados nuevos.
+    function aplicarFiltroGastoEgresos() {
+        var filtro = $("#filtroGastoEgreso").val() || "todos";
+
+        $("#tablaEgresosCaja .egreso-row, #tablaEgresosCaja .egreso-card").each(function () {
+            var $fila = $(this);
+            var esGasto = $fila.attr("data-esgasto") === "1";
+            var visible = filtro === "todos" || (filtro === "gastos" && esGasto) || (filtro === "no-gastos" && !esGasto);
+
+            $fila.toggleClass("d-none", !visible);
+
+            if ($fila.hasClass("egreso-row")) {
+                $fila.next(".egreso-detalle-row").toggleClass("d-none", !visible);
+            }
+        });
     }
 
     function refrescarComboTiposIndex() {
@@ -935,9 +957,13 @@
                 e.preventDefault();
                 filtrar({ usarFechasActuales: true });
             })
-            .off("change.egresosFiltroVivo", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso, #soloGastos")
-            .on("change.egresosFiltroVivo", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso, #soloGastos", function () {
+            .off("change.egresosFiltroVivo", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso")
+            .on("change.egresosFiltroVivo", "#filtroSucursalEgreso, #filtroUsuarioEgreso, #filtroTipoEgreso", function () {
                 filtrar({ usarFechasActuales: false });
+            })
+            .off("change.egresosFiltroGastoVivo", "#filtroGastoEgreso")
+            .on("change.egresosFiltroGastoVivo", "#filtroGastoEgreso", function () {
+                aplicarFiltroGastoEgresos();
             })
             .off("change.egresosFechas", "#filtroDesdeEgreso, #filtroHastaEgreso")
             .on("change.egresosFechas", "#filtroDesdeEgreso, #filtroHastaEgreso", function () {
@@ -1075,6 +1101,7 @@
         abrirTipos: abrirTipos,
         bindTipoForm: bindTipoForm,
         aplicarFiltrosTiposEgreso: aplicarFiltrosTiposEgreso,
+        aplicarFiltroGastoEgresos: aplicarFiltroGastoEgresos,
         refrescarComboTiposIndex: refrescarComboTiposIndex,
         bindForm: bindForm,
         bindComisionesForm: bindComisionesForm,
@@ -1090,5 +1117,6 @@
 
     $(function () {
         bindGeneral();
+        aplicarFiltroGastoEgresos();
     });
 })(window, window.jQuery);

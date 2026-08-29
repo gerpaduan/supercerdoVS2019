@@ -40,6 +40,15 @@
                     <button type="button" class="btn btn-sm @(filtroActividad == "pagoElectronico" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="pagoElectronico">Pagos electronicos</button>
                     <button type="button" class="btn btn-sm @(filtroActividad == "ctaCte" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="ctaCte">Cta Cte</button>
                 </div>
+                @* Sub-filtro Gasto/No-gasto: solo tiene sentido dentro del pill "Egresos de caja" --
+                   los otros 3 buckets ya excluyen por construccion lo que no es egreso real. Efimero
+                   y por-render: arranca siempre en "todos", en vivo (JS mas abajo), sin persistencia
+                   entre pills ni entre aperturas del modal. *@
+                <select id="filtroGastoMisActividades" class="form-control form-control-sm @(filtroActividad == "gastos" ? "" : "d-none")" style="width:auto;">
+                    <option value="todos">Todos</option>
+                    <option value="gastos">Solo gastos</option>
+                    <option value="no-gastos">No gastos</option>
+                </select>
                 <div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" id="switchVistaCompletaEgresos">
                     <label class="custom-control-label" for="switchVistaCompletaEgresos">Vista completa</label>
@@ -83,6 +92,24 @@
                 if (window.EgresosCaja && typeof window.EgresosCaja.abrirNuevo === "function") {
                     window.EgresosCaja.abrirNuevo();
                 }
+            })
+            .off("change.misActividadesFiltroGasto", "#filtroGastoMisActividades")
+            .on("change.misActividadesFiltroGasto", "#filtroGastoMisActividades", function () {
+                // Duplicado deliberado de EgresosCaja.aplicarFiltroGastoEgresos() (egresos-caja.js):
+                // este partial no comparte modulo JS con esa pagina y la logica es minima, asi que
+                // extraerla a un helper comun seria mas maquina que la que amerita esto.
+                var filtro = $(this).val() || "todos";
+                $("#misActividadesContenido .egreso-row, #misActividadesContenido .egreso-card").each(function () {
+                    var $fila = $(this);
+                    var esGasto = $fila.attr("data-esgasto") === "1";
+                    var visible = filtro === "todos" || (filtro === "gastos" && esGasto) || (filtro === "no-gastos" && !esGasto);
+
+                    $fila.toggleClass("d-none", !visible);
+
+                    if ($fila.hasClass("egreso-row")) {
+                        $fila.next(".egreso-detalle-row").toggleClass("d-none", !visible);
+                    }
+                });
             })
             .off("click.misActividadesFiltro", "[data-filtro-actividad]")
             .on("click.misActividadesFiltro", "[data-filtro-actividad]", function () {

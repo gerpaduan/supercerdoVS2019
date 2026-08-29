@@ -23,6 +23,12 @@ namespace Web.Models
 
         public string Estado { get; set; }
 
+        // Quien esta operando esta pantalla ahora -- con la cuenta de produccion, es el
+        // operador real ya seleccionado antes de entrar (ver StockController.Editar,
+        // docs/DECISIONS.md), no "User Produccion". Mismo campo que ya usan Movimientos y
+        // Elaborados.
+        public string UsuarioNombre { get; set; }
+
         public int IdProveedor { get; set; }
 
         public string ProveedorNombre { get; set; }

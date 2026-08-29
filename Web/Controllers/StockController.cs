@@ -120,7 +120,14 @@ namespace Web.Controllers
             DateTime desde = fechaDesde ?? fechaLimiteSinPermiso;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Stock.VerStock, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()) && hasta < desde)
+            // BUG real encontrado: sin mostrarAviso:fechaDesde.HasValue, este ajuste silencioso
+            // pisaba CUALQUIER TempData["AlertMsg"] pendiente en la primera carga sin querystring
+            // -- incluido el cartel de "guardado con exito" que deja Guardar() antes de redirigir
+            // aca. Mismo bug ya identificado y corregido en CajasController.CajasAbiertas (ver
+            // docs/DECISIONS.md, "/Cajas/CajasAbiertas ya no muestra el cartel..."); aca se aplica
+            // el mismo criterio: silencioso en la carga por defecto, se avisa solo si el usuario
+            // explicito una fecha (buscar).
+            if (AjustarFechaIndiceSegunLimiteYPermiso(Permisos.Stock.VerStock, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo(), mostrarAviso: fechaDesde.HasValue) && hasta < desde)
                 hasta = desde;
 
             int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (user.IdSucursal > 0 ? user.IdSucursal : 0);
@@ -436,20 +443,34 @@ namespace Web.Controllers
             return PartialView("~/Views/Productos/_StockPorSucursalesProductoModal.cshtml", model);
         }
 
-        public ActionResult Nuevo(string tipoCompra)
+        public ActionResult Nuevo(string tipoCompra, int idUsuarioCreador = 0)
         {
             string tipoNormalizado = NormalizarTipoOperacion(tipoCompra);
             if (string.IsNullOrWhiteSpace(tipoNormalizado))
                 return RedirectToAction("Index");
 
-            return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado });
+            return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador = idUsuarioCreador });
         }
 
-        public ActionResult Editar(int id = 0, string tipoCompra = "")
+        public ActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
                 return RedirectToAction("Index", "Login");
+
+            // Usuario de produccion: la seleccion de "quien esta haciendo esto" se pide ANTES de
+            // entrar a la vista (no al guardar como era antes, ver docs/DECISIONS.md, "Mover la
+            // seleccion de usuario..."). Sin contraseña -- mismo mecanismo que ya existia al
+            // guardar (BaseController.ResolverUsuarioCreador), solo que ahora el id viaja en la
+            // URL de entrada en vez de resolverse recien en el POST.
+            if (user.EsUsuarioProduccion && idUsuarioCreador <= 0)
+            {
+                return RedirectToAction("Index", "SeleccionUsuario", new
+                {
+                    returnUrl = Request.RawUrl,
+                    cancelUrl = Url.Action("Index", "Stock")
+                });
+            }
 
             Entidades.Compra compra = null;
             if (id > 0)
@@ -488,7 +509,13 @@ namespace Web.Controllers
             var model = compra != null ? CrearViewModelEdicion(compra, user) : CrearViewModelNuevo(user, tipoOperacion);
             model.SoloLecturaInicial = model.EsEdicion;
             model.PuedeHabilitarEdicion = !model.EsEdicion || puedeModificar;
-            CargarViewBags(model);
+            // Quien esta operando esta pantalla ahora (campo "Usuario" del formulario) -- con
+            // produccion, el operador real ya seleccionado antes de entrar, no "User Produccion"
+            // (ver docs/DECISIONS.md).
+            model.UsuarioNombre = user.EsUsuarioProduccion
+                ? ResolverUsuarioCreador(idUsuarioCreador, user).Nombre
+                : (user.Nombre ?? "");
+            CargarViewBags(model, idUsuarioCreador);
             ConfigurarAdvertenciaFechaEnVivo("FechaCompra", Permisos.Stock.AddOrEditStock, idCreador);
 
             return View("~/Views/Stock/Editar.cshtml", model);
@@ -509,6 +536,16 @@ namespace Web.Controllers
                 TempData["AlertMsg"] = "No se recibieron datos para guardar.";
                 return RedirectToAction("Index");
             }
+
+            // Usuario de produccion: el creador/actualizador real es el elegido antes de entrar
+            // a esta pantalla (idUsuarioCreador, ver StockController.Editar), no el usuario de
+            // sesion compartido. Resuelto ARRIBA de todo (a diferencia de antes, que se resolvia
+            // recien despues de las primeras validaciones) para que TODAS las ramas de error de
+            // abajo -- que re-renderizan este mismo formulario -- puedan reenviarlo y mostrar el
+            // nombre correcto sin volver a pedir el selector (BUG real encontrado: al re-renderizar
+            // sin este valor, ViewBag.IdUsuarioCreadorPreseleccionado volvia a 0 y el JS volvia a
+            // abrir el modal en cada submit -- ver docs/DECISIONS.md).
+            var usuarioCreador = ResolverUsuarioCreador(idUsuarioCreador, user);
 
             string tipoOperacion = NormalizarTipoOperacion(model.TipoCompra);
             Entidades.Compra compraActual = null;
@@ -536,7 +573,9 @@ namespace Web.Controllers
             if (!string.IsNullOrWhiteSpace(error))
             {
                 ModelState.AddModelError("", error);
-                CargarViewBags(model);
+                if (user.EsUsuarioProduccion)
+                    model.UsuarioNombre = usuarioCreador.Nombre;
+                CargarViewBags(model, idUsuarioCreador);
                 CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
@@ -547,22 +586,21 @@ namespace Web.Controllers
             if (!PermisosHelper.TienePermiso(Session, Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador))
             {
                 ModelState.AddModelError("", ConstruirMensajePermisoFecha(Permisos.Stock.AddOrEditStock, fechaPermiso, idCreador) ?? "No tiene permisos para guardar este movimiento.");
-                CargarViewBags(model);
+                if (user.EsUsuarioProduccion)
+                    model.UsuarioNombre = usuarioCreador.Nombre;
+                CargarViewBags(model, idUsuarioCreador);
                 CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
 
-            // Usuario de produccion: el creador/actualizador real es el elegido del modal
-            // (idUsuarioCreador), no el usuario de sesion compartido. Los chequeos de permiso de
-            // arriba siguen usando "user" (la sesion real) sin cambios.
-            var usuarioCreador = ResolverUsuarioCreador(idUsuarioCreador, user);
-
             Entidades.Sucursal sucursal = oSucursalN.findById(model.IdSucursal);
             if (sucursal == null || sucursal.IdSucursal <= 0)
             {
                 ModelState.AddModelError("", "Seleccione una sucursal válida.");
-                CargarViewBags(model);
+                if (user.EsUsuarioProduccion)
+                    model.UsuarioNombre = usuarioCreador.Nombre;
+                CargarViewBags(model, idUsuarioCreador);
                 CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
@@ -577,7 +615,9 @@ namespace Web.Controllers
             if (proveedor == null || proveedor.IdPersona <= 0)
             {
                 ModelState.AddModelError("", "No se pudo resolver la persona para este movimiento.");
-                CargarViewBags(model);
+                if (user.EsUsuarioProduccion)
+                    model.UsuarioNombre = usuarioCreador.Nombre;
+                CargarViewBags(model, idUsuarioCreador);
                 CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
@@ -613,7 +653,9 @@ namespace Web.Controllers
                 if (corte == null || corte.IdCorte <= 0 || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
                 {
                     ModelState.AddModelError("", "No se encontró el producto de la línea " + index + ".");
-                    CargarViewBags(model);
+                    if (user.EsUsuarioProduccion)
+                        model.UsuarioNombre = usuarioCreador.Nombre;
+                    CargarViewBags(model, idUsuarioCreador);
                     CargarDatosRelacionadosEnModelo(model, compraActual);
                     RecalcularTotales(model);
                     return View("~/Views/Stock/Editar.cshtml", model);
@@ -660,7 +702,9 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", "Error al guardar el movimiento de stock. " + ex.Message);
-                CargarViewBags(model);
+                if (user.EsUsuarioProduccion)
+                    model.UsuarioNombre = usuarioCreador.Nombre;
+                CargarViewBags(model, idUsuarioCreador);
                 CargarDatosRelacionadosEnModelo(model, compraActual);
                 RecalcularTotales(model);
                 return View("~/Views/Stock/Editar.cshtml", model);
@@ -1501,7 +1545,7 @@ namespace Web.Controllers
             return model;
         }
 
-        private void CargarViewBags(StockEditVm model)
+        private void CargarViewBags(StockEditVm model, int idUsuarioCreadorPreseleccionado = 0)
         {
             ViewBag.Title = model.EsEdicion ? "Modificar Stock" : "Nuevo Stock";
             ViewBag.Seccion = "Stock";
@@ -1512,6 +1556,14 @@ namespace Web.Controllers
             var usuarioSesion = Session["Usuario"] as Entidades.Usuario;
             ViewBag.EsUsuarioProduccion = usuarioSesion != null && usuarioSesion.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            // Ya se selecciono antes de entrar (gate en Editar, ver docs/DECISIONS.md) -- se
+            // precarga para que el JS no vuelva a preguntar al guardar. Los re-renders de Guardar
+            // (validacion fallida) no pasan este valor (queda en 0 = "no precargado") -- ahi
+            // sigue funcionando como red de seguridad y pregunta de nuevo, caso de borde aceptado.
+            ViewBag.IdUsuarioCreadorPreseleccionado =
+                usuarioSesion != null && usuarioSesion.EsUsuarioProduccion && idUsuarioCreadorPreseleccionado > 0
+                    ? ResolverUsuarioCreador(idUsuarioCreadorPreseleccionado, usuarioSesion).Id
+                    : 0;
         }
 
         private Dictionary<int, CompraIndexDetalleVm> ConstruirDetallesIndex(DataTable dt)

@@ -175,6 +175,16 @@
                             <i class="fas fa-clone"></i>
                             <span>Duplicar POS</span>
                         </button>
+                        @if (Session["Usuario"] != null && ((Entidades.Usuario)Session["Usuario"]).EsUsuarioProduccion)
+                        {
+                            <button type="button"
+                                    class="btn btn-outline-secondary btn-sm pos-btn-layout mr-2"
+                                    id="btnCambiarOperadorPOS"
+                                    title="Cambiar el empleado que está operando este POS">
+                                <i class="fas fa-user-clock"></i>
+                                <span>Cambiar operario</span>
+                            </button>
+                        }
                         <a class="btn btn-light btn-sm pos-btn-layout"
                            id="btnSalirPOS"
                            href="@Url.Action("Index", "Home")"
@@ -640,6 +650,10 @@ else
     @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 
 }
+
+@* Usuario de produccion: modal de login del operador (siempre presente, sea cual sea el
+   estado de caja/venta de arriba) -- ver seccion "Usuario de produccion" en DECISIONS.md. *@
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <div id="contenedorModalPersona"></div>
 
@@ -1321,6 +1335,7 @@ else
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes.js?v=3238")"></script>
     <script src="@Url.Content("~/Scripts/app/calculadora-billetes-targets.js?v=7")"></script>
     <script src="@Url.Content("~/Scripts/app/ventas-expendios-pos.js?v=9")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=10")"></script>
     <script>
     window.EgresosCajaUrls = {
@@ -1368,6 +1383,108 @@ else
 
     $(function () {
 
+        // BUG real encontrado: este bloque gigante de $(function(){...}) corta mas abajo con un
+        // return si no existe #pos-app/#inputCodigo (ver guard "Helpers" mas abajo) -- esos ids
+        // solo se renderizan dentro de @@if (cajaAbierta && Model != null) en el HTML de esta
+        // misma vista. Con usuario de produccion sin operador autorizado, el controller devuelve
+        // Model=null, ese HTML no se emite, el guard cortaba ANTES de llegar a definir
+        // PosOperadorConfig y de llamar a pedirOperador(true) -- el modal de login nunca se
+        // abria, ni se mostraba nada mas (pantalla en blanco bajo el topbar). Por eso este bloque
+        // vive ACA, antes del guard -- no depende de #pos-app, solo del modal de
+        // _ModalSeleccionUsuario.cshtml (que se renderiza siempre, mas abajo en el HTML). Ver
+        // docs/DECISIONS.md.
+
+        // Usuario de produccion (cuenta compartida): pide autorizar con usuario+contraseña real
+        // de un empleado antes de poder operar este POS (ver BaseController.ValidarOperadorPOS).
+        // Reusa el modal generico _ModalSeleccionUsuario.cshtml / seleccion-usuario.js, igual que
+        // el step-up de Cierre de Caja.
+        window.PosOperadorConfig = {
+            esUsuarioProduccion: @(Session["Usuario"] != null && ((Entidades.Usuario)Session["Usuario"]).EsUsuarioProduccion ? "true" : "false"),
+            requiereOperadorPOS: @((ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS) ? "true" : "false"),
+            posInstanceId: @Html.Raw(Json.Encode(posInstanceId)),
+            urlAutorizar: '@Url.Action("AutorizarOperadorPOS", "Ventas")',
+            urlCerrar: '@Url.Action("CerrarOperadorPOS", "Ventas")',
+            usuariosActivos: @Html.Raw(Json.Encode(ViewBag.UsuariosActivosEmpresa as System.Collections.Generic.List<object> ?? new System.Collections.Generic.List<object>()))
+        };
+
+        // pos-multi-instance.js hace deteccion de conflictos ("ya hay un POS abierto") y registra
+        // heartbeat -- no debe correr mientras todavia falta autenticar al operador (esa fase ni
+        // siquiera es "una instancia de POS" real todavia, y su init() podria interferir con el
+        // login -- por eso se pospone hasta que requiereOperadorPOS sea false).
+        if (!(window.PosOperadorConfig.esUsuarioProduccion && window.PosOperadorConfig.requiereOperadorPOS)) {
+            window.POSMultiInstance?.init?.();
+        }
+
+        (function () {
+            var cfg = window.PosOperadorConfig;
+            if (!cfg.esUsuarioProduccion) return;
+
+            var loginObligatorioPendiente = false;
+
+            // No confiar en que pos-multi-instance.js ya sincronizo posInstanceId a la URL
+            // (ensureUrlParams, dentro de su init(), que arriba se pospone a proposito mientras
+            // falta el login) -- un location.reload() plano perdia el posInstanceId y el servidor
+            // generaba uno nuevo en cada vuelta, mostrando el login en loop infinito. Se arma la URL
+            // a mano, explicita.
+            function recargarConOperadorAutorizado() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('posInstanceId', cfg.posInstanceId);
+                window.PosNavegandoInternoPOS = true;
+                window.location.href = url.toString();
+            }
+
+            function pedirOperador(esInicial) {
+                loginObligatorioPendiente = esInicial;
+                window.SeleccionUsuario.abrir({
+                    titulo: esInicial ? 'Autorizate para operar este Punto de Venta' : 'Cambiar operario',
+                    usuarios: cfg.usuariosActivos,
+                    requierePassword: true,
+                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId)
+                }).then(function () {
+                    loginObligatorioPendiente = false;
+                    // Recarga para que caja/permisos del nuevo operador se recalculen server-side.
+                    recargarConOperadorAutorizado();
+                }).catch(function () {
+                    if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+
+            // Red de seguridad: si el login era obligatorio y el modal se cierra sin resolver
+            // (Escape/backdrop/"Cancelar"/X), el Promise de SeleccionUsuario.abrir() nunca se
+            // resuelve NI se rechaza (ver seleccion-usuario.js) -- sin esto, .catch() nunca corre.
+            // La pagina ya corta antes de armar la venta mientras requiereOperadorPOS sea true (ver
+            // el early-return en VentasController.POS), esto es refuerzo de UX, no la unica
+            // proteccion.
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (loginObligatorioPendiente && !$(this).data('resuelto')) {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                }
+            });
+
+            if (cfg.requiereOperadorPOS) {
+                pedirOperador(true);
+            }
+
+            $(document).on('click', '#btnCambiarOperadorPOS', function () {
+                pedirOperador(false);
+            });
+
+            // BUG real encontrado: 'pagehide' dispara con CUALQUIER navegacion, incluida una vuelta
+            // a esta misma instancia de POS (reload post-login, cambio de sucursal, reset post-venta).
+            // El sendBeacon de limpieza competia en paralelo con el GET de la pagina siguiente por el
+            // mismo Session -- si el beacon ganaba la carrera, el operador ya autorizado desaparecia
+            // justo antes de que la pagina nueva lo buscara, pidiendo el login de nuevo (intermitente).
+            // Las navegaciones que vuelven a esta misma instancia marcan
+            // window.PosNavegandoInternoPOS = true antes de navegar para saltear el beacon.
+            window.addEventListener('pagehide', function () {
+                if (window.PosNavegandoInternoPOS) return;
+                if (navigator.sendBeacon) {
+                    var data = new Blob([JSON.stringify({ posInstanceId: cfg.posInstanceId })], { type: 'application/json' });
+                    navigator.sendBeacon(cfg.urlCerrar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId), data);
+                }
+            });
+        })();
+
          // -----------------------
     // Helpers
     // -----------------------
@@ -1399,7 +1516,7 @@ else
             url: '@Url.Action("AbrirCaja", "Cajas")',
             type: 'POST',
             dataType: 'json',
-            data: { cajaInicio: cajaInicio, fechaHora: fechaHora },
+            data: { cajaInicio: cajaInicio, fechaHora: fechaHora, posInstanceId: window.POSModo?.instanceId || '' },
             success: function (r) {
                 if (r && r.ok) {
 
@@ -1407,6 +1524,11 @@ else
                         sessionStorage.setItem("pos-mostrar-recordatorio-sucursal", "1");
                     } catch (e) { }
                     $("#modalAbrirCaja").modal('hide');
+                    // Mismo bug que ya se corrigio en otros puntos (ver docs/DECISIONS.md,
+                    // "Causa raiz real de los logins repetidos"): esta recarga es una navegacion
+                    // real, dispara 'pagehide', y sin esta bandera el beacon de limpieza del
+                    // operador de produccion competia en carrera con el GET de la recarga.
+                    window.PosNavegandoInternoPOS = true;
                     location.reload();
                     return;
                 }
@@ -1427,8 +1549,11 @@ else
 
         // Si el controller te setea ViewBag.CajaAbierta (como ya haces):
         var cajaAbierta = @((ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta) ? "true" : "false");
+        // Usuario de produccion sin operador autorizado todavia: el login va primero, recien
+        // despues (al recargar ya autorizado) corresponde evaluar si hace falta abrir caja.
+        var requiereOperadorPOS = @((ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS) ? "true" : "false");
 
-        if (!cajaAbierta) {
+        if (!cajaAbierta && !requiereOperadorPOS) {
             // seteo fecha/hora y abro modal
             $("#fechaHoraApertura").val(nowAR());
 
@@ -1573,7 +1698,18 @@ else
     window.POSModo.returnUrlDetalle = @Html.Raw(Json.Encode(returnUrlDetalle));
     window.POSModo.instancia = @Html.Raw(Json.Encode(posModoInstancia));
     window.POSModo.instanceId = @Html.Raw(Json.Encode(posInstanceId));
-    window.POSMultiInstance?.init?.();
+
+    // Toda vuelta a esta misma pantalla de POS debe incluir posInstanceId -- si no, con
+    // usuario de produccion el operador ya autorizado se pierde (el servidor genera un
+    // posInstanceId nuevo) y se vuelve a pedir el login sin necesidad. Ya paso 3 veces en
+    // distintos lugares (ver docs/DECISIONS.md) -- de aca en mas, toda navegacion de vuelta a
+    // POS usa este helper.
+    window.urlVentasPOSConInstancia = function () {
+        var url = new URL('@Url.Action("POS", "Ventas")', window.location.origin);
+        if (window.POSModo.instanceId) url.searchParams.set('posInstanceId', window.POSModo.instanceId);
+        return url.toString();
+    };
+
     window.POSFacturaElectronicaConfig = {
         empresaTieneCertificado: empresaTieneCertificadoFacturaElectronica
     };
@@ -1594,27 +1730,12 @@ else
     const POS_RECORDATORIO_SUCURSAL_KEY = "pos-mostrar-recordatorio-sucursal";
     let posInactividadTimer = null;
     let posRecordatorioSucursalAbierto = false;
-    let posAbrioSucursalDesdeRecordatorio = false;
 
     function htmlRecordatorioSucursalPOS() {
         const sucursalSegura = $('<div>').text(sucursalNombrePOS || '').html();
         return ''
             + '<div class="mb-2">Usted esta operando en la sucursal:</div>'
-            + '<div style="font-size:1.75rem; font-weight:700; line-height:1.2;">' + sucursalSegura + '</div>'
-            + '<div class="mt-3">'
-            + '  <button type="button" id="btnCambiarSucursalDesdeRecordatorio" class="btn btn-outline-secondary btn-sm">Cambiar sucursal</button>'
-            + '</div>';
-    }
-
-    function abrirModalCambioSucursalDesdeRecordatorio() {
-        posAbrioSucursalDesdeRecordatorio = true;
-        if (window.Swal) {
-            Swal.close();
-        }
-
-        setTimeout(function () {
-            $("#modalSucursales").modal("show");
-        }, 150);
+            + '<div style="font-size:1.75rem; font-weight:700; line-height:1.2;">' + sucursalSegura + '</div>';
     }
 
     function mostrarRecordatorioSucursalPOS(reiniciarDespues) {
@@ -1623,22 +1744,15 @@ else
         }
 
         posRecordatorioSucursalAbierto = true;
-        posAbrioSucursalDesdeRecordatorio = false;
         Swal.fire({
             icon: 'info',
             html: htmlRecordatorioSucursalPOS(),
             confirmButtonText: 'Continuar',
             confirmButtonColor: '#4e73df',
-            allowOutsideClick: false,
-            didOpen: function () {
-                const btnCambiarSucursal = document.getElementById('btnCambiarSucursalDesdeRecordatorio');
-                if (btnCambiarSucursal) {
-                    btnCambiarSucursal.addEventListener('click', abrirModalCambioSucursalDesdeRecordatorio);
-                }
-            }
+            allowOutsideClick: false
         }).then(function () {
             posRecordatorioSucursalAbierto = false;
-            if (!posAbrioSucursalDesdeRecordatorio && reiniciarDespues !== false) {
+            if (reiniciarDespues !== false) {
                 reiniciarTemporizadorInactividadPOS();
             }
         });
@@ -1687,7 +1801,8 @@ else
     $(document).on("sucursal:cambiada", function () {
         window.desactivarAvisoSalidaPOS?.();
         window.POSDraft?.clear?.();
-        window.location.href = '@Url.Action("POS", "Ventas")';
+        window.PosNavegandoInternoPOS = true;
+        window.location.href = window.urlVentasPOSConInstancia();
     });
 
     function getFechaVentaPOS() {
@@ -2362,13 +2477,14 @@ else
 
     window.resetPOSDespuesDeFinalizar = function () {
         $.ajax({
-            url: '@Url.Action("POS", "Ventas")',
+            url: window.urlVentasPOSConInstancia(),
             type: "GET",
             cache: false
         }).done(function () {
             window.resetPOS();
         }).fail(function () {
-            window.location.href = '@Url.Action("POS", "Ventas")';
+            window.PosNavegandoInternoPOS = true;
+            window.location.href = window.urlVentasPOSConInstancia();
         });
     };
 

@@ -63,7 +63,11 @@ namespace Web.Controllers
             int? idSucursalSeleccionada = ResolverSucursalSeleccionada(sucursales, idSucursal);
             DateTime fechaLimiteSinPermiso = DateTime.Today.AddDays(-param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
-            AjustarFechaIndiceSegunLimiteYPermiso(PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo());
+            // El cartel de "no tiene permiso para esa fecha" solo tiene sentido cuando el
+            // usuario mando una fecha explicita (desde el input, al presionar Buscar) -- si
+            // fechaDesde vino null (primera carga de la vista, sin querystring), el default de
+            // "hoy menos 7 dias" se recorta en silencio, sin avisar nada que el usuario no pidio.
+            AjustarFechaIndiceSegunLimiteYPermiso(PermisosPantallasWeb.Cajas.CajasAbiertasConsulta, ref desde, fechaLimiteSinPermiso, Utilidades.ValoresParametrosMetodos.IdCreadorNulo(), mostrarAviso: fechaDesde.HasValue);
 
             ViewBag.Sucursales = sucursales;
             ViewBag.HayVariasSucursales = sucursales.Count > 1;
@@ -90,7 +94,7 @@ namespace Web.Controllers
             return View("~/Views/Cajas/CajasAbiertas.cshtml", dt);
         }
 
-        public ActionResult EgresosCaja(int? idSucursal, int idUsuario = -1, int idTipoEgresoCaja = 0, string descripcion = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, bool soloGastos = false, bool ajax = false)
+        public ActionResult EgresosCaja(int? idSucursal, int idUsuario = -1, int idTipoEgresoCaja = 0, string descripcion = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string filtroGasto = "todos", bool ajax = false)
         {
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today.AddDays(1).AddSeconds(-1);
@@ -102,7 +106,7 @@ namespace Web.Controllers
                 if (ajax)
                     return new HttpStatusCodeResult(403, "No tiene permisos para ver egresos de caja.");
 
-                CargarViewBagsEgresos(idSucursal ?? 0, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, soloGastos, false);
+                CargarViewBagsEgresos(idSucursal ?? 0, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
                 ViewBag.SinPermiso = true;
                 ViewBag.MensajePermiso = ConstruirMensajePermisoFecha(PermisosPantallasWeb.EgresosCaja.Consulta, desde)
                     ?? "No tiene permisos para ver egresos de caja.";
@@ -111,10 +115,10 @@ namespace Web.Controllers
 
             int sucursalSeleccionada = idSucursal ?? 0;
 
-            CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, soloGastos, false);
+            CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
 
             DataTable dt = oCierreN.obtenerEgresosCaja(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion ?? "", desde, hasta);
-            dt = FiltrarSoloGastos(dt, soloGastos, oCierreN.obtenerTiposEgresoCaja("", 0));
+            dt = ExcluirTiposReservadosEgresosCaja(dt);
             CargarPermisosEdicionEgresos(dt, false);
 
             if (ajax)
@@ -148,6 +152,7 @@ namespace Web.Controllers
             ViewBag.FiltroActividad = filtroActividad ?? "todos";
             ViewBag.CierreCaja = cierre;
             ViewBag.SucursalActividad = cierre != null && cierre.Sucursal != null ? cierre.Sucursal.sucursal : "";
+            ViewBag.TiposEgresoCaja = oCierreN.obtenerTiposEgresoCaja("", 0);
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
             ViewBag.MostrarResumenMisActividades = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.Consulta);
             ViewBag.ModoActividades = desdePos;
@@ -179,6 +184,7 @@ namespace Web.Controllers
             ViewBag.SoloEgresos = false;
             ViewBag.FiltroActividad = filtroActividad ?? "todos";
             ViewBag.CierreCaja = cierre;
+            ViewBag.TiposEgresoCaja = oCierreN.obtenerTiposEgresoCaja("", 0);
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
             ViewBag.MostrarResumenMisActividades = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.Consulta);
             ViewBag.ModoActividades = true;
@@ -858,13 +864,18 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public JsonResult AbrirCaja(string cajaInicio, string fechaHora)
+        public JsonResult AbrirCaja(string cajaInicio, string fechaHora, string posInstanceId = null)
         {
             try
             {
                 var user = Session["Usuario"] as Entidades.Usuario;
                 if (user == null)
                     return Json(new { ok = false, mensaje = "Sesión inválida" });
+
+                // Usuario de produccion abriendo caja desde POS Venta/Expendio: la caja queda a
+                // nombre del operador real ya autorizado (ver BaseController.ResolverOperadorPOS),
+                // no de la cuenta compartida. Para cualquier otro usuario, sin cambios.
+                var operador = ResolverOperadorPOS(posInstanceId, user);
 
                 float cajaInicio_ = ParseFloat(cajaInicio);
                 if (cajaInicio_ <= 0)
@@ -886,7 +897,7 @@ namespace Web.Controllers
                 var nuevoCierre = new Entidades.CierreCaja
                 {
                     Sucursal = oSucursalN.findById(user.IdSucursal),
-                    UsuarioInicio = user,
+                    UsuarioInicio = operador,
                     FechaHoraInicio = fechaApertura,
                     CajaInicio = cajaInicio_
                 };
@@ -972,7 +983,7 @@ namespace Web.Controllers
                 : 0m;
         }
 
-        private void CargarViewBagsEgresos(int idSucursal, int idUsuario, int idTipoEgresoCaja, string descripcion, DateTime fechaDesde, DateTime fechaHasta, bool soloGastos, bool desdePos)
+        private void CargarViewBagsEgresos(int idSucursal, int idUsuario, int idTipoEgresoCaja, string descripcion, DateTime fechaDesde, DateTime fechaHasta, string filtroGasto, bool desdePos)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             ViewBag.Sucursales = oSucursalN.findAll();
@@ -984,7 +995,7 @@ namespace Web.Controllers
             ViewBag.Descripcion = descripcion ?? "";
             ViewBag.FechaDesde = fechaDesde;
             ViewBag.FechaHasta = fechaHasta;
-            ViewBag.SoloGastos = soloGastos;
+            ViewBag.FiltroGasto = filtroGasto;
             ViewBag.DesdePOS = desdePos;
             ViewBag.UsuarioAdmin = user != null && user.Admin;
             ViewBag.PuedeVerTiposEgreso = PermisosHelper.TienePermisoVer(Session, PermisosPantallasWeb.EgresosCaja.TiposConsulta);
@@ -1103,37 +1114,29 @@ namespace Web.Controllers
             return abierta ? cierre : null;
         }
 
-        private DataTable FiltrarSoloGastos(DataTable dt, bool soloGastos, DataTable tiposEgresoCaja)
+        // Tipos reservados que el sistema inserta solo, nunca creados a mano desde "Nuevo Egreso" --
+        // no son egresos de caja reales (son el reflejo de una venta con forma de pago no efectivo o
+        // de un movimiento de cuenta corriente), asi que no tiene sentido mostrarlos en este listado
+        // en ningun estado del filtro (Todos/Gastos/No gastos). Comparacion por nombre, no por id,
+        // para reusar el mismo criterio ya establecido en EsCtaCte/EsPagoElectronico de
+        // _EgresosCajaTabla.cshtml.
+        private static readonly string[] TiposExcluidosDeEgresosCaja = { "Cta Cte", "Pago Electronico" };
+
+        private DataTable ExcluirTiposReservadosEgresosCaja(DataTable dt)
         {
-            if (!soloGastos || dt == null)
+            if (dt == null || !dt.Columns.Contains("TipoEgresoCaja"))
                 return dt;
 
-            if (dt.Columns.Contains("Gasto"))
-            {
-                DataRow[] rows = dt.Select("Gasto = true");
-                return rows.Length > 0 ? rows.CopyToDataTable() : dt.Clone();
-            }
-
-            if (!dt.Columns.Contains("TipoEgresoCaja") || tiposEgresoCaja == null || !tiposEgresoCaja.Columns.Contains("Es_Gasto"))
-                return dt;
-
-            var tiposGasto = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (DataRow tipo in tiposEgresoCaja.Rows)
-            {
-                string valor = Convert.ToString(tipo["Es_Gasto"]);
-                bool esGasto = string.Equals(valor, "true", StringComparison.OrdinalIgnoreCase) || valor == "1";
-                if (esGasto)
-                    tiposGasto.Add(Convert.ToString(tipo["tipoEgresoCaja"]));
-            }
-
-            DataTable filtrado = dt.Clone();
+            DataTable resultado = dt.Clone();
             foreach (DataRow row in dt.Rows)
             {
-                if (tiposGasto.Contains(Convert.ToString(row["TipoEgresoCaja"])))
-                    filtrado.ImportRow(row);
+                string tipo = Convert.ToString(row["TipoEgresoCaja"]);
+                bool esReservadoExcluido = TiposExcluidosDeEgresosCaja.Any(t => string.Equals(t, tipo, StringComparison.OrdinalIgnoreCase));
+                if (!esReservadoExcluido)
+                    resultado.ImportRow(row);
             }
 
-            return filtrado;
+            return resultado;
         }
 
         private DataTable FiltrarEgresosRealesVendedor(DataTable dt, bool soloEgresos)
@@ -1206,6 +1209,13 @@ namespace Web.Controllers
                    tipoNormalizado.IndexOf("Cobro", System.StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        // Bucket "egresos de caja" = todo lo que no sea Cta Cte ni Pago Electronico (mismo
+        // criterio que ExcluirTiposReservadosEgresosCaja/FiltrarEgresosRealesVendedor). Antes
+        // esta funcion miraba el flag real "esGasto" del tipo cuando la columna "Gasto" estaba
+        // presente (que es siempre, via getEgresosCajaVendedor) -- eso excluia del pill
+        // "Egresos de caja" cualquier tipo custom no reservado con esGasto=false, aunque fuera
+        // un egreso de caja real. El flag "esGasto" es un concepto de negocio distinto (alimenta
+        // el sub-filtro visual Gasto/No-gasto via data-esgasto), no decide pertenencia al bucket.
         private bool EsGastoCaja(DataRow row)
         {
             if (row == null || row.Table == null)
@@ -1213,12 +1223,6 @@ namespace Web.Controllers
 
             if (EsPagoCobro(row))
                 return false;
-
-            if (row.Table.Columns.Contains("Gasto"))
-            {
-                string valor = Convert.ToString(row["Gasto"]);
-                return string.Equals(valor, "true", StringComparison.OrdinalIgnoreCase) || valor == "1";
-            }
 
             return !EsPagoElectronico(row) && !EsCtaCte(row);
         }

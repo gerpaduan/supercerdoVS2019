@@ -5,7 +5,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 }
 
-<div class="container-fluid">
+<div class="container-fluid usuarios-editar-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <h1 class="h3 mb-1 text-gray-800">@(Model.EsEdicion ? "Modificar usuario" : "Nuevo usuario")</h1>
@@ -176,6 +176,9 @@
                                     @Html.CheckBoxFor(m => m.PermitirLoginFueraSucursal, new { @class = "custom-control-input", id = "PermitirLoginFueraSucursal" })
                                 }
                                 <label class="custom-control-label" for="PermitirLoginFueraSucursal">Permitir login fuera de sucursal</label>
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoLoginFueraSucursal" title="¿Qué significa 'Permitir login fuera de sucursal'?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
                             </div>
                             @if (Model.SoloLectura)
                             {
@@ -195,11 +198,34 @@
                                     @Html.CheckBoxFor(m => m.EsUsuarioProduccion, new { @class = "custom-control-input", id = "EsUsuarioProduccion" })
                                 }
                                 <label class="custom-control-label" for="EsUsuarioProduccion">Usuario de producción</label>
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoUsuarioProduccion" title="¿Qué es un 'Usuario de producción'?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
                             </div>
                             <small class="form-text text-muted">Sin acceso a Ventas ni Finanzas. No puede ser Admin.</small>
                             @if (Model.SoloLectura)
                             {
                                 @Html.HiddenFor(m => m.EsUsuarioProduccion)
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.PuedeOperarPOS, new { @class = "custom-control-input", id = "PuedeOperarPOS", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.PuedeOperarPOS, new { @class = "custom-control-input", id = "PuedeOperarPOS" })
+                                }
+                                <label class="custom-control-label" for="PuedeOperarPOS">Puede operar POS</label>
+                            </div>
+                            <small class="form-text text-muted">Otorga el permiso mínimo necesario para usar POS Venta / POS Expendio.</small>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.PuedeOperarPOS)
                             }
                         </div>
                     </div>
@@ -230,6 +256,110 @@
     </div>
 </div>
 
+<!-- MODAL INFO: que significa "Permitir login fuera de sucursal" -->
+<div class="modal fade" id="modalInfoLoginFueraSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Qué significa "Permitir login fuera de sucursal"?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Este usuario puede iniciar sesión sin la validación de ubicación (GPS) que algunas
+                    sucursales tienen activada para el login.
+                </p>
+                <p>
+                    Si la sucursal del usuario tiene esa validación activada, un usuario normal solo puede
+                    loguearse estando físicamente dentro del radio configurado. Los administradores quedan
+                    exceptuados automáticamente; este interruptor da la misma excepción a un usuario que no
+                    es administrador.
+                </p>
+                <p class="mb-0">
+                    No tiene relación con elegir una sucursal distinta a la asignada — solo saltea el
+                    control de ubicación.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INFO: que es un "Usuario de produccion" -->
+<div class="modal fade" id="modalInfoUsuarioProduccion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Qué es un "Usuario de producción"?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Pensado para agilizar la carga en un sector donde la PC es compartida por varios
+                    operarios</strong> — con este usuario logueado, guardar un movimiento, stock o elaborado
+                    <strong>no pide contraseña</strong>: solo aparece una lista para elegir qué empleado hizo
+                    la operación, y ese es el que queda registrado como responsable.
+                </p>
+                <p>
+                    Es una cuenta compartida (sin login individual por operario), para no frenar la carga
+                    pidiendo que cada uno inicie sesión con su propio usuario.
+                </p>
+                <p>Además, al tildarlo:</p>
+                <ul>
+                    <li>No puede ser Administrador (y viceversa).</li>
+                    <li>
+                        Pierde acceso a Ventas, Finanzas y a la pestaña Fórmulas de Elaborados, sin importar
+                        lo que se tilde en la pantalla de permisos.
+                    </li>
+                </ul>
+                <p class="mb-0">
+                    Nota: también queda sin acceso a "Ajuste de Stock" (esa operación requiere ser
+                    Administrador, incompatible con este interruptor) — es una limitación conocida, no algo
+                    buscado a propósito.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .usuarios-editar-page {
+        font-size: .9rem;
+    }
+
+    .usuarios-editar-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .usuarios-editar-page .form-control,
+    .usuarios-editar-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .usuarios-editar-page label,
+    .usuarios-editar-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .usuarios-editar-page .alert,
+    .usuarios-editar-page .small,
+    .usuarios-editar-page .text-muted,
+    .usuarios-editar-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    @@media (min-width: 1200px) {
+        .usuarios-editar-page .form-control,
+        .usuarios-editar-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+    }
+</style>
+
 <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
 <script>
     window.EditReadOnly && window.EditReadOnly.init({
@@ -250,6 +380,25 @@
         });
         jQuery(document).on("change", "#EsUsuarioProduccion", function () {
             if (jQuery(this).is(":checked")) jQuery("#Admin").prop("checked", false);
+        });
+
+        // Una cuenta de produccion nunca debe tener "Ventas > Editar" (bloqueado tambien
+        // server-side, ver UsuariosController.AplicarPuedeOperarPOS) -- al marcar "Usuario de
+        // produccion" se destilda y deshabilita "Puede operar POS"; al desmarcarla se rehabilita
+        // (vuelve a su ultimo estado, no se fuerza a tildado).
+        function sincronizarPuedeOperarPOS() {
+            var esProduccion = jQuery("#EsUsuarioProduccion").is(":checked");
+            jQuery("#PuedeOperarPOS").prop("disabled", esProduccion);
+            if (esProduccion) jQuery("#PuedeOperarPOS").prop("checked", false);
+        }
+        jQuery(document).on("change", "#EsUsuarioProduccion", sincronizarPuedeOperarPOS);
+        sincronizarPuedeOperarPOS();
+
+        jQuery("#btnInfoLoginFueraSucursal").on("click", function () {
+            jQuery("#modalInfoLoginFueraSucursal").modal("show");
+        });
+        jQuery("#btnInfoUsuarioProduccion").on("click", function () {
+            jQuery("#modalInfoUsuarioProduccion").modal("show");
         });
     });
 </script>

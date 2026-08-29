@@ -88,7 +88,11 @@ namespace Web.Helpers
                 // explicito, connect-src 'self' bloquea TODAS las llamadas al agente (impresion de
                 // tickets, dispositivos seguros), no solo las de un endpoint puntual. Hallazgo real
                 // durante la tarea de dispositivos seguros -- ver docs/DECISIONS.md.
-                "connect-src 'self' http://127.0.0.1:18777;";
+                // El agente local de balanza (Carnisys.Balanza.Agent, Web/Scripts/carnisys.balanza.js)
+                // corre en 127.0.0.1:5100, otro origen distinto -- mismo motivo que el de arriba.
+                // Sin este permiso, CarnisysBalanza.start() (usado en Dashboard, Stock, Elaborados,
+                // Movimientos y POS) queda bloqueado por CSP en cada poll de /status y /peso.
+                "connect-src 'self' http://127.0.0.1:18777 http://127.0.0.1:5100;";
             response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
             response.Headers.Remove("X-Powered-By");
             response.Headers.Remove("Server");

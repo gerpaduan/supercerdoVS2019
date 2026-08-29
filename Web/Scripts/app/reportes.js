@@ -123,6 +123,11 @@
         var $fechaHastaDateWrap = $("#fechaHastaDateWrap");
         var $btnAhora = $("#btnAhoraReporte");
         var $switchDetalles = $("#switchMostrarDetallesReporte");
+        var $btnToggleBusquedaProducto = $("#btnToggleBusquedaProductoReporte");
+        var $busquedaProducto = $("#busquedaProductoReporte");
+        var $switchTotales = $("#switchMostrarTotalesReporte");
+        var $totalesGrid = $(".reportes-totales-grid");
+        var $lblTotalRegistrosCompacto = $("#lblTotalRegistrosCompacto");
         var $floatingZone = $("#reportesFloatingZone");
         var $stickyStack = $("#reportesStickyStack");
         var $stickyPlaceholder = $();
@@ -267,18 +272,29 @@
                 if (resetValues || !$fechaHastaDate.val()) {
                     $fechaHastaDate.val(ahora);
                 }
+                // Stock Actual siempre reporta "a este momento" -- fecha hasta queda de solo
+                // lectura y se vuelve a forzar a la hora exacta en cada click de Buscar (ver
+                // handler de submit), para que el usuario no pueda dejarla desactualizada sin querer.
+                $fechaHastaDate.prop("readonly", true);
+                $btnAhora.prop("disabled", true);
             } else if (tipo === "Cierre Stock") {
                 applyDateMode(true, true);
                 fillClosureSelect($fechaDesdeCierre, resetValues ? anteultimo : ($fechaDesdeCierre.val() || config.fechaDesdeActual), parseInt($sucursal.val() || "0", 10) === 0);
                 fillClosureSelect($fechaHastaCierre, resetValues ? ultimo : ($fechaHastaCierre.val() || config.fechaHastaActual), parseInt($sucursal.val() || "0", 10) === 0);
+                $fechaHastaDate.prop("readonly", false);
+                $btnAhora.prop("disabled", false);
             } else if (tipo === "Stock Retroactivo") {
                 applyDateMode(true, false);
                 fillClosureSelect($fechaDesdeCierre, resetValues ? ultimo : ($fechaDesdeCierre.val() || config.fechaDesdeActual), parseInt($sucursal.val() || "0", 10) === 0);
                 if (resetValues || !$fechaHastaDate.val()) {
                     $fechaHastaDate.val(ahora);
                 }
+                $fechaHastaDate.prop("readonly", false);
+                $btnAhora.prop("disabled", false);
             } else {
                 applyDateMode(false, false);
+                $fechaHastaDate.prop("readonly", false);
+                $btnAhora.prop("disabled", false);
             }
         }
 
@@ -515,6 +531,7 @@
             $("#totalEgresosReporte").text(formatNumber(totalEgresos, 3));
             $("#cantidadProductosReporte").text(Object.keys(productos).length);
             $("#cantidadRegistrosReporte").text(registros);
+            $("#lblTotalRegistrosCompacto").text(registros + " registros visibles");
             $("#filaSinResultadosReporte").toggleClass("d-none", registros !== 0);
         }
 
@@ -626,6 +643,7 @@
             }));
             $("#cantidadProductosReporte").text(registros);
             $("#cantidadRegistrosReporte").text(registros);
+            $("#lblTotalRegistrosCompacto").text(registros + " registros visibles");
             $("#filaSinResultadosVentasReporte").toggleClass("d-none", registros !== 0);
         }
 
@@ -656,6 +674,7 @@
             $("#totalEgresosReporte").text(formatNumber(totalDiferencia, 3));
             $("#cantidadProductosReporte").text(registros);
             $("#cantidadRegistrosReporte").text(registros);
+            $("#lblTotalRegistrosCompacto").text(registros + " registros visibles");
             $("#filaSinResultadosProyeccionReporte").toggleClass("d-none", registros !== 0);
         }
 
@@ -1317,7 +1336,36 @@
             applyDetailsMode();
         });
 
-        $form.on("change input keyup", ".filtro-vivo", function () {
+        // #panelFiltrosAvanzadosReporte vive dentro de _FiltrosSecundarios.cshtml, que se
+        // reemplaza entero por AJAX al cambiar "Tipo de reporte" (refreshFiltrosSecundarios) --
+        // por eso el binding es delegado (no un $(...) cacheado) y no necesita re-bindearse.
+        $form.on("change", "#switchFiltrosAvanzadosReporte", function () {
+            $("#panelFiltrosAvanzadosReporte").toggleClass("d-none", !$(this).is(":checked"));
+        });
+
+        $switchTotales.on("change", function () {
+            var mostrar = $(this).is(":checked");
+            $totalesGrid.toggleClass("d-none", !mostrar);
+            $lblTotalRegistrosCompacto.toggleClass("d-none", mostrar);
+        });
+
+        $btnToggleBusquedaProducto.on("click", function () {
+            var mostrar = $busquedaProducto.hasClass("d-none");
+            $busquedaProducto.toggleClass("d-none", !mostrar);
+            $(this).attr("aria-expanded", mostrar ? "true" : "false");
+
+            if (mostrar) {
+                $busquedaProducto.focus();
+            } else {
+                $busquedaProducto.val("");
+                applyLiveFilters();
+            }
+        });
+
+        // Delegado a document, no a $form: #busquedaProductoReporte vive arriba de la tabla de
+        // resultados, fuera de <form id="formReportes"> -- una delegacion escopeada a $form nunca
+        // recibe eventos de un elemento que no es su descendiente.
+        $(document).on("change input keyup", ".filtro-vivo", function () {
             applyLiveFilters();
         });
 
@@ -1360,7 +1408,8 @@
             openStockDetailModal($(this).closest(".reporte-stock-row"));
         });
 
-        $(document).on("click", "#tablaReporteStockActual .reporte-sortable-col", function () {
+        $(document).on("click", "#tablaReporteStockActual .reporte-sortable-col", function (e) {
+            e.preventDefault();
             sortStockRows($(this).attr("data-sort-key"), $(this).attr("data-sort-type"));
         });
 
@@ -1384,10 +1433,13 @@
         });
 
         $form.on("submit", function () {
+            if (reportType() === "Stock Actual") {
+                $fechaHastaDate.val(nowLocalValue());
+            }
+
             showPending(false);
             $("#buscarReportes").val("true");
             $("#btnBuscarReporte").prop("disabled", true).find(".btn-buscar-texto").text("Cargando...");
-            $("#estadoReporteTexto").text("Cargando reporte...");
         });
 
         applyReportMode(false);

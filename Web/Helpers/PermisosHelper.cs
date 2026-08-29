@@ -54,7 +54,7 @@ namespace Web.Helpers
         /// puede actuar" para las acciones de Cierre de Caja -- tambien determina el
         /// UsuarioCierre que se graba al cerrar la caja.
         /// </summary>
-        public static Entidades.Usuario ObtenerUsuarioAutorizadoCierre(HttpSessionStateBase session)
+        public static Entidades.Usuario ObtenerUsuarioAutorizadoCierre(HttpSessionStateBase session, string posInstanceId = null)
         {
             var usuarioLogueado = ObtenerUsuario(session);
             if (usuarioLogueado != null && TienePermisoVer(session, PermisosPantallasWeb.Cajas.CerrarCaja))
@@ -63,7 +63,153 @@ namespace Web.Helpers
             if (session == null)
                 return null;
 
-            return MemoryCache.Default.Get(ClaveCacheElevacionCierre(session.SessionID)) as Entidades.Usuario;
+            var elevado = MemoryCache.Default.Get(ClaveCacheElevacionCierre(session.SessionID)) as Entidades.Usuario;
+            if (elevado != null)
+                return elevado;
+
+            // Si la accion se dispara desde un POS donde ya hay un operador de produccion
+            // autorizado (ver RegistrarOperadorPOS abajo), ese operador tambien puede cerrar
+            // caja sin pedir contraseña de nuevo -- ya se autentico al entrar al POS. Parametro
+            // opcional: los llamados existentes de Cierre de Caja (fuera de POS) no lo pasan y
+            // se comportan exactamente igual que antes.
+            if (!string.IsNullOrWhiteSpace(posInstanceId))
+                return ObtenerOperadorPOS(session, posInstanceId);
+
+            return null;
+        }
+
+        // ===== Operador de POS para la cuenta compartida "usuario de produccion" =====
+        //
+        // VentasController/PuntosExpendioController NO tienen [SessionState(ReadOnly)] (a
+        // diferencia de CajasController arriba), asi que Session[...] persiste normalmente
+        // entre requests -- no hace falta MemoryCache aca. Clave por posInstanceId (no solo
+        // por sesion): cada pestaña de POS duplicada tiene su propio operador, no se pisan
+        // entre si. posInstanceId viaja en la URL de POS y sobrevive a un F5 (ver
+        // pos-multi-instance.js) pero es nuevo (GUID) cada vez que se entra de cero a la
+        // vista -- por eso esto "dura hasta cerrar la vista" sin necesitar expiracion por
+        // tiempo: una vista nueva nunca matchea una clave vieja.
+        private static string ClaveSessionOperadorPOS(string posInstanceId)
+        {
+            return "OperadorPOS_" + (posInstanceId ?? "");
+        }
+
+        /// <summary>
+        /// Registra que, para esta instancia de POS (pestaña), un usuario real autorizo con su
+        /// propia contraseña operar en nombre de la cuenta compartida de produccion.
+        /// </summary>
+        public static void RegistrarOperadorPOS(HttpSessionStateBase session, string posInstanceId, Entidades.Usuario operador)
+        {
+            if (session == null || string.IsNullOrWhiteSpace(posInstanceId) || operador == null)
+                return;
+
+            session[ClaveSessionOperadorPOS(posInstanceId)] = operador;
+        }
+
+        /// <summary>
+        /// Operador real autorizado para esta instancia de POS, o null si todavia no se
+        /// autorizo ninguno (la vista debe pedir usuario+contraseña).
+        /// </summary>
+        public static Entidades.Usuario ObtenerOperadorPOS(HttpSessionStateBase session, string posInstanceId)
+        {
+            if (session == null || string.IsNullOrWhiteSpace(posInstanceId))
+                return null;
+
+            return session[ClaveSessionOperadorPOS(posInstanceId)] as Entidades.Usuario;
+        }
+
+        /// <summary>
+        /// Limpia el operador de esta instancia de POS -- se llama al cerrar la vista (beacon
+        /// de beforeunload/pagehide) para no dejar la identidad del operador colgada en
+        /// Session. Es higiene, no la garantia real de "vuelve a pedir credenciales" (esa la
+        /// da que cada apertura nueva de POS usa un posInstanceId distinto).
+        /// </summary>
+        public static void LimpiarOperadorPOS(HttpSessionStateBase session, string posInstanceId)
+        {
+            if (session == null || string.IsNullOrWhiteSpace(posInstanceId))
+                return;
+
+            session.Remove(ClaveSessionOperadorPOS(posInstanceId));
+        }
+
+        // ===== Operador de modulo para la cuenta compartida "usuario de produccion" =====
+        //
+        // Mismo concepto que "Operador de POS" arriba, pero para pantallas de consulta
+        // (Ventas/Index, DetalleVenta, Lineas) en vez de POS -- por eso NO hay posInstanceId:
+        // no existe "pestaña duplicada" para un listado/reporte, una sola clave por sesion
+        // alcanza. La duracion no depende de una vista con id nuevo cada vez (como en POS),
+        // asi que la limpieza corre desde los layouts compartidos (_LayoutBase.cshtml /
+        // _LayoutPOS.cshtml, via LimpiarOperadorModuloSiSalioDelModulo) apenas el usuario
+        // navega a un controller fuera del modulo autorizado -- ver docs/DECISIONS.md.
+        private static readonly System.Collections.Generic.Dictionary<string, string> ControllersPorModulo =
+            new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Ventas", "Ventas" },
+                { "Compras", "Compras" }
+            };
+
+        private static string ClaveSessionOperadorModulo(string modulo)
+        {
+            return "OperadorModulo_" + (modulo ?? "");
+        }
+
+        /// <summary>
+        /// Registra que, para esta sesion, un usuario real autorizo con su propia contraseña
+        /// operar en nombre de la cuenta compartida de produccion dentro de un modulo (ej.
+        /// "Ventas").
+        /// </summary>
+        public static void RegistrarOperadorModulo(HttpSessionStateBase session, string modulo, Entidades.Usuario operador)
+        {
+            if (session == null || string.IsNullOrWhiteSpace(modulo) || operador == null)
+                return;
+
+            session[ClaveSessionOperadorModulo(modulo)] = operador;
+        }
+
+        /// <summary>
+        /// Operador real autorizado para este modulo en esta sesion, o null si todavia no se
+        /// autorizo ninguno (la vista debe pedir usuario+contraseña).
+        /// </summary>
+        public static Entidades.Usuario ObtenerOperadorModulo(HttpSessionStateBase session, string modulo)
+        {
+            if (session == null || string.IsNullOrWhiteSpace(modulo))
+                return null;
+
+            return session[ClaveSessionOperadorModulo(modulo)] as Entidades.Usuario;
+        }
+
+        /// <summary>
+        /// Limpia el operador de este modulo.
+        /// </summary>
+        public static void LimpiarOperadorModulo(HttpSessionStateBase session, string modulo)
+        {
+            if (session == null || string.IsNullOrWhiteSpace(modulo))
+                return;
+
+            session.Remove(ClaveSessionOperadorModulo(modulo));
+        }
+
+        /// <summary>
+        /// Se llama desde _LayoutBase.cshtml y _LayoutPOS.cshtml en CADA render (de cualquier
+        /// pagina de la app) -- si hay un operador de modulo activo y el controller que se esta
+        /// ejecutando no pertenece a ese modulo, lo limpia ahi mismo. Es la forma en que el
+        /// operador "pierde el permiso al hacer clic afuera" sin depender de que el navegador
+        /// dispare nada (nada de beacon/pagehide aca) ni de tocar el filtro global de todos los
+        /// controllers -- el propio layout compartido ya lee Session para otras cosas.
+        /// </summary>
+        public static void LimpiarOperadorModuloSiSalioDelModulo(HttpSessionStateBase session, string controllerActual)
+        {
+            if (session == null)
+                return;
+
+            foreach (var modulo in ControllersPorModulo.Keys)
+            {
+                if (session[ClaveSessionOperadorModulo(modulo)] == null)
+                    continue;
+
+                string controllerDelModulo = ControllersPorModulo[modulo];
+                if (!string.Equals(controllerActual ?? "", controllerDelModulo, StringComparison.OrdinalIgnoreCase))
+                    session.Remove(ClaveSessionOperadorModulo(modulo));
+            }
         }
 
         /// <summary>

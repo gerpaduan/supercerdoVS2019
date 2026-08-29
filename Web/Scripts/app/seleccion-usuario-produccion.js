@@ -18,6 +18,23 @@
             return;
         }
 
+        // Ya se eligio ANTES de entrar a la vista (ver docs/DECISIONS.md, "Mover la seleccion de
+        // usuario..." -- Movimientos/Stock/Elaborados redirigen a /SeleccionUsuario antes de
+        // mostrar el formulario) -- no se vuelve a preguntar al guardar, solo se precarga el
+        // campo oculto con lo que ya se eligio. Si por algun motivo llegara sin precargar
+        // (pantalla vieja en cache, entrada no cubierta todavia), sigue funcionando como red de
+        // seguridad: pregunta igual que antes.
+        var idPreseleccionado = parseInt(window.IdUsuarioCreadorPreseleccionado, 10) || 0;
+        if (idPreseleccionado > 0) {
+            var $inputPre = $form.find('input[name="' + inputName + '"]');
+            if (!$inputPre.length) {
+                $inputPre = $('<input type="hidden" />').attr('name', inputName).appendTo($form);
+            }
+            $inputPre.val(idPreseleccionado);
+            accion();
+            return;
+        }
+
         if (!window.SeleccionUsuario) {
             accion();
             return;

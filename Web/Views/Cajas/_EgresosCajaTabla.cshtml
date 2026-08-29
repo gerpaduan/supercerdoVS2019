@@ -156,6 +156,36 @@
             return "Pago electronico";
         return "Egreso de caja";
     }
+
+    // Misma logica dual-path que antes vivia en CajasController.FiltrarPorGasto (ahora que el
+    // filtro Gasto/No-gasto es en vivo del lado del cliente, esta funcion solo marca cada fila
+    // con data-esgasto -- el filtrado real lo hace el JS comparando ese atributo).
+    bool EsGasto(DataRow row, DataTable tiposEgresoCajaLookup)
+    {
+        if (row == null)
+            return false;
+
+        if (row.Table.Columns.Contains("Gasto") && row["Gasto"] != DBNull.Value)
+        {
+            string valorDirecto = Convert.ToString(row["Gasto"]);
+            return string.Equals(valorDirecto, "true", StringComparison.OrdinalIgnoreCase) || valorDirecto == "1";
+        }
+
+        if (tiposEgresoCajaLookup == null || !tiposEgresoCajaLookup.Columns.Contains("Es_Gasto"))
+            return false;
+
+        string tipoFila = Valor(row, "TipoEgresoCaja");
+        foreach (DataRow tipo in tiposEgresoCajaLookup.Rows)
+        {
+            if (string.Equals(Convert.ToString(tipo["tipoEgresoCaja"]), tipoFila, StringComparison.OrdinalIgnoreCase))
+            {
+                string valor = Convert.ToString(tipo["Es_Gasto"]);
+                return string.Equals(valor, "true", StringComparison.OrdinalIgnoreCase) || valor == "1";
+            }
+        }
+
+        return false;
+    }
 }
 
 @{
@@ -168,6 +198,10 @@
     var descripcionesAnuladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     string returnUrlActual = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Request.RawUrl ?? ""));
     string sucursalActividad = ViewBag.SucursalActividad as string ?? "";
+    // Lookup Es_Gasto por tipo (id/tipoEgresoCaja/Es_Gasto) -- lo cargan las 3 actions que
+    // renderizan este partial (EgresosCaja, MisEgresosCaja, ActividadesCaja). Alimenta data-esgasto
+    // en cada fila/tarjeta, que el JS usa para el filtro Gasto/No-gasto en vivo (ver EsGasto arriba).
+    var tiposEgresoCajaLookup = ViewBag.TiposEgresoCaja as DataTable;
 
     if (Model != null && Model.Columns.Contains("Monto"))
     {
@@ -254,7 +288,7 @@
                         : "";
                     string tipoModificacion = puedeModificarCompra ? "compra" : "egreso";
 
-                    <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id">
+                    <tr class="egreso-row @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-id="@id" data-esgasto="@(EsGasto(row, tiposEgresoCajaLookup) ? "1" : "0")">
                         <td class="text-nowrap">@Fecha(row, "Fecha")</td>
                         <td>
                             @Valor(row, "TipoEgresoCaja")
@@ -386,7 +420,7 @@
                 : "";
             string tipoModificacion = puedeModificarCompra ? "compra" : "egreso";
 
-            <div class="egreso-card @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")">
+            <div class="egreso-card @((esAnulacion || esHistorico) ? "egreso-row-anulado" : "")" data-esgasto="@(EsGasto(row, tiposEgresoCajaLookup) ? "1" : "0")">
                 <div class="egreso-card-top">
                     <strong>
                         @Valor(row, "TipoEgresoCaja")
