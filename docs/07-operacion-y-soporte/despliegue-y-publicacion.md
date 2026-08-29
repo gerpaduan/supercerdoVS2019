@@ -33,6 +33,7 @@ Acceso SSH de la VM: `~/hosts/carnisys-vm-windows.env` (fuera del repo). Sitio r
 - `curl https://carnisys.com/` debe dar `200` (landing de marketing publica, no redirige mas a `/Login/Index` desde que se agrego esa home -- desactualizado respecto a la version original de este runbook, 2026-07-29, que esperaba `302`).
 - `curl https://carnisys.com/Login/Index` debe dar `200`, sin `Stack Trace` / `Server Error` en el body.
 - Confirmado 2026-08-14 (deploy del commit `c9f60625`, feature de bloqueo/desbloqueo de cuenta y dispositivos seguros): ambas URLs devuelven `200`, headers de seguridad completos, y el `Content-Security-Policy` incluye `connect-src ... http://127.0.0.1:18777` (confirma que el build con el fix de CSP para el PrintAgent quedo efectivamente publicado).
+- **Confirmado 2026-08-29** (deploy commit `d9b3e3f7`, fix de `Web.csproj` sin wildcard -- ver `incidencias-frecuentes.md`): metodo de swap carpeta-por-carpeta (nunca `CarniSysWeb` entera, mismo criterio que San Lorenzo) + `Web.config` SI se reemplaza en esta VM (a diferencia de San Lorenzo), con `requireSSL`/`Security:CookieRequireSsl` ajustados a mano a `false` y `DataEngine=Postgres` preservado (ya viene asi del `Web.config` de dev). `Stop-WebAppPool`/`Start-WebAppPool` tuvo un gotcha real (ver `incidencias-frecuentes.md`, el `Start` inmediatamente despues del `Stop` fallo con `0x80070425`) -- resuelto reintentando en una llamada separada. `curl` final: `200` en ambas URLs, CSP incluye `http://127.0.0.1:5100` (agente de balanza, mismo fix que San Lorenzo).
 
 ### Rollback
 
