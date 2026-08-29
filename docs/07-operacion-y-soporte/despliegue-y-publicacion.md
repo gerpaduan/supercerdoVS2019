@@ -42,6 +42,31 @@ Restaurar el backup de `web\backups\CarniSysWeb_<timestamp>` con `robocopy /MIR`
 
 `C:\inetpub\wwwroot\web` es un segundo sitio IIS que **no** recibe trafico publico (Caddy solo enruta a "CarniSys"). Ahi vive el historial de `_deploy\` (paquetes extraidos) y `backups\` (snapshots). Al 2026-07-29 habia un build de staging del 28/7 parcheado a mano el 29/7 (`Web.config_before_dbfix_*`) que nunca se promovio a produccion y se dejo sin tocar.
 
+### Postgres en esta VM (desde 2026-08-29, cutover real)
+
+Desde el 2026-08-29 `carnisys.com` corre en Postgres (`DataEngine=Postgres` en `Web.config`, ver
+`docs/DECISIONS.md` de esa fecha para el detalle completo del cutover). Esto cambia el deploy de
+esta VM en dos puntos que no aplicaban antes:
+
+- **El `Web.config` que se sube ahora trae `DataEngine=Postgres`** (viene del `Web.config` de dev,
+  sin override en `Web.Release.config`) -- a diferencia de antes, cuando esa clave ni existia en
+  el `Web.config` de la VM. **Cuidado en cada deploy futuro**: si algun dia se necesita que esta
+  VM vuelva a SQL Server sin tocar el motor de dev, hay que forzar `DataEngine=SqlServer` a mano
+  en el `Web.config` publicado antes de copiarlo (mismo criterio que ya se usa con `requireSSL`).
+- **`Config\connectionStrings.config` de la VM tiene una entrada `ConexionPostgresPiloto`**
+  (host `localhost`, base `carnisys`, rol `carnisys_user`, `Keepalive=30;Tcp Keepalive=true;`
+  obligatorio) ademas de `ConexionPrincipal` (SQL Server, que se deja intacta como via de
+  rollback). Este archivo **nunca se toca por el deploy de codigo** (se excluye del paquete, como
+  siempre) -- si hace falta rotar la password o el host, se edita a mano en la VM.
+
+**Roles Postgres de esta VM** (credenciales en `~/hosts/carnisys-vm-postgres.env`, nunca en el
+repo): `carnisys_admin` (dueno/DDL de las 49 tablas), `carnisys_user` (rol de aplicacion, el que
+usa `connectionStrings.config`), `cs_admin_pg` (`BYPASSRLS`), mas los roles `NOLOGIN BYPASSRLS`
+`carnisys_usuarios_bypass`/`carnisys_sysadmin_bypass`. El esquema se creo corriendo los 30 scripts
+de `DatosPostgres/DB-Migrations/*.sql` en orden (ver `docs/DECISIONS.md` 2026-08-29 para el detalle
+de que rol corre cada script) -- **no correr `DB-Migrations` de nuevo sobre esta base** salvo que
+sea una migracion nueva que todavia no se aplico ahi (comparar contra dev local primero).
+
 ## Segundo destino: "Servidor SM" (`192.168.0.151`) -> distinto de la VM de produccion "Carnisys"
 
 **No confundir con la VM de arriba.** Hay dos servidores de deploy distintos para este proyecto:

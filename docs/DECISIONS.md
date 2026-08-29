@@ -1,6 +1,73 @@
-# Decisiones de arquitectura
+﻿# Decisiones de arquitectura
 
-## 2026-08-28 (la mas reciente) - Causa REAL definitiva: restoreStateIfNeeded() en Stock/Index.cshtml pisaba la pagina (y el TempData) antes de que el usuario la viera
+## 2026-08-29 (la mas reciente) - Cutover real a Postgres en la VM de produccion "Carnisys" (carnisys.com)
+
+**Decidido**: `carnisys.com` corre en Postgres desde hoy, no solo en dev. Hasta ahora cada etapa de
+la migracion (`Usuario.cs`, `Venta.cs`, System Administration, etc.) cerraba con la misma
+salvedad: "el codigo queda listo y verificado pero no en produccion, el cutover es una decision
+aparte" (ver entradas 2026-08-19/20/25). Hoy se tomo esa decision, pedido explicito del usuario
+(`AskUserQuestion`, confirmando ademas que los datos de la base Postgres de dev local son datos
+reales de negocio, no de prueba) — no una consecuencia automatica de un deploy de rutina.
+
+**Por que ahora**: `docs/GAPS.md` decia "sin gaps abiertos" desde el 2026-08-20, y el ultimo commit
+(`f417f08f`) porto System Administration, el ultimo modulo que quedaba 100% en SQL Server. El
+codigo estaba listo; faltaba solo la decision de negocio.
+
+**Que se hizo (en orden)**:
+1. Restore points: `git tag pre-deploy-postgres-cutover-20260829` (commit `71bd638f`), backup
+   completo de `C:\inetpub\wwwroot\CarniSysWeb` en `web\backups\CarniSysWeb_20260829_154839`
+   (2369 archivos, 0 errores) y `pg_dump --data-only` de la base local de dev, todo antes de
+   tocar nada.
+2. Deploy de codigo (proceso ya documentado abajo, sin cambios): Release + `FolderProfile`,
+   ajuste manual de `requireSSL=false`/`CookieRequireSsl=false` (mitigacion ya conocida,
+   `docs/09-cambios-y-pendientes/riesgos-conocidos.md` 2026-07-29), swap via `robocopy /MIR`.
+   El swap de `bin\` de paso limpio ~46 DLLs/PDBs `App_Web_*` viejos (assemblies de Razor
+   precompilados de deploys anteriores) que ya no correspondian a ningun archivo fuente actual —
+   el pedido explicito de "nada de codigo viejo colgado" quedo cubierto por el `/MIR` estandar,
+   no hizo falta logica extra. Tambien se borro `web.config.bak-20260722-cookiessl`, un archivo
+   suelto de una sesion de deploy vieja.
+3. **Se corrigio el setup de Postgres de la VM**: la instalacion de la sesion anterior
+   (2026-08-22) habia creado un solo rol (`carnisys_user`, dueno de una base `carnisys` vacia) que
+   **no coincidia con el diseno real de 3 roles** (`carnisys_admin` dueno/DDL, `carnisys_user` de
+   aplicacion sin ownership, `cs_admin_pg` con `BYPASSRLS` — ver
+   `docs/06-datos-e-integraciones/rls-postgres.md`). Se hizo `DROP DATABASE`/`DROP ROLE` de ese
+   setup ad-hoc (estaba vacio, sin uso real, riesgo cero) y se reconstruyo corriendo los 30
+   scripts reales de `DatosPostgres/DB-Migrations/*.sql` en orden, con el rol correcto por
+   script: el primero (`Create_carnisys_roles_y_db`) como `postgres` superusuario; los 27
+   `Create_*`/`Alter_*` de tablas como `carnisys_admin` (para que quede como dueno real, pieza
+   central del diseno RLS); los 3 que crean roles `BYPASSRLS` o hacen `GRANT`
+   (`..._bypass_role.sql` x2 y `..._Grant_iva...sql`) como `postgres` (creación de rol
+   requiere superusuario, `carnisys_admin` no tiene `CREATEROLE`). Verificado: 49 tablas (igual
+   que dev local) y los 5 roles con los atributos `rolbypassrls`/`rolcanlogin` correctos.
+4. **Copia de datos reales**: `pg_dump --data-only --disable-triggers -Fc` de la base local de
+   dev (evita el problema conocido de FK circular en `personas.idpropietario`), subido por SFTP y
+   restaurado con `pg_restore --data-only --disable-triggers` como `postgres` (bypasea RLS
+   automaticamente durante la carga). Verificado con conteo de filas exacto entre dev local y VM
+   en `ventas` (762), `personas` (25), `corte` (88), `movimiento` (37), `usuarios` (18).
+5. `Web/Config/connectionStrings.config` de la VM: se agrego `ConexionPostgresPiloto` (host
+   `localhost`, rol `carnisys_user`, `Keepalive=30;Tcp Keepalive=true;` obligatorio — bug real ya
+   encontrado y resuelto en dev, 2026-08-21) **editando el XML en el lugar**, sin tocar
+   `ConexionPrincipal` (SQL Server) que ya estaba ahi — se preserva como via de rollback minima.
+6. Credenciales nuevas (3 roles de la VM, nunca reusadas de dev local) guardadas en
+   `~/hosts/carnisys-vm-postgres.env`.
+
+**Validado mecanicamente**: `curl https://carnisys.com/` y `/Login/Index` devuelven `200`, titulo
+`Ingresar a CARNISYS`, sin stack trace, `App_Data/error-web.log` vacio tras el deploy, App Pool
+`CarniSys` en estado `Started`.
+
+**Pendiente, no verificado por mi (requiere al usuario)**: un login real con un usuario de negocio
+real y click-through de 2-3 pantallas que toquen Postgres a fondo (Ventas/POS, Stock, Compras) —
+no tengo credenciales de negocio reales para probarlo yo mismo, y no correspondia generarlas/
+adivinarlas. `X-Carnisys-Db-Calls`/`X-Carnisys-Db-Ms` siguen en `0` en todas las requests probadas
+(gap ya documentado: `DatosPostgres/DbPg.cs` no tiene instrumentacion, a diferencia de
+`Utilidades/Db.cs` — no es un bug nuevo de este cutover).
+
+**Rollback disponible** (no usado, la validacion mecanica paso): restaurar
+`web\backups\CarniSysWeb_20260829_154839` con `robocopy /MIR` sobre `CarniSysWeb` — el
+`Web.config` de ese backup no tiene `DataEngine`, por lo que el rollback vuelve a SQL Server sin
+tocar esa base para nada (nunca se toco durante todo este cutover).
+
+## 2026-08-28 - Causa REAL definitiva: restoreStateIfNeeded() en Stock/Index.cshtml pisaba la pagina (y el TempData) antes de que el usuario la viera
 
 El fix del Service Worker (entrada de abajo) era real y necesario, pero el usuario probo en incognito (sin Service Worker) y el cartel **seguia sin aparecer** -- eso descartaba la teoria por completo. Se agrego un diagnostico temporal (log a archivo, ver `StockController.Index`/`Guardar`, ya removido) para observar el server sin depender de nada del navegador. El log fue concluyente:
 

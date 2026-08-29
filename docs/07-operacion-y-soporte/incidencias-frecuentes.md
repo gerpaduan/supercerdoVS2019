@@ -13,7 +13,23 @@ Registrar fallas repetidas, sintomas, diagnostico y resolucion conocida.
 
 ---
 
-## 2026-08-29 (mas reciente) - Deploy San Lorenzo: `Move-Item` de la carpeta entera dejo el sitio sin `Web.config`/`Global.asax`/`AFIP` unos minutos
+## 2026-08-29 (mas reciente) - `Web.csproj` es un proyecto clasico SIN wildcard: un archivo nuevo creado fuera de Visual Studio no se publica solo
+
+- **Sintoma**: `/Movimientos/Editar` (y a la larga cualquier vista que use `@Html.Partial("~/Views/Shared/_NumericKeypad.cshtml")`) tiraba `InvalidOperationException: No se encuentra la vista parcial` **en produccion (San Lorenzo)**, pese a que el sitio local (IIS Express, sirviendo directo desde el codigo fuente) funcionaba perfecto.
+- **Causa**: `Web.csproj` es un proyecto Web Application **clasico** (no SDK-style): cada `.cshtml`/`.js`/`.css` necesita su propio `<Content Include="...">` explicito para que MSBuild lo reconozca como parte del proyecto. Visual Studio agrega esa linea solo cuando el archivo se crea DESDE el IDE. Un archivo creado por fuera (ej. por un agente, editando el disco directo) **nunca queda registrado**, y un publish real (`msbuild /p:DeployOnBuild=true`, que hace `AspnetCompileMerge` de las vistas) lo excluye en silencio del paquete -- sin ningun error ni warning durante el build. Localmente (IIS Express corriendo sobre la carpeta fuente) esto no se nota, porque ahi las vistas se sirven directo del disco, no del paquete precompilado.
+- **Alcance real encontrado**: al auditar (comparar `Get-ChildItem` contra el contenido de `Web.csproj`) aparecieron **27 vistas y 3 JS/CSS faltantes**, no solo la que rompio -- incluia `Views/Compras/AutorizarModulo.cshtml`, `Views/Ventas/AutorizarModulo.cshtml`, `Views/SeleccionUsuario/Index.cshtml`, las 24 vistas de `Views/MigracionPostgres/Comparar*.cshtml`, y `numeric-keypad.js`/`.css`/`busqueda-feedback.js` -- ninguno se habia agregado al csproj al crearse (de sesiones distintas, no solo la de hoy).
+- **Resolucion**: se agregaron los 30 `<Content Include="...">` faltantes, se recompilo (Debug local + Release/publish) y se re-desplego a San Lorenzo. Confirmado con el marcador de precompilacion (`Views/Shared/_NumericKeypad.cshtml` en el server pasa a ser un archivo de 105 bytes "no se debe eliminar" -- eso es NORMAL en este proyecto, prueba de que la vista SI quedo en el paquete precompilado esta vez).
+- **Regla para toda tarea futura que cree un archivo `.cshtml`/`.js`/`.css` nuevo en `Web/`**: agregar la linea `<Content Include="...">` correspondiente a `Web.csproj` **en el mismo momento** que se crea el archivo (no despues, no "si hace falta") -- y antes de dar la tarea por terminada, correr una verificacion tipo:
+  ```powershell
+  $csproj = Get-Content Web\Web.csproj -Raw
+  Get-ChildItem Web\Views -Filter *.cshtml -Recurse | ForEach-Object {
+      $rel = $_.FullName.Substring((Resolve-Path Web).Path.Length + 1)
+      if ($csproj -notlike "*$rel*") { Write-Output "FALTA: $rel" }
+  }
+  ```
+  (mismo criterio para `Web\Scripts\*.js` y `Web\Content\css\*.css`). El build local exitoso **no prueba nada** para este caso -- solo un publish real (o esta verificacion) lo detecta.
+
+## 2026-08-29 - Deploy San Lorenzo: `Move-Item` de la carpeta entera dejo el sitio sin `Web.config`/`Global.asax`/`AFIP` unos minutos
 
 - **Contexto**: deploy normal a San Lorenzo (ver `despliegue-y-publicacion.md`), publicando codigo limpio via SFTP+PowerShell remoto por SSH (sin GUI, sesion Posh-SSH). Primer intento del swap uso `Move-Item -Path CarniSysWeb -Destination backups\CarniSysWeb_<ts>` para "backuppear y vaciar" el sitio en un solo paso atomico, antes de mover las carpetas nuevas adentro.
 - **Sintoma**: ese primer `Move-Item` tiro error (`El proceso no puede obtener acceso al archivo porque esta siendo utilizado en otro proceso` -- un log dentro de `App_Data\` estaba abierto por el App Pool). El comando reporto error, pero **la carpeta SI se habia movido igual** (rename de directorio en NTFS no requiere que los archivos internos esten libres) -- dejando `CarniSysWeb` **completamente vacia de Web.config/Global.asax/AFIP** hasta el segundo intento (que solo restauro bin/Content/Scripts/Views/fonts + sueltos, no esos 3). El sitio quedo sirviendo sin `Web.config` real un rato corto, sin que el error de PowerShell lo dejara en evidencia (parecia que el `Move-Item` habia fallado limpio, sin tocar nada).
