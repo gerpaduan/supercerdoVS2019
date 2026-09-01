@@ -1,0 +1,657 @@
+@model Entidades.EgresoCaja
+@using System.Data
+@using System.Globalization
+@using System.Linq
+
+@{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool usuarioAdmin = ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin;
+    bool esEdicion = ViewBag.EsEdicion != null && (bool)ViewBag.EsEdicion;
+    var usuario = ViewBag.UsuarioActual as Entidades.Usuario;
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    var tipos = ViewBag.TiposEgresoCaja as DataTable;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    int idSucursal = Model != null && Model.Sucursal != null && Model.Sucursal.idSucursal > 0 ? Model.Sucursal.idSucursal : (ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0);
+    bool mostrarSucursales = !desdePos && idCierreActividad == 0;
+    string monto = Model != null && Model.Monto > 0 ? Model.Monto.ToString("0.##", CultureInfo.InvariantCulture) : "";
+    string sucursalActual = "";
+    if (Model != null && Model.Sucursal != null && !string.IsNullOrWhiteSpace(Model.Sucursal.SucursalNombre))
+    {
+        sucursalActual = Model.Sucursal.SucursalNombre;
+    }
+    else if (usuario != null && usuario.Sucursal != null && !string.IsNullOrWhiteSpace(usuario.Sucursal.SucursalNombre))
+    {
+        sucursalActual = usuario.Sucursal.SucursalNombre;
+    }
+    else if (sucursales != null)
+    {
+        var sucursalSeleccionada = sucursales.FirstOrDefault(s => s.IdSucursal == idSucursal);
+        sucursalActual = sucursalSeleccionada != null ? sucursalSeleccionada.SucursalNombre : "";
+    }
+}
+
+<div class="egreso-form-wrap">
+    <form id="formEgresoCaja" data-desde-pos="@desdePos.ToString().ToLower()" data-id-cierre="@idCierreActividad">
+        <input type="hidden" name="id" value="@(Model != null ? Model.Id : 0)" />
+        <input type="hidden" name="desdePos" value="@desdePos.ToString().ToLower()" />
+        <input type="hidden" name="idCierre" value="@idCierreActividad" />
+
+        <div id="egresoCajaError" class="alert alert-danger d-none"></div>
+
+        <div class="egreso-form-head">
+            <div>
+                <span class="text-muted d-block">@(esEdicion ? "Modificacion" : "Vendedor")</span>
+                <strong>@(usuario != null ? usuario.Nombre : "-")</strong>
+                @if (!string.IsNullOrWhiteSpace(sucursalActual))
+                {
+                    <small class="text-muted d-block mt-1">Sucursal: <strong>@sucursalActual</strong></small>
+                }
+            </div>
+            @if (desdePos)
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVolverMisEgresos">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            }
+        </div>
+
+        <div class="egreso-form-grid">
+            @if (mostrarSucursales)
+            {
+                <div class="form-group egreso-field egreso-field-sucursal">
+                    <label>Sucursal</label>
+                    <select class="form-control" name="idSucursal" id="egresoSucursal">
+                        @if (sucursales != null)
+                        {
+                            foreach (var s in sucursales)
+                            {
+                                <option value="@s.IdSucursal" selected="@(s.IdSucursal == idSucursal ? "selected" : null)">@s.SucursalNombre</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="form-group egreso-field egreso-field-fecha">
+                <label>Fecha</label>
+                <input type="datetime-local"
+                       class="form-control"
+                       name="fecha"
+                       id="egresoFecha"
+                       value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm")" />
+            </div>
+
+            <div class="form-group egreso-field egreso-field-tipo">
+                <label>Tipo</label>
+                <select class="form-control" name="idTipoEgresoCaja" id="idTipoEgresoCaja">
+                    <option value="0">Seleccione un tipo</option>
+                    @if (tipos != null)
+                    {
+                        foreach (DataRow row in tipos.Rows)
+                        {
+                            int idTipo = Convert.ToInt32(row["id"]);
+                            bool reservado = row.Table.Columns.Contains("Reservado")
+                                && row["Reservado"] != DBNull.Value
+                                && Convert.ToBoolean(row["Reservado"]);
+                            if (idTipo == 0) { continue; }
+                            if (!esEdicion && reservado) { continue; }
+                            <option value="@idTipo" selected="@(Model != null && idTipo == Model.IdTipoEgresoCaja ? "selected" : null)">@row["tipoEgresoCaja"]</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            @if (!mostrarSucursales)
+            {
+                <input type="hidden" name="idSucursal" value="@idSucursal" />
+            }
+
+            <div class="form-group egreso-field egreso-field-descripcion">
+                <label>Descripcion</label>
+                <input type="text" class="form-control" id="egresoDescripcion" name="descripcion" maxlength="100" autocomplete="off" value="@(Model != null ? Model.Descripcion : "")" />
+            </div>
+
+            <div class="form-group egreso-field egreso-field-monto">
+                <label>Monto</label>
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control solo-decimal egreso-monto"
+                           id="egresoMonto"
+                           name="monto"
+                           inputmode="decimal"
+                           autocomplete="off"
+                           value="@monto" />
+                    <div class="input-group-append">
+                        <button type="button"
+                                id="btnCalculadoraBilletesEgreso"
+                                class="btn btn-outline-secondary js-calculadora-billetes-launch js-calculadora-billetes-egreso"
+                                data-cb-context="egreso"
+                                data-cb-input="#egresoMonto, [name='monto']"
+                                data-cb-detail="#egresoDetalle, [name='detalle']"
+                                title="Calcular efectivo">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group egreso-field egreso-field-detalle">
+                <label>Detalle</label>
+                <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@(Model != null ? Model.Detalle : "")</textarea>
+            </div>
+        </div>
+
+        <div class="egreso-form-actions">
+            @if (esEdicion)
+            {
+                <button type="button"
+                        class="btn btn-primary btn-block mb-2"
+                        id="btnHabilitarEdicionEgresoCaja"
+                        data-edit-readonly-ignore="true">
+                    <i class="fas fa-edit mr-1"></i> Modificar
+                </button>
+            }
+            <button type="submit" class="btn btn-success btn-block @(esEdicion ? "d-none" : "")" id="btnGuardarEgresoCaja">
+                <i class="fas fa-save mr-1"></i> Guardar egreso
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .egreso-form-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        margin-bottom: .55rem;
+        padding-bottom: .45rem;
+        border-bottom: 1px solid rgba(0, 0, 0, .08);
+    }
+
+    .egreso-form-head .text-muted {
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    .egreso-form-head strong {
+        line-height: 1.15;
+    }
+
+    .egreso-form-head small {
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    .egreso-form-grid .form-group label {
+        margin-bottom: .25rem;
+        font-size: .875rem;
+    }
+
+    .egreso-form-grid .form-group {
+        margin-bottom: .65rem;
+    }
+
+    @@media (min-width: 992px) {
+        .egreso-form-wrap {
+            max-width: 100%;
+        }
+
+        .egreso-form-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+            gap: 0 1rem;
+            align-items: start;
+        }
+
+        .egreso-form-grid .egreso-field {
+            min-width: 0;
+        }
+
+        .egreso-form-grid .egreso-field-detalle {
+            grid-column: 1 / -1;
+        }
+
+        .egreso-form-grid .egreso-field-detalle textarea {
+            min-height: 7.5rem;
+            resize: vertical;
+        }
+
+        .egreso-form-actions {
+            margin-top: .5rem;
+        }
+
+        .egreso-form-actions .btn {
+            max-width: 18rem;
+            margin-left: auto;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        if (window.EgresosCaja && typeof window.EgresosCaja.bindForm === "function") {
+            window.EgresosCaja.bindForm("#formEgresoCaja");
+        }
+
+        var soloLecturaInicial = @Html.Raw(esEdicion ? "true" : "false");
+        var esDesdePos = @Html.Raw(desdePos ? "true" : "false");
+        var form = document.getElementById("formEgresoCaja");
+        var btnModificar = document.getElementById("btnHabilitarEdicionEgresoCaja");
+        var btnGuardar = document.getElementById("btnGuardarEgresoCaja");
+        var btnCalculadora = document.getElementById("btnCalculadoraBilletesEgreso");
+        var selectSucursal = document.getElementById("egresoSucursal") || (form ? form.querySelector("[name='idSucursal']") : null);
+        var inputFecha = document.getElementById("egresoFecha") || (form ? form.querySelector("[name='fecha']") : null);
+        var selectTipo = document.getElementById("idTipoEgresoCaja") || (form ? form.querySelector("[name='idTipoEgresoCaja']") : null);
+        var inputDescripcion = document.getElementById("egresoDescripcion") || (form ? form.querySelector("[name='descripcion']") : null);
+        var inputMonto = document.getElementById("egresoMonto") || (form ? form.querySelector("[name='monto']") : null);
+        var inputDetalle = document.getElementById("egresoDetalle") || (form ? form.querySelector("[name='detalle']") : null);
+        var tiposDisponibles = [];
+        var busquedaTipoTexto = "";
+        var busquedaTipoTimer = null;
+        var ultimaTeclaTipo = "";
+
+        if (selectTipo && selectTipo.options) {
+            Array.prototype.forEach.call(selectTipo.options, function (option) {
+                var id = option && option.value ? parseInt(option.value, 10) : 0;
+                var texto = option ? (option.text || "") : "";
+                if (!id || !texto) {
+                    return;
+                }
+
+                tiposDisponibles.push({
+                    id: id,
+                    texto: texto,
+                    normalizado: texto.toLowerCase()
+                });
+            });
+        }
+
+        function parseMontoCalculadora(texto) {
+            var valor = (texto || "").toString().replace(/\$/g, "").replace(/\s+/g, "").trim();
+            if (!valor) {
+                return "0.00";
+            }
+
+            var ultimaComa = valor.lastIndexOf(",");
+            var ultimoPunto = valor.lastIndexOf(".");
+            if (ultimaComa >= 0 && ultimoPunto >= 0) {
+                if (ultimaComa > ultimoPunto) {
+                    valor = valor.replace(/\./g, "").replace(",", ".");
+                } else {
+                    valor = valor.replace(/,/g, "");
+                }
+            } else {
+                valor = valor.replace(",", ".");
+            }
+
+            var numero = parseFloat(valor);
+            return isNaN(numero) ? "0.00" : numero.toFixed(2);
+        }
+
+        function dispararEventos(control, eventos) {
+            if (!control || !eventos || !eventos.length) {
+                return;
+            }
+
+            eventos.forEach(function (nombre) {
+                var evt;
+                try {
+                    evt = new Event(nombre, { bubbles: true });
+                } catch (e) {
+                    evt = document.createEvent("Event");
+                    evt.initEvent(nombre, true, true);
+                }
+
+                control.dispatchEvent(evt);
+            });
+        }
+
+        function mergeDetalleEfectivo(textoActual, resultado) {
+            if (window.CalculadoraBilletes && typeof window.CalculadoraBilletes.mergeDetalleBlock === "function") {
+                return window.CalculadoraBilletes.mergeDetalleBlock(textoActual, resultado);
+            }
+
+            return textoActual || "";
+        }
+
+        function focusAndSelect(control) {
+            if (!control) {
+                return;
+            }
+
+            control.focus();
+            if (typeof control.select === "function" && control.tagName !== "SELECT") {
+                control.select();
+            }
+        }
+
+        function buscarTipoCoincidente(texto) {
+            var valor = (texto || "").toString().trim().toLowerCase();
+            if (!valor) {
+                return null;
+            }
+
+            for (var i = 0; i < tiposDisponibles.length; i++) {
+                if (tiposDisponibles[i].normalizado === valor) {
+                    return tiposDisponibles[i];
+                }
+            }
+
+            for (var j = 0; j < tiposDisponibles.length; j++) {
+                if (tiposDisponibles[j].normalizado.indexOf(valor) === 0) {
+                    return tiposDisponibles[j];
+                }
+            }
+
+            for (var k = 0; k < tiposDisponibles.length; k++) {
+                if (tiposDisponibles[k].normalizado.indexOf(valor) >= 0) {
+                    return tiposDisponibles[k];
+                }
+            }
+
+            return null;
+        }
+
+        function seleccionarTipoCoincidente(texto) {
+            if (!selectTipo) {
+                return false;
+            }
+
+            var coincidencia = buscarTipoCoincidente(texto);
+            if (!coincidencia) {
+                return false;
+            }
+
+            selectTipo.value = String(coincidencia.id);
+            dispararEventos(selectTipo, ["input", "change"]);
+            return true;
+        }
+
+        function resetBusquedaTipo() {
+            busquedaTipoTexto = "";
+            ultimaTeclaTipo = "";
+            if (busquedaTipoTimer) {
+                clearTimeout(busquedaTipoTimer);
+                busquedaTipoTimer = null;
+            }
+        }
+
+        function acumularBusquedaTipo(caracter) {
+            busquedaTipoTexto += caracter.toLowerCase();
+            if (busquedaTipoTimer) {
+                clearTimeout(busquedaTipoTimer);
+            }
+
+            busquedaTipoTimer = setTimeout(function () {
+                resetBusquedaTipo();
+            }, 850);
+        }
+
+        function refrescarBusquedaTipo() {
+            if (busquedaTipoTimer) {
+                clearTimeout(busquedaTipoTimer);
+            }
+
+            busquedaTipoTimer = setTimeout(function () {
+                resetBusquedaTipo();
+            }, 850);
+        }
+
+        function seleccionarSiguienteTipoPorInicial(caracter) {
+            if (!selectTipo) {
+                return false;
+            }
+
+            var valor = (caracter || "").toString().trim().toLowerCase();
+            if (!valor) {
+                return false;
+            }
+
+            var coincidencias = [];
+            for (var i = 0; i < tiposDisponibles.length; i++) {
+                if (tiposDisponibles[i].normalizado.indexOf(valor) === 0) {
+                    coincidencias.push(tiposDisponibles[i]);
+                }
+            }
+
+            if (!coincidencias.length) {
+                return false;
+            }
+
+            var actual = (selectTipo.value || "").toString();
+            var indiceActual = -1;
+            for (var j = 0; j < coincidencias.length; j++) {
+                if (String(coincidencias[j].id) === actual) {
+                    indiceActual = j;
+                    break;
+                }
+            }
+
+            var siguiente = coincidencias[(indiceActual + 1) % coincidencias.length];
+            selectTipo.value = String(siguiente.id);
+            dispararEventos(selectTipo, ["input", "change"]);
+            return true;
+        }
+
+        function bindBusquedaTipoSelect(control) {
+            if (!control) {
+                return;
+            }
+
+            control.addEventListener("keydown", function (evt) {
+                if (evt.altKey || evt.ctrlKey || evt.metaKey) {
+                    return;
+                }
+
+                var tecla = evt.key || "";
+                if (tecla.length !== 1 || /\s/.test(tecla)) {
+                    return;
+                }
+
+                var teclaNormalizada = tecla.toLowerCase();
+                if (busquedaTipoTexto.length === 1
+                    && busquedaTipoTexto === teclaNormalizada
+                    && ultimaTeclaTipo === teclaNormalizada) {
+                    refrescarBusquedaTipo();
+                    seleccionarSiguienteTipoPorInicial(teclaNormalizada);
+                    evt.preventDefault();
+                    return;
+                }
+
+                acumularBusquedaTipo(tecla);
+                ultimaTeclaTipo = teclaNormalizada;
+
+                if (seleccionarTipoCoincidente(busquedaTipoTexto)) {
+                    evt.preventDefault();
+                    return;
+                }
+
+                seleccionarTipoCoincidente(tecla);
+                evt.preventDefault();
+            });
+
+            control.addEventListener("blur", resetBusquedaTipo);
+        }
+
+        function avanzarFocusEgreso(actual) {
+            if (!actual) {
+                return;
+            }
+
+            if (actual === selectSucursal) {
+                focusAndSelect(inputFecha);
+                return;
+            }
+
+            if (actual === selectTipo) {
+                focusAndSelect(esDesdePos ? inputDescripcion : inputFecha);
+                return;
+            }
+
+            if (actual === inputFecha) {
+                focusAndSelect(esDesdePos ? inputDescripcion : selectTipo);
+                return;
+            }
+
+            if (actual === inputDescripcion) {
+                focusAndSelect(inputMonto);
+                return;
+            }
+
+            if (actual === inputMonto) {
+                focusAndSelect(inputDetalle);
+                return;
+            }
+
+            if (actual === inputDetalle) {
+                if (btnGuardar && !btnGuardar.classList.contains("d-none") && !btnGuardar.disabled) {
+                    btnGuardar.focus();
+                    btnGuardar.click();
+                }
+            }
+        }
+
+        function bindEnterFlow(control) {
+            if (!control) {
+                return;
+            }
+
+            control.addEventListener("keydown", function (evt) {
+                if (evt.key !== "Enter" || evt.shiftKey || evt.altKey || evt.ctrlKey || evt.metaKey) {
+                    return;
+                }
+
+                evt.preventDefault();
+                avanzarFocusEgreso(control);
+            });
+        }
+
+        function setSoloLectura(readOnly) {
+            if (!form) {
+                return;
+            }
+
+            var controls = form.querySelectorAll("input, select, textarea");
+            var calcButtons = form.querySelectorAll(".js-calculadora-billetes-launch");
+            Array.prototype.forEach.call(controls, function (control) {
+                if (!control || control.type === "hidden") {
+                    return;
+                }
+
+                if (readOnly) {
+                    if (control.tagName === "SELECT") {
+                        control.disabled = true;
+                    } else {
+                        control.readOnly = true;
+                    }
+                } else {
+                    if (control.tagName === "SELECT") {
+                        control.disabled = false;
+                    } else {
+                        control.readOnly = false;
+                    }
+                }
+            });
+
+            Array.prototype.forEach.call(calcButtons, function (button) {
+                button.disabled = !!readOnly;
+            });
+
+            if (btnModificar) {
+                btnModificar.classList.toggle("d-none", !readOnly);
+            }
+
+            if (btnGuardar) {
+                btnGuardar.classList.toggle("d-none", readOnly);
+                btnGuardar.disabled = readOnly;
+            }
+        }
+
+        if (form) {
+            form.addEventListener("submit", function (evt) {
+                if (soloLecturaInicial) {
+                    evt.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        if (btnModificar) {
+            btnModificar.addEventListener("click", function () {
+                soloLecturaInicial = false;
+                setSoloLectura(false);
+            });
+        }
+
+        if (btnCalculadora) {
+            btnCalculadora.addEventListener("click", function (evt) {
+                evt.preventDefault();
+
+                if (!window.CalculadoraBilletes || typeof window.CalculadoraBilletes.open !== "function") {
+                    return;
+                }
+
+                window.CalculadoraBilletes.open({
+                    tituloPantalla: "Calculadora Billetes",
+                    titulo: "Detalle de billetes",
+                    callbackOnAceptar: function (resultado) {
+                        if (inputMonto) {
+                            inputMonto.value = Number(resultado && resultado.total ? resultado.total : 0).toFixed(2);
+                            dispararEventos(inputMonto, ["input", "change", "keyup"]);
+                        }
+
+                        if (inputDetalle) {
+                            inputDetalle.value = mergeDetalleEfectivo(inputDetalle.value, resultado);
+                            dispararEventos(inputDetalle, ["input", "change"]);
+                        }
+                    }
+                });
+            });
+        }
+
+        $(document)
+            .off("click.egresoMontoCalculadora", "#btnAceptarCalculadoraBilletes")
+            .on("click.egresoMontoCalculadora", "#btnAceptarCalculadoraBilletes", function () {
+                if (!inputMonto) {
+                    return;
+                }
+
+                var lblTotal = document.getElementById("lblCalculadoraBilletesTotal");
+                inputMonto.value = parseMontoCalculadora(lblTotal ? lblTotal.textContent : "");
+                dispararEventos(inputMonto, ["input", "change", "keyup"]);
+            });
+
+        bindBusquedaTipoSelect(selectTipo);
+        bindEnterFlow(selectSucursal);
+        bindEnterFlow(selectTipo);
+        bindEnterFlow(inputFecha);
+        bindEnterFlow(inputDescripcion);
+        bindEnterFlow(inputMonto);
+        bindEnterFlow(inputDetalle);
+
+        setSoloLectura(soloLecturaInicial);
+
+        function enfocarInicialEgreso() {
+            var selector = @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#egresoFecha\""));
+            var el = document.querySelector(selector);
+            if (!el) {
+                return;
+            }
+
+            el.focus();
+            if (!@Html.Raw(esEdicion ? "true" : "false") && typeof el.select === "function") {
+                el.select();
+            }
+        }
+
+        setTimeout(function () {
+            enfocarInicialEgreso();
+        }, 100);
+
+        if (esDesdePos) {
+            setTimeout(enfocarInicialEgreso, 220);
+            setTimeout(enfocarInicialEgreso, 420);
+        }
+    })();
+</script>

@@ -1,0 +1,54 @@
+@model System.Data.DataTable
+
+@{
+    bool hayVariasSucursales = ViewBag.HayVariasSucursales != null && (bool)ViewBag.HayVariasSucursales;
+}
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped table-sm cajas-table-compact" id="tablaCajas">
+        <thead class="thead-dark">
+            <tr>
+                <th style="width: 18%;">Sucursal</th>
+                <th style="width: 18%;">Vendedor</th>
+                <th style="width: 18%;">Fecha Inicio</th>
+                <th style="width: 14%;">Caja Inicial $</th>
+                <th style="width: 32%;" class="text-nowrap">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["sucursal"]</td>
+                    <td>@row["vendedor"]</td>
+                    <td>@row["fechaHoraInicio"]</td>
+                    <td>@row["cajaInicio"]</td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-success btn-sm"
+                                onclick="conAutorizacionCierre(function () { abrirModalVentas(@row["id"]); })">
+                            <i class="fas fa-shopping-cart"></i> Ventas
+                        </button>
+
+                        <button class="btn btn-info btn-sm"
+                                onclick="conAutorizacionCierre(function () { abrirModalActividades(@row["id"]); })">
+                            <i class="fas fa-history"></i> Actividad
+                        </button>
+
+                        <button class="btn btn-danger btn-sm"
+                                onclick="conAutorizacionCierre(function () { abrirModalCerrarCaja(@row["id"]); })">
+                            <i class="fas fa-lock"></i> Cerrar
+                        </button>
+
+                        @if (hayVariasSucursales)
+                        {
+                            <button class="btn btn-warning btn-sm"
+                                    onclick="conAutorizacionCierre(function () { abrirModalCambioSucursal(@row["id"], @row["idSucursal"], '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(row["sucursal"]) ?? "")', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(row["vendedor"]) ?? "")', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Convert.ToString(row["fechaHoraInicio"]) ?? "")'); })">
+                                <i class="fas fa-exchange-alt"></i> Cambiar sucursal
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -3565,3 +3565,102 @@ trabajo en curso.
 - `FinanzasController.cs` (1944 líneas, no leído todavía) — leer y scopear en la próxima sesión.
 - Vistas ya identificadas (line count real, no estimado): `Views/Cajas/*` (12 archivos, 3980 líneas),
   `Views/Finanzas/*` (4935 líneas).
+
+## 2026-09-01 -- Migración ASP.NET Core, Módulo 7 (Caja y tesorería): primer slice portado (CajasAbiertas)
+
+Con confirmación explícita del usuario ("Primer slice completo ahora"), se portó la pantalla
+"Cajas Abiertas" completa: `CajasController.cs` (nuevo, ~700 líneas de las 1631 del original) con
+`CajasAbiertas`, `HistorialCierresCaja`, `ObtenerDatosCierre`, `CerrarCaja`,
+`PreviewCambioSucursalCaja`, `CambiarSucursalCaja`, `ActividadesCaja`, `NuevoEgresoCaja`,
+`GuardarEgresoCaja`, `AbrirCaja` (esta última inalcanzable en este slice, ver abajo). Vistas:
+`Cajas/CajasAbiertas.cshtml` (1180 líneas), `_TablaCajasAbiertas.cshtml`, `_TablaCierresDeCaja.cshtml`,
+`_MisEgresosCaja.cshtml`, `_EgresosCajaTabla.cshtml`, `_AddOrEditEgresoCaja.cshtml`.
+
+**Step-up de autenticación NO portado (decisión deliberada, documentada en la cabecera del
+controller)**: `AutorizarAccionCierre`/`RevocarAutorizacionCierre` (con `CierreCajaStepUpRateLimiter`)
+permiten a un usuario SIN el permiso directo de cerrar caja autorizar temporalmente tipeando la
+clave de otro usuario que sí lo tiene. `PermisosHelper.ObtenerUsuarioAutorizadoCierre` resuelve
+primero `TienePermisoVer(Cajas.CerrarCaja)`, que con el stub `Admin=true` (mismo bypass usado en
+toda la migración) siempre da `true` -- el stub SIEMPRE tiene el permiso directo, así que la rama
+de step-up es código inalcanzable bajo este stub (mismo criterio ya aplicado a
+`AutorizarModuloCompras` en Compras y a `SeleccionUsuarioController`). No se reprodujo con
+infraestructura de Session que WebCore no tiene. El front-end queda intacto
+(`window.CajasStepUpTienePermisoDirecto=true` evita que el modal de autorización se abra nunca).
+
+**`EgresosCajaPolicy` portado con un solo cambio real**: la rama "no desde POS" llamaba a
+`PermisosHelper.TienePermiso(usuario, empresa, EgresosCaja.AltaEdicion, fecha, creadoPor)` (chequeo
+contra Session) -- se reemplazó por `usuario.Admin` directo, ya que `PermisosHelper.TienePermiso`
+hace exactamente ese mismo bypass internamente para un Admin. El resto de las reglas de negocio
+reales (qué es una compra/pago electrónico/cuenta corriente, qué sucursal y caja abierta aplica
+desde POS) se portaron tal cual.
+
+**Botón "Ventas" de cada fila apunta a `Ventas/MisVentas` (Módulo 8, POS, no portado)** -- queda
+wireado igual que el original pero da 404 al clickear, mismo patrón ya aceptado para toda
+dependencia de POS en este proyecto.
+
+**`AbrirCaja` se portó por fidelidad pero es código inalcanzable en este slice**: su único punto de
+entrada real es `Views/Ventas/POS.cshtml` (`_AbrirCajaModal.cshtml`), Módulo 8. No se portó ese
+modal ni la vista POS.
+
+**2 gaps de plataforma reales encontrados y corregidos de paso** (afectan a vistas ya portadas de
+Módulos 1-3, no solo a este slice -- se corrigieron en `WebCore/Views/Shared/_Layout.cshtml`
+globalmente, mismo criterio que el resto de scripts globales ya documentados como gap en
+`gaps.md`):
+1. `calculadora-billetes.js`/`calculadora-billetes-targets.js`: el botón "Calcular efectivo" de
+   `_AddOrEditEgresoCaja.cshtml` depende de estos scripts, cargados globalmente en `Web` clásico
+   (`_LayoutBase.cshtml`) pero ausentes en el `_Layout.cshtml` mínimo de `WebCore`.
+2. **SweetAlert2 (`Swal`)**: gap preexistente encontrado recién ahora -- `Productos/Index.cshtml`,
+   `Productos/AddOrEdit.cshtml`, `Productos/Tipos.cshtml`, `Personas/Editar.cshtml`,
+   `Stock/Index.cshtml`, `Stock/ExistenciaPorSucursales.cshtml`,
+   `SystemAdministration/AltaRapidaEmpresa.cshtml` (Módulos 1-4, ya "validados") también llaman
+   `Swal.fire(...)` sin que el script estuviera cargado en ningún lado de `WebCore` -- nadie lo
+   había notado porque ninguna de esas rutas de código se había ejercitado hasta ahora contra un
+   flujo que dispara esa alerta específica. Se agregó el mismo CDN + helper local
+   (`swal-single-confirm.js`) que usa `Web` clásico. **No se re-verificó cada vista afectada** -- se
+   asume corregido por ser un script puramente aditivo y global, pero queda como pendiente de
+   confirmar si en algún momento se re-audita paridad de esos módulos.
+
+**Verificado con datos reales (solo lectura, sin escrituras todavía)**: `CajasAbiertas` (5 cajas
+reales abiertas de la empresa 1, incluida San Martin/"ger"/$1000), `HistorialCierresCaja` (17
+cierres históricos reales), `ObtenerDatosCierre` (JSON con ventas/egresos reales calculados),
+`ActividadesCaja` (106 filas de actividad real), `NuevoEgresoCaja` (formulario con combos reales),
+`PreviewCambioSucursalCaja` (2 casos reales: mismo-sucursal rechazado, sucursal-destino-con-caja-
+ya-abierta rechazado -- la regla de negocio real de `Negocio.CierreCaja` funcionando igual que en
+`Web` clásico).
+
+**NO verificado en vivo todavía (pendiente de autorización explícita antes de ejecutar)**:
+`GuardarEgresoCaja`, `CerrarCaja`, `CambiarSucursalCaja` -- las 3 escrituras reales de este slice.
+
+**Alcance de Módulo 7 restante**: `EgresosCaja`/`TiposEgresoCaja` (pantalla administrativa
+separada, segundo slice) y `FinanzasController.cs` (1944 líneas, todavía sin leer).
+
+## Verificación en vivo del slice CajasAbiertas (escrituras reales, autorizadas explícitamente por el usuario)
+
+Fecha: 2026-09-01. Mismo procedimiento de verificación ya usado en Stock/Compras/Usuarios: escritura
+real contra la base local (`.\sqlexpress`, base `carnisys`), confirmada con `sqlcmd`/`cs_admin`.
+
+**`GuardarEgresoCaja`**: se creó un egreso real sobre la caja abierta 10000006 (San Martin, "ger",
+tipo "LUZ", $123,45, descripción "Prueba WebCore Modulo 7") — `id=353` en `EgresosCaja`, confirmado
+con `sqlcmd`: `monto=123.45`, `idSucursal=1`, `creadoPor=2` ("ger", correcto). Se dejó el registro
+como evidencia (mismo criterio que las compras/pesajes de prueba de Módulos 4/5) en vez de borrarlo,
+por describirse a sí mismo como prueba en su propia descripción.
+
+**`CambiarSucursalCaja`**: se movió la caja abierta `10000007` (San Martin, usuario 11) a San Lorenzo
+— confirmado con `sqlcmd` que el registro real cambió de `idSucursal=1` a `idSucursal=2` **y de
+`id=10000007` a `id=20000008`**, hallazgo real no anticipado: los ids de `CierreCaja` codifican la
+sucursal como prefijo (`1xxxxxxx`/`2xxxxxxx`/etc.), así que mover de sucursal implica una
+renumeración real del id, manejada por `Negocio.CierreCaja.cambiarSucursalCaja` (código 100%
+compartido con `Web` clásico) — comportamiento correcto, no un bug. La respuesta ya había anticipado
+esto (`{"tabla":"CierreCaja","cantidad":1},{"tabla":"Ventas","cantidad":4}`, ambas tablas movidas
+atómicamente).
+
+**`CerrarCaja`**: se cerró la caja `10000006` (`CajaCierre=185000`, `Diferencia=608,89`,
+`ImporteRetirado=180000`, `CajaInicioSiguiente=5000`) — confirmado con `sqlcmd`: `usuarioCierre=2`
+("ger", el usuario autorizado real bajo el stub), `fechaHoraCierre` seteada al momento del POST, y
+los 4 montos idénticos a los enviados. Se dejó cerrada (no hay una acción de "reabrir caja" en el
+sistema original tampoco) — era una de 4 cajas abiertas reales pero ya viejas/abandonadas (abierta
+desde 2026-05-19, nunca cerrada), consistente con datos de prueba de sesiones anteriores de esta
+misma migración, no una caja de un cajero real operando hoy.
+
+**Con esto, el slice 1 de Módulo 7 (CajasAbiertas) queda validado de punta a punta**, incluidas las
+3 escrituras reales que quedaban pendientes.

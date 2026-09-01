@@ -23,7 +23,7 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 4 | Stock e inventario | validado | Las 13 acciones portadas y verificadas de punta a punta, incluidas las escrituras reales -- ver detalle abajo |
 | 5 | Compras y abastecimiento | validado | 8 de 10 acciones portadas y validadas, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
-| 7 | Caja y tesorería | no iniciado (scopeado) | ~12.500 líneas, dinero real + step-up auth + acoplado a POS -- ver detalle abajo y `docs/DECISIONS.md` 2026-09-01 |
+| 7 | Caja y tesorería | en progreso | Slice 1 (CajasAbiertas) portado y verificado con datos reales (solo lectura) -- ver detalle abajo |
 | 8 | Ventas y POS | no iniciado | El más grande, con AFIP/hotkeys/balanza/código de barras — último |
 
 ## Módulo 1 — Administración de sistema
@@ -228,7 +228,18 @@ Trabajo autónomo nocturno (autorización explícita del usuario, 2026-09-01: "h
 
 **Assets estáticos copiados**: `Scripts/app/reportes.js`, `Content/vendor/chart.js/Chart.bundle.min.js` (sin modificar).
 
-## Módulo 7 — Caja y tesorería (SCOPEADO, NO INICIADO)
+## Módulo 7 — Caja y tesorería (EN PROGRESO)
+
+**Slice 1 — CajasAbiertas: portado, verificado con datos reales, escrituras pendientes de autorización.**
+
+`CajasController.cs` (nuevo) + `Cajas/{CajasAbiertas,_TablaCajasAbiertas,_TablaCierresDeCaja,_MisEgresosCaja,_EgresosCajaTabla,_AddOrEditEgresoCaja}.cshtml`. Acciones portadas: `CajasAbiertas`, `HistorialCierresCaja`, `ObtenerDatosCierre`, `CerrarCaja`, `PreviewCambioSucursalCaja`, `CambiarSucursalCaja`, `ActividadesCaja`, `NuevoEgresoCaja`, `GuardarEgresoCaja`, `AbrirCaja` (inalcanzable en este slice). Detalle completo de decisiones (step-up de auth no portado, `EgresosCajaPolicy`, 2 gaps de plataforma corregidos -- calculadora de billetes y SweetAlert2) en `docs/DECISIONS.md` 2026-09-01.
+
+Verificado con datos reales: listado de cajas abiertas (5 reales), historial de cierres (17 reales), datos de cierre, actividades (106 filas), preview de cambio de sucursal (2 casos reales de la regla de negocio). **Las 3 escrituras (`GuardarEgresoCaja`, `CerrarCaja`, `CambiarSucursalCaja`) ya se probaron en vivo y quedaron validadas** -- ver `docs/DECISIONS.md`. Hallazgo real durante la prueba: el `id` de `CierreCaja` codifica la sucursal como prefijo, así que `CambiarSucursalCaja` renumera el id real además de actualizar `idSucursal` (comportamiento correcto de `Negocio.CierreCaja`, no un bug). **Slice 1 (CajasAbiertas) queda completo y validado de punta a punta.**
+
+**Slice 2 (pendiente)**: `EgresosCaja`/`TiposEgresoCaja` (pantalla administrativa separada).
+**Slice 3 (pendiente, el de mayor riesgo)**: `FinanzasController.cs` (1944 líneas, sin leer todavía).
+
+### Contexto original del scoping (previo al slice 1)
 
 Scoping hecho (2026-09-01, ver `docs/DECISIONS.md`): `CajasController.cs` (1631 líneas, leído completo) +
 `FinanzasController.cs` (1944 líneas, no leído todavía). `MercadoPagoController.cs` excluido del alcance

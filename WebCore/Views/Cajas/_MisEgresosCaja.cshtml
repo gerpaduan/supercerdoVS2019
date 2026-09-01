@@ -1,0 +1,507 @@
+@model System.Data.DataTable
+
+@{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    string mensaje = ViewBag.Mensaje as string;
+    decimal total = ViewBag.TotalVisible != null ? (decimal)ViewBag.TotalVisible : 0;
+    int cantidadItems = Model != null ? Model.Rows.Count : 0;
+    string filtroActividad = ViewBag.FiltroActividad as string ?? "todos";
+    bool permitirNuevo = ViewBag.PermitirNuevo == null || (bool)ViewBag.PermitirNuevo;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    string tituloActividades = ViewBag.TituloActividades as string ?? "Mis actividades";
+    string subtituloActividades = ViewBag.SubtituloActividades as string;
+    bool mostrarResumenMisActividades = ViewBag.MostrarResumenMisActividades == null || (bool)ViewBag.MostrarResumenMisActividades;
+}
+
+<div class="egresos-pos mis-actividades-modal @(desdePos ? "mis-actividades-pos-compacta" : "")">
+    @if (!string.IsNullOrWhiteSpace(mensaje))
+    {
+        <div class="alert alert-warning m-3">@mensaje</div>
+    }
+    else
+    {
+        <div class="egresos-pos-toolbar">
+            <div class="egresos-pos-toolbar-main">
+                @if (!string.IsNullOrWhiteSpace(subtituloActividades))
+                {
+                    <small class="text-muted d-block">@subtituloActividades</small>
+                }
+                <span class="mis-actividades-items-badge" title="Cantidad de items mostrados en la tabla">
+                    @cantidadItems item@(cantidadItems == 1 ? "" : "s")
+                </span>
+            </div>
+            <div class="egresos-pos-toolbar-actions">
+                <button type="button" class="btn btn-outline-primary" id="btnAbrirMisVentasDesdeActividades">
+                    <i class="fas fa-shopping-cart mr-1"></i> Mis ventas
+                </button>
+                <div class="egresos-actividad-filtros" role="group" aria-label="Filtro de actividades">
+                    <button type="button" class="btn btn-sm @(filtroActividad == "todos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="todos">Todos</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "gastos" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="gastos">Egresos de caja</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "pagoElectronico" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="pagoElectronico">Pagos electronicos</button>
+                    <button type="button" class="btn btn-sm @(filtroActividad == "ctaCte" ? "btn-primary" : "btn-outline-primary")" data-filtro-actividad="ctaCte">Cta Cte</button>
+                </div>
+                <select id="filtroGastoMisActividades" class="form-control form-control-sm @(filtroActividad == "gastos" ? "" : "d-none")" style="width:auto;">
+                    <option value="todos">Todos</option>
+                    <option value="gastos">Solo gastos</option>
+                    <option value="no-gastos">No gastos</option>
+                </select>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="switchVistaCompletaEgresos">
+                    <label class="custom-control-label" for="switchVistaCompletaEgresos">Vista completa</label>
+                </div>
+                @if (permitirNuevo)
+                {
+                    <button type="button" class="btn btn-success" id="btnNuevoEgresoDesdeMis">
+                        <i class="fas fa-plus mr-1"></i> Nuevo Egreso
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="px-3 pb-3">
+            @if (mostrarResumenMisActividades)
+            {
+                <div class="egresos-resumen">
+                    <div>
+                        <span class="text-muted">El total corresponde solo a egresos de caja</span>
+                        <strong>$ @total.ToString("N2")</strong>
+                    </div>
+                </div>
+            }
+            <div id="misActividadesContenido">
+                @Html.Partial("~/Views/Cajas/_EgresosCajaTabla.cshtml", Model)
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    (function () {
+        $(document)
+            .off("click.misEgresos", "#btnNuevoEgresoDesdeMis")
+            .on("click.misEgresos", "#btnNuevoEgresoDesdeMis", function () {
+                if (window.POSEgresos && typeof window.POSEgresos.abrirNuevo === "function") {
+                    window.POSEgresos.abrirNuevo();
+                    return;
+                }
+
+                if (window.EgresosCaja && typeof window.EgresosCaja.abrirNuevo === "function") {
+                    window.EgresosCaja.abrirNuevo();
+                }
+            })
+            .off("change.misActividadesFiltroGasto", "#filtroGastoMisActividades")
+            .on("change.misActividadesFiltroGasto", "#filtroGastoMisActividades", function () {
+                var filtro = $(this).val() || "todos";
+                $("#misActividadesContenido .egreso-row, #misActividadesContenido .egreso-card").each(function () {
+                    var $fila = $(this);
+                    var esGasto = $fila.attr("data-esgasto") === "1";
+                    var visible = filtro === "todos" || (filtro === "gastos" && esGasto) || (filtro === "no-gastos" && !esGasto);
+
+                    $fila.toggleClass("d-none", !visible);
+
+                    if ($fila.hasClass("egreso-row")) {
+                        $fila.next(".egreso-detalle-row").toggleClass("d-none", !visible);
+                    }
+                });
+            })
+            .off("click.misActividadesFiltro", "[data-filtro-actividad]")
+            .on("click.misActividadesFiltro", "[data-filtro-actividad]", function () {
+                var filtro = $(this).data("filtro-actividad") || "todos";
+                if (window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
+                    window.POSEgresos.abrirMis(filtro);
+                    return;
+                }
+
+                if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
+                    window.CajasAbiertas.idCierreActividadActual = @idCierreActividad;
+                    window.CajasAbiertas.abrirActividades(@idCierreActividad, filtro);
+                }
+            })
+            .off("click.misVentasDesdeActividades", "#btnAbrirMisVentasDesdeActividades")
+            .on("click.misVentasDesdeActividades", "#btnAbrirMisVentasDesdeActividades", function () {
+                if (window.POSVentas && typeof window.POSVentas.abrirMis === "function") {
+                    window.POSVentas.abrirMis();
+                    return;
+                }
+
+                if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirVentas === "function") {
+                    window.CajasAbiertas.abrirVentas(@idCierreActividad);
+                }
+            });
+    })();
+</script>
+
+<style>
+    .mis-actividades-modal {
+        font-size: 0.875rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta {
+        font-size: 0.82rem;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem 1rem;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar-main {
+        flex: 1 1 180px;
+        min-width: 0;
+    }
+
+    .mis-actividades-modal .mis-actividades-items-badge {
+        display: inline-flex;
+        align-items: center;
+        margin-top: .35rem;
+        padding: .2rem .55rem;
+        border: 1px solid #d9e2ef;
+        border-radius: 999px;
+        background: #f8f9fc;
+        color: #4f5d75;
+        font-size: .78rem;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar-actions {
+        flex: 999 1 680px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .6rem;
+    }
+
+    .mis-actividades-modal .egresos-actividad-filtros {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+    }
+
+    .mis-actividades-modal .egresos-actividad-filtros .btn,
+    .mis-actividades-modal .egresos-pos-toolbar-actions .btn {
+        margin: 0;
+    }
+
+    .mis-actividades-modal .egresos-pos-toolbar-actions .custom-switch {
+        padding-top: .15rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar {
+        margin: .75rem;
+        padding: .7rem .85rem;
+        border-radius: .75rem;
+        gap: .55rem .75rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-main small {
+        font-size: .73rem;
+        line-height: 1.2;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .mis-actividades-items-badge {
+        margin-top: .25rem;
+        padding: .16rem .48rem;
+        font-size: .72rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions {
+        gap: .45rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .btn {
+        min-height: 2rem;
+        padding: .35rem .65rem;
+        border-radius: .55rem;
+        font-size: .79rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros {
+        gap: .3rem;
+        padding: .2rem;
+        border: 1px solid #e3e6f0;
+        border-radius: 999px;
+        background: #f8f9fc;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros .btn {
+        min-height: 1.85rem;
+        padding: .25rem .55rem;
+        font-size: .76rem;
+        border-radius: 999px;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .custom-switch {
+        margin-left: .15rem;
+        padding-top: .05rem;
+        font-size: .78rem;
+        white-space: nowrap;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .px-3.pb-3 {
+        padding: 0 .75rem .75rem !important;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-resumen {
+        margin-bottom: .5rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta .egresos-resumen > div {
+        min-width: 0;
+        padding: .35rem .55rem;
+        border-radius: .65rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table-responsive {
+        border: 1px solid #e3e6f0;
+        border-radius: .75rem;
+        background: #fff;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table {
+        font-size: .75rem;
+        line-height: 1.05;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table th,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table td {
+        padding: .2rem .34rem;
+        line-height: 1.05;
+        vertical-align: middle;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table thead th {
+        padding-top: .18rem;
+        padding-bottom: .18rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table .badge,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table .badge-light {
+        padding: .1rem .24rem;
+        font-size: .66rem;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-detalle-egreso,
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .btn-modificar-egreso {
+        padding: .06rem .22rem;
+        line-height: 1;
+    }
+
+    .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .egreso-detalle-collapse > div {
+        padding: .75rem !important;
+    }
+
+    @@media (max-width: 767.98px) {
+        .mis-actividades-modal .egresos-pos-toolbar {
+            flex-direction: row;
+        }
+
+        .mis-actividades-modal .egresos-pos-toolbar-actions {
+            justify-content: flex-start;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar {
+            margin: .5rem;
+            padding: .6rem;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .px-3.pb-3 {
+            padding: 0 .5rem .5rem !important;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnAbrirMisVentasDesdeActividades,
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnNuevoEgresoDesdeMis {
+            flex: 1 1 0;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnAbrirMisVentasDesdeActividades {
+            order: 1;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions #btnNuevoEgresoDesdeMis {
+            order: 2;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros {
+            order: 3;
+            width: 100%;
+            border-radius: 999px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-actividad-filtros .btn {
+            flex: 0 0 auto;
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .mis-actividades-modal.mis-actividades-pos-compacta .egresos-pos-toolbar-actions .custom-switch {
+            order: 4;
+            width: 100%;
+            margin-left: 0;
+        }
+    }
+
+    html.dark-mode .egresos-pos {
+        background: #0f172a;
+        color: #e5edf7;
+    }
+
+    html.dark-mode .egresos-pos .egresos-resumen {
+        background: #132032;
+        border: 1px solid #2a3b52;
+        border-radius: 10px;
+    }
+
+    html.dark-mode .egresos-pos .text-muted,
+    html.dark-mode .egresos-pos .small.text-muted,
+    html.dark-mode .egresos-pos small.text-muted {
+        color: #97a7bd !important;
+    }
+
+    html.dark-mode .egresos-pos .table {
+        color: #e5edf7;
+        background-color: transparent;
+    }
+
+    html.dark-mode .egresos-pos .table thead th,
+    html.dark-mode .egresos-pos .thead-light th {
+        background: #172638 !important;
+        color: #eaf2fb !important;
+        border-color: #2a3b52 !important;
+    }
+
+    html.dark-mode .egresos-pos .table td,
+    html.dark-mode .egresos-pos .table th,
+    html.dark-mode .egresos-pos .table-bordered td,
+    html.dark-mode .egresos-pos .table-bordered th {
+        border-color: #2a3b52 !important;
+    }
+
+    html.dark-mode .mis-actividades-modal.mis-actividades-pos-compacta #misActividadesContenido .table-responsive {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .egresos-pos .table-hover tbody tr:hover {
+        background: rgba(255, 255, 255, .04);
+    }
+
+    html.dark-mode .egresos-pos .badge-light {
+        background: #223449 !important;
+        color: #e5edf7 !important;
+        border-color: #35506c !important;
+    }
+
+    html.dark-mode .egresos-pos .bg-light,
+    html.dark-mode .egresos-pos .egreso-card,
+    html.dark-mode .egresos-pos .egreso-card-detail {
+        background: #132032 !important;
+        color: #e5edf7 !important;
+        border-color: #2a3b52 !important;
+    }
+
+    html.dark-mode .egresos-pos .border-top {
+        border-color: #2a3b52 !important;
+    }
+
+    html.dark-mode .egresos-pos .btn-link {
+        color: #8fc5ff;
+    }
+
+    html.dark-mode .egresos-pos .btn-outline-primary {
+        background: #162538;
+        color: #b9d7ff;
+        border-color: #436886;
+    }
+
+    html.dark-mode .egresos-pos .btn-outline-primary:hover,
+    html.dark-mode .egresos-pos .btn-outline-primary:focus {
+        background: #274761;
+        border-color: #4f7aa0;
+        color: #f4f8fc;
+    }
+
+    html.dark-mode .egresos-pos .btn-primary {
+        background: #2d6fa3;
+        border-color: #3f84bb;
+        color: #f4f8fc;
+    }
+
+    html.dark-mode .egresos-pos .btn-primary:hover,
+    html.dark-mode .egresos-pos .btn-primary:focus {
+        background: #347db7;
+        border-color: #4b95d1;
+        color: #fff;
+    }
+
+    html.dark-mode .egresos-pos .btn-success {
+        background: #1d6f52;
+        border-color: #2b8d69;
+        color: #f4f8fc;
+    }
+
+    html.dark-mode .egresos-pos .btn-success:hover,
+    html.dark-mode .egresos-pos .btn-success:focus {
+        background: #238562;
+        border-color: #33a178;
+        color: #fff;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros {
+        background: #132032;
+        border-color: #2a3b52;
+    }
+
+    html.dark-mode .mis-actividades-modal .mis-actividades-items-badge {
+        background: #162538;
+        border-color: #2f4d69;
+        color: #d7e7fb;
+    }
+
+    html.dark-mode .mis-actividades-modal .custom-control-label {
+        color: #eaf2fb !important;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn,
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn i,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn i {
+        color: #eaf2fb !important;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn-outline-primary,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn-outline-primary {
+        background: #162538;
+        border-color: #436886;
+    }
+
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn-outline-primary:hover,
+    html.dark-mode .mis-actividades-modal .egresos-pos-toolbar-actions .btn-outline-primary:focus,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn-outline-primary:hover,
+    html.dark-mode .mis-actividades-modal .egresos-actividad-filtros .btn-outline-primary:focus {
+        background: #274761;
+        border-color: #4f7aa0;
+    }
+
+    html.dark-mode .egresos-pos .custom-control-label::before {
+        background-color: #132032;
+        border-color: #35506c;
+    }
+</style>

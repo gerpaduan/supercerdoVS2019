@@ -1,0 +1,102 @@
+@model System.Data.DataTable
+@using System.Data
+@using System.Globalization
+
+@functions {
+    string Valor(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return "";
+
+        return Convert.ToString(row[columna]) ?? "";
+    }
+
+    string FormatearFecha(DataRow row, string columna)
+    {
+        DateTime fecha;
+        return DateTime.TryParse(Valor(row, columna), out fecha) ? fecha.ToString("dd/MM/yyyy HH:mm") : Valor(row, columna);
+    }
+
+    string FormatearMonto(DataRow row, string columna)
+    {
+        decimal monto;
+        string valor = Valor(row, columna);
+        if (decimal.TryParse(valor, NumberStyles.Any, CultureInfo.CurrentCulture, out monto) ||
+            decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out monto))
+            return monto.ToString("N2");
+
+        return valor;
+    }
+}
+
+@{
+    int items = Model != null ? Model.Rows.Count : 0;
+    bool puedeModificarCierres = ViewBag.PuedeModificarCierres != null && (bool)ViewBag.PuedeModificarCierres;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="text-muted small">Resultados: @items</div>
+    <div class="text-muted small">Histórico por sucursal desde la fecha seleccionada.</div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm table-bordered table-hover mb-0" id="tablaCierresHistoricos">
+        <thead class="thead-light">
+            <tr>
+                <th>Id</th>
+                <th>Iniciada por</th>
+                <th>Inicio</th>
+                <th>Cierre</th>
+                <th class="text-right">Caja inicial</th>
+                <th class="text-right">Ventas</th>
+                <th class="text-right">EgresosCaja</th>
+                <th class="text-right">Caja cierre</th>
+                <th class="text-right">Diferencia</th>
+                <th class="text-right">Caja ini sig</th>
+                <th class="text-right">Retirado</th>
+                <th>Cerrada por</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Rows.Count > 0)
+            {
+                foreach (DataRow row in Model.Rows)
+                {
+                    <tr>
+                        <td>@Valor(row, "id")</td>
+                        <td>@Valor(row, "Iniciada_Por")</td>
+                        <td>@FormatearFecha(row, "Inicio")</td>
+                        <td>@FormatearFecha(row, "Cierre")</td>
+                        <td class="text-right">@FormatearMonto(row, "Caja_Inicial")</td>
+                        <td class="text-right">@FormatearMonto(row, "Ventas")</td>
+                        <td class="text-right">@FormatearMonto(row, "EgresosCaja")</td>
+                        <td class="text-right">@FormatearMonto(row, "Caja_Cierre")</td>
+                        <td class="text-right">@FormatearMonto(row, "Diferencia")</td>
+                        <td class="text-right">@FormatearMonto(row, "Caja_Ini_Sig")</td>
+                        <td class="text-right">@FormatearMonto(row, "Retirado")</td>
+                        <td>@Valor(row, "Cerrada_Por")</td>
+                        <td class="text-nowrap">
+                            @if (puedeModificarCierres)
+                            {
+                                <button type="button" class="btn btn-warning btn-sm" onclick="abrirModalCerrarCaja(@Valor(row, "id"), true)">
+                                    <i class="fas fa-edit"></i> Modificar
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary badge-modificar">Solo admin</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="13" class="text-center text-muted py-4">No se encontraron cierres de caja para los filtros seleccionados.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

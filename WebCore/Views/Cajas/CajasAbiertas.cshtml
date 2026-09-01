@@ -1,0 +1,1172 @@
+@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "Cajas Abiertas";
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    bool hayVariasSucursales = ViewBag.HayVariasSucursales != null && (bool)ViewBag.HayVariasSucursales;
+    bool puedeModificarCierres = ViewBag.PuedeModificarCierres != null && (bool)ViewBag.PuedeModificarCierres;
+    bool tienePermisoCerrarCaja = ViewBag.TienePermisoCerrarCaja != null && (bool)ViewBag.TienePermisoCerrarCaja;
+    var usuariosActivosEmpresa = ViewBag.UsuariosActivosEmpresa as List<object> ?? new List<object>();
+    int? idSucursal = ViewBag.IdSucursal;
+    string buscar = ViewBag.Buscar ?? "";
+    DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today.AddDays(-7);
+    var historialCierres = ViewBag.HistorialCierres as System.Data.DataTable ?? new System.Data.DataTable();
+}
+
+<div class="container-fluid px-2 px-md-3 cajas-page cajas-form-compact">
+    @Html.AntiForgeryToken()
+
+    <div class="card shadow-sm mb-3 cajas-panel-card">
+        <div class="card-body">
+            <form id="formFiltros">
+                <div class="row mb-3">
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <label for="idSucursal" class="cajas-filtro-label">Sucursal</label>
+                        <select name="idSucursal" id="idSucursal" class="form-control">
+                            @if (sucursales.Count > 1)
+                            {
+                                <option value="" selected="@(!idSucursal.HasValue ? "selected" : null)">-- Todas las sucursales --</option>
+                            }
+                            @foreach (var s in sucursales)
+                            {
+                                <option value="@s.IdSucursal" selected="@(s.IdSucursal == idSucursal ? "selected" : null)">
+                                    @s.SucursalNombre
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <label for="fechaDesde" class="cajas-filtro-label">Fecha desde</label>
+                        <input type="date"
+                               name="fechaDesde"
+                               id="fechaDesde"
+                               value="@fechaDesde.ToString("yyyy-MM-dd")"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-12 col-md-4 col-xl-4">
+                        <label for="buscarVendedor" class="cajas-filtro-label">Vendedor</label>
+                        <div class="input-group">
+                            <input type="text"
+                                   name="buscar"
+                                   id="buscarVendedor"
+                                   value="@buscar"
+                                   class="form-control"
+                                   placeholder="buscar vendedor"
+                                   onkeyup="filtrar()" />
+
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="btnBuscarCajasAbiertas" onclick="filtrar()">
+                                    <span class="btn-buscar-texto">Buscar</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @Html.Partial("~/Views/Shared/_AdvertenciaPermisoFecha.cshtml")
+
+                <div id="estadoBusquedaCajasAbiertas" class="text-muted small">Resultados actualizados.</div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 cajas-panel-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Cajas abiertas</h6>
+                <div id="estadoBusquedaCajasAbiertasTabla" class="text-muted small">Resultados actualizados.</div>
+            </div>
+            <div id="tablaResultado" class="cajas-resultado-wrap">
+                @Html.Partial("~/Views/Cajas/_TablaCajasAbiertas.cshtml", Model)
+            </div>
+        </div>
+    </div>
+
+    @if (tienePermisoCerrarCaja)
+    {
+        <div class="card shadow-sm cajas-panel-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Historial de cierres</h6>
+                    <div id="estadoBusquedaHistorialCajas" class="text-muted small">Resultados actualizados.</div>
+                </div>
+                <div id="tablaResultadoHistorial" class="cajas-resultado-wrap">
+                    @Html.Partial("~/Views/Cajas/_TablaCierresDeCaja.cshtml", historialCierres)
+                </div>
+            </div>
+        </div>
+    }
+
+    <style>
+        .cajas-page h6 {
+            font-size: .92rem;
+            font-weight: 700;
+            color: #2f3a4a;
+        }
+
+        .cajas-page #tablaResultadoHistorial .btn-sm,
+        .cajas-page #tablaResultado .btn-sm {
+            padding: .18rem .42rem;
+            line-height: 1.12;
+            font-size: .76rem;
+        }
+
+        .cajas-page #tablaResultadoHistorial table {
+            font-size: .8rem;
+        }
+
+        .cajas-page #tablaResultadoHistorial th,
+        .cajas-page #tablaResultadoHistorial td {
+            padding: .36rem .48rem;
+            vertical-align: middle;
+            line-height: 1.12;
+        }
+
+        .cajas-page #tablaResultadoHistorial thead th {
+            font-size: .69rem !important;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        .cajas-page .badge-modificar {
+            font-size: .72rem;
+            padding: .28rem .42rem;
+        }
+
+        .cajas-page #permisoFechaWarning {
+            margin-top: .65rem !important;
+        }
+
+        .cajas-page {
+            font-size: .9rem;
+        }
+
+        .cajas-page .cajas-panel-card {
+            border: 1px solid #e9ecef;
+            border-radius: .75rem;
+        }
+
+        .cajas-page .cajas-panel-card > .card-body,
+        .cajas-page .cajas-panel-card .card-body {
+            padding: .8rem .92rem;
+        }
+
+        .cajas-page .cajas-filtro-label {
+            font-size: .76rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: .18rem;
+        }
+
+        .cajas-page .cajas-form-compact .form-control,
+        .cajas-page .cajas-form-compact .input-group-text,
+        .cajas-page .cajas-form-compact .btn:not(.btn-sm) {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+            border-radius: .52rem;
+        }
+
+        .cajas-page .small,
+        .cajas-page .text-muted {
+            font-size: .76rem !important;
+        }
+
+        .cajas-page #tablaCajas {
+            font-size: .82rem;
+        }
+
+        .cajas-page #tablaCajas th,
+        .cajas-page #tablaCajas td {
+            padding: .36rem .48rem;
+            vertical-align: middle;
+            line-height: 1.12;
+        }
+
+        .cajas-page #tablaCajas thead th,
+        .cajas-page #tablaCajas > thead > tr > th {
+            font-size: .72rem !important;
+            line-height: 1.05;
+            padding-top: .42rem;
+            padding-bottom: .42rem;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        @@media (min-width: 1200px) {
+            .cajas-page .cajas-panel-card > .card-body,
+            .cajas-page .cajas-panel-card .card-body {
+                padding: .72rem .84rem;
+            }
+
+            .cajas-page .cajas-form-compact .form-control,
+            .cajas-page .cajas-form-compact .input-group-text,
+            .cajas-page .cajas-form-compact .btn:not(.btn-sm) {
+                min-height: 2.02rem;
+                font-size: .81rem;
+                padding: .24rem .5rem;
+            }
+
+            .cajas-page #tablaCajas,
+            .cajas-page #tablaResultadoHistorial table {
+                font-size: .79rem;
+            }
+
+            .cajas-page #tablaCajas thead th,
+            .cajas-page #tablaCajas > thead > tr > th,
+            .cajas-page #tablaResultadoHistorial thead th {
+                font-size: .69rem !important;
+            }
+        }
+    </style>
+
+</div>
+
+@if (hayVariasSucursales)
+{
+    <div class="modal fade" id="modalCambioSucursalCaja" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Cambiar sucursal de caja abierta</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="CambioSucursalIdCierre" />
+                    <input type="hidden" id="CambioSucursalIdActual" />
+
+                    <div class="alert alert-warning mb-3">
+                        Esta accion corregira la sucursal de la caja y de todas las operaciones asociadas. Usar solo cuando el cajero trabajo por error en una sucursal incorrecta.
+                    </div>
+
+                    <div id="cambioSucursalCajaError" class="alert alert-danger d-none"></div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Cajero</label>
+                            <input type="text" id="CambioSucursalUsuarioCaja" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label>Apertura</label>
+                            <input type="text" id="CambioSucursalFechaInicio" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label>Sucursal actual</label>
+                            <input type="text" id="CambioSucursalActualNombre" class="form-control" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label>Nueva sucursal</label>
+                            <select id="CambioSucursalNueva" class="form-control">
+                                <option value="">Seleccionar sucursal...</option>
+                                @foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal">@s.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label>Vista previa</label>
+                        <div id="cambioSucursalCajaPreview" class="border rounded p-3 bg-light text-muted">
+                            Selecciona la nueva sucursal para calcular los registros que se van a corregir.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnConfirmarCambioSucursalCaja" class="btn btn-warning" onclick="confirmarCambioSucursalCaja()" disabled>Cambiar sucursal</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="modalEgresoCaja" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalEgresoCajaTitulo">Nuevo Egreso de Caja</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenedorEgresoCaja">
+                <div class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Actividades -->
+<div class="modal fade" id="modalActividadesCaja" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Actividades</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="contenedorActividadesCaja" class="p-4 text-center text-muted">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cerrar Caja -->
+<div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalCerrarCajaTitulo">Cerrar Caja</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
+
+                <form id="formCerrarCaja">
+
+                    <input type="hidden" id="Id" name="Id" />
+                    <input type="hidden" id="ModoModificacion" name="modoModificacion" value="false" />
+
+                    <div class="mb-2">
+                        <label class="mb-1">Sucursal</label>
+                        <div id="labelSucursal" class="font-weight-bold"></div>
+                    </div>
+                    <hr />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Usuario Inicio</label>
+                            <input type="text" id="CajaDesc" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6 order-2 order-md-1">
+                            <label>Caja Inicial</label>
+                            <input type="text" id="CajaInicial" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-6 order-1 order-md-2">
+                            <label>Apertura</label>
+                            <input type="text" id="FechaApertura" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Usuario Cierre</label>
+                            <input type="text" id="Usuario" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Fecha Cierre</label>
+                            <input type="text" id="FechaCierre" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Ventas</label>
+                            <input type="text" id="Ventas" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>EgresosCaja</label>
+                            <input type="text" id="EgresosCaja" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Caja Cierre</label>
+                            <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Diferencia</label>
+                            <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;" />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Importe Retirado</label>
+                            <input type="text" id="ImporteRetirado" name="ImporteRetirado" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                        </div>
+                        <div class="col-md-6">
+                            <label>Queda en Caja</label>
+                            <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;" />
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btnGuardarCierreCaja" onclick="guardarCierreCaja()">Cerrar Caja</button>
+                <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+<style>
+    @@media (min-width: 992px) {
+        #modalActividadesCaja .modal-dialog {
+            width: 60%;
+            max-width: none;
+        }
+
+        #modalCerrarCaja .modal-dialog {
+            max-width: 620px;
+            margin: 0.75rem auto;
+        }
+
+        #modalCerrarCaja .modal-content {
+            max-height: calc(100vh - 1.5rem);
+        }
+
+        #modalCerrarCaja .modal-body {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            overflow-y: auto;
+        }
+
+        #modalCerrarCaja .modal-footer {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        #modalCerrarCaja hr {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #modalCerrarCaja label {
+            margin-bottom: 0.15rem;
+            font-size: 0.95rem;
+        }
+
+        #modalCerrarCaja .row {
+            margin-bottom: 0.35rem;
+        }
+
+        #modalCerrarCaja .form-control {
+            min-height: calc(1.35em + 0.45rem + 2px);
+            padding-top: 0.2rem;
+            padding-bottom: 0.2rem;
+            font-size: 0.95rem;
+        }
+
+        #modalCerrarCaja .modal-header {
+            padding-top: 0.6rem;
+            padding-bottom: 0.6rem;
+        }
+
+        #modalCerrarCaja .modal-title {
+            font-size: 1.1rem;
+        }
+
+        #modalCerrarCaja #Diferencia,
+        #modalCerrarCaja #CajaInicioSiguiente {
+            font-size: 1.1rem !important;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script>
+        window.EgresosCajaUrls = {
+            nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
+            guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+        };
+        window.CajasHistorialUrls = {
+            listar: '@Url.Action("HistorialCierresCaja", "Cajas")'
+        };
+        window.VentasCajaUrls = {
+            mis: '@Url.Action("MisVentas", "Ventas")',
+            detalle: '@Url.Action("DetalleVenta", "Ventas")'
+        };
+        window.CambioSucursalCajaUrls = {
+            preview: '@Url.Action("PreviewCambioSucursalCaja", "Cajas")',
+            guardar: '@Url.Action("CambiarSucursalCaja", "Cajas")'
+        };
+        window.CajasStepUpUrls = {
+            autorizar: '@Url.Action("AutorizarAccionCierre", "Cajas")',
+            revocar: '@Url.Action("RevocarAutorizacionCierre", "Cajas")'
+        };
+        window.CajasStepUpUsuarios = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(usuariosActivosEmpresa));
+        window.CajasStepUpTienePermisoDirecto = @(tienePermisoCerrarCaja ? "true" : "false");
+
+        // Autorizacion temporal de Cierre de Caja (step-up de credenciales) -----------
+        // Si el usuario logueado ya tiene el permiso de cerrar caja, o si ya autorizo
+        // hace menos de 5 minutos en esta misma vista, ejecuta la accion directo. Si no,
+        // abre el selector de usuario+contraseña (componente reusable, ver
+        // seleccion-usuario.js) y recien ejecuta la accion si la autorizacion vino bien.
+        // En WebCore, CajasStepUpTienePermisoDirecto siempre es true (stub Admin) -- esta
+        // rama de step-up nunca se ejecuta, ver cabecera de CajasController.cs.
+        var cierreCajaElevacionExpira = 0;
+        var CIERRE_CAJA_ELEVACION_MS = 5 * 60 * 1000;
+
+        function conAutorizacionCierre(accion) {
+            if (window.CajasStepUpTienePermisoDirecto || Date.now() < cierreCajaElevacionExpira) {
+                accion();
+                return;
+            }
+
+            window.SeleccionUsuario.abrir({
+                titulo: 'Autorizar accion de Cierre de Caja',
+                usuarios: window.CajasStepUpUsuarios,
+                requierePassword: true,
+                validarUrl: window.CajasStepUpUrls.autorizar
+            }).then(function (usuario) {
+                cierreCajaElevacionExpira = Date.now() + CIERRE_CAJA_ELEVACION_MS;
+                accion();
+            }).catch(function () {
+                // Modal cerrado sin autorizar (Cancelar/Esc/backdrop) -- no se ejecuta la accion.
+            });
+        }
+
+        window.addEventListener('beforeunload', function () {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(window.CajasStepUpUrls.revocar);
+            }
+        });
+
+        function setBuscandoCajasAbiertas(buscando, mensaje) {
+            const $btn = $("#btnBuscarCajasAbiertas");
+            const $texto = $btn.find(".btn-buscar-texto");
+            const $estado = $("#estadoBusquedaCajasAbiertasTabla");
+
+            $btn.prop("disabled", buscando);
+            $texto.text(buscando ? "Cargando..." : "Buscar");
+            $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
+        }
+
+        function setBuscandoHistorial(buscando, mensaje) {
+            const $estado = $("#estadoBusquedaHistorialCajas");
+            $estado.text(mensaje || (buscando ? "Actualizando búsqueda..." : "Resultados actualizados."));
+        }
+
+        function filtrar() {
+            const idSucursal = $("#idSucursal").val() || "";
+            const buscar = $("#buscarVendedor").val() || "";
+            const fechaDesde = $("#fechaDesde").val() || "";
+
+            let pos = 0;
+            const txt = document.getElementById("buscarVendedor");
+            if (txt && document.activeElement === txt && typeof txt.selectionStart === "number") {
+                pos = txt.selectionStart;
+            }
+
+            setBuscandoCajasAbiertas(true);
+            $("#tablaResultado").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
+
+            if (window.CajasStepUpTienePermisoDirecto) {
+                setBuscandoHistorial(true);
+                $("#tablaResultadoHistorial").html('<div class="p-4 text-center text-muted">Cargando resultados...</div>');
+            }
+
+            $.ajax({
+                url: '@Url.Action("CajasAbiertas", "Cajas")',
+                type: 'GET',
+                data: {
+                    idSucursal: idSucursal,
+                    buscar: buscar,
+                    fechaDesde: fechaDesde,
+                    ajax: true
+                },
+                cache: false,
+                success: function (html) {
+                    $("#tablaResultado").html(html);
+
+                    if (txt) {
+                        setTimeout(() => {
+                            txt.focus();
+                            try {
+                                txt.setSelectionRange(pos, pos);
+                            } catch (e) { }
+                        }, 30);
+                    }
+                },
+                error: function () {
+                    $("#tablaResultado").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar la búsqueda.</div>');
+                    $("#estadoBusquedaCajasAbiertasTabla").text("Ocurrió un error al actualizar la búsqueda.");
+                },
+                complete: function () {
+                    const mensaje = $("#estadoBusquedaCajasAbiertasTabla").text();
+                    setBuscandoCajasAbiertas(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
+                }
+            });
+
+            if (window.CajasStepUpTienePermisoDirecto) {
+                $.ajax({
+                    url: window.CajasHistorialUrls.listar,
+                    type: 'GET',
+                    data: {
+                        idSucursal: idSucursal,
+                        buscar: buscar,
+                        fechaDesde: fechaDesde
+                    },
+                    cache: false,
+                    success: function (html) {
+                        $("#tablaResultadoHistorial").html(html);
+                    },
+                    error: function () {
+                        $("#tablaResultadoHistorial").html('<div class="alert alert-danger m-3 mb-0">No se pudo actualizar el historial.</div>');
+                        $("#estadoBusquedaHistorialCajas").text("Ocurrió un error al actualizar el historial.");
+                    },
+                    complete: function () {
+                        const mensaje = $("#estadoBusquedaHistorialCajas").text();
+                        setBuscandoHistorial(false, mensaje === "Actualizando búsqueda..." ? "Resultados actualizados." : mensaje);
+                    }
+                });
+            }
+        }
+
+        $(document).on('change', '#idSucursal', function () {
+            filtrar();
+        });
+        $(document).on('change', '#fechaDesde', function () { filtrar(); });
+
+        $(document)
+            .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
+            .on('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja', function () {
+                var zIndex = 1040 + (10 * $('.modal.show').length);
+                $(this).css('z-index', zIndex);
+
+                setTimeout(function () {
+                    $('.modal-backdrop').not('.modal-stack').last()
+                        .css('z-index', zIndex - 1)
+                        .addClass('modal-stack');
+                }, 0);
+            });
+
+        function abrirModalActividades(idCierre, filtroActividad) {
+            window.CajasAbiertas = window.CajasAbiertas || {};
+            window.CajasAbiertas.idCierreActividadActual = idCierre;
+            $("#contenedorActividadesCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalActividadesCaja").modal("show");
+
+            $.ajax({
+                url: '@Url.Action("ActividadesCaja", "Cajas")',
+                type: 'GET',
+                data: {
+                    idCierre: idCierre,
+                    filtroActividad: filtroActividad || "todos"
+                },
+                cache: false,
+                success: function (html) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                        return;
+                    }
+
+                    $("#contenedorActividadesCaja").html(html);
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron cargar las actividades de la caja.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#contenedorActividadesCaja").html('<div class="alert alert-danger m-3">' + $('<div>').text(mensaje).html() + '</div>');
+                }
+            });
+        }
+
+        function abrirModalVentas(idCierre) {
+            window.CajasAbiertas = window.CajasAbiertas || {};
+            window.CajasAbiertas.idCierreActividadActual = idCierre;
+            $("#contenedorActividadesCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalActividadesCaja").modal("show");
+
+            $.ajax({
+                url: window.VentasCajaUrls.mis,
+                type: 'GET',
+                data: {
+                    idCierre: idCierre
+                },
+                cache: false,
+                success: function (html) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                        return;
+                    }
+
+                    $("#contenedorActividadesCaja").html(html);
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron cargar las ventas de la caja.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#contenedorActividadesCaja").html('<div class="alert alert-danger m-3">' + $('<div>').text(mensaje).html() + '</div>');
+                }
+            });
+        }
+
+        function abrirDetalleVenta(idVenta, idCierre) {
+            $("#contenedorActividadesCaja").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+            $("#modalActividadesCaja").modal("show");
+
+            $.ajax({
+                url: window.VentasCajaUrls.detalle,
+                type: 'GET',
+                data: {
+                    id: idVenta,
+                    modal: true,
+                    idCierre: idCierre
+                },
+                cache: false,
+                success: function (html) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                        window.EgresosCaja.renderConScripts(html, "#contenedorActividadesCaja");
+                        return;
+                    }
+
+                    $("#contenedorActividadesCaja").html(html);
+                },
+                error: function () {
+                    $("#contenedorActividadesCaja").html('<div class="alert alert-danger m-3">No se pudo cargar el detalle de la venta.</div>');
+                }
+            });
+        }
+
+        window.CajasAbiertas = window.CajasAbiertas || {};
+        window.CajasAbiertas.abrirActividades = abrirModalActividades;
+        window.CajasAbiertas.abrirVentas = abrirModalVentas;
+        window.CajasAbiertas.abrirDetalleVenta = abrirDetalleVenta;
+
+        function abrirModalCambioSucursal(idCierre, idSucursalActual, sucursalActual, vendedor, fechaInicio) {
+            $("#CambioSucursalIdCierre").val(idCierre);
+            $("#CambioSucursalIdActual").val(idSucursalActual);
+            $("#CambioSucursalUsuarioCaja").val(vendedor || "");
+            $("#CambioSucursalFechaInicio").val(fechaInicio || "");
+            $("#CambioSucursalActualNombre").val(sucursalActual || "");
+            $("#CambioSucursalNueva").val("");
+            $("#CambioSucursalNueva option").prop("disabled", false);
+            if (idSucursalActual) {
+                $("#CambioSucursalNueva option[value='" + idSucursalActual + "']").prop("disabled", true);
+            }
+            $("#cambioSucursalCajaError").addClass("d-none").text("");
+            $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Selecciona la nueva sucursal para calcular los registros que se van a corregir.");
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+            $("#modalCambioSucursalCaja").modal("show");
+        }
+
+        function renderPreviewCambioSucursalCaja(resp) {
+            if (!resp || !resp.ok) {
+                $("#cambioSucursalCajaPreview").removeClass("text-muted").addClass("text-danger").text((resp && resp.mensaje) || "No se pudo generar la vista previa.");
+                $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+                return;
+            }
+
+            const mensaje = $('<div>').text(resp.mensaje || "").html();
+            let html = '<div class="mb-2"><strong>Rango:</strong> ' + $('<div>').text(resp.fechaDesde + ' - ' + resp.fechaHasta).html() + '</div>';
+            html += '<div class="mb-2"><strong>Origen:</strong> ' + $('<div>').text(resp.sucursalActual || "").html() + '</div>';
+            html += '<div class="mb-3"><strong>Destino:</strong> ' + $('<div>').text(resp.sucursalNueva || "").html() + '</div>';
+
+            if (resp.tablas && resp.tablas.length) {
+                html += '<div class="table-responsive"><table class="table table-sm table-bordered mb-2"><thead><tr><th>Tabla</th><th class="text-right">Registros</th></tr></thead><tbody>';
+                resp.tablas.forEach(function (item) {
+                    html += '<tr><td>' + $('<div>').text(item.tabla).html() + '</td><td class="text-right">' + item.cantidad + '</td></tr>';
+                });
+                html += '</tbody></table></div>';
+            }
+
+            html += '<div class="small ' + (resp.puedeEjecutar ? 'text-muted' : 'text-danger') + '">' + mensaje + '</div>';
+            $("#cambioSucursalCajaPreview").removeClass("text-muted text-danger").html(html);
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", !resp.puedeEjecutar);
+        }
+
+        function cargarPreviewCambioSucursalCaja() {
+            const idCierre = $("#CambioSucursalIdCierre").val();
+            const idSucursalNueva = $("#CambioSucursalNueva").val();
+
+            if (!idCierre || !idSucursalNueva) {
+                $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Selecciona la nueva sucursal para calcular los registros que se van a corregir.");
+                $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+                return;
+            }
+
+            $("#cambioSucursalCajaError").addClass("d-none").text("");
+            $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Calculando vista previa...");
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+
+            $.ajax({
+                url: window.CambioSucursalCajaUrls.preview,
+                type: 'GET',
+                data: {
+                    idCierre: idCierre,
+                    idSucursalNueva: idSucursalNueva
+                },
+                cache: false,
+                success: function (resp) {
+                    renderPreviewCambioSucursalCaja(resp);
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudo generar la vista previa.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    renderPreviewCambioSucursalCaja({ ok: false, mensaje: mensaje });
+                }
+            });
+        }
+
+        function confirmarCambioSucursalCaja() {
+            const idCierre = $("#CambioSucursalIdCierre").val();
+            const idSucursalNueva = $("#CambioSucursalNueva").val();
+
+            if (!idCierre || !idSucursalNueva) {
+                $("#cambioSucursalCajaError").removeClass("d-none").text("Selecciona la nueva sucursal antes de continuar.");
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Confirmar cambio de sucursal',
+                text: 'Esta accion corregira la sucursal de la caja y de todas las operaciones asociadas. Usar solo cuando el cajero trabajo por error en una sucursal incorrecta.',
+                showCancelButton: true,
+                confirmButtonText: 'Cambiar sucursal',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f0ad4e'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+                $.ajax({
+                    url: window.CambioSucursalCajaUrls.guardar,
+                    type: 'POST',
+                    data: {
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val(),
+                        IdCierre: idCierre,
+                        IdSucursalNueva: idSucursalNueva
+                    },
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            $("#cambioSucursalCajaError").removeClass("d-none").text((resp && resp.mensaje) || "No se pudo cambiar la sucursal.");
+                            $("#btnConfirmarCambioSucursalCaja").prop("disabled", false);
+                            return;
+                        }
+
+                        $("#modalCambioSucursalCaja").modal("hide");
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucursal corregida',
+                            text: resp.mensaje || 'La sucursal de la caja se actualizo correctamente.',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#4e73df'
+                        }).then(() => {
+                            filtrar();
+                        });
+                    },
+                    error: function (xhr) {
+                        let mensaje = "No se pudo cambiar la sucursal.";
+                        if (xhr && xhr.responseText) {
+                            mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                        }
+                        $("#cambioSucursalCajaError").removeClass("d-none").text(mensaje);
+                        $("#btnConfirmarCambioSucursalCaja").prop("disabled", false);
+                    }
+                });
+            });
+        }
+
+        $(document).on('change', '#CambioSucursalNueva', function () {
+            cargarPreviewCambioSucursalCaja();
+        });
+
+        function abrirModalCerrarCaja(Id, modoModificacion) {
+            $("#cerrarCajaError").addClass("d-none").text("");
+
+            $.ajax({
+                url: '@Url.Action("ObtenerDatosCierre", "Cajas")',
+                type: 'GET',
+                data: {
+                    id: Id,
+                    modoModificacion: !!modoModificacion
+                },
+                success: function (data) {
+                    $("#Id").val(data.id);
+                    $("#ModoModificacion").val(data.modoModificacion ? "true" : "false");
+                    $("#labelSucursal").text(data.suc);
+                    $("#CajaDesc").val(data.vendedor);
+                    $("#FechaApertura").val(data.fechaApertura);
+                    $("#FechaCierre").val(data.fechaCierre || "");
+                    setFormattedValue("#CajaInicial", data.cajaInicial);
+                    $("#Usuario").val(data.usuario);
+                    setFormattedValue("#Ventas", data.ventas);
+                    setFormattedValue("#EgresosCaja", data.egresosCaja);
+                    setFormattedValue("#CajaCierre", data.modoModificacion ? data.cajaCierre : null, true);
+                    setFormattedValue("#Diferencia", data.modoModificacion ? data.diferencia : null, true);
+                    setFormattedValue("#ImporteRetirado", data.modoModificacion ? data.importeRetirado : null, true);
+                    setFormattedValue("#CajaInicioSiguiente", data.modoModificacion ? data.cajaInicioSiguiente : null, true);
+                    $("#modalCerrarCajaTitulo").text(data.modoModificacion ? "Modificar Cierre de Caja" : "Cerrar Caja");
+                    $("#btnGuardarCierreCaja").text(data.modoModificacion ? "Actualizar datos" : "Cerrar Caja");
+                    if (data.modoModificacion) {
+                        recalcularCierre();
+                    }
+                    $("#modalCerrarCaja").modal("show");
+                },
+                error: function (xhr) {
+                    let mensaje = "No se pudieron cargar los datos del cierre.";
+                    if (xhr && xhr.responseText) {
+                        mensaje = xhr.responseText.replace(/<[^>]+>/g, "").trim() || mensaje;
+                    }
+                    $("#cerrarCajaError").removeClass("d-none").text(mensaje);
+                    $("#modalCerrarCaja").modal("show");
+                }
+            });
+        }
+
+        $('#modalCerrarCaja').on('shown.bs.modal', function () {
+            window.setTimeout(function () {
+                $("#CajaCierre").trigger("focus").trigger("select");
+            }, 100);
+        });
+
+        $('#modalCerrarCaja').on('hidden.bs.modal', function () {
+            $(this).find('input:not([type="hidden"])').val('');
+            $(this).find('textarea').val('');
+            $(this).find('select').prop('selectedIndex', 0);
+            $('.text-danger').addClass('d-none').text('');
+            $("#ModoModificacion").val("false");
+            $("#modalCerrarCajaTitulo").text("Cerrar Caja");
+            $("#btnGuardarCierreCaja").text("Cerrar Caja");
+        });
+
+        $(document).on('keydown', '#CajaCierre, #ImporteRetirado', function (e) {
+            if (e.key !== 'Enter') {
+                return;
+            }
+
+            e.preventDefault();
+
+            if (this.id === 'CajaCierre') {
+                $("#ImporteRetirado").trigger("focus").trigger("select");
+                return;
+            }
+
+            if (this.id === 'ImporteRetirado') {
+                $("#modalCerrarCaja .modal-footer .btn-danger").trigger("focus");
+            }
+        });
+
+        $('#modalCambioSucursalCaja').on('hidden.bs.modal', function () {
+            $("#CambioSucursalIdCierre").val('');
+            $("#CambioSucursalIdActual").val('');
+            $("#CambioSucursalUsuarioCaja").val('');
+            $("#CambioSucursalFechaInicio").val('');
+            $("#CambioSucursalActualNombre").val('');
+            $("#CambioSucursalNueva").val('');
+            $("#CambioSucursalNueva option").prop("disabled", false);
+            $("#cambioSucursalCajaError").addClass("d-none").text('');
+            $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html('Selecciona la nueva sucursal para calcular los registros que se van a corregir.');
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+        });
+
+        function esNumeroValido(v) {
+            return /^-?\d*(\.\d+)?$/.test(v);
+        }
+
+        function toFloat(value) {
+            if (value == null) return 0;
+
+            let v = String(value).trim();
+            if (v === "") return 0;
+
+            v = v.replace(/\$/g, "").replace(/\s+/g, "");
+
+            if (/[eE]/.test(v) && v.indexOf(",") === -1) {
+                const exponencial = Number(v);
+                return isFinite(exponencial) ? exponencial : 0;
+            }
+
+            const tieneComa = v.indexOf(",") >= 0;
+            const tienePunto = v.indexOf(".") >= 0;
+
+            if (tieneComa && tienePunto) {
+                v = v.replace(/\./g, "").replace(",", ".");
+            } else if (tieneComa) {
+                v = v.replace(",", ".");
+            }
+
+            const numero = Number(v);
+            return isFinite(numero) ? numero : 0;
+        }
+
+        function formatNumberEsAr(value, permitirVacio) {
+            if (value == null || value === "") {
+                return permitirVacio ? "" : "0,00";
+            }
+
+            const numero = toFloat(value);
+            return numero.toLocaleString("es-AR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function setFormattedValue(selector, value, permitirVacio) {
+            $(selector).val(formatNumberEsAr(value, !!permitirVacio));
+        }
+
+        function toEditableNumberString(value) {
+            if (value == null) return "";
+
+            const texto = String(value).trim();
+            if (texto === "") return "";
+
+            return toFloat(texto).toFixed(2);
+        }
+
+        function toPostNumberString(value) {
+            const texto = value == null ? "" : String(value).trim();
+            if (texto === "") return "";
+            return toFloat(texto).toFixed(2);
+        }
+
+        function guardarCierreCaja() {
+            let data = {
+                Id: $("#Id").val(),
+                CajaCierre: toPostNumberString($("#CajaCierre").val()),
+                Diferencia: toPostNumberString($("#Diferencia").val()),
+                ImporteRetirado: toPostNumberString($("#ImporteRetirado").val()),
+                CajaInicioSiguiente: toPostNumberString($("#CajaInicioSiguiente").val()),
+                modoModificacion: $("#ModoModificacion").val() === "true"
+            };
+
+            $.ajax({
+                url: '@Url.Action("CerrarCaja", "Cajas")',
+                type: 'POST',
+                data: data,
+                success: function (resp) {
+                    if (!resp.ok) {
+                        $("#cerrarCajaError").removeClass("d-none").text(resp.error);
+                        return;
+                    }
+
+                    const esModificacion = $("#ModoModificacion").val() === "true";
+                    Swal.fire({
+                        icon: 'success',
+                        title: esModificacion ? 'Cierre actualizado' : 'Caja cerrada',
+                        text: esModificacion ? (resp.mensaje || 'El cierre de caja se actualizó correctamente') : 'La caja se cerró correctamente',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#4e73df',
+                        focusConfirm: true
+                    }).then(() => {
+                        $("#modalCerrarCaja").modal("hide");
+                        filtrar();
+                    });
+                }
+            });
+        }
+
+        function validarNumero(input) {
+            let v = input.value;
+            if (!v) {
+                input.value = "";
+                return;
+            }
+
+            v = v.replace(/[^\d,.\-]/g, "");
+            v = v.replace(/,/g, ".");
+
+            const signo = v.startsWith("-") ? "-" : "";
+            v = (signo ? v.substring(1) : v).replace(/-/g, "");
+
+            const partes = v.split(".");
+            if (partes.length > 2) {
+                v = partes.shift() + "." + partes.join("");
+            }
+
+            input.value = signo + v;
+        }
+
+        $(document).on('focus', '#CajaCierre, #ImporteRetirado', function () {
+            if (!this.value) {
+                return;
+            }
+
+            this.value = toEditableNumberString(this.value);
+        });
+
+        $(document).on('blur', '#CajaCierre, #ImporteRetirado', function () {
+            if (!this.value || !String(this.value).trim()) {
+                return;
+            }
+
+            this.value = formatNumberEsAr(this.value, false);
+            recalcularCierre();
+        });
+
+        function recalcularCierre() {
+            let cajaInicial = toFloat($("#CajaInicial").val());
+            let ventas = toFloat($("#Ventas").val());
+            let gastos = toFloat($("#EgresosCaja").val());
+            let cajaCierre = toFloat($("#CajaCierre").val());
+            let importeRetirado = toFloat($("#ImporteRetirado").val());
+
+            let diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
+
+            if ($("#CajaCierre").val().length > 0)
+                $("#Diferencia").val(formatNumberEsAr(diferencia, false));
+            else
+                $("#Diferencia").val("");
+
+            let cajaInicioSiguiente = cajaCierre - importeRetirado;
+            $("#CajaInicioSiguiente").val(formatNumberEsAr(cajaInicioSiguiente, false));
+
+            colorearDiferencia();
+        }
+
+        function colorearDiferencia() {
+            let valor = toFloat($("#Diferencia").val());
+
+            if (isNaN(valor)) {
+                $("#Diferencia").css("background-color", "white");
+                return;
+            }
+
+            if (valor >= -100 && valor <= 100) {
+                $("#Diferencia").css("background-color", "#c8f7c5");
+            }
+            else if ((valor > 100 && valor <= 300) || (valor < -100 && valor >= -300)) {
+                $("#Diferencia").css("background-color", "#fff3b0");
+            }
+            else {
+                $("#Diferencia").css("background-color", "#f7c6c6");
+            }
+        }
+    </script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=10")"></script>
+}
