@@ -3718,3 +3718,50 @@ punta a punta**, incluidas las 3 escrituras.
 
 **Resta de Módulo 7**: `FinanzasController.cs` (1944 líneas, todavía sin leer) -- último slice
 pendiente.
+
+## 2026-09-01 -- Migración ASP.NET Core, Módulo 7, slice final: FinanzasController (parcial, con 2 bloqueantes documentados)
+
+Se portó `FinanzasController.cs` de forma PARCIAL, deliberadamente: `CtasCtes` (listado de cuentas
+corrientes), `Cheques` (pantalla + CRUD completo: `GetCheques`/`GetCheque`/`GuardarCheque`/
+`BuscarChequePorNro`/`ValidarChequeParaPago`). Vistas: `Finanzas/CtasCtes.cshtml`,
+`Finanzas/Cheques.cshtml`, `_ChequeBusquedaTabla.cshtml`, `_ModalAltaCheque.cshtml`. Sin modelo
+nuevo (usa `Entidades.Cheque`/`Entidades.Pago` directamente, igual que el original).
+
+**NO portado en este slice, por 2 bloqueantes reales (no por alcance de tiempo)**:
+
+1. **Generación de PDF (iTextSharp)**: `ExportarPdfPersona`, `ImprimirPdfPago`, `GenerarPdfPago`,
+   `GenerarPdfCuentaCorrienteBytes`. `iTextSharp` ya estaba marcado como bloqueante desde el plan
+   original de esta migración (no es netstandard, requiere decisión de licencia AGPL/comercial de
+   iText7 antes de instalar/usar -- CLAUDE.md §1.2, "esperar confirmación explícita"). Esa decisión
+   nunca se tomó en esta sesión, así que no se portó nada que dependa de iTextSharp.
+2. **Envío real de emails** (`SmtpMailHelper.SendMail`): `ObtenerDatosEmailCuentaCorriente`/
+   `EnviarCuentaCorrienteEmail`, `ObtenerDatosEmailPago`/`EnviarComprobantePagoEmail`. Además de
+   depender del bloqueante #1 (adjuntan el PDF), probar esto en vivo mandaría un email real a la
+   casilla de un cliente/proveedor real de la base de producción-de-pruebas -- una acción con
+   efecto visible a un tercero real, categoría que esta migración nunca ejecuta sin autorización
+   explícita puntual (mucho más específica que el permiso genérico de escritura en la base local
+   ya otorgado para esta sesión).
+
+**En cascada, tampoco se portaron `CtaCtePersona` (detalle de cuenta corriente de una persona, con
+botones de exportar/enviar) ni `AddOrEditPago`/`AddOrEditPagoPost` (alta de pagos/cobros, con
+impresión de ticket/PDF y acoplamiento a POS para el flujo `desdePos`)** -- ambas dependen en
+cascada de los 2 bloqueantes de arriba para su flujo completo (aunque el alta del pago en sí no
+usa PDF, el modal posterior de impresión/envío sí, y separar "guardar" de "imprimir/enviar" en
+2 sesiones distintas de trabajo habría dejado una función a medio portar). Quedan documentadas
+como **Módulo 7 slice pendiente** en `docs/10-migracion-aspnet-core/README.md`, bloqueadas hasta
+que se tome la decisión de licencia de iText7 (o se decida no imprimir/enviar desde WebCore y
+solo registrar el pago).
+
+**Verificación en vivo** (autorización ya vigente): `CtasCtes` (10 cuentas corrientes reales),
+`Cheques`/`GetCheques` (cheques reales, incluido un caso con `PENDIENTE`+`entregadoA>0` mostrando
+correctamente `ENTREGADO` en la vista, misma regla de negocio que el original), `GetCheque`
+(detalle real), `BuscarChequePorNro` (mensaje de error real para un número inexistente).
+`GuardarCheque` probado en vivo: cheque de prueba creado (`id=17`, "TEST-M7-999", $555,55,
+`creadoPor=2`), confirmado con `sqlcmd` y dejado como evidencia (identificable por su número y
+observaciones, mismo criterio que otras escrituras de prueba de esta migración).
+
+**Con esto, Módulo 7 (Caja y tesorería) queda en el siguiente estado**: `CajasController.cs`
+completo (2 slices, validado de punta a punta) + `FinanzasController.cs` parcial (CtasCtes/Cheques
+validados; CtaCtePersona/AddOrEditPago/PDF/email bloqueados en espera de la decisión de iText7).
+No se considera "Módulo 7 100% completo" hasta esa decisión -- se documenta como estado real, no
+se fuerza un cierre artificial.

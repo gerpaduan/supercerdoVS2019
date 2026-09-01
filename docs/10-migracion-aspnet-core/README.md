@@ -240,7 +240,17 @@ Verificado con datos reales: listado de cajas abiertas (5 reales), historial de 
 
 `EgresosCaja` (listado administrativo con filtros), `TiposEgresoCaja`/`AddOrEditTipoEgresoCaja`/`TiposEgresoCajaOpciones`/`GuardarTipoEgresoCaja`/`EliminarTipoEgresoCaja` (catálogo), `CalcularComisionesElectronicas`/`ObtenerResumenComisionesElectronicas`/`GuardarComisionesElectronicas`. Modelo nuevo `WebCore/Models/CajasVm.cs`. Verificado con datos reales (938 egresos, 9 tipos, comisiones reales de agosto 2026). Las 3 escrituras probadas en vivo: alta+baja de un tipo de prueba (round-trip limpio, sin dejar rastro) y un egreso real de comisión electrónica ($1.294,64, San Lorenzo, dejado como evidencia). Se encontró y documentó (sin corregir, heredado de `Web` clásico) un bug real: la grilla de comisiones precarga en $0,00 cuando se elige "Todas las sucursales" -- ver `gaps.md`.
 
-**Slice 3 (pendiente, el de mayor riesgo)**: `FinanzasController.cs` (1944 líneas, sin leer todavía).
+**Slice 3 — FinanzasController: PARCIAL, con 2 bloqueantes reales documentados (no por falta de tiempo).**
+
+Portado y verificado con datos reales: `CtasCtes` (listado, 10 cuentas reales), `Cheques` + CRUD completo (`GetCheques`/`GetCheque`/`GuardarCheque`/`BuscarChequePorNro`/`ValidarChequeParaPago`), incluida la escritura en vivo (`GuardarCheque`, cheque de prueba `id=17` dejado como evidencia).
+
+**NO portado, bloqueado por 2 decisiones pendientes** (ver `docs/DECISIONS.md` 2026-09-01 para el detalle completo):
+1. **iTextSharp** (PDF): `ExportarPdfPersona`, `ImprimirPdfPago`, `GenerarPdfPago`, `GenerarPdfCuentaCorrienteBytes` -- bloqueante de licencia ya señalado desde el plan original de esta migración (iText7 AGPL/comercial, CLAUDE.md §1.2), nunca resuelto.
+2. **Envío real de emails** (`SmtpMailHelper`): `EnviarCuentaCorrienteEmail`, `EnviarComprobantePagoEmail` -- efecto real sobre terceros, requiere autorización explícita puntual más allá del permiso genérico de escritura en la base local.
+
+En cascada, **`CtaCtePersona` y `AddOrEditPago`/`AddOrEditPagoPost` tampoco se portaron** (dependen de los 2 bloqueantes de arriba para su flujo completo de impresión/envío tras guardar).
+
+**Estado real de Módulo 7**: `CajasController.cs` completo y validado (2 slices) + `FinanzasController.cs` parcial. No se declara "Módulo 7 100% completo" -- queda pendiente de la decisión de iText7 antes de cerrar `CtaCtePersona`/`AddOrEditPago`.
 
 ### Contexto original del scoping (previo al slice 1)
 

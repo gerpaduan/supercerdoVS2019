@@ -1,0 +1,183 @@
+@model System.Data.DataTable
+
+@{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
+    bool ocultarSaldo = ViewBag.OcultarSaldo != null && (bool)ViewBag.OcultarSaldo;
+
+    ViewBag.Title = "Cuentas Corrientes";
+
+    string buscar = ViewBag.Buscar ?? "";
+    string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";
+    int indiceNombreIdentif = -1;
+    int indiceRazonSocial = -1;
+
+    for (int i = 0; i < Model.Columns.Count; i++)
+    {
+        string nombreColumna = (Model.Columns[i].ColumnName ?? "").Trim().ToLowerInvariant();
+
+        if (indiceNombreIdentif < 0 && (nombreColumna.Contains("nombre identif") || nombreColumna.Contains("identificacion") || nombreColumna.Contains("identif.")))
+        {
+            indiceNombreIdentif = i;
+        }
+
+        if (indiceRazonSocial < 0 && nombreColumna.Contains("razon social"))
+        {
+            indiceRazonSocial = i;
+        }
+    }
+}
+<div class="container-fluid ctactes-index-page">
+
+    <!-- PANEL SUPERIOR DE BÚSQUEDA -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="form-inline">
+                <div class="form-group mr-2 w-100">
+                    <!-- w-100 para que ocupe todo -->
+                    <div class="input-group w-100">
+                        <input type="text" id="txtBuscar" class="form-control" value="@buscar" placeholder="Buscar por Nombre Identif. y/o Razón social..." oninput="filtrarCtasCtesVivo()" onkeyup="filtrarCtasCtesVivo()">
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- GRILLA -->
+    <div class="card shadow @(desdePos ? "" : "ctactes-tabla-card")">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="tablaCtasCtes" width="100%" cellspacing="0">
+                    <thead class="thead-dark">
+                        <tr>
+
+                            @for (int i = 0; i < Model.Columns.Count; i++)
+                            {
+                                var col = Model.Columns[i];
+                                bool combinarPersona = indiceNombreIdentif >= 0 && indiceRazonSocial >= 0;
+
+                                if (combinarPersona && i == indiceRazonSocial)
+                                {
+                                    continue;
+                                }
+
+                                if (combinarPersona && i == indiceNombreIdentif)
+                                {
+                                    <th>Persona</th>
+                                }
+                                else if (col.ColumnName.ToLower() == "saldo")
+                                {
+                                    <th>
+                                        @col.ColumnName
+
+                                        <!-- Botón ordenar -->
+                                        @if (!ocultarSaldo)
+                                        {
+                                            <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
+                                               class="btn btn-sm btn-light ml-2"
+                                               data-pos-ajax="@(desdePos ? "true" : "false")"
+                                               data-pos-title="Cuentas corrientes">
+                                                @(ordenSaldo == "ASC" ? "↓" : "↑")
+                                            </a>
+                                        }
+                                    </th>
+                                }
+                                else
+                                {
+                                    <th>@col.ColumnName</th>
+                                }
+                            }
+
+                        </tr>
+                    </thead>
+
+                        <tbody id="tbodyCtas">
+                        @foreach (System.Data.DataRow row in Model.Rows)
+                        {
+                            var idPersona = row[0] != DBNull.Value ? row[0].ToString() : "";
+                            var nombreIdentif = indiceNombreIdentif >= 0 && row[indiceNombreIdentif] != DBNull.Value ? row[indiceNombreIdentif].ToString() : "";
+                            var razonSocial = indiceRazonSocial >= 0 && row[indiceRazonSocial] != DBNull.Value ? row[indiceRazonSocial].ToString() : "";
+                            <tr onclick="irACtaCte(this)" style="cursor:pointer;" data-id-persona="@idPersona">
+                                @for (int i = 0; i < Model.Columns.Count; i++)
+                                {
+                                    var col = Model.Columns[i];
+                                    bool combinarPersona = indiceNombreIdentif >= 0 && indiceRazonSocial >= 0;
+
+                                    if (combinarPersona && i == indiceRazonSocial)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (combinarPersona && i == indiceNombreIdentif)
+                                    {
+                                        <td class="ctacte-persona-cell">
+                                            <div class="ctacte-persona-principal">@nombreIdentif</div>
+                                            @if (!string.IsNullOrWhiteSpace(razonSocial))
+                                            {
+                                                <div class="ctacte-persona-secundaria">@razonSocial</div>
+                                            }
+                                        </td>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "Saldo", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        decimal saldoFila = row[col] == DBNull.Value ? 0m : Convert.ToDecimal(row[col]);
+                                        <td>@(ocultarSaldo ? "***" : saldoFila.ToString("N2"))</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@row[col]</td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="@Url.Content("~/Content/css/ctasctes.css?v=1")" />
+<script src="@Url.Content("~/Scripts/app/ctasctes.js?v=1")"></script>
+<script>
+    (function () {
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest ? event.target.closest(".ctactes-index-page a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            var href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            event.preventDefault();
+            showNavigationLoading("Cargando solicitud...");
+            window.setTimeout(function () {
+                window.location.href = link.href;
+            }, 0);
+        });
+    })();
+
+    window.CtasCtesConfig = {
+        ctaCtePersonaUrl: '@Url.Action("CtaCtePersona", "Finanzas")',
+        desdePos: @Html.Raw(desdePos.ToString().ToLower())
+    };
+
+    if (window.CtasCtesPage && typeof window.CtasCtesPage.init === "function") {
+        window.CtasCtesPage.init();
+    }
+</script>
