@@ -3664,3 +3664,57 @@ misma migración, no una caja de un cajero real operando hoy.
 
 **Con esto, el slice 1 de Módulo 7 (CajasAbiertas) queda validado de punta a punta**, incluidas las
 3 escrituras reales que quedaban pendientes.
+
+## 2026-09-01 -- Migración ASP.NET Core, Módulo 7, slice 2: EgresosCaja/TiposEgresoCaja (pantalla administrativa)
+
+Se completó el segundo slice de `CajasController.cs`: `EgresosCaja` (listado administrativo con
+filtros), `TiposEgresoCaja`/`AddOrEditTipoEgresoCaja`/`TiposEgresoCajaOpciones`/
+`GuardarTipoEgresoCaja`/`EliminarTipoEgresoCaja` (catálogo de tipos de egreso) y
+`CalcularComisionesElectronicas`/`ObtenerResumenComisionesElectronicas`/
+`GuardarComisionesElectronicas` (cálculo automático de comisiones por pagos electrónicos). Vistas:
+`Cajas/EgresosCaja.cshtml`, `_TiposEgresoCajaModal.cshtml`, `_AddOrEditTipoEgresoCaja.cshtml`,
+`_TiposEgresoCajaTabla.cshtml`, `_CalcularComisionesElectronicas.cshtml`. Modelo nuevo
+`WebCore/Models/CajasVm.cs` (`TipoEgresoCajaEditVm`, `CalcularComisionesElectronicasVm`,
+`ComisionElectronicaFormaVm`). Se agregó `Negocio.Venta` al controller (necesario para
+`ObtenerFormasPagoElectronicas`, no usado en el slice 1).
+
+**Bug real preexistente encontrado, heredado fielmente del original (NO corregido, documentado
+en `gaps.md`)**: `CrearModelComisionesElectronicas`/`ObtenerFormasPagoElectronicas` reciben
+`idSucursal` como `int` (no `int?`) y lo pasan tal cual a `Negocio.Venta.getAllVentas` -- cuando
+el usuario elige "Todas" (`idSucursal=0`), `Datos.Venta.getAllVentas` interpreta el `0` como un
+filtro literal por `idSucursal=0` (una sucursal inexistente, ya que las reales empiezan en 1), no
+como "sin filtro" (que requiere `null`/`-1`). Resultado: al abrir "Calcular comisiones
+electrónicas" con "Todas" seleccionado, la grilla se precarga con $0,00 en vez de los montos
+reales. El botón "Recalcular totales" (que llama a `ObtenerResumenComisionesElectronicas`, la
+única de las 3 acciones que sí convierte `idSucursal > 0 ? idSucursal : null`) corrige la
+visualización al click. **Este bug existe igual en `Web` clásico** (mismo código, ninguna línea
+distinta) -- se portó tal cual, sin arreglarlo, según el criterio de esta migración de preservar
+comportamiento exacto salvo decisión explícita en contrario.
+
+**Verificación en vivo de las 3 escrituras de este slice** (autorización ya vigente):
+- `GuardarTipoEgresoCaja`/`EliminarTipoEgresoCaja`: round-trip completo con un tipo de prueba
+  ("Prueba Modulo 7 Slice 2", `id=304`) -- creado, confirmado vía `TiposEgresoCajaOpciones`, y
+  eliminado, quedando la base sin rastro (a diferencia de otros writes de esta migración, este sí
+  se limpió porque es un catálogo, no una operación de negocio con fecha/monto real).
+- `GuardarComisionesElectronicas`: comisión real calculada sobre datos reales de agosto 2026 en
+  San Lorenzo (Débito $129.464,20 al 1% = $1.294,64) -- `id=354` en `EgresosCaja`, confirmado con
+  `sqlcmd`: `monto=1294.64`, `idSucursal=2`, `tipo=303` ("Comision Banco"), descripción generada
+  correctamente ("Periodo 01/08/2026 - 31/08/2026 | Sucursal: San Lorenzo"), `creadoPor=2`. Se
+  dejó como evidencia (mismo criterio que el resto de escrituras reales de esta migración).
+
+**Hallazgo de infraestructura (no de código, del entorno de pruebas)**: durante las pruebas de
+este slice aparecieron timeouts de conexión SQL intermitentes (`Connection Timeout Expired` en
+`Utilidades.Conexion.conectar`). Investigado: no es un leak de conexiones de la app (`Db.cs`/
+`Conexion.cs` usan `using` correctamente en todos los paths) ni bloqueos en el servidor (sin
+`blocking_session_id` ni locks en espera) -- es agotamiento transitorio de recursos de SQL Server
+Express (edición limitada a 1 CPU/1GB RAM) acumulado tras un día entero de pruebas repetidas con
+reinicios forzados (`Stop-Process -Force`) del proceso `WebCore`. Se resolvió reiniciando el
+proceso `WebCore` (limpia su pool de conexiones) y, con autorización explícita del usuario, dando
+`KILL` a las sesiones `sa` huérfanas del lado del servidor. No requiere cambio de código -- queda
+como nota operativa para sesiones futuras de pruebas largas contra esta misma instancia local.
+
+**Con esto, el slice 2 de Módulo 7 (EgresosCaja/TiposEgresoCaja) queda completo y validado de
+punta a punta**, incluidas las 3 escrituras.
+
+**Resta de Módulo 7**: `FinanzasController.cs` (1944 líneas, todavía sin leer) -- último slice
+pendiente.

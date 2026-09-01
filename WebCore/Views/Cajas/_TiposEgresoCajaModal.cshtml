@@ -1,0 +1,59 @@
+@model System.Data.DataTable
+
+@{
+    bool puedeEditar = ViewBag.PuedeEditarTipos != null && (bool)ViewBag.PuedeEditarTipos;
+    string buscar = ViewBag.BuscarTipoEgreso as string ?? "";
+}
+
+<div class="tipos-egreso-modal">
+    <form id="formTokenTiposEgresoCaja">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div class="mb-3">
+        <div class="form-row">
+            <div class="col-12 col-md-5 mb-2">
+                <label class="small font-weight-bold text-muted mb-1">Buscar</label>
+                <input type="text"
+                       class="form-control"
+                       id="buscarTipoEgresoCaja"
+                       name="buscar"
+                       value="@buscar"
+                       autocomplete="off"
+                       placeholder="Buscar tipo de egreso..." />
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+                <label class="small font-weight-bold text-muted mb-1">Origen</label>
+                <select class="form-control" id="filtroOrigenTipoEgreso">
+                    <option value="todos">Todos</option>
+                    <option value="propios">Propios</option>
+                    <option value="sistema">Sistema</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2 mb-2">
+                <label class="small font-weight-bold text-muted mb-1">Gasto</label>
+                <select class="form-control" id="filtroGastoTipoEgreso">
+                    <option value="todos">Todos</option>
+                    <option value="gastos">Solo gastos</option>
+                    <option value="no-gastos">No gastos</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2 mb-2 d-flex align-items-end">
+                @if (puedeEditar)
+                {
+                    <button type="button" class="btn btn-success btn-block" id="btnNuevoTipoEgresoCaja">
+                        <i class="fas fa-plus mr-1"></i> Nuevo
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info py-2 mb-3">
+        Los tipos reservados por el sistema no pueden editarse ni eliminarse.
+    </div>
+
+    <div id="tablaTiposEgresoCaja">
+        @Html.Partial("~/Views/Cajas/_TiposEgresoCajaTabla.cshtml", Model)
+    </div>
+</div>

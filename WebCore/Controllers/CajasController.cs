@@ -36,8 +36,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
+using WebCore.Models;
 
 namespace WebCore.Controllers
 {
@@ -66,6 +68,7 @@ namespace WebCore.Controllers
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Usuario _oUsuarioN;
+        private readonly Negocio.Venta _oVentaN;
 
         private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
         {
@@ -84,6 +87,7 @@ namespace WebCore.Controllers
             _oCierreN = new Negocio.CierreCaja(_empresa, _param);
             _oSucursalN = new Negocio.Sucursal(_empresa, _param);
             _oUsuarioN = new Negocio.Usuario(_empresa, _param);
+            _oVentaN = new Negocio.Venta(_empresa, _param);
         }
 
         [HttpGet]
@@ -430,6 +434,303 @@ namespace WebCore.Controllers
             catch (Exception ex)
             {
                 return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        // ---- Slice 2: pantalla administrativa "Egresos de Caja" (EgresosCaja/TiposEgresoCaja) ----
+        // Mismo criterio de stub que el resto del controller. PermisosHelper.TienePermisoVer/
+        // TienePermisoEditar se omiten (siempre true bajo Admin=true) salvo donde el original
+        // ya usaba un chequeo real de negocio (ej. "!user.Admin" en EliminarTipoEgresoCaja, que
+        // se deja tal cual aunque nunca se dispare con este stub).
+
+        [HttpGet]
+        public IActionResult EgresosCaja(int? idSucursal, int idUsuario = -1, int idTipoEgresoCaja = 0, string descripcion = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string filtroGasto = "todos", bool ajax = false)
+        {
+            DateTime desde = fechaDesde ?? DateTime.Today;
+            DateTime hasta = fechaHasta ?? DateTime.Today.AddDays(1).AddSeconds(-1);
+            if (hasta.TimeOfDay == TimeSpan.Zero)
+                hasta = hasta.AddDays(1).AddSeconds(-1);
+
+            int sucursalSeleccionada = idSucursal ?? 0;
+
+            CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
+
+            DataTable dt = _oCierreN.obtenerEgresosCaja(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion ?? "", desde, hasta);
+            dt = ExcluirTiposReservadosEgresosCaja(dt);
+            CargarPermisosEdicionEgresos(dt, false);
+
+            if (ajax)
+                return PartialView("~/Views/Cajas/_EgresosCajaTabla.cshtml", dt);
+
+            ViewBag.Title = "Egresos de Caja";
+            return View("~/Views/Cajas/EgresosCaja.cshtml", dt);
+        }
+
+        [HttpGet]
+        public IActionResult TiposEgresoCaja(string buscar = "")
+        {
+            var user = _usuarioActual;
+
+            ViewBag.BuscarTipoEgreso = buscar ?? "";
+            ViewBag.PuedeEditarTipos = true;
+            ViewBag.UsuarioAdmin = user.Admin;
+
+            DataTable dt = _oCierreN.obtenerTiposEgresoCaja(buscar ?? "", 0);
+            return PartialView("~/Views/Cajas/_TiposEgresoCajaModal.cshtml", dt);
+        }
+
+        [HttpGet]
+        public IActionResult AddOrEditTipoEgresoCaja(int id = 0)
+        {
+            var model = new TipoEgresoCajaEditVm();
+            if (id > 0)
+            {
+                DataTable dt = _oCierreN.obtenerTiposEgresoCaja("", id);
+                if (dt == null || dt.Rows.Count == 0)
+                    return NotFound("No se encontró el tipo de egreso seleccionado.");
+
+                DataRow row = dt.Rows[0];
+                bool reservado = row.Table.Columns.Contains("Reservado") && row["Reservado"] != DBNull.Value && Convert.ToBoolean(row["Reservado"]);
+                if (reservado)
+                    return BadRequest("El tipo de egreso seleccionado es reservado por el sistema y no puede modificarse.");
+
+                model.Id = id;
+                model.TipoEgresoCaja = Convert.ToString(row["tipoEgresoCaja"]) ?? "";
+                model.EsGasto = row.Table.Columns.Contains("Es_Gasto") && row["Es_Gasto"] != DBNull.Value && Convert.ToBoolean(row["Es_Gasto"]);
+                model.Reservado = reservado;
+            }
+
+            return PartialView("~/Views/Cajas/_AddOrEditTipoEgresoCaja.cshtml", model);
+        }
+
+        [HttpGet]
+        public IActionResult TiposEgresoCajaOpciones()
+        {
+            DataTable dt = _oCierreN.obtenerTiposEgresoCaja("", 0);
+            var items = dt.AsEnumerable()
+                .Where(r => Convert.ToInt32(r["id"]) > 0)
+                .Select(r => new
+                {
+                    id = Convert.ToInt32(r["id"]),
+                    nombre = Convert.ToString(r["tipoEgresoCaja"])
+                })
+                .ToList();
+
+            return Json(new { ok = true, items = items });
+        }
+
+        [HttpGet]
+        public IActionResult CalcularComisionesElectronicas(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int idSucursal = 0, bool desdePos = false, int idCierre = 0)
+        {
+            var user = _usuarioActual;
+
+            CierreCaja? cierreContexto = idCierre > 0
+                ? _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "")
+                : null;
+
+            if (idCierre > 0)
+            {
+                if (cierreContexto == null || cierreContexto.Id == 0)
+                    return NotFound("No se encontró la caja seleccionada.");
+
+                if (!CajaSigueAbierta(cierreContexto))
+                    return BadRequest("La caja seleccionada ya no se encuentra abierta.");
+            }
+
+            DateTime desde = (fechaDesde ?? DateTime.Today).Date;
+            DateTime hasta = (fechaHasta ?? DateTime.Today).Date;
+            if (desde > hasta)
+                return BadRequest("La fecha desde no puede ser mayor que la fecha hasta.");
+
+            bool sucursalFija = desdePos || (cierreContexto != null && cierreContexto.Sucursal != null);
+            int sucursalSeleccionada = desdePos
+                ? user.IdSucursal
+                : (cierreContexto != null && cierreContexto.Sucursal != null
+                    ? cierreContexto.Sucursal.idSucursal
+                    : idSucursal);
+
+            var sucursal = sucursalSeleccionada > 0 ? _oSucursalN.findById(sucursalSeleccionada) : null;
+            if (sucursalSeleccionada > 0 && sucursal == null)
+                return BadRequest("Sucursal inválida.");
+
+            if (desdePos && !_oCierreN.validarCajaAbiertaVendedor(DateTime.Now, sucursal, user))
+                return BadRequest("Debe tener una caja abierta en la sucursal activa para registrar egresos desde POS.");
+
+            var model = CrearModelComisionesElectronicas(desde, hasta, DateTime.Now, sucursalSeleccionada, desdePos, idCierre);
+            ViewBag.TiposEgresoCaja = _oCierreN.obtenerTiposEgresoCaja("", 0);
+            ViewBag.Sucursales = _oSucursalN.findAll();
+            ViewBag.MostrarSelectorSucursal = !sucursalFija;
+            return PartialView("~/Views/Cajas/_CalcularComisionesElectronicas.cshtml", model);
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerResumenComisionesElectronicas(DateTime fechaDesde, DateTime fechaHasta, int idSucursal)
+        {
+            try
+            {
+                if (fechaDesde.Date > fechaHasta.Date)
+                    return Json(new { ok = false, mensaje = "La fecha desde no puede ser mayor que la fecha hasta." });
+
+                int? sucursalConsulta = idSucursal > 0 ? (int?)idSucursal : null;
+                if (sucursalConsulta.HasValue && _oSucursalN.findById(sucursalConsulta.Value) == null)
+                    return Json(new { ok = false, mensaje = "Sucursal inválida." });
+
+                var formas = ObtenerFormasPagoElectronicas(fechaDesde.Date, fechaHasta.Date, sucursalConsulta, null);
+                return Json(new
+                {
+                    ok = true,
+                    items = formas.Select(f => new
+                    {
+                        codigo = f.Codigo,
+                        nombre = f.Nombre,
+                        totalCobrado = f.TotalCobrado
+                    }).ToList(),
+                    total = formas.Sum(f => f.TotalCobrado)
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "No se pudieron calcular las comisiones. " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarTipoEgresoCaja(TipoEgresoCajaEditVm model)
+        {
+            try
+            {
+                string nombre = model != null ? (model.TipoEgresoCaja ?? "").Trim() : "";
+                if (string.IsNullOrWhiteSpace(nombre))
+                    return Json(new { ok = false, mensaje = "El campo Tipo no puede ser vacío." });
+
+                int id = model != null ? model.Id : 0;
+                if (id > 0)
+                {
+                    DataTable dt = _oCierreN.obtenerTiposEgresoCaja("", id);
+                    if (dt == null || dt.Rows.Count == 0)
+                        return Json(new { ok = false, mensaje = "No se encontró el tipo de egreso seleccionado." });
+
+                    bool reservado = dt.Rows[0].Table.Columns.Contains("Reservado") &&
+                                     dt.Rows[0]["Reservado"] != DBNull.Value &&
+                                     Convert.ToBoolean(dt.Rows[0]["Reservado"]);
+                    if (reservado)
+                        return Json(new { ok = false, mensaje = "El tipo de egreso seleccionado es reservado por el sistema y no puede modificarse." });
+                }
+
+                _oCierreN.addOrEditTipoEgreso(id > 0 ? id : -1, nombre, model != null && model.EsGasto);
+                return Json(new { ok = true, mensaje = "El Tipo Egreso se registró correctamente." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EliminarTipoEgresoCaja(int id)
+        {
+            try
+            {
+                var user = _usuarioActual;
+
+                if (!user.Admin)
+                    return Json(new { ok = false, mensaje = "Debe tener permiso de Administrador para eliminar un Tipo Egreso." });
+
+                DataTable dt = _oCierreN.obtenerTiposEgresoCaja("", id);
+                if (dt == null || dt.Rows.Count == 0)
+                    return Json(new { ok = false, mensaje = "No se encontró el tipo de egreso seleccionado." });
+
+                bool reservado = dt.Rows[0].Table.Columns.Contains("Reservado") &&
+                                 dt.Rows[0]["Reservado"] != DBNull.Value &&
+                                 Convert.ToBoolean(dt.Rows[0]["Reservado"]);
+                if (reservado)
+                    return Json(new { ok = false, mensaje = "El Tipo Egreso seleccionado es reservado por el sistema y no puede eliminarse." });
+
+                _oCierreN.eliminarTipoEgreso(id);
+                return Json(new { ok = true, mensaje = "El Tipo Egreso se eliminó correctamente." });
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message != null && ex.Message.IndexOf("FK", StringComparison.OrdinalIgnoreCase) >= 0
+                    ? "No se puede eliminar porque existen egresos de caja con el Tipo Egreso seleccionado."
+                    : ex.Message;
+                return Json(new { ok = false, mensaje = msg });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult GuardarComisionesElectronicas(DateTime fechaDesde, DateTime fechaHasta, DateTime fechaEgreso, int idTipoEgresoCaja, int idSucursal, string porcentajeDebito, string porcentajeCredito, string porcentajeQr, string porcentajeTransferencia, bool desdePos = false, int idCierre = 0)
+        {
+            try
+            {
+                var user = _usuarioActual;
+
+                DateTime desde = fechaDesde.Date;
+                DateTime hasta = fechaHasta.Date;
+                if (desde > hasta)
+                    return Json(new { ok = false, mensaje = "La fecha desde no puede ser mayor que la fecha hasta." });
+
+                var porcentajes = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "Debito", ParseDecimalFlexible(porcentajeDebito) },
+                    { "Credito", ParseDecimalFlexible(porcentajeCredito) },
+                    { "Qr", ParseDecimalFlexible(porcentajeQr) },
+                    { "Transferencia", ParseDecimalFlexible(porcentajeTransferencia) }
+                };
+
+                int? sucursalFiltro = idSucursal > 0 ? (int?)idSucursal : null;
+                if (sucursalFiltro.HasValue && _oSucursalN.findById(sucursalFiltro.Value) == null)
+                    return Json(new { ok = false, mensaje = "Sucursal inválida." });
+
+                var formas = ObtenerFormasPagoElectronicas(desde, hasta, sucursalFiltro, porcentajes);
+                decimal totalComisiones = formas.Sum(f => f.ImporteComision);
+                if (totalComisiones <= 0)
+                    return Json(new { ok = false, mensaje = "Debe existir al menos una comisión mayor a cero para guardar el egreso." });
+
+                string sucursalDescripcion = ObtenerDescripcionSucursal(idSucursal);
+                string descripcion = string.Format(
+                    "Periodo {0} - {1} | Sucursal: {2}",
+                    desde.ToString("dd/MM/yyyy"),
+                    hasta.ToString("dd/MM/yyyy"),
+                    sucursalDescripcion);
+
+                StringBuilder detalleBuilder = new StringBuilder();
+                detalleBuilder.AppendFormat(
+                    "Cálculo automático de comisiones por pagos electrónicos entre {0} y {1} | Sucursal: {2}.",
+                    desde.ToString("dd/MM/yyyy"),
+                    hasta.ToString("dd/MM/yyyy"),
+                    sucursalDescripcion);
+
+                foreach (var forma in formas)
+                {
+                    detalleBuilder.AppendLine();
+                    detalleBuilder.AppendFormat(
+                        "{0}: total cobrado ${1} - comisión {2}% = ${3}",
+                        forma.Nombre,
+                        FormatearImporte(forma.TotalCobrado),
+                        FormatearPorcentaje(forma.Porcentaje),
+                        FormatearImporte(forma.ImporteComision));
+                }
+
+                int idSucursalGuardar = idSucursal > 0 ? idSucursal : user.IdSucursal;
+                var resultado = GuardarEgresoCajaCore(
+                    0,
+                    fechaEgreso,
+                    idTipoEgresoCaja,
+                    descripcion,
+                    totalComisiones.ToString(CultureInfo.InvariantCulture),
+                    detalleBuilder.ToString(),
+                    idSucursalGuardar,
+                    desdePos,
+                    idCierre);
+
+                return Json(new { ok = resultado.Ok, id = resultado.Id, mensaje = resultado.Mensaje });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "Error al guardar comisiones electrónicas. " + ex.Message });
             }
         }
 
@@ -884,6 +1185,192 @@ namespace WebCore.Controllers
                 Id = egreso.Id,
                 Mensaje = id > 0 ? "El egreso de caja se modificó correctamente." : "El egreso de caja se guardó correctamente."
             };
+        }
+
+        private void CargarViewBagsEgresos(int idSucursal, int idUsuario, int idTipoEgresoCaja, string descripcion, DateTime fechaDesde, DateTime fechaHasta, string filtroGasto, bool desdePos)
+        {
+            var user = _usuarioActual;
+            ViewBag.Sucursales = _oSucursalN.findAll();
+            ViewBag.Usuarios = ObtenerUsuariosFiltroEgresos();
+            ViewBag.TiposEgresoCaja = _oCierreN.obtenerTiposEgresoCaja("", 0);
+            ViewBag.IdSucursal = idSucursal;
+            ViewBag.IdUsuario = idUsuario;
+            ViewBag.IdTipoEgresoCaja = idTipoEgresoCaja;
+            ViewBag.Descripcion = descripcion ?? "";
+            ViewBag.FechaDesde = fechaDesde;
+            ViewBag.FechaHasta = fechaHasta;
+            ViewBag.FiltroGasto = filtroGasto;
+            ViewBag.DesdePOS = desdePos;
+            ViewBag.UsuarioAdmin = user.Admin;
+            ViewBag.PuedeVerTiposEgreso = true;
+            ViewBag.PuedeEditarTiposEgreso = true;
+        }
+
+        private DataTable ObtenerUsuariosFiltroEgresos()
+        {
+            var dtUsuarios = _oUsuarioN.obtenerUsuarios(true);
+
+            if (dtUsuarios != null && dtUsuarios.Columns.Contains("id") && dtUsuarios.Columns.Contains("nombre"))
+            {
+                DataRow drTodos = dtUsuarios.NewRow();
+                drTodos["id"] = -1;
+                drTodos["nombre"] = "Todos";
+                dtUsuarios.Rows.Add(drTodos);
+                dtUsuarios.DefaultView.Sort = "id";
+            }
+
+            return dtUsuarios;
+        }
+
+        // Tipos reservados que el sistema inserta solo (reflejo de una venta con forma de pago no
+        // efectivo o de un movimiento de cuenta corriente) -- no son egresos de caja reales, nunca
+        // se muestran en este listado.
+        private static readonly string[] TiposExcluidosDeEgresosCaja = { "Cta Cte", "Pago Electronico" };
+
+        private DataTable ExcluirTiposReservadosEgresosCaja(DataTable dt)
+        {
+            if (dt == null || !dt.Columns.Contains("TipoEgresoCaja"))
+                return dt;
+
+            DataTable resultado = dt.Clone();
+            foreach (DataRow row in dt.Rows)
+            {
+                string tipo = Convert.ToString(row["TipoEgresoCaja"]);
+                bool esReservadoExcluido = TiposExcluidosDeEgresosCaja.Any(t => string.Equals(t, tipo, StringComparison.OrdinalIgnoreCase));
+                if (!esReservadoExcluido)
+                    resultado.ImportRow(row);
+            }
+
+            return resultado;
+        }
+
+        private CalcularComisionesElectronicasVm CrearModelComisionesElectronicas(DateTime fechaDesde, DateTime fechaHasta, DateTime fechaEgreso, int idSucursal, bool desdePos, int idCierre)
+        {
+            var sucursal = idSucursal > 0 ? _oSucursalN.findById(idSucursal) : null;
+            var porcentajesDefault = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Debito", Convert.ToDecimal(_param.GetFloat(ParamKeys.ComisionDebito, 0f)) },
+                { "Credito", Convert.ToDecimal(_param.GetFloat(ParamKeys.ComisionCredito, 0f)) },
+                { "Qr", 0m },
+                { "Transferencia", 0m }
+            };
+
+            var formas = ObtenerFormasPagoElectronicas(fechaDesde, fechaHasta, idSucursal, porcentajesDefault);
+            return new CalcularComisionesElectronicasVm
+            {
+                FechaDesde = fechaDesde,
+                FechaHasta = fechaHasta,
+                FechaEgreso = fechaEgreso,
+                IdSucursal = idSucursal,
+                SucursalNombre = sucursal != null ? sucursal.SucursalNombre : "Todas",
+                IdTipoEgresoCaja = 0,
+                DesdePos = desdePos,
+                IdCierre = idCierre,
+                FormasPago = formas,
+                TotalEgreso = formas.Sum(f => f.ImporteComision)
+            };
+        }
+
+        private List<ComisionElectronicaFormaVm> ObtenerFormasPagoElectronicas(DateTime fechaDesde, DateTime fechaHasta, int? idSucursal, IDictionary<string, decimal> porcentajes)
+        {
+            var items = new List<ComisionElectronicaFormaVm>
+            {
+                new ComisionElectronicaFormaVm { Codigo = "Debito", Nombre = "Débito", Porcentaje = ObtenerPorcentaje(porcentajes, "Debito") },
+                new ComisionElectronicaFormaVm { Codigo = "Credito", Nombre = "Crédito", Porcentaje = ObtenerPorcentaje(porcentajes, "Credito") },
+                new ComisionElectronicaFormaVm { Codigo = "Qr", Nombre = "QR", Porcentaje = ObtenerPorcentaje(porcentajes, "Qr") },
+                new ComisionElectronicaFormaVm { Codigo = "Transferencia", Nombre = "Transferencia", Porcentaje = ObtenerPorcentaje(porcentajes, "Transferencia") }
+            };
+
+            var ventas = _oVentaN.getAllVentas(fechaDesde.Date, fechaHasta.Date, "", -1, -1, idSucursal, false, false) ?? new List<Entidades.Venta>();
+            foreach (var venta in ventas)
+            {
+                if (venta == null || string.Equals(venta.Estado ?? "", "ANULADO", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var item = items.FirstOrDefault(i => string.Equals(i.Codigo, venta.FormaPago ?? "", StringComparison.OrdinalIgnoreCase));
+                if (item == null)
+                    continue;
+
+                decimal totalVenta = Convert.ToDecimal(venta.TotalImporte);
+                decimal pagoMixtoEfectivo = Convert.ToDecimal(venta.PagoMixtoEfectivo);
+                decimal totalElectronico = pagoMixtoEfectivo > 0m ? totalVenta - pagoMixtoEfectivo : totalVenta;
+                if (totalElectronico <= 0m)
+                    continue;
+
+                item.TotalCobrado += totalElectronico;
+            }
+
+            foreach (var item in items)
+            {
+                item.ImporteComision = decimal.Round(item.TotalCobrado * item.Porcentaje / 100m, 2, MidpointRounding.AwayFromZero);
+            }
+
+            return items;
+        }
+
+        private decimal ObtenerPorcentaje(IDictionary<string, decimal> porcentajes, string codigo)
+        {
+            if (porcentajes == null || string.IsNullOrWhiteSpace(codigo))
+                return 0m;
+
+            decimal valor;
+            return porcentajes.TryGetValue(codigo, out valor) ? valor : 0m;
+        }
+
+        private string FormatearImporte(decimal valor)
+        {
+            return valor.ToString("N2", new CultureInfo("es-AR"));
+        }
+
+        private string FormatearPorcentaje(decimal valor)
+        {
+            return valor.ToString("0.##", new CultureInfo("es-AR"));
+        }
+
+        private string ObtenerDescripcionSucursal(int idSucursal)
+        {
+            if (idSucursal <= 0)
+                return "Todas";
+
+            var sucursal = _oSucursalN.findById(idSucursal);
+            return sucursal != null && !string.IsNullOrWhiteSpace(sucursal.SucursalNombre)
+                ? sucursal.SucursalNombre
+                : "Todas";
+        }
+
+        private decimal ParseDecimalFlexible(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return 0m;
+
+            string limpio = value.Trim()
+                .Replace("$", "")
+                .Replace(" ", "");
+
+            decimal numero;
+            if (decimal.TryParse(limpio, NumberStyles.Any, new CultureInfo("es-AR"), out numero))
+                return numero;
+
+            if (decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out numero))
+                return numero;
+
+            int ultimaComa = limpio.LastIndexOf(',');
+            int ultimoPunto = limpio.LastIndexOf('.');
+            if (ultimaComa >= 0 && ultimoPunto >= 0)
+            {
+                char separadorDecimal = ultimaComa > ultimoPunto ? ',' : '.';
+                limpio = separadorDecimal == ','
+                    ? limpio.Replace(".", "").Replace(',', '.')
+                    : limpio.Replace(",", "");
+            }
+            else
+            {
+                limpio = limpio.Replace(',', '.');
+            }
+
+            return decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out numero)
+                ? numero
+                : 0m;
         }
 
         private int ValorInt(DataRow row, string columna)

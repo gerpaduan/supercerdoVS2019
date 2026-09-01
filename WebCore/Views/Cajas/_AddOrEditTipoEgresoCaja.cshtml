@@ -1,0 +1,69 @@
+@model WebCore.Models.TipoEgresoCajaEditVm
+
+@{
+    bool esEdicion = Model != null && Model.Id > 0;
+}
+
+<form id="formTipoEgresoCaja">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@(Model != null ? Model.Id : 0)" />
+
+    <div id="tipoEgresoCajaError" class="alert alert-danger d-none"></div>
+
+    <div class="form-group">
+        <label for="tipoEgresoCajaNombre">Tipo</label>
+        <input type="text"
+               class="form-control"
+               id="tipoEgresoCajaNombre"
+               name="TipoEgresoCaja"
+               maxlength="100"
+               autocomplete="off"
+               value="@(Model != null ? Model.TipoEgresoCaja : "")" />
+    </div>
+
+    <div class="custom-control custom-checkbox mb-3">
+        @Html.CheckBox("EsGasto", Model != null && Model.EsGasto, new { @class = "custom-control-input", id = "tipoEgresoCajaEsGasto" })
+        <label class="custom-control-label" for="tipoEgresoCajaEsGasto">Es gasto</label>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary" id="btnVolverTiposEgresoCaja">
+            Volver
+        </button>
+        <div>
+            @if (esEdicion)
+            {
+                <button type="button"
+                        class="btn btn-secondary mr-2"
+                        id="btnHabilitarEdicionTipoEgresoCaja"
+                        data-edit-readonly-ignore="true">
+                    Modificar
+                </button>
+            }
+            <button type="submit" class="btn btn-primary @(esEdicion ? "d-none" : "")" id="btnGuardarTipoEgresoCaja">
+            @(esEdicion ? "Guardar cambios" : "Guardar tipo")
+            </button>
+        </div>
+    </div>
+</form>
+
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+<script>
+    (function () {
+        if (window.EgresosCaja && typeof window.EgresosCaja.bindTipoForm === "function") {
+            window.EgresosCaja.bindTipoForm("#formTipoEgresoCaja");
+        }
+
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formTipoEgresoCaja",
+            soloLecturaInicial: @(esEdicion ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionTipoEgresoCaja",
+            saveButtonSelector: "#btnGuardarTipoEgresoCaja"
+        });
+
+        setTimeout(function () {
+            var input = document.getElementById("tipoEgresoCajaNombre");
+            if (input) input.focus();
+        }, 50);
+    })();
+</script>

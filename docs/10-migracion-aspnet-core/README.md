@@ -236,7 +236,10 @@ Trabajo autónomo nocturno (autorización explícita del usuario, 2026-09-01: "h
 
 Verificado con datos reales: listado de cajas abiertas (5 reales), historial de cierres (17 reales), datos de cierre, actividades (106 filas), preview de cambio de sucursal (2 casos reales de la regla de negocio). **Las 3 escrituras (`GuardarEgresoCaja`, `CerrarCaja`, `CambiarSucursalCaja`) ya se probaron en vivo y quedaron validadas** -- ver `docs/DECISIONS.md`. Hallazgo real durante la prueba: el `id` de `CierreCaja` codifica la sucursal como prefijo, así que `CambiarSucursalCaja` renumera el id real además de actualizar `idSucursal` (comportamiento correcto de `Negocio.CierreCaja`, no un bug). **Slice 1 (CajasAbiertas) queda completo y validado de punta a punta.**
 
-**Slice 2 (pendiente)**: `EgresosCaja`/`TiposEgresoCaja` (pantalla administrativa separada).
+**Slice 2 — EgresosCaja/TiposEgresoCaja: portado, verificado con datos reales, incluidas sus 3 escrituras.**
+
+`EgresosCaja` (listado administrativo con filtros), `TiposEgresoCaja`/`AddOrEditTipoEgresoCaja`/`TiposEgresoCajaOpciones`/`GuardarTipoEgresoCaja`/`EliminarTipoEgresoCaja` (catálogo), `CalcularComisionesElectronicas`/`ObtenerResumenComisionesElectronicas`/`GuardarComisionesElectronicas`. Modelo nuevo `WebCore/Models/CajasVm.cs`. Verificado con datos reales (938 egresos, 9 tipos, comisiones reales de agosto 2026). Las 3 escrituras probadas en vivo: alta+baja de un tipo de prueba (round-trip limpio, sin dejar rastro) y un egreso real de comisión electrónica ($1.294,64, San Lorenzo, dejado como evidencia). Se encontró y documentó (sin corregir, heredado de `Web` clásico) un bug real: la grilla de comisiones precarga en $0,00 cuando se elige "Todas las sucursales" -- ver `gaps.md`.
+
 **Slice 3 (pendiente, el de mayor riesgo)**: `FinanzasController.cs` (1944 líneas, sin leer todavía).
 
 ### Contexto original del scoping (previo al slice 1)
