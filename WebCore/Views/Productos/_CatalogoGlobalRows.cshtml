@@ -1,0 +1,92 @@
+@using System.Linq
+@model List<WebCore.Models.ProductoGlobalImportItemVm>
+
+@if (Model == null || !Model.Any())
+{
+    <tr>
+        <td colspan="7" class="text-center text-muted py-4">
+            No se encontraron productos en el catalogo global.
+        </td>
+    </tr>
+}
+else
+{
+    foreach (var item in Model)
+    {
+        var relacion = "-";
+        if (!string.IsNullOrWhiteSpace(item.ProductoGlobalMaestroNombre))
+        {
+            relacion = item.EsPresentacion
+                ? "Presentacion de " + item.ProductoGlobalMaestroNombre
+                : "Deriva de " + item.ProductoGlobalMaestroNombre;
+        }
+
+        <tr data-id="@item.IdProductoGlobal"
+            data-importado="@(item.YaImportado ? "1" : "0")"
+            data-codigo-original="@item.CodigoOriginal"
+            data-codigo-sugerido="@item.CodigoSugerido"
+            data-codigo-duplicado="@(item.CodigoDuplicadoEnEmpresa ? "1" : "0")">
+            <td class="text-center align-middle">
+                <input type="checkbox"
+                       class="chk-global-producto"
+                       @(item.YaImportado ? "disabled" : "") />
+            </td>
+            <td class="text-nowrap align-middle">@item.CodigoOriginal</td>
+            <td class="align-middle">
+                <div class="font-weight-bold">@item.Descripcion</div>
+                <small class="text-muted">@(!string.IsNullOrWhiteSpace(item.Tipo) ? item.Tipo : "Sin tipo")</small>
+            </td>
+            <td class="align-middle">
+                <span>@relacion</span>
+                @if (!item.EsPresentacion && item.IdProductoGlobalMaestro.HasValue && item.Porcentaje > 0)
+                {
+                    <br />
+                    <small class="text-muted">Porcentaje: @item.Porcentaje</small>
+                }
+            </td>
+            <td class="align-middle">
+                <input type="text"
+                       class="form-control form-control-sm js-codigo-destino"
+                       value="@item.CodigoDestino"
+                       inputmode="numeric"
+                       @(item.YaImportado ? "disabled" : "") />
+            </td>
+            <td class="align-middle">
+                @if (item.YaImportado)
+                {
+                    <small class="text-muted">No editable</small>
+                }
+                else
+                {
+                    <div class="js-precio-wrapper d-none">
+                        <input type="text"
+                               class="form-control form-control-sm js-precio-destino"
+                               value=""
+                               inputmode="decimal"
+                               autocomplete="off"
+                               placeholder="Precio">
+                    </div>
+                }
+            </td>
+            <td class="align-middle">
+                @if (item.YaImportado)
+                {
+                    <span class="badge badge-success">Ya importado</span>
+                    if (item.CodigoEmpresaImportado.HasValue)
+                    {
+                        <br />
+                        <small class="text-muted">Codigo empresa: @item.CodigoEmpresaImportado</small>
+                    }
+                }
+                else
+                {
+                    <div class="js-estado-global">
+                        <span class="badge badge-secondary">Disponible</span>
+                        <br />
+                        <small class="text-muted">@item.MensajeEstado</small>
+                    </div>
+                }
+            </td>
+        </tr>
+    }
+}

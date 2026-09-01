@@ -1,0 +1,307 @@
+@model WebCore.Models.PersonaIndexVm
+
+@{
+    ViewData["Title"] = "Personas";
+}
+
+<div class="container-fluid personas-index-page">
+    <style>
+        .persona-global {
+            opacity: 1;
+        }
+
+        .persona-global td {
+            background-color: var(--ui-surface-alt);
+            color: var(--ui-text-soft);
+        }
+
+        .personas-index-page .card-body {
+            padding: .85rem 1rem;
+        }
+
+        .personas-index-page .personas-filtros-card .card-body {
+            padding: .72rem .85rem;
+        }
+
+        .personas-index-page .personas-filtro-label {
+            font-size: .76rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: .18rem;
+        }
+
+        .personas-index-page .personas-filtros-card .form-control,
+        .personas-index-page .personas-filtros-card .btn {
+            font-size: .87rem;
+            min-height: 2.35rem;
+            border-radius: .55rem;
+            padding: .32rem .62rem;
+        }
+
+        .personas-index-page .tabla-full .table,
+        .personas-index-page .table-responsive .table {
+            font-size: .84rem;
+        }
+
+        .personas-index-page .tabla-full .table th,
+        .personas-index-page .tabla-full .table td,
+        .personas-index-page .table-responsive .table th,
+        .personas-index-page .table-responsive .table td {
+            padding: .38rem .5rem;
+            vertical-align: middle;
+            line-height: 1.15;
+        }
+
+        .personas-index-page .tabla-full .table thead th,
+        .personas-index-page .tabla-full .table > thead > tr > th,
+        .personas-index-page .table-responsive .table thead th,
+        .personas-index-page .table-responsive .table > thead > tr > th {
+            font-size: .72rem !important;
+            line-height: 1.05;
+            padding-top: .42rem;
+            padding-bottom: .42rem;
+        }
+
+        .personas-index-page .btn-sm {
+            padding: .18rem .42rem;
+            line-height: 1.15;
+        }
+
+        .personas-index-page .persona-id-cell {
+            font-size: .76rem;
+        }
+
+        @@media (min-width: 1200px) {
+            .personas-index-page .mb-3 {
+                margin-bottom: .85rem !important;
+            }
+
+            .personas-index-page .personas-filtros-card .card-body {
+                padding: .65rem .8rem;
+            }
+
+            .personas-index-page .personas-filtros-card .form-control,
+            .personas-index-page .personas-filtros-card .btn {
+                min-height: 2.15rem;
+                font-size: .84rem;
+                padding: .28rem .56rem;
+            }
+
+            .personas-index-page .tabla-full .table,
+            .personas-index-page .table-responsive .table {
+                font-size: .81rem;
+            }
+
+            .personas-index-page .tabla-full .table thead th,
+            .personas-index-page .tabla-full .table > thead > tr > th,
+            .personas-index-page .table-responsive .table thead th,
+            .personas-index-page .table-responsive .table > thead > tr > th {
+                font-size: .69rem !important;
+            }
+        }
+    </style>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Personas</h1>
+            <div class="text-muted">Alta, consulta y edición de personas del sistema.</div>
+        </div>
+        <a class="btn btn-success mt-2 mt-md-0" href="@Url.Action("Nuevo", "Personas")">
+            <i class="fas fa-plus mr-1"></i> Nueva persona
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 personas-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index", "Personas")" id="formFiltrosPersonas">
+                <div class="form-row align-items-end">
+                    <div class="col-12 col-md-7 col-lg-6 mb-2">
+                        <label class="personas-filtro-label">Buscar</label>
+                        <input type="text"
+                               class="form-control"
+                               id="txtFiltroPersonas"
+                               name="filtro"
+                               value="@Model.Filtro"
+                               autocomplete="off"
+                               placeholder="Razón social, CUIT o identificación" />
+                    </div>
+                    <div class="col-12 col-md-5 col-lg-4 mb-2 d-flex">
+                        <button type="submit" class="btn btn-outline-primary mr-2">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </button>
+                        <a href="@Url.Action("Index", "Personas")" class="btn btn-outline-secondary">
+                            Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:80px;">ID</th>
+                            <th>Identificación</th>
+                            <th>Razón social</th>
+                            <th>IVA</th>
+                            <th>CUIT</th>
+                            <th>Teléfono</th>
+                            <th>Domicilio</th>
+                            <th>Ciudad</th>
+                            <th>Otros datos</th>
+                            <th style="width:120px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyPersonas">
+                        @if (Model == null || Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">No se encontraron personas.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr class="@(item.IdEmpresa == 0 ? "persona-global" : "")">
+                                    <td class="persona-id-cell">@item.IdPersona</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Identificacion) ? item.Identificacion : "-")</td>
+                                    <td class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.RazonSocial) ? item.RazonSocial : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Iva) ? item.Iva : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Cuit) ? item.Cuit : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Telefono) ? item.Telefono : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Domicilio) ? item.Domicilio : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.Ciudad) ? item.Ciudad : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(item.OtrosDatos) ? item.OtrosDatos : "-")</td>
+                                    <td class="text-nowrap">
+                                        @if (item.PuedeModificar)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Personas", new { id = item.IdPersona })">
+                                                Modificar
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no pueden modificarse desde una empresa.">
+                                                Modificar
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        function showNavigationLoading(message) {
+            if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+            }
+        }
+
+        function navegarConLoader(url) {
+            if (!url) return;
+            showNavigationLoading("Cargando solicitud...");
+            window.setTimeout(function () {
+                window.location.href = url;
+            }, 0);
+        }
+
+        var successAlert = document.getElementById("personasSuccessAlert");
+        if (successAlert) {
+            window.setTimeout(function () {
+                $(successAlert).alert("close");
+            }, 2500);
+        }
+
+        var formFiltros = document.getElementById("formFiltrosPersonas");
+        if (formFiltros) {
+            formFiltros.addEventListener("submit", function () {
+                showNavigationLoading("Cargando solicitud...");
+            });
+        }
+
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest ? event.target.closest(".personas-index-page a[href]") : null;
+            if (!link) return;
+            if (link.target === "_blank" || link.hasAttribute("download")) return;
+
+            var href = link.getAttribute("href") || "";
+            if (!href || href.charAt(0) === "#" || /^javascript:/i.test(href)) return;
+
+            event.preventDefault();
+            navegarConLoader(link.href);
+        });
+
+        var $input = $("#txtFiltroPersonas");
+        var $tbody = $("#tbodyPersonas");
+        var debounceHandle = 0;
+        var ultimoFiltro = $input.val() || "";
+        var baseEditarUrl = "@Url.Action("Editar", "Personas")";
+
+        function escapeHtml(texto) {
+            return $("<div>").text(texto == null ? "" : texto).html();
+        }
+
+        function valorCelda(texto, destacado) {
+            var limpio = $.trim(texto || "");
+            var contenido = limpio ? escapeHtml(limpio) : "-";
+            return destacado ? '<td class="font-weight-bold">' + contenido + "</td>" : "<td>" + contenido + "</td>";
+        }
+
+        function renderTabla(items) {
+            if (!items || !items.length) {
+                $tbody.html('<tr><td colspan="10" class="text-center text-muted py-4">No se encontraron personas.</td></tr>');
+                return;
+            }
+
+            var html = "";
+            items.forEach(function (item) {
+                var esGlobal = Number(item.idEmpresa || 0) === 0;
+                html += '<tr' + (esGlobal ? ' class="persona-global"' : '') + ">";
+                html += '<td class="persona-id-cell">' + escapeHtml(item.idPersona) + "</td>";
+                html += valorCelda(item.identificacion, false);
+                html += valorCelda(item.razonSocial, true);
+                html += valorCelda(item.iva, false);
+                html += valorCelda(item.cuit, false);
+                html += valorCelda(item.telefono, false);
+                html += valorCelda(item.domicilio, false);
+                html += valorCelda(item.ciudad, false);
+                html += valorCelda(item.otrosDatos, false);
+                if (item.puedeModificar) {
+                    html += '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="' + baseEditarUrl + '?id=' + encodeURIComponent(item.idPersona) + '">Modificar</a></td>';
+                } else {
+                    html += '<td class="text-nowrap"><button type="button" class="btn btn-sm btn-outline-secondary" disabled="disabled" title="Las personas globales no pueden modificarse desde una empresa.">Modificar</button></td>';
+                }
+                html += "</tr>";
+            });
+
+            $tbody.html(html);
+        }
+
+        function cargarPersonasEnVivo() {
+            var filtro = $input.val() || "";
+            ultimoFiltro = filtro;
+
+            $.get("@Url.Action("Listar", "Personas")", { filtro: filtro }, function (data) {
+                if (ultimoFiltro !== ($input.val() || "")) return;
+                renderTabla(data);
+            });
+        }
+
+        $input.on("input", function () {
+            window.clearTimeout(debounceHandle);
+            debounceHandle = window.setTimeout(cargarPersonasEnVivo, 250);
+        });
+    })();
+</script>

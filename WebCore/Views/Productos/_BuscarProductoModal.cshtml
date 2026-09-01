@@ -1,0 +1,126 @@
+﻿@using System
+
+@{
+    // Configuración reutilizable por ViewData
+    var modalId = (ViewData["ModalId"] as string) ?? "modalBuscarProducto";
+    var apiUrl = (ViewData["ApiUrl"] as string) ?? Url.Action("ListarProductos", "Productos");
+    var titulo = (ViewData["Titulo"] as string) ?? "Buscar Producto";
+
+    bool mostrarPrecio = true; // <- default: mostrar precio
+    if (ViewData["MostrarPrecio"] != null)
+    {
+        bool.TryParse(ViewData["MostrarPrecio"].ToString(), out mostrarPrecio);
+    }
+}
+
+<style>
+    #@(modalId).modal-search-compact .modal-dialog {
+        max-width: 940px;
+    }
+
+    #@(modalId).modal-search-compact .modal-content {
+        border-radius: .75rem;
+    }
+
+    #@(modalId).modal-search-compact .modal-header {
+        padding: .65rem .9rem;
+    }
+
+    #@(modalId).modal-search-compact .modal-title {
+        font-size: .92rem;
+        line-height: 1.1;
+    }
+
+    #@(modalId).modal-search-compact .modal-body {
+        padding: .8rem .9rem .75rem;
+        font-size: .86rem;
+    }
+
+    #@(modalId).modal-search-compact .form-control {
+        min-height: 2.45rem;
+        font-size: .85rem;
+        padding: .32rem .6rem;
+    }
+
+    #@(modalId).modal-search-compact .table {
+        font-size: .82rem;
+    }
+
+    #@(modalId).modal-search-compact .table th,
+    #@(modalId).modal-search-compact .table td {
+        padding: .38rem .5rem;
+        line-height: 1.1;
+        vertical-align: middle;
+    }
+
+    #@(modalId).modal-search-compact .table thead th {
+        font-size: .72rem;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    #@(modalId).modal-search-compact .modal-search-help {
+        font-size: .73rem;
+        line-height: 1.15;
+    }
+</style>
+
+<div class="modal fade modal-search-compact"
+     id="@modalId"
+     tabindex="-1"
+     role="dialog"
+     aria-hidden="true"
+     data-role="buscar-producto-modal"
+     data-api-url="@apiUrl"
+     data-mostrar-precio="@(mostrarPrecio ? "true" : "false")">
+
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document" style="max-height: 100vh;">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-box"></i> @titulo
+                </h5>
+
+                @* Compatible Bootstrap 4/5 *@
+                <button type="button"
+                        class="close text-white"
+                        data-dismiss="modal"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Filtro -->
+                <div class="form-group mb-3">
+                    <input type="text"
+                           class="form-control js-buscar-producto-input"
+                           placeholder="Buscar por código o nombre"
+                           autocomplete="off" />
+                </div>
+
+                <!-- Tabla (scroll, no supera alto de pantalla) -->
+                <div class="table-responsive" style="max-height: calc(100vh - 240px); overflow-y:auto;">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:120px">Código</th>
+                                <th>Producto</th>
+                                <th class="text-right js-col-precio-header" style="width:120px">Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody class="js-buscar-producto-tbody"></tbody>
+                    </table>
+                </div>
+
+                <small class="text-muted d-block mt-2 modal-search-help">
+                    Enter selecciona la fila activa (o la primera). Doble clic también selecciona.
+                </small>
+
+            </div>
+        </div>
+    </div>
+</div>

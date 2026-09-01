@@ -1,0 +1,2785 @@
+@model WebCore.Models.CorteUpsertVM
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    bool esEdicion = Model != null && Model.IdCorte > 0;
+    bool productoGuardadoContinuo = ViewBag.ProductoGuardadoContinuo != null && System.Convert.ToBoolean(ViewBag.ProductoGuardadoContinuo);
+    ViewBag.Title = esEdicion ? "Editar producto" : "Alta de producto";
+}
+
+<style>
+    .producto-edit-page {
+        font-size: .9rem;
+    }
+
+    .producto-edit-page .form-control,
+    .producto-edit-page .form-select,
+    .producto-edit-page select.form-control {
+        min-height: 2.6rem;
+        font-size: .87rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .producto-edit-page .btn:not(.btn-sm) {
+        min-height: 2.6rem;
+        font-size: .87rem;
+        border-radius: .55rem;
+        padding: .32rem .7rem;
+    }
+
+    .producto-edit-page .form-label,
+    .producto-edit-page .form-check-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .32rem;
+    }
+
+    .producto-edit-page .small,
+    .producto-edit-page small,
+    .producto-edit-page .text-muted {
+        font-size: .74rem;
+        line-height: 1.15;
+    }
+
+    .producto-edit-page .alert {
+        font-size: .82rem;
+    }
+
+    .producto-edit-page .input-group > .btn,
+    .producto-edit-page .input-group > .form-control {
+        min-height: 2.6rem;
+    }
+
+    .producto-edit-card {
+        padding: .9rem 1rem !important;
+        border-radius: .75rem;
+    }
+
+    .producto-edit-section-title {
+        font-size: .82rem;
+        line-height: 1.05;
+        letter-spacing: .03em;
+        margin-bottom: .8rem !important;
+    }
+
+    html:not(.dark-mode) body .form-switch {
+        padding-left: 3rem;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input {
+        width: 2.55rem;
+        height: 1.35rem;
+        margin-top: 0.1rem;
+        margin-left: -3rem;
+        vertical-align: top;
+        cursor: pointer;
+        border: 1px solid #b8c2d1;
+        border-radius: 999px;
+        background-color: #dfe6ef;
+        background-image: radial-gradient(circle, #ffffff 0 42%, transparent 43%);
+        background-repeat: no-repeat;
+        background-position: left 0.14rem center;
+        background-size: 1rem 1rem;
+        -webkit-appearance: none;
+        appearance: none;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        transition: background-color 0.16s ease, border-color 0.16s ease, background-position 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        background-position: right 0.14rem center;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(78, 115, 223, 0.12);
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.16rem rgba(78, 115, 223, 0.2);
+    }
+
+    html:not(.dark-mode) body .producto-focus-switch .form-check-input:focus {
+        box-shadow: 0 0 0 0.24rem rgba(78, 115, 223, 0.34), inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+    }
+
+    .producto-focus-switch:focus-within .form-check-label {
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:disabled {
+        cursor: default;
+        opacity: 1;
+        background-color: #e9edf4;
+        border-color: #cfd7e3;
+    }
+
+    html:not(.dark-mode) body .form-switch .form-check-input:disabled:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        background-position: right 0.14rem center;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(78, 115, 223, 0.12);
+    }
+
+    .atajos-acciones {
+        font-size: 0.74rem;
+        line-height: 1.35;
+    }
+
+    .producto-edit-page .row.g-3 {
+        row-gap: .8rem !important;
+    }
+
+    .producto-edit-page .form-check.form-switch {
+        margin-bottom: .55rem !important;
+    }
+
+    .producto-edit-page .btn-guardar-destacado,
+    .producto-edit-page #btnHabilitarEdicionProducto,
+    .producto-edit-page #btnVolverProducto,
+    .producto-edit-page #btnSiguienteProducto {
+        font-size: .84rem;
+    }
+
+    @@media (min-width: 992px) {
+        .producto-edit-card {
+            padding: .85rem .95rem !important;
+        }
+    }
+</style>
+
+<div class="container-fluid px-2 px-md-3 producto-edit-page">
+
+    <div class="row">
+        <div class="col-12 col-lg-7">
+
+            <form asp-controller="Productos" asp-action="Guardar" method="post" id="frmCorte" autocomplete="off">
+                @Html.AntiForgeryToken()
+
+                @Html.HiddenFor(m => m.IdCorte)
+                @Html.HiddenFor(m => m.IdMarca)
+                @Html.HiddenFor(m => m.IdCorteMaestro)
+                @Html.HiddenFor(m => m.Porcentaje)
+                @Html.HiddenFor(m => m.PorcentajeHueso)
+                @Html.HiddenFor(m => m.AlicuotaIva)
+                @Html.HiddenFor(m => m.SiguienteIdEdicion)
+                @Html.HiddenFor(m => m.UltimoProductoContinuoId)
+                @Html.HiddenFor(m => m.RetomarProductoId)
+                @Html.HiddenFor(m => m.FlujoBaseContinuo)
+                <input type="hidden" name="EsEdicionFormulario" value="@(esEdicion ? "1" : "0")" />
+
+                <div id="page-urls"
+                     data-url-add-or-edit="@Url.Action("AddOrEdit", "Productos")"
+                     data-url-marcas="@Url.Action("BuscarMarca", "Productos")"
+                     data-url-cortes="@Url.Action("Buscar", "Productos")"
+                     data-url-existe-codigo="@Url.Action("FindCorteByCodigo", "Productos")"
+                     data-url-autocomplete-global="@(esEdicion ? "" : Url.Action("BuscarProductoGlobalParaAlta", "Productos"))">
+                </div>
+
+                @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+                @* El mensaje de "guardado correctamente" ahora lo muestra el cartel
+                   generico de _LayoutBase.cshtml (SweetAlert2) -- este div ya no es
+                   un banner visual, solo lleva el flag data-recargar que lee el
+                   script de mas abajo para saber si toca avanzar solo al siguiente
+                   formulario en blanco (modo "carga continua"). *@
+                <div id="alertCargaContinua"
+                     class="d-none"
+                     data-recargar="@(!esEdicion && productoGuardadoContinuo ? "1" : "0")">
+                </div>
+
+                <!-- =========================
+                 1) DATOS PRINCIPALES
+                 ========================= -->
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="mb-0 producto-edit-section-title">Datos del producto</h5>
+                        <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
+                            <span class="text-muted @(esEdicion ? "" : "d-none")">ID: <b>@Model.IdCorte</b></span>
+                            <div class="form-check form-switch mb-0 text-end producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.CargaContinua, new { @class = "form-check-input", id = "swCargaContinua", data_edit_readonly_ignore = "true" })
+                                <label class="form-check-label fw-semibold" for="swCargaContinua">Carga continua</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="hintCargaContinuaAlta" class="small text-info mb-3 d-none">
+                        Al guardar, se limpia el formulario para cargar el siguiente producto.
+                    </div>
+                    <div id="hintCargaContinuaEdicion" class="small text-info mb-3 d-none">
+                        Al guardar, se abre el siguiente producto visible de la grilla actual.
+                    </div>
+                    <div class="row g-3">
+                        <!-- ?? SCANNER (arriba del C�digo) -->
+                        <div class="col-12" id="scannerContainer" style="display:none;">
+                            <div class="card shadow-sm">
+                                <div class="card-body p-2">
+
+                                    <div class="scanner-wrapper">
+                                        <video id="videoScanner" autoplay muted playsinline></video>
+                                        <div class="scanner-line"></div>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap justify-content-between mt-2">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">Flash</button>
+                                        <button type="button" class="btn btn-warning btn-sm" id="btnLimpiarScanner">Limpiar</button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cámara</button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">Código</label>
+
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                                @Html.TextBoxFor(m => m.Codigo, new { @class = "form-control", inputmode = "numeric", placeholder = "EAN / código interno", id = "Codigo", maxlength = "15" })
+                            </div>
+
+                            <small id="scannerMsg" class="text-danger d-none"></small>
+                            <small id="autocompleteCodigoMsg" class="text-success d-none"></small>
+                            <div id="alertCodigoExiste" class="alert alert-warning py-2 px-2 mt-2 mb-0 d-none"></div>
+                            <small id="msgCodigoReq" class="text-danger d-none">El campo codigo es obligatorio.</small>
+                            <small id="msgCodigoEanInvalido" class="text-danger d-none">El código de barras no es válido (dígito verificador incorrecto).</small>
+                            @Html.ValidationMessageFor(m => m.Codigo, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="col-12 col-md-8">
+                            <label class="form-label">Nombre</label>
+                            @Html.TextBoxFor(m => m.CorteDesc, new { @class = "form-control", maxlength = "50", id = "CorteDesc" })
+                            <small id="msgNombreReq" class="text-danger d-none">El campo nombre es obligatorio.</small>
+                            @Html.ValidationMessageFor(m => m.CorteDesc, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">Precio Kg</label>
+                            @Html.TextBoxFor(m => m.PrecioKg, new { @class = "form-control", placeholder = "0,00", id = "PrecioKg", inputmode = "decimal" })
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">Tipo</label>
+                            @Html.DropDownListFor(m => m.Tipo, Model.Tipos ?? new List<SelectListItem>(),
+                                "Seleccione...", new { @class = "form-control", id = "ddlTipo" })
+                            <small id="msgTipoReq" class="text-danger d-none">Debe seleccionar un tipo.</small>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">IVA</label>
+                            @Html.DropDownListFor(m => m.IdAlicuotaIva, Model.AlicuotasIva ?? new List<SelectListItem>(),
+                                "Seleccione...", new { @class = "form-control", id = "ddlIva" })
+                            <small id="msgIvaReq" class="text-danger d-none">Debe seleccionar un IVA.</small>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Marca (opcional)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="txtMarcaNombre"
+                                       value="@(Model?.MarcaNombre ?? "")" readonly placeholder="Sin marca" tabindex="-1" />
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarMarca" title="Buscar marca (F9)" tabindex="-1">
+                                    <i class="fas fa-search"></i><span class="d-none d-md-inline ml-1 small">F9</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarMarca" title="Quitar marca"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =========================
+                 2) STOCK Y ESTADO (debajo)
+                 ========================= -->
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
+                    <h5 class="mb-3 producto-edit-section-title">Stock y estado</h5>
+
+                    <div class="row g-3">
+
+
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "swPesable" })
+                                <label class="form-check-label" for="swPesable">Pesable</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input", id = "swHabilitado" })
+                                <label class="form-check-label" for="swHabilitado">Habilitado</label>
+                            </div>
+
+                            <!-- Oculto a proposito: este flag ahora se activa/desactiva solo desde
+                                 /Elaborados/EditarFormula (interruptor "Ingreso Rapido", ver
+                                 docs/DECISIONS.md 2026-08-22) -- se sigue posteando su valor actual
+                                 sin cambios al guardar el producto desde esta pantalla. -->
+                            <div class="form-check form-switch mb-2 producto-focus-switch d-none">
+                                @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
+                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2 producto-focus-switch">
+                                @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
+                                <label class="form-check-label" for="swCierre">En cierre stock</label>
+                            </div>
+                            <small id="avisoCierreStockSinIndependiente" class="text-warning mt-n1 mb-2 d-none">
+                                Este producto no va a aparecer en el reporte de Cierre de Stock hasta que actives "Independiente" (sección Producto Maestro / Presentación).
+                            </small>
+                        </div>
+
+                        <div class="col-12 col-md-6 @(esEdicion ? "d-none" : "")">
+                            <label class="form-label">
+                                Punto Stock (número entero)
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoPuntoStock" title="¿Para qué sirve este valor?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </label>
+                            @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">Promedio</label>
+                            @Html.TextBoxFor(m => m.Promedio, new { @class = "form-control", placeholder = "0,00" })
+                        </div>
+
+                        
+                        <div class="col-12 col-md-6 @(esEdicion ? "" : "d-none")">
+                        
+                            
+                            
+                                <label class="form-label">Nivel (solo edición)</label>
+                                <input class="form-control" value="@Model.Nivel" readonly />
+                        
+                        
+                            
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <!-- =========================
+                 3) CORTE MAESTRO / PRESENTACIÓN (debajo)
+                 ========================= -->
+                <div class="p-3 rounded bg-light border mb-3 producto-edit-card">
+                    <h5 class="mb-3 producto-edit-section-title">Producto maestro / Presentación</h5>
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">Modo</label>
+                            @Html.DropDownListFor(m => m.ModoCorte,
+                                new List<SelectListItem> {
+                                    new SelectListItem{ Text="Ninguno", Value="Ninguno" },
+                                    new SelectListItem{ Text="Producto maestro", Value="CorteMaestro" },
+                                    new SelectListItem{ Text="Presentación", Value="Presentacion" },
+                                },
+                                new { @class = "form-control", id = "ddlModo" })
+                        </div>
+
+                        <div class="col-12 col-md-8" id="boxCorteMaestro">
+                            <label class="form-label">Producto maestro</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="txtCorteMaestroNombre"
+                                       value="@(Model?.CorteMaestroNombre ?? "")"
+                                       readonly placeholder="Seleccione un producto maestro..." />
+                                <button type="button" class="btn btn-outline-secondary" id="btnBuscarCorteMaestro" title="Buscar producto maestro (F10)">
+                                    <i class="fas fa-search"></i><span class="d-none d-md-inline ml-1 small">F10</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="btnLimpiarCorteMaestro"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="col-12" id="boxCorteMaestroCampos">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label">% (Porcentaje)</label>
+                                    <input type="text" class="form-control" id="txtPorcentaje"
+                                           value="@(Model != null ? Model.Porcentaje.ToString() : "0")"
+                                           placeholder="0,00" inputmode="decimal" />
+                                </div>
+
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label">Desperdicio</label>
+                                    <input type="text" class="form-control" id="txtDesperdicio"
+                                           value="@(Model != null ? Model.PorcentajeHueso.ToString() : "0")"
+                                           placeholder="0,00" inputmode="decimal" />
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="col-12" id="boxPresentacionCampos">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label">Presentación (unidades)</label>
+                                    <input type="text" class="form-control" id="txtPresentacionUnidades"
+                                           name="PresentacionUnidades"
+                                           value="@(Model?.PresentacionUnidades != null ? Model.PresentacionUnidades.ToString() : "")"
+                                           placeholder="Ej: 5" inputmode="decimal" />
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="col-12" id="boxIndependiente">
+                            <div class="form-check form-switch producto-focus-switch d-inline-block">
+                                @Html.CheckBoxFor(m => m.Independiente, new { @class = "form-check-input", id = "swIndependiente" })
+                                <label class="form-check-label" for="swIndependiente">Independiente</label>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoIndependiente" title="¿Qué significa 'Independiente'?" tabindex="-1">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- =========================
+                 4) BOTONERA (fija al pie)
+                 ========================= -->
+                <div class="espacio-botonera-fija"></div>
+
+                <div class="barra-acciones-fija">
+                    <div class="barra-acciones-inner d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <a class="btn btn-outline-secondary" id="btnVolverProducto" href="@Url.Action("Index","Productos")" title="Alt+V">
+                            <span class="shortcut-letter">V</span>olver
+                        </a>
+
+                        <div class="producto-edit-actions-right d-flex flex-column align-items-end">
+                            <div class="producto-edit-actions-buttons d-flex gap-2">
+                            <button type="button"
+                                    class="btn btn-outline-primary d-none"
+                                    id="btnSiguienteProducto"
+                                    data-edit-readonly-ignore="true"
+                                    title="Alt+S">
+                                <span class="shortcut-letter">S</span>iguiente
+                            </button>
+                            <button type="button"
+                                    class="btn btn-secondary @(esEdicion ? "" : "d-none")"
+                                    id="btnHabilitarEdicionProducto"
+                                    data-edit-readonly-ignore="true"
+                                    title="Alt+M">
+                                <span class="shortcut-letter">M</span>odificar
+                            </button>
+                            <button type="submit" name="accion" value="guardar" class="btn btn-primary btn-guardar-destacado @(esEdicion ? "d-none" : "")" id="btnGuardarProducto" title="@(esEdicion ? "Alt+G o Alt+C" : "Alt+C o Alt+G")">
+                                @if (esEdicion)
+                                {
+                                    <span><span class="shortcut-letter">G</span>uardar cambios</span>
+                                }
+                                else
+                                {
+                                    <span><span class="shortcut-letter">C</span>rear producto</span>
+                                }
+                            </button>
+
+                            @*<button type="submit" name="accion" value="guardar_nuevo" class="btn btn-outline-primary">
+                                    @(esEdicion ? "Guardar y cargar otro" : "Crear y continuar")
+                                </button>*@
+                            </div>
+                            <div class="atajos-acciones small text-muted d-none d-lg-block mt-1 text-right" id="atajosAccionesProducto"></div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<audio id="beep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
+
+<!-- MODAL MARCAS -->
+<div class="modal fade" id="modalMarcas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fit-screen modal-search-compact-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">Buscar marca</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body modal-search-compact-body">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="qMarca" placeholder="Escribí para buscar..." />
+                    <button class="btn btn-primary" type="button" id="btnDoBuscarMarca">Buscar</button>
+                </div>
+
+                <div class="table-responsive modal-table-scroll" id="wrapTablaMarcas">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Marca</th>
+                                <th style="width:35%;">Propietario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbMarcas">
+                            <tr><td colspan="2" class="text-muted">Cargando marcas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <small class="text-muted d-block mt-2 modal-search-help">
+                    Enter = selecciona la primera fila. Doble clic = selecciona la fila.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CORTES (Corte Maestro) - reutiliza partial -->
+@{
+    var vdBuscarCorteMaestro = new ViewDataDictionary(ViewData);
+    vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
+    vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
+    vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
+    vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edici�n
+}
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
+
+<!-- MODAL INFO: que significa "Independiente" -->
+<div class="modal fade" id="modalInfoIndependiente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Qué significa "Independiente"?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Este producto es derivado de un Producto Maestro (o forma parte de una presentación).
+                    El interruptor define si este producto lleva su <strong>propio renglón de stock</strong>,
+                    separado del maestro.
+                </p>
+                <ul>
+                    <li>
+                        <strong>Activado</strong>: cuando el maestro se vende/consume, a este producto se le
+                        descuenta automáticamente su parte según el % que le corresponde (ej. el maestro
+                        reparte 40%/60% entre dos derivados — si el maestro consume 10, a este le descuenta 4).
+                        Y si vendés este producto directamente, también le resta al maestro.
+                    </li>
+                    <li>
+                        <strong>Desactivado</strong>: este producto no lleva stock propio — todo lo que vendas
+                        de él se descuenta directo del maestro, sin quedar registrado acá.
+                    </li>
+                </ul>
+                <p>
+                    Dos productos derivados del mismo maestro (hermanos) <strong>nunca se afectan entre sí</strong>,
+                    tenga cada uno "Independiente" activado o no. El movimiento siempre pasa por el maestro,
+                    nunca de un hermano a otro.
+                </p>
+                <p class="mb-0">
+                    Para que este producto aparezca como renglón en el reporte de "Cierre de Stock" necesita
+                    <strong>"Independiente" Y "En cierre stock" activados los dos</strong> — con uno solo no alcanza.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INFO: para que sirve el Punto Stock -->
+<div class="modal fade" id="modalInfoPuntoStock" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Para qué sirve el Punto Stock?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    Este valor se va a cargar como punto de stock inicial en todas las sucursales existentes al
+                    crear el producto. Después se administra por sucursal desde "Ver stock por sucursales".
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const barra = document.querySelector('.barra-acciones-fija');
+        if (!barra) return;
+
+        // Busca la columna que contiene el formulario/botonera
+        const contenedor = barra.closest('.col-12.col-lg-7')
+            || document.querySelector('#frmCorte')?.closest('.col-12.col-lg-7');
+
+        if (!contenedor) return;
+
+        function ajustarBarra() {
+            const r = contenedor.getBoundingClientRect();
+
+            barra.style.left = r.left + 'px';
+            barra.style.width = r.width + 'px';
+        }
+
+        ajustarBarra();
+
+        window.addEventListener('resize', ajustarBarra);
+        window.addEventListener('scroll', ajustarBarra, { passive: true });
+
+        // Por si cambia el layout din�micamente (responsive / contenido)
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(ajustarBarra);
+            ro.observe(contenedor);
+        }
+    })();
+</script>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script>
+(function () {
+    // =========================
+    // URLs
+    // =========================
+    const $urls = $("#page-urls");
+    const urlMarcas = $urls.data("url-marcas");
+    const urlCortes = $urls.data("url-cortes");
+    const urlExisteCodigo = $urls.data("url-existe-codigo");
+    const urlAddOrEdit = $urls.data("url-add-or-edit");
+    const urlAutocompleteGlobal = $urls.data("url-autocomplete-global");
+
+    const esEdicion = @((Model?.IdCorte ?? 0) > 0 ? "true" : "false");
+    const cargaContinuaInicial = @(Model?.CargaContinua == true ? "true" : "false");
+    const idProductoActual = @(Model?.IdCorte ?? 0);
+    const STORAGE_ORDEN_EDICION_KEY = "productos_edicion_orden_visible";
+    const STORAGE_HISTORIAL_EDICION_KEY = "productos_edicion_historial";
+    const STORAGE_MODO_EDICION_ACTIVO_KEY = "productos_edicion_modo_activo";
+    const STORAGE_FOCUS_CODIGO_KEY = "productos_focus_codigo";
+    const flujoBaseContinuo = '@((Model?.FlujoBaseContinuo ?? "").ToLowerInvariant())';
+
+    // =========================
+    // Refs principales
+    // =========================
+    const $frm = $("#frmCorte");
+    const $btnVolver = $("#btnVolverProducto");
+    const $btnGuardar = $("#btnGuardarProducto");
+    const $btnVerAnteriorProducto = $("#btnVerAnteriorProducto");
+    const $btnSiguienteProducto = $("#btnSiguienteProducto");
+    const $btnHabilitarEdicionProducto = $("#btnHabilitarEdicionProducto");
+    const $atajosAccionesProducto = $("#atajosAccionesProducto");
+    const $codigo = $("#Codigo");
+    const $precioKg = $("#frmCorte").find("input[name='PrecioKg']").first();
+    const $promedio = $("#frmCorte").find("input[name='Promedio']").first();
+    const $nombre = $("#CorteDesc");
+    const $tipo = $("#ddlTipo");
+    const $iva = $("#ddlIva");
+    const $pesable = $("#swPesable");
+    const $puntoStock = $("#frmCorte").find("input[name='PuntoStock']").first();
+    const $idCorteMaestroHidden = $("input[name='IdCorteMaestro']");
+    const $presentacionUnidades = $("#txtPresentacionUnidades");
+    const $porcentaje = $("#txtPorcentaje");
+    const $desperdicio = $("#txtDesperdicio");
+    const $swCargaContinua = $("#swCargaContinua");
+    const $siguienteIdEdicion = $("input[name='SiguienteIdEdicion']");
+    const $ultimoProductoContinuoId = $("input[name='UltimoProductoContinuoId']");
+    const $retomarProductoId = $("input[name='RetomarProductoId']");
+    const $hintCargaContinuaAlta = $("#hintCargaContinuaAlta");
+    const $hintCargaContinuaEdicion = $("#hintCargaContinuaEdicion");
+
+    const $alertCodigoExiste = $("#alertCodigoExiste");
+    const $autocompleteCodigoMsg = $("#autocompleteCodigoMsg");
+    const $msgCodigoReq = $("#msgCodigoReq");
+    const $msgCodigoEanInvalido = $("#msgCodigoEanInvalido");
+    const $msgNombreReq = $("#msgNombreReq");
+    const $msgTipoReq = $("#msgTipoReq");
+    const $msgIvaReq = $("#msgIvaReq");
+
+    let codigoDuplicado = false;
+    let codigoEanInvalido = false;
+    let xhrCodigo = null;
+    let xhrAutocompleteCodigo = null;
+    let debounceAutocompleteCodigo = null;
+    let ultimoCodigoAutocompletado = "";
+    let reenviandoSubmit = false;
+    let snapshotEdicionInicial = "";
+
+    // =========================
+    // Helpers UI (texto seguro)
+    // =========================
+    function escapeHtml(str) {
+        return (str == null ? "" : String(str))
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function setAutocompleteCodigoMsg(texto) {
+        if (!$autocompleteCodigoMsg.length) return;
+
+        if (!texto) {
+            $autocompleteCodigoMsg.addClass("d-none").text("");
+            return;
+        }
+
+        $autocompleteCodigoMsg.removeClass("d-none").text(texto);
+    }
+
+    let cargaSolicitudActiva = false;
+
+    function mostrarCargaSolicitud() {
+        if (!window.Swal || cargaSolicitudActiva) return;
+
+        cargaSolicitudActiva = true;
+        Swal.fire({
+            title: "Cargando solicitud...",
+            text: "Espere un momento.",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showConfirmButton: false,
+            didOpen: function () {
+                if (Swal.showLoading) {
+                    Swal.showLoading();
+                }
+            }
+        });
+    }
+
+    function ocultarCargaSolicitud() {
+        if (!cargaSolicitudActiva) return;
+        cargaSolicitudActiva = false;
+
+        if (window.Swal && typeof Swal.close === "function") {
+            Swal.close();
+        }
+    }
+
+    function construirSnapshotEdicion() {
+        const partes = [];
+
+        $frm.find("input, select, textarea").each(function () {
+            const $el = $(this);
+            const nombre = ($el.attr("name") || "").trim();
+            if (!nombre) return;
+            if ($el.is("[type='hidden']")) return;
+            if (nombre === "CargaContinua") return;
+            if ($el.is("[data-edit-readonly-ignore='true']")) return;
+
+            const tipo = (($el.attr("type") || "") + "").toLowerCase();
+            let valor = "";
+
+            if (tipo === "checkbox" || tipo === "radio") {
+                valor = $el.prop("checked") ? "1" : "0";
+            } else {
+                valor = ($el.val() || "").toString().trim();
+            }
+
+            partes.push(nombre + "=" + valor);
+        });
+
+        return partes.join("|");
+    }
+
+    function actualizarSnapshotEdicion() {
+        snapshotEdicionInicial = construirSnapshotEdicion();
+    }
+
+    function hayCambiosSinGuardar() {
+        if (!esEdicion) return false;
+        return construirSnapshotEdicion() !== snapshotEdicionInicial;
+    }
+
+    function leerOrdenEdicionVisible() {
+        try {
+            const raw = window.sessionStorage.getItem(STORAGE_ORDEN_EDICION_KEY);
+            if (!raw) return [];
+
+            const ids = JSON.parse(raw);
+            if (!Array.isArray(ids)) return [];
+
+            return ids
+                .map(v => Number(v))
+                .filter(v => Number.isFinite(v) && v > 0);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function obtenerSiguienteProductoId() {
+        const orden = leerOrdenEdicionVisible();
+        if (!orden.length || !idProductoActual) return 0;
+
+        const indexActual = orden.findIndex(id => id === Number(idProductoActual));
+        if (indexActual < 0 || indexActual + 1 >= orden.length) return 0;
+
+        return Number(orden[indexActual + 1]) || 0;
+    }
+
+    function tieneOrdenEdicionVisibleValido() {
+        const orden = leerOrdenEdicionVisible();
+        if (!orden.length || !idProductoActual) return false;
+        return orden.indexOf(Number(idProductoActual)) >= 0;
+    }
+
+    function leerHistorialEdicion() {
+        try {
+            const raw = window.sessionStorage.getItem(STORAGE_HISTORIAL_EDICION_KEY);
+            if (!raw) return [];
+
+            const ids = JSON.parse(raw);
+            if (!Array.isArray(ids)) return [];
+
+            return ids
+                .map(v => Number(v))
+                .filter(v => Number.isFinite(v) && v > 0);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function guardarHistorialEdicion(historial) {
+        try {
+            const limpio = (historial || [])
+                .map(v => Number(v))
+                .filter(v => Number.isFinite(v) && v > 0);
+
+            if (!limpio.length) {
+                window.sessionStorage.removeItem(STORAGE_HISTORIAL_EDICION_KEY);
+                return;
+            }
+
+            window.sessionStorage.setItem(STORAGE_HISTORIAL_EDICION_KEY, JSON.stringify(limpio));
+        } catch (e) {
+        }
+    }
+
+    function limpiarHistorialEdicion() {
+        try {
+            window.sessionStorage.removeItem(STORAGE_HISTORIAL_EDICION_KEY);
+        } catch (e) {
+        }
+    }
+
+    function guardarModoEdicionActivo(activo) {
+        try {
+            if (activo) {
+                window.sessionStorage.setItem(STORAGE_MODO_EDICION_ACTIVO_KEY, "1");
+            } else {
+                window.sessionStorage.removeItem(STORAGE_MODO_EDICION_ACTIVO_KEY);
+            }
+        } catch (e) {
+        }
+    }
+
+    function obtenerModoEdicionActivo() {
+        try {
+            return window.sessionStorage.getItem(STORAGE_MODO_EDICION_ACTIVO_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function obtenerAnteriorProductoId() {
+        const historial = leerHistorialEdicion();
+        if (!historial.length) return 0;
+
+        return Number(historial[historial.length - 1]) || 0;
+    }
+
+    function registrarProductoActualEnHistorial() {
+        if (!esEdicion || !(Number(idProductoActual) > 0)) return;
+
+        const historial = leerHistorialEdicion();
+        const actual = Number(idProductoActual);
+
+        if (historial[historial.length - 1] === actual) {
+            return;
+        }
+
+        historial.push(actual);
+        guardarHistorialEdicion(historial);
+    }
+
+    function consumirAnteriorHistorial() {
+        const historial = leerHistorialEdicion();
+        if (!historial.length) return 0;
+
+        const anterior = Number(historial.pop()) || 0;
+        guardarHistorialEdicion(historial);
+        return anterior;
+    }
+
+    function obtenerUltimoProductoContinuoId() {
+        const id = Number($ultimoProductoContinuoId.val() || 0);
+        return Number.isFinite(id) && id > 0 ? id : 0;
+    }
+
+    function actualizarUiCargaContinua() {
+        const activa = !!$swCargaContinua.prop("checked");
+        const siguienteId = esEdicion ? obtenerSiguienteProductoId() : 0;
+        const anteriorId = esEdicion ? obtenerAnteriorProductoId() : 0;
+        const ultimoProductoId = obtenerUltimoProductoContinuoId();
+        const puedeVerAnterior = esEdicion
+            ? activa && anteriorId > 0
+            : activa && ultimoProductoId > 0 && ultimoProductoId !== Number(idProductoActual || 0);
+
+        $hintCargaContinuaAlta.toggleClass("d-none", esEdicion || !activa);
+        $hintCargaContinuaEdicion.toggleClass("d-none", !esEdicion || !activa);
+        $btnVerAnteriorProducto.toggleClass("d-none", !puedeVerAnterior);
+
+        if (esEdicion) {
+            if (activa && (siguienteId > 0 || anteriorId > 0)) {
+                $hintCargaContinuaEdicion.text("En edición puede navegar entre los productos visibles. Si el formulario está habilitado, se advertirá antes de continuar.");
+            } else if (activa) {
+                $hintCargaContinuaEdicion.text(tieneOrdenEdicionVisibleValido()
+                    ? "No hay otros productos visibles en la grilla actual para navegar."
+                    : "No se pudo recuperar el orden visible del listado. Vuelva a abrir el producto desde el Index para usar Carga continua.");
+            }
+
+            $siguienteIdEdicion.val(activa && siguienteId > 0 ? String(siguienteId) : "");
+            $btnSiguienteProducto.toggleClass("d-none", !activa);
+            $btnSiguienteProducto.prop("disabled", !(activa && siguienteId > 0));
+        } else {
+            $siguienteIdEdicion.val("");
+            $btnSiguienteProducto.addClass("d-none").prop("disabled", true);
+        }
+
+        actualizarTextoAtajosAcciones();
+    }
+
+    function actualizarTextoAtajosAcciones() {
+        if (!$atajosAccionesProducto.length) return;
+
+        const atajos = [];
+        if (esElementoAccion($btnVerAnteriorProducto)) {
+            atajos.push("Alt + Flecha izquierda anterior");
+        }
+        if (esElementoAccion($btnSiguienteProducto)) {
+            atajos.push("Alt + Flecha derecha siguiente");
+        }
+
+        const editReadonlyApi = window.productosEditReadonly;
+        const estaSoloLectura = !editReadonlyApi || editReadonlyApi.isReadOnly();
+        const $accionPrincipal = estaSoloLectura ? $btnHabilitarEdicionProducto : $btnGuardar;
+        if (esElementoAccion($accionPrincipal)) {
+            atajos.push("Alt + Enter modificar/guardar");
+        }
+
+        if (!atajos.length) {
+            $atajosAccionesProducto.addClass("d-none").text("");
+            return;
+        }
+
+        $atajosAccionesProducto.removeClass("d-none").text("Atajos: " + atajos.join(", "));
+    }
+
+    function irAProductoEdicion(destinoId) {
+        const idDestino = Number(destinoId || 0);
+        if (!(idDestino > 0)) {
+            return;
+        }
+
+        const query = new URLSearchParams();
+        query.set("id", String(idDestino));
+        query.set("cargaContinua", "true");
+        query.set("flujoBaseContinuo", "edicion");
+
+        mostrarCargaSolicitud();
+        window.location.href = urlAddOrEdit + "?" + query.toString();
+    }
+
+    function confirmarNavegacionEdicion(destinoId, esAnterior) {
+        const idDestino = Number(destinoId || 0);
+        if (!(idDestino > 0)) {
+            return;
+        }
+
+        const editReadonlyApi = window.productosEditReadonly;
+        const estaSoloLectura = !editReadonlyApi || editReadonlyApi.isReadOnly();
+
+        if (estaSoloLectura) {
+            guardarModoEdicionActivo(false);
+            if (esAnterior) {
+                consumirAnteriorHistorial();
+            }
+            irAProductoEdicion(idDestino);
+            return;
+        }
+
+        if (!esAnterior) {
+            guardarModoEdicionActivo(true);
+            registrarProductoActualEnHistorial();
+            $swCargaContinua.prop("checked", true);
+            $("input[name='FlujoBaseContinuo']").val("edicion");
+            $siguienteIdEdicion.val(String(idDestino));
+            $retomarProductoId.val("");
+            $frm.trigger("submit");
+            return;
+        }
+
+        if (!hayCambiosSinGuardar()) {
+            guardarModoEdicionActivo(true);
+            consumirAnteriorHistorial();
+            irAProductoEdicion(idDestino);
+            return;
+        }
+
+        let keyHandler = null;
+
+        Swal.fire({
+            title: "Hay cambios sin guardar",
+            html: "Si continúa sin guardar, se perderán los cambios del producto actual.",
+            icon: "warning",
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: "1- Guardar y continuar",
+            denyButtonText: "2- Continuar sin guardar",
+            cancelButtonText: "3- Cancelar",
+            didOpen: function () {
+                keyHandler = function (evt) {
+                    if (evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.repeat) {
+                        return;
+                    }
+
+                    const key = String(evt.key || "");
+                    if (key === "1") {
+                        evt.preventDefault();
+                        Swal.clickConfirm();
+                        return;
+                    }
+
+                    if (key === "2") {
+                        evt.preventDefault();
+                        Swal.clickDeny();
+                        return;
+                    }
+
+                    if (key === "3") {
+                        evt.preventDefault();
+                        Swal.close();
+                    }
+                };
+
+                document.addEventListener("keydown", keyHandler, true);
+            },
+            willClose: function () {
+                if (keyHandler) {
+                    document.removeEventListener("keydown", keyHandler, true);
+                    keyHandler = null;
+                }
+            }
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                guardarModoEdicionActivo(true);
+                $swCargaContinua.prop("checked", true);
+                $("input[name='FlujoBaseContinuo']").val("edicion");
+
+                if (esAnterior) {
+                    consumirAnteriorHistorial();
+                    $retomarProductoId.val(String(idDestino));
+                    $siguienteIdEdicion.val("");
+                } else {
+                    registrarProductoActualEnHistorial();
+                    $siguienteIdEdicion.val(String(idDestino));
+                    $retomarProductoId.val("");
+                }
+
+                $frm.trigger("submit");
+                return;
+            }
+
+            if (result.isDenied) {
+                guardarModoEdicionActivo(true);
+                if (esAnterior) {
+                    consumirAnteriorHistorial();
+                }
+                if (!esAnterior) {
+                    registrarProductoActualEnHistorial();
+                }
+                irAProductoEdicion(idDestino);
+            }
+        });
+    }
+
+    function enfocarInputCodigo() {
+        const inputCodigo = document.getElementById("Codigo");
+        if (!inputCodigo) return;
+
+        try {
+            inputCodigo.focus();
+            if (typeof inputCodigo.select === "function") {
+                inputCodigo.select();
+            }
+        } catch (e) {
+        }
+    }
+
+    function enfocarInputCodigoAlFinal() {
+        const inputCodigo = document.getElementById("Codigo");
+        if (!inputCodigo) return;
+
+        try {
+            inputCodigo.focus();
+
+            if (typeof inputCodigo.value === "string" && typeof inputCodigo.setSelectionRange === "function") {
+                const largo = inputCodigo.value.length;
+                inputCodigo.setSelectionRange(largo, largo);
+            }
+        } catch (e) {
+        }
+    }
+
+    function esElementoAccion($elemento) {
+        if (!$elemento || !$elemento.length) return false;
+        if (!$elemento.is(":visible")) return false;
+        if ($elemento.is(":disabled")) return false;
+        return true;
+    }
+
+    function obtenerElementosTabulables() {
+        return $frm
+            .find("input, select, textarea, button, a[href], [tabindex]")
+            .filter(function () {
+                const $el = $(this);
+                const tabIndex = this.getAttribute("tabindex");
+                const esTabIndexInvalido = tabIndex != null && Number(tabIndex) < 0;
+
+                return !esTabIndexInvalido
+                    && !$el.is(":disabled")
+                    && $el.is(":visible")
+                    && $el.css("visibility") !== "hidden";
+            });
+    }
+
+    function moverFocoComoTab(reversa) {
+        const $elementos = obtenerElementosTabulables();
+        if (!$elementos.length) return;
+
+        const actual = document.activeElement;
+        let indiceActual = $elementos.index(actual);
+
+        if (indiceActual < 0) {
+            indiceActual = reversa ? 0 : -1;
+        }
+
+        const siguienteIndice = reversa
+            ? (indiceActual <= 0 ? $elementos.length - 1 : indiceActual - 1)
+            : (indiceActual + 1 >= $elementos.length ? 0 : indiceActual + 1);
+
+        const siguiente = $elementos.get(siguienteIndice);
+        if (!siguiente) return;
+
+        siguiente.focus();
+
+        if ((siguiente.tagName || "").toLowerCase() === "input" && typeof siguiente.select === "function") {
+            const type = (siguiente.type || "").toLowerCase();
+            if (type !== "checkbox" && type !== "radio" && type !== "button" && type !== "submit") {
+                siguiente.select();
+            }
+        }
+    }
+
+    // Variante de moverFocoComoTab anclada a la posicion DOM de un elemento de referencia, no a
+    // document.activeElement -- necesaria para volver de un modal (ej. Marcas, Producto Maestro),
+    // donde el boton/input que lo abrio tiene tabindex="-1" (excluido a proposito del tabulado) y
+    // por eso nunca aparece en obtenerElementosTabulables(); buscar "el siguiente despues del
+    // activeElement" ahi no da un resultado util. En cambio, esto busca el primer elemento
+    // tabulable que este DESPUES de la referencia en el orden real del documento.
+    function moverFocoDespuesDe($referencia) {
+        if (!$referencia || !$referencia.length) return;
+
+        const referenciaEl = $referencia.get(0);
+        const $elementos = obtenerElementosTabulables();
+
+        for (let i = 0; i < $elementos.length; i++) {
+            const el = $elementos.get(i);
+            if (referenciaEl.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                el.focus();
+                if ((el.tagName || "").toLowerCase() === "input" && typeof el.select === "function") {
+                    const type = (el.type || "").toLowerCase();
+                    if (type !== "checkbox" && type !== "radio" && type !== "button" && type !== "submit") {
+                        el.select();
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    // =========================
+    // Decimales flexibles (coma o punto)
+    // - Mientras escribe: muestra con punto (si escribe coma, se convierte a punto)
+    // - Antes de enviar: se convierte a coma (binder es-AR)
+    // =========================
+    function normalizarDecimalTexto(v) {
+        v = (v || "").toString().trim();
+
+        // coma -> punto
+        v = v.replace(/,/g, ".");
+
+        // dejar solo d�gitos y punto
+        v = v.replace(/[^\d.]/g, "");
+
+        // dejar un solo punto decimal
+        const partes = v.split(".");
+        if (partes.length > 2) {
+            v = partes[0] + "." + partes.slice(1).join("");
+        }
+
+        return v;
+    }
+
+    function parseFloatFlexible(v) {
+        const txt = normalizarDecimalTexto(v);
+        if (txt === "") return null;
+
+        const n = parseFloat(txt);
+        return isNaN(n) ? null : n;
+    }
+
+    // Para enviar al POST con cultura es-AR (coma decimal)
+    function formatFloatForPost(n) {
+        return Number(n).toString().replace(".", ",");
+    }
+
+    function normalizarCampoFloatVisible($input) {
+        if (!$input || !$input.length) return;
+        $input.on("input", function () {
+            this.value = normalizarDecimalTexto(this.value);
+        });
+    }
+
+    normalizarCampoFloatVisible($precioKg);
+    normalizarCampoFloatVisible($promedio);
+    normalizarCampoFloatVisible($porcentaje);
+    normalizarCampoFloatVisible($desperdicio);
+    normalizarCampoFloatVisible($presentacionUnidades);
+
+    // Capitaliza solo la primera letra de cada palabra nueva (despues de
+    // espacio o al inicio) mientras se tipea -- no fuerza minuscula el resto,
+    // para no pelear con siglas tipeadas a proposito (ej. "IVA").
+    function capitalizarPrimeraLetraCadaPalabra($input) {
+        if (!$input || !$input.length) return;
+        $input.on("input", function () {
+            const el = this;
+            const cursorPos = el.selectionStart;
+            const original = el.value;
+            const transformado = original.replace(/(^|\s)([a-záéíóúñü])/gi, (m, sep, letra) => sep + letra.toUpperCase());
+            if (transformado !== original) {
+                el.value = transformado;
+                try { el.setSelectionRange(cursorPos, cursorPos); } catch (_) { }
+            }
+        });
+    }
+
+    capitalizarPrimeraLetraCadaPalabra($nombre);
+
+    // =========================
+    // UI: mostrar/ocultar secciones (Modo)
+    // =========================
+    const $ddlModo = $("#ddlModo");
+    const $boxCorteMaestro = $("#boxCorteMaestro");
+    const $boxIndep = $("#boxIndependiente");
+    const $boxCMCampos = $("#boxCorteMaestroCampos");
+    const $boxPresCampos = $("#boxPresentacionCampos");
+
+    function aplicarModo() {
+        const modo = ($ddlModo.val() || "Ninguno");
+
+        if (modo === "Ninguno") {
+            $boxCorteMaestro.hide();
+            $boxIndep.hide();
+            $boxCMCampos.hide();
+            $boxPresCampos.hide();
+
+            // Limpieza + enviar cero en hidden
+            $("input[name='IdCorteMaestro']").val("");
+            $("#txtCorteMaestroNombre").val("");
+
+            $("input[name='Porcentaje']").val("0");
+            $("input[name='PorcentajeHueso']").val("0");
+            $("#txtPorcentaje").val("0");
+            $("#txtDesperdicio").val("0");
+            $("#txtPresentacionUnidades").val("");
+            return;
+        }
+
+        // Para CorteMaestro y Presentaci�n: mostrar selector de corte maestro + independiente
+        $boxCorteMaestro.show();
+        $boxIndep.show();
+
+        if (modo === "CorteMaestro") {
+            $boxCMCampos.show();
+            $boxPresCampos.hide();
+        } else if (modo === "Presentacion") {
+            $boxCMCampos.hide();
+            $boxPresCampos.show();
+        }
+    }
+
+    // Aviso: "En cierre stock" solo tiene efecto si el producto tambien es "Independiente" (el
+    // reporte de Cierre de Stock filtra WHERE independiente=1 AND enCierreStock=true, ver
+    // Datos/DB-Procedures/20260805-Alter_a_CierreStockWeb_SignoEgresoStockYFechaInicial.sql /
+    // DatosPostgres/CortePg.cs::CierreStockWeb). Un producto sin maestro (modo="Ninguno") no
+    // muestra el interruptor "Independiente" y se considera independiente implicito -- no
+    // corresponde avisar en ese caso.
+    function actualizarAvisoCierreStockIndependiente() {
+        const tieneMaestro = ($ddlModo.val() || "Ninguno") !== "Ninguno";
+        const esIndependiente = !tieneMaestro || $("#swIndependiente").is(":checked");
+        const enCierreStock = $("#swCierre").is(":checked");
+        const mostrarAviso = enCierreStock && !esIndependiente;
+        // d-none y d-block no pueden convivir en el mismo elemento (ambos usan !important, gana
+        // el que este despues en la hoja de Bootstrap) -- se togglean los dos, nunca queda uno
+        // "residual" del render inicial.
+        $("#avisoCierreStockSinIndependiente").toggleClass("d-none", !mostrarAviso).toggleClass("d-block", mostrarAviso);
+    }
+
+    $ddlModo.on("change", function () {
+        aplicarModo();
+        actualizarAvisoCierreStockIndependiente();
+    });
+    $("#swCierre, #swIndependiente").on("change", actualizarAvisoCierreStockIndependiente);
+    $("#btnInfoIndependiente").on("click", function () {
+        $("#modalInfoIndependiente").modal("show");
+    });
+    $("#btnInfoPuntoStock").on("click", function () {
+        $("#modalInfoPuntoStock").modal("show");
+    });
+
+    function aplicarProductoGlobalEnFormulario(producto) {
+        if (!producto) return;
+
+        $("input[name='IdCorte']").val("0");
+
+        if (producto.codigo) $codigo.val(producto.codigo);
+        $nombre.val(producto.descripcion || "");
+        $precioKg.val(producto.precioKg != null ? normalizarDecimalTexto(producto.precioKg) : "");
+        $tipo.val(producto.tipo || "");
+        $iva.val(producto.idAlicuotaIva || "");
+
+        $("input[name='IdMarca']").val(producto.idMarca || "");
+        $("#txtMarcaNombre").val(producto.marcaNombre || "");
+
+        $("#swPesable").prop("checked", !!producto.pesable);
+        $("#swHabilitado").prop("checked", !!producto.habilitado);
+        $("#swRapido").prop("checked", !!producto.ingresoRapidoEmbutido);
+        $("#swCierre").prop("checked", !!producto.enCierreStock);
+        $("#swIndependiente").prop("checked", !!producto.independiente);
+
+        $puntoStock.val(producto.puntoStock != null ? producto.puntoStock : "");
+        $promedio.val(producto.promedio != null ? normalizarDecimalTexto(producto.promedio) : "");
+
+        $ddlModo.val(producto.modoCorte || "Ninguno");
+        $("input[name='IdCorteMaestro']").val(producto.idCorteMaestro || "");
+        $("#txtCorteMaestroNombre").val(producto.corteMaestroNombre || "");
+
+        $("input[name='Porcentaje']").val(producto.porcentaje != null ? formatFloatForPost(producto.porcentaje) : "0");
+        $("input[name='PorcentajeHueso']").val(producto.porcentajeHueso != null ? formatFloatForPost(producto.porcentajeHueso) : "0");
+        $("#txtPorcentaje").val(producto.porcentaje != null ? normalizarDecimalTexto(producto.porcentaje) : "0");
+        $("#txtDesperdicio").val(producto.porcentajeHueso != null ? normalizarDecimalTexto(producto.porcentajeHueso) : "0");
+        $("#txtPresentacionUnidades").val(producto.presentacionUnidades != null ? normalizarDecimalTexto(producto.presentacionUnidades) : "");
+
+        aplicarModo();
+        validarModoDependientes();
+    }
+
+    function intentarAutocompleteProductoGlobal() {
+        if (esEdicion || !urlAutocompleteGlobal) return;
+
+        const codigo = onlyDigits($codigo.val());
+        if (!isValidEAN(codigo)) return;
+        if (codigo === ultimoCodigoAutocompletado) return;
+
+        if (xhrAutocompleteCodigo && xhrAutocompleteCodigo.readyState !== 4) {
+            xhrAutocompleteCodigo.abort();
+        }
+
+        xhrAutocompleteCodigo = $.get(urlAutocompleteGlobal, { codigoBarra: codigo })
+            .done(function (data) {
+                if (!data || !data.ok || !data.producto) return;
+
+                ultimoCodigoAutocompletado = codigo;
+                aplicarProductoGlobalEnFormulario(data.producto);
+                setAutocompleteCodigoMsg("Se autocompletaron los datos desde el catálogo global.");
+            })
+            .fail(function (xhr, status) {
+                if (status === "abort") return;
+                setAutocompleteCodigoMsg("");
+            });
+    }
+
+    $swCargaContinua.on("change", actualizarUiCargaContinua);
+
+    $btnHabilitarEdicionProducto.on("click", function () {
+        guardarModoEdicionActivo(true);
+        window.setTimeout(enfocarInputCodigoAlFinal, 120);
+    });
+
+    $btnSiguienteProducto.on("click", function () {
+        if (!tieneOrdenEdicionVisibleValido()) {
+            Swal.fire("Carga continua no disponible", "No se pudo recuperar el orden del listado actual. Volvé a abrir el producto desde el Index para continuar navegando.", "info");
+            return;
+        }
+
+        const siguienteId = obtenerSiguienteProductoId();
+        if (!(siguienteId > 0)) {
+            Swal.fire("Sin siguiente producto", "No hay otro producto visible en la grilla actual.", "info");
+            return;
+        }
+        confirmarNavegacionEdicion(siguienteId, false);
+    });
+
+    $btnVerAnteriorProducto.on("click", function () {
+        const anteriorId = esEdicion ? obtenerAnteriorProductoId() : obtenerUltimoProductoContinuoId();
+        if (!(anteriorId > 0)) {
+            return;
+        }
+
+        if (esEdicion) {
+            confirmarNavegacionEdicion(anteriorId, true);
+            return;
+        }
+
+        const query = new URLSearchParams();
+        query.set("id", String(anteriorId));
+        query.set("cargaContinua", "true");
+        query.set("flujoBaseContinuo", flujoBaseContinuo || "alta");
+        query.set("ultimoProductoContinuoId", String(anteriorId));
+
+        const retomarId = Number(idProductoActual || 0);
+        if (retomarId > 0 && retomarId !== anteriorId) {
+            query.set("retomarProductoId", String(retomarId));
+        }
+
+        mostrarCargaSolicitud();
+        window.location.href = urlAddOrEdit + "?" + query.toString();
+    });
+
+    $(document).on("keydown", function (e) {
+        if (e.key === "F9" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            if ($(e.target).closest(".modal").length) return;
+            if (!esElementoAccion($("#btnBuscarMarca"))) return;
+
+            e.preventDefault();
+            $("#btnBuscarMarca").trigger("click");
+            return;
+        }
+
+        if (e.key === "F10" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            if ($(e.target).closest(".modal").length) return;
+            if (!esElementoAccion($("#btnBuscarCorteMaestro"))) return;
+
+            e.preventDefault();
+            $("#btnBuscarCorteMaestro").trigger("click");
+            return;
+        }
+
+        if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+        if (document.body.classList.contains("swal2-shown")) return;
+
+        const tecla = (e.key || "").toLowerCase();
+        let $destino = null;
+
+        if (tecla === "arrowleft") {
+            $destino = $btnVerAnteriorProducto;
+        } else if (tecla === "arrowright") {
+            $destino = $btnSiguienteProducto;
+        } else if (tecla === "enter") {
+            const editReadonlyApi = window.productosEditReadonly;
+            const estaSoloLectura = !editReadonlyApi || editReadonlyApi.isReadOnly();
+            $destino = estaSoloLectura ? $btnHabilitarEdicionProducto : $btnGuardar;
+        } else if (tecla === "v") {
+            $destino = $btnVolver;
+        } else if (tecla === "a") {
+            $destino = $btnVerAnteriorProducto;
+        } else if (tecla === "s") {
+            $destino = $btnSiguienteProducto;
+        } else if (tecla === "m") {
+            $destino = $btnHabilitarEdicionProducto;
+        } else if (tecla === "g" || tecla === "c") {
+            $destino = $btnGuardar;
+        }
+
+        if (!esElementoAccion($destino)) return;
+
+        e.preventDefault();
+        $destino.trigger("click");
+    });
+
+    $frm.on("keydown", function (e) {
+        if (e.key !== "Enter" || e.altKey || e.ctrlKey || e.metaKey) return;
+
+        const target = e.target;
+        if (!target) return;
+
+        const tag = (target.tagName || "").toLowerCase();
+        const type = ((target.type || "") + "").toLowerCase();
+
+        if (tag === "textarea") return;
+        if (type === "submit" || type === "button") return;
+        if ($(target).closest(".modal").length) return;
+
+        e.preventDefault();
+
+        if (target.id === "ddlIva" && $pesable.length) {
+            $pesable.focus();
+            return;
+        }
+
+        moverFocoComoTab(!!e.shiftKey);
+    });
+
+    // =========================
+    // MODAL MARCAS
+    // - abre y carga todas las marcas
+    // - foco autom�tico en input
+    // - Enter selecciona primera fila
+    // - Doble click selecciona
+    // - sin bot�n "Seleccionar"
+    // =========================
+    let debounceMarcaTimer = null;
+
+    // Guardar el boton que abrio el modal (para devolver el foco si se cancela sin seleccionar).
+    let $triggerModalMarcas = null;
+    let marcaSeleccionada = false;
+
+    function seleccionarMarcaDesdeFila($row) {
+        if (!$row || !$row.length) return;
+
+        const id = $row.data("id");
+        const nombre = $row.data("nombre");
+
+        $("input[name='IdMarca']").val(id || "");
+        $("#txtMarcaNombre").val(nombre || "");
+        marcaSeleccionada = true;
+        $("#modalMarcas").modal("hide");
+    }
+
+    $("#btnBuscarMarca").on("click", function () {
+        $triggerModalMarcas = $(this);
+        marcaSeleccionada = false;
+        mostrarCargaSolicitud();
+        $("#modalMarcas").modal("show");
+    });
+
+    $("#btnLimpiarMarca").on("click", function () {
+        $("input[name='IdMarca']").val("");
+        $("#txtMarcaNombre").val("");
+    });
+
+    function renderMarcas(items) {
+        const $tb = $("#tbMarcas");
+
+        if (!items || !items.length) {
+            $tb.html('<tr><td colspan="2" class="text-muted">Sin resultados</td></tr>');
+            return;
+        }
+
+        let html = "";
+        items.forEach(x => {
+            const id = x.id ?? x.Id ?? "";
+            const nombre = x.nombre ?? x.Nombre ?? x.marca ?? x.Marca ?? "";
+            const propietario = x.propietario ?? x.Propietario ?? x.duenio ?? x.Duenio ?? x.titular ?? x.Titular ?? "";
+
+            html += `
+                <tr class="fila-marca"
+                    data-id="${escapeHtml(id)}"
+                    data-nombre="${escapeHtml(nombre)}"
+                    style="cursor:pointer;">
+                    <td>${escapeHtml(nombre)}</td>
+                    <td>${escapeHtml(propietario)}</td>
+                </tr>`;
+        });
+
+        $tb.html(html);
+
+        // marcar primera fila
+        $tb.find("tr:first").addClass("table-active");
+    }
+
+    function buscarMarcas() {
+        const q = ($("#qMarca").val() || "").trim();
+
+        $.get(urlMarcas, { q: q })
+            .done(renderMarcas)
+            .fail(function () {
+                $("#tbMarcas").html('<tr><td colspan="2" class="text-danger">Error cargando marcas</td></tr>');
+            })
+            .always(function () {
+                ocultarCargaSolicitud();
+            });
+    }
+
+    // Al abrir: foco + cargar todas autom�ticamente
+    $("#modalMarcas").on("shown.bs.modal", function () {
+        setTimeout(function () {
+            $("#qMarca").focus().select();
+        }, 80);
+
+        buscarMarcas(); // q vac�o => traer todas
+    });
+
+
+    // Si se selecciono una marca, el foco avanza al siguiente control (como si se hubiese
+    // presionado Tab desde el boton "Buscar marca"). Si se cancelo (Esc/X), vuelve al boton que
+    // abrio el modal.
+    $("#modalMarcas").on("hidden.bs.modal", function () {
+        setTimeout(function () {
+            if (marcaSeleccionada) {
+                moverFocoDespuesDe($("#btnBuscarMarca"));
+            } else if ($triggerModalMarcas && $triggerModalMarcas.length) {
+                $triggerModalMarcas.focus();
+            } else if ($pesable.length && $pesable.is(":visible") && !$pesable.is(":disabled")) {
+                $pesable.focus();
+            }
+        }, 0);
+    });
+
+    // Bot�n Buscar manual
+    $("#btnDoBuscarMarca").on("click", buscarMarcas);
+
+    // B�squeda en vivo (debounce)
+    $("#qMarca").on("input", function () {
+        clearTimeout(debounceMarcaTimer);
+        debounceMarcaTimer = setTimeout(function () {
+            buscarMarcas();
+        }, 250);
+    });
+
+    // Enter => seleccionar fila activa o primera
+    $("#qMarca").on("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+            const $tb = $("#tbMarcas");
+            const $sel = $tb.find("tr.table-active:first");
+            const $row = $sel.length ? $sel : $tb.find("tr:first");
+
+            if ($row.length && !$row.find("td.text-danger, td.text-muted").length) {
+                seleccionarMarcaDesdeFila($row);
+            }
+        }
+    });
+
+    // Click => marcar fila
+    $("#tbMarcas").on("click", "tr", function () {
+        const $row = $(this);
+        if ($row.find("td").length === 1 && ($row.text() || "").match(/Sin resultados|Error|Cargando/i)) return;
+
+        $("#tbMarcas tr").removeClass("table-active");
+        $row.addClass("table-active");
+    });
+
+    // Doble click => seleccionar
+    $("#tbMarcas").on("dblclick", "tr", function () {
+        const $row = $(this);
+        if ($row.find("td").length === 1 && ($row.text() || "").match(/Sin resultados|Error|Cargando/i)) return;
+
+        seleccionarMarcaDesdeFila($row);
+    });
+
+    // =========================
+    // MODAL CORTES (Corte Maestro)
+    // reutiliza _BuscarProductoModal + script global
+    // =========================
+
+    // ?? guardar el bot�n que abri� el modal
+    let $triggerModalCorteMaestro= null;
+
+    $("#btnBuscarCorteMaestro").on("click", function () {
+        if (typeof window.abrirBuscarProductoModal !== "function") {
+            alert("No se pudo abrir el buscador de productos. Verificá que el script del modal esté cargado.");
+            return;
+        }
+
+        $triggerModalCorteMaestro = $(this);
+        mostrarCargaSolicitud();
+
+        window.abrirBuscarProductoModal({
+            modalSelector: "#modalBuscarProducto", // <-- explícito
+            onSelect: function (producto) {
+                $("input[name='IdCorteMaestro']").val(producto.id || "");
+                $("#txtCorteMaestroNombre").val(producto.nombre || "");
+                // El handler hidden.bs.modal de mas abajo (foco al trigger) envuelve su .focus()
+                // en setTimeout(fn,0). Dos setTimeout(0) corren en el orden en que se programaron,
+                // no en el orden de los handlers -- como ese ya se programo antes de que onSelect
+                // llegue aca, hay que envolver esto tambien para programarse despues y ganar.
+                setTimeout(function () {
+                    moverFocoDespuesDe($("#btnBuscarCorteMaestro"));
+                }, 0);
+            }
+        });
+    });
+
+    $("#btnLimpiarCorteMaestro").on("click", function () {
+        $("input[name='IdCorteMaestro']").val("");
+        $("#txtCorteMaestroNombre").val("");
+    });
+
+    // ?? NUEVO: al cerrar, devolver foco al bot�n que lo abri�
+    $("#modalBuscarProducto").on("hidden.bs.modal", function () {
+        setTimeout(function () {
+            if ($triggerModalCorteMaestro && $triggerModalCorteMaestro.length) {
+                $triggerModalCorteMaestro.focus();
+            } else {
+                $("#btnBuscarCorteMaestro").focus(); // fallback
+            }
+        }, 0);
+    });
+
+    $("#modalBuscarProducto").on("shown.bs.modal", function () {
+        ocultarCargaSolicitud();
+    });
+
+    // =========================
+    // INIT Modo
+    // =========================
+    function initModoFallback() {
+        const modoActual = ($ddlModo.val() || "");
+        if (modoActual) return;
+
+        const idCM = parseInt($("input[name='IdCorteMaestro']").val() || "0", 10);
+        const ph = parseFloat((($("input[name='PorcentajeHueso']").val() || "0") + "").replace(",", "."));
+
+        if (idCM > 0) {
+            $ddlModo.val(ph > 100 ? "Presentacion" : "CorteMaestro");
+        } else {
+            $ddlModo.val("Ninguno");
+        }
+    }
+
+    // Default independiente tildado si es alta
+    if ($("#swIndependiente").length && $("#swIndependiente").is(":checked") === false && !esEdicion) {
+        $("#swIndependiente").prop("checked", true);
+    }
+
+    // Defaults pedidos: En cierre stock + Habilitado tildados en ALTA
+    if (!esEdicion) {
+        $("#swCierre").prop("checked", true);
+        $("#swHabilitado").prop("checked", true);
+    }
+
+    initModoFallback();
+    aplicarModo();
+    actualizarAvisoCierreStockIndependiente();
+
+    // =========================
+    // ALTA: iniciar c�digo y precio vac�os
+    // =========================
+    if (!esEdicion) {
+        $codigo.val("");
+        $precioKg.val(""); // placeholder 0,00 visible
+    }
+
+    // =========================
+    // Recordar �ltimos Tipo e IVA (solo alta)
+    // =========================
+    const LS_TIPO = "producto_alta_ultimo_tipo";
+    const LS_IVA = "producto_alta_ultimo_iva";
+
+    function tieneValorSeleccionado($ddl) {
+        const v = ($ddl.val() || "").toString();
+        return v !== "";
+    }
+
+    if (!esEdicion) {
+        const tipoGuardado = localStorage.getItem(LS_TIPO);
+        const ivaGuardado = localStorage.getItem(LS_IVA);
+
+        if (!tieneValorSeleccionado($tipo) && tipoGuardado && $tipo.find(`option[value="${tipoGuardado}"]`).length) {
+            $tipo.val(tipoGuardado);
+        }
+
+        if (!tieneValorSeleccionado($iva) && ivaGuardado && $iva.find(`option[value="${ivaGuardado}"]`).length) {
+            $iva.val(ivaGuardado);
+        }
+    }
+
+    $tipo.on("change", function () {
+        const v = ($tipo.val() || "").toString();
+        if (v !== "") localStorage.setItem(LS_TIPO, v);
+    });
+
+    $iva.on("change", function () {
+        const v = ($iva.val() || "").toString();
+        if (v !== "") localStorage.setItem(LS_IVA, v);
+    });
+
+    // =========================
+    // Validaciones en vista (cliente)
+    // =========================
+    function marcarValidez($el, ok) {
+        if (!$el || !$el.length) return;
+        $el.toggleClass("is-invalid", !ok);
+    }
+
+    function esEnteroPositivoTexto(v) {
+        v = (v || "").toString().trim();
+        return /^\d+$/.test(v) && v !== "0";
+    }
+
+    function esEnteroNoNegativoTexto(v) {
+        v = (v || "").toString().trim();
+        return /^\d+$/.test(v); // permite 0
+    }
+
+    // Chequea el digito verificador SOLO cuando el valor tiene pinta de EAN
+    // (8 o 13 digitos) -- este mismo campo tambien se usa para codigos
+    // internos cortos ("1", "999999"), que no son EAN y no deben rechazarse.
+    // La camara (mas abajo, BarcodeScanner) ya valida esto antes de completar
+    // el campo; esto cubre lo tipeado o pegado a mano, que hoy se guardaba
+    // sin ningun chequeo.
+    function actualizarEstadoBotonGuardar() {
+        $btnGuardar.prop("disabled", (codigoDuplicado && !esEdicion) || codigoEanInvalido);
+    }
+
+    function validarCodigo() {
+        const v = (($codigo.val() || "") + "").trim();
+
+        // obligatorio + num�rico entero
+        const ok = esEnteroNoNegativoTexto(v) && v !== "";
+        $msgCodigoReq.toggleClass("d-none", ok);
+
+        const digitos = onlyDigits(v);
+        codigoEanInvalido = (digitos.length === 8 || digitos.length === 13) && !isValidEAN(digitos);
+        $msgCodigoEanInvalido.toggleClass("d-none", !codigoEanInvalido);
+        $codigo.toggleClass("is-invalid", !ok || codigoEanInvalido);
+        actualizarEstadoBotonGuardar();
+
+        return ok && !codigoEanInvalido;
+    }
+
+    function validarNombre() {
+        const ok = (($nombre.val() || "").trim() !== "");
+        $msgNombreReq.toggleClass("d-none", ok);
+        $nombre.toggleClass("is-invalid", !ok);
+        return ok;
+    }
+
+    function validarPrecio() {
+        const raw = (($precioKg.val() || "") + "").trim();
+
+        // obligatorio
+        if (raw === "") {
+            marcarValidez($precioKg, false);
+            return false;
+        }
+
+        // num�rico (float) y >= 0
+        const n = parseFloatFlexible(raw);
+        const ok = (n !== null && n >= 0);
+
+        marcarValidez($precioKg, ok);
+        return ok;
+    }
+
+    function validarTipo() {
+        const ok = (($tipo.val() || "").toString() !== "");
+        $msgTipoReq.toggleClass("d-none", ok);
+        $tipo.toggleClass("is-invalid", !ok);
+        return ok;
+    }
+
+    function validarIva() {
+        const ok = (($iva.val() || "").toString() !== "");
+        $msgIvaReq.toggleClass("d-none", ok);
+        $iva.toggleClass("is-invalid", !ok);
+        return ok;
+    }
+
+    function validarPuntoStock() {
+        const raw = (($puntoStock.val() || "") + "").trim();
+
+        // Seg�n lo que pediste: entero, no vac�o, >= 0
+        if (raw === "") {
+            marcarValidez($puntoStock, false);
+            return false;
+        }
+
+        const ok = esEnteroNoNegativoTexto(raw);
+        marcarValidez($puntoStock, ok);
+        return ok;
+    }
+
+    function validarPromedio() {
+        const raw = (($promedio.val() || "") + "").trim();
+
+        // si quer�s obligatorio, cambi� este return por validaci�n como precio
+        if (raw === "") {
+            marcarValidez($promedio, true);
+            return true; // opcional
+        }
+
+        const n = parseFloatFlexible(raw);
+        const ok = (n !== null); // si quer�s >=0: (n !== null && n >= 0)
+        marcarValidez($promedio, ok);
+        return ok;
+    }
+
+    function validarPorcentajeCorteMaestro() {
+        const raw = (($porcentaje.val() || "") + "").trim();
+        const n = parseFloatFlexible(raw);
+
+        // obligatorio cuando modo = CorteMaestro y > 0
+        const ok = (raw !== "" && n !== null && n > 0);
+        marcarValidez($porcentaje, ok);
+        return ok;
+    }
+
+    function validarDesperdicioCorteMaestro() {
+        const raw = (($desperdicio.val() || "") + "").trim();
+        const n = parseFloatFlexible(raw);
+
+        // obligatorio cuando modo = CorteMaestro y >= 0
+        const ok = (raw !== "" && n !== null && n >= 0);
+        marcarValidez($desperdicio, ok);
+        return ok;
+    }
+
+    function validarPresentacionUnidades() {
+        const raw = (($presentacionUnidades.val() || "") + "").trim();
+        const n = parseFloatFlexible(raw);
+
+        // obligatorio cuando modo = Presentacion y >= 1
+        const ok = (raw !== "" && n !== null && n >= 0);
+        marcarValidez($presentacionUnidades, ok);
+        return ok;
+    }
+
+    function validarCorteMaestroSeleccionadoSiAplica() {
+        const modo = ($ddlModo.val() || "Ninguno");
+
+        if (modo === "CorteMaestro" || modo === "Presentacion") {
+            const ok = (($idCorteMaestroHidden.val() || "") + "").trim() !== "";
+            marcarValidez($("#txtCorteMaestroNombre"), ok);
+            return ok;
+        }
+
+        marcarValidez($("#txtCorteMaestroNombre"), true);
+        return true;
+    }
+
+    function validarModoDependientes() {
+        const modo = ($ddlModo.val() || "Ninguno");
+        let ok = true;
+
+        // valida selecci�n de corte maestro si aplica
+        if (!validarCorteMaestroSeleccionadoSiAplica()) ok = false;
+
+        if (modo === "CorteMaestro") {
+            if (!validarPorcentajeCorteMaestro()) ok = false;
+            if (!validarDesperdicioCorteMaestro()) ok = false;
+
+            // limpiar visualmente presentaci�n (sin tocar valor)
+            marcarValidez($presentacionUnidades, true);
+        }
+        else if (modo === "Presentacion") {
+            if (!validarPresentacionUnidades()) ok = false;
+
+            // limpiar visualmente porcentaje/desperdicio (sin tocar valor)
+            marcarValidez($porcentaje, true);
+            marcarValidez($desperdicio, true);
+        }
+        else {
+            // Ninguno
+            marcarValidez($("#txtCorteMaestroNombre"), true);
+            marcarValidez($porcentaje, true);
+            marcarValidez($desperdicio, true);
+            marcarValidez($presentacionUnidades, true);
+        }
+
+        return ok;
+    }
+
+    // Eventos de validaci�n
+    $nombre.on("blur input", validarNombre);
+    $codigo.on("blur input", validarCodigo);
+    $precioKg.on("blur input", validarPrecio);
+    $tipo.on("change", validarTipo);
+    $iva.on("change", validarIva);
+    $puntoStock.on("blur input", validarPuntoStock);
+    $promedio.on("blur input", validarPromedio);
+    $porcentaje.on("blur input", function () {
+        if (($ddlModo.val() || "") === "CorteMaestro") validarPorcentajeCorteMaestro();
+    });
+    $desperdicio.on("blur input", function () {
+        if (($ddlModo.val() || "") === "CorteMaestro") validarDesperdicioCorteMaestro();
+    });
+    $presentacionUnidades.on("blur input", function () {
+        if (($ddlModo.val() || "") === "Presentacion") validarPresentacionUnidades();
+    });
+    $ddlModo.on("change", function () {
+        validarModoDependientes();
+    });
+    // =========================
+    // Validaci�n c�digo duplicado UI
+    // =========================
+    function setCodigoDuplicadoUI(existe, nombreProducto) {
+        codigoDuplicado = !!existe;
+
+        if (codigoDuplicado) {
+            const texto = nombreProducto
+                ? `El código ya existe para el producto: ${nombreProducto}`
+                : "El código ya existe para otro producto.";
+            $alertCodigoExiste.removeClass("d-none").text(texto);
+        } else {
+            $alertCodigoExiste.addClass("d-none").text("");
+        }
+
+        // Deshabilitar/habilitar bot�n crear producto (solo alta)
+        actualizarEstadoBotonGuardar();
+    }
+
+    // =========================
+    // Validaci�n c�digo duplicado (PROMISE)
+    // - Sirve para blur y para submit
+    // =========================
+    function validarCodigoExistente() {
+        const dfd = $.Deferred();
+        const codigo = ($codigo.val() || "").trim();
+
+        if (xhrCodigo && xhrCodigo.readyState !== 4) {
+            xhrCodigo.abort();
+        }
+
+        if (codigo === "") {
+            setCodigoDuplicadoUI(false, "");
+            dfd.resolve();
+            return dfd.promise();
+        }
+
+        xhrCodigo = $.get(urlExisteCodigo, {
+                codigo: codigo,
+                idExcluir: $("input[name='IdCorte']").val() || 0
+            })
+            .done(function (data) {
+                let existe = false;
+                let nombre = "";
+
+                if (data) {
+                    // Endpoint mejorado: { existe: true/false, nombre: "..." }
+                    if ("existe" in data || "Existe" in data) {
+                        existe = !!(data.existe === true || data.Existe === true);
+                    } else {
+                        // Compatibilidad con endpoint viejo: si devuelve objeto => existe
+                        existe = !!(data.id || data.Id || data.descripcion || data.Descripcion);
+                    }
+
+                    nombre = data.nombre || data.Nombre || data.descripcion || data.Descripcion || "";
+                }
+
+                // Si est�s en edici�n y el c�digo pertenece al mismo producto, no marcar duplicado
+                if (esEdicion && data && (data.id || data.Id)) {
+                    const idEncontrado = parseInt(data.id || data.Id || 0, 10);
+                    const idActual = parseInt($("input[name='IdCorte']").val() || "0", 10);
+
+                    if (idEncontrado > 0 && idActual > 0 && idEncontrado === idActual) {
+                        setCodigoDuplicadoUI(false, "");
+                        dfd.resolve();
+                        return;
+                    }
+                }
+
+                setCodigoDuplicadoUI(existe, nombre);
+                dfd.resolve();
+            })
+            .fail(function (xhr, status) {
+                if (status === "abort") {
+                    dfd.reject("abort");
+                    return;
+                }
+
+                // Compatibilidad endpoint viejo: 404 = no existe
+                if (xhr && xhr.status === 404) {
+                    setCodigoDuplicadoUI(false, "");
+                    dfd.resolve();
+                    return;
+                }
+
+                // Error real: no bloquear por red
+                setCodigoDuplicadoUI(false, "");
+                dfd.resolve();
+            });
+
+        return dfd.promise();
+    }
+
+    $codigo.on("blur", function () {
+        validarCodigoExistente();
+        intentarAutocompleteProductoGlobal();
+    });
+
+    // Si cambia el c�digo, limpiar alerta y re-habilitar hasta revalidar
+    $codigo.on("input", function () {
+        setCodigoDuplicadoUI(false, "");
+        setAutocompleteCodigoMsg("");
+
+        const codigoActual = onlyDigits($codigo.val());
+        if (codigoActual !== ultimoCodigoAutocompletado) {
+            ultimoCodigoAutocompletado = "";
+        }
+
+        if (debounceAutocompleteCodigo) {
+            clearTimeout(debounceAutocompleteCodigo);
+        }
+
+        if (!esEdicion && isValidEAN(codigoActual)) {
+            debounceAutocompleteCodigo = setTimeout(function () {
+                intentarAutocompleteProductoGlobal();
+            }, 250);
+        }
+    });
+
+    // =========================
+    // Helpers submit decimales
+    // =========================
+    function normalizarFloatOpcionalParaPost($input, etiqueta) {
+        if (!$input || !$input.length) return true;
+
+        const raw = ($input.val() || "").toString().trim();
+        if (raw === "") return true; // opcional, se deja vac�o
+
+        const n = parseFloatFlexible(raw);
+        if (n === null) {
+            alert(`${etiqueta} inválido. Usá números y decimal con coma o punto.`);
+            return false;
+        }
+
+        $input.val(formatFloatForPost(n)); // COMA para binder .NET (es-AR)
+        return true;
+    }
+
+    // =========================
+    // Submit: SIEMPRE validar c�digo duplicado + luego validar resto
+    // =========================
+    $("#frmCorte").on("submit", function (e) {
+
+        function enfocarPrimerInvalido() {
+            const $first = $frm.find(".is-invalid:visible").first();
+            if ($first.length) {
+                $first.focus();
+                if ($first.is("input[type='text'], input:not([type])")) {
+                    try { $first.select(); } catch (_) { }
+                }
+            }
+        }
+
+        // Paso 1: siempre validar c�digo duplicado (aunque no haya salido del input)
+        if (!reenviandoSubmit) {
+            e.preventDefault();
+
+            validarCodigoExistente().done(function () {
+                if (codigoDuplicado) {
+                    $codigo.focus().select();
+                    return; // NO reenv�a
+                }
+
+                reenviandoSubmit = true;
+                $frm.trigger("submit"); // reingresa y sigue con l�gica normal
+            });
+
+            return false;
+        }
+
+        // Paso 2: submit real (reenv�o controlado)
+        reenviandoSubmit = false;
+
+        let ok = true;
+
+        // Validaciones base
+        if (!validarCodigo()) ok = false;
+        if (!validarNombre()) ok = false;
+        if (!validarPrecio()) ok = false;
+        if (!validarTipo()) ok = false;
+        if (!validarIva()) ok = false;
+        if (!validarPuntoStock()) ok = false;
+        if (!validarPromedio()) ok = false;
+        if (!validarModoDependientes()) ok = false;
+
+        // Duplicado (por si qued� marcado)
+        if (codigoDuplicado) {
+            ok = false;
+            $codigo.addClass("is-invalid");
+        }
+
+        if (!ok) {
+            e.preventDefault();
+            enfocarPrimerInvalido();
+            return false;
+        }
+
+        // =========================
+        // Normalizaci�n de num�ricos para POST (.NET es-AR)
+        // =========================
+
+        // Precio Kg (obligatorio en cliente, pero reutilizamos helper)
+        if (!normalizarFloatOpcionalParaPost($precioKg, "Precio Kg")) {
+            e.preventDefault();
+            marcarValidez($precioKg, false);
+            $precioKg.focus().select();
+            return false;
+        }
+
+        // Promedio (opcional o float v�lido)
+        if (!normalizarFloatOpcionalParaPost($promedio, "Promedio")) {
+            e.preventDefault();
+            marcarValidez($promedio, false);
+            $promedio.focus().select();
+            return false;
+        }
+
+        const modo = ($ddlModo.val() || "Ninguno");
+
+        if (modo === "CorteMaestro") {
+            const nPorc = parseFloatFlexible($porcentaje.val() || "");
+            const nDesp = parseFloatFlexible($desperdicio.val() || "");
+
+            // Redundancia defensiva (ya validado arriba)
+            if (nPorc === null || nPorc <= 0) {
+                e.preventDefault();
+                marcarValidez($porcentaje, false);
+                $porcentaje.focus().select();
+                return false;
+            }
+
+            if (nDesp === null || nDesp < 0) {
+                e.preventDefault();
+                marcarValidez($desperdicio, false);
+                $desperdicio.focus().select();
+                return false;
+            }
+
+            // HiddenFor -> valores con coma para binder .NET
+            $("input[name='Porcentaje']").val(formatFloatForPost(nPorc));
+            $("input[name='PorcentajeHueso']").val(formatFloatForPost(nDesp));
+        }
+
+        if (modo === "Presentacion") {
+            const u = parseFloatFlexible($("#txtPresentacionUnidades").val() || "");
+
+            // Redundancia defensiva (ya validado arriba)
+            if (u === null || u < 1) {
+                e.preventDefault();
+                marcarValidez($("#txtPresentacionUnidades"), false);
+                $("#txtPresentacionUnidades").focus().select();
+                return false;
+            }
+
+            $("input[name='Porcentaje']").val("100");
+            $("input[name='PorcentajeHueso']").val(formatFloatForPost(100 * (u - 1)));
+        }
+
+        if (modo === "Ninguno") {
+            // Solo hidden para enviar consistente (NO limpiamos visibles)
+            $("input[name='IdCorteMaestro']").val("");
+            $("input[name='Porcentaje']").val("0");
+            $("input[name='PorcentajeHueso']").val("0");
+        }
+
+        // Unico punto donde se sabe con certeza que el submit va a navegar de
+        // verdad (ya pasaron Paso 1 -codigo duplicado- y Paso 2 -validaciones
+        // sync- y la logica de modo). Antes esto se mostraba sin condicion en
+        // CUALQUIER evento submit (ver mas abajo, handler eliminado) y quedaba
+        // trabado para siempre si alguna validacion fallaba, porque ninguna
+        // rama de fallo lo cerraba.
+        mostrarCargaSolicitud();
+
+        return true;
+    });
+
+
+    // ======================================================
+    //para scrolear cuando el usuario usa tab para saltar de campo en campo
+    // ======================================================
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.addEventListener('focus', () => {
+            const scrollMargin = 200; // Por ejemplo, margen para que no quede tapado
+            const elementTop = element.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({ top: elementTop - scrollMargin, behavior: 'smooth' });
+        });
+    });
+
+    // ======================================================
+    // SCANNER: EAN-8 / EAN-13 -> setea #Codigo, cierra, foco #CorteDesc
+    // ======================================================
+    const TIEMPO_RELECTURA = 2000;
+    const SEL_CODIGO = "#Codigo";
+    const SEL_DESC = "#CorteDesc";
+    const SEL_MSG = "#scannerMsg";
+
+    let ultimoCodigoLeido = "";
+    let tiempoUltimaLectura = 0;
+    let pausaLecturaActiva = false;
+    let pausaLecturaTimer = null;
+
+    function beep() {
+        const audio = document.getElementById("beep");
+        if (!audio) return;
+        try {
+            audio.currentTime = 0;
+            audio.play();
+        } catch (e) { }
+    }
+
+    function setScannerMsg(text) {
+        const el = document.querySelector(SEL_MSG);
+        if (!el) return;
+        if (!text) {
+            el.classList.add("d-none");
+            el.textContent = "";
+        } else {
+            el.textContent = text;
+            el.classList.remove("d-none");
+        }
+    }
+
+    function onlyDigits(s) { return (s || "").toString().replace(/\D/g, ""); }
+
+    function limpiarEstadoLecturaScanner() {
+        ultimoCodigoLeido = "";
+        tiempoUltimaLectura = 0;
+        pausaLecturaActiva = false;
+        if (pausaLecturaTimer) {
+            clearTimeout(pausaLecturaTimer);
+            pausaLecturaTimer = null;
+        }
+    }
+
+    function limpiarCodigoScanner() {
+        const codigoEl = document.querySelector(SEL_CODIGO);
+        if (codigoEl) {
+            codigoEl.value = "";
+            $(codigoEl).trigger("input");
+        }
+        setScannerMsg("");
+        limpiarEstadoLecturaScanner();
+    }
+
+    function syncFlashButton(estado) {
+        const btn = document.getElementById("btnFlash");
+        if (!btn) return;
+
+        if (estado) {
+            btn.classList.remove("btn-secondary");
+            btn.classList.add("btn-warning");
+            btn.textContent = "Flash ON";
+        } else {
+            btn.classList.remove("btn-warning");
+            btn.classList.add("btn-secondary");
+            btn.textContent = "Flash";
+        }
+    }
+
+    function isValidEAN(code) {
+        code = onlyDigits(code);
+        if (code.length === 13) return isValidEAN13(code);
+        if (code.length === 8) return isValidEAN8(code);
+        return false;
+    }
+
+    function isValidEAN13(code13) {
+        if (!/^\d{13}$/.test(code13)) return false;
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            const d = parseInt(code13[i], 10);
+            sum += (i % 2 === 0) ? d : d * 3;
+        }
+        const check = (10 - (sum % 10)) % 10;
+        return check === parseInt(code13[12], 10);
+    }
+
+    function isValidEAN8(code8) {
+        if (!/^\d{8}$/.test(code8)) return false;
+        let sum = 0;
+        for (let i = 0; i < 7; i++) {
+            const d = parseInt(code8[i], 10);
+            sum += (i % 2 === 0) ? d * 3 : d;
+        }
+        const check = (10 - (sum % 10)) % 10;
+        return check === parseInt(code8[7], 10);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (esEdicion && !cargaContinuaInicial) {
+            limpiarHistorialEdicion();
+            guardarModoEdicionActivo(false);
+        }
+
+        enfocarInputCodigo();
+
+        actualizarUiCargaContinua();
+        actualizarSnapshotEdicion();
+
+        if (window.sessionStorage.getItem(STORAGE_FOCUS_CODIGO_KEY) === "1") {
+            window.sessionStorage.removeItem(STORAGE_FOCUS_CODIGO_KEY);
+            window.setTimeout(enfocarInputCodigo, 150);
+        }
+
+        const alertaCargaContinua = document.getElementById('alertCargaContinua');
+        if (alertaCargaContinua && alertaCargaContinua.getAttribute('data-recargar') === '1') {
+            // La recarga al siguiente formulario en blanco espera a que se
+            // cierre el cartel de "guardado correctamente" (_LayoutBase.cshtml)
+            // en vez de tener su propio timer de 2s en paralelo -- evita que
+            // ambos compitan y corten el cartel a mitad de camino.
+            document.addEventListener('layoutAlertClosed', function () {
+                window.sessionStorage.setItem(STORAGE_FOCUS_CODIGO_KEY, "1");
+                mostrarCargaSolicitud();
+                window.location.replace('@Url.Action("AddOrEdit", "Productos", new { cargaContinua = true })');
+            }, { once: true });
+        }
+    });
+
+    if (typeof BarcodeScanner !== "undefined") {
+        const scanner = new BarcodeScanner({
+            videoSelector: "#videoScanner",
+            containerSelector: "#scannerContainer",
+            onCodeDetected: function (codigoLeido) {
+
+                if (pausaLecturaActiva) return;
+
+                const clean = onlyDigits(codigoLeido);
+                if (!clean) return;
+
+                if (!ultimoCodigoLeido) {
+                    ultimoCodigoLeido = clean;
+                    tiempoUltimaLectura = Date.now();
+                    setScannerMsg("Código detectado. Acerque nuevamente para confirmar.");
+                    return;
+                }
+
+                if (clean !== ultimoCodigoLeido) {
+                    ultimoCodigoLeido = clean;
+                    tiempoUltimaLectura = Date.now();
+                    setScannerMsg("La segunda lectura no coincidió. Se reinició la validación.");
+                    return;
+                }
+
+                if (!isValidEAN(clean)) {
+                    limpiarEstadoLecturaScanner();
+                    setScannerMsg("Código inválido (solo EAN-8 o EAN-13). Volvé a enfocar.");
+                    return;
+                }
+
+                const codigoEl = document.querySelector(SEL_CODIGO);
+                if (codigoEl) {
+                    codigoEl.value = clean;
+                    $(codigoEl).trigger("input");
+                }
+
+                pausaLecturaActiva = true;
+                tiempoUltimaLectura = Date.now();
+                setScannerMsg("Código leído correctamente.");
+                beep();
+                scanner.cerrar();
+                pausaLecturaTimer = setTimeout(function () {
+                    limpiarEstadoLecturaScanner();
+                    setScannerMsg("");
+                }, TIEMPO_RELECTURA);
+
+                const desc = document.querySelector(SEL_DESC);
+                if (desc) desc.focus();
+            }
+        });
+
+        document.getElementById("btnScanner")?.addEventListener("click", () => {
+            setScannerMsg("");
+            limpiarEstadoLecturaScanner();
+            syncFlashButton(false);
+            scanner.iniciar().catch(function () {
+                setScannerMsg("No se pudo iniciar la cámara.");
+            });
+        });
+
+        document.getElementById("btnCerrarScanner")?.addEventListener("click", () => {
+            setScannerMsg("");
+            limpiarEstadoLecturaScanner();
+            scanner.cerrar();
+            syncFlashButton(false);
+        });
+
+        document.getElementById("btnLimpiarScanner")?.addEventListener("click", () => {
+            limpiarCodigoScanner();
+        });
+
+        document.getElementById("btnFlash")?.addEventListener("click", async () => {
+            const estado = await scanner.toggleFlash();
+            syncFlashButton(estado);
+        });
+    }
+
+    window.productosEditReadonly = window.EditReadOnly && window.EditReadOnly.init({
+        formSelector: "#frmCorte",
+        soloLecturaInicial: @(esEdicion ? "true" : "false"),
+        modifyButtonSelector: "#btnHabilitarEdicionProducto",
+        saveButtonSelector: "#btnGuardarProducto",
+        onStateChanged: function () {
+            actualizarTextoAtajosAcciones();
+        }
+    });
+
+    if (window.productosEditReadonly && esEdicion && cargaContinuaInicial && obtenerModoEdicionActivo()) {
+        window.productosEditReadonly.setReadOnly(false);
+        window.setTimeout(actualizarSnapshotEdicion, 0);
+    }
+
+    window.setTimeout(actualizarTextoAtajosAcciones, 0);
+
+    // El aviso de carga para el submit del form vive en el handler de
+    // #frmCorte de mas arriba (justo antes del "return true;" final) -- ahi
+    // se sabe con certeza que el submit va a navegar. Un handler separado acá
+    // (bindeado sin condicion a CUALQUIER evento submit, incluido el
+    // "preflight" que ese mismo handler intercepta con preventDefault) dejaba
+    // el modal trabado para siempre si alguna validacion fallaba.
+
+    $btnVolver.on("click.productosLoader", function (e) {
+        e.preventDefault();
+        mostrarCargaSolicitud();
+        window.setTimeout(function () {
+            window.location.href = $btnVolver.attr("href");
+        }, 0);
+    });
+    window.setTimeout(function () {
+        if (window.productosEditReadonly && window.productosEditReadonly.isReadOnly && window.productosEditReadonly.isReadOnly()) {
+            return;
+        }
+
+        enfocarInputCodigo();
+    }, 120);
+})();
+    </script>
+}
+
+<style>
+    /* Scanner */
+    #scannerContainer {
+        margin-bottom: .75rem;
+    }
+
+    .scanner-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        height: 80px;
+        overflow: hidden;
+        background: #000;
+        border-radius: 8px;
+    }
+
+    #videoScanner {
+        width: 100%;
+        height: auto;
+    }
+
+    .scanner-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: red;
+        box-shadow: 0 0 6px red;
+        animation: scan 1.2s linear infinite;
+    }
+
+    @@keyframes scan {
+        0% {
+            top: 15%;
+            opacity: .9;
+        }
+
+        50% {
+            top: 50%;
+            opacity: 1;
+        }
+
+        100% {
+            top: 85%;
+            opacity: .9;
+        }
+    }
+
+    .validation-summary-valid {
+        display: none;
+    }
+
+    .validation-summary-errors ul {
+        margin-bottom: 0;
+    }
+
+    .shortcut-letter {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    /* Modal: que no supere el alto de pantalla */
+    .modal-fit-screen .modal-content,
+    #modalBuscarProducto .modal-content {
+        max-height: calc(100vh - 1.5rem);
+    }
+
+    .modal-table-scroll {
+        max-height: min(50vh, 420px);
+        overflow-y: auto;
+    }
+
+    #modalBuscarProducto .table-responsive {
+        max-height: min(50vh, 420px);
+        overflow-y: auto;
+    }
+
+    #modalMarcas .modal-search-compact-dialog {
+        max-width: 920px;
+    }
+
+    #modalMarcas .modal-content {
+        border-radius: .75rem;
+    }
+
+    #modalMarcas .modal-search-compact-header {
+        padding: .65rem .9rem;
+    }
+
+    #modalMarcas .modal-title {
+        font-size: .92rem;
+        line-height: 1.1;
+    }
+
+    #modalMarcas .modal-search-compact-body {
+        padding: .8rem .9rem .75rem;
+        font-size: .86rem;
+    }
+
+    #modalMarcas .form-control,
+    #modalMarcas .btn {
+        min-height: 2.45rem;
+        font-size: .85rem;
+    }
+
+    #modalMarcas .table {
+        font-size: .82rem;
+    }
+
+    #modalMarcas .table th,
+    #modalMarcas .table td {
+        padding: .38rem .5rem;
+        line-height: 1.1;
+        vertical-align: middle;
+    }
+
+    #modalMarcas .table thead th {
+        font-size: .72rem;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    #modalMarcas .modal-search-help {
+        font-size: .73rem;
+        line-height: 1.15;
+    }
+
+    /* Fila activa (si no se nota bien con tu theme) */
+    #tbMarcas tr.table-active,
+    #tablaProductos tr.table-active {
+        background-color: rgba(13, 110, 253, .12);
+    }
+    /* Botonera fija inferior */
+.espacio-botonera-fija {
+    height: 78px; /* reserva espacio para que no tape contenido */
+}
+
+.barra-acciones-fija {
+    position: fixed;
+    bottom: 0;
+    z-index: 1030;
+
+    /* ?? ya NO ancho completo */
+    left: auto;
+    right: auto;
+    width: auto;
+
+    background: var(--ui-surface);
+    border-top: 1px solid var(--ui-border);
+    box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+    backdrop-filter: blur(8px);
+    padding: .4rem .65rem;
+    border-radius: .7rem .7rem 0 0;
+}
+
+.barra-acciones-inner {
+    /* ?? usa todo el ancho de la barra (que ya coincide con la columna) */
+    max-width: none;
+    margin: 0;
+    gap: .6rem;
+}
+
+.producto-edit-actions-right {
+    gap: .18rem;
+}
+
+.producto-edit-actions-buttons {
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.barra-acciones-fija .btn {
+    min-height: 2.45rem;
+}
+
+.barra-acciones-fija #btnVolverProducto,
+.barra-acciones-fija #btnSiguienteProducto,
+.barra-acciones-fija #btnHabilitarEdicionProducto {
+    font-weight: 600;
+}
+
+.barra-acciones-fija #btnGuardarProducto {
+    min-width: 11.5rem;
+    font-weight: 700;
+}
+
+.barra-acciones-fija .atajos-acciones {
+    letter-spacing: .01em;
+}
+
+@@media (min-width: 992px) {
+    .barra-acciones-fija {
+        padding: .38rem .62rem;
+    }
+
+    .barra-acciones-inner {
+        min-width: 100%;
+    }
+
+    .producto-edit-actions-buttons {
+        gap: .45rem;
+    }
+
+    .barra-acciones-fija .btn {
+        min-height: 2.38rem;
+    }
+}
+
+.btn-guardar-destacado {
+    transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+.btn-guardar-destacado:focus,
+.btn-guardar-destacado:focus-visible {
+    outline: 0;
+    border-color: #ffb84d;
+    box-shadow: 0 0 0 .28rem rgba(255, 184, 77, .45), 0 .35rem 1rem rgba(13, 110, 253, .18);
+    transform: translateY(-1px);
+}
+
+@@media (max-width: 576px) {
+    .espacio-botonera-fija {
+        height: 96px;
+    }
+
+    .producto-edit-actions-right,
+    .producto-edit-actions-buttons {
+        width: 100%;
+    }
+
+    .producto-edit-actions-buttons {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .barra-acciones-fija .btn {
+        min-height: 40px;
+    }
+}
+</style>

@@ -1,0 +1,40 @@
+@using System.Linq
+@model List<WebCore.Models.TipoProductoGlobalImportItemVm>
+
+@if (Model == null || !Model.Any())
+{
+    <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+            No se encontraron tipos de producto en el catálogo global.
+        </td>
+    </tr>
+}
+else
+{
+    foreach (var item in Model)
+    {
+        <tr data-tipo="@item.Tipo"
+            data-bloqueado="@(item.YaExisteEnEmpresa ? "1" : "0")"
+            class="@(item.YaExisteEnEmpresa ? "table-light text-muted" : "")">
+            <td class="text-center align-middle">
+                <input type="checkbox"
+                       class="chk-global-tipo-producto"
+                       @(item.YaExisteEnEmpresa ? "disabled" : "") />
+            </td>
+            <td class="align-middle">
+                <div class="font-weight-bold">@item.Tipo</div>
+            </td>
+            <td class="align-middle">@item.Orden</td>
+            <td class="align-middle">
+                @if (item.YaExisteEnEmpresa)
+                {
+                    <span class="badge badge-secondary">Ya existe en el sistema</span>
+                }
+                else
+                {
+                    <span class="badge badge-primary">Disponible</span>
+                }
+            </td>
+        </tr>
+    }
+}

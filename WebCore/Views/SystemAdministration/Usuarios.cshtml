@@ -1,0 +1,184 @@
+@model WebCore.Models.SystemAdministrationUsuarioIndexVm
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="sysadmin-usuarios-page">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+    <div>
+        <h4 class="mb-1">Usuarios</h4>
+        <p class="text-muted mb-0">Administracion global de usuarios por empresa y sucursal.</p>
+    </div>
+    <a class="btn btn-primary mt-3 mt-md-0" href="@Url.Action("EditarUsuario", "SystemAdministration", new { idEmpresa = Model.FiltroEmpresaId })">
+        <i class="fas fa-plus mr-1"></i>Nuevo usuario
+    </a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="form-row align-items-end">
+            <div class="form-group col-md-5 mb-0">
+                <label>Empresa</label>
+                @Html.DropDownListFor(m => m.FiltroEmpresaId, Model.Empresas, new { @class = "form-control", id = "filtroEmpresaUsuarios" })
+            </div>
+            <div class="form-group col-md-4 mb-0">
+                <label>Usuario</label>
+                <input type="text" class="form-control" id="filtroUsuarioTexto" placeholder="Buscar por usuario..." autocomplete="off" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered mb-0">
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Sucursal</th>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Admin</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items == null || Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No hay usuarios cargados para el filtro seleccionado.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr data-id-empresa="@item.IdEmpresa" data-usuario="@((item.Usuario ?? "").ToLowerInvariant())">
+                                <td>@item.EmpresaNombre</td>
+                                <td>@item.SucursalNombre</td>
+                                <td>@item.Nombre</td>
+                                <td>@item.Usuario</td>
+                                <td>@item.Email</td>
+                                <td>@(item.Admin ? "Si" : "No")</td>
+                                <td>
+                                    <span class="badge @(item.Activo ? "badge-success" : "badge-secondary")">
+                                        @(item.Activo ? "Activo" : "Inactivo")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditarUsuario", "SystemAdministration", new { id = item.Id })">Editar</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+
+<style>
+    .sysadmin-usuarios-page {
+        font-size: .9rem;
+    }
+
+    .sysadmin-usuarios-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .sysadmin-usuarios-page .form-control,
+    .sysadmin-usuarios-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .sysadmin-usuarios-page label,
+    .sysadmin-usuarios-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .sysadmin-usuarios-page .alert,
+    .sysadmin-usuarios-page .small,
+    .sysadmin-usuarios-page .text-muted,
+    .sysadmin-usuarios-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    .sysadmin-usuarios-page .table {
+        font-size: .84rem;
+    }
+
+    .sysadmin-usuarios-page .table th,
+    .sysadmin-usuarios-page .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .sysadmin-usuarios-page .table thead th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .sysadmin-usuarios-page .form-control,
+        .sysadmin-usuarios-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+
+        .sysadmin-usuarios-page .table {
+            font-size: .81rem;
+        }
+
+        .sysadmin-usuarios-page .table thead th {
+            font-size: .69rem !important;
+        }
+    }
+</style>
+
+@section Scripts {
+<script>
+    (function () {
+        var $select = $("#filtroEmpresaUsuarios");
+        var $texto = $("#filtroUsuarioTexto");
+        var $tbody = $(".sysadmin-usuarios-page tbody").first();
+
+        function aplicarFiltros() {
+            var idEmpresa = $select.val() || "0";
+            var texto = ($texto.val() || "").toLowerCase().trim();
+            var visibles = 0;
+
+            $tbody.find("tr[data-id-empresa]").each(function () {
+                var $fila = $(this);
+                var visible = idEmpresa === "0" || $fila.attr("data-id-empresa") === idEmpresa;
+
+                if (visible && texto) {
+                    visible = ($fila.attr("data-usuario") || "").indexOf(texto) >= 0;
+                }
+
+                $fila.toggleClass("d-none", !visible);
+                if (visible) visibles += 1;
+            });
+
+            $tbody.find(".sysadmin-usuarios-empty-filter").remove();
+            if (visibles === 0 && $tbody.find("tr[data-id-empresa]").length > 0) {
+                $tbody.append('<tr class="sysadmin-usuarios-empty-filter"><td colspan="8" class="text-center text-muted py-4">No hay usuarios para el filtro seleccionado.</td></tr>');
+            }
+        }
+
+        $select.on("change", aplicarFiltros);
+        $texto.on("input", aplicarFiltros);
+        aplicarFiltros();
+    })();
+</script>
+}

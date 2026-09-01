@@ -1,0 +1,240 @@
+@model WebCore.Models.MarcaEditVm
+
+@{
+    bool esEdicion = Model != null && Model.IdPersona > 0;
+    bool soloLecturaNombre = Model != null && Model.SoloLecturaNombre;
+    string mensajeInfoEdicion = "";
+    string textoGuardar = esEdicion ? "Guardar cambios" : "Guardar marca";
+    string claseGuardar = esEdicion ? "btn btn-primary d-none" : "btn btn-primary";
+    string alertaInfoHtml = "";
+    string botonModificarHtml = esEdicion
+        ? "<button type=\"button\" class=\"btn btn-secondary mr-2\" id=\"btnHabilitarEdicionMarcaAdmin\" data-edit-readonly-ignore=\"true\">Modificar</button>"
+        : "";
+
+    if (esEdicion)
+    {
+        mensajeInfoEdicion = Model != null && Model.EsAdministrador
+            ? "Al cambiar el nombre de la marca puede afectar los registros historicos."
+            : "Para cambiar el nombre de la marca debe comunicarse con un administrador, ya que puede afectar los registros historicos.";
+        alertaInfoHtml = "<div class=\"alert alert-info\">" + mensajeInfoEdicion + "</div>";
+    }
+}
+
+<form action="/" method="post" id="formMarcaAdmin">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="IdPersona" value="@(Model != null ? Model.IdPersona : 0)" />
+    <input type="hidden" name="ConfirmarMarcasParecidas" value="false" />
+    <input type="hidden" name="IdPropietario" id="marcaAdminIdPropietario" value="@(Model != null && Model.IdPropietario.HasValue ? Model.IdPropietario.Value.ToString() : "")" />
+
+    <div id="marcaAdminError" class="alert alert-danger d-none"></div>
+
+    @Html.Raw(alertaInfoHtml)
+
+    <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-outline-info" id="btnInfoMarcaAdmin">
+            <i class="fas fa-info-circle mr-1"></i> Info
+        </button>
+    </div>
+
+    <div class="form-group">
+        <label for="marcaAdminNombre">Nombre de marca</label>
+        <input type="text"
+               class="form-control"
+               id="marcaAdminNombre"
+               name="RazonSocial"
+               maxlength="200"
+               autocomplete="off"
+               value="@(Model != null ? Model.RazonSocial : "")"
+               readonly="@(soloLecturaNombre ? "readonly" : null)" />
+    </div>
+
+    <div class="form-group">
+        <label>Propietario</label>
+        <div class="input-group">
+            <input type="text"
+                   class="form-control"
+                   id="marcaAdminPropietarioNombre"
+                   value="@(Model != null ? Model.PropietarioNombre : "")"
+                   readonly
+                   placeholder="Sin propietario" />
+            <div class="input-group-append">
+                <button type="button" class="btn btn-outline-secondary" id="btnBuscarPropietarioMarca" title="Buscar propietario">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button type="button" class="btn btn-outline-danger" id="btnQuitarPropietarioMarca" title="Quitar propietario">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="marcaAdminOtrosDatos">Otros datos</label>
+        <textarea class="form-control"
+                  id="marcaAdminOtrosDatos"
+                  name="OtrosDatos"
+                  rows="3">@((Model != null ? Model.OtrosDatos : "") ?? "")</textarea>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+            Volver
+        </button>
+        <div>
+            @Html.Raw(botonModificarHtml)
+            <button type="submit" class="@claseGuardar" id="btnGuardarMarcaAdmin">
+                @textoGuardar
+            </button>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="modalBuscarPropietarioMarca" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Seleccionar propietario</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="qPropietarioMarca" placeholder="Escribi para buscar..." />
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" id="btnBuscarPropietarioListado">Buscar</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Persona</th>
+                                <th style="width:30%;">CUIT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbPropietariosMarca">
+                            <tr><td colspan="2" class="text-muted">Cargando personas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted d-block mt-2">Doble clic o Enter para seleccionar la primera fila.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var urlPersonas = '@Url.Action("Listar", "Personas")';
+
+        function renderPropietarios(items) {
+            var $tb = $('#tbPropietariosMarca');
+            if (!items || !items.length) {
+                $tb.html('<tr><td colspan="2" class="text-muted">No se encontraron personas.</td></tr>');
+                return;
+            }
+
+            var html = '';
+            items.forEach(function (x) {
+                var nombre = x.razonSocial || '';
+                var cuit = x.cuit || '';
+                html += '<tr class="fila-propietario-marca" data-id="' + x.idPersona + '" data-nombre="' + $('<div>').text(nombre).html() + '">';
+                html += '<td>' + $('<div>').text(nombre).html() + '</td>';
+                html += '<td>' + $('<div>').text(cuit).html() + '</td>';
+                html += '</tr>';
+            });
+            $tb.html(html);
+            $tb.find('tr:first').addClass('table-active');
+        }
+
+        function buscarPropietarios() {
+            $.get(urlPersonas, { filtro: ($('#qPropietarioMarca').val() || '').trim() })
+                .done(renderPropietarios)
+                .fail(function () {
+                    $('#tbPropietariosMarca').html('<tr><td colspan="2" class="text-danger">No se pudo cargar el listado de personas.</td></tr>');
+                });
+        }
+
+        function seleccionarPropietario($row) {
+            if (!$row || !$row.length) return;
+
+            $('#marcaAdminIdPropietario').val($row.data('id') || '');
+            $('#marcaAdminPropietarioNombre').val($row.data('nombre') || '');
+            $('#modalBuscarPropietarioMarca').modal('hide');
+        }
+
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formMarcaAdmin",
+            soloLecturaInicial: @(esEdicion ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionMarcaAdmin",
+            saveButtonSelector: "#btnGuardarMarcaAdmin"
+        });
+
+        function syncQuitarPropietario() {
+            var tienePropietario = !!($('#marcaAdminIdPropietario').val() || '').trim();
+            $('#btnQuitarPropietarioMarca').toggle(tienePropietario);
+        }
+
+        $('#btnInfoMarcaAdmin').off('click').on('click', function () {
+            alert(
+                'Aviso:\\n\\n' +
+                '- Cualquier usuario puede crear nuevas marcas.\\n' +
+                '- Solo los administradores pueden modificar el nombre de la marca.\\n\\n' +
+                '- El sistema informara cuando haya marcas parecidas al agregar una nueva.'
+            );
+        });
+
+        $('#btnBuscarPropietarioMarca').off('click').on('click', function () {
+            $('#modalBuscarPropietarioMarca').modal('show');
+            buscarPropietarios();
+            setTimeout(function () {
+                $('#qPropietarioMarca').focus().select();
+            }, 100);
+        });
+
+        $('#btnBuscarPropietarioListado').off('click').on('click', buscarPropietarios);
+
+        $('#qPropietarioMarca').off('input').on('input', function () {
+            buscarPropietarios();
+        }).off('keydown').on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                seleccionarPropietario($('#tbPropietariosMarca tr:first'));
+            }
+        });
+
+        $('#tbPropietariosMarca')
+            .off('click', 'tr')
+            .on('click', 'tr', function () {
+                $('#tbPropietariosMarca tr').removeClass('table-active');
+                $(this).addClass('table-active');
+            })
+            .off('dblclick', 'tr')
+            .on('dblclick', 'tr', function () {
+                seleccionarPropietario($(this));
+            });
+
+        $('#btnQuitarPropietarioMarca').off('click').on('click', function () {
+            if (!$('#marcaAdminIdPropietario').val()) return;
+            if (!confirm('Quitar propietario de la marca?')) return;
+
+            $('#marcaAdminIdPropietario').val('');
+            $('#marcaAdminPropietarioNombre').val('');
+            syncQuitarPropietario();
+        });
+
+        syncQuitarPropietario();
+
+        setTimeout(function () {
+            var input = document.getElementById("marcaAdminNombre");
+            if (input) {
+                input.focus();
+                if (!input.readOnly) {
+                    input.select();
+                }
+            }
+        }, 50);
+    })();
+</script>

@@ -1,0 +1,332 @@
+@model WebCore.Models.SystemAdministrationAltaRapidaVm
+@using System.Linq
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Alta rapida de empresa";
+}
+
+<div class="card shadow-sm sysadmin-alta-rapida-page">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Alta rapida de empresa</h6>
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Empresas", "SystemAdministration")">
+            <i class="fas fa-arrow-left mr-1"></i>Volver
+        </a>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">En una sola pantalla podes crear la empresa, la primera sucursal y el usuario administrador inicial.</p>
+
+        <form asp-controller="SystemAdministration" asp-action="GuardarAltaRapidaEmpresa" method="post" novalidate="novalidate">
+            @Html.AntiForgeryToken()
+
+            <div class="validation-summary-valid text-danger mb-3" data-valmsg-summary="true">
+                @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="font-weight-bold text-primary mb-3">Datos de empresa</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-5">
+                        <label>Razon social</label>
+                        @Html.TextBoxFor(m => m.Empresa.RazonSocialAfip, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>CUIT</label>
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.Empresa.Cuit, new { @class = "form-control", autocomplete = "off", maxlength = "20", placeholder = "00-00000000-0" })
+                            <div class="input-group-append">
+                                <button type="button"
+                                        class="btn btn-outline-primary"
+                                        id="btnBuscarAfipAltaRapida"
+                                        title="Buscar en AFIP">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Condicion IVA</label>
+                        @Html.TextBoxFor(m => m.Empresa.CondicionIVA, new { @class = "form-control", list = "condicionesIvaList", autocomplete = "off" })
+                        <datalist id="condicionesIvaList">
+                            @foreach (var condicionIva in (System.Collections.Generic.List<WebCore.Models.SystemAdministrationCondicionIvaVm>)ViewBag.CondicionesIva)
+                            {
+                                <option value="@condicionIva.Descripcion"></option>
+                            }
+                        </datalist>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Nombre fantasia</label>
+                        @Html.TextBoxFor(m => m.Empresa.NombreFantasia, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Domicilio</label>
+                        @Html.TextBoxFor(m => m.Empresa.Domicilio, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Telefono</label>
+                        @Html.TextBoxFor(m => m.Empresa.Telefono, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Email</label>
+                        @Html.TextBoxFor(m => m.Empresa.Email, new { @class = "form-control", type = "email" })
+                    </div>
+                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="font-weight-bold text-primary mb-3">Primera sucursal</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Sucursal</label>
+                        @Html.TextBoxFor(m => m.Sucursal.Sucursal, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Direccion</label>
+                        @Html.TextBoxFor(m => m.Sucursal.Direccion, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Localidad</label>
+                        @Html.TextBoxFor(m => m.Sucursal.Localidad, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Pto. venta AFIP</label>
+                        @Html.TextBoxFor(m => m.Sucursal.CodPuntoVentaAfip, new { @class = "form-control", type = "number", min = "0" })
+                    </div>
+                </div>
+                <div class="form-row">
+                    @if (Model.TieneTelefonoSucursal)
+                    {
+                        <div class="form-group col-md-3">
+                            <label>Telefono sucursal</label>
+                            @Html.TextBoxFor(m => m.Sucursal.Telefono, new { @class = "form-control" })
+                        </div>
+                    }
+                    <div class="form-group col-md-3">
+                        <label>Provincia</label>
+                        @Html.TextBoxFor(m => m.Sucursal.Provincia, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Pais</label>
+                        @Html.TextBoxFor(m => m.Sucursal.Pais, new { @class = "form-control" })
+                    </div>
+                    @if (Model.TieneActivaSucursal)
+                    {
+                        <div class="form-group col-md-3">
+                            <div class="custom-control custom-switch mt-4">
+                                @Html.CheckBoxFor(m => m.Sucursal.Activa, new { @class = "custom-control-input" })
+                                <label class="custom-control-label" for="Sucursal_Activa">Sucursal activa</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="font-weight-bold text-primary mb-3">Usuario administrador inicial</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Nombre</label>
+                        @Html.TextBoxFor(m => m.Usuario.Nombre, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Usuario</label>
+                        @Html.TextBoxFor(m => m.Usuario.Usuario, new { @class = "form-control", autocomplete = "off" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Email</label>
+                        @Html.TextBoxFor(m => m.Usuario.Email, new { @class = "form-control", type = "email" })
+                    </div>
+                    <div class="form-group col-md-2">
+                        <div class="custom-control custom-switch mt-4">
+                            @Html.CheckBoxFor(m => m.Usuario.Admin, new { @class = "custom-control-input" })
+                            <label class="custom-control-label" for="Usuario_Admin">Administrador</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Clave</label>
+                        @Html.PasswordFor(m => m.Usuario.Clave, new { @class = "form-control", autocomplete = "new-password" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Confirmar clave</label>
+                        @Html.PasswordFor(m => m.Usuario.ConfirmarClave, new { @class = "form-control", autocomplete = "new-password" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <div class="custom-control custom-switch mt-4">
+                            @Html.CheckBoxFor(m => m.Usuario.Activo, new { @class = "custom-control-input" })
+                            <label class="custom-control-label" for="Usuario_Activo">Usuario activo</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-4">
+                <h6 class="font-weight-bold text-primary mb-1">Producto &quot;Codigo Generico&quot;</h6>
+                <p class="text-muted small mb-3">Se crea junto con la empresa. Usalo para vender algo sin un codigo especifico cargado en el catalogo.</p>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Codigo</label>
+                        @Html.TextBoxFor(m => m.Empresa.CodigoGenericoCodigo, new { @class = "form-control", type = "number" })
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Nombre</label>
+                        @Html.TextBoxFor(m => m.Empresa.CodigoGenericoNombre, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>IVA</label>
+                        @Html.DropDownListFor(m => m.Empresa.CodigoGenericoIdAlicuotaIva,
+                            ((System.Collections.Generic.List<WebCore.Models.SystemAdministrationAlicuotaIvaVm>)ViewBag.AlicuotasIva)
+                                .Select(a => new SelectListItem { Value = a.IdAlicuotaIva.ToString(), Text = a.Alicuota.ToString("0.##") + "%" }),
+                            new { @class = "form-control" })
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">Crear empresa completa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .sysadmin-alta-rapida-page {
+        font-size: .9rem;
+    }
+
+    .sysadmin-alta-rapida-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .sysadmin-alta-rapida-page .form-control,
+    .sysadmin-alta-rapida-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .sysadmin-alta-rapida-page label,
+    .sysadmin-alta-rapida-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .sysadmin-alta-rapida-page .alert,
+    .sysadmin-alta-rapida-page .small,
+    .sysadmin-alta-rapida-page .text-muted,
+    .sysadmin-alta-rapida-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    @@media (min-width: 1200px) {
+        .sysadmin-alta-rapida-page .form-control,
+        .sysadmin-alta-rapida-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+    }
+</style>
+
+@* TODO(claude): el boton "Buscar en AFIP" llama a Personas/BuscarPadronAfipAjax, que todavia no
+   esta portado a WebCore (Modulo 2 de docs/10-migracion-aspnet-core/README.md, no iniciado).
+   Se preserva el markup/JS identico al original por fidelidad de paridad visual, pero el fetch
+   va a devolver 404 hasta que ese controller se porte -- ver gap en
+   docs/10-migracion-aspnet-core/gaps.md. *@
+<script>
+    (function () {
+        function inicializarAltaRapidaAfip() {
+            var $btnBuscar = $("#btnBuscarAfipAltaRapida");
+            if (!$btnBuscar.length) {
+                return;
+            }
+
+            var urlBuscarAfip = '@Url.Action("BuscarPadronAfipAjax", "Personas")';
+
+            function limpiarCuit(valor) {
+                return (valor || "").replace(/\D/g, "");
+            }
+
+            function mostrarMensaje(tipo, titulo, texto) {
+                if (window.Swal && typeof window.Swal.fire === "function") {
+                    Swal.fire({ icon: tipo, title: titulo, text: texto });
+                } else {
+                    alert(titulo + "\n\n" + texto);
+                }
+            }
+
+            function setValorSiExiste(selector, valor) {
+                if (valor === null || typeof valor === "undefined") {
+                    return;
+                }
+
+                var $input = $(selector);
+                if ($input.length) {
+                    $input.val(valor);
+                }
+            }
+
+            function completarDesdeAfip(resp) {
+                setValorSiExiste("#Empresa_Cuit", limpiarCuit($("#Empresa_Cuit").val()));
+                setValorSiExiste("#Empresa_RazonSocialAfip", resp.razonSocial || "");
+                setValorSiExiste("#Empresa_CondicionIVA", resp.condicionIva || "");
+                setValorSiExiste("#Empresa_Domicilio", resp.domicilio || "");
+                setValorSiExiste("#Empresa_Ciudad", resp.ciudad || "");
+
+                var $dirSucursal = $("#Sucursal_Direccion");
+                if ($dirSucursal.length && !$dirSucursal.val() && resp.domicilio) {
+                    $dirSucursal.val(resp.domicilio);
+                }
+
+                var $localidadSucursal = $("#Sucursal_Localidad");
+                if ($localidadSucursal.length && !$localidadSucursal.val() && resp.ciudad) {
+                    $localidadSucursal.val(resp.ciudad);
+                }
+            }
+
+            $btnBuscar.on("click", function (evt) {
+                evt.preventDefault();
+
+                var $cuit = $("#Empresa_Cuit");
+                var cuit = limpiarCuit($cuit.val());
+                if (cuit.length !== 11) {
+                    mostrarMensaje("warning", "AFIP/ARCA", "Ingrese un CUIT valido de 11 digitos.");
+                    return;
+                }
+
+                $cuit.val(cuit);
+                $btnBuscar.prop("disabled", true);
+
+                $.getJSON(urlBuscarAfip, { cuit: cuit })
+                    .done(function (resp) {
+                        if (!resp || !resp.ok) {
+                            mostrarMensaje((resp && resp.tipo) || "error", "AFIP/ARCA", (resp && resp.msg) || "No se pudo consultar AFIP/ARCA.");
+                            return;
+                        }
+
+                        completarDesdeAfip(resp);
+                        mostrarMensaje("success", "AFIP/ARCA", resp.msg || "Datos recuperados desde AFIP/ARCA.");
+                    })
+                    .fail(function (xhr) {
+                        var msg = "No se pudo conectar con AFIP/ARCA.";
+                        if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
+                            msg = xhr.responseJSON.msg;
+                        }
+
+                        mostrarMensaje("error", "AFIP/ARCA", msg);
+                    })
+                    .always(function () {
+                        $btnBuscar.prop("disabled", false);
+                    });
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", inicializarAltaRapidaAfip);
+        } else {
+            inicializarAltaRapidaAfip();
+        }
+    })();
+</script>

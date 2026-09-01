@@ -1,0 +1,71 @@
+@model WebCore.Models.CatalogoGlobalTiposProductoVm
+
+<form id="formCatalogoGlobalTiposProducto" class="form-catalogo-global-tipos h-100">
+    @Html.AntiForgeryToken()
+
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <i class="fas fa-globe-americas mr-1"></i> Catálogo global de tipos de producto
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body modal-catalogo-global-tipos-body">
+        <div class="row align-items-end mb-3 flex-shrink-0">
+            <div class="col-lg-7 mb-2 mb-lg-0">
+                <label class="font-weight-bold mb-1">Buscar por nombre</label>
+                <input type="text"
+                       class="form-control"
+                       id="txtBuscarCatalogoGlobalTiposProducto"
+                       value="@Model.Busqueda"
+                       autocomplete="off"
+                       placeholder="Escriba para filtrar el catálogo global">
+            </div>
+            <div class="col-lg-5">
+                <div class="alert alert-info mb-0 py-2 px-3">
+                    Seleccione los tipos globales que desea agregar a la empresa actual.
+                </div>
+            </div>
+        </div>
+
+        <div id="alertCatalogoGlobalTiposProducto" class="alert alert-danger d-none py-2 px-3 flex-shrink-0"></div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2 flex-shrink-0">
+            <div class="d-flex flex-wrap align-items-center">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox" class="custom-control-input" id="chkSeleccionarTodosTiposGlobales">
+                    <label class="custom-control-label" for="chkSeleccionarTodosTiposGlobales">Seleccionar todos</label>
+                </div>
+            </div>
+
+            <small class="text-muted" id="lblResumenCatalogoGlobalTiposProducto">
+                @Model.Tipos.Count tipo(s) disponible(s)
+            </small>
+        </div>
+
+        <div class="table-responsive border rounded tabla-catalogo-global-tipos">
+            <table class="table table-sm table-hover mb-0" id="tablaCatalogoGlobalTiposProducto">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width:42px;" class="text-center">Sel.</th>
+                        <th>Tipo de producto</th>
+                        <th style="width:110px;">Orden</th>
+                        <th style="width:220px;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyCatalogoGlobalTiposProducto">
+                    @Html.Partial("~/Views/Productos/_CatalogoGlobalTiposProductoRows.cshtml", Model.Tipos)
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnImportarTiposProductoGlobales">
+            <i class="fas fa-download mr-1"></i> Agregar tipos de producto
+        </button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+    </div>
+</form>

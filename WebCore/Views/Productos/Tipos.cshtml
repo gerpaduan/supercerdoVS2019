@@ -1,0 +1,529 @@
+@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "Tipos de Producto";
+
+    bool puedeEditar = ViewBag.PuedeEditarTiposProducto != null && (bool)ViewBag.PuedeEditarTiposProducto;
+    string buscar = ViewBag.BuscarTipoProducto as string ?? "";
+}
+
+<div class="container-fluid productos-tipos-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="mb-1">Tipos de Producto</h3>
+            <div class="text-muted">Administración de tipos disponibles para Productos.</div>
+        </div>
+        <div class="d-flex flex-wrap">
+            <a href="@Url.Action("Index", "Productos")" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left mr-1"></i> Volver a Productos
+            </a>
+            @if (puedeEditar)
+            {
+                <button type="button" class="btn btn-outline-info mr-2" id="btnCatalogoGlobalTiposProducto">
+                    <i class="fas fa-globe-americas mr-1"></i> Catálogo Global
+                </button>
+                <button type="button" class="btn btn-primary" id="btnNuevoTipoProducto">
+                    <i class="fas fa-plus mr-1"></i> Nuevo tipo de producto
+                </button>
+            }
+        </div>
+    </div>
+
+    <form asp-controller="Productos" asp-action="Tipos" method="get" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="form-row align-items-end">
+                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                    <label class="small font-weight-bold text-muted mb-1">Buscar tipo de producto</label>
+                    <input type="text"
+                           class="form-control"
+                           name="buscar"
+                           value="@buscar"
+                           autocomplete="off"
+                           placeholder="Escribí un tipo..." />
+                </div>
+                <div class="col-12 col-md-6 col-lg-3 mb-2 d-flex">
+                    <button type="submit" class="btn btn-outline-primary mr-2">
+                        <i class="fas fa-search mr-1"></i> Buscar
+                    </button>
+                    <a href="@Url.Action("Tipos", "Productos")" class="btn btn-outline-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="alert alert-info">
+        Los tipos reservados por el sistema no pueden modificarse ni eliminarse.
+    </div>
+
+    <form action="/" method="post" id="formTokenTiposProducto">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0" id="tablaTiposProductoWrap">
+            @Html.Partial("~/Views/Productos/_TiposProductoTabla.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTipoProducto" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTipoProductoTitulo">Tipo de producto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalTipoProductoBody">
+                <div class="text-center text-muted py-4">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCatalogoGlobalTiposProducto" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-catalogo-global-tipos-dialog" role="document">
+        <div class="modal-content" id="modalCatalogoGlobalTiposProductoContent">
+            <div class="modal-body">
+                <div class="text-center text-muted py-5">Cargando...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .productos-tipos-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .productos-tipos-page .alert,
+    .productos-tipos-page .text-muted,
+    .productos-tipos-page .small,
+    .productos-tipos-page label {
+        font-size: .8rem;
+    }
+
+    .productos-tipos-page .form-control {
+        font-size: .87rem;
+        min-height: 2.3rem;
+        padding: .32rem .58rem;
+    }
+
+    .productos-tipos-page .table {
+        font-size: .84rem;
+    }
+
+    .productos-tipos-page .table th,
+    .productos-tipos-page .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .productos-tipos-page .table thead th,
+    .productos-tipos-page .table > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .productos-tipos-page .badge {
+        font-size: .76rem;
+    }
+
+    .productos-tipos-page .btn {
+        font-size: .83rem;
+        padding: .34rem .65rem;
+    }
+
+    .productos-tipos-page .btn.btn-sm {
+        font-size: .76rem;
+        padding: .28rem .5rem;
+    }
+
+    .productos-tipos-page .modal-header,
+    .productos-tipos-page .modal-body {
+        font-size: .87rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .productos-tipos-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .productos-tipos-page .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .productos-tipos-page .form-control {
+            font-size: .84rem;
+            min-height: 2.15rem;
+            padding: .28rem .54rem;
+        }
+
+        .productos-tipos-page .table {
+            font-size: .8rem;
+        }
+
+        .productos-tipos-page .table thead th,
+        .productos-tipos-page .table > thead > tr > th {
+            font-size: .68rem;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script>
+        (function () {
+            var urlModal = '@Url.Action("TipoProductoModal", "Productos")';
+            var urlGuardar = '@Url.Action("GuardarTipoProducto", "Productos")';
+            var urlEliminar = '@Url.Action("EliminarTipoProducto", "Productos")';
+            var urlVerGlobales = '@Url.Action("VerGlobalesTiposProducto", "Productos")';
+            var urlBuscarGlobales = '@Url.Action("BuscarGlobalesTiposProducto", "Productos")';
+            var urlImportarGlobales = '@Url.Action("ImportarTiposProductoSeleccionados", "Productos")';
+            var token = $('#formTokenTiposProducto input[name="__RequestVerificationToken"]').val();
+            var catalogoGlobalTiposState = {
+                selectedTipos: {}
+            };
+
+            function abrirModal(tipo) {
+                var titulo = tipo ? 'Modificar tipo de producto' : 'Nuevo tipo de producto';
+                $('#modalTipoProductoTitulo').text(titulo);
+                $('#modalTipoProductoBody').html('<div class="text-center text-muted py-4">Cargando...</div>');
+                $('#modalTipoProducto').modal('show');
+
+                $.get(urlModal, { tipo: tipo || '' })
+                    .done(function (html) {
+                        $('#modalTipoProductoBody').html(html);
+                    })
+                    .fail(function (xhr) {
+                        var html = xhr && xhr.responseText
+                            ? xhr.responseText
+                            : '<div class="alert alert-danger mb-0">No se pudo abrir el formulario.</div>';
+                        $('#modalTipoProductoBody').html(html);
+                    });
+            }
+
+            function normalizarTipo(tipo) {
+                return (tipo || '').toString().trim().toLowerCase();
+            }
+
+            function setAlertCatalogoGlobalTipos(mensaje) {
+                var $alert = $('#alertCatalogoGlobalTiposProducto');
+                if (!$alert.length) return;
+
+                if (!mensaje) {
+                    $alert.addClass('d-none').html('');
+                    return;
+                }
+
+                $alert.removeClass('d-none').html(mensaje);
+            }
+
+            function actualizarResumenCatalogoGlobalTipos() {
+                var visibles = $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').length;
+                var seleccionados = Object.keys(catalogoGlobalTiposState.selectedTipos).length;
+                $('#lblResumenCatalogoGlobalTiposProducto').text(visibles + ' tipo(s) visible(s) - ' + seleccionados + ' seleccionado(s)');
+            }
+
+            function snapshotCatalogoGlobalTiposState() {
+                catalogoGlobalTiposState.selectedTipos = {};
+
+                $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').each(function () {
+                    var $row = $(this);
+                    var $chk = $row.find('.chk-global-tipo-producto');
+                    if ($chk.length && !$chk.is(':disabled') && $chk.is(':checked')) {
+                        catalogoGlobalTiposState.selectedTipos[normalizarTipo($row.data('tipo'))] = true;
+                    }
+                });
+            }
+
+            function restoreCatalogoGlobalTiposState() {
+                $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').each(function () {
+                    var $row = $(this);
+                    var key = normalizarTipo($row.data('tipo'));
+                    var checked = !!catalogoGlobalTiposState.selectedTipos[key];
+                    var $chk = $row.find('.chk-global-tipo-producto');
+                    if ($chk.length && !$chk.is(':disabled')) {
+                        $chk.prop('checked', checked);
+                    }
+                });
+
+                var $checksDisponibles = $('#tbodyCatalogoGlobalTiposProducto .chk-global-tipo-producto:not(:disabled)');
+                $('#chkSeleccionarTodosTiposGlobales').prop('checked', $checksDisponibles.length > 0 && $checksDisponibles.filter(':checked').length === $checksDisponibles.length);
+                actualizarResumenCatalogoGlobalTipos();
+            }
+
+            function bindCatalogoGlobalTiposEvents() {
+                $('#txtBuscarCatalogoGlobalTiposProducto').off('input').on('input', function () {
+                    snapshotCatalogoGlobalTiposState();
+
+                    $.get(urlBuscarGlobales, { q: ($(this).val() || '').toString() })
+                        .done(function (resp) {
+                            if (!resp || resp.ok === false) {
+                                setAlertCatalogoGlobalTipos(resp && resp.mensaje ? resp.mensaje : 'No se pudo buscar en el catálogo global.');
+                                return;
+                            }
+
+                            $('#tbodyCatalogoGlobalTiposProducto').html(resp.html || '');
+                            restoreCatalogoGlobalTiposState();
+                            setAlertCatalogoGlobalTipos('');
+                        })
+                        .fail(function () {
+                            setAlertCatalogoGlobalTipos('No se pudo buscar en el catálogo global.');
+                        });
+                });
+
+                $('#chkSeleccionarTodosTiposGlobales').off('change').on('change', function () {
+                    var checked = $(this).is(':checked');
+                    $('#tbodyCatalogoGlobalTiposProducto .chk-global-tipo-producto:not(:disabled)').prop('checked', checked);
+                    snapshotCatalogoGlobalTiposState();
+                    actualizarResumenCatalogoGlobalTipos();
+                });
+
+                $('#modalCatalogoGlobalTiposProducto')
+                    .off('change', '.chk-global-tipo-producto')
+                    .on('change', '.chk-global-tipo-producto', function () {
+                        snapshotCatalogoGlobalTiposState();
+                        var $checksDisponibles = $('#tbodyCatalogoGlobalTiposProducto .chk-global-tipo-producto:not(:disabled)');
+                        $('#chkSeleccionarTodosTiposGlobales').prop('checked', $checksDisponibles.length > 0 && $checksDisponibles.filter(':checked').length === $checksDisponibles.length);
+                        actualizarResumenCatalogoGlobalTipos();
+                    })
+                    .off('dblclick', '#tbodyCatalogoGlobalTiposProducto tr[data-tipo]')
+                    .on('dblclick', '#tbodyCatalogoGlobalTiposProducto tr[data-tipo]', function (e) {
+                        if ($(e.target).is('input, button, label')) return;
+
+                        var $chk = $(this).find('.chk-global-tipo-producto');
+                        if (!$chk.length || $chk.is(':disabled')) return;
+
+                        $chk.prop('checked', !$chk.is(':checked')).trigger('change');
+                    });
+
+                $('#btnImportarTiposProductoGlobales').off('click').on('click', function () {
+                    snapshotCatalogoGlobalTiposState();
+
+                    var seleccionados = [];
+                    $('#tbodyCatalogoGlobalTiposProducto tr[data-tipo]').each(function () {
+                        var $row = $(this);
+                        var $chk = $row.find('.chk-global-tipo-producto');
+                        if ($chk.length && !$chk.is(':disabled') && $chk.is(':checked')) {
+                            seleccionados.push(($row.data('tipo') || '').toString());
+                        }
+                    });
+
+                    if (!seleccionados.length) {
+                        setAlertCatalogoGlobalTipos('Seleccione al menos un tipo de producto para agregar.');
+                        return;
+                    }
+
+                    var postData = {
+                        __RequestVerificationToken: $('#formCatalogoGlobalTiposProducto input[name="__RequestVerificationToken"]').val()
+                    };
+
+                    $.each(seleccionados, function (index, tipo) {
+                        postData['Tipos[' + index + '].Tipo'] = tipo;
+                    });
+
+                    setAlertCatalogoGlobalTipos('');
+
+                    $.ajax({
+                        url: urlImportarGlobales,
+                        type: 'POST',
+                        data: postData
+                    }).done(function (resp) {
+                        if (!resp || resp.ok === false) {
+                            setAlertCatalogoGlobalTipos(resp && resp.mensaje ? resp.mensaje : 'No se pudieron agregar los tipos seleccionados.');
+                            return;
+                        }
+
+                        $('#modalCatalogoGlobalTiposProducto').modal('hide');
+                        Swal.fire('Catálogo global', resp.mensaje || 'Se agregaron correctamente los tipos de producto seleccionados.', 'success')
+                            .then(function () {
+                                window.location.reload();
+                            });
+                    }).fail(function () {
+                        setAlertCatalogoGlobalTipos('No se pudieron agregar los tipos seleccionados.');
+                    });
+                });
+
+                actualizarResumenCatalogoGlobalTipos();
+            }
+
+            function abrirCatalogoGlobalTiposProducto() {
+                catalogoGlobalTiposState.selectedTipos = {};
+                $('#modalCatalogoGlobalTiposProductoContent').html('<div class="modal-body"><div class="text-center text-muted py-5">Cargando...</div></div>');
+                $('#modalCatalogoGlobalTiposProducto').modal('show');
+
+                $.get(urlVerGlobales)
+                    .done(function (html) {
+                        $('#modalCatalogoGlobalTiposProductoContent').html(html);
+                        bindCatalogoGlobalTiposEvents();
+                        setTimeout(function () {
+                            $('#txtBuscarCatalogoGlobalTiposProducto').trigger('focus');
+                        }, 150);
+                    })
+                    .fail(function () {
+                        $('#modalCatalogoGlobalTiposProductoContent').html('<div class="modal-body"><div class="alert alert-danger mb-0">No se pudo cargar el catálogo global de tipos de producto.</div></div>');
+                    });
+            }
+
+            $(document)
+                .off('click.tiposProductoCatalogoGlobal', '#btnCatalogoGlobalTiposProducto')
+                .on('click.tiposProductoCatalogoGlobal', '#btnCatalogoGlobalTiposProducto', function () {
+                    abrirCatalogoGlobalTiposProducto();
+                })
+                .off('click.tiposProductoNuevo', '#btnNuevoTipoProducto')
+                .on('click.tiposProductoNuevo', '#btnNuevoTipoProducto', function () {
+                    abrirModal('');
+                })
+                .off('click.tiposProductoEditar', '.btn-editar-tipo-producto')
+                .on('click.tiposProductoEditar', '.btn-editar-tipo-producto', function () {
+                    abrirModal($(this).data('tipo'));
+                })
+                .off('submit.tiposProductoGuardar', '#formTipoProducto')
+                .on('submit.tiposProductoGuardar', '#formTipoProducto', function (e) {
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: urlGuardar,
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        success: function (resp) {
+                            if (!resp || !resp.success) {
+                                $('#tipoProductoError').removeClass('d-none').text(resp && resp.message ? resp.message : 'No se pudo guardar el tipo de producto.');
+                                return;
+                            }
+
+                            if (window.SaveSuccessAlert) {
+                                window.SaveSuccessAlert.show(resp.message || 'El tipo de producto se guardó correctamente.', {
+                                    then: function () { window.location.reload(); }
+                                });
+                            } else {
+                                alert(resp.message || 'El tipo de producto se guardó correctamente.');
+                                window.location.reload();
+                            }
+                        },
+                        error: function () {
+                            $('#tipoProductoError').removeClass('d-none').text('No se pudo guardar el tipo de producto.');
+                        }
+                    });
+                })
+                .off('click.tiposProductoEliminar', '.btn-eliminar-tipo-producto')
+                .on('click.tiposProductoEliminar', '.btn-eliminar-tipo-producto', function () {
+                    var tipo = ($(this).data('tipo') || '').toString();
+                    if (!tipo) return;
+
+                    if (!confirm('¿Está seguro que desea eliminar el Tipo Producto: ' + tipo.toUpperCase() + '?')) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: urlEliminar,
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: token,
+                            tipo: tipo
+                        },
+                        success: function (resp) {
+                            if (!resp || !resp.success) {
+                                alert(resp && resp.message ? resp.message : 'No se pudo eliminar el tipo de producto.');
+                                return;
+                            }
+
+                            alert(resp.message || 'El tipo de producto se eliminó correctamente.');
+                            window.location.reload();
+                        },
+                        error: function () {
+                            alert('No se pudo eliminar el tipo de producto.');
+                        }
+                    });
+                });
+        })();
+    </script>
+
+    <style>
+        .modal-catalogo-global-tipos-dialog {
+            max-width: 960px;
+            margin: 1rem auto;
+        }
+
+        #modalCatalogoGlobalTiposProducto .modal-content {
+            display: flex;
+            flex-direction: column;
+            min-height: 80vh;
+            max-height: calc(100vh - 2rem);
+        }
+
+        .form-catalogo-global-tipos {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .modal-catalogo-global-tipos-body {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .tabla-catalogo-global-tipos {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        #tablaCatalogoGlobalTiposProducto thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8f9fa;
+        }
+
+        #tbodyCatalogoGlobalTiposProducto tr[data-tipo] {
+            cursor: default;
+        }
+
+        html.dark-mode #modalCatalogoGlobalTiposProducto .modal-content {
+            background: #182232;
+            color: #e6edf5;
+        }
+
+        html.dark-mode #tablaCatalogoGlobalTiposProducto thead th {
+            background: #243447;
+            color: #e6edf5;
+        }
+
+        html.dark-mode #tbodyCatalogoGlobalTiposProducto tr[data-bloqueado="1"] {
+            background-color: rgba(255, 255, 255, 0.06);
+            color: #9fb0c3;
+        }
+
+        html.dark-mode #tbodyCatalogoGlobalTiposProducto tr[data-bloqueado="1"] td {
+            background-color: transparent;
+        }
+
+        html.dark-mode #tbodyCatalogoGlobalTiposProducto tr[data-bloqueado="1"] .badge.badge-secondary {
+            background-color: #495a6d;
+            color: #e6edf5;
+        }
+
+        @@media (max-width: 768px) {
+            .modal-catalogo-global-tipos-dialog {
+                margin: .5rem;
+            }
+
+            #modalCatalogoGlobalTiposProducto .modal-content {
+                min-height: calc(100vh - 1rem);
+                max-height: calc(100vh - 1rem);
+            }
+        }
+    </style>
+}

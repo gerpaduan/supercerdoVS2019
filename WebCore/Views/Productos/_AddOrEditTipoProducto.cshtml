@@ -1,0 +1,81 @@
+@model WebCore.Models.TipoProductoEditVm
+
+@{
+    bool esEdicion = Model != null && !string.IsNullOrWhiteSpace(Model.TipoOriginal);
+    bool reservado = Model != null && Model.Reservado;
+    bool mostrarBotonModificar = esEdicion && !reservado;
+    bool soloLecturaInicial = mostrarBotonModificar;
+    string textoGuardar = esEdicion ? "Guardar cambios" : "Guardar tipo de producto";
+    string claseGuardar = esEdicion ? "btn btn-primary d-none" : "btn btn-primary";
+    string alertaReservadoHtml = reservado
+        ? "<div class=\"alert alert-warning\">El tipo seleccionado es reservado por el sistema y no puede modificarse.</div>"
+        : "";
+    string botonModificarHtml = mostrarBotonModificar
+        ? "<button type=\"button\" class=\"btn btn-secondary mr-2\" id=\"btnHabilitarEdicionTipoProducto\" data-edit-readonly-ignore=\"true\">Modificar</button>"
+        : "";
+}
+
+<form action="/" method="post" id="formTipoProducto">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="TipoOriginal" value="@(Model != null ? Model.TipoOriginal : "")" />
+
+    <div id="tipoProductoError" class="alert alert-danger d-none"></div>
+
+    @Html.Raw(alertaReservadoHtml)
+
+    <div class="form-group">
+        <label for="tipoProductoNombre">Nombre del tipo de producto</label>
+        <input type="text"
+               class="form-control"
+               id="tipoProductoNombre"
+               name="Tipo"
+               maxlength="100"
+               autocomplete="off"
+               value="@(Model != null ? Model.Tipo : "")" />
+    </div>
+
+    <div class="form-group">
+        <label for="tipoProductoOrden">Orden</label>
+        <input type="number"
+               class="form-control"
+               id="tipoProductoOrden"
+               name="Orden"
+               min="1"
+               step="1"
+               value="@(Model != null ? Model.Orden : 100)" />
+        <small class="form-text text-muted">Orden que tendrá en la lista el tipo de producto.</small>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+            Volver
+        </button>
+        <div>
+            @Html.Raw(botonModificarHtml)
+            <button type="submit" class="@claseGuardar" id="btnGuardarTipoProducto">
+                @textoGuardar
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    (function () {
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formTipoProducto",
+            soloLecturaInicial: @(soloLecturaInicial ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionTipoProducto",
+            saveButtonSelector: "#btnGuardarTipoProducto"
+        });
+
+        setTimeout(function () {
+            var input = document.getElementById("tipoProductoNombre");
+            if (input) {
+                input.focus();
+                if (!input.readOnly) {
+                    input.select();
+                }
+            }
+        }, 50);
+    })();
+</script>

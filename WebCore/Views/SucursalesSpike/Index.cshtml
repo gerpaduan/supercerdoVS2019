@@ -1,0 +1,25 @@
+@model List<Entidades.Sucursal>
+@{
+    ViewData["Title"] = "Spike: Sucursales (WebCore)";
+}
+
+<h1>Spike de migración — Sucursales</h1>
+<p>Esta vista prueba que <code>Negocio.Sucursal</code> (compartido con <code>Web</code> y <code>Presentacion</code>) funciona igual desde ASP.NET Core.</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.IdSucursal</td>
+                <td>@s.SucursalNombre</td>
+            </tr>
+        }
+    </tbody>
+</table>
