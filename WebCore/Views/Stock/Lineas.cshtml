@@ -1,0 +1,416 @@
+@model WebCore.Models.StockLineasIndexVm
+@using Entidades
+@using System.Collections.Generic
+@using System.Linq
+
+@{
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+}
+
+<div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="stock">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h4 class="mb-2 mb-md-0">Lineas de stock</h4>
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock", new { idSucursal = Model.IdSucursal, tipoCompra = Model.TipoCompra, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") })">
+            <i class="fas fa-arrow-left mr-1"></i> Volver al indice
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Lineas", "Stock")" class="js-form-filtros-lineas">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                    Se modificaron filtros principales. Presioná <strong>Buscar</strong> para recargar los datos.
+                </div>
+
+                <div class="elaborados-filtros-grid lineas-filtros-grid cols-4">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Sucursal</label>
+                        <select name="idSucursal" id="idSucursalStockLineas" class="form-control">
+                            <option value="0" selected="@(Model.IdSucursal == 0 ? "selected" : null)">Todas</option>
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursal ? "selected" : null)">@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha desde</label>
+                        <input name="fechaDesde" id="fechaDesdeStockLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha hasta</label>
+                        <input name="fechaHasta" id="fechaHastaStockLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Producto</label>
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="producto" value="@Model.Producto" placeholder="Codigo o descripcion" autocomplete="off" />
+                    </div>
+                    <div class="form-group mb-0 lineas-filtro-accion">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarStockLineas">
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <div id="estadoBusquedaStockLineas" class="text-muted small">Resultados actualizados.</div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12 col-md-4 mb-3">
+                        <label class="elaborados-filtro-label">Tipo de operación</label>
+                        <select class="form-control js-filtro-vivo" data-live-filter="tipoOperacion">
+                            <option value="">Todos</option>
+                            <option value="ingreso stock" selected="@(Model.TipoCompra == "Ingreso Stock" ? "selected" : null)">Ingreso</option>
+                            <option value="egreso stock" selected="@(Model.TipoCompra == "Egreso Stock" ? "selected" : null)">Egreso</option>
+                            <option value="cierre stock" selected="@(Model.TipoCompra == "Cierre Stock" ? "selected" : null)">Cierre</option>
+                            <option value="pesaje cortes" selected="@(Model.TipoCompra == "Pesaje Cortes" ? "selected" : null)">Pesaje</option>
+                            <option value="ajuste stock" selected="@(Model.TipoCompra == "Ajuste Stock" ? "selected" : null)">Ajuste</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-1">
+                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesStock" />
+                    <label class="custom-control-label" for="expandirDetallesStock">Ver detalles</label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lineas-resumen-grid cols-4 mb-3">
+        <div class="card border-left-primary shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalKg">0,000</div></div></div>
+        <div class="card border-left-success shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total pesos</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalImporte">$ 0,00</div></div></div>
+        <div class="card border-left-info shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-info text-uppercase mb-1">Cantidad de lineas</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalLineas">0</div></div></div>
+        <div class="card border-left-secondary shadow-sm lineas-resumen-card"><div class="card-body py-3"><div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Cantidad de registros</div><div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRegistros">0</div></div></div>
+    </div>
+
+    <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-server @(Model.Registros != null && Model.Registros.Count > 0 ? "d-none" : "")">No se encontraron registros de stock con lineas para los filtros seleccionados.</div>
+    <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-client d-none">No hay resultados con el filtro en vivo.</div>
+
+    @if (Model.Registros != null)
+    {
+        foreach (var registro in Model.Registros)
+        {
+            var tipoOperacion = registro.Campos.FirstOrDefault(x => x.Etiqueta == "Tipo de operacion");
+            <div class="card shadow-sm mb-3 linea-registro-card js-registro-card"
+                 data-tipoOperacion="@(tipoOperacion != null ? tipoOperacion.Valor : "")">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                        <div>
+                            <div class="linea-resumen-principal">@registro.ResumenCompacto</div>
+                            <div class="linea-resumen-secundario">@registro.ResumenSecundario</div>
+                        </div>
+                        <div class="linea-resumen-tools mt-2 mt-md-0">
+                            <span class="badge badge-primary badge-pill px-3 py-2">@registro.TotalKg.ToString("N3") kg</span>
+                            <a class="btn btn-sm btn-outline-primary" href="@registro.EditUrl">Ver registro</a>
+                        </div>
+                    </div>
+                    <div class="row mt-3 linea-registro-extra d-none">
+                        @foreach (var campo in registro.Campos)
+                        {
+                            <div class="col-12 col-md-4 mb-2">
+                                <div class="small text-muted text-uppercase">@campo.Etiqueta</div>
+                                <div>@campo.Valor</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="table-responsive js-sync-scroll-body">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Código producto</th>
+                                <th>Producto</th>
+                                <th class="text-right">Cantidad / kg</th>
+                                <th class="text-center">Tipo / signo</th>
+                                <th>Observación línea</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var linea in registro.Lineas)
+                            {
+                                <tr class="js-linea-row" data-codigo="@linea.Codigo" data-producto="@linea.Producto" data-kg="@linea.CantidadKg" data-total="0" data-unidades="0">
+                                    <td>@linea.Codigo</td>
+                                    <td>@linea.Producto</td>
+                                    <td class="text-right">@linea.CantidadKgTexto</td>
+                                    <td class="text-center">@linea.Signo</td>
+                                    <td>@linea.Observacion</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .container-fluid[data-lineas-agrupadas-page="stock"] {
+        font-size: .9rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        margin-bottom: .18rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .form-control,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .btn {
+        min-height: 2.35rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .alert,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .small,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .text-muted,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .custom-control-label {
+        font-size: .8rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-resumen-grid {
+        gap: .65rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-resumen-card .card-body {
+        padding: .58rem .76rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-resumen-card .text-xs {
+        font-size: .67rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-resumen-card .h5 {
+        font-size: .96rem;
+        line-height: 1.05;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .linea-registro-card .card-header {
+        padding: .68rem .82rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .linea-resumen-principal {
+        font-size: .86rem;
+        line-height: 1.15;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .linea-resumen-secundario,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .linea-registro-extra .small,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-empty-state {
+        font-size: .78rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .linea-resumen-tools .badge,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .linea-resumen-tools .btn {
+        font-size: .78rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table {
+        font-size: .84rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table th,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table thead th,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table thead.thead-light th,
+    .container-fluid[data-lineas-agrupadas-page="stock"] .table .thead-light th {
+        font-size: .73rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    @@media (min-width: 1200px) {
+        .container-fluid[data-lineas-agrupadas-page="stock"] .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .form-control,
+        .container-fluid[data-lineas-agrupadas-page="stock"] .elaborados-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-resumen-card .card-body {
+            padding: .5rem .7rem !important;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .lineas-resumen-card .h5 {
+            font-size: .86rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .linea-registro-card .card-header {
+            padding: .6rem .78rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .linea-resumen-principal {
+            font-size: .81rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .table {
+            font-size: .8rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .table thead th,
+        .container-fluid[data-lineas-agrupadas-page="stock"] .table > thead > tr > th {
+            font-size: .68rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="stock"] .table thead.thead-light th,
+        .container-fluid[data-lineas-agrupadas-page="stock"] .table .thead-light th {
+            font-size: .68rem !important;
+            padding-top: .34rem;
+            padding-bottom: .34rem;
+        }
+    }
+</style>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
+
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.querySelector('.js-form-filtros-lineas');
+            if (!form) return;
+
+            var inputSucursal = document.getElementById('idSucursalStockLineas');
+            var inputFechaDesde = document.getElementById('fechaDesdeStockLineas');
+            var inputFechaHasta = document.getElementById('fechaHastaStockLineas');
+            var alerta = document.getElementById('alertaFiltrosPendientes');
+            var estado = document.getElementById('estadoBusquedaStockLineas');
+            var btnBuscar = document.getElementById('btnBuscarStockLineas');
+            var btnTexto = btnBuscar ? btnBuscar.querySelector('.btn-buscar-texto') : null;
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+            };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
+                    window.ModalRequestLoading.trackNavigation(message || 'Cargando solicitud...');
+                }
+            }
+
+            function submitConLoader() {
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAviso() {
+                if (!alerta) return;
+                alerta.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscando(mensaje) {
+                if (btnBuscar) btnBuscar.disabled = true;
+                if (btnTexto) btnTexto.textContent = ' Cargando...';
+                if (estado) estado.textContent = mensaje || 'Actualizando búsqueda...';
+            }
+
+            function enviarEnVivo() {
+                setBuscando('Actualizando búsqueda en vivo...');
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                }
+
+                submitConLoader();
+            }
+
+            if (inputFechaDesde) {
+                inputFechaDesde.addEventListener('change', actualizarAviso);
+            }
+
+            if (inputFechaHasta) {
+                inputFechaHasta.addEventListener('change', actualizarAviso);
+            }
+
+            if (inputSucursal) {
+                inputSucursal.addEventListener('change', enviarEnVivo);
+            }
+
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    form.dataset.loadingSubmitPending = '';
+                    return;
+                }
+
+                event.preventDefault();
+                fechasAplicadas = {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+                };
+                actualizarAviso();
+                setBuscando('Actualizando búsqueda...');
+            });
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+                form.dataset.loadingSubmitPending = 'true';
+                submitConLoader();
+            });
+        })();
+    </script>
+    <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js?v=1")"></script>
+}

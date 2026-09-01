@@ -1,0 +1,21 @@
+@* Tarjeta colapsable de camara + boton para leer codigo de barra.
+   Reusa la logica de Scripts/app/barcode-code-input.js (misma validacion EAN-8/13
+   y doble lectura que Views/Productos/AddOrEdit.cshtml). Requiere que la vista
+   incluya scanner.js (BarcodeScanner) antes de barcode-code-input.js. *@
+<div class="col-12 scanner-shared-card" id="scannerContainer" style="display:none;">
+    <div class="card shadow-sm">
+        <div class="card-body p-2">
+            <div class="scanner-wrapper">
+                <video id="videoScanner" autoplay muted playsinline></video>
+                <div class="scanner-line"></div>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between mt-2">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">Flash</button>
+                <button type="button" class="btn btn-warning btn-sm" id="btnLimpiarScanner">Limpiar</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cámara</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="beep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>

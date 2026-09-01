@@ -1,0 +1,40 @@
+@{
+    // Teclado numerico en pantalla, generico y reusable entre vistas (ver
+    // Web/Scripts/app/numeric-keypad.js). Por ahora solo desktop (d-none d-lg-block) --
+    // pedido explicito, se puede sumar mobile mas adelante si hace falta.
+    // ViewBag.NumericKeypadId: id del contenedor, para poder tener mas de una instancia
+    // en la misma pagina si algun dia hiciera falta. Default: "numericKeypad".
+    string keypadId = ViewBag.NumericKeypadId as string;
+    if (string.IsNullOrWhiteSpace(keypadId))
+    {
+        keypadId = "numericKeypad";
+    }
+}
+<div class="d-none d-lg-block numeric-keypad-wrap">
+    <div class="card bg-light mb-3" id="@keypadId">
+        <div class="card-body">
+            <h6 class="font-weight-bold text-uppercase text-muted mb-2">Teclado</h6>
+            <div class="numeric-keypad-grid">
+                <button type="button" class="btn btn-light btn-key" data-key="7">7</button>
+                <button type="button" class="btn btn-light btn-key" data-key="8">8</button>
+                <button type="button" class="btn btn-light btn-key" data-key="9">9</button>
+                <button type="button" class="btn btn-warning btn-key" data-key="BACKSPACE" title="Borrar">
+                    <i class="fas fa-backspace"></i>
+                </button>
+
+                <button type="button" class="btn btn-light btn-key" data-key="4">4</button>
+                <button type="button" class="btn btn-light btn-key" data-key="5">5</button>
+                <button type="button" class="btn btn-light btn-key" data-key="6">6</button>
+                <button type="button" class="btn btn-secondary btn-key" data-key="*">*</button>
+
+                <button type="button" class="btn btn-light btn-key" data-key="1">1</button>
+                <button type="button" class="btn btn-light btn-key" data-key="2">2</button>
+                <button type="button" class="btn btn-light btn-key" data-key="3">3</button>
+                <button type="button" class="btn btn-info btn-enter numeric-keypad-key-enter" data-key="ENTER">Enter</button>
+
+                <button type="button" class="btn btn-light btn-key numeric-keypad-key-zero" data-key="0">0</button>
+                <button type="button" class="btn btn-light btn-key" data-key=".">.</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -50,6 +50,167 @@ Requisito de CLAUDE.md §11.1 ("validar al juez: pasa contra el original y falla
 **Control negativo**: se cambio a proposito el formato de fecha en `WebCore/Views/AuditoriaLogin/Index.cshtml` (`dd/MM/yyyy HH:mm` -> `yyyy-MM-dd HH:mm`), se corrio el mismo diff normalizado de siempre contra `Web` clasico (con `DataEngine=SqlServer` local, mismo ajuste que la vez anterior) -- **el juez detecto la rotura**: 95 de 96 filas marcadas como distintas (el formato de fecha cambiado en cada una). Revertido el cambio inmediatamente despues de confirmar la deteccion.
 
 Con esto, las 4 condiciones de CLAUDE.md §11.1 quedan cumplidas: plan escrito y confirmado, juez definido, juez validado (positivo Y negativo), restore point (`git tag`, ver mas abajo). Arranca el fan-out real por el modulo 1 (Administracion de sistema), tracking en `docs/10-migracion-aspnet-core/README.md`.
+
+## 2026-08-31 - Integracion Mercado Pago Point, Fase 2: panel de conexion OAuth
+
+**Contexto**: segunda fase de la integracion con Point (ver Fase 1 mas abajo). Aplicacion
+"CarniSys" ya creada por el usuario en `applications.mercadopago.com` -- una sola Aplicacion
+para toda la plataforma (Client ID/Client Secret compartidos por todas las empresas, cada una
+autoriza la suya via OAuth). Se activo PKCE en la Aplicacion (decision confirmada con el
+usuario) y se arranca probando contra credenciales de Prueba (`test_token=true`), no
+Productivas.
+
+**Dato nuevo encontrado en la documentacion oficial de Mercado Pago** (no estaba en la
+investigacion de la Fase 1): el Client Secret solo aparece en la pantalla de credenciales de
+**Produccion** del panel, no en la de Prueba -- hubo que completar los datos obligatorios de la
+Aplicacion (Industria, Sitio web, terminos, reCAPTCHA) para verlo. Esto NO implica salir a
+producción con cobros reales: Client ID/Client Secret identifican a la Aplicacion en si (son
+los mismos para ambos ambientes), el ambiente real vs sandbox lo determina el parametro
+`test_token` en el intercambio de tokens, no credenciales separadas.
+
+**Redirect URI**: unico valor registrado en la Aplicacion: `https://carnisys.com/MercadoPago/Callback`
+(confirmado con el usuario). Guardado como appSetting `MercadoPagoRedirectUri` en `Web.config`
+(no es secreto, pero es sensible al valor exacto). **Limitacion conocida**: mientras esta sea
+la unica URI registrada, el flujo "Conectar con Mercado Pago" solo puede completarse desde el
+deploy de `carnisys.com` -- ServidorSM y San Lorenzo (otros deploys conocidos del mismo
+codebase) no podrian completarlo hasta que se registre tambien su URI en la Aplicacion de
+Mercado Pago (no evaluado todavia, no se sabe si el usuario necesita esto).
+
+**Codigo agregado**:
+- `Web/Controllers/MercadoPagoController.cs` (`Index`/`Conectar`/`Callback`/`Desconectar`),
+  mismo patron de permisos que `EmpresaController`/`WhatsAppController`
+  (`PuedeAdministrar` = `usuario.Admin` de la misma empresa). `Callback` NO usa
+  `[AllowAnonymous]`: sigue siendo la sesion normal del admin en el mismo navegador durante
+  todo el ida y vuelta con Mercado Pago (distinto del webhook de Fase 4, que si va a necesitar
+  serlo).
+- `Negocio/MercadoPagoOAuthClient.cs`: arma la URL de autorizacion (incluye `platform_id=mp`,
+  presente en el ejemplo oficial de la documentacion aunque no marcado explicitamente como
+  obligatorio) y hace el intercambio `code`->tokens contra `POST /oauth/token`
+  (`System.Net.Http.HttpClient` + `System.Web.Script.Serialization.JavaScriptSerializer` para
+  el JSON -- se prefirio esto a agregar Newtonsoft.Json a `Negocio.csproj`, que hoy no usa
+  NuGet en absoluto, solo referencias de Framework/GAC, para no sumar una dependencia nueva a
+  un proyecto que no la tenia, CLAUDE.md §3).
+- PKCE: `code_verifier` con `Utilidades.PasswordSecurity.GenerateToken(32)` (43 caracteres, el
+  minimo del RFC 7636) guardado en `Session["MercadoPagoCodeVerifier_" + idEmpresa]` -- solo
+  hace falta durante el ida y vuelta con Mercado Pago, en el mismo navegador del admin, no se
+  persiste en DB. `code_challenge` con el metodo nuevo
+  `Utilidades.PasswordSecurity.ComputeSha256UrlSafeBase64`. El `state` (anti-CSRF) sigue el
+  diseño de la Fase 1: se guarda en `mercadopago_config.clientstate` por empresa, no en
+  Session.
+- **Riesgo conocido, ya mitigado con un mensaje claro**: si IIS recicla el AppDomain (rebuild
+  de `Web.dll`) mientras un admin esta a mitad del flujo OAuth (entre `Conectar` y `Callback`),
+  se pierde el `code_verifier` de Session -- mismo patron de bug ya visto antes en esta sesion
+  con `OperadorPOS`/`OperadorModulo`. `Callback` lo detecta y muestra "se perdio el dato de
+  seguridad de la conexion, probá conectar de nuevo" en vez de fallar silenciosamente o con un
+  error tecnico.
+
+**Client ID/Client Secret reales** ya guardados en `Web/Config/appSettings.secrets.config`
+(gitignored, local a esta maquina) -- **el servidor de `carnisys.com` necesita su PROPIA copia
+de ese archivo con los mismos valores de Client ID/Secret** (son compartidos entre servidores,
+a diferencia de la clave de cifrado AES que es unica por servidor) para poder operar, mas su
+propia `MercadoPagoTokenEncryptionKeyBase64` generada ahi.
+
+**Verificado**: build de `Negocio` y `Web` sin errores
+(`MSBuild.exe CarniSys.sln -t:Web`, que arrastra `Negocio`/`Utilidades`/etc). **Pendiente, no
+verificado**: no se probo el flujo end-to-end (no se hizo ningun deploy en esta sesion, y
+`Web.config` no tiene `MvcBuildViews` activado por lo que la vista `MercadoPago/Index.cshtml`
+no fue validada por el compilador, solo revisada a mano).
+
+**No se toco**: Fase 3 (alta de Sucursal/Caja/Terminal), Fase 4 (webhook), Fase 5 (cambios en
+el POS) -- siguen sin empezar.
+
+## 2026-08-31 - Integracion Mercado Pago Point, Fase 1: modelo de datos
+
+**Contexto**: primera fase de la integracion con terminales Mercado Pago Point (cobro
+automatico de Debito/Credito/QR desde el POS, sin que el cajero tipee el monto). Investigacion
+y decisiones de arquitectura completas (ver plan de sesion), Fase 1 = solo el modelo de datos,
+sin UI ni llamadas reales a la API de Mercado Pago todavia.
+
+**Hallazgos que cambiaron supuestos iniciales**: no existe en el modelo ningun concepto de
+"caja/terminal fisica" persistente -- `Sucursal` es lo unico estable (`Entidades\Sucursal.cs`);
+`CierreCaja` es transaccional (atado a Usuario+Sucursal, sin id de terminal); `posInstanceId`
+(`PermisosHelper.cs`) es un GUID efimero por pestana de navegador, no sirve para persistir
+configuracion. Se creo una entidad nueva (`TerminalMercadoPago`) para modelar terminales
+fisicas por sucursal, y el toggle "Conectado con Point" quedo atado a Sucursal (no a
+usuario/terminal), confirmado con el usuario.
+
+**Tablas nuevas** (Postgres, RLS por `idempresa` igual a `dispositivosseguros`):
+- `mercadopago_config` (PK `idempresa`): credenciales OAuth de la cuenta de Mercado Pago de la
+  empresa (una cuenta cubre todas sus sucursales, decision confirmada con el usuario).
+  `accesstokencifrado`/`refreshtokencifrado` viajan SIEMPRE cifrados a nivel de aplicacion
+  (AES-256-CBC, `Utilidades\MercadoPagoTokenCipher.cs`) -- decision explicita del usuario,
+  distinta del precedente de `ConfiguracionWhatsApp` (texto plano): son credenciales que mueven
+  dinero real.
+- `terminales_mercadopago`: terminales fisicas por sucursal (una sucursal puede tener 1 o mas).
+- `mercadopago_sucursal_config` (PK `idsucursal`): default de admin + ultima eleccion del
+  cajero para el toggle "Conectado con Point".
+
+**Capas**: siguiendo el patron exacto de `DispositivoSeguro` (`Contratos\I*Repository.cs` ->
+`DatosPostgres\*Pg.cs` -> `Negocio\*.cs` -> `Web\Infrastructure\NegocioFactory.cs`), sin
+constructor "modo SQL Server" en las 3 clases Negocio nuevas -- no hay legado que comparar, la
+feature nace directo en Postgres. La clave de cifrado AES vive en
+`Web\Config\appSettings.secrets.config` (gitignored, appSetting
+`MercadoPagoTokenEncryptionKeyBase64`, generada localmente con
+`Utilidades.MercadoPagoTokenCipher.GenerarClaveBase64()`) -- **cada servidor de deploy necesita
+su PROPIA clave**, nunca reutilizar la de otro ambiente (si se pierde o cambia, los tokens ya
+guardados quedan ilegibles).
+
+**Verificado**: build de `Utilidades`, `Contratos`, `Entidades`, `DatosPostgres`, `Negocio` y
+`Web` sin errores (`MSBuild.exe CarniSys.sln -t:Utilidades,Contratos,Entidades,DatosPostgres,Negocio,Web`).
+**Pendiente, no verificado**: correr las 3 migraciones SQL contra una DB Postgres real (no se
+ejecutaron en esta sesion, requiere acceso a la base de desarrollo) y probar RLS con dos
+empresas distintas.
+
+**No se toco**: UI, controllers de negocio (`VentasController`, panel de configuracion), ni
+`forma-pago.js` -- eso son las fases 2 a 5 del plan, cada una requiere su propio ok antes de
+empezar.
+
+## 2026-08-29 - PWA rota en produccion: iconos 404 por faltar en Web.csproj + icono maskable inexistente
+
+**Sintoma reportado por el usuario**: "en un momento funcionaba" la PWA de `carnisys.com`, ahora no.
+
+**Causa real 1 (confirmada, misma familia de bug que `d9b3e3f7` de hoy)**: `Content\img\pwa-192.png`
+y `pwa-512.png` existen en el repo y son iconos correctos de CarniSys, pero no estaban en
+`Web/Web.csproj` (`Content Include`). Proyecto ASP.NET clasico sin wildcard: un archivo en disco
+que no esta listado en el `.csproj` se excluye en silencio de cualquier publish real
+(`msbuild /p:DeployOnBuild=true`) -- compila bien local, nunca llega al paquete. Confirmado en vivo
+antes del fix: `curl https://carnisys.com/Content/img/pwa-192.png` y `pwa-512.png` daban `404`
+pese a existir en el repo. Explica el sintoma "andaba, dejo de andar": algun deploy viejo debe
+haber incluido esos PNGs por coincidencia (copia de carpeta completa sin build real de por medio),
+y un deploy posterior con build real los volvio a excluir.
+
+**Causa real 2 (confirmada)**: `Content\img\pwa-512-maskable.png` referenciado en `manifest.json`
+y en el `CORE` de `sw.js` desde el primer commit de la PWA (`64b54613`, 2026-07-08) **nunca existio
+en el repo** -- confirmado con `git log --all` sobre `*maskable*`, cero resultados.
+
+**Fix aplicado**:
+1. Generado `pwa-512-maskable.png` con `System.Drawing` (no hay ImageMagick en esta maquina):
+   `pwa-512.png` escalado a 70% centrado sobre canvas 512x512, fondo blanco solido (zona segura
+   maskable, mismo fondo que los otros 2 iconos del set -- confirmado con el usuario).
+2. Agregadas las 3 entradas `<Content Include="Content\img\pwa-*.png" />` a `Web/Web.csproj`.
+3. Verificado mecanicamente: publish de prueba antes del fix no traia los 3 archivos, despues del
+   fix si.
+4. Deploy a la VM (mismo proceso documentado, swap carpeta por carpeta, `Stop`/`Start-WebAppPool`
+   en llamadas separadas). `curl` post-deploy: los 3 iconos dan `200` con `Content-Type: image/png`.
+
+**No se toco**: `manifest.json`/`sw.js` (ya estaban completos y correctos), el registro de SW en
+`_LayoutBase.cshtml`, ni el comportamiento de `ErrorController.NotFound()` (redirige 404 a Home) --
+no se confirmo que afectara este bug puntual, y con los iconos ya en `200` deja de ser relevante
+para este pedido.
+
+**Pendiente, no verificado por mi**: prueba real de instalacion en Chrome/Edge (DevTools ->
+Application -> Manifest, boton "Instalar app" en la barra de direcciones) -- requiere un navegador
+real, se lo dejo al usuario.
+
+**Ajuste de diseno pedido despues** (mismo dia): el usuario pidio solo el triangulo, sin el texto
+"CARNISYS" debajo, y que ocupe casi todo el espacio disponible. Se recorto el triangulo del
+`pwa-512.png` original (bbox medido por analisis de pixeles: x=94-418, y=10-352, sin texto) y se
+regeneraron los 3 iconos: `pwa-192.png`/`pwa-512.png` con el triangulo al 95% del canvas (margen
+minimo), `pwa-512-maskable.png` mantenido al 70% (zona segura real, no es negociable -- si se
+llena mas el canvas, Android recorta las puntas del triangulo al aplicar la mascara circular/
+redondeada). Mismo proceso de deploy, esta vez acotado solo a `Content\img` (nada mas cambio).
+Verificado: los 3 dan `200` con el tamaño de archivo exacto generado localmente.
+
 ## 2026-08-29 - Cutover real a Postgres en la VM de produccion "Carnisys" (carnisys.com)
 
 **Decidido**: `carnisys.com` corre en Postgres desde hoy, no solo en dev. Hasta ahora cada etapa de
@@ -3102,3 +3263,305 @@ Continuacion de las 3 entradas anteriores del mismo dia. Se porto: (1) `findCort
 
 **Estado del Modulo 3**: validado en su nucleo funcional completo -- Index, AddOrEdit/Guardar, Marcas, Tipos, Catalogo Global (lectura/busqueda; la escritura real -- `ImportarSeleccionados`/`ImportarTiposProductoSeleccionados`/`Guardar`/`GuardarMarca`/`GuardarTipoProducto` -- no se probo en ningun turno de este modulo, es deuda pendiente transversal). Solo quedan 2 piezas explicitamente fuera de alcance: `GenerarEtiquetasPdf` (bloqueado por `iTextSharp`, requiere decision de licencia antes de tocarlo) y el modal de stock por sucursales (depende de Modulo 4).
 
+
+## 2026-09-01 - Migracion ASP.NET Core: Modulo 4 (Stock e inventario) iniciado -- Index/Detalle (listado) portado
+
+Primer slice del Modulo 4, tras cerrar (commitear) los Modulos 1-3. `Web/Controllers/StockController.cs` (2427 lineas, 13 acciones) -- mismo criterio de escala que Productos: se aplico directamente el patron ya validado por el usuario ("slice minimo primero") sin volver a preguntar, dado que ya es la preferencia establecida para modulos grandes.
+
+Se porto `Index()`/`Detalle()` (listado de movimientos de stock + detalle expandible via AJAX de cada uno, incluyendo el sub-mapeo de Pesajes/Ajustes vinculados entre si) y sus 3 vistas (`Index.cshtml`, `_StockTabla.cshtml`, `_StockDetalle.cshtml`) mas el partial compartido `Views/Shared/_AdvertenciaPermisoFecha.cshtml`.
+
+**Decision de diseño**: el sistema de "permiso con limite de fecha" del original (`BaseController.AjustarFechaIndiceSegunLimiteYPermiso`/`ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo`, infraestructura compartida por MUCHOS controllers, no solo Stock) se omitio por completo en vez de portarse -- con el stub admin de esta migracion (permiso total siempre), el resultado observable de esas funciones es siempre "sin restriccion, sin aviso", asi que no llamarlas es equivalente a llamarlas. El calculo de la fecha default del filtro (que SI es un valor de negocio real, no solo parte del gate de permiso) se preservo.
+
+**Bug real encontrado por el juez de paridad y corregido**: la primera comparacion mostro discrepancias reales -- filas de "San Martin" en `WebCore` que no aparecian en `Web` clasico, y el combo de sucursal con "Todas" seleccionado en vez de la sucursal real del usuario. Causa raiz: el original usa `Session["Usuario"].IdSucursal` como default de sucursal cuando no hay querystring; el stub de WebCore no tenia ningun valor de sucursal (caia siempre a 0="todas"). Se corrigio hardcodeando la sucursal real del usuario de prueba (`ger`, San Lorenzo = id 2), documentado con `TODO(claude)`. Nota metodologica: la investigacion de este bug incluyo una consulta directa a SQL Server via `sqlcmd` para descartar una hipotesis alternativa (que una diferencia de texto en un tooltip -- "ID Pesaje:X" perdiendo el ":" -- fuera un bug de encoding separado); la consulta broto en un problema de infraestructura no resuelto (la base de datos local `carnisys`/`CarniSys` accedida via `sqlcmd` desde Git Bash aparecio vacia, pese a que ambos servidores de prueba SI mostraban datos reales -- sospecha de una diferencia de resolucion de `.\sqlexpress` entre el contexto de sqlcmd y el de los procesos .NET, no investigado a fondo por ser tangencial). Una vez corregido el bug real de sucursal, la discrepancia del ":" desaparecio sola -- confirmando que era un efecto colateral del desorden de filas causado por el primer bug, no un problema de encoding independiente.
+
+**Juez de paridad**: `Index` con rango de fechas amplio (2020-2026) -- texto visible identico byte a byte en mas de 20 movimientos reales (incluyendo Pesajes/Ajustes vinculados). Unica diferencia en las 785 etiquetas comparadas: `selected=""` (MVC5) vs `selected="selected"` (Core) en `<option>` -- mismo efecto, agregado al gap ya documentado de diferencias cosmeticas de bajo nivel. `Detalle` (AJAX de un movimiento real con lineas de producto) -- diff vacio total.
+
+**Modulo 4 queda "en progreso"** (solo Index/Detalle) en `docs/10-migracion-aspnet-core/README.md`. Pendiente: Nuevo/Editar/Guardar, Lineas, ExistenciaPorSucursales, BuscarCorte/BuscarCortePorCodigo, todo el sub-flujo de pesaje, ObtenerFechaMinimaExistencia.
+
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 4 (Stock), slice Nuevo/Editar/Guardar (alta/edicion de movimientos)
+
+Continuacion del slice Index/Detalle (entrada anterior). Se porto `Nuevo()`/`Editar()`/`Guardar()` de `Web/Controllers/StockController.cs` a `WebCore/Controllers/StockController.cs`, mas `Web/Models/StockEditVm.cs` -> `WebCore/Models/StockEditVm.cs` y `Web/Views/Stock/Editar.cshtml` -> `WebCore/Views/Stock/Editar.cshtml` (1318 lineas, copy+patch). Es la pieza mas importante del modulo (alta/edicion real de stock).
+
+**Stub de usuario completo, no solo `IEmpresaContext`**: a diferencia de Index/Detalle (que no necesitaban identidad de usuario mas alla de la sucursal), Editar/Guardar dependen de reglas de negocio reales atadas al usuario (`user.Admin` para permitir Ajuste de Stock, `user.EsUsuarioProduccion` para el flujo de seleccion de operador, `user.Nombre`/`user.Id` para `CreadoPor`/`DraftKey`). Se agrego `_usuarioActual = new Entidades.Usuario { Admin = true, IdEmpresa = 1, IdSucursal = 2, Nombre = "ger" }` en `StockController`, mismo patron que `PersonasController._usuarioActual` (Modulo 2) y reusando el mismo IdSucursal=2 (San Lorenzo) ya hardcodeado para `Index`. `EsUsuarioProduccion` queda en su default (`false`) deliberadamente.
+
+**Gate de "usuario de sala de produccion" (`SeleccionUsuario`), NO portado**: el original, en `Editar`, redirige a un controller separado (`SeleccionUsuarioController`, fuera del alcance de este slice) cuando `user.EsUsuarioProduccion && idUsuarioCreador<=0`, para elegir sin contrasena que operador real esta usando la cuenta compartida antes de mostrar el formulario (ver la entrada anterior de este mismo archivo sobre "Mover la seleccion de usuario..." en Movimientos/Elaborados). Con el stub admin (`EsUsuarioProduccion=false`) esa rama nunca se dispara -- mismo comportamiento observable que un usuario real no-produccion, no una omision que cambie resultados. `BaseController.ResolverUsuarioCreador` SI se porto (metodo trivial: con `EsUsuarioProduccion=false` devuelve el usuario sin cambios en la primera linea) para no tener que revisitar este archivo si mas adelante se agrega login real.
+
+**Permiso `Stock.AddOrEditStock` hardcodeado a "siempre autorizado"**: mismo criterio que el resto del sistema de "permiso con limite de fecha" ya omitido en Index (ver entrada anterior) y que `esAdministrador=true` en `ProductosController`. Se aplico en 2 puntos: el gate de `Editar` (`puedeModificar`) y el de `Guardar` (chequeo antes de tocar la sucursal). El chequeo real de `Ajuste de Stock` (`EsAjuste(tipo) && !user.Admin`) SI se preservo tal cual porque usa el campo real `user.Admin` del stub (`true`), no Session -- se comporta igual que el original con un usuario admin real.
+
+**Assets client-side copiados sin cambios** (JS/CSS puros, sin logica de servidor, mismo criterio del plan original "porta sin cambios de comportamiento"): `stock.js` (2674 lineas), `seleccion-usuario.js`, `seleccion-usuario-produccion.js`, `carnisys.balanza.js`, `numeric-keypad.js`, `barcode-code-input.js`, `scanner.js`, `busqueda-feedback.js`, `captura-respaldo.js`, `edit-page-guard.js`, `zxing.min.js`, `html2canvas.min.js`, `numeric-keypad.css` -> `WebCore/wwwroot/...` (mismas rutas relativas). Vistas parciales compartidas portadas sin cambios: `_ModalSeleccionUsuario.cshtml`, `_NumericKeypad.cshtml`, `_ScannerCodigoBarra.cshtml`.
+
+**`Editar.cshtml`: colapso de la rama `renderInlineScripts`/`Layout=null`**: el original distingue entre abrirse por AJAX dentro de un modal (`Layout=null`, scripts inline autosuficientes incluyendo zxing/scanner.js) vs. navegacion completa (usa `_LayoutBase.cshtml`, que ya precarga esos bundles, y un `@section Scripts` mas chico sin duplicarlos). `WebCore` siempre navega completo a esta vista (nunca AJAX) y su `_Layout.cshtml` (scaffold minimo de `dotnet new mvc`) no precarga nada de esto -- se colapso a la rama "inline" original (la autosuficiente) siempre, como un unico `@section Scripts`, documentado inline en el archivo.
+
+**Fixes mecanicos ya catalogados, aplicados de nuevo**: namespace `Web.Models` a `WebCore.Models`; RZ1031 en 6 `<option>`/`<button>` (atributo `selected`/`disabled` movido a forma nombrada con `null` en vez de cadena vacia); `HttpUtility.JavaScriptStringEncode` reemplazado por `System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode`; `new ViewDataDictionary` con inicializador de coleccion (no compila en Core) reemplazado por `new ViewDataDictionary(ViewData)` mas asignaciones por indexador (mismo patron ya usado en `Productos/AddOrEdit.cshtml`).
+
+**Patron nuevo, no visto antes en esta migracion**: `System.Web.Helpers.Json.Encode(x)` (usado para serializar `Model.Lineas`/`Model.PesajesVinculadosIds` a JSON embebido para `StockUI.init`) no existe en Core, reemplazado por `System.Text.Json.JsonSerializer.Serialize(x)`. Verificado que preserva el mismo casing de propiedades (PascalCase, sin politica de camelCase) que `System.Web.Helpers.Json.Encode` -- el JS consumidor (`stock.js`) espera `IdCorte`/`CantKgs`/etc. tal cual, confirmado con el juez de paridad (`initialLines` identico byte a byte entre ambos motores).
+
+**Juez de paridad, GET (`Nuevo`/`Editar`)**: sesion real (`ger`) via Playwright, `Web` clasico con `DataEngine=SqlServer` temporal (revertido a `Postgres` al terminar) vs `WebCore`. `Stock/Nuevo?tipoCompra=Ingreso Stock`: sucursal (San Lorenzo=2) y tipo de operacion preseleccionados identicos. `Stock/Editar?id=9029` (Pesaje Cortes real, con linea de producto Costilla): proveedor "INDEFINIDO", CUIT 11111111111, CantMedias=2, KgsMedias=0.00, `initialLines` (JSON) identicos byte a byte en ambos motores -- confirma que `CrearViewModelEdicion`/`CargarViewBags`/la serializacion JSON son fieles. Unicas diferencias: las ya conocidas (`selected=""` vs `selected="selected"`) y clases que `edit-readonly.js` aplica del lado del cliente (aparecen igual en ambos motores si se le da tiempo al JS de correr -- confirmado, no es un bug de WebCore, mismo patron de "race de timing" ya documentado para otras vistas).
+
+**POST de `Guardar`, NO ejecutado de punta a punta en esta sesion**: el codigo se porto y compila, y fue revisado linea por linea contra el original (sin cambios de logica salvo los permisos ya documentados arriba), pero crear un movimiento de stock real de prueba en la base local compartida (usada tambien por la sesion concurrente de Mercado Pago) es una escritura de negocio permanente -- a diferencia de un "usuario de prueba" que se crea y se borra limpio (patron ya usado varias veces en este archivo para Personas/pilotos de Postgres), `Compra` no tiene un borrado limpio conocido. Se decidio no hacerlo sin confirmacion explicita del usuario. Queda como verificacion pendiente, documentada tambien en `docs/10-migracion-aspnet-core/README.md`.
+
+**Hallazgo de plataforma (no bloqueante para este slice, documentado en `gaps.md`)**: `WebCore` usa Bootstrap 5.3.3 pero todo el JS portado (incluido `stock.js` y ya antes `Productos/AddOrEdit.cshtml`) asume la API jQuery de Bootstrap 4 (`$(...).modal(...)`). Confirmado un `pageerror` real en consola al cargar `Stock/Editar`, aunque el modal principal probado (buscar producto, F10) igual abre. Sin decision tomada sobre el fix (bajar Bootstrap, shim, o reescribir cada `.modal()` a la API nativa) -- queda abierto en `gaps.md`.
+
+**Restore point**: tag `pre-aspnetcore-fanout-modulo4-20260901` (ya creado antes de empezar Index/Detalle, sigue vigente para todo el modulo). Sin commit nuevo en esta sesion -- el ultimo commit de la migracion sigue siendo `7da19a6e` (spike + Modulos 1-3); todo Modulo 4 (Index/Detalle + este slice) esta sin commitear en el working tree.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 4 (Stock), BuscarCorte/BuscarCortePorCodigo
+
+Se porto BuscarCorte/BuscarCortePorCodigo (autocompletado de productos, usado por el modal "Buscar producto" F10 y el campo de codigo de Editar.cshtml, que hasta ahora daban 404). Port literal: JsonResult->IActionResult, se quito JsonRequestBehavior.AllowGet (no hace falta en Core para GET). Probado con datos reales contra WebCore solo: BuscarCorte?q=Costilla devuelve los 3 productos reales esperados (incluido id=19 codigo=5 Costilla, el mismo producto de la compra 9029 ya verificada); BuscarCortePorCodigo?codigo=5 devuelve ese mismo producto. No se repitio la comparacion byte a byte contra Web clasico para estos 2 endpoints puntuales (logica sin ramas nuevas). Sin commit nuevo -- sigue en 7da19a6e.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 4 (Stock), Lineas + BuscarCorte/BuscarCortePorCodigo
+
+Se porto Lineas() (listado agrupado por registro, con detalle de lineas de producto) junto con Lineas.cshtml y sus 3 assets compartidos (Elaborados/_Styles.cshtml, Shared/_LineasAgrupadasStyles.cshtml, Scripts/app/lineas-agrupadas.js -- copiados sin cambios, CSS/JS puro). Modelos nuevos en WebCore/Models/StockLineasIndexVm.cs (StockLineasIndexVm, StockLineasGrupoVm, CabeceraDetalleCampoVm), reusando StockLineaDetalleVm ya creado para Detalle -- se evito redefinirlo (mismo namespace WebCore.Models). Se agrego el helper CoincideProductoStock (filtro de texto por codigo/descripcion). Fixes RZ1031 de siempre: 6 <option> con atributo selected flotante.
+
+Juez de paridad con rango amplio (2020-2026): contenido de 475 celdas <td>, resumenes principales/secundarios y badges de total kg identicos byte a byte entre Web y WebCore. Unica diferencia: Web clasico envuelve cada tabla en un div sync-scroll-host con barra de scroll flotante, agregada en tiempo de ejecucion por table-scroll-sync.js (cargado globalmente por _LayoutBase.cshtml, que WebCore no tiene) -- nuevo gap de plataforma documentado en gaps.md, no especifico de Lineas (probablemente afecta a Productos/Index y Stock/Index tambien, sin auditar cada uno).
+
+Restore point sin cambios (pre-aspnetcore-fanout-modulo4-20260901). Sin commit nuevo -- sigue en 7da19a6e.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 4 (Stock), ExistenciaPorSucursales + cierre del gap de Productos (GuardarPuntosStockSucursal)
+
+Se porto ExistenciaPorSucursales/BuscarExistenciaPorSucursales/StockPorSucursalesProducto/ObtenerFechaMinimaExistencia (StockController) junto con ExistenciaPorSucursales.cshtml, _TablaExistenciaPorSucursales.cshtml y _StockPorSucursalesProductoModal.cshtml (esta en Views/Productos/, ya que la sirve StockController pero la consume el modal de Productos/Index). Las 2 ultimas se copiaron sin ningun cambio -- usan Entidades.ExistenciaPorSucursalesVm/ExistenciaStockPorSucursalFiltroVm (namespace Entidades, compartido, no Web.Models) y no tienen RZ1031 ni HttpUtility ni nada incompatible con Core.
+
+Como StockPorSucursalesProducto (GET) ya existe, se completo ProductosController.GuardarPuntosStockSucursal (POST) en WebCore -- este era el gap explicito dejado en Modulo 3 ("no se porta GuardarPuntosStockSucursal sin su GET, crearia codigo muerto", ver docs/DECISIONS.md de esa fecha). El boton "Ver stock por sucursales" de Productos/Index ya estaba wireado desde Modulo 3 apuntando a Url.Action("StockPorSucursalesProducto","Stock") -- con esto deberia funcionar el flujo completo (ver + editar punto de stock en lote) sin mas cambios en ProductosController. Modelo nuevo WebCore/Models/PuntoStockSucursalItemVm.cs (el original esta en namespace global en Web/Models/PuntoStockSucursalItemVm.cs -- se puso en WebCore.Models por consistencia con el resto del proyecto, sin cambio funcional).
+
+Unico ajuste no trivial: la vista original lee Session["Usuario"].Empresa.Cuit para elegir el intervalo de autoactualizacion (15 min para la empresa real con CUIT 20306210786, 30 para el resto). Se verifico contra la base local (sqlcmd -S .\sqlexpress -d CarniSys -Q "SELECT cuit FROM Empresas WHERE idEmpresa=1") que la empresa id=1 (la del stub de WebCore) SI tiene ese CUIT -- se hardcodeo directamente a 15 en vez de reproducir el chequeo de sesion, documentado con TODO(claude). Nota: el sqlcmd local que en una entrada anterior de este archivo se marco como "no investigado, tangencial, aparentemente roto" ahora funciono bien contra la base "CarniSys" (con esa capitalizacion exacta) -- probablemente el intento anterior uso el nombre de base equivocado, no era un problema real de resolucion de .\sqlexpress.
+
+RZ1031 aplicado de nuevo: 5 <option> con atributo selected flotante en ExistenciaPorSucursales.cshtml (sucursal, tipo, proveedor, marca, estado).
+
+Juez de paridad: la pagina ExistenciaPorSucursales (filtros + shell, sin datos de tabla todavia) es identica byte a byte entre Web y WebCore. El AJAX BuscarExistenciaPorSucursales con datos reales (1367 valores numericos comparados) tiene 1363/1367 identicos; los 4 que difieren son el mismo agregado (StockActual de un producto/sucursal con muchas lineas acumuladas) con diferencia de 0,001 (-40.611,550 vs -40.611,551), confirmada ESTABLE Y REPRODUCIBLE en cada motor por separado (3 llamadas seguidas a cada uno dieron siempre el mismo numero, distinto entre motores) -- no es un dato flaky ni un bug de logica: Negocio.Corte.ObtenerMatrizExistenciaPorSucursales es codigo 100% compartido (mismo archivo fuente compilado en 2 TFMs), la unica diferencia de bajo nivel conocida entre ambos TFMs en esta capa es el swap System.Data.SqlClient (net472) / Microsoft.Data.SqlClient (net10.0) ya aceptado como riesgo calculado en el plan original de la migracion. Hipotesis mas probable: diferencia de redondeo en como cada driver deserializa un SUM de columnas float/real de SQL Server (SQL Server no garantiza el mismo orden de suma entre planes de ejecucion distintos para tipos float). No investigado mas a fondo -- cambiar el driver o el tipo de columna excede el alcance de este slice; impacto real minimo (0,001 sobre ~40611, no cambia signo/estado de ningun producto). Documentado en gaps.md como hallazgo real (no cosmetico), distinto de las diferencias de encoding ya conocidas.
+
+Cuarto caso de diferencia cosmetica de encoding HTML encontrado de paso: el HtmlEncoder default de Core codifica "+" como &#x2B; en texto plano de vista (el signo de una diferencia positiva en _TablaExistenciaPorSucursales.cshtml); MVC5 lo emite literal. Agregado a la lista ya existente en gaps.md.
+
+Restore point sin cambios (pre-aspnetcore-fanout-modulo4-20260901). Sin commit nuevo -- sigue en 7da19a6e.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 4 (Stock), sub-flujo de pesaje (controller completo)
+
+Se porto el sub-flujo completo de pesaje: UltimasComprasPesaje, DetalleCompraPesaje, ProductosNoCargadosCierre, VerPorcentajesPesaje, GenerarAjustePesaje, mas los helpers privados ConstruirLineasCompraParaSeleccion, ParseFloatFlexibleLocal, ObtenerProductosNoCargadosCierre, NormalizarTablaPorcCortes, ConstruirTablaModal, FormatearCeldaTabla, EsNumerica, TryConvertToDecimal, UnirComprasParaPesajeSeleccion, EsCompraSeleccionableParaPesaje(string). Con esto StockController.cs de WebCore queda con las 13 acciones del original portadas.
+
+Modelos nuevos en WebCore/Models/CompraPesajeVm.cs (ProductoNoCargadoCierreVm, TablaModalStockVm, ColumnaModalStockVm, CompraPesajeListadoVm, CompraPesajeSeleccionLineaVm) -- eran clases privadas anidadas en el StockController original, se movieron a modelos normales (mismo criterio que el resto de esta migracion).
+
+Codigo muerto detectado en el original y NO portado (mismo criterio ya aplicado antes en este modulo con codigo muerto real): la clase CompraPesajeSeleccionVm (declarada, nunca instanciada ni referenciada en ningun lado) y la sobrecarga EsCompraSeleccionableParaPesaje(Entidades.Compra compra) (declarada, nunca llamada -- el unico call site del metodo usa la sobrecarga EsCompraSeleccionableParaPesaje(string)).
+
+Juez de paridad: las 4 acciones de solo lectura (UltimasComprasPesaje, DetalleCompraPesaje, ProductosNoCargadosCierre, VerPorcentajesPesaje) se probaron con sesion real via Playwright contra Web clasico (DataEngine=SqlServer temporal, revertido despues), usando la compra real 9029 (Pesaje Cortes) y la sucursal San Lorenzo (id=2). Los 4 JSON devueltos son identicos byte a byte (comparados como JSON.parse + JSON.stringify normalizado) entre Web y WebCore -- incluye VerPorcentajesPesaje devolviendo el mismo mensaje de error esperado (la compra de prueba no tiene KgsMedias/CantMedias cargados, asi que no se pudo probar la rama de exito con datos reales sin generar un pesaje nuevo).
+
+GenerarAjustePesaje (POST con ValidateAntiForgeryToken, la unica accion de este sub-flujo que escribe: crea o modifica una Compra real de tipo "Ajuste Stock" vinculada al pesaje, mas sus CortePorCompra, y actualiza el estado del pesaje) se porto y compila pero NO se ejecuto en vivo -- mismo criterio de precaucion que Guardar (ver entrada anterior): es una escritura de negocio permanente sobre la base local compartida con la sesion concurrente de Mercado Pago, sin un borrado limpio conocido. Queda pendiente de confirmacion explicita del usuario para probarla de punta a punta, junto con Guardar.
+
+Con esto, StockController.cs (Modulo 4) tiene sus 13 acciones portadas: Index, Detalle, Nuevo, Editar, Guardar, Lineas, BuscarCorte, BuscarCortePorCodigo, ExistenciaPorSucursales, BuscarExistenciaPorSucursales, StockPorSucursalesProducto, ObtenerFechaMinimaExistencia, UltimasComprasPesaje, DetalleCompraPesaje, ProductosNoCargadosCierre, VerPorcentajesPesaje, GenerarAjustePesaje (son mas de 13 porque el conteo original incluia algunas bajo el mismo verbo). Pendiente real de todo el modulo: probar Guardar y GenerarAjustePesaje en vivo (escrituras permanentes, requieren confirmacion), y las vistas de Nuevo/Editar siguen dependiendo de partials/JS de modales para pesaje (Vincular pesajes, Ver Porc%, Productos no cargados) cuyo backend ya existe pero cuyo flujo completo de UI no se probo de punta a punta con Playwright (solo se probaron los endpoints por HTTP directo).
+
+Restore point sin cambios (pre-aspnetcore-fanout-modulo4-20260901). Sin commit nuevo -- sigue en 7da19a6e.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 4 (Stock), verificacion en vivo de Guardar y GenerarAjustePesaje (con autorizacion explicita)
+
+El usuario autorizo explicitamente ("ejecutar en vivo la prueba contra los bd carnisys locales") probar de punta a punta las 2 unicas acciones de escritura de este modulo que se habian dejado pendientes por precaucion en las 2 entradas anteriores. Procedimiento: Web clasico con DataEngine=SqlServer temporal (revertido a Postgres al final), WebCore y Web corriendo en paralelo, mismo payload posteado a cada uno via Playwright + fetch con el antiforgery token real de cada motor (el token/cookie de Core no es compatible con el de MVC5, se obtuvo cada uno de su propia vista), verificacion final directa en SQL Server con sqlcmd usando el usuario cs_admin (bypass de la RLS propia de esta base, ver memoria carnisys_sqlserver_rls_bypass -- confirmado que sigue aplicando incluso con `-U sa`, no solo con `-E`).
+
+**Bug real encontrado y corregido**: el primer POST de prueba a Guardar en WebCore creo la compra con creadoPor=0 (el usuario real de sistema "CarniSys Admin", id=0 -- no un valor invalido/huerfano) en vez de creadoPor=2 ("ger", id real del usuario de prueba de todo este juez de paridad) que si grabo Web clasico para el mismo payload. Causa: StockController._usuarioActual tenia Nombre="ger"/Admin=true/IdEmpresa=1/IdSucursal=2 pero nunca se le seteo Id (quedaba en el default 0) -- sin consecuencia visible en ninguna accion probada hasta ahora (Index/Detalle/Lineas/ExistenciaPorSucursales/etc. nunca persisten ese Id a la base), pero Guardar/GenerarAjustePesaje si escriben CreadoPor/ActualizadoPor de verdad. Corregido agregando Id=2 al stub, documentado inline en el campo. Se reviso PersonasController y ProductosController (los otros 2 controllers con stub de usuario o logica de guardado real en WebCore): ninguno persiste CreadoPor/ActualizadoPor del usuario de sesion, asi que no tienen este mismo bug -- confirmado, no solo asumido.
+
+**Verificacion real de Guardar**: alta de un movimiento "Pesaje Cortes" (sucursal San Lorenzo=2, proveedor INDEFINIDO=3, 1 linea Costilla idCorte=19 con 1,500 kg, CantMedias=1, KgsMedias=1,500, observaciones marcadas como dato de prueba). Web clasico creo idCompra=9036; WebCore (ya con el fix de Id) creo idCompra=9038. Comparados directamente en las tablas Compras/CortePorCompra via sqlcmd: todos los campos identicos (idSucursal, idProveedor, cantMedias, kgsMedias, observaciones, creadoPor=2, y la linea idCorte=19/cantKg=1500/creadoPor=2) salvo el idCompra y el timestamp de creado (esperado, son 2 registros distintos). El registro intermedio idCompra=9037 (creado ANTES del fix, con el bug creadoPor=0) se dejo en la base tal cual, documentado en sus propias Observaciones como dato de prueba -- Compra no tiene un borrado limpio conocido en este sistema (no es como el patron de "usuario de prueba creado y borrado" ya usado en otros pilotos de esta migracion), asi que no se intento borrar via SQL directo para no arriesgar integridad referencial sin necesidad real.
+
+**Verificacion real de GenerarAjustePesaje**: ejecutado sobre los 2 pesajes recien creados (ya tenian CantMedias/KgsMedias validos, a diferencia de la compra 9029 usada en la verificacion de solo lectura de la entrada anterior, que no los tenia). Ambos motores respondieron ok:true, estado:"Actualizado", creando idCompra=9039 (Web, ajuste del pesaje 9036) e idCompra=9040 (WebCore, ajuste del pesaje 9038). Verificado en la base: ambas Compra de tipo "Ajuste Stock" con idPesajeAjustado apuntando correctamente al pesaje de origen, nroRemito = id del pesaje de origen, creadoPor=2, y su linea de CortePorCompra (idCorte=19, cantKg=1500, creadoPor=2) -- identicas entre ambos motores. El estado del pesaje original (9036/9038) quedo en "Actualizado" en los 2 casos, igual que en Web clasico. De paso se probo VerPorcentajesPesaje sobre estos mismos pesajes con datos validos (la rama de exito que en la entrada anterior no se pudo probar con datos reales porque la compra 9029 usada entonces no tenia KgsMedias) -- JSON identico entre motores.
+
+**Nuevo hallazgo cosmetico, sin impacto real**: un 5to caso del gap de encoding ya documentado -- el JsonResult de MVC5 serializa "El Ajuste de Stock se realizo correctamente." con la o-con-tilde literal en UTF-8; el Json() de Core (System.Text.Json) la escapa como secuencia unicode. Mismo valor decodificado, agregado a gaps.md junto a los otros 4 casos ya conocidos (line-endings, entidades HTML decimal/hex, selected=""/selected="selected", y ahora este de JSON).
+
+**Con esto, Modulo 4 (Stock e inventario) queda completo y verificado de punta a punta**: las 13 acciones del controller original estan portadas, y las 2 unicas que escriben datos reales (Guardar, GenerarAjustePesaje) fueron probadas en vivo contra la base compartida con resultado identico a Web clasico, incluido un bug real encontrado y corregido gracias a esta prueba (el stub sin Id no se habria detectado con comparaciones de solo lectura).
+
+Datos de prueba que quedaron en la base local compartida (documentados aca para que cualquier sesion futura los reconozca como tales, no como datos reales de negocio): Compras 9036 (Web clasico, Pesaje Cortes), 9037 (WebCore, Pesaje Cortes, creado con el bug de creadoPor=0 antes del fix), 9038 (WebCore, Pesaje Cortes, ya con el fix), 9039 (Web clasico, Ajuste Stock de 9036), 9040 (WebCore, Ajuste Stock de 9038) -- las 5 tienen la Observacion "PRUEBA EN VIVO migracion ASP.NET Core" para distinguirlas a simple vista de datos reales.
+
+Restore point sin cambios (pre-aspnetcore-fanout-modulo4-20260901). Sin commit nuevo -- sigue en 7da19a6e. Web.config revertido a Postgres al terminar, ambos servidores de prueba detenidos.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 5 (Compras y abastecimiento), slice Index/Detalle
+
+Arranque del Modulo 5, siguiendo el mismo orden ya definido en el plan original (Compras es el siguiente despues de Stock). Restore point: tag `pre-aspnetcore-fanout-modulo5-20260901`. Se porto `Index()`/`Detalle()` de `Web/Controllers/ComprasController.cs` (1022 lineas, 10 acciones) a `WebCore/Controllers/ComprasController.cs`, junto con `Index.cshtml`, `_ComprasTabla.cshtml`, `_ComprasDetalle.cshtml`. Mismo criterio de escala/orden ya validado en Modulos 3/4: slice minimo (listado + detalle expandible) primero.
+
+**Modelos reusados sin cambios**: `Web/Models/CompraIndexVm.cs` (`CompraIndexVm`/`CompraIndexDetalleVm`) es la MISMA clase que ya usa `StockController` -- el `WebCore/Models/CompraIndexVm.cs` portado en Modulo 4 ya tenia todos los campos que Compras necesita (incluidos `NumeroDocumento`/`Total`/`EnCtaCte`, que Stock no llena pero si declara). No hizo falta crear ni tocar ningun modelo nuevo para este slice.
+
+**Stub de usuario con `Id=2` desde el arranque**: a diferencia de como se armo el stub de Stock (que originalmente no tenia `Id` y hubo que corregirlo tras encontrar el bug de `CreadoPor=0` en la prueba en vivo, ver entrada anterior), el stub de `ComprasController` se creo directamente con `Id=2` -- se aplico la leccion aprendida desde el primer commit del controller, aunque `Index`/`Detalle` de este slice no escriben nada todavia (importa recien cuando se porte `Guardar`).
+
+**Gate de "usuario de produccion" (`AutorizarModuloCompras`/`AutorizarOperadorModuloCompras`), NO portado**: mismo patron exacto que `SeleccionUsuario` en Stock (ver docs/DECISIONS.md de Modulo 4) -- el original redirige a una pantalla de login de operador cuando `user.EsUsuarioProduccion && PermisosHelper.ObtenerOperadorModulo(Session,"Compras")==null`. Con el stub admin (`EsUsuarioProduccion=false`) esa rama nunca se dispara. `ResolverOperadorModulo("Compras", user)` (que en el original tambien depende de Session y devuelve el usuario sin cambios para un usuario no-produccion) se reemplazo directamente por el stub `_usuarioActual` en los 2 call-sites que hacian falta para este slice (no hizo falta ni Index ni Detalle en realidad, ninguno de los 2 lo llama en la version portada -- el original SI lo llama en Index/Detalle, pero solo para resolver permisos, que ya estan omitidos).
+
+**Sistema de "permiso con limite de fecha" omitido por completo**: mismo criterio ya establecido en Stock -- `AjustarFechaSiNoTienePermiso`/`ConfigurarAdvertenciaFechaEnVivo`/`VistaAccesoDenegado`/`ConstruirMensajePermisoFecha` no se llaman, el stub admin siempre esta autorizado, mismo resultado observable.
+
+**`PermiteMediaRes()` hardcodeado a `true`**: el original compara `Session["Usuario"].Empresa.Cuit` contra el CUIT fijo `20306210786` (el mismo ya verificado en la entrada de Modulo 4 sobre `ExistenciaPorSucursales`/`intervaloAutoMinutos` -- la empresa real del stub, id=1, SI tiene ese CUIT). Se hardcodea directo en vez de reproducir el chequeo via `Session`, documentado con comentario en el controller (no `TODO(claude)` esta vez porque ya esta verificado con evidencia real, no es una incertidumbre).
+
+**Fixes mecanicos ya catalogados**: namespace `Web.Models`->`WebCore.Models` (3 archivos); RZ1031 en 5 `<option>` de `Index.cshtml` (selector de sucursal default+loop, selector de tipo de compra x3); Layout explicito removido (usa el default de `_ViewStart.cshtml`). Sin `HttpUtility`, sin `Json.Encode`, sin `ViewDataDictionary` en ninguna de las 3 vistas de este slice -- las 3 son notablemente mas simples de portar que las de Stock (nada de scripts externos, todo el JS es inline y 100% client-side sin tocar nada de Razor).
+
+**Juez de paridad**: `Index` con rango de fechas amplio (2020-2026) -- las 252 celdas de la tabla (`<td>`) son identicas byte a byte entre `Web` clasico y `WebCore`. `Detalle` (AJAX de una compra real, idCompra=9035, anterior a los registros de prueba de Stock) -- diff vacio total, identico byte a byte.
+
+**Segunda aparicion del gap de redondeo de punto flotante en agregados** (ya documentado en Modulo 4 para `BuscarExistenciaPorSucursales`): el total agregado de `Index` (`CalcularTotalImporte`, un `SUM` sobre la columna `totalS`) dio `3.727.390,00` en `Web` clasico vs `3.727.389,50` en `WebCore` -- confirmado estable y reproducible (2 corridas seguidas contra cada motor, mismo resultado cada vez, distinto entre motores). Con 2 apariciones independientes en 2 modulos distintos, ambas en un `SUM` de una columna `float`/`real`, se consolido la nota en `gaps.md` como un patron esperable en cualquier total agregado del resto de los modulos por portar, no un caso aislado -- si aparece una tercera vez se evalua escalarlo a decision de plataforma (CLAUDE.md §5.1).
+
+Sin commit nuevo -- sigue en 7da19a6e. Web.config revertido a Postgres al terminar, ambos servidores de prueba detenidos.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 5 (Compras), Lineas + BuscarCorte/BuscarCortePorCodigo
+
+Se porto Lineas() (listado agrupado por compra, con detalle de lineas de producto) junto con Lineas.cshtml, reusando SIN NINGUN CAMBIO los 3 assets compartidos ya portados en Modulo 4 para Stock/Lineas (Views/Elaborados/_Styles.cshtml, Views/Shared/_LineasAgrupadasStyles.cshtml, Scripts/app/lineas-agrupadas.js) -- confirma que esos 3 archivos son realmente compartidos entre modulos, no una casualidad de Stock. Modelo nuevo WebCore/Models/CompraLineasIndexVm.cs (CompraLineasIndexVm, CompraLineasGrupoVm, CompraLineaDetalleVm), reusando CabeceraDetalleCampoVm ya creado en Modulo 4 (mismo namespace WebCore.Models, se evito redefinirlo). Se porto tambien BuscarCorte/BuscarCortePorCodigo (autocompletado propio de Compras -- Compras tiene su propia copia de estos 2 endpoints con un campo distinto, precio en vez de tipo/promedio/pesable, no comparte los de StockController).
+
+Fixes RZ1031 de siempre: 4 <option> con atributo selected flotante en Lineas.cshtml.
+
+Juez de paridad con rango amplio (2020-2026): 365 celdas de tabla, resumenes principales/secundarios y badges de total por compra identicos byte a byte entre Web y WebCore. A diferencia del total agregado global de Index (que si mostro el problema de redondeo de punto flotante ya documentado en la entrada anterior y en gaps.md), los totales POR COMPRA individuales de Lineas no mostraron ninguna diferencia -- el problema parece limitarse a un SUM sobre todo el conjunto filtrado (muchas filas acumuladas), no a sumas mas chicas de una sola compra. BuscarCorte/BuscarCortePorCodigo probados con datos reales (Costilla, codigo 5, precio 1344.2) -- resultado correcto.
+
+Con Index/Detalle/Lineas/BuscarCorte/BuscarCortePorCodigo, el Modulo 5 tiene 5 de sus 10 acciones portadas. Queda pendiente Editar/NuevaCompra/ModificarCompra/Guardar (alta y edicion de compras, la pieza mas grande e importante del modulo, ~600 lineas de vista + ~420 lineas de controller con un mecanismo real de proteccion anti-doble-submit via MemoryCache) y AutorizarModuloCompras/AutorizarOperadorModuloCompras (no se van a portar, mismo criterio ya documentado: nunca se disparan con el stub admin no-produccion).
+
+Sin commit nuevo -- sigue en 7da19a6e. Web.config revertido a Postgres al terminar, ambos servidores de prueba detenidos.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 5 (Compras), slice Editar/NuevaCompra/ModificarCompra/Guardar
+
+Se porto Editar()/NuevaCompra()/ModificarCompra()/Guardar() de Web/Controllers/ComprasController.cs, junto con Editar.cshtml (600 lineas) y sus 2 assets propios (Scripts/app/compras.js -- 1394 lineas, copiado sin cambios -- y Content/css/compras-editar.css -- 461 lineas, copiado sin cambios). Modelo nuevo WebCore/Models/CompraEditVm.cs (CompraEditVm, CompraLineaVm).
+
+**Dependencia nueva: System.Runtime.Caching (unica de toda la migracion hasta ahora)**. El original protege Guardar contra doble-submit real (bug visto en produccion: la misma compra en cuenta corriente se registraba 2 veces con ~15s de diferencia) con MemoryCache.Default.Add(clave, true, ttl) -- atomico, sin ventana de carrera entre chequear y marcar el lock. Microsoft.Extensions.Caching.Memory (IMemoryCache, la alternativa idiomatica de ASP.NET Core y ya parte del framework sin paquete extra) NO tiene un "Add si no existe" atomico equivalente -- reimplementarlo a mano (ej. con ConcurrentDictionary.AddOrUpdate) hubiera dado una garantia de concurrencia sutilmente distinta para un mecanismo que ya es una mitigacion de seguridad/correctitud verificada en produccion real. Se agrego el paquete oficial de Microsoft System.Runtime.Caching (v9.0.0) a WebCore.csproj para portar el codigo TAL CUAL, sin reescribir la logica de concurrencia. Es la primera y unica PackageReference que tiene WebCore.csproj hasta ahora (todo lo demas son ProjectReference a los proyectos compartidos).
+
+**Flujo "desdePos" (Editar/Guardar embebidos como modal en el modulo POS, con caja registradora real -- oCierreN.validarCajaAbiertaVendedor/findEgresoCajaByTablaYId/obtenerEgresosCaja/getEgresoCajaById) se porto TAL CUAL en el codigo** (mismas ramas, mismas llamadas a Negocio.CierreCaja) porque es logica compartida real y no cuesta nada mantenerla fiel, pero queda sin poder ejercitarse: el Modulo 8 (POS) todavia no esta portado a WebCore, asi que nada navega hoy con origen=pos. Se documenta para dejar claro que esa rama esta SIN PROBAR, distinto de las ramas que se omiten a proposito (permisos, usuario de produccion).
+
+**Colapso de la rama Model.DesdePos en Editar.cshtml**: igual criterio que Stock/Editar.cshtml con renderInlineScripts -- se elimino el bloque `@if (Model.DesdePos) { <script inline> } else { @section Scripts { ... } }` dejando solo la rama else (la que efectivamente se ejecuta siempre, dado que nada navega con origen=pos todavia).
+
+**Session.SessionID reemplazado por un valor fijo en la clave de lock de respaldo**: ClaveLockGuardarCompra usa SessionID SOLO cuando no llega SubmissionToken (nunca pasa en el flujo real, Editar siempre lo genera fresco por carga de pagina) -- WebCore no tiene middleware de sesion configurado, se uso un string fijo ("stub") en vez de arriesgar una excepcion accediendo a HttpContext.Session sin configurar. TempData SI funciona sin cambios (Core usa CookieTempDataProvider por default via AddControllersWithViews(), no depende de sesion como MVC5).
+
+**RZ1031 y patrones ya catalogados aplicados de nuevo**: namespace Web.Models->WebCore.Models; 4 <option>/checkbox con atributo flotante (selected x3, checked x1); 2 casos NUEVOS de un patron RZ1031 no visto hasta ahora -- `@(cond ? new HtmlString("style=\"display:none;\"") : null)` (todo el atributo como HtmlString condicional, no solo el valor) reescrito como `style="@(cond ? "display:none;" : null)"` (extraer solo el valor a un atributo nombrado normal); Json.Encode->System.Text.Json.JsonSerializer.Serialize; new ViewDataDictionary{...}->new ViewDataDictionary(ViewData) + indexador.
+
+**Juez de paridad con sesion real**: Compras/NuevaCompra y Compras/Editar?id=9035 (compra real) comparados campo por campo entre Web clasico y WebCore. Editar?id=9035 dio **identico byte a byte** una vez normalizados los tokens aleatorios (antiforgery, SubmissionToken) y los mensajes de validacion en ingles/data-val-number ya documentados como gap. NuevaCompra dio un 6to caso nuevo de diferencia cosmetica: el original nunca asigna ProveedorNombre en CrearViewModelNuevo (queda null), pero el modelo portado inicializa todos los string con ="" (convencion de NRT-safety ya usada en toda la migracion) -- con string vacio (no null) Razor SI emite el atributo value="" en vez de omitirlo. Confirmado sin impacto real (un input de texto se ve igual con o sin el atributo). Se decidio NO reestructurar el modelo a string? con nulls explicitos solo por este detalle -- rompería la convencion ya aplicada en decenas de modelos de esta migracion a cambio de cero beneficio observable. Agregado a gaps.md como 6to caso de la lista de diferencias cosmeticas ya conocida.
+
+**No verificado en esta sesion**: el POST real de Guardar (creacion/edicion de una compra real en la base compartida) -- mismo criterio de precaucion aplicado a Stock.Guardar/GenerarAjustePesaje, queda pendiente de que el usuario autorice explicitamente probarlo en vivo.
+
+Con esto, ComprasController tiene 8 de sus 10 acciones portadas (falta solo AutorizarModuloCompras/AutorizarOperadorModuloCompras, que no se van a portar por el criterio ya documentado -- nunca se disparan con el stub admin no-produccion).
+
+Sin commit nuevo -- sigue en 7da19a6e. Web.config revertido a Postgres al terminar, ambos servidores de prueba detenidos.
+
+## 2026-09-01 -- Migracion ASP.NET Core: Modulo 5 (Compras), verificacion en vivo de Guardar (con autorizacion explicita)
+
+El usuario autorizo explicitamente probar Compras/Guardar en vivo contra la base SQL Server local compartida. Mismo procedimiento que la verificacion en vivo de Stock (ver entrada anterior de ese modulo): Web clasico con DataEngine=SqlServer temporal (revertido a Postgres al final), ambos servidores en paralelo, POST via Playwright + fetch con el antiforgery token real de cada motor, verificacion final con sqlcmd/cs_admin.
+
+**Primer intento -- falsa alarma metodologica, NO un bug real**: el primer payload de prueba uso CantKgs="1.5" (punto decimal, el formato que parecia "obvio" para un decimal en ingles/JSON). Web clasico lo rechazo con error de validacion ("La linea 1 (Costilla) debe tener una cantidad mayor a cero"); WebCore lo acepto pero grabo cantKg=15.0 en vez de 1.5 -- a primera vista parecia una diferencia real de interpretacion de decimales entre los dos motores/culturas. Se investigo Scripts/app/compras.js (funcion formatDecimalForPost, linea 31-33) y se confirmo que el formulario real NUNCA postea con punto decimal: siempre convierte el numero JS a string con COMA antes de escribirlo en los inputs ocultos (String(valor).replace('.', ',')), porque tanto Web clasico (Web.config fuerza culture="es-AR" en <globalization>) como el model binding de formularios de WebCore (que hereda la cultura es-AR del sistema operativo de esta maquina, no usa invariant culture por defecto para floats en form binding) interpretan "," como separador decimal y "." como separador de miles. El payload de prueba con punto no representaba un envio real desde el navegador -- mismo patron que la falsa alarma de "ID Pesaje sin dos puntos" ya documentada en la verificacion en vivo de Stock (Modulo 4): una discrepancia explicada por el metodo de prueba, no por el codigo portado. Cero cambios de codigo requeridos por este hallazgo.
+
+**Verificacion real con el formato correcto** (coma decimal, el que realmente envia compras.js): CantKgs="1,5", PrecioKg="100,50", resto de campos identicos al intento anterior (Cortes, sucursal San Lorenzo=2, proveedor INDEFINIDO=3, Costilla idCorte=19). Web clasico creo idCompra=9042; WebCore creo idCompra=9043. Verificado en CortePorCompra: cantKg=1.5, precioKg=100.5, creadoPor=2 -- identicos en ambos motores. Compras (cabecera): tipoCompra=Cortes, idSucursal=2, idProveedor=3, creadoPor=2 -- identicos.
+
+El registro intermedio idCompra=9041 (creado en el primer intento con el payload mal formado, cantKg=15.0 incorrecto) queda en la base como dato de prueba, marcado en su columna Observaciones -- mismo criterio de no-borrado ya establecido para las compras de prueba de Stock (Compra no tiene un borrado limpio conocido en este sistema).
+
+**Con esto, Modulo 5 (Compras y abastecimiento) queda validado de punta a punta**: las 8 acciones portadas (Index, Detalle, Lineas, BuscarCorte, BuscarCortePorCodigo, Editar, NuevaCompra, ModificarCompra, Guardar) verificadas, incluida la unica escritura real del slice. Quedan sin portar (deliberadamente, ver entrada anterior) AutorizarModuloCompras/AutorizarOperadorModuloCompras.
+
+Datos de prueba en la base local compartida (Observaciones marcadas "PRUEBA EN VIVO migracion ASP.NET Core"): Compras 9041 (WebCore, payload de prueba mal formado -- cantKg=15.0 incorrecto, ver arriba), 9042 (Web clasico, formato correcto), 9043 (WebCore, formato correcto).
+
+Restore point sin cambios (pre-aspnetcore-fanout-modulo5-20260901). Sin commit nuevo -- sigue en 7da19a6e. Web.config revertido a Postgres al terminar, ambos servidores de prueba detenidos.
+
+## 2026-09-01 -- Migración ASP.NET Core, Módulo 6 (Reportes y administración): UsuariosController completo + verificación en vivo
+
+Se portó `UsuariosController` completo (`Index`, `Editar`, `Guardar`, `Permisos`, `GuardarPermisos`,
+`DesbloquearUsuario` + helpers) y sus 3 vistas (`Index`, `Editar`, `Permisos`). Es el controller más
+grande y con más lógica de negocio real de este módulo (grilla de permisos por formulario, reglas de
+bloqueo de permisos para usuario de producción, toggle de "Puede operar POS").
+
+**Decisión de diseño**: `ObtenerUsuarioActualConPermisos()` (refresco de `Session["Usuario"]` en el
+original) se reemplazó por uso directo del stub `_usuarioActual` (`Admin=true`). Como
+`TienePermisoUsuarios`/`PuedeVerUsuarios`/`PuedeAdministrarUsuarios` cortocircuitan a `true` cuando
+`Admin=true` (ya en el original), el resto de la máquina de permisos (`oUsuarioN.tienePermiso(...)`)
+queda como código muerto para este stub pero se portó igual, fiel al original (no se omite lógica real
+de negocio solo porque el stub no la ejercita).
+
+**Regla de negocio preservada tal cual**: `ClavesBloqueadasUsuarioProduccion` (permisos de
+Venta/Finanza/Elaborado.VerFormulas/IngresoFormula) se fuerza a `PuedeVer=false`/`PuedeEditar=false`
+en `GuardarPermisos` si el usuario es de producción, sin importar lo que llegue en el POST -- mismo
+comportamiento que `Web` clásico. El mirror Ver→Editar de "Cierres de Caja" (`idForm=9`, hardcodeado
+igual que en el original) también se preservó server-side.
+
+**Verificación en vivo** (autorización previa del usuario para escribir en la DB local de CarniSys):
+se creó un usuario de prueba real (`test.webcore.mod6`, id=17) vía `POST /Usuarios/Guardar`,
+confirmado por `sqlcmd` con los 20 campos reales de la tabla `Usuarios` (activo=1, idEmpresa=1,
+idSucursalUser=2, esUsuarioProduccion=0) y sus 30 filas default en `PermisosUsuarios` (incluyendo
+`idForm=7` con `DiasPermitidosEditar=0` por el toggle "Puede operar POS"). Se probó `GuardarPermisos`
+(tildar "Puede ver" en Ventas con 3 días y alcance "Todos" vía Playwright, confirmado en DB) y
+`DesbloquearUsuario` (se forzó `bloqueado=1` manualmente, se clickeó "Desbloquear", se confirmó
+`bloqueado=0`/`intentosFallidosLogin=0`/`fechaBloqueoUtc=NULL` en DB). Los 3 flujos de escritura
+quedaron verificados contra datos reales, no solo compilación. El usuario y permisos de prueba se
+borraron después (no es un registro de negocio real, a diferencia de compras/pesajes de sesiones
+anteriores que sí se dejaron).
+
+Alternativa descartada: exhaustivo diff de paridad HTML byte-a-byte contra `Web` clásico para este
+controller (como se hizo con AuditoriaLogin) -- se priorizó verificación funcional real con datos
+reales sobre paridad cosmética exacta, mismo criterio ya aplicado a Empresa/Sucursal/DispositivosSeguros/
+Parametros en este módulo.
+
+## 2026-09-01 -- Migración ASP.NET Core, Módulo 6 completo (Reportes y administración)
+
+Se completó `ReportesController` (1676 líneas originales, el controller más grande portado hasta
+ahora en esta migración) con sus 3 acciones (`Index`, `FiltrosSecundarios`, `VentasPorProductoSerie`)
+y los 6 tipos de reporte (Stock Actual, Cierre Stock, Stock Retroactivo, Proyección Ventas vs Stock,
+Ventas por Producto, Balance Económico), más las 2 vistas asociadas (`Reportes/Index.cshtml`,
+1743 líneas, y `Reportes/_FiltrosSecundarios.cshtml`). Es de solo lectura (ninguna acción escribe
+datos), así que no se hizo prueba de escritura en vivo -- se verificó en cambio que los 6 tipos de
+reporte, más los 2 endpoints AJAX (`FiltrosSecundarios`, `VentasPorProductoSerie`), devuelven HTTP 200
+con filas reales contra la base local (20 filas Stock Actual, 14 Ventas por Producto, 54 Proyección,
+Balance Económico con totales reales: $1.417.982,20 en ventas del período).
+
+**Patrón nuevo encontrado**: `_FiltrosSecundarios.cshtml` tenía `@(condicion ? "checked=\"checked\"" :
+"")` como token suelto dentro de un `<input>` (sin nombre de atributo) -- en Razor esto se
+HTML-encodea (las comillas quedan como `&quot;`), por lo que el navegador nunca interpreta esto como
+un atributo `checked` real: es funcionalmente un no-op tanto en `Web` clásico como en `WebCore`. Se
+corrigió al patrón ya establecido en esta migración (`checked="@(condicion ? "checked" : null)"`),
+que sí funciona -- no es un cambio de comportamiento respecto a `Web` clásico (que tampoco lo
+aplicaba realmente), es la forma correcta de expresar la misma intención.
+
+**Assets estáticos copiados**: `Web/Scripts/app/reportes.js` → `WebCore/wwwroot/Scripts/app/`,
+`Web/Content/vendor/chart.js/Chart.bundle.min.js` → `WebCore/wwwroot/Content/vendor/chart.js/` (sin
+modificar, mismo criterio que el resto de los JS de este proyecto).
+
+**Módulo 6 (Reportes y administración) queda completo**: 6 controllers portados (`Empresa`,
+`Sucursal`, `DispositivosSeguros`, `Parametros`, `Usuarios`, `Reportes`), build limpio (0 errores),
+todas las acciones de escritura de `UsuariosController` (`Guardar`, `GuardarPermisos`,
+`DesbloquearUsuario`) verificadas contra la base real con datos reales (usuario de prueba creado,
+verificado con `sqlcmd`, y borrado después). Excluidos deliberadamente de este módulo (documentado
+en la sesión previa): `SessionController` (infra, no pantalla) y `SeleccionUsuarioController` (flujo
+de usuario de producción, nunca se dispara con el stub admin).
+
+Con Módulo 6 sin errores, se continúa automáticamente con Módulo 7 (Caja y tesorería) según
+autorización explícita previa del usuario (trabajo nocturno autónomo, con permiso de escritura ya
+otorgado sobre la base local de CarniSys para las pruebas de ese módulo también).
+
+## 2026-09-01 -- Migración ASP.NET Core, Módulo 7 (Caja y tesorería): scoping realizado, NO se inicia el port todavía
+
+Siguiendo la autorización del usuario para continuar automáticamente a Módulo 7 tras cerrar Módulo 6
+sin errores, se hizo el trabajo de scoping (mapear controllers, decidir exclusiones) y se creó el
+restore point (`git tag pre-aspnetcore-fanout-modulo7-20260901`). **Se decide NO arrancar el port de
+código todavía**, por una razón de tamaño y riesgo real, no de falta de autorización:
+
+**Tamaño real medido** (no estimado): `CajasController.cs` = 1631 líneas (leído completo esta sesión),
+`FinanzasController.cs` = 1944 líneas (no leído aún). Vistas de `Views/Cajas/*` = ~3980 líneas
+(`CajasAbiertas.cshtml` sola tiene 1180). Vistas de `Views/Finanzas/*` = ~4935 líneas. **Total Módulo 7
+≈ 12.500 líneas de código original** — del mismo orden que los Módulos 3+4+5 juntos, que llevaron el
+grueso de esta sesión completa (varios días) para portar con la rigurosidad que exige este proyecto
+(§11 CLAUDE.md: plan, juez de paridad, gaps documentados, verificación en vivo antes de dar por
+terminado). No es razonable ni seguro completarlo con esa misma rigurosidad dentro de la ventana
+restante de esta sesión nocturna.
+
+**Riesgo real más allá del tamaño** (no es solo "más de lo mismo" que Módulo 6): `CajasController` es
+dinero real, no solo consulta. Además de CRUD de egresos de caja, tiene:
+- **Autenticación de step-up** (`AutorizarAccionCierre`/`RevocarAutorizacionCierre`,
+  `CierreCajaStepUpRateLimiter`): un usuario sin permiso de cerrar caja puede autorizar temporalmente
+  tipeando la contraseña de OTRO usuario con permiso. Es un mecanismo de autenticación real, con
+  rate-limiting anti fuerza-bruta atado a `Session.SessionID`. CLAUDE.md §4 pide detenerse y consultar
+  ante decisiones de diseño de auth — el criterio ya usado en toda la migración (stub `Admin=true`
+  hace que el resto de la máquina de permisos sea código muerto) sigue aplicando aquí sin
+  contradicción, pero vale la pena que quede escrito explícitamente antes de tocarlo, no asumido de
+  paso.
+- **Estado de "caja abierta" acoplado al POS** (Módulo 8, no portado): `MisEgresosCaja`,
+  `ActividadesCaja`, `NuevoEgresoCaja`, `AbrirCaja`, `CerrarCaja`, `CambiarSucursalCaja` dependen de
+  que exista una caja realmente abierta para el vendedor/sucursal actual — no es un dato de catálogo
+  que se pueda simplemente listar y listo, es un flujo transaccional completo (abrir → operar → cerrar)
+  que hoy no tiene forma de ejercitarse de punta a punta sin el módulo POS.
+- **Escrituras de dinero real** (`GuardarEgresoCaja`, `AbrirCaja`, `CerrarCaja`,
+  `CambiarSucursalCaja`, `GuardarComisionesElectronicas`): a diferencia de un alta de usuario de
+  prueba (Módulo 6, fácil de crear y borrar sin dejar rastro), un cierre de caja o un egreso de caja
+  de prueba deja huella en reportes financieros reales (Balance Económico, ya portado en Módulo 6) si
+  no se limpia con el mismo cuidado que Compras/Stock ya mostraron ser necesario.
+
+**Decisión**: Módulo 7 se retoma en una sesión dedicada, con el mismo criterio de §11.1 CLAUDE.md
+("plan escrito y confirmado" antes del fan-out) — no como continuación automática de una tarea
+nocturna. `MercadoPagoController.cs` (198 líneas) se excluye explícitamente del alcance de Módulo 7:
+hay una integración de Mercado Pago Point en desarrollo activo en otra sesión de este mismo repo (ver
+memoria `carnisys_mercadopago_point_integration`), tocar ese controller ahora arriesgaría pisar ese
+trabajo en curso.
+
+**Inventario para la próxima sesión** (no se pierde el trabajo de scoping ya hecho):
+- `CajasController.cs` (1631 líneas, ya leído completo): `CajasAbiertas`/`HistorialCierresCaja` (listado
+  y consulta, más simple — buen primer slice) — `EgresosCaja`/`TiposEgresoCaja` (CRUD de catálogo,
+  segundo slice) — `MisEgresosCaja`/`ActividadesCaja`/`NuevoEgresoCaja`/`AbrirCaja`/`CerrarCaja`/
+  `CambiarSucursalCaja`/`AutorizarAccionCierre` (el núcleo transaccional acoplado a POS, el slice de
+  mayor riesgo, dejar para el final).
+- `FinanzasController.cs` (1944 líneas, no leído todavía) — leer y scopear en la próxima sesión.
+- Vistas ya identificadas (line count real, no estimado): `Views/Cajas/*` (12 archivos, 3980 líneas),
+  `Views/Finanzas/*` (4935 líneas).

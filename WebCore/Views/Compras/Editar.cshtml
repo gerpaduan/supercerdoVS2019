@@ -1,0 +1,547 @@
+@model WebCore.Models.CompraEditVm
+@using System
+@using System.Collections.Generic
+@using Entidades
+
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar Compra" : "Nueva Compra";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    var modalProductoData = new ViewDataDictionary(ViewData);
+    modalProductoData["ModalId"] = "modalBuscarProductoCompra";
+    modalProductoData["ApiUrl"] = Url.Action("BuscarCorte", "Compras");
+    modalProductoData["Titulo"] = "Buscar Producto de Compra";
+    modalProductoData["MostrarPrecio"] = "true";
+    string tipoCortes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);
+    string tipoMediaRes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes);
+    bool permiteMediaRes = Model.EmpresaCuit == 20306210786;
+    bool mostrarSelectorTipo = permiteMediaRes;
+    string tipoCompraInicial = !permiteMediaRes && !Model.EsEdicion ? tipoCortes : (string.IsNullOrWhiteSpace(Model.TipoCompra) ? tipoCortes : Model.TipoCompra);
+    bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="container-fluid px-2 px-md-3 compra-page @(Model.DesdePos ? "compra-page-pos" : "")" data-compra-page="1">
+    <div id="compraDraftBanner" class="alert alert-warning d-none" role="alert">
+        Se encontró un borrador local de esta compra.
+        <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form id="formCompra" method="post" action="@Url.Action("Guardar", "Compras")" novalidate>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.SubmissionToken)
+                @Html.HiddenFor(m => m.IdCompra)
+                @Html.HiddenFor(m => m.Origen)
+                @Html.HiddenFor(m => m.DraftKey)
+                @Html.HiddenFor(m => m.EmpresaCuit)
+                @Html.HiddenFor(m => m.CantMedias, new { id = "CantMedias" })
+                @Html.HiddenFor(m => m.KgsMedias, new { id = "KgsMedias" })
+                <input type="hidden" id="idPersona" name="IdProveedor" value="@Model.IdProveedor" />
+                <div id="lineasHiddenContainer"></div>
+
+                <div class="compra-section-label">
+                    <span>Datos principales</span>
+                    <small class="text-muted">Complete primero sucursal, fecha y proveedor. Luego cargue las líneas.</small>
+                </div>
+
+                <div class="row compra-datos-principales-row">
+                    @if (mostrarSelectorTipo)
+                    {
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label for="TipoCompra">Tipo compra</label>
+                                <select id="TipoCompra" name="TipoCompra" class="form-control">
+                                    <option value="@tipoCortes" selected="@(string.Equals(tipoCompraInicial, tipoCortes, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Producto</option>
+                                    <option value="@tipoMediaRes" selected="@(string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Media</option>
+                                </select>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden" id="TipoCompra" name="TipoCompra" value="@tipoCompraInicial" />
+                    }
+
+                    <div class="col-12 col-lg-@(mostrarSelectorTipo ? "3" : "4")">
+                        <div class="form-group">
+                            <label for="IdSucursal">Sucursal</label>
+                            @if (Model.SucursalEditable)
+                            {
+                                <select id="IdSucursal" name="IdSucursal" class="form-control">
+                                    <option value="0">Seleccione...</option>
+                                    @foreach (var sucursal in sucursales)
+                                    {
+                                        <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursal ? "selected" : null)">
+                                            @sucursal.SucursalNombre
+                                        </option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="hidden" id="IdSucursal" name="IdSucursal" value="@Model.IdSucursal" />
+                                <input type="text" class="form-control" value="@Model.SucursalNombre" readonly />
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <div class="form-group">
+                            <label for="FechaCompra">Fecha</label>
+                            <input type="datetime-local"
+                                   id="FechaCompra"
+                                   name="FechaCompra"
+                                   class="form-control"
+                                   value="@Model.FechaCompra.ToString("yyyy-MM-ddTHH:mm")" />
+                            @Html.Partial("_AdvertenciaPermisoFecha")
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row compra-datos-secundarios-row">
+                    <div class="col-12 col-lg-5">
+                        <div class="form-group">
+                            <label for="razonSocial">Proveedor</label>
+                            <div class="input-group">
+                                <input type="text" id="razonSocial" class="form-control" value="@Model.ProveedorNombre" placeholder="Seleccione un proveedor" readonly />
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-primary" id="btnBuscarProveedor" title="Buscar proveedor (F9)">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btnLimpiarProveedor">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="NroRemito">Nro.Remito/Factura</label>
+                            @Html.TextBoxFor(m => m.NroRemito, new { @class = "form-control", id = "NroRemito", maxlength = 100 })
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-2 compra-cta-col">
+                        <div class="compra-cta-card">
+                            <div class="compra-cta-head">
+                                <span class="compra-cta-title">Cuenta corriente</span>
+                                <div class="custom-control custom-switch compra-cta-switch">
+                                    <input type="checkbox" class="custom-control-input" id="EnCtaCte" name="EnCtaCte" value="true" checked="@(Model.EnCtaCte ? "checked" : null)" />
+                                    <input type="hidden" name="EnCtaCte" value="false" />
+                                    <label class="custom-control-label" for="EnCtaCte"><span class="sr-only">Cuenta corriente</span></label>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block compra-cta-help">Use esta opción si la compra queda pendiente de pago.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div id="panelLineaCorte" class="compra-linea-panel" style="@(mostrarMediaInicial ? "display:none;" : null)">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h6 class="font-weight-bold text-uppercase text-muted mb-0">Agregar producto</h6>
+                        <div class="d-flex flex-wrap align-items-center gap-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
+                                <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
+                            </button>
+                            <span class="small text-muted d-none" id="lblCapturaRespaldoActiva" title="Se guarda una captura de la pantalla completa en tu carpeta elegida cada vez que agregás o quitás un producto">
+                                <i class="fas fa-shield-alt mr-1 text-success"></i> Respaldo automático activado
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row align-items-end mb-3">
+                        <div class="col-12 col-lg-8">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="chkCargaContinuaProducto" />
+                                <label class="custom-control-label" for="chkCargaContinuaProducto">Cargar varias veces este producto</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="panelCargaContinuaProducto" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
+                        <div><strong>Producto en carga:</strong> <span id="lblProductoContinuo">-</span></div>
+                        <div><strong>Precio compra:</strong> <span id="lblPrecioContinuo">-</span></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-2">
+                            <div class="form-group">
+                                <label for="txtCodigoProducto">Código</label>
+                                <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="form-group">
+                                <label for="txtProductoNombre">Producto</label>
+                                <div class="input-group">
+                                    <input type="hidden" id="txtProductoId" />
+                                    <input type="hidden" id="txtPrecioActualProducto" />
+                                    <input type="text" id="txtProductoNombre" class="form-control app-product-highlight" readonly />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarProducto" title="Buscar producto (F10)">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="form-group">
+                                <label for="txtCantKgs">Cantidad</label>
+                                <input type="number" id="txtCantKgs" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="form-group">
+                                <label for="txtPrecioKg">Precio</label>
+                                <input type="number" id="txtPrecioKg" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <div class="form-group">
+                                <label for="txtSubtotalLinea">Subtotal</label>
+                                <input type="text" id="txtSubtotalLinea" class="form-control" readonly />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row compra-ajustes-grid mb-3">
+                        <div class="col-12 col-lg-3">
+                            <div class="border rounded p-3 bg-light h-100 compra-ajuste-card">
+                                <div class="custom-control custom-switch mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="chkAplicarDescRecargo" />
+                                    <label class="custom-control-label" for="chkAplicarDescRecargo">Desc./Recargo</label>
+                                </div>
+                                <div id="panelDescRecargo" class="row" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="form-group mb-0">
+                                            <label for="txtDescRecargo">Porcentaje</label>
+                                            <input type="number" id="txtDescRecargo" class="form-control" step="0.01" value="0" />
+                                            <small class="form-text text-muted">Negativo descuenta, positivo recarga.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-3">
+                            <div class="border rounded p-3 bg-light h-100 compra-ajuste-card">
+                                <div class="custom-control custom-switch mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="chkAplicarIva" />
+                                    <label class="custom-control-label" for="chkAplicarIva">IVA</label>
+                                </div>
+                                <div id="panelIva" class="row" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="form-group mb-0">
+                                            <label for="txtIvaCompra">Porcentaje</label>
+                                            <input type="number" id="txtIvaCompra" class="form-control" min="0" step="0.01" value="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-4">
+                            <div class="border rounded p-3 h-100 compra-ajuste-card">
+                                <div class="custom-control custom-switch mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="chkAplicarPrecioVentaMargen" />
+                                    <label class="custom-control-label" for="chkAplicarPrecioVentaMargen">Margen / precio de venta</label>
+                                </div>
+                                <div id="panelPrecioVentaMargen" style="display:none;">
+                                    <div class="alert alert-light border py-2 px-3 mb-2">
+                                        Precio actual del producto:
+                                        <strong id="lblPrecioActualProducto">-</strong>
+                                    </div>
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" id="optMargen" name="modoPrecioVenta" class="custom-control-input" checked />
+                                        <label class="custom-control-label" for="optMargen">Margen %</label>
+                                    </div>
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" id="optPrecioVenta" name="modoPrecioVenta" class="custom-control-input" />
+                                        <label class="custom-control-label" for="optPrecioVenta">Nuevo precio venta</label>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-12 col-md-4">
+                                            <div class="form-group mb-md-0">
+                                                <label for="txtMargen">Margen</label>
+                                                <input type="number" id="txtMargen" class="form-control" step="0.01" />
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-5">
+                                            <div class="form-group mb-0">
+                                                <label for="txtPrecioVenta">Precio venta</label>
+                                                <input type="number" id="txtPrecioVenta" class="form-control" min="0" step="0.01" />
+                                                <small id="lblAdvertenciaPrecioVenta" class="form-text text-danger" style="display:none;">El nuevo precio de venta es menor al precio actual del producto.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-2 d-flex align-items-end justify-content-lg-end">
+                            <button type="button" class="btn btn-primary mt-2 mt-lg-0" id="btnAgregarLineaCorte">
+                                <i class="fas fa-plus"></i> Agregar producto
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="panelLineaMediaRes" class="compra-linea-panel" style="@(mostrarMediaInicial ? null : "display:none;")">
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3">Agregar media</h6>
+                    <div class="custom-control custom-switch mb-3">
+                        <input type="checkbox" class="custom-control-input" id="chkCargaContinuaMedia" />
+                        <label class="custom-control-label" for="chkCargaContinuaMedia">Cargar varias medias con el mismo precio</label>
+                    </div>
+                    <div id="panelCargaContinuaMedia" class="alert alert-info py-2 px-3 mb-3" style="display:none;">
+                        <div><strong>Precio media en carga:</strong> <span id="lblPrecioMediaContinuo">-</span></div>
+                    </div>
+                    <div class="row compra-media-row">
+                        <input type="hidden" id="txtNroTropa" />
+                        <div class="col-6 col-md-4 compra-col-media-kgs">
+                            <div class="form-group">
+                                <label for="txtKgMedia">Kg media</label>
+                                <input type="number" id="txtKgMedia" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 compra-col-media-precio">
+                            <div class="form-group">
+                                <label for="txtPrecioMedia">Precio media</label>
+                                <input type="number" id="txtPrecioMedia" class="form-control" min="0" step="0.01" />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-2 compra-col-media-add">
+                            <div class="form-group mb-0 compra-add-action-group">
+                                <label class="d-none d-md-block">&nbsp;</label>
+                                <button type="button"
+                                        class="btn btn-primary compra-icon-btn"
+                                        id="btnAgregarLineaMediaRes"
+                                        title="Agregar media"
+                                        aria-label="Agregar media">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row compra-workspace-row">
+                    <div class="col-12 col-xl-8">
+                <div class="table-responsive mb-3 compra-tabla-wrap">
+                    <table class="table table-hover table-sm" id="tablaLineasCompra">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 70px;">
+                                    <button type="button" class="btn btn-link btn-sm p-0 font-weight-bold text-dark js-line-order-toggle" data-action="toggle-line-order" data-edit-readonly-ignore="true" title="Ordenar por número">
+                                        #
+                                        <span class="js-line-order-indicator" aria-hidden="true">↓</span>
+                                    </button>
+                                </th>
+                                <th>Detalle</th>
+                                <th class="text-right">Cantidad</th>
+                                <th class="text-right">Precio</th>
+                                <th class="text-right">P. venta</th>
+                                <th class="text-right">Margen</th>
+                                <th class="text-right">Total</th>
+                                <th style="width: 70px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Lineas != null && Model.Lineas.Count > 0)
+                            {
+                                for (var i = 0; i < Model.Lineas.Count; i++)
+                                {
+                                    var linea = Model.Lineas[i];
+                                    var numeroLinea = i + 1;
+                                    if (linea.EsMediaRes)
+                                    {
+                                        <tr>
+                                            <td class="text-center font-weight-bold">@numeroLinea</td>
+                                            <td class="compra-detalle-cell"><strong>Tropa:</strong> @(string.IsNullOrWhiteSpace(linea.NroTropa) ? "-" : linea.NroTropa)</td>
+                                            <td class="text-right">@linea.KgMedia.ToString("0.00")</td>
+                                            <td class="text-right">@linea.PrecioMedia.ToString("0.00")</td>
+                                            <td class="text-right">-</td>
+                                            <td class="text-right">-</td>
+                                            <td class="text-right">@linea.TotalLinea.ToString("0.00")</td>
+                                            <td></td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td class="text-center font-weight-bold">@numeroLinea</td>
+                                            <td class="compra-detalle-cell">
+                                                <strong>@linea.CorteNombre</strong><br />
+                                                <small class="text-muted">Código: @(linea.Codigo.HasValue ? linea.Codigo.Value.ToString() : "")@(linea.Balanza ? " | Balanza" : "")</small>
+                                            </td>
+                                            <td class="text-right">@linea.CantKgs.ToString("0.00")</td>
+                                            <td class="text-right">@linea.PrecioKg.ToString("0.00")</td>
+                                            <td class="text-right">@(linea.PrecioVenta > 0 ? linea.PrecioVenta.ToString("0.00") : "-")</td>
+                                            <td class="text-right">@(linea.Margen != 0 ? linea.Margen.ToString("0.00") : "-")</td>
+                                            <td class="text-right">@linea.TotalLinea.ToString("0.00")</td>
+                                            <td></td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                <tr class="js-empty-row">
+                                    <td colspan="8" class="text-center text-muted">Todavía no hay líneas cargadas.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="compra-sidebar-stack">
+                        <div class="border rounded p-3 bg-white compra-medias-box">
+                            <div class="form-group mb-0">
+                                <label for="CantMediasMediaRes">Cantidad medias reses</label>
+                                <input type="number" class="form-control js-cant-medias-visible" id="CantMediasMediaRes" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                            </div>
+                        </div>
+                        <div class="border rounded p-3 bg-light compra-totales-box">
+                            <div class="d-flex justify-content-between">
+                                <span>Items</span>
+                                <strong id="totalItems">@Model.CantItems</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Total cantidad</span>
+                                <strong id="totalKg">@Model.TotalKg.ToString("0.00")</strong>
+                            </div>
+                            <div class="d-flex justify-content-between compra-total-principal">
+                                <span>Total compra</span>
+                                <strong id="totalImporte">$ @Model.TotalImporte.ToString("0.00")</strong>
+                            </div>
+                        </div>
+                        <div class="border rounded p-3 bg-white compra-observaciones-box">
+                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                                <label for="Observaciones" class="mb-0 font-weight-bold">Observaciones</label>
+                                <small class="text-muted">Opcional</small>
+                            </div>
+                            @Html.TextAreaFor(m => m.Observaciones, 2, 1, new { @class = "form-control", id = "Observaciones", placeholder = "Dato adicional si hace falta." })
+                        </div>
+                        @if (Model.EsEdicion)
+                        {
+                            <div class="small text-muted compra-meta-box">
+                                <span class="d-block">Creado: @Model.Creado por @Model.CreadoPor</span>
+                                <span class="d-block">Actualizado: @Model.Actualizado por @Model.ActualizadoPor</span>
+                            </div>
+                        }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between flex-wrap mt-4 compra-actions-bar">
+                    <div class="mb-2 d-flex align-items-center flex-wrap">
+                        <button type="button" class="btn btn-outline-secondary" id="btnLimpiarBorrador">
+                            Limpiar borrador
+                        </button>
+                        <small class="text-muted ml-0 ml-md-3 mt-2 mt-md-0 compra-shortcuts-help">Atajos: F9 proveedor, F10 producto, Alt+G guardar, Alt+Enter guardar, Alt+C cancelar.</small>
+                    </div>
+                    <div class="mb-2">
+                        @if (Model.EsEdicion)
+                        {
+                            <button type="button"
+                                    class="btn btn-primary mr-2"
+                                    id="btnHabilitarEdicionCompra"
+                                    data-edit-readonly-ignore="true">
+                                <i class="fas fa-edit mr-1"></i> Modificar
+                            </button>
+                        }
+                        @if (!Model.DesdePos)
+                        {
+                            <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary" id="btnCancelarCompra">
+                                Cancelar
+                            </a>
+                        }
+                        <button type="submit" class="btn btn-success @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarCompra">
+                            <i class="fas fa-save"></i> Guardar compra
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="@Url.Content("~/Content/css/compras-editar.css?v=1")" />
+
+<div id="contenedorModalPersonaCompra"></div>
+@if (!Model.DesdePos)
+{
+    @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+
+    <div class="modal fade" id="modalPersonaCrearCompra" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo proveedor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" id="modalPersonaCrearCompraBody">
+                    <div class="text-center text-muted py-4">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+    @* Diferencia deliberada respecto al original: se elimino la rama "@if (Model.DesdePos) {...}"
+       (scripts inline para cuando esta vista se abre embebida en POS, ver header del controller)
+       porque el Modulo 8 (POS) todavia no esta portado a WebCore -- nada navega hoy con
+       origen=pos, asi que esa rama nunca se ejecutaria. Se conserva solo la rama "else" original
+       (navegacion completa por Compras/Index), ya estructurada como @section Scripts. *@
+    @section Scripts {
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js?v=27")"></script>
+        <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+        <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+        <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+        <script>
+            (function () {
+                window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
+                if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
+                    return;
+                }
+
+                window.ComprasUI.init({
+                    formSelector: "#formCompra",
+                    desdePos: false,
+                    widgetFijo: false,
+                    permiteMediaRes: @(permiteMediaRes ? "true" : "false"),
+                    esEdicion: @(Model.EsEdicion ? "true" : "false"),
+                    draftKey: "@Model.DraftKey",
+                    modalProductoSelector: "#modalBuscarProductoCompra",
+                    initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas)),
+                    urls: {
+                        guardar: "@Url.Action("Guardar", "Compras")",
+                        personaBuscarModal: "@Url.Action("Buscar", "Personas")",
+                        personaListar: "@Url.Action("Listar", "Personas")",
+                        personaCrear: "@Url.Action("PersonaModal", "Personas")",
+                        personaGuardarCrear: "@Url.Action("GuardarPersonaModal", "Personas")",
+                        buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
+                        editarLayout: "@Url.Action("Editar", "Compras")",
+                        nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
+                    }
+                });
+
+                window.EditReadOnly && window.EditReadOnly.init({
+                    formSelector: "#formCompra",
+                    soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                    modifyButtonSelector: "#btnHabilitarEdicionCompra",
+                    saveButtonSelector: "#btnGuardarCompra",
+                    onStateChanged: function (readOnly, $form) {
+                        if (window.ComprasUI && typeof window.ComprasUI.syncPrimaryAction === "function") {
+                            window.ComprasUI.syncPrimaryAction($form);
+                        }
+                    }
+                });
+            })();
+        </script>
+    }

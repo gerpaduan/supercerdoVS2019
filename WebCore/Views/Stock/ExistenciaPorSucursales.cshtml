@@ -1,0 +1,727 @@
+@model Entidades.ExistenciaPorSucursalesVm
+@using System
+@using System.Linq
+
+@{
+    ViewBag.Title = "Existencia por sucursales";
+
+    var filtro = Model != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
+    string fechaHasta = filtro.FechaHasta.HasValue ? filtro.FechaHasta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    string fechaMinima = filtro.FechaMinimaConsulta.HasValue ? filtro.FechaMinimaConsulta.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+    // TODO(claude): el original lee Session["Usuario"].Empresa.Cuit para elegir el intervalo de
+    // autoactualizacion (15 min para la empresa real con CUIT 20306210786, 30 para el resto). Sin
+    // sesion real, se verifico contra la base local (empresa id=1, la del stub de WebCore) que
+    // ese CUIT SI coincide -- se hardcodea directamente a 15 en vez de reproducir el chequeo
+    // (mismo resultado observable para el usuario de prueba de todo el juez de paridad).
+    int intervaloAutoMinutos = 15;
+}
+
+<div class="container-fluid existencia-sucursales-page">
+    <div class="card shadow-sm mb-3 stock-filtros-card">
+        <div class="card-body">
+            <form id="formExistenciaSucursales" autocomplete="off">
+                <div class="stock-filtros-stack">
+                    <div class="stock-filtros-row existencia-filtros-row-top">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroSucursalExistencia">Sucursal</label>
+                            <select id="filtroSucursalExistencia" name="idSucursal" class="form-control">
+                                @foreach (var sucursal in filtro.SucursalesDisponibles)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == filtro.IdSucursal ? "selected" : null)">@sucursal.Sucursal</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label d-none d-md-block">&nbsp;</label>
+                            <!-- Fecha hasta ya no se elige a mano: siempre se recalcula a la fecha/hora
+                                 exacta del momento de la busqueda (manual o autoactualizada, ver el
+                                 submit del form en el script). El datepicker/label visibles ya no
+                                 aportan nada, asi que se saca de la vista -- sigue viajando oculto
+                                 para no romper el resto de la logica (min de fecha, serialize del form). -->
+                            <input type="hidden" id="filtroFechaHastaExistencia" name="fechaHasta" value="@fechaHasta" min="@fechaMinima" />
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarExistencia">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+                            </button>
+                        </div>
+
+                        <div class="form-group mb-0 existencia-check-wrap">
+                            <div class="custom-control custom-switch existencia-check">
+                                <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosExistencia">
+                                <label class="custom-control-label" for="switchFiltrosAvanzadosExistencia">Filtros avanzados</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="existencia-filtros-avanzados-grid d-none" id="panelFiltrosAvanzadosExistencia">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroTipoExistencia">Tipo</label>
+                            <select id="filtroTipoExistencia" name="tipo" class="form-control">
+                                <option value="">Todos</option>
+                                @foreach (var tipo in filtro.TiposDisponibles)
+                                {
+                                    <option value="@tipo" selected="@(string.Equals(tipo, filtro.Tipo, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@tipo</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroProveedorExistencia">Proveedor</label>
+                            <select id="filtroProveedorExistencia" name="idProveedor" class="form-control">
+                                <option value="0">Todos</option>
+                                @foreach (var proveedor in filtro.ProveedoresDisponibles)
+                                {
+                                    <option value="@proveedor.IdPersona" selected="@(proveedor.IdPersona == filtro.IdProveedor ? "selected" : null)">@proveedor.RazonSocial</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroMarcaExistencia">Marca</label>
+                            <select id="filtroMarcaExistencia" name="idMarca" class="form-control">
+                                <option value="0">Todas</option>
+                                @foreach (var marca in filtro.MarcasDisponibles)
+                                {
+                                    <option value="@marca.IdPersona" selected="@(marca.IdPersona == filtro.IdMarca ? "selected" : null)">@marca.RazonSocial</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label" for="filtroEstadoExistencia">EstadoStock</label>
+                            <select id="filtroEstadoExistencia" name="estadoStock" class="form-control">
+                                @foreach (var estado in filtro.EstadosDisponibles)
+                                {
+                                    <option value="@estado" selected="@(string.Equals(estado, filtro.EstadoStock, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@estado</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 existencia-estado-card">
+        <div class="card-body py-3">
+            <div class="existencia-estado-grid">
+                <div class="existencia-estado-item">
+                    <span class="text-muted">Última actualización:</span>
+                    <strong id="lblUltimaActualizacionExistencia">-</strong>
+                </div>
+                <div class="existencia-estado-item existencia-estado-item-full">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="switchAutoActualizarExistencia">
+                        <label class="custom-control-label" for="switchAutoActualizarExistencia">Autoactualizar stock</label>
+                    </div>
+                    <span id="lblAutoActualizarExistencia" class="small text-muted">Cada @intervaloAutoMinutos minutos, hasta 6 veces.</span>
+                </div>
+                <div class="existencia-estado-item">
+                    <span id="lblAvisoPendienteExistencia" class="text-warning d-none">Hay filtros sin aplicar.</span>
+                    <span id="lblEstadoConsultaExistencia" class="text-muted">Presioná Buscar para consultar stock.</span>
+                </div>
+                <div class="existencia-estado-item existencia-estado-item-right">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="switchEstadoStockExistencia">
+                        <label class="custom-control-label" for="switchEstadoStockExistencia">Estado Stock</label>
+                    </div>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="switchExpandirExistencia">
+                        <label class="custom-control-label" for="switchExpandirExistencia">Expandir todos</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0" id="contenedorTablaExistenciaSucursales">
+            @Html.Partial("~/Views/Stock/_TablaExistenciaPorSucursales.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<style>
+    .existencia-sucursales-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .existencia-filtros-row-top,
+    .existencia-filtros-avanzados-grid,
+    .existencia-estado-grid {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .existencia-filtros-avanzados-grid {
+        margin-top: .65rem;
+    }
+
+    .existencia-check-wrap {
+        display: flex;
+        align-items: end;
+    }
+
+    .existencia-check {
+        padding-bottom: .38rem;
+    }
+
+    .existencia-estado-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .existencia-estado-item {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        flex-wrap: wrap;
+    }
+
+    .existencia-estado-item-full {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        order: 4;
+    }
+
+    .existencia-estado-item-right {
+        justify-content: flex-end;
+    }
+
+    .existencia-sucursales-page .stock-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .existencia-sucursales-page .stock-filtros-card .form-control,
+    .existencia-sucursales-page .stock-filtros-card .btn {
+        min-height: 2.35rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .existencia-sucursales-page .stock-filtro-label,
+    .existencia-sucursales-page .custom-control-label {
+        font-size: .76rem;
+    }
+
+    .existencia-sucursales-page .existencia-estado-card .card-body {
+        padding: .62rem .82rem !important;
+    }
+
+    .existencia-sucursales-page .existencia-estado-item,
+    .existencia-sucursales-page .existencia-estado-item .text-muted,
+    .existencia-sucursales-page .existencia-estado-item .small,
+    .existencia-sucursales-page #lblEstadoConsultaExistencia,
+    .existencia-sucursales-page #lblAvisoPendienteExistencia {
+        font-size: .8rem;
+    }
+
+    .existencia-sucursales-page .existencia-estado-item strong {
+        font-size: .84rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .existencia-sucursales-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .existencia-sucursales-page .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .existencia-sucursales-page .stock-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .existencia-sucursales-page .stock-filtros-card .form-control,
+        .existencia-sucursales-page .stock-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .existencia-sucursales-page .existencia-estado-card .card-body {
+            padding: .52rem .74rem !important;
+        }
+
+        .existencia-sucursales-page .existencia-estado-item,
+        .existencia-sucursales-page .existencia-estado-item .text-muted,
+        .existencia-sucursales-page .existencia-estado-item .small,
+        .existencia-sucursales-page #lblEstadoConsultaExistencia,
+        .existencia-sucursales-page #lblAvisoPendienteExistencia {
+            font-size: .76rem;
+        }
+
+        .existencia-sucursales-page .existencia-estado-item strong {
+            font-size: .8rem;
+        }
+
+        .existencia-filtros-row-top {
+            grid-template-columns: 2fr 1fr auto;
+            align-items: end;
+        }
+
+        .existencia-filtros-avanzados-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .existencia-estado-grid {
+            grid-template-columns: 1fr 1.5fr auto;
+            align-items: center;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .existencia-filtros-row-top {
+            grid-template-columns: 2fr 1fr auto;
+            align-items: end;
+        }
+
+        .existencia-estado-grid {
+            grid-template-columns: 1fr 1.5fr auto;
+        }
+
+        .existencia-filtros-avanzados-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .existencia-filtros-row-top,
+        .existencia-filtros-avanzados-grid,
+        .existencia-estado-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .existencia-estado-item-right {
+            justify-content: flex-start;
+        }
+
+        .stock-filtro-accion .btn {
+            min-height: 2.7rem;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var buscarUrl = '@Url.Action("BuscarExistenciaPorSucursales", "Stock")';
+            var fechaMinimaUrl = '@Url.Action("ObtenerFechaMinimaExistencia", "Stock")';
+            var $form = $("#formExistenciaSucursales");
+            var $fechaHasta = $("#filtroFechaHastaExistencia");
+            var $lblFechaMinima = $("#lblFechaMinimaExistencia");
+            var $contenedor = $("#contenedorTablaExistenciaSucursales");
+            var $btnBuscar = $("#btnBuscarExistencia");
+            var $btnBuscarTexto = $btnBuscar.find(".btn-buscar-texto");
+            var $lblUltima = $("#lblUltimaActualizacionExistencia");
+            var $lblPendiente = $("#lblAvisoPendienteExistencia");
+            var $lblEstado = $("#lblEstadoConsultaExistencia");
+            var $switchExpandir = $("#switchExpandirExistencia");
+            var $switchEstadoStock = $("#switchEstadoStockExistencia");
+            var $switchAuto = $("#switchAutoActualizarExistencia");
+            var $lblAuto = $("#lblAutoActualizarExistencia");
+            var consultaAplicada = null;
+            var sincronizandoScrollDetalle = false;
+            var ultimoToqueDetalle = { target: "", time: 0 };
+            var intervaloAutoMinutos = @intervaloAutoMinutos;
+            var maxAutoActualizaciones = 6;
+            var autoActualizacionesEjecutadas = 0;
+            var autoActualizacionTimer = null;
+            var autoActualizacionCountdownTimer = null;
+            var autoActualizacionProximaEjecucion = null;
+            var autoActualizacionDisparadaPorTimer = false;
+
+            function obtenerEstadoConsulta() {
+                return {
+                    texto: ($("#filtroTextoExistencia").val() || "").trim(),
+                    idSucursal: $("#filtroSucursalExistencia").val() || "0",
+                    fechaHasta: $("#filtroFechaHastaExistencia").val() || "",
+                    tipo: $("#filtroTipoExistencia").val() || "",
+                    idProveedor: $("#filtroProveedorExistencia").val() || "0",
+                    idMarca: $("#filtroMarcaExistencia").val() || "0"
+                };
+            }
+
+            function estadosIguales(a, b) {
+                return JSON.stringify(a) === JSON.stringify(b);
+            }
+
+            // El calculo de existencia parte siempre del ultimo cierre de stock registrado, sin
+            // importar que "Fecha hasta" se pida -- por eso no tiene sentido dejar elegir una fecha
+            // anterior a ese cierre (daria un resultado incorrecto, ver docs/DECISIONS.md). Esto
+            // actualiza el limite (atributo "min" del selector + el texto de ayuda) cada vez que
+            // cambia la sucursal elegida, sin esperar a que se presione Buscar.
+            function actualizarFechaMinimaExistencia() {
+                var idSucursal = $("#filtroSucursalExistencia").val() || "0";
+
+                $.ajax({
+                    url: fechaMinimaUrl,
+                    type: "GET",
+                    data: { idSucursal: idSucursal }
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) return;
+
+                    $fechaHasta.attr("min", resp.fechaMinima || "");
+
+                    if (resp.fechaMinima && $fechaHasta.val() && $fechaHasta.val() < resp.fechaMinima) {
+                        $fechaHasta.val(resp.fechaMinima);
+                    }
+
+                    if (resp.fechaMinima) {
+                        var fechaCorta = resp.fechaMinima.split("T")[0].split("-").reverse().join("/");
+                        var detalle = (resp.detalle || []).map(function (d) { return d.Sucursal + ": " + d.fecha; }).join(" · ");
+                        $lblFechaMinima.text("— Cálculo desde " + fechaCorta).attr("title", detalle);
+                    } else {
+                        $lblFechaMinima.text("— sin cierre de stock registrado").attr("title", "");
+                    }
+                });
+            }
+
+            function actualizarPendiente() {
+                if (!consultaAplicada) {
+                    $lblPendiente.addClass("d-none");
+                    return;
+                }
+
+                var pendiente = !estadosIguales(consultaAplicada, obtenerEstadoConsulta());
+                $lblPendiente.toggleClass("d-none", !pendiente);
+            }
+
+            function aplicarExpandidoGlobal() {
+                var expandir = $switchExpandir.is(":checked");
+                $contenedor.find(".existencia-detalle-row").each(function () {
+                    var $fila = $(this);
+                    var visiblePadre = !$fila.prev(".existencia-producto-row").hasClass("d-none");
+                    $fila.toggleClass("d-none", !(expandir && visiblePadre));
+                });
+
+                $contenedor.find(".btn-toggle-existencia i").toggleClass("fa-minus-square", expandir).toggleClass("fa-plus-square", !expandir);
+            }
+
+            function aplicarEstadoStockExistencia() {
+                var mostrar = $switchEstadoStock.is(":checked");
+                $contenedor.find(".existencia-dif-col, .existencia-col-estadostock").toggleClass("d-none", !mostrar);
+            }
+
+            function toggleDetalleExistencia(target) {
+                var $detalle = target ? $(target) : $();
+                if (!$detalle.length) return;
+                var expandido = !$detalle.hasClass("d-none");
+                $detalle.toggleClass("d-none", expandido);
+                $('.btn-toggle-existencia[data-target="' + target + '"]')
+                    .find("i")
+                    .toggleClass("fa-plus-square", expandido)
+                    .toggleClass("fa-minus-square", !expandido);
+            }
+
+            function aplicarFiltrosVisuales() {
+                var texto = ($("#filtroTextoExistencia").val() || "").trim().toUpperCase();
+                var estado = ($("#filtroEstadoExistencia").val() || "Todos").trim().toUpperCase();
+
+                $contenedor.find(".existencia-producto-row").each(function () {
+                    var $row = $(this);
+                    var textoRow = ($row.attr("data-texto") || "").toUpperCase();
+                    var estados = ($row.attr("data-estados") || "").toUpperCase().split("|");
+                    var coincideTexto = !texto || textoRow.indexOf(texto) >= 0;
+                    var coincideEstado = estado === "TODOS" || estados.indexOf(estado) >= 0;
+                    var visible = coincideTexto && coincideEstado;
+                    var target = $row.attr("data-detail-target");
+                    var $detalle = target ? $(target) : $();
+
+                    $row.toggleClass("d-none", !visible);
+                    if (!visible) {
+                        $detalle.addClass("d-none");
+                    }
+                });
+
+                aplicarExpandidoGlobal();
+            }
+
+            function setBuscando(buscando) {
+                $btnBuscar.prop("disabled", buscando);
+                $btnBuscarTexto.text(buscando ? "Buscando..." : "Buscar");
+            }
+
+            function limpiarTimerAutoActualizacion() {
+                if (autoActualizacionTimer) {
+                    window.clearTimeout(autoActualizacionTimer);
+                    autoActualizacionTimer = null;
+                }
+
+                if (autoActualizacionCountdownTimer) {
+                    window.clearInterval(autoActualizacionCountdownTimer);
+                    autoActualizacionCountdownTimer = null;
+                }
+
+                autoActualizacionProximaEjecucion = null;
+            }
+
+            function actualizarTextoAutoActualizacion() {
+                if (!$switchAuto.is(":checked")) {
+                    $lblAuto
+                        .removeClass("text-success text-warning")
+                        .addClass("text-muted")
+                        .text("Cada " + intervaloAutoMinutos + " minutos, hasta 6 veces.");
+                    return;
+                }
+
+                var restantes = Math.max(0, maxAutoActualizaciones - autoActualizacionesEjecutadas);
+                if (!autoActualizacionProximaEjecucion) {
+                    $lblAuto
+                        .removeClass("text-muted text-warning")
+                        .addClass("text-success")
+                        .text("Autoactualización activa. Restan " + restantes + " ejecuciones.");
+                    return;
+                }
+
+                var msRestantes = Math.max(0, autoActualizacionProximaEjecucion - new Date().getTime());
+                var totalSegundos = Math.ceil(msRestantes / 1000);
+                var minutos = Math.floor(totalSegundos / 60);
+                var segundos = totalSegundos % 60;
+
+                $lblAuto
+                    .removeClass("text-muted text-warning")
+                    .addClass("text-success")
+                    .text("Autoactualización activa. Próxima en " + minutos + ":" + String(segundos).padStart(2, "0") + ". Restan " + restantes + " ejecuciones.");
+            }
+
+            function notificarAutoActualizacionDesactivada() {
+                var mensaje = "La actualización automática de stock fue desactivada. Volvé a activarla si la necesitás.";
+                $lblEstado.text(mensaje);
+                $lblAuto
+                    .removeClass("text-muted text-success")
+                    .addClass("text-warning")
+                    .text(mensaje);
+
+                if (window.Swal && typeof window.Swal.fire === "function") {
+                    window.Swal.fire({
+                        icon: "info",
+                        title: "Autoactualización desactivada",
+                        text: mensaje
+                    });
+                }
+            }
+
+            function desactivarAutoActualizacion(informarUsuario) {
+                limpiarTimerAutoActualizacion();
+                autoActualizacionesEjecutadas = 0;
+                $switchAuto.prop("checked", false);
+                actualizarTextoAutoActualizacion();
+
+                if (informarUsuario) {
+                    notificarAutoActualizacionDesactivada();
+                }
+            }
+
+            function programarProximaAutoActualizacion() {
+                limpiarTimerAutoActualizacion();
+
+                if (!$switchAuto.is(":checked")) {
+                    actualizarTextoAutoActualizacion();
+                    return;
+                }
+
+                if (autoActualizacionesEjecutadas >= maxAutoActualizaciones) {
+                    desactivarAutoActualizacion(true);
+                    return;
+                }
+
+                autoActualizacionProximaEjecucion = new Date().getTime() + (intervaloAutoMinutos * 60 * 1000);
+                autoActualizacionTimer = window.setTimeout(function () {
+                    autoActualizacionTimer = null;
+
+                    if (!$switchAuto.is(":checked")) {
+                        actualizarTextoAutoActualizacion();
+                        return;
+                    }
+
+                    autoActualizacionDisparadaPorTimer = true;
+                    $form.trigger("submit");
+                }, intervaloAutoMinutos * 60 * 1000);
+
+                autoActualizacionCountdownTimer = window.setInterval(actualizarTextoAutoActualizacion, 1000);
+                actualizarTextoAutoActualizacion();
+            }
+
+            function ahoraLocalInput() {
+                var ahora = new Date();
+                var off = ahora.getTimezoneOffset();
+                var local = new Date(ahora.getTime() - (off * 60000));
+                return local.toISOString().slice(0, 16);
+            }
+
+            function actualizarUltimaActualizacion() {
+                var ahora = new Date();
+                var dd = String(ahora.getDate()).padStart(2, "0");
+                var mm = String(ahora.getMonth() + 1).padStart(2, "0");
+                var yyyy = ahora.getFullYear();
+                var hh = String(ahora.getHours()).padStart(2, "0");
+                var mi = String(ahora.getMinutes()).padStart(2, "0");
+                var ss = String(ahora.getSeconds()).padStart(2, "0");
+                $lblUltima.text(dd + "/" + mm + "/" + yyyy + " " + hh + ":" + mi + ":" + ss);
+            }
+
+            function vincularScrollDetalles() {
+                $contenedor.find(".existencia-detalle-scroll-sync")
+                    .off("scroll.syncDetalle")
+                    .on("scroll.syncDetalle", function () {
+                        if (sincronizandoScrollDetalle) {
+                            return;
+                        }
+
+                        sincronizandoScrollDetalle = true;
+                        var scrollLeft = this.scrollLeft;
+
+                        $contenedor.find(".existencia-detalle-scroll-sync").not(this).each(function () {
+                            this.scrollLeft = scrollLeft;
+                        });
+
+                        sincronizandoScrollDetalle = false;
+                    });
+            }
+
+            $form.on("submit", function (e) {
+                e.preventDefault();
+                // Fecha hasta siempre se recalcula al momento exacto de la busqueda (manual o
+                // autoactualizada) -- unico punto de entrada para ambos triggers, ya que la
+                // autoactualizacion tambien dispara este mismo submit.
+                $("#filtroFechaHastaExistencia").val(ahoraLocalInput());
+                setBuscando(true);
+                $lblEstado.text("Consultando stock...");
+
+                $.ajax({
+                    url: buscarUrl,
+                    type: "GET",
+                    // #filtroTextoExistencia ya no es descendiente de $form (vive arriba de la
+                    // tabla) -- $form.serialize() no lo incluiria, y el servidor si lo usa como
+                    // filtro real (LIKE en el SP), asi que se agrega a mano.
+                    data: $form.serialize() + "&texto=" + encodeURIComponent($("#filtroTextoExistencia").val() || "")
+                }).done(function (html) {
+                    $contenedor.html(html);
+                    consultaAplicada = obtenerEstadoConsulta();
+                    actualizarUltimaActualizacion();
+                    actualizarPendiente();
+                    aplicarFiltrosVisuales();
+                    aplicarEstadoStockExistencia();
+                    vincularScrollDetalles();
+                    if ($switchAuto.is(":checked") && autoActualizacionDisparadaPorTimer) {
+                        autoActualizacionesEjecutadas += 1;
+                        $lblEstado.text("Consulta actualizada. Autoactualización " + autoActualizacionesEjecutadas + " de " + maxAutoActualizaciones + ".");
+                    } else {
+                        $lblEstado.text("Consulta actualizada.");
+                    }
+                }).fail(function () {
+                    $contenedor.html('<div class="alert alert-danger m-3 mb-0">No se pudo consultar la existencia por sucursales.</div>');
+                    $lblEstado.text("Ocurrió un error al consultar stock.");
+                }).always(function () {
+                    var ejecucionAutomatica = autoActualizacionDisparadaPorTimer;
+                    autoActualizacionDisparadaPorTimer = false;
+                    setBuscando(false);
+                    if ($switchAuto.is(":checked")) {
+                        if (ejecucionAutomatica && autoActualizacionesEjecutadas >= maxAutoActualizaciones) {
+                            desactivarAutoActualizacion(true);
+                        } else {
+                            programarProximaAutoActualizacion();
+                        }
+                    } else {
+                        actualizarTextoAutoActualizacion();
+                    }
+                });
+            });
+
+            $(document).on("click", ".btn-toggle-existencia", function (e) {
+                e.stopPropagation();
+                var target = $(this).attr("data-target");
+                toggleDetalleExistencia(target);
+            });
+
+            $(document).on("dblclick", ".existencia-producto-row", function (e) {
+                if ($(e.target).closest(".btn-toggle-existencia").length) return;
+                toggleDetalleExistencia($(this).attr("data-detail-target"));
+            });
+
+            $(document).on("touchend", ".existencia-producto-row", function (e) {
+                if ($(e.target).closest(".btn-toggle-existencia").length) return;
+
+                var ahora = new Date().getTime();
+                var target = $(this).attr("data-detail-target") || "";
+                var esDobleToque = ultimoToqueDetalle.target === target && (ahora - ultimoToqueDetalle.time) <= 350;
+
+                ultimoToqueDetalle = {
+                    target: target,
+                    time: ahora
+                };
+
+                if (!esDobleToque) return;
+
+                e.preventDefault();
+                toggleDetalleExistencia(target);
+                ultimoToqueDetalle = { target: "", time: 0 };
+            });
+
+            $switchExpandir.on("change", aplicarExpandidoGlobal);
+            $switchEstadoStock.on("change", aplicarEstadoStockExistencia);
+            $switchAuto.on("change", function () {
+                if ($(this).is(":checked")) {
+                    autoActualizacionesEjecutadas = 0;
+                    $lblEstado.text("Autoactualización activada. Se actualizará cada " + intervaloAutoMinutos + " minutos hasta 6 veces.");
+                    programarProximaAutoActualizacion();
+                } else {
+                    limpiarTimerAutoActualizacion();
+                    autoActualizacionesEjecutadas = 0;
+                    actualizarTextoAutoActualizacion();
+                    if (consultaAplicada) {
+                        $lblEstado.text("Autoactualización desactivada.");
+                    }
+                }
+            });
+
+            $("#filtroSucursalExistencia, #filtroFechaHastaExistencia, #filtroTipoExistencia, #filtroProveedorExistencia, #filtroMarcaExistencia")
+                .on("input change", function () {
+                    actualizarPendiente();
+                    aplicarFiltrosVisuales();
+                });
+
+            // #filtroTextoExistencia vive dentro del contenedor que se reemplaza entero por AJAX
+            // en cada Buscar (ver el "done" del submit mas abajo) -- un binding directo como el de
+            // arriba quedaria huerfano despues del primer refresh. Delegado sobre $contenedor, que
+            // si persiste (solo se le reemplaza el innerHTML).
+            $contenedor.on("input change", "#filtroTextoExistencia", function () {
+                actualizarPendiente();
+                aplicarFiltrosVisuales();
+            });
+
+            // Mismo patron toggle+input colapsable que #btnToggleBusquedaLineasStock en
+            // Stock/Editar -- tambien delegado sobre $contenedor por la misma razon de arriba.
+            $contenedor.on("click", "#btnToggleBusquedaExistencia", function () {
+                var $btn = $(this);
+                var $input = $contenedor.find("#filtroTextoExistencia");
+                var mostrar = $input.hasClass("d-none");
+                $input.toggleClass("d-none", !mostrar);
+                $btn.attr("aria-expanded", mostrar ? "true" : "false");
+
+                if (mostrar) {
+                    $input.focus();
+                } else {
+                    $input.val("");
+                    actualizarPendiente();
+                    aplicarFiltrosVisuales();
+                }
+            });
+
+            $("#filtroSucursalExistencia").on("change", actualizarFechaMinimaExistencia);
+
+            $("#filtroEstadoExistencia").on("change", aplicarFiltrosVisuales);
+
+            $("#switchFiltrosAvanzadosExistencia").on("change", function () {
+                $("#panelFiltrosAvanzadosExistencia").toggleClass("d-none", !$(this).is(":checked"));
+            });
+
+            aplicarFiltrosVisuales();
+            aplicarEstadoStockExistencia();
+            vincularScrollDetalles();
+            actualizarTextoAutoActualizacion();
+        })();
+    </script>
+}

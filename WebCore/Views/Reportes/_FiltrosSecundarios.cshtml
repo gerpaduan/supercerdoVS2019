@@ -1,0 +1,136 @@
+@model WebCore.Models.ReportesViewModel
+@using System
+@using System.Linq
+@{
+    // Filtros secundarios (dependientes del tipo de reporte) + switch de Balance + Periodos
+    // comparativos. Extraido de Index.cshtml para poder refrescarse solo, por AJAX, cuando
+    // cambia "Tipo de reporte" -- ver ReportesController.FiltrosSecundarios y
+    // Scripts/app/reportes.js (refreshFiltrosSecundarios). Mismo patron de booleans locales
+    // que usa Index.cshtml en su bloque @{} superior.
+    var esReporteVentasProducto =
+        string.Equals(Model.TipoReporteSeleccionado, "Ventas por Producto", StringComparison.OrdinalIgnoreCase);
+    var esReporteProyeccion =
+        string.Equals(Model.TipoReporteSeleccionado, "Proyeccion Ventas vs Stock", StringComparison.OrdinalIgnoreCase);
+    var esReporteBalance =
+        string.Equals(Model.TipoReporteSeleccionado, "Balance Economico", StringComparison.OrdinalIgnoreCase);
+    // Los 4 filtros de abajo viven detras del switch "Filtros avanzados" (oculto por defecto,
+    // ver reportes.js). El filtro de Producto (codigo/descripcion) se movio arriba de la tabla
+    // de resultados, estilo /Stock/Editar -- ya no vive en este partial.
+    var hayFiltrosAvanzados = Model.MostrarFiltroTipoProducto || Model.MostrarFiltroMarca
+        || Model.MostrarFiltroEstadoStock || Model.MostrarFiltroAgrupacionTemporal;
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between mt-3">
+    <div>
+        @if (hayFiltrosAvanzados)
+        {
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzadosReporte" />
+                <label class="custom-control-label" for="switchFiltrosAvanzadosReporte">Filtros avanzados</label>
+            </div>
+        }
+    </div>
+    <button type="submit" class="btn btn-primary" id="btnBuscarReporte">
+        <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto">Buscar</span>
+    </button>
+</div>
+
+@if (hayFiltrosAvanzados)
+{
+    <div class="reportes-filtros-grid reportes-filtros-secundarios mt-2 d-none" id="panelFiltrosAvanzadosReporte">
+        @if (Model.MostrarFiltroTipoProducto)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="tipoProductoReporte">Tipo de producto</label>
+                @Html.DropDownList("tipoProducto", Model.TiposProducto, new { @class = "form-control filtro-vivo", id = "tipoProductoReporte" })
+            </div>
+        }
+
+        @if (Model.MostrarFiltroMarca)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="marcaReporte">Marca</label>
+                @Html.DropDownList("marcaId", Model.Marcas, new { @class = "form-control filtro-vivo", id = "marcaReporte" })
+            </div>
+        }
+
+        @if (Model.MostrarFiltroEstadoStock)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="estadoStockReporte">Estado stock</label>
+                @Html.DropDownList("estadoStock", Model.EstadosStock, new { @class = "form-control filtro-vivo", id = "estadoStockReporte" })
+            </div>
+        }
+
+        @if (Model.MostrarFiltroAgrupacionTemporal)
+        {
+            <div class="form-group mb-0">
+                <label class="stock-filtro-label" for="agrupacionTemporalReporte">Agrupacion grafico</label>
+                @Html.DropDownList("agrupacionTemporal", Model.AgrupacionesTemporales, new { @class = "form-control filtro-principal", id = "agrupacionTemporalReporte" })
+            </div>
+        }
+    </div>
+}
+
+@if (esReporteBalance)
+{
+    <div class="border-top mt-3 pt-3">
+        <div class="custom-control custom-switch">
+            <input type="checkbox"
+                   class="custom-control-input filtro-principal"
+                   id="incluirVentasCuentaCorrienteBalance"
+                   name="incluirVentasCuentaCorrienteBalance"
+                   value="true"
+                   checked="@(Model.IncluirVentasCuentaCorrienteBalance ? "checked" : null)" />
+            <label class="custom-control-label" for="incluirVentasCuentaCorrienteBalance">
+                Incluir ventas en cuenta corriente en el balance
+            </label>
+        </div>
+    </div>
+}
+
+@if (esReporteVentasProducto || esReporteProyeccion || esReporteBalance)
+{
+    <div class="border-top mt-3 pt-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+            <div>
+                <div class="font-weight-semibold">Periodos comparativos</div>
+                <div class="text-muted small">Cada periodo agregado toma exactamente la misma duracion que el periodo principal.</div>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarPeriodoComparativo">
+                <i class="fas fa-plus mr-1"></i>Agregar periodo
+            </button>
+        </div>
+
+        <div id="listaPeriodosComparativos">
+            @foreach (var periodo in (Model.PeriodosComparativosVentas ?? new System.Collections.Generic.List<WebCore.Models.ReportePeriodoComparativoVm>()).Where(x => !x.EsPrincipal))
+            {
+                <div class="reportes-periodo-comparativo card border-0 bg-light mb-2">
+                    <div class="card-body py-2 px-3">
+                        <div class="reportes-periodo-grid">
+                            <div>
+                                <label class="stock-filtro-label mb-1">Fecha comparativa</label>
+                                <div class="input-group input-group-sm reportes-periodo-fecha-group">
+                                    <input type="date" class="form-control filtro-principal periodo-comparativo-fecha" value="@periodo.FechaDesde.ToString("yyyy-MM-dd")" />
+                                    <div class="input-group-append">
+                                        <span class="input-group-text periodo-comparativo-hora">@periodo.FechaDesde.ToString("HH:mm")</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="periodoComparativoDesde" class="periodo-comparativo-desde" value="@periodo.FechaDesdeValor" />
+                            </div>
+                            <div>
+                                <label class="stock-filtro-label mb-1">Rango calculado</label>
+                                <input type="text" class="form-control form-control-sm periodo-comparativo-hasta" value="@periodo.FechaHasta.ToString("dd/MM/yyyy HH:mm")" readonly="readonly" />
+                            </div>
+                            <div class="reportes-periodo-accion">
+                                <button type="button" class="btn btn-outline-danger btn-sm btn-quitar-periodo">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

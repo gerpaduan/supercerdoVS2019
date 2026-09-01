@@ -1,0 +1,250 @@
+﻿@model WebCore.Models.CompraIndexVm
+@using System
+@using System.Collections.Generic
+@using System.Data
+
+@{
+    var dt = Model != null ? Model.Compras : null;
+    var detalles = Model != null ? Model.Detalles : new Dictionary<int, WebCore.Models.CompraIndexDetalleVm>();
+    int totalColumnas = 8;
+}
+
+@functions {
+    public static string TruncarProveedor(string valor, int maximo)
+    {
+        if (string.IsNullOrWhiteSpace(valor)) return "";
+        var limpio = valor.Trim();
+        return limpio.Length <= maximo ? limpio : limpio.Substring(0, maximo);
+    }
+
+    public static string LeerTexto(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return "";
+
+        return Convert.ToString(row[columna]);
+    }
+
+    public static int? LeerEnteroNullable(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return null;
+
+        return Convert.ToInt32(row[columna]);
+    }
+
+    public static float? LeerFloatNullable(DataRow row, string columna)
+    {
+        if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+            return null;
+
+        return Convert.ToSingle(row[columna]);
+    }
+}
+
+<div class="table-responsive tabla-full">
+    <table class="table table-bordered table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Fecha</th>
+                <th>Sucursal</th>
+                <th>Acción</th>
+                <th class="text-right">Cantidad</th>
+                <th class="text-center" style="width: 70px;">Obs.</th>
+                <th>Ajuste</th>
+                <th style="width: 220px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (dt == null || dt.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="@totalColumnas" class="text-center text-muted py-4">No se encontraron movimientos de stock para el filtro seleccionado.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    int idCompra = Convert.ToInt32(row["idCompra"]);
+                    DateTime? fechaCompra = row["fechaCompra"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaCompra"]);
+                    float cantKg = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]);
+                    string estado = row.Table.Columns.Contains("estado") && row["estado"] != DBNull.Value ? row["estado"].ToString() : "";
+                    string detailId = "detStock_" + idCompra;
+                    WebCore.Models.CompraIndexDetalleVm detalle = detalles.ContainsKey(idCompra) ? detalles[idCompra] : null;
+                    string resumenPesaje = "";
+                    string tipoCompraFila = LeerTexto(row, "tipoCompra");
+                    bool esPesajeFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Pesaje", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool esAjusteFila = !string.IsNullOrWhiteSpace(tipoCompraFila) && tipoCompraFila.IndexOf("Ajuste", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if ((detalle != null && detalle.EsPesaje) || esPesajeFila)
+                    {
+                        string proveedorOrigen = detalle != null && !string.IsNullOrWhiteSpace(detalle.ProveedorCompraVinculada)
+                            ? detalle.ProveedorCompraVinculada
+                            : LeerTexto(row, "razonSocial");
+                        float? kgsOrigen = detalle != null && detalle.KgsCompraVinculada.HasValue
+                            ? detalle.KgsCompraVinculada
+                            : (LeerFloatNullable(row, "kgsMedias") ?? (cantKg > 0 ? (float?)cantKg : null));
+                        int? mediasOrigen = detalle != null && detalle.CantMediasCompraVinculada.HasValue
+                            ? detalle.CantMediasCompraVinculada
+                            : (LeerEnteroNullable(row, "cantMedias") ?? (detalle != null && detalle.CantidadMedias > 0 ? (int?)detalle.CantidadMedias : null));
+                        string proveedorPesaje = TruncarProveedor(proveedorOrigen, 8);
+                        string kgsPesaje = kgsOrigen.HasValue ? kgsOrigen.Value.ToString("N0") + " kgs" : "";
+                        string mediasPesaje = mediasOrigen.HasValue ? mediasOrigen.Value.ToString() + " Medias Reses" : "";
+                        var partesPesaje = new List<string>();
+
+                        if (!string.IsNullOrWhiteSpace(proveedorPesaje))
+                        {
+                            partesPesaje.Add(proveedorPesaje);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(kgsPesaje))
+                        {
+                            partesPesaje.Add(kgsPesaje);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(mediasPesaje))
+                        {
+                            partesPesaje.Add(mediasPesaje);
+                        }
+
+                        resumenPesaje = string.Join(" | ", partesPesaje);
+                    }
+
+                    <tr>
+                        <td class="stock-id-cell font-weight-bold">@idCompra</td>
+                        <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td>@row["sucursal"]</td>
+                        <td>
+                            <div class="stock-accion-titulo">@row["tipoCompra"]</div>
+                            @if (!string.IsNullOrWhiteSpace(resumenPesaje))
+                            {
+                                <div class="stock-accion-resumen" title="@resumenPesaje">@resumenPesaje</div>
+                            }
+                            @if (detalle != null)
+                            {
+                                if (detalle.EsPesaje && detalle.IdCompraVinculada.HasValue)
+                                {
+                                    if (detalle.CompraVinculadaEsPesaje)
+                                    {
+                                        <div class="mt-1">
+                                            <span class="badge badge-pill badge-warning">Pesaje padre #@detalle.IdCompraVinculada.Value</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mt-1">
+                                            <span class="badge badge-pill badge-primary">Compra #@detalle.IdCompraVinculada.Value</span>
+                                        </div>
+                                    }
+                                }
+
+                                if (detalle.EsPesaje && detalle.PesajesHijosVinculadosIds != null && detalle.PesajesHijosVinculadosIds.Count > 0)
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-secondary" title="@string.Join(", ", detalle.PesajesHijosVinculadosIds.ConvertAll(id => "#" + id))">
+                                            @detalle.PesajesHijosVinculadosIds.Count pesaje@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s") vinculado@(detalle.PesajesHijosVinculadosIds.Count == 1 ? "" : "s")
+                                        </span>
+                                    </div>
+                                }
+
+                                if (detalle.EsPesaje && detalle.IdAjusteRelacionado.HasValue)
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-success">Aj. #@detalle.IdAjusteRelacionado.Value</span>
+                                    </div>
+                                }
+                                else if (((detalle.EsAjuste || esAjusteFila) && detalle.IdPesajeRelacionado.HasValue))
+                                {
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-info">Pesaje #@detalle.IdPesajeRelacionado.Value</span>
+                                    </div>
+                                }
+                            }
+                        </td>
+                        <td class="text-right">@cantKg.ToString("N2")</td>
+                        <td class="text-center">
+                            @if (detalle != null && !string.IsNullOrWhiteSpace(detalle.Observaciones))
+                            {
+                                <span class="badge badge-pill badge-info" title="@detalle.Observaciones">1</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(estado))
+                            {
+                                <span class="font-weight-bold @(estado.Equals("Actualizado", StringComparison.OrdinalIgnoreCase) ? "text-success" : "text-danger")">@estado</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-center text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "Stock", new { id = idCompra })" title="Ver stock">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-link text-decoration-none btn-detalles-stock"
+                                    data-target="#@detailId"
+                                    aria-expanded="false"
+                                    aria-controls="@detailId">
+                                <i class="fas fa-chevron-down"></i> Detalles
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="@totalColumnas" class="p-0">
+                            <div id="@detailId" class="collapse stock-detalle-collapse">
+                                <div class="p-3 bg-light border-top stock-detalle-body">
+                                    <div class="stock-detalle-lazy"
+                                         data-loaded="false"
+                                         data-url="@Url.Action("Detalle", "Stock", new { idCompra = idCompra })">
+                                        <div class="text-muted">Presioná <strong>Detalles</strong> para cargar la información.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .stock-detalle-body {
+        font-size: 0.83rem;
+    }
+
+    .stock-accion-resumen {
+        font-size: .72rem;
+        line-height: 1.15;
+        color: #6c757d;
+        margin-top: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+    }
+
+    .stock-id-cell {
+        font-size: .76rem;
+    }
+
+    .stock-accion-titulo {
+        font-weight: 700;
+    }
+
+    .stock-relacionado-box {
+        border-radius: 0.5rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid rgba(0, 123, 255, 0.18);
+        background: rgba(0, 123, 255, 0.06);
+    }
+
+    .stock-relacionado-pesaje {
+        border-color: rgba(23, 162, 184, 0.24);
+        background: rgba(23, 162, 184, 0.08);
+    }
+</style>

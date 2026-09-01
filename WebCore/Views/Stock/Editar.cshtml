@@ -1,0 +1,1152 @@
+@model WebCore.Models.StockEditVm
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Entidades
+
+@{
+    // Diferencia deliberada respecto al original: se elimina la distincion
+    // renderInlineScripts/Layout=null (pensada para cuando esta vista se abre por AJAX dentro de
+    // un modal, asumiendo que _LayoutBase.cshtml ya precargo scanner.js/zxing/etc.). WebCore
+    // siempre navega a esta vista de forma completa (nunca por AJAX) y su _Layout.cshtml todavia
+    // no tiene esos bundles precargados (gap ya documentado), asi que se colapsa siempre al
+    // comportamiento de la rama "inline" original (la version autosuficiente, que ya incluye
+    // zxing/scanner.js por si misma) -- ver seccion Scripts al final del archivo.
+    ViewBag.Title = Model.EsEdicion ? "Modificar Stock" : "Nuevo Stock";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    bool esPesaje = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes), StringComparison.OrdinalIgnoreCase);
+    bool esAjuste = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock), StringComparison.OrdinalIgnoreCase);
+    bool esEgreso = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock), StringComparison.OrdinalIgnoreCase);
+    bool permiteNegativo = esAjuste || esEgreso;
+    bool tieneCompraVinculadaPesaje = esPesaje && Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0;
+    bool compraVinculadaEsPesaje = Model.CompraVinculadaEsPesaje;
+    bool mostrarGuardarSinPesaje = Model.GuardarSinPesaje
+        || ViewData.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Any(e => string.Equals(e.ErrorMessage, "Ingrese los kilos de medias para el pesaje.", StringComparison.OrdinalIgnoreCase));
+    var modalProductoData = new ViewDataDictionary(ViewData);
+    modalProductoData["ModalId"] = "modalBuscarProductoStock";
+    modalProductoData["ApiUrl"] = Url.Action("BuscarCorte", "Stock");
+    modalProductoData["Titulo"] = "Buscar Producto de Stock";
+    modalProductoData["MostrarPrecio"] = "false";
+}
+
+<div class="container-fluid px-2 px-md-3 stock-page stock-form-compact" data-stock-page="1">
+    <div id="stockDraftBanner" class="alert alert-warning d-none" role="alert">
+        Se encontró un borrador local de este movimiento de stock.
+        <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Stock")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+        <span id="stockEstadoAjusteBadge"
+              class="badge badge-pill @(string.Equals(Model.Estado, "Actualizado", StringComparison.OrdinalIgnoreCase) ? "badge-success" : "badge-warning") px-3 py-2 @(!esPesaje || string.IsNullOrWhiteSpace(Model.Estado) ? "d-none" : "")">
+            Ajuste: <span id="stockEstadoAjusteTexto">@Model.Estado</span>
+        </span>
+    </div>
+
+    <div class="card shadow-sm stock-panel-card">
+        <div class="card-body">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            <form id="formStock" method="post" action="@Url.Action("Guardar", "Stock")" novalidate>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IdCompra)
+                @Html.HiddenFor(m => m.TipoCompra)
+                @Html.HiddenFor(m => m.IdProveedor)
+                @Html.HiddenFor(m => m.IdPesajeAjustado)
+                @Html.HiddenFor(m => m.DraftKey)
+                <div id="lineasHiddenContainer"></div>
+                <div id="pesajesVinculadosHiddenContainer"></div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="IdSucursal">Sucursal</label>
+                            <select id="IdSucursal" name="IdSucursal" class="form-control">
+                                @foreach (var sucursal in sucursales)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursal ? "selected" : null)">@sucursal.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="FechaCompra">Fecha</label>
+                            <input type="datetime-local"
+                                   id="FechaCompra"
+                                   name="FechaCompra"
+                                   class="form-control"
+                                   value="@Model.FechaCompra.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="form-group">
+                            <label for="TipoCompraVisual">Acción</label>
+                            <div class="input-group">
+                                <select id="TipoCompraVisual" class="form-control app-product-highlight stock-action-highlight" disabled>
+                                    <option value="Ingreso Stock" selected="@(string.Equals(Model.TipoCompra, "Ingreso Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Ingreso</option>
+                                    <option value="Egreso Stock" selected="@(string.Equals(Model.TipoCompra, "Egreso Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Egreso</option>
+                                    <option value="Cierre Stock" selected="@(string.Equals(Model.TipoCompra, "Cierre Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Cierre</option>
+                                    <option value="Ajuste Stock" selected="@(string.Equals(Model.TipoCompra, "Ajuste Stock", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Ajuste</option>
+                                    <option value="Pesaje Cortes" selected="@(string.Equals(Model.TipoCompra, "Pesaje Cortes", StringComparison.OrdinalIgnoreCase) ? "selected" : null)">Pesaje</option>
+                                </select>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary stock-action-button" id="btnHabilitarTipoCompra" title="Habilitar cambio de acción">
+                                        <i class="fas fa-edit mr-1"></i> Cambiar
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">La acción se desbloquea sólo cuando presiona cambiar.</small>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-4">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        @Html.Partial("_AdvertenciaPermisoFecha")
+                    </div>
+                </div>
+
+                <div class="row @(esPesaje ? "" : "d-none")" id="bloquePesajeStock">
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group">
+                                <label for="razonSocial">Proveedor</label>
+                                <div class="input-group">
+                                    <input type="text" id="razonSocial" class="form-control" value="@Model.ProveedorNombre" placeholder="Seleccione un proveedor" readonly />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarProveedor" title="Buscar proveedor (F9)">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="btnLimpiarProveedor" title="Limpiar proveedor">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted" id="lblProveedorCuit">@(!string.IsNullOrWhiteSpace(Model.ProveedorCuit) ? ("CUIT: " + Model.ProveedorCuit) : "Sin proveedor seleccionado")</small>
+                                <div class="stock-compra-vinculada-box mt-2 @((tieneCompraVinculadaPesaje && !Model.EsEdicion) ? "" : "d-none")" id="stockCompraVinculadaBox">
+                                    <div class="small text-uppercase font-weight-bold mb-2">
+                                        @(compraVinculadaEsPesaje ? "Pesaje padre vinculado" : "Compra vinculada")
+                                        <span id="stockCompraVinculadaId" class="ml-1">@(tieneCompraVinculadaPesaje ? "#" + Model.IdPesajeAjustado.Value : "")</span>
+                                    </div>
+                                    <div id="stockCompraVinculadaEstado" class="font-weight-bold @(!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada) ? "" : "d-none")">@Model.EstadoCompraVinculada</div>
+                                    <div id="stockCompraVinculadaDatos" class="@(!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada) ? "d-none" : "")">
+                                        <div class="small text-muted">Proveedor</div>
+                                        <div class="font-weight-bold" id="stockCompraVinculadaProveedor">@(!string.IsNullOrWhiteSpace(Model.ProveedorCompraVinculada) ? Model.ProveedorCompraVinculada : "-")</div>
+                                        <div class="small text-muted mt-2">Fecha de compra</div>
+                                        <div class="font-weight-bold" id="stockCompraVinculadaFecha">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <div class="form-group">
+                                <label for="CantMedias">Cant.Medias</label>
+                                <input type="number" id="CantMedias" name="CantMedias" class="form-control" min="1" step="1" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" />
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <div class="form-group">
+                                <label for="KgsMedias">Kgs.Medias</label>
+                                <input type="text" id="KgsMedias" name="KgsMedias" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" value="@(Model.KgsMedias.HasValue ? Model.KgsMedias.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                                <div class="mt-2 @(mostrarGuardarSinPesaje ? "" : "d-none")" id="wrapGuardarSinPesaje">
+                                    <div class="custom-control custom-switch">
+                                        @Html.CheckBoxFor(m => m.GuardarSinPesaje, new { @class = "custom-control-input", id = "GuardarSinPesaje" })
+                                        <label class="custom-control-label" for="GuardarSinPesaje">Guardar sin pesaje</label>
+                                    </div>
+                                    <small class="form-text text-muted">Guardar Kgs.Medias en 0</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnSeleccionarCompraPesaje">
+                            <div class="form-group mb-lg-0">
+                                <label class="d-none d-lg-block">&nbsp;</label>
+                                <button type="button" class="btn btn-outline-primary btn-block" id="btnSeleccionarCompraPesaje">
+                                    <i class="fas fa-shopping-basket mr-1"></i> Vincular compra
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-2 @(esPesaje ? "" : "d-none")" id="wrapBtnVincularPesaje">
+                            <div class="form-group mb-lg-0">
+                                <label class="d-none d-lg-block">&nbsp;</label>
+                                <button type="button" class="btn btn-outline-info btn-block" id="btnVincularPesajes">
+                                    <i class="fas fa-link mr-1"></i> Vincular pesajes
+                                </button>
+                            </div>
+                        </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        @if (Model.EsEdicion && esPesaje)
+                        {
+                            <div class="stock-compra-vinculada-box @(tieneCompraVinculadaPesaje ? "" : "d-none")">
+                                <div class="small text-uppercase font-weight-bold mb-2">
+                                    @(compraVinculadaEsPesaje ? "Pesaje padre vinculado" : "Compra vinculada")
+                                    <span class="ml-1">@(tieneCompraVinculadaPesaje ? "#" + Model.IdPesajeAjustado.Value : "")</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.EstadoCompraVinculada))
+                                {
+                                    <div class="font-weight-bold">@Model.EstadoCompraVinculada</div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Proveedor</div>
+                                            <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorCompraVinculada) ? Model.ProveedorCompraVinculada : "-")</div>
+                                        </div>
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Fecha de compra</div>
+                                            <div class="font-weight-bold">@(Model.FechaCompraVinculada.HasValue ? Model.FechaCompraVinculada.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Cant.Medias</div>
+                                            <div class="font-weight-bold">@(Model.CantMediasCompraVinculada.HasValue ? Model.CantMediasCompraVinculada.Value.ToString() : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Kgs.Medias</div>
+                                            <div class="font-weight-bold">@(Model.KgsCompraVinculada.HasValue ? Model.KgsCompraVinculada.Value.ToString("N2") : "-")</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (Model.EsEdicion && esAjuste)
+                        {
+                            <div class="stock-pesaje-ajustado-box">
+                                <div class="small text-uppercase font-weight-bold mb-2">
+                                    @(Model.IdPesajeAjustado.HasValue && Model.IdPesajeAjustado.Value > 0
+                                        ? "Pesaje vinculado #" + Model.IdPesajeAjustado.Value
+                                        : "Pesaje vinculado")
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.EstadoPesajeAjustado))
+                                {
+                                    <div class="font-weight-bold">@Model.EstadoPesajeAjustado</div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Proveedor</div>
+                                            <div class="font-weight-bold">@(!string.IsNullOrWhiteSpace(Model.ProveedorPesajeAjustado) ? Model.ProveedorPesajeAjustado : "-")</div>
+                                        </div>
+                                        <div class="col-12 col-md-6 mb-2">
+                                            <div class="text-muted small">Fecha del pesaje</div>
+                                            <div class="font-weight-bold">@(Model.FechaPesajeAjustado.HasValue ? Model.FechaPesajeAjustado.Value.ToString("dd/MM/yyyy HH:mm") : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Cant.Medias</div>
+                                            <div class="font-weight-bold">@(Model.CantMediasPesajeAjustado.HasValue ? Model.CantMediasPesajeAjustado.Value.ToString() : "-")</div>
+                                        </div>
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-muted small">Kgs.Medias</div>
+                                            <div class="font-weight-bold">@(Model.KgsPesajeAjustado.HasValue ? Model.KgsPesajeAjustado.Value.ToString("N2") : "-")</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3 stock-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 stock-section-title">Agregar producto</h6>
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div class="custom-control custom-switch mr-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
+                                        <label class="custom-control-label" for="chkBalanzaLinea">Balanza</label>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true">
+                                        <i class="fas fa-layer-group mr-1"></i> Ver acumulados
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoStock" title="Mostrar/ocultar teclado digital">
+                                        <i class="fas fa-keyboard"></i> <i class="fas fa-chevron-down" id="iconoToggleTecladoStock"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info @(esPesaje ? "" : "d-none")" id="btnVerPorcentajePesaje" data-edit-readonly-ignore="true">
+                                        <i class="fas fa-percent mr-1"></i> Ver Porc(%)
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary @(string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), StringComparison.OrdinalIgnoreCase) ? "" : "d-none")" id="btnProductosNoCargados">
+                                        <i class="fas fa-list mr-1"></i> Productos no cargados
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
+                                        <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
+                                    </button>
+                                    <span class="small text-muted d-none" id="lblCapturaRespaldoActiva" title="Se guarda una captura de la pantalla completa en tu carpeta elegida cada vez que agregás o quitás un producto">
+                                        <i class="fas fa-shield-alt mr-1 text-success"></i> Respaldo automático activado
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="balanzaStatusWrapStock">
+                                <div class="small text-muted mb-2">
+                                    Conexión balanza: <span id="estadoBalanzaStock">Desconocida</span>
+                                </div>
+                                <div class="progress mb-3" style="height:4px;">
+                                    <div id="barraBalanzaStock" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            @Html.Partial("~/Views/Shared/_ScannerCodigoBarra.cshtml")
+
+                            <div class="numeric-keypad-toggle-layout" id="stockNumericKeypadLayout">
+                                <div class="numeric-keypad-toggle-fields">
+                                    <div class="row align-items-end">
+                                        <div class="col-12 col-md-3 col-lg-3">
+                                            <div class="form-group">
+                                                <label for="txtCodigoProducto">Código</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código de barra">
+                                                            <i class="fas fa-barcode"></i>
+                                                        </button>
+                                                    </div>
+                                                    <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" style="min-width:13ch;" />
+                                                </div>
+                                                <small id="scannerMsg" class="text-danger d-none"></small>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-5 col-lg-6">
+                                            <div class="form-group">
+                                                <label for="txtProductoNombre">Producto</label>
+                                                <div class="input-group">
+                                                    <input type="hidden" id="txtProductoId" />
+                                                    <input type="hidden" id="txtProductoPesable" />
+                                                    <input type="hidden" id="txtProductoTipo" />
+                                                    <input type="hidden" id="txtProductoPromedio" />
+                                                    <input type="text" id="txtProductoNombre" class="form-control app-product-highlight" readonly />
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarProducto" title="Buscar producto (F10)" data-edit-readonly-ignore="true">
+                                                            <i class="fas fa-search"></i>
+                                                            <span class="d-none d-lg-inline ml-1">F10</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-8 col-md-3 col-lg-2">
+                                            <div class="form-group">
+                                                <label for="txtCantKgs" id="lblCantidadStock">Cantidad</label>
+                                                <input type="text" id="txtCantKgs" class="form-control solo-decimal" inputmode="decimal" enterkeyhint="done" autocomplete="off" style="min-width:8ch;" data-permite-negativo="@(permiteNegativo ? "true" : "false")" />
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-1">
+                                            <div class="form-group">
+                                                <label class="d-block invisible mb-0">&nbsp;</label>
+                                                <button type="button" class="btn btn-primary btn-block d-flex align-items-center justify-content-center" id="btnAgregarLineaStock" title="Agregar">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @{ ViewBag.NumericKeypadId = "numericKeypadStock"; }
+                                @Html.Partial("~/Views/Shared/_NumericKeypad.cshtml")
+                            </div>
+                        </div>
+
+                        <div id="stockFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
+                        <div id="stockWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                        <div id="stockPesajesVinculadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
+
+                        <div class="d-flex align-items-center mb-2 stock-search-toolbar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasStock"
+                                    title="Buscar en la tabla" aria-expanded="false">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <input type="text" id="filtroLineasStock" class="form-control form-control-sm ml-2 d-none"
+                                   placeholder="Buscar por producto o código..." autocomplete="off" style="max-width:280px;">
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm stock-table-compact" id="tablaLineasStock">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="stock-th-producto">
+                                            <a href="#" class="js-stock-sort" data-sort-key="producto">Producto</a>
+                                            <span class="stock-th-sep">·</span>
+                                            <a href="#" class="js-stock-sort stock-th-codigo-link" data-sort-key="codigo">Código</a>
+                                        </th>
+                                        <th class="text-right" style="width:120px;" data-sort-key="cantidad">Cantidad</th>
+                                        <th class="text-center" style="width:70px;">bal</th>
+                                        <th style="width:160px;" data-sort-key="creado">Creado</th>
+                                        <th style="width:70px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="card bg-light stock-panel-card stock-summary-card">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-2 stock-section-title">Resumen</h6>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total items</span>
+                                    <strong id="totalItems">@Model.CantItems</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total cantidad</span>
+                                    <strong id="totalKg">@Model.TotalKg.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)</strong>
+                                </div>
+                                <hr />
+                                <div class="d-flex flex-wrap align-items-center justify-content-between small text-muted">
+                                    <span class="mr-2">Acción: <strong id="stockAccionActual">@Model.TipoCompra</strong></span>
+                                    <span class="d-flex align-items-center mt-2 mt-md-0">
+                                        <label class="mb-0 mr-2 text-nowrap">Usuario</label>
+                                        <input type="text" class="form-control form-control-sm" style="max-width: 160px;" value="@Model.UsuarioNombre" readonly />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted mt-2" id="txtAyudaCantidad">
+                            @(permiteNegativo ? "Puede ingresar valores positivos o negativos según el ajuste o egreso." : "")
+                        </small>
+                        <div class="card stock-panel-card mt-3">
+                            <div class="card-body">
+                                <div class="form-group mb-0">
+                                    <label for="Observaciones">Observaciones</label>
+                                    @Html.TextAreaFor(m => m.Observaciones, 2, 1, new { @class = "form-control js-auto-resize", id = "Observaciones", style = "min-height: calc(1.5em * 2 + 1rem); overflow:hidden; resize:vertical;" })
+                                </div>
+                            </div>
+                        </div>
+                        @if (Model.EsEdicion)
+                        {
+                            <div class="card stock-panel-card mt-3">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="small text-muted">Creado</div>
+                                            <div class="font-weight-bold">@Model.Creado</div>
+                                            <div class="small text-muted">@Model.CreadoPor</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Actualizado</div>
+                                            <div class="font-weight-bold">@Model.Actualizado</div>
+                                            <div class="small text-muted">@Model.ActualizadoPor</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionStock"
+                                data-edit-readonly-ignore="true"
+                                disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
+                    <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarStock">
+                        <i class="fas fa-save mr-1"></i> Guardar stock
+                    </button>
+                    <a href="@Url.Action("Index", "Stock")" class="btn btn-outline-secondary mb-2">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-stock-compact" id="modalVincularPesajesStock" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Vincular pesajes</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="stockVincularPesajesWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                <div class="small text-muted mb-1">Se muestran solo pesajes de la misma sucursal, ordenados del m&aacute;s reciente al m&aacute;s antiguo.</div>
+                <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalVincularPesajesStock">-</strong></div>
+                <div class="row align-items-end mb-3 stock-modal-filters">
+                    <div class="col-12 col-lg-4">
+                        <label for="txtFiltroProveedorVincularPesajes">Proveedor</label>
+                        <input type="text" id="txtFiltroProveedorVincularPesajes" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaDesdeVincularPesajes">Fecha desde</label>
+                        <input type="date" id="txtFechaDesdeVincularPesajes" class="form-control" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaHastaVincularPesajes">Fecha hasta</label>
+                        <input type="date" id="txtFechaHastaVincularPesajes" class="form-control" />
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <button type="button" class="btn btn-outline-secondary btn-block" id="btnLimpiarFiltrosVincularPesajes">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaVincularPesajesStock">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:70px;">ID</th>
+                                <th style="width:150px;">Fecha</th>
+                                <th>Proveedor</th>
+                                <th class="text-right" style="width:110px;">Medias</th>
+                                <th class="text-right" style="width:110px;">Kilos</th>
+                                <th style="width:150px;">Sucursal</th>
+                                <th class="text-center" style="width:120px;">Detalle</th>
+                                <th class="text-center" style="width:140px;">Acci&oacute;n</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVincularPesajesStock">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-stock-compact" id="modalPorcentajesPesajeStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Ver Porcentaje Cortes</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="stockPorcentajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                    <div class="mb-2">
+                        <span class="font-weight-bold">Estado:</span>
+                        <span id="lblEstadoAjusteModalStock" class="font-weight-bold text-danger">-</span>
+                    </div>
+                    <button type="button" class="btn btn-success mb-2" id="btnGenerarAjustePesajeStock">
+                        <i class="fas fa-balance-scale mr-1"></i> Generar Ajuste
+                    </button>
+                </div>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPromMediasStock">
+                        <thead class="thead-light"></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPorcCortesStock">
+                        <thead class="thead-light"></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProductosNoCargadosStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-no-cargados-stock" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Productos no cargados</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2 px-3 mb-3" id="stockNoCargadosContexto">
+                    <div><strong>Sucursal:</strong> <span id="lblSucursalNoCargadosContexto">@Model.SucursalNombre</span></div>
+                    <div><strong>Fecha:</strong> <span id="lblFechaNoCargadosContexto">@Model.FechaCompra.ToString("dd/MM/yyyy HH:mm")</span></div>
+                    <div class="mt-2 mb-0">
+                        Está trabajando sobre esta sucursal. Si fue seleccionada por error, el stock actual puede no coincidir y generar diferencias importantes.
+                    </div>
+                </div>
+
+                <div id="stockNoCargadosWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                <div id="stockNoCargadosInfo" class="alert alert-info py-2 px-3 mb-3 d-none"></div>
+
+                <div class="row align-items-end mb-3">
+                    <div class="col-12 col-lg-5">
+                        <label for="txtBuscarNoCargadosStock">Buscar</label>
+                        <input type="text" id="txtBuscarNoCargadosStock" class="form-control" placeholder="Código o descripción" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label for="filtroStockNoCargados">Filtro</label>
+                        <select id="filtroStockNoCargados" class="form-control">
+                            <option value="todos">Todos</option>
+                            <option value="con-stock">Con stock</option>
+                            <option value="sin-stock">Sin stock</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="small text-muted">Pendientes</div>
+                        <div class="font-weight-bold" id="lblPendientesNoCargados">0 productos</div>
+                    </div>
+                    <div class="col-6 col-lg-2">
+                        <div class="small text-muted">Seleccionados</div>
+                        <div class="font-weight-bold" id="lblSeleccionadosNoCargados">0</div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
+                    <button type="button" class="btn btn-success mr-2 mb-2" id="btnAgregarNoCargadosStockActual">
+                        <i class="fas fa-plus mr-1"></i> Agregar con stock actual
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary mb-2" id="btnAgregarNoCargadosSinStock">
+                        <i class="fas fa-minus-circle mr-1"></i> Agregar como sin stock (0,000)
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0" id="tablaNoCargadosStock">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:55px;" class="text-center">
+                                    <input type="checkbox" id="chkSeleccionarTodosNoCargados" />
+                                </th>
+                                <th style="width:120px;">Código</th>
+                                <th>Producto / Descripción</th>
+                                <th class="text-right" style="width:130px;">Stock actual</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-stock-compact" id="modalAcumuladosStock" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-acumulados-stock-compact" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Acumulados del stock</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:120px;">Código</th>
+                                <th>Producto</th>
+                                <th class="text-right" style="width:120px;">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAcumuladosStock"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-stock-compact" id="modalSeleccionCompraPesajeStock" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Vincular compra</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="stockComprasPesajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+                <div class="small text-muted mb-1">Se muestran compras de Cortes y Media Res de la misma sucursal, ordenadas de la m&aacute;s reciente a la m&aacute;s antigua.</div>
+                <div class="small text-muted mb-3">Sucursal actual: <strong id="lblSucursalComprasPesajeStock">-</strong></div>
+                <div class="row align-items-end mb-3 stock-modal-filters">
+                    <div class="col-12 col-lg-4">
+                        <label for="txtFiltroProveedorComprasPesaje">Proveedor</label>
+                        <input type="text" id="txtFiltroProveedorComprasPesaje" class="form-control" placeholder="Buscar proveedor" autocomplete="off" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaDesdeComprasPesaje">Fecha desde</label>
+                        <input type="date" id="txtFechaDesdeComprasPesaje" class="form-control" />
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <label for="txtFechaHastaComprasPesaje">Fecha hasta</label>
+                        <input type="date" id="txtFechaHastaComprasPesaje" class="form-control" />
+                    </div>
+                    <div class="col-12 col-lg-2">
+                        <button type="button" class="btn btn-outline-secondary btn-block" id="btnLimpiarFiltrosComprasPesaje">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaComprasPesajeStock">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:150px;">Fecha</th>
+                                <th>Proveedor</th>
+                                <th class="text-right" style="width:110px;">Kilos</th>
+                                <th class="text-right" style="width:110px;">Medias</th>
+                                <th class="text-center" style="width:120px;">Detalle</th>
+                                <th class="text-center" style="width:130px;">Vincular</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyComprasPesajeStock">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="contenedorModalPersonaStock"></div>
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+<style>
+    .stock-page .stock-panel-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .stock-page .stock-panel-card > .card-body,
+    .stock-page .stock-panel-card .card-body {
+        padding: .8rem .92rem;
+    }
+
+    .stock-page .stock-section-box {
+        border: 1px solid #e9ecef !important;
+        border-radius: .7rem !important;
+        padding: .8rem .92rem !important;
+        margin-bottom: .85rem !important;
+    }
+
+    .stock-page .stock-section-title {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+        margin-bottom: .55rem !important;
+    }
+
+    .stock-page .stock-section-box h6.text-uppercase,
+    .stock-page .stock-panel-card h6.text-uppercase {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+    }
+
+    .stock-page .stock-form-compact label,
+    .stock-page .stock-section-box label,
+    .stock-page .stock-panel-card label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .stock-page .stock-form-compact .form-control,
+    .stock-page .stock-form-compact .input-group-text,
+    .stock-page .stock-form-compact .btn:not(.btn-sm),
+    .stock-page .stock-section-box .form-control,
+    .stock-page .stock-section-box .input-group-text,
+    .stock-page .stock-section-box .btn:not(.btn-sm),
+    .stock-page .stock-panel-card .form-control,
+    .stock-page .stock-panel-card .input-group-text,
+    .stock-page .stock-panel-card .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .stock-page .stock-form-compact .custom-control-label,
+    .stock-page .stock-section-box .custom-control-label,
+    .stock-page .stock-panel-card .custom-control-label {
+        font-size: .78rem;
+    }
+
+    .stock-page .stock-form-compact .small,
+    .stock-page .stock-form-compact .text-muted,
+    .stock-page .stock-section-box .small,
+    .stock-page .stock-section-box .text-muted,
+    .stock-page .stock-panel-card .small,
+    .stock-page .stock-panel-card .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .stock-page .stock-summary-card .card-body {
+        padding: .58rem .76rem;
+    }
+
+    .stock-page .stock-table-compact {
+        font-size: .82rem;
+    }
+
+    .stock-page .stock-table-compact th,
+    .stock-page .stock-table-compact td {
+        padding: .36rem .48rem;
+        vertical-align: middle;
+        line-height: 1.12;
+    }
+
+    .stock-page .stock-table-compact thead th,
+    .stock-page .stock-table-compact > thead > tr > th {
+        font-size: .66rem !important;
+        line-height: 1.02;
+        padding-top: .32rem;
+        padding-bottom: .32rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .stock-page .stock-table-compact .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.12;
+        font-size: .76rem;
+    }
+
+    .stock-page #tablaLineasStock thead [data-sort-key] {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .stock-page #tablaLineasStock thead th[data-sort-key]:hover,
+    .stock-page #tablaLineasStock thead .js-stock-sort:hover {
+        background: rgba(0, 0, 0, .045);
+    }
+
+    .stock-page #tablaLineasStock thead th.stock-sort-active,
+    .stock-page #tablaLineasStock thead .js-stock-sort.stock-sort-active {
+        background: rgba(13, 110, 253, .12);
+        color: #0b57c0;
+        box-shadow: inset 0 -2px 0 rgba(13, 110, 253, .45);
+    }
+
+    .stock-page #tablaLineasStock .stock-th-producto .js-stock-sort {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .stock-page #tablaLineasStock .stock-th-producto .stock-th-sep {
+        opacity: .5;
+        padding: 0 .15rem;
+    }
+
+    .dark-mode .stock-page #tablaLineasStock thead [data-sort-key]:hover,
+    body.dark-mode .stock-page #tablaLineasStock thead [data-sort-key]:hover {
+        background: rgba(255, 255, 255, .08);
+    }
+
+    .dark-mode .stock-page #tablaLineasStock thead .stock-sort-active,
+    body.dark-mode .stock-page #tablaLineasStock thead .stock-sort-active {
+        background: rgba(84, 160, 255, .18);
+        color: #d9e9ff;
+        box-shadow: inset 0 -2px 0 rgba(149, 197, 255, .55);
+    }
+
+    .stock-page .stock-action-highlight {
+        background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%) !important;
+        border-color: #7fb0ff !important;
+        box-shadow: inset 0 0 0 1px rgba(127, 176, 255, .18);
+    }
+
+    .stock-page .stock-action-button {
+        border-color: #7fb0ff;
+        color: #0b57c0;
+        font-weight: 600;
+    }
+
+    .modal-stock-compact .modal-content {
+        border-radius: .75rem;
+    }
+
+    .modal-stock-compact .modal-header {
+        padding: .58rem .82rem;
+    }
+
+    .modal-stock-compact .modal-title {
+        font-size: .94rem;
+        line-height: 1.1;
+    }
+
+    .modal-stock-compact .modal-body {
+        padding: .78rem .86rem;
+    }
+
+    .modal-stock-compact label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .modal-stock-compact .form-control,
+    .modal-stock-compact .input-group-text,
+    .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+        min-height: 2.08rem;
+        font-size: .83rem;
+        padding: .26rem .52rem;
+        border-radius: .5rem;
+    }
+
+    .modal-stock-compact .small,
+    .modal-stock-compact .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .modal-stock-compact .alert {
+        margin-bottom: .75rem !important;
+        padding: .48rem .72rem;
+        font-size: .8rem;
+    }
+
+    .modal-stock-compact .table-responsive {
+        margin-bottom: 0;
+    }
+
+    .modal-stock-compact .stock-modal-filters {
+        margin-bottom: .75rem !important;
+    }
+
+    .modal-acumulados-stock-compact {
+        max-width: 420px;
+    }
+
+    @@media (min-width: 1200px) {
+        .stock-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .stock-page .stock-panel-card > .card-body,
+        .stock-page .stock-panel-card .card-body {
+            padding: .72rem .84rem;
+        }
+
+        .stock-page .stock-section-box {
+            padding: .72rem .84rem !important;
+        }
+
+        .stock-page .stock-form-compact .form-control,
+        .stock-page .stock-form-compact .input-group-text,
+        .stock-page .stock-form-compact .btn:not(.btn-sm),
+        .stock-page .stock-section-box .form-control,
+        .stock-page .stock-section-box .input-group-text,
+        .stock-page .stock-section-box .btn:not(.btn-sm),
+        .stock-page .stock-panel-card .form-control,
+        .stock-page .stock-panel-card .input-group-text,
+        .stock-page .stock-panel-card .btn:not(.btn-sm) {
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .stock-page .stock-table-compact {
+            font-size: .79rem;
+        }
+
+        .stock-page .stock-table-compact thead th,
+        .stock-page .stock-table-compact > thead > tr > th {
+            font-size: .63rem !important;
+        }
+
+        .modal-stock-compact .modal-header {
+            padding: .52rem .76rem;
+        }
+
+        .modal-stock-compact .modal-body {
+            padding: .72rem .8rem;
+        }
+
+        .modal-stock-compact .form-control,
+        .modal-stock-compact .input-group-text,
+        .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+            min-height: 2rem;
+            font-size: .8rem;
+            padding: .22rem .48rem;
+        }
+    }
+</style>
+
+@section Scripts {
+    <style>
+        @@media (min-width: 992px) {
+            .modal-no-cargados-stock {
+                max-width: 50vw;
+            }
+        }
+
+        #tablaNoCargadosStock tbody tr {
+            cursor: pointer;
+        }
+
+        #tablaNoCargadosStock tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        #tablaNoCargadosStock tbody tr + tr td {
+            border-top: 1px solid #e9ecef;
+        }
+
+        #tablaPorcCortesStock tbody tr:last-child {
+            font-weight: 700;
+            background-color: #f8f9fa;
+        }
+
+        html:not(.dark-mode) #btnVincularPesajes:hover,
+        html:not(.dark-mode) #btnVincularPesajes:focus,
+        body:not(.dark-mode) #btnVincularPesajes:hover,
+        body:not(.dark-mode) #btnVincularPesajes:focus {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: #fff;
+        }
+
+        html.dark-mode #tablaPorcCortesStock tbody tr:last-child td,
+        body.dark-mode #tablaPorcCortesStock tbody tr:last-child td {
+            background-color: #2f3541;
+            color: #f8f9fc;
+        }
+    </style>
+    @* Este modo no pasa por _LayoutBase.cshtml, asi que scanner.js/ZXing no estan
+       cargados todavia: se agregan aca para que el boton de escanear funcione
+       igual que en el modo con layout completo. *@
+    <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
+    <script>
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
+    </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/stock.js?v=40")"></script>
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")"></script>
+    <script>
+        $(function () {
+            if (window.NumericKeypad) {
+                window.NumericKeypad.create({
+                    selectorTeclado: '#numericKeypadStock',
+                    selectorInputsValidos: '#txtCodigoProducto, #txtCantKgs, #CantMedias, #KgsMedias'
+                });
+            }
+
+            $('#btnToggleTecladoStock').on('click', function () {
+                var desplegado = $('#stockNumericKeypadLayout').toggleClass('teclado-desplegado').hasClass('teclado-desplegado');
+                $('#iconoToggleTecladoStock')
+                    .toggleClass('fa-chevron-down', !desplegado)
+                    .toggleClass('fa-chevron-up', desplegado);
+            });
+        });
+    </script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
+    <script>
+        (function () {
+            window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
+            if (!window.StockUI || typeof window.StockUI.init !== "function") {
+                return;
+            }
+
+            // La vista puede entrar por AJAX; por eso la inicialización queda inline, igual que en otras pantallas modales.
+            window.StockUI.init({
+                formSelector: "#formStock",
+                modalProductoSelector: "#modalBuscarProductoStock",
+                initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.StockLineaVm>())),
+                pesajesVinculadosExistentes: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PesajesVinculadosIds ?? new List<int>())),
+                tipoCompra: "@Model.TipoCompra",
+                draftKey: "@Model.DraftKey",
+                permiteCantidadNegativa: @(permiteNegativo ? "true" : "false"),
+                esEgreso: @(esEgreso ? "true" : "false"),
+                esPesaje: @(esPesaje ? "true" : "false"),
+                balanzaUrl: "http://localhost:5100/peso",
+                proveedorDefaultId: @Model.IdProveedor,
+                proveedorDefaultNombre: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.ProveedorNombre ?? ""))",
+                proveedorDefaultCuit: "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(Model.ProveedorCuit ?? ""))",
+                urls: {
+                    buscarCorte: "@Url.Action("BuscarCorte", "Stock")",
+                    buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Stock")",
+                    ultimasComprasPesaje: "@Url.Action("UltimasComprasPesaje", "Stock")",
+                    ultimosPesajesVinculables: "@Url.Action("UltimasComprasPesaje", "Stock")",
+                    detalleCompraPesaje: "@Url.Action("DetalleCompraPesaje", "Stock")",
+                    verPorcentajesPesaje: "@Url.Action("VerPorcentajesPesaje", "Stock")",
+                    generarAjustePesaje: "@Url.Action("GenerarAjustePesaje", "Stock")",
+                    productosNoCargadosCierre: "@Url.Action("ProductosNoCargadosCierre", "Stock")",
+                    personaBuscarModal: "@ViewBag.UrlBuscarPersonaModal",
+                    personaListar: "@ViewBag.UrlPersonaListar"
+                }
+            });
+
+            window.EditReadOnly && window.EditReadOnly.init({
+                formSelector: "#formStock",
+                soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+                modifyButtonSelector: "#btnHabilitarEdicionStock",
+                saveButtonSelector: "#btnGuardarStock",
+                onStateChanged: function (readOnly, $form) {
+                    if (window.StockUI && typeof window.StockUI.syncPrimaryAction === "function") {
+                        window.StockUI.syncPrimaryAction($form);
+                    }
+                }
+            });
+
+            // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
+            // Enter que ya usa la busqueda manual (stock.js), asi reusa la logica
+            // existente de buscar producto + foco en Cantidad sin duplicarla.
+            window.BarcodeCodeInput && window.BarcodeCodeInput.attach({
+                videoSelector: "#videoScanner",
+                containerSelector: "#scannerContainer",
+                buttonSelector: "#btnScanner",
+                closeButtonSelector: "#btnCerrarScanner",
+                clearButtonSelector: "#btnLimpiarScanner",
+                flashButtonSelector: "#btnFlash",
+                msgSelector: "#scannerMsg",
+                codigoInputSelector: "#txtCodigoProducto",
+                // Se cargan varios productos seguidos: la camara queda
+                // abierta lista para la proxima lectura en vez de cerrarse.
+                cerrarAlLeer: false,
+                onCodigoAceptado: function (codigo) {
+                    var el = document.getElementById("txtCodigoProducto");
+                    if (!el) return;
+                    window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+                    el.value = codigo;
+                    el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+                }
+            });
+        })();
+    </script>
+}

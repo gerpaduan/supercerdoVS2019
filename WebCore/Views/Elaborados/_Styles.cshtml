@@ -1,0 +1,318 @@
+<style>
+    .elaborados-tabs-card,
+    .elaborados-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .elaborados-page .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .elaborados-page .elaborados-panel-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .elaborados-page .elaborados-panel-card > .card-body,
+    .elaborados-page .elaborados-panel-card .card-body {
+        padding: .8rem .92rem;
+    }
+
+    .elaborados-page .elaborados-section-box {
+        border: 1px solid #e9ecef !important;
+        border-radius: .7rem !important;
+        padding: .8rem .92rem !important;
+        margin-bottom: .85rem !important;
+    }
+
+    .elaborados-page .elaborados-section-title {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+        margin-bottom: .55rem !important;
+    }
+
+    .elaborados-page .elaborados-section-box h6.text-uppercase,
+    .elaborados-page .elaborados-panel-card h6.text-uppercase {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+    }
+
+    .elaborados-page .elaborados-form-compact label,
+    .elaborados-page .elaborados-section-box label,
+    .elaborados-page .elaborados-panel-card label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .elaborados-page .elaborados-form-compact .form-control,
+    .elaborados-page .elaborados-form-compact .input-group-text,
+    .elaborados-page .elaborados-form-compact .btn:not(.btn-sm),
+    .elaborados-page .elaborados-section-box .form-control,
+    .elaborados-page .elaborados-section-box .input-group-text,
+    .elaborados-page .elaborados-section-box .btn:not(.btn-sm),
+    .elaborados-page .elaborados-panel-card .form-control,
+    .elaborados-page .elaborados-panel-card .input-group-text,
+    .elaborados-page .elaborados-panel-card .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .elaborados-page .elaborados-form-compact .custom-control-label,
+    .elaborados-page .elaborados-section-box .custom-control-label,
+    .elaborados-page .elaborados-panel-card .custom-control-label {
+        font-size: .78rem;
+    }
+
+    .elaborados-page .elaborados-form-compact .small,
+    .elaborados-page .elaborados-form-compact .text-muted,
+    .elaborados-page .elaborados-section-box .small,
+    .elaborados-page .elaborados-section-box .text-muted,
+    .elaborados-page .elaborados-panel-card .small,
+    .elaborados-page .elaborados-panel-card .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .elaborados-page .elaborados-summary-card .card-body {
+        padding: .58rem .76rem;
+    }
+
+    .elaborados-page .elaborados-summary-label {
+        font-size: .68rem;
+        line-height: 1.05;
+        margin-bottom: .14rem !important;
+    }
+
+    .elaborados-page .elaborados-summary-value {
+        font-size: .98rem;
+        line-height: 1.05;
+    }
+
+    .elaborados-page .elaborados-summary-card .text-xs {
+        font-size: .68rem !important;
+    }
+
+    .elaborados-page .elaborados-summary-card .h5 {
+        font-size: .98rem;
+        line-height: 1.05;
+        margin-bottom: 0 !important;
+    }
+
+    .elaborados-page .elaborados-formula-detail-wrap .row.mb-3 {
+        margin-bottom: .7rem !important;
+    }
+
+    .elaborados-page .elaborados-detail-meta-card {
+        border: 1px solid #dee2e6;
+        border-radius: .55rem;
+        background: #fff;
+        padding: .62rem .76rem;
+        height: 100%;
+    }
+
+    .elaborados-page .elaborados-detail-meta-row {
+        margin-bottom: .34rem;
+        line-height: 1.18;
+        font-size: .79rem;
+    }
+
+    .elaborados-page .elaborados-formula-detail-wrap .mb-2 {
+        margin-bottom: .34rem !important;
+        line-height: 1.18;
+        font-size: .79rem;
+    }
+
+    .elaborados-page .elaborados-table-compact {
+        font-size: .82rem;
+    }
+
+    .elaborados-page .elaborados-table-compact th,
+    .elaborados-page .elaborados-table-compact td {
+        padding: .36rem .48rem;
+        vertical-align: middle;
+        line-height: 1.12;
+    }
+
+    .elaborados-page .elaborados-table-compact thead th,
+    .elaborados-page .elaborados-table-compact > thead > tr > th {
+        font-size: .66rem !important;
+        line-height: 1.02;
+        padding-top: .32rem;
+        padding-bottom: .32rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .elaborados-page .elaborados-table-compact .btn-sm,
+    .elaborados-page .elaborados-table-actions .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.12;
+        font-size: .76rem;
+    }
+
+    .elaborados-tabs-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .elaborados-tabs-nav .nav-link {
+        border-radius: 999px;
+        font-weight: 600;
+        color: #4e73df;
+        background: #f8f9fc;
+    }
+
+    .elaborados-tabs-nav .nav-link.active {
+        background: #4e73df;
+        color: #fff;
+    }
+
+    .elaborados-filtros-card {
+        font-size: .9rem;
+    }
+
+    .elaborados-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .elaborados-filtros-grid {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .elaborados-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .elaborados-filtros-card .form-control,
+    .elaborados-filtros-card .btn {
+        font-size: .87rem;
+        min-height: 2.65rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .elaborados-filtros-card .custom-switch {
+        padding-top: .25rem;
+    }
+
+    .elaborados-filtros-card .custom-control-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .elaborados-filtros-card .alert,
+    .elaborados-filtros-card .small,
+    .elaborados-filtros-card .text-muted,
+    .elaborados-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .elaborados-total-card .card-body {
+        padding: .6rem .8rem;
+    }
+
+    .elaborados-total-label {
+        font-size: .68rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .elaborados-total-value {
+        font-size: 1rem;
+        line-height: 1.05;
+    }
+
+    @@media (min-width: 1200px) {
+        .elaborados-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .elaborados-page .elaborados-panel-card > .card-body,
+        .elaborados-page .elaborados-panel-card .card-body {
+            padding: .72rem .84rem;
+        }
+
+        .elaborados-page .elaborados-section-box {
+            padding: .72rem .84rem !important;
+        }
+
+        .elaborados-page .elaborados-form-compact .form-control,
+        .elaborados-page .elaborados-form-compact .input-group-text,
+        .elaborados-page .elaborados-form-compact .btn:not(.btn-sm),
+        .elaborados-page .elaborados-section-box .form-control,
+        .elaborados-page .elaborados-section-box .input-group-text,
+        .elaborados-page .elaborados-section-box .btn:not(.btn-sm),
+        .elaborados-page .elaborados-panel-card .form-control,
+        .elaborados-page .elaborados-panel-card .input-group-text,
+        .elaborados-page .elaborados-panel-card .btn:not(.btn-sm) {
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .elaborados-page .elaborados-table-compact {
+            font-size: .79rem;
+        }
+
+        .elaborados-page .elaborados-table-compact thead th,
+        .elaborados-page .elaborados-table-compact > thead > tr > th {
+            font-size: .67rem !important;
+        }
+
+        .elaborados-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .elaborados-filtros-grid {
+            grid-template-columns: 1fr 1.2fr 1fr 1fr 140px;
+            align-items: end;
+        }
+
+        .elaborados-filtros-grid-formula {
+            grid-template-columns: 1fr 140px;
+        }
+
+        .elaborados-filtros-grid-rapido {
+            grid-template-columns: 1.3fr .9fr;
+            align-items: end;
+        }
+
+        .elaborados-filtros-card .form-control,
+        .elaborados-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .elaborados-total-card .card-body {
+            padding: .5rem .72rem;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .elaborados-filtros-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .elaborados-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .elaborados-filtros-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

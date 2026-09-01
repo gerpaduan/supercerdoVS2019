@@ -1,0 +1,888 @@
+@model WebCore.Models.CompraIndexVm
+@using System
+@using System.Collections.Generic
+@using System.Data
+
+@{
+    ViewBag.Title = "Stock";
+
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    int idSucursal = ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : 0;
+    string tipoCompra = ViewBag.TipoCompra as string ?? "Ver Todos";
+    DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today.AddDays(-7);
+    DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today;
+    float totalKg = ViewBag.TotalKg != null ? (float)ViewBag.TotalKg : 0f;
+    string stockDraftKeyToClear = TempData["StockDraftKeyToClear"] as string ?? "";
+}
+
+<div class="container-fluid stock-index-page">
+    <div class="d-flex justify-content-end mb-3">
+        <a class="btn btn-outline-primary stock-btn-lineas" href="@Url.Action("Lineas", "Stock", new { idSucursal = idSucursal, tipoCompra = tipoCompra, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 stock-acciones-card">
+        <div class="card-body">
+            <div class="stock-acciones-grid">
+                <a class="btn btn-success stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Ingreso Stock" })">
+                    <i class="fas fa-box-open"></i>
+                    <span>Ingreso</span>
+                </a>
+                <a class="btn btn-danger stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Egreso Stock" })">
+                    <i class="fas fa-minus-circle"></i>
+                    <span>Egreso</span>
+                </a>
+                <a class="btn btn-primary stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Cierre Stock" })">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Cierre</span>
+                </a>
+                <a class="btn btn-info stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Pesaje Cortes" })">
+                    <i class="fas fa-weight-hanging"></i>
+                    <span>Pesaje</span>
+                </a>
+                <a class="btn btn-warning stock-action-btn" href="@Url.Action("Nuevo", "Stock", new { tipoCompra = "Ajuste Stock" })">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Ajuste</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 stock-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index", "Stock")">
+                <div class="stock-filtros-stack">
+                    <div id="alertaFiltrosPendientesStock" class="alert alert-warning d-none mb-0" role="alert">
+                        Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                    </div>
+
+                    <div class="stock-filtros-row stock-filtros-row-sucursal">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Sucursal</label>
+                            <select name="idSucursal" class="form-control" id="idSucursalStock">
+                                <option value="0" selected="@(idSucursal == 0 ? "selected" : null)">Todas</option>
+                                @foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal" selected="@(s.IdSucursal == idSucursal ? "selected" : null)">@s.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Acción</label>
+                            <select name="tipoCompra" class="form-control" id="tipoCompraStock">
+                                <option value="Ver Todos" selected="@(tipoCompra == "Ver Todos" ? "selected" : null)">Todas</option>
+                                <option value="Ingreso Stock" selected="@(tipoCompra == "Ingreso Stock" ? "selected" : null)">Ingreso</option>
+                                <option value="Egreso Stock" selected="@(tipoCompra == "Egreso Stock" ? "selected" : null)">Egreso</option>
+                                <option value="Cierre Stock" selected="@(tipoCompra == "Cierre Stock" ? "selected" : null)">Cierre</option>
+                                <option value="Pesaje Cortes" selected="@(tipoCompra == "Pesaje Cortes" ? "selected" : null)">Pesaje</option>
+                                <option value="Ajuste Stock" selected="@(tipoCompra == "Ajuste Stock" ? "selected" : null)">Ajuste</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="stock-filtros-row stock-filtros-row-fechas">
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Desde</label>
+                            <input type="date" id="fechaDesde" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                            @Html.Partial("_AdvertenciaPermisoFecha")
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="stock-filtro-label">Hasta</label>
+                            <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                        </div>
+
+                        <div class="form-group mb-0 stock-filtro-accion">
+                            <label class="stock-filtro-label d-none d-lg-block">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarStock">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div id="estadoBusquedaStock" class="text-muted small">Resultados actualizados.</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card border-left-primary shadow-sm h-100 stock-total-card">
+                <div class="card-body">
+                    <div class="stock-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="stock-total-value font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center mb-2">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="switchVistaCompletaStock">
+            <label class="custom-control-label" for="switchVistaCompletaStock">Ver detalles</label>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @Html.Partial("~/Views/Stock/_StockTabla.cshtml", Model)
+        </div>
+    </div>
+
+    <div class="d-none">
+        @Html.AntiForgeryToken()
+    </div>
+
+    <div class="modal fade modal-stock-compact" id="modalPorcentajesPesajeStock" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title">Ver Porcentaje Cortes</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="stockIndexPesajeIdActual" value="0" />
+                    <div id="stockPorcentajeWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                        <div class="mb-2">
+                            <span class="font-weight-bold">Estado:</span>
+                            <span id="lblEstadoAjusteModalStock" class="font-weight-bold text-danger">-</span>
+                        </div>
+                        <button type="button" class="btn btn-success mb-2" id="btnGenerarAjustePesajeStock">
+                            <i class="fas fa-balance-scale mr-1"></i> Generar Ajuste
+                        </button>
+                    </div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPromMediasStock">
+                            <thead class="thead-light"></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0 stock-table-compact" id="tablaPorcCortesStock">
+                            <thead class="thead-light"></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stock-acciones-card,
+    .stock-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .stock-index-page .card-body {
+        padding: .72rem .9rem;
+    }
+
+    .stock-acciones-grid,
+    .stock-filtros-stack,
+    .stock-filtros-row {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .stock-filtros-card {
+        font-size: .9rem;
+    }
+
+    .stock-filtros-card .card-body {
+        padding: .68rem .82rem;
+    }
+
+    .stock-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .stock-filtros-card .form-control,
+    .stock-filtros-card .btn,
+    .stock-action-btn {
+        min-height: 2.35rem;
+        border-radius: .5rem;
+    }
+
+    .stock-filtros-card .form-control,
+    .stock-filtros-card .btn {
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .stock-filtros-card .alert,
+    .stock-filtros-card .small,
+    .stock-filtros-card .text-muted,
+    .stock-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .stock-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .32rem;
+        font-weight: 600;
+        font-size: .92rem;
+        padding: .1rem .42rem;
+        min-height: 1.65rem;
+        line-height: 1;
+    }
+
+    .stock-action-btn i {
+        font-size: inherit;
+        line-height: 1;
+    }
+
+    .stock-action-btn span {
+        line-height: 1;
+    }
+
+    .stock-btn-lineas {
+        min-height: 2.1rem;
+        font-size: .82rem;
+        padding: .24rem .58rem;
+        border-radius: .5rem;
+    }
+
+    .stock-index-page .custom-switch {
+        line-height: 1.1;
+    }
+
+    .stock-total-card .card-body {
+        padding: .6rem .8rem;
+    }
+
+    .stock-total-label {
+        font-size: .68rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .stock-total-value {
+        font-size: 1rem;
+        line-height: 1.05;
+    }
+
+    .stock-index-page .h5 {
+        font-size: 1.15rem;
+    }
+
+    .stock-index-page .tabla-full .table {
+        font-size: .84rem;
+    }
+
+    .stock-index-page .tabla-full .table th,
+    .stock-index-page .tabla-full .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .stock-index-page .tabla-full .table thead th,
+    .stock-index-page .tabla-full .table > thead > tr > th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    .stock-index-page .tabla-full .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.15;
+    }
+
+    .modal-stock-compact .modal-content {
+        border-radius: .75rem;
+    }
+
+    .modal-stock-compact .modal-header {
+        padding: .58rem .82rem;
+    }
+
+    .modal-stock-compact .modal-title {
+        font-size: .94rem;
+        line-height: 1.1;
+    }
+
+    .modal-stock-compact .modal-body {
+        padding: .78rem .86rem;
+    }
+
+    .modal-stock-compact .form-control,
+    .modal-stock-compact .input-group-text,
+    .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+        min-height: 2.08rem;
+        font-size: .83rem;
+        padding: .26rem .52rem;
+        border-radius: .5rem;
+    }
+
+    .modal-stock-compact .alert {
+        margin-bottom: .75rem !important;
+        padding: .48rem .72rem;
+        font-size: .8rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .stock-index-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .stock-index-page .stock-acciones-card .card-body,
+        .stock-index-page .stock-filtros-card .card-body {
+            padding: .52rem .72rem;
+        }
+
+        .stock-total-card .card-body {
+            padding: .5rem .72rem;
+        }
+
+        .stock-acciones-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .stock-filtros-row-sucursal,
+        .stock-filtros-row-fechas {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stock-filtros-row-fechas {
+            grid-template-columns: 1fr 1fr 140px;
+            align-items: end;
+        }
+
+        .stock-action-btn {
+            min-height: 1.55rem;
+            padding: .06rem .36rem;
+            font-size: .88rem;
+        }
+
+        .stock-filtros-card .form-control,
+        .stock-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .stock-index-page .tabla-full .table {
+            font-size: .81rem;
+        }
+
+        .stock-index-page .tabla-full .table thead th,
+        .stock-index-page .tabla-full .table > thead > tr > th {
+            font-size: .69rem !important;
+        }
+
+        .modal-stock-compact .modal-header {
+            padding: .52rem .76rem;
+        }
+
+        .modal-stock-compact .modal-body {
+            padding: .72rem .8rem;
+        }
+
+        .modal-stock-compact .form-control,
+        .modal-stock-compact .input-group-text,
+        .modal-stock-compact .btn:not(.btn-sm):not(.close) {
+            min-height: 2rem;
+            font-size: .8rem;
+            padding: .22rem .48rem;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .stock-acciones-grid,
+        .stock-filtros-row-sucursal,
+        .stock-filtros-row-fechas {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stock-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .stock-acciones-grid,
+        .stock-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            // BUG real encontrado: restoreStateIfNeeded() (mas abajo) navega solo si la URL
+            // actual no tiene querystring -- pero el redirect de Guardar() tras un guardado
+            // exitoso ("/Stock", sin parametros) tambien cae en ese caso, asi que la restauracion
+            // de filtros pisaba esa pagina (y el TempData del cartel de exito) antes de que el
+            // usuario llegara a verla. Este flag corta la restauracion cuando hay un aviso
+            // pendiente. Ver docs/DECISIONS.md.
+            var hayAlertaPendiente = @Html.Raw((TempData["AlertMsg"] != null) ? "true" : "false");
+
+            var draftKeyToClear = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(stockDraftKeyToClear))";
+            if (draftKeyToClear && window.localStorage) {
+                try {
+                    window.localStorage.removeItem(draftKeyToClear);
+                } catch (e) {
+                }
+            }
+
+            var storageKey = "stock_index_filters_v1";
+            var form = document.querySelector('.stock-filtros-card form');
+            var inputFechaDesde = document.getElementById('fechaDesde');
+            var inputFechaHasta = form ? form.querySelector('input[name="fechaHasta"]') : null;
+            var inputSucursal = form ? form.querySelector('select[name="idSucursal"]') : null;
+            var inputTipoCompra = form ? form.querySelector('select[name="tipoCompra"]') : null;
+            var alertaPendiente = document.getElementById("alertaFiltrosPendientesStock");
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+            };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                if (!form) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursal: inputSucursal ? inputSucursal.value : "",
+                    tipoCompra: inputTipoCompra ? inputTipoCompra.value : ""
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle("d-none", !hayFechasPendientes());
+            }
+
+            function setBuscandoStock(mensaje) {
+                var btnBuscar = document.getElementById("btnBuscarStock");
+                var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                var estado = document.getElementById("estadoBusquedaStock");
+
+                if (btnBuscar) {
+                    btnBuscar.disabled = true;
+                }
+
+                if (btnTexto) {
+                    btnTexto.textContent = " Cargando...";
+                }
+
+                if (estado) {
+                    estado.textContent = mensaje || "Actualizando búsqueda...";
+                }
+            }
+
+            function enviarFiltrosEnVivo() {
+                if (!form) return;
+
+                saveState();
+                setBuscandoStock("Actualizando búsqueda en vivo...");
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    saveState();
+                }
+
+                submitConLoader();
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search || hayAlertaPendiente) return;
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+                    if (state.idSucursal) params.set("idSucursal", state.idSucursal);
+                    if (state.tipoCompra) params.set("tipoCompra", state.tipoCompra);
+
+                    var query = params.toString();
+                    if (query) {
+                        navegarConLoader(form.action + "?" + query, true);
+                    }
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+            actualizarAvisoPendiente();
+
+            if (form) {
+                form.addEventListener("submit", function (event) {
+                    if (form.dataset.loadingSubmitPending === "true") {
+                        form.dataset.loadingSubmitPending = "";
+                        return;
+                    }
+
+                    event.preventDefault();
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    saveState();
+                    var btnBuscar = document.getElementById("btnBuscarStock");
+                    var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                    var estado = document.getElementById("estadoBusquedaStock");
+
+                    if (btnBuscar) {
+                        btnBuscar.disabled = true;
+                    }
+
+                    if (btnTexto) {
+                        btnTexto.textContent = " Cargando...";
+                    }
+
+                    if (estado) {
+                        estado.textContent = "Actualizando búsqueda...";
+                    }
+                    form.dataset.loadingSubmitPending = "true";
+                    submitConLoader();
+                });
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+            }
+
+            if (inputFechaDesde) {
+                inputFechaDesde.addEventListener("change", actualizarAvisoPendiente);
+            }
+
+            if (inputFechaHasta) {
+                inputFechaHasta.addEventListener("change", actualizarAvisoPendiente);
+            }
+
+            if (inputSucursal) {
+                inputSucursal.addEventListener("change", enviarFiltrosEnVivo);
+            }
+
+            if (inputTipoCompra) {
+                inputTipoCompra.addEventListener("change", enviarFiltrosEnVivo);
+            }
+
+            document.querySelectorAll(".stock-btn-lineas, .stock-action-btn").forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    var href = link.getAttribute("href") || "";
+                    if (!href) return;
+                    event.preventDefault();
+                    navegarConLoader(href, false);
+                });
+            });
+
+            var successAlert = document.getElementById("stockSuccessAlert");
+            if (successAlert) {
+                window.setTimeout(function () {
+                    $(successAlert).alert("close");
+                }, 2500);
+            }
+
+            const switchVista = document.getElementById("switchVistaCompletaStock");
+            if (!switchVista) return;
+
+            function syncIcon(button, expanded) {
+                if (!button) return;
+                button.setAttribute("aria-expanded", expanded ? "true" : "false");
+                const icon = button.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("fa-chevron-down", !expanded);
+                    icon.classList.toggle("fa-chevron-up", expanded);
+                }
+            }
+
+            function cargarDetalleStock(detalle) {
+                if (!detalle) return;
+
+                const contenedor = detalle.querySelector(".stock-detalle-lazy");
+                if (!contenedor) return;
+
+                if (contenedor.getAttribute("data-loaded") === "true"
+                    || contenedor.getAttribute("data-loading") === "true") {
+                    return;
+                }
+
+                const url = contenedor.getAttribute("data-url");
+                if (!url) return;
+
+                contenedor.setAttribute("data-loading", "true");
+                contenedor.innerHTML = '<div class="text-muted">Cargando detalle...</div>';
+
+                $.get(url)
+                    .done(function (html) {
+                        contenedor.innerHTML = html;
+                        contenedor.setAttribute("data-loaded", "true");
+                    })
+                    .fail(function () {
+                        contenedor.innerHTML = '<div class="text-danger">No se pudo cargar el detalle del movimiento.</div>';
+                    })
+                    .always(function () {
+                        contenedor.removeAttribute("data-loading");
+                    });
+            }
+
+            document.addEventListener("click", function (e) {
+                const btn = e.target.closest(".btn-detalles-stock");
+                if (!btn) return;
+
+                e.preventDefault();
+                const selector = btn.getAttribute("data-target");
+                const detalle = selector ? document.querySelector(selector) : null;
+                if (!detalle) return;
+
+                cargarDetalleStock(detalle);
+
+                const expanded = detalle.classList.contains("show");
+                $(detalle).collapse(expanded ? "hide" : "show");
+                syncIcon(btn, !expanded);
+            });
+
+            document.addEventListener("dblclick", function (e) {
+                if (e.target.closest("a, button")) return;
+                const row = e.target.closest("tr");
+                if (!row) return;
+                const btnDetalle = row.querySelector(".btn-detalles-stock");
+                if (btnDetalle) btnDetalle.click();
+            });
+
+            switchVista.addEventListener("change", function () {
+                const expandir = switchVista.checked;
+                document.querySelectorAll(".stock-detalle-collapse").forEach(function (detalle) {
+                    if (expandir) {
+                        cargarDetalleStock(detalle);
+                    }
+                    $(detalle).collapse(expandir ? "show" : "hide");
+                    const btn = document.querySelector('.btn-detalles-stock[data-target="#' + detalle.id + '"]');
+                    syncIcon(btn, expandir);
+                });
+            });
+
+            function escapeHtmlStock(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function clearPorcentajeWarningStock() {
+                $('#stockPorcentajeWarning').addClass('d-none').text('');
+            }
+
+            function showPorcentajeWarningStock(text) {
+                $('#stockPorcentajeWarning').text(text || '').removeClass('d-none');
+            }
+
+            function renderTablaPorcentajesStock($table, tabla, emptyText) {
+                var $thead = $table.find('thead');
+                var $tbody = $table.find('tbody');
+                var columnas = tabla && $.isArray(tabla.columnas) ? tabla.columnas : [];
+                var filas = tabla && $.isArray(tabla.filas) ? tabla.filas : [];
+                var visibles = $.grep(columnas, function (col) { return !col.oculta; });
+                var headHtml = '';
+                var bodyHtml = '';
+
+                if (!visibles.length) {
+                    $thead.html('');
+                    $tbody.html('<tr><td class="text-center text-muted py-3">' + escapeHtmlStock(emptyText || 'Sin datos.') + '</td></tr>');
+                    return;
+                }
+
+                headHtml += '<tr>';
+                $.each(columnas, function (_, col) {
+                    if (col.oculta) return;
+                    headHtml += '<th' + (col.alineacionDerecha ? ' class="text-right"' : '') + '>' + escapeHtmlStock(col.nombre || '') + '</th>';
+                });
+                headHtml += '</tr>';
+
+                if (!filas.length) {
+                    bodyHtml = '<tr><td colspan="' + visibles.length + '" class="text-center text-muted py-3">' + escapeHtmlStock(emptyText || 'Sin datos.') + '</td></tr>';
+                } else {
+                    $.each(filas, function (_, fila) {
+                        bodyHtml += '<tr>';
+                        $.each(columnas, function (colIndex, col) {
+                            if (col.oculta) return;
+                            var valor = $.isArray(fila) ? (fila[colIndex] || '') : '';
+                            bodyHtml += '<td' + (col.alineacionDerecha ? ' class="text-right"' : '') + '>' + escapeHtmlStock(valor) + '</td>';
+                        });
+                        bodyHtml += '</tr>';
+                    });
+                }
+
+                $thead.html(headHtml);
+                $tbody.html(bodyHtml);
+            }
+
+            function actualizarEstadoAjustePesajeStock(estado) {
+                var texto = $.trim(estado || '');
+                var actualizado = texto.toLowerCase() === 'actualizado';
+                $('#lblEstadoAjusteModalStock')
+                    .text(texto || '-')
+                    .toggleClass('text-success', actualizado)
+                    .toggleClass('text-danger', !actualizado);
+            }
+
+            function cargarPorcentajesPesajeStock(idCompra) {
+                clearPorcentajeWarningStock();
+                $('#stockIndexPesajeIdActual').val(idCompra || 0);
+                $('#btnGenerarAjustePesajeStock').prop('disabled', true);
+                actualizarEstadoAjustePesajeStock('-');
+                renderTablaPorcentajesStock($('#tablaPromMediasStock'), null, 'Cargando...');
+                renderTablaPorcentajesStock($('#tablaPorcCortesStock'), null, 'Cargando...');
+
+                $.ajax({
+                    url: '@Url.Action("VerPorcentajesPesaje", "Stock")',
+                    method: 'POST',
+                    data: {
+                        idCompra: idCompra
+                    }
+                }).done(function (resp) {
+                    if (!resp || resp.ok !== true) {
+                        showPorcentajeWarningStock((resp && resp.mensaje) || 'No se pudo obtener el análisis del pesaje.');
+                        renderTablaPorcentajesStock($('#tablaPromMediasStock'), null, 'Sin datos.');
+                        renderTablaPorcentajesStock($('#tablaPorcCortesStock'), null, 'Sin datos.');
+                        return;
+                    }
+
+                    actualizarEstadoAjustePesajeStock(resp.estado || '');
+                    $('#btnGenerarAjustePesajeStock').prop('disabled', resp.puedeGenerarAjuste !== true);
+                    renderTablaPorcentajesStock($('#tablaPromMediasStock'), resp.promMedias, 'Sin datos de promedios.');
+                    renderTablaPorcentajesStock($('#tablaPorcCortesStock'), resp.porcCortes, 'Sin datos de porcentajes.');
+                }).fail(function () {
+                    showPorcentajeWarningStock('No se pudo obtener el análisis del pesaje.');
+                    renderTablaPorcentajesStock($('#tablaPromMediasStock'), null, 'Sin datos.');
+                    renderTablaPorcentajesStock($('#tablaPorcCortesStock'), null, 'Sin datos.');
+                });
+            }
+
+            $(document).on('click', '.btn-ver-porcentaje-pesaje-index', function () {
+                var idCompra = parseInt($(this).data('id-compra'), 10) || 0;
+                if (idCompra <= 0) {
+                    return;
+                }
+
+                $('#modalPorcentajesPesajeStock').modal('show');
+                cargarPorcentajesPesajeStock(idCompra);
+            });
+
+            $('#btnGenerarAjustePesajeStock').on('click', function () {
+                var idCompra = parseInt($('#stockIndexPesajeIdActual').val(), 10) || 0;
+                var token = $('input[name="__RequestVerificationToken"]').first().val() || '';
+
+                if (idCompra <= 0 || !token) {
+                    showPorcentajeWarningStock('No se pudo identificar el pesaje.');
+                    return;
+                }
+
+                clearPorcentajeWarningStock();
+                $('#btnGenerarAjustePesajeStock').prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("GenerarAjustePesaje", "Stock")',
+                    method: 'POST',
+                    data: {
+                        __RequestVerificationToken: token,
+                        idCompra: idCompra
+                    }
+                }).done(function (resp) {
+                    if (!resp || resp.ok !== true) {
+                        var mensajeError = (resp && resp.mensaje) || 'No se pudo generar el ajuste.';
+                        showPorcentajeWarningStock(mensajeError);
+                        if ($.trim($('#lblEstadoAjusteModalStock').text() || '').toLowerCase() !== 'actualizado') {
+                            $('#btnGenerarAjustePesajeStock').prop('disabled', false);
+                        }
+                        return;
+                    }
+
+                    actualizarEstadoAjustePesajeStock(resp.estado || 'Actualizado');
+                    $('#modalPorcentajesPesajeStock').modal('hide');
+
+                    if (window.Swal && typeof window.Swal.fire === 'function') {
+                        window.Swal.fire({
+                            icon: 'success',
+                            title: 'Ajuste generado correctamente',
+                            text: resp.mensaje || 'El Ajuste de Stock se realizó correctamente.'
+                        }).then(function () {
+                            window.location.reload();
+                        });
+                    } else {
+                        window.location.reload();
+                    }
+                }).fail(function () {
+                    showPorcentajeWarningStock('No se pudo generar el ajuste.');
+                    if ($.trim($('#lblEstadoAjusteModalStock').text() || '').toLowerCase() !== 'actualizado') {
+                        $('#btnGenerarAjustePesajeStock').prop('disabled', false);
+                    }
+                });
+            });
+        })();
+    </script>
+}

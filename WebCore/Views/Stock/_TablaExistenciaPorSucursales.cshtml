@@ -1,0 +1,426 @@
+@model Entidades.ExistenciaPorSucursalesVm
+@using System
+@using System.Linq
+
+@functions {
+    private string CssEstado(string estado)
+    {
+        string valor = (estado ?? "").Trim().ToUpperInvariant();
+        if (valor == "NEGATIVO") return "text-danger font-weight-bold";
+        if (valor == "BAJO") return "text-warning font-weight-bold";
+        if (valor == "SIN STOCK") return "text-muted";
+        return "";
+    }
+}
+
+@{
+    var filtro = Model != null && Model.Filtro != null ? Model.Filtro : new Entidades.ExistenciaStockPorSucursalFiltroVm();
+    var columnas = Model != null ? Model.Columnas : new System.Collections.Generic.List<Entidades.SucursalColumnaStockVm>();
+    var productos = Model != null ? Model.Productos : new System.Collections.Generic.List<Entidades.ProductoStockPorSucursalVm>();
+    // Columna "Total" solo cuando el filtro de sucursal es "Todas" (idSucursal=0):
+    // con una sola sucursal seleccionada no hay nada que sumar.
+    bool mostrarTotal = Model != null && Model.Filtro != null && Model.Filtro.IdSucursal == 0;
+    // *2: cada sucursal aporta 2 columnas (Stock + Dif.) al layout del <tr>, aunque la de Dif.
+    // arranque oculta con d-none -- sigue existiendo en el DOM y hay que contarla en el colspan
+    // de la fila de detalle expandible (ver mas abajo). +1 fijo: columna "Estado Stock", tambien
+    // siempre presente en el DOM (oculta con d-none), igual criterio que las columnas Dif.
+    int totalColumnas = 2 + (columnas.Count * 2) + (mostrarTotal ? 1 : 0) + 1;
+}
+
+@if (Model == null || !Model.ConsultaRealizada)
+{
+    <div class="p-4 text-center text-muted">
+        Presioná Buscar para consultar stock.
+    </div>
+}
+else if (productos == null || productos.Count == 0)
+{
+    <div class="p-4 text-center text-muted">
+        @(string.IsNullOrWhiteSpace(Model.Mensaje) ? "No se encontraron datos para los filtros seleccionados." : Model.Mensaje)
+    </div>
+}
+else
+{
+    <style>
+        .tabla-existencia-sucursales {
+            table-layout: fixed;
+            width: max-content;
+            font-size: .84rem;
+        }
+
+        .tabla-full {
+            overflow-x: auto;
+        }
+
+        .tabla-existencia-sucursales th,
+        .tabla-existencia-sucursales td {
+            vertical-align: top;
+            padding: .42rem .58rem;
+            line-height: 1.15;
+        }
+
+        .existencia-col-toggle,
+        .existencia-col-toggle-cell {
+            width: 55px;
+            min-width: 55px;
+        }
+
+        .existencia-col-producto,
+        .existencia-col-producto-cell {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: #fff;
+            width: 25ch;
+            min-width: 25ch;
+            max-width: 25ch;
+        }
+
+        .tabla-existencia-sucursales thead .existencia-col-producto {
+            z-index: 5;
+            background: #f8f9fc;
+        }
+
+        .tabla-existencia-sucursales thead th,
+        .tabla-existencia-sucursales > thead > tr > th,
+        .tabla-existencia-sucursales .thead-light th {
+            font-size: .73rem !important;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+            padding-top: .38rem;
+            padding-bottom: .38rem;
+            line-height: 1.1;
+        }
+
+        .tabla-existencia-sucursales th.text-right.text-nowrap,
+        .tabla-existencia-sucursales td.text-right.text-nowrap {
+            width: 18ch;
+            min-width: 18ch;
+            max-width: 18ch;
+        }
+
+        .existencia-col-total {
+            font-weight: 700;
+            background: #f8f9fc;
+        }
+
+        .existencia-producto-row {
+            cursor: pointer;
+        }
+
+        .existencia-producto-wrap {
+            max-width: 25ch;
+        }
+
+        .existencia-producto-desc {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+            line-height: 1.2;
+            max-width: 25ch;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .existencia-producto-codigo {
+            display: block;
+            margin-top: .2rem;
+            font-size: .72rem;
+            color: #858796;
+        }
+
+        .existencia-producto-completo {
+            font-size: .78rem;
+            color: #6c757d;
+            margin-bottom: .75rem;
+        }
+
+        .existencia-producto-completo strong {
+            color: inherit;
+        }
+
+        .existencia-detalle-box {
+            background: #f8f9fc;
+            overflow: hidden;
+        }
+
+        .existencia-detalle-scroll-sync {
+            max-width: 100%;
+            max-height: 22rem;
+            overflow: auto;
+        }
+
+        .existencia-detalle-tabla {
+            width: max-content;
+            min-width: 100%;
+            font-size: .79rem;
+        }
+
+        .existencia-detalle-tabla th,
+        .existencia-detalle-tabla td {
+            white-space: nowrap;
+        }
+
+        .existencia-detalle-tabla thead th {
+            font-size: .67rem !important;
+            line-height: 1.1;
+            padding-top: .32rem;
+            padding-bottom: .32rem;
+        }
+
+        .existencia-detalle-destacado {
+            background: #f4f8fc;
+            font-weight: 600;
+        }
+
+        .existencia-detalle-stockactual {
+            background: #e7f1fb;
+            font-weight: 700;
+        }
+
+        html.dark-mode .existencia-col-producto,
+        html.dark-mode .existencia-col-producto-cell {
+            background: #1f2533;
+        }
+
+        html.dark-mode .tabla-existencia-sucursales thead .existencia-col-producto {
+            background: #273043;
+        }
+
+        html.dark-mode .existencia-col-total {
+            background: #273043;
+        }
+
+        html.dark-mode .existencia-detalle-box {
+            background: #273043;
+        }
+
+        html.dark-mode .existencia-producto-codigo,
+        html.dark-mode .existencia-producto-completo {
+            color: rgba(255,255,255,.72);
+        }
+
+        html.dark-mode .existencia-detalle-destacado {
+            background: #2b394d;
+            color: #f8f9fc;
+        }
+
+        html.dark-mode .existencia-detalle-stockactual {
+            background: #35506f;
+            color: #ffffff;
+        }
+
+        @@media (min-width: 1200px) {
+            .tabla-existencia-sucursales {
+                font-size: .8rem;
+            }
+
+            .tabla-existencia-sucursales thead th,
+            .tabla-existencia-sucursales > thead > tr > th,
+            .tabla-existencia-sucursales .thead-light th {
+                font-size: .68rem !important;
+                padding-top: .34rem;
+                padding-bottom: .34rem;
+            }
+
+            .existencia-detalle-tabla {
+                font-size: .75rem;
+            }
+
+            .existencia-detalle-tabla thead th {
+                font-size: .63rem !important;
+            }
+        }
+
+        @@media (max-width: 767.98px) {
+            .tabla-full .tabla-existencia-sucursales {
+                width: max-content !important;
+                min-width: 0 !important;
+            }
+
+            .existencia-col-producto,
+            .existencia-col-producto-cell {
+                min-width: 9rem;
+                width: 9rem;
+                max-width: 9rem;
+            }
+
+            .existencia-producto-wrap,
+            .existencia-producto-desc {
+                max-width: 15ch;
+            }
+
+            .tabla-existencia-sucursales th.text-right.text-nowrap,
+            .tabla-existencia-sucursales td.text-right.text-nowrap {
+                min-width: 92px;
+                width: 92px;
+            }
+
+            .existencia-detalle-scroll-sync {
+                max-height: 18rem;
+            }
+        }
+    </style>
+
+    <div class="d-flex align-items-center mb-2 px-3 pt-3 existencia-search-toolbar">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaExistencia"
+                title="Buscar producto" aria-expanded="false">
+            <i class="fas fa-search"></i>
+        </button>
+        <input type="text" id="filtroTextoExistencia" name="texto" class="form-control form-control-sm ml-2 d-none"
+               value="@filtro.Texto" placeholder="Producto / texto" autocomplete="off" style="max-width:280px;" />
+    </div>
+
+    <div class="table-responsive tabla-full js-sync-scroll-body">
+        <table class="table table-bordered table-hover mb-0 tabla-existencia-sucursales js-sticky-first-col">
+            <thead class="thead-light">
+                <tr>
+                    <th class="existencia-col-producto">Producto</th>
+                    @foreach (var columna in columnas)
+                    {
+                        <th class="text-right text-nowrap">@columna.Sucursal</th>
+                        <th class="text-right text-nowrap existencia-dif-col d-none" title="Stock actual menos punto de stock">Dif. @columna.Sucursal</th>
+                    }
+                    @if (mostrarTotal)
+                    {
+                        <th class="text-right text-nowrap existencia-col-total">Total</th>
+                    }
+                    <th class="text-right text-nowrap existencia-col-estadostock d-none">Estado Stock</th>
+                    <th class="existencia-col-toggle"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var producto in productos)
+                {
+                    string detailId = "detalleExistencia_" + producto.IdCorte;
+                    float totalStockProducto = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.StockActual ?? 0f);
+                    float totalPuntoStockProducto = columnas.Sum(c => producto.Celdas.FirstOrDefault(x => x.IdSucursal == c.IdSucursal)?.PuntoStock ?? 0f);
+                    float estadoStockValor = totalStockProducto - totalPuntoStockProducto;
+                    string claseEstadoStock = estadoStockValor < 0 ? "text-danger font-weight-bold" : estadoStockValor > 0 ? "text-success font-weight-bold" : "text-warning font-weight-bold";
+                    <tr class="existencia-producto-row"
+                        data-detail-target="#@detailId"
+                        data-texto="@producto.TextoBusqueda"
+                        data-estados="@producto.EstadosFila">
+                        <td class="existencia-col-producto-cell">
+                            <div class="existencia-producto-wrap">
+                                <div class="existencia-producto-desc" title="@producto.Corte">@producto.Corte</div>
+                                <span class="existencia-producto-codigo">cod: @producto.Codigo</span>
+                            </div>
+                        </td>
+                        @foreach (var columna in columnas)
+                        {
+                            var celda = producto.Celdas.FirstOrDefault(x => x.IdSucursal == columna.IdSucursal) ?? new Entidades.StockSucursalCeldaVm
+                            {
+                                IdSucursal = columna.IdSucursal,
+                                Sucursal = columna.Sucursal,
+                                StockActual = 0f,
+                                PuntoStock = 0f,
+                                EstadoStock = "SIN STOCK"
+                            };
+
+                            <td class="text-right text-nowrap @CssEstado(celda.EstadoStock)" title="@celda.EstadoStock">
+                                @celda.StockActual.ToString("N3")
+                                @{ var equivalenteUnidades = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)celda.StockActual, (decimal)celda.Promedio, celda.Pesable); }
+                                @if (equivalenteUnidades != null)
+                                {
+                                    <span class="existencia-producto-codigo">@equivalenteUnidades</span>
+                                }
+                            </td>
+
+                            // Dif. = stock actual menos punto de stock de esa sucursal (columna oculta por
+                            // defecto, la muestra el interruptor "Estado Stock"). Punto stock sin configurar
+                            // (0) no se distingue de "configurado en 0" -- decision explicita, mas simple.
+                            float dif = celda.StockActual - celda.PuntoStock;
+                            string claseDif = dif < 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold";
+                            string signoDif = dif > 0 ? "+" : "";
+                            var equivalenteUnidadesDif = Entidades.StockUnidadesHelper.FormatearEquivalenteUnidades((decimal)dif, (decimal)celda.Promedio, celda.Pesable);
+
+                            <td class="text-right text-nowrap existencia-dif-col d-none @claseDif" title="@("Punto stock: " + celda.PuntoStock.ToString("N3"))">
+                                @(signoDif + dif.ToString("N3"))
+                                @if (equivalenteUnidadesDif != null)
+                                {
+                                    <span class="existencia-producto-codigo">@equivalenteUnidadesDif (pto: @celda.PuntoStock.ToString("N3"))</span>
+                                }
+                            </td>
+                        }
+                        @if (mostrarTotal)
+                        {
+                            <td class="text-right text-nowrap existencia-col-total" title="Suma de stock en todas las sucursales">
+                                @totalStockProducto.ToString("N3")
+                            </td>
+                        }
+                        <td class="text-right text-nowrap existencia-col-estadostock d-none @claseEstadoStock" title="Total menos punto de stock (sucursales visibles)">
+                            @estadoStockValor.ToString("N3")
+                            @if (estadoStockValor < 0)
+                            {
+                                <span class="existencia-producto-codigo">Faltante</span>
+                            }
+                        </td>
+                        <td class="text-center existencia-col-toggle-cell">
+                            <button type="button" class="btn btn-link p-0 btn-toggle-existencia" data-target="#@detailId" title="Expandir detalle">
+                                <i class="far fa-plus-square"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr id="@detailId" class="existencia-detalle-row d-none">
+                        <td colspan="@totalColumnas" class="p-0">
+                            <div class="p-3 border-top existencia-detalle-box">
+                                <div class="table-responsive existencia-detalle-scroll-sync js-sync-scroll-body">
+                                    <table class="table table-sm table-bordered mb-0 existencia-detalle-tabla">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th class="existencia-detalle-destacado">Sucursal</th>
+                                                <th title="FechaUltimoCierre">F. Cierre</th>
+                                                <th class="text-right existencia-detalle-destacado" title="StockInicial">St. Ini.</th>
+                                                <th class="text-right">Compras</th>
+                                                <th class="text-right" title="IngresoElaborado">Ing. Elab.</th>
+                                                <th class="text-right" title="IngresoStock">Ing. Stock</th>
+                                                <th class="text-right" title="IngresoMovimiento">Ing. Mov.</th>
+                                                <th class="text-right" title="AjusteStock">Ajuste</th>
+                                                <th class="text-right existencia-detalle-destacado" title="TotalIngresos">Tot. Ing.</th>
+                                                <th class="text-right" title="EgresoStock">Egr. Stock</th>
+                                                <th class="text-right" title="EgresoMovimiento">Egr. Mov.</th>
+                                                <th class="text-right" title="EgresoElaborado">Egr. Elab.</th>
+                                                <th class="text-right">Ventas</th>
+                                                <th class="text-right existencia-detalle-destacado" title="TotalEgresos">Tot. Egr.</th>
+                                                <th class="text-right existencia-detalle-stockactual" title="StockActual">Stock Act.</th>
+                                                <th title="EstadoStock">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var detalle in producto.Detalles.OrderBy(x => x.Sucursal))
+                                            {
+                                                <tr>
+                                                    <td class="existencia-detalle-destacado">@detalle.Sucursal</td>
+                                                    <td>@(detalle.FechaUltimoCierre.HasValue ? detalle.FechaUltimoCierre.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                                                    <td class="text-right existencia-detalle-destacado">@detalle.StockInicial.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.Compras.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.IngresoElaborado.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.IngresoStock.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.IngresoMovimiento.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.AjusteStock.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-destacado">@detalle.TotalIngresos.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.EgresoStock.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.EgresoMovimiento.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.EgresoElaborado.ToString("N3")</td>
+                                                    <td class="text-right">@detalle.Ventas.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-destacado">@detalle.TotalEgresos.ToString("N3")</td>
+                                                    <td class="text-right existencia-detalle-stockactual @CssEstado(detalle.EstadoStock)">@detalle.StockActual.ToString("N3")</td>
+                                                    <td class="@CssEstado(detalle.EstadoStock)">@detalle.EstadoStock</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

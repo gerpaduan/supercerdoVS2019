@@ -9,6 +9,16 @@
     <ProjectReference Include="..\Utilidades.Core\Utilidades.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Requerido por ComprasController.Guardar para portar la proteccion anti-doble-submit del
+         original (MemoryCache.Default.Add, atomico, ver docs/DECISIONS.md, Modulo 5). Se eligio
+         este paquete oficial de Microsoft en vez de reimplementar la logica con
+         Microsoft.Extensions.Caching.Memory (IMemoryCache no tiene un "Add si no existe" atomico
+         built-in) para preservar exactamente la misma garantia de concurrencia ya verificada en
+         produccion, sin reescribir un mecanismo de seguridad. -->
+    <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

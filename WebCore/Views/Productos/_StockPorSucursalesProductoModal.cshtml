@@ -1,0 +1,347 @@
+@model Entidades.ExistenciaPorSucursalesVm
+@using System.Globalization
+@using System.Linq
+
+@functions {
+    private string CssEstado(string estado)
+    {
+        string valor = (estado ?? "").Trim().ToUpperInvariant();
+        if (valor == "NEGATIVO") return "text-danger font-weight-bold";
+        if (valor == "BAJO") return "text-warning font-weight-bold";
+        if (valor == "SIN STOCK") return "text-muted";
+        return "";
+    }
+}
+
+@{
+    var producto = Model != null && Model.Productos != null ? Model.Productos.FirstOrDefault() : null;
+    var detalles = producto != null && producto.Detalles != null
+        ? producto.Detalles.OrderBy(x => x.Sucursal).ToList()
+        : new System.Collections.Generic.List<Entidades.DetalleStockSucursalVm>();
+    string productoNombre = ViewBag.ProductoNombre as string ?? (producto != null ? producto.Corte : "");
+    string productoCodigo = ViewBag.ProductoCodigo != null ? Convert.ToString(ViewBag.ProductoCodigo) : (producto != null ? producto.Codigo.ToString() : "");
+    bool productoSinStock = ViewBag.ProductoSinStock != null && (bool)ViewBag.ProductoSinStock;
+    int idCorteActual = producto != null ? producto.IdCorte : 0;
+
+    // El SP de existencia (a_ExistenciaStockPorSucursales) excluye productos con
+    // EnCierreStock=false o Independiente=false — no es "sin stock", es "no se administra
+    // por sucursal aca". Se distingue para mostrar el motivo real y, en modo lotes, saltear
+    // automaticamente en vez de dejar al usuario mirando un cartel.
+    bool? productoEnCierreStock = ViewBag.ProductoEnCierreStock as bool?;
+    bool? productoEsIndependiente = ViewBag.ProductoEsIndependiente as bool?;
+    bool excluidoPorEnCierreStock = productoEnCierreStock.HasValue && !productoEnCierreStock.Value;
+    bool excluidoPorNoIndependiente = !excluidoPorEnCierreStock && productoEsIndependiente.HasValue && !productoEsIndependiente.Value;
+}
+
+<style>
+    #modalStockSucursales .modal-body { padding: .7rem .85rem; }
+
+    #modalStockSucursales .stock-header-producto {
+        background: #f8f9fa;
+        border-radius: .4rem;
+        padding: .5rem .7rem;
+    }
+    #modalStockSucursales .stock-header-nombre { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+    #modalStockSucursales .stock-header-codigo {
+        font-size: .76rem;
+        font-weight: 600;
+        padding: .3rem .55rem;
+        letter-spacing: .02em;
+    }
+    html.dark-mode #modalStockSucursales .stock-header-producto,
+    body.dark-mode #modalStockSucursales .stock-header-producto { background: #1f2937; }
+
+    #modalStockSucursales .table-sm td,
+    #modalStockSucursales .table-sm th { padding: .2rem .4rem; font-size: .78rem; }
+    #modalStockSucursales .punto-stock-fila { padding: .25rem .5rem; font-size: .82rem; }
+    #modalStockSucursales #bloqueEditarPuntoStock { padding: .5rem .65rem; }
+    #modalStockSucursales .js-input-punto-stock { max-width: 90px; padding: .18rem .4rem; }
+    #modalStockSucursales .custom-control-label { font-size: .85rem; }
+</style>
+
+<div class="d-flex align-items-center flex-wrap mb-2 stock-header-linea stock-header-producto" style="gap:.6rem;">
+    <span class="stock-header-nombre">@(!string.IsNullOrWhiteSpace(productoNombre) ? productoNombre : "-")</span>
+    <span class="badge badge-secondary stock-header-codigo">Cód. @(!string.IsNullOrWhiteSpace(productoCodigo) ? productoCodigo : "-")</span>
+</div>
+
+@if (Model == null || !Model.ConsultaRealizada)
+{
+    <div class="alert alert-info mb-0 py-2">Presioná Buscar para consultar stock.</div>
+}
+else if (producto == null || detalles.Count == 0)
+{
+    string mensajeSinDatos;
+    if (excluidoPorEnCierreStock)
+    {
+        mensajeSinDatos = "Este producto no tiene activado \"En cierre stock\", así que no se administra punto de stock por sucursal. Acá solo se muestran productos con esa opción activada.";
+    }
+    else if (excluidoPorNoIndependiente)
+    {
+        mensajeSinDatos = "Este producto no es independiente (es un sub-corte/presentación) — el stock se administra desde el corte del que depende.";
+    }
+    else
+    {
+        mensajeSinDatos = string.IsNullOrWhiteSpace(Model.Mensaje) ? "El producto no tiene stock en ninguna sucursal." : Model.Mensaje;
+    }
+
+    <div class="alert alert-warning mb-0 py-2">
+        @mensajeSinDatos
+    </div>
+
+    if (excluidoPorEnCierreStock || excluidoPorNoIndependiente)
+    {
+        <script>
+            (function () {
+                if (window.modoLotePuntoStockActivo && typeof avanzarSiguienteProductoLotePuntoStock === "function") {
+                    avanzarSiguienteProductoLotePuntoStock();
+                }
+            })();
+        </script>
+    }
+}
+else
+{
+    if (productoSinStock)
+    {
+        <div class="alert alert-info py-2">
+            El producto no tiene stock positivo en ninguna sucursal.
+        </div>
+    }
+
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex flex-wrap align-items-center justify-content-end mb-2" style="gap: .75rem;">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="chkVerDetalleStockProducto">
+            <label class="custom-control-label" for="chkVerDetalleStockProducto">Ver detalle</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="chkModificarPuntoStockProducto">
+            <label class="custom-control-label" for="chkModificarPuntoStockProducto">Modificar punto de stock</label>
+        </div>
+    </div>
+
+    <div id="bloqueEditarPuntoStock" class="d-none mb-2 border rounded bg-light" data-id-corte="@idCorteActual">
+        <div class="d-flex align-items-start mb-2">
+            <i class="fas fa-info-circle text-info mr-2 mt-1"></i>
+            <small class="text-muted mb-0">
+                Escribí el punto de stock de cada sucursal y presioná <strong>Enter</strong> o <strong>Tab</strong>
+                para pasar a la siguiente. Al llegar a la última, se pasa al botón "Guardar puntos de stock",
+                que guarda todas las sucursales de este producto juntas. Activá "Modificar en lotes" para
+                seguir con el próximo producto de la lista sin cerrar esta ventana.
+            </small>
+        </div>
+
+        <div class="custom-control custom-switch mb-2">
+            <input type="checkbox" class="custom-control-input" id="chkModificarEnLotesPuntoStock">
+            <label class="custom-control-label" for="chkModificarEnLotesPuntoStock">Modificar en lotes</label>
+        </div>
+
+        <div class="list-group mb-2">
+            @foreach (var detalle in detalles)
+            {
+                <div class="list-group-item d-flex align-items-center justify-content-between flex-wrap punto-stock-fila js-fila-punto-stock" data-id-sucursal="@detalle.IdSucursal">
+                    <span class="mr-2">@detalle.Sucursal</span>
+                    <input type="number" min="0" step="1" inputmode="numeric"
+                           class="form-control form-control-sm js-input-punto-stock"
+                           value="@(detalle.PuntoStock.ToString("F0", CultureInfo.InvariantCulture))">
+                </div>
+            }
+        </div>
+
+        <button type="button" id="btnGuardarPuntosStock" class="btn btn-primary btn-sm btn-block">
+            <i class="fas fa-save mr-1"></i> Guardar puntos de stock
+        </button>
+    </div>
+
+    <small class="text-muted d-block mb-1 text-uppercase font-weight-bold" style="font-size:.68rem; letter-spacing:.03em;">Detalle por sucursal</small>
+    <div class="table-responsive js-sync-scroll-body">
+        <table class="table table-sm table-bordered mb-0 js-sticky-first-col">
+            <thead class="thead-light">
+                <tr>
+                    <th>Sucursal</th>
+                    <th class="text-nowrap">F. Cierre</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">St. Ini.</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Compras</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Ing. Elab.</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Ing. Stock</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Ing. Mov.</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Ajuste</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Tot. Ing.</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Egr. Stock</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Egr. Mov.</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Egr. Elab.</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Ventas</th>
+                    <th class="text-right text-nowrap detalle-stock-producto" style="display:none;">Tot. Egr.</th>
+                    <th class="text-right text-nowrap">Stock Act.</th>
+                    <th class="text-right text-nowrap">Dif.</th>
+                    <th class="text-nowrap">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detalle in detalles)
+                {
+                    float dif = detalle.StockActual - detalle.PuntoStock;
+                    string colorDif = dif >= 0 ? "text-success" : "text-danger";
+
+                    <tr data-id-sucursal="@detalle.IdSucursal">
+                        <td>@detalle.Sucursal</td>
+                        <td class="text-nowrap">@(detalle.FechaUltimoCierre.HasValue ? detalle.FechaUltimoCierre.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.StockInicial.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.Compras.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.IngresoElaborado.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.IngresoStock.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.IngresoMovimiento.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.AjusteStock.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.TotalIngresos.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.EgresoStock.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.EgresoMovimiento.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.EgresoElaborado.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.Ventas.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap detalle-stock-producto" style="display:none;">@detalle.TotalEgresos.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap @CssEstado(detalle.EstadoStock) js-stock-actual-valor" data-stock-actual="@(detalle.StockActual.ToString(CultureInfo.InvariantCulture))">@detalle.StockActual.ToString("N3", new CultureInfo("es-AR"))</td>
+                        <td class="text-right text-nowrap">
+                            <span class="@colorDif font-weight-bold js-dif-stock-valor">@dif.ToString("N3", new CultureInfo("es-AR"))</span>
+                            <small class="text-muted d-block js-dif-stock-punto">Pto: @detalle.PuntoStock.ToString("N0", new CultureInfo("es-AR"))</small>
+                        </td>
+                        <td class="text-nowrap @CssEstado(detalle.EstadoStock)">@detalle.EstadoStock</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        (function () {
+            var $switchDetalle = $("#chkVerDetalleStockProducto");
+            var $detalle = $(".detalle-stock-producto");
+
+            function actualizarDetalle() {
+                $detalle.toggle($switchDetalle.is(":checked"));
+            }
+
+            $switchDetalle.off("change.stockProductoDetalle").on("change.stockProductoDetalle", actualizarDetalle);
+            actualizarDetalle();
+
+            var $switchEditar = $("#chkModificarPuntoStockProducto");
+            var $bloque = $("#bloqueEditarPuntoStock");
+            var $switchLote = $("#chkModificarEnLotesPuntoStock");
+            var $inputsPuntoStock = $bloque.find(".js-input-punto-stock");
+
+            function enfocarPrimerInput() {
+                $inputsPuntoStock.first().trigger("focus").trigger("select");
+            }
+
+            function mostrarBloqueEdicion(mostrar) {
+                $bloque.toggleClass("d-none", !mostrar);
+                if (mostrar) enfocarPrimerInput();
+            }
+
+            $switchEditar.off("change.puntoStockToggle").on("change.puntoStockToggle", function () {
+                mostrarBloqueEdicion($switchEditar.is(":checked"));
+            });
+
+            $switchLote.off("change.puntoStockLote").on("change.puntoStockLote", function () {
+                window.modoLotePuntoStockActivo = $switchLote.is(":checked");
+            });
+
+            // Enter O Tab (sin Shift) avanzan al siguiente campo — Tab solo tambien queda
+            // manejado a mano en vez de confiar en el orden nativo del navegador, para que
+            // el comportamiento sea identico y predecible con las dos teclas.
+            $inputsPuntoStock.off("keydown.puntoStock").on("keydown.puntoStock", function (e) {
+                var esEnter = e.which === 13;
+                var esTabAdelante = e.which === 9 && !e.shiftKey;
+                if (!esEnter && !esTabAdelante) return;
+                e.preventDefault();
+
+                var indexActual = $inputsPuntoStock.index(this);
+                var esUltimo = indexActual === $inputsPuntoStock.length - 1;
+
+                if (esUltimo) {
+                    $("#btnGuardarPuntosStock").trigger("focus");
+                } else {
+                    $inputsPuntoStock.eq(indexActual + 1).trigger("focus").trigger("select");
+                }
+            });
+
+            $("#btnGuardarPuntosStock").off("click.guardarPuntoStock").on("click.guardarPuntoStock", function () {
+                var idCorte = Number($bloque.data("id-corte"));
+                var token = $("#modalStockSucursales input[name='__RequestVerificationToken']").val();
+                var valores = [];
+                var huboInvalido = false;
+
+                $inputsPuntoStock.each(function () {
+                    var $input = $(this);
+                    var $fila = $input.closest(".js-fila-punto-stock");
+                    var idSucursal = Number($fila.data("id-sucursal"));
+                    var valor = parseInt($input.val(), 10);
+
+                    if (!Number.isFinite(valor) || valor < 0) {
+                        huboInvalido = true;
+                        $input.addClass("is-invalid");
+                        return;
+                    }
+
+                    $input.removeClass("is-invalid");
+                    valores.push({ idSucursal: idSucursal, puntoStock: valor });
+                });
+
+                if (huboInvalido) {
+                    Swal.fire("Error", "El punto de stock debe ser un número entero mayor o igual a 0.", "error");
+                    return;
+                }
+
+                var datosPost = { __RequestVerificationToken: token, idCorte: idCorte };
+                valores.forEach(function (v, i) {
+                    datosPost["valores[" + i + "].IdSucursal"] = v.idSucursal;
+                    datosPost["valores[" + i + "].PuntoStock"] = v.puntoStock;
+                });
+
+                $.ajax({
+                    url: '@Url.Action("GuardarPuntosStockSucursal", "Productos")',
+                    type: 'POST',
+                    data: datosPost
+                }).done(function (resp) {
+                    if (!manejarPermiso(resp)) return;
+
+                    // Actualiza la tabla de solo lectura sin recargar el modal entero.
+                    valores.forEach(function (v) {
+                        var $filaTabla = $("table tr[data-id-sucursal='" + v.idSucursal + "']");
+                        var $stockActualTd = $filaTabla.find(".js-stock-actual-valor");
+                        var stockActual = parseFloat($stockActualTd.data("stock-actual")) || 0;
+                        var dif = stockActual - v.puntoStock;
+                        var $dif = $filaTabla.find(".js-dif-stock-valor");
+                        $dif.text(dif.toLocaleString("es-AR", { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
+                        $dif.toggleClass("text-success", dif >= 0).toggleClass("text-danger", dif < 0);
+                        $filaTabla.find(".js-dif-stock-punto").text("Pto: " + v.puntoStock.toLocaleString("es-AR"));
+                    });
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Se guardaron los puntos de stock",
+                        timer: 2000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+
+                    if (window.modoLotePuntoStockActivo && typeof avanzarSiguienteProductoLotePuntoStock === "function") {
+                        avanzarSiguienteProductoLotePuntoStock();
+                    } else {
+                        $("#modalStockSucursales").modal("hide");
+                    }
+                }).fail(function () {
+                    Swal.fire("Error", "No se pudieron guardar los puntos de stock. Intentá de nuevo.", "error");
+                });
+            });
+
+            // Modo lote: al recargar el modal para el siguiente producto, el bloque se
+            // reactiva solo (el contenido del modal se reemplaza entero en cada apertura,
+            // los switches no persisten por si mismos).
+            if (window.modoLotePuntoStockActivo) {
+                $switchEditar.prop("checked", true);
+                $switchLote.prop("checked", true);
+                mostrarBloqueEdicion(true);
+            }
+        })();
+    </script>
+}

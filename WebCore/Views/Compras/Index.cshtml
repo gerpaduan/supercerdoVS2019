@@ -1,0 +1,592 @@
+@model WebCore.Models.CompraIndexVm
+
+@{
+    ViewBag.Title = "Compras";
+
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    int idSucursal = ViewBag.IdSucursal != null ? (int)ViewBag.IdSucursal : -1;
+    string tipoCompra = ViewBag.TipoCompra as string ?? "Todos";
+    string texto = ViewBag.Texto as string ?? "";
+    DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today;
+    DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today;
+    bool permiteMediaRes = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
+    int totalCantMedias = ViewBag.TotalCantMedias != null ? (int)ViewBag.TotalCantMedias : 0;
+    float totalKg = ViewBag.TotalKg != null ? (float)ViewBag.TotalKg : 0f;
+    float totalS = ViewBag.TotalS != null ? (float)ViewBag.TotalS : 0f;
+    string successMessage = TempData["ComprasSuccessMessage"] as string ?? "";
+}
+
+<div class="container-fluid compras-index-page">
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div id="comprasSuccessAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <div class="d-flex flex-wrap align-items-center mb-3 compras-acciones-header">
+        <a class="btn btn-success mt-2 mt-md-0 compras-btn-accion" href="@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })" id="btnNuevaCompraIndex">
+            <i class="fas fa-plus mr-1"></i> Nueva compra
+        </a>
+        <a class="btn btn-outline-primary mt-2 mt-md-0 ml-md-2 compras-btn-accion" href="@Url.Action("Lineas", "Compras", new { idSucursal = idSucursal, tipoCompra = tipoCompra, texto = texto, fechaDesde = fechaDesde.ToString("yyyy-MM-dd"), fechaHasta = fechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasComprasIndex">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 compras-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index", "Compras")">
+                <div class="compras-filtros-stack">
+                    <div id="alertaFiltrosPendientesCompras" class="alert alert-warning d-none mb-0" role="alert">
+                        Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                    </div>
+
+                    <div class="compras-filtros-row compras-filtros-row-fechas">
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Desde</label>
+                            <input type="date" id="fechaDesde" name="fechaDesde" value="@fechaDesde.ToString("yyyy-MM-dd")" class="form-control" />
+                            @Html.Partial("_AdvertenciaPermisoFecha")
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Hasta</label>
+                            <input type="date" name="fechaHasta" value="@fechaHasta.ToString("yyyy-MM-dd")" class="form-control" />
+                        </div>
+
+                        <div class="form-group mb-0 compras-filtro-accion">
+                            <label class="compras-filtro-label d-none d-lg-block">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block" id="btnBuscarCompras">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="compras-filtros-row compras-filtros-row-sucursal">
+                        <div class="form-group mb-0 compras-filtro-sucursal">
+                            <label class="compras-filtro-label">Sucursal</label>
+                            <select name="idSucursal" id="idSucursalCompras" class="form-control">
+                                <option value="-1" selected="@(idSucursal == -1 ? "selected" : null)">Todas</option>
+                                @foreach (var s in sucursales)
+                                {
+                                    <option value="@s.IdSucursal" selected="@(s.IdSucursal == idSucursal ? "selected" : null)">@s.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="compras-filtros-row compras-filtros-row-busqueda">
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Tipo compra</label>
+                            @if (permiteMediaRes)
+                            {
+                                <select name="tipoCompra" id="tipoCompraCompras" class="form-control">
+                                    <option value="Todos" selected="@(tipoCompra == "Todos" ? "selected" : null)">Todos</option>
+                                    <option value="Media Res" selected="@(tipoCompra == "Media Res" ? "selected" : null)">Media Res</option>
+                                    <option value="Cortes" selected="@(tipoCompra == "Cortes" ? "selected" : null)">Cortes</option>
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="tipoCompra" value="Todos" />
+                                <input type="text" class="form-control" value="Productos" readonly />
+                            }
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="compras-filtro-label">Descripcion</label>
+                            <input type="text" name="texto" value="@texto" class="form-control" autocomplete="off" placeholder="Proveedor, documento, observaciones..." />
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div id="estadoBusquedaCompras" class="text-muted small">Resultados actualizados.</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-4 mb-2">
+            <div class="card border-left-info shadow-sm h-100 compras-total-card">
+                <div class="card-body">
+                    <div class="compras-total-label text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
+                    <div class="compras-total-value font-weight-bold text-gray-800">@totalCantMedias</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-2">
+            <div class="card border-left-primary shadow-sm h-100 compras-total-card">
+                <div class="card-body">
+                    <div class="compras-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="compras-total-value font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-2">
+            <div class="card border-left-success shadow-sm h-100 compras-total-card">
+                <div class="card-body">
+                    <div class="compras-total-label text-xs font-weight-bold text-success text-uppercase mb-1">Total</div>
+                    <div class="compras-total-value font-weight-bold text-gray-800">@totalS.ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center mb-2">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="switchVistaCompletaCompras">
+            <label class="custom-control-label" for="switchVistaCompletaCompras">Vista completa</label>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @Html.Partial("~/Views/Compras/_ComprasTabla.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+<style>
+    .compras-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+        font-size: .9rem;
+    }
+
+    .compras-index-page .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .compras-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .compras-filtros-stack {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .compras-filtros-row {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .compras-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .compras-filtros-card .form-control,
+    .compras-filtros-card .btn {
+        font-size: .87rem;
+        min-height: 2.65rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .compras-acciones-header {
+        justify-content: flex-start;
+    }
+
+    .compras-btn-accion {
+        width: 100%;
+        min-height: 2.1rem;
+        font-size: .82rem;
+        padding: .24rem .58rem;
+        border-radius: .5rem;
+    }
+
+    .compras-filtros-card .alert,
+    .compras-filtros-card .small,
+    .compras-filtros-card .text-muted,
+    .compras-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .compras-total-card .card-body {
+        padding: .6rem .8rem;
+    }
+
+    .compras-total-label {
+        font-size: .68rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .compras-total-value {
+        font-size: 1rem;
+        line-height: 1.05;
+    }
+
+    .compras-index-page .tabla-full .table {
+        font-size: .84rem;
+    }
+
+    .compras-index-page .tabla-full .table th,
+    .compras-index-page .tabla-full .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .compras-index-page .tabla-full .table thead th,
+    .compras-index-page .tabla-full .table > thead > tr > th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    .compras-index-page .tabla-full .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.15;
+    }
+
+    @@media (min-width: 1200px) {
+        .compras-index-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .compras-acciones-header {
+            justify-content: flex-end;
+        }
+
+        .compras-btn-accion {
+            width: auto;
+        }
+
+        .compras-index-page .compras-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .compras-total-card .card-body {
+            padding: .5rem .72rem;
+        }
+
+        .compras-filtros-row-fechas {
+            grid-template-columns: 1.15fr 1.15fr 140px;
+            align-items: end;
+        }
+
+        .compras-filtro-sucursal {
+            max-width: 420px;
+        }
+
+        .compras-filtros-row-busqueda {
+            grid-template-columns: .9fr 1.5fr;
+        }
+
+        .compras-filtros-card .form-control,
+        .compras-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .compras-index-page .tabla-full .table {
+            font-size: .81rem;
+        }
+
+        .compras-index-page .tabla-full .table thead th,
+        .compras-index-page .tabla-full .table > thead > tr > th {
+            font-size: .69rem !important;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .compras-filtros-row-fechas,
+        .compras-filtros-row-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .compras-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .compras-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            document.addEventListener("keydown", function (event) {
+                if (!event.altKey) return;
+
+                var target = event.target;
+                var tagName = target && target.tagName ? target.tagName.toUpperCase() : "";
+                var isEditable = target && (target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT");
+                if (isEditable) return;
+
+                var key = (event.key || "").toLowerCase();
+                var btnNuevo = document.getElementById("btnNuevaCompraIndex");
+                var btnLineas = document.getElementById("btnVerLineasComprasIndex");
+
+                if ((key === "n" || key === "enter") && btnNuevo) {
+                    event.preventDefault();
+                    navegarConLoader(btnNuevo.href, false);
+                } else if (key === "v" && btnLineas) {
+                    event.preventDefault();
+                    navegarConLoader(btnLineas.href, false);
+                }
+            });
+
+            var storageKey = "compras_index_filters_v1";
+            var form = document.querySelector('.compras-filtros-card form');
+            var inputFechaDesde = document.getElementById('fechaDesde');
+            var inputFechaHasta = form ? form.querySelector('input[name="fechaHasta"]') : null;
+            var inputSucursal = form ? form.querySelector('select[name="idSucursal"]') : null;
+            var inputTipoCompra = form ? form.querySelector('[name="tipoCompra"]') : null;
+            var inputTexto = form ? form.querySelector('input[name="texto"]') : null;
+            var alertaPendiente = document.getElementById('alertaFiltrosPendientesCompras');
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+            };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                if (!form) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursal: inputSucursal ? inputSucursal.value : "",
+                    tipoCompra: inputTipoCompra ? inputTipoCompra.value : "",
+                    texto: inputTexto ? inputTexto.value : ""
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscandoCompras(mensaje) {
+                var btnBuscar = document.getElementById("btnBuscarCompras");
+                var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                var estado = document.getElementById("estadoBusquedaCompras");
+
+                if (btnBuscar) btnBuscar.disabled = true;
+                if (btnTexto) btnTexto.textContent = " Cargando...";
+                if (estado) estado.textContent = mensaje || "Actualizando búsqueda...";
+            }
+
+            function enviarFiltrosEnVivo() {
+                if (!form) return;
+                saveState();
+                setBuscandoCompras("Actualizando búsqueda en vivo...");
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    saveState();
+                }
+
+                submitConLoader();
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search) return;
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+                    if (state.idSucursal) params.set("idSucursal", state.idSucursal);
+                    if (state.tipoCompra) params.set("tipoCompra", state.tipoCompra);
+                    if (state.texto) params.set("texto", state.texto);
+
+                    var query = params.toString();
+                    if (query) {
+                        navegarConLoader(form.action + "?" + query, true);
+                    }
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+            actualizarAvisoPendiente();
+
+            if (form) {
+                form.addEventListener("submit", function (event) {
+                    if (form.dataset.loadingSubmitPending === "true") {
+                        form.dataset.loadingSubmitPending = "";
+                        return;
+                    }
+
+                    event.preventDefault();
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    saveState();
+                    actualizarAvisoPendiente();
+                    setBuscandoCompras();
+                    form.dataset.loadingSubmitPending = "true";
+                    submitConLoader();
+                });
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+            }
+
+            if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAvisoPendiente);
+            if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAvisoPendiente);
+            if (inputSucursal) inputSucursal.addEventListener('change', enviarFiltrosEnVivo);
+            if (inputTipoCompra) inputTipoCompra.addEventListener('change', enviarFiltrosEnVivo);
+
+            document.querySelectorAll("#btnNuevaCompraIndex, #btnVerLineasComprasIndex").forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    var href = link.getAttribute("href") || "";
+                    if (!href) return;
+                    event.preventDefault();
+                    navegarConLoader(href, false);
+                });
+            });
+
+            var successAlert = document.getElementById("comprasSuccessAlert");
+            if (successAlert) {
+                window.setTimeout(function () {
+                    $(successAlert).alert("close");
+                }, 2500);
+            }
+
+            const switchVista = document.getElementById("switchVistaCompletaCompras");
+            if (!switchVista) return;
+
+            function syncIcon(button, expanded) {
+                if (!button) return;
+                button.setAttribute("aria-expanded", expanded ? "true" : "false");
+                const icon = button.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("fa-chevron-down", !expanded);
+                    icon.classList.toggle("fa-chevron-up", expanded);
+                }
+            }
+
+            function cargarDetalleCompra(detalle) {
+                if (!detalle) return;
+
+                const contenedor = detalle.querySelector(".compra-detalle-lazy");
+                if (!contenedor) return;
+
+                if (contenedor.getAttribute("data-loaded") === "true"
+                    || contenedor.getAttribute("data-loading") === "true") {
+                    return;
+                }
+
+                const url = contenedor.getAttribute("data-url");
+                if (!url) return;
+
+                contenedor.setAttribute("data-loading", "true");
+                contenedor.innerHTML = '<div class="text-muted">Cargando detalle...</div>';
+
+                $.get(url)
+                    .done(function (html) {
+                        contenedor.innerHTML = html;
+                        contenedor.setAttribute("data-loaded", "true");
+                    })
+                    .fail(function () {
+                        contenedor.innerHTML = '<div class="text-danger">No se pudo cargar el detalle de la compra.</div>';
+                    })
+                    .always(function () {
+                        contenedor.removeAttribute("data-loading");
+                    });
+            }
+
+            document.addEventListener("click", function (e) {
+                const btn = e.target.closest(".btn-detalles-compra");
+                if (!btn) return;
+
+                e.preventDefault();
+                const selector = btn.getAttribute("data-target");
+                const detalle = selector ? document.querySelector(selector) : null;
+                if (!detalle) return;
+
+                cargarDetalleCompra(detalle);
+
+                const expanded = detalle.classList.contains("show");
+                $(detalle).collapse(expanded ? "hide" : "show");
+                syncIcon(btn, !expanded);
+            });
+
+            document.addEventListener("dblclick", function (e) {
+                if (e.target.closest("a, button")) return;
+                const row = e.target.closest("tr");
+                if (!row) return;
+                const btnDetalle = row.querySelector(".btn-detalles-compra");
+                if (btnDetalle) btnDetalle.click();
+            });
+
+            switchVista.addEventListener("change", function () {
+                const expandir = switchVista.checked;
+                document.querySelectorAll(".compra-detalle-collapse").forEach(function (detalle) {
+                    if (expandir) {
+                        cargarDetalleCompra(detalle);
+                    }
+                    $(detalle).collapse(expandir ? "show" : "hide");
+                    const btn = document.querySelector('.btn-detalles-compra[data-target="#' + detalle.id + '"]');
+                    syncIcon(btn, expandir);
+                });
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,402 @@
+@model WebCore.Models.UsuarioEditVm
+
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar usuario" : "Nuevo usuario";
+}
+
+<div class="container-fluid usuarios-editar-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">@(Model.EsEdicion ? "Modificar usuario" : "Nuevo usuario")</h1>
+        </div>
+        <a class="btn btn-outline-secondary mt-2 mt-md-0" href="@Url.Action("Index", "Usuarios")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            @if (Model.SoloLectura)
+            {
+                <div class="alert alert-secondary">
+                    El usuario se muestra en modo solo lectura porque no tiene permisos para administrarlo.
+                </div>
+            }
+
+            <form asp-controller="Usuarios" asp-action="Guardar" method="post" novalidate="novalidate" id="formUsuario">
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Id)
+
+                <div class="row">
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="Id">ID</label>
+                            <input type="text" class="form-control" value="@(Model.Id > 0 ? Model.Id.ToString() : "Nuevo")" readonly="readonly" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            <label for="Nombre">Nombre</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", autocomplete = "off", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", autocomplete = "off" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Nombre, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label for="IdEmpresa">ID Empresa</label>
+                            @Html.TextBoxFor(m => m.IdEmpresa, new { @class = "form-control", @readonly = "readonly" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Usuario">Usuario</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.Usuario, new { @class = "form-control", autocomplete = "off", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Usuario, new { @class = "form-control", autocomplete = "off" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Usuario, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Email">Email</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", autocomplete = "off", type = "email", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", autocomplete = "off", type = "email" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="IdSucursalUser">ID Sucursal User</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.DropDownListFor(m => m.IdSucursalUser, Model.Sucursales, "Sin sucursal por defecto", new { @class = "form-control", @disabled = "disabled" })
+                                @Html.HiddenFor(m => m.IdSucursalUser)
+                            }
+                            else
+                            {
+                                @Html.DropDownListFor(m => m.IdSucursalUser, Model.Sucursales, "Sin sucursal por defecto", new { @class = "form-control" })
+                            }
+                            @Html.ValidationMessageFor(m => m.IdSucursalUser, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-4">
+                        <div class="form-group">
+                            <label for="Clave">Clave</label>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.PasswordFor(m => m.Clave, new { @class = "form-control", autocomplete = "new-password", placeholder = Model.EsEdicion ? "Dejar vacia para mantener la actual" : "", @readonly = "readonly" })
+                            }
+                            else
+                            {
+                                @Html.PasswordFor(m => m.Clave, new { @class = "form-control", autocomplete = "new-password", placeholder = Model.EsEdicion ? "Dejar vacia para mantener la actual" : "" })
+                            }
+                            @Html.ValidationMessageFor(m => m.Clave, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.Admin, new { @class = "custom-control-input", id = "Admin", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.Admin, new { @class = "custom-control-input", id = "Admin" })
+                                }
+                                <label class="custom-control-label" for="Admin">Admin</label>
+                            </div>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.Admin)
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.Activo, new { @class = "custom-control-input", id = "Activo", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.Activo, new { @class = "custom-control-input", id = "Activo" })
+                                }
+                                <label class="custom-control-label" for="Activo">Activo</label>
+                            </div>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.Activo)
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.PermitirLoginFueraSucursal, new { @class = "custom-control-input", id = "PermitirLoginFueraSucursal", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.PermitirLoginFueraSucursal, new { @class = "custom-control-input", id = "PermitirLoginFueraSucursal" })
+                                }
+                                <label class="custom-control-label" for="PermitirLoginFueraSucursal">Permitir login fuera de sucursal</label>
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoLoginFueraSucursal" title="¿Qué significa 'Permitir login fuera de sucursal'?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.PermitirLoginFueraSucursal)
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.EsUsuarioProduccion, new { @class = "custom-control-input", id = "EsUsuarioProduccion", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.EsUsuarioProduccion, new { @class = "custom-control-input", id = "EsUsuarioProduccion" })
+                                }
+                                <label class="custom-control-label" for="EsUsuarioProduccion">Usuario de producción</label>
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoUsuarioProduccion" title="¿Qué es un 'Usuario de producción'?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Sin acceso a Ventas ni Finanzas. No puede ser Admin.</small>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.EsUsuarioProduccion)
+                            }
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.PuedeOperarPOS, new { @class = "custom-control-input", id = "PuedeOperarPOS", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.PuedeOperarPOS, new { @class = "custom-control-input", id = "PuedeOperarPOS" })
+                                }
+                                <label class="custom-control-label" for="PuedeOperarPOS">Puede operar POS</label>
+                            </div>
+                            <small class="form-text text-muted">Otorga el permiso mínimo necesario para usar POS Venta / POS Expendio.</small>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.PuedeOperarPOS)
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion && !Model.SoloLectura)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionUsuario"
+                                data-edit-readonly-ignore="true">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
+                    @if (!Model.SoloLectura)
+                    {
+                        <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !Model.SoloLectura) ? "d-none" : "")" id="btnGuardarUsuario">
+                            <i class="fas fa-save mr-1"></i> Guardar usuario
+                        </button>
+                    }
+                    <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Usuarios")">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INFO: que significa "Permitir login fuera de sucursal" -->
+<div class="modal fade" id="modalInfoLoginFueraSucursal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Qué significa "Permitir login fuera de sucursal"?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Este usuario puede iniciar sesión sin la validación de ubicación (GPS) que algunas
+                    sucursales tienen activada para el login.
+                </p>
+                <p>
+                    Si la sucursal del usuario tiene esa validación activada, un usuario normal solo puede
+                    loguearse estando físicamente dentro del radio configurado. Los administradores quedan
+                    exceptuados automáticamente; este interruptor da la misma excepción a un usuario que no
+                    es administrador.
+                </p>
+                <p class="mb-0">
+                    No tiene relación con elegir una sucursal distinta a la asignada — solo saltea el
+                    control de ubicación.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INFO: que es un "Usuario de produccion" -->
+<div class="modal fade" id="modalInfoUsuarioProduccion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white modal-search-compact-header">
+                <h5 class="modal-title">¿Qué es un "Usuario de producción"?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Pensado para agilizar la carga en un sector donde la PC es compartida por varios
+                    operarios</strong> — con este usuario logueado, guardar un movimiento, stock o elaborado
+                    <strong>no pide contraseña</strong>: solo aparece una lista para elegir qué empleado hizo
+                    la operación, y ese es el que queda registrado como responsable.
+                </p>
+                <p>
+                    Es una cuenta compartida (sin login individual por operario), para no frenar la carga
+                    pidiendo que cada uno inicie sesión con su propio usuario.
+                </p>
+                <p>Además, al tildarlo:</p>
+                <ul>
+                    <li>No puede ser Administrador (y viceversa).</li>
+                    <li>
+                        Pierde acceso a Ventas, Finanzas y a la pestaña Fórmulas de Elaborados, sin importar
+                        lo que se tilde en la pantalla de permisos.
+                    </li>
+                </ul>
+                <p class="mb-0">
+                    Nota: también queda sin acceso a "Ajuste de Stock" (esa operación requiere ser
+                    Administrador, incompatible con este interruptor) — es una limitación conocida, no algo
+                    buscado a propósito.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .usuarios-editar-page {
+        font-size: .9rem;
+    }
+
+    .usuarios-editar-page .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .usuarios-editar-page .form-control,
+    .usuarios-editar-page .btn {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+        border-radius: .55rem;
+    }
+
+    .usuarios-editar-page label,
+    .usuarios-editar-page .col-form-label {
+        font-size: .8rem;
+    }
+
+    .usuarios-editar-page .alert,
+    .usuarios-editar-page .small,
+    .usuarios-editar-page .text-muted,
+    .usuarios-editar-page .form-text {
+        font-size: .8rem !important;
+    }
+
+    @@media (min-width: 1200px) {
+        .usuarios-editar-page .form-control,
+        .usuarios-editar-page .btn {
+            min-height: 2.15rem !important;
+            font-size: .84rem !important;
+            padding: .28rem .56rem !important;
+        }
+    }
+</style>
+
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+<script>
+    window.EditReadOnly && window.EditReadOnly.init({
+        formSelector: "#formUsuario",
+        soloLecturaInicial: @((Model.EsEdicion && !Model.SoloLectura) ? "true" : "false"),
+        modifyButtonSelector: "#btnHabilitarEdicionUsuario",
+        saveButtonSelector: "#btnGuardarUsuario"
+    });
+
+    // Admin y Usuario de producción son mutuamente excluyentes (el server lo vuelve a validar
+    // igual en UsuariosController.ValidarUsuario) -- tildar uno destilda el otro, para que el
+    // usuario no se entere del conflicto recién al guardar.
+    // Nota: este bloque esta mas arriba en el HTML que el <script> de jquery.min.js (que carga
+    // al final del body) -- se difiere a DOMContentLoaded para asegurar que jQuery ya exista.
+    document.addEventListener("DOMContentLoaded", function () {
+        jQuery(document).on("change", "#Admin", function () {
+            if (jQuery(this).is(":checked")) jQuery("#EsUsuarioProduccion").prop("checked", false);
+        });
+        jQuery(document).on("change", "#EsUsuarioProduccion", function () {
+            if (jQuery(this).is(":checked")) jQuery("#Admin").prop("checked", false);
+        });
+
+        // Una cuenta de produccion nunca debe tener "Ventas > Editar" (bloqueado tambien
+        // server-side, ver UsuariosController.AplicarPuedeOperarPOS) -- al marcar "Usuario de
+        // produccion" se destilda y deshabilita "Puede operar POS"; al desmarcarla se rehabilita
+        // (vuelve a su ultimo estado, no se fuerza a tildado).
+        function sincronizarPuedeOperarPOS() {
+            var esProduccion = jQuery("#EsUsuarioProduccion").is(":checked");
+            jQuery("#PuedeOperarPOS").prop("disabled", esProduccion);
+            if (esProduccion) jQuery("#PuedeOperarPOS").prop("checked", false);
+        }
+        jQuery(document).on("change", "#EsUsuarioProduccion", sincronizarPuedeOperarPOS);
+        sincronizarPuedeOperarPOS();
+
+        jQuery("#btnInfoLoginFueraSucursal").on("click", function () {
+            jQuery("#modalInfoLoginFueraSucursal").modal("show");
+        });
+        jQuery("#btnInfoUsuarioProduccion").on("click", function () {
+            jQuery("#modalInfoUsuarioProduccion").modal("show");
+        });
+    });
+</script>

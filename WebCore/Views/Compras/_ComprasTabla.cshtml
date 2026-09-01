@@ -1,0 +1,94 @@
+@model WebCore.Models.CompraIndexVm
+@using System
+@using System.Collections.Generic
+@using System.Data
+
+@{
+    var dt = Model != null ? Model.Compras : null;
+    bool mostrarTipoCompra = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
+    int totalColumnas = 8 + (mostrarTipoCompra ? 1 : 0);
+}
+
+<div class="table-responsive tabla-full">
+    <table class="table table-bordered table-hover mb-0">
+        <thead class="thead-light">
+            <tr>
+                <th>Fecha</th>
+                <th>Nro.Remito/Factura</th>
+                <th>Proveedor</th>
+                @if (mostrarTipoCompra)
+                {
+                    <th>TipoCompra</th>
+                }
+                <th class="text-right">Un./Kg.</th>
+                <th class="text-right">Medias Reses</th>
+                <th class="text-right">Total</th>
+                <th style="width: 180px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (dt == null || dt.Rows.Count == 0)
+            {
+                <tr>
+                    <td colspan="@totalColumnas" class="text-center text-muted py-4">No se encontraron compras para el filtro seleccionado.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    int idCompra = Convert.ToInt32(row["idCompra"]);
+                    DateTime? fechaCompra = row["fechaCompra"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaCompra"]);
+                    float cantKg = row["cantKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["cantKg"]);
+                    float totalS = row["totalS"] == DBNull.Value ? 0f : Convert.ToSingle(row["totalS"]);
+                    int cantMedias = row.Table.Columns.Contains("cantMedias") && row["cantMedias"] != DBNull.Value ? Convert.ToInt32(row["cantMedias"]) : 0;
+                    string estado = row.Table.Columns.Contains("estado") && row["estado"] != DBNull.Value ? row["estado"].ToString() : "";
+                    bool anulado = !string.IsNullOrWhiteSpace(estado) && !estado.Equals("Alta", StringComparison.OrdinalIgnoreCase);
+                    string detailId = "detCompra_" + idCompra;
+
+                    <tr class="@(anulado ? "table-danger" : "")">
+                        <td>@(fechaCompra.HasValue ? fechaCompra.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                        <td>@row["nroRemito"]</td>
+                        <td>@row["razonSocial"]</td>
+                        @if (mostrarTipoCompra)
+                        {
+                            <td>@row["tipoCompra"]</td>
+                        }
+                        <td class="text-right">@cantKg.ToString("N2")</td>
+                        <td class="text-right">@cantMedias</td>
+                        <td class="text-right">@totalS.ToString("N2")</td>
+                        <td class="text-center text-nowrap">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary btn-detalles-compra"
+                                    data-target="#@detailId"
+                                    aria-expanded="false"
+                                    aria-controls="@detailId"
+                                    title="Ver detalle">
+                                <i class="fas fa-angle-down"></i>
+                            </button>
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="@Url.Action("ModificarCompra", "Compras", new { id = idCompra, origen = "layout" })"
+                               title="Ver compra"
+                               aria-label="Ver compra">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="tr-detalles-compra">
+                        <td colspan="@totalColumnas" class="p-0">
+                            <div id="@detailId" class="collapse compra-detalle-collapse">
+                                <div class="p-3 bg-light border-top compra-detalle-body">
+                                    <div class="compra-detalle-lazy"
+                                         data-loaded="false"
+                                         data-url="@Url.Action("Detalle", "Compras", new { idCompra = idCompra })">
+                                        <div class="text-muted">Presioná <strong>Detalles</strong> para cargar la información.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

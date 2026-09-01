@@ -1372,6 +1372,44 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Guardar punto de stock por sucursal (en lote, todas las sucursales de un producto
+        // juntas -- nunca sucursal por sucursal, ver modal "Ver stock por sucursales"). Consumido
+        // por _StockPorSucursalesProductoModal.cshtml, que a su vez es servido por
+        // StockController.StockPorSucursalesProducto (Modulo 4) -- quedo deliberadamente sin
+        // portar hasta ahora porque dependia de ese GET, ya portado (ver docs/DECISIONS.md).
+        // TODO(claude): permiso Producto.NuevoCorte omitido, mismo criterio ya usado en el resto
+        // de este controller (esAdministrador=true) -- el stub admin siempre esta autorizado.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarPuntosStockSucursal(int idCorte, List<PuntoStockSucursalItemVm> valores)
+        {
+            if (idCorte <= 0)
+                return Json(new { error = "Producto inválido." });
+
+            if (valores == null || valores.Count == 0)
+                return Json(new { error = "No hay valores para guardar." });
+
+            if (valores.Any(v => v.PuntoStock < 0))
+                return Json(new { error = "El punto de stock debe ser un número entero mayor o igual a 0." });
+
+            int idEmpresaSesion = _empresa != null ? _empresa.IdEmpresa : 0;
+
+            try
+            {
+                var lista = valores
+                    .Select(v => (idSucursal: v.IdSucursal, puntoStock: v.PuntoStock))
+                    .ToList();
+
+                _oCortePuntoStockSucursalN.GuardarPuntosStockLote(idEmpresaSesion, idCorte, lista);
+            }
+            catch (Exception)
+            {
+                return Json(new { error = "No se pudieron guardar los puntos de stock. Intentá de nuevo." });
+            }
+
+            return Json(new { ok = true });
+        }
+
         [HttpGet]
         public IActionResult findCorteById(int id)
         {
