@@ -24,7 +24,7 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 5 | Compras y abastecimiento | validado | 8 de 10 acciones portadas y validadas, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
 | 7 | Caja y tesorería | en progreso | Slice 1 (CajasAbiertas) portado y verificado con datos reales (solo lectura) -- ver detalle abajo |
-| 8 | Ventas y POS | en progreso | Slice 1 (listados/detalle de solo lectura) portado y verificado con datos reales — ver detalle abajo |
+| 8 | Ventas y POS | en progreso | Slice 1 (Ventas, solo lectura) + Slice 2 (PuntosExpendio, listado + sectores) portados y verificados con datos reales, incluida una escritura real — ver detalle abajo |
 
 ## Módulo 1 — Administración de sistema
 
@@ -304,6 +304,25 @@ Controller original: `Web/Controllers/VentasController.cs` -- 3336 líneas, 30 a
 **Verificado con datos reales**: `Index` (rango agosto-septiembre 2026, 36 ventas reales listadas y agrupadas por fecha), `Lineas` (35 registros con líneas de producto reales), `Facturas` + `BuscarFacturas` (2 facturas reales, $145 total, HTML de fila idéntico al patrón de `Web` clásico), `DetalleVenta` (id=1734, líneas y total reales), `DetalleFactura` (id=109, card de factura + card de venta embebido, ambos con datos reales), `MisVentas` (sin caja abierta para el usuario de prueba en este momento -- se verificó la rama de "no hay caja abierta", el camino con caja abierta ya se ejercitó indirectamente en Módulo 7). Todo el slice es de solo lectura, así que no aplica prueba de escritura en vivo (no hay POST en este slice).
 
 **No verificado en este turno**: `BuscarFacturas` con filtros de cliente/vendedor/forma de pago/tipo de comprobante poblados (solo se probó sin filtros); el flujo completo de scroll infinito con más de 50 facturas (la base de prueba solo tiene 109 facturas en total, insuficiente para forzar una segunda página con los filtros usados).
+
+**Slice 2 — `PuntosExpendioController`: listado de solo lectura + catálogo de sectores, portado y verificado con datos reales, incluida la escritura real.**
+
+Controller original: `Web/Controllers/PuntosExpendioController.cs` -- 1286 líneas, 20 acciones. Se leyó completo para scopear con criterio. Vistas del slice: `ExpendiosGenerados.cshtml`, `Sectores.cshtml`.
+
+`WebCore/Controllers/PuntosExpendioController.cs` (nuevo) porta **3 acciones**: `ExpendiosGenerados` (shell + filtros), `ExpendiosGeneradosData` (AJAX de solo lectura, listado de expendios ya generados), `Sectores`/`GuardarSector`/`EliminarSector` (catálogo simple de sectores -- mismo perfil de riesgo que `TiposEgresoCaja` de Módulo 7: CRUD chico sin dinero involucrado). Modelo nuevo `WebCore/Models/PuntoExpendioVm.cs` (`SectorAbmVm`, `SectorResumenVm`).
+
+**Las 17 acciones restantes del original NO se portan en este slice** (documentado en la cabecera del controller), agrupadas por motivo:
+1. **POS transaccional** (crea una `Venta`/expendio real, acoplado al estado de caja de Módulo 7, requiere su propio plan y juez de paridad antes de tocarlo, CLAUDE.md §11.1): `Abrir`, `POS`, `AutorizarOperadorPOS`, `CerrarOperadorPOS`, `Guardar`, `FinalizarPOS`, `BuscarProducto`, `BuscarProductoPorCodigo`, `BuscarProductoPOS`, `MisExpendiosPOS` (este último además depende de `ResolverOperadorPOS`, infraestructura de POS que no existe sin `Session`).
+2. **Impresión/PDF** (mismo bloqueante de iTextSharp ya documentado, CLAUDE.md §1.2): `ImprimirTicket`, `ImprimirTicketPayload`, `DescargarAgenteImpresion`, `ImprimirPdf`.
+3. **Envío real de email** (CLAUDE.md §4): `ObtenerDatosEmailExpendio`, `EnviarComprobanteEmailExpendio`.
+
+**Consecuencia visible en la vista**: el botón "Imprimir" de cada card de `ExpendiosGenerados` (abría `_ModalPostPuntoExpendio.cshtml`, 100% print/PDF/email) se excluyó -- mismo criterio ya usado en `VentasController` para los botones de Factura/Imprimir/Email.
+
+**Bypass de permisos, mismo criterio de toda la migración**: el usuario stub (`Admin=true`) hace que `PermisosHelper.TienePermiso(Session, Permisos.Venta.NuevaVenta, ...)` del original resuelva siempre "sin restricción" -- se omite directamente en las 3 acciones portadas.
+
+**Verificado con datos reales**: `ExpendiosGenerados`/`ExpendiosGeneradosData` (expendios reales de mayo 2026, sector "Carniceria", productos y totales reales). `Sectores` (listado real de sectores con su estado "en uso"). **Escritura real probada de punta a punta** (`GuardarSector`/`EliminarSector`, vía POST real con antiforgery token, verificado con `sqlcmd` contra la tabla `Sectores`): se creó el sector de prueba "PRUEBA MODULO 8 SLICE" (`idEmpresa=1`, confirmado en la base), se verificó que aparecía en el listado, y se eliminó -- round-trip limpio, sin dejar rastro (mismo patrón que el alta/baja de tipo de egreso de Módulo 7 slice 2).
+
+**No verificado en este turno**: `GuardarSector` en modo edición (`sectorOriginal` no vacío) -- solo se probó el alta; la validación `existeSector` (nombre duplicado) tampoco se ejercitó en vivo.
 
 ## Juez de paridad — validado con control negativo
 

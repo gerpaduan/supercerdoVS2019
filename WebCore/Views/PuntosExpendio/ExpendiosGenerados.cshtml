@@ -1,0 +1,468 @@
+@using System.Collections.Generic
+@*
+    Boton "Imprimir" de cada card (abria _ModalPostPuntoExpendio.cshtml -- ticket/PDF/email) se
+    excluye a proposito: depende de ImprimirTicket/ImprimirPdf/EnviarComprobanteEmailExpendio, no
+    portados en este slice (ver cabecera de PuntosExpendioController.cs). El resto de la pantalla
+    (listado/filtro de solo lectura) queda igual al original.
+*@
+@{
+    var fechaHoy = ViewBag.FechaHoy as string ?? "";
+    var sectores = ViewBag.SectoresExpendio as List<SelectListItem> ?? new List<SelectListItem>();
+    var sucursales = ViewBag.SucursalesExpendio as List<SelectListItem> ?? new List<SelectListItem>();
+    var usuarios = ViewBag.UsuariosExpendio as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Expendios generados</h1>
+            <p class="mb-0 text-muted">Consulta general de expendios registrados en la empresa.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="form-row align-items-end">
+                <div class="col-12 col-md-2 mb-2">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosFechaDesde">Fecha desde</label>
+                    <input type="datetime-local" step="1" class="form-control form-control-sm" id="filtroExpendiosFechaDesde" value="@fechaHoy" />
+                </div>
+                <div class="col-12 col-md-2 mb-2">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosFechaHasta">Fecha hasta</label>
+                    <input type="datetime-local" step="1" class="form-control form-control-sm" id="filtroExpendiosFechaHasta" value="@fechaHoy" />
+                </div>
+                <div class="col-12 col-md-2 mb-2">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosEstado">Estado</label>
+                    <select class="form-control form-control-sm" id="filtroExpendiosEstado">
+                        <option value="">Todos</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Asignado">Asignado</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 mb-2">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosSucursal">Sucursal</label>
+                    <select class="form-control form-control-sm" id="filtroExpendiosSucursal">
+                        <option value="">Todas</option>
+                        @foreach (var item in sucursales)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 mb-2">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosSector">Sector</label>
+                    <select class="form-control form-control-sm" id="filtroExpendiosSector">
+                        <option value="">Todos</option>
+                        @foreach (var item in sectores)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 mb-2">
+                    <button type="button" class="btn btn-primary btn-sm btn-block" id="btnBuscarExpendiosGenerados">
+                        <i class="fas fa-search mr-1"></i>Buscar
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosCliente">Identificacion cliente</label>
+                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosCliente" placeholder="Filtrar por cliente o identificacion" />
+                </div>
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosProducto">Producto</label>
+                    <input type="text" class="form-control form-control-sm" id="filtroExpendiosProducto" placeholder="Filtrar por producto" />
+                </div>
+                <div class="col-12 col-md-3 mb-2 mb-md-0">
+                    <label class="small font-weight-bold mb-1" for="filtroExpendiosUsuario">Usuario</label>
+                    <select class="form-control form-control-sm" id="filtroExpendiosUsuario">
+                        <option value="">Todos</option>
+                        @foreach (var item in usuarios)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <div class="small text-muted pt-4 d-none" id="msgFiltroFechaExpendiosGenerados">
+                        Cambio el rango de fechas. Presione Buscar para actualizar los datos.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3 expendios-totales-card">
+        <div class="card-body py-2">
+            <div class="d-flex flex-wrap justify-content-between">
+                <h5 class="text-muted m-0" style="font-weight: 500;">Expendios: <span id="totExpendiosCantidad">0</span></h5>
+                <h5 class="text-muted m-0" style="font-weight: 500;">Lineas: <span id="totExpendiosLineas">0</span></h5>
+                <h5 class="text-muted m-0" style="font-weight: 500;">Kgs.: <span id="totExpendiosKg">0,000</span></h5>
+                <h5 class="text-muted m-0" style="font-weight: 500;">Total: <span id="totExpendiosImporte">$ 0,00</span></h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="alert alert-info d-none" id="msgExpendiosGenerados"></div>
+
+            <div id="expendiosGeneradosCards" class="expendios-cards">
+                <div class="text-center text-muted py-4">No hay expendios para mostrar.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .expendios-cards {
+        display: flex;
+        flex-direction: column;
+        gap: .85rem;
+    }
+
+    .expendio-card {
+        border-left: 4px solid var(--ui-border-strong);
+    }
+
+    @@media (min-width: 992px) {
+        .expendios-cards {
+            align-items: flex-start;
+        }
+
+        .expendio-card {
+            width: 70%;
+        }
+    }
+
+    .expendio-card--asignado {
+        border-left-color: var(--secondary);
+    }
+
+    .expendio-card--pendiente {
+        border-left-color: var(--warning);
+    }
+
+    .expendio-card-header {
+        padding: .75rem 1rem;
+        border-bottom: 1px solid var(--ui-border);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+
+    .expendio-card-titulo {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        flex-wrap: wrap;
+    }
+
+    .expendio-card-numero {
+        font-weight: 700;
+        color: var(--ui-primary);
+        font-size: 1.05rem;
+    }
+
+    .expendio-card-fecha {
+        color: #6c757d;
+        font-size: .82rem;
+    }
+
+    .expendio-card-cliente {
+        font-weight: 600;
+        margin-top: .2rem;
+    }
+
+    .expendio-card-meta {
+        font-size: .78rem;
+        color: #6c757d;
+        margin-top: .15rem;
+    }
+
+    .expendio-card-body {
+        padding: 0 1rem;
+    }
+
+    .expendio-card-lineas {
+        font-size: .84rem;
+    }
+
+    .expendio-card-lineas th,
+    .expendio-card-lineas td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .expendio-card-lineas thead th {
+        font-size: .72rem !important;
+        color: #6c757d;
+        border-top: none;
+    }
+
+    .expendio-card-footer {
+        padding: .5rem 1rem .75rem;
+        text-align: right;
+        font-size: .82rem;
+        color: #6c757d;
+        border-top: 1px solid var(--ui-border);
+        margin-top: .25rem;
+    }
+
+    .expendio-card-footer strong {
+        color: var(--ui-primary);
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function (window, $, document) {
+            'use strict';
+
+            var config = {
+                url: '@Url.Action("ExpendiosGeneradosData", "PuntosExpendio")'
+            };
+            var cache = [];
+            var fetchState = {
+                fechaDesde: $('#filtroExpendiosFechaDesde').val() || '',
+                fechaHasta: $('#filtroExpendiosFechaHasta').val() || ''
+            };
+
+            function formatKg(value) {
+                return Number(value || 0).toLocaleString('es-AR', {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3
+                });
+            }
+
+            function formatMoney(value) {
+                return '$ ' + Number(value || 0).toLocaleString('es-AR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function normalizeText(value) {
+                return String(value == null ? '' : value).toLowerCase().replace(/\s+/g, ' ').trim();
+            }
+
+            function showMessage(type, text) {
+                var $msg = $('#msgExpendiosGenerados');
+                if (!text) {
+                    $msg.addClass('d-none')
+                        .removeClass('alert-info alert-warning alert-danger alert-success')
+                        .text('');
+                    return;
+                }
+
+                var css = {
+                    info: 'alert-info',
+                    warning: 'alert-warning',
+                    danger: 'alert-danger',
+                    success: 'alert-success'
+                }[type || 'info'] || 'alert-info';
+
+                $msg.removeClass('d-none alert-info alert-warning alert-danger alert-success')
+                    .addClass(css)
+                    .text(text);
+            }
+
+            function renderDetalle(lineas) {
+                if (!lineas || !lineas.length) {
+                    return '<div class="small text-muted py-2">Sin detalle de lineas.</div>';
+                }
+
+                var html = '<div class="table-responsive"><table class="table table-sm table-borderless mb-0 expendio-card-lineas"><thead><tr>'
+                    + '<th style="width:90px;">Codigo</th>'
+                    + '<th>Producto</th>'
+                    + '<th style="width:95px;" class="text-right">Kgs.</th>'
+                    + '<th style="width:110px;" class="text-right">Precio</th>'
+                    + '<th style="width:110px;" class="text-right">Total</th>'
+                    + '</tr></thead><tbody>';
+
+                lineas.forEach(function (linea) {
+                    html += '<tr>'
+                        + '<td>' + escapeHtml(linea.codigo || 0) + '</td>'
+                        + '<td>' + escapeHtml(linea.producto || '') + '</td>'
+                        + '<td class="text-right">' + formatKg(linea.cantKg) + '</td>'
+                        + '<td class="text-right">' + formatMoney(linea.precioKg) + '</td>'
+                        + '<td class="text-right">' + formatMoney(linea.total) + '</td>'
+                        + '</tr>';
+                });
+
+                html += '</tbody></table></div>';
+                return html;
+            }
+
+            function renderExpendioCard(item) {
+                var estadoClass = item.estado === 'Asignado' ? 'badge-secondary' : 'badge-warning';
+                var cardEstadoClass = item.estado === 'Asignado' ? 'expendio-card--asignado' : 'expendio-card--pendiente';
+                var meta = 'Sector: ' + escapeHtml(item.sector || '-')
+                    + ' &middot; Usuario: ' + escapeHtml(item.usuario || '-')
+                    + ' &middot; Sucursal: ' + escapeHtml(item.sucursal || '-');
+
+                return '<div class="card shadow-sm expendio-card ' + cardEstadoClass + '">'
+                    + '<div class="expendio-card-header">'
+                    + '<div>'
+                    + '<div class="expendio-card-titulo">'
+                    + '<span class="expendio-card-numero">#' + escapeHtml(item.idExpendio || 0) + '</span>'
+                    + '<span class="expendio-card-fecha">' + escapeHtml(item.fecha || '') + ' ' + escapeHtml(item.hora || '') + '</span>'
+                    + '<span class="badge ' + estadoClass + '">' + escapeHtml(item.estado || '') + '</span>'
+                    + '</div>'
+                    + '<div class="expendio-card-cliente">' + escapeHtml(item.identificacionExpendio || 'Consumidor final') + '</div>'
+                    + '<div class="expendio-card-meta">' + meta + '</div>'
+                    + '</div>'
+                    + '</div>'
+                    + '<div class="expendio-card-body">'
+                    + renderDetalle(item.lineas || [])
+                    + '</div>'
+                    + '<div class="expendio-card-footer">'
+                    + escapeHtml(item.cantItems || '0') + ' items &middot; '
+                    + formatKg(item.totalKg) + ' kg &middot; '
+                    + '<strong>' + formatMoney(item.totalImporte) + '</strong>'
+                    + '</div>'
+                    + '</div>';
+            }
+
+            function renderCards(items) {
+                var $cont = $('#expendiosGeneradosCards');
+                $cont.empty();
+
+                if (!items || !items.length) {
+                    $cont.append('<div class="text-center text-muted py-4">No hay expendios para mostrar.</div>');
+                    return;
+                }
+
+                items.forEach(function (item) {
+                    $cont.append(renderExpendioCard(item));
+                });
+            }
+
+            function getFilteredItems() {
+                var cliente = normalizeText($('#filtroExpendiosCliente').val());
+                var producto = normalizeText($('#filtroExpendiosProducto').val());
+                var sucursal = normalizeText($('#filtroExpendiosSucursal').val());
+                var estado = normalizeText($('#filtroExpendiosEstado').val());
+                var sector = normalizeText($('#filtroExpendiosSector').val());
+                var usuario = normalizeText($('#filtroExpendiosUsuario').val());
+
+                return cache.filter(function (item) {
+                    var productoOk = !producto || (item.lineas || []).some(function (linea) {
+                        return normalizeText(linea.producto).indexOf(producto) >= 0;
+                    });
+
+                    if (cliente && normalizeText(item.identificacionExpendio).indexOf(cliente) < 0) return false;
+                    if (sucursal && normalizeText(item.sucursal) !== sucursal) return false;
+                    if (estado && normalizeText(item.estado) !== estado) return false;
+                    if (sector && normalizeText(item.sector) !== sector) return false;
+                    if (usuario && normalizeText(item.usuario) !== usuario) return false;
+                    if (!productoOk) return false;
+                    return true;
+                });
+            }
+
+            function renderTotales(items) {
+                var totExpendios = items ? items.length : 0;
+                var totLineas = 0;
+                var totKg = 0;
+                var totImporte = 0;
+
+                (items || []).forEach(function (item) {
+                    totLineas += (item.lineas || []).length;
+                    totKg += Number(item.totalKg || 0);
+                    totImporte += Number(item.totalImporte || 0);
+                });
+
+                $('#totExpendiosCantidad').text(totExpendios.toLocaleString('es-AR'));
+                $('#totExpendiosLineas').text(totLineas.toLocaleString('es-AR'));
+                $('#totExpendiosKg').text(formatKg(totKg));
+                $('#totExpendiosImporte').text(formatMoney(totImporte));
+            }
+
+            function applyFilters() {
+                var items = getFilteredItems();
+                renderCards(items);
+                renderTotales(items);
+            }
+
+            function setDateHint(visible) {
+                $('#msgFiltroFechaExpendiosGenerados').toggleClass('d-none', !visible);
+            }
+
+            function loadData() {
+                var fechaDesde = $('#filtroExpendiosFechaDesde').val() || '';
+                var fechaHasta = $('#filtroExpendiosFechaHasta').val() || '';
+
+                if (fechaDesde && fechaHasta && fechaDesde > fechaHasta) {
+                    showMessage('warning', 'La fecha desde no puede ser mayor a la fecha hasta.');
+                    return;
+                }
+
+                fetchState.fechaDesde = fechaDesde;
+                fetchState.fechaHasta = fechaHasta;
+                setDateHint(false);
+                showMessage(null, '');
+                $('#expendiosGeneradosCards').html('<div class="text-center text-muted py-4">Consultando expendios...</div>');
+
+                $.ajax({
+                    url: config.url,
+                    type: 'GET',
+                    dataType: 'json',
+                    cache: false,
+                    data: {
+                        fechaDesde: fechaDesde,
+                        fechaHasta: fechaHasta
+                    }
+                })
+                    .done(function (resp) {
+                        if (!resp || resp.ok === false) {
+                            cache = [];
+                            applyFilters();
+                            showMessage('warning', resp && resp.mensaje ? resp.mensaje : 'No se pudieron consultar los expendios.');
+                            return;
+                        }
+
+                        cache = resp.items || [];
+                        applyFilters();
+                        if (!cache.length) {
+                            showMessage('info', 'No hay expendios para el rango de fechas seleccionado.');
+                        }
+                    })
+                    .fail(function () {
+                        cache = [];
+                        applyFilters();
+                        showMessage('danger', 'No se pudieron consultar los expendios.');
+                    });
+            }
+
+            $('#btnBuscarExpendiosGenerados').on('click', function () {
+                loadData();
+            });
+
+            $('#filtroExpendiosFechaDesde, #filtroExpendiosFechaHasta').on('change', function () {
+                var cambioPendiente = fetchState.fechaDesde !== ($('#filtroExpendiosFechaDesde').val() || '')
+                    || fetchState.fechaHasta !== ($('#filtroExpendiosFechaHasta').val() || '');
+                setDateHint(cambioPendiente);
+            });
+
+            $('#filtroExpendiosCliente, #filtroExpendiosProducto').on('input', applyFilters);
+            $('#filtroExpendiosEstado, #filtroExpendiosSucursal, #filtroExpendiosSector, #filtroExpendiosUsuario').on('change', applyFilters);
+
+            loadData();
+        })(window, window.jQuery, document);
+    </script>
+}
