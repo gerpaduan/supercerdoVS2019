@@ -24,7 +24,7 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 5 | Compras y abastecimiento | validado | 8 de 10 acciones portadas y validadas, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
 | 7 | Caja y tesorería | en progreso | Slice 1 (CajasAbiertas) portado y verificado con datos reales (solo lectura) -- ver detalle abajo |
-| 8 | Ventas y POS | no iniciado | El más grande, con AFIP/hotkeys/balanza/código de barras — último |
+| 8 | Ventas y POS | en progreso | Slice 1 (listados/detalle de solo lectura) portado y verificado con datos reales — ver detalle abajo |
 
 ## Módulo 1 — Administración de sistema
 
@@ -275,6 +275,35 @@ esta base).
    `AutorizarAccionCierre` (núcleo transaccional, dinero real + auth — dejar para el final, con plan
    escrito y confirmado antes de tocarlo, per CLAUDE.md §11.1).
 4. `FinanzasController.cs` — leer y scopear recién al llegar a este punto.
+
+## Módulo 8 — Ventas y POS (EN PROGRESO)
+
+**Slice 1 — listados y detalle de solo lectura: portado, verificado con datos reales.**
+
+Controller original: `Web/Controllers/VentasController.cs` -- 3336 líneas, 30 acciones (el más grande de toda la migración). Se leyó completo (header + las 30 acciones + todos los helpers privados relevantes) para poder scopear con criterio, no solo por tamaño de archivo. Vistas del slice: `Index.cshtml`, `Facturas.cshtml`, `Lineas.cshtml`, `DetalleVenta.cshtml`, `DetalleFactura.cshtml`, `_MisVentas.cshtml` + 5 partials (`_TablaVentas`, `_TablaFacturas`, `_FacturasRows`, `_VentasFacturasFiltrosScripts`, `_DetalleVentaCard` -- esta última nueva, ver abajo).
+
+`WebCore/Controllers/VentasController.cs` (nuevo) porta **7 acciones de solo lectura**: `Index`, `Facturas`, `BuscarFacturas` (AJAX, scroll infinito de 50 en 50, mismo patrón que `ProductosController.BuscarGlobales`), `Lineas`, `MisVentas`, `DetalleVenta`, `DetalleFactura`. Modelo nuevo `WebCore/Models/VentasVm.cs` (`FacturasIndexVm`, `FacturaListadoItemVm`, `FacturaDetalleVm`, `TipoComprobanteFacturas`, `VentaLineasIndexVm`, `VentaLineasGrupoVm`, `VentaLineaDetalleVm` -- reusa `CabeceraDetalleCampoVm` ya existente).
+
+**Las 23 acciones restantes del controller original NO se portan en este slice** (documentado en la cabecera de `VentasController.cs`), agrupadas por motivo:
+1. **AFIP** (bloqueante ya conocido desde el plan original, pendiente el mini-spike de AFIP): `ProbarLoginAfip`, `GenerarFactura`, `NuevaFacturaSinVenta`, `CrearVentaManualParaFactura`, `LimpiarLineasVentaManual`, `CerrarVentaSinFacturar`, `GenerarNotaCredito`.
+2. **POS transaccional** (venta real con balanza/código de barras/caja -- acoplado al estado de "caja abierta" de Módulo 7 y de mayor riesgo; requiere su propio plan y juez de paridad end-to-end antes de tocarlo, CLAUDE.md §11.1): `POS`, `AutorizarOperadorPOS`, `CerrarOperadorPOS`, `AutorizarModuloVentas`, `AutorizarOperadorModuloVentas`, `BuscarExpendiosPOS`, `ObtenerExpendioPOS`, `BuscarProducto`, `AgregarProducto`, `FinalizarVenta`, `ModificarVenta`.
+3. **Impresión/email/PDF** (mismo bloqueante ya documentado en `FinanzasController` slice final: iTextSharp sin decisión de licencia + envío real de email, CLAUDE.md §1.2/§4): `ImprimirTicket`, `ImprimirTicketPayload`, `ImprimirIngresoBilletesPayload`, `DescargarAgenteImpresion`, `ObtenerDatosEmailComprobante`, `EnviarComprobanteEmail`, `Imprimir`.
+
+**Consecuencia visible en las vistas**: los botones "Modificar venta"/"Cambiar Forma de Pago" (apuntan a `POS`, no portado), "Factura"/"Imprimir"/"Enviar por email" (AFIP e impresión/email, no portados) de `DetalleVenta.cshtml` original se **excluyeron** de la vista portada -- mismo criterio ya usado en `FinanzasController` (excluir en cascada en vez de dejar un botón wireado a una acción inexistente). También se excluyó el botón "Nueva factura" de `Facturas.cshtml` (abre `VentasFacturaModal`, depende de AFIP).
+
+**Bypass de permisos, mismo criterio ya establecido en todos los módulos anteriores**: el usuario stub (`Admin=true`) hace que `PermisosHelper.TienePermiso*`/`VistaAccesoDenegado`/`ConfigurarAdvertenciaFechaEnVivo`/`AjustarFechaSiNoTienePermiso` del original resuelvan siempre "sin restricción" -- se omiten directamente. Por la misma razón se omitieron los helpers que solo alimentaban esos permisos y los botones ya excluidos: `PuedeModificarUltimaVenta`, `PuedeCambiarFormaPago`, `TienePermisoAdministrativoSobreVenta` y sus "Motivo". `PerformanceInstrumentation.LogServerEvent` (llamado en el `DetalleVenta` original) tampoco se portó -- no existe en `Utilidades.Core`, y ningún otro controller de `WebCore` lo usa.
+
+**`_DetalleVentaCard.cshtml` (partial nueva)**: el original usa `@Html.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, modal = true, ... })` dentro de `DetalleFactura.cshtml` para embeber el detalle de la venta asociada -- `Html.Action` (child actions) no existe en ASP.NET Core. Se extrajo el card de venta (header + cliente/fecha/forma de pago + líneas + total, sin los botones ya excluidos) a un partial compartido, consumido tanto por `DetalleVenta.cshtml` (pantalla completa) como por `DetalleFactura.cshtml` (embebido, seteando el mismo `ViewBag` que pondría el controller). Diferencia menor de comportamiento, documentada aquí: el card embebido en `DetalleFactura` no recalcula "factura/NC asociada" para la venta (queda `false` fijo, ya que `DetalleFactura` muestra esa información en su propio card exterior) -- el original sí la recalculaba y la mostraba duplicada; se consideró ruido visual, no una regresión funcional.
+
+**Patrones de conversión aplicados** (ya establecidos en módulos anteriores, reaplicados sin volver a decidir): `Request["x"]` → `Context.Request.Query["x"]`; `<option ... @(cond ? "selected" : "")>` (RZ1031) → `<option ... selected="@(cond ? "selected" : null)">`; `HttpUtility.UrlEncode(Request.RawUrl)` → `Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString)`; `Json.Encode(x)` → `System.Text.Json.JsonSerializer.Serialize(x)`; el JSON con HTML pre-renderizado de `BuscarFacturas` usa el mismo patrón `RenderPartialViewToStringAsync` (con `IRazorViewEngine`/`ITempDataProvider` inyectados) ya usado en `ProductosController`.
+
+**Bug real encontrado y corregido durante el smoke test** (no un gap, un fix): el primer intento de `RenderPartialViewToStringAsync` en `BuscarFacturas` pasó la vista como ruta absoluta (`"~/Views/Ventas/_FacturasRows.cshtml"`) a `IRazorViewEngine.FindView`, que espera un nombre relativo al controller actual (no una ruta rooteada) -- daba `InvalidOperationException: No se encontró la vista parcial`. Corregido pasando solo `"_FacturasRows"`, igual que el patrón ya usado en `ProductosController`.
+
+**Assets estáticos**: no se copió ningún archivo nuevo -- `lineas-agrupadas.js`, `Views/Elaborados/_Styles.cshtml` y `Views/Shared/_LineasAgrupadasStyles.cshtml` ya existían en `WebCore` desde los módulos de Stock/Compras y se reusaron tal cual.
+
+**Verificado con datos reales**: `Index` (rango agosto-septiembre 2026, 36 ventas reales listadas y agrupadas por fecha), `Lineas` (35 registros con líneas de producto reales), `Facturas` + `BuscarFacturas` (2 facturas reales, $145 total, HTML de fila idéntico al patrón de `Web` clásico), `DetalleVenta` (id=1734, líneas y total reales), `DetalleFactura` (id=109, card de factura + card de venta embebido, ambos con datos reales), `MisVentas` (sin caja abierta para el usuario de prueba en este momento -- se verificó la rama de "no hay caja abierta", el camino con caja abierta ya se ejercitó indirectamente en Módulo 7). Todo el slice es de solo lectura, así que no aplica prueba de escritura en vivo (no hay POST en este slice).
+
+**No verificado en este turno**: `BuscarFacturas` con filtros de cliente/vendedor/forma de pago/tipo de comprobante poblados (solo se probó sin filtros); el flujo completo de scroll infinito con más de 50 facturas (la base de prueba solo tiene 109 facturas en total, insuficiente para forzar una segunda página con los filtros usados).
 
 ## Juez de paridad — validado con control negativo
 

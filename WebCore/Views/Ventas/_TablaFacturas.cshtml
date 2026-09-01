@@ -1,0 +1,18 @@
+@model List<FacturaListadoItemVm>
+
+@* Envoltorio: el <ul> fijo + mensaje de "sin resultados" + las filas en si (extraidas a
+   _FacturasRows.cshtml, que tambien se usa para el HTML que appendea el scroll infinito -- ver
+   VentasController.BuscarFacturas y _VentasFacturasFiltrosScripts.cshtml). *@
+<ul id="listaFacturas" class="list-group list-group-flush">
+    @if (Model == null || Model.Count == 0)
+    {
+        <li class="list-group-item text-center text-muted py-4" id="listaFacturasVacia">
+            <i class="fas fa-search fa-2x mb-2"></i><br />
+            No hay coincidencias
+        </li>
+    }
+    else
+    {
+        @Html.Partial("~/Views/Ventas/_FacturasRows.cshtml", Model)
+    }
+</ul>

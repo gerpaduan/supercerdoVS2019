@@ -1,0 +1,960 @@
+@model string
+
+@{
+    var modo = (Model ?? "ventas").ToLowerInvariant();
+    var tituloFormaPagoVacio = "Todas las formas de pago";
+    var tituloTipoVacio = "Todos los comprobantes";
+    var textoSingularTipo = "Tipo comprobante";
+    var esVentas = modo == "ventas";
+}
+
+<script>
+        (function () {
+            const form = document.getElementById('@(esVentas ? "formFiltroFechas" : "formFiltroFacturas")');
+            const storageKey = '@(esVentas ? "ventas_index_filters_v1" : "ventas_facturas_filters_v1")';
+
+            if (!form) {
+                return;
+            }
+
+            const fechaDesde = document.getElementById('fechaDesde');
+            const fechaHasta = document.getElementById('fechaHasta');
+            const fechaDesdeDateMobile = document.getElementById('fechaDesdeDateMobile');
+            const fechaDesdeHourMobile = document.getElementById('fechaDesdeHourMobile');
+            const fechaDesdeMinuteMobile = document.getElementById('fechaDesdeMinuteMobile');
+            const fechaHastaDateMobile = document.getElementById('fechaHastaDateMobile');
+            const fechaHastaHourMobile = document.getElementById('fechaHastaHourMobile');
+            const fechaHastaMinuteMobile = document.getElementById('fechaHastaMinuteMobile');
+            const fechaDesdeResumen = document.getElementById('fechaDesdeResumen');
+            const fechaHastaResumen = document.getElementById('fechaHastaResumen');
+            const btnFiltrar = document.getElementById('btnFiltrarFechas');
+            const idSucursal = document.getElementById('idSucursal');
+            const alertaPendiente = document.getElementById('@(esVentas ? "alertaFiltrosPendientesVentas" : "alertaFiltrosPendientesFacturas")');
+            const estadoBusqueda = document.getElementById('@(esVentas ? "estadoBusquedaVentas" : "estadoBusquedaFacturas")');
+            const esFacturas = @(esVentas ? "false" : "true");
+            const btnFiltrarTexto = btnFiltrar ? btnFiltrar.querySelector('.btn-buscar-texto') : null;
+            const nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+
+            let fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
+            let fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
+                    window.ModalRequestLoading.trackNavigation(message || 'Cargando solicitud...');
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function getServerState() {
+                return {
+                    fechaDesde: fechaDesde ? fechaDesde.value : "",
+                    fechaHasta: fechaHasta ? fechaHasta.value : "",
+                    idSucursal: idSucursal ? idSucursal.value : ""
+                };
+            }
+
+            function saveServerState() {
+                if (!window.sessionStorage) return;
+                const current = getStoredState();
+                current.server = getServerState();
+                window.sessionStorage.setItem(storageKey, JSON.stringify(current));
+            }
+
+            function getClientState() {
+                return {
+                    cliente: buscadorCliente ? buscadorCliente.value : "",
+                    vendedor: buscadorVendedor ? buscadorVendedor.value : "",
+                    formasPago: getSeleccionados(filtroFormaPagoChecks),
+                    tiposComprobante: getSeleccionados(filtroTipoComprobanteChecks)
+                };
+            }
+
+            function saveClientState() {
+                if (!window.sessionStorage) return;
+                const current = getStoredState();
+                current.client = getClientState();
+                window.sessionStorage.setItem(storageKey, JSON.stringify(current));
+            }
+
+            function getStoredState() {
+                if (!window.sessionStorage) return {};
+                try {
+                    return JSON.parse(window.sessionStorage.getItem(storageKey) || "{}") || {};
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                    return {};
+                }
+            }
+
+            function restoreServerStateIfNeeded() {
+                if (!window.sessionStorage || window.location.search) return false;
+
+                const state = getStoredState();
+                if (!state.server) return false;
+
+                const params = new URLSearchParams();
+                if (state.server.fechaDesde) params.set("fechaDesde", state.server.fechaDesde);
+                if (state.server.fechaHasta) params.set("fechaHasta", state.server.fechaHasta);
+                if (state.server.idSucursal) params.set("idSucursal", state.server.idSucursal);
+
+                const query = params.toString();
+                if (query) {
+                    navegarConLoader(form.action + "?" + query, true);
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (restoreServerStateIfNeeded()) {
+                return;
+            }
+
+            saveServerState();
+
+            function fechasValidas() {
+                if (!fechaDesde || !fechaHasta || !fechaDesde.value || !fechaHasta.value) return false;
+                return new Date(fechaDesde.value) <= new Date(fechaHasta.value);
+            }
+
+            function hayFechasPendientes() {
+                return (fechaDesde ? fechaDesde.value : "") !== fechaDesdeAplicada
+                    || (fechaHasta ? fechaHasta.value : "") !== fechaHastaAplicada;
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscando(mensaje) {
+                if (btnFiltrar) btnFiltrar.disabled = true;
+                if (btnFiltrarTexto) btnFiltrarTexto.textContent = 'Cargando...';
+                if (estadoBusqueda) estadoBusqueda.textContent = mensaje || 'Actualizando búsqueda...';
+            }
+
+            function verificarCambios() {
+                const valido = fechasValidas();
+
+                if (fechaDesde) {
+                    fechaDesde.classList.toggle('is-invalid', !valido);
+                }
+
+                if (fechaHasta) {
+                    fechaHasta.classList.toggle('is-invalid', !valido);
+                }
+            }
+
+            function splitDateTimeValue(valor) {
+                if (!valor || valor.indexOf('T') < 0) {
+                    return { fecha: "", hora: "00", minuto: "00" };
+                }
+
+                const partes = valor.split('T');
+                const horaMin = (partes[1] || "00:00").split(':');
+
+                return {
+                    fecha: partes[0] || "",
+                    hora: horaMin[0] || "00",
+                    minuto: horaMin[1] || "00"
+                };
+            }
+
+            function buildDateTimeValue(fecha, hora, minuto) {
+                if (!fecha) return "";
+                return fecha + "T" + (hora || "00") + ":" + (minuto || "00");
+            }
+
+            function syncMobileFromDateTime(input, dateInput, hourInput, minuteInput) {
+                if (!input || !dateInput || !hourInput || !minuteInput) return;
+
+                const partes = splitDateTimeValue(input.value);
+                dateInput.value = partes.fecha;
+                hourInput.value = partes.hora;
+                minuteInput.value = partes.minuto;
+            }
+
+            function syncDateTimeFromMobile(input, dateInput, hourInput, minuteInput) {
+                if (!input || !dateInput || !hourInput || !minuteInput) return;
+                input.value = buildDateTimeValue(dateInput.value, hourInput.value, minuteInput.value);
+            }
+
+            function onFechaMobileChanged(input, dateInput, hourInput, minuteInput, resumen) {
+                syncDateTimeFromMobile(input, dateInput, hourInput, minuteInput);
+                verificarCambios();
+                saveServerState();
+                actualizarAvisoPendiente();
+                actualizarResumenFecha(input, resumen);
+            }
+
+            function formatFechaResumen(valor) {
+                if (!valor) return "";
+
+                const fecha = new Date(valor);
+                if (isNaN(fecha.getTime())) return "";
+
+                const dias = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+                const pad = function (numero) { return numero.toString().padStart(2, '0'); };
+
+                return dias[fecha.getDay()]
+                    + " "
+                    + pad(fecha.getDate()) + "/" + pad(fecha.getMonth() + 1) + "/" + fecha.getFullYear()
+                    + " "
+                    + pad(fecha.getHours()) + ":" + pad(fecha.getMinutes());
+            }
+
+            function actualizarResumenFecha(input, resumen) {
+                if (!resumen) return;
+                resumen.textContent = formatFechaResumen(input ? input.value : "");
+            }
+
+            if (fechaDesde) {
+                fechaDesde.addEventListener('change', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); actualizarResumenFecha(fechaDesde, fechaDesdeResumen); });
+                fechaDesde.addEventListener('input', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); actualizarResumenFecha(fechaDesde, fechaDesdeResumen); });
+            }
+
+            if (fechaHasta) {
+                fechaHasta.addEventListener('change', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); actualizarResumenFecha(fechaHasta, fechaHastaResumen); });
+                fechaHasta.addEventListener('input', function () { verificarCambios(); saveServerState(); actualizarAvisoPendiente(); actualizarResumenFecha(fechaHasta, fechaHastaResumen); });
+            }
+
+            [fechaDesdeDateMobile, fechaDesdeHourMobile, fechaDesdeMinuteMobile].forEach(function (control) {
+                if (!control) return;
+                control.addEventListener('change', function () {
+                    onFechaMobileChanged(fechaDesde, fechaDesdeDateMobile, fechaDesdeHourMobile, fechaDesdeMinuteMobile, fechaDesdeResumen);
+                });
+            });
+
+            [fechaHastaDateMobile, fechaHastaHourMobile, fechaHastaMinuteMobile].forEach(function (control) {
+                if (!control) return;
+                control.addEventListener('change', function () {
+                    onFechaMobileChanged(fechaHasta, fechaHastaDateMobile, fechaHastaHourMobile, fechaHastaMinuteMobile, fechaHastaResumen);
+                });
+            });
+
+            if (idSucursal) {
+                idSucursal.addEventListener('change', function () {
+                    saveServerState();
+                    setBuscando('Actualizando búsqueda en vivo...');
+
+                    if (hayFechasPendientes()) {
+                        if (fechaDesde) fechaDesde.value = fechaDesdeAplicada;
+                        if (fechaHasta) fechaHasta.value = fechaHastaAplicada;
+                        saveServerState();
+                        verificarCambios();
+                        actualizarAvisoPendiente();
+                    }
+
+                    submitConLoader();
+                });
+            }
+
+            form.addEventListener('submit', function (e) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    form.dataset.loadingSubmitPending = '';
+                    return;
+                }
+
+                if (!fechasValidas()) {
+                    e.preventDefault();
+                    return;
+                }
+
+                e.preventDefault();
+                fechaDesdeAplicada = fechaDesde ? fechaDesde.value : "";
+                fechaHastaAplicada = fechaHasta ? fechaHasta.value : "";
+                saveServerState();
+                actualizarAvisoPendiente();
+                setBuscando();
+                form.dataset.loadingSubmitPending = 'true';
+                submitConLoader();
+            });
+
+
+        const buscadorCliente = document.getElementById("buscadorCliente");
+        const buscadorVendedor = document.getElementById("buscadorVendedor");
+        const items = Array.from(document.querySelectorAll(".venta-item"));
+
+        const filtroFormaPagoChecks = Array.from(document.querySelectorAll(".chk-forma-pago"));
+        const filtroFormaPagoTexto = document.getElementById("filtroFormaPagoTexto");
+        const filtroFormaPagoBadge = document.getElementById("filtroFormaPagoBadge");
+        const btnLimpiarFormaPago = document.getElementById("btnLimpiarFormaPago");
+
+        const filtroTipoComprobanteChecks = Array.from(document.querySelectorAll(".chk-tipo-comprobante"));
+        const filtroTipoComprobanteTexto = document.getElementById("filtroTipoComprobanteTexto");
+        const filtroTipoComprobanteBadge = document.getElementById("filtroTipoComprobanteBadge");
+        const btnLimpiarTipoComprobante = document.getElementById("btnLimpiarTipoComprobante");
+
+        // ==== Carga progresiva de Facturas (scroll infinito de 50 en 50, ver docs/DECISIONS.md) ====
+        // Solo aplica en modo "facturas". Ventas/Index (modo "ventas") sigue con aplicarFiltros()
+        // (DOM, mas abajo) tal cual estaba -- no se toca su comportamiento.
+        const buscarFacturasUrl = '@Url.Action("BuscarFacturas", "Ventas")';
+        const hiddenFormasPago = document.getElementById("hiddenFormasPago");
+        const hiddenTiposComprobante = document.getElementById("hiddenTiposComprobante");
+        const listaFacturas = document.getElementById("listaFacturas");
+        const facturasCard = document.getElementById("facturasCardLista");
+        const facturasSpinner = document.getElementById("facturasCargandoMas");
+
+        let facturasPaginaActual = parseInt((facturasCard && facturasCard.dataset.pagina) || "1", 10);
+        let facturasHayMas = !!(facturasCard && facturasCard.dataset.hayMas === "true");
+        let facturasCargando = false;
+        let facturasSolicitudActual = 0; // descarta respuestas fuera de orden (mismo criterio que Catalogo Global)
+        let facturasDebounceTimer = null;
+
+        function csvSeleccionados(checks) {
+            return checks.filter(function (chk) { return chk.checked; }).map(function (chk) { return chk.value; }).join(",");
+        }
+
+        function eliminarEncabezadoFechaDuplicado(fragment) {
+            const primerEncabezadoNuevo = fragment.querySelector(".fecha-grupo");
+            if (!primerEncabezadoNuevo || !listaFacturas) return;
+
+            const encabezadosActuales = listaFacturas.querySelectorAll(".fecha-grupo");
+            if (encabezadosActuales.length === 0) return;
+
+            const ultimoActual = encabezadosActuales[encabezadosActuales.length - 1];
+            if (ultimoActual.dataset.fechaGrupo === primerEncabezadoNuevo.dataset.fechaGrupo) {
+                primerEncabezadoNuevo.remove();
+            }
+        }
+
+        function buscarFacturasServidor(reset) {
+            if (!listaFacturas) return;
+            // Un reset (cambio de filtro) siempre tiene prioridad y puede pisar un scroll-load en
+            // vuelo -- el chequeo de "solicitud" mas abajo descarta la respuesta vieja cuando
+            // llegue. Un scroll-load, en cambio, no debe pisar nada que ya este en curso.
+            if (!reset && (facturasCargando || !facturasHayMas)) return;
+
+            facturasCargando = true;
+            const solicitud = ++facturasSolicitudActual;
+            const pagina = reset ? 1 : facturasPaginaActual + 1;
+
+            if (!reset && facturasSpinner) facturasSpinner.classList.remove("d-none");
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", fechaDesde ? fechaDesde.value : "");
+            params.set("fechaHasta", fechaHasta ? fechaHasta.value : "");
+            params.set("idSucursal", (idSucursal && idSucursal.value) || "-1");
+            params.set("cliente", buscadorCliente ? buscadorCliente.value : "");
+            params.set("vendedor", buscadorVendedor ? buscadorVendedor.value : "");
+            params.set("formasPago", csvSeleccionados(filtroFormaPagoChecks));
+            params.set("tiposComprobante", csvSeleccionados(filtroTipoComprobanteChecks));
+            params.set("pagina", pagina.toString());
+
+            fetch(buscarFacturasUrl + "?" + params.toString(), { silentLoading: true })
+                .then(function (r) { return r.json(); })
+                .then(function (resp) {
+                    if (solicitud !== facturasSolicitudActual || !resp || !resp.ok) return;
+
+                    if (reset) {
+                        listaFacturas.innerHTML = "";
+                        if (resp.html && resp.html.trim()) {
+                            const plantilla = document.createElement("template");
+                            plantilla.innerHTML = resp.html;
+                            listaFacturas.appendChild(plantilla.content);
+                        } else {
+                            listaFacturas.innerHTML = '<li class="list-group-item text-center text-muted py-4">'
+                                + '<i class="fas fa-search fa-2x mb-2"></i><br />No hay coincidencias</li>';
+                        }
+                    } else if (resp.html) {
+                        const plantilla = document.createElement("template");
+                        plantilla.innerHTML = resp.html;
+                        eliminarEncabezadoFechaDuplicado(plantilla.content);
+                        listaFacturas.appendChild(plantilla.content);
+                    }
+
+                    facturasPaginaActual = pagina;
+                    facturasHayMas = !!resp.hayMas;
+
+                    if (reset && typeof resp.cantidad === "number") {
+                        const cantNode = document.getElementById("cantFiltrado");
+                        if (cantNode) cantNode.textContent = "Cant.: " + resp.cantidad;
+                    }
+                    if (reset && typeof resp.totalFacturado === "number") {
+                        const totalNode = document.getElementById("totalFiltrado");
+                        if (totalNode) totalNode.textContent = "Total: " + resp.totalFacturado.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+                    }
+                })
+                .catch(function () { /* silencioso: no bloquear la pantalla por un error de red puntual */ })
+                .finally(function () {
+                    if (solicitud === facturasSolicitudActual) {
+                        facturasCargando = false;
+                        if (facturasSpinner) facturasSpinner.classList.add("d-none");
+                    }
+                });
+        }
+
+        function dispararBusquedaFacturasDebounced() {
+            if (facturasDebounceTimer) window.clearTimeout(facturasDebounceTimer);
+            facturasDebounceTimer = window.setTimeout(function () { buscarFacturasServidor(true); }, 350);
+        }
+
+        if (esFacturas) {
+            window.addEventListener("scroll", function () {
+                if (!facturasHayMas || facturasCargando) return;
+                const restante = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+                if (restante > 250) return;
+                buscarFacturasServidor(false);
+            });
+        }
+        // ==== Fin carga progresiva de Facturas ====
+
+        function getSeleccionados(checks) {
+            return checks.filter(chk => chk.checked).map(chk => (chk.value || "").toLowerCase());
+        }
+
+        function actualizarResumenDropdown(checks, texto, badge, tituloVacio, tituloUno, tituloVarios) {
+            if (!texto || !badge) return;
+
+            const seleccionadas = checks.filter(chk => chk.checked);
+            const cantidad = seleccionadas.length;
+
+            if (cantidad === 0) {
+                texto.textContent = tituloVacio;
+                badge.classList.add("d-none");
+                return;
+            }
+
+            if (cantidad === 1) {
+                texto.textContent = seleccionadas[0].dataset.label || seleccionadas[0].value || tituloUno;
+                badge.classList.add("d-none");
+                return;
+            }
+
+            texto.textContent = tituloVarios;
+            badge.textContent = cantidad.toString();
+            badge.classList.remove("d-none");
+        }
+
+        function aplicarFiltros() {
+            const textoCliente = (buscadorCliente?.value || "").toLowerCase();
+            const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
+            const formasPagoSeleccionadas = getSeleccionados(filtroFormaPagoChecks);
+            const tiposSeleccionados = getSeleccionados(filtroTipoComprobanteChecks);
+
+            let total = 0;
+            let cant = 0;
+
+            items.forEach(function (item) {
+                const cliente = (item.dataset.cliente || "").toLowerCase();
+                const identificacion = (item.dataset.identificacion || "").toLowerCase();
+                const vendedor = (item.dataset.vendedor || "").toLowerCase();
+                const formaPago = (item.dataset.formaPago || "").toLowerCase();
+                const tipoComprobante = (item.dataset.tipoComprobante || "").toLowerCase();
+
+                const coincideCliente = !textoCliente || cliente.includes(textoCliente) || identificacion.includes(textoCliente);
+                const coincideVendedor = !textoVendedor || vendedor.includes(textoVendedor);
+                const coincideFormaPago = formasPagoSeleccionadas.length === 0 || formasPagoSeleccionadas.includes(formaPago);
+                const coincideTipo = tiposSeleccionados.length === 0 || tiposSeleccionados.includes(tipoComprobante);
+                const mostrar = coincideCliente && coincideVendedor && coincideFormaPago && coincideTipo;
+
+                item.style.display = mostrar ? "" : "none";
+
+                if (mostrar) {
+                    total += parseFloat(item.querySelector(".importe")?.dataset.valor || 0);
+                    cant++;
+                }
+            });
+
+            const totalNode = document.getElementById("totalFiltrado");
+            const cantNode = document.getElementById("cantFiltrado");
+
+            if (totalNode) {
+                totalNode.textContent = "Total: " + total.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+            }
+
+            if (cantNode) {
+                cantNode.textContent = "Cant.: " + cant.toString();
+            }
+
+            document.querySelectorAll(".fecha-grupo").forEach(function (grupo) {
+                // La lista es plana (.fecha-grupo y .venta-item son hermanos directos de <ul>,
+                // sin anidar por fecha -- ver _TablaVentas.cshtml) -- por eso hay que recorrer
+                // los hermanos siguientes hasta el proximo .fecha-grupo (o el final), no todos
+                // los hijos de la lista, o un item visible de OTRA fecha hacia que este
+                // encabezado quedara visible aunque su propio grupo este vacio tras filtrar.
+                let tieneItems = false;
+                let hermano = grupo.nextElementSibling;
+
+                while (hermano && !hermano.classList.contains("fecha-grupo")) {
+                    if (hermano.classList.contains("venta-item") && hermano.style.display !== "none") {
+                        tieneItems = true;
+                        break;
+                    }
+                    hermano = hermano.nextElementSibling;
+                }
+
+                grupo.style.display = tieneItems ? "" : "none";
+            });
+        }
+
+        function restoreClientState() {
+            const state = getStoredState();
+            if (!state.client) return;
+
+            if (buscadorCliente) buscadorCliente.value = state.client.cliente || "";
+            if (buscadorVendedor) buscadorVendedor.value = state.client.vendedor || "";
+
+            filtroFormaPagoChecks.forEach(function (chk) {
+                chk.checked = (state.client.formasPago || []).indexOf((chk.value || "").toLowerCase()) >= 0;
+            });
+
+            filtroTipoComprobanteChecks.forEach(function (chk) {
+                chk.checked = (state.client.tiposComprobante || []).indexOf((chk.value || "").toLowerCase()) >= 0;
+            });
+
+            if (esFacturas) {
+                if (hiddenFormasPago) hiddenFormasPago.value = csvSeleccionados(filtroFormaPagoChecks);
+                if (hiddenTiposComprobante) hiddenTiposComprobante.value = csvSeleccionados(filtroTipoComprobanteChecks);
+            }
+        }
+
+        // El listado de Facturas filtra en el servidor (busqueda con debounce en Cliente/Vendedor,
+        // busqueda inmediata al tildar Forma de pago/Tipo de comprobante) en vez de esconder/mostrar
+        // <li> ya renderizados -- necesario para que el filtro combine bien con la paginacion (si no,
+        // al scrollear solo filtraria dentro de lo ya cargado). Ventas/Index (esFacturas=false) sigue
+        // con aplicarFiltros() (DOM) tal cual estaba.
+        buscadorCliente?.addEventListener("input", function () {
+            saveClientState();
+            if (esFacturas) { dispararBusquedaFacturasDebounced(); } else { aplicarFiltros(); }
+        });
+        buscadorVendedor?.addEventListener("input", function () {
+            saveClientState();
+            if (esFacturas) { dispararBusquedaFacturasDebounced(); } else { aplicarFiltros(); }
+        });
+
+        filtroFormaPagoChecks.forEach(function (chk) {
+            chk.addEventListener("change", function () {
+                actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+                saveClientState();
+                if (esFacturas) {
+                    if (hiddenFormasPago) hiddenFormasPago.value = csvSeleccionados(filtroFormaPagoChecks);
+                    buscarFacturasServidor(true);
+                } else {
+                    aplicarFiltros();
+                }
+            });
+        });
+
+        filtroTipoComprobanteChecks.forEach(function (chk) {
+            chk.addEventListener("change", function () {
+                actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+                saveClientState();
+                if (esFacturas) {
+                    if (hiddenTiposComprobante) hiddenTiposComprobante.value = csvSeleccionados(filtroTipoComprobanteChecks);
+                    buscarFacturasServidor(true);
+                } else {
+                    aplicarFiltros();
+                }
+            });
+        });
+
+        btnLimpiarFormaPago?.addEventListener("click", function (e) {
+            e.preventDefault();
+            filtroFormaPagoChecks.forEach(function (chk) { chk.checked = false; });
+            actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+            saveClientState();
+            if (esFacturas) {
+                if (hiddenFormasPago) hiddenFormasPago.value = "";
+                buscarFacturasServidor(true);
+            } else {
+                aplicarFiltros();
+            }
+        });
+
+        btnLimpiarTipoComprobante?.addEventListener("click", function (e) {
+            e.preventDefault();
+            filtroTipoComprobanteChecks.forEach(function (chk) { chk.checked = false; });
+            actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+            saveClientState();
+            if (esFacturas) {
+                if (hiddenTiposComprobante) hiddenTiposComprobante.value = "";
+                buscarFacturasServidor(true);
+            } else {
+                aplicarFiltros();
+            }
+        });
+
+        document.querySelectorAll(".filtro-forma-pago-menu").forEach(function (menu) {
+            menu.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+        });
+
+        restoreClientState();
+        syncMobileFromDateTime(fechaDesde, fechaDesdeDateMobile, fechaDesdeHourMobile, fechaDesdeMinuteMobile);
+        syncMobileFromDateTime(fechaHasta, fechaHastaDateMobile, fechaHastaHourMobile, fechaHastaMinuteMobile);
+        verificarCambios();
+        actualizarAvisoPendiente();
+        actualizarResumenFecha(fechaDesde, fechaDesdeResumen);
+        actualizarResumenFecha(fechaHasta, fechaHastaResumen);
+        actualizarResumenDropdown(filtroFormaPagoChecks, filtroFormaPagoTexto, filtroFormaPagoBadge, "@tituloFormaPagoVacio", "Forma de pago", "Forma de pago");
+        actualizarResumenDropdown(filtroTipoComprobanteChecks, filtroTipoComprobanteTexto, filtroTipoComprobanteBadge, "@tituloTipoVacio", "@textoSingularTipo", "@textoSingularTipo");
+        if (esFacturas) {
+            // El servidor ya renderizo la pagina 1 con el filtro de la URL -- esto solo vuelve a
+            // buscar si sessionStorage tenia guardado un filtro de cliente/vendedor/forma de
+            // pago/tipo de comprobante que la URL no traia (mismo criterio que restoreServerStateIfNeeded
+            // para fecha/sucursal, pero sin redirigir: acá alcanza con un fetch silencioso).
+            buscarFacturasServidor(true);
+        } else {
+            aplicarFiltros();
+        }
+        saveClientState();
+
+        document.getElementById("btnVerLineasVentas")?.addEventListener("click", function () {
+            saveServerState();
+            saveClientState();
+            const baseUrl = this.getAttribute("data-base-url") || "";
+            if (!baseUrl) return;
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", document.getElementById("fechaDesde")?.value || "");
+            params.set("fechaHasta", document.getElementById("fechaHasta")?.value || "");
+            params.set("idSucursal", document.getElementById("idSucursal")?.value || "-1");
+            params.set("cliente", buscadorCliente?.value || "");
+            params.set("vendedor", buscadorVendedor?.value || "");
+            params.set("formasPago", getSeleccionados(filtroFormaPagoChecks).join(","));
+
+            navegarConLoader(baseUrl + "?" + params.toString(), false);
+        });
+
+        document.getElementById("btnVerFacturasVentas")?.addEventListener("click", function () {
+            saveServerState();
+            saveClientState();
+            const baseUrl = this.getAttribute("data-base-url") || "";
+            if (!baseUrl) return;
+
+            const params = new URLSearchParams();
+            params.set("fechaDesde", document.getElementById("fechaDesde")?.value || "");
+            params.set("fechaHasta", document.getElementById("fechaHasta")?.value || "");
+            params.set("idSucursal", document.getElementById("idSucursal")?.value || "-1");
+
+            navegarConLoader(baseUrl + "?" + params.toString(), false);
+        });
+        })();
+</script>
+
+<style>
+    .filtros-ventas-card {
+        font-size: .9rem;
+    }
+
+    .venta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: .55rem .78rem;
+    }
+
+    .venta-icono {
+        flex: 0 0 auto;
+        margin-right: 10px;
+    }
+
+    .venta-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .venta-tipo-persona {
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    @@media (max-width: 576px) {
+        .venta-tipo-persona {
+            max-width: 17ch;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+    }
+
+    .venta-id {
+        font-size: .75rem;
+        color: #6c757d;
+    }
+
+    .venta-obs {
+        font-size: .75rem;
+        color: #4f5d75;
+        margin-top: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 30rem;
+    }
+
+    .venta-total {
+        text-align: right;
+        flex: 0 0 auto;
+    }
+
+    .venta-total .importe {
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .venta-item:hover {
+        background-color: #f8f9fc;
+    }
+
+    .filtros-ventas-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .filtros-ventas-card .card-body,
+    .filtros-ventas-card {
+        padding: .72rem .85rem !important;
+    }
+
+    .filtros-ventas-stack {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .filtros-fila {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .fecha-resumen-dia {
+        display: block;
+        margin-top: .22rem;
+        font-size: .74rem;
+        color: #5f6f7f;
+    }
+
+    .fecha-mobile-picker {
+        display: none;
+        margin-top: .35rem;
+        padding: .55rem;
+        border: 1px solid #e2e8f0;
+        border-radius: .7rem;
+        background: #f8fafc;
+    }
+
+    html.dark-mode body.app-shell .fecha-mobile-picker,
+    body.app-shell.dark-mode .fecha-mobile-picker {
+        background: var(--ui-surface-alt);
+        border-color: var(--ui-border);
+    }
+
+    .fecha-mobile-time-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: .45rem;
+        align-items: center;
+        margin-top: .45rem;
+    }
+
+    .fecha-mobile-time-sep {
+        font-weight: 700;
+        color: #51606f;
+        text-align: center;
+    }
+
+    .filtros-ventas-card .form-control {
+        min-height: 2.35rem;
+        border-radius: .55rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .filtros-ventas-card .btn {
+        min-height: 2.35rem;
+        border-radius: .55rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .filtros-ventas-card .small,
+    .filtros-ventas-card .text-muted,
+    .filtros-ventas-card #estadoBusquedaVentas,
+    .filtros-ventas-card #estadoBusquedaFacturas {
+        font-size: .8rem !important;
+    }
+
+    .filtro-forma-pago-btn {
+        border: 1px solid #ced4da;
+        background: #fff;
+        color: #495057;
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .filtro-forma-pago-btn:focus,
+    .filtro-forma-pago-btn:hover {
+        background: #fff;
+        color: #495057;
+    }
+
+    .filtro-forma-pago-menu {
+        max-height: 320px;
+        overflow-y: auto;
+        border-radius: .7rem;
+        box-shadow: 0 .35rem 1rem rgba(0, 0, 0, .12);
+        font-size: .84rem;
+    }
+
+    .filtro-forma-pago-item {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        border-radius: .45rem;
+    }
+
+    .filtro-forma-pago-item:hover,
+    .filtro-forma-pago-clear:hover {
+        background-color: #f8f9fc;
+    }
+
+    .ventas-totales-card {
+        padding: .38rem .65rem !important;
+    }
+
+    .ventas-totales-card h5 {
+        font-size: .88rem;
+    }
+
+    #listaVentas .fecha-grupo {
+        font-size: .76rem;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding: .38rem .78rem;
+    }
+
+    .venta-tipo-persona {
+        font-size: .84rem;
+        line-height: 1.15;
+    }
+
+    .venta-total .importe {
+        font-size: .85rem;
+    }
+
+    @@media (min-width: 992px) {
+        .vista-venta {
+            width: 60%;
+            max-width: none;
+            margin: 0 !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+
+    @@media (min-width: 1200px) {
+        .filtros-ventas-card .form-control,
+        .filtros-ventas-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .filtros-ventas-card .card-body,
+        .filtros-ventas-card {
+            padding: .65rem .8rem !important;
+        }
+
+        .filtros-fila-fechas {
+            grid-template-columns: 1.15fr 1.15fr 140px;
+            align-items: end;
+        }
+
+        .filtro-sucursal {
+            max-width: 420px;
+        }
+
+        .filtros-fila-busqueda {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .venta-item {
+            padding: .48rem .72rem;
+        }
+
+        .venta-tipo-persona {
+            font-size: .8rem;
+        }
+
+        .venta-id,
+        .venta-obs,
+        .venta-total .text-muted.small {
+            font-size: .72rem !important;
+        }
+
+        .venta-total .importe,
+        .ventas-totales-card h5 {
+            font-size: .82rem;
+        }
+
+        #listaVentas .fecha-grupo {
+            font-size: .68rem;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .filtros-fila-fechas,
+        .filtros-fila-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .filtro-accion {
+            grid-column: 2;
+        }
+
+        .filtros-fila-sucursal {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .filtros-fila {
+            grid-template-columns: 1fr;
+        }
+
+        .fecha-datetime-original {
+            display: none;
+        }
+
+        .fecha-mobile-picker {
+            display: block;
+        }
+    }
+</style>

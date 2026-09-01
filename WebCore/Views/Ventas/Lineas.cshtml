@@ -1,0 +1,446 @@
+@model VentaLineasIndexVm
+@using Entidades
+
+@{
+    ViewBag.Title = "Lineas de venta";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+}
+
+<div class="container-fluid px-2 px-md-3" data-lineas-agrupadas-page="ventas">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <h4 class="mb-2 mb-md-0">Lineas de venta</h4>
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
+            <i class="fas fa-arrow-left mr-1"></i> Volver al indice
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 elaborados-filtros-card">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Lineas", "Ventas")" class="js-form-filtros-lineas">
+                <div id="alertaFiltrosPendientes" class="alert alert-warning d-none mb-3" role="alert">
+                    Se modificaron filtros principales. Presioná <strong>Buscar</strong> para recargar los datos.
+                </div>
+
+                <div class="elaborados-filtros-grid lineas-filtros-grid cols-4">
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Sucursal</label>
+                        <select name="idSucursal" id="idSucursalVentasLineas" class="form-control">
+                            <option value="-1" selected="@(Model.IdSucursal == -1 ? "selected" : null)">Todas</option>
+                            @foreach (var sucursal in sucursales)
+                            {
+                                <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursal ? "selected" : null)">@sucursal.SucursalNombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha desde</label>
+                        <input name="fechaDesde" id="fechaDesdeVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Fecha hasta</label>
+                        <input name="fechaHasta" id="fechaHastaVentasLineas" type="datetime-local" step="1" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="elaborados-filtro-label">Producto</label>
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="producto" value="@Model.Producto" placeholder="Codigo o descripcion" autocomplete="off" />
+                    </div>
+                    <div class="form-group mb-0 lineas-filtro-accion">
+                        <label class="elaborados-filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarVentasLineas">
+                            <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <div id="estadoBusquedaVentasLineas" class="text-muted small">Resultados actualizados.</div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12 col-md-4 mb-3">
+                        <label class="elaborados-filtro-label">Cliente</label>
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="cliente" value="@Model.Cliente" placeholder="Nombre o identificacion" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label class="elaborados-filtro-label">Vendedor</label>
+                        <input type="text" class="form-control js-filtro-vivo" data-live-filter="vendedor" value="@Model.Vendedor" placeholder="Nombre del vendedor" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label class="elaborados-filtro-label d-block">Forma de pago</label>
+                        <div class="border rounded p-2">
+                            @foreach (var formaPago in new[] { "Efectivo", "Debito", "Credito", "CtaCte", "Qr", "Transferencia" })
+                            {
+                                <label class="mr-3 mb-1">
+                                    <input type="checkbox"
+                                           class="js-filtro-vivo"
+                                           data-live-filter="formaPago"
+                                           value="@formaPago"
+                                           @(Model.FormasPagoSeleccionadas.Any(x => string.Equals(x, formaPago, StringComparison.OrdinalIgnoreCase)) ? "checked" : "") />
+                                    <span class="ml-1">@formaPago</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-1">
+                    <input type="checkbox" class="custom-control-input js-toggle-detalles-general" id="expandirDetallesVentas" />
+                    <label class="custom-control-label" for="expandirDetallesVentas">Ver detalles</label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lineas-resumen-grid cols-4 mb-3">
+        <div class="card border-left-primary shadow-sm lineas-resumen-card">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalKg">0,000</div>
+            </div>
+        </div>
+        <div class="card border-left-success shadow-sm lineas-resumen-card">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total pesos</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalImporte">$ 0,00</div>
+            </div>
+        </div>
+        <div class="card border-left-info shadow-sm lineas-resumen-card">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Cantidad de lineas</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalLineas">0</div>
+            </div>
+        </div>
+        <div class="card border-left-secondary shadow-sm lineas-resumen-card">
+            <div class="card-body py-3">
+                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Cantidad de registros</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRegistros">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-server @(Model.Ventas != null && Model.Ventas.Count > 0 ? "d-none" : "")">
+        No se encontraron ventas con lineas para los filtros seleccionados.
+    </div>
+    <div class="alert alert-light text-center text-muted lineas-empty-state js-lineas-empty-client d-none">
+        No hay resultados con el filtro en vivo.
+    </div>
+
+    @if (Model.Ventas != null)
+    {
+        foreach (var venta in Model.Ventas)
+        {
+            var cliente = venta.Campos.FirstOrDefault(x => x.Etiqueta == "Cliente");
+            var vendedor = venta.Campos.FirstOrDefault(x => x.Etiqueta == "Vendedor");
+            var formaPago = venta.Campos.FirstOrDefault(x => x.Etiqueta == "Forma de pago");
+            <div class="card shadow-sm mb-3 linea-registro-card js-registro-card"
+                 data-cliente="@(cliente != null ? cliente.Valor : "")"
+                 data-vendedor="@(vendedor != null ? vendedor.Valor : "")"
+                 data-formaPago="@(formaPago != null ? formaPago.Valor : "")">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                        <div>
+                            <div class="linea-resumen-principal">@venta.ResumenCompacto</div>
+                            <div class="linea-resumen-secundario">@venta.ResumenSecundario</div>
+                        </div>
+                        <div class="linea-resumen-tools mt-2 mt-md-0">
+                            <span class="badge badge-success badge-pill px-3 py-2">@venta.TotalTexto</span>
+                            <a class="btn btn-sm btn-outline-primary" href="@venta.EditUrl">Ver registro</a>
+                        </div>
+                    </div>
+                    <div class="row mt-3 linea-registro-extra d-none">
+                        @foreach (var campo in venta.Campos)
+                        {
+                            <div class="col-12 col-md-4 mb-2">
+                                <div class="small text-muted text-uppercase">@campo.Etiqueta</div>
+                                <div>@campo.Valor</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="table-responsive js-sync-scroll-body">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Codigo producto</th>
+                                <th>Producto</th>
+                                <th class="text-right">Cantidad / kg</th>
+                                <th class="text-right">Precio</th>
+                                <th class="text-right">Total linea</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var linea in venta.Lineas)
+                            {
+                                <tr class="js-linea-row"
+                                    data-codigo="@linea.Codigo"
+                                    data-producto="@linea.Producto"
+                                    data-kg="@linea.CantidadKg"
+                                    data-total="@linea.Total"
+                                    data-unidades="0">
+                                    <td>@linea.Codigo</td>
+                                    <td>@linea.Producto</td>
+                                    <td class="text-right">@linea.CantidadKgTexto</td>
+                                    <td class="text-right">@linea.PrecioTexto</td>
+                                    <td class="text-right">@linea.TotalTexto</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .container-fluid[data-lineas-agrupadas-page="ventas"] {
+        font-size: .9rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .card-body {
+        padding: .82rem 1rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        margin-bottom: .18rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .btn {
+        min-height: 2.35rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .alert,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .small,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .text-muted,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .custom-control-label {
+        font-size: .8rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-grid {
+        gap: .65rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .card-body {
+        padding: .58rem .76rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .text-xs {
+        font-size: .67rem;
+        line-height: 1.05;
+        margin-bottom: .12rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .h5 {
+        font-size: .96rem;
+        line-height: 1.05;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-registro-card .card-header {
+        padding: .68rem .82rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-principal {
+        font-size: .86rem;
+        line-height: 1.15;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-secundario,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-registro-extra .small,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-empty-state {
+        font-size: .78rem !important;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-tools .badge,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-tools .btn {
+        font-size: .78rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table {
+        font-size: .84rem;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table th,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table td {
+        padding: .42rem .58rem;
+        line-height: 1.15;
+        vertical-align: middle;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead th,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table > thead > tr > th {
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead.thead-light th,
+    .container-fluid[data-lineas-agrupadas-page="ventas"] .table .thead-light th {
+        font-size: .73rem !important;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+        padding-top: .38rem;
+        padding-bottom: .38rem;
+        line-height: 1.1;
+    }
+
+    @@media (min-width: 1200px) {
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .card-body {
+            padding: .7rem .85rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .form-control,
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .elaborados-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .card-body {
+            padding: .5rem .7rem !important;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .lineas-resumen-card .h5 {
+            font-size: .86rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-registro-card .card-header {
+            padding: .6rem .78rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .linea-resumen-principal {
+            font-size: .81rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .table {
+            font-size: .8rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead th,
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .table > thead > tr > th {
+            font-size: .68rem;
+        }
+
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .table thead.thead-light th,
+        .container-fluid[data-lineas-agrupadas-page="ventas"] .table .thead-light th {
+            font-size: .68rem !important;
+            padding-top: .34rem;
+            padding-bottom: .34rem;
+        }
+    }
+</style>
+
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_LineasAgrupadasStyles.cshtml")
+
+@section Scripts {
+    <script>
+        (function () {
+            var form = document.querySelector('.js-form-filtros-lineas');
+            if (!form) return;
+
+            var inputSucursal = document.getElementById('idSucursalVentasLineas');
+            var inputFechaDesde = document.getElementById('fechaDesdeVentasLineas');
+            var inputFechaHasta = document.getElementById('fechaHastaVentasLineas');
+            var alerta = document.getElementById('alertaFiltrosPendientes');
+            var estado = document.getElementById('estadoBusquedaVentasLineas');
+            var btnBuscar = document.getElementById('btnBuscarVentasLineas');
+            var btnTexto = btnBuscar ? btnBuscar.querySelector('.btn-buscar-texto') : null;
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+            };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === 'function') {
+                    window.ModalRequestLoading.trackNavigation(message || 'Cargando solicitud...');
+                }
+            }
+
+            function submitConLoader() {
+                showNavigationLoading('Cargando solicitud...');
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAviso() {
+                if (!alerta) return;
+                alerta.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscando(mensaje) {
+                if (btnBuscar) btnBuscar.disabled = true;
+                if (btnTexto) btnTexto.textContent = ' Cargando...';
+                if (estado) estado.textContent = mensaje || 'Actualizando búsqueda...';
+            }
+
+            function enviarEnVivo() {
+                setBuscando('Actualizando búsqueda en vivo...');
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                }
+
+                submitConLoader();
+            }
+
+            if (inputFechaDesde) inputFechaDesde.addEventListener('change', actualizarAviso);
+            if (inputFechaHasta) inputFechaHasta.addEventListener('change', actualizarAviso);
+            if (inputSucursal) inputSucursal.addEventListener('change', enviarEnVivo);
+
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.loadingSubmitPending === 'true') {
+                    form.dataset.loadingSubmitPending = '';
+                    return;
+                }
+
+                event.preventDefault();
+                fechasAplicadas = {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : '',
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : ''
+                };
+                actualizarAviso();
+                setBuscando('Actualizando búsqueda...');
+                form.dataset.loadingSubmitPending = 'true';
+                submitConLoader();
+            });
+        })();
+    </script>
+    <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js?v=1")"></script>
+}

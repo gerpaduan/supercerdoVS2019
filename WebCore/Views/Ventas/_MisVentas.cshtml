@@ -1,0 +1,271 @@
+@model List<Entidades.Venta>
+
+@{
+    string mensaje = ViewBag.Mensaje as string;
+    decimal total = ViewBag.TotalVisible != null ? (decimal)ViewBag.TotalVisible : 0;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    string tituloVentas = ViewBag.TituloVentas as string ?? "Mis ventas";
+    string subtituloVentas = ViewBag.SubtituloVentas as string;
+    bool mostrarTotalMisVentas = ViewBag.MostrarTotalMisVentas == null || (bool)ViewBag.MostrarTotalMisVentas;
+    ViewBag.ModoModalVentas = true;
+}
+
+<div class="egresos-pos vista-venta mis-ventas-modal">
+    @if (!string.IsNullOrWhiteSpace(mensaje))
+    {
+        <div class="alert alert-warning m-3">@mensaje</div>
+    }
+    else
+    {
+        <div class="egresos-pos-toolbar mis-ventas-filtros">
+            <div class="mis-ventas-filtros-campos">
+                <div class="form-group mis-ventas-filtro-cliente mb-2 mb-md-0">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <input type="text" id="misVentasBuscarCliente" class="form-control" placeholder="Buscar cliente..." autocomplete="off" />
+                    </div>
+                </div>
+                <div class="form-group mis-ventas-filtro-forma-pago mb-2 mb-md-0">
+                    <select id="misVentasFormaPago" class="form-control form-control-sm">
+                        <option value="">Forma de pago (todas)</option>
+                        @foreach (Entidades.Venta.FormaPagoEnum fp in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
+                        {
+                            <option value="@fp.ToString().ToLower()">@fp.ToString()</option>
+                        }
+                    </select>
+                </div>
+                <button type="button" class="btn btn-outline-secondary mis-ventas-filtro-volver" id="btnVolverMisActividadesDesdeVentas">
+                    <i class="fas fa-arrow-left mr-1"></i> Volver
+                </button>
+            </div>
+        </div>
+
+        <div class="px-3 pb-3">
+            <div class="egresos-resumen">
+                <div>
+                    <span class="text-muted">Cant.</span>
+                    <strong id="misVentasCantidad">@((Model ?? new List<Entidades.Venta>()).Count)</strong>
+                </div>
+                @if (mostrarTotalMisVentas)
+                {
+                    <div>
+                        <span class="text-muted">Total</span>
+                        <strong id="misVentasTotal">@total.ToString("C")</strong>
+                    </div>
+                }
+            </div>
+
+            <div class="card shadow-sm ventas-card w-100">
+                <div class="card-body p-0">
+                    @Html.Partial("~/Views/Ventas/_TablaVentas.cshtml", Model)
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .mis-ventas-modal {
+        font-size: 0.875rem;
+    }
+
+    .egresos-pos .ventas-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .egresos-pos-toolbar h5 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .egresos-pos-toolbar .form-control,
+    .egresos-pos-toolbar .btn {
+        min-height: 2.65rem;
+        border-radius: .55rem;
+    }
+
+    .egresos-resumen {
+        font-size: 1rem;
+    }
+
+    .venta-item-modal { cursor: pointer; }
+
+    .venta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
+
+    .venta-icono { flex: 0 0 auto; margin-right: 10px; }
+
+    .venta-info { flex: 1 1 auto; min-width: 0; }
+
+    .venta-tipo-persona { word-wrap: break-word; white-space: normal; }
+
+    .venta-id { font-size: 0.8rem; color: #6c757d; }
+
+    .venta-obs {
+        font-size: 0.8rem;
+        color: #4f5d75;
+        margin-top: .15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 30rem;
+    }
+
+    .venta-total { text-align: right; flex: 0 0 auto; }
+
+    .venta-total .importe { font-weight: bold; color: #28a745; }
+
+    .venta-item:hover { background-color: #f8f9fc; }
+
+    .mis-ventas-modal.vista-venta {
+        width: 100%;
+        max-width: none;
+        margin: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    @@media (max-width: 576px) {
+        .venta-tipo-persona {
+            max-width: 17ch;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+    }
+
+    .mis-ventas-filtros {
+        background: #f8f9fc;
+    }
+
+    .mis-ventas-filtros-campos {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .6rem;
+        width: 100%;
+    }
+
+    .mis-ventas-filtro-cliente {
+        flex: 1 1 220px;
+        max-width: 320px;
+        margin: 0;
+    }
+
+    .mis-ventas-filtro-forma-pago {
+        flex: 0 1 200px;
+        margin: 0;
+    }
+
+    .mis-ventas-filtros .input-group-text {
+        background: #fff;
+        color: #858796;
+    }
+
+    @@media (max-width: 767.98px) {
+        .mis-ventas-filtros-campos {
+            justify-content: stretch;
+        }
+
+        .mis-ventas-filtro-cliente,
+        .mis-ventas-filtro-forma-pago,
+        .mis-ventas-filtro-volver {
+            flex: 1 1 100%;
+            max-width: none;
+            width: 100%;
+        }
+    }
+
+    html.dark-mode .mis-ventas-filtros {
+        background: #132032;
+    }
+
+    html.dark-mode .mis-ventas-filtros .input-group-text {
+        background: #172638;
+        color: #97a7bd;
+        border-color: #2a3b52;
+    }
+</style>
+
+<script>
+    (function () {
+        function aplicarFiltrosMisVentas() {
+            var textoCliente = ($("#misVentasBuscarCliente").val() || "").toLowerCase();
+            var formaPagoSel = ($("#misVentasFormaPago").val() || "").toLowerCase();
+            var total = 0;
+            var cant = 0;
+
+            $("#listaVentas .venta-item").each(function () {
+                var $item = $(this);
+                var cliente = (($item.data("cliente") || "") + " " + ($item.data("identificacion") || "")).toLowerCase();
+                var formaPago = (($item.data("forma-pago") || "") + "").toLowerCase();
+
+                var mostrar = (!textoCliente || cliente.indexOf(textoCliente) >= 0) &&
+                    (!formaPagoSel || formaPago === formaPagoSel);
+
+                $item.toggle(mostrar);
+
+                if (mostrar) {
+                    var valor = parseFloat($item.find(".importe").data("valor")) || 0;
+                    total += valor;
+                    cant++;
+                }
+            });
+
+            $("#listaVentas .fecha-grupo").each(function () {
+                var $grupo = $(this);
+                var $siguiente = $grupo.nextUntil(".fecha-grupo", ".venta-item:visible");
+                $grupo.toggle($siguiente.length > 0);
+            });
+
+            $("#misVentasCantidad").text(cant);
+            $("#misVentasTotal").text(total.toLocaleString("es-AR", { style: "currency", currency: "ARS" }));
+        }
+
+        function abrirDetalleVenta(idVenta) {
+            if (!idVenta) return;
+
+            if (@(desdePos ? "true" : "false") && window.POSVentas && typeof window.POSVentas.abrirDetalle === "function") {
+                window.POSVentas.abrirDetalle(idVenta);
+                return;
+            }
+
+            if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirDetalleVenta === "function") {
+                window.CajasAbiertas.abrirDetalleVenta(idVenta, @idCierreActividad);
+            }
+        }
+
+        $(document)
+            .off("input.misVentasFiltro", "#misVentasBuscarCliente")
+            .on("input.misVentasFiltro", "#misVentasBuscarCliente", aplicarFiltrosMisVentas)
+            .off("change.misVentasFiltro", "#misVentasFormaPago")
+            .on("change.misVentasFiltro", "#misVentasFormaPago", aplicarFiltrosMisVentas)
+            .off("click.misVentasDetalle", "#listaVentas .venta-item-modal")
+            .on("click.misVentasDetalle", "#listaVentas .venta-item-modal", function () {
+                abrirDetalleVenta($(this).data("venta-id"));
+            })
+            .off("click.misVentasVolver", "#btnVolverMisActividadesDesdeVentas")
+            .on("click.misVentasVolver", "#btnVolverMisActividadesDesdeVentas", function () {
+                if (@(desdePos ? "true" : "false") && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
+                    window.POSEgresos.abrirMis();
+                    return;
+                }
+
+                if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirActividades === "function") {
+                    window.CajasAbiertas.abrirActividades(@idCierreActividad);
+                }
+            });
+    })();
+</script>

@@ -1,0 +1,255 @@
+@model Entidades.Venta
+@*
+    Card de detalle de una venta -- extraida como partial compartida entre DetalleVenta.cshtml
+    (pantalla completa) y DetalleFactura.cshtml (embebida bajo el detalle de la factura), porque
+    ASP.NET Core no tiene equivalente directo a Html.Action del Web original (que invocaba
+    DetalleVenta como "child action" con modal=true). En vez de duplicar el markup, ambas vistas
+    llaman a esta partial con el mismo Model (Entidades.Venta) y ViewBag (ModoModal, DesdePOS,
+    IdCierreActividad, ReturnUrlDetalle, TieneFacturaVenta, TieneNotaCreditoVenta,
+    IdNotaCreditoVenta).
+
+    Excluye a proposito los botones "Modificar venta"/"Cambiar Forma de Pago" (apuntan a POS, no
+    portado en este slice), "Factura"/"Imprimir"/"Enviar por email" (AFIP e impresion/email, no
+    portados) -- ver header de WebCore/Controllers/VentasController.cs.
+*@
+@{
+    bool modoModal = ViewBag.ModoModal != null && (bool)ViewBag.ModoModal;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
+    string returnUrlDetalle = ViewBag.ReturnUrlDetalle as string ?? "";
+    var index = 1;
+    bool mostrarBotonVolver = modoModal || !string.IsNullOrWhiteSpace(returnUrlDetalle);
+    string hrefBotonVolver = (!modoModal && !string.IsNullOrWhiteSpace(returnUrlDetalle)) ? returnUrlDetalle : "#";
+    bool tieneFacturaVenta = ViewBag.TieneFacturaVenta != null && (bool)ViewBag.TieneFacturaVenta;
+    bool tieneNotaCreditoVenta = ViewBag.TieneNotaCreditoVenta != null && (bool)ViewBag.TieneNotaCreditoVenta;
+    int idNotaCreditoVenta = ViewBag.IdNotaCreditoVenta != null ? (int)ViewBag.IdNotaCreditoVenta : 0;
+    string razonSocialCliente = Model.Persona != null ? Model.Persona.razonSocial ?? "" : "";
+    string identificacionCliente = Model.Persona != null ? Model.Persona.Identificacion ?? "" : "";
+    bool mostrarIdentificacionCliente = !string.IsNullOrWhiteSpace(identificacionCliente)
+        && !string.Equals(identificacionCliente.Trim(), razonSocialCliente.Trim(), StringComparison.OrdinalIgnoreCase);
+}
+
+<style>
+    .detalle-documento-header .detalle-documento-titulo {
+        font-size: 14px;
+    }
+
+    .detalle-documento-header .badge {
+        font-size: 0.625rem;
+    }
+
+    .detalle-venta-resumen h5 {
+        font-size: 14px;
+    }
+
+    .detalle-venta-identificacion {
+        font-size: 14px;
+    }
+</style>
+
+<div class="card shadow mb-4 w-100 w-md-50 @(modoModal ? "" : "mx-auto") vista-venta @(modoModal ? "vista-venta-modal" : "")">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center detalle-documento-header">
+        <div class="d-flex align-items-center">
+            @if (mostrarBotonVolver)
+            {
+                <a href="@hrefBotonVolver" class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverListadoVentasDetalle">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            }
+            <h6 class="m-0 font-weight-bold text-primary detalle-documento-titulo">Detalle de Venta</h6>
+        </div>
+        <span class="badge badge-info">#@Model.IdVenta</span>
+    </div>
+
+    <div class="card-body bg-white">
+        <div class="row mb-3 detalle-documento-resumen detalle-venta-resumen">
+            <div class="col-md-6">
+                <h5 class="font-weight-bold text-dark">
+                    Cliente: <span class="text-muted">@razonSocialCliente</span>
+                </h5>
+                @if (mostrarIdentificacionCliente)
+                {
+                    <div class="text-muted detalle-venta-identificacion">Ident: @identificacionCliente</div>
+                }
+            </div>
+            <div class="col-md-6 text-md-right">
+                <h5 class="font-weight-bold text-dark">
+                    <span class="text-muted">@Model.FechaVenta</span>
+                </h5>
+            </div>
+            <div class="col-md-6">
+                <h5 class="font-weight-bold text-dark">
+                    Tipo Comprobante: <span class="text-muted">@Model.TipoComprobante</span>
+                </h5>
+            </div>
+            <div class="col-md-6 text-md-right">
+                <h5 class="font-weight-bold text-dark">
+                    Forma de pago: <span class="text-muted">@Model.FormaPago</span>
+                </h5>
+            </div>
+        </div>
+
+        @if (tieneFacturaVenta || tieneNotaCreditoVenta)
+        {
+            <div class="alert alert-light border mb-3">
+                @if (tieneFacturaVenta)
+                {
+                    <div><strong>Factura asociada:</strong> sí</div>
+                }
+                @if (tieneNotaCreditoVenta && idNotaCreditoVenta > 0)
+                {
+                    <div>
+                        <strong>Nota de crédito asociada:</strong>
+                        <a href="@Url.Action("DetalleFactura", "Ventas", new { id = idNotaCreditoVenta, returnUrl = returnUrlDetalle })">ver detalle</a>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+        {
+            <div class="alert alert-light border mb-4">
+                <div class="font-weight-bold text-secondary mb-1">
+                    <i class="fas fa-sticky-note mr-2"></i>Comentario
+                </div>
+                <div class="text-dark comentario-venta">@Model.Observaciones</div>
+            </div>
+        }
+
+        <div class="venta-lineas bg-white">
+            @foreach (var linea in Model.LineasVenta)
+            {
+                <div class="mb-3">
+                    <div>
+                        #@index <strong>@linea.Corte.CorteDesc</strong> (cod: @linea.Corte.codigo)&nbsp;&nbsp;
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            &nbsp;&nbsp;&nbsp;&nbsp; @linea.CantKg.ToString("0.###") x @linea.PrecioKg.ToString("C")
+                        </div>
+
+                        <div class="text-right font-weight-bold">
+                            @((linea.CantKg * linea.PrecioKg).ToString("C"))
+                        </div>
+                    </div>
+                </div>
+                index++;
+            }
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col text-right">
+            <h4 class="font-weight-bold">
+                Total Venta: <span class="text-success">@Model.TotalImporte.ToString("C")   </span>
+            </h4>
+        </div>
+    </div>
+</div>
+
+<style>
+    .venta-lineas {
+        background-color: #fff;
+    }
+
+        .venta-lineas .mb-3 {
+            padding: .5rem 0;
+            border: none;
+        }
+
+        .venta-lineas .font-weight-bold {
+            margin-bottom: .25rem;
+        }
+
+    @@media (min-width: 992px) {
+        .vista-venta {
+            width: 60% !important;
+            max-width: none;
+            margin: 0 !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+
+    .vista-venta-modal {
+        width: 100% !important;
+        max-width: 700px;
+        margin: 0 auto 1rem auto !important;
+    }
+
+    .vista-venta-modal .card-body,
+    .vista-venta-modal .card-header {
+        text-align: left;
+    }
+
+    .vista-venta-modal .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .vista-venta-modal .col {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    @@media (min-width: 992px) {
+        .vista-venta-modal {
+            width: 100% !important;
+            margin: 0 auto 1rem auto !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+
+    .comentario-venta {
+        white-space: pre-wrap;
+    }
+</style>
+
+<script>
+    (function () {
+        function volverDetalleVenta() {
+            var returnUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(returnUrlDetalle));
+
+            if (returnUrl) {
+                if (@(modoModal && desdePos ? "true" : "false") && window.POSFinanzas && typeof window.POSFinanzas.cargar === "function") {
+                    window.POSFinanzas.cargar(returnUrl, "Cuenta corriente");
+                    return;
+                }
+
+                window.location.href = returnUrl;
+                return;
+            }
+
+            if (@(desdePos ? "true" : "false") && window.POSVentas && typeof window.POSVentas.abrirMis === "function") {
+                window.POSVentas.abrirMis();
+                return;
+            }
+
+            if (@idCierreActividad > 0 && window.CajasAbiertas && typeof window.CajasAbiertas.abrirVentas === "function") {
+                window.CajasAbiertas.abrirVentas(@idCierreActividad);
+                return;
+            }
+
+            window.history.back();
+        }
+
+        function enlazarBotonVolverDetalle() {
+            var btn = document.getElementById("btnVolverListadoVentasDetalle");
+            if (!btn || btn.dataset.volverDetalleBound === "true") return;
+
+            btn.dataset.volverDetalleBound = "true";
+            btn.addEventListener("click", function (event) {
+                event.preventDefault();
+                volverDetalleVenta();
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", enlazarBotonVolverDetalle);
+        } else {
+            enlazarBotonVolverDetalle();
+        }
+    })();
+</script>

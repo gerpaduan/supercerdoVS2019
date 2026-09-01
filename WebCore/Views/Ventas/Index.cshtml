@@ -1,0 +1,248 @@
+@model List<Entidades.Venta>
+
+@{
+    ViewBag.Title = "Ventas";
+}
+
+<div class="container-fluid  p-0 vista-venta">
+
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button"
+                id="btnVerFacturasVentas"
+                class="btn btn-outline-secondary mr-2"
+                data-base-url="@Url.Action("Facturas", "Ventas")">
+            <i class="fas fa-file-invoice-dollar mr-1"></i> Facturas
+        </button>
+        <button type="button"
+                id="btnVerLineasVentas"
+                class="btn btn-outline-primary"
+                data-base-url="@Url.Action("Lineas", "Ventas")">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </button>
+    </div>
+
+    <!-- Filtro por fechas, sucursal y búsqueda rápida -->
+    <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
+        <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
+            <div class="filtros-ventas-stack">
+                <div id="alertaFiltrosPendientesVentas" class="alert alert-warning d-none mb-0" role="alert">
+                    Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                </div>
+
+                <div class="filtros-fila filtros-fila-fechas">
+                    <div class="form-group mb-0">
+                        <label for="fechaDesde" class="filtro-label">Desde</label>
+                        <input type="datetime-local"
+                               id="fechaDesde"
+                               name="fechaDesde"
+                               class="form-control fecha-datetime-original"
+                               value="@(string.IsNullOrEmpty(Context.Request.Query["fechaDesde"])
+? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
+: Context.Request.Query["fechaDesde"].ToString())" />
+                        <div class="fecha-mobile-picker">
+                            <input type="date"
+                                   id="fechaDesdeDateMobile"
+                                   class="form-control fecha-mobile-date" />
+                            <div class="fecha-mobile-time-row">
+                                <select id="fechaDesdeHourMobile" class="form-control fecha-mobile-time">
+                                    @for (var hora = 0; hora < 24; hora++)
+                                    {
+                                        <option value="@hora.ToString("00")">@hora.ToString("00")</option>
+                                    }
+                                </select>
+                                <span class="fecha-mobile-time-sep">:</span>
+                                <select id="fechaDesdeMinuteMobile" class="form-control fecha-mobile-time">
+                                    @for (var minuto = 0; minuto < 60; minuto++)
+                                    {
+                                        <option value="@minuto.ToString("00")">@minuto.ToString("00")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <small id="fechaDesdeResumen" class="form-text text-muted fecha-resumen-dia"></small>
+                        @Html.Partial("_AdvertenciaPermisoFecha")
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="fechaHasta" class="filtro-label">Hasta</label>
+                        <input type="datetime-local"
+                               id="fechaHasta"
+                               name="fechaHasta"
+                               class="form-control fecha-datetime-original"
+                               value="@(string.IsNullOrEmpty(Context.Request.Query["fechaHasta"])
+? DateTime.Today.ToString("yyyy-MM-ddT23:59")
+: Context.Request.Query["fechaHasta"].ToString())" />
+                        <div class="fecha-mobile-picker">
+                            <input type="date"
+                                   id="fechaHastaDateMobile"
+                                   class="form-control fecha-mobile-date" />
+                            <div class="fecha-mobile-time-row">
+                                <select id="fechaHastaHourMobile" class="form-control fecha-mobile-time">
+                                    @for (var hora = 0; hora < 24; hora++)
+                                    {
+                                        <option value="@hora.ToString("00")">@hora.ToString("00")</option>
+                                    }
+                                </select>
+                                <span class="fecha-mobile-time-sep">:</span>
+                                <select id="fechaHastaMinuteMobile" class="form-control fecha-mobile-time">
+                                    @for (var minuto = 0; minuto < 60; minuto++)
+                                    {
+                                        <option value="@minuto.ToString("00")">@minuto.ToString("00")</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <small id="fechaHastaResumen" class="form-text text-muted fecha-resumen-dia"></small>
+                    </div>
+
+                    <div class="form-group mb-0 filtro-accion">
+                        <label class="filtro-label d-none d-lg-block">&nbsp;</label>
+                        <button type="submit"
+                                id="btnFiltrarFechas"
+                                class="btn btn-primary btn-block"
+                                >
+                            <span class="btn-buscar-texto">Buscar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filtros-fila filtros-fila-sucursal">
+                    <div class="form-group mb-0 filtro-sucursal">
+                        <label for="idSucursal" class="filtro-label">Sucursal</label>
+                        <select id="idSucursal" name="idSucursal" class="form-control">
+                            <option value="">Todas las sucursales</option>
+
+                            @foreach (var s in ViewBag.Sucursales)
+                            {
+                                <option value="@s.IdSucursal" selected="@(ViewBag.IdSucursalSeleccionada == s.IdSucursal ? "selected" : null)">
+                                    @s.SucursalNombre
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filtros-fila filtros-fila-busqueda">
+                    <div class="form-group mb-0">
+                        <label for="buscadorVendedor" class="filtro-label">Vendedor</label>
+                        <input type="text"
+                               id="buscadorVendedor"
+                               class="form-control"
+                               placeholder="Nombre del vendedor" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="buscadorCliente" class="filtro-label">Cliente</label>
+                        <input type="text"
+                               id="buscadorCliente"
+                               class="form-control"
+                               placeholder="Nombre o identificación" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="btnFiltroFormaPago" class="filtro-label">Forma de pago</label>
+                        <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroFormaPagoDropdown">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn"
+                                    type="button"
+                                    id="btnFiltroFormaPago"
+                                    data-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                <span id="filtroFormaPagoTexto">Todas las formas de pago</span>
+                                <span id="filtroFormaPagoBadge" class="badge badge-primary d-none ml-2">0</span>
+                                <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2"
+                                 aria-labelledby="btnFiltroFormaPago">
+                                <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarFormaPago">
+                                    Todas las formas de pago
+                                </button>
+                                <div class="dropdown-divider my-2"></div>
+                                @foreach (Entidades.Venta.FormaPagoEnum fp
+                                        in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
+                                {
+                                    var formaPagoNombre = fp.ToString();
+                                    <label class="dropdown-item filtro-forma-pago-item px-2 mb-0">
+                                        <input type="checkbox"
+                                               class="mr-2 chk-forma-pago"
+                                               value="@formaPagoNombre"
+                                               data-label="@formaPagoNombre" />
+                                        <span>@formaPagoNombre</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="btnFiltroTipoComprobante" class="filtro-label">Tipo comprobante</label>
+                        <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroTipoComprobanteDropdown">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn"
+                                    type="button"
+                                    id="btnFiltroTipoComprobante"
+                                    data-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                <span id="filtroTipoComprobanteTexto">Todos los comprobantes</span>
+                                <span id="filtroTipoComprobanteBadge" class="badge badge-primary d-none ml-2">0</span>
+                                <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2"
+                                 aria-labelledby="btnFiltroTipoComprobante">
+                                <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarTipoComprobante">
+                                    Todos los comprobantes
+                                </button>
+                                <div class="dropdown-divider my-2"></div>
+                                @foreach (var tipo in new[] { "X", "A", "B", "C" })
+                                {
+                                    <label class="dropdown-item filtro-forma-pago-item px-2 mb-0">
+                                        <input type="checkbox"
+                                               class="mr-2 chk-tipo-comprobante"
+                                               value="@tipo"
+                                               data-label="@tipo" />
+                                        <span>@tipo</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div id="estadoBusquedaVentas" class="text-muted small">Resultados actualizados.</div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 🧮 Total del período -->
+
+    @if (ViewBag.TotalFiltrado != null)
+    {
+        <div class="card mb-2 shadow-sm ventas-totales-card" style="padding: 6px 10px;">
+            <div class="d-flex justify-content-between">
+                <h5 id="cantFiltrado" class="text-muted m-0" style="font-weight: 500;">
+                    Cant.: @Model.Count
+                </h5>
+
+                <h5 id="totalFiltrado" class="text-muted m-0" style="font-weight: 500;">
+                    Total: @(((decimal)ViewBag.TotalFiltrado).ToString("C"))
+                </h5>
+
+            </div>
+        </div>
+    }
+
+    <!-- 🧾 Listado de ventas -->
+    <div class="card shadow-sm ventas-card w-100">
+        <div class="card-body p-0">
+            @{
+                ViewBag.ModoModalVentas = false;
+                ViewBag.DetalleVentaBaseUrl = Url.Action("DetalleVenta", "Ventas");
+            }
+            @Html.Partial("~/Views/Ventas/_TablaVentas.cshtml", Model)
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "ventas")

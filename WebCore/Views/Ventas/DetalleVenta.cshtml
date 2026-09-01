@@ -1,0 +1,12 @@
+@model Entidades.Venta
+
+@{
+    ViewBag.Title = "Detalle Ventas";
+    bool modoModal = ViewBag.ModoModal != null && (bool)ViewBag.ModoModal;
+    if (modoModal)
+    {
+        Layout = null;
+    }
+}
+
+@await Html.PartialAsync("_DetalleVentaCard", Model)
