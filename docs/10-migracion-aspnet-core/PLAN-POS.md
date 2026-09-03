@@ -28,13 +28,16 @@ Es, por lejos, la pieza más grande de toda la migración — más grande que to
 
 ## 2. Hallazgo de arquitectura: `Session["VentaActiva"]`
 
-Investigado leyendo `POS` (GET), `FinalizarVenta`, `ModificarVenta`, `AgregarProducto`, `ConstruirLineasVentaDesdeRequest` completos.
+Investigado leyendo `POS` (GET), `FinalizarVenta`, `ModificarVenta`, `AgregarProducto`, `ConstruirLineasVentaDesdeRequest` completos, y buscando en todos los `.js` del proyecto quién llama a cada endpoint.
 
-- `POS` (GET) arma un objeto `Venta` "cáscara" (sin líneas, o con las últimas líneas si el usuario recargó la página) y lo guarda en `Session["VentaActiva"]`.
-- `FinalizarVenta`/`ModificarVenta` (POST) leen esa cáscara de `Session["VentaActiva"]` para campos como `Vendedor`/`FechaVenta`, **pero las líneas de la venta (`LineasVenta`) se reconstruyen siempre desde el `FinalizarVentaRequest` que manda el cliente** (`ConstruirLineasVentaDesdeRequest`, resuelve cada `Corte` por código contra la base) -- **no** desde la Session.
+- Solo hay **3 usos reales** de `Session["VentaActiva"]` en todo el código, los 3 dentro de `VentasController.cs`, y los 3 acotados a la misma sesión de navegador del mismo cajero (no hay coordinación entre usuarios ni entre pantallas):
+  1. `POS` (GET) arma un objeto `Venta` "cáscara" (sin líneas, o resumiendo las últimas si el usuario recargó la página) y lo guarda en `Session["VentaActiva"]`.
+  2. `FinalizarVenta` (POST) lee esa cáscara **solo** para `Vendedor`/`FechaVenta` -- las líneas de la venta (`LineasVenta`) se reconstruyen siempre desde el `FinalizarVentaRequest` que manda el cliente (`ConstruirLineasVentaDesdeRequest`, resuelve cada `Corte` por código contra la base), **no** desde la Session.
+  3. `AgregarProducto` (POST) es la única acción que de verdad manipula `Session["VentaActiva"].LineasVenta` -- pero **es código muerto**: se buscó `AgregarProducto` en los 4 archivos `.js` donde aparece el texto (`pos-product.js`, `pos-cart.js`, `pos-balanza.js`, `movimientos.js`) y ninguno hace un `$.ajax`/`fetch` contra `/Ventas/AgregarProducto` -- las coincidencias son el botón `#btnAgregarProducto` y la función `addProduct()` del carrito 100% client-side, sin relación con este endpoint. Mismo patrón ya visto en Cajas con `AbrirCaja` (ported for fidelity only).
+- **`ModificarVenta` (modificar una venta existente) NO usa `Session["VentaActiva"]` en ningún punto** -- busca la venta directo por ID contra la base (`oVentaN.getVentaById(request.IdVenta)`). El caso de "modificar una venta desde otra pantalla/sesión" (ej. desde Cierre de Caja) ya es 100% stateless en el original, confirmado leyendo el método completo.
 - El carrito real (qué productos, cantidades, forma de pago en pantalla) vive en el cliente, en `pos-cart.js`/`pos-state.js` -- el servidor nunca es la fuente de verdad del carrito mientras se arma la venta.
 
-**Consecuencia para WebCore**: ninguno de los controllers portados hasta ahora usa `Session` (todos usan el usuario stub `Admin=true`, sin login). Portar el núcleo POS tal cual, con `Session["VentaActiva"]`, requeriría agregar infraestructura de sesión real a WebCore por primera vez -- algo que el resto de la migración evitó a propósito.
+**Consecuencia para WebCore**: ninguno de los controllers portados hasta ahora usa `Session` (todos usan el usuario stub `Admin=true`, sin login). Portar el núcleo POS tal cual, con `Session["VentaActiva"]`, requeriría agregar infraestructura de sesión real a WebCore por primera vez -- algo que el resto de la migración evitó a propósito, para replicar un mecanismo que el propio código demuestra ser mucho más chico de lo que parece a primera vista (2 usos reales, no una coordinación compleja entre pantallas).
 
 ## 3. Decisión de diseño propuesta (necesita tu confirmación)
 
