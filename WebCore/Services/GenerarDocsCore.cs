@@ -1,6 +1,6 @@
 // Port de Utilidades/GenerarDocs.cs (iTextSharp) a QuestPDF -- ver docs/10-migracion-aspnet-core/
-// README.md. Solo porta lo que usa VentasController: GenerarFacturaPDF (factura/ticket A4) y el QR
-// oficial de AFIP (RG 4892/2020). GenerarPdfCtaCtePersona (Finanzas) no se porta en este slice.
+// README.md. Porta GenerarFacturaPDF (factura/ticket A4, VentasController) con el QR oficial de
+// AFIP (RG 4892/2020) y GenerarPdfCtaCtePersona (extracto de cuenta corriente, FinanzasController).
 //
 // Simplificacion deliberada: el original fija el bloque de totales/regimen fiscal/QR/CAE a una
 // posicion absoluta en la ULTIMA pagina via PdfStamper/PdfContentByte (especifico de iTextSharp,
@@ -13,6 +13,7 @@
 // desde el plan original de la migracion -- GDI+ no corre en Linux desde .NET 6+). Aca se usa
 // PngByteQRCode (bytes PNG directos, sin System.Drawing), mismo payload/URL de AFIP.
 using System;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
@@ -25,6 +26,87 @@ namespace WebCore.Services
 {
     public static class GenerarDocsCore
     {
+        // Port de Utilidades/GenerarDocs.cs GenerarPdfCtaCtePersona -- mismo contenido/orden,
+        // sintaxis QuestPDF en vez de iTextSharp.
+        public static byte[] GenerarPdfCtaCtePersona(DataTable dt, DateTime fechaDesde)
+        {
+            var culturaAr = new CultureInfo("es-AR");
+            string persona = "";
+            decimal saldo = 0;
+
+            if (dt.Rows.Count > 0)
+            {
+                persona = dt.Rows[0]["razonSocial"].ToString();
+                saldo = Convert.ToDecimal(dt.Rows[dt.Rows.Count - 1]["Saldo"]);
+            }
+
+            var documento = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(20, Unit.Point);
+                    page.DefaultTextStyle(x => x.FontSize(9));
+
+                    page.Content().Column(col =>
+                    {
+                        col.Spacing(4);
+
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text(persona).FontSize(12).Bold();
+                            row.RelativeItem().AlignRight().Text(text =>
+                            {
+                                text.Span("Saldo: ").FontSize(12).Bold().FontColor(Colors.Grey.Medium);
+                                text.Span("$ " + saldo.ToString("N2", culturaAr)).FontSize(12).Bold()
+                                    .FontColor(saldo >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
+                            });
+                        });
+
+                        col.Item().PaddingTop(4).Text("Desde: " + fechaDesde.ToString("dd/MM/yyyy"));
+
+                        col.Item().PaddingTop(6).Table(table =>
+                        {
+                            table.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn(1.4f);
+                                c.RelativeColumn(1.4f);
+                                c.RelativeColumn(3.6f);
+                                c.RelativeColumn(1.4f);
+                                c.RelativeColumn(1.4f);
+                                c.RelativeColumn(1.2f);
+                            });
+
+                            table.Header(h =>
+                            {
+                                h.Cell().Background("#F0F0F0").Padding(5).Text("Fecha").Bold();
+                                h.Cell().Background("#F0F0F0").Padding(5).Text("Operacion").Bold();
+                                h.Cell().Background("#F0F0F0").Padding(5).Text("Detalle").Bold();
+                                h.Cell().Background("#F0F0F0").Padding(5).AlignRight().Text("Importe").Bold();
+                                h.Cell().Background("#F0F0F0").Padding(5).AlignRight().Text("Saldo").Bold();
+                                h.Cell().Background("#F0F0F0").Padding(5).Text("Sucursal").Bold();
+                            });
+
+                            foreach (DataRow row in dt.Rows)
+                            {
+                                decimal importe = Convert.ToDecimal(row["importe"]);
+                                string detalle = (string.IsNullOrEmpty(row["nroDoc"].ToString()) ? "" : (row["nroDoc"].ToString() + " | ")) + row["detalle"].ToString();
+
+                                table.Cell().Padding(5).Text(Convert.ToDateTime(row["fecha"]).ToString("dd/MM/yyyy"));
+                                table.Cell().Padding(5).Text(row["tabla"].ToString());
+                                table.Cell().Padding(5).Text(detalle);
+                                table.Cell().Padding(5).AlignRight().Text(importe.ToString("N2", culturaAr))
+                                    .FontColor(importe >= 0 ? Colors.Green.Darken2 : Colors.Red.Darken2);
+                                table.Cell().Padding(5).AlignRight().Text(Convert.ToDecimal(row["Saldo"]).ToString("N2", culturaAr));
+                                table.Cell().Padding(5).Text(row["Sucursal"].ToString());
+                            }
+                        });
+                    });
+                });
+            });
+
+            return documento.GeneratePdf();
+        }
         public static byte[] GenerarFacturaPDF(Entidades.Venta venta, Entidades.FacturaElectronica factura = null)
         {
             var culturaAr = new CultureInfo("es-AR");
