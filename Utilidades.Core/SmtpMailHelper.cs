@@ -2,6 +2,8 @@
 // SendMail/IsValidEmail de Web/Helpers/SmtpMailHelper.cs (los 2 metodos que usan
 // VentasController/PuntosExpendioController/FinanzasController de WebCore) -- SendPasswordReset/
 // SendAccountUnlock no se portan, fuera de alcance (no los usa ningun controller de WebCore).
+// SendMail porta los 3 adjuntos (factura + detalle + nota de credito) del original -- Ventas.
+// EnviarComprobanteEmail los necesita simultaneos.
 using System;
 using System.Configuration;
 using System.IO;
@@ -37,6 +39,12 @@ namespace Utilidades
             string attachmentFileName = null,
             byte[] attachmentBytes = null,
             string attachmentContentType = "application/pdf",
+            string attachmentFileName2 = null,
+            byte[] attachmentBytes2 = null,
+            string attachmentContentType2 = "application/pdf",
+            string attachmentFileName3 = null,
+            byte[] attachmentBytes3 = null,
+            string attachmentContentType3 = "application/pdf",
             string fromNameOverride = null,
             string replyToEmail = null,
             string replyToName = null)
@@ -77,6 +85,20 @@ namespace Utilidades
                     var stream = new MemoryStream(attachmentBytes);
                     var attachment = new Attachment(stream, attachmentFileName ?? "adjunto.pdf", attachmentContentType ?? "application/octet-stream");
                     message.Attachments.Add(attachment);
+                }
+
+                if (attachmentBytes2 != null && attachmentBytes2.Length > 0)
+                {
+                    var stream2 = new MemoryStream(attachmentBytes2);
+                    var attachment2 = new Attachment(stream2, attachmentFileName2 ?? "adjunto-2.pdf", attachmentContentType2 ?? "application/octet-stream");
+                    message.Attachments.Add(attachment2);
+                }
+
+                if (attachmentBytes3 != null && attachmentBytes3.Length > 0)
+                {
+                    var stream3 = new MemoryStream(attachmentBytes3);
+                    var attachment3 = new Attachment(stream3, attachmentFileName3 ?? "adjunto-3.pdf", attachmentContentType3 ?? "application/octet-stream");
+                    message.Attachments.Add(attachment3);
                 }
 
                 using (var client = new SmtpClient(host, port))

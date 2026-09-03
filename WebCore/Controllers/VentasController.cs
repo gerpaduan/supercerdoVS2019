@@ -945,5 +945,369 @@ namespace WebCore.Controllers
             int idNotaCredito = _oVentaN.existeNotaCreditoParaVenta(idVenta);
             return idNotaCredito > 0 ? _oVentaN.getFactuElecById(idNotaCredito) : null;
         }
+
+        // ===== PDF (QuestPDF, ver docs/DECISIONS.md) y email real =====
+
+        [HttpGet]
+        public IActionResult Imprimir(int id, string documento = "")
+        {
+            Entidades.Venta venta = _oVentaN.getVentaById(id);
+            if (venta == null)
+                return NotFound();
+
+            string documentoSolicitado = (documento ?? "").Trim().ToLowerInvariant();
+            byte[] pdfBytes;
+            string nombreArchivo;
+
+            switch (documentoSolicitado)
+            {
+                case "detalle":
+                    pdfBytes = GenerarPdfDetalleVentaBytes(venta);
+                    nombreArchivo = "Detalle_" + id + ".pdf";
+                    break;
+                case "nc":
+                    var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                    pdfBytes = GenerarPdfNotaCreditoBytes(venta);
+                    nombreArchivo = ConstruirNombreArchivoComprobante(venta, notaCredito, "NotaCredito_" + id + ".pdf");
+                    break;
+                case "factura":
+                default:
+                    var factura = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                    pdfBytes = GenerarPdfVentaBytes(venta);
+                    nombreArchivo = ConstruirNombreArchivoComprobante(venta, factura, "Factura_" + id + ".pdf");
+                    break;
+            }
+
+            return File(pdfBytes, "application/pdf", nombreArchivo);
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerDatosEmailComprobante(int id)
+        {
+            try
+            {
+                var venta = _oVentaN.getVentaById(id);
+                if (venta == null || venta.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta no encontrada." });
+
+                var empresaVenta = ObtenerEmpresaVenta(venta);
+                var factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                string nombreEmpresa = ObtenerNombreEmpresaVenta(venta);
+                string emailDestino = venta.Persona != null ? (venta.Persona.Email ?? "").Trim() : "";
+                bool adjuntarDetalleDisponible = factuElec != null
+                    && factuElec.Id > 0
+                    && (Math.Abs(factuElec.PorcentajeFacturacion - 100f) > 0.0001f
+                        || !string.IsNullOrWhiteSpace(factuElec.DescItemUnitario));
+                string asunto = "Comprobante de " + nombreEmpresa;
+                string cuerpo =
+                    "Estimado/a cliente:\n\n" +
+                    "Adjuntamos la factura correspondiente.\n\n" +
+                    "Este correo fue enviado automáticamente. Por favor, no responda a este mensaje.\n\n" +
+                    "Atentamente,\n" +
+                    nombreEmpresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = emailDestino,
+                    asunto,
+                    mensaje = cuerpo,
+                    adjuntarDetalleDisponible,
+                    tieneFactura = factuElec != null && factuElec.Id > 0,
+                    tieneNotaCredito = notaCredito != null && notaCredito.Id > 0,
+                    facturaAgrupaItems = factuElec != null && !string.IsNullOrWhiteSpace(factuElec.DescItemUnitario),
+                    empresa = nombreEmpresa,
+                    replyTo = empresaVenta != null ? (empresaVenta.Email ?? "") : ""
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult EnviarComprobanteEmail(int idVenta, string emailDestino, string asunto, string mensaje, bool adjuntarDetalle = false, string documento = "")
+        {
+            try
+            {
+                var venta = _oVentaN.getVentaById(idVenta);
+                if (venta == null || venta.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta no encontrada." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                var empresaVenta = ObtenerEmpresaVenta(venta);
+                string nombreEmpresa = ObtenerNombreEmpresaVenta(venta);
+                var factura = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+                byte[] pdfBytes = null;
+                byte[] pdfDetalleBytes = null;
+                byte[] pdfNotaCreditoBytes = null;
+                string bodyHtml = ConvertirTextoAHtml(mensaje);
+                string nombreAdjunto = ConstruirNombreArchivoComprobante(venta, factura, "Factura_" + venta.IdVenta + ".pdf");
+                string nombreAdjuntoDetalle = "Detalle_" + venta.IdVenta + ".pdf";
+                string nombreAdjuntoNotaCredito = ConstruirNombreArchivoComprobante(venta, notaCredito, "NotaCredito_" + venta.IdVenta + ".pdf");
+                string fromName = "CarniSys - " + nombreEmpresa;
+                string replyToEmail = empresaVenta != null ? (empresaVenta.Email ?? "").Trim() : "";
+                string documentoSolicitado = (documento ?? "").Trim().ToLowerInvariant();
+
+                if (string.IsNullOrWhiteSpace(documentoSolicitado))
+                    documentoSolicitado = adjuntarDetalle ? "todos" : "factura";
+
+                bool incluirDetalle = documentoSolicitado == "todos" || documentoSolicitado == "detalle";
+                bool incluirFactura = documentoSolicitado == "todos" || documentoSolicitado == "factura";
+                bool incluirNc = documentoSolicitado == "todos" || documentoSolicitado == "nc";
+
+                if (incluirDetalle)
+                    pdfDetalleBytes = GenerarPdfDetalleVentaBytes(venta);
+
+                if (incluirFactura && factura != null && factura.Id > 0)
+                    pdfBytes = GenerarPdfComprobanteBytes(venta, factura, false);
+
+                if (incluirNc && notaCredito != null && notaCredito.Id > 0)
+                    pdfNotaCreditoBytes = GenerarPdfComprobanteBytes(venta, notaCredito, true);
+
+                if (!incluirFactura && !incluirNc && !incluirDetalle)
+                    return Json(new { ok = false, msg = "Seleccione al menos un comprobante para enviar." });
+
+                if (incluirFactura && pdfBytes == null)
+                    return Json(new { ok = false, msg = "La venta no tiene factura asociada." });
+
+                if (incluirNc && pdfNotaCreditoBytes == null)
+                    return Json(new { ok = false, msg = "La venta no tiene nota de crédito asociada." });
+
+                if (adjuntarDetalle && documentoSolicitado == "factura")
+                {
+                    bool puedeAdjuntarDetalle = factura != null
+                        && factura.Id > 0
+                        && (Math.Abs(factura.PorcentajeFacturacion - 100f) > 0.0001f
+                            || !string.IsNullOrWhiteSpace(factura.DescItemUnitario));
+
+                    if (puedeAdjuntarDetalle)
+                        pdfDetalleBytes = GenerarPdfDetalleVentaBytes(venta);
+                }
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: venta.Persona != null ? venta.Persona.RazonSocial : "",
+                    subject: asunto,
+                    bodyHtml: bodyHtml,
+                    attachmentFileName: nombreAdjunto,
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    attachmentFileName2: pdfDetalleBytes != null ? nombreAdjuntoDetalle : null,
+                    attachmentBytes2: pdfDetalleBytes,
+                    attachmentContentType2: "application/pdf",
+                    attachmentFileName3: pdfNotaCreditoBytes != null ? nombreAdjuntoNotaCredito : null,
+                    attachmentBytes3: pdfNotaCreditoBytes,
+                    attachmentContentType3: "application/pdf",
+                    fromNameOverride: fromName,
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: nombreEmpresa
+                );
+
+                return Json(new { ok = true, msg = "El comprobante se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
+        }
+
+        private static string ConstruirNombreArchivoComprobante(
+            Entidades.Venta venta,
+            Entidades.FacturaElectronica comprobante,
+            string nombreFallback)
+        {
+            if (comprobante == null || comprobante.Id <= 0)
+                return nombreFallback;
+
+            string letraFactura = string.Empty;
+            if (comprobante.CodTipoCbteAfip > 0)
+            {
+                char letraPorCodigo = comprobante.getLetraId_TipoCbte(comprobante.CodTipoCbteAfip);
+                letraFactura = letraPorCodigo == '\0' ? string.Empty : letraPorCodigo.ToString().ToUpper();
+            }
+
+            if (string.IsNullOrWhiteSpace(letraFactura) && !string.IsNullOrWhiteSpace(comprobante.DescTipoCbteAfip))
+            {
+                string descTipoCbteAfip = comprobante.DescTipoCbteAfip.Trim();
+                letraFactura = descTipoCbteAfip.Substring(descTipoCbteAfip.Length - 1).ToUpper();
+            }
+            string nombreClienteArchivo = (comprobante.RazonSocialAFIP ?? venta?.Persona?.razonSocial ?? string.Empty).Trim();
+
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                letraFactura = letraFactura.Replace(invalidChar.ToString(), string.Empty);
+                nombreClienteArchivo = nombreClienteArchivo.Replace(invalidChar.ToString(), string.Empty);
+            }
+
+            if (string.IsNullOrWhiteSpace(nombreClienteArchivo))
+                nombreClienteArchivo = "CLIENTE";
+
+            nombreClienteArchivo = nombreClienteArchivo.Length > 15
+                ? nombreClienteArchivo.Substring(0, 15).Trim()
+                : nombreClienteArchivo;
+
+            string fechaArchivo = (comprobante.FechaEmisionAfip ?? venta?.FechaVenta ?? DateTime.Now).ToString("yyyyMMdd");
+
+            return fechaArchivo + "_Factura" +
+                letraFactura + "_" +
+                (comprobante.PtoVtaAfip ?? string.Empty) + "-" +
+                (comprobante.NroCbteAfip ?? string.Empty) + "_" +
+                nombreClienteArchivo + ".pdf";
+        }
+
+        private byte[] GenerarPdfVentaBytes(Entidades.Venta venta)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            Entidades.FacturaElectronica factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+            if (factuElec == null || factuElec.Id <= 0)
+                return GenerarPdfDetalleVentaBytes(venta);
+
+            return GenerarPdfComprobanteBytes(venta, factuElec, false);
+        }
+
+        private byte[] GenerarPdfNotaCreditoBytes(Entidades.Venta venta)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            var notaCredito = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+            if (notaCredito == null || notaCredito.Id <= 0)
+                throw new InvalidOperationException("La venta no tiene nota de crédito asociada.");
+
+            return GenerarPdfComprobanteBytes(venta, notaCredito, true);
+        }
+
+        private byte[] GenerarPdfComprobanteBytes(Entidades.Venta venta, Entidades.FacturaElectronica comprobante, bool esNotaCredito)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            if (comprobante == null || comprobante.Id <= 0)
+                throw new InvalidOperationException("Comprobante no encontrado.");
+
+            if (esNotaCredito)
+            {
+                var facturaAsociada = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+                if (facturaAsociada != null && facturaAsociada.Id > 0)
+                {
+                    string numeroComprobanteAsociado =
+                        string.Format(
+                            "{0}-{1}",
+                            facturaAsociada.PtoVtaAfip ?? "",
+                            facturaAsociada.NroCbteAfip ?? ""
+                        ).Trim().Trim('-');
+
+                    string nombreComprobanteAsociado = (facturaAsociada.DescTipoCbteAfip ?? "").Trim();
+
+                    if (!string.IsNullOrWhiteSpace(numeroComprobanteAsociado) &&
+                        !string.IsNullOrWhiteSpace(nombreComprobanteAsociado))
+                    {
+                        comprobante.ComprobanteAsociadoInfo =
+                            numeroComprobanteAsociado + " " + nombreComprobanteAsociado;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(numeroComprobanteAsociado))
+                    {
+                        comprobante.ComprobanteAsociadoInfo = numeroComprobanteAsociado;
+                    }
+                    else
+                    {
+                        comprobante.ComprobanteAsociadoInfo = nombreComprobanteAsociado;
+                    }
+                }
+                else
+                {
+                    comprobante.ComprobanteAsociadoInfo = "";
+                }
+            }
+            else
+            {
+                comprobante.ComprobanteAsociadoInfo = "";
+            }
+
+            char letraComprobante = comprobante.getLetraId_TipoCbte(comprobante.CodTipoCbteAfip);
+            return WebCore.Services.GenerarDocsCore.GenerarFacturaPDF(CrearVentaDocumento(venta, letraComprobante), comprobante);
+        }
+
+        private byte[] GenerarPdfDetalleVentaBytes(Entidades.Venta venta)
+        {
+            if (venta == null || venta.IdVenta <= 0)
+                throw new InvalidOperationException("Venta no encontrada.");
+
+            var ventaDetalle = CrearVentaDetalleTipoX(venta);
+            return WebCore.Services.GenerarDocsCore.GenerarFacturaPDF(ventaDetalle, null);
+        }
+
+        private Entidades.Venta CrearVentaDetalleTipoX(Entidades.Venta venta)
+        {
+            return CrearVentaDocumento(venta, 'X');
+        }
+
+        private Entidades.Venta CrearVentaDocumento(Entidades.Venta venta, char tipoComprobante)
+        {
+            return new Entidades.Venta
+            {
+                IdVenta = venta.IdVenta,
+                FechaVenta = venta.FechaVenta,
+                Observaciones = venta.Observaciones,
+                Sucursal = venta.Sucursal,
+                Persona = venta.Persona,
+                NroRemito = venta.NroRemito,
+                FormaPago = venta.FormaPago,
+                TipoComprobante = tipoComprobante,
+                Vendedor = venta.Vendedor,
+                LineasVenta = venta.LineasVenta,
+                TotalImporte = venta.LineasVenta != null ? venta.LineasVenta.Sum(l => l != null ? l.ImporteConIva() : 0f) : 0f,
+                TotalImporteOriginal = venta.TotalImporteOriginal
+            };
+        }
+
+        private Entidades.Empresa ObtenerEmpresaVenta(Entidades.Venta venta)
+        {
+            return (venta != null && venta.Sucursal != null ? venta.Sucursal.Empresa : null)
+                ?? _usuarioActual.Empresa;
+        }
+
+        private string ObtenerNombreEmpresaVenta(Entidades.Venta venta)
+        {
+            var empresaVenta = ObtenerEmpresaVenta(venta);
+            string nombre = empresaVenta != null
+                ? (!string.IsNullOrWhiteSpace(empresaVenta.NombreFantasia) ? empresaVenta.NombreFantasia : empresaVenta.RazonSocialAfip)
+                : "";
+            return !string.IsNullOrWhiteSpace(nombre)
+                ? nombre.Trim()
+                : "CarniSys";
+        }
+
+        private string ConvertirTextoAHtml(string texto)
+        {
+            string safe = System.Net.WebUtility.HtmlEncode(texto ?? "");
+            safe = safe.Replace("\r\n", "\n").Replace("\r", "\n");
+            string cuerpoHtml = "<p>" + safe.Replace("\n\n", "</p><p>").Replace("\n", "<br />") + "</p>";
+            string pieHtml =
+                "<div style=\"margin-top:24px; padding-top:12px; border-top:1px solid #ddd; font-size:11px; color:#777; line-height:1.4;\">" +
+                "<p>CarniSys es un software de gestión comercial para pequeños y medianos comercios, diseñado para administrar ventas, stock y facturación, con integración a balanzas para agilizar la atención en productos pesables.</p>" +
+                "</div>";
+
+            return cuerpoHtml + pieHtml;
+        }
     }
 }

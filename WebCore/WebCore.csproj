@@ -23,6 +23,11 @@
          servicio de red, ver docs/10-migracion-aspnet-core/README.md). License Community: gratis
          para el porte de CarniSys. -->
     <PackageReference Include="QuestPDF" Version="2026.8.0" />
+    <!-- QR oficial de AFIP (RG 4892/2020) para el PDF de factura: Utilidades.GenerarDocs.cs
+         (clasico) usa QRCodeGenerator + System.Drawing.Bitmap, que no corre en Linux desde
+         .NET 6+ (GDI+ removido, bloqueante ya señalado desde el plan original de la migracion).
+         El port a WebCore usa PngByteQRCode en cambio (bytes PNG directos, sin System.Drawing). -->
+    <PackageReference Include="QRCoder" Version="1.8.0" />
   </ItemGroup>
 
   <PropertyGroup>
