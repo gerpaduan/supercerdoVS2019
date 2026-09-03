@@ -274,6 +274,9 @@
     <Content Include="Content\img\CarniSys_Logo_sinSlogan.png" />
     <Content Include="Content\img\carnisys-home-experiencia.jpg" />
     <Content Include="Content\img\carnisys-home-hero.jpg" />
+    <Content Include="Content\img\pwa-192.png" />
+    <Content Include="Content\img\pwa-512.png" />
+    <Content Include="Content\img\pwa-512-maskable.png" />
     <Content Include="Content\img\undraw_posting_photo.svg" />
     <Content Include="Content\img\undraw_profile.svg" />
     <Content Include="Content\img\undraw_profile_1.svg" />
