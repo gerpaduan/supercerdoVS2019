@@ -52,7 +52,7 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 5 | Compras y abastecimiento | validado | 8 de 10 acciones portadas y validadas, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
 | 7 | Caja y tesorería | en progreso | Slice 1 (CajasAbiertas) portado y verificado con datos reales (solo lectura) -- ver detalle abajo |
-| 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (facturación manual) verificado contra producción real — ver detalle abajo |
+| 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (facturación manual, Factura A y B) verificado contra producción real; núcleo POS transaccional con plan escrito pendiente de confirmación, ver `PLAN-POS.md` — ver detalle abajo |
 
 ## Módulo 1 — Administración de sistema
 
@@ -415,7 +415,19 @@ Portado en `VentasController.cs`: `Imprimir` (factura/detalle/nota de crédito),
 
 **No portado todavía**: `AddOrEditPago`/`AddOrEditPagoPost` (alta de pagos/cobros -- ESCRITURA de dinero que impacta la cta cte, acoplada a POS/Cajas, distinto perfil de riesgo del resto de este slice, que es de solo lectura + export) e `ImprimirPdfPago`/`ObtenerDatosEmailPago`/`EnviarComprobantePagoEmail` (su PDF/email, dependen de `AddOrEditPago`). `verMovimientoCtaCte` para tablas que no son "Ventas" (Compras/Pagos) tampoco se portó -- redirigían a `ModificarCompra`/`AddOrEditPago`, ninguno de los dos portado.
 
-**Pendiente para una próxima sesión**: `AddOrEditPago` + su PDF/email (necesita su propio scope, es un flujo de escritura); probar Factura A y nota de crédito reales de Ventas cuando surja el caso de uso; plan escrito del núcleo POS transaccional (CLAUDE.md §11.1, sin arrancar todavía).
+**Pendiente para una próxima sesión**: `AddOrEditPago` + su PDF/email (necesita su propio scope, es un flujo de escritura); nota de crédito real de Ventas cuando surja el caso de uso (Factura A y B ya verificadas, ver más arriba).
+
+## Núcleo POS transaccional — plan escrito, sin implementar (2026-09-03)
+
+`docs/10-migracion-aspnet-core/PLAN-POS.md` (nuevo) es el plan exigido por CLAUDE.md §11.1 antes de tocar código de `VentasController.POS`/`FinalizarVenta`/`ModificarVenta`/etc. y su equivalente en `PuntosExpendioController`. **Todavía no está confirmado ni implementado** -- resumen de los hallazgos clave:
+
+- **Tamaño real medido**: ~12 050 líneas entre `Ventas/POS.cshtml` (6226), `PuntosExpendio/POS.cshtml` (1980) y los 8 archivos `pos-*.js` -- la pieza más grande de todo el programa, más grande que todo lo demás portado hasta ahora combinado.
+- **Hallazgo de arquitectura**: `FinalizarVenta`/`ModificarVenta` usan `Session["VentaActiva"]`, pero investigando el código se confirmó que las líneas de la venta se reconstruyen siempre desde lo que manda el cliente (`ConstruirLineasVentaDesdeRequest`) -- el carrito real vive 100% en el cliente (`pos-cart.js`/`pos-state.js`), la Session solo carga una "cáscara" con `Vendedor`/`FechaVenta`.
+- **Decisión propuesta, pendiente de tu confirmación**: no portar `Session["VentaActiva"]` -- rediseñar como flujo sin estado de servidor (todo lo necesario viaja en el request), con `localStorage` opcional del lado del cliente para la comodidad de "recordar un carrito sin terminar". Evita agregar infraestructura de `ISession` a WebCore (que ningún otro controller de la migración usa) solo para replicar un mecanismo que el propio código demuestra prescindible.
+- **Juez de paridad propuesto**: harness con Playwright, 5 escenarios reales (agregar por código de barras, búsqueda + pago mixto, modificar última venta, cambiar forma de pago, cerrar sin operador de producción), comparando el resultado persistido en base entre `Web` y `WebCore` -- no diff de HTML (el POS es demasiado interactivo para eso). **No implementado todavía** -- es la primera tarea real cuando arranque la implementación.
+- Batches sugeridos, restore points y criterio de éxito: ver el documento completo.
+
+Necesita de vos, antes de cualquier código: confirmar o rechazar la decisión de Session (arriba) y el orden de batches propuesto.
 
 ## Juez de paridad — validado con control negativo
 
