@@ -44,6 +44,7 @@ using Entidades;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
@@ -1308,6 +1309,292 @@ namespace WebCore.Controllers
                 "</div>";
 
             return cuerpoHtml + pieHtml;
+        }
+
+        // ===== Nucleo POS transaccional (ver docs/10-migracion-aspnet-core/PLAN-POS.md) =====
+        //
+        // FinalizarVenta/ModificarVenta portados SIN Session["VentaActiva"] -- decision de diseño
+        // confirmada en el plan: el original ya reconstruye LineasVenta siempre desde el request
+        // del cliente (nunca desde Session), asi que el diseño sin estado de servidor no cambia
+        // comportamiento observable. AgregarProducto NO se porta -- confirmado codigo muerto (
+        // ningun .js del original le pega, ver PLAN-POS.md seccion 2).
+        //
+        // Chequeos de permisos del original (PuedeModificarUltimaVenta/PuedeCambiarFormaPago/
+        // TienePermisoAdministrativoSobreVenta, todos vía PermisosHelper.TienePermiso) se omiten
+        // directamente: bajo el usuario stub (Admin=true) siempre resuelven "permitido", mismo
+        // criterio que el resto de esta migracion.
+        // [FromBody]: el cliente original (pos-cart.js) manda `data: JSON.stringify(payload)` --
+        // en MVC5 el JsonValueProviderFactory bindea eso automaticamente sin atributo; en ASP.NET
+        // Core hace falta declararlo explicito para un Controller comun (no [ApiController]).
+        [HttpPost]
+        public IActionResult FinalizarVenta([FromBody] FinalizarVentaRequest request)
+        {
+            try
+            {
+                var user = _usuarioActual;
+
+                if (request == null || request.LineasVenta == null || !request.LineasVenta.Any())
+                    return Json(new { ok = false, msg = "No hay productos en la venta" });
+
+                if (user.IdSucursal == 0)
+                    return Json(new { ok = false, msg = "Seleccione una sucursal antes de finalizar la venta." });
+
+                if (request.IdSucursalPOS != user.IdSucursal)
+                {
+                    var sucursalPos = _oSucursalN.findById(request.IdSucursalPOS);
+                    string nombreSucursalPos = sucursalPos != null && !string.IsNullOrWhiteSpace(sucursalPos.SucursalNombre)
+                        ? sucursalPos.SucursalNombre
+                        : "original del POS";
+
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = "La venta fue iniciada en la sucursal " + nombreSucursalPos +
+                              ". Vuelva a la pantalla principal, cambie a esa sucursal y luego finalice la venta."
+                    });
+                }
+
+                var persona = _oPersonaN.findById(request.IdPersona);
+                if (persona == null)
+                    return Json(new { ok = false, msg = "El Cliente no existe." });
+
+                var sucursal = _oSucursalN.findById(user.IdSucursal);
+                if (sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida." });
+
+                var venta = new Entidades.Venta
+                {
+                    Persona = persona,
+                    Sucursal = sucursal,
+                    Vendedor = user,
+                    FechaVenta = DateTime.Now,
+                    TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
+                    Observaciones = request.Observaciones ?? "",
+                    FormaPago = request.FormaPago,
+                    EnCtaCte = request.FormaPago == Entidades.Venta.formaPagoEnum.CtaCte.ToString(),
+                    PagoMixtoEfectivo = request.EsPagoMixto ? request.Efectivo : 0
+                };
+
+                if (venta.EnCtaCte && (!venta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())
+                    || persona.idPersona.Equals(_param.GetInt(ParamKeys.IdConsumidorFinal, 0))))
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = "Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
+                              "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo."
+                    });
+                }
+
+                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, user);
+                if (!cajaAbierta)
+                    return Json(new { ok = false, msg = "La caja ha sido cerrada." });
+
+                List<Entidades.LineaVenta> lineasVenta = ConstruirLineasVentaDesdeRequest(request);
+                CompletarAnulacionesVenta(lineasVenta);
+
+                venta.LineasVenta = lineasVenta;
+                venta.ListaExpendios = (request.ListaExpendios ?? new List<int>())
+                    .Where(x => x > 0)
+                    .Distinct()
+                    .ToList();
+
+                int idVenta = _oVentaN.agregarVenta(venta);
+
+                return Json(new { ok = true, ventaId = idVenta });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error al finalizar la venta", error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult ModificarVenta([FromBody] FinalizarVentaRequest request)
+        {
+            try
+            {
+                var user = _usuarioActual;
+                bool soloFormaPago = request != null && request.SoloFormaPago;
+
+                if (request == null || request.IdVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta inválida" });
+
+                var venta = _oVentaN.getVentaById(request.IdVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "La venta no existe." });
+
+                if (request.LineasVenta == null || !request.LineasVenta.Any())
+                    return Json(new { ok = false, msg = "No hay productos en la venta" });
+
+                var persona = _oPersonaN.findById(request.IdPersona);
+                if (persona == null)
+                    return Json(new { ok = false, msg = "El Cliente no existe." });
+
+                venta.Persona = persona;
+
+                int idSucursalDestino = venta.Sucursal != null && venta.Sucursal.idSucursal > 0
+                    ? venta.Sucursal.idSucursal
+                    : user.IdSucursal;
+
+                venta.Sucursal = _oSucursalN.findById(idSucursalDestino);
+                if (venta.Sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida." });
+
+                venta.Observaciones = request.Observaciones ?? venta.Observaciones ?? "";
+                venta.FormaPago = request.FormaPago;
+                venta.EnCtaCte = request.FormaPago == Entidades.Venta.formaPagoEnum.CtaCte.ToString();
+                venta.PagoMixtoEfectivo = request.EsPagoMixto ? request.Efectivo : 0;
+
+                if (venta.EnCtaCte && (!venta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())
+                    || persona.idPersona.Equals(_param.GetInt(ParamKeys.IdConsumidorFinal, 0))))
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = "Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
+                              "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo."
+                    });
+                }
+
+                venta.LineasVenta = ConstruirLineasVentaDesdeRequest(request);
+                venta.ListaExpendios = (request.ListaExpendios ?? new List<int>())
+                    .Where(x => x > 0)
+                    .Distinct()
+                    .ToList();
+                CompletarAnulacionesVenta(venta.LineasVenta);
+
+                _oVentaN.modificarVenta(venta, venta.Sucursal.idSucursal, !soloFormaPago, null);
+
+                return Json(new { ok = true, ventaId = venta.IdVenta });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error al modificar la venta", error = ex.Message });
+            }
+        }
+
+        // Port de la version ESTABLE de "buscar producto para POS por codigo" -- la que hoy tiene
+        // Web/Controllers/VentasController.BuscarProducto usa Negocio.BarcodeInterpreter, una
+        // clase nueva sin commitear de otra sesion en paralelo (Negocio/BarcodeInterpreter.cs,
+        // Entidades/CasoInterpretacionBarcode.cs, etc.) que ademas hoy NO COMPILA (CS0103,
+        // 'ValidacionEan' no existe). No se porta esa dependencia -- en su lugar se usa la logica
+        // equivalente, ya estable y commiteada, de PuntosExpendioController.BuscarProductoPOS
+        // (codigo generico via sufijo "G<n>" + precio manual, sin el motor de codigos de barra
+        // internos de balanza que agrega BarcodeInterpreter). Cuando esa otra sesion termine y
+        // commitee su trabajo, esto se actualiza para usar la clase compartida real.
+        [HttpGet]
+        public IActionResult BuscarProducto(string codigo, bool ingresoCantidadX = false)
+        {
+            if (string.IsNullOrWhiteSpace(codigo))
+                return Json(new { success = false, message = "Código inválido." });
+
+            codigo = codigo.Replace(",", ".");
+
+            if (codigo.Split('.').Length - 1 > 1)
+                return Json(new { success = false, message = "Formato de código inválido." });
+
+            var matchGenerico = System.Text.RegularExpressions.Regex.Match(codigo, @"^[^G]*G(\d+)[^G]*$");
+            long numeroSumaGen = matchGenerico.Success ? int.Parse(matchGenerico.Groups[1].Value) : 0;
+
+            const int cantMinDigEan8 = 8;
+            bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDigEan8);
+
+            long codigoBuscado;
+            if (esGenerico)
+            {
+                codigoBuscado = _param.GetLong(ParamKeys.CodProdGenerico, 0L) + numeroSumaGen;
+            }
+            else if (!long.TryParse(codigo, out codigoBuscado) || codigoBuscado <= 0)
+            {
+                return Json(new { success = false, message = "Código inválido." });
+            }
+
+            var corte = _oCorteN.findCorteByCodigoEmpresa(codigoBuscado, _usuarioActual.IdEmpresa, false);
+            if (corte == null || corte.IdCorte <= 0)
+            {
+                string mensajeNoEncontrado = esGenerico ? "No existe el código genérico." : "No se encontró el producto.";
+                return Json(new { success = false, message = mensajeNoEncontrado });
+            }
+
+            if (esGenerico)
+            {
+                int indexG = codigo.IndexOf('G');
+                string precioTexto = indexG != -1 ? codigo.Substring(0, indexG) : codigo;
+                corte.PrecioKg = float.Parse(precioTexto, CultureInfo.InvariantCulture);
+            }
+
+            return Json(new
+            {
+                id = corte.IdCorte,
+                codigo = corte.Codigo.ToString(),
+                nombre = !string.IsNullOrWhiteSpace(corte.corte) ? corte.corte : corte.CorteDesc,
+                precioKg = corte.PrecioKg,
+                precioOriginal = corte.PrecioKg,
+                pesable = corte.Pesable,
+                balanza = corte.Pesable
+            });
+        }
+
+        private List<Entidades.LineaVenta> ConstruirLineasVentaDesdeRequest(FinalizarVentaRequest request)
+        {
+            var lineasVenta = new List<Entidades.LineaVenta>();
+
+            foreach (var l in request.LineasVenta)
+            {
+                var linea = new Entidades.LineaVenta
+                {
+                    Corte = _oCorteN.findCorteByCodigoEmpresa(l.Codigo, _usuarioActual.IdEmpresa, false),
+                    KgsTotalCalculado = l.CantKg,
+                    CantKg = l.CantKg,
+                    PrecioKg = l.PrecioKg,
+                    Bonificacion = l.Bonificacion,
+                    Estado = l.Estado,
+                    IndexAnulado = l.IndexAnulado,
+                    PesoBalanza = l.Balanza,
+                    IdExpendio = l.IdExpendio
+                };
+
+                lineasVenta.Add(linea);
+            }
+
+            return lineasVenta;
+        }
+
+        private void CompletarAnulacionesVenta(List<Entidades.LineaVenta> lineasVenta)
+        {
+            var lineasAnuladas = new List<Entidades.LineaVenta>();
+            int cantLineaParam = lineasVenta.Count;
+
+            for (int index = 0; index < lineasVenta.Count; index++)
+            {
+                if (Entidades.LineaVenta.esAnulado(lineasVenta[index].Estado) && lineasVenta[index].IndexAnulado == -1)
+                {
+                    lineasVenta[index].Estado = 0;
+
+                    var oLineaVenta = new Entidades.LineaVenta
+                    {
+                        Corte = lineasVenta[index].Corte,
+                        Venta = lineasVenta[index].Venta,
+                        CantKg = lineasVenta[index].CantKg * -1,
+                        KgsTotalCalculado = lineasVenta[index].KgsTotalCalculado * -1,
+                        KgsAjusteTarj = lineasVenta[index].KgsAjusteTarj * -1,
+                        PrecioKg = lineasVenta[index].PrecioKg,
+                        Estado = 1,
+                        Bonificacion = lineasVenta[index].Bonificacion,
+                        IndexAnulado = index,
+                        IdExpendio = lineasVenta[index].IdExpendio
+                    };
+
+                    lineasVenta[index].IndexAnulado = cantLineaParam++;
+                    lineasAnuladas.Add(oLineaVenta);
+                }
+            }
+
+            for (int index = 0; index < lineasAnuladas.Count; index++)
+                lineasVenta.Add(lineasAnuladas[index]);
         }
     }
 }

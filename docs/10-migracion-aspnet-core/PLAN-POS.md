@@ -1,6 +1,6 @@
 # Plan: Módulo 8, núcleo POS transaccional (CLAUDE.md §11.1)
 
-Estado: **borrador para revisión — sin fan-out todavía**. Este documento es el "plan escrito y confirmado" que exige CLAUDE.md §11.1 antes de tocar código del núcleo POS. Se escribió con investigación real (lectura de código, no supuestos) pero **no se implementó nada todavía** — necesita tu confirmación, en particular sobre la decisión de diseño de la sección 3.
+Estado: **confirmado (2026-09-03) y en implementación** -- ver sección 10 para el avance real. Este documento es el "plan escrito y confirmado" que exige CLAUDE.md §11.1 antes de tocar código del núcleo POS. La decisión de diseño de la sección 3 (sin `Session["VentaActiva"]`) fue confirmada por el usuario y ya está implementada y verificada.
 
 Alcance de "núcleo POS": `Web/Controllers/VentasController.cs` — `POS`, `AutorizarOperadorPOS`, `CerrarOperadorPOS`, `AutorizarModuloVentas`, `AutorizarOperadorModuloVentas`, `BuscarExpendiosPOS`, `ObtenerExpendioPOS`, `BuscarProducto`, `AgregarProducto`, `FinalizarVenta`, `ModificarVenta` — más el equivalente en `Web/Controllers/PuntosExpendioController.cs` (`POS`, `FinalizarPOS`, etc., ya señalado como excluido en Módulo 8 slice 2, mismo motivo).
 
@@ -100,6 +100,19 @@ Se abrirá `docs/10-migracion-aspnet-core/GAPS-POS.md` cuando arranque la implem
 
 ## 9. Qué necesito de vos antes de arrancar
 
-1. **Confirmar o rechazar la decisión de la sección 3** (eliminar `Session["VentaActiva"]`, carrito 100% stateless con `localStorage` opcional para UX). Si la rechazás, el plan cambia: agregar `ISession` real a WebCore pasa a ser un prerrequisito, con su propio análisis de qué otros módulos podrían empezar a apoyarse en Session sin querer.
-2. **Confirmar el orden de batches** (sección 6) o pedir otro.
-3. Después de eso, arranco por el harness de paridad (sección 5) como primer paso real, no por código de producto.
+1. ~~Confirmar o rechazar la decisión de la sección 3~~ -- **confirmado** ("ADELANTE", 2026-09-03).
+2. ~~Confirmar el orden de batches~~ -- **confirmado**, con el ajuste real descripto en la sección 10.
+
+## 10. Avance real (2026-09-03)
+
+**Restore point**: `git tag pre-pos-nucleo-20260903` (antes de tocar código).
+
+**Juez de paridad -- desviación consciente del diseño original de la sección 5**: el harness Playwright automatizado **no se construyó** -- `WebCore` todavía no tiene ninguna vista de POS para que un browser automatizado clickee. En su lugar se usó el mismo mecanismo de verificación de toda esta migración (llamada HTTP real a la acción + `sqlcmd` contra la base local para confirmar lo persistido), que cumple el mismo objetivo del juez (comparar comportamiento contra datos reales, no contra lo que el código "debería" hacer) sin necesitar una UI que todavía no existe. El harness Playwright de la sección 5 sigue siendo la propuesta correcta para cuando haya una vista de POS real que probar de punta a punta (batches 5 en adelante); se retoma en ese momento.
+
+**Portado y verificado con datos reales** (`WebCore/Controllers/VentasController.cs`):
+- **`FinalizarVenta`** -- reescrito sin `Session["VentaActiva"]` (venta armada entera desde el `FinalizarVentaRequest`, `[FromBody]` porque el cliente original ya manda JSON). Probado: venta real `idVenta=1739`, 1 línea (CARRE, 1 kg, $15), `idVendedor=2`, `formaPago=Efectivo`, verificada con `sqlcmd` contra `Ventas`/`LineaVenta`.
+- **`ModificarVenta`** -- ya era 100% stateless en el original (confirmado en la sección 2), portado sin cambios de lógica más allá de sacar los chequeos de permiso (bypass Admin, mismo criterio de siempre). Probado: modificó la venta 1739 (observaciones + cantidad 1kg→2kg), verificado que `LineaVenta` reemplazó la línea vieja por una nueva (`eliminarLineas=true`, mismo comportamiento que el original).
+- **`BuscarProducto`** -- **no se portó la versión actual del original**, que depende de `Negocio.BarcodeInterpreter` (clase nueva, sin commitear, de una sesión en paralelo trabajando en códigos de barra internos -- y que hoy **no compila**, `CS0103: 'ValidacionEan' no existe en el contexto actual`, confirmado en un intento de build de la solución completa). Se portó en su lugar la lógica equivalente y estable de `PuntosExpendioController.BuscarProductoPOS` (código genérico vía sufijo `G<n>` + precio manual, sin el motor de códigos de barra internos de balanza que agrega `BarcodeInterpreter`). Cuando la otra sesión commitee su trabajo, hay que revisar si `VentasController.BuscarProducto` necesita actualizarse a la clase compartida real. Probado: `BuscarProducto?codigo=1` devolvió el producto real (CARRE, id=33, $12000/kg).
+- **`AgregarProducto`**: confirmado código muerto (sección 2), no se porta.
+
+**No implementado todavía** (batches 5-7 del plan): pago mixto, expendios asociados (`BuscarExpendiosPOS`/`ObtenerExpendioPOS`), balanza, código de barras, enganche con AFIP desde una venta real de POS (no la venta manual ya probada), `PuntosExpendioController.POS`/`FinalizarPOS`, y toda la vista de POS en sí (`Ventas/POS.cshtml`, 6226 líneas -- nada de esto tiene UI en WebCore todavía, solo los 3 endpoints de arriba, verificados por HTTP directo).

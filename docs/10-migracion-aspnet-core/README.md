@@ -52,7 +52,7 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 5 | Compras y abastecimiento | validado | 8 de 10 acciones portadas y validadas, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
 | 7 | Caja y tesorería | en progreso | Slice 1 (CajasAbiertas) portado y verificado con datos reales (solo lectura) -- ver detalle abajo |
-| 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (facturación manual, Factura A y B) verificado contra producción real; núcleo POS transaccional con plan escrito pendiente de confirmación, ver `PLAN-POS.md` — ver detalle abajo |
+| 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (Factura A y B reales) + núcleo POS: `FinalizarVenta`/`ModificarVenta`/`BuscarProducto` portados y verificados con datos reales (sin UI todavía), ver `PLAN-POS.md` — ver detalle abajo |
 
 ## Módulo 1 — Administración de sistema
 
@@ -417,17 +417,15 @@ Portado en `VentasController.cs`: `Imprimir` (factura/detalle/nota de crédito),
 
 **Pendiente para una próxima sesión**: `AddOrEditPago` + su PDF/email (necesita su propio scope, es un flujo de escritura); nota de crédito real de Ventas cuando surja el caso de uso (Factura A y B ya verificadas, ver más arriba).
 
-## Núcleo POS transaccional — plan escrito, sin implementar (2026-09-03)
+## Núcleo POS transaccional — plan confirmado, en implementación (2026-09-03)
 
-`docs/10-migracion-aspnet-core/PLAN-POS.md` (nuevo) es el plan exigido por CLAUDE.md §11.1 antes de tocar código de `VentasController.POS`/`FinalizarVenta`/`ModificarVenta`/etc. y su equivalente en `PuntosExpendioController`. **Todavía no está confirmado ni implementado** -- resumen de los hallazgos clave:
+`docs/10-migracion-aspnet-core/PLAN-POS.md` es el plan exigido por CLAUDE.md §11.1 antes de tocar código de `VentasController.POS`/`FinalizarVenta`/`ModificarVenta`/etc. y su equivalente en `PuntosExpendioController`. El usuario confirmó la decisión de diseño ("ADELANTE") y ya arrancó la implementación real, batch por batch. Resumen (detalle completo y verificación en `PLAN-POS.md`):
 
-- **Tamaño real medido**: ~12 050 líneas entre `Ventas/POS.cshtml` (6226), `PuntosExpendio/POS.cshtml` (1980) y los 8 archivos `pos-*.js` -- la pieza más grande de todo el programa, más grande que todo lo demás portado hasta ahora combinado.
-- **Hallazgo de arquitectura**: `FinalizarVenta`/`ModificarVenta` usan `Session["VentaActiva"]`, pero investigando el código se confirmó que las líneas de la venta se reconstruyen siempre desde lo que manda el cliente (`ConstruirLineasVentaDesdeRequest`) -- el carrito real vive 100% en el cliente (`pos-cart.js`/`pos-state.js`), la Session solo carga una "cáscara" con `Vendedor`/`FechaVenta`.
-- **Decisión propuesta, pendiente de tu confirmación**: no portar `Session["VentaActiva"]` -- rediseñar como flujo sin estado de servidor (todo lo necesario viaja en el request), con `localStorage` opcional del lado del cliente para la comodidad de "recordar un carrito sin terminar". Evita agregar infraestructura de `ISession` a WebCore (que ningún otro controller de la migración usa) solo para replicar un mecanismo que el propio código demuestra prescindible.
-- **Juez de paridad propuesto**: harness con Playwright, 5 escenarios reales (agregar por código de barras, búsqueda + pago mixto, modificar última venta, cambiar forma de pago, cerrar sin operador de producción), comparando el resultado persistido en base entre `Web` y `WebCore` -- no diff de HTML (el POS es demasiado interactivo para eso). **No implementado todavía** -- es la primera tarea real cuando arranque la implementación.
-- Batches sugeridos, restore points y criterio de éxito: ver el documento completo.
-
-Necesita de vos, antes de cualquier código: confirmar o rechazar la decisión de Session (arriba) y el orden de batches propuesto.
+- **Tamaño real medido**: ~12 050 líneas entre `Ventas/POS.cshtml` (6226), `PuntosExpendio/POS.cshtml` (1980) y los 8 archivos `pos-*.js` -- la pieza más grande de todo el programa.
+- **Hallazgo de arquitectura confirmado**: `Session["VentaActiva"]` tiene solo 3 usos reales, los 3 dentro de la misma sesión de navegador del mismo cajero -- `AgregarProducto` (el único que la manipula de verdad) es código muerto (ningún `.js` lo llama), y `ModificarVenta` ya era 100% stateless en el original. Decisión: **no portar `Session["VentaActiva"]`**, `WebCore` sigue sin usar `ISession` en ningún controller.
+- **Portado y verificado con datos reales**: `FinalizarVenta` (venta real `idVenta=1739`, verificada en `Ventas`/`LineaVenta`), `ModificarVenta` (misma venta, modificada), `BuscarProducto` (código real `1` → CARRE, $12000/kg) -- este último usando la lógica estable de `PuntosExpendioController.BuscarProductoPOS` en vez de la versión actual del original, que depende de `Negocio.BarcodeInterpreter` (código nuevo sin commitear de otra sesión en paralelo, que hoy **no compila**).
+- **Juez de paridad**: el harness Playwright propuesto en el plan no se construyó todavía -- `WebCore` no tiene vista de POS que un browser pueda clickear. Se usó en su lugar el mismo mecanismo de esta migración (HTTP directo + `sqlcmd` contra la base), que cumple el mismo objetivo sin necesitar una UI inexistente.
+- **Sin implementar todavía**: pago mixto, expendios asociados, balanza, código de barras, enganche AFIP desde POS real, `PuntosExpendioController.POS`/`FinalizarPOS`, y toda la vista de POS (nada de esto tiene UI en WebCore todavía).
 
 ## Juez de paridad — validado con control negativo
 
