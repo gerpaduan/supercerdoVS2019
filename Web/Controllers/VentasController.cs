@@ -32,6 +32,7 @@ namespace Web.Controllers
         private Negocio.Persona oPersonaN;
         private Negocio.CierreCaja oCierreN;
         private Negocio.Corte oCorteN;
+        private Negocio.BarcodeInterpreter oBarcodeInterpreter;
 
         private Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         private Entidades.Venta.imprimirCbteEnum imprimirCbte =
@@ -48,6 +49,7 @@ namespace Web.Controllers
             oPersonaN = Web.Infrastructure.NegocioFactory.CrearPersona(empresa, param);
             oCierreN = Web.Infrastructure.NegocioFactory.CrearCierreCaja(empresa, param);
             oCorteN = Web.Infrastructure.NegocioFactory.CrearCorte(empresa, param);
+            oBarcodeInterpreter = Web.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(empresa, param);
         }
 
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
@@ -1244,46 +1246,66 @@ namespace Web.Controllers
 
                 codigo = codigo.Replace(",", ".");
 
-                int cantidadPuntos = codigo.Split('.').Length - 1;
-
-                if (cantidadPuntos > 1)
-                {
-                    return Json(new { error = "Formato de código inválido" }, JsonRequestBehavior.AllowGet);
-                }
-                //validar la cantidad de G
-                var match = Regex.Match(codigo, @"^[^G]*G(\d+)[^G]*$");
-                long numeroSumaGen = match.Success ? int.Parse(match.Groups[1].Value) :0;
-
-                //Para validar que sea precio siempre q contenga '.' y se suponga q no es un codigo de barras
-                int cantMinDig_EAN8 = 8;
-                bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDig_EAN8);
-
-                long codigoProducto = esGenerico
-                    ? param.GetLong(ParamKeys.CodProdGenerico, 0L) + numeroSumaGen
-                    : Convert.ToInt64(codigo);
-
-                var gestorCortes = oCorteN;
                 int idEmpresaSesion = (Session["Usuario"] as Entidades.Usuario) != null
                     ? ((Session["Usuario"] as Entidades.Usuario).IdEmpresa)
                     : (empresa != null ? empresa.IdEmpresa : 0);
-                var corte = idEmpresaSesion > 0
-                    ? gestorCortes.findCorteByCodigoEmpresa(codigoProducto, idEmpresaSesion, false)
-                    : gestorCortes.findCorteByCodigo(codigoProducto, false);
 
-                if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
+                // Mecanismo "codigo generico" (sufijo G<n>, o precio manual con punto decimal)
+                // y motor de codigos de barra internos de balanza (prefijo 20-29), ambos
+                // centralizados en Negocio.BarcodeInterpreter -- misma logica que
+                // PuntosExpendioController.BuscarProductoPOS. Ver docs/DECISIONS.md.
+                var generico = oBarcodeInterpreter.InterpretarCodigoGenerico(
+                    codigo, ingresoCantidadX, param.GetLong(ParamKeys.CodProdGenerico, 0L));
+
+                if (generico.FormatoInvalido)
+                    return Json(new { error = "Formato de código inválido" }, JsonRequestBehavior.AllowGet);
+
+                Entidades.Corte corte;
+                decimal? cantidadSugerida = null;
+
+                if (generico.EsGenerico)
                 {
-                    string mensaje = esGenerico ? ("No existe  el código genérico") : "Código inexistente"; 
-                    return Json(new { success = false, message = mensaje }, JsonRequestBehavior.AllowGet);
+                    corte = idEmpresaSesion > 0
+                        ? oCorteN.findCorteByCodigoEmpresa(generico.CodigoProducto, idEmpresaSesion, false)
+                        : oCorteN.findCorteByCodigo(generico.CodigoProducto, false);
+
+                    if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
+                        return Json(new { success = false, message = "No existe  el código genérico" }, JsonRequestBehavior.AllowGet);
+
+                    corte.PrecioKg = generico.PrecioManual.Value;
                 }
-
-                if (esGenerico)
+                else
                 {
-                    int indexG = codigo.IndexOf('G');
+                    var interno = oBarcodeInterpreter.Interpretar(codigo, idEmpresaSesion);
 
-                    if (indexG != -1)
-                        codigo = codigo.Substring(0, indexG);
+                    if (interno.EsCodigoInterno)
+                    {
+                        if (interno.Caso == Entidades.CasoInterpretacionBarcode.EstructuraInvalida)
+                            return Json(new { success = false, message = interno.MensajeDiagnostico }, JsonRequestBehavior.AllowGet);
 
-                    corte.PrecioKg = float.Parse(codigo, CultureInfo.InvariantCulture);
+                        if (interno.Caso == Entidades.CasoInterpretacionBarcode.ProductoNoEncontrado)
+                            return Json(new { success = false, message = "Código inexistente" }, JsonRequestBehavior.AllowGet);
+
+                        // Entidades.CasoInterpretacionBarcode.Interpretado
+                        corte = interno.Producto;
+                        if (interno.TipoValor == Entidades.TipoValorCodigoBarras.Precio)
+                            corte.PrecioKg = (float)interno.Valor.Value;
+                        else
+                            cantidadSugerida = interno.Valor;
+                    }
+                    else
+                    {
+                        // Camino de siempre: prefijo fuera de 20-29, o dentro de 20-29 pero sin
+                        // formato configurado para esta empresa -- busqueda exacta por codigo
+                        // completo, sin cambios de comportamiento.
+                        long codigoProducto = Convert.ToInt64(codigo);
+                        corte = idEmpresaSesion > 0
+                            ? oCorteN.findCorteByCodigoEmpresa(codigoProducto, idEmpresaSesion, false)
+                            : oCorteN.findCorteByCodigo(codigoProducto, false);
+
+                        if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
+                            return Json(new { success = false, message = "Código inexistente" }, JsonRequestBehavior.AllowGet);
+                    }
                 }
 
                 return Json(new
@@ -1293,7 +1315,8 @@ namespace Web.Controllers
                     precioKg = Math.Round((double)corte.PrecioKg, 2),
                     precioOriginal = Math.Round((double)corte.PrecioKg, 2),
                     codigo = corte.codigo,
-                    pesable = corte.Pesable
+                    pesable = corte.Pesable,
+                    cantidadSugerida = cantidadSugerida
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)

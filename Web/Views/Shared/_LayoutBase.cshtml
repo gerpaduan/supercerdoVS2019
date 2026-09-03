@@ -60,6 +60,8 @@
         controller == "Empresa" ||
         controller == "Sucursal" ||
         controller == "DispositivosSeguros" ||
+        controller == "CodigosBarra" ||
+        controller == "MercadoPago" ||
         controller == "AuditoriaLogin" ||
         (controller == "Home" && action == "Utilidades");
     bool administracionSistemaActiva = controller == "SystemAdministration";
@@ -409,6 +411,8 @@
                             <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
                             <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
                             <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
+                            <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Códigos de barra</a>
+                            <a class="collapse-item @(controller == "MercadoPago" ? "active" : "")" href="@Url.Action("Index", "MercadoPago")">Mercado Pago</a>
                             <a class="collapse-item @((controller == "Home" && action == "Utilidades") ? "active" : "")" href="@Url.Action("Utilidades","Home")">Utilidades</a>
                         </div>
                     </div>

@@ -167,6 +167,7 @@
     <Compile Include="IEmpresaContext.cs" />
     <Compile Include="IParametrosContext.cs" />
     <Compile Include="Mensajes.cs" />
+    <Compile Include="MercadoPagoTokenCipher.cs" />
     <Compile Include="PerformanceInstrumentation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SingletonLeerPeso.cs" />
@@ -176,6 +177,7 @@
     <Compile Include="Util_Form.designer.cs">
       <DependentUpon>Util_Form.cs</DependentUpon>
     </Compile>
+    <Compile Include="ValidacionEan.cs" />
     <Compile Include="ValoresParametrosMetodos.cs" />
     <Compile Include="VerificadorConexion.cs" />
   </ItemGroup>

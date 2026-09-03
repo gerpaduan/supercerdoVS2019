@@ -244,10 +244,14 @@
                     productoSeleccionado = data;
                     showProduct(data);
 
-                    // Si el codigo es EAN valido, conservamos el comportamiento
-                    // heredado: cantidad 1 y continuacion automatica del flujo.
+                    // Si el codigo es EAN valido, conservamos el comportamiento heredado:
+                    // continuacion automatica del flujo. La cantidad es 1 salvo que el
+                    // servidor haya interpretado el codigo como interno de balanza con
+                    // TipoValor=Cantidad (data.cantidadSugerida) -- ahi el peso viene
+                    // embebido en el codigo, no es "1 unidad" (ver BarcodeInterpreter).
                     if (typeof window.esEANValido === 'function' && window.esEANValido(codigoTrim)) {
-                        $('#inputCantidad').val('1');
+                        var cantidadDesdeServidor = Number(data && data.cantidadSugerida);
+                        $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
                         document.querySelector('#inputCantidad')?.focus();
                         handleEnter();
                     }
@@ -309,11 +313,16 @@
                 $('#inputCantidad').val('1');
                 $('#inputCodigo').val(entrada);
 
-                finishTyping(entrada, function (ok) {
+                finishTyping(entrada, function (ok, data) {
                     if (ok === false) return;
                     // Mismo caso que arriba: si el producto escaneado no es pesable,
-                    // onProductoChanged ya limpio la cantidad por defecto (1).
-                    $('#inputCantidad').val('1');
+                    // onProductoChanged ya limpio la cantidad por defecto (1). Si el
+                    // servidor interpreto el codigo como interno de balanza con
+                    // TipoValor=Cantidad (data.cantidadSugerida), usamos ese peso real en
+                    // vez de forzar 1 -- sin esto, cualquier pesada real quedaria cargada
+                    // como cantidad=1 (ver BarcodeInterpreter).
+                    var cantidadDesdeServidor = Number(data && data.cantidadSugerida);
+                    $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
                     options.addProduct();
                     showWaiting();
                 }, true);

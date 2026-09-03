@@ -4,6 +4,7 @@
 
 - [Productos](./productos.md)
 - [Ventas y POS](./ventas-y-pos.md)
+- [Códigos de barra internos (balanza, prefijo 20-29)](./codigos-de-barra-internos.md)
 - [Compras y abastecimiento](./compras-y-abastecimiento.md)
 - [Stock e inventario](./stock-e-inventario.md)
 - [Caja y tesoreria](./caja-y-tesoreria.md)

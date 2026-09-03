@@ -16,7 +16,7 @@ namespace DatosPostgres
     //
     // StockCorteSucursal: NUNCA se porta a Postgres (tabla obsoleta, 0 filas reales, confirmado
     // sin lector/escritor real en C#) -- eliminarCorte omite ese paso a proposito, no es un gap.
-    public class CortePg : Contratos.ICorteRepository
+    public class CortePg : Contratos.ICorteRepository, Contratos.ICorteBusquedaSimpleRepository
     {
         private readonly string _connectionString;
         private readonly int _idEmpresa;

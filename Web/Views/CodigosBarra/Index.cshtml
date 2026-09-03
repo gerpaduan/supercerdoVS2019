@@ -1,0 +1,115 @@
+@model Web.Models.FormatosCodigoBarraIndexVm
+@{
+    ViewBag.Title = "Códigos de barra";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid codigos-barra-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h4 mb-1 text-gray-800">Códigos de barra</h1>
+            <p class="text-muted mb-0">
+                Formatos para interpretar códigos de barra internos generados por balanza (EAN-13 con prefijo 20 a 29).
+                Un código de este tipo, escaneado en el POS, se descompone en código de producto + peso o precio según el formato configurado para el prefijo.
+            </p>
+        </div>
+        @if (Model.PuedeAdministrar)
+        {
+            <a class="btn btn-primary mb-2" href="@Url.Action("Nuevo", "CodigosBarra")">
+                <i class="fas fa-plus mr-1"></i> Nuevo formato
+            </a>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:90px;">Prefijo</th>
+                            <th>Nombre</th>
+                            <th style="width:140px;">Tipo de valor</th>
+                            <th style="width:90px;">Activo</th>
+                            @if (Model.PuedeAdministrar)
+                            {
+                                <th style="width:100px;">Acciones</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items == null || Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No hay formatos de código de barra configurados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td><code>@item.Prefijo</code></td>
+                                    <td>@item.Nombre</td>
+                                    <td>@(item.TipoValor == Entidades.TipoValorCodigoBarras.Precio ? "Precio" : "Cantidad")</td>
+                                    <td>
+                                        @if (item.Activo)
+                                        {
+                                            <span class="badge badge-success">Sí</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary">No</span>
+                                        }
+                                    </td>
+                                    @if (Model.PuedeAdministrar)
+                                    {
+                                        <td>
+                                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Editar", "CodigosBarra", new { id = item.Id })">
+                                                Editar
+                                            </a>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .codigos-barra-page {
+        font-size: .9rem;
+    }
+
+    .codigos-barra-page .table {
+        font-size: .84rem;
+    }
+
+    .codigos-barra-page .table th,
+    .codigos-barra-page .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .codigos-barra-page .table thead th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .codigos-barra-page .table {
+            font-size: .81rem;
+        }
+
+        .codigos-barra-page .table thead th {
+            font-size: .69rem !important;
+        }
+    }
+</style>

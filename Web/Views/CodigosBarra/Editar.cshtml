@@ -1,0 +1,276 @@
+@model Web.Models.FormatoCodigoBarraEditVm
+@{
+    ViewBag.Title = Model.EsNuevo ? "Nuevo formato de código de barra" : "Editar formato de código de barra";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var mensajesValidacion = ViewData.ModelState.Values
+        .SelectMany(x => x.Errors)
+        .Select(x => x.ErrorMessage)
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .ToList();
+}
+
+<div class="container-fluid codigos-barra-editar-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h4 mb-1 text-gray-800">@ViewBag.Title</h1>
+            <p class="text-muted mb-0">
+                Define cómo se lee un código de barras interno de balanza (EAN-13) para el prefijo elegido. El código de producto extraído se busca por el campo "Código" existente de cada producto.
+            </p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (mensajesValidacion.Any())
+            {
+                <div class="alert alert-danger">
+                    <ul class="mb-0 pl-3">
+                        @foreach (var mensaje in mensajesValidacion)
+                        {
+                            <li>@mensaje</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="form-group">
+                <label for="presetSelector">Configuración habitual (opcional)</label>
+                <select id="presetSelector" class="form-control">
+                    <option value="">— Elegir un preset para completar los campos —</option>
+                    <option value="peso_kg">Balanza estándar — Peso en kg (PLU 5 dígitos, peso 5 dígitos, 3 decimales)</option>
+                    <option value="precio_total">Balanza estándar — Precio total (PLU 5 dígitos, precio 5 dígitos, 2 decimales)</option>
+                    <option value="plu_corto_precio">PLU corto + precio (PLU 3 dígitos, precio 6 dígitos, 2 decimales)</option>
+                </select>
+                <small class="form-text text-muted">Los presets solo completan los campos de abajo — el Prefijo siempre se elige a mano, según cómo esté configurada la balanza física.</small>
+            </div>
+
+            @using (Html.BeginForm("Guardar", "CodigosBarra", FormMethod.Post, new { id = "formCodigoBarra" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Id)
+                @Html.HiddenFor(m => m.EsNuevo)
+
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Nombre)
+                            @Html.TextBoxFor(m => m.Nombre, new { @class = "form-control", autocomplete = "off", id = "campoNombre" })
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Prefijo)
+                            @if (Model.EsNuevo)
+                            {
+                                @Html.DropDownListFor(m => m.Prefijo, PrefijosDisponibles(), "— Elegir —", new { @class = "form-control", id = "campoPrefijo" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.Prefijo, new { @class = "form-control", @readonly = "readonly", id = "campoPrefijo" })
+                                <small class="form-text text-muted">No se puede cambiar. Para usar otro prefijo, creá un formato nuevo.</small>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.LongitudTotal)
+                            @Html.TextBoxFor(m => m.LongitudTotal, new { @class = "form-control", @readonly = "readonly", id = "campoLongitudTotal" })
+                            <small class="form-text text-muted">Siempre 13 (EAN-13).</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="h6 text-gray-700 mt-3">Código de producto (PLU)</h2>
+                <div class="row">
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.PosicionCodigo)
+                            @Html.TextBoxFor(m => m.PosicionCodigo, new { @class = "form-control campo-formato", type = "number", min = "3", max = "13", id = "campoPosicionCodigo" })
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.LongitudCodigo)
+                            @Html.TextBoxFor(m => m.LongitudCodigo, new { @class = "form-control campo-formato", type = "number", min = "1", max = "11", id = "campoLongitudCodigo" })
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="h6 text-gray-700 mt-3">Valor (precio o cantidad)</h2>
+                <div class="row">
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.PosicionValor)
+                            @Html.TextBoxFor(m => m.PosicionValor, new { @class = "form-control campo-formato", type = "number", min = "3", max = "13", id = "campoPosicionValor" })
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.LongitudValor)
+                            @Html.TextBoxFor(m => m.LongitudValor, new { @class = "form-control campo-formato", type = "number", min = "1", max = "11", id = "campoLongitudValor" })
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="form-group">
+                            <label>Tipo de valor</label>
+                            <div class="custom-control custom-radio">
+                                @Html.RadioButtonFor(m => m.TipoValor, Entidades.TipoValorCodigoBarras.Precio, new { @class = "custom-control-input campo-formato", id = "tipoValorPrecio" })
+                                <label class="custom-control-label" for="tipoValorPrecio">Precio</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                @Html.RadioButtonFor(m => m.TipoValor, Entidades.TipoValorCodigoBarras.Cantidad, new { @class = "custom-control-input campo-formato", id = "tipoValorCantidad" })
+                                <label class="custom-control-label" for="tipoValorCantidad">Cantidad (peso)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.CantidadDecimales)
+                            @Html.TextBoxFor(m => m.CantidadDecimales, new { @class = "form-control campo-formato", type = "number", min = "0", max = "4", id = "campoCantidadDecimales" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="custom-control custom-switch mt-2 mb-3">
+                    @Html.CheckBoxFor(m => m.Activo, new { @class = "custom-control-input" })
+                    <label class="custom-control-label" for="Activo">Activo</label>
+                </div>
+
+                <div id="ejemploLectura" class="alert alert-info small"></div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    <button type="submit" class="btn btn-success mr-2 mb-2">
+                        <i class="fas fa-save mr-1"></i> Guardar
+                    </button>
+                    <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "CodigosBarra")">
+                        Volver
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static System.Collections.Generic.List<SelectListItem> PrefijosDisponibles()
+    {
+        var items = new System.Collections.Generic.List<SelectListItem>();
+        for (int prefijo = 20; prefijo <= 29; prefijo++)
+        {
+            items.Add(new SelectListItem { Text = prefijo.ToString(), Value = prefijo.ToString() });
+        }
+        return items;
+    }
+}
+
+<style>
+    .codigos-barra-editar-page {
+        font-size: .9rem;
+    }
+
+    .codigos-barra-editar-page .form-control {
+        font-size: .87rem !important;
+        min-height: 2.3rem !important;
+        padding: .32rem .58rem !important;
+    }
+
+    #ejemploLectura code {
+        background: rgba(0,0,0,.06);
+        padding: .05rem .3rem;
+        border-radius: .3rem;
+    }
+</style>
+
+<script>
+    // Presets: solo completan los campos del formulario (sin roundtrip al servidor), el
+    // Prefijo se elige siempre a mano. Layout "5+5" (posiciones 3-7 PLU, 8-12 valor) es el mas
+    // usado por balanzas comerciales (Mettler Toledo/Bizerba/Digi/CAS) para EAN-13 interno.
+    var PRESETS = {
+        peso_kg: { posicionCodigo: 3, longitudCodigo: 5, posicionValor: 8, longitudValor: 5, tipoValor: 'Cantidad', cantidadDecimales: 3 },
+        precio_total: { posicionCodigo: 3, longitudCodigo: 5, posicionValor: 8, longitudValor: 5, tipoValor: 'Precio', cantidadDecimales: 2 },
+        plu_corto_precio: { posicionCodigo: 3, longitudCodigo: 3, posicionValor: 6, longitudValor: 6, tipoValor: 'Precio', cantidadDecimales: 2 }
+    };
+
+    document.getElementById('presetSelector').addEventListener('change', function () {
+        var preset = PRESETS[this.value];
+        if (!preset) return;
+
+        document.getElementById('campoPosicionCodigo').value = preset.posicionCodigo;
+        document.getElementById('campoLongitudCodigo').value = preset.longitudCodigo;
+        document.getElementById('campoPosicionValor').value = preset.posicionValor;
+        document.getElementById('campoLongitudValor').value = preset.longitudValor;
+        document.getElementById('campoCantidadDecimales').value = preset.cantidadDecimales;
+        document.getElementById(preset.tipoValor === 'Precio' ? 'tipoValorPrecio' : 'tipoValorCantidad').checked = true;
+
+        actualizarEjemplo();
+    });
+
+    // Mismo algoritmo de digito verificador EAN-13 que Utilidades.ValidacionEan.EsEan13Valido
+    // (servidor) -- solo para armar el ejemplo visual, no valida nada de este formulario.
+    function calcularDigitoVerificadorEan13(doce) {
+        var suma = 0;
+        for (var i = 0; i < 12; i++) {
+            var digito = doce.charCodeAt(i) - 48;
+            suma += (i % 2 === 0) ? digito : digito * 3;
+        }
+        return String((10 - (suma % 10)) % 10);
+    }
+
+    function actualizarEjemplo() {
+        var prefijo = document.getElementById('campoPrefijo').value || '20';
+        var posCod = parseInt(document.getElementById('campoPosicionCodigo').value, 10) || 0;
+        var longCod = parseInt(document.getElementById('campoLongitudCodigo').value, 10) || 0;
+        var posVal = parseInt(document.getElementById('campoPosicionValor').value, 10) || 0;
+        var longVal = parseInt(document.getElementById('campoLongitudValor').value, 10) || 0;
+        var decimales = parseInt(document.getElementById('campoCantidadDecimales').value, 10) || 0;
+        var esPrecio = document.getElementById('tipoValorPrecio').checked;
+
+        var destino = document.getElementById('ejemploLectura');
+
+        if (!posCod || !longCod || !posVal || !longVal || String(prefijo).length !== 2) {
+            destino.textContent = 'Completá Prefijo, posiciones y longitudes para ver un ejemplo de lectura.';
+            return;
+        }
+
+        // Arma 12 digitos de ejemplo: prefijo fijo, PLU de ejemplo "123" (o menos, segun
+        // longitud), valor de ejemplo "1250" (o menos), resto en '0'. Solo para ilustrar.
+        var doce = (prefijo + '0000000000').substring(0, 12).split('');
+        var pluEjemplo = '123'.substring(0, Math.min(3, longCod));
+        var valorEjemplo = '1250'.substring(0, Math.min(4, longVal));
+
+        function colocar(texto, posicion1Based, longitud) {
+            var relleno = ('0'.repeat(Math.max(0, longitud - texto.length))) + texto;
+            relleno = relleno.substring(relleno.length - longitud);
+            for (var i = 0; i < longitud; i++) {
+                var idx = (posicion1Based - 1) + i;
+                if (idx >= 0 && idx < 12) doce[idx] = relleno[i];
+            }
+        }
+
+        colocar(pluEjemplo, posCod, longCod);
+        colocar(valorEjemplo, posVal, longVal);
+
+        var doceStr = doce.join('');
+        var verificador = calcularDigitoVerificadorEan13(doceStr);
+        var codigoCompleto = doceStr + verificador;
+
+        var pluExtraido = parseInt(doceStr.substring(posCod - 1, posCod - 1 + longCod), 10);
+        var valorCrudo = parseInt(doceStr.substring(posVal - 1, posVal - 1 + longVal), 10);
+        var valorFinal = (valorCrudo / Math.pow(10, decimales)).toFixed(decimales);
+
+        destino.innerHTML = 'Ejemplo: el código <code>' + codigoCompleto + '</code> se leería como código de producto <code>' + pluExtraido +
+            '</code> y ' + (esPrecio ? 'precio' : 'cantidad') + ' <code>' + valorFinal + '</code>. ' +
+            'El producto se busca por su campo "Código" = <code>' + pluExtraido + '</code>.';
+    }
+
+    document.querySelectorAll('.campo-formato').forEach(function (el) {
+        el.addEventListener('input', actualizarEjemplo);
+        el.addEventListener('change', actualizarEjemplo);
+    });
+    var campoPrefijoEl = document.getElementById('campoPrefijo');
+    if (campoPrefijoEl) campoPrefijoEl.addEventListener('change', actualizarEjemplo);
+
+    actualizarEjemplo();
+</script>

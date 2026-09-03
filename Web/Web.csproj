@@ -136,6 +136,7 @@
     <Compile Include="Controllers\ComprasController.cs" />
     <Compile Include="Controllers\ElaboradosController.cs" />
     <Compile Include="Controllers\DispositivosSegurosController.cs" />
+    <Compile Include="Controllers\CodigosBarraController.cs" />
     <Compile Include="Controllers\EmpresaController.cs" />
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\FinanzasController.cs" />
@@ -222,6 +223,7 @@
     <Compile Include="Models\CatalogoGlobalTiposProductoVm.cs" />
     <Compile Include="Models\CatalogoGlobalProductosVm.cs" />
     <Compile Include="Models\DispositivosSegurosVm.cs" />
+    <Compile Include="Models\FormatoCodigoBarraVm.cs" />
     <Compile Include="Models\ImportarTiposProductoGlobalesRequest.cs" />
     <Compile Include="Models\ImportarProductosGlobalesRequest.cs" />
     <Compile Include="Models\ParametrosVm.cs" />
@@ -2234,6 +2236,8 @@
     <Content Include="Views\Personas\_AddOrEditPersonaModal.cshtml" />
     <Content Include="Views\Parametros\Index.cshtml" />
     <Content Include="Views\DispositivosSeguros\Index.cshtml" />
+    <Content Include="Views\CodigosBarra\Index.cshtml" />
+    <Content Include="Views\CodigosBarra\Editar.cshtml" />
     <Content Include="Views\Empresa\Index.cshtml" />
     <Content Include="Views\Sucursal\Index.cshtml" />
     <Content Include="Views\Sucursal\Editar.cshtml" />

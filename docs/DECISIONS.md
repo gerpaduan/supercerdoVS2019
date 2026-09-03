@@ -1,6 +1,67 @@
 ﻿# Decisiones de arquitectura
 
-## 2026-08-31 (la mas reciente) - Migracion a ASP.NET Core: spike inicial, primeros resultados reales
+## 2026-09-01 (la mas reciente) - Integracion Mercado Pago Point, Fase 3: alta de Sucursal/Caja/Terminal
+
+**Contexto**: tercera fase de la integracion con Point (ver Fases 1 y 2 mas abajo). Se investigo
+el detalle real de las APIs de Store/POS/Terminal de Mercado Pago (no se habia hecho en la
+investigacion original) y aparecieron 3 columnas que la Fase 1 no habia anticipado:
+`mercadopago_config.mpuserid` (el `user_id` que devuelve el OAuth, lo pide `POST /users/{user_id}/stores`),
+`mercadopago_sucursal_config.mpstoreid` (una Store por Sucursal), y
+`terminales_mercadopago.posid` (el id de la Caja/POS, necesario para despues resolver que
+terminal fisica quedo vinculada). Migracion `20260901-Alter_mercadopago_fase3_columns.sql` --
+`terminalidmp` pasa a admitir NULL (antes NOT NULL): recien se completa despues del
+emparejamiento manual.
+
+**Hallazgo clave de la API real**: el campo que usa la API de cobro (`config.point.terminal_id`
+en `POST /v1/orders`, Fase 5) es el id de HARDWARE de la terminal (formato
+"MARCA_MODELO__SERIAL", impreso atras del equipo), **no** el id numerico de la Caja/POS que
+devuelve `POST /v2/pos`. Por eso `terminales_mercadopago` guarda los dos ids por separado
+(`posid` y `terminalidmp`) -- se completa `terminalidmp` recien despues de que el admin
+empareja la terminal fisica con la app de Mercado Pago (paso manual, sin API,
+"Configurar terminal" del sitio de MP) y CarniSys lo verifica consultando
+`GET /terminals/v1/list?store_id&pos_id`.
+
+**Flujo de alta implementado** (`Web/Controllers/MercadoPagoTerminalesController.cs`, mismo
+patron de permisos que `MercadoPagoController`):
+1. Admin carga calle/número/ciudad/provincia de la Sucursal (no se auto-parsea `Sucursal.Direccion`,
+   es un campo libre -- se prefirio pedirle los datos estructurados al admin en vez de adivinar
+   el split, evita el riesgo de una Store mal cargada en Mercado Pago) -> `POST /users/{user_id}/stores`.
+2. Admin agrega una terminal con un alias -> `POST /v2/pos`, guarda el `posid`, la fila nace
+   `activo=false` sin `terminalidmp`.
+3. Admin empareja la terminal fisica con la app de Mercado Pago (fuera de CarniSys).
+4. Admin presiona "Verificar vinculación" -> `GET /terminals/v1/list`, si hay resultado guarda
+   `terminalidmp` y pasa `activo=true`.
+5. Opcional: "Activar modo integrado" -> `PATCH /terminals/v1/setup` con `operating_mode: PDV`.
+
+**Codigo agregado**: `Negocio/MercadoPagoPointClient.cs` (mismo estilo que `MercadoPagoOAuthClient.cs`:
+`HttpClient` + `JavaScriptSerializer`, Bearer con el access_token de la empresa),
+`Web/Controllers/MercadoPagoTerminalesController.cs`, `Web/Models/MercadoPagoTerminalesVm.cs`,
+`Web/Views/MercadoPagoTerminales/Index.cshtml`, link desde `MercadoPago/Index.cshtml`
+("Gestionar sucursales y terminales").
+
+**Corrección de nombres, no de comportamiento**: `Entidades.MercadoPagoConfig.AccessTokenCifrado`/
+`RefreshTokenCifrado` se renombraron a `AccessToken`/`RefreshToken` -- el mismo objeto se usaba
+para el valor cifrado (tal cual sale de la DB, `DatosPostgres.MercadoPagoConfigPg`) y para el
+valor ya descifrado que devuelve `Negocio.MercadoPagoConfig.ObtenerPorEmpresa()`, y el nombre
+"Cifrado" quedaba engañoso justo en el punto donde se arma el header Authorization real contra
+la API de Mercado Pago (Fase 3 lo hizo evidente). Sin cambio de comportamiento, solo de claridad
+(CLAUDE.md §2.1).
+
+**Nota sobre trabajo concurrente**: en paralelo a esta sesion, otra sesion esta migrando
+`Negocio.csproj`/`Datos.csproj` a SDK-style multi-target (`net472;net10.0`, ver su propia
+entrada mas abajo). `Negocio.csproj` ya no usa `<Compile Include>` explicito (glob automatico);
+se agrego `MercadoPagoPointClient.cs` a la lista de exclusiones de `net10.0` de esa migracion
+(usa `System.Web.Script.Serialization`, no disponible ahi), seams mismo criterio ya aplicado a
+los demas archivos de Mercado Pago. No se tocó nada mas de esa migracion.
+
+**Verificado**: build de `Negocio` (ambos targets, `net472` y `net10.0`) y `Web` sin errores.
+**Pendiente, no verificado**: correr la migracion SQL contra una DB real, y probar el alta de
+Store/POS/Terminal contra la API real de Mercado Pago (necesita estar conectado, Fase 2
+tampoco esta probada end-to-end todavia).
+
+**No se toco**: Fase 4 (webhook), Fase 5 (cambios en el POS) -- siguen sin empezar.
+
+## 2026-08-31 - Migracion a ASP.NET Core: spike inicial, primeros resultados reales
 
 Continuacion del plan de migracion (ver entrada mas abajo de la sesion de analisis). Primer avance real ejecutado (no solo diseñado):
 
@@ -3765,3 +3826,78 @@ completo (2 slices, validado de punta a punta) + `FinanzasController.cs` parcial
 validados; CtaCtePersona/AddOrEditPago/PDF/email bloqueados en espera de la decisión de iText7).
 No se considera "Módulo 7 100% completo" hasta esa decisión -- se documenta como estado real, no
 se fuerza un cierre artificial.
+
+## 2026-09-03 - Motor configurable de códigos de barra internos (EAN-13, prefijo 20-29)
+
+**Qué se implementó**: motor centralizado (`Negocio/BarcodeInterpreter.cs`) que interpreta
+códigos de barra EAN-13 generados por balanzas comerciales (prefijo 20-29), con el formato
+(posición/longitud de PLU y de valor, tipo Precio/Cantidad, decimales) configurable por empresa
+en una tabla nueva (`dbo.FormatosCodigoBarras`/`formatoscodigobarras`, dual SQL Server+Postgres)
+vía una pantalla nueva ("Códigos de barra", `CodigosBarraController`). Detalle completo en
+`docs/03-modulos/codigos-de-barra-internos.md` -- acá solo las decisiones de diseño reales.
+
+**Decisiones tomadas (confirmadas explícitamente por el usuario antes de implementar, por ser
+ambiguas/críticas)**:
+1. El PLU extraído del código interno se busca contra el campo `Corte.Codigo` **ya existente**
+   (no se agregó ningún campo nuevo a `Corte`/`ICorteRepository`/`CortePg`). Alternativa
+   descartada: agregar un campo `CodigoInterno`/`Plu` separado -- mayor alcance (schema change en
+   una entidad ya migrada a dual DB) sin necesidad real, dado que el mecanismo "código genérico"
+   ya existente usa el mismo patrón (un número corto que se busca contra `Codigo`).
+2. Un solo formato activo por `(IdEmpresa, Prefijo)`, `UNIQUE` real en AMBOS motores. A
+   diferencia de `dispositivosseguros` (gap conocido: el `UNIQUE` de SQL Server no se replicó
+   como único real en Postgres), acá sí se replicó -- decisión explícita para no repetir el gap.
+   El campo `Prioridad` se guarda (lo pedía el spec) pero sin efecto funcional todavía.
+
+**Decisiones de diseño no preguntadas (de bajo riesgo, dentro del criterio "reusar, no
+duplicar" ya pedido)**:
+- Checksum EAN server-side: se creó `Utilidades/ValidacionEan.cs` (4ta implementación en el
+  repo -- las 3 existentes, `ProductosController.cs` x2 y `GenerarCodigoBarra.cs`, no se
+  tocaron, fuera de alcance). Se duplicó tal cual en `Utilidades.Core/ValidacionEan.cs` porque
+  `Negocio.csproj` referencia `Utilidades.Core` (no `Utilidades`, que trae WinForms/COM) para su
+  leg `net10.0` -- mismo criterio que el resto de archivos ya duplicados en ese proyecto
+  (`Conexion.cs`, `Db.cs`, `EmpresaContextNulo.cs`, `IEmpresaContext.cs`, `IParametrosContext.cs`,
+  `PasswordSecurity.cs`). Sin esto, `Negocio.csproj` no compila para `net10.0` (`ValidacionEan`
+  no existe en el `Utilidades.Core` que referencia ese leg).
+- El mecanismo "código genérico" (sufijo `G<n>`, precio manual con punto decimal), que vivía
+  duplicado en `VentasController.BuscarProducto` y `PuntosExpendioController.BuscarProductoPOS`,
+  se migró TAMBIÉN al motor centralizado (`BarcodeInterpreter.InterpretarCodigoGenerico`) en la
+  misma pasada -- el pedido original exigía explícitamente que las dos pantallas de POS terminen
+  con la misma lógica de interpretación, y dejar ese mecanismo duplicado al lado del motor nuevo
+  hubiera incumplido eso.
+- Interfaz angosta nueva `Contratos/ICorteBusquedaSimpleRepository.cs` (2 de los 40+ métodos de
+  `ICorteRepository`) en vez de atar `BarcodeInterpreter` a la interfaz completa de `Corte`.
+  `Datos.Corte`/`DatosPostgres.CortePg` ya tenían los 2 métodos con la firma exacta -- el cambio
+  fue de una línea por archivo (agregar la interfaz a la declaración de clase).
+- Campo JSON nuevo y aditivo `cantidadSugerida` en las respuestas de `BuscarProducto`/
+  `BuscarProductoPOS`, más 2 puntos tocados en `Web/Scripts/app/pos-product.js`: sin esto, un
+  código interno con `TipoValor=Cantidad` (peso) hubiera quedado cargado como cantidad=1 en el
+  carrito en vez del peso real extraído del código -- gap real encontrado durante el diseño, no
+  parte del pedido original palabra por palabra pero necesario para que la feature funcione de
+  verdad en el POS.
+
+**Verificado en vivo** (autorización ya vigente para el entorno local, `DataEngine=Postgres`):
+migración `20260901-Create_formatoscodigobarras.sql` corrida contra `carnisys` local con el rol
+`carnisys_admin` (dueño de las tablas, ver `~/hosts/postgres-local.env`) -- `carnisys_user` (rol
+de aplicación) no tiene `CREATE` sobre el schema `public`, como es esperado. `dotnet` CLI no puede
+compilar `Utilidades.csproj` (task `ResolveComReference`, no soportada fuera de MSBuild de
+escritorio) -- se usó `MSBuild.exe` de Visual Studio (mismo binario que ya usa toda la solución) y
+`vstest.console.exe` para los tests, igual criterio que la suite `Negocio.Tests` ya documentada
+arriba. **53/53 tests pasan** (38 preexistentes + 15 nuevos: 9 `BarcodeInterpreterTests`, 6
+`BarcodeInterpreterCodigoGenericoTests`, incluido aislamiento por empresa con 2 formatos
+distintos para el mismo prefijo). `Web` compila limpio. Probado por HTTP contra IIS Express real
+(`https://localhost:44371`, login real): alta de formato vía `/CodigosBarra/Guardar` (persistido
+en Postgres, verificado con `psql`), validación de prefijo duplicado, `/Ventas/BuscarProducto` y
+`/PuntosExpendio/BuscarProductoPOS` con un EAN-13 interno real (prefijo 21, PLU=202, peso
+crudo=500/3 decimales) -- ambos devuelven `cantidadSugerida:0.5` para el mismo producto
+(`idcorte=2`, "PROD SC 01"), confirmando que las dos pantallas de POS interpretan igual. Regresión
+confirmada: un EAN-13 comercial real (prefijo 77, "YERBA LA MERCED DE MONTE") y el mecanismo de
+código genérico (`12.50G1`) siguen resolviendo exactamente igual que antes de este cambio. La fila
+de prueba creada en `formatoscodigobarras` se borró al terminar la verificación.
+
+**Pendiente, no verificado en esta sesión**: el script SQL Server
+(`Datos/DB-Procedures/20260901-Create_FormatosCodigoBarras.sql`) no se corrió contra ninguna
+instancia de SQL Server real (el entorno local usa Postgres) -- correrlo y verificarlo la primera
+vez que se despliegue con `DataEngine=SqlServer` (San Lorenzo o Servidor SM). Tampoco hay tests
+automatizados de `pos-product.js` ni de los controllers Web (no existe infraestructura de test
+para esa capa en el repo, mismo límite ya documentado en otras entradas de esta migración).
+

@@ -99,6 +99,27 @@ namespace Web.Infrastructure
             return new Negocio.CuentaCorriente(repo, empresa, param);
         }
 
+        // BarcodeInterpreter y FormatoCodigoBarras: motor de codigos de barra internos de
+        // balanza (prefijo EAN 20-29), configurables por empresa. Ver docs/DECISIONS.md y
+        // Negocio/BarcodeInterpreter.cs.
+        public static Negocio.BarcodeInterpreter CrearBarcodeInterpreter(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            if (!UsarPostgres) return new Negocio.BarcodeInterpreter(empresa, param);
+
+            var formatoRepo = new DatosPostgres.FormatoCodigoBarrasPg(PgConnString, empresa.IdEmpresa);
+            var personaRepo = new DatosPostgres.PersonaPg(PgConnString, empresa.IdEmpresa);
+            var corteRepo = new DatosPostgres.CortePg(PgConnString, empresa.IdEmpresa, personaRepo);
+            return new Negocio.BarcodeInterpreter(formatoRepo, corteRepo);
+        }
+
+        public static Negocio.FormatoCodigoBarras CrearFormatoCodigoBarras(IEmpresaContext empresa)
+        {
+            if (!UsarPostgres) return new Negocio.FormatoCodigoBarras(empresa);
+
+            var repo = new DatosPostgres.FormatoCodigoBarrasPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.FormatoCodigoBarras(repo);
+        }
+
         public static Negocio.DispositivoSeguro CrearDispositivoSeguro(IEmpresaContext empresa)
         {
             if (!UsarPostgres) return new Negocio.DispositivoSeguro(empresa);
@@ -113,6 +134,43 @@ namespace Web.Infrastructure
 
             var repo = new DatosPostgres.EmpresaPg(PgConnString, empresa.IdEmpresa);
             return new Negocio.Empresa(repo);
+        }
+
+        // Sin modo SQL Server: mercadopago_config/terminales_mercadopago/mercadopago_sucursal_config
+        // nacen directo en Postgres, no hay legado que comparar (ver docs/DECISIONS.md 2026-08-31).
+        // La clave de cifrado de los tokens sale de Web.config, nunca de un literal en el codigo
+        // (CLAUDE.md §1.1) -- Negocio.dll no lee ConfigurationManager directo porque tambien lo
+        // referencia WinForms (Presentacion/), que no tiene este appSetting en su propio config.
+        private static byte[] MercadoPagoClaveCifrado
+        {
+            get
+            {
+                string claveBase64 = ConfigurationManager.AppSettings["MercadoPagoTokenEncryptionKeyBase64"];
+                if (string.IsNullOrWhiteSpace(claveBase64))
+                    throw new InvalidOperationException(
+                        "Falta el appSetting \"MercadoPagoTokenEncryptionKeyBase64\" en Web.config -- generarlo con " +
+                        "Utilidades.MercadoPagoTokenCipher.GenerarClaveBase64() antes de usar la integracion con Mercado Pago.");
+
+                return Convert.FromBase64String(claveBase64);
+            }
+        }
+
+        public static Negocio.MercadoPagoConfig CrearMercadoPagoConfig(IEmpresaContext empresa)
+        {
+            var repo = new DatosPostgres.MercadoPagoConfigPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.MercadoPagoConfig(repo, MercadoPagoClaveCifrado);
+        }
+
+        public static Negocio.TerminalMercadoPago CrearTerminalMercadoPago(IEmpresaContext empresa)
+        {
+            var repo = new DatosPostgres.TerminalMercadoPagoPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.TerminalMercadoPago(repo);
+        }
+
+        public static Negocio.MercadoPagoSucursalConfig CrearMercadoPagoSucursalConfig(IEmpresaContext empresa)
+        {
+            var repo = new DatosPostgres.MercadoPagoSucursalConfigPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.MercadoPagoSucursalConfig(repo);
         }
 
         public static Negocio.OtrasClases CrearOtrasClases(IEmpresaContext empresa, IParametrosContext param = null)
