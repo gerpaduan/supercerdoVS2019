@@ -80,6 +80,7 @@ namespace WebCore.Controllers
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Corte _oCorteN;
+        private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
 
         private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
         {
@@ -104,6 +105,7 @@ namespace WebCore.Controllers
             _oCierreN = new Negocio.CierreCaja(_empresa, _param);
             _oPersonaN = new Negocio.Persona(_empresa, _param);
             _oCorteN = new Negocio.Corte(_empresa, _param);
+            _oBarcodeInterpreter = new Negocio.BarcodeInterpreter(_empresa, _param);
         }
 
         private async System.Threading.Tasks.Task<string> RenderPartialViewToStringAsync(string viewName, object model)
@@ -1476,66 +1478,92 @@ namespace WebCore.Controllers
             }
         }
 
-        // Port de la version ESTABLE de "buscar producto para POS por codigo" -- la que hoy tiene
-        // Web/Controllers/VentasController.BuscarProducto usa Negocio.BarcodeInterpreter, una
-        // clase nueva sin commitear de otra sesion en paralelo (Negocio/BarcodeInterpreter.cs,
-        // Entidades/CasoInterpretacionBarcode.cs, etc.) que ademas hoy NO COMPILA (CS0103,
-        // 'ValidacionEan' no existe). No se porta esa dependencia -- en su lugar se usa la logica
-        // equivalente, ya estable y commiteada, de PuntosExpendioController.BuscarProductoPOS
-        // (codigo generico via sufijo "G<n>" + precio manual, sin el motor de codigos de barra
-        // internos de balanza que agrega BarcodeInterpreter). Cuando esa otra sesion termine y
-        // commitee su trabajo, esto se actualiza para usar la clase compartida real.
+        // Port de VentasController.BuscarProducto (2026-09-04): usa Negocio.BarcodeInterpreter,
+        // la clase compartida (Ventas y Expendio) que centraliza los 2 mecanismos --codigo
+        // generico (sufijo "G<n>"/precio manual) y codigos de barra internos de balanza
+        // (EAN-13 prefijo 20-29, formato configurable por empresa)-- que hasta ahora vivian
+        // duplicados en los 2 controllers. Portada por la sesion en paralelo que la desarrollo
+        // (ver docs/DECISIONS.md), incorporada aca reemplazando la version simplificada del
+        // 2026-09-03 (que usaba la logica vieja de PuntosExpendioController.BuscarProductoPOS,
+        // sin el motor de codigos internos, porque en ese momento BarcodeInterpreter todavia no
+        // compilaba). Misma logica que el original, sin cambios.
         [HttpGet]
         public IActionResult BuscarProducto(string codigo, bool ingresoCantidadX = false)
         {
-            if (string.IsNullOrWhiteSpace(codigo))
-                return Json(new { success = false, message = "Código inválido." });
-
-            codigo = codigo.Replace(",", ".");
-
-            if (codigo.Split('.').Length - 1 > 1)
-                return Json(new { success = false, message = "Formato de código inválido." });
-
-            var matchGenerico = System.Text.RegularExpressions.Regex.Match(codigo, @"^[^G]*G(\d+)[^G]*$");
-            long numeroSumaGen = matchGenerico.Success ? int.Parse(matchGenerico.Groups[1].Value) : 0;
-
-            const int cantMinDigEan8 = 8;
-            bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDigEan8);
-
-            long codigoBuscado;
-            if (esGenerico)
+            try
             {
-                codigoBuscado = _param.GetLong(ParamKeys.CodProdGenerico, 0L) + numeroSumaGen;
+                if (string.IsNullOrWhiteSpace(codigo))
+                    return Json(new { error = "Código vacío" });
+
+                codigo = codigo.Replace(",", ".");
+
+                int idEmpresaSesion = _usuarioActual.IdEmpresa;
+
+                var generico = _oBarcodeInterpreter.InterpretarCodigoGenerico(
+                    codigo, ingresoCantidadX, _param.GetLong(ParamKeys.CodProdGenerico, 0L));
+
+                if (generico.FormatoInvalido)
+                    return Json(new { error = "Formato de código inválido" });
+
+                Entidades.Corte corte;
+                decimal? cantidadSugerida = null;
+
+                if (generico.EsGenerico)
+                {
+                    corte = idEmpresaSesion > 0
+                        ? _oCorteN.findCorteByCodigoEmpresa(generico.CodigoProducto, idEmpresaSesion, false)
+                        : _oCorteN.findCorteByCodigo(generico.CodigoProducto, false);
+
+                    if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
+                        return Json(new { success = false, message = "No existe  el código genérico" });
+
+                    corte.PrecioKg = generico.PrecioManual.Value;
+                }
+                else
+                {
+                    var interno = _oBarcodeInterpreter.Interpretar(codigo, idEmpresaSesion);
+
+                    if (interno.EsCodigoInterno)
+                    {
+                        if (interno.Caso == Entidades.CasoInterpretacionBarcode.EstructuraInvalida)
+                            return Json(new { success = false, message = interno.MensajeDiagnostico });
+
+                        if (interno.Caso == Entidades.CasoInterpretacionBarcode.ProductoNoEncontrado)
+                            return Json(new { success = false, message = "Código inexistente" });
+
+                        corte = interno.Producto;
+                        if (interno.TipoValor == Entidades.TipoValorCodigoBarras.Precio)
+                            corte.PrecioKg = (float)interno.Valor.Value;
+                        else
+                            cantidadSugerida = interno.Valor;
+                    }
+                    else
+                    {
+                        long codigoProducto = Convert.ToInt64(codigo);
+                        corte = idEmpresaSesion > 0
+                            ? _oCorteN.findCorteByCodigoEmpresa(codigoProducto, idEmpresaSesion, false)
+                            : _oCorteN.findCorteByCodigo(codigoProducto, false);
+
+                        if (corte == null || (idEmpresaSesion > 0 && corte.IdEmpresa != idEmpresaSesion))
+                            return Json(new { success = false, message = "Código inexistente" });
+                    }
+                }
+
+                return Json(new
+                {
+                    id = corte.IdCorte,
+                    nombre = corte.CorteDesc,
+                    precioKg = Math.Round((double)corte.PrecioKg, 2),
+                    precioOriginal = Math.Round((double)corte.PrecioKg, 2),
+                    codigo = corte.codigo,
+                    pesable = corte.Pesable,
+                    cantidadSugerida
+                });
             }
-            else if (!long.TryParse(codigo, out codigoBuscado) || codigoBuscado <= 0)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "Código inválido." });
+                return Json(new { success = false, message = ex.Message });
             }
-
-            var corte = _oCorteN.findCorteByCodigoEmpresa(codigoBuscado, _usuarioActual.IdEmpresa, false);
-            if (corte == null || corte.IdCorte <= 0)
-            {
-                string mensajeNoEncontrado = esGenerico ? "No existe el código genérico." : "No se encontró el producto.";
-                return Json(new { success = false, message = mensajeNoEncontrado });
-            }
-
-            if (esGenerico)
-            {
-                int indexG = codigo.IndexOf('G');
-                string precioTexto = indexG != -1 ? codigo.Substring(0, indexG) : codigo;
-                corte.PrecioKg = float.Parse(precioTexto, CultureInfo.InvariantCulture);
-            }
-
-            return Json(new
-            {
-                id = corte.IdCorte,
-                codigo = corte.Codigo.ToString(),
-                nombre = !string.IsNullOrWhiteSpace(corte.corte) ? corte.corte : corte.CorteDesc,
-                precioKg = corte.PrecioKg,
-                precioOriginal = corte.PrecioKg,
-                pesable = corte.Pesable,
-                balanza = corte.Pesable
-            });
         }
 
         private List<Entidades.LineaVenta> ConstruirLineasVentaDesdeRequest(FinalizarVentaRequest request)
