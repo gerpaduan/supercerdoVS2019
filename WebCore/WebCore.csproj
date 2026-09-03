@@ -18,6 +18,11 @@
          built-in) para preservar exactamente la misma garantia de concurrencia ya verificada en
          produccion, sin reescribir un mecanismo de seguridad. -->
     <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
+    <!-- Reemplazo de iTextSharp (no corre en .NET Core) para generacion de PDF: QuestPDF,
+         elegido por el usuario en vez de iText7 AGPL (que exige codigo abierto para uso como
+         servicio de red, ver docs/10-migracion-aspnet-core/README.md). License Community: gratis
+         para el porte de CarniSys. -->
+    <PackageReference Include="QuestPDF" Version="2026.8.0" />
   </ItemGroup>
 
   <PropertyGroup>

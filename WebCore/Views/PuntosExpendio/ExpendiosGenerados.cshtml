@@ -1,9 +1,10 @@
 @using System.Collections.Generic
 @*
-    Boton "Imprimir" de cada card (abria _ModalPostPuntoExpendio.cshtml -- ticket/PDF/email) se
-    excluye a proposito: depende de ImprimirTicket/ImprimirPdf/EnviarComprobanteEmailExpendio, no
-    portados en este slice (ver cabecera de PuntosExpendioController.cs). El resto de la pantalla
-    (listado/filtro de solo lectura) queda igual al original.
+    Botones "PDF"/"Email" de cada card (agregados 2026-09-03, ver docs/DECISIONS.md) reemplazan al
+    boton unico "Imprimir" original (que abria _ModalPostPuntoExpendio.cshtml con 3 opciones:
+    ticket/PDF/email). Solo el ticket ESC/POS sigue sin portar (depende del agente de impresion
+    local, sin relacion con el bloqueante de PDF que ya se resolvio con QuestPDF) -- ver cabecera
+    de PuntosExpendioController.cs.
 *@
 @{
     var fechaHoy = ViewBag.FechaHoy as string ?? "";
@@ -326,6 +327,10 @@
                     + '<div class="expendio-card-cliente">' + escapeHtml(item.identificacionExpendio || 'Consumidor final') + '</div>'
                     + '<div class="expendio-card-meta">' + meta + '</div>'
                     + '</div>'
+                    + '<div>'
+                    + '<a class="btn btn-sm btn-outline-secondary mr-1" href="' + escapeHtml(item.pdfUrl || '#') + '" target="_blank">PDF</a>'
+                    + '<button type="button" class="btn btn-sm btn-outline-primary btnEmailExpendioGenerado" data-email-url="' + escapeHtml(item.emailUrl || '') + '" data-id-expendio="' + escapeHtml(item.idExpendio || 0) + '">Email</button>'
+                    + '</div>'
                     + '</div>'
                     + '<div class="expendio-card-body">'
                     + renderDetalle(item.lineas || [])
@@ -451,6 +456,40 @@
 
             $('#btnBuscarExpendiosGenerados').on('click', function () {
                 loadData();
+            });
+
+            // Flujo minimo de envio de comprobante por email (sin modal rico -- ver
+            // docs/10-migracion-aspnet-core/README.md): trae asunto/mensaje por defecto,
+            // pide el email destino con prompt() y postea directo.
+            $(document).on('click', '.btnEmailExpendioGenerado', function () {
+                var $btn = $(this);
+                var emailUrl = $btn.data('email-url');
+                var idExpendio = parseInt($btn.data('id-expendio') || 0, 10) || 0;
+                if (!emailUrl || !idExpendio) return;
+
+                $.getJSON(emailUrl).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        showMessage('warning', (resp && resp.msg) || 'No se pudieron obtener los datos del email.');
+                        return;
+                    }
+
+                    var destino = window.prompt('Email destino:', resp.email || '');
+                    if (!destino) return;
+
+                    $.post('@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")', {
+                        idExpendio: idExpendio,
+                        emailDestino: destino,
+                        asunto: resp.asunto,
+                        mensaje: resp.mensaje
+                    }).done(function (envioResp) {
+                        showMessage(envioResp && envioResp.ok ? 'success' : 'danger',
+                            (envioResp && envioResp.msg) || 'Error desconocido enviando el email.');
+                    }).fail(function () {
+                        showMessage('danger', 'No se pudo enviar el email.');
+                    });
+                }).fail(function () {
+                    showMessage('danger', 'No se pudieron obtener los datos del email.');
+                });
             });
 
             $('#filtroExpendiosFechaDesde, #filtroExpendiosFechaHasta').on('change', function () {

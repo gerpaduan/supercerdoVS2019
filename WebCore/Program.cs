@@ -1,3 +1,8 @@
+// QuestPDF (reemplazo de iTextSharp para generacion de PDF, ver docs/10-migracion-aspnet-core/
+// README.md): la license Community es gratis para el porte de CarniSys, pero hay que declararla
+// una vez al arrancar o cada generacion de PDF tira excepcion.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
