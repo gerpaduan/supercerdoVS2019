@@ -2,6 +2,34 @@
 
 Plan completo y decisiones de diseño en `docs/DECISIONS.md` (entradas 2026-08-31 y 2026-09-01). Este archivo es el tracker vivo de avance módulo por módulo — se actualiza en cada sesión que toque la migración.
 
+## ⚠️ HALLAZGO DE SEGURIDAD CRÍTICO — sin resolver (2026-09-03)
+
+Portando el mini-spike de AFIP (ver más abajo) se encontró que **los certificados AFIP reales
+(`.pfx`, con clave privada) están commiteados en el historial de git**, a pesar de que
+`.gitignore` los excluye desde algún commit posterior:
+
+```
+Web/AFIP/20306210786/certif-prod.pfx   -- CUIT 20306210786, certificado de PRODUCCIÓN
+Web/AFIP/20261593832/certif-prod.pfx
+Web/AFIP/20261593832/HernanAfip_AliasCertif.pfx
+```
+
+`.gitignore` solo bloquea *cambios nuevos* — no borra lo que ya está en el historial. Cualquiera
+con acceso al repo (o a un clon/backup que haya existido en algún momento) tiene la clave privada
+para firmar facturación electrónica en nombre de esa CUIT ante AFIP. Esto **no lo causó esta
+sesión** — ya estaba así — pero se encontró trabajando en el mini-spike y hay que decidir:
+
+1. **Rotar el certificado en AFIP** (generar un par de claves nuevo, revocar el actual) — el
+   comprometido debe darse por quemado independientemente de qué se haga con el repo.
+2. **Purgar el historial de git** (`git filter-repo` o BFG) — operación destructiva que reescribe
+   hashes de commits y requiere `push --force`; coordinar con la sesión paralela que está
+   trabajando sobre esta misma rama antes de tocar el historial.
+
+No se tomó ninguna acción sobre esto en esta sesión (ni rotación ni reescritura de historial) —
+queda pendiente de decisión explícita, CLAUDE.md §4. `docs/DECISIONS.md` no se pudo actualizar en
+esta sesión (tiene cambios sin commitear de la sesión paralela de Mercado Pago) — este hallazgo
+debe pasar a una entrada de `DECISIONS.md` en cuanto esa sesión libere el archivo.
+
 ## Spike inicial — CERRADO (2026-08-31 / 2026-09-01)
 
 Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y corre con `Negocio`/`Datos`/`Entidades`/`Contratos`/`Utilidades.Core` conectados; `Presentacion` (WinForms) y `Web` (MVC5) siguen funcionando sin cambios; juez de paridad (diff de HTML) ejecutado contra una vista real (`AuditoriaLogin`) con resultado idéntico; corrida verificada bajo Linux real (WSL2 + Ubuntu 26.04 + .NET 10 nativo), Kestrel sirviendo y ejecutando la cadena completa hasta el intento de conexión SQL.
@@ -24,7 +52,7 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 5 | Compras y abastecimiento | validado | 8 de 10 acciones portadas y validadas, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
 | 7 | Caja y tesorería | en progreso | Slice 1 (CajasAbiertas) portado y verificado con datos reales (solo lectura) -- ver detalle abajo |
-| 8 | Ventas y POS | en progreso | Slice 1 (Ventas, solo lectura) + Slice 2 (PuntosExpendio, listado + sectores) portados y verificados con datos reales, incluida una escritura real — ver detalle abajo |
+| 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (facturación manual) verificado contra producción real — ver detalle abajo |
 
 ## Módulo 1 — Administración de sistema
 
@@ -323,6 +351,41 @@ Controller original: `Web/Controllers/PuntosExpendioController.cs` -- 1286 líne
 **Verificado con datos reales**: `ExpendiosGenerados`/`ExpendiosGeneradosData` (expendios reales de mayo 2026, sector "Carniceria", productos y totales reales). `Sectores` (listado real de sectores con su estado "en uso"). **Escritura real probada de punta a punta** (`GuardarSector`/`EliminarSector`, vía POST real con antiforgery token, verificado con `sqlcmd` contra la tabla `Sectores`): se creó el sector de prueba "PRUEBA MODULO 8 SLICE" (`idEmpresa=1`, confirmado en la base), se verificó que aparecía en el listado, y se eliminó -- round-trip limpio, sin dejar rastro (mismo patrón que el alta/baja de tipo de egreso de Módulo 7 slice 2).
 
 **No verificado en este turno**: `GuardarSector` en modo edición (`sectorOriginal` no vacío) -- solo se probó el alta; la validación `existeSector` (nombre duplicado) tampoco se ejercitó en vivo.
+
+**Mini-spike AFIP (2026-09-03) — CERRADO, verificado contra producción real.**
+
+Máxima incertidumbre técnica del programa completo (señalada como tal desde el plan original). Autorizado explícitamente por el usuario: "que funcione tal cual lo hace web, ya están las credenciales para la prueba, usar montos menores a 20". Resultado: **funciona, probado con una factura real emitida contra AFIP producción** (no homologación).
+
+*Problema*: `AFIP.csproj` (proyecto clásico, `net472`) usa 2 proxies SOAP generados por `wsdl.exe`/Visual Studio (`Web References\WSAA\Reference.cs`, `Web References\WSFEHOMO\Reference.cs`), ambos heredan de `System.Web.Services.Protocols.SoapHttpClientProtocol` -- no existe en .NET Core. `AFIP/LoginClass.cs` (login WSAA vía `X509Certificate2` + `SignedCms`) ya era portable tal cual, confirmado.
+
+*Solución*: `AFIP.csproj` convertido a SDK-style multi-target `net472;net10.0` (mismo patrón que `Datos`/`Negocio`). Para `net10.0`:
+1. `dotnet-svcutil` (instalado como global tool) regeneró los 2 clientes SOAP contra los mismos `.wsdl` ya versionados (`AFIP/ServiceReferenceCore/WSFEServiceReference.cs`, `WSAAServiceReference.cs`, namespaces `AFIP.WSFECore`/`AFIP.WSAACore`) -- cliente WCF real (`System.ServiceModel.Http`/`Primitives` 8.1.2), no una reescritura manual de SOAP a mano (demasiado riesgo para algo que factura ante el fisco).
+2. Dos shims de compatibilidad (`AFIP/ServiceReferenceCore/Ws{fe,aa}Compat.cs`, compilan solo en `net10.0`) reproducen la API síncrona vieja (`Service.Url`/`ClientCertificates`/`FECompUltimoAutorizado`/`FECAESolicitar`, `WSAA.LoginCMSService.loginCms`) envolviendo el cliente WCF nuevo -- así **`GenerarFacturaService.cs` y `LoginClass.cs` compilan sin cambios de lógica en los dos TFM** (mismo código fuente, mismo cálculo fiscal, para `Web` clásico en producción y `WebCore`). Único ajuste real (no de comportamiento): 2 líneas que calificaban `AFIP.WSFEHOMO.AlicIva` explícito pasaron a `AlicIva` sin calificar (no se puede aliasear un nombre calificado en C#, solo un identificador simple) y `MonCotizSpecified` (flag "Specified" que el proxy viejo generaba y el cliente nuevo no) quedó detrás de `#if NET472`.
+3. `System.Security.Cryptography.Xml` 8.0.2 (transitiva de `System.ServiceModel.*`) tenía una vulnerabilidad alta conocida (NU1903) -- se pineó `10.0.11` (parcheada) como `PackageReference` directa.
+4. `GenerarFacturaService`'s constructor ganó un parámetro opcional `basePathOverride` (default `null` = comportamiento idéntico al original, que usa `AppDomain.CurrentDomain.BaseDirectory` -- la raíz del sitio para `Web` clásico bajo IIS). `WebCore` lo necesita porque `AppDomain.CurrentDomain.BaseDirectory` ahí es la carpeta de build (`bin/Debug/net10.0`), no el content root -- `VentasController` ahora inyecta `IWebHostEnvironment` y pasa `_env.ContentRootPath`.
+5. **Certificado**: en vez de duplicar el `.pfx` en una segunda ubicación (ver el hallazgo de seguridad al principio de este archivo -- ya son un problema de por sí), `WebCore/AFIP` es una **junction de NTFS** (`New-Item -ItemType Junction`, no un symlink, no requiere admin) apuntando a `Web/AFIP` -- una sola copia real en disco. Tanto `/Web/AFIP/` como `/WebCore/AFIP/` están en `.gitignore`.
+
+*Puerto en `WebCore/Controllers/VentasController.cs`*: 4 acciones + 2 helpers del flujo "facturar sin venta" (la única vía de facturación que no depende de POS, elegida a propósito): `NuevaFacturaSinVenta`, `CrearVentaManualParaFactura`, `GenerarFactura`, `LimpiarLineasVentaManual`, `BuildFacturaDTO`, `MapDtoToFactura` -- lógica de cálculo fiscal sin cambios respecto al original. `NuevaFacturaSinVenta` devuelve JSON (no la vista rica `_FacturaElectronica.cshtml`, 828 líneas -- **no portada en este slice**, fuera de alcance del mini-spike; queda como tarea de UI aparte). Se agregó `PreviewFacturaDto(idVenta)`, un helper GET nuevo (no existe en el original) que recalcula `BuildFacturaDTO` contra la venta real ya creada -- necesario porque el DTO que arma `NuevaFacturaSinVenta` se computa contra una `Persona` en blanco (mismo comportamiento que el original), así que `CodTipoCbteAfip`/`TipoDocAfip`/etc. quedan mal si se usan tal cual para una venta con cliente real; la UI rica original resuelve esto con JS al seleccionar el cliente, que este slice no reimplementa.
+
+`WebCore/Models/DTO/FacturaElectronicaDto.cs` (nuevo) porta `FacturaElectronicaDTO`/`LineaVentaDto`. `AFIP.csproj` agregado como `ProjectReference` de `WebCore.csproj`.
+
+**Verificado contra AFIP producción real, de punta a punta:**
+- Intento 1 (control negativo real, no buscado): venta manual con cliente = CUIT del propio emisor (20306210786) → AFIP rechazó con error real y específico (`10069: Campo DocNro no puede ser igual al del emisor`) -- prueba que WSAA login + WSFE `FECompUltimoAutorizado` + `FECAESolicitar` funcionan de punta a punta contra producción (si no funcionaran, no habría un error *de negocio* de AFIP, habría una excepción de transporte/protocolo). Sin efecto: un rechazo no consume numeración.
+- Intento 2 (éxito real): venta manual, cliente "JUAN PEREZ" (Consumidor Final, persona de prueba ya existente en la base), $15 (bajo el límite de $20 pedido), 10,5% IVA → **Factura B real emitida**: puntoVenta 00007, número 00056299, **CAE 86361319370755**, vto CAE 2026-09-13, persistida en `FacturaElectronica.id=111`. Verificado con `sqlcmd` contra la base real.
+- Limpieza: las 3 ventas manuales de prueba (1735 fallida por formato, 1736 rechazada por AFIP, 1737 exitosa) tuvieron su línea temporal borrada vía `LimpiarLineasVentaManual` (mismo mecanismo del original) -- no queda venta con datos de prueba visibles en listados. La factura con CAE real (id=111) **no se borra ni se puede borrar**: es un documento fiscal real ya reportado a AFIP.
+
+**Bug real encontrado y evitado, no del código sino de mi propio test**: `CrearVentaManualParaFactura` recibe `montoTotal`/`alicuotaIva` como form-urlencoded, bindeados con la cultura del servidor (`es-AR`, coma decimal) -- exactamente el mismo comportamiento que el original (`Web/Scripts/app/factura-electronica.js` arma los valores a mano con coma, `toServerDec()`, por esta razón). Postear `"15.00"` (punto) bajo esa cultura lo interpretó como `1500` (punto = separador de miles). Detectado con `PreviewFacturaDto` antes de tocar AFIP, corregido a formato coma, sin impacto real.
+
+**No portado en este slice** (documentado en la cabecera de `VentasController.cs`): `ProbarLoginAfip`, `GenerarNotaCredito`, `CerrarVentaSinFacturar` (no las necesita el flujo "sin venta"); toda la generación de PDF/ticket con QR AFIP (bloqueante de iTextSharp/QuestPDF, ver más abajo); envío de comprobante por email; el flujo de facturación normal acoplado a POS (`GenerarFactura` desde una venta real de POS, no manual); la vista rica `_FacturaElectronica.cshtml`.
+
+## PDF (QuestPDF) y envío de email — decisiones tomadas, implementación pendiente
+
+Autorizado por el usuario en la misma respuesta que destrabó AFIP:
+
+- **PDF**: `iTextSharp` (el que usa `Web` clásico) no corre en .NET Core; su sucesor `iText7` es AGPL con obligación real de código abierto para uso como servicio de red. Se eligió **QuestPDF** (license Community, gratis para el porte de CarniSys) como reemplazo -- **no instalado todavía**, ningún PDF (Finanzas, Ventas, PuntosExpendio, Productos/etiquetas) está portado aún.
+- **Email real**: autorizado "igual que lo hace Web clásico". `Utilidades.Core/SmtpMailHelper.cs` (nuevo) porta `SendMail`/`IsValidEmail` de `Web/Helpers/SmtpMailHelper.cs` (usa `System.Net.Mail`, portable sin cambios) -- **agregado pero todavía sin conectar a ningún controller**. `Web/Config/appSettings.secrets.config` (SMTP real) solo tiene valores placeholder en este ambiente de desarrollo local, así que el envío real no se pudo probar en vivo todavía ni en `Web` clásico ni en `WebCore` -- falta credencial real para ese paso, no es un bloqueante de código.
+
+Pendiente para una próxima sesión: agregar el paquete QuestPDF, portar `GenerarPdfPuntoExpendio`/`GenerarPdfComprobanteBytes`/`GenerarPdfDetalleVentaBytes`/los PDF de `FinanzasController`, y conectar `ObtenerDatosEmailComprobante`/`EnviarComprobanteEmail` (Ventas), `ObtenerDatosEmailExpendio`/`EnviarComprobanteEmailExpendio` (PuntosExpendio), `EnviarCuentaCorrienteEmail`/`EnviarComprobantePagoEmail` (Finanzas).
 
 ## Juez de paridad — validado con control negativo
 

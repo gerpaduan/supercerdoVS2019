@@ -32,6 +32,14 @@
 // PerformanceInstrumentation.LogServerEvent (llamado en el DetalleVenta original) no se porta:
 // no existe en WebCore/Utilidades.Core (ver docs/DECISIONS.md, spike de Utilidades.Core), y
 // ningun otro controller de WebCore lo usa.
+//
+// AGREGADO (mini-spike AFIP, ver docs/DECISIONS.md): NuevaFacturaSinVenta/CrearVentaManualParaFactura/
+// GenerarFactura/LimpiarLineasVentaManual -- el flujo de "facturar sin venta" del original, elegido
+// a proposito porque es la unica via de facturacion que NO depende de POS (no portado). Usa
+// AFIP.GenerarFacturaService tal cual (mismo codigo fuente que Web clasico, ver AFIP.csproj
+// multi-target net472;net10.0) contra PRODUCCION real de AFIP -- BuildFacturaDTO/MapDtoToFactura
+// portados sin cambios de logica fiscal. El resto de las acciones AFIP (GenerarNotaCredito,
+// ProbarLoginAfip, CerrarVentaSinFacturar) siguen sin portar, no las necesita este flujo.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -45,6 +53,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Utilidades;
 using WebCore.Models;
+using WebCore.Models.DTO;
 
 namespace WebCore.Controllers
 {
@@ -61,12 +70,15 @@ namespace WebCore.Controllers
 
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
+        private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
         private readonly IEmpresaContext _empresa = new StubEmpresaContext();
         private readonly IParametrosContext _param;
 
         private readonly Negocio.Venta _oVentaN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.CierreCaja _oCierreN;
+        private readonly Negocio.Persona _oPersonaN;
+        private readonly Negocio.Corte _oCorteN;
 
         private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
         {
@@ -77,10 +89,11 @@ namespace WebCore.Controllers
             Nombre = "ger"
         };
 
-        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider)
+        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
+            _env = env;
 
             _param = new Negocio.Parametros(_empresa);
             _param.Reload();
@@ -88,6 +101,8 @@ namespace WebCore.Controllers
             _oVentaN = new Negocio.Venta(_empresa, _param);
             _oSucursalN = new Negocio.Sucursal(_empresa, _param);
             _oCierreN = new Negocio.CierreCaja(_empresa, _param);
+            _oPersonaN = new Negocio.Persona(_empresa, _param);
+            _oCorteN = new Negocio.Corte(_empresa, _param);
         }
 
         private async System.Threading.Tasks.Task<string> RenderPartialViewToStringAsync(string viewName, object model)
@@ -397,6 +412,388 @@ namespace WebCore.Controllers
             };
 
             return View("~/Views/Ventas/DetalleFactura.cshtml", model);
+        }
+
+        // GET /Ventas/NuevaFacturaSinVenta -- arma el DTO "en blanco" para el formulario de
+        // facturacion manual (sin venta de productos real detras, ver docs/DECISIONS.md). Devuelve
+        // JSON, no una vista: la vista rica original (_FacturaElectronica.cshtml, 828 lineas) NO se
+        // porta en este slice (fuera de alcance del mini-spike AFIP, ver docs/DECISIONS.md) -- este
+        // endpoint sirve para verificar el armado del DTO y como base de una UI futura.
+        [HttpGet]
+        public IActionResult NuevaFacturaSinVenta()
+        {
+            var user = _usuarioActual;
+            var sucursal = _oSucursalN.findById(user.IdSucursal);
+            if (sucursal == null)
+                return Json(new { ok = false, msg = "Sucursal inválida" });
+
+            var ventaVacia = new Entidades.Venta
+            {
+                IdVenta = 0,
+                Sucursal = sucursal,
+                Persona = new Entidades.Persona(),
+                LineasVenta = new List<Entidades.LineaVenta>(),
+                FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString(),
+                Observaciones = "",
+                FechaVenta = DateTime.Now
+            };
+
+            var dto = BuildFacturaDTO(ventaVacia, new Entidades.FacturaElectronica());
+            dto.IdVenta = 0;
+            dto.NroDocAfip = "";
+            dto.RazonSocialAFIP = "";
+            dto.CondicionIvaAFIP = "Consumidor Final";
+            dto.DomicilioAFIP = "";
+            dto.AgruparItemUnitario = true;
+
+            var alicuotasDt = _oCorteN.obtenerAlicuotasIva(false);
+            var alicuotas = alicuotasDt.AsEnumerable()
+                .Select(r => new { idIva = Convert.ToInt32(r["idIva"]), iva = Convert.ToDouble(r["iva"]) })
+                .ToList();
+
+            return Json(new
+            {
+                ok = true,
+                dto,
+                sucursalNombre = !string.IsNullOrWhiteSpace(sucursal.SucursalNombre) ? sucursal.SucursalNombre : sucursal.sucursal,
+                alicuotas
+            });
+        }
+
+        // POST /Ventas/CrearVentaManualParaFactura -- crea una venta real minima (Efectivo, sin
+        // cta.cte, 1 linea con el total ingresado a mano) para poder facturarla con el circuito
+        // normal de GenerarFactura sin tocarlo. La linea se borra despues, una vez que la factura
+        // ya tiene CAE (ver LimpiarLineasVentaManual).
+        [HttpPost]
+        public IActionResult CrearVentaManualParaFactura(int idPersona, decimal montoTotal, int idAlicuotaIva, float alicuotaIva)
+        {
+            try
+            {
+                if (idPersona <= 0)
+                    return Json(new { ok = false, msg = "Seleccioná un cliente." });
+
+                if (montoTotal <= 0)
+                    return Json(new { ok = false, msg = "El monto total debe ser mayor a cero." });
+
+                var user = _usuarioActual;
+                var persona = _oPersonaN.findById(idPersona);
+                if (persona == null)
+                    return Json(new { ok = false, msg = "Cliente inválido" });
+
+                var sucursal = _oSucursalN.findById(user.IdSucursal);
+                if (sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida" });
+
+                var productoPlaceholder = _oCorteN.ObtenerCortesPorEmpresa(user.IdEmpresa, false).FirstOrDefault();
+                if (productoPlaceholder == null)
+                    return Json(new { ok = false, msg = "No hay ningún producto cargado para esta empresa." });
+
+                var venta = new Entidades.Venta
+                {
+                    IdVenta = 0,
+                    Persona = persona,
+                    Sucursal = sucursal,
+                    TipoVenta = "Caja",
+                    FechaVenta = DateTime.Now,
+                    Turno = "",
+                    DiaFestivo = "",
+                    Observaciones = "Factura manual sin venta asociada",
+                    NroRemito = "",
+                    FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString(),
+                    EnCtaCte = false,
+                    TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
+                    Vendedor = user,
+                    LineasVenta = new List<Entidades.LineaVenta>
+                    {
+                        new Entidades.LineaVenta
+                        {
+                            Corte = productoPlaceholder,
+                            KgsTotalCalculado = 1,
+                            CantKg = 1,
+                            PrecioKg = (float)montoTotal,
+                            Bonificacion = 0,
+                            Estado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado),
+                            IndexAnulado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado),
+                            PesoBalanza = false,
+                            IdExpendio = 0
+                        }
+                    }
+                };
+
+                int idVenta = _oVentaN.agregarVenta(venta);
+
+                _oVentaN.actualizarAlicuotaLineaVenta(venta.LineasVenta[0].IdLineaVenta, idAlicuotaIva, alicuotaIva);
+
+                return Json(new { ok = true, idVenta });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error creando la venta manual: " + ex.Message });
+            }
+        }
+
+        // POST /Ventas/GenerarFactura -- llama a AFIP.GenerarFacturaService (produccion real, ver
+        // docs/DECISIONS.md) y persiste el resultado. Logica identica a Web clasico: MapDtoToFactura
+        // + AFIP.GenerarFacturaService.GenerarFactura, sin cambios.
+        // El original postea esto como form-urlencoded (Web/Scripts/app/factura-electronica.js,
+        // $form.serialize()), no JSON -- FacturaElectronicaDto se bindea por defecto desde los
+        // campos del form (mismo binder implicito que MVC5), sin [FromBody].
+        [HttpPost]
+        public IActionResult GenerarFactura(FacturaElectronicaDto dto)
+        {
+            try
+            {
+                if (dto == null)
+                    return Json(new { ok = false, msg = "No se recibieron datos de la factura." });
+
+                var factura = MapDtoToFactura(dto);
+
+                if (factura.Venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                int idFactExistente = _oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, false);
+                if (idFactExistente > 0)
+                {
+                    var fExist = _oVentaN.getFactuElecById(idFactExistente);
+                    return Json(new
+                    {
+                        ok = true,
+                        already = true,
+                        facturaId = idFactExistente,
+                        nro = fExist?.NroCbteAfip,
+                        cae = fExist?.CAE1,
+                        mensaje = "Ya existe una factura asociada a esta venta"
+                    });
+                }
+
+                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta, _env.ContentRootPath);
+                var afipRes = afipSvc.GenerarFactura(factura, false);
+
+                if (!afipRes.Ok)
+                {
+                    try
+                    {
+                        var factErr = new Entidades.FacturaElectronica
+                        {
+                            IdVenta = factura.Venta.IdVenta,
+                            Error = true,
+                            MensajeError = afipRes.Mensaje,
+                            FechaError = DateTime.Now
+                        };
+                        _oVentaN.addOrEditFactuElec(factErr);
+                    }
+                    catch
+                    {
+                        // no bloquear la respuesta por fallo al guardar el error
+                    }
+
+                    return Json(new { ok = false, msg = "AFIP: " + afipRes.Mensaje });
+                }
+
+                try
+                {
+                    _oVentaN.addOrEditFactuElec(afipRes.Factura);
+                }
+                catch (Exception saveEx)
+                {
+                    return Json(new { ok = false, msg = "Error guardando factura en BD: " + saveEx.Message });
+                }
+
+                int idGuardado = _oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, false);
+                var facturaGuardada = idGuardado > 0 ? _oVentaN.getFactuElecById(idGuardado) : factura;
+
+                return Json(new
+                {
+                    ok = true,
+                    facturaId = idGuardado,
+                    nro = facturaGuardada?.NroCbteAfip,
+                    cae = facturaGuardada?.CAE1,
+                    mensaje = afipRes.Mensaje ?? "Factura generada correctamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error generando factura", error = ex.Message });
+            }
+        }
+
+        // POST /Ventas/LimpiarLineasVentaManual -- borra la linea temporal de una venta manual,
+        // una vez que la factura ya fue emitida (tiene CAE).
+        [HttpPost]
+        public IActionResult LimpiarLineasVentaManual(int idVenta)
+        {
+            try
+            {
+                if (idVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta inválida" });
+
+                var venta = _oVentaN.getVentaById(idVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                if (venta.EnCtaCte || venta.FormaPago != Entidades.Venta.formaPagoEnum.Efectivo.ToString())
+                    return Json(new { ok = false, msg = "Esta venta no corresponde a una factura manual." });
+
+                _oVentaN.eliminarLineasVenta(idVenta);
+
+                return Json(new { ok = true });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error limpiando la venta manual: " + ex.Message });
+            }
+        }
+
+        // GET /Ventas/PreviewFacturaDto?idVenta=X -- helper de verificacion para probar el flujo de
+        // facturacion manual de punta a punta sin portar la vista rica _FacturaElectronica.cshtml
+        // (828 lineas, fuera de alcance de este slice, ver docs/DECISIONS.md). Devuelve el mismo
+        // BuildFacturaDTO que arma la UI real, ya computado contra la Persona real de la venta --
+        // asi el caller (curl/Postman) puede tomar estos valores tal cual y postearlos a
+        // GenerarFactura, en vez de adivinar CodTipoCbteAfip/TipoDocAfip/etc a mano.
+        [HttpGet]
+        public IActionResult PreviewFacturaDto(int idVenta)
+        {
+            var venta = _oVentaN.getVentaById(idVenta);
+            if (venta == null)
+                return Json(new { ok = false, msg = "Venta no encontrada" });
+
+            var dto = BuildFacturaDTO(venta, new Entidades.FacturaElectronica());
+            return Json(new { ok = true, dto });
+        }
+
+        private FacturaElectronicaDto BuildFacturaDTO(Entidades.Venta venta, Entidades.FacturaElectronica factuElec)
+        {
+            var dto = new FacturaElectronicaDto();
+            bool facturaYaGenerada = factuElec != null && factuElec.Id > 0;
+
+            dto.IdVenta = venta.IdVenta;
+            dto.IdFactura = factuElec.Id;
+
+            dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip == 0 ?
+                factuElec.getCodTipoCbteAFIP(venta.Sucursal.Empresa.EsRRII, venta.Persona.EsRRII(venta.Persona.IdIva), false) :
+                factuElec.CodTipoCbteAfip;
+            dto.DescTipoCbteAfip = factuElec.DescTipoCbteAfip;
+            dto.LetraCbte = factuElec.getLetraId_TipoCbte(dto.CodTipoCbteAfip).ToString();
+            dto.NroCbteAfip = factuElec.NroCbteAfip;
+            dto.FechaEmisionAfip = factuElec.Id > 0
+                ? factuElec.FechaEmisionAfip
+                : venta.FechaVenta;
+
+            dto.PtoVtaAfip = venta.Sucursal.CodPuntoVentaAfip.ToString();
+            dto.EmisorRazonSocial = venta.Sucursal.Empresa.RazonSocialAfip;
+            dto.EmisorCUIT = venta.Sucursal.Empresa.Cuit.ToString();
+            dto.EmisorCondicionIVA = venta.Sucursal.Empresa.CondicionIVA;
+            dto.EmisorDomicilio = venta.Sucursal.Direccion;
+            dto.EmisorIngresosBrutos = venta.Sucursal.Empresa.Iibb.ToString();
+            dto.EmisorInicioActividad = venta.Sucursal.Empresa.InicioActividad.ToString("dd/MM/yyyy");
+
+            dto.TipoDocAfip = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.TipoDocAfip)
+                ? factuElec.TipoDocAfip
+                : (venta.Persona.IdIva == Entidades.FacturaElectronica.codCF_IvaAfip ?
+                    Entidades.FacturaElectronica.codTipoDoc_SinIdentif : Entidades.FacturaElectronica.codTipoDoc_CUIT).ToString();
+            dto.NroDocAfip = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.NroDocAfip)
+                ? factuElec.NroDocAfip
+                : venta.Persona.Cuit?.Replace("-", "");
+            dto.RazonSocialAFIP = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.RazonSocialAFIP)
+                ? factuElec.RazonSocialAFIP
+                : venta.Persona.razonSocial;
+            dto.CondicionIvaAFIP = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.CondicionIvaAFIP)
+                ? factuElec.CondicionIvaAFIP
+                : venta.Persona.Iva;
+            dto.DomicilioAFIP = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.DomicilioAFIP)
+                ? factuElec.DomicilioAFIP
+                : $"{venta.Persona.Domicilio} - {venta.Persona.Ciudad}";
+            dto.Whatsapp = venta.Persona.Telefono;
+
+            dto.CondicionVenta = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.CondicionVenta)
+                ? factuElec.CondicionVenta
+                : dto.CondicionVenta;
+            dto.FormaPago = facturaYaGenerada && !string.IsNullOrWhiteSpace(factuElec.FormaPago)
+                ? factuElec.FormaPago
+                : venta.FormaPago + (venta.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
+            dto.PorcentajeFacturacion = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.PorcentajeFacturacion)
+                : 100m;
+            dto.DescItemUnitario = facturaYaGenerada ? (factuElec.DescItemUnitario ?? "") : "";
+            dto.AgruparItemUnitario = !string.IsNullOrWhiteSpace(dto.DescItemUnitario);
+            dto.Observaciones = facturaYaGenerada
+                ? (factuElec.Observaciones ?? "")
+                : (venta.Observaciones ?? "");
+
+            foreach (var l in venta.LineasVenta)
+            {
+                dto.Detalle.Add(new LineaVentaDto
+                {
+                    IdLineaVenta = l.IdLineaVenta,
+                    IdCorte = l.Corte.idCorte,
+                    Codigo = l.Corte.codigo,
+                    Descripcion = l.Corte.corte,
+                    CantKg = l.CantKg,
+                    PrecioKg = l.PrecioKg,
+                    Importe = (float)Math.Round((l.CantKg * l.PrecioKg), 2),
+                    IdAlicuotaIva = l.IdAlicuotaIva,
+                    AlicuotaIva = l.AlicuotaIva,
+                    Bonificacion = l.Bonificacion,
+                    Estado = l.Estado,
+                    Balanza = l.PesoBalanza,
+                    IndexAnulado = l.IndexAnulado,
+                });
+            }
+
+            dto.ImporteTotal = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.ImporteTotal)
+                : (decimal)venta.LineasVenta.Sum(l => l.ImporteConIva());
+            dto.ImporteNetoGravado = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.ImporteNetoGravado)
+                : (decimal)venta.LineasVenta.Sum(l => l.ImporteNeto());
+            dto.Iva = facturaYaGenerada
+                ? Convert.ToDecimal(factuElec.Iva)
+                : (decimal)venta.LineasVenta.Sum(l => l.ImporteIva());
+
+            dto.CAE = factuElec.CAE1;
+            dto.FecVtoCAE = factuElec.FecVtoCAE;
+
+            return dto;
+        }
+
+        private FacturaElectronica MapDtoToFactura(FacturaElectronicaDto dto)
+        {
+            return new FacturaElectronica
+            {
+                Id = dto.IdFactura,
+                IdVenta = dto.IdVenta,
+                Venta = _oVentaN.getVentaById(dto.IdVenta),
+                PtoVtaAfip = dto.PtoVtaAfip,
+                CodTipoCbteAfip = dto.CodTipoCbteAfip,
+                DescTipoCbteAfip = dto.DescTipoCbteAfip,
+                NroCbteAfip = dto.NroCbteAfip,
+                FechaEmisionAfip = dto.FechaEmisionAfip,
+
+                TipoDocAfip = dto.TipoDocAfip,
+                NroDocAfip = dto.NroDocAfip,
+                RazonSocialAFIP = dto.RazonSocialAFIP,
+                CondicionIvaAFIP = dto.CondicionIvaAFIP,
+                DomicilioAFIP = dto.DomicilioAFIP,
+
+                CondicionVenta = dto.CondicionVenta,
+                FormaPago = dto.FormaPago,
+                DescItemUnitario = dto.AgruparItemUnitario ? (dto.DescItemUnitario ?? "") : "",
+                Observaciones = dto.Observaciones ?? "",
+
+                PorcentajeFacturacion = (float)dto.PorcentajeFacturacion,
+                ImporteNetoGravado = (float)dto.ImporteNetoGravado,
+                Iva = (float)dto.Iva,
+                ImporteTotal = (float)dto.ImporteTotal,
+
+                CAE1 = dto.CAE,
+                FecVtoCAE = dto.FecVtoCAE,
+
+                Creado = DateTime.Now,
+                Error = false
+            };
         }
 
         private Entidades.CierreCaja ObtenerCierreMisVentas(Entidades.Usuario user, bool desdePos, int idCierre)

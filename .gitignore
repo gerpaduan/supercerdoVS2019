@@ -90,5 +90,9 @@ bld/
 **/tools/Resharper/**/*.DotSettings.user
 **/Tools/Resharper/**/*.DotSettings.user
 
-# Ignorar carpeta AFIP dentro de Web
+# Ignorar carpeta AFIP dentro de Web (certificados AFIP reales, con clave privada)
 /Web/AFIP/
+
+# Idem para WebCore -- mismo certificado, referenciado via junction local (ver docs/DECISIONS.md,
+# mini-spike AFIP). NUNCA debe trackearse una segunda copia del certificado.
+/WebCore/AFIP/

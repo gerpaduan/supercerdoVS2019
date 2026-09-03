@@ -32,7 +32,12 @@ namespace AFIP
         private readonly string cuit;
         private readonly int ptoVtaAfip;
 
-        public GenerarFacturaService(Entidades.Venta venta)
+        // basePathOverride: opcional, solo lo usa WebCore (ver VentasController.GenerarFactura).
+        // AppDomain.CurrentDomain.BaseDirectory es el root del sitio para el Web clasico (asi
+        // corre IIS las apps ASP.NET), pero para WebCore (Kestrel self-hosted) es la carpeta de
+        // build (bin/Debug/net10.0), no el content root del proyecto -- ahi no esta AFIP/<cuit>/.
+        // Sin override, comportamiento identico al original (net472 no cambia).
+        public GenerarFacturaService(Entidades.Venta venta, string basePathOverride = null)
         {
             if (venta == null) throw new ArgumentNullException(nameof(venta));
             if (venta.Sucursal == null) throw new ArgumentException("Venta sin Sucursal", nameof(venta));
@@ -46,8 +51,12 @@ namespace AFIP
             cuit = venta.Sucursal.Empresa.Cuit.ToString();
             ptoVtaAfip = venta.Sucursal.CodPuntoVentaAfip;
 
+            string appBaseDirectory = string.IsNullOrWhiteSpace(basePathOverride)
+                ? AppDomain.CurrentDomain.BaseDirectory
+                : basePathOverride;
+
             string basePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
+                appBaseDirectory,
                 "AFIP",
                 cuit
             );
@@ -141,7 +150,13 @@ namespace AFIP
 
             det.MonId = "PES";
             det.MonCotiz = 1;
+#if NET472
+            // El proxy ASMX viejo (net472) genera un flag "Specified" por cada elemento XSD
+            // opcional para decidir si lo serializa -- el cliente WCF nuevo (net10.0, dotnet-svcutil)
+            // no lo genera para este campo, MonCotiz ya viaja siempre. Sin esto en net472, MonCotiz
+            // no se manda en el XML aunque se haya asignado el valor arriba.
             det.MonCotizSpecified = true;
+#endif
 
             det.ImpNeto = 0;
             det.ImpIVA = 0;
@@ -167,7 +182,7 @@ namespace AFIP
             // ===============================
             if (informaIva && lineas.Any(l => l.AlicuotaIva > 0))
             {
-                var ivaWsList = new List<AFIP.WSFEHOMO.AlicIva>();
+                var ivaWsList = new List<AlicIva>();
 
                 var grupos = lineas
                     .Where(l => l.AlicuotaIva > 0)
@@ -193,7 +208,7 @@ namespace AFIP
                     ivaAcum += iva;
 
                     // WSFE
-                    ivaWsList.Add(new AFIP.WSFEHOMO.AlicIva
+                    ivaWsList.Add(new AlicIva
                     {
                         Id = (int)Math.Round(g.Key.IdAlicuotaIva, 0, MidpointRounding.AwayFromZero),
                         BaseImp = baseImp,
