@@ -1,0 +1,97 @@
+@*
+    Batch 6 (post-venta basico, ver docs/10-migracion-aspnet-core/PLAN-POS-UI.md) -- version
+    reducida y deliberadamente distinta de Web/Views/Ventas/_ModalPostVenta.cshtml (198 lineas:
+    ticket ESC/POS con agente local, factura AFIP automatica, WhatsApp, configurar impresora).
+    Alcance de este batch: imprimir (PDF via Imprimir?documento=detalle, ya portado, el navegador
+    hace de "agente" con su propio dialogo de impresion) + email (ObtenerDatosEmailComprobante/
+    EnviarComprobanteEmail, ya portados, mismo patron ya usado en Finanzas/CtaCtePersona y
+    PuntosExpendio/ExpendiosGenerados). Factura AFIP automatica, WhatsApp, agente de impresion
+    local y ticket ESC/POS quedan para el batch 7 o una iteracion futura -- ver header de
+    Ventas/POS.cshtml.
+*@
+<div class="modal fade" id="modalPostVentaBasico" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-check-circle mr-2"></i>Venta completada
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-1" id="pvbResumenVenta">Venta registrada correctamente.</p>
+                <h3 class="mb-3 font-weight-bold text-success" id="pvbTotalVenta"></h3>
+
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <a class="btn btn-outline-primary" id="btnPvbImprimir" target="_blank" rel="noopener">
+                        <i class="fas fa-print mr-1"></i>Imprimir comprobante
+                    </a>
+                    <button type="button" class="btn btn-outline-success" id="btnPvbEmail">
+                        <i class="fas fa-envelope mr-1"></i>Enviar por email
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnPvbContinuar">
+                        <i class="fas fa-cash-register mr-1"></i>Nueva venta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEmailPostVentaPOS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Enviar comprobante por email</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="pvbEmailDestino">Email destino</label>
+                    <input type="email" class="form-control" id="pvbEmailDestino" maxlength="200" placeholder="cliente@dominio.com">
+                </div>
+                <div class="form-group">
+                    <label for="pvbEmailAsunto">Asunto</label>
+                    <input type="text" class="form-control" id="pvbEmailAsunto" maxlength="200">
+                </div>
+                <div class="form-group mb-0">
+                    <label for="pvbEmailMensaje">Mensaje</label>
+                    <textarea class="form-control" id="pvbEmailMensaje" rows="5"></textarea>
+                </div>
+                <div class="alert alert-danger d-none mb-0 mt-2" id="pvbEmailError"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" type="button" id="btnPvbConfirmarEmail">
+                    <i class="fas fa-paper-plane mr-1"></i>Enviar email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-postventa-compact {
+        font-size: .86rem;
+    }
+
+    .modal-postventa-compact .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-postventa-compact label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .modal-postventa-compact .form-control,
+    .modal-postventa-compact .btn {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .5rem;
+    }
+</style>

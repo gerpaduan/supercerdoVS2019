@@ -500,6 +500,10 @@ namespace Negocio
         {
             return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
         }
+        public DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal)
+        {
+            return oVentaD.obtenerExpendiosAvanzado(fechaDesde, fechaHasta, idSucursal);
+        }
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
             return oVentaD.obtenerExpendiosPorUsuario(idSucursal, idVendedor, top, fechaDesde, fechaHasta);

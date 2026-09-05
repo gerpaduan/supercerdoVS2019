@@ -1,0 +1,209 @@
+@*
+    Port simplificado de Web/Views/Shared/_LayoutPOS.cshtml para la UI de POS (batch 1+2, ver
+    docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Diferencias deliberadas respecto al original,
+    todas por la misma razon (WebCore no tiene sistema de login/Session real, mismo criterio que
+    el resto de la migracion):
+      - Sin el redirect a Login si no hay usuario en Session (no existe ese Session).
+      - Sin el dropdown de usuario/logout/"Cambiar clave"/modal de sesion expirada/KeepAlive.
+      - Marca de la topbar fija ("CarniSys") en vez de leer Empresa.NombreFantasia de Session.
+    Scripts: solo los que necesita el batch 1+2 (jquery/bootstrap, SweetAlert2, pos-guard.js). Se
+    van agregando mas a medida que avanzan los batches (forma-pago.js en el 3, balanza en el 4,
+    etc.) -- no se precargan de una sola vez para no arrastrar dependencias de features que todavia
+    no existen en esta vista.
+*@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>CarniSys | Punto de Venta</title>
+
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem("carnisys-theme") === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        html.dark-mode, html.dark-mode body {
+            background: #0f1724 !important;
+            color: rgba(255,255,255,.92);
+        }
+
+        html.dark-mode {
+            color-scheme: dark;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @* Shim de compatibilidad Bootstrap 4 -> 5, ver docs/DECISIONS.md (2026-09-04) y
+       WebCore/wwwroot/Content/css/bootstrap4-compat.css para el detalle. *@
+    <link rel="stylesheet" href="~/Content/css/bootstrap4-compat.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Content/css/pos.css" asp-append-version="true" />
+    <!-- UI de Expendios (ver docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md): reglas
+         propias ".pos-expendio-*"/"#modalSectoresPuntoExpendio", no pisan nada de Ventas/POS. -->
+    <link rel="stylesheet" href="~/Content/css/pos-expendio.css" asp-append-version="true" />
+
+    <style>
+        .pos-layout-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .pos-layout-brand .pos-brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff3e8 0%, #ffe0c1 100%);
+            color: #b45309;
+            border: 1px solid rgba(180, 83, 9, .16);
+        }
+
+        .pos-layout-brand .pos-empresa {
+            font-weight: 800;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .topbar-icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 !important;
+        }
+
+        .topbar-icon-btn:hover {
+            background: rgba(255,255,255,.14);
+            text-decoration: none;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        #pos-layout-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        nav.card-header {
+            flex: 0 0 auto;
+        }
+
+        #pos-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            padding: 0;
+            background-color: #f8f9fc;
+        }
+
+        body.dark-mode #pos-container {
+            background-color: #1d293a !important;
+        }
+
+        @@media (min-width: 992px) {
+            html, body {
+                overflow: hidden !important;
+            }
+
+            #pos-container {
+                overflow: hidden !important;
+            }
+        }
+
+        @@media (max-width: 991.98px) {
+            html, body {
+                overflow: auto !important;
+            }
+
+            #pos-container {
+                overflow: visible !important;
+            }
+        }
+    </style>
+</head>
+<body id="page-top">
+    <div id="pos-layout-content">
+        <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(180deg, #3a4e67 0%, #243446 100%);">
+            <div class="pos-layout-brand">
+                <div class="pos-brand-mark">
+                    <i class="fas fa-store-alt"></i>
+                </div>
+                <div class="pos-empresa">CarniSys</div>
+            </div>
+
+            <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
+                <i id="icoTheme" class="fas fa-moon text-light"></i>
+            </a>
+        </nav>
+
+        <div id="pos-container">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js?v=1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
+    <script src="~/Scripts/app/pos-guard.js?v=4"></script>
+
+    <script>
+        window.buscarProductoUrl = '@Url.Action("BuscarProducto", "Ventas")';
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        (function () {
+            const STORAGE_KEY = "carnisys-theme";
+
+            function setTheme(mode) {
+                const isDark = (mode === "dark");
+                document.documentElement.classList.toggle("dark-mode", isDark);
+                document.body.classList.toggle("dark-mode", isDark);
+
+                const ico = document.getElementById("icoTheme");
+                if (ico) ico.className = isDark ? "fas fa-sun" : "fas fa-moon";
+
+                try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) { }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                setTheme(localStorage.getItem(STORAGE_KEY) || "light");
+
+                const btn = document.getElementById("btnToggleTheme");
+                if (btn) {
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        setTheme((localStorage.getItem(STORAGE_KEY) || "light") === "dark" ? "light" : "dark");
+                    });
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

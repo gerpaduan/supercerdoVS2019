@@ -1,4 +1,4 @@
-// Port PARCIAL de Web/Controllers/PersonasController.cs (ver docs/DECISIONS.md, migracion
+﻿// Port PARCIAL de Web/Controllers/PersonasController.cs (ver docs/DECISIONS.md, migracion
 // ASP.NET Core, Modulo 2 -- Clientes y proveedores). Se porta el CRUD completo (Index, Nuevo,
 // Editar, Guardar, Buscar, Listar, Obtener, PersonaModal, GuardarPersonaModal) MENOS las 2
 // acciones que dependen de AFIP (BuscarPadronAfip, BuscarPadronAfipAjax -- el modulo AFIP todavia
@@ -53,10 +53,10 @@ namespace WebCore.Controllers
             // para resolver ParamKeys.IdConsumidorFinal -- Web/Controllers/BaseController.cs lo arma
             // igual (NegocioFactory.CrearParametros(empresa) + Reload()) y lo cachea en
             // Session["PARAM_CTX"]; aca no hay sesion todavia, se crea uno nuevo por request.
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oPersonaN = new Negocio.Persona(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
         }
 
         [HttpGet]

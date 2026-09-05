@@ -1,0 +1,92 @@
+@*
+    UI de Expendios (ver docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md) -- version
+    reducida y deliberada de Web/Views/PuntosExpendio/_ModalPostPuntoExpendio.cshtml (146 lineas:
+    ticket ESC/POS con agente local, WhatsApp, configurar impresora). Mismo patron ya usado en
+    Ventas/_ModalPostVentaBasico.cshtml (batch 6 del POS de Ventas): solo PDF (ImprimirPdf, ya
+    portado) y Email (ObtenerDatosEmailExpendio/EnviarComprobanteEmailExpendio, ya portados).
+*@
+<div class="modal fade" id="modalPostPuntoExpendioBasico" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-check-circle mr-2"></i>Punto de expendio guardado
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3" id="ppebResumen">Expendio registrado correctamente.</p>
+
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <a class="btn btn-outline-primary" id="btnPpebPdf" target="_blank" rel="noopener">
+                        <i class="fas fa-file-pdf mr-1"></i>Ver / imprimir PDF
+                    </a>
+                    <button type="button" class="btn btn-outline-success" id="btnPpebEmail">
+                        <i class="fas fa-envelope mr-1"></i>Enviar por email
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnPpebContinuar">
+                        <i class="fas fa-store mr-1"></i>Nuevo expendio
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEmailPostPuntoExpendio" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Enviar comprobante por email</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ppebEmailDestino">Email destino</label>
+                    <input type="email" class="form-control" id="ppebEmailDestino" maxlength="200" placeholder="cliente@dominio.com">
+                </div>
+                <div class="form-group">
+                    <label for="ppebEmailAsunto">Asunto</label>
+                    <input type="text" class="form-control" id="ppebEmailAsunto" maxlength="200">
+                </div>
+                <div class="form-group mb-0">
+                    <label for="ppebEmailMensaje">Mensaje</label>
+                    <textarea class="form-control" id="ppebEmailMensaje" rows="5"></textarea>
+                </div>
+                <div class="alert alert-danger d-none mb-0 mt-2" id="ppebEmailError"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" type="button" id="btnPpebConfirmarEmail">
+                    <i class="fas fa-paper-plane mr-1"></i>Enviar email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-postventa-compact {
+        font-size: .86rem;
+    }
+
+    .modal-postventa-compact .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-postventa-compact label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .modal-postventa-compact .form-control,
+    .modal-postventa-compact .btn {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .5rem;
+    }
+</style>

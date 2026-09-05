@@ -1,4 +1,4 @@
-// Port de Web/Controllers/ReportesController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+﻿// Port de Web/Controllers/ReportesController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Es el ultimo controller de este modulo, y el mas grande
 // (1676 lineas en el original) -- de solo lectura (ninguna accion escribe datos), asi que no hace
 // falta prueba de escritura en vivo, solo verificacion de que cada tipo de reporte trae datos reales.
@@ -58,15 +58,15 @@ namespace WebCore.Controllers
 
         public ReportesController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oCorteN = new Negocio.Corte(_empresa, _param);
-            _oCompraN = new Negocio.Compra(_empresa, _param);
-            _oVentaN = new Negocio.Venta(_empresa, _param);
-            _oCierreN = new Negocio.CierreCaja(_empresa, _param);
-            _oCuentaCorrienteN = new Negocio.CuentaCorriente(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oCompraN = WebCore.Infrastructure.NegocioFactory.CrearCompra(_empresa, _param);
+            _oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
+            _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
+            _oCuentaCorrienteN = WebCore.Infrastructure.NegocioFactory.CrearCuentaCorriente(_empresa, _param);
         }
 
         private int ObtenerIdEmpresaSesion()

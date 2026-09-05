@@ -32,6 +32,12 @@
                     var atributosModal = modoModal
                         ? $"data-venta-id=\"{venta.IdVenta}\""
                         : $"onclick=\"location.href='{detalleUrl}'\"";
+                    // Mismo formato que BuildFacturaDTO/_TicketHTML.cshtml del original ("Debito |
+                    // Efectivo") para que el listado no oculte que la venta se cobro combinando
+                    // efectivo con otro medio -- gap encontrado por el usuario probando el batch 3.
+                    string formaPagoTexto = venta.PagoMixtoEfectivo > 0
+                        ? venta.FormaPago + " | Efectivo"
+                        : venta.FormaPago;
 
                     <li class="list-group-item venta-item @(modoModal ? "venta-item-modal" : "")"
                         data-forma-pago="@venta.FormaPago.ToString()"
@@ -70,7 +76,7 @@
 
                         <div class="venta-info">
                             <div class="venta-tipo-persona font-weight-bold">
-                                @venta.TipoComprobante - @venta.FormaPago
+                                @venta.TipoComprobante - @formaPagoTexto
                             </div>
                             @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
                             {

@@ -1,0 +1,136 @@
+@* Port literal de Web/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml (UI de Expendios, ver
+   docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md). F6 (Mis expendios) y F9 (Buscar
+   cliente) quedan en la lista tal cual el original -- no estan portados en este MVP, pero
+   Scripts/app/pos-help.js (ya portado, sin cambios) degrada solo esos casos a un evento sin
+   listener / boton disabled, mismo criterio ya usado en la Ayuda del POS de Ventas. *@
+<div class="modal fade pos-help-modal" id="modalAyudaPOS" tabindex="-1" role="dialog" aria-labelledby="modalAyudaPuntoExpendioTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title pos-help-title" id="modalAyudaPuntoExpendioTitle">
+                    <i class="fas fa-keyboard mr-2"></i>Ayuda y atajos
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row pos-help-grid">
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="Home">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Foco en código</span>
+                                <span class="badge badge-primary pos-help-key">Inicio</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-success btn-block pos-help-action" data-accion="End">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Finalizar registro</span>
+                                <span class="badge badge-success pos-help-key">Fin</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F6">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Mis expendios</span>
+                                <span class="badge badge-primary pos-help-key">F6</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F9">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Buscar cliente</span>
+                                <span class="badge badge-primary pos-help-key">F9</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="AvPag">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Foco en cliente / identificacion</span>
+                                <span class="badge badge-primary pos-help-key">AvPag</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F10">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Buscar producto</span>
+                                <span class="badge badge-primary pos-help-key">F10</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-info btn-block pos-help-action">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Activar o desactivar balanza</span>
+                                <span class="badge badge-info pos-help-key">*</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted">Esc cierra la ayuda.</small>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pos-help-modal .modal-dialog {
+        max-width: 820px;
+    }
+
+    .pos-help-modal .modal-header {
+        background: #f8f9fa;
+    }
+
+    .pos-help-title {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .pos-help-grid .col-12 {
+        margin-bottom: .75rem;
+    }
+
+    .pos-help-action {
+        text-align: left;
+        min-height: 62px;
+        border-radius: 10px;
+    }
+
+    .pos-help-action .pos-help-action-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        width: 100%;
+    }
+
+    .pos-help-action .pos-help-label {
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .pos-help-action .pos-help-key {
+        white-space: nowrap;
+        font-size: .82rem;
+        padding: .4rem .55rem;
+        border-radius: .5rem;
+    }
+</style>

@@ -1,3 +1,6 @@
+// Port literal de Web/Scripts/carnisys.balanza.js (batch 4, ver
+// docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Cliente HTTP puro del agente local de balanza
+// (Carnisys.Balanza.Agent, http://127.0.0.1:5100) -- sin cambios de logica.
 (function (window) {
     'use strict';
 

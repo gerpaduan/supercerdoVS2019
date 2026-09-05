@@ -1,0 +1,1199 @@
+@*
+    Port de Web/Views/Ventas/POS.cshtml (6226 lineas) -- docs/10-migracion-aspnet-core/PLAN-POS-UI.md.
+    Venta SIEMPRE nueva -- ver VentasController.POS() para el diseno sin Session.
+
+    Batch 1+2 (esqueleto + carrito, verificados en navegador por el usuario 2026-09-04): topbar,
+    carrito, buscador+teclado+panel de producto, modal "Linea de venta".
+
+    Batch 3 (forma de pago + Finalizar, verificado en navegador 2026-09-04): modal "Forma de pago"
+    (_FormaPagoModal.cshtml) + Scripts/app/forma-pago.js, ambos portados SIN cambios de logica --
+    ya apuntaban a FinalizarVenta/ModificarVenta, portados y verificados con datos reales en
+    PLAN-POS.md. Diferencia deliberada: mostrarModalPostVenta() se sobreescribe mas abajo con un
+    Swal simple + reload en vez de abrir el modal real de post-venta (modal-postventa.js, 1298
+    lineas -- ticket/email/AFIP -- no portado todavia, llega en el batch 6). "Pago Mixto" se
+    desacoplo de la preseleccion de forma de pago (cambio deliberado pedido por el usuario, ver
+    docs/DECISIONS.md).
+
+    Batch 4 (balanza fisica, verificado en navegador con balanza real 2026-09-04): Scripts/
+    carnisys.balanza.js + Scripts/app/pos-balanza.js, ambos portados SIN cambios -- degradan solos
+    a modo manual si el agente local (127.0.0.1:5100) no responde. El "*" del teclado virtual
+    alterna manual/balanza. `#modalPesable` del original NO se porta: confirmado codigo muerto,
+    ningun JS lo referencia.
+
+    Batch 5 (expendios asociados, agregado 2026-09-04): _ModalExpendiosPOS.cshtml +
+    _ModalObservacionesExpendio.cshtml + Scripts/app/ventas-expendios-pos.js, portados SIN cambios
+    -- ya apuntaban a BuscarExpendiosPOS/ObtenerExpendioPOS, portados y verificados con datos
+    reales en PLAN-POS.md. El modal solo se abre con el atajo AvPag (PageDown) -- se porto ese
+    atajo puntual (sin el resto del dispatcher de hotkeys F2-F8, que llega en el batch 7) porque
+    el original tampoco tiene un boton visible para esto (confirmado con grep).
+
+    Batch 6 (post-venta basico, agregado 2026-09-04): _ModalPostVentaBasico.cshtml (nuevo,
+    version reducida y deliberada de _ModalPostVenta.cshtml -- ver su propio header). Imprimir
+    (PDF via el endpoint Imprimir ya portado, `documento=detalle`, se abre en pestaña nueva y el
+    navegador hace de "agente" con su propio dialogo de impresion) y email (ObtenerDatosEmail
+    Comprobante/EnviarComprobanteEmail, tambien ya portados de un slice anterior -- el header de
+    este mismo archivo tenia una nota vieja diciendo que faltaban, ya no es asi). Pitido al
+    finalizar agregado a pedido del usuario.
+
+    Batch 7 (cola final, EN PROGRESO, agregado 2026-09-04): _ModalComentarioVenta.cshtml +
+    Scripts/app/pos-comment.js, portados SIN cambios. Boton "Comentario" agregado en la fila de
+    zona-botones.
+
+    Batch 7, iteraciones 2-5 (2026-09-04, detalle completo en PLAN-POS-UI.md, no duplicado aca):
+      - Iter. 2: Ayuda (F1, _ModalAyudaPOS.cshtml + pos-help.js) y Cancelar Venta
+        (guardarVentaAnuladaDirectamente). window.api.venta.pos agregado (evita el fallback de
+        forma-pago.js navegando a "undefined" cuando omitirPostVenta=true).
+      - Iter. 3: Scanner de camara (wiring nomas, los archivos ya estaban portados) y Calculadora
+        de billetes (F3, nuevo _CalculadoraBilletesModal.cshtml + 2 endpoints en HomeController.cs
+        con QuestPDF -- de paso arregla el boton "Calcular efectivo" de Cajas, que estaba roto).
+      - Iter. 4: Duplicar POS (multi-instancia), recortado sin login de operador de produccion.
+      - Iter. 5: Edicion de venta existente (idVentaEditar), MVP sin soloFormaPago. Permisos
+        bypaseados a proposito -- pendiente de portar reglas reales + "usuario produccion" cuando
+        haya login/sesion real, ver docs/10-migracion-aspnet-core/gaps.md. Fix de seguimiento el
+        mismo dia: window.POSFormaPagoActual (gap desde el batch 3, no de esta iteracion) ahora
+        se inicializa desde el Model -- el modal de Finalizar marca la forma de pago actual de la
+        venta y precarga los montos si era pago mixto.
+      - Iter. 6: soloFormaPago ("Cambiar Forma de Pago"), reusa la mecanica de la iteracion 5.
+
+    Excluido a proposito (ver PLAN-POS-UI.md/gaps.md para el detalle y el resto de los batches):
+      - Cambiar/buscar cliente (boton F9/CF quedan visibles pero sin JS todavia -- el cliente
+        de la venta es siempre Consumidor Final).
+      - Login de operador de produccion + permisos reales de edicion (bloqueado por falta de
+        login/sesion real, ver gaps.md).
+      - Factura AFIP automatica desde post-venta, WhatsApp, ticket ESC/POS con agente de
+        impresion local, configurar impresora.
+    El CSS (WebCore/wwwroot/Content/css/pos.css) es un port literal completo -- varias reglas
+    todavia no tienen HTML/JS correspondiente en este batch, son inertes hasta que lleguen.
+*@
+@model Entidades.Venta
+
+@{
+    ViewBag.Title = "CarniSys | Punto de Venta";
+    Layout = "~/Views/Shared/_LayoutPOS.cshtml";
+
+    bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
+    int idSucursalPOS = ViewBag.IdSucursalPOS != null ? (int)ViewBag.IdSucursalPOS : 0;
+    int idUsuarioPOS = ViewBag.IdUsuarioPOS != null ? (int)ViewBag.IdUsuarioPOS : 0;
+    string sucursalNombrePOS = ViewBag.SucursalNombre as string ?? "";
+    string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
+    string posInstanceId = ViewBag.PosInstanceId as string ?? "";
+    bool esEdicionVenta = ViewBag.EsEdicionVenta != null && (bool)ViewBag.EsEdicionVenta;
+    int idVentaEditar = ViewBag.IdVentaEditar != null ? (int)ViewBag.IdVentaEditar : 0;
+    bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
+
+    // Precarga de POSState en modo edicion -- port de Web/Views/Ventas/POS.cshtml:24-63 (batch 7,
+    // iteracion 5). "anulado"/"indexAnulado" replican EXACTAMENTE la logica del original
+    // (incluida la comparacion IdLineaVenta contra el diccionario agrupado por IndexAnulado) --
+    // no se "corrigio" nada raro que se haya notado ahi, paridad de comportamiento (CLAUDE.md §11.1).
+    var lineasActivasEdicion = (Model != null && Model.LineasVenta != null)
+        ? Model.LineasVenta.Where(l => !Entidades.LineaVenta.esAnulado(l.Estado)).ToList()
+        : new List<Entidades.LineaVenta>();
+    var lineasAnuladasPorLineaEdicion = (Model != null && Model.LineasVenta != null)
+        ? Model.LineasVenta
+            .Where(l => Entidades.LineaVenta.esAnulado(l.Estado) && l.IndexAnulado > 0)
+            .GroupBy(l => l.IndexAnulado)
+            .ToDictionary(g => g.Key, g => g.First())
+        : new Dictionary<int, Entidades.LineaVenta>();
+    var lineasEdicionPos = new List<object>();
+    var listaExpendiosEdicionPos = new List<int>();
+    if (esEdicionVenta)
+    {
+        var indexLinea = 1;
+        foreach (var linea in lineasActivasEdicion)
+        {
+            if (linea.IdExpendio > 0 && !listaExpendiosEdicionPos.Contains(linea.IdExpendio))
+            {
+                listaExpendiosEdicionPos.Add(linea.IdExpendio);
+            }
+
+            lineasEdicionPos.Add(new
+            {
+                index = indexLinea++,
+                producto = linea.Corte.CorteDesc,
+                codigo = linea.Corte.codigo,
+                cant = Math.Abs(linea.CantKg).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
+                precio = "$ " + linea.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                precioOriginal = "$ " + linea.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                subtotal = "$ " + (Math.Abs(linea.CantKg) * linea.PrecioKg).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                bonificacion = linea.Bonificacion,
+                anulado = lineasAnuladasPorLineaEdicion.ContainsKey(linea.IdLineaVenta),
+                indexAnulado = -1,
+                balanza = linea.PesoBalanza,
+                pesable = linea.Corte.Pesable,
+                idExpendio = linea.IdExpendio,
+                esHistorica = true
+            });
+        }
+    }
+}
+
+@if (cajaAbierta && Model != null)
+{
+    <div class="pos-page">
+
+        <!-- TOP POS -->
+        <div class="pos-topbar row no-gutters align-items-stretch mb-2">
+
+            <div class="col-12 col-lg-6 order-2 order-lg-1 d-flex align-items-center">
+                <div class="pos-cliente w-100">
+                    <input type="hidden" id="idPersona" value="@Model.IdPersona" />
+
+                    <div class="input-group input-group-sm">
+                        <input type="text"
+                               id="razonSocial"
+                               class="form-control"
+                               value="@(Model.Persona?.RazonSocial ?? "Error al cargar cliente")"
+                               readonly />
+
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary" id="btnBuscarPersona" title="Buscar cliente (disponible en un próximo batch)" disabled>
+                                <i class="fas fa-search"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-secondary" id="btnConsumidorFinal" title="Consumidor Final" disabled>
+                                CF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6 order-1 order-lg-2">
+                <div class="pos-topbar-summary d-flex align-items-stretch justify-content-between">
+                    <div class="pos-meta flex-grow-1 pr-2">
+                        <div class="pos-meta-main">
+                            <div class="pos-meta-main-secondary">
+                                <div class="pos-brand-subline">
+                                    <span class="pos-brand-subline-label">Sucursal</span>
+                                    <span class="pos-brand-subline-value text-truncate">@sucursalNombrePOS</span>
+                                </div>
+
+                                <div class="pos-fecha pos-meta-time pos-meta-time-inline">
+                                    <span class="pos-time-chip">
+                                        <i class="far fa-clock"></i>
+                                        <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pos-meta-hidden">
+                            <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                            <input type="hidden" id="idSucursalPOS" value="@idSucursalPOS" />
+                            <input type="hidden" id="idVentaEditar" value="@idVentaEditar" />
+                        </div>
+                    </div>
+
+                    <div class="pos-top-actions">
+                        <span id="posInstanceBadge" class="badge badge-pill mr-2 @(posModoInstancia == "duplicado" ? "badge-warning" : "badge-info d-none")">
+                            @(posModoInstancia == "duplicado" ? "POS Duplicado" : "POS Original")
+                        </span>
+                        <button type="button"
+                                class="btn btn-outline-primary btn-sm pos-btn-layout mr-2"
+                                id="btnDuplicarPOS"
+                                title="Abrir POS duplicado">
+                            <i class="fas fa-clone"></i>
+                            <span>Duplicar POS</span>
+                        </button>
+                        <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" title="Volver al sistema">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Salir</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Vista: Punto de Venta -->
+        <div class="container-fluid p-1" id="pos-app">
+
+            <div class="card shadow-lg border-0 pos-panel">
+
+                <div class="card-body p-2 d-flex flex-column">
+
+                    <div class="row flex-grow-1 h-100">
+
+                        <!-- COLUMNA IZQUIERDA - CARRITO -->
+                        <div class="col-12 col-md-6 carrito-col pos-ventas-cart-col">
+
+                            <div class="zona-tabla">
+                                <table class="table table-sm tabla-productos mb-0">
+                                    <tbody id="tablaItems">
+                                        <tr id="filaVacia">
+                                            <td class="text-muted text-center py-3">
+                                                No hay productos agregados
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="zona-total">
+                                @if (esEdicionVenta)
+                                {
+                                    <div class="pos-restore-banner">
+                                        <i class="fas fa-pen mr-1"></i>
+                                        @(soloFormaPago ? "Cambiando forma de pago" : "Modificando venta") <strong>#@idVentaEditar</strong>
+                                    </div>
+                                    <div class="pos-restore-banner pos-restore-banner-info">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Los productos ya cargados mantienen su precio original. Los nuevos productos se calcularán según la forma de pago seleccionada.
+                                    </div>
+                                }
+                                <div id="posFormaPagoActual" class="pos-forma-pago-banner d-none">
+                                    <div class="pos-forma-pago-copy">
+                                        <span class="pos-forma-pago-label">Forma de pago:</span>
+                                        <strong id="posFormaPagoNombre">-</strong>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h2 class="m-0 pos-total-label">Total</h2>
+                                    <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-start pos-sale-summary-row">
+                                    <div id="posVentaItemsResumen" class="pos-sale-items text-muted"></div>
+                                    <div id="posVentaResumen" class="pos-sale-summary text-muted">
+                                        Sin productos
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- COLUMNA DERECHA -->
+                        <div class="col-12 col-md-6 d-flex flex-column pos-workbench pos-ventas-workbench-col">
+                            <div class="pos-workbench-scroll">
+
+                                <!-- BLOQUE SCANNER (batch 7, iteracion 3) -->
+                                <div class="row" id="scannerContainer" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="card shadow">
+                                            <div class="card-body text-center">
+
+                                                <div class="scanner-wrapper">
+                                                    <video id="videoScanner" autoplay muted playsinline></video>
+                                                    <div class="scanner-line"></div>
+                                                </div>
+
+                                                <div class="d-flex justify-content-between mt-2">
+                                                    <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">
+                                                        Flash
+                                                    </button>
+
+                                                    <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">
+                                                        Cerrar cámara
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <audio id="beep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
+
+                                <!-- BUSCADOR -->
+                                <div class="row g-2 mb-3 pos-search-row">
+                                    <div class="col-12">
+                                        <div class="input-group input-group-lg pos-search-group">
+                                            <span class="input-group-text scanner-btn" id="btnScanner">
+                                                <i class="fas fa-barcode"></i>
+                                            </span>
+                                            <input type="text"
+                                                   id="inputCodigo"
+                                                   class="form-control"
+                                                   placeholder="Ingrese código..."
+                                                   autocomplete="off"
+                                                   autofocus />
+
+                                            <button class="btn btn-outline-secondary" id="btnAgregarManual" disabled title="Buscador avanzado (disponible en un próximo batch)">
+                                                Buscar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- INFO PRODUCTO -->
+                                <div id="producto-info" class="p-3 rounded bg-light border mb-3">
+                                    <div class="row">
+
+                                        <div class="col-6 producto-resumen">
+
+                                            <h4 id="prodNombre" class="fw-bold text-muted">
+                                                Info producto...
+                                            </h4>
+
+                                            <div class="mb-3 pos-product-metric">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <label class="lbl-precio">Precio</label>
+                                                    <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3 pos-product-metric pos-product-metric-cantidad">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                                    <input id="inputCantidad" class="form-control" autocomplete="off" inputmode="decimal" disabled>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3 pos-product-metric">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <label class="lbl-subtotal">Subtotal</label>
+                                                    <h4 id="prodSubtotal" class="fw-bold text-muted m-0">
+                                                        $ 0,00
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                            <button id="btnAgregarProducto"
+                                                    class="btn btn-success btn-lg w-100 btn-agregar-pos d-none d-md-flex"
+                                                    disabled>
+                                                <i class="fas fa-cart-plus"></i>
+                                                <span>
+                                                    <strong>Agregar</strong>
+                                                    <small>a la venta</small>
+                                                </span>
+                                            </button>
+
+                                        </div>
+
+                                        <div class="col-6">
+                                            <div class="keyboard-grid">
+                                                <button class="btn btn-secondary btn-key" data-key="*" title="Alternar manual/balanza">*</button>
+                                                <button class="btn btn-light btn-key">7</button>
+                                                <button class="btn btn-light btn-key">8</button>
+                                                <button class="btn btn-light btn-key">9</button>
+                                                <button class="btn btn-warning btn-key" data-key="BACKSPACE" title="Borrar">
+                                                    <i class="fas fa-backspace"></i>
+                                                </button>
+
+                                                <button class="btn btn-secondary btn-key" data-key="G">G</button>
+                                                <button class="btn btn-light btn-key">4</button>
+                                                <button class="btn btn-light btn-key">5</button>
+                                                <button class="btn btn-light btn-key">6</button>
+                                                <button class="btn btn-secondary btn-key" data-key="X" title="Multiplicación">X</button>
+
+                                                <button class="btn btn-secondary btn-key">G1</button>
+                                                <button class="btn btn-light btn-key">1</button>
+                                                <button class="btn btn-light btn-key">2</button>
+                                                <button class="btn btn-light btn-key">3</button>
+
+                                                <button class="btn btn-info btn-enter btn-key">Enter</button>
+
+                                                <button class="btn btn-secondary btn-key"></button>
+                                                <button class="btn btn-light btn-key key-zero">0</button>
+                                                <button class="btn btn-light btn-key">.</button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- BOTONES FINALES -->
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
+                                    <i class="fas fa-cash-register"></i>
+                                    <span>
+                                        <strong>@(esEdicionVenta ? "Guardar" : "Finalizar")</strong>
+                                        <small>@(esEdicionVenta ? "cambios" : "y cobrar")</small>
+                                    </span>
+                                </button>
+                            </div>
+                            <div id="pos-bottom-anchor"></div>
+
+                            <!-- ESTADO BALANZA -->
+                            <div class="mt-auto pos-footer-panel">
+                                <div class="zona-botones">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem">@(esEdicionVenta ? "Salir edición" : "Cancelar Venta")</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
+                                                Comentario
+                                                <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
+                                            </button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pos-balanza-card">
+                                    <small class="text-muted pos-balanza-caption">
+                                        Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                    </small>
+                                    <div id="msgBalanzaPOS" class="small text-muted mt-1 pos-balanza-lectura"></div>
+                                    <div class="progress mt-1" style="height:8px;">
+                                        <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODAL LINEA VENTA -->
+    <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content shadow">
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-receipt mr-2"></i> Línea de venta
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">&times;</button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input id="modalProducto" class="form-control mb-2" readonly>
+
+                    <div class="row mb-2" id="bloqueDatosLineaBonificacion">
+
+                        <div class="col-12 col-md-5">
+                            <label class="small">Cant.</label>
+
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button id="btnCantMenos" type="button" class="btn btn-outline-secondary d-none" tabindex="-1">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+
+                                <input id="modalCantidad" class="form-control text-right" readonly inputmode="decimal" autocomplete="off">
+
+                                <div class="input-group-append">
+                                    <button id="btnCantMas" type="button" class="btn btn-outline-secondary d-none" tabindex="-1">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-100 d-block d-md-none"></div>
+
+                        <div class="col-6 col-md-3">
+                            <label class="small">Precio lista</label>
+                            <input id="modalPrecio" class="form-control text-right" readonly>
+                        </div>
+
+                        <div class="col-6 col-md-4">
+                            <label id="lblTotalModalLineaVenta" class="small">Total</label>
+                            <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <div id="bloqueBonificar" style="display:none">
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="chkPorcentaje">
+                            <label class="form-check-label" for="chkPorcentaje">Bonificar por porcentaje</label>
+                        </div>
+
+                        <div class="form-check mb-2 d-none" id="bloqueAplicarBonificacionTodos">
+                            <input class="form-check-input" type="checkbox" id="chkBonificarTodos">
+                            <label class="form-check-label" for="chkBonificarTodos">Aplicar a todos los productos</label>
+                        </div>
+
+                        <div class="small text-muted mb-2 d-none" id="msgRecargoBonificacion">
+                            Si ingresa un porcentaje negativo, se aplicará como recargo.
+                        </div>
+
+                        <div class="alert alert-info py-2 px-3 small d-none" id="msgBonificarTodos">
+                            Esta bonificación se aplicará a todos los productos del carrito.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6" id="bloquePrecioBonificado">
+                                <label class="small">Precio bonificado</label>
+                                <input id="txtPrecioKg" class="form-control text-right" inputmode="decimal" autocomplete="off">
+                            </div>
+
+                            <div class="col-6">
+                                <label id="lblTipoPorcentaje" class="small">% bonificación</label>
+                                <input id="txtPorcentaje" class="form-control text-right" inputmode="decimal" autocomplete="off" readonly>
+                            </div>
+                        </div>
+
+                        <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">
+                            Aplicar bonificación
+                        </button>
+
+                        <div class="mt-2"></div>
+                    </div>
+
+                    <div id="bloqueCantidad" style="display:none">
+                        <button id="btnAplicarCantidad" class="btn btn-primary btn-block mt-3">
+                            Aplicar cantidad
+                        </button>
+
+                        <div class="mt-2"></div>
+                    </div>
+
+                    <div class="d-flex flex-column" style="gap:.5rem;">
+
+                        <button id="btnMostrarBonificar" class="btn btn-success">
+                            <i class="fas fa-percentage"></i> Bonificar
+                        </button>
+
+                        <button id="btnMostrarCantidad" class="btn btn-info">
+                            <i class="fas fa-sort-numeric-up"></i> Cantidad
+                        </button>
+
+                        <button id="btnEliminarItem" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
+    @Html.Partial("~/Views/Ventas/_ModalExpendiosPOS.cshtml")
+    @Html.Partial("~/Views/Ventas/_ModalObservacionesExpendio.cshtml")
+    @Html.Partial("~/Views/Ventas/_ModalPostVentaBasico.cshtml")
+    @Html.Partial("~/Views/Ventas/_ModalComentarioVenta.cshtml")
+    @Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
+    @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
+
+    <div id="globalAntiForgeryToken" style="display:none;">
+        @Html.AntiForgeryToken()
+    </div>
+}
+else
+{
+    @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
+}
+
+@section Scripts {
+    <script src="~/Scripts/carnisys.balanza.js?v=1"></script>
+    <script src="~/Scripts/app/pos-state.js?v=1"></script>
+    <script src="~/Scripts/app/pos-keyboard.js?v=1"></script>
+    <script src="~/Scripts/app/pos-product.js?v=1"></script>
+    <script src="~/Scripts/app/pos-cart.js?v=1"></script>
+    <script src="~/Scripts/app/pos-balanza.js?v=1"></script>
+    <script src="~/Scripts/app/forma-pago.js?v=1"></script>
+    <script src="~/Scripts/app/ventas-expendios-pos.js?v=1"></script>
+    <script src="~/Scripts/app/pos-comment.js?v=1"></script>
+    <script src="~/Scripts/app/pos-help.js?v=1"></script>
+    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
+    <script src="~/Scripts/app/scanner.js"></script>
+    <script src="~/Scripts/app/calculadora-billetes.js?v=3239"></script>
+    <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
+    <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
+
+    <script>
+        (function () {
+            var cajaAbierta = @(cajaAbierta ? "true" : "false");
+
+            if (!cajaAbierta) {
+                function pad(n) { return (n < 10 ? "0" : "") + n; }
+                function nowAR() {
+                    var d = new Date();
+                    return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear()
+                        + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+                }
+
+                function mostrarErrorAbrirCaja(msg) {
+                    if (window.Swal) {
+                        Swal.fire({ icon: "error", title: "No se pudo abrir la caja", text: msg || "Error" });
+                    } else {
+                        alert(msg || "No se pudo abrir la caja");
+                    }
+                }
+
+                window.abrirCaja = function () {
+                    var cajaInicio = $("#montoInicial").val();
+                    var fechaHora = $("#fechaHoraApertura").val();
+
+                    $.ajax({
+                        url: "@Url.Action("AbrirCaja", "Cajas")",
+                        type: "POST",
+                        dataType: "json",
+                        data: { cajaInicio: cajaInicio, fechaHora: fechaHora, posInstanceId: "" },
+                        success: function (r) {
+                            if (r && r.ok) {
+                                $("#modalAbrirCaja").modal("hide");
+                                location.reload();
+                                return;
+                            }
+                            mostrarErrorAbrirCaja((r && r.mensaje) ? r.mensaje : "Error al abrir caja.");
+                        },
+                        error: function () {
+                            mostrarErrorAbrirCaja("No se pudo contactar al servidor.");
+                        }
+                    });
+                };
+
+                $(function () {
+                    $("#fechaHoraApertura").val(nowAR());
+                    $("#modalAbrirCaja").modal("show");
+                    $("#modalAbrirCaja").on("shown.bs.modal", function () {
+                        $("#montoInicial").trigger("focus");
+                    });
+
+                    $("#btnCancelarAbrirCaja").off("click").on("click", function () {
+                        window.location.href = "@Url.Action("Index", "Home")";
+                    });
+
+                    $("#montoInicial").off("keydown").on("keydown", function (e) {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            window.abrirCaja();
+                        }
+                    });
+                });
+
+                return;
+            }
+
+            // ===== Caja abierta: bootstrap del POS (batch 1+2) =====
+
+            function beep() {
+                var audio = document.getElementById("beep");
+                if (!audio) return;
+                audio.currentTime = 0;
+                audio.play();
+            }
+
+            function mostrarErrorConexion(msg) {
+                if (window.Swal) {
+                    Swal.fire({ icon: "error", title: "Sin conexión", text: msg, allowOutsideClick: false });
+                } else {
+                    alert(msg);
+                }
+            }
+
+            var posProduct = null;
+            var posCart = null;
+            var posBalanza = null;
+
+            var posKeyboard = window.POSKeyboard.create({
+                handleEnter: function () { return posProduct ? posProduct.handleEnter() : null; },
+                calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+                finishTyping: function (value) { return posProduct ? posProduct.finishTyping(value) : null; },
+                setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; },
+                onManualModeRequested: function (inputId) { return posBalanza ? posBalanza.alternarDesdeAsterisco(inputId) : null; }
+            });
+
+            posProduct = window.POSProduct.create({
+                soloFormaPago: false,
+                calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+                addProduct: function () { return posCart ? posCart.addProduct() : null; },
+                getInputActivo: function () { return posKeyboard.getInputActivo(); },
+                clearInputActivo: function () { return posKeyboard.clearInputActivo(); },
+                showConnectionError: mostrarErrorConexion,
+                onProductoChanged: function (producto) { return posBalanza ? posBalanza.onProductoChanged(producto) : null; },
+                onProductoConfirmed: function (producto) { return posBalanza ? posBalanza.onProductoConfirmed(producto) : null; }
+            });
+
+            posCart = window.POSCart.create({
+                POSState: window.POSState,
+                soloFormaPago: false,
+                eliminarFisicoLineasPendientes: false,
+                // Bonificar sin restriccion -- mismo criterio que el resto de la migracion
+                // (usuario stub Admin=true, el chequeo de permiso del original siempre da OK).
+                puedeBonificar: true,
+                getProductoSeleccionado: function () { return posProduct.getProductoSeleccionado(); },
+                setProductoSeleccionado: function (value) { return posProduct.setProductoSeleccionado(value); },
+                getPrecioActual: function () { return posProduct.getPrecioActual(); },
+                beep: beep,
+                focusCodigo: function () { return posKeyboard.focusCodigo(); },
+                showWaiting: function () { return posProduct.showWaiting(); },
+                scrollPantallaMobile: function () { },
+                handleEnter: function () { return posProduct.handleEnter(); },
+                getTypingTimer: function () { return posProduct.getTypingTimer(); },
+                setEnterDesdeTecladoVirtual: function (value) { return posProduct.setEnterDesdeTecladoVirtual(value); },
+                beforeAddProduct: function (producto, cantidad) { return posBalanza ? posBalanza.beforeAddProduct(producto, cantidad) : { ok: true }; }
+            });
+
+            // ===== Batch 4: balanza fisica =====
+            // Degrada sola a modo manual si el agente local (127.0.0.1:5100) no responde -- ver
+            // Scripts/carnisys.balanza.js. #modalPesable del original NO se porta: confirmado
+            // codigo muerto (ningun JS lo referencia, ver docs/DECISIONS.md).
+            function mostrarAvisoBalanzaDiscreto(msg) {
+                var $msg = $("#msgBalanzaPOS");
+                if (!$msg.length) return;
+                $msg.text(msg || "");
+            }
+
+            posBalanza = window.POSBalanza.create({
+                baseUrl: "http://127.0.0.1:5100",
+                statusIntervalMs: 2500,
+                pesoIntervalMs: 250,
+                calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
+                focusCantidad: function () { return posKeyboard.focusCantidad(); },
+                focusCodigo: function () { return posKeyboard.focusCodigo(); },
+                showNotice: mostrarAvisoBalanzaDiscreto
+            });
+
+            // ===== Batch 7 (parcial): comentario de venta =====
+            // Se crea antes que posExpendios porque este la referencia (updateComentarioBadge).
+            var posComment = window.POSComment.create({
+                POSState: window.POSState,
+                focusCodigo: function () { return posKeyboard.focusCodigo(); }
+            });
+
+            // ===== Batch 5: expendios asociados =====
+            // BuscarExpendiosPOS/ObtenerExpendioPOS ya portados y verificados con datos reales
+            // (PLAN-POS.md). Se abre con el atajo AvPag (PageDown), via el hook
+            // window.posHotkeysHooks.AvPag registrado mas abajo (posHelp, batch 7 iteracion 2) --
+            // no hay boton visible en ningun lado de POS.cshtml, se verifico con grep.
+            var posExpendios = window.POSExpendios.create({
+                POSState: window.POSState,
+                renderTable: function (lineas) { return posCart ? posCart.renderTable(lineas) : null; },
+                recalculateTotal: function () { return posCart ? posCart.recalculateTotal() : null; },
+                updateSaleState: function () { return posCart ? posCart.updateSaleState() : null; },
+                updateCartSummary: function () { return posCart ? posCart.updateCartSummary?.() : null; },
+                beep: beep,
+                showWaiting: function () { return posProduct ? posProduct.showWaiting() : null; },
+                focusCodigo: function () { return posKeyboard.focusCodigo(); },
+                updateComentarioBadge: function () { return posComment.updateButtonState(); }
+            });
+            window.POSExpendiosCurrent = posExpendios;
+
+            // ===== Batch 7, iteracion 2: Ayuda (F1) =====
+            var posHelp = window.POSHelp.create({
+                focusCodigo: function () { return posKeyboard.focusCodigo(); },
+                clickIfEnabled: function (selector) {
+                    var button = document.querySelector(selector);
+                    if (button && !button.disabled) {
+                        button.click();
+                    }
+                }
+            });
+
+            window.posHotkeysHooks = window.posHotkeysHooks || {};
+            window.posHotkeysHooks.AvPag = function () {
+                window.POSExpendiosCurrent?.open?.();
+            };
+            // ===== Batch 7, iteracion 3: calculadora de billetes (F3) =====
+            // Standalone -- sin usarDetalleExterno/selectorInputTotal, distinto del uso en
+            // Cajas/_AddOrEditEgresoCaja.cshtml que si mergea el resultado en un textarea.
+            window.posHotkeysHooks.F3 = function () {
+                window.CalculadoraBilletes?.open?.({
+                    tituloPantalla: "Ingreso de billetes",
+                    titulo: "Detalle de billetes"
+                });
+            };
+            // F2/F4-F8 y F9 (Buscar cliente) NO se registran a proposito: sus modulos originales
+            // (CtasCtes/POSCompras/POSEgresos/POSFinanzas, boton de cliente) no estan portados
+            // todavia -- pos-help.js los deja degradar solos (evento sin listener / boton
+            // disabled), ver header del archivo.
+
+            posProduct.init();
+            posCart.init();
+            posBalanza.init();
+            posExpendios.init();
+            posComment.init();
+            posHelp.init();
+            posKeyboard.init();
+
+            // ===== Batch 7, iteracion 3: scanner de camara =====
+            // Port literal de Web/Views/Ventas/POS.cshtml (~1614-1644): scanner.js/zxing.min.js
+            // ya estaban portados byte-a-byte en WebCore (probados en Stock/Editar.cshtml), solo
+            // faltaba el wiring en POS. manejarEnter -> window.manejarEnter, ya expuesto por
+            // pos-product.js. #btnLimpiarScanner del partial compartido _ScannerCodigoBarra.cshtml
+            // NO se usa aca a proposito: el bloque HTML de POS es el propio del original (con
+            // Flash/Cerrar camara nomas), no el partial compartido con otros modulos.
+            var scannerPOS = new BarcodeScanner({
+                videoSelector: "#videoScanner",
+                containerSelector: "#scannerContainer",
+                onCodeDetected: function (codigo) {
+                    document.querySelector("#inputCodigo").value = codigo;
+                    document.querySelector("#inputCodigo").focus();
+                    window.manejarEnter();
+                }
+            });
+            document.getElementById("btnScanner")?.addEventListener("click", () => scannerPOS.iniciar());
+            document.getElementById("btnCerrarScanner")?.addEventListener("click", () => scannerPOS.cerrar());
+            document.getElementById("btnFlash")?.addEventListener("click", async () => {
+                var estado = await scannerPOS.toggleFlash();
+                var btn = document.getElementById("btnFlash");
+                if (estado) {
+                    btn.classList.remove("btn-secondary");
+                    btn.classList.add("btn-warning");
+                    btn.textContent = "Flash activo";
+                } else {
+                    btn.classList.remove("btn-warning");
+                    btn.classList.add("btn-secondary");
+                    btn.textContent = "Flash";
+                }
+            });
+
+            // ===== Batch 3: forma de pago + Finalizar =====
+            // URLs que consume forma-pago.js (Scripts/app/forma-pago.js, sin cambios de logica) --
+            // FinalizarVenta/ModificarVenta ya portados y verificados con datos reales (PLAN-POS.md).
+            window.api = window.api || {};
+            window.api.venta = {
+                pos: "@Url.Action("POS", "Ventas")",
+                finalizar: "@Url.Action("FinalizarVenta", "Ventas")",
+                modificar: "@Url.Action("ModificarVenta", "Ventas")",
+                detalle: "@Url.Action("DetalleVenta", "Ventas")",
+                buscarExpendiosPos: "@Url.Action("BuscarExpendiosPOS", "Ventas")",
+                obtenerExpendioPos: "@Url.Action("ObtenerExpendioPOS", "Ventas")",
+                imprimir: "@Url.Action("Imprimir", "Ventas")",
+                obtenerDatosEmailComprobante: "@Url.Action("ObtenerDatosEmailComprobante", "Ventas")",
+                enviarComprobanteEmail: "@Url.Action("EnviarComprobanteEmail", "Ventas")"
+            };
+
+            // Sucursal del cajero actual -- default del filtro de sucursal del modal de
+            // expendios (batch 5, ver PLAN-POS-UI.md / docs/DECISIONS.md).
+            window.idSucursalUsuarioPOS = @idSucursalPOS;
+
+            // ===== Batch 7, iteracion 4: Duplicar POS (multi-instancia) =====
+            // Recortado sin login de operador de produccion (no portado, ver header del
+            // archivo) -- solo deteccion de conflicto entre pestañas via localStorage.
+            // window.POSModo.instanceId es ademas lo que forma-pago.js:594 manda como
+            // posInstanceId al finalizar (antes siempre '', vestigio inerte porque
+            // window.POSModo no existia -- con esto queda conectado de verdad).
+            window.POSMultiInstanceConfig = {
+                role: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posModoInstancia)),
+                instanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+                userId: @idUsuarioPOS,
+                sucursalId: @idSucursalPOS,
+                homeUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Home"))),
+                originalUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("POS", "Ventas", new { modoPos = "original" }))),
+                duplicateBaseUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("POS", "Ventas"))),
+                originalWindowName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("CarniSysPOS-" + idUsuarioPOS + "-" + idSucursalPOS + "-original")),
+                windowName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("CarniSysPOS-" + idUsuarioPOS + "-" + idSucursalPOS + "-" + posModoInstancia)),
+                duplicateWindowName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("CarniSysPOSDuplicado-" + idUsuarioPOS + "-" + idSucursalPOS))
+            };
+            window.POSModo = window.POSModo || {};
+            window.POSModo.instancia = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posModoInstancia));
+            window.POSModo.instanceId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId));
+            window.POSModo.soloFormaPago = @(soloFormaPago ? "true" : "false");
+            window.POSMultiInstance?.init?.();
+
+            // ===== Batch 7, iteracion 5: edicion de venta existente =====
+            // Recortado sin soloFormaPago (queda para una iteracion siguiente, ver
+            // docs/10-migracion-aspnet-core/PLAN-POS-UI.md) y sin los permisos reales del
+            // original (PuedeModificarUltimaVenta/PuedeCambiarFormaPago) -- ver TODO(claude) en
+            // VentasController.POS().
+            window.esEdicionVenta = @(esEdicionVenta ? "true" : "false");
+            @if (esEdicionVenta)
+            {
+                <text>
+                window.POSState.setLineas(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(lineasEdicionPos)));
+                window.POSState.setListaExpendios(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(listaExpendiosEdicionPos)));
+                posCart.renderTable(window.POSState.getLineas());
+                posCart.recalculateTotal();
+                posCart.updateSaleState();
+                posCart.updateCartSummary?.();
+                posComment.updateButtonState?.();
+                posExpendios.syncAssignedFromCart?.();
+                </text>
+            }
+
+            // ===== Batch 7, iteracion 6: soloFormaPago ("Cambiar Forma de Pago") =====
+            // Reusa toda la mecanica de edicion de venta de la iteracion 5 -- solo bloquea la UI
+            // de productos y abre el modal de forma de pago automaticamente. Port literal de
+            // Web/Views/Ventas/POS.cshtml:2390-2420,2801-2805.
+            function volverDesdeSoloFormaPago() {
+                window.desactivarAvisoSalidaPOS?.();
+                window.location.href = window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val());
+            }
+
+            function aplicarModoSoloFormaPago() {
+                if (!window.POSModo?.soloFormaPago) return;
+
+                $("body").addClass("pos-solo-forma-pago");
+                $("#inputCodigo, #inputCantidad, #fechaVentaEditable, #btnAgregarManual, #btnBuscarPersona, #btnConsumidorFinal, #btnScanner")
+                    .prop("disabled", true)
+                    .attr("readonly", "readonly");
+                $("#tablaItems").addClass("pos-bloqueado");
+                $("#btnSalirPOS").attr("href", window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val()));
+
+                setTimeout(function () {
+                    window.POSGuard
+                        ? window.POSGuard.requestModalOpen("formaPago", function () {
+                            window.abrirModalFormaPagoFinalizacion?.();
+                        })
+                        : window.abrirModalFormaPagoFinalizacion?.();
+                }, 250);
+            }
+
+            $(document).on("hidden.bs.modal.posSoloFormaPago", "#modalFormaPago", function () {
+                if (!window.POSModo?.soloFormaPago) return;
+                if (window.POSSoloFormaPagoGuardado) return;
+                volverDesdeSoloFormaPago();
+            });
+
+            aplicarModoSoloFormaPago();
+
+            // RequierePreseleccionFormaPago SI se porta real (no hardcodeado): de esto depende
+            // que "Pago Mixto" se pueda habilitar en el modal de Finalizar (ver Obtener
+            // ConfiguracionFormaPagoPOS/RequierePreseleccionFormaPagoPOS en VentasController.cs).
+            var requierePreseleccionFormaPago = @(ViewBag.RequierePreseleccionFormaPago != null && (bool)ViewBag.RequierePreseleccionFormaPago ? "true" : "false");
+            window.POSFormaPagoConfig = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.FormasPagoConfig ?? new Dictionary<string, decimal>()));
+            if (typeof window.POSState.setRequierePreseleccionFormaPago === "function") {
+                window.POSState.setRequierePreseleccionFormaPago(requierePreseleccionFormaPago);
+            }
+
+            // Port de Web/Views/Ventas/POS.cshtml:1716-1727 (faltaba en WebCore -- pedido del
+            // usuario 2026-09-04 al probar "Modificar venta"). window.POSFormaPagoActual ya lo
+            // lee window.preCargarFormaPagoActual (forma-pago.js, ya portado sin cambios): al
+            // abrir el modal de Finalizar marca el boton de la forma de pago actual, muestra la
+            // leyenda "Forma de pago actual: ..." (#formaPagoActualInfo, ya en _FormaPagoModal.
+            // cshtml) y, si fue pago mixto, precarga #montoEfectivo/#montoOtroPago y tilda
+            // #chkPagoMixto -- sin este init quedaba siempre vacio (undefined -> "").
+            window.POSFormaPagoActual = {
+                formaPago: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model != null ? Model.FormaPago ?? "" : "")),
+                pagoMixtoEfectivo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model != null ? Model.PagoMixtoEfectivo : 0f)),
+                total: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model != null ? Model.TotalImporte : 0f))
+            };
+            if (window.POSFormaPagoActual.formaPago && typeof window.POSState.setFormaPagoPreseleccionada === "function") {
+                window.POSState.setFormaPagoPreseleccionada({
+                    id: window.POSFormaPagoActual.formaPago,
+                    nombre: window.POSFormaPagoActual.formaPago,
+                    tipo: window.POSFormaPagoActual.formaPago
+                });
+            }
+
+            $("#btnFinalizar").on("click", function () {
+                window.abrirModalFormaPagoFinalizacion();
+            });
+
+            // ===== Batch 7, iteracion 2: Cancelar Venta =====
+            // Port de guardarVentaAnuladaDirectamente (Web/Views/Ventas/POS.cshtml) con un
+            // recorte deliberado: el original tiene 2 ramas mas en el handler de click
+            // (esEdicionVenta / soloFormaPago) que dependen de la edicion de venta, todavia no
+            // portada en WebCore -- ver header del archivo. Si en el futuro se porta edicion de
+            // venta, agregar esas 2 ramas ahi mismo.
+            var cancelandoVentaPOS = false;
+            var indicesCancelacionPOS = [];
+
+            function guardarVentaAnuladaDirectamente(omitirPostVenta) {
+                if (cancelandoVentaPOS) return;
+
+                var lineas = window.POSState?.getLineas?.() || [];
+                var lineasActivas = lineas.filter(function (linea) {
+                    return linea && !linea.anulado;
+                });
+
+                if (!lineas.length) {
+                    Swal.fire({
+                        icon: "info",
+                        title: "Venta vacía",
+                        text: "No hay una venta en curso para cancelar."
+                    });
+                    return;
+                }
+
+                cancelandoVentaPOS = true;
+                window.POSCancelacionEnCurso = true;
+                indicesCancelacionPOS = lineasActivas.map(function (linea) {
+                    return linea.index;
+                });
+                $("#btnCancelarItem").prop("disabled", true);
+
+                lineasActivas.forEach(function (linea) {
+                    window.POSState.anularLinea(linea.index);
+                });
+
+                posCart.renderTable(window.POSState.getLineas());
+                posCart.recalculateTotal();
+                posCart.updateSaleState();
+
+                finalizarVenta({
+                    formaPago: "Efectivo",
+                    esPagoMixto: false,
+                    efectivo: 0,
+                    idPersona: $("#idPersona").val(),
+                    omitirPostVenta: omitirPostVenta === true
+                });
+            }
+
+            $("#btnCancelarItem").on("click", function () {
+                if (window.POSModo?.soloFormaPago) {
+                    volverDesdeSoloFormaPago();
+                    return;
+                }
+
+                if (window.esEdicionVenta) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "¿Salir de la edición?",
+                        text: "Se descartarán los cambios no guardados.",
+                        showCancelButton: true,
+                        confirmButtonText: "Sí",
+                        cancelButtonText: "No"
+                    }).then(function (result) {
+                        if (!result.isConfirmed) return;
+                        window.location.href = window.api.venta.detalle + "?id=" + encodeURIComponent($("#idVentaEditar").val());
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    icon: "warning",
+                    title: "¿Realmente desea cancelar la venta?",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí",
+                    cancelButtonText: "No"
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    guardarVentaAnuladaDirectamente(true);
+                });
+            });
+
+            $(document).on("ventaCancelacion:error", function () {
+                indicesCancelacionPOS.forEach(function (index) {
+                    var linea = window.POSState?.findLineaByIndex?.(index);
+                    if (linea) linea.anulado = false;
+                });
+
+                indicesCancelacionPOS = [];
+                cancelandoVentaPOS = false;
+                window.POSCancelacionEnCurso = false;
+                $("#btnCancelarItem").prop("disabled", false);
+                posCart.renderTable(window.POSState.getLineas());
+                posCart.recalculateTotal();
+                posCart.updateSaleState();
+            });
+
+            // ===== Batch 6: post-venta basico (ticket + email, sin AFIP) =====
+            // Reemplaza al modal real de post-venta (modal-postventa.js: ticket ESC/POS con
+            // agente local, factura AFIP automatica, WhatsApp -- 1298 lineas, no portado, ver
+            // header del archivo). Este modal reducido cubre imprimir (PDF via Imprimir, el
+            // navegador hace de "agente" con su propio dialogo de impresion) y email (mismos
+            // endpoints ya portados que usa Ventas/DetalleVenta).
+            var pvbDocumentoEmail = "detalle";
+
+            window.mostrarModalPostVenta = function (ventaId) {
+                // Filtros del modal de expendios reiniciados al finalizar (pedido explicito del
+                // usuario, ver docs/DECISIONS.md).
+                posExpendios.resetFiltros();
+                beep();
+
+                var total = window.POSState?.getTotal ? window.POSState.getTotal() : 0;
+                $("#pvbResumenVenta").text("Venta #" + ventaId + " registrada correctamente.");
+                $("#pvbTotalVenta").text("$ " + total.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $("#btnPvbImprimir").attr("href", window.api.venta.imprimir + "?id=" + ventaId + "&documento=detalle");
+                $("#btnPvbImprimir").data("venta-id", ventaId);
+                $("#btnPvbEmail").data("venta-id", ventaId);
+
+                $("#modalPostVentaBasico").modal("show");
+            };
+
+            function pvbContinuarNuevaVenta() {
+                $("#modalPostVentaBasico").modal("hide");
+                // Si esta es la pestaña "duplicado" (Duplicar POS, batch 7 iteracion 4): marca
+                // el flag para que, tras el reload, pos-multi-instance.js la cierre y devuelva
+                // el foco al POS original -- mismo patron que modal-postventa.js (el modal real,
+                // no portado) usa en cerrarPostVentaYRecargar.
+                window.POSMultiInstance?.closeAfterPostVenta?.();
+                window.location.reload();
+            }
+
+            $("#btnPvbContinuar").on("click", pvbContinuarNuevaVenta);
+            // Sin boton de cerrar (X) a proposito -- misma logica que el modal real
+            // (data-backdrop="static", sin data-dismiss en el header): el cajero elige una
+            // accion explicita ("Nueva venta") antes de volver al POS, no se puede pasar por alto
+            // sin querer con un click afuera o Escape.
+
+            $("#btnPvbEmail").on("click", function () {
+                var ventaId = $(this).data("venta-id");
+                $("#pvbEmailError").addClass("d-none").text("");
+
+                $.ajax({
+                    url: window.api.venta.obtenerDatosEmailComprobante,
+                    type: "GET",
+                    dataType: "json",
+                    data: { id: ventaId }
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        Swal.fire({ icon: "error", title: "No se pudo preparar el email", text: (resp && resp.msg) || "Error desconocido." });
+                        return;
+                    }
+
+                    pvbDocumentoEmail = resp.tieneFactura ? "factura" : "detalle";
+                    $("#pvbEmailDestino").val(resp.email || "");
+                    $("#pvbEmailAsunto").val(resp.asunto || "");
+                    $("#pvbEmailMensaje").val(resp.mensaje || "");
+                    $("#modalEmailPostVentaPOS").modal("show");
+                }).fail(function (xhr) {
+                    Swal.fire({ icon: "error", title: "No se pudo preparar el email", text: (xhr.responseJSON && xhr.responseJSON.msg) || "Error de conexión." });
+                });
+            });
+
+            $("#btnPvbConfirmarEmail").on("click", function () {
+                var ventaId = $("#btnPvbEmail").data("venta-id");
+                var email = ($("#pvbEmailDestino").val() || "").trim();
+                var asunto = ($("#pvbEmailAsunto").val() || "").trim();
+                var mensaje = ($("#pvbEmailMensaje").val() || "").trim();
+
+                if (!email) {
+                    $("#pvbEmailError").removeClass("d-none").text("Ingrese un email destino.");
+                    return;
+                }
+
+                var $btn = $(this);
+                $btn.prop("disabled", true);
+
+                $.ajax({
+                    url: window.api.venta.enviarComprobanteEmail,
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        idVenta: ventaId,
+                        emailDestino: email,
+                        asunto: asunto,
+                        mensaje: mensaje,
+                        documento: pvbDocumentoEmail
+                    }
+                }).done(function (resp) {
+                    $btn.prop("disabled", false);
+
+                    if (!resp || !resp.ok) {
+                        $("#pvbEmailError").removeClass("d-none").text((resp && resp.msg) || "No se pudo enviar el email.");
+                        return;
+                    }
+
+                    $("#modalEmailPostVentaPOS").modal("hide");
+                    Swal.fire({ icon: "success", title: "Email enviado", text: "El comprobante se envió correctamente." });
+                }).fail(function (xhr) {
+                    $btn.prop("disabled", false);
+                    $("#pvbEmailError").removeClass("d-none").text((xhr.responseJSON && xhr.responseJSON.msg) || "No se pudo enviar el email.");
+                });
+            });
+
+            (function () {
+                var dias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+                var meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+                function actualizarFechaHora() {
+                    var ahora = new Date();
+                    var texto = dias[ahora.getDay()] + " " + ahora.getDate() + " de " + meses[ahora.getMonth()]
+                        + ", " + ahora.getFullYear() + ". " + String(ahora.getHours()).padStart(2, "0")
+                        + ":" + String(ahora.getMinutes()).padStart(2, "0");
+
+                    var span = document.getElementById("fechaHoraPOS");
+                    if (span) span.innerText = texto;
+                }
+
+                actualizarFechaHora();
+                setInterval(actualizarFechaHora, 60000);
+            })();
+        })();
+    </script>
+}

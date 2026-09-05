@@ -15,7 +15,11 @@ namespace WebCore.Controllers
 {
     public class SystemAdministrationController : Controller
     {
-        private readonly SystemAdministrationRepository _repo = new SystemAdministrationRepository();
+        // Hibrido SQL Server/Postgres (2026-09-05, ver docs/DECISIONS.md "Postgres es la base
+        // oficial y unica" y docs/10-migracion-aspnet-core/gaps.md): antes instanciaba
+        // SystemAdministrationRepository directo (siempre SQL Server), el unico controller que no
+        // seguia el switch de WebCore.Infrastructure.NegocioFactory.
+        private readonly ISystemAdministrationRepository _repo = WebCore.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository();
 
         public IActionResult Empresas()
         {

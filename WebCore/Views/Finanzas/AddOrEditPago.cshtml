@@ -1,0 +1,535 @@
+@model Entidades.Pago
+@*
+    Port simplificado de Web/Views/Finanzas/AddOrEditPago.cshtml (1541 lineas) +
+    _AddOrEditPagoScripts.cshtml (698 lineas) -- ver docs/10-migracion-aspnet-core/
+    PLAN-ADDOREDITPAGO.md. Alta/edicion de un Pago o Cobro en cuenta corriente.
+
+    Recortes deliberados (confirmados con el usuario antes de implementar):
+      - Sin atajos de teclado 1/2 (pagar/cobrar), sin bloque colapsable de observaciones -- UI
+        simplificada, misma logica de negocio.
+
+    Pago con Cheque/EftvoCheque portado 2026-09-05 (ver docs/DECISIONS.md): reusa el CRUD de
+    cheques ya existente (_ChequeBusquedaTabla.cshtml, _ModalAltaCheque.cshtml,
+    Scripts/app/modal-cheque.js) mas un port literal de Scripts/app/pago-cheques.js. Los 3
+    endpoints AJAX (BuscarChequePorNro/GetCheques/GuardarCheque) ya existian en este controller
+    con el contrato exacto que ese script espera -- confirmado antes de tocar nada.
+*@
+@{
+    bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    var personaObj = ViewBag.Persona as Entidades.Persona;
+    string persona = personaObj != null ? (personaObj.RazonSocial ?? "") : "";
+    decimal saldo = ViewBag.SaldoPersona;
+    int idPersona = ViewBag.IdPersona != null ? (int)ViewBag.IdPersona : 0;
+    string returnUrl = ViewBag.ReturnUrl as string ?? "";
+    bool esNuevo = Model.Id == 0;
+    ViewBag.Title = esNuevo ? "Nuevo pago o cobro" : "Editar pago o cobro";
+
+    var formasPago = new (string valor, string texto)[]
+    {
+        ("Efectivo", "Efectivo"),
+        ("Debito", "Debito"),
+        ("Credito", "Credito"),
+        ("Qr", "Qr"),
+        ("Transferencia", "Transferencia"),
+        ("Cheque", "Cheque"),
+        ("EftvoCheque", "Efectivo + Cheques"),
+        ("Otro", "Otro")
+    };
+
+    var chequeBusquedaViewData = new ViewDataDictionary(ViewData);
+    chequeBusquedaViewData["ChequeBusquedaEnPago"] = true;
+}
+
+<div id="addOrEditPagoContainer" class="container-fluid px-2 px-md-3 pago-form-compact">
+    <div class="alert alert-primary d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <a href="@(string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("CtaCtePersona", "Finanzas", new { idPersona }) : returnUrl)"
+               class="btn btn-sm btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h5 class="mb-0"><strong>@persona</strong></h5>
+        </div>
+        <h5 class="mb-0">
+            Saldo:
+            <span class="@(saldo >= 0 ? "text-success" : "text-danger") font-weight-bold">$ @saldo.ToString("N2")</span>
+        </h5>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <input type="hidden" id="hddIdPersona" value="@idPersona" />
+            <input type="hidden" id="hddReturnUrl" value="@returnUrl" />
+
+            <div class="form-row">
+                <div class="col-md-3 mb-3">
+                    <label for="AProveedor">Operación</label>
+                    <select id="AProveedor" name="AProveedor" class="form-control">
+                        <option value="false" selected="@(!Model.AProveedor ? "selected" : null)">Cobro (recibo dinero)</option>
+                        <option value="true" selected="@(Model.AProveedor ? "selected" : null)">Pago (entrego dinero)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label for="SucursalId">Sucursal</label>
+                    <select id="SucursalId" name="SucursalId" class="form-control">
+                        @foreach (var sucursal in sucursales)
+                        {
+                            <option value="@sucursal.idSucursal" selected="@((Model.Sucursal != null && Model.Sucursal.idSucursal == sucursal.idSucursal) ? "selected" : null)">@sucursal.sucursal</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label for="Fecha">Fecha</label>
+                    <input type="datetime-local" id="Fecha" class="form-control" value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label for="NroRecibo">N° Recibo</label>
+                    <input type="text" id="NroRecibo" class="form-control" value="@Model.NroRecibo" readonly />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="col-md-4 mb-3">
+                    <label for="FormaPago_">Forma de pago</label>
+                    <select id="FormaPago_" name="FormaPago_" class="form-control">
+                        @foreach (var forma in formasPago)
+                        {
+                            <option value="@forma.valor" selected="@(Model.FormaPago == forma.valor ? "selected" : null)">@forma.texto</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label for="txtImporte">Importe</label>
+                    <input type="text" id="txtImporte" class="form-control text-right" inputmode="decimal" autocomplete="off"
+                           value="@(Model.Importe > 0 ? Model.Importe.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                </div>
+
+                <div class="col-md-4 mb-3" id="bloqueEfectivo" style="display:none;">
+                    <label for="Efectivo">Efectivo (pago mixto)</label>
+                    <input type="text" id="Efectivo" class="form-control text-right" inputmode="decimal" autocomplete="off"
+                           value="@(Model.Efectivo > 0 ? Model.Efectivo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
+                </div>
+            </div>
+
+            <div id="bloqueCheques" class="cheques-panel" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Cheques</h6>
+                    <small class="text-muted">Buscá, agregá o cargá cheques sin salir del pago.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="txtNroCheque">Número de Cheque</label>
+                    <div class="input-group">
+                        <input type="text" id="txtNroCheque" class="form-control" placeholder="Ingrese número de cheque...">
+                        <div class="input-group-append">
+                            <button type="button" id="btnAgregarCheque" class="btn btn-primary">Agregar</button>
+                            <button type="button" id="btnBuscarCheques" class="btn btn-info">Buscar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive cheques-tabla-wrap mb-2">
+                    <table class="table table-bordered table-sm cheques-table-compact" id="tablaCheques">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Número</th>
+                                <th>Banco</th>
+                                <th>Fecha Pago</th>
+                                <th>Importe</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label for="txtTotalCheques">Total Cheques</label>
+                    <input type="text" id="txtTotalCheques" class="form-control" readonly value="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="Observaciones">Observaciones</label>
+                <textarea id="Observaciones" class="form-control" rows="3" maxlength="500">@Model.Observaciones</textarea>
+            </div>
+
+            <input type="hidden" id="Id" value="@Model.Id" />
+            <input type="hidden" id="ChequesJson" />
+
+            <div class="alert alert-danger d-none" id="msgErrorPago"></div>
+
+            <div class="d-flex justify-content-end" style="gap:.5rem;">
+                @if (!esNuevo)
+                {
+                    <a class="btn btn-outline-secondary" id="btnPdfPago" href="@ViewBag.ImprimirPagoPdfUrl" target="_blank" rel="noopener">
+                        <i class="fas fa-file-pdf mr-1"></i>Ver PDF
+                    </a>
+                    <button type="button" class="btn btn-outline-success" id="btnEmailPago">
+                        <i class="fas fa-envelope mr-1"></i>Enviar por email
+                    </button>
+                }
+                <button type="button" class="btn btn-primary" id="btnGuardarPago">
+                    <i class="fas fa-save mr-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEmailPago" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Enviar comprobante por email</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="pagoEmailDestino">Email destino</label>
+                    <input type="email" class="form-control" id="pagoEmailDestino" maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label for="pagoEmailAsunto">Asunto</label>
+                    <input type="text" class="form-control" id="pagoEmailAsunto" maxlength="200">
+                </div>
+                <div class="form-group mb-0">
+                    <label for="pagoEmailMensaje">Mensaje</label>
+                    <textarea class="form-control" id="pagoEmailMensaje" rows="5"></textarea>
+                </div>
+                <div class="alert alert-danger d-none mb-0 mt-2" id="pagoEmailError"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" type="button" id="btnConfirmarEmailPago">
+                    <i class="fas fa-paper-plane mr-1"></i>Enviar email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBuscarCheques" tabindex="-1" role="dialog" aria-labelledby="modalBuscarChequesLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-xl modal-cheque-compact-dialog" role="document">
+        <div class="modal-content modal-cheque-compact">
+            <div class="modal-header modal-cheque-compact-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search mr-2"></i>Buscar Cheques
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body modal-cheque-compact-body modal-cheque-busqueda-body">
+                @Html.Partial("_ChequeBusquedaTabla", (object)null, chequeBusquedaViewData)
+            </div>
+            <div class="modal-footer modal-cheque-compact-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("_ModalAltaCheque")
+
+<div class="modal fade" id="modalDetalleCheque" tabindex="-1" role="dialog" aria-labelledby="modalDetalleChequeLabel" aria-hidden="true" data-backdrop="static" data-keyboard="true">
+    <div class="modal-dialog modal-lg modal-cheque-compact-dialog" role="document">
+        <div class="modal-content modal-cheque-compact">
+            <div class="modal-header modal-cheque-compact-header">
+                <h5 class="modal-title" id="modalDetalleChequeLabel">
+                    <i class="fas fa-receipt mr-2"></i>Detalle del cheque
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body modal-cheque-compact-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Número</small>
+                        <strong id="detalleChequeNumero">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Estado</small>
+                        <strong id="detalleChequeEstado">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Origen</small>
+                        <strong id="detalleChequeOrigen">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Banco</small>
+                        <strong id="detalleChequeBanco">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Recibido de</small>
+                        <strong id="detalleChequeRecibidoDe">-</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <small class="text-muted d-block">Entregado a</small>
+                        <strong id="detalleChequeEntregadoA">-</strong>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Observaciones</small>
+                        <div id="detalleChequeObservaciones">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer modal-cheque-compact-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="globalAntiForgeryToken" style="display:none;">
+    @Html.AntiForgeryToken()
+</div>
+
+<script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
+<script src="@Url.Content("~/Scripts/app/pago-cheques.js")"></script>
+<script>
+    (function () {
+        // Esta vista se renderiza tanto con layout completo (navegacion directa) como sin layout
+        // (PartialView via AJAX, ver FinanzasController.AddOrEditPago) -- por eso no puede usar
+        // @@section Scripts (rompe cuando se sirve como partial, sin Layout). En el caso con layout,
+        // jquery.min.js carga al final del <body>, despues de este bloque -- se difiere a
+        // DOMContentLoaded para asegurar que jQuery ya exista (mismo patron que AltaRapidaEmpresa.cshtml).
+        function inicializarAddOrEditPago() {
+        var idPago = @Model.Id;
+        var idPersona = @idPersona;
+        var urlPost = '@Url.Action("AddOrEditPagoPost", "Finanzas")';
+        var pdfUrlBase = '@Url.Action("ImprimirPdfPago", "Finanzas")';
+        var emailConfigUrl = '@Url.Action("ObtenerDatosEmailPago", "Finanzas")';
+        var emailSendUrl = '@Url.Action("EnviarComprobantePagoEmail", "Finanzas")';
+
+        function tokenAntiForgery() {
+            return document.querySelector('#globalAntiForgeryToken input[name="__RequestVerificationToken"]')?.value || '';
+        }
+
+        function parseDecimal(value) {
+            var text = String(value == null ? '' : value).trim().replace(/\./g, '').replace(',', '.');
+            var n = parseFloat(text.replace(/[^0-9.\-]/g, ''));
+            return isNaN(n) ? 0 : n;
+        }
+
+        // ===== Pago con Cheque/EftvoCheque (2026-09-05, ver docs/DECISIONS.md) =====
+        // Port de la logica de _AddOrEditPagoScripts.cshtml (Web clasico), acotada a lo que esta
+        // vista simplificada necesita -- sin el gate "operacionPendienteSeleccion" del original,
+        // que no existe en esta version (AProveedor siempre tiene un valor por defecto acá).
+        function normalizarFormaPago(valor) {
+            return (valor || '').toString().trim().toLowerCase();
+        }
+
+        function esFormaCheque(valor) {
+            var v = normalizarFormaPago(valor);
+            return v === 'cheque' || v === 'eftvocheque';
+        }
+
+        function esFormaMixta(valor) {
+            return normalizarFormaPago(valor) === 'eftvocheque';
+        }
+
+        function tieneChequesAsignados() {
+            return $('#tablaCheques tbody tr').length > 0;
+        }
+
+        function construirChequesJson() {
+            var lista = [];
+
+            $('#tablaCheques tbody tr').each(function () {
+                lista.push({
+                    Id: $(this).data('id') || 0,
+                    NroCheque: ($(this).find('td:eq(0)').text() || '').trim(),
+                    Banco: ($(this).find('td:eq(1)').text() || '').trim(),
+                    FechaPago: ($(this).find('td:eq(2)').text() || '').trim(),
+                    Importe: parseFloat(($(this).find('td:eq(3)').text() || '').replace('$', '').trim()) || 0
+                });
+            });
+
+            $('#ChequesJson').val(JSON.stringify(lista));
+        }
+
+        function actualizarVisibilidadCheques() {
+            var esCheque = esFormaCheque($('#FormaPago_').val());
+            var esMixto = esFormaMixta($('#FormaPago_').val());
+
+            $('#bloqueCheques').toggle(esCheque);
+            $('#txtImporte').prop('readonly', esCheque);
+
+            if (esCheque && esMixto) {
+                $('#bloqueEfectivo').show();
+            } else {
+                $('#bloqueEfectivo').hide();
+                if (esCheque) $('#Efectivo').val('0');
+            }
+
+            if (esCheque && window.PagoCheques) {
+                window.PagoCheques.recalcularTotales();
+            } else if (!esCheque && window.PagoCheques) {
+                window.PagoCheques.clearCheques();
+            }
+        }
+
+        var ultimaFormaPago = $('#FormaPago_').val();
+
+        $('#FormaPago_').on('change', function () {
+            var valorNuevo = $(this).val();
+
+            if (!esFormaCheque(valorNuevo) && tieneChequesAsignados()) {
+                Swal.fire({ icon: 'warning', title: 'Validación', text: 'Para cambiar la forma de pago primero debe quitar los cheques asignados.' });
+                $(this).val(ultimaFormaPago);
+                return;
+            }
+
+            ultimaFormaPago = valorNuevo;
+            actualizarVisibilidadCheques();
+        });
+
+        $('#Efectivo').on('input', function () {
+            if (window.PagoCheques) window.PagoCheques.recalcularTotales();
+        });
+
+        window.PagoChequeSeed = [
+            @if (Model.Cheques != null)
+            {
+                for (int i = 0; i < Model.Cheques.Count; i++)
+                {
+                    var c = Model.Cheques[i];
+                    <text>{ Id: @c.Id, NroCheque: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(c.NroCheque ?? ""))', Banco: '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(c.Banco ?? ""))', FechaPago: '@c.FechaPago.ToString("yyyy-MM-dd")', Importe: @c.Importe.ToString(System.Globalization.CultureInfo.InvariantCulture) }@(i < Model.Cheques.Count - 1 ? "," : "")</text>
+                }
+            }
+        ];
+
+        function inicializarPagoChequesCuandoListo() {
+            if (!window.PagoCheques) {
+                window.setTimeout(inicializarPagoChequesCuandoListo, 60);
+                return;
+            }
+
+            window.PagoCheques.init({
+                buscarChequePorNro: '@Url.Action("BuscarChequePorNro", "Finanzas")',
+                getCheques: '@Url.Action("GetCheques", "Finanzas")',
+                guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")'
+            });
+
+            actualizarVisibilidadCheques();
+        }
+
+        inicializarPagoChequesCuandoListo();
+
+        $('#btnGuardarPago').on('click', function () {
+            $('#msgErrorPago').addClass('d-none').text('');
+            construirChequesJson();
+
+            var payload = {
+                Id: idPago,
+                Fecha: $('#Fecha').val(),
+                FormaPago_: $('#FormaPago_').val(),
+                AProveedor: $('#AProveedor').val() === 'true',
+                Observaciones: $('#Observaciones').val() || '',
+                NroRecibo: $('#NroRecibo').val() || ''
+            };
+
+            var params = $.param(payload) +
+                '&SucursalId=' + encodeURIComponent($('#SucursalId').val()) +
+                '&idPersona=' + encodeURIComponent(idPersona) +
+                '&importe=' + encodeURIComponent($('#txtImporte').val()) +
+                '&Efectivo=' + encodeURIComponent($('#Efectivo').val() || '0') +
+                '&ChequesJson=' + encodeURIComponent($('#ChequesJson').val() || '') +
+                '&returnUrl=' + encodeURIComponent($('#hddReturnUrl').val() || '');
+
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+
+            $.ajax({
+                url: urlPost,
+                type: 'POST',
+                data: params,
+                headers: { RequestVerificationToken: tokenAntiForgery() }
+            }).done(function (resp) {
+                $btn.prop('disabled', false);
+
+                if (!resp || !resp.ok) {
+                    $('#msgErrorPago').removeClass('d-none').text((resp && resp.mensaje) || 'No se pudo guardar el pago.');
+                    return;
+                }
+
+                window.location.href = resp.redirectUrl;
+            }).fail(function (xhr) {
+                $btn.prop('disabled', false);
+                $('#msgErrorPago').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.mensaje) || 'No se pudo guardar el pago.');
+            });
+        });
+
+        $('#btnEmailPago').on('click', function () {
+            $('#pagoEmailError').addClass('d-none').text('');
+
+            $.getJSON(emailConfigUrl, { id: idPago }).done(function (resp) {
+                if (!resp || !resp.ok) {
+                    Swal.fire({ icon: 'error', title: 'No se pudo preparar el email', text: (resp && resp.msg) || 'Error desconocido.' });
+                    return;
+                }
+
+                $('#pagoEmailDestino').val(resp.email || '');
+                $('#pagoEmailAsunto').val(resp.asunto || '');
+                $('#pagoEmailMensaje').val(resp.mensaje || '');
+                $('#modalEmailPago').modal('show');
+            }).fail(function () {
+                Swal.fire({ icon: 'error', title: 'No se pudo preparar el email', text: 'Error de conexión.' });
+            });
+        });
+
+        $('#btnConfirmarEmailPago').on('click', function () {
+            var email = ($('#pagoEmailDestino').val() || '').trim();
+            var asunto = ($('#pagoEmailAsunto').val() || '').trim();
+            var mensaje = ($('#pagoEmailMensaje').val() || '').trim();
+
+            if (!email) {
+                $('#pagoEmailError').removeClass('d-none').text('Ingrese un email destino.');
+                return;
+            }
+
+            var $btn = $(this);
+            $btn.prop('disabled', true);
+
+            $.post(emailSendUrl, { idPago: idPago, emailDestino: email, asunto: asunto, mensaje: mensaje })
+                .done(function (resp) {
+                    $btn.prop('disabled', false);
+
+                    if (!resp || !resp.ok) {
+                        $('#pagoEmailError').removeClass('d-none').text((resp && resp.msg) || 'No se pudo enviar el email.');
+                        return;
+                    }
+
+                    $('#modalEmailPago').modal('hide');
+                    Swal.fire({ icon: 'success', title: 'Email enviado', text: 'El recibo se envió correctamente.' });
+                }).fail(function (xhr) {
+                    $btn.prop('disabled', false);
+                    $('#pagoEmailError').removeClass('d-none').text((xhr.responseJSON && xhr.responseJSON.msg) || 'No se pudo enviar el email.');
+                });
+        });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", inicializarAddOrEditPago);
+        } else {
+            inicializarAddOrEditPago();
+        }
+    })();
+</script>
+
+<style>
+    .pago-form-compact label {
+        font-size: .82rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .2rem;
+    }
+</style>

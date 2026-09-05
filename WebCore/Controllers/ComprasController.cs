@@ -1,4 +1,4 @@
-// Port PARCIAL de Web/Controllers/ComprasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
+﻿// Port PARCIAL de Web/Controllers/ComprasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
 // Core, Modulo 5 -- Compras y abastecimiento). El original tiene 1022 lineas y 10 acciones.
 // Mismo criterio de escala que Modulos 3/4: se porta en slices. Portado hasta ahora: Index()/
 // Detalle() (listado + detalle expandible), Lineas() (listado por producto), BuscarCorte/
@@ -82,14 +82,14 @@ namespace WebCore.Controllers
 
         public ComprasController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oCompraN = new Negocio.Compra(_empresa, _param);
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oCorteN = new Negocio.Corte(_empresa, _param);
-            _oPersonaN = new Negocio.Persona(_empresa, _param);
-            _oCierreN = new Negocio.CierreCaja(_empresa, _param);
+            _oCompraN = WebCore.Infrastructure.NegocioFactory.CrearCompra(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
         }
 
         public IActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)

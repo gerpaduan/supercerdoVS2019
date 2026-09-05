@@ -1,0 +1,34 @@
+@*
+    Version reducida de Web/Views/Movimientos/_ModalPostMovimiento.cshtml -- excluye el ticket
+    ESC/POS via agente local (print-agent.js, ImprimirTicket/ImprimirTicketPayload/
+    DescargarAgenteImpresion, "Configurar impresora") porque el agente no esta portado, mismo
+    criterio ya usado en Ventas/PuntosExpendio (_ModalPostVentaBasico/_ModalPostPuntoExpendioBasico).
+    "Generar PDF" y "Enviar a WhatsApp" si funcionan (no dependen del agente).
+*@
+<div class="modal fade" id="modalPostMovimiento" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">Movimiento guardado</h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3" style="font-size:1.05rem;">Que deseas hacer ahora?</p>
+
+                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnPostMovimientoNoImprimir" type="button">
+                    <span class="badge badge-light mr-2">1</span>
+                    Continuar
+                </button>
+
+                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostMovimientoPdf" type="button">
+                    <span class="badge badge-light mr-2">2</span>
+                    Generar PDF
+                </button>
+
+                <button class="btn btn-success btn-lg btn-block" id="btnPostMovimientoWhatsapp" type="button">
+                    <span class="badge badge-light mr-2">3</span>
+                    <i class="fab fa-whatsapp mr-2"></i>Enviar a WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

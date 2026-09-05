@@ -1,4 +1,4 @@
-// Port PARCIAL de Web/Controllers/CajasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
+﻿// Port PARCIAL de Web/Controllers/CajasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
 // Core, Modulo 7 -- Caja y tesoreria). El original tiene 1631 lineas y ~20 acciones. Primer slice
 // (confirmado con el usuario): la pantalla "Cajas Abiertas" completa -- listado + historial +
 // egresos de caja (Nuevo/Guardar/Actividades) + cierre de caja + cambio de sucursal. Portado:
@@ -81,13 +81,13 @@ namespace WebCore.Controllers
 
         public CajasController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oCierreN = new Negocio.CierreCaja(_empresa, _param);
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oUsuarioN = new Negocio.Usuario(_empresa, _param);
-            _oVentaN = new Negocio.Venta(_empresa, _param);
+            _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
         }
 
         [HttpGet]

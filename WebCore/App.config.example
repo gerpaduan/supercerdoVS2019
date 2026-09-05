@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plantilla de WebCore/App.config (gitignorado, ver docs/DECISIONS.md). Para un checkout
+     nuevo: copiar este archivo a App.config en la misma carpeta y completar los valores reales
+     de este ambiente (connectionString local, SmtpUser/SmtpPass reales si se va a probar envio
+     de email). Nunca commitear App.config con valores reales. -->
+<configuration>
+  <appSettings>
+    <add key="connString" value="ConexionPrincipal" />
+    <add key="idSucursal" value="1" />
+    <add key="cuit" value="20306210786" />
+    <add key="timeOut" value="30" />
+    <add key="SmtpHost" value="smtp.gmail.com" />
+    <add key="SmtpPort" value="587" />
+    <add key="SmtpEnableSsl" value="true" />
+    <add key="SmtpUser" value="usuario@dominio.com" />
+    <add key="SmtpPass" value="clave-o-app-password" />
+    <add key="SmtpFromEmail" value="usuario@dominio.com" />
+    <add key="SmtpFromName" value="CarniSys" />
+    <!-- Postgres es la base oficial y unica de la plataforma (2026-09-05, ver docs/DECISIONS.md).
+         SQL Server queda solo como legado -- el switch (WebCore/Infrastructure/NegocioFactory.cs)
+         se mantiene por compatibilidad, pero el default real es "Postgres". -->
+    <add key="DataEngine" value="Postgres" />
+    <!-- Sidebar de _Layout.cshtml: modulos todavia no migrados a WebCore linkean con URL
+         absoluta al Web clasico. Sin barra final. -->
+    <add key="WebClasicoBaseUrl" value="https://localhost:44371" />
+  </appSettings>
+  <connectionStrings>
+    <add name="ConexionPrincipal"
+         connectionString="Data Source=.\sqlexpress;Initial Catalog=carnisys;User ID=sa;Password=sistema;"
+         providerName="System.Data.SqlClient" />
+    <add name="ConexionPostgresPiloto"
+         connectionString="Host=localhost;Port=5432;Database=carnisys;Username=usuario-postgres;Password=clave-postgres;Maximum Pool Size=30;Keepalive=30;Tcp Keepalive=true;"
+         providerName="Npgsql" />
+  </connectionStrings>
+</configuration>

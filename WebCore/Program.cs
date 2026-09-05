@@ -27,16 +27,24 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Bug real encontrado el 2026-09-05 (ver docs/DECISIONS.md), detectado recien con Playwright real
+// -- curl sin --compressed nunca lo disparaba: MapStaticAssets() (pipeline de assets estaticos de
+// .NET 9/10, con manifest de compresion generado en build) devolvia Content-Length: 0 para
+// jquery.min.js (y probablemente otros archivos de wwwroot/lib) a CUALQUIER cliente que pida
+// gzip -- osea, todo navegador real, siempre. Rompia jQuery en TODA la app silenciosamente (sin
+// error de servidor, sin 404, el navegador solo recibia un archivo vacio). Reemplazado por
+// UseStaticFiles(), el middleware clasico: sirve los archivos de wwwroot tal cual, sin manifest
+// ni compresion de build -- mismo mecanismo que uso toda la migracion hasta ahora sin problemas.
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
-
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 
 app.Run();

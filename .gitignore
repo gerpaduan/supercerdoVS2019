@@ -68,6 +68,8 @@ packages/
 x64/
 Web/Config/connectionStrings.config
 Web/Config/appSettings.secrets.config
+Web/Config/machineKey.config
+WebCore/App.config
 x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/

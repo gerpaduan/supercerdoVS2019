@@ -15,7 +15,6 @@
 <div class="container-fluid empresa-index-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
-            <h1 class="h3 mb-1 text-gray-800">Mi Empresa</h1>
             <p class="text-muted mb-0">Datos generales y horario laboral de @(!string.IsNullOrWhiteSpace(Model.RazonSocialAfip) ? Model.RazonSocialAfip : "la empresa").</p>
         </div>
     </div>
@@ -185,11 +184,6 @@
 <style>
     .empresa-index-page {
         font-size: .9rem;
-    }
-
-    .empresa-index-page .h3 {
-        font-size: 1.28rem;
-        line-height: 1.15;
     }
 
     .empresa-index-page .card-body {

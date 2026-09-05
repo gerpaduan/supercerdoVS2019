@@ -1,0 +1,575 @@
+(function (window, $) {
+    'use strict';
+
+    function createPOSProduct(options) {
+        // Este modulo concentra el estado del producto que el cajero esta
+        // trabajando en este momento: codigo, resultado de la busqueda,
+        // precio actual y reglas especiales como "2X123".
+        let typingTimer = null;
+        let productoSeleccionado = null;
+        let precioActual = 0;
+        let buscandoProducto = false;
+        let ultimoCodigoPedido = null;
+        let reqProducto = null;
+        let enterDesdeTecladoVirtual = false;
+        const soloFormaPago = options.soloFormaPago === true;
+
+        // Normaliza el codigo para que todas las comparaciones hablen el mismo
+        // idioma: mayusculas, sin espacios sobrantes y con la X consistente.
+        function normalizeInput(raw) {
+            return String(raw ?? '')
+                .trim()
+                .toUpperCase()
+                .replace(/\u00D7/g, 'X');
+        }
+
+        // Convierte un numero escrito con formato local a float.
+        // Acepta "1,25" o "1.25".
+        function parseFloatAR(value) {
+            const number = parseFloat(String(value ?? '').trim().replace(',', '.'));
+            return Number.isFinite(number) ? number : NaN;
+        }
+
+        // Detecta el formato "cantidad X codigo".
+        // Si la entrada no aplica, devolvemos null para seguir con la busqueda normal.
+        function parseCantidadXCodigo(input) {
+            const normalized = normalizeInput(input);
+            const match = normalized.match(/^([0-9]+(?:[.,][0-9]+)?)X(.+)$/);
+            if (!match) return null;
+
+            const cantidad = parseFloatAR(match[1]);
+            const codigo = String(match[2] ?? '').trim();
+
+            if (!codigo) return null;
+            if (!Number.isFinite(cantidad) || cantidad <= 0) return null;
+
+            return {
+                cant: cantidad,
+                codigo: codigo
+            };
+        }
+
+        // Detecta codigos de barra de punto de expendio en formato PE123F.
+        function parseExpendioBarcode(input) {
+            const normalized = normalizeInput(input);
+            const match = normalized.match(/^PE(\d+)F$/);
+            if (!match) return null;
+
+            const idExpendio = parseInt(match[1], 10) || 0;
+            if (idExpendio <= 0) return null;
+
+            return {
+                idExpendio: idExpendio
+            };
+        }
+
+        // Devuelve el foco al input principal del POS.
+        function focusCodigo(selectText) {
+            if (soloFormaPago) return;
+            const $input = $('#inputCodigo');
+            $input.focus();
+
+            if (selectText !== false) {
+                $input.select();
+            }
+        }
+
+        // Lleva el foco a cantidad cuando ya confirmamos un producto valido.
+        function focusCantidad() {
+            if (soloFormaPago) return;
+            $('#inputCantidad').focus().select();
+        }
+
+        function setSearchingState(active) {
+            $('#inputCodigo').toggleClass('pos-input-buscando', !!active);
+        }
+
+        function showMessage(icon, title, text) {
+            if (window.Swal) {
+                Swal.fire({ icon: icon, title: title, text: text });
+                return;
+            }
+
+            alert(text || title);
+        }
+
+        function debeAbrirPreseleccionFormaPago(codigo) {
+            if (soloFormaPago) return false;
+            if (!codigo) return false;
+            if (window.POSState?.getRequierePreseleccionFormaPago?.() !== true) return false;
+            if (window.POSState?.getFormaPagoPreseleccionada?.()?.tipo) return false;
+            if ($('#modalFormaPago').hasClass('show')) return false;
+            return typeof window.abrirModalFormaPagoPreseleccion === 'function';
+        }
+
+        // Restablece el panel de producto al estado neutro.
+        function showWaiting() {
+            setSearchingState(false);
+            productoSeleccionado = null;
+            precioActual = 0;
+
+            $('#prodNombre').text('Info producto...').removeClass('fw-bold pos-campo-cargado').addClass('text-muted');
+            $('#prodPrecio').text('').removeClass('pos-campo-cargado');
+            $('#prodSubtotal').text('$ 0,00');
+            $('#inputCantidad').prop('disabled', true).val('').removeClass('pos-campo-cargado');
+            $('#btnAgregarProducto').prop('disabled', true);
+            if (typeof options.onProductoChanged === 'function') {
+                options.onProductoChanged(null);
+            }
+        }
+
+        function abortPendingProductRequest() {
+            if (reqProducto && reqProducto.readyState !== 4) {
+                reqProducto.abort();
+            }
+
+            reqProducto = null;
+            buscandoProducto = false;
+            ultimoCodigoPedido = null;
+            setSearchingState(false);
+        }
+
+        // Muestra un mensaje de espera mientras el backend responde.
+        function showSearching(message, keepQuantity) {
+            setSearchingState(true);
+            const cantidadActual = keepQuantity ? $('#inputCantidad').val() : '';
+
+            productoSeleccionado = null;
+            precioActual = 0;
+
+            $('#prodNombre').text(message || 'Buscando...').removeClass('fw-bold pos-campo-cargado').addClass('text-muted');
+            $('#prodPrecio').text('').addClass('text-muted').removeClass('pos-campo-cargado');
+            $('#prodSubtotal').text('$ 0,00');
+            $('#inputCantidad').prop('disabled', true).val(cantidadActual);
+            $('#inputCantidad').toggleClass('pos-campo-cargado', !!(cantidadActual && String(cantidadActual).trim()));
+            $('#btnAgregarProducto').prop('disabled', true);
+        }
+
+        // Deja la UI lista para un nuevo intento cuando no encontramos coincidencia.
+        function showNoMatch(message) {
+            setSearchingState(false);
+            productoSeleccionado = null;
+            precioActual = 0;
+
+            $('#prodNombre').text(message || 'Sin coincidencia').removeClass('fw-bold pos-campo-cargado').addClass('text-muted');
+            $('#prodPrecio').text('').addClass('text-muted').removeClass('pos-campo-cargado');
+            $('#prodSubtotal').text('$ 0,00');
+            $('#inputCantidad').prop('disabled', true).val('').removeClass('pos-campo-cargado');
+            $('#btnAgregarProducto').prop('disabled', true);
+            if (typeof options.onProductoChanged === 'function') {
+                options.onProductoChanged(null);
+            }
+
+            focusCodigo(false);
+        }
+
+        // Carga en pantalla el producto elegido y delega el subtotal al modulo
+        // del carrito, que es quien conoce la logica de cantidades/subtotales.
+        function showProduct(producto) {
+            const formaPagoSeleccionada = window.POSState?.getFormaPagoPreseleccionada?.();
+            const precioBase = Number(producto.precioOriginal || producto.precioKg || 0);
+            const precioMostrado = formaPagoSeleccionada && window.POSFormaPagoPrecios
+                ? window.POSFormaPagoPrecios.calcularPrecioFormaPago(precioBase, formaPagoSeleccionada.tipo)
+                : precioBase;
+
+            producto.precioOriginal = precioBase;
+            producto.precioKg = precioMostrado;
+
+            $('#prodNombre').text(producto.nombre).removeClass('text-muted').addClass('fw-bold pos-campo-cargado');
+            $('#prodPrecio').text('$ ' + precioMostrado.toLocaleString('es-AR')).removeClass('text-muted').addClass('fw-bold pos-campo-cargado');
+
+            const $precioManual = $('#inputPrecioManualExpendio');
+            if ($precioManual.length && !$precioManual.prop('readonly')) {
+                $precioManual.val(precioMostrado.toFixed(2).replace('.', ','));
+            }
+
+            precioActual = precioMostrado;
+
+            $('#inputCantidad').prop('disabled', false);
+            $('#prodSubtotal').text('$ 0,00');
+            options.calculateSubtotal();
+            $('#btnAgregarProducto').prop('disabled', false);
+            if (typeof options.onProductoChanged === 'function') {
+                options.onProductoChanged(producto);
+            }
+        }
+
+        // Hace la consulta real al backend. Mantiene varias defensas del flujo
+        // original: abortar requests viejos, ignorar respuestas atrasadas y
+        // permitir callbacks para los casos de auto-agregado.
+        function finishTyping(codigo, callback, ingresoCantidadXParam) {
+            if (soloFormaPago) return;
+            const codigoTrim = normalizeInput(codigo);
+
+            if (!codigoTrim) {
+                showWaiting();
+                return;
+            }
+
+            showSearching(null, Boolean(ingresoCantidadXParam));
+
+            if (reqProducto && reqProducto.readyState !== 4) {
+                reqProducto.abort();
+            }
+
+            buscandoProducto = true;
+            ultimoCodigoPedido = codigoTrim;
+
+            reqProducto = $.ajax({
+                url: window.buscarProductoUrl,
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    codigo: codigoTrim,
+                    ingresoCantidadX: Boolean(ingresoCantidadXParam)
+                },
+                timeout: 3000,
+                success: function (data) {
+                    buscandoProducto = false;
+                    setSearchingState(false);
+
+                    const codigoActual = normalizeInput($('#inputCodigo').val());
+                    if (codigoActual !== ultimoCodigoPedido) return;
+
+                    if (data && data.success === false) {
+                        productoSeleccionado = null;
+                        showNoMatch(data.message);
+
+                        if (typeof callback === 'function') {
+                            callback(false, data);
+                        }
+                        return;
+                    }
+
+                    productoSeleccionado = data;
+                    showProduct(data);
+
+                    // Si el codigo es EAN valido, conservamos el comportamiento heredado:
+                    // continuacion automatica del flujo. La cantidad es 1 salvo que el
+                    // servidor haya interpretado el codigo como interno de balanza con
+                    // TipoValor=Cantidad (data.cantidadSugerida) -- ahi el peso viene
+                    // embebido en el codigo, no es "1 unidad" (ver BarcodeInterpreter).
+                    if (typeof window.esEANValido === 'function' && window.esEANValido(codigoTrim)) {
+                        var cantidadDesdeServidor = Number(data && data.cantidadSugerida);
+                        $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
+                        document.querySelector('#inputCantidad')?.focus();
+                        handleEnter();
+                    }
+
+                    if (typeof callback === 'function') {
+                        callback(true, data);
+                    }
+                },
+                error: function (xhr, status) {
+                    if (status === 'abort') return;
+
+                    buscandoProducto = false;
+                    setSearchingState(false);
+
+                    if (status === 'timeout') {
+                        options.showConnectionError('La conexion es lenta. Reintente.');
+                        return;
+                    }
+
+                    if (!navigator.onLine) {
+                        options.showConnectionError('Sin conexion a Internet');
+                        return;
+                    }
+
+                    options.showConnectionError('No se pudo contactar al servidor');
+                }
+            });
+        }
+
+        // Interpreta formatos rapidos como "2X123" o un EAN directo.
+        // Si consigue resolverlos y dispara auto-agregado, devuelve true.
+        function processCodeWithQuantity() {
+            if (soloFormaPago) return false;
+            const input = document.getElementById('inputCodigo');
+            if (!input) return false;
+
+            const entrada = normalizeInput(input.value);
+            const parsed = parseCantidadXCodigo(entrada);
+
+            if (parsed) {
+                $('#inputCantidad').val(String(parsed.cant));
+                $('#inputCodigo').val(parsed.codigo);
+
+                finishTyping(parsed.codigo, function (ok) {
+                    if (ok === false) return;
+                    // showProduct() ya disparo onProductoChanged, que para productos no
+                    // pesables (como el generico) limpia #inputCantidad para forzar carga
+                    // manual. Como acá la cantidad ya vino explicita en "cantXcodigo",
+                    // la reponemos antes de agregar.
+                    $('#inputCantidad').val(String(parsed.cant));
+                    options.addProduct();
+                    showWaiting();
+                }, true);
+
+                return true;
+            }
+
+            if (typeof window.esEANValido === 'function' && window.esEANValido(entrada)) {
+                $('#inputCantidad').val('1');
+                $('#inputCodigo').val(entrada);
+
+                finishTyping(entrada, function (ok, data) {
+                    if (ok === false) return;
+                    // Mismo caso que arriba: si el producto escaneado no es pesable,
+                    // onProductoChanged ya limpio la cantidad por defecto (1). Si el
+                    // servidor interpreto el codigo como interno de balanza con
+                    // TipoValor=Cantidad (data.cantidadSugerida), usamos ese peso real en
+                    // vez de forzar 1 -- sin esto, cualquier pesada real quedaria cargada
+                    // como cantidad=1 (ver BarcodeInterpreter).
+                    var cantidadDesdeServidor = Number(data && data.cantidadSugerida);
+                    $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
+                    options.addProduct();
+                    showWaiting();
+                }, true);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        function processExpendioBarcode() {
+            if (soloFormaPago) return false;
+
+            const entrada = normalizeInput($('#inputCodigo').val());
+            const parsed = parseExpendioBarcode(entrada);
+            if (!parsed) return false;
+
+            abortPendingProductRequest();
+            window.POSExpendiosCurrent?.cargarExpendio?.(parsed.idExpendio);
+            return true;
+        }
+
+        // Centraliza la accion Enter del bloque de producto.
+        // Si el foco esta en cantidad, agrega.
+        // Si el foco esta en codigo, busca o intenta auto-agregado.
+        function handleEnter() {
+            // Si hay un modal abierto (ej. Compras) el foco puede haber quedado en un input de
+            // esta pantalla de atras -- el backdrop de Bootstrap bloquea el mouse pero no el
+            // teclado. Sin este chequeo, Enter (fisico o del teclado virtual, que tambien pasa
+            // por aca) terminaba agregando un producto detras del modal.
+            if ($(".modal.show").length) return;
+            if (soloFormaPago) return;
+            const inputActivo = options.getInputActivo();
+            if (!inputActivo) return;
+
+            if (inputActivo.id === 'inputCantidad') {
+                options.addProduct();
+                enterDesdeTecladoVirtual = false;
+                return;
+            }
+
+            if (enterDesdeTecladoVirtual || inputActivo.id === 'inputCodigo') {
+                const autoCargaExpendio = processExpendioBarcode();
+                if (autoCargaExpendio) {
+                    enterDesdeTecladoVirtual = false;
+                    return;
+                }
+
+                const autoAgregado = processCodeWithQuantity();
+                enterDesdeTecladoVirtual = false;
+
+                if (autoAgregado) return;
+
+                const codigoInput = normalizeInput($('#inputCodigo').val());
+
+                if (codigoInput.includes('X')) {
+                    showNoMatch('Formato invalido (use 2X123)');
+                    return;
+                }
+
+                if (buscandoProducto) return;
+
+                finishTyping(codigoInput, function () {
+                    const codigoActual = normalizeInput($('#inputCodigo').val());
+                    const codigoProducto = normalizeInput(productoSeleccionado?.codigo);
+
+                    if (!codigoProducto || codigoProducto !== codigoActual) {
+                        showNoMatch();
+                        productoSeleccionado = null;
+                        return;
+                    }
+
+                    if (typeof options.onProductoConfirmed === 'function') {
+                        options.onProductoConfirmed(productoSeleccionado);
+                    }
+
+                    focusCantidad();
+                });
+            }
+        }
+
+        // Abre el modal global de productos y, cuando el usuario elige uno,
+        // reusa el mismo flujo de busqueda que usa el input de codigo.
+        function openSearchModal() {
+            if (soloFormaPago) return;
+            if (typeof window.abrirBuscarProductoModal !== 'function') {
+                showMessage('error', 'Buscador de productos', 'No se pudo abrir el buscador de productos. Verifica que el script global del modal esté cargado.');
+                return;
+            }
+
+            options.clearInputActivo();
+
+            window.abrirBuscarProductoModal({
+                modalSelector: '#modalBuscarProducto',
+                mostrarPrecio: true,
+                onSelect: function (producto) {
+                    const codigo = String((producto && producto.codigo) || '').trim();
+                    if (!codigo) {
+                        focusCodigo();
+                        return;
+                    }
+
+                    $('#inputCodigo').val(codigo);
+                    clearTimeout(typingTimer);
+
+                    finishTyping(codigo, function (ok) {
+                        if (ok === false) {
+                            focusCodigo();
+                            return;
+                        }
+
+                        const codigoActual = normalizeInput($('#inputCodigo').val());
+                        const codigoProducto = normalizeInput(productoSeleccionado?.codigo);
+
+                        if (!codigoProducto || codigoProducto !== codigoActual) {
+                            showNoMatch();
+                            productoSeleccionado = null;
+                            focusCodigo();
+                            return;
+                        }
+
+                        if (typeof options.onProductoConfirmed === 'function') {
+                            options.onProductoConfirmed(productoSeleccionado);
+                        }
+
+                        if (typeof window.esEANValido === 'function' && window.esEANValido(codigoActual)) {
+                            return;
+                        }
+
+                        focusCantidad();
+                    });
+                }
+            });
+        }
+
+        // Escucha lo que se escribe en codigo y dispara una busqueda con debounce.
+        // El Enter no se procesa aca para no duplicar logica.
+        function bindLiveSearch() {
+            if (soloFormaPago) return;
+            $('#inputCodigo').on('keyup', function (e) {
+                const codigo = String(this.value ?? '').trim().toUpperCase();
+
+                if (e.key === 'Enter') {
+                    clearTimeout(typingTimer);
+                    return;
+                }
+
+                if (codigo.includes('X')) {
+                    // Mientras el usuario arma un patron tipo 4X5 o 4X5G
+                    // no consultamos al backend ni forzamos el foco.
+                    // El procesamiento real se hace al confirmar con Enter.
+                    clearTimeout(typingTimer);
+                    return;
+                }
+
+                clearTimeout(typingTimer);
+
+                if (debeAbrirPreseleccionFormaPago(codigo)) {
+                    window.abrirModalFormaPagoPreseleccion();
+                    return;
+                }
+
+                typingTimer = setTimeout(function () {
+                    finishTyping(codigo);
+                }, 250);
+            });
+        }
+
+        // Mientras el modal de busqueda esta abierto, el teclado del POS no debe
+        // quedar apuntando a inputs que no pertenecen a la pantalla principal.
+        function bindSearchModalFocus() {
+            $('#modalBuscarProducto')
+                .off('shown.bs.modal.posBuscar hidden.bs.modal.posBuscar')
+                .on('shown.bs.modal.posBuscar', function () {
+                    options.clearInputActivo();
+                })
+                .on('hidden.bs.modal.posBuscar', function () {
+                    setTimeout(function () {
+                        focusCodigo();
+                    }, 0);
+                });
+        }
+
+        function bindDomEvents() {
+            if (soloFormaPago) return;
+            $('#btnAgregarManual').off('click').on('click', function (e) {
+                e.preventDefault();
+                openSearchModal();
+            });
+
+            bindLiveSearch();
+            bindSearchModalFocus();
+        }
+
+        const api = {
+            init: function () {
+                bindDomEvents();
+            },
+            getProductoSeleccionado: function () {
+                return productoSeleccionado;
+            },
+            setProductoSeleccionado: function (value) {
+                productoSeleccionado = value || null;
+                return productoSeleccionado;
+            },
+            getPrecioActual: function () {
+                return precioActual;
+            },
+            getTypingTimer: function () {
+                return typingTimer;
+            },
+            setEnterDesdeTecladoVirtual: function (value) {
+                enterDesdeTecladoVirtual = Boolean(value);
+            },
+            focusCodigo: focusCodigo,
+            focusCantidad: focusCantidad,
+            showWaiting: showWaiting,
+            showSearching: showSearching,
+            showNoMatch: showNoMatch,
+            showProduct: showProduct,
+            handleEnter: handleEnter,
+            finishTyping: finishTyping,
+            openSearchModal: openSearchModal,
+            normalizeInput: normalizeInput,
+            parseFloatAR: parseFloatAR,
+            parseCantidadXCodigo: parseCantidadXCodigo,
+            parseExpendioBarcode: parseExpendioBarcode
+        };
+
+        // Wrappers globales para mantener compatibilidad con el codigo que todavia
+        // sigue dentro de la vista o en scripts heredados.
+        window.abrirBuscadorProductosPOS = openSearchModal;
+        window.manejarEnter = handleEnter;
+        window.terminarEscritura = finishTyping;
+        window.normalizarEntrada = normalizeInput;
+        window.parseFloatAR = parseFloatAR;
+        window.parseCantidadXCodigo = parseCantidadXCodigo;
+        window.parseExpendioBarcode = parseExpendioBarcode;
+        window.mostrarProducto = showProduct;
+        window.mostrarSinCoincidencia = showNoMatch;
+        window.mostrarEsperando = showWaiting;
+        window.mostrarBuscando = showSearching;
+
+        return api;
+    }
+
+    window.POSProduct = {
+        create: createPOSProduct
+    };
+})(window, window.jQuery);

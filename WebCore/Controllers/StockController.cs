@@ -1,4 +1,4 @@
-// Port PARCIAL de Web/Controllers/StockController.cs (ver docs/DECISIONS.md, migracion ASP.NET
+﻿// Port PARCIAL de Web/Controllers/StockController.cs (ver docs/DECISIONS.md, migracion ASP.NET
 // Core, Modulo 4 -- Stock e inventario). El original tiene 2427 lineas y 13 acciones (listado,
 // alta/edicion de movimientos de stock, flujo completo de "pesaje" con ajustes vinculados,
 // existencia por sucursal, autocompletado de productos). Mismo criterio de escala que Modulo 3
@@ -90,13 +90,13 @@ namespace WebCore.Controllers
 
         public StockController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oCompraN = new Negocio.Compra(_empresa, _param);
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oPersonaN = new Negocio.Persona(_empresa, _param);
-            _oCorteN = new Negocio.Corte(_empresa, _param);
+            _oCompraN = WebCore.Infrastructure.NegocioFactory.CrearCompra(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
         }
 
         public IActionResult Index(int? idSucursal = null, string tipoCompra = "Ver Todos", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
@@ -1417,7 +1417,7 @@ namespace WebCore.Controllers
             if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion || idUsuarioCreador <= 0)
                 return usuarioSesion;
 
-            var oUsuarioN = new Negocio.Usuario(_empresa, _param);
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
             var candidato = oUsuarioN.getUsuarioById(idUsuarioCreador);
             if (candidato == null || !candidato.Activo || candidato.IdEmpresa != usuarioSesion.IdEmpresa)
                 return usuarioSesion;

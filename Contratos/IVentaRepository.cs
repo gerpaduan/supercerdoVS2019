@@ -70,6 +70,7 @@ namespace Contratos
         Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE);
         void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null);
         DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal);
+        DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal);
         DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
         Entidades.Venta getExpedioById(int idExpendio);

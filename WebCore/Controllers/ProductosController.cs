@@ -1,4 +1,4 @@
-// Port PARCIAL de Web/Controllers/ProductosController.cs (ver docs/DECISIONS.md, migracion
+﻿// Port PARCIAL de Web/Controllers/ProductosController.cs (ver docs/DECISIONS.md, migracion
 // ASP.NET Core, Modulo 3 -- Productos). El original tiene 2515 lineas y 24 acciones (Index,
 // alta/edicion con "carga continua", Marcas, Tipos, Catalogo Global, PDF de etiquetas). Portado
 // en varios turnos, confirmado con el usuario dado el tamano real del modulo (ver
@@ -7,10 +7,14 @@
 // le importaba al pedido original) + las 4 acciones AJAX que esa vista consume directamente
 // (FindCorteByCodigo, BuscarProductoGlobalParaAlta, BuscarMarca, ListarProductos); turno 3 =
 // Marcas/Tipos (CRUD completo) + Eliminar (borrar producto, boton ya presente en Index.cshtml).
-// NO portado todavia: el modal "Ver catalogo global" completo (VerGlobales/BuscarGlobales/
-// ImportarSeleccionados + equivalentes de Tipos), GenerarEtiquetasPdf (bloqueado por iTextSharp,
-// blocker ya conocido del plan), EditPrecioCorte/GuardarPuntosStockSucursal/findCorteById
-// (botones que ya existen en Index.cshtml portado pero cuyo backing action todavia no existe).
+// GenerarEtiquetasPdf (2026-09-04) -- el bloqueante de iTextSharp ya no aplica (QuestPDF, ver
+// docs/10-migracion-aspnet-core/README.md); EditPrecioCorte/GuardarPuntosStockSucursal/
+// findCorteById tambien portados (turnos previos, esta cabecera habia quedado desactualizada).
+//
+// El modal "Ver catalogo global" (VerGlobales/BuscarGlobales/ImportarSeleccionados +
+// equivalentes de Tipos) tambien esta portado (esta cabecera decia lo contrario, drift viejo) --
+// ImportarSeleccionados/ImportarTiposProductoSeleccionados (las 2 escrituras reales) quedan sin
+// probar con un POST real, ver docs/10-migracion-aspnet-core/README.md.
 //
 // Mismo criterio que Personas: IEmpresaContext + IParametrosContext reales (Negocio.Parametros +
 // Reload(), evita el NullReferenceException ya encontrado en Modulo 2) en vez de Session["Usuario"]/
@@ -27,6 +31,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -49,6 +54,7 @@ namespace WebCore.Controllers
 
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
+        private readonly IWebHostEnvironment _env;
         private readonly IEmpresaContext _empresa = new StubEmpresaContext();
         private readonly IParametrosContext _param;
         private readonly Negocio.Sucursal _oSucursalN;
@@ -56,23 +62,27 @@ namespace WebCore.Controllers
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.CortePuntoStockSucursal _oCortePuntoStockSucursalN;
 
-        public ProductosController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider)
+        // IWebHostEnvironment: mismo criterio ya establecido en VentasController para AFIP -- lee
+        // el logo de GenerarEtiquetasPdf desde WebRootPath, GenerarDocsCore.cs se mantiene libre
+        // de acceso a disco.
+        public ProductosController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
+            _env = env;
 
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oCorteN = new Negocio.Corte(_empresa, _param);
-            _oPersonaN = new Negocio.Persona(_empresa, _param);
-            _oCortePuntoStockSucursalN = new Negocio.CortePuntoStockSucursal(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oCortePuntoStockSucursalN = WebCore.Infrastructure.NegocioFactory.CrearCortePuntoStockSucursal(_empresa, _param);
         }
 
         private Negocio.CatalogoGlobalProducto ObtenerGestorCatalogoGlobal()
         {
-            return new Negocio.CatalogoGlobalProducto(new EmpresaContextNulo(), null);
+            return WebCore.Infrastructure.NegocioFactory.CrearCatalogoGlobalProducto(new EmpresaContextNulo(), null);
         }
 
         public IActionResult Index(
@@ -1408,6 +1418,48 @@ namespace WebCore.Controllers
             }
 
             return Json(new { ok = true });
+        }
+
+        // Port de Web/Controllers/ProductosController.cs GenerarEtiquetasPdf (2026-09-04) -- el
+        // bloqueante de licencia de iTextSharp ya no aplica (esta migracion adopto QuestPDF, ver
+        // docs/10-migracion-aspnet-core/README.md); el layout/logica de seleccion de codigo de
+        // barras se porto tal cual a WebCore/Services/GenerarDocsCore.cs (GenerarPdfEtiquetas).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GenerarEtiquetasPdf(string ids, string tamano)
+        {
+            var idsList = (ids ?? "")
+                .Split(',')
+                .Select(s => { int id; return int.TryParse(s, out id) ? id : 0; })
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (idsList.Count == 0)
+                return NotFound();
+
+            var productos = idsList
+                .Select(id => _oCorteN.findCorteById(id, false))
+                .Where(c => c != null && c.IdCorte > 0)
+                .ToList();
+
+            if (productos.Count == 0)
+                return NotFound();
+
+            byte[] logoBytes = null;
+            try
+            {
+                string logoPath = Path.Combine(_env.WebRootPath, "Content", "img", "CarniSys_Logo_sinSlogan.png");
+                if (System.IO.File.Exists(logoPath))
+                    logoBytes = System.IO.File.ReadAllBytes(logoPath);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("GenerarEtiquetasPdf - no se pudo cargar el logo: {0}", ex);
+            }
+
+            byte[] bytes = WebCore.Services.GenerarDocsCore.GenerarPdfEtiquetas(productos, tamano, logoBytes);
+            return File(bytes, "application/pdf", "Etiquetas.pdf");
         }
 
         [HttpGet]

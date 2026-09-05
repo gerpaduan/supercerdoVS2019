@@ -1,4 +1,4 @@
-// Port de Web/Controllers/SucursalController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+﻿// Port de Web/Controllers/SucursalController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Pantalla "Mis Sucursales": ver/editar las sucursales de
 // la empresa actual (distinto de SystemAdministrationController.Sucursales, cross-tenant para el
 // super-admin de plataforma, ya portado en Modulo 1). Mismo criterio de stub que EmpresaController
@@ -34,7 +34,7 @@ namespace WebCore.Controllers
 
         public SucursalController()
         {
-            _oSucursalN = new Negocio.Sucursal(_empresa);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa);
         }
 
         [HttpGet]

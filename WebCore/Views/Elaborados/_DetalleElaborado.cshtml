@@ -1,0 +1,139 @@
+@model WebCore.Models.ElaboradoDetalleVm
+@using System.Globalization
+
+@{
+    var cultura = CultureInfo.GetCultureInfo("es-AR");
+}
+
+@if (Model == null)
+{
+    <div class="text-muted">No se pudieron cargar los detalles del elaborado.</div>
+}
+else
+{
+    var elaborado = !string.IsNullOrWhiteSpace(Model.Elaborado) ? Model.Elaborado : "-";
+    var codigo = Model.Codigo > 0 ? Model.Codigo.ToString() : "-";
+    var observaciones = !string.IsNullOrWhiteSpace(Model.Observaciones) ? Model.Observaciones : "-";
+    var receta = !string.IsNullOrWhiteSpace(Model.Receta) ? Model.Receta : "-";
+    var usuarioCreacion = !string.IsNullOrWhiteSpace(Model.UsuarioCreacion) ? Model.UsuarioCreacion : "-";
+    var fechaCreacion = Model.FechaCreacion.HasValue ? Model.FechaCreacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+    var usuarioActualizacion = !string.IsNullOrWhiteSpace(Model.UsuarioActualizacion) ? Model.UsuarioActualizacion : "-";
+    var fechaActualizacion = Model.FechaActualizacion.HasValue ? Model.FechaActualizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-";
+    var sucursal = !string.IsNullOrWhiteSpace(Model.Sucursal) ? Model.Sucursal : "-";
+    var estado = !string.IsNullOrWhiteSpace(Model.Estado) ? Model.Estado : "-";
+
+    <div class="row elaborado-detalle-layout">
+        <div class="col-12 col-xl-8 order-2 order-xl-1">
+            <div class="table-responsive mt-3 mt-xl-0">
+                <table class="table table-sm table-bordered mb-0 elaborado-detalle-tabla">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:120px;">Codigo</th>
+                            <th>Producto</th>
+                            <th class="text-right" style="width:120px;">Kgs</th>
+                            <th class="text-center" style="width:90px;">Balanza</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.IngredientesUtilizados == null || Model.IngredientesUtilizados.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No se encontraron ingredientes utilizados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var linea in Model.IngredientesUtilizados)
+                            {
+                                <tr>
+                                    <td>@(linea.Codigo > 0 ? linea.Codigo.ToString() : "-")</td>
+                                    <td>@(!string.IsNullOrWhiteSpace(linea.Producto) ? linea.Producto : "-")</td>
+                                    <td class="text-right">@linea.Kgs.ToString("N3", cultura)</td>
+                                    <td class="text-center">@(linea.PesoBalanza ? "Si" : "No")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4 order-1 order-xl-2">
+            <div class="elaborado-detalle-meta-card">
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">ID del registro:</span> <span class="font-weight-bold">@Model.Id</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Elaborado:</span> <span class="font-weight-bold">@elaborado</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Codigo:</span> <span class="font-weight-bold">@codigo</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Observaciones:</span> <span class="font-weight-bold">@observaciones</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Receta:</span> <span class="font-weight-bold">@receta</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Quien lo creo:</span> <span class="font-weight-bold">@usuarioCreacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de creacion:</span> <span class="font-weight-bold">@fechaCreacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Quien lo actualizo:</span> <span class="font-weight-bold">@usuarioActualizacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Fecha de actualizacion:</span> <span class="font-weight-bold">@fechaActualizacion</span></div>
+                <div class="elaborado-detalle-meta-row"><span class="text-muted">Sucursal:</span> <span class="font-weight-bold">@sucursal</span></div>
+                <div class="elaborado-detalle-meta-row mb-0"><span class="text-muted">Estado:</span> <span class="font-weight-bold">@estado</span></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .elaborado-detalle-layout {
+            align-items: flex-start;
+        }
+
+        .elaborado-detalle-meta-card {
+            border: 1px solid #dee2e6;
+            border-radius: .5rem;
+            background: #fff;
+            padding: .85rem .95rem;
+        }
+
+        .elaborado-detalle-meta-row {
+            margin-bottom: .45rem;
+            line-height: 1.2;
+        }
+
+        .elaborado-detalle-tabla thead th {
+            font-size: .76rem;
+            padding-top: .3rem;
+            padding-bottom: .3rem;
+        }
+
+        html.dark-mode .elaborado-detalle-meta-card,
+        body.dark-mode .elaborado-detalle-meta-card {
+            background: #111827;
+            border-color: #374151;
+            color: #f3f4f6;
+        }
+
+        html.dark-mode .elaborado-detalle-meta-card .text-muted,
+        body.dark-mode .elaborado-detalle-meta-card .text-muted {
+            color: #9ca3af !important;
+        }
+
+        html.dark-mode .elaborado-detalle-tabla,
+        body.dark-mode .elaborado-detalle-tabla {
+            color: #f3f4f6;
+        }
+
+        html.dark-mode .elaborado-detalle-tabla td,
+        html.dark-mode .elaborado-detalle-tabla th,
+        body.dark-mode .elaborado-detalle-tabla td,
+        body.dark-mode .elaborado-detalle-tabla th {
+            border-color: #374151;
+        }
+
+        html.dark-mode .elaborado-detalle-tabla thead.thead-light th,
+        body.dark-mode .elaborado-detalle-tabla thead.thead-light th {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border-color: #374151;
+        }
+
+        @@media (min-width: 1200px) {
+            .elaborado-detalle-meta-card {
+                position: sticky;
+                top: .25rem;
+            }
+        }
+    </style>
+}

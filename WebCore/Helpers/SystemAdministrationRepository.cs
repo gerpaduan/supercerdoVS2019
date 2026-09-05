@@ -14,7 +14,7 @@ using WebCore.Models;
 
 namespace WebCore.Helpers
 {
-    public class SystemAdministrationRepository
+    public class SystemAdministrationRepository : ISystemAdministrationRepository
     {
         private readonly IEmpresaContext _empresaRaiz;
 

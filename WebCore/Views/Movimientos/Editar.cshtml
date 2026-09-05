@@ -1,0 +1,764 @@
+@model WebCore.Models.MovimientoEditVm
+@using System.Collections.Generic
+@using Entidades
+
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar Movimiento" : "Nuevo Movimiento";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    var modalProductoData = new ViewDataDictionary(ViewData);
+    modalProductoData["ModalId"] = "modalBuscarProductoMovimiento";
+    modalProductoData["ApiUrl"] = Url.Action("BuscarProducto", "Movimientos");
+    modalProductoData["Titulo"] = "Buscar producto para Movimiento";
+    modalProductoData["MostrarPrecio"] = "false";
+}
+
+<div class="container-fluid px-2 px-md-3 movimiento-page movimiento-form-compact" data-movimiento-page="1">
+    <div id="movimientoDraftBanner" class="alert alert-warning d-none" role="alert">
+        Se encontró un borrador local de este movimiento.
+        <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Movimientos")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+        @if (Model.EsEdicion)
+        {
+            <button type="button" class="btn btn-outline-primary" id="btnImprimirMovimiento">
+                <i class="fas fa-print mr-1"></i> Imprimir
+            </button>
+        }
+    </div>
+
+    <div class="card shadow-sm movimiento-panel-card">
+        <div class="card-body">
+            <form id="formMovimiento" method="post" action="@Url.Action("Guardar", "Movimientos")" novalidate>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IdMovimiento)
+                @Html.HiddenFor(m => m.EmpresaCuit)
+                <div id="lineasHiddenContainer"></div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="IdSucursalOrigen">Sucursal origen</label>
+                            <select id="IdSucursalOrigen" name="IdSucursalOrigen" class="form-control">
+                                <option value="0">Seleccione...</option>
+                                @foreach (var sucursal in sucursales)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursalOrigen ? "selected" : null)">@sucursal.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="IdSucursalDestino">Sucursal destino</label>
+                            <select id="IdSucursalDestino" name="IdSucursalDestino" class="form-control">
+                                <option value="0">Seleccione...</option>
+                                @foreach (var sucursal in sucursales)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursalDestino ? "selected" : null)">@sucursal.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="FechaMovimiento">Fecha</label>
+                            <input type="datetime-local"
+                                   id="FechaMovimiento"
+                                   name="FechaMovimiento"
+                                   class="form-control"
+                                   value="@Model.FechaMovimiento.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        @Html.Partial("_AdvertenciaPermisoFecha")
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3 movimiento-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 movimiento-section-title">Agregar producto</h6>
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div class="custom-control custom-switch mr-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkBalanzaLinea" checked />
+                                        <label class="custom-control-label" for="chkBalanzaLinea">Balanza</label>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumulados" data-edit-readonly-ignore="true">
+                                        <i class="fas fa-layer-group mr-1"></i> Ver acumulados
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoMovimiento" title="Mostrar/ocultar teclado digital">
+                                        <i class="fas fa-keyboard"></i> <i class="fas fa-chevron-down" id="iconoToggleTecladoMovimiento"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
+                                        <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
+                                    </button>
+                                    <span class="small text-muted d-none" id="lblCapturaRespaldoActiva" title="Se guarda una captura de la pantalla completa en tu carpeta elegida cada vez que agregás o quitás un producto">
+                                        <i class="fas fa-shield-alt mr-1 text-success"></i> Respaldo automático activado
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="balanzaStatusWrapMovimiento">
+                                <div class="small text-muted mb-2">
+                                    Conexión balanza: <span id="estadoBalanzaMovimiento">Desconocida</span>
+                                </div>
+                                <div class="progress mb-3" style="height:4px;">
+                                    <div id="barraBalanzaMovimiento" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            <div id="movimientoWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+
+                            @Html.Partial("~/Views/Shared/_ScannerCodigoBarra.cshtml")
+
+                            <div class="numeric-keypad-toggle-layout" id="movimientoNumericKeypadLayout">
+                                <div class="numeric-keypad-toggle-fields">
+                                    <div class="row align-items-end movimiento-producto-row">
+                                        <div class="col-12 col-md-4 col-lg-3 movimiento-col-codigo">
+                                            <div class="form-group">
+                                                <label for="txtCodigoProducto">Código</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <button type="button" class="btn btn-outline-secondary" id="btnScanner" title="Escanear código de barra">
+                                                            <i class="fas fa-barcode"></i>
+                                                        </button>
+                                                    </div>
+                                                    <input type="number" id="txtCodigoProducto" class="form-control movimiento-input-codigo" min="0" step="1" autocomplete="off" />
+                                                </div>
+                                                <small id="scannerMsg" class="text-danger d-none"></small>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-8 col-lg movimiento-col-producto">
+                                            <div class="form-group">
+                                                <label for="txtProductoNombre">Producto</label>
+                                                <div class="input-group">
+                                                    <input type="hidden" id="txtProductoId" />
+                                                    <input type="hidden" id="txtProductoPesable" />
+                                                    <input type="hidden" id="txtProductoTipo" />
+                                                    <input type="hidden" id="txtProductoPromedio" />
+                                                    <input type="text" id="txtProductoNombre" class="form-control movimiento-producto-highlight app-product-highlight" readonly />
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarProducto" title="Buscar producto (F10)">
+                                                            <i class="fas fa-search"></i>
+                                                            <span class="d-none d-lg-inline ml-1">F10</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
+                                            <div class="form-group">
+                                                <label for="txtCantUnidad">Cant.Un.</label>
+                                                <input type="number" id="txtCantUnidad" class="form-control movimiento-input-cantidad" min="0" step="1" />
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-3 col-lg-2 movimiento-col-cantidad">
+                                            <div class="form-group">
+                                                <label for="txtCantKgs">Kgs.</label>
+                                                <input type="text" id="txtCantKgs" class="form-control solo-decimal movimiento-input-cantidad" inputmode="decimal" enterkeyhint="done" autocomplete="off" />
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-lg-auto movimiento-col-accion">
+                                            <div class="form-group">
+                                                <label class="d-block invisible mb-0">&nbsp;</label>
+                                                <button type="button" class="btn btn-primary movimiento-btn-add" id="btnAgregarProducto" title="Agregar producto" aria-label="Agregar producto">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @{ ViewBag.NumericKeypadId = "numericKeypadMovimiento"; }
+                                @Html.Partial("~/Views/Shared/_NumericKeypad.cshtml")
+                            </div>
+
+                            <div class="custom-control custom-checkbox mb-3 d-none" id="wrapPermitirIngreso">
+                                <input type="checkbox" class="custom-control-input" id="chkPermitirIngreso" />
+                                <label class="custom-control-label" for="chkPermitirIngreso">Permitir ingreso</label>
+                                <small class="form-text text-muted">Presione <strong>+</strong> para registrar.</small>
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex align-items-center mb-2 movimiento-search-toolbar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleBusquedaLineasMovimiento"
+                                    title="Buscar en la tabla" aria-expanded="false">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <input type="text" id="filtroLineasMovimiento" class="form-control form-control-sm ml-2 d-none"
+                                   placeholder="Buscar por producto o código..." autocomplete="off" style="max-width:280px;">
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm movimiento-table-compact" id="tablaLineasMovimiento">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width:110px;">Código</th>
+                                        <th>Producto</th>
+                                        <th class="text-right" style="width:8ch;">Cant.Un.</th>
+                                        <th class="text-right" style="width:8ch;">Kilos</th>
+                                        <th class="text-center" style="width:8ch;">Balanza</th>
+                                        <th class="text-center" style="width:8ch;">Permitir ingreso</th>
+                                        <th style="width:70px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="card bg-light movimiento-panel-card movimiento-summary-card">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-2 movimiento-section-title">Resumen</h6>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total items</span>
+                                    <strong id="lblTotalItems">0</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total unidades</span>
+                                    <strong id="lblTotalUnidades">0</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total kilos</span>
+                                    <strong id="lblTotalKilos">0.000</strong>
+                                </div>
+                                <hr />
+                                <div class="form-group mb-0">
+                                    <label class="small text-muted mb-1">Usuario</label>
+                                    <input type="text" class="form-control form-control-sm" value="@Model.UsuarioNombre" readonly />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card movimiento-panel-card mt-3">
+                            <div class="card-body">
+                                <div class="form-group mb-0">
+                                    <label for="Observaciones">Observaciones</label>
+                                    <textarea id="Observaciones"
+                                              name="Observaciones"
+                                              class="form-control js-auto-resize"
+                                              rows="2"
+                                              style="min-height: calc(1.5em * 2 + 1rem); overflow:hidden; resize:none;"
+                                              maxlength="250">@Model.Observaciones</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        @if (Model.EsEdicion)
+                        {
+                            <div class="card movimiento-panel-card mt-3 movimiento-meta-card">
+                                <div class="card-body">
+                                    <label class="d-block mb-2">Datos del movimiento</label>
+                                    <div class="movimiento-meta-grid">
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Movimiento origen</div>
+                                            <div class="font-weight-bold">@Model.IdMovimientoOrigen</div>
+                                        </div>
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Movimiento destino</div>
+                                            <div class="font-weight-bold">@Model.IdMovimientoDestino</div>
+                                        </div>
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Creado</div>
+                                            <div class="font-weight-bold">@Model.Creado</div>
+                                            <div class="small text-muted">@Model.CreadoPor</div>
+                                        </div>
+                                        <div class="movimiento-meta-item">
+                                            <div class="small text-muted movimiento-meta-label">Actualizado</div>
+                                            <div class="font-weight-bold">@Model.Actualizado</div>
+                                            <div class="small text-muted">@Model.ActualizadoPor</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionMovimiento"
+                                data-edit-readonly-ignore="true"
+                                disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
+                    <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion ? "d-none" : "")" id="btnGuardarMovimiento">
+                        <i class="fas fa-save mr-1"></i> Guardar movimiento
+                    </button>
+                    <a href="@Url.Action("Index", "Movimientos")" class="btn btn-outline-secondary mb-2">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAcumuladosMovimiento" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Acumulados del movimiento</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 movimiento-table-compact">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:110px;">Código</th>
+                                <th>Producto</th>
+                                <th class="text-right" style="width:110px;">Cant.Un.</th>
+                                <th class="text-right" style="width:110px;">Kilos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAcumuladosMovimiento"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalProductoData)
+@Html.Partial("~/Views/Movimientos/_ModalPostMovimiento.cshtml")
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+<style>
+    .movimiento-page .movimiento-panel-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+    }
+
+    .movimiento-page .movimiento-panel-card > .card-body,
+    .movimiento-page .movimiento-panel-card .card-body {
+        padding: .82rem .96rem;
+    }
+
+    .movimiento-page .movimiento-section-box {
+        border: 1px solid #e9ecef !important;
+        border-radius: .7rem !important;
+        padding: .8rem .92rem !important;
+        margin-bottom: .85rem !important;
+    }
+
+    .movimiento-page .movimiento-form-compact label,
+    .movimiento-page .movimiento-section-box label,
+    .movimiento-page .movimiento-panel-card label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .movimiento-page .movimiento-form-compact .form-control,
+    .movimiento-page .movimiento-form-compact .input-group-text,
+    .movimiento-page .movimiento-form-compact .btn:not(.btn-sm),
+    .movimiento-page .movimiento-section-box .form-control,
+    .movimiento-page .movimiento-section-box .input-group-text,
+    .movimiento-page .movimiento-section-box .btn:not(.btn-sm),
+    .movimiento-page .movimiento-panel-card .form-control,
+    .movimiento-page .movimiento-panel-card .input-group-text,
+    .movimiento-page .movimiento-panel-card .btn:not(.btn-sm) {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .movimiento-page .movimiento-section-title {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+        margin-bottom: .55rem !important;
+    }
+
+    .movimiento-page .movimiento-form-compact .custom-control-label,
+    .movimiento-page .movimiento-section-box .custom-control-label,
+    .movimiento-page .movimiento-panel-card .custom-control-label,
+    .movimiento-page .movimiento-form-compact .small,
+    .movimiento-page .movimiento-form-compact .text-muted,
+    .movimiento-page .movimiento-section-box .small,
+    .movimiento-page .movimiento-section-box .text-muted,
+    .movimiento-page .movimiento-panel-card .small,
+    .movimiento-page .movimiento-panel-card .text-muted {
+        font-size: .76rem !important;
+    }
+
+    .movimiento-page .movimiento-section-box h6.text-uppercase,
+    .movimiento-page .movimiento-panel-card h6.text-uppercase {
+        font-size: .72rem;
+        letter-spacing: .04em;
+        line-height: 1.1;
+    }
+
+    .movimiento-page .movimiento-meta-label {
+        font-size: .68rem !important;
+        line-height: 1.05;
+        margin-bottom: .14rem !important;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .movimiento-page .movimiento-summary-card .card-body {
+        padding: .62rem .78rem;
+    }
+
+    .movimiento-page .movimiento-meta-card .card-body {
+        min-height: calc(1.5em * 2 + 3.2rem);
+    }
+
+    .movimiento-page .movimiento-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .65rem;
+    }
+
+    .movimiento-page .movimiento-meta-item {
+        min-width: 0;
+    }
+
+    .movimiento-page .movimiento-meta-card .font-weight-bold {
+        font-size: .82rem;
+        line-height: 1.15;
+    }
+
+    .movimiento-page .movimiento-meta-card .small.text-muted:not(.movimiento-meta-label) {
+        font-size: .7rem !important;
+        line-height: 1.1;
+    }
+
+    .movimiento-page .movimiento-producto-row {
+        margin-left: -.3rem;
+        margin-right: -.3rem;
+    }
+
+    .movimiento-page .movimiento-producto-row > div {
+        padding-left: .3rem;
+        padding-right: .3rem;
+    }
+
+    .movimiento-page .movimiento-input-codigo {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    /* El input de codigo ahora vive dentro de un .input-group junto al
+       boton de escanear (btnScanner). El width:100%/min-width:100% de
+       arriba asume un input suelto: dentro del input-group empuja al
+       boton a su propia fila (mismo problema que el filtro de "Mis
+       actividades" del 2026-07-31, ver incidencias-frecuentes.md). Se
+       pisa con mayor especificidad para que el input vuelva a compartir
+       fila con el boton via flexbox normal de Bootstrap. */
+    .movimiento-page .input-group .movimiento-input-codigo {
+        /* Bootstrap resuelve esto con width:1% (no "auto") en su propio
+           ".input-group > .form-control": el motor de flexbox decide en
+           que fila entra cada item usando el ancho preferido ANTES de
+           aplicar el shrink, y "auto" cae al ancho nativo del <input>
+           (~190px), mas ancho que el hueco junto al boton -> wrappea.
+           1% le da un ancho preferido chico para esa decision; el
+           flex-grow:1 despues lo estira para ocupar la fila entera. */
+        width: 1%;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .movimiento-page .movimiento-input-cantidad {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .movimiento-page .movimiento-producto-highlight {
+        font-size: .92rem !important;
+        font-weight: 700;
+        color: #000;
+        background: #f8fbff;
+        border-color: #9ec5fe;
+        letter-spacing: .01em;
+    }
+
+    .movimiento-page .movimiento-producto-highlight[readonly] {
+        background: #f8fbff;
+        color: #000;
+        opacity: 1;
+    }
+
+    .movimiento-page .movimiento-btn-add {
+        width: 100%;
+    }
+
+    .movimiento-page .movimiento-table-compact {
+        font-size: .82rem;
+    }
+
+    .movimiento-page .movimiento-table-compact th,
+    .movimiento-page .movimiento-table-compact td {
+        padding: .36rem .48rem;
+        vertical-align: middle;
+        line-height: 1.12;
+    }
+
+    .movimiento-page .movimiento-table-compact thead th,
+    .movimiento-page .movimiento-table-compact > thead > tr > th {
+        font-size: .66rem !important;
+        line-height: 1.02;
+        padding-top: .32rem;
+        padding-bottom: .32rem;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .movimiento-page #tablaLineasMovimiento thead th[data-sort-key] {
+        user-select: none;
+        transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .movimiento-page #tablaLineasMovimiento thead th[data-sort-key]:hover {
+        background: rgba(0, 0, 0, .045);
+    }
+
+    .movimiento-page #tablaLineasMovimiento thead th.movimiento-sort-active {
+        background: rgba(13, 110, 253, .12);
+        color: #0b57c0;
+        box-shadow: inset 0 -2px 0 rgba(13, 110, 253, .45);
+    }
+
+    .dark-mode .movimiento-page #tablaLineasMovimiento thead th[data-sort-key]:hover,
+    body.dark-mode .movimiento-page #tablaLineasMovimiento thead th[data-sort-key]:hover {
+        background: rgba(255, 255, 255, .08);
+    }
+
+    .dark-mode .movimiento-page #tablaLineasMovimiento thead th.movimiento-sort-active,
+    body.dark-mode .movimiento-page #tablaLineasMovimiento thead th.movimiento-sort-active {
+        background: rgba(84, 160, 255, .18);
+        color: #d9e9ff;
+        box-shadow: inset 0 -2px 0 rgba(149, 197, 255, .55);
+    }
+
+    .movimiento-page .movimiento-table-compact .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.12;
+        font-size: .76rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .movimiento-page .movimiento-col-codigo {
+            -ms-flex: 0 0 25%;
+            flex: 0 0 25%;
+            max-width: 25%;
+        }
+
+        .movimiento-page .movimiento-col-producto {
+            -ms-flex: 1 1 0%;
+            flex: 1 1 0%;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-col-cantidad {
+            -ms-flex: 0 0 16.666667%;
+            flex: 0 0 16.666667%;
+            max-width: 16.666667%;
+        }
+
+        .movimiento-page .movimiento-col-accion {
+            -ms-flex: 0 0 auto;
+            flex: 0 0 auto;
+            width: auto;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-input-codigo {
+            width: 100%;
+            min-width: 100%;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-input-cantidad {
+            width: 100%;
+            min-width: 100%;
+            max-width: none;
+        }
+
+        .movimiento-page .movimiento-btn-add {
+            width: 2.15rem;
+            min-width: 2.15rem;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .movimiento-page .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .movimiento-page .movimiento-panel-card > .card-body,
+        .movimiento-page .movimiento-panel-card .card-body {
+            padding: .74rem .86rem;
+        }
+
+        .movimiento-page .movimiento-meta-card .card-body {
+            min-height: calc(1.5em * 2 + 3rem);
+        }
+
+        .movimiento-page .movimiento-meta-card .font-weight-bold {
+            font-size: .79rem;
+        }
+
+        .movimiento-page .movimiento-section-box {
+            padding: .72rem .84rem !important;
+        }
+
+        .movimiento-page .movimiento-form-compact .form-control,
+        .movimiento-page .movimiento-form-compact .input-group-text,
+        .movimiento-page .movimiento-form-compact .btn:not(.btn-sm),
+        .movimiento-page .movimiento-section-box .form-control,
+        .movimiento-page .movimiento-section-box .input-group-text,
+        .movimiento-page .movimiento-section-box .btn:not(.btn-sm),
+        .movimiento-page .movimiento-panel-card .form-control,
+        .movimiento-page .movimiento-panel-card .input-group-text,
+        .movimiento-page .movimiento-panel-card .btn:not(.btn-sm) {
+            min-height: 2.02rem;
+            font-size: .81rem;
+            padding: .24rem .5rem;
+        }
+
+        .movimiento-page .movimiento-table-compact {
+            font-size: .79rem;
+        }
+
+        .movimiento-page .movimiento-table-compact thead th,
+        .movimiento-page .movimiento-table-compact > thead > tr > th {
+            font-size: .63rem !important;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .movimiento-page .movimiento-meta-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+</style>
+
+@section Scripts {
+    @* _Layout.cshtml no precarga scanner.js/ZXing (a diferencia de Web/_LayoutBase.cshtml) --
+       se agregan aca, mismo criterio ya usado en Stock/Editar.cshtml. *@
+    <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
+    <script>
+        window.movimientosConfig = {
+            draftKey: 'movimiento_draft_@(Model.EsEdicion ? Model.IdMovimiento.ToString() : "new")',
+            urlBuscarProductoPorCodigo: '@Url.Action("BuscarProductoPorCodigo", "Movimientos")',
+            redirectUrl: '@Url.Action("Index", "Movimientos")',
+            imprimirUrl: '',
+            imprimirPayloadUrl: '',
+            pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
+            whatsappTexto: '@(Model.EsEdicion ? System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Context.Request.Scheme)) : "")',
+            balanzaUrl: 'http://localhost:5100/peso',
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false")
+        };
+        window.movimientoLineasIniciales = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.MovimientoLineaVm>()));
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        // Ya se eligio antes de entrar a esta vista (ver MovimientosController.Editar,
+        // docs/DECISIONS.md) -- seleccion-usuario-produccion.js no vuelve a preguntar si esto
+        // ya tiene un valor.
+        window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
+    </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=8")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=29")"></script>
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")"></script>
+    <script>
+        $(function () {
+            if (window.NumericKeypad) {
+                window.NumericKeypad.create({
+                    selectorTeclado: '#numericKeypadMovimiento',
+                    selectorInputsValidos: '#txtCodigoProducto, #txtCantUnidad, #txtCantKgs'
+                });
+            }
+
+            $('#btnToggleTecladoMovimiento').on('click', function () {
+                var desplegado = $('#movimientoNumericKeypadLayout').toggleClass('teclado-desplegado').hasClass('teclado-desplegado');
+                $('#iconoToggleTecladoMovimiento')
+                    .toggleClass('fa-chevron-down', !desplegado)
+                    .toggleClass('fa-chevron-up', desplegado);
+            });
+        });
+    </script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+    <script>
+        // Solo en mobile: el aviso de validacion queda entre codigo y
+        // producto (a la vista del usuario, en vez de arriba de todo,
+        // detras de la camara; en desktop no se mueve).
+        window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
+            "#movimientoWarning",
+            ".movimiento-col-codigo"
+        );
+        window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+    </script>
+    <script>
+        // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
+        // Enter que ya usa la busqueda manual (movimientos.js), asi reusa la
+        // logica existente de buscar producto + foco en Cant.Un. sin duplicarla.
+        window.BarcodeCodeInput && window.BarcodeCodeInput.attach({
+            videoSelector: "#videoScanner",
+            containerSelector: "#scannerContainer",
+            buttonSelector: "#btnScanner",
+            closeButtonSelector: "#btnCerrarScanner",
+            clearButtonSelector: "#btnLimpiarScanner",
+            flashButtonSelector: "#btnFlash",
+            msgSelector: "#scannerMsg",
+            codigoInputSelector: "#txtCodigoProducto",
+            // Acá se cargan varios productos seguidos: la camara queda
+            // abierta lista para la proxima lectura en vez de cerrarse sola.
+            cerrarAlLeer: false,
+            onCodigoAceptado: function (codigo) {
+                var el = document.getElementById("txtCodigoProducto");
+                if (!el) return;
+                window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+                el.value = codigo;
+                el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+            }
+        });
+    </script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script>
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formMovimiento",
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionMovimiento",
+            saveButtonSelector: "#btnGuardarMovimiento",
+            onStateChanged: function (readOnly) {
+                if (window.MovimientosEdit && typeof window.MovimientosEdit.setReadOnly === "function") {
+                    window.MovimientosEdit.setReadOnly(readOnly);
+                }
+                if (window.MovimientosEdit && typeof window.MovimientosEdit.syncPrimaryAction === "function") {
+                    window.MovimientosEdit.syncPrimaryAction();
+                }
+            }
+        });
+    </script>
+}

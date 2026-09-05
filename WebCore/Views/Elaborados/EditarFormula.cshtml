@@ -1,0 +1,853 @@
+@model WebCore.Models.ElaboradoFormulaEditVm
+@using System.Collections.Generic
+
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar formula" : "Nueva formula";
+
+    var modalElaboradoData = new ViewDataDictionary(ViewData);
+    modalElaboradoData["ModalId"] = "modalBuscarElaboradoFormula";
+    modalElaboradoData["ApiUrl"] = Url.Action("BuscarProducto", "Elaborados");
+    modalElaboradoData["Titulo"] = "Buscar elaborado";
+    modalElaboradoData["MostrarPrecio"] = "false";
+
+    var modalIngredienteData = new ViewDataDictionary(ViewData);
+    modalIngredienteData["ModalId"] = "modalBuscarIngredienteFormula";
+    modalIngredienteData["ApiUrl"] = Url.Action("BuscarProducto", "Elaborados");
+    modalIngredienteData["Titulo"] = "Buscar ingrediente";
+    modalIngredienteData["MostrarPrecio"] = "false";
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page" data-formula-page="editar">
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Formulas", "Elaborados")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow-sm elaborados-panel-card elaborados-form-compact">
+        <div class="card-body">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            <form id="formEditarFormula" method="post" action="@Url.Action("GuardarFormula", "Elaborados")" novalidate>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IdFormula)
+                <div id="lineasFormulaHiddenContainer"></div>
+
+                <div class="row">
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label>Usuario</label>
+                            <input type="text" class="form-control" value="@Model.UsuarioNombre" readonly />
+                        </div>
+                    </div>
+                    @if (Model.EsEdicion)
+                    {
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label>Creado</label>
+                                <input type="text" class="form-control" value="@Model.CreadoPor | @Model.Creado" readonly />
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label>Actualizado</label>
+                                <input type="text" class="form-control" value="@Model.ActualizadoPor | @Model.Actualizado" readonly />
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
+                            </div>
+
+                            <div id="formulaErrorElaboradoExistente" class="alert alert-warning py-2 px-3 mb-3 d-none">
+                                El elaborado ya posee una formula. Modifique la existente.
+                            </div>
+
+                            <div id="formulaInfoIngresoRapido" class="alert alert-info py-2 px-3 mb-3 @(Model.EsIngresoRapidoElaborado ? "" : "d-none")">
+                                Este producto es de Ingreso Rapido: se puede agregar directamente desde Ingreso Rapido, sin tipear los ingredientes a mano. El sistema calculara automaticamente un Ajuste de Formula para que el resultado final represente 1 unidad.
+                                @if (Model.CodigoProductoGenerico > 0)
+                                {
+                                    <span class="d-block mt-1">Se usa el codigo generico <strong>@Model.CodigoProductoGenerico</strong>@(!string.IsNullOrWhiteSpace(Model.NombreProductoGenerico) ? (" - " + Model.NombreProductoGenerico) : "") para realizar el ajuste.</span>
+                                }
+                            </div>
+
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-3 col-lg-2">
+                                    <div class="form-group">
+                                        <label for="txtCodigoElaboradoFormula">Codigo</label>
+                                        <input type="number" id="txtCodigoElaboradoFormula" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-9 col-lg-10">
+                                    <div class="form-group">
+                                        <label for="txtElaboradoFormulaNombre">Elaborado</label>
+                                        <div class="input-group">
+                                            <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
+                                            <input type="hidden" id="txtElaboradoEsPesableFormula" value="@(Model.EsPesableElaborado ? "true" : "false")" />
+                                            <input type="hidden" id="txtElaboradoIngresoRapidoFormula" value="@(Model.EsIngresoRapidoElaborado ? "true" : "false")" />
+                                            <input type="text" id="txtElaboradoFormulaNombre" class="form-control" value="@Model.Elaborado" readonly />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarElaboradoFormula" title="Buscar elaborado (F9)">
+                                                    <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F9</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="custom-control custom-switch mt-2">
+                                <input type="checkbox" class="custom-control-input" id="chkIngresoRapidoElaborado" checked="@(Model.EsIngresoRapidoElaborado ? "checked" : null)" />
+                                <label class="custom-control-label" for="chkIngresoRapidoElaborado">Ingreso Rapido</label>
+                            </div>
+                        </div>
+
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes de la formula</h6>
+                            </div>
+
+                            <div id="formulaFeedback" class="alert alert-success py-2 px-3 mb-3 d-none"></div>
+
+                            <div class="custom-control custom-switch mb-2">
+                                <input type="checkbox" class="custom-control-input" id="chkEscalaUnidadFormula" checked="@(Model.EscalaUnidad ? "checked" : null)" />
+                                <label class="custom-control-label" for="chkEscalaUnidadFormula">Calcular por <strong id="lblEscalaUnidadEtiqueta">@Model.EtiquetaValorFormula</strong></label>
+                            </div>
+                            <small class="text-muted d-block mb-3" id="lblEscalaUnidadAyuda"></small>
+
+                            <div id="bloqueAjusteFormula" class="d-flex flex-wrap align-items-center mb-3">
+                                <div class="custom-control custom-switch mr-4 mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="chkTieneAjusteFormula" />
+                                    <label class="custom-control-label" for="chkTieneAjusteFormula">Agregar Ajuste de Formula</label>
+                                </div>
+                                <div class="custom-control custom-switch mb-2" id="wrapAjustarUnidad">
+                                    <input type="checkbox" class="custom-control-input" id="chkAjustarUnidad" />
+                                    <label class="custom-control-label" for="chkAjustarUnidad">Ajustar a formula unitaria</label>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-3" id="lblAjusteFormulaAyuda"></p>
+
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-3">
+                                    <div class="form-group">
+                                        <label for="txtCodigoIngredienteFormula">Codigo</label>
+                                        <input type="number" id="txtCodigoIngredienteFormula" class="form-control" step="1" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-5">
+                                    <div class="form-group">
+                                        <label for="txtIngredienteFormulaNombre">Ingrediente</label>
+                                        <div class="input-group">
+                                            <input type="hidden" id="txtIngredienteFormulaId" />
+                                            <input type="text" id="txtIngredienteFormulaNombre" class="form-control" readonly />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarIngredienteFormula" title="Buscar ingrediente (F10)">
+                                                    <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F10</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <div class="form-group">
+                                        <label for="txtPorcentajeFormula" id="lblValorFormulaInput">@Model.EtiquetaValorFormula</label>
+                                        <input type="text" id="txtPorcentajeFormula" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" />
+                                    </div>
+                                </div>
+                                <div class="col-8 col-md-2 col-lg-1">
+                                    <div class="form-group mb-3">
+                                        <div class="custom-control custom-switch formula-auto-wrap">
+                                            <input type="checkbox" class="custom-control-input" id="chkAgregarAutoFormula" checked />
+                                            <label class="custom-control-label" for="chkAgregarAutoFormula">Auto</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-2 col-lg-1">
+                                    <button type="button" class="btn btn-primary btn-block mb-3 formula-btn-add" id="btnAgregarLineaFormula" title="Agregar">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted" id="lblAutoFormulaMensaje"></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered table-sm elaborados-table-compact" id="tablaLineasFormula">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width:110px;">Codigo</th>
+                                        <th>Ingrediente</th>
+                                        <th class="text-right" style="width:120px;" id="lblValorFormulaColumna">@Model.EtiquetaValorFormula</th>
+                                        <th class="text-center" style="width:90px;" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">Auto</th>
+                                        <th class="text-center d-none" style="width:110px;" id="colNoSumaPeso" title="Tildado: este ingrediente no suma al peso del elaborado (ej. tripa) -- se resta en la fila de Ajuste de Formula.">No suma peso</th>
+                                        <th style="width:70px;">Accion</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarPasoReceta">
+                                    <i class="fas fa-plus mr-1"></i> Agregar paso
+                                </button>
+                            </div>
+                            <textarea id="Receta" name="Receta" class="d-none">@Model.Receta</textarea>
+                            <div id="pasosRecetaContainer"></div>
+                        </div>
+
+                        <div class="card bg-light elaborados-panel-card elaborados-summary-card">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title">Totales</h6>
+                                <div class="d-flex justify-content-between">
+                                    <span id="lblTotalPrincipalTexto">@(Model.EscalaUnidad ? "Total unidades" : "Total porcentaje")</span>
+                                    <strong id="lblTotalPorcentaje">@Model.TotalPorcentaje.ToString("N2")</strong>
+                                </div>
+                                <div class="d-flex justify-content-between @(Model.EscalaUnidad ? "d-none" : "")" id="filaTotalSecundario">
+                                    <span>Equivalencia en unidades</span>
+                                    <strong id="lblTotalUnidades">@Model.TotalUnidades.ToString("N2")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion && Model.SoloLecturaInicial)
+                    {
+                        <button type="button" class="btn btn-primary mr-2 mb-2" id="btnHabilitarEdicionFormula">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
+                    <button type="submit" class="btn btn-success mr-2 mb-2 @(Model.EsEdicion && Model.SoloLecturaInicial ? "d-none" : "")" id="btnGuardarFormula">
+                        <i class="fas fa-save mr-1"></i> Guardar formula
+                    </button>
+                    <a href="@Url.Action("Formulas", "Elaborados")" class="btn btn-outline-secondary mb-2">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalElaboradoData)
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalIngredienteData)
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+
+<style>
+    .js-auto-receta {
+        overflow: hidden;
+        resize: vertical;
+    }
+
+    .formula-auto-wrap {
+        margin-top: 2.35rem;
+    }
+
+    .formula-btn-add {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(1.5em + .75rem + 2px);
+    }
+
+    .formula-btn-add i {
+        margin: 0;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            var $form = $('#formEditarFormula');
+            var $recetaHidden = $('#Receta');
+            var $pasosContainer = $('#pasosRecetaContainer');
+            var state = {
+                lineas: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.ElaboradoFormulaEditLineaVm>())),
+                // Interruptor manual Unidad/Porcentaje -- distinto de "modoUnidad" (variable local
+                // de syncAjusteFormula, el Modo A del Ajuste de Formula). Al inicializar toma el
+                // default segun Corte.Pesable (calculado server-side); de ahi en mas lo cambia
+                // solo el usuario, con el interruptor #chkEscalaUnidadFormula.
+                escalaUnidad: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EscalaUnidad)),
+                esIngresoRapido: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EsIngresoRapidoElaborado)),
+                codigoGenerico: @Model.CodigoProductoGenerico,
+                nombreGenerico: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.NombreProductoGenerico ?? "")),
+                soloLectura: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SoloLecturaInicial)),
+                codigoElaboradoInicial: @Model.CodigoElaborado,
+                // Interruptor 2 (Modo A, "ajustar a formula unitaria") -- ver docs/DECISIONS.md 2026-08-22.
+                ajustarUnidad: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AjustarUnidad))
+            };
+            // Interruptor 1 (maestro, "Agregar Ajuste de Formula") -- se infiere del estado inicial:
+            // si ya hay una linea de ajuste, si el Modo A esta activo, o si algun ingrediente ya
+            // esta tildado "No suma peso" (Modo B). Para Ingreso Rapido no aplica (es automatico,
+            // los interruptores nuevos quedan ocultos).
+            state.tieneAjuste = state.lineas.some(function (l) { return l.EsAjusteFormula; })
+                || state.ajustarUnidad
+                || state.lineas.some(function (l) { return l.NoSumaPeso; });
+
+            function toNumber(value) {
+                if (value === null || value === undefined) return 0;
+                if (typeof value === "number") return value;
+                value = value.toString().replace(/\./g, '').replace(',', '.');
+                var parsed = parseFloat(value);
+                return isNaN(parsed) ? 0 : parsed;
+            }
+
+            function formatValue(value) {
+                return (toNumber(value)).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function autoResizeTextarea($textarea) {
+                if (!$textarea || !$textarea.length) return;
+                $textarea.css('height', 'auto');
+                $textarea.css('height', $textarea.get(0).scrollHeight + 'px');
+            }
+
+            // Interpreta el texto plano guardado ("Paso N: texto" por linea) como un array de pasos.
+            // Lineas sin el prefijo "Paso N:" se pliegan al paso anterior (texto multilinea) o, si no hay
+            // paso previo, arrancan un primer paso para no perder contenido de recetas cargadas antes de este cambio.
+            function parsearPasosReceta(texto) {
+                var lineas = (texto || '').replace(/\r\n/g, '\n').split('\n');
+                var regexPaso = /^Paso\s+\d+\s*:\s?(.*)$/i;
+                var pasos = [];
+                var pasoActual = null;
+
+                lineas.forEach(function (linea) {
+                    var match = linea.match(regexPaso);
+                    if (match) {
+                        pasoActual = { texto: match[1] };
+                        pasos.push(pasoActual);
+                    } else if (pasoActual) {
+                        pasoActual.texto += (pasoActual.texto ? '\n' : '') + linea;
+                    } else if (linea.trim() !== '') {
+                        pasoActual = { texto: linea };
+                        pasos.push(pasoActual);
+                    }
+                });
+
+                return pasos;
+            }
+
+            // Arma el texto plano a guardar. Los pasos vacios al final se descartan (no corren la numeracion
+            // de ningun paso con contenido); un paso vacio en el medio se conserva para no renumerar lo de abajo.
+            function construirRecetaFinal() {
+                var pasos = state.pasos.slice();
+                while (pasos.length > 0 && $.trim(pasos[pasos.length - 1].texto || '') === '') {
+                    pasos.pop();
+                }
+                return pasos.map(function (paso, index) {
+                    return 'Paso ' + (index + 1) + ': ' + (paso.texto || '');
+                }).join('\n');
+            }
+
+            function renderPasosReceta() {
+                var html = '';
+                state.pasos.forEach(function (paso, index) {
+                    html += '<div class="formula-paso-row d-flex align-items-start mb-2" data-index="' + index + '">';
+                    html += '<div class="input-group flex-grow-1">';
+                    html += '<div class="input-group-prepend"><span class="input-group-text formula-paso-numero">Paso ' + (index + 1) + ':</span></div>';
+                    html += '<textarea class="form-control js-auto-receta formula-paso-texto" rows="1" placeholder="Describa el paso..."' + (state.soloLectura ? ' readonly' : '') + '>' + $('<div/>').text(paso.texto || '').html() + '</textarea>';
+                    html += '</div>';
+                    html += '<button type="button" class="btn btn-outline-danger btn-sm ml-2 js-remove-paso" data-index="' + index + '" title="Eliminar paso"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>';
+                    html += '</div>';
+                });
+                $pasosContainer.html(html);
+                $pasosContainer.find('.formula-paso-texto').each(function () { autoResizeTextarea($(this)); });
+            }
+
+            function targetValorVisible() {
+                return state.escalaUnidad ? 1 : 100;
+            }
+
+            function valorLabel() {
+                return state.escalaUnidad ? 'Unidad' : 'Porcentaje';
+            }
+
+            function updateModeLabels() {
+                $('#lblValorFormulaInput').text(valorLabel());
+                $('#lblValorFormulaColumna').text(valorLabel());
+                $('#lblTotalPrincipalTexto').text(state.escalaUnidad ? 'Total unidades' : 'Total porcentaje');
+                $('#filaTotalSecundario').toggleClass('d-none', state.escalaUnidad);
+
+                $('#chkEscalaUnidadFormula').prop('checked', state.escalaUnidad);
+                $('#lblEscalaUnidadEtiqueta').text(valorLabel());
+                $('#lblEscalaUnidadAyuda').text(state.escalaUnidad
+                    ? 'Se ingresa en unidades: 1 equivale al 100% del producto, 2 al 200%, etc.'
+                    : 'Se ingresa directamente el porcentaje del producto.');
+
+                if (state.esIngresoRapido) {
+                    var texto = 'Este producto es de Ingreso Rapido: se puede agregar directamente desde Ingreso Rapido, sin tipear los ingredientes a mano. El sistema calculara automaticamente un Ajuste de Formula para que el resultado final represente 1 unidad.';
+                    if (state.codigoGenerico > 0) {
+                        texto += ' Se usa el codigo generico ' + state.codigoGenerico + (state.nombreGenerico ? (' - ' + state.nombreGenerico) : '') + ' para realizar el ajuste.';
+                    }
+                    $('#formulaInfoIngresoRapido').removeClass('d-none').text(texto);
+                } else {
+                    $('#formulaInfoIngresoRapido').addClass('d-none').text('');
+                }
+
+                actualizarVisibilidadAjuste();
+            }
+
+            // Jerarquia de 2 interruptores (ver docs/DECISIONS.md 2026-08-22):
+            // - Interruptor 1 (#chkTieneAjusteFormula, maestro): agrega/quita la fila de Ajuste de
+            //   Formula de la tabla.
+            // - Interruptor 2 (#chkAjustarUnidad, Modo A, solo visible/habilitado si el 1 esta
+            //   activo): la fila de ajuste se recalcula en vivo para que la formula sume 1 unidad;
+            //   al activarse oculta/deshabilita la columna "No suma peso" (Modo B) y destilda lo
+            //   que hubiera. Si el 2 esta apagado (con el 1 activo), Modo B queda disponible.
+            // Para Ingreso Rapido (automatico, sin cambios de comportamiento) los 2 interruptores
+            // quedan ocultos -- ya existe el aviso informativo de mas arriba.
+            function actualizarVisibilidadAjuste() {
+                $('#chkIngresoRapidoElaborado').prop('checked', state.esIngresoRapido).prop('disabled', state.soloLectura);
+                $('#bloqueAjusteFormula, #lblAjusteFormulaAyuda').toggleClass('d-none', state.esIngresoRapido);
+                if (state.esIngresoRapido) return;
+
+                $('#chkTieneAjusteFormula').prop('checked', state.tieneAjuste);
+                $('#chkAjustarUnidad').prop('checked', state.ajustarUnidad).prop('disabled', !state.tieneAjuste || state.soloLectura);
+                $('#wrapAjustarUnidad').toggleClass('d-none', !state.tieneAjuste);
+
+                var modoB = state.tieneAjuste && !state.ajustarUnidad;
+                $('#colNoSumaPeso').toggleClass('d-none', !modoB);
+                $('.js-no-suma-peso').closest('td').toggleClass('d-none', !modoB);
+
+                if (state.tieneAjuste && state.ajustarUnidad) {
+                    $('#lblAjusteFormulaAyuda').text('El Ajuste de Formula se calcula solo para que el total de la formula de 1 unidad (ej. un combo de 2 productos).');
+                } else if (state.tieneAjuste) {
+                    $('#lblAjusteFormulaAyuda').text('Tilda "No suma peso" en los ingredientes que no aportan peso al elaborado (ej. la tripa en una formula de chorizo) -- se restan solos en la fila de Ajuste de Formula.');
+                } else {
+                    $('#lblAjusteFormulaAyuda').text('');
+                }
+            }
+
+            function setReadOnly(readOnly) {
+                state.soloLectura = readOnly;
+                $('#txtCodigoElaboradoFormula, #txtCodigoIngredienteFormula, #txtPorcentajeFormula').prop('readonly', readOnly);
+                $('#btnBuscarElaboradoFormula, #btnBuscarIngredienteFormula, #btnAgregarLineaFormula, .js-remove-linea-formula').prop('disabled', readOnly);
+                $('#chkAgregarAutoFormula, #chkTieneAjusteFormula, #chkAjustarUnidad, #chkIngresoRapidoElaborado, #chkEscalaUnidadFormula, .js-no-suma-peso').prop('disabled', readOnly);
+                $('#btnAgregarPasoReceta, .js-remove-paso').prop('disabled', readOnly);
+                $pasosContainer.find('.formula-paso-texto').prop('readonly', readOnly);
+                syncPrimaryAction();
+                actualizarVisibilidadAjuste();
+            }
+
+            // Mensaje dinamico junto al interruptor "Auto", explicando que va a pasar con la
+            // proxima linea a agregar segun el estado actual del interruptor.
+            function actualizarMensajeAuto() {
+                var activado = $('#chkAgregarAutoFormula').is(':checked');
+                $('#lblAutoFormulaMensaje').text(activado
+                    ? 'Se va a cargar solo al guardar el Elaborado.'
+                    : 'Vas a tener que cargarlo a mano en el Elaborado.');
+            }
+
+            function syncPrimaryAction() {
+                var $modify = $('#btnHabilitarEdicionFormula');
+                var $save = $('#btnGuardarFormula');
+
+                if (state.soloLectura) {
+                    $modify
+                        .html('Modificar')
+                        .toggleClass('d-none', false)
+                        .attr('title', 'Modificar (Alt+Enter)');
+
+                    $save
+                        .toggleClass('d-none', true)
+                        .attr('title', 'Guardar formula (Alt+Enter)');
+                    return;
+                }
+
+                $modify.toggleClass('d-none', true);
+                $save
+                    .toggleClass('d-none', false)
+                    .attr('title', 'Guardar formula (Alt+Enter)');
+            }
+
+            // Espejo cliente-side de Negocio/Corte.cs NormalizarFormulaElaborado -- mismos 3 modos,
+            // mismo criterio (ver comentario ahi). El servidor vuelve a calcular esto al guardar,
+            // esto es solo para la vista previa en pantalla.
+            function syncAjusteFormula() {
+                state.lineas = state.lineas.filter(function (linea) { return !linea.EsAjusteFormula; });
+                if (!state.codigoGenerico) return;
+
+                var modoUnidad = state.esIngresoRapido || state.ajustarUnidad;
+                var lineasNoSumanPeso = state.lineas.filter(function (linea) { return linea.NoSumaPeso; });
+
+                // Mismo criterio que el servidor: sin Modo A ni ninguna linea tildada, no hay nada
+                // que calcular -- el Interruptor 1 solo "habilita" la posibilidad, no alcanza solo.
+                if (!modoUnidad && lineasNoSumanPeso.length === 0) return;
+
+                var ajuste;
+                if (modoUnidad) {
+                    var total = 0;
+                    state.lineas.forEach(function (linea) { total += toNumber(linea.Porcentaje); });
+                    ajuste = targetValorVisible() - total;
+                } else {
+                    var totalNoSumaPeso = 0;
+                    lineasNoSumanPeso.forEach(function (linea) { totalNoSumaPeso += toNumber(linea.Porcentaje); });
+                    ajuste = -totalNoSumaPeso;
+                }
+
+                state.lineas.unshift({
+                    IdCorte: 0,
+                    Codigo: state.codigoGenerico,
+                    Producto: state.nombreGenerico || 'Ajuste de Formula',
+                    Porcentaje: ajuste,
+                    AgregarAuto: true,
+                    EsAjusteFormula: true
+                });
+            }
+
+            function rebuildHidden() {
+                var html = '';
+                var index = 0;
+
+                html += '<input type="hidden" name="AjustarUnidad" value="' + (state.ajustarUnidad ? 'true' : 'false') + '" />';
+                html += '<input type="hidden" name="EsIngresoRapidoElaborado" value="' + (state.esIngresoRapido ? 'true' : 'false') + '" />';
+                html += '<input type="hidden" name="EscalaUnidad" value="' + (state.escalaUnidad ? 'true' : 'false') + '" />';
+
+                state.lineas.forEach(function (linea) {
+                    if (linea.EsAjusteFormula) return;
+
+                    html += '<input type="hidden" name="Lineas[' + index + '].IdCorte" value="' + (linea.IdCorte || 0) + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].Codigo" value="' + (linea.Codigo || 0) + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].Producto" value="' + $('<div/>').text(linea.Producto || '').html() + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].Porcentaje" value="' + formatValue(linea.Porcentaje || 0) + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].AgregarAuto" value="' + (linea.AgregarAuto ? 'true' : 'false') + '" />';
+                    html += '<input type="hidden" name="Lineas[' + index + '].NoSumaPeso" value="' + (linea.NoSumaPeso ? 'true' : 'false') + '" />';
+                    index++;
+                });
+
+                $('#lineasFormulaHiddenContainer').html(html);
+            }
+
+            function renderLineas() {
+                syncAjusteFormula();
+                rebuildHidden();
+
+                var html = '';
+                var total = 0;
+                var modoB = state.tieneAjuste && !state.ajustarUnidad && !state.esIngresoRapido;
+                state.lineas.forEach(function (linea, index) {
+                    total += toNumber(linea.Porcentaje);
+                    html += '<tr' + (linea.EsAjusteFormula ? ' class="table-warning"' : '') + '>';
+                    html += '<td>' + (linea.EsAjusteFormula ? 'Ajuste Formula' : (linea.Codigo || '')) + '</td>';
+                    html += '<td>' + (linea.Producto || '') + '</td>';
+                    html += '<td class="text-right">' + formatValue(linea.Porcentaje) + '</td>';
+                    html += '<td class="text-center">' + (linea.AgregarAuto ? 'Si' : 'No') + '</td>';
+                    html += '<td class="text-center' + (modoB ? '' : ' d-none') + '">';
+                    if (!linea.EsAjusteFormula) {
+                        html += '<input type="checkbox" class="js-no-suma-peso" data-index="' + index + '"' + (linea.NoSumaPeso ? ' checked' : '') + (state.soloLectura ? ' disabled' : '') + ' />';
+                    }
+                    html += '</td>';
+                    html += '<td>';
+                    if (!linea.EsAjusteFormula) {
+                        html += '<button type="button" class="btn btn-sm btn-outline-danger js-remove-linea-formula" data-index="' + index + '"' + (state.soloLectura ? ' disabled' : '') + '><i class="fas fa-trash"></i></button>';
+                    }
+                    html += '</td>';
+                    html += '</tr>';
+                });
+
+                $('#tablaLineasFormula tbody').html(html);
+                $('#lblTotalPorcentaje').text(formatValue(total));
+                $('#lblTotalUnidades').text(formatValue(state.escalaUnidad ? total : (total / 100)));
+            }
+
+            // Al togglear el interruptor, reescala en memoria los valores ya cargados para que
+            // sigan representando la misma proporcion real (ej. "200" en Porcentaje pasa a "2" en
+            // Unidad). La fila de Ajuste de Formula no se reescala a mano: se recalcula sola en
+            // syncAjusteFormula (llamada desde renderLineas) con el nuevo targetValorVisible().
+            function aplicarEscalaUnidad(nuevaEscalaUnidad) {
+                if (nuevaEscalaUnidad === state.escalaUnidad) return;
+                var factor = nuevaEscalaUnidad ? (1 / 100) : 100;
+                state.lineas.forEach(function (linea) {
+                    if (linea.EsAjusteFormula) return;
+                    linea.Porcentaje = toNumber(linea.Porcentaje) * factor;
+                });
+                state.escalaUnidad = nuevaEscalaUnidad;
+                updateModeLabels();
+                renderLineas();
+            }
+
+            function limpiarIngrediente() {
+                $('#txtCodigoIngredienteFormula').val('');
+                $('#txtIngredienteFormulaId').val('');
+                $('#txtIngredienteFormulaNombre').val('');
+                $('#txtPorcentajeFormula').val('');
+                // Arranca en Auto activado para el proximo ingrediente (pedido del usuario:
+                // toda linea nueva de formula arranca en Auto, no solo en Ingreso Rapido).
+                $('#chkAgregarAutoFormula').prop('checked', true);
+                actualizarMensajeAuto();
+            }
+
+            function setProducto($codigo, $id, $nombre, resp) {
+                $codigo.val(resp && resp.codigo ? resp.codigo : '');
+                $id.val(resp && resp.id ? resp.id : '');
+                $nombre.val(resp && resp.nombre ? resp.nombre : '');
+            }
+
+            function buscarPorCodigo($codigo, callback) {
+                var codigo = parseInt($codigo.val(), 10) || 0;
+                if (!codigo) {
+                    if (callback) callback();
+                    return;
+                }
+
+                // El codigo de ingrediente admite productos con codigo negativo; el de
+                // elaborado (producto principal) sigue exigiendo codigo positivo, sin cambios.
+                var esIngrediente = $codigo.is('#txtCodigoIngredienteFormula');
+                $.get('@Url.Action("BuscarProductoPorCodigo", "Elaborados")', { codigo: codigo, permitirCodigoNegativo: esIngrediente, idFormulaActual: @Model.IdFormula })
+                    .done(function (resp) {
+                        if (!resp || !resp.ok) {
+                            if (window.Swal) Swal.fire('Producto', (resp && resp.mensaje) || 'No se encontro el producto.', 'warning');
+                            else alert((resp && resp.mensaje) || 'No se encontro el producto.');
+                            return;
+                        }
+
+                        if ($codigo.is('#txtCodigoElaboradoFormula')) {
+                            if (resp.tieneFormula) {
+                                var msg = 'Este producto ya tiene una fórmula cargada. Para modificarla, seleccionala desde la lista de fórmulas.';
+                                if (window.Swal) Swal.fire('Fórmula existente', msg, 'info');
+                                else alert(msg);
+                                $codigo.val('');
+                                return;
+                            }
+                            setProducto($('#txtCodigoElaboradoFormula'), $('#IdElaborado'), $('#txtElaboradoFormulaNombre'), resp);
+                            // Sin ingredientes cargados todavia, elegir el elaborado es parte de
+                            // "inicializar" la formula -- el interruptor toma el default segun el
+                            // producto (igual que al abrir una formula existente). Con ingredientes
+                            // ya cargados, es un REEMPLAZO del elaborado con trabajo en curso: el
+                            // interruptor NO se toca, pedido explicito del usuario.
+                            if (state.lineas.length === 0) {
+                                state.escalaUnidad = !resp.pesable;
+                            }
+                            state.esIngresoRapido = !!resp.ingresoRapido;
+                        } else {
+                            setProducto($('#txtCodigoIngredienteFormula'), $('#txtIngredienteFormulaId'), $('#txtIngredienteFormulaNombre'), resp);
+                        }
+
+                        updateModeLabels();
+                        renderLineas();
+                        if (callback) callback(resp);
+                    });
+            }
+
+            function abrirModalElaborado() {
+                if (typeof window.abrirBuscarProductoModal !== 'function') {
+                    console.error('abrirBuscarProductoModal no esta disponible (falta cargar modal-productos.js).');
+                    return;
+                }
+                window.abrirBuscarProductoModal({
+                    modalSelector: '#modalBuscarElaboradoFormula',
+                    mostrarPrecio: false,
+                    onSelect: function (producto) {
+                        $('#txtCodigoElaboradoFormula').val(producto.codigo || '');
+                        buscarPorCodigo($('#txtCodigoElaboradoFormula'), function () {
+                            $('#txtCodigoIngredienteFormula').focus();
+                        });
+                    }
+                });
+            }
+
+            function abrirModalIngrediente() {
+                if (typeof window.abrirBuscarProductoModal !== 'function') {
+                    console.error('abrirBuscarProductoModal no esta disponible (falta cargar modal-productos.js).');
+                    return;
+                }
+                window.abrirBuscarProductoModal({
+                    modalSelector: '#modalBuscarIngredienteFormula',
+                    mostrarPrecio: false,
+                    onSelect: function (producto) {
+                        $('#txtCodigoIngredienteFormula').val(producto.codigo || '');
+                        buscarPorCodigo($('#txtCodigoIngredienteFormula'), function () {
+                            $('#txtPorcentajeFormula').focus().select();
+                        });
+                    }
+                });
+            }
+
+            $('#chkAgregarAutoFormula').on('change', actualizarMensajeAuto);
+
+            $('#chkTieneAjusteFormula').on('change', function () {
+                state.tieneAjuste = $(this).is(':checked');
+                if (!state.tieneAjuste) {
+                    // Al apagar el maestro, tambien se apaga el Modo A y se destildan los "No
+                    // suma peso" -- sin Interruptor 1 no queda ningun modo activo.
+                    state.ajustarUnidad = false;
+                    state.lineas.forEach(function (linea) { linea.NoSumaPeso = false; });
+                }
+                actualizarVisibilidadAjuste();
+                renderLineas();
+            });
+
+            $('#chkAjustarUnidad').on('change', function () {
+                state.ajustarUnidad = $(this).is(':checked');
+                if (state.ajustarUnidad) {
+                    // Modo A activado: se destildan los "No suma peso" (Modo B), son excluyentes.
+                    state.lineas.forEach(function (linea) { linea.NoSumaPeso = false; });
+                }
+                actualizarVisibilidadAjuste();
+                renderLineas();
+            });
+
+            $('#chkIngresoRapidoElaborado').on('change', function () {
+                state.esIngresoRapido = $(this).is(':checked');
+                updateModeLabels();
+                renderLineas();
+            });
+
+            $('#chkEscalaUnidadFormula').on('change', function () {
+                aplicarEscalaUnidad($(this).is(':checked'));
+            });
+
+            $('#tablaLineasFormula').on('change', '.js-no-suma-peso', function () {
+                var index = parseInt($(this).attr('data-index'), 10);
+                if (isNaN(index) || !state.lineas[index]) return;
+                state.lineas[index].NoSumaPeso = $(this).is(':checked');
+                renderLineas();
+            });
+
+            $('#btnBuscarElaboradoFormula').on('click', abrirModalElaborado);
+            $('#btnBuscarIngredienteFormula').on('click', abrirModalIngrediente);
+
+            $pasosContainer.on('input', '.formula-paso-texto', function () {
+                var $textarea = $(this);
+                var index = parseInt($textarea.closest('.formula-paso-row').attr('data-index'), 10);
+                if (!isNaN(index) && state.pasos[index]) {
+                    state.pasos[index].texto = $textarea.val();
+                }
+                autoResizeTextarea($textarea);
+            });
+
+            $pasosContainer.on('click', '.js-remove-paso', function () {
+                if (state.soloLectura) return;
+                var index = parseInt($(this).attr('data-index'), 10);
+                if (isNaN(index)) return;
+                state.pasos.splice(index, 1);
+                renderPasosReceta();
+            });
+
+            $('#btnAgregarPasoReceta').on('click', function () {
+                if (state.soloLectura) return;
+                state.pasos.push({ texto: '' });
+                renderPasosReceta();
+                $pasosContainer.find('.formula-paso-row').last().find('.formula-paso-texto').focus();
+            });
+
+            $form.on('submit', function () {
+                $recetaHidden.val(construirRecetaFinal());
+            });
+
+            $('#btnAgregarLineaFormula').on('click', function () {
+                var idCorte = parseInt($('#txtIngredienteFormulaId').val(), 10) || 0;
+                var codigo = parseInt($('#txtCodigoIngredienteFormula').val(), 10) || 0;
+                var producto = $('#txtIngredienteFormulaNombre').val() || '';
+                var porcentaje = toNumber($('#txtPorcentajeFormula').val());
+
+                if (!idCorte || !producto) {
+                    if (window.Swal) Swal.fire('Ingredientes', 'Debe seleccionar un ingrediente.', 'warning');
+                    else alert('Debe seleccionar un ingrediente.');
+                    return;
+                }
+
+                state.lineas.push({
+                    IdCorte: idCorte,
+                    Codigo: codigo,
+                    Producto: producto,
+                    Porcentaje: porcentaje,
+                    AgregarAuto: $('#chkAgregarAutoFormula').is(':checked'),
+                    EsAjusteFormula: false
+                });
+
+                limpiarIngrediente();
+                renderLineas();
+                $('#txtCodigoIngredienteFormula').focus();
+            });
+
+            $(document).on('click', '.js-remove-linea-formula', function () {
+                var index = parseInt($(this).attr('data-index'), 10);
+                if (isNaN(index)) return;
+                state.lineas.splice(index, 1);
+                renderLineas();
+            });
+
+            $('#txtCodigoElaboradoFormula').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo($(this), function () { $('#txtCodigoIngredienteFormula').focus(); }); }
+            });
+
+            $('#txtCodigoIngredienteFormula').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); buscarPorCodigo($(this), function () { $('#txtPorcentajeFormula').focus().select(); }); }
+            });
+
+            $('#txtPorcentajeFormula').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); $('#btnAgregarLineaFormula').trigger('click'); }
+            });
+
+            $('#btnHabilitarEdicionFormula').on('click', function () {
+                if (!state.soloLectura) return;
+                setReadOnly(false);
+                $('#txtCodigoIngredienteFormula').focus();
+            });
+
+            $(document).on('keydown.formulaHotkeys', function (e) {
+                if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+                if (String(e.key || '').toLowerCase() !== 'enter') return;
+                if ($(e.target).closest('.modal').length) return;
+
+                var $action = state.soloLectura ? $('#btnHabilitarEdicionFormula') : $('#btnGuardarFormula');
+                if (!$action.length || $action.prop('disabled') || $action.hasClass('d-none')) return;
+
+                e.preventDefault();
+                $action.trigger('click');
+            });
+
+            // F9 abre el buscador de Elaborado, F10 el de Ingrediente -- mismo patron ya
+            // usado en elaborados-carga.js/compras.js/movimientos.js (deteccion directa de
+            // e.key, sin libreria de atajos compartida).
+            $(document).on('keydown.formulaFxHotkeys', function (e) {
+                if (state.soloLectura) return;
+                var tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+                if (tag === 'textarea') return;
+
+                if (e.key === 'F9') {
+                    e.preventDefault();
+                    abrirModalElaborado();
+                    return;
+                }
+
+                if (e.key === 'F10') {
+                    e.preventDefault();
+                    abrirModalIngrediente();
+                }
+            });
+
+            state.pasos = parsearPasosReceta($recetaHidden.val());
+            if (state.pasos.length === 0) state.pasos.push({ texto: '' });
+            renderPasosReceta();
+
+            updateModeLabels();
+            renderLineas();
+            actualizarMensajeAuto();
+            setReadOnly(state.soloLectura);
+        })();
+    </script>
+}

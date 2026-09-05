@@ -918,6 +918,53 @@ namespace Datos
             );
         }
 
+        // Agregado 2026-09-04 para los filtros avanzados del modal de expendios de POS en WebCore
+        // (ver docs/10-migracion-aspnet-core/PLAN-POS-UI.md, batch 5). NO reemplaza a
+        // obtenerUltimosExpendios (Web clasico sigue usando esa) -- metodo nuevo, aditivo, para no
+        // tocar una firma que ya consume produccion. Diferencias reales: fechaHasta opcional,
+        // idSucursal=0 trae TODAS las sucursales (idSucursal>0 filtra una puntual, sea o no la del
+        // usuario logueado -- carga cross-sucursal autorizada explicitamente por el usuario, ver
+        // docs/DECISIONS.md), y devuelve el nombre de sucursal por fila para la columna nueva.
+        public DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal)
+        {
+            const string sql = @"
+                SELECT e.fechaExpendio,
+                       e.idExpendio,
+                       identificacionExpendio,
+                       sector,
+                       c.codigo,
+                       c.corte,
+                       le.cantKg,
+                       le.precioKg,
+                       (le.cantKg * le.precioKg) AS total,
+                       idVenta,
+                       u.nombre AS vendedor,
+                       e.observaciones,
+                       e.idSucursal,
+                       s.sucursal AS sucursalNombre
+                FROM dbo.Expendios e
+                INNER JOIN dbo.LineaExpendio le ON e.idExpendio = le.idExpendio
+                INNER JOIN dbo.Corte c ON le.idCorte = c.idCorte
+                INNER JOIN dbo.Usuarios u ON e.idVendedor = u.id
+                INNER JOIN dbo.Sucursal s ON e.idSucursal = s.idSucursal
+                WHERE e.fechaExpendio >= @fechaDesde
+                  AND (@fechaHasta IS NULL OR e.fechaExpendio <= @fechaHasta)
+                  AND (@idSucursal = 0 OR e.idSucursal = @idSucursal)
+                ORDER BY e.fechaExpendio;";
+
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                p =>
+                {
+                    p.AddWithValue("@fechaDesde", fechaDesde);
+                    p.AddWithValue("@fechaHasta", (object)fechaHasta ?? DBNull.Value);
+                    p.AddWithValue("@idSucursal", idSucursal);
+                }
+            );
+        }
+
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
             const string sql = @"

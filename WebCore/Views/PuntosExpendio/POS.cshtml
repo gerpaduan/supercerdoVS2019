@@ -1,0 +1,524 @@
+@*
+    Port de Web/Views/PuntosExpendio/POS.cshtml (1980 lineas) -- docs/10-migracion-aspnet-core/
+    PLAN-POS-EXPENDIOS-UI.md. Reusa casi toda la infraestructura ya construida para el POS de
+    Ventas (Scripts/app/pos-state.js, pos-cart.js, pos-keyboard.js, pos-guard.js, pos-product.js,
+    pos-balanza.js, pos-help.js, pos-comment.js, pos-multi-instance.js -- los 9, sin cambios).
+
+    Diferencias de negocio vs. el POS de Ventas (confirmadas contra el original, no asumidas):
+      - Sin forma de pago: el expendio queda pendiente de cobro (FormaPago=Nulo,
+        TipoComprobante=X en FinalizarPOS, ya portado). El cobro real pasa despues por
+        Ventas/POS (modal de expendios asociados, ya portado).
+      - Sector obligatorio: modal de seleccion bloquea "Finalizar" sin sector (catalogo de
+        Sectores ya portado, Modulo 8 slice 2).
+      - Cliente = texto libre (IdentificacionCliente), no Persona real salvo "Consumidor Final".
+      - Con balanza (mismo mecanismo que Ventas). CON scanner de camara: confirmado que el
+        original SI lo tiene disponible (scanner.js/zxing.min.js se cargan globalmente desde
+        _LayoutPOS.cshtml en el clasico -- no hay que reinventar wiring, solo replicar el mismo
+        <script> puntual que ya se agrego en Ventas/POS.cshtml, ya que WebCore no tiene ese
+        global en su _LayoutPOS.cshtml).
+      - Con "Duplicar POS" (pos-multi-instance.js, namespaced con productKey:'expendio' -- el
+        modulo ya soporta esto, agregado cuando se porto para Ventas).
+
+    Explicitamente afuera de este MVP (mismo criterio que toda la migracion, ver PLAN-POS-
+    EXPENDIOS-UI.md):
+      - Login de operador de produccion (PosOperadorConfig/AutorizarOperadorPOS/CerrarOperadorPOS,
+        _ModalSeleccionUsuario.cshtml) -- gap ya abierto en gaps.md, bypaseado (requiereOperadorPOS
+        fijo en false desde el controller).
+      - "Mis expendios" (F6) + su modal -- sin equivalente en el Ventas/POS ya portado tampoco.
+      - Buscar cliente real (#btnBuscarPersona) y buscador avanzado (#btnAgregarManual) -- mismos
+        2 excluidos que en Ventas/POS.cshtml (quedan visibles pero sin JS, "CF" si funciona).
+      - Ticket ESC/POS / agente de impresion local / WhatsApp -- modal-postexpendio.js reemplazado
+        por _ModalPostPuntoExpendioBasico.cshtml (solo PDF + email, ya portados).
+*@
+@model WebCore.Models.PuntoExpendioEditVm
+
+@{
+    Layout = "~/Views/Shared/_LayoutPOS.cshtml";
+    ViewBag.Title = "CarniSys | Punto de Expendio";
+
+    bool haySectores = Model.SectoresDisponibles != null && Model.SectoresDisponibles.Count > 0;
+    bool permiteEditarPrecio = Model.PermiteEditarPrecio;
+    string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
+    string posInstanceId = ViewBag.PosInstanceId as string ?? "";
+    int idUsuarioPOS = ViewBag.IdUsuarioPOS != null ? (int)ViewBag.IdUsuarioPOS : 0;
+    int idSucursalPOS = ViewBag.IdSucursalPOS != null ? (int)ViewBag.IdSucursalPOS : 0;
+    int idConsumidorFinal = ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0;
+}
+
+<div class="pos-page pos-expendio-page">
+    <div class="pos-topbar pos-topbar-expendio mb-2">
+        <input type="hidden" id="idPersona" value="0" />
+        <input type="hidden" id="sectorPuntoExpendio" value="@Model.Sector" />
+        <input type="hidden" id="permiteEditarPrecioPuntoExpendio" value="@(permiteEditarPrecio ? "1" : "0")" />
+        <input type="hidden" id="fechaExpendio" value="@Model.FechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss")" />
+
+        <div class="pos-topbar-grid">
+            <div class="pos-topbar-item pos-topbar-item-cliente">
+                <div class="pos-topbar-label">Cliente / Identificación</div>
+                <input type="hidden" id="clienteRazonSocialValor" value="" />
+                <div class="input-group input-group-sm">
+                    <input type="text"
+                           id="razonSocial"
+                           class="form-control"
+                           value="@Model.IdentificacionCliente"
+                           maxlength="120"
+                           autocomplete="off"
+                           placeholder="Cliente / identificación libre" />
+
+                    <div class="input-group-append">
+                        <button type="button"
+                                class="btn btn-primary"
+                                id="btnBuscarPersona"
+                                disabled
+                                title="Buscar cliente (disponible en una próxima iteración)">
+                            <i class="fas fa-search"></i>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                id="btnConsumidorFinal"
+                                title="Consumidor Final">
+                            CF
+                        </button>
+                    </div>
+                </div>
+                <div id="clienteRazonSocialWrap" class="pos-cliente-identificacion d-none" title="">
+                    <span class="pos-cliente-identificacion-label">Raz. social:</span>
+                    <span id="clienteRazonSocialTexto"></span>
+                </div>
+            </div>
+
+            <div class="pos-topbar-item">
+                <div class="pos-topbar-label">Sucursal</div>
+                <div class="pos-topbar-value text-truncate">@Model.SucursalNombre</div>
+            </div>
+
+            <div class="pos-topbar-item pos-topbar-item-fecha">
+                <div class="pos-topbar-label">Fecha y hora</div>
+                <div class="pos-topbar-value" id="fechaHoraPOSExpendio"></div>
+            </div>
+
+            <div class="pos-topbar-item pos-topbar-item-action pos-topbar-item-actions-group">
+                <span id="posInstanceBadge" class="badge badge-pill @(posModoInstancia == "duplicado" ? "badge-warning" : "badge-info d-none")">
+                    @(posModoInstancia == "duplicado" ? "POS Duplicado" : "POS Original")
+                </span>
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm pos-btn-layout"
+                        id="btnDuplicarPOS"
+                        title="Abrir POS duplicado">
+                    <i class="fas fa-clone"></i>
+                    <span>Duplicar POS</span>
+                </button>
+                <a class="btn btn-light btn-sm pos-btn-layout"
+                   href="@Url.Action("Index", "Home")"
+                   title="Volver al sistema">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid p-1" id="pos-app">
+        @if (!haySectores)
+        {
+            <div class="alert alert-warning mb-0">
+                No hay sectores configurados para esta empresa.
+                <a class="alert-link" href="@Url.Action("Sectores", "PuntosExpendio")">Administrar sectores</a>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-lg border-0 pos-panel">
+                <div class="card-body p-2 d-flex flex-column">
+                    <div class="row flex-grow-1 h-100 pos-expendio-main-row">
+                        <div class="col-12 col-lg-5 carrito-col">
+                            <div class="zona-tabla">
+                                <table class="table table-sm tabla-productos mb-0">
+                                    <tbody id="tablaItems">
+                                        <tr id="filaVacia">
+                                            <td class="text-muted text-center py-3">
+                                                No hay productos agregados
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="zona-total">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h2 class="m-0 pos-total-label">Total</h2>
+                                    <h2 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h2>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-start pos-sale-summary-row">
+                                    <div id="posVentaItemsResumen" class="pos-sale-items text-muted"></div>
+                                    <div id="posVentaResumen" class="pos-sale-summary text-muted">
+                                        Sin productos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-7 d-flex flex-column pos-expendio-actions-col">
+                            <div class="row" id="scannerContainer" style="display:none;">
+                                <div class="col-12">
+                                    <div class="card shadow">
+                                        <div class="card-body text-center">
+                                            <div class="scanner-wrapper">
+                                                <video id="videoScanner" autoplay muted playsinline></video>
+                                                <div class="scanner-line"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">Flash</button>
+                                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">Cerrar cámara</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <audio id="beep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-12">
+                                    <div class="input-group pos-search-group">
+                                        <span class="input-group-text scanner-btn" id="btnScanner">
+                                            <i class="fas fa-barcode"></i>
+                                        </span>
+                                        <input type="text"
+                                               id="inputCodigo"
+                                               class="form-control"
+                                               placeholder="Ingrese el código..."
+                                               autocomplete="off"
+                                               autofocus />
+
+                                        <button class="btn btn-outline-secondary"
+                                                id="btnAgregarManual"
+                                                type="button"
+                                                disabled
+                                                title="Buscador avanzado (disponible en una próxima iteración)">
+                                            Buscar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="producto-info" class="p-2 rounded bg-light border mb-2">
+                                <div class="row">
+                                    <div class="col-6 producto-resumen">
+                                        <h4 id="prodNombre" class="fw-bold text-muted">
+                                            Info producto...
+                                        </h4>
+                                        <div class="mb-3 pos-product-metric">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-precio">Precio</label>
+                                                <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 pos-product-metric pos-product-metric-cantidad">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                                <input id="inputCantidad"
+                                                       class="form-control"
+                                                       autocomplete="off"
+                                                       inputmode="decimal">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3 pos-product-metric">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-subtotal">Subtotal</label>
+                                                <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
+                                            </div>
+                                        </div>
+
+                                        <button id="btnAgregarProducto"
+                                                class="btn btn-success btn-lg w-100 btn-agregar-pos d-none d-md-flex"
+                                                disabled>
+                                            <i class="fas fa-cart-plus"></i>
+                                            <span>
+                                                <strong>Agregar</strong>
+                                                <small>al expendio</small>
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <div class="keyboard-grid">
+                                            <button class="btn btn-secondary btn-key" data-key="*">*</button>
+                                            <button class="btn btn-light btn-key">7</button>
+                                            <button class="btn btn-light btn-key">8</button>
+                                            <button class="btn btn-light btn-key">9</button>
+                                            <button class="btn btn-warning btn-key" data-key="←" title="Borrar">
+                                                <i class="fas fa-backspace"></i>
+                                            </button>
+
+                                            <button class="btn btn-secondary btn-key" data-key="G">G</button>
+                                            <button class="btn btn-light btn-key">4</button>
+                                            <button class="btn btn-light btn-key">5</button>
+                                            <button class="btn btn-light btn-key">6</button>
+                                            <button class="btn btn-secondary btn-key" data-key="×" title="Multiplicación">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+
+                                            <button class="btn btn-secondary btn-key" data-key="G1">G1</button>
+                                            <button class="btn btn-light btn-key">1</button>
+                                            <button class="btn btn-light btn-key">2</button>
+                                            <button class="btn btn-light btn-key">3</button>
+
+                                            <button class="btn btn-info btn-enter btn-key">Enter</button>
+
+                                            <button class="btn btn-secondary btn-key"></button>
+                                            <button class="btn btn-light btn-key key-zero">0</button>
+                                            <button class="btn btn-light btn-key">.</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar" disabled="@(string.IsNullOrWhiteSpace(Model.Sector) ? "disabled" : null)">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>
+                                        <strong>Finalizar</strong>
+                                        <small>registro</small>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <div id="pos-bottom-anchor"></div>
+
+                            <div class="zona-botones zona-botones-carrito mt-2">
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-secondary w-100" id="btnCancelarItem">Cancelar</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
+                                            Comentario
+                                            <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pos-footer-panel">
+                                <div class="pos-balanza-card">
+                                    <small class="text-muted d-block pos-balanza-caption">
+                                        Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                    </small>
+                                    <div class="small text-muted mt-1">
+                                        Presione <strong>*</strong> para activar o desactivar la balanza.
+                                    </div>
+                                    <div id="msgBalanzaPOS" class="small text-muted mt-1"></div>
+                                    <div class="progress mt-1 mb-2" style="height:8px;">
+                                        <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    Sector activo: <span id="estadoSectorPuntoExpendioFooter">@(string.IsNullOrWhiteSpace(Model.Sector) ? "Sin seleccionar" : Model.Sector)</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt mr-2"></i> Línea del punto de expendio
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">×</button>
+            </div>
+
+            <div class="modal-body">
+                <input id="modalProducto" class="form-control mb-2" readonly>
+
+                <div class="row mb-2" id="bloqueDatosLineaBonificacion">
+                    <div class="col-12 col-md-5">
+                        <label class="small">Cant.</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <button id="btnCantMenos" type="button" class="btn btn-outline-secondary d-none" tabindex="-1">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                            <input id="modalCantidad" class="form-control text-right" readonly inputmode="decimal" autocomplete="off">
+                            <div class="input-group-append">
+                                <button id="btnCantMas" type="button" class="btn btn-outline-secondary d-none" tabindex="-1">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-100 d-block d-md-none"></div>
+
+                    <div class="col-6 col-md-3">
+                        <label class="small">Precio lista</label>
+                        <input id="modalPrecio" class="form-control text-right" readonly>
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <label id="lblTotalModalLineaVenta" class="small">Total</label>
+                        <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div id="bloqueBonificar" style="display:none">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="chkPorcentaje">
+                        <label class="form-check-label" for="chkPorcentaje">Bonificar por porcentaje</label>
+                    </div>
+
+                    <div class="form-check mb-2 d-none" id="bloqueAplicarBonificacionTodos">
+                        <input class="form-check-input" type="checkbox" id="chkBonificarTodos">
+                        <label class="form-check-label" for="chkBonificarTodos">Aplicar a todos los productos</label>
+                    </div>
+
+                    <div class="small text-muted mb-2 d-none" id="msgRecargoBonificacion">
+                        Si ingresa un porcentaje negativo, se aplicará como recargo.
+                    </div>
+
+                    <div class="alert alert-info py-2 px-3 small d-none" id="msgBonificarTodos">
+                        Esta bonificación se aplicará a todos los productos del carrito.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6" id="bloquePrecioBonificado">
+                            <label class="small">Precio bonificado</label>
+                            <input id="txtPrecioKg" class="form-control text-right" inputmode="decimal" autocomplete="off">
+                        </div>
+
+                        <div class="col-6">
+                            <label id="lblTipoPorcentaje" class="small">% bonificación</label>
+                            <input id="txtPorcentaje" class="form-control text-right" inputmode="decimal" autocomplete="off" readonly>
+                        </div>
+                    </div>
+
+                    <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">Aplicar bonificación</button>
+                    <div class="mt-2"></div>
+                </div>
+
+                <div id="bloqueCantidad" style="display:none">
+                    <button id="btnAplicarCantidad" class="btn btn-primary btn-block mt-3">Aplicar cantidad</button>
+                    <div class="mt-2"></div>
+                </div>
+
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <button id="btnMostrarBonificar" class="btn btn-success">
+                        <i class="fas fa-percentage"></i> Bonificar
+                    </button>
+
+                    <button id="btnMostrarCantidad" class="btn btn-info">
+                        <i class="fas fa-sort-numeric-up"></i> Cantidad
+                    </button>
+
+                    <button id="btnEliminarItem" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSectoresPuntoExpendio" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-store mr-2"></i>Seleccionar sector</h5>
+            </div>
+            <div class="modal-body">
+                <input type="text"
+                       id="txtBuscarSectorExpendio"
+                       class="form-control mb-3"
+                       placeholder="Buscar sector..."
+                       autocomplete="off" />
+
+                <div class="list-group" id="listaSectoresExpendio">
+                    @foreach (var sector in Model.SectoresDisponibles ?? new List<string>())
+                    {
+                        <button type="button"
+                                class="list-group-item list-group-item-action js-sector-item"
+                                data-sector="@sector">
+                            @sector
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Cancelar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml")
+@Html.Partial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml")
+@Html.Partial("~/Views/PuntosExpendio/_ModalPostPuntoExpendioBasico.cshtml")
+
+<div id="globalAntiForgeryToken" style="display:none;">
+    @Html.AntiForgeryToken()
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/carnisys.balanza.js?v=1"></script>
+    <script src="~/Scripts/app/pos-state.js?v=1"></script>
+    <script src="~/Scripts/app/pos-keyboard.js?v=1"></script>
+    <script src="~/Scripts/app/pos-product.js?v=1"></script>
+    <script src="~/Scripts/app/pos-cart.js?v=1"></script>
+    <script src="~/Scripts/app/pos-balanza.js?v=1"></script>
+    <script src="~/Scripts/app/pos-comment.js?v=1"></script>
+    <script src="~/Scripts/app/pos-help.js?v=1"></script>
+    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
+    <script src="~/Scripts/app/scanner.js"></script>
+    <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
+    <script src="~/Scripts/app/punto-expendio-pos.js?v=1"></script>
+
+    <script>
+        window.puntoExpendioPosConfig = {
+            sectorSeleccionado: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Sector ?? "")),
+            permiteEditarPrecio: @(permiteEditarPrecio ? "true" : "false"),
+            urlPos: '@Url.Action("POS", "PuntosExpendio")',
+            urlFinalizar: '@Url.Action("FinalizarPOS", "PuntosExpendio")',
+            urlBuscarProductoPos: '@Url.Action("BuscarProductoPOS", "PuntosExpendio")',
+            urlPdf: '@Url.Action("ImprimirPdf", "PuntosExpendio")',
+            urlEmailConfig: '@Url.Action("ObtenerDatosEmailExpendio", "PuntosExpendio")',
+            urlEmailEnviar: '@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")',
+            idConsumidorFinal: @idConsumidorFinal,
+            puedeBonificar: true,
+            mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.',
+            posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId))
+        };
+
+        // "Duplicar POS" (batch de Ventas, mismo modulo, ver PLAN-POS-EXPENDIOS-UI.md) --
+        // productKey:'expendio' namespacea el localStorage para que un POS de Venta y uno de
+        // Expendio abiertos en pestañas distintas del mismo cajero no se detecten como
+        // conflicto entre si (pos-multi-instance.js:22-30, ya soporta esto).
+        window.POSMultiInstanceConfig = {
+            productKey: 'expendio',
+            role: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posModoInstancia)),
+            instanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+            userId: @idUsuarioPOS,
+            sucursalId: @idSucursalPOS,
+            homeUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("Index", "Home"))),
+            originalUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("POS", "PuntosExpendio", new { sector = Model.Sector, modoPos = "original" }))),
+            duplicateBaseUrl: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Url.Action("POS", "PuntosExpendio", new { sector = Model.Sector }))),
+            originalWindowName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("CarniSysPOSExpendio-" + idUsuarioPOS + "-" + idSucursalPOS + "-original")),
+            windowName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("CarniSysPOSExpendio-" + idUsuarioPOS + "-" + idSucursalPOS + "-" + posModoInstancia)),
+            duplicateWindowName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize("CarniSysPOSExpendioDuplicado-" + idUsuarioPOS + "-" + idSucursalPOS))
+        };
+    </script>
+}

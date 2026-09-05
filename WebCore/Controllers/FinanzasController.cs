@@ -1,16 +1,16 @@
-// Port PARCIAL de Web/Controllers/FinanzasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
+﻿// Port de Web/Controllers/FinanzasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
 // Core, Modulo 7 -- Caja y tesoreria). El original tiene 1941 lineas. Portado: CtasCtes (listado),
-// Cheques (pantalla + CRUD completo), y (2026-09-03, ya destrabado el bloqueante de PDF/email --
-// ver docs/10-migracion-aspnet-core/README.md) CtaCtePersona (extracto de cuenta corriente de una
-// persona) con exportacion a PDF/Excel/email real.
+// Cheques (pantalla + CRUD completo), CtaCtePersona (extracto de cuenta corriente de una persona)
+// con exportacion a PDF/Excel/email real (2026-09-03), y AddOrEditPago/AddOrEditPagoPost (alta y
+// edicion de pagos/cobros en cuenta corriente) + ImprimirPdfPago/ObtenerDatosEmailPago/
+// EnviarComprobantePagoEmail (2026-09-04, ver docs/10-migracion-aspnet-core/README.md) --
+// verificado de punta a punta con datos reales (pago real creado y editado, PDF generado, email
+// preparado). verMovimientoCtaCte solo cubre la rama "Ventas" (redirige a Ventas/DetalleVenta) y
+// ahora tambien "Pagos" (redirige a AddOrEditPago); la rama "Compras" sigue sin portar
+// (ModificarCompra de Compras, fuera de alcance de este controller).
 //
-// NO portado todavia: AddOrEditPago/AddOrEditPagoPost (alta de pagos/cobros) e
-// ImprimirPdfPago/ObtenerDatosEmailPago/EnviarComprobantePagoEmail (su PDF/email) -- es un flujo de
-// ESCRITURA de dinero (crea/edita un Pago que impacta la cta cte), con acoplamiento a POS
-// (desdePos) y a Cajas (Modulo 7), distinto en riesgo del PDF/email de solo lectura de este slice.
-// Botones "Agregar Pago / Cobro" y atajos de teclado relacionados quedan excluidos de la vista por
-// el mismo motivo (apuntan a una accion no portada). verMovimientoCtaCte tampoco se porta salvo la
-// rama "Ventas" (unico caso reusable con lo ya portado, redirige a Ventas/DetalleVenta).
+// AddOrEditPago: modo POS (2026-09-05) y pago con Cheque/EftvoCheque (2026-09-05) ya portados,
+// ver docs/DECISIONS.md. Sin piezas deferred pendientes en este controller.
 //
 // Mismo stub que el resto de la migracion. PermisosHelper.TienePermiso(Session, ...) se omite
 // (bypass de Admin=true) salvo donde el original ya usa un chequeo real independiente de Session
@@ -25,6 +25,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
+using WebCore.Models;
+using WebCore.Services;
 
 namespace WebCore.Controllers
 {
@@ -39,6 +41,8 @@ namespace WebCore.Controllers
         private readonly IParametrosContext _param;
         private readonly Negocio.CuentaCorriente _oCtaCteN;
         private readonly Negocio.Persona _oPersonaN;
+        private readonly Negocio.Sucursal _oSucursalN;
+        private readonly Negocio.CierreCaja _oCierreN;
 
         private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
         {
@@ -51,11 +55,40 @@ namespace WebCore.Controllers
 
         public FinanzasController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oCtaCteN = new Negocio.CuentaCorriente(_empresa, _param);
-            _oPersonaN = new Negocio.Persona(_empresa, _param);
+            _oCtaCteN = WebCore.Infrastructure.NegocioFactory.CrearCuentaCorriente(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
+        }
+
+        // Port de FinanzasController.ObtenerCajaAbiertaUsuario (Web/Controllers/FinanzasController.cs:1215)
+        // -- misma logica exacta, adaptada al stub _usuarioActual en vez de Session["Usuario"]
+        // (WebCore no tiene sesion real, ver docs/DECISIONS.md). Mismo patron ya usado y verificado
+        // en VentasController/CajasController para resolver "la caja abierta del vendedor actual".
+        private Entidades.CierreCaja ObtenerCajaAbiertaUsuario(Entidades.Usuario user)
+        {
+            if (user == null || user.IdSucursal == 0)
+                return null;
+
+            if (user.Sucursal == null || user.Sucursal.IdSucursal != user.IdSucursal)
+                user.Sucursal = _oSucursalN.findById(user.IdSucursal);
+
+            if (user.Sucursal == null || user.Sucursal.IdSucursal == 0)
+                return null;
+
+            var cierre = new Entidades.CierreCaja
+            {
+                Sucursal = user.Sucursal,
+                UsuarioInicio = user
+            };
+
+            cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+
+            bool abierta = cierre != null && !cierre.FechaHoraCierre.HasValue;
+            return abierta ? cierre : null;
         }
 
         private bool EsPeticionAjax()
@@ -573,6 +606,394 @@ namespace WebCore.Controllers
                 Response.StatusCode = 500;
                 return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
             }
+        }
+
+        // ===== AddOrEditPago (alta/edicion de pago o cobro en cuenta corriente) =====
+        // Ver docs/10-migracion-aspnet-core/PLAN-ADDOREDITPAGO.md. Port de Web/Controllers/
+        // FinanzasController.cs:822-1282. Recortes deliberados confirmados con el usuario:
+        //   1. Modo POS (desdePos, gate de caja abierta) portado 2026-09-05 -- ver
+        //      ObtenerCajaAbiertaUsuario arriba. Se dejo afuera a proposito el TempData["DesdePOS"]
+        //      del original (persistia el flag entre requests via redirect): WebCore es 100%
+        //      stateless por querystring en todos sus controllers, y hoy no hay ningun caller real
+        //      que dependa de ese carry-over (ningun boton de POS todavia linkea a AddOrEditPago).
+        //      Si aparece un caso real, se agrega ahi, no antes.
+        //   2. SIN "Cheque"/"EftvoCheque" como forma de pago -- el merge de cheques (ChequesJson,
+        //      2 modales de busqueda/alta) es una pieza grande aparte; los cheques YA tienen su
+        //      propio CRUD completo en WebCore (Finanzas/Cheques.cshtml), solo no se puede pagar
+        //      CON un cheque desde este formulario todavia. Ver gaps.md.
+        // Gap de permisos real encontrado en el original (Permisos.Finanza.AddOrEditPago nunca se
+        // valida) -- documentado en gaps.md, no se corrige (bypass, mismo criterio de siempre).
+        [HttpGet]
+        public IActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false)
+        {
+            bool renderParcial = desdePos || EsPeticionAjax();
+            var sucursales = _oSucursalN.findAll();
+            string returnUrlDecodificada = DecodeReturnUrlIfNeeded(returnUrl);
+            Entidades.Pago pagoExistente = null;
+
+            // _ModalAltaCheque.cshtml (incluido en esta vista desde 2026-09-05, pago con cheque)
+            // necesita ViewBag.Bancos -- mismo dato que ya carga Cheques() para el mismo modal.
+            ViewBag.Bancos = _oCtaCteN.getBancos();
+
+            if (desdePos)
+            {
+                var cierreCajaActual = ObtenerCajaAbiertaUsuario(_usuarioActual);
+                if (cierreCajaActual == null)
+                    return StatusCode(403, "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS.");
+            }
+
+            if (idPago > 0)
+            {
+                pagoExistente = _oCtaCteN.getPagoById(idPago);
+                if (pagoExistente == null)
+                    return NotFound();
+
+                if (idPersona <= 0 && pagoExistente.Persona != null)
+                    idPersona = pagoExistente.Persona.IdPersona;
+            }
+
+            ViewBag.Sucursales = sucursales;
+            ViewBag.ReturnUrl = returnUrlDecodificada;
+            ViewBag.DesdePOS = desdePos;
+            ViewBag.RenderSinLayout = renderParcial;
+
+            DataTable dtMov = _oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
+            decimal saldo = 0;
+            if (dtMov != null && dtMov.Rows.Count > 0)
+            {
+                DataRow ultimaFila = dtMov.Rows[dtMov.Rows.Count - 1];
+                if (ultimaFila["Saldo"] != DBNull.Value)
+                    saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
+            }
+
+            var persona = _oPersonaN.findById(idPersona);
+            if (persona == null)
+                return NotFound();
+
+            ViewBag.IdPersona = idPersona;
+            ViewBag.Persona = persona;
+            ViewBag.SaldoPersona = saldo;
+            ViewBag.ImprimirPagoPdfUrl = idPago > 0 ? Url.Action("ImprimirPdfPago", "Finanzas", new { id = idPago }) : "";
+
+            Entidades.Pago model;
+            if (idPago == 0)
+            {
+                model = new Entidades.Pago
+                {
+                    Fecha = DateTime.Now,
+                    Sucursal = _usuarioActual.Sucursal ?? _oSucursalN.findById(_usuarioActual.IdSucursal)
+                };
+                model.NroRecibo = model.Sucursal != null && model.Sucursal.idSucursal > 0
+                    ? _oCtaCteN.getNroReciboAutomatico(model.Sucursal.idSucursal)
+                    : "";
+            }
+            else
+            {
+                model = pagoExistente;
+            }
+
+            if (renderParcial)
+                return PartialView("~/Views/Finanzas/AddOrEditPago.cshtml", model);
+
+            return View("~/Views/Finanzas/AddOrEditPago.cshtml", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AddOrEditPagoPost(
+            Entidades.Pago oPagoE,
+            string returnUrl,
+            int SucursalId = 0,
+            int idPersona = 0,
+            string importe = "",
+            string Efectivo = "",
+            string ChequesJson = "",
+            bool desdePos = false)
+        {
+            returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
+
+            if (desdePos && !_usuarioActual.Admin)
+                SucursalId = _usuarioActual.IdSucursal;
+
+            oPagoE.Sucursal = _oSucursalN.findById(SucursalId);
+            oPagoE.Persona = _oPersonaN.findById(idPersona);
+
+            // Pago con Cheque/EftvoCheque (2026-09-05, ver docs/DECISIONS.md): el cliente manda
+            // solo Id/NroCheque de cada fila ya agregada (ver pago-cheques.js:obtenerChequesActualesJson,
+            // reusado tal cual del original) -- se vuelve a pedir cada cheque real por Id para no
+            // confiar en datos que el navegador pudo alterar (mismo criterio que el original).
+            oPagoE.Cheques = new List<Entidades.Cheque>();
+            if (!string.IsNullOrWhiteSpace(ChequesJson))
+            {
+                var chequesCliente = System.Text.Json.JsonSerializer.Deserialize<List<Entidades.Cheque>>(ChequesJson) ?? new List<Entidades.Cheque>();
+                foreach (var chequeCliente in chequesCliente)
+                {
+                    if (chequeCliente == null || chequeCliente.Id <= 0) continue;
+                    var chequeReal = _oCtaCteN.getChequePorIDorNro(chequeCliente.Id, "");
+                    if (chequeReal != null) oPagoE.Cheques.Add(chequeReal);
+                }
+            }
+
+            oPagoE.Importe = ParseFloat(importe);
+            oPagoE.Efectivo = string.IsNullOrEmpty(Efectivo) ? 0 : ParseFloat(Efectivo);
+            oPagoE.Banco = "";
+            oPagoE.NroCheque = "";
+            oPagoE.TitularCheque = "";
+
+            Entidades.Pago pagoAnterior = oPagoE.Id > 0 ? _oCtaCteN.getPagoById(oPagoE.Id) : null;
+            if (oPagoE.Id > 0 && pagoAnterior == null)
+                return Json(new { ok = false, mensaje = "No se encontró el pago o cobro a modificar." });
+
+            oPagoE.CreadoPor = oPagoE.Id > 0 ? pagoAnterior.CreadoPor : _usuarioActual;
+            oPagoE.ActualizadoPor = oPagoE.Id > 0 ? _usuarioActual : oPagoE.ActualizadoPor;
+            oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
+
+            var (ok, mensaje) = _oCtaCteN.ValidarPago(oPagoE);
+            if (!ok)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = string.IsNullOrWhiteSpace(mensaje) ? "No se pudo validar el pago." : mensaje
+                });
+            }
+
+            // cierreCajaActual queda null fuera de modo POS -- mismo comportamiento que el
+            // original (crearMovCtaCtePago no genera egreso de caja si no hay cierre asociado).
+            Entidades.CierreCaja cierreCajaActual = null;
+            if (desdePos)
+            {
+                cierreCajaActual = ObtenerCajaAbiertaUsuario(_usuarioActual);
+                if (cierreCajaActual == null)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS."
+                    });
+                }
+
+                if (oPagoE.Sucursal == null || oPagoE.Sucursal.idSucursal != _usuarioActual.IdSucursal)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "El pago o cobro debe registrarse en la sucursal activa del POS."
+                    });
+                }
+
+                if (!cierreCajaActual.FechaHoraInicio.HasValue ||
+                    oPagoE.Fecha < cierreCajaActual.FechaHoraInicio.Value ||
+                    oPagoE.Fecha > DateTime.Now)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        mensaje = "La fecha y hora del pago o cobro debe corresponder a una caja abierta del vendedor."
+                    });
+                }
+            }
+
+            _ = _oCtaCteN.addOrEditPago(oPagoE, cierreCajaActual, pagoAnterior);
+
+            string urlRetornoDefault = !string.IsNullOrWhiteSpace(returnUrl)
+                ? returnUrl
+                : Url.Action("CtaCtePersona", "Finanzas", new { idPersona, fechaDesde = DateTime.Today.ToString("yyyy-MM-dd") });
+
+            if (desdePos)
+            {
+                return Json(new
+                {
+                    ok = true,
+                    redirectUrl = urlRetornoDefault,
+                    cerrarModalPago = true,
+                    pagoId = oPagoE.Id,
+                    pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }),
+                    emailConfigUrl = Url.Action("ObtenerDatosEmailPago", "Finanzas"),
+                    emailSendUrl = Url.Action("EnviarComprobantePagoEmail", "Finanzas")
+                });
+            }
+
+            return Json(new
+            {
+                ok = true,
+                redirectUrl = urlRetornoDefault,
+                pagoId = oPagoE.Id,
+                pdfUrl = Url.Action("ImprimirPdfPago", "Finanzas", new { id = oPagoE.Id }),
+                emailConfigUrl = Url.Action("ObtenerDatosEmailPago", "Finanzas"),
+                emailSendUrl = Url.Action("EnviarComprobantePagoEmail", "Finanzas")
+            });
+        }
+
+        [HttpGet]
+        public IActionResult ImprimirPdfPago(int id)
+        {
+            var model = ConstruirReciboPagoVm(id);
+            if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                return NotFound();
+
+            byte[] bytes = GenerarDocsCore.GenerarPdfPago(model);
+            string nroRecibo = string.IsNullOrWhiteSpace(model.Pago.NroRecibo) ? ("Pago_" + model.Pago.Id) : model.Pago.NroRecibo.Replace("/", "-");
+            return File(bytes, "application/pdf", "Recibo_" + nroRecibo + ".pdf");
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerDatosEmailPago(int id)
+        {
+            try
+            {
+                var model = ConstruirReciboPagoVm(id);
+                if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                    return Json(new { ok = false, msg = "Pago no encontrado." });
+
+                string nombreEmpresa = model.Empresa != null
+                    ? (!string.IsNullOrWhiteSpace(model.Empresa.NombreFantasia) ? model.Empresa.NombreFantasia : model.Empresa.RazonSocialAfip)
+                    : "";
+                if (string.IsNullOrWhiteSpace(nombreEmpresa)) nombreEmpresa = "CarniSys";
+
+                string tipoOperacion = model.TipoOperacion ?? "Recibo";
+                string nroRecibo = model.Pago.NroRecibo ?? ("#" + model.Pago.Id);
+                string emailDestino = model.Pago.Persona != null ? (model.Pago.Persona.Email ?? "").Trim() : "";
+                string asunto = tipoOperacion + " " + nroRecibo + " - " + nombreEmpresa;
+                string cuerpo =
+                    "Hola" + (model.Pago.Persona != null && !string.IsNullOrWhiteSpace(model.Pago.Persona.RazonSocial) ? " " + model.Pago.Persona.RazonSocial : "") + ",\n\n" +
+                    "Te enviamos adjunto el recibo " + nroRecibo + ".\n\n" +
+                    "Fecha: " + model.Pago.Fecha.ToString("dd/MM/yyyy HH:mm") + "\n" +
+                    "Importe: $" + Convert.ToDecimal(model.Pago.Importe).ToString("N2") + "\n\n" +
+                    "Saludos,\n" + nombreEmpresa;
+
+                return Json(new
+                {
+                    ok = true,
+                    email = emailDestino,
+                    asunto,
+                    mensaje = cuerpo,
+                    empresa = nombreEmpresa,
+                    replyTo = model.Empresa != null ? (model.Empresa.Email ?? "") : ""
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public IActionResult EnviarComprobantePagoEmail(int idPago, string emailDestino, string asunto, string mensaje)
+        {
+            try
+            {
+                var model = ConstruirReciboPagoVm(idPago);
+                if (model == null || model.Pago == null || model.Pago.Id <= 0)
+                    return Json(new { ok = false, msg = "Pago no encontrado." });
+
+                emailDestino = (emailDestino ?? "").Trim();
+                asunto = (asunto ?? "").Trim();
+                mensaje = (mensaje ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email destino." });
+                if (!SmtpMailHelper.IsValidEmail(emailDestino))
+                    return Json(new { ok = false, msg = "Ingrese un email válido." });
+                if (string.IsNullOrWhiteSpace(asunto))
+                    return Json(new { ok = false, msg = "Ingrese un asunto." });
+
+                byte[] pdfBytes = GenerarDocsCore.GenerarPdfPago(model);
+                string nroRecibo = string.IsNullOrWhiteSpace(model.Pago.NroRecibo) ? ("Pago_" + model.Pago.Id) : model.Pago.NroRecibo.Replace("/", "-");
+                string nombreAdjunto = "Recibo_" + nroRecibo + ".pdf";
+                string nombreEmpresa = model.Empresa != null
+                    ? (!string.IsNullOrWhiteSpace(model.Empresa.NombreFantasia) ? model.Empresa.NombreFantasia : model.Empresa.RazonSocialAfip)
+                    : "";
+                if (string.IsNullOrWhiteSpace(nombreEmpresa)) nombreEmpresa = "CarniSys";
+
+                string fromName = "CarniSys - " + nombreEmpresa;
+                string replyToEmail = model.Empresa != null ? (model.Empresa.Email ?? "").Trim() : "";
+
+                SmtpMailHelper.SendMail(
+                    toEmail: emailDestino,
+                    toName: model.Pago.Persona != null ? model.Pago.Persona.RazonSocial : "",
+                    subject: asunto,
+                    bodyHtml: ConvertirTextoAHtmlPago(mensaje),
+                    attachmentFileName: nombreAdjunto,
+                    attachmentBytes: pdfBytes,
+                    attachmentContentType: "application/pdf",
+                    fromNameOverride: fromName,
+                    replyToEmail: SmtpMailHelper.IsValidEmail(replyToEmail) ? replyToEmail : null,
+                    replyToName: nombreEmpresa
+                );
+
+                return Json(new { ok = true, msg = "El recibo se envió correctamente." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "No se pudo enviar el email. " + ex.Message });
+            }
+        }
+
+        // Puente para clickear una fila "Pagos" del extracto de CtaCtePersona.cshtml (ya existe
+        // la variable esPago ahi, solo faltaba esta action) -- Ventas/Compras tambien pasan por
+        // aca pero solo Ventas ya esta portado (Compras.ModificarCompra no existe todavia).
+        [HttpGet]
+        public IActionResult verMovimientoCtaCte(int idPersona, string returnUrl, string tabla, int idTabla = 0)
+        {
+            var movTabla = new Entidades.MovCtaCte();
+            var tablaEnum = movTabla.getTablaEnum(tabla);
+            string decodedReturnUrl = DecodeReturnUrlIfNeeded(returnUrl);
+
+            switch (tablaEnum)
+            {
+                case Entidades.MovCtaCte.tablas.Ventas:
+                    return RedirectToAction("DetalleVenta", "Ventas", new { id = idTabla });
+
+                case Entidades.MovCtaCte.tablas.Pagos:
+                    return AddOrEditPago(idPersona, decodedReturnUrl, idTabla);
+
+                default:
+                    return NotFound();
+            }
+        }
+
+        private ReciboPagoVm ConstruirReciboPagoVm(int idPago)
+        {
+            var pago = _oCtaCteN.getPagoById(idPago);
+            if (pago == null || pago.Id <= 0)
+                return null;
+
+            var empresaActual = _usuarioActual.Empresa;
+            if (empresaActual == null && pago.Sucursal != null && pago.Sucursal.IdEmpresa > 0)
+                empresaActual = _oSucursalN.findEmpresaById(pago.Sucursal.IdEmpresa);
+
+            DataTable dtCtaCte = _oCtaCteN.getCtaCteByIdPersona(pago.Persona.IdPersona, new DateTime(2000, 1, 1));
+            decimal saldo = 0m;
+            bool tieneSaldo = false;
+
+            if (dtCtaCte != null && dtCtaCte.Rows.Count > 0)
+            {
+                DataRow ultimaFila = dtCtaCte.Rows[dtCtaCte.Rows.Count - 1];
+                if (ultimaFila["Saldo"] != DBNull.Value)
+                {
+                    saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
+                    tieneSaldo = true;
+                }
+            }
+
+            string tipoOperacion = pago.AProveedor ? "Pago" : "Cobro";
+            string personaEtiqueta = pago.AProveedor ? "Proveedor" : "Cliente";
+            string detalleOperacion = pago.AProveedor ? "Se entregó dinero a la persona." : "Se recibió dinero de la persona.";
+
+            return new ReciboPagoVm
+            {
+                Pago = pago,
+                Empresa = empresaActual,
+                Saldo = saldo,
+                TieneSaldo = tieneSaldo,
+                TipoOperacion = tipoOperacion,
+                PersonaEtiqueta = personaEtiqueta,
+                DetalleOperacion = detalleOperacion,
+                UrlPdfAbsoluta = Url.Action("ImprimirPdfPago", "Finanzas", new { id = pago.Id }, Request.Scheme),
+                ComprobantesRelacionados = new List<string>()
+            };
         }
 
         private DataTable FiltrarRegistrosRepetidos(DataTable dtMov)

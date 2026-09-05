@@ -1,4 +1,4 @@
-// Port de Web/Controllers/UsuariosController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+﻿// Port de Web/Controllers/UsuariosController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Gestion de usuarios y permisos de la empresa actual
 // (self-service, distinto de SystemAdministrationController.Usuarios, cross-tenant para el
 // super-admin de plataforma, ya portado en Modulo 1).
@@ -47,11 +47,11 @@ namespace WebCore.Controllers
 
         public UsuariosController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oUsuarioN = new Negocio.Usuario(_empresa, _param);
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
         }
 
         public IActionResult Index()
@@ -194,7 +194,7 @@ namespace WebCore.Controllers
                 int idUsuarioPersistido = usuarioGuardar.Id;
                 if (idUsuarioPersistido <= 0)
                 {
-                    var usuarioBusqueda = new Negocio.Usuario(_empresa, _param);
+                    var usuarioBusqueda = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
                     usuarioBusqueda.obtenerUsuarios(false);
                     idUsuarioPersistido = (usuarioBusqueda.listaUsuario() ?? new List<Entidades.Usuario>())
                         .Where(u => u != null && u.IdEmpresa == _empresa.IdEmpresa)

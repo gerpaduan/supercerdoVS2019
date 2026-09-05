@@ -1275,6 +1275,43 @@ namespace DatosPostgres
                 });
         }
 
+        // Agregado 2026-09-04 para los filtros avanzados del modal de expendios de POS en WebCore
+        // (ver docs/10-migracion-aspnet-core/PLAN-POS-UI.md, batch 5) -- mismo criterio que la
+        // version SQL Server de Datos/Venta.cs: metodo nuevo, aditivo, idSucursal=0 trae todas.
+        public DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal)
+        {
+            return DbPg.DataTable(_connectionString, _idEmpresa, @"
+                SELECT e.fechaexpendio,
+                       e.idexpendio,
+                       identificacionexpendio,
+                       sector,
+                       c.codigo,
+                       c.corte,
+                       le.cantkg,
+                       le.preciokg,
+                       (le.cantkg * le.preciokg) AS total,
+                       idventa,
+                       u.nombre AS vendedor,
+                       e.observaciones,
+                       e.idsucursal,
+                       s.sucursal AS sucursalnombre
+                FROM expendios e
+                INNER JOIN lineaexpendio le ON e.idexpendio = le.idexpendio
+                INNER JOIN corte c ON le.idcorte = c.idcorte
+                INNER JOIN usuarios u ON e.idvendedor = u.id
+                INNER JOIN sucursal s ON e.idsucursal = s.idsucursal
+                WHERE e.fechaexpendio >= @fechaDesde
+                  AND (@fechaHasta::timestamp IS NULL OR e.fechaexpendio <= @fechaHasta)
+                  AND (@idSucursal = 0 OR e.idsucursal = @idSucursal)
+                ORDER BY e.fechaexpendio;",
+                p =>
+                {
+                    p.AddWithValue("fechaDesde", fechaDesde);
+                    p.AddWithValue("fechaHasta", (object)fechaHasta ?? DBNull.Value);
+                    p.AddWithValue("idSucursal", idSucursal);
+                });
+        }
+
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
             return DbPg.DataTable(_connectionString, _idEmpresa, @"

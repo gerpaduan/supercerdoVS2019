@@ -1,0 +1,575 @@
+﻿#content-wrapper,
+#content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.container-fluid {
+    max-width: 98% !important;
+    margin: 0 auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Neutralizacion de acentos rosados / danger compartidos */
+:root {
+    --ux-danger: #b4583f;
+    --ux-danger-dark: #924632;
+    --ux-danger-soft: #f7ede9;
+    --ux-danger-soft-strong: #eed6cd;
+    --z-layout-sticky: 1032;
+    --z-layout-dropdown: 1036;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+}
+
+.topbar {
+    position: relative;
+    z-index: var(--z-layout-sticky);
+    overflow: visible;
+}
+
+.topbar .dropdown {
+    position: relative;
+}
+
+.topbar .dropdown-menu {
+    z-index: var(--z-layout-dropdown) !important;
+}
+
+.modal-backdrop {
+    z-index: var(--z-modal-backdrop) !important;
+}
+
+.modal {
+    z-index: var(--z-modal) !important;
+}
+
+code,
+a > code {
+    color: var(--ux-danger-dark);
+}
+
+.text-danger {
+    color: var(--ux-danger) !important;
+}
+
+.btn-danger {
+    background-color: var(--ux-danger);
+    border-color: var(--ux-danger);
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger.focus {
+    background-color: var(--ux-danger-dark);
+    border-color: var(--ux-danger-dark);
+}
+
+.btn-outline-danger {
+    color: var(--ux-danger);
+    border-color: #d3ac9f;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus,
+.btn-outline-danger.focus {
+    background-color: var(--ux-danger-soft);
+    border-color: #c58a79;
+    color: #7f3826;
+}
+
+.alert-danger {
+    background-color: var(--ux-danger-soft);
+    border-color: var(--ux-danger-soft-strong);
+    color: var(--ux-danger-dark);
+}
+
+.badge-danger {
+    background-color: var(--ux-danger);
+}
+
+.table-danger,
+.table-danger > td,
+.table-danger > th {
+    background-color: var(--ux-danger-soft);
+}
+
+.table-hover .table-danger:hover,
+.table-hover .table-danger:hover > td,
+.table-hover .table-danger:hover > th {
+    background-color: #f1dfd8;
+}
+
+.app-product-highlight {
+    font-size: .92rem !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    border-color: #9ec5fe !important;
+    letter-spacing: .01em;
+}
+
+.app-product-highlight[readonly],
+.app-product-highlight:read-only {
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    opacity: 1;
+}
+
+.app-product-highlight {
+    font-size: .92rem !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    border-color: #9ec5fe !important;
+    letter-spacing: .01em;
+}
+
+.app-product-highlight[readonly],
+.app-product-highlight:read-only {
+    color: #000 !important;
+    -webkit-text-fill-color: #000;
+    background: #f8fbff !important;
+    opacity: 1;
+}
+
+/* El fondo/color de arriba es fijo (!important) y no tiene variante oscura:
+   en paginas con el tema de ui-refresh.css (body.app-shell), el input
+   "resaltado" del producto seleccionado (Movimientos, Stock, etc.) quedaba
+   siempre con fondo claro aunque el resto de la pagina estuviera en modo
+   oscuro. Se pisa con las mismas variables que usa el resto de los inputs
+   en modo oscuro (--ui-input-bg / --ui-text de ui-refresh.css). */
+html.dark-mode body.app-shell .app-product-highlight,
+body.app-shell.dark-mode .app-product-highlight,
+html.dark-mode body.app-shell .app-product-highlight[readonly],
+body.app-shell.dark-mode .app-product-highlight[readonly],
+html.dark-mode body.app-shell .app-product-highlight:read-only,
+body.app-shell.dark-mode .app-product-highlight:read-only {
+    color: var(--ui-text) !important;
+    -webkit-text-fill-color: var(--ui-text);
+    background: var(--ui-input-bg) !important;
+    border-color: var(--ui-border) !important;
+}
+/* Contenedor responsive: permite scroll horizontal si es necesario */
+.table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; /* scroll suave en móviles */
+}
+
+/* Tabla: layout fijo para respetar anchos de colgroup */
+.table.tabla-productos {
+    table-layout: fixed !important;
+    width: 100% !important;
+    border-collapse: collapse;
+}
+
+/* Evitar que el padding rompa el ancho en ch */
+.table.tabla-productos th,
+.table.tabla-productos td {
+    box-sizing: border-box;
+    padding: .5rem; /* ajustá si querés */
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    vertical-align: top !important;
+    min-width: 10ch;
+}
+
+/* Código: NO romper palabras, una sola línea */
+.col-codigo {
+    width: 15ch !important; /* ancho compacto medido en caracteres */
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    text-align: right;
+}
+
+/* Producto: EXACTO 25 caracteres por línea, forzado en responsive */
+.col-producto {
+    width: 40ch !important;
+    max-width: 40ch !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Stock: estrecho y centrado */
+.col-tipo {
+    width: 12ch !important;
+    text-align: center;
+}
+
+/* Precio: crecer según mayor contenido, en una sola línea */
+.col-precio {
+    width: 15ch !important; /* ancho compacto medido en caracteres */
+    white-space: nowrap !important;
+    text-align: right;
+    width: auto !important;
+}
+
+/* Acciones: pequeño */
+.col-acciones {
+    width: 15ch !important;
+    text-align: left;
+    //width: auto !important;
+}
+
+/* Columna filler: absorbe todo el espacio sobrante */
+.col-extra {
+    width: 15ch !important;
+    text-align: left;
+    width: auto !important;
+}
+
+
+/* Si tenías min-width inline en la tabla, anularlo */
+.table.tabla-productos[style] {
+    min-width: unset !important;
+}
+
+/* Elimina reglas globales que podrían impedir el wrap en Producto */
+.table thead th {
+    white-space: normal !important;
+}
+/* Responsive: en pantallas menores a 768px, ancho 20ch */
+@media (max-width: 768px) {
+    .col-producto {
+        width: 15ch !important;
+        max-width: 20ch !important;
+    }
+}
+
+
+/* ===========================================
+   Botones forma de pago: número + texto truncado
+   =========================================== */
+
+#modalFormaPago .btn-forma-pago {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    padding: .7rem .5rem;
+    white-space: normal;
+}
+
+    /* Número/atajo */
+    #modalFormaPago .btn-forma-pago .fp-key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 1.05rem;
+        background: rgba(255,255,255,.25);
+    }
+
+    /* Texto: siempre dentro, con truncado */
+    #modalFormaPago .btn-forma-pago .fp-text {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+        line-height: 1.05;
+    }
+
+/* Ajustes para pantallas chicas */
+@media (max-width: 576px) {
+    #modalFormaPago .btn-forma-pago {
+        padding: .6rem .35rem;
+    }
+
+        #modalFormaPago .btn-forma-pago .fp-text {
+            font-size: .95rem;
+        }
+}
+
+#tablaPersonas tr.fila-persona.is-selected {
+    outline: 2px solid rgba(0,0,0,.2);
+    background: rgba(0,0,0,.06);
+}
+
+/* Egresos de Caja */
+.egresos-page,
+.egresos-pos {
+    width: 100%;
+}
+
+.egresos-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: .75rem;
+}
+
+.egresos-filtros,
+.egresos-pos-toolbar,
+.egreso-form-wrap {
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.egresos-pos-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: 1rem;
+}
+
+.egresos-resumen {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-bottom: .75rem;
+}
+
+.egresos-resumen > div {
+    min-width: 120px;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #f8f9fc;
+    padding: .45rem .7rem;
+    text-align: right;
+}
+
+.egresos-resumen span,
+.egresos-resumen strong {
+    display: block;
+}
+
+.egresos-tabla-desktop td,
+.egresos-tabla-desktop th {
+    vertical-align: middle;
+}
+
+.egresos-cards-mobile {
+    display: none;
+}
+
+.egreso-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: .75rem;
+    margin-bottom: .6rem;
+}
+
+.egreso-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.egreso-card-top span {
+    flex: 0 0 auto;
+    font-weight: 700;
+    color: #1f7a46;
+}
+
+.egreso-card-line,
+.egreso-card-detail,
+.egreso-card-foot {
+    margin-top: .35rem;
+}
+
+.egreso-card-line {
+    color: #4a5568;
+}
+
+.egreso-card-detail {
+    border-top: 1px solid #edf2f7;
+    padding-top: .45rem;
+    white-space: pre-wrap;
+}
+
+.egreso-card-foot {
+    color: #858796;
+    font-size: .85rem;
+}
+
+.egreso-form-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    background: #f8f9fc;
+    padding: .65rem .75rem;
+    margin-bottom: .85rem;
+}
+
+.egreso-monto {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.egresos-actividad-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.egreso-row-anulado {
+    opacity: .72;
+}
+
+.egreso-row-anulado td,
+.egreso-row-anulado .egreso-card-line {
+    text-decoration: line-through;
+}
+
+@media (min-width: 992px) {
+    #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+        max-width: 570px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .egresos-actions {
+        justify-content: stretch;
+    }
+
+    .egresos-actions .btn,
+    .egresos-pos-toolbar .btn {
+        width: 100%;
+    }
+
+    .egresos-pos-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .egresos-resumen {
+        justify-content: stretch;
+    }
+
+    .egresos-resumen > div {
+        flex: 1 1 0;
+    }
+
+    .egresos-tabla-desktop {
+        display: none;
+    }
+
+    .egresos-cards-mobile {
+        display: block;
+    }
+}
+
+/* Scanner de codigo de barra por camara (compartido por las vistas que usan
+   Views/Shared/_ScannerCodigoBarra.cshtml + Scripts/app/barcode-code-input.js).
+   Mismos valores que el bloque propio de Views/Productos/AddOrEdit.cshtml
+   (no se toca ese archivo, se deja como esta). width:100% lo hace responsive
+   de fabrica, sin necesidad de media queries aparte. */
+#scannerContainer {
+    margin-bottom: .75rem;
+}
+
+.scanner-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    height: 80px;
+    overflow: hidden;
+    background: #000;
+    border-radius: 8px;
+}
+
+#videoScanner {
+    width: 100%;
+    height: auto;
+}
+
+.scanner-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: red;
+    box-shadow: 0 0 6px red;
+    animation: scan 1.2s linear infinite;
+}
+
+@keyframes scan {
+    0% {
+        top: 15%;
+        opacity: .9;
+    }
+
+    50% {
+        top: 50%;
+        opacity: 1;
+    }
+
+    100% {
+        top: 85%;
+        opacity: .9;
+    }
+}
+
+/* Ajustes exclusivos del scanner compartido de Movimientos/Stock
+   (Views/Shared/_ScannerCodigoBarra.cshtml, clase marcadora "scanner-shared-card"
+   en el contenedor raiz) -- NO afecta a los scanners propios de Productos/
+   AddOrEdit, Productos/Index, Ventas/POS ni PuntosExpendio/POS, que usan los
+   mismos nombres de id/clase pero con su CSS inline propia y no tienen esta
+   clase marcadora. Pedido del usuario: en mobile el video quedaba angosto
+   (medido: card 133.8px, video 116.2px con viewport 390px) porque cada nivel
+   anidado (columna + card + card-body) le resta su propio padding -- acá se
+   hace que el video ocupe el ancho real de la card, sin tocar el gutter de la
+   columna (eso desalinearia el scanner con el resto de los campos del form). */
+.scanner-shared-card .scanner-wrapper {
+    /* Bleed: cancela el padding p-2 (.5rem) de la card-body para que el video
+       llegue hasta el borde interno de la card en vez de quedar recuadrado.
+       width:auto (pisando el width:100%/max-width:100% de la regla base) es
+       necesario -- con width explicito puesto, el modelo de caja queda
+       sobre-restringido (width + margin-left + margin-right no puede superar
+       el ancho del contenedor) y el navegador ignora el margen negativo en
+       vez de agrandar la caja. Con width:auto, el margen negativo si expande
+       la caja como corresponde (verificado con getBoundingClientRect real). */
+    width: auto;
+    max-width: none;
+    margin: -.5rem -.5rem 0 -.5rem;
+    /* Mismo radio que usa Bootstrap para .card-img-top (card-radius - border),
+       solo arriba -- abajo no hace falta, ahi sigue el padding normal. */
+    border-radius: calc(.25rem - 1px) calc(.25rem - 1px) 0 0;
+}
+
+@media (max-width: 575.98px) {
+    /* Botones (Flash/Limpiar/Cerrar camara) se compactan en vez de wrappear a
+       2 lineas -- "Cerrar camara" es el texto mas largo y el que fuerza el
+       salto en pantallas angostas. */
+    .scanner-shared-card .btn {
+        font-size: .7rem;
+        padding: .25rem .4rem;
+        white-space: nowrap;
+    }
+}
+
+/* Checkbox de seleccion en Productos/Index modo etiquetas (Views/Productos/
+   Index.cshtml, clase exclusiva -- confirmado por grep que no se reusa en
+   ningun otro lado). Antes era un checkbox nativo sin estilo, chico y poco
+   clickeable -- se agranda y se usa el azul de marca (--primary, ya definido
+   en sb-admin-2.css) via accent-color en vez de armar el custom-checkbox de
+   Bootstrap completo (ese patron necesita un <label> visible para dibujar el
+   check con pseudo-elementos, y acá no hay texto de label por fila). */
+.chk-etiqueta {
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: #4e73df;
+    cursor: pointer;
+}

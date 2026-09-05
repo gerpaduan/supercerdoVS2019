@@ -1,4 +1,4 @@
-// Port de Web/Controllers/DispositivosSegurosController.cs (ver docs/DECISIONS.md, migracion
+﻿// Port de Web/Controllers/DispositivosSegurosController.cs (ver docs/DECISIONS.md, migracion
 // ASP.NET Core, Modulo 6 -- Reportes y administracion). Registro de PCs conocidas (numero de
 // serie via agente local) que saltan el bloqueo por IP del login. Mismo criterio de stub que
 // Empresa/SucursalController.
@@ -30,7 +30,7 @@ namespace WebCore.Controllers
 
         public DispositivosSegurosController()
         {
-            _oDispositivoN = new Negocio.DispositivoSeguro(_empresa);
+            _oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(_empresa);
         }
 
         [HttpGet]

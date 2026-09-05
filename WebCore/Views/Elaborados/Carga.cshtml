@@ -1,0 +1,456 @@
+@model WebCore.Models.ElaboradoCargaVm
+@using System.Collections.Generic
+@using Entidades
+
+@{
+    ViewBag.Title = Model.EsEdicion ? "Modificar elaborado" : "Carga / ingreso de elaborado";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+    bool esAnulado = string.Equals(Model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
+
+    var modalElaboradoData = new ViewDataDictionary(ViewData);
+    modalElaboradoData["ModalId"] = "modalBuscarElaborado";
+    modalElaboradoData["ApiUrl"] = Url.Action("BuscarProducto", "Elaborados");
+    modalElaboradoData["Titulo"] = "Buscar elaborado";
+    modalElaboradoData["MostrarPrecio"] = "false";
+
+    var modalIngredienteData = new ViewDataDictionary(ViewData);
+    modalIngredienteData["ModalId"] = "modalBuscarIngrediente";
+    modalIngredienteData["ApiUrl"] = Url.Action("BuscarProducto", "Elaborados");
+    modalIngredienteData["Titulo"] = "Buscar ingrediente";
+    modalIngredienteData["MostrarPrecio"] = "false";
+}
+
+<div class="container-fluid px-2 px-md-3 elaborados-page" data-elaborados-page="carga">
+    <div id="elaboradoCargaDraftBanner" class="alert alert-warning d-none" role="alert">
+        Se encontro un borrador local de este elaborado.
+        <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
+        <button type="button" class="btn btn-sm btn-outline-dark ml-2" data-action="clear-draft">Limpiar borrador</button>
+    </div>
+
+    @Html.Partial("~/Views/Elaborados/_Tabs.cshtml", Model.Tabs)
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <a class="btn btn-outline-secondary mb-2" href="@Url.Action("Index", "Elaborados")">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+        @if (esAnulado)
+        {
+            <span class="badge badge-danger px-3 py-2 text-uppercase mb-2">Anulado</span>
+        }
+    </div>
+
+    <div class="card shadow-sm elaborados-panel-card elaborados-form-compact">
+        <div class="card-body">
+            <form id="formCargaElaborado" method="post" action="@Url.Action("GuardarCarga", "Elaborados")" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="IdEmbutido" name="IdEmbutido" value="@Model.IdEmbutido" />
+                <div id="lineasHiddenContainer"></div>
+
+                @if (Model.EsEdicion && !esAnulado && !Model.PuedeHabilitarEdicion)
+                {
+                    <div class="alert alert-secondary" role="alert">
+                        El elaborado se muestra en modo vista porque no tiene permisos para modificarlo.
+                    </div>
+                }
+                else if (Model.EsEdicion && !esAnulado)
+                {
+                    <div class="alert alert-warning" role="alert">
+                        Al guardar esta modificacion se anula primero el registro actual y luego se crea uno nuevo con los datos actualizados.
+                    </div>
+                }
+                @if (Model.EsEdicion && esAnulado)
+                {
+                    <div class="alert alert-secondary" role="alert">
+                        El elaborado fue anulado y no puede ser modificado.
+                    </div>
+                }
+
+                <div class="row">
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="IdSucursal">Sucursal</label>
+                            <select id="IdSucursal" name="IdSucursal" class="form-control" disabled="@(esAnulado ? "disabled" : null)">
+                                <option value="0">Seleccione...</option>
+                                @foreach (var sucursal in sucursales)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursal ? "selected" : null)">@sucursal.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label for="FechaEmbutido">Fecha</label>
+                            <input type="datetime-local"
+                                   id="FechaEmbutido"
+                                   name="FechaEmbutido"
+                                   class="form-control"
+                                   value="@Model.FechaEmbutido.ToString("yyyy-MM-ddTHH:mm:ss")"
+                                   step="1"
+                                   readonly="@(esAnulado ? "readonly" : null)" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <div class="form-group">
+                            <label>Usuario</label>
+                            <input type="text" class="form-control" value="@Model.UsuarioNombre" readonly />
+                        </div>
+                    </div>
+                    @if (Model.EsEdicion)
+                    {
+                        <div class="col-12 col-lg-3">
+                            <div class="form-group">
+                                <label>Creado</label>
+                                <input type="text" class="form-control" value="@Model.CreadoPor | @Model.Creado" readonly />
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        @Html.Partial("_AdvertenciaPermisoFecha")
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-xl-8">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Elaborado</h6>
+                            </div>
+
+                            <div id="elaboradoWarning" class="alert alert-info d-none py-2 px-3 mb-3"></div>
+
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-3 col-lg-2 elaborado-col-codigo">
+                                    <div class="form-group">
+                                        <label for="txtCodigoElaborado">Codigo</label>
+                                        <input type="number" id="txtCodigoElaborado" class="form-control" min="0" step="1" autocomplete="off" value="@(Model.CodigoElaborado > 0 ? Model.CodigoElaborado.ToString() : "")" readonly="@(esAnulado ? "readonly" : null)" />
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-9 col-lg-10">
+                                    <div class="form-group">
+                                        <label for="txtElaboradoNombre">Elaborado</label>
+                                        <div class="input-group">
+                                            <input type="hidden" id="IdElaborado" name="IdElaborado" value="@Model.IdElaborado" />
+                                            <input type="hidden" id="txtElaboradoTipo" />
+                                            <input type="hidden" id="txtElaboradoPromedio" />
+                                            <input type="text" id="txtElaboradoNombre" class="form-control app-product-highlight" value="@Model.Elaborado" readonly />
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-primary" id="btnBuscarElaborado" title="Buscar elaborado (F9)" disabled="@(esAnulado ? "disabled" : null)">
+                                                    <i class="fas fa-search"></i>
+                                                    <span class="d-none d-lg-inline ml-1">F9</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @if (Model.EsEdicion)
+                            {
+                                <div class="small text-muted mt-2">
+                                    Ultima actualizacion: @Model.ActualizadoPor | @Model.Actualizado
+                                </div>
+                            }
+                        </div>
+
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Ingredientes manuales</h6>
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div class="custom-control custom-switch mr-2">
+                                        <input type="checkbox" class="custom-control-input" id="chkBalanzaIngrediente" checked disabled="@(esAnulado ? "disabled" : null)" />
+                                        <label class="custom-control-label" for="chkBalanzaIngrediente">Balanza</label>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerAcumuladosElaborado">
+                                        <i class="fas fa-layer-group mr-1"></i> Ver acumulados
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-block" id="btnToggleTecladoIngrediente" title="Mostrar/ocultar teclado digital">
+                                        <i class="fas fa-keyboard"></i> <i class="fas fa-chevron-down" id="iconoToggleTecladoIngrediente"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btnActivarCapturaRespaldo" title="Guarda una captura de la pantalla completa cada vez que agregás o quitás un producto, como respaldo local por si se corta la luz o se cierra el sistema">
+                                        <i class="fas fa-shield-alt mr-1"></i> Activar respaldo automático
+                                    </button>
+                                    <span class="small text-muted d-none" id="lblCapturaRespaldoActiva" title="Se guarda una captura de la pantalla completa en tu carpeta elegida cada vez que agregás o quitás un producto">
+                                        <i class="fas fa-shield-alt mr-1 text-success"></i> Respaldo automático activado
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="balanzaStatusWrapElaborado">
+                                <div class="small text-muted mb-2">
+                                    Conexion balanza: <span id="estadoBalanzaElaborado">Desconocida</span>
+                                </div>
+                                <div class="progress mb-3" style="height:4px;">
+                                    <div id="barraBalanzaElaborado" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            <div id="cargaWarning" class="alert alert-warning py-2 px-3 mb-3 d-none"></div>
+
+                            <div class="numeric-keypad-toggle-layout" id="ingredientesManualesLayout">
+                                <div class="numeric-keypad-toggle-fields">
+                                    <div class="row align-items-end">
+                                        <div class="col-12 col-md-4 col-lg-3 ingrediente-col-codigo">
+                                            <div class="form-group">
+                                                <label for="txtCodigoIngrediente">Codigo</label>
+                                                <input type="number" id="txtCodigoIngrediente" class="form-control" min="0" step="1" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-8 col-lg-5">
+                                            <div class="form-group">
+                                                <label for="txtIngredienteNombre">Ingrediente</label>
+                                                <div class="input-group">
+                                                    <input type="hidden" id="txtIngredienteId" />
+                                                    <input type="hidden" id="txtIngredientePesable" />
+                                                    <input type="hidden" id="txtIngredienteTipo" />
+                                                    <input type="hidden" id="txtIngredientePromedio" />
+                                                    <input type="text" id="txtIngredienteNombre" class="form-control app-product-highlight" readonly />
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-primary" id="btnBuscarIngrediente" title="Buscar ingrediente (F10)" disabled="@(esAnulado ? "disabled" : null)">
+                                                            <i class="fas fa-search"></i>
+                                                            <span class="d-none d-lg-inline ml-1">F10</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 col-lg-2">
+                                            <div class="form-group">
+                                                <label for="txtKgIngrediente">Cant. Kgs</label>
+                                                <input type="text" id="txtKgIngrediente" class="form-control solo-decimal" inputmode="decimal" autocomplete="off" readonly="@(esAnulado ? "readonly" : null)" />
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 col-lg-2">
+                                            <div class="form-group">
+                                                <label class="d-none d-md-block">&nbsp;</label>
+                                                <button type="button" class="btn btn-primary btn-block" id="btnAgregarIngrediente" title="Agregar ingrediente" disabled="@(esAnulado ? "disabled" : null)">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @Html.Partial("~/Views/Shared/_NumericKeypad.cshtml")
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered table-sm elaborados-table-compact" id="tablaLineasElaborado">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width:110px;">Codigo</th>
+                                        <th>Ingrediente</th>
+                                        <th class="text-right" style="width:120px;">Kilos</th>
+                                        <th class="text-center" style="width:90px;">Balanza</th>
+                                        <th style="width:70px;">Accion</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-xl-4">
+                        <div class="border rounded p-3 mb-3 elaborados-section-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                <h6 class="font-weight-bold text-uppercase text-muted mb-0 elaborados-section-title">Receta</h6>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="Receta" class="sr-only">Receta</label>
+                                <textarea id="Receta" class="form-control js-auto-receta" rows="2" readonly>@Model.Receta</textarea>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light mb-3 elaborados-panel-card elaborados-summary-card">
+                            <div class="card-body">
+                                <h6 class="font-weight-bold text-uppercase text-muted elaborados-section-title" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">Formula</h6>
+                                <div class="table-responsive formula-elaborado-wrap">
+                                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact" id="tablaFormulaElaborado">
+                                        <thead>
+                                            <tr>
+                                                <th>Ingrediente</th>
+                                                <th class="text-right" style="width:100px;">Kgs</th>
+                                                <th class="text-center" style="width:70px;" title="Auto activado: el ingrediente se agrega solo al guardar el Elaborado, calculado como % de lo cargado a mano. Auto desactivado: hay que cargarlo a mano en el Elaborado.">Auto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <hr />
+                                <div class="d-flex justify-content-between">
+                                    <span>Total manual</span>
+                                    <strong id="lblTotalManual">0.000</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <span>Total a producir</span>
+                                    <strong id="lblTotalProducir">0.000</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card elaborados-panel-card">
+                            <div class="card-body">
+                                <div class="form-group mb-0">
+                                    <label for="Observaciones">Observaciones</label>
+                                    <textarea id="Observaciones"
+                                              name="Observaciones"
+                                              class="form-control"
+                                              rows="3"
+                                              maxlength="250"
+                                              readonly="@(esAnulado ? "readonly" : null)">@Model.Observaciones</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex flex-wrap align-items-center">
+                    @if (Model.EsEdicion && !esAnulado)
+                    {
+                        <button type="button"
+                                class="btn btn-primary mr-2 mb-2"
+                                id="btnHabilitarEdicionElaborado"
+                                data-edit-readonly-ignore="true"
+                                disabled="@(Model.PuedeHabilitarEdicion ? null : "disabled")">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                    }
+                    @if (!esAnulado)
+                    {
+                        <button type="submit" class="btn btn-success mr-2 mb-2 @((Model.EsEdicion && !esAnulado) ? "d-none" : "")" id="btnGuardarElaborado" disabled="@(Model.EsEdicion && !Model.PermiteGuardarEdicion ? "disabled" : null)">
+                            <i class="fas fa-save mr-1"></i> @(Model.EsEdicion ? "Guardar cambios" : "Guardar elaborado")
+                        </button>
+                    }
+                    @if (Model.EsEdicion && Model.PuedeAnular)
+                    {
+                        <button type="button" class="btn btn-outline-danger mr-2 mb-2" id="btnAnularElaborado">
+                            <i class="fas fa-ban mr-1"></i> Anular
+                        </button>
+                    }
+                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2" data-ignore-exit="1">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAcumuladosElaborado" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Acumulados del elaborado</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 elaborados-table-compact">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:120px;">Codigo</th>
+                                <th>Producto</th>
+                                <th class="text-right" style="width:120px;">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAcumuladosElaborado"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalElaboradoData)
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", modalIngredienteData)
+@Html.Partial("~/Views/Elaborados/_Styles.cshtml")
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+
+<style>
+    .js-auto-receta {
+        overflow: hidden;
+        resize: vertical;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        window.elaboradosCargaConfig = {
+            buscarProductoPorCodigoUrl: '@Url.Action("BuscarProductoPorCodigo", "Elaborados")',
+            obtenerFormulaUrl: '@Url.Action("ObtenerFormula", "Elaborados")',
+            guardarUrl: '@Url.Action("GuardarCarga", "Elaborados")',
+            anularUrl: '@Url.Action("Anular", "Elaborados")',
+            redirectUrl: '@Url.Action("Index", "Elaborados")',
+            balanzaUrl: 'http://localhost:5100/peso',
+            draftKey: 'elaborados:carga:@(Model.IdEmbutido > 0 ? ("edit:" + Model.IdEmbutido) : "new")',
+            esEdicion: @(Model.EsEdicion ? "true" : "false"),
+            esAnulado: @(esAnulado ? "true" : "false"),
+            permiteGuardarEdicion: @(Model.PermiteGuardarEdicion ? "true" : "false"),
+            puedeAnular: @(Model.PuedeAnular ? "true" : "false"),
+            initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas ?? new List<WebCore.Models.ElaboradoCargaLineaVm>())),
+            initialFormula: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Formula ?? new List<WebCore.Models.ElaboradoFormulaLineaVm>()))
+        };
+        window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
+        window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
+        window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
+    </script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=20")"></script>
+    <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
+    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")"></script>
+    <script>
+        $(function () {
+            if (window.NumericKeypad) {
+                window.NumericKeypad.create({
+                    selectorTeclado: '#numericKeypad',
+                    selectorInputsValidos: '#txtCodigoElaborado, #txtCodigoIngrediente, #txtKgIngrediente'
+                });
+            }
+
+            $('#btnToggleTecladoIngrediente').on('click', function () {
+                var desplegado = $('#ingredientesManualesLayout').toggleClass('teclado-desplegado').hasClass('teclado-desplegado');
+                $('#iconoToggleTecladoIngrediente')
+                    .toggleClass('fa-chevron-down', !desplegado)
+                    .toggleClass('fa-chevron-up', desplegado);
+            });
+        });
+    </script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+    <script>
+        // Solo en mobile: cada aviso de validacion queda entre su propio
+        // input de codigo y el de nombre (elaborado / ingrediente), a la
+        // vista del usuario (en desktop no se mueve).
+        window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
+            "#elaboradoWarning",
+            ".elaborado-col-codigo"
+        );
+        window.BusquedaFeedback && window.BusquedaFeedback.anclarAvisoResponsive(
+            "#cargaWarning",
+            ".ingrediente-col-codigo"
+        );
+        window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+    </script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script>
+        window.EditReadOnly && window.EditReadOnly.init({
+            formSelector: "#formCargaElaborado",
+            soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false"),
+            modifyButtonSelector: "#btnHabilitarEdicionElaborado",
+            saveButtonSelector: "#btnGuardarElaborado",
+            onStateChanged: function (readOnly) {
+                if (window.ElaboradosCarga && typeof window.ElaboradosCarga.syncPrimaryAction === "function") {
+                    window.ElaboradosCarga.syncPrimaryAction();
+                }
+            }
+        });
+    </script>
+}

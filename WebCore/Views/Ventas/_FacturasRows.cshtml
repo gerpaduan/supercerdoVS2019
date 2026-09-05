@@ -29,7 +29,11 @@
                 {
                     tipoComprobante = factura.getLetraId_TipoCbte(factura.CodTipoCbteAfip).ToString();
                 }
-                var formaPago = !string.IsNullOrWhiteSpace(factura != null ? factura.FormaPago : "") ? factura.FormaPago : (venta != null ? venta.FormaPago : "");
+                // factura.FormaPago ya incluye "| Efectivo" cuando corresponde (BuildFacturaDTO);
+                // el fallback a venta.FormaPago (factura sin FormaPago guardado) no lo traia.
+                var formaPago = !string.IsNullOrWhiteSpace(factura != null ? factura.FormaPago : "")
+                    ? factura.FormaPago
+                    : (venta != null && venta.PagoMixtoEfectivo > 0 ? venta.FormaPago + " | Efectivo" : (venta != null ? venta.FormaPago : ""));
                 var cliente = venta != null && venta.Persona != null ? venta.Persona.razonSocial : (factura != null ? factura.RazonSocialAFIP : "");
                 var identificacion = venta != null && venta.Persona != null ? venta.Persona.Identificacion : (factura != null ? factura.NroDocAfip : "");
                 var vendedor = venta != null && venta.Vendedor != null ? venta.Vendedor.Nombre : "";

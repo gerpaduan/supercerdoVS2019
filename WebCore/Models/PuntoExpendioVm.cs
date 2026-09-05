@@ -1,11 +1,50 @@
-// Port parcial de Web/Models/PuntoExpendioVm.cs -- solo el ABM de sectores (ver cabecera de
-// WebCore/Controllers/PuntosExpendioController.cs). PuntoExpendioEditVm/PuntoExpendioLineaVm NO
-// se portan: solo los usan Abrir/Guardar (crea una Venta/expendio real), fuera de alcance de este
-// slice de solo lectura + catalogo de sectores.
+// Port parcial de Web/Models/PuntoExpendioVm.cs -- ABM de sectores + PuntoExpendioEditVm/
+// PuntoExpendioLineaVm (agregados 2026-09-04 para el nucleo POS transaccional de PuntosExpendio,
+// ver docs/10-migracion-aspnet-core/PLAN-POS.md seccion 6, batch 7 -- WebCore/Controllers/
+// PuntosExpendioController.cs.FinalizarPOS). Abrir/Guardar (formulario de pagina completa, vista
+// separada) siguen sin portar, no los necesita FinalizarPOS.
+using System;
 using System.Collections.Generic;
 
 namespace WebCore.Models
 {
+    public class PuntoExpendioEditVm
+    {
+        public PuntoExpendioEditVm()
+        {
+            FechaExpendio = DateTime.Now;
+            Lineas = new List<PuntoExpendioLineaVm>();
+            SectoresDisponibles = new List<string>();
+        }
+
+        public int IdExpendio { get; set; }
+        public bool EsGuardado { get; set; }
+        public string Sector { get; set; }
+        public DateTime FechaExpendio { get; set; }
+        public string IdentificacionCliente { get; set; }
+        public string Observaciones { get; set; }
+        public string SucursalNombre { get; set; }
+        public string VendedorNombre { get; set; }
+        public bool PermiteEditarPrecio { get; set; }
+        public int CantItems { get; set; }
+        public float TotalKilos { get; set; }
+        public float TotalImporte { get; set; }
+        public string TipoImpresion { get; set; }
+        public List<string> SectoresDisponibles { get; set; }
+        public List<PuntoExpendioLineaVm> Lineas { get; set; }
+    }
+
+    public class PuntoExpendioLineaVm
+    {
+        public int IdCorte { get; set; }
+        public long Codigo { get; set; }
+        public string Producto { get; set; }
+        public float CantKg { get; set; }
+        public float PrecioKg { get; set; }
+        public bool PesoBalanza { get; set; }
+        public float Total { get; set; }
+    }
+
     public class SectorAbmVm
     {
         public SectorAbmVm()

@@ -8,6 +8,29 @@ No confundir con `docs/GAPS.md` (raíz), que es específico de la migración SQL
 
 ## Abiertos
 
+### Permisos reales de venta y "usuario producción" — bypaseados en WebCore, portar cuando haya login/sesión real
+
+Detectado: 2026-09-04, batch 7 POS UI, iteración 5 (edición de venta existente). Pedido explícito del usuario: **"ESTOS PERMISOS SON PROPIOS DE LA APP, Y MUY IMPORTANTES. ANOTALO PARA MAS ADELANTE PORQUE NECESITAMOS PORTAR ESTAS REGLAS, AL IGUAL QUE UN USUARIO 'PRODUCCION'"**.
+
+`Web/Controllers/VentasController.cs` (clásico) protege la edición de una venta con reglas reales:
+
+- `PuedeModificarUltimaVenta` (2521-2542): admin, o la venta es literalmente `getUltimaVentaVendedor(cierre)` del cierre de caja actual del vendedor + permiso `Permisos.Venta.UltimaVenta` vigente.
+- `PuedeCambiarFormaPago` (2618-2643): admin, o misma sucursal + mismo vendedor del cierre actual + `FechaVenta` dentro del rango del cierre.
+- `PuedeEditarFechaVenta`: permiso `Permisos.Venta.NuevaVenta` sobre la fecha del vendedor — más estricto que editar productos.
+- **"Usuario de producción"** (cuenta compartida de POS): `user.EsUsuarioProduccion` + `PermisosHelper.RegistrarOperadorPOS/ObtenerOperadorPOS(Session, posInstanceId)` — pide login real de un empleado (usuario+contraseña) antes de operar cada instancia de POS; el operador autorizado gobierna permisos finos (Bonificar, editar/anular última venta) dentro de esa pestaña. Ver `Web/Views/Ventas/POS.cshtml:782-808` y `docs/DECISIONS.md` 2026-08-27/28.
+
+`WebCore` corre con un usuario único hardcodeado (`_usuarioActual`, `Id=2/Admin=true/IdEmpresa=1/IdSucursal=2`, sin `Session`) — todo el sistema de permisos de la migración resuelve siempre "permitido" (mismo criterio en Cajas/Finanzas/Reportes/Ventas). Concretamente hoy:
+
+- `ViewBag.PuedeModificarVenta = true` siempre (`VentasController.DetalleVenta`) — el botón "Modificar venta" aparece para cualquier venta, sin importar cierre de caja ni vendedor.
+- `ModificarVenta`/`POS` en WebCore no validan caja abierta del vendedor ni sucursal del request contra el usuario (documentado en el header de `VentasController.cs`).
+- "Cambiar Forma de Pago" (modo `soloFormaPago`) directamente no está portado.
+- No existe ningún concepto de "usuario producción" ni login de operador por pestaña en WebCore.
+
+**No se resuelve ahora** porque no hay sistema de login/sesión real en WebCore todavía (diseño deliberado del spike inicial, ver plan de migración) — portar estas reglas sin eso no se puede probar de verdad (no hay multi-usuario). Queda anotado para cuando se diseñe autenticación real: en ese momento, portar `PuedeModificarUltimaVenta`/`PuedeCambiarFormaPago`/`PuedeEditarFechaVenta`/`TienePermisoAdministrativoSobreVenta` y la feature completa de "usuario producción" (login de operador por instancia de POS) juntas, no por separado — están relacionadas (mismo helper `PermisosHelper`, misma pantalla).
+
+Impacto real: alto una vez que haya usuarios reales — sin esto, cualquier usuario puede editar cualquier venta sin restricción de caja/turno, y no hay forma de compartir una PC de POS entre varios empleados con auditoría real de quién operó qué. Hoy (usuario único de desarrollo) no bloquea nada.
+
+
 ### Mensajes de validación built-in de ASP.NET Core en ingles (campos de tipo valor no-nullable)
 
 Detectado: 2026-09-01, juez de paridad sobre `SystemAdministration/EditarEmpresa`. Confirmado como patron transversal a los Modulos 1, 2 y 3 (no exclusivo de Empresas): reaparece igual en `EditarSucursal` (IdSucursal, IdEmpresa, CodPuntoVentaAfip), `EditarUsuario` (Id, IdEmpresa, IdSucursalUser, Admin, Activo, PermitirLoginFueraSucursal), `AltaRapidaEmpresa` (Usuario.Admin, Usuario.Activo, Sucursal.CodPuntoVentaAfip, Empresa.CodigoGenericoCodigo, Empresa.CodigoGenericoIdAlicuotaIva), `Personas/Editar` (IdPersona, IdIva, CtaCte) y `Productos/AddOrEdit` (IdCorte, IdMarca, IdCorteMaestro, Porcentaje, PorcentajeHueso, AlicuotaIva, SiguienteIdEdicion, UltimoProductoContinuoId, RetomarProductoId, CargaContinua, Pesable, Habilitado, IngresoRapidoEmbutido, EnCierreStock, Independiente, PuntoStock, IdAlicuotaIva -- el formulario mas grande portado hasta ahora, mismo patron en 16+ campos). Tambien se confirmo que Core no emite `data-val-number` para NINGUN campo numerico (con o sin Required), a diferencia de MVC5 que siempre lo agrega para `int`/`long`/`int?` -- mismo gap, alcance mas amplio de lo que parecia con el primer campo encontrado.
@@ -24,6 +47,23 @@ El fix real es configurar localizacion de ASP.NET Core (`AddDataAnnotationsLocal
 Impacto real: bajo (server-side sigue validando correctamente; solo cambia el idioma del mensaje y se pierde feedback instantaneo en el navegador para 2 campos numericos de todo el modulo). No bloquea seguir con el resto de Módulo 1.
 
 Sin decision tomada todavia sobre cuando encarar la localizacion global -- queda abierto.
+
+**Investigado 2026-09-05 (sin resolver, revertido)**: se probaron 2 enfoques, ninguno cerro el gap de forma confiable:
+1. `app.UseRequestLocalization(es-AR)` -- **no tuvo ningun efecto** en el mensaje (seguia en ingles) para el caso de un campo simplemente ausente del POST (bindea a su default 0/false sin error). **Revertido ademas por un riesgo real detectado a tiempo, no solo por no funcionar**: cambiar la cultura del request afecta tambien el *model binding* automatico de cualquier `decimal`/`double`/`DateTime` que no pase por los parsers manuales ya usados en toda esta migracion (`ParseFloat`, etc., adoptados justamente para evitar depender de la cultura del hilo) -- un cambio de plataforma con blast radius mucho mayor que el bug cosmetico que se queria arreglar, sin forma de auditar cada endpoint afectado en un tiempo razonable.
+2. `options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(...)` (segun CLAUDE.md §1.3 hay que consultar la doc real de la firma exacta antes de usarla, no adivinar de memoria -- no se tenia acceso a esa doc en esta sesion) -- SI se disparo para un campo numerico posteado con string vacio (confirma que existe una via real para arreglar esto), pero el parametro recibido por el accessor no era el nombre del campo (dio `"El campo  es obligatorio."`, con el nombre vacio) -- signo de haber elegido el accessor/parametro equivocado por adivinar la API en vez de verificarla. Revertido en vez de seguir iterando a ciegas.
+
+**Para la proxima vez que se encare**: confirmar primero, con la documentacion real de `DefaultModelBindingMessageProvider` (via Context7 u otra fuente oficial, CLAUDE.md §1.3), cual accessor exacto corresponde a "campo no-nullable ausente del POST, sin `[Required]` explicito" y que parametro recibe -- y verificar aparte, con un test dedicado que cubra varios endpoints con decimales/fechas, que fijar la cultura del request no cambia ningun resultado de parsing ya validado en este programa.
+
+**Investigado 2026-09-05, segunda pasada (cerrado como "sin fix de plataforma viable sin nueva dependencia" -- decision pendiente del usuario)**: con WebSearch/WebFetch ya disponibles, se confirmo la documentacion real de punta a punta:
+
+1. `DefaultModelBindingMessageProvider.ValueMustNotBeNullAccessor` (el accessor que SI se disparaba en el intento anterior) tiene como texto default real **"The value '{0}' is invalid."** (confirmado via `learn.microsoft.com/.../defaultmodelbindingmessageprovider.valuemustnotbenullaccessor`) -- el `{0}` es el VALOR intentado (string vacio en el repro), no el nombre del campo. Esto explica el bug del intento anterior (`"El campo  es obligatorio."` con hueco vacio: se asumio que `{0}` era el nombre de campo, y ademas ese accessor ni siquiera es el que produce el texto "The X field is required." que se queria traducir -- es un mensaje distinto, de una situacion de binding distinta.
+2. El texto real "The {0} field is required." **no sale de `DefaultModelBindingMessageProvider` en absoluto** -- es el default de `System.ComponentModel.DataAnnotations.RequiredAttribute` (la validacion implicita que ASP.NET Core agrega para todo tipo valor no-nullable), confirmado via el issue oficial `dotnet/runtime#24084` ("Provide localization for default error messages in System.ComponentModel.Annotations"): **.NET solo trae el recurso de este mensaje en ingles** -- no hay satelite en espanol ni ningun mecanismo que lo traduzca cambiando la cultura del request (por eso el intento 1, `UseRequestLocalization`, no tuvo ningun efecto: no es un problema de cultura, es que el string en si no esta traducido en el framework).
+3. Alternativas reales, ninguna es un "flip de un config":
+   - **Manual**: `[Required(ErrorMessage = "...")]` explicito en cada propiedad afectada -- no es un fix de plataforma, es tocar cada DTO/ViewModel uno por uno (decenas de campos ya relevados en este mismo gap).
+   - **Recurso propio**: registrar un `IStringLocalizer`/resx propio e interceptarlo via un `IValidationAttributeAdapterProvider` custom -- viable pero es una pieza de arquitectura nueva (no trivial), no una config de una linea.
+   - **Paquete de terceros** (`Toolbelt.ComponentModel.Annotations.Resources`, aporta el satelite en espanol para los attributes de `System.ComponentModel.Annotations` via reflection sobre areas no documentadas del framework) -- resuelve esto en una linea (`AddSystemComponentModelAnnotationsLocalization()`), pero es una dependencia nueva que exige pasar por CLAUDE.md §1.2 (comparar contra alternativa OSS -- la alternativa acá es la opción "manual" de arriba -- y esperar confirmación explícita antes de instalar), y el propio autor advierte que usa reflection sobre superficie no documentada (puede romper en futuras versiones de .NET).
+
+**Cierre de esta investigacion**: no hay una solucion de plataforma de bajo costo y bajo riesgo -- las 3 opciones reales tienen costo (tocar cada campo, construir una pieza nueva, o sumar una dependencia con riesgo de mantenimiento). Dado que el impacto real ya esta documentado como bajo (solo cambia el idioma del mensaje, el server-side sigue validando bien), **queda sin resolver a proposito, pendiente de que el usuario decida cual de las 3 alternativas prefiere** (o si prefiere seguir sin resolverlo) -- no se elige una unilateralmente por ser una decision de plataforma (CLAUDE.md §0/§3), no un bug puntual.
 
 ### Botones "Buscar en AFIP" (Personas, AltaRapidaEmpresa, modal de alta) no funcionan: el modulo AFIP no esta portado
 
@@ -43,35 +83,6 @@ El submit real del modal lo maneja `Web/Scripts/app/persona-buscar.js` (delegado
 
 Impacto real: bajo -- el modal es un componente consumido desde POS/Compras, no desde el modulo Personas en si (`PersonasController.PersonaModal`/`GuardarPersonaModal` ya existen y funcionan via POST directo, probado por el juez). Se resuelve solo cuando se porte el modulo que lo consume -- no requiere decision aparte.
 
-### Bootstrap 5 (WebCore) vs. API jQuery de Bootstrap 4 (JS portado tal cual) -- `$(...).modal is not a function`
-
-Detectado: 2026-09-01, juez de paridad sobre `Stock/Editar` (Modulo 4). Confirmado que ya estaba presente sin documentar desde Modulo 3 (`Productos/AddOrEdit.cshtml` llama `$("#modalInfoIndependiente").modal("show")`/`$("#modalMarcas").modal("hide")`, mismo patron).
-
-`WebCore/wwwroot/lib/bootstrap` es la version 5.3.3 -- Bootstrap 5 elimino la dependencia de jQuery y con ella el plugin `$.fn.modal`/`$.fn.tooltip`/etc. Pero todo el JS portado sin cambios desde `Web/Scripts/` (son assets 100% client-side, se copian tal cual, ver plan original de la migracion) fue escrito contra Bootstrap 4 y usa esa API jQuery en varios puntos (`stock.js`, `Productos/AddOrEdit.cshtml` inline, probablemente mas vistas con modales ya portadas que no se revisaron una por una).
-
-Confirmado con Playwright en `Stock/Editar`: aparece un `pageerror` real en consola (`$(...).modal is not a function`) al cargar la pagina. Pese al error, el modal de "Buscar producto" (F10) igual termina abriendose visualmente (Bootstrap 5 tambien reacciona en paralelo a los atributos `data-bs-toggle`/eventos nativos, asi que el flujo principal probado no quedo bloqueado) -- pero no se probo cada modal de cada vista ya portada, puede haber casos donde el error SI corte la ejecucion del resto de un mismo bloque `<script>` (un error no capturado detiene las sentencias siguientes del mismo IIFE, no las de otros `<script>` tags).
-
-El fix real es una decision de plataforma, no algo que se resuelva en una vista puntual: o se baja `WebCore` a Bootstrap 4.x (mismo major que sigue usando `Web`, cero cambios en el JS portado), o se agrega un shim/polyfill que reimplemente `$.fn.modal` sobre la API nativa de Bootstrap 5, o se reescribe cada uso de `.modal()`/`.tooltip()`/etc. a la API nativa (`bootstrap.Modal.getOrCreateInstance(el).show()`) en cada script portado (mas trabajo, tantas veces como aparezca el patron).
-
-Impacto real: bajo por ahora en lo probado (el flujo principal de agregar productos en Stock sigue funcionando), pero sin auditar exhaustivamente. Sin decision tomada todavia sobre cual de las 3 opciones tomar -- queda abierto.
-
-### `table-scroll-sync.js` (scrollbar flotante para tablas anchas) no cargado en WebCore
-
-Detectado: 2026-09-01, juez de paridad sobre `Stock/Lineas` (Modulo 4). Misma causa raiz que el gap de alertas de TempData (mas abajo): `Web/Views/Shared/_LayoutBase.cshtml` carga `~/Scripts/app/table-scroll-sync.js` globalmente (linea 685) para TODA vista con `.table-responsive.js-sync-scroll-body` -- envuelve la tabla en un `<div class="sync-scroll-host">` con una barra de scroll flotante (`sync-scroll-floating`). El `_Layout.cshtml` minimo de `WebCore` no lo carga, asi que esas tablas se ven sin la barra flotante -- probablemente afecta a TODAS las vistas ya portadas con tablas anchas (`Productos/Index`, `Stock/Index`, etc.), no solo `Lineas`, aunque no se audito cada una.
-
-Confirmado con el juez de paridad que es puramente un wrapper de UI agregado por JS en tiempo de ejecucion (no server-side): el contenido real de las celdas, resumenes y badges de `Stock/Lineas` es identico byte a byte entre `Web` y `WebCore` una vez que se descarta ese wrapper -- no es una discrepancia de datos.
-
-Impacto real: bajo -- en pantallas anchas la tabla sigue siendo usable con el scroll nativo del navegador, solo se pierde la barra flotante de conveniencia en mobile/tablet. Mismo tipo de decision que el gap de alertas (portar el mecanismo global de `_LayoutBase.cshtml`, no ad-hoc por vista) -- sin decision tomada todavia sobre cuando portarlo.
-
-### Alertas de TempData (`AlertType`/`AlertTitle`/`AlertMsg`) no se muestran en WebCore
-
-Detectado: 2026-09-01, patron transversal confirmado en Modulo 1 y Modulo 2 (no es nuevo de Personas, ya estaba presente sin documentar desde `SystemAdministrationController.GuardarEmpresa`/`GuardarSucursal`/`GuardarUsuario`/`GuardarAltaRapidaEmpresa`).
-
-`Web/Views/Shared/_LayoutBase.cshtml` (el layout real de `Web`) lee `TempData["AlertType"]`/`AlertTitle`/`AlertMsg` despues de cada redirect y renderiza un toast/alert. `WebCore/Views/Shared/_Layout.cshtml` es el scaffold minimo default de `dotnet new mvc` -- no lee ni renderiza esas claves. Todo controller portado hasta ahora sigue seteando esas 3 claves de TempData (fidelidad de logica), pero en `WebCore` no se ve nada tras un guardado exitoso o un error de redireccion.
-
-Impacto real: bajo para el juez de paridad de HTML puro (compara la pagina despues del redirect, sin el toast en ninguno de los 2 lados si se navega directo a la URL destino) pero SI afecta la experiencia real de uso (guardar algo en `WebCore` hoy no da ningun feedback visual). Es una tarea de plataforma (portar el mecanismo de alertas de `_LayoutBase.cshtml`, no solo copiar 3 lineas) -- no se resuelve ad-hoc en un modulo puntual.
-
-Sin decision tomada todavia sobre cuando portar el layout completo -- queda abierto.
 
 ### Diferencias cosmeticas de encoding HTML/JSON entre motores, sin impacto real (line endings y entidades numericas)
 

@@ -26,12 +26,12 @@
     .linea-resumen-principal {
         font-size: 1rem;
         font-weight: 700;
-        color: #2f3a4a;
+        color: var(--ui-text, #2f3a4a);
     }
 
     .linea-resumen-secundario {
         font-size: .8rem;
-        color: #6c757d;
+        color: var(--ui-text-muted, #6c757d);
     }
 
     .linea-resumen-tools {
@@ -42,9 +42,10 @@
     }
 
     .lineas-empty-state {
-        border: 1px dashed #d6dbe4;
+        border: 1px dashed var(--ui-border, #d6dbe4);
         border-radius: .75rem;
-        background: #fff;
+        background: var(--ui-surface, #fff);
+        color: var(--ui-text, inherit);
     }
 
     @@media (min-width: 1200px) {

@@ -28,6 +28,12 @@
          .NET 6+ (GDI+ removido, bloqueante ya señalado desde el plan original de la migracion).
          El port a WebCore usa PngByteQRCode en cambio (bytes PNG directos, sin System.Drawing). -->
     <PackageReference Include="QRCoder" Version="1.8.0" />
+    <!-- Codigo de barras (EAN-13/EAN-8/Code128) para GenerarEtiquetasPdf (Modulo 3, etiquetas de
+         producto): el original (iTextSharp) usa BarcodeEAN/Barcode128 propios de esa libreria, sin
+         equivalente en QuestPDF (que no genera codigos de barra nativamente, confirmado en su
+         propia documentacion, que recomienda justamente ZXing.Net via SVG). Se eligio SVG (no
+         bitmap) por el mismo motivo que QRCoder/PngByteQRCode: sin System.Drawing, corre en Linux. -->
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
   </ItemGroup>
 
   <PropertyGroup>

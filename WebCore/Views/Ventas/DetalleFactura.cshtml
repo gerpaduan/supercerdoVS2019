@@ -54,6 +54,12 @@
     }
     var returnUrl = Model.ReturnUrl ?? "";
     var numeroFactura = factura != null ? string.Format("{0}-{1}", factura.PtoVtaAfip ?? "", factura.NroCbteAfip ?? "") : "";
+    // factura.FormaPago ya incluye "| Efectivo" cuando corresponde (ver BuildFacturaDTO en
+    // VentasController.cs) -- el fallback a venta.FormaPago (factura sin FormaPago guardado) no,
+    // se agrega igual que en _DetalleVentaCard.cshtml/_TablaVentas.cshtml.
+    string formaPagoTexto = !string.IsNullOrWhiteSpace(factura != null ? factura.FormaPago : null)
+        ? factura.FormaPago
+        : (venta != null && venta.PagoMixtoEfectivo > 0 ? venta.FormaPago + " | Efectivo" : (venta != null ? venta.FormaPago : ""));
 }
 
 <div class="card shadow mb-4 w-100 mx-auto vista-venta">
@@ -92,7 +98,7 @@
             </div>
             <div class="col-md-6">
                 <h5 class="font-weight-bold text-dark">
-                    Forma de pago: <span class="text-muted">@(!string.IsNullOrWhiteSpace(factura.FormaPago) ? factura.FormaPago : (venta != null ? venta.FormaPago : ""))</span>
+                    Forma de pago: <span class="text-muted">@formaPagoTexto</span>
                 </h5>
             </div>
             <div class="col-md-6 text-md-right">

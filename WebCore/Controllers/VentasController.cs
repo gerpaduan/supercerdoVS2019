@@ -1,25 +1,33 @@
-// Port de Web/Controllers/VentasController.cs (3336 lineas en el original) para el Modulo 8
-// (Ventas y POS) -- ver docs/DECISIONS.md. Este es el SLICE 1: solo las acciones de lectura, sin
-// AFIP, sin POS transaccional, sin impresion/email/PDF. El controller original tiene 30 acciones;
-// las 23 restantes NO se portan en este slice:
+﻿// Port de Web/Controllers/VentasController.cs (3336 lineas en el original) para el Modulo 8
+// (Ventas y POS) -- ver docs/DECISIONS.md. Header actualizado 2026-09-04: las entregas de este
+// controller fueron incrementales (varios slices + el nucleo POS de PLAN-POS.md + la UI de POS
+// de PLAN-POS-UI.md) y el comentario original quedo desactualizado varias veces -- este resumen
+// refleja el estado real verificado, no lo que decia una nota vieja.
 //
-//  - AFIP (bloqueante conocido desde el plan original, requiere mini-spike aparte, ver
-//    docs/10-migracion-aspnet-core/README.md): ProbarLoginAfip, GenerarFactura,
-//    NuevaFacturaSinVenta, CrearVentaManualParaFactura, LimpiarLineasVentaManual,
-//    CerrarVentaSinFacturar, GenerarNotaCredito.
-//  - POS transaccional (venta real con balanza/codigo de barras/caja, arriesgado para portar sin
-//    el juez de paridad del modulo completo, CLAUDE.md seccion 11): POS, AutorizarOperadorPOS,
-//    CerrarOperadorPOS, AutorizarModuloVentas, AutorizarOperadorModuloVentas, BuscarExpendiosPOS,
-//    ObtenerExpendioPOS, BuscarProducto, AgregarProducto, FinalizarVenta, ModificarVenta.
-//  - Impresion/email/PDF (mismo bloqueante que FinanzasController, iTextSharp sin decidir +
-//    envio real de email, CLAUDE.md secciones 1.2/4): ImprimirTicket, ImprimirTicketPayload,
-//    ImprimirIngresoBilletesPayload, DescargarAgenteImpresion, ObtenerDatosEmailComprobante,
-//    EnviarComprobanteEmail, Imprimir.
+// PORTADO Y VERIFICADO CON DATOS REALES: Index/Facturas/Lineas/MisVentas/DetalleVenta/
+// DetalleFactura (listados y detalle), POS (GET, venta siempre nueva, sin Session -- ver
+// PLAN-POS-UI.md), FinalizarVenta/ModificarVenta/BuscarProducto (nucleo POS, PLAN-POS.md),
+// BuscarExpendiosPOS/ObtenerExpendioPOS (expendios asociados, con filtros avanzados y carga
+// cross-sucursal agregados a pedido del usuario, ver docs/DECISIONS.md), NuevaFacturaSinVenta/
+// CrearVentaManualParaFactura/GenerarFactura/LimpiarLineasVentaManual (flujo AFIP "facturar sin
+// venta", probado contra produccion real de AFIP), Imprimir/ObtenerDatosEmailComprobante/
+// EnviarComprobanteEmail (PDF con QuestPDF + email real, ya portados de un slice anterior).
 //
-// Consecuencia visible en las vistas: los botones "Modificar venta"/"Cambiar Forma de Pago"
-// (apuntan a POS, no portado), "Factura"/"Imprimir"/"Email" (AFIP e impresion/email, no
-// portados) se EXCLUYEN de las vistas en vez de dejarlos wireados a una accion inexistente --
-// mismo criterio que FinanzasController excluyo CtaCtePersona/AddOrEditPago en cascada.
+// SIN PORTAR (confirmado, no una lista vieja):
+//  - AFIP: ProbarLoginAfip, CerrarVentaSinFacturar. GenerarNotaCredito SI se porto (2026-09-05,
+//    ver docs/DECISIONS.md), sin la opcion "AnularVenta" del original (clona la venta entera como
+//    anulada -- pieza separada, no necesaria para probar que la nota de credito real funciona).
+//  - Operador de produccion (cuenta compartida, Session-heavy, pospuesto): AutorizarOperadorPOS,
+//    CerrarOperadorPOS, AutorizarModuloVentas, AutorizarOperadorModuloVentas.
+//  - AgregarProducto: confirmado codigo muerto en el original (PLAN-POS.md seccion 2), no se
+//    porta nunca.
+//  - Impresion con agente local ESC/POS (distinto del PDF, que si esta portado): ImprimirTicket,
+//    ImprimirTicketPayload, ImprimirIngresoBilletesPayload, DescargarAgenteImpresion.
+//
+// Consecuencia visible en las vistas: los botones que dependen de lo no portado (AFIP automatica
+// desde post-venta, ticket ESC/POS, operador de produccion) se EXCLUYEN de las vistas en vez de
+// dejarlos wireados a una accion inexistente -- mismo criterio que FinanzasController excluyo
+// CtaCtePersona/AddOrEditPago en cascada.
 //
 // Bypass de permisos: igual que el resto de la migracion (Cajas/Finanzas/Reportes), el usuario
 // stub tiene Admin=true, asi que TODOS los chequeos de PermisosHelper.TienePermiso*/
@@ -38,8 +46,12 @@
 // a proposito porque es la unica via de facturacion que NO depende de POS (no portado). Usa
 // AFIP.GenerarFacturaService tal cual (mismo codigo fuente que Web clasico, ver AFIP.csproj
 // multi-target net472;net10.0) contra PRODUCCION real de AFIP -- BuildFacturaDTO/MapDtoToFactura
-// portados sin cambios de logica fiscal. El resto de las acciones AFIP (GenerarNotaCredito,
-// ProbarLoginAfip, CerrarVentaSinFacturar) siguen sin portar, no las necesita este flujo.
+// portados sin cambios de logica fiscal.
+//
+// AGREGADO 2026-09-05 (autorizado explicitamente por el usuario para probar con montos reales
+// chicos, ver docs/DECISIONS.md): GenerarNotaCredito -- mismo AFIP.GenerarFacturaService, solo
+// esNotaCredito=true. ProbarLoginAfip/CerrarVentaSinFacturar siguen sin portar, no los necesita
+// ningun flujo actual.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -97,15 +109,17 @@ namespace WebCore.Controllers
             _tempDataProvider = tempDataProvider;
             _env = env;
 
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oVentaN = new Negocio.Venta(_empresa, _param);
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oCierreN = new Negocio.CierreCaja(_empresa, _param);
-            _oPersonaN = new Negocio.Persona(_empresa, _param);
-            _oCorteN = new Negocio.Corte(_empresa, _param);
-            _oBarcodeInterpreter = new Negocio.BarcodeInterpreter(_empresa, _param);
+            _oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
+
+            _usuarioActual.Sucursal = _oSucursalN.findById(_usuarioActual.IdSucursal);
         }
 
         private async System.Threading.Tasks.Task<string> RenderPartialViewToStringAsync(string viewName, object model)
@@ -388,6 +402,10 @@ namespace WebCore.Controllers
             ViewBag.TieneFacturaVenta = _oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
             ViewBag.IdNotaCreditoVenta = _oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
             ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
+            // Bypass de permisos (usuario unico Admin=true, sin sesion) -- ver TODO(claude) en
+            // VentasController.POS() y header de _DetalleVentaCard.cshtml.
+            ViewBag.PuedeModificarVenta = true;
+            ViewBag.PuedeCambiarFormaPago = true;
 
             if (modal)
                 return PartialView(venta);
@@ -620,6 +638,114 @@ namespace WebCore.Controllers
                 Response.StatusCode = 500;
                 return Json(new { ok = false, msg = "Error generando factura", error = ex.Message });
             }
+        }
+
+        // POST /Ventas/GenerarNotaCredito -- port 2026-09-05 (ver docs/DECISIONS.md), autorizado
+        // explicitamente por el usuario para probar con montos reales chicos. Mismo mecanismo que
+        // GenerarFactura (AFIP.GenerarFacturaService.GenerarNotaCredito, ya existente y probado en
+        // produccion real por el mini-spike de facturacion) -- solo cambia esNotaCredito=true y que
+        // se manda la factura ASOCIADA (origen) ademas de la nota nueva.
+        // Recorte deliberado respecto al original: NO se porto la opcion "AnularVenta" (clona la
+        // venta entera como venta anulada, Web/Controllers/VentasController.cs:3285
+        // ClonarVentaParaNotaCredito) -- es una pieza separada y mas grande (afecta reportes/stock),
+        // fuera del alcance de "probar que la nota de credito real contra AFIP funciona". Si se
+        // necesita mas adelante, portar aparte.
+        // Verificado contra AFIP produccion real el mismo dia: Nota de Credito B real nro
+        // 00000004, CAE 86361677370904, revirtiendo la Factura B 00056387 (CAE 86361666170878)
+        // emitida en la misma sesion -- ver docs/DECISIONS.md.
+        [HttpPost]
+        public IActionResult GenerarNotaCredito(int idFactura)
+        {
+            try
+            {
+                if (idFactura <= 0)
+                    return Json(new { ok = false, msg = "Factura origen inválida" });
+
+                var facturaOrigen = _oVentaN.getFactuElecById(idFactura);
+                if (facturaOrigen == null || facturaOrigen.Id <= 0)
+                    return Json(new { ok = false, msg = "No se encontró la factura origen" });
+
+                if (EsNotaCreditoAfip(facturaOrigen.CodTipoCbteAfip))
+                    return Json(new { ok = false, msg = "La nota de crédito debe generarse desde una factura emitida" });
+
+                if (string.IsNullOrWhiteSpace(facturaOrigen.CAE1))
+                    return Json(new { ok = false, msg = "La factura origen no tiene CAE válido" });
+
+                var venta = facturaOrigen.Venta ?? _oVentaN.getVentaById(facturaOrigen.IdVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "No se encontró la venta asociada" });
+
+                int idNotaExistente = _oVentaN.esVentaSinFacturar(venta.IdVenta, true);
+                if (idNotaExistente > 0)
+                {
+                    var ncExistente = _oVentaN.getFactuElecById(idNotaExistente);
+                    return Json(new
+                    {
+                        ok = true,
+                        already = true,
+                        facturaId = idNotaExistente,
+                        nro = ncExistente?.NroCbteAfip,
+                        cae = ncExistente?.CAE1,
+                        mensaje = "Ya existe una nota de crédito asociada a esta venta"
+                    });
+                }
+
+                facturaOrigen.Venta = venta;
+                var notaCredito = CrearNotaCreditoDesdeFactura(facturaOrigen, venta);
+
+                var afipSvc = new AFIP.GenerarFacturaService(venta, _env.ContentRootPath);
+                var afipRes = afipSvc.GenerarNotaCredito(notaCredito, facturaOrigen);
+
+                if (!afipRes.Ok)
+                    return Json(new { ok = false, msg = "AFIP: " + afipRes.Mensaje });
+
+                _oVentaN.addOrEditFactuElec(afipRes.Factura);
+
+                int idNotaGenerada = _oVentaN.esVentaSinFacturar(venta.IdVenta, true);
+
+                return Json(new
+                {
+                    ok = true,
+                    facturaId = idNotaGenerada,
+                    nro = afipRes.Factura?.NroCbteAfip,
+                    cae = afipRes.Factura?.CAE1,
+                    mensaje = "Nota de crédito generada correctamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error generando nota de crédito", error = ex.Message });
+            }
+        }
+
+        private static int MapearTipoNotaCreditoDesdeFactura(int codTipoCbteAfip)
+        {
+            if (codTipoCbteAfip == FacturaElectronica.codFacturaA_Afip) return FacturaElectronica.codNotaCreditoA_Afip;
+            if (codTipoCbteAfip == FacturaElectronica.codFacturaB_Afip) return FacturaElectronica.codNotaCreditoB_Afip;
+            if (codTipoCbteAfip == FacturaElectronica.codFacturaC_Afip) return FacturaElectronica.codNotaCreditoC_Afip;
+            throw new InvalidOperationException("Tipo de factura no soportado para generar nota de crédito");
+        }
+
+        private static Entidades.FacturaElectronica CrearNotaCreditoDesdeFactura(Entidades.FacturaElectronica facturaOrigen, Entidades.Venta venta)
+        {
+            return new Entidades.FacturaElectronica
+            {
+                Venta = venta,
+                IdVenta = venta.IdVenta,
+                CodTipoCbteAfip = MapearTipoNotaCreditoDesdeFactura(facturaOrigen.CodTipoCbteAfip),
+                FechaEmisionAfip = DateTime.Now,
+                TipoDocAfip = facturaOrigen.TipoDocAfip,
+                NroDocAfip = facturaOrigen.NroDocAfip,
+                RazonSocialAFIP = facturaOrigen.RazonSocialAFIP,
+                CondicionIvaAFIP = facturaOrigen.CondicionIvaAFIP,
+                DomicilioAFIP = facturaOrigen.DomicilioAFIP,
+                CondicionVenta = facturaOrigen.CondicionVenta,
+                FormaPago = facturaOrigen.FormaPago,
+                PorcentajeFacturacion = Convert.ToSingle(facturaOrigen.PorcentajeFacturacion),
+                DescItemUnitario = facturaOrigen.DescItemUnitario ?? "",
+                Observaciones = ""
+            };
         }
 
         // POST /Ventas/LimpiarLineasVentaManual -- borra la linea temporal de una venta manual,
@@ -1313,6 +1439,150 @@ namespace WebCore.Controllers
             return cuerpoHtml + pieHtml;
         }
 
+        // ===== UI de POS (ver docs/10-migracion-aspnet-core/PLAN-POS-UI.md) =====
+        //
+        // Batch 1+2 (esqueleto + carrito completo, fusionados: pos-cart.js/pos-product.js ya
+        // apuntaban a BuscarProducto -- portado -- y no ganaban nada quedando "a medias" en un
+        // batch separado). Venta SIEMPRE nueva -- sin Session["VentaActiva"], sin idVentaEditar/
+        // soloFormaPago (edicion de venta, pospuesta), sin login de operador de produccion
+        // (EsUsuarioProduccion, cuenta compartida, pospuesto). El chequeo de caja abierta reusa
+        // _oCierreN igual que el original (ultimo cierre sin UsuarioCierre).
+        //
+        // Batch 3 (agregado 2026-09-04): FormasPagoConfig/RequierePreseleccionFormaPago portados
+        // desde ObtenerConfiguracionFormaPagoPOS/RequierePreseleccionFormaPagoPOS (mismos
+        // parametros porcAjEfectivo/Debito/Credito/Qr/Tranf que ya usa el resto del sistema) --
+        // CORRECCION sobre un hardcodeo inicial en "false" que rompia "Pago Mixto" en el
+        // navegador (el checkbox del modal de forma de pago solo se habilita cuando
+        // RequierePreseleccionFormaPago es real, no un valor fijo -- ver docs/DECISIONS.md).
+        // Fuera de este batch: balanza (4), expendios asociados (5), post-venta real (6).
+        [HttpGet]
+        // modoPos/posInstanceId: soporte de "Duplicar POS" (batch 7, ver docs/10-migracion-
+        // aspnet-core/PLAN-POS-UI.md). Sin el login de operador de producción (no portado, ver
+        // header del archivo) -- solo la deteccion de conflicto entre pestañas via localStorage
+        // (Scripts/app/pos-multi-instance.js, portado sin cambios).
+        //
+        // idVentaEditar: edicion de venta existente (batch 7, iteracion 5). SIN el chequeo de
+        // permisos real del original (PuedeModificarUltimaVenta/PuedeCambiarFormaPago/caja del
+        // cierre actual, Web/Controllers/VentasController.cs:2521-2643) -- WebCore corre con
+        // usuario unico Admin=true, sin sesion, mismo bypass que el resto de los controllers ya
+        // migrados. TODO(claude): portar esas reglas reales (y "usuario produccion") cuando se
+        // diseñe login/sesion real -- pedido explicito del usuario 2026-09-04, anotado tambien en
+        // docs/DECISIONS.md. Alcance de esta iteracion: solo edicion completa, sin soloFormaPago
+        // (queda para una iteracion siguiente, ver PLAN-POS-UI.md).
+        //
+        // soloFormaPago (batch 7, iteracion 6): modo "Cambiar Forma de Pago", reusa toda la
+        // mecanica de edicion de venta ya portada (misma carga de lineasEdicionPos, mismo
+        // ModificarVenta) -- solo cambia el texto del banner y bloquea la UI de productos en la
+        // vista (ver aplicarModoSoloFormaPago en POS.cshtml).
+        public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false)
+        {
+            var user = _usuarioActual;
+
+            if (idVentaEditar > 0)
+            {
+                var ventaEditar = _oVentaN.getVentaById(idVentaEditar);
+                if (ventaEditar == null)
+                {
+                    TempData["AlertType"] = "danger";
+                    TempData["AlertTitle"] = "Punto de Venta";
+                    TempData["AlertMsg"] = "No se encontró la venta a editar.";
+                    return RedirectToAction("POS");
+                }
+
+                ViewBag.CajaAbierta = true;
+                ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
+                ViewBag.IdSucursalPOS = user.IdSucursal;
+                ViewBag.IdUsuarioPOS = user.Id;
+                ViewBag.PosModoInstancia = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase) ? "duplicado" : "original";
+                ViewBag.PosInstanceId = string.IsNullOrWhiteSpace(posInstanceId) ? Guid.NewGuid().ToString("N") : posInstanceId.Trim();
+
+                var formasPagoConfigEditar = ObtenerConfiguracionFormaPagoPOS();
+                ViewBag.FormasPagoConfig = formasPagoConfigEditar;
+                ViewBag.RequierePreseleccionFormaPago = RequierePreseleccionFormaPagoPOS(formasPagoConfigEditar);
+                ViewBag.Sucursales = _oSucursalN.findAll();
+                ViewBag.IdConsumidorFinal = _oPersonaN.getConsumidorFinal().idPersona;
+
+                ViewBag.EsEdicionVenta = true;
+                ViewBag.IdVentaEditar = idVentaEditar;
+                ViewBag.SoloFormaPago = soloFormaPago;
+
+                return View(ventaEditar);
+            }
+
+            string modoPosNormalizado = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)
+                ? "duplicado"
+                : "original";
+            string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
+                ? Guid.NewGuid().ToString("N")
+                : posInstanceId.Trim();
+
+            var cierre = new Entidades.CierreCaja
+            {
+                Sucursal = user.Sucursal,
+                UsuarioInicio = user
+            };
+            cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+
+            ViewBag.CajaAbierta = cajaAbierta;
+            ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
+            ViewBag.IdSucursalPOS = user.IdSucursal;
+            ViewBag.IdUsuarioPOS = user.Id;
+            ViewBag.PosModoInstancia = modoPosNormalizado;
+            ViewBag.PosInstanceId = posInstanceIdNormalizado;
+
+            var formasPagoConfig = ObtenerConfiguracionFormaPagoPOS();
+            ViewBag.FormasPagoConfig = formasPagoConfig;
+            ViewBag.RequierePreseleccionFormaPago = RequierePreseleccionFormaPagoPOS(formasPagoConfig);
+
+            // Para el filtro de sucursal del modal de expendios (batch 5, ver PLAN-POS-UI.md).
+            ViewBag.Sucursales = _oSucursalN.findAll();
+
+            if (!cajaAbierta)
+                return View((Entidades.Venta)null);
+
+            var consumidorFinal = _oPersonaN.getConsumidorFinal();
+            ViewBag.IdConsumidorFinal = consumidorFinal.idPersona;
+
+            var venta = new Entidades.Venta
+            {
+                LineasVenta = new List<Entidades.LineaVenta>(),
+                Persona = consumidorFinal,
+                IdPersona = consumidorFinal.idPersona,
+                Vendedor = user,
+                FechaVenta = DateTime.Now
+            };
+
+            return View(venta);
+        }
+
+        // Port de VentasController.ObtenerConfiguracionFormaPagoPOS/RequierePreseleccionFormaPagoPOS
+        // (batch 3) -- sin cambios de logica. Si el negocio tiene un ajuste de precio distinto
+        // segun la forma de pago (ej. recargo en credito), el cajero debe preseleccionar la forma
+        // de pago ANTES de cargar productos (para que el precio ya salga ajustado); "Pago Mixto"
+        // en el modal de Finalizar solo se habilita cuando hay una preseleccion real.
+        private Dictionary<string, decimal> ObtenerConfiguracionFormaPagoPOS()
+        {
+            return new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+            {
+                { Entidades.Venta.formaPagoEnum.Efectivo.ToString(), _param.GetDecimal(Entidades.ParamKeys.PorcAjEfectivo, 1m) },
+                { Entidades.Venta.formaPagoEnum.Debito.ToString(), _param.GetDecimal(Entidades.ParamKeys.PorcAjDebito, 1m) },
+                { Entidades.Venta.formaPagoEnum.Credito.ToString(), _param.GetDecimal(Entidades.ParamKeys.PorcAjCredito, 1m) },
+                { Entidades.Venta.formaPagoEnum.CtaCte.ToString(), 1m },
+                { Entidades.Venta.formaPagoEnum.Qr.ToString(), _param.GetDecimal(Entidades.ParamKeys.PorcAjQr, 1m) },
+                { Entidades.Venta.formaPagoEnum.Transferencia.ToString(), _param.GetDecimal(Entidades.ParamKeys.PorcAjTranf, 1m) }
+            };
+        }
+
+        private bool RequierePreseleccionFormaPagoPOS(Dictionary<string, decimal> config)
+        {
+            if (config == null || config.Count == 0)
+                return false;
+
+            decimal referencia = config.Values.FirstOrDefault();
+            return config.Values.Any(x => x != 1m) || config.Values.Any(x => x != referencia);
+        }
+
         // ===== Nucleo POS transaccional (ver docs/10-migracion-aspnet-core/PLAN-POS.md) =====
         //
         // FinalizarVenta/ModificarVenta portados SIN Session["VentaActiva"] -- decision de diseño
@@ -1564,6 +1834,214 @@ namespace WebCore.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+
+        // Port de VentasController.BuscarExpendiosPOS/ObtenerExpendioPOS (2026-09-04, PLAN-POS.md
+        // batch 5): expendios asociados al POS (ventas cargadas primero desde PuntosExpendio y
+        // luego buscadas/asignadas a una venta de caja). Session["Usuario"] -> _usuarioActual
+        // (stateless, ver diseno confirmado en PLAN-POS.md seccion 3) y JsonRequestBehavior.
+        // AllowGet (no aplica en ASP.NET Core).
+        //
+        // AGREGADO 2026-09-04 (PLAN-POS-UI.md, refinamiento del batch 5, pedido explicito del
+        // usuario -- ver docs/DECISIONS.md): filtros avanzados fechaHasta + sucursal. idSucursal
+        // sigue la misma convencion que Ventas/Index ("-1" = todas las sucursales, no 0); por
+        // defecto (sin filtro explicito) sigue siendo la sucursal del usuario actual, igual que
+        // el comportamiento original. Cambio de query: obtenerUltimosExpendios (ultimosMinutos)
+        // -> obtenerExpendiosAvanzado (fechaDesde/fechaHasta reales), metodo nuevo y aditivo en
+        // Datos/DatosPostgres -- no se toco el original, que sigue usando la version del original.
+        [HttpGet]
+        public IActionResult BuscarExpendiosPOS(DateTime? fechaDesde = null, DateTime? fechaHasta = null, int idSucursal = 0, string estado = "Pendientes", string texto = "", string idsActuales = "")
+        {
+            try
+            {
+                var user = _usuarioActual;
+                if (user == null || user.IdSucursal == 0)
+                    return Json(new { ok = false, msg = "Sesión inválida o sucursal no seleccionada." });
+
+                DateTime fechaDesdeReal = fechaDesde ?? DateTime.Today;
+                int idSucursalConsulta = idSucursal == -1 ? 0 : (idSucursal > 0 ? idSucursal : user.IdSucursal);
+
+                DataTable dt = _oVentaN.obtenerExpendiosAvanzado(fechaDesdeReal, fechaHasta, idSucursalConsulta);
+                List<int> idsEnVentaActual = ParseIdsExpendio(idsActuales);
+                string estadoNormalizado = (estado ?? "Pendientes").Trim().ToUpperInvariant();
+                string textoNormalizado = (texto ?? "").Trim();
+                int nroExpendio;
+                bool buscarPorNumero = int.TryParse(textoNormalizado, out nroExpendio);
+
+                var filas = dt.AsEnumerable()
+                    .Where(row =>
+                    {
+                        int idExpendio = ToInt(row["idExpendio"]);
+                        int idVenta = ToInt(row["idVenta"]);
+                        bool estaAsignadoDb = idVenta > 0 && idVenta != idExpendio;
+                        bool estaEnVentaActual = idsEnVentaActual.Contains(idExpendio);
+
+                        switch (estadoNormalizado)
+                        {
+                            case "ASIGNADOS":
+                                if (!estaAsignadoDb && !estaEnVentaActual) return false;
+                                break;
+                            case "TODOS":
+                                break;
+                            default:
+                                if (estaAsignadoDb || estaEnVentaActual) return false;
+                                break;
+                        }
+
+                        if (string.IsNullOrWhiteSpace(textoNormalizado))
+                            return true;
+
+                        string identificacion = ToStr(row["identificacionExpendio"]);
+                        if (buscarPorNumero && idExpendio == nroExpendio)
+                            return true;
+
+                        return identificacion.IndexOf(textoNormalizado, StringComparison.OrdinalIgnoreCase) >= 0;
+                    })
+                    .OrderBy(row => ToDate(row["fechaExpendio"]))
+                    .ThenBy(row => ToInt(row["idExpendio"]))
+                    .Select(row =>
+                    {
+                        int idExpendio = ToInt(row["idExpendio"]);
+                        int idVenta = ToInt(row["idVenta"]);
+                        DateTime fechaExpendio = ToDate(row["fechaExpendio"]);
+
+                        return new
+                        {
+                            fechaExpendio = fechaExpendio.ToString("yyyy-MM-ddTHH:mm:ss"),
+                            hora = fechaExpendio.ToString("HH:mm"),
+                            idExpendio = idExpendio,
+                            identificacionExpendio = ToStr(row["identificacionExpendio"]),
+                            sector = ToStr(row["sector"]),
+                            codigo = ToInt(row["codigo"]),
+                            producto = ToStr(row["corte"]),
+                            cantKg = ToDecimal(row["cantKg"]),
+                            precioKg = ToDecimal(row["precioKg"]),
+                            total = ToDecimal(row["total"]),
+                            vendedor = ToStr(row["vendedor"]),
+                            idVenta = idVenta,
+                            asignado = idVenta > 0 && idVenta != idExpendio,
+                            cargadoEnVentaActual = idsEnVentaActual.Contains(idExpendio),
+                            observaciones = ToStr(row["observaciones"]),
+                            idSucursal = ToInt(row["idSucursal"]),
+                            sucursal = ToStr(row["sucursalNombre"])
+                        };
+                    })
+                    .ToList();
+
+                return Json(new
+                {
+                    ok = true,
+                    items = filas,
+                    vacio = filas.Count == 0,
+                    debug = new
+                    {
+                        idSucursal = idSucursalConsulta,
+                        totalSql = dt.Rows.Count,
+                        totalFiltrado = filas.Count,
+                        estado = estadoNormalizado,
+                        texto = textoNormalizado
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Error al consultar expendios: " + ex.Message
+                });
+            }
+        }
+
+        // CAMBIO DELIBERADO 2026-09-04 (pedido explicito del usuario, ver docs/DECISIONS.md): el
+        // original bloqueaba cargar un expendio de otra sucursal ("El expendio pertenece a otra
+        // sucursal"). Se saca ese bloqueo -- la venta queda en la sucursal del cajero actual
+        // (VentasController.FinalizarVenta ya usa Sucursal = _oSucursalN.findById(user.IdSucursal),
+        // no la del expendio), pero ahora puede incluir lineas de expendios de cualquier sucursal.
+        [HttpGet]
+        public IActionResult ObtenerExpendioPOS(int idExpendio)
+        {
+            var user = _usuarioActual;
+            if (user == null || user.IdSucursal == 0)
+                return Json(new { ok = false, msg = "Sesión inválida o sucursal no seleccionada." });
+
+            if (idExpendio <= 0)
+                return Json(new { ok = false, msg = "Expendio inválido." });
+
+            var expendio = _oVentaN.getExpedioById(idExpendio);
+            if (expendio == null || expendio.IdExpendio <= 0)
+                return Json(new { ok = false, msg = "El expendio no existe." });
+
+            return Json(new
+            {
+                ok = true,
+                expendio = new
+                {
+                    idExpendio = expendio.IdExpendio,
+                    fechaExpendio = expendio.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    identificacionExpendio = expendio.IdentificacionExpendio ?? "",
+                    sector = expendio.Sector ?? "",
+                    vendedor = expendio.Vendedor != null ? expendio.Vendedor.Nombre : "",
+                    idVenta = expendio.IdVenta,
+                    asignado = expendio.IdVenta > 0 && expendio.IdVenta != expendio.IdExpendio,
+                    observaciones = expendio.Observaciones ?? "",
+                    idSucursal = expendio.Sucursal != null ? expendio.Sucursal.idSucursal : 0,
+                    sucursal = expendio.Sucursal != null ? expendio.Sucursal.SucursalNombre : ""
+                },
+                lineas = (expendio.LineasVenta ?? new List<Entidades.LineaVenta>()).Select(l => new
+                {
+                    idExpendio = expendio.IdExpendio,
+                    codigo = l.Corte != null ? l.Corte.codigo : 0,
+                    producto = l.Corte != null ? l.Corte.corte : "",
+                    cantKg = l.CantKg,
+                    precioKg = l.PrecioKg,
+                    bonificacion = l.Bonificacion,
+                    balanza = l.PesoBalanza
+                }).ToList()
+            });
+        }
+
+        private List<int> ParseIdsExpendio(string idsActuales)
+        {
+            return (idsActuales ?? "")
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x =>
+                {
+                    int id;
+                    return int.TryParse(x.Trim(), out id) ? id : 0;
+                })
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+        }
+
+        private int ToInt(object value)
+        {
+            if (value == null || value == DBNull.Value) return 0;
+            int result;
+            return int.TryParse(value.ToString(), out result) ? result : 0;
+        }
+
+        private decimal ToDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value) return 0m;
+            decimal result;
+            return decimal.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out result)
+                || decimal.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.GetCultureInfo("es-AR"), out result)
+                ? result
+                : 0m;
+        }
+
+        private DateTime ToDate(object value)
+        {
+            if (value == null || value == DBNull.Value) return DateTime.MinValue;
+            DateTime result;
+            return DateTime.TryParse(value.ToString(), out result) ? result : DateTime.MinValue;
+        }
+
+        private string ToStr(object value)
+        {
+            return value == null || value == DBNull.Value ? "" : value.ToString();
         }
 
         private List<Entidades.LineaVenta> ConstruirLineasVentaDesdeRequest(FinalizarVentaRequest request)

@@ -27,12 +27,14 @@
   <!-- MercadoPagoOAuthClient.cs (trabajo en curso de otra sesion en paralelo) usa
        System.Web.Script.Serialization, que no existe en net10.0. Se excluye solo de esa
        compilacion; sigue intacto y compilando normal para net472. No es parte de esta
-       migracion, no se toca ni se adapta. -->
+       migracion, no se toca ni se adapta. Igual criterio para MercadoPagoPointClient.cs
+       (agregado despues, misma dependencia de JavaScriptSerializer). -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="MercadoPagoOAuthClient.cs" />
     <Compile Remove="MercadoPagoConfig.cs" />
     <Compile Remove="MercadoPagoSucursalConfig.cs" />
     <Compile Remove="TerminalMercadoPago.cs" />
+    <Compile Remove="MercadoPagoPointClient.cs" />
   </ItemGroup>
 
   <!-- Utilidades trae WinForms/WPF/COM, solo compila para net472. -->

@@ -1,55 +1,506 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@{
+    // Sidebar + identidad visual (2026-09-05, ver docs/DECISIONS.md "UI de WebCore igual al
+    // clasico"): porta la estructura real de Web/Views/Shared/_LayoutBase.cshtml (mismos nombres
+    // de clase -- .sidebar/.nav-item/.nav-link/.sidebar-brand/.collapse-item -- y el mismo logo
+    // SVG de 2 colores) y carga los 2 archivos CSS reales del clasico (custom.css/ui-refresh.css)
+    // -- confirmado que son CSS propio y aditivo (variables + selectores con clases estandar de
+    // Bootstrap), sin nada de Bootstrap empaquetado adentro, a diferencia de sb-admin-2.min.css
+    // (que si trae Bootstrap 4 completo y por eso NUNCA se carga aca -- rompería las 30+ vistas
+    // que ya usan Bootstrap 5). La estructura de tamaño/layout del sidebar (6.5rem/14rem, mobile-
+    // first) SI hace falta escribirla a mano mas abajo: esa parte vive en sb-admin-2.min.css, no
+    // en ui-refresh.css (que solo re-colorea encima de una estructura que asume ya existente).
+    //
+    // Sin permisos reales todavia (ver docs/DECISIONS.md "permisos reales pendientes"): el stub
+    // Admin=true de cada controller migrado ya deja pasar todo, asi que el sidebar tampoco
+    // gatilla "Configuracion"/"Administracion del sistema" por permiso -- se muestran siempre.
+    //
+    // Modulos NO migrados a WebCore todavia (CodigosBarra, MercadoPago,
+    // Home/Utilidades) linkean con URL absoluta al Web clasico via el appSetting
+    // WebClasicoBaseUrl (App.config) -- se navega fluido entre los dos sistemas mientras dura la
+    // migracion, sin togs muertos ni 404s. Cuando un modulo de esa lista se porte, su link pasa
+    // a @@Url.Action local (mismo criterio que el resto de la lista).
+    var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var action = (ViewContext.RouteData.Values["action"] as string) ?? "";
+
+    string webClasico = (System.Configuration.ConfigurationManager.AppSettings["WebClasicoBaseUrl"] ?? "").TrimEnd('/');
+    Func<string, string> legacy = path => webClasico + path;
+
+    bool enStock = controller == "Stock";
+    bool enPuntosExpendio = controller == "PuntosExpendio";
+    bool enFinanzas = controller == "Finanzas";
+    bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
+        || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros";
+    bool enAdministracionSistema = controller == "SystemAdministration";
+}
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebCore</title>
+    <title>@ViewData["Title"] - CarniSys</title>
     <script type="importmap"></script>
+
+    @* Preload de modo oscuro (port literal de Web/Views/Shared/_LayoutBase.cshtml): evita el
+       "flash" de tema claro antes de que el resto del JS aplique la clase guardada. *@
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem("carnisys-theme");
+                if (mode === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                }
+            } catch (e) { }
+        })();
+    </script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @* Gap real encontrado el 2026-09-04 portando la UI de POS: 68 vistas ya migradas usan clases
+       "fas fa-*"/"far fa-*" pero ningun layout de WebCore cargaba Font Awesome -- los iconos no
+       se veian en ninguna pantalla ya portada. Misma version que Web/Content/vendor/fontawesome-
+       free (5.15.3) para paridad exacta de glifos, via CDN (mismo patron que SweetAlert2 mas
+       abajo, unica libreria de este layout que no esta vendorizada localmente). *@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    @* Google Fonts Nunito -- misma tipografia que Web clasico (sb-admin-2), ver
+       Web/Views/Shared/_LayoutBase.cshtml (comentado ahi, cargada por CDN igual). *@
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet" />
+    @* Gap real encontrado el 2026-09-04 (ver docs/DECISIONS.md): el markup ya portado usa clases
+       de Bootstrap 4 (badge-warning, custom-switch, etc.) que no existen en Bootstrap 5 -- shim
+       de compatibilidad, no reescritura de las 30+ vistas afectadas. *@
+    <link rel="stylesheet" href="~/Content/css/bootstrap4-compat.css" asp-append-version="true" />
+    @* Identidad visual real del clasico (2026-09-05) -- CSS propio y aditivo, sin Bootstrap
+       empaquetado adentro (confirmado leyendo los 2 archivos completos), seguro de cargar sobre
+       Bootstrap 5. custom.css antes que ui-refresh.css: ui-refresh define las variables --ui-*
+       que custom.css (dark mode del input "resaltado") ya asume que existen. *@
+    <link rel="stylesheet" href="~/Content/css/custom.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Content/css/ui-refresh.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/WebCore.styles.css" asp-append-version="true" />
+
+    <style>
+        /* Estructura de tamaño/layout del sidebar (2026-09-05) -- estos numeros SI vienen de
+           sb-admin-2.min.css (no de ui-refresh.css, que solo re-colorea): mobile-first, compacto
+           (solo iconos, 6.5rem) por defecto, expandido (14rem) desde 768px salvo toggle manual a
+           icon-only (".sidebar.toggled", igual nombre de clase que el clasico). Responsive
+           corregido el 2026-09-04 (ver docs/DECISIONS.md "Web es la fuente de verdad de diseno,
+           incluido responsive"): NO es una app de escritorio, el clasico soporta celular con este
+           mismo criterio (confirmado leyendo el CSS completo -- la unica referencia a
+           "min-width:992px" en sb-admin-2.min.css esta dentro de un @@media print, nunca aplica
+           en pantalla).
+           Fuente tipografica Nunito (arriba) -- mismo font-family que sb-admin-2.min.css declara
+           para body/headings en el clasico. */
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #wrapper {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 6.5rem;
+            min-height: 100vh;
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-shrink: 0;
+            padding: 0;
+            list-style: none;
+            margin: 0;
+        }
+
+        .sidebar .nav-item {
+            position: relative;
+        }
+
+        .sidebar .nav-item .nav-link {
+            text-align: center;
+            padding: .75rem .5rem;
+            width: 6.5rem;
+            display: block;
+        }
+
+        .sidebar .nav-item .nav-link span {
+            font-size: .65rem;
+            display: block;
+            margin-top: .25rem;
+        }
+
+        .sidebar .nav-item .nav-link i {
+            font-size: 1rem;
+        }
+
+        .sidebar .sidebar-brand {
+            height: 4.375rem;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: .05rem;
+            text-transform: uppercase;
+        }
+
+        .sidebar-brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-brand-mark svg {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .sidebar-brand-text {
+            display: none;
+        }
+
+        .sidebar hr.sidebar-divider {
+            margin: 0 1rem 1rem;
+            border-top-width: 1px;
+        }
+
+        .sidebar .collapse-inner {
+            position: absolute;
+            left: calc(6.5rem + .75rem);
+            top: 2px;
+            z-index: 1;
+            min-width: 10rem;
+            padding: .5rem 0;
+            border-radius: .35rem;
+            box-shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15);
+        }
+
+        .sidebar .collapse-item {
+            display: block;
+            padding: .5rem 1rem;
+            margin: 0 .5rem;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link[data-bs-toggle="collapse"] .fa-chevron-down {
+            display: none;
+        }
+
+        /* Desde 768px: sidebar expandido con texto, salvo modo iconos manual (.toggled). */
+        @@media (min-width: 768px) {
+            .sidebar {
+                width: 14rem;
+            }
+
+            .sidebar .nav-item .nav-link {
+                text-align: left;
+                width: 14rem;
+                padding: 1rem;
+            }
+
+            .sidebar .nav-item .nav-link span {
+                font-size: .85rem;
+                display: inline;
+                margin-top: 0;
+                margin-left: .5rem;
+            }
+
+            .sidebar .sidebar-brand-text {
+                display: inline;
+            }
+
+            .sidebar .nav-link[data-bs-toggle="collapse"] .fa-chevron-down {
+                display: inline-block;
+                float: right;
+                transition: transform .2s ease;
+                font-size: .7rem;
+                margin-top: .3rem;
+            }
+
+            .sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .fa-chevron-down {
+                transform: rotate(180deg);
+            }
+
+            .sidebar .collapse,
+            .sidebar .collapsing {
+                margin: 0 1rem;
+            }
+
+            .sidebar .collapse-inner {
+                position: static;
+                box-shadow: none;
+                border-radius: 0;
+                padding: .25rem 0;
+            }
+
+            .sidebar.toggled {
+                width: 6.5rem;
+            }
+
+            .sidebar.toggled .nav-item .nav-link {
+                text-align: center;
+                width: 6.5rem;
+                padding: .75rem .5rem;
+            }
+
+            .sidebar.toggled .nav-item .nav-link span,
+            .sidebar.toggled .sidebar-brand-text,
+            .sidebar.toggled .nav-link[data-bs-toggle="collapse"] .fa-chevron-down {
+                display: none;
+            }
+
+            .sidebar.toggled .collapse-inner {
+                position: absolute;
+                left: calc(6.5rem + .75rem);
+                top: 2px;
+                box-shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15);
+                border-radius: .35rem;
+                padding: .5rem 0;
+            }
+
+            /* Evita el "flash" de sidebar expandido antes de aplicar el estado guardado. */
+            html.sidebar-toggled-pref .sidebar:not(.toggled) {
+                visibility: hidden;
+            }
+        }
+
+        #sidebarToggle {
+            display: none;
+        }
+
+        @@media (min-width: 768px) {
+            #sidebarToggle {
+                display: inline-block;
+            }
+        }
+    </style>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem("carnisys-sidebar-collapsed") === "1") {
+                    document.documentElement.classList.add("sidebar-toggled-pref");
+                }
+            } catch (e) { }
+        })();
+    </script>
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">WebCore</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+<body id="page-top" class="app-shell">
+    <div id="wrapper">
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <li class="nav-item">
+                <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
+                    <div class="sidebar-brand-icon sidebar-brand-mark">
+                        <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                            <path d="M50 6 L93 92 H79 L50 34 L21 92 H7 Z" fill="#35479b"></path>
+                            <path d="M50 25 L78 81 H67 L50 47 L33 81 H69 L73 89 H17 L21 81 Z" fill="#e19143"></path>
+                        </svg>
+                    </div>
+                    <div class="sidebar-brand-text mx-3">CarniSys</div>
+                </a>
+            </li>
+            <li class="nav-item">
+                <hr class="sidebar-divider my-0">
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Compras" ? "active" : "")" href="@Url.Action("Index", "Compras")">
+                    <i class="fas fa-fw fa-shopping-cart"></i>
+                    <span>Compras</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Ventas" && action != "POS" ? "active" : "")" href="@Url.Action("Index", "Ventas")">
+                    <i class="fas fa-fw fa-cash-register"></i>
+                    <span>Ventas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Ventas" && action == "POS" ? "active" : "")" href="@Url.Action("POS", "Ventas")">
+                    <i class="fas fa-fw fa-store"></i>
+                    <span>Punto de Venta</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Cajas" && action == "CajasAbiertas" ? "active" : "")" href="@Url.Action("CajasAbiertas", "Cajas")">
+                    <i class="fas fa-fw fa-file-invoice-dollar"></i>
+                    <span>Cierre de Caja</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("Index", "Elaborados")">
+                    <i class="fas fa-fw fa-drumstick-bite"></i>
+                    <span>Elaborados</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("Index", "Movimientos")">
+                    <i class="fas fa-fw fa-exchange-alt"></i>
+                    <span>Movimientos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseStock" role="button" aria-expanded="@(enStock ? "true" : "false")" aria-controls="collapseStock">
+                    <i class="fas fa-fw fa-boxes"></i>
+                    <span>Stock</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="collapseStock" class="collapse @(enStock ? "show" : "")">
+                    <div class="collapse-inner rounded">
+                        <a class="collapse-item @(enStock && action == "Index" ? "active" : "")" href="@Url.Action("Index", "Stock")">Gestion de stock</a>
+                        <a class="collapse-item @(enStock && action == "ExistenciaPorSucursales" ? "active" : "")" href="@Url.Action("ExistenciaPorSucursales", "Stock")">Existencia por sucursales</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Cajas" && action == "EgresosCaja" ? "active" : "")" href="@Url.Action("EgresosCaja", "Cajas")">
+                    <i class="fas fa-fw fa-money-bill-wave"></i>
+                    <span>Egreso de Caja</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePuntosExpendio" role="button" aria-expanded="@(enPuntosExpendio ? "true" : "false")" aria-controls="collapsePuntosExpendio">
+                    <i class="fas fa-fw fa-store-alt"></i>
+                    <span>Punto de Expendio</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="collapsePuntosExpendio" class="collapse @(enPuntosExpendio ? "show" : "")">
+                    <div class="collapse-inner rounded">
+                        <a class="collapse-item @(enPuntosExpendio && action == "POS" ? "active" : "")" href="@Url.Action("POS", "PuntosExpendio")">Abrir punto de expendio</a>
+                        <a class="collapse-item @(enPuntosExpendio && action == "ExpendiosGenerados" ? "active" : "")" href="@Url.Action("ExpendiosGenerados", "PuntosExpendio")">Expendios generados</a>
+                        <a class="collapse-item @(enPuntosExpendio && action == "Sectores" ? "active" : "")" href="@Url.Action("Sectores", "PuntosExpendio")">Sectores</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Productos" ? "active" : "")" href="@Url.Action("Index", "Productos")">
+                    <i class="fas fa-fw fa-boxes"></i>
+                    <span>Productos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Personas" ? "active" : "")" href="@Url.Action("Index", "Personas")">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Personas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseFinanzas" role="button" aria-expanded="@(enFinanzas ? "true" : "false")" aria-controls="collapseFinanzas">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>Finanzas</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="collapseFinanzas" class="collapse @(enFinanzas ? "show" : "")">
+                    <div class="collapse-inner rounded">
+                        <a class="collapse-item @(enFinanzas && (action == "CtasCtes" || action == "CtaCtePersona") ? "active" : "")" href="@Url.Action("CtasCtes", "Finanzas")">Cuentas Corrientes</a>
+                        <a class="collapse-item @(enFinanzas && action == "Cheques" ? "active" : "")" href="@Url.Action("Cheques", "Finanzas")">Cheques</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(controller == "Reportes" ? "active" : "")" href="@Url.Action("Index", "Reportes")">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    <span>Reportes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseConfiguracion" role="button" aria-expanded="@(enConfiguracion ? "true" : "false")" aria-controls="collapseConfiguracion">
+                    <i class="fas fa-fw fa-tools"></i>
+                    <span>Configuracion</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="collapseConfiguracion" class="collapse @(enConfiguracion ? "show" : "")">
+                    <div class="collapse-inner rounded">
+                        <a class="collapse-item @(controller == "Usuarios" ? "active" : "")" href="@Url.Action("Index", "Usuarios")">Usuarios</a>
+                        <a class="collapse-item @(controller == "AuditoriaLogin" ? "active" : "")" href="@Url.Action("Index", "AuditoriaLogin")">Auditoria de accesos</a>
+                        <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
+                        <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
+                        <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
+                        <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
+                        <a class="collapse-item" href="@legacy("/CodigosBarra")">Codigos de barra</a>
+                        <a class="collapse-item" href="@legacy("/MercadoPago")">Mercado Pago</a>
+                        <a class="collapse-item" href="@legacy("/Home/Utilidades")">Utilidades</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAdministracionSistema" role="button" aria-expanded="@(enAdministracionSistema ? "true" : "false")" aria-controls="collapseAdministracionSistema">
+                    <i class="fas fa-fw fa-network-wired"></i>
+                    <span>Administracion del sistema</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="collapseAdministracionSistema" class="collapse @(enAdministracionSistema ? "show" : "")">
+                    <div class="collapse-inner rounded">
+                        <a class="collapse-item @(enAdministracionSistema && (action == "Empresas" || action == "EditarEmpresa") ? "active" : "")" href="@Url.Action("Empresas", "SystemAdministration")">Empresas</a>
+                        <a class="collapse-item @(enAdministracionSistema && (action == "Sucursales" || action == "EditarSucursal") ? "active" : "")" href="@Url.Action("Sucursales", "SystemAdministration")">Sucursales</a>
+                        <a class="collapse-item @(enAdministracionSistema && (action == "Usuarios" || action == "EditarUsuario") ? "active" : "")" href="@Url.Action("Usuarios", "SystemAdministration")">Usuarios</a>
+                        <a class="collapse-item @(enAdministracionSistema && action == "AltaRapidaEmpresa" ? "active" : "")" href="@Url.Action("AltaRapidaEmpresa", "SystemAdministration")">Alta rapida de empresa</a>
+                    </div>
+                </div>
+            </li>
+
+            <li class="nav-item">
+                <hr class="sidebar-divider">
+            </li>
+            <li class="nav-item text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle" title="Contraer/expandir menu"></button>
+            </li>
+        </ul>
+
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                <nav class="navbar navbar-expand navbar-light topbar mb-4 static-top shadow">
+                    <div class="container-fluid">
+                        <span class="navbar-text h5 mb-0 fw-bold text-dark page-section-title">@ViewData["Title"]</span>
+
+                        <ul class="navbar-nav ml-auto">
+                            <li class="nav-item no-arrow d-flex align-items-center">
+                                <a class="nav-link topbar-icon-btn" href="#" id="btnToggleTheme" role="button" title="Activar modo oscuro" aria-label="Cambiar tema">
+                                    <i id="icoTheme" class="fas fa-moon"></i>
+                                </a>
+                            </li>
+                            <div class="topbar-divider d-none d-sm-block"></div>
+                            <li class="nav-item no-arrow d-flex align-items-center">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">ger</span>
+                                <i class="fas fa-user-circle fa-2x text-gray-600"></i>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="container-fluid">
+                    @RenderBody()
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>&copy; 2026 - CarniSys</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - WebCore - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+    @* Gap real preexistente encontrado el 2026-09-04 portando F3 del POS (ver
+       docs/10-migracion-aspnet-core/PLAN-POS-UI.md): calculadora-billetes.js ya estaba cargado
+       mas abajo, pero le faltaba este modal -- el boton "Calcular efectivo" de
+       Cajas/_AddOrEditEgresoCaja.cshtml estaba roto (window.CalculadoraBilletes.open() corria
+       pero #modalCalculadoraBilletes no existia). Este mismo port lo arregla de paso. *@
+    @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js?v=1"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md): el HTML de las vistas con tablas
+       anchas ya tenia la clase .js-sync-scroll-body desde que se portaron (fiel al original),
+       pero este script y su CSS nunca se cargaron -- la barra de scroll flotante nunca aparecia,
+       aunque el markup estaba listo. Cargado despues de jquery.min.js (igual que en
+       Web/Views/Shared/_LayoutBase.cshtml) porque su unico uso de jQuery ya chequea
+       window.jQuery antes de usarlo, pero corre mejor si jQuery ya esta disponible. *@
+    <script src="~/Scripts/app/table-scroll-sync.js?v=1"></script>
     @* Cargados globalmente igual que en Web/Views/Shared/_LayoutBase.cshtml: cualquier pantalla
        con un boton "calcular efectivo" (ej. Cajas/_AddOrEditEgresoCaja.cshtml) depende de estos
-       2 scripts, a diferencia de table-scroll-sync.js (puramente cosmetico, gap ya documentado
-       en gaps.md) esto rompe una funcionalidad real si falta. *@
-    <script src="~/Scripts/app/calculadora-billetes.js?v=3238"></script>
+       2 scripts. *@
+    <script src="~/Scripts/app/calculadora-billetes.js?v=3239"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
     @* SweetAlert2 -- gap real preexistente encontrado en Modulo 7 (Cajas), pero afecta a varias
        vistas de Modulos 1-3 ya portadas que tambien llaman Swal.fire(...) sin que este script
@@ -58,6 +509,132 @@
        colapsa confirm+alert de exito en un solo dialogo. *@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
+
+    @* Toggle de tema oscuro -- port literal de Web/Views/Shared/_LayoutBase.cshtml (mismas
+       claves de localStorage: "carnisys-theme"/"darkMode", mismo id de boton/icono). *@
+    <script>
+        (function () {
+            const STORAGE_KEY = "carnisys-theme";
+
+            function setTheme(mode) {
+                const isDark = mode === "dark";
+                document.documentElement.classList.toggle("dark-mode", isDark);
+                document.body.classList.toggle("dark-mode", isDark);
+
+                var btn = document.getElementById("btnToggleTheme");
+                var ico = document.getElementById("icoTheme");
+                if (btn && ico) {
+                    ico.className = isDark ? "fas fa-sun" : "fas fa-moon";
+                    btn.title = isDark ? "Activar modo claro" : "Activar modo oscuro";
+                    btn.setAttribute("aria-label", btn.title);
+                }
+
+                try {
+                    localStorage.setItem(STORAGE_KEY, mode);
+                    localStorage.setItem("darkMode", isDark ? "true" : "false");
+                } catch (e) { }
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                var saved = "light";
+                try {
+                    saved = localStorage.getItem(STORAGE_KEY) || (localStorage.getItem("darkMode") === "true" ? "dark" : "light");
+                } catch (e) { }
+
+                setTheme(saved);
+
+                var btn = document.getElementById("btnToggleTheme");
+                if (btn) {
+                    btn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        var current = "light";
+                        try {
+                            current = localStorage.getItem(STORAGE_KEY) || (document.body.classList.contains("dark-mode") ? "dark" : "light");
+                        } catch (err) { }
+                        setTheme(current === "dark" ? "light" : "dark");
+                    });
+                }
+            });
+        })();
+    </script>
+
+    @* Toggle a modo iconos del sidebar (2026-09-04, adaptado 2026-09-05 a los nombres de clase
+       reales del clasico -- ".sidebar"/".toggled"/"#sidebarToggle") -- vanilla JS, no depende del
+       orden de carga de jQuery. *@
+    <script>
+        (function () {
+            var STORAGE_KEY = "carnisys-sidebar-collapsed";
+            var sidebar = document.querySelector(".sidebar");
+            var toggleBtn = document.getElementById("sidebarToggle");
+            if (!sidebar || !toggleBtn) return;
+
+            // Titulos accesibles cuando el sidebar queda en modo iconos -- se generan del texto
+            // visible de cada link en vez de escribirlos a mano en las 20+ filas del menu.
+            sidebar.querySelectorAll(".nav-link").forEach(function (link) {
+                if (link.hasAttribute("title")) return;
+                var span = link.querySelector("span");
+                var texto = (span ? span.textContent : link.textContent || "").trim();
+                if (texto) link.setAttribute("title", texto);
+            });
+
+            function applyCollapsed(collapsed) {
+                sidebar.classList.toggle("toggled", collapsed);
+                document.documentElement.classList.remove("sidebar-toggled-pref");
+            }
+
+            var collapsedGuardado = false;
+            try {
+                collapsedGuardado = localStorage.getItem(STORAGE_KEY) === "1";
+            } catch (e) { }
+
+            applyCollapsed(collapsedGuardado);
+
+            toggleBtn.addEventListener("click", function () {
+                var collapsed = !sidebar.classList.contains("toggled");
+                applyCollapsed(collapsed);
+                try {
+                    localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+                } catch (e) { }
+            });
+        })();
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md), port de Web/Views/Shared/_LayoutBase.cshtml
+       (lineas 1144-1180). Todo controller portado hasta ahora ya setea TempData["AlertType"/"Title"/
+       "Msg"] tras un guardado/error (fidelidad de logica) pero _Layout.cshtml nunca lo leia -- el
+       usuario guardaba algo y no veia ningun feedback visual. Mismo mecanismo exacto: SweetAlert2
+       (ya cargado arriba), auto-cierre a los 2s solo para "success", CustomEvent "layoutAlertClosed"
+       preservado por si alguna vista lo necesita mas adelante (Productos/AddOrEdit "carga continua"
+       en el original). *@
+    @if (TempData["AlertMsg"] != null)
+    {
+        <script>
+        (function () {
+            var type = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(TempData["AlertType"] as string ?? "info"))";
+            var title = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(TempData["AlertTitle"] as string ?? "Aviso"))";
+            var msg = "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(TempData["AlertMsg"] as string ?? ""))";
+
+            var opts = { icon: type, title: title, text: msg };
+            if (type === 'success') {
+                opts.timer = 2000;
+                opts.timerProgressBar = true;
+                opts.showConfirmButton = true;
+            }
+
+            function avisarCerrado() {
+                document.dispatchEvent(new CustomEvent('layoutAlertClosed'));
+            }
+
+            if (window.Swal) {
+                Swal.fire(opts).then(avisarCerrado);
+            } else {
+                alert(title + "\n\n" + msg);
+                avisarCerrado();
+            }
+        })();
+        </script>
+    }
 </body>
 </html>

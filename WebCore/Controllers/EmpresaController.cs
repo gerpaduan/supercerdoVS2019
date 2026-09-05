@@ -1,4 +1,4 @@
-// Port de Web/Controllers/EmpresaController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+﻿// Port de Web/Controllers/EmpresaController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Pantalla "Mi Empresa": ver/editar datos basicos y
 // horario laboral de la empresa actual (distinto de SystemAdministrationController, que es
 // cross-tenant para el super-admin de plataforma, ya portado en Modulo 1).
@@ -39,7 +39,7 @@ namespace WebCore.Controllers
 
         public EmpresaController()
         {
-            _oEmpresaN = new Negocio.Empresa(_empresa);
+            _oEmpresaN = WebCore.Infrastructure.NegocioFactory.CrearEmpresa(_empresa);
         }
 
         [HttpGet]

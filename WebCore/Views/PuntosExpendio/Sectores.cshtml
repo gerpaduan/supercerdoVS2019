@@ -4,7 +4,7 @@
     bool editando = !string.IsNullOrWhiteSpace(Model.SectorOriginal);
 }
 
-<div class="container-fluid px-2 px-md-3">
+<div class="container-fluid px-2 px-md-3 sectores-page">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
         <a class="btn btn-outline-secondary" href="@Url.Action("ExpendiosGenerados", "PuntosExpendio")">
             <i class="fas fa-arrow-left mr-1"></i> Volver
@@ -15,7 +15,7 @@
         <div class="col-12 col-lg-4 mb-3">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">@(editando ? "Modificar sector" : "Nuevo sector")</h5>
+                    <h6 class="font-weight-bold text-uppercase text-muted mb-3 sectores-section-title">@(editando ? "Modificar sector" : "Nuevo sector")</h6>
 
                     <form asp-controller="PuntosExpendio" asp-action="GuardarSector" method="post">
                         @Html.AntiForgeryToken()
@@ -92,6 +92,57 @@
         </div>
     </div>
 </div>
+
+<style>
+    .sectores-page {
+        font-size: .86rem;
+    }
+
+    .sectores-page .card-body {
+        padding: .8rem .92rem;
+    }
+
+    .sectores-page .sectores-section-title {
+        font-size: .72rem;
+        letter-spacing: .04em;
+    }
+
+    .sectores-page label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .sectores-page .form-control,
+    .sectores-page .btn {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .52rem;
+    }
+
+    .sectores-page table th,
+    .sectores-page table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+        font-size: .84rem;
+    }
+
+    .sectores-page table thead th {
+        font-size: .68rem !important;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        padding-top: .4rem;
+        padding-bottom: .4rem;
+    }
+
+    .sectores-page .btn-group-sm > .btn {
+        font-size: .76rem;
+        padding: .18rem .42rem;
+    }
+</style>
 
 <script>
     (function () {

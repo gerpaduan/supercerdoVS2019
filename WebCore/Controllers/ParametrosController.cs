@@ -1,4 +1,4 @@
-// Port de Web/Controllers/ParametrosController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+﻿// Port de Web/Controllers/ParametrosController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Grilla de parametros de la empresa actual (catalogo
 // general + valor particular por tenant). Mismo criterio de stub que Empresa/SucursalController.
 //
@@ -45,9 +45,9 @@ namespace WebCore.Controllers
 
         public ParametrosController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
-            _oParametrosN = new Negocio.Parametros(_empresa);
+            _oParametrosN = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
         }
 
         [HttpGet]

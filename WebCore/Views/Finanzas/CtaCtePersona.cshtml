@@ -3,11 +3,11 @@
 @*
     Port simplificado de Web/Views/Finanzas/CtaCtePersona.cshtml (1201 lineas en el original) --
     ver docs/10-migracion-aspnet-core/README.md. Se excluyen: el modo "desdePos" (embebido en POS,
-    no portado), el boton "Agregar Pago / Cobro" (apunta a AddOrEditPago, no portado), los atajos
-    de teclado (utiles sobre todo para ese boton), y el ordenamiento de columnas por click (JS
-    propio del original, no critico). El click en una fila navega a Ventas/DetalleVenta si la
-    operacion es una Venta (unico caso reusable con lo ya portado); las demas filas no son
-    clickeables.
+    no portado), los atajos de teclado, y el ordenamiento de columnas por click (JS propio del
+    original, no critico). El click en una fila navega a Ventas/DetalleVenta si es una Venta, o
+    a Finanzas/AddOrEditPago si es un Pago no historico (ambos ya portados, ver
+    docs/10-migracion-aspnet-core/PLAN-ADDOREDITPAGO.md) -- las demas filas no son clickeables.
+    Boton "Agregar Pago / Cobro" agregado junto con AddOrEditPago (mismo plan).
 *@
 @{
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
@@ -113,6 +113,10 @@
                     @if (puedeExportarCuentaCorriente)
                     {
                         <div class="d-flex justify-content-end align-items-center ctacte-acciones-row">
+                            <a href="@Url.Action("AddOrEditPago", "Finanzas", new { idPersona = ViewBag.IdPersona, returnUrl = Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString) })"
+                               class="btn btn-outline-primary mr-2">
+                                <i class="fas fa-hand-holding-usd"></i> Agregar Pago / Cobro
+                            </a>
                             <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde, mostrarAnulados })"
                                class="btn btn-outline-danger mr-2">
                                 <i class="fas fa-file-pdf"></i> PDF
@@ -174,10 +178,16 @@
                                 && int.TryParse(Convert.ToString(row["IdTabla"]), out idTablaMovimiento)
                                 && idTablaMovimiento > 0;
 
-                            <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(!esVenta ? "ctacte-row-sin-operacion" : "")"
+                            int idTablaPago = 0;
+                            int.TryParse(Convert.ToString(row["IdTabla"]), out idTablaPago);
+                            bool esPagoEditable = esPago && !esHistorico && idTablaPago > 0;
+
+                            <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(!esVenta && !esPagoEditable ? "ctacte-row-sin-operacion" : "")"
                                 data-es-venta="@(esVenta ? "true" : "false")"
                                 data-id-venta="@idTablaMovimiento"
-                                style="cursor:@(esVenta ? "pointer" : "default");">
+                                data-es-pago="@(esPagoEditable ? "true" : "false")"
+                                data-id-pago="@(esPagoEditable ? idTablaPago : 0)"
+                                style="cursor:@((esVenta || esPagoEditable) ? "pointer" : "default");">
                                 <td style="display:none;">@row["ID"]</td>
                                 <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
                                 <td class="@claseColorOperacion" style="font-weight:bold;">
@@ -286,10 +296,19 @@
         var emailSendUrl = '@Url.Action("EnviarCuentaCorrienteEmail", "Finanzas")';
 
         document.querySelectorAll('.js-fila-ctacte').forEach(function (fila) {
-            if (fila.dataset.esVenta !== 'true') return;
-            fila.addEventListener('click', function () {
-                window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + fila.dataset.idVenta;
-            });
+            if (fila.dataset.esVenta === 'true') {
+                fila.addEventListener('click', function () {
+                    window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + fila.dataset.idVenta;
+                });
+                return;
+            }
+
+            if (fila.dataset.esPago === 'true') {
+                fila.addEventListener('click', function () {
+                    var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = '@Url.Action("AddOrEditPago", "Finanzas")?idPersona=' + idPersona + '&idPago=' + fila.dataset.idPago + '&returnUrl=' + returnUrl;
+                });
+            }
         });
 
         if (!puedeExportarCuentaCorriente) return;

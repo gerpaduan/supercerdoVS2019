@@ -1254,6 +1254,28 @@
         border-right-width: 2px;
     }
 
+    /* Tinte sutil de columnas (Stock/Ventas/Diferencia) para agrupar visualmente -- en modo
+       oscuro los tonos pastel casi blancos del original quedaban como parches blancos solidos
+       sobre el resto de la tabla ya oscura (hallazgo real 2026-09-05, ver docs/DECISIONS.md).
+       Se preserva la misma jerarquia visual (la columna "Diferencia total" es la mas destacada)
+       con superposiciones translucidas en vez de colores solidos. */
+    html.dark-mode .reportes-proyeccion-head-metrics th,
+    html.dark-mode .reportes-proyeccion-stock-cell {
+        background: rgba(255, 255, 255, .035);
+    }
+
+    html.dark-mode .reportes-proyeccion-ventas-cell {
+        background: transparent;
+    }
+
+    html.dark-mode .reportes-proyeccion-dif-cell {
+        background: rgba(255, 255, 255, .02);
+    }
+
+    html.dark-mode .reportes-proyeccion-dif-total-cell {
+        background: rgba(79, 121, 166, .16);
+    }
+
     .reporte-balance-row-metrica > td,
     .reporte-balance-row-metrica > th {
         background: #eaf7fb;
@@ -1545,6 +1567,7 @@
         color: #9fb0c7 !important;
     }
 
+    html.dark-mode .reporte-stock-modal-producto,
     html.dark-mode .reporte-stock-modal-kpi {
         background: #223047;
         border-color: #31445f;

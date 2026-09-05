@@ -1,0 +1,133 @@
+@*
+    Estilos compactos compartidos entre Ventas/Index.cshtml y Ventas/Facturas.cshtml (mismas
+    clases: filtros-ventas-card/filtros-fila para el formulario de filtros, venta-item/venta-icono/
+    venta-info/venta-total para las filas de _TablaVentas.cshtml y _FacturasRows.cshtml). Se
+    centraliza aca en vez de duplicar el <style> en cada vista -- mismo patron que
+    Elaborados/_Styles.cshtml.
+*@
+<style>
+    .vista-venta {
+        font-size: .9rem;
+    }
+
+    .vista-venta .filtros-ventas-card {
+        padding: .72rem .85rem !important;
+    }
+
+    .filtros-ventas-stack,
+    .filtros-fila {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+        display: block;
+    }
+
+    .vista-venta .filtros-ventas-card .form-control,
+    .vista-venta .filtros-ventas-card .btn,
+    .vista-venta .filtro-forma-pago-btn {
+        min-height: 2.35rem;
+        font-size: .87rem;
+        padding: .32rem .62rem;
+        border-radius: .5rem;
+    }
+
+    .vista-venta .filtros-ventas-card .alert,
+    .vista-venta .filtros-ventas-card .small,
+    .vista-venta .filtros-ventas-card .text-muted {
+        font-size: .8rem !important;
+    }
+
+    .filtro-forma-pago-menu {
+        font-size: .84rem;
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .vista-venta .ventas-totales-card h5 {
+        font-size: .92rem !important;
+    }
+
+    .vista-venta .venta-item {
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+        padding: .55rem .85rem;
+        font-size: .86rem;
+        cursor: pointer;
+    }
+
+    .vista-venta .venta-icono {
+        flex: 0 0 auto;
+        width: 1.6rem;
+        text-align: center;
+    }
+
+    .vista-venta .venta-icono .fa-2x {
+        font-size: 1.3em;
+    }
+
+    .vista-venta .venta-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .vista-venta .venta-tipo-persona {
+        font-size: .86rem;
+        line-height: 1.2;
+    }
+
+    .vista-venta .venta-id,
+    .vista-venta .venta-obs {
+        font-size: .76rem !important;
+        color: #6c757d;
+        line-height: 1.25;
+    }
+
+    .vista-venta .venta-total {
+        flex: 0 0 auto;
+        text-align: right;
+    }
+
+    .vista-venta .venta-total .importe {
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .vista-venta .fecha-grupo {
+        font-size: .78rem !important;
+        padding: .38rem .85rem;
+    }
+
+    @@media (min-width: 1200px) {
+        .vista-venta .filtros-ventas-card .form-control,
+        .vista-venta .filtros-ventas-card .btn,
+        .vista-venta .filtro-forma-pago-btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .filtros-fila {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (min-width: 768px) {
+        .filtros-fila-fechas {
+            grid-template-columns: 1fr 1fr 140px;
+            align-items: end;
+        }
+
+        .filtros-fila-busqueda {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+</style>

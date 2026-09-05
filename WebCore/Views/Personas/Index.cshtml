@@ -103,7 +103,6 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
-            <h1 class="h3 mb-1 text-gray-800">Personas</h1>
             <div class="text-muted">Alta, consulta y edición de personas del sistema.</div>
         </div>
         <a class="btn btn-success mt-2 mt-md-0" href="@Url.Action("Nuevo", "Personas")">
@@ -201,6 +200,7 @@
     </div>
 </div>
 
+@section Scripts {
 <script>
     (function () {
         function showNavigationLoading(message) {
@@ -305,3 +305,4 @@
         });
     })();
 </script>
+}

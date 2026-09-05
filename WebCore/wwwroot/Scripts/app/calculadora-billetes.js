@@ -833,10 +833,15 @@
                 $('#calculadoraBilletesTitulo').text(opcionesActuales.tituloPantalla || 'Calculadora Billetes');
             }
 
+            // Bootstrap 5: .modal(objetoOpciones) solo crea/configura la instancia (getOrCreateInstance),
+            // a diferencia de BS4 NO la muestra sola -- hace falta el .modal('show') explicito de abajo.
+            // Bug real: sin esta segunda linea el modal nunca aparecia (ni error en consola), afectaba
+            // tanto F3 en el POS como "Calcular efectivo" en Cajas/_AddOrEditEgresoCaja.cshtml.
             $('#modalCalculadoraBilletes').modal({
                 backdrop: 'static',
                 keyboard: false
             });
+            $('#modalCalculadoraBilletes').modal('show');
         },
         formatInputValue: function (value) {
             return Number(value || 0).toFixed(2);

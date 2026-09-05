@@ -1,4 +1,4 @@
-// Port parcial de Web/Controllers/PuntosExpendioController.cs (1286 lineas, 20 acciones) para el
+﻿// Port parcial de Web/Controllers/PuntosExpendioController.cs (1286 lineas, 20 acciones) para el
 // Modulo 8 (Ventas y POS) -- ver docs/DECISIONS.md y docs/10-migracion-aspnet-core/README.md. Este
 // slice porta SOLO: ExpendiosGenerados/ExpendiosGeneradosData (listado de solo lectura de
 // expendios ya generados) y Sectores/GuardarSector/EliminarSector (catalogo simple de sectores,
@@ -8,10 +8,18 @@
 // iTextSharp elegido por el usuario) y ObtenerDatosEmailExpendio/EnviarComprobanteEmailExpendio
 // (envio real de email, autorizado explicitamente) -- portados, ver mas abajo.
 //
-// Las 12 acciones restantes del original siguen sin portar en este slice:
-//  - POS transaccional (crea una Venta/expendio real, acoplado al estado de caja de Modulo 7,
-//    requiere su propio plan y juez de paridad antes de tocarlo, CLAUDE.md seccion 11.1):
-//    Abrir, POS, AutorizarOperadorPOS, CerrarOperadorPOS, Guardar, FinalizarPOS,
+// AGREGADO (2026-09-04, PLAN-POS.md batch 7): FinalizarPOS -- el endpoint transaccional que crea
+// el expendio real (Negocio.Venta.agregarExpendio/agregarLineaExprendio), mismo patron y mismo
+// nivel de verificacion que VentasController.FinalizarVenta (HTTP directo + sqlcmd, sin UI propia
+// todavia). ResolverOperadorPOS (step-up de la cuenta compartida de produccion) se omite: bajo el
+// stub Admin=true, _usuarioActual.EsUsuarioProduccion siempre es false, asi que ese metodo
+// devolveria el mismo usuario sin cambios -- mismo criterio de "codigo muerto bajo el stub" que el
+// resto de la migracion.
+//
+// Las 11 acciones restantes del original siguen sin portar en este slice:
+//  - POS transaccional restante (la vista POS.cshtml en si, 1980 lineas, y el flujo de
+//    autorizacion de operador que solo aplica a la cuenta compartida de produccion, no usada en
+//    ningun juez de esta migracion): Abrir, POS, AutorizarOperadorPOS, CerrarOperadorPOS, Guardar,
 //    BuscarProducto, BuscarProductoPorCodigo, BuscarProductoPOS, MisExpendiosPOS (este ultimo
 //    ademas depende de ResolverOperadorPOS, infraestructura de POS que no existe sin Session).
 //  - Impresion de tickets ESC/POS (agente de impresion local, sin relacion con el bloqueante de
@@ -37,6 +45,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using Utilidades;
 using WebCore.Models;
+using WebCore.Models.DTO;
 
 namespace WebCore.Controllers
 {
@@ -53,6 +62,9 @@ namespace WebCore.Controllers
         private readonly Negocio.Venta _oVentaN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Usuario _oUsuarioN;
+        private readonly Negocio.Corte _oCorteN;
+        private readonly Negocio.Persona _oPersonaN;
+        private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
 
         private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
         {
@@ -65,14 +77,142 @@ namespace WebCore.Controllers
 
         public PuntosExpendioController()
         {
-            _param = new Negocio.Parametros(_empresa);
+            _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
-            _oVentaN = new Negocio.Venta(_empresa, _param);
-            _oSucursalN = new Negocio.Sucursal(_empresa, _param);
-            _oUsuarioN = new Negocio.Usuario(_empresa, _param);
+            _oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
+            _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+            _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
 
             _usuarioActual.Sucursal = _oSucursalN.findById(_usuarioActual.IdSucursal);
+        }
+
+        // Port de PuntosExpendioController.POS (batch UI de Expendios, ver
+        // docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md). Sin login de operador de
+        // produccion (requiereOperadorPOS queda fijo en false -- mismo bypass de permisos que
+        // el resto de WebCore, ver gaps.md "Permisos reales de venta y usuario produccion") y
+        // sin AsegurarSucursalUsuario (no aplica bajo el usuario stub, que ya tiene sucursal fija).
+        [HttpGet]
+        public IActionResult POS(string sector = "", string modoPos = "original", string posInstanceId = "")
+        {
+            var user = _usuarioActual;
+
+            string modoPosNormalizado = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)
+                ? "duplicado"
+                : "original";
+            string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
+                ? Guid.NewGuid().ToString("N")
+                : posInstanceId.Trim();
+
+            string sectorNormalizado = (sector ?? "").Trim();
+            var model = new PuntoExpendioEditVm
+            {
+                Sector = sectorNormalizado,
+                FechaExpendio = DateTime.Now,
+                IdentificacionCliente = "",
+                Observaciones = "",
+                EsGuardado = false,
+                SectoresDisponibles = ObtenerSectores(),
+                PermiteEditarPrecio = string.Equals(sectorNormalizado, "PRESUPUESTO", StringComparison.OrdinalIgnoreCase),
+                VendedorNombre = user.Nombre ?? "",
+                SucursalNombre = user.Sucursal?.SucursalNombre ?? ""
+            };
+
+            ViewBag.IdConsumidorFinal = _oPersonaN.getConsumidorFinal()?.idPersona ?? 0;
+            ViewBag.PuedeBonificarPuntoExpendio = true;
+            ViewBag.IdSucursalPOS = user.IdSucursal;
+            ViewBag.IdUsuarioPOS = user.Id;
+            ViewBag.PosModoInstancia = modoPosNormalizado;
+            ViewBag.PosInstanceId = posInstanceIdNormalizado;
+
+            return View("~/Views/PuntosExpendio/POS.cshtml", model);
+        }
+
+        // Port de PuntosExpendioController.BuscarProductoPOS -- mismo motor que
+        // VentasController.BuscarProducto (Negocio.BarcodeInterpreter, codigos genericos G/G1 y
+        // codigos internos de balanza 20-29), sin cambios de logica.
+        [HttpGet]
+        public IActionResult BuscarProductoPOS(string codigo, bool ingresoCantidadX = false)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(codigo))
+                    return Json(new { success = false, message = "Código inválido." });
+
+                codigo = codigo.Replace(",", ".");
+                int idEmpresaSesion = _usuarioActual.IdEmpresa;
+
+                var generico = _oBarcodeInterpreter.InterpretarCodigoGenerico(
+                    codigo, ingresoCantidadX, _param.GetLong(ParamKeys.CodProdGenerico, 0L));
+
+                if (generico.FormatoInvalido)
+                    return Json(new { success = false, message = "Formato de código inválido." });
+
+                Entidades.Corte corte;
+                decimal? cantidadSugerida = null;
+
+                if (generico.EsGenerico)
+                {
+                    corte = idEmpresaSesion > 0
+                        ? _oCorteN.findCorteByCodigoEmpresa(generico.CodigoProducto, idEmpresaSesion, false)
+                        : _oCorteN.findCorteByCodigo(generico.CodigoProducto, false);
+
+                    if (corte == null || corte.IdCorte <= 0)
+                        return Json(new { success = false, message = "No existe el código genérico." });
+
+                    corte.PrecioKg = generico.PrecioManual.Value;
+                }
+                else
+                {
+                    var interno = _oBarcodeInterpreter.Interpretar(codigo, idEmpresaSesion);
+
+                    if (interno.EsCodigoInterno)
+                    {
+                        if (interno.Caso == Entidades.CasoInterpretacionBarcode.EstructuraInvalida)
+                            return Json(new { success = false, message = interno.MensajeDiagnostico });
+
+                        if (interno.Caso == Entidades.CasoInterpretacionBarcode.ProductoNoEncontrado)
+                            return Json(new { success = false, message = "No se encontró el producto." });
+
+                        corte = interno.Producto;
+                        if (interno.TipoValor == Entidades.TipoValorCodigoBarras.Precio)
+                            corte.PrecioKg = (float)interno.Valor.Value;
+                        else
+                            cantidadSugerida = interno.Valor;
+                    }
+                    else
+                    {
+                        if (!long.TryParse(codigo, out long codigoBuscado) || codigoBuscado <= 0)
+                            return Json(new { success = false, message = "Código inválido." });
+
+                        corte = idEmpresaSesion > 0
+                            ? _oCorteN.findCorteByCodigoEmpresa(codigoBuscado, idEmpresaSesion, false)
+                            : _oCorteN.findCorteByCodigo(codigoBuscado, false);
+
+                        if (corte == null || corte.IdCorte <= 0)
+                            return Json(new { success = false, message = "No se encontró el producto." });
+                    }
+                }
+
+                return Json(new
+                {
+                    id = corte.IdCorte,
+                    codigo = corte.codigo.ToString(),
+                    nombre = !string.IsNullOrWhiteSpace(corte.corte) ? corte.corte : corte.CorteDesc,
+                    precioKg = corte.PrecioKg,
+                    precioOriginal = corte.PrecioKg,
+                    pesable = corte.Pesable,
+                    balanza = corte.Pesable,
+                    cantidadSugerida
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         public IActionResult ExpendiosGenerados()
@@ -262,6 +402,174 @@ namespace WebCore.Controllers
             TempData["AlertTitle"] = "Sectores";
             TempData["AlertMsg"] = "El sector se eliminó correctamente.";
             return RedirectToAction("Sectores");
+        }
+
+        // Port de PuntosExpendioController.FinalizarPOS (2026-09-04, PLAN-POS.md batch 7) -- crea
+        // el expendio real (Venta con TipoVenta="Caja", FormaPago=Nulo, TipoComprobante=X) y sus
+        // lineas. Sin cambios de logica respecto al original mas alla de: Session["Usuario"] ->
+        // _usuarioActual; ResolverOperadorPOS omitido (ver header del archivo); [FromBody] porque
+        // el body es JSON (mismo motivo que VentasController.FinalizarVenta).
+        [HttpPost]
+        public IActionResult FinalizarPOS([FromBody] FinalizarPuntoExpendioRequest request)
+        {
+            var user = _usuarioActual;
+            DateTime fecha = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Today;
+            var operador = user;
+
+            var model = new PuntoExpendioEditVm
+            {
+                FechaExpendio = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Now,
+                Sector = request != null ? request.Sector : "",
+                IdentificacionCliente = request != null ? request.IdentificacionCliente : "",
+                Observaciones = request != null ? request.Observaciones : "",
+                Lineas = new List<PuntoExpendioLineaVm>()
+            };
+
+            foreach (var linea in (request != null ? request.LineasVenta : null) ?? new List<LineaVentaDto>())
+            {
+                if (linea == null || Entidades.LineaVenta.esAnulado(linea.Estado))
+                    continue;
+
+                model.Lineas.Add(new PuntoExpendioLineaVm
+                {
+                    IdCorte = linea.IdCorte,
+                    Codigo = linea.Codigo,
+                    Producto = linea.Descripcion ?? "",
+                    CantKg = linea.CantKg,
+                    PrecioKg = linea.PrecioKg,
+                    PesoBalanza = linea.Balanza,
+                    Total = linea.Importe
+                });
+            }
+
+            NormalizarLineas(model);
+
+            string error = ValidarModelo(model);
+            if (!string.IsNullOrWhiteSpace(error))
+                return Json(new { ok = false, mensaje = error });
+
+            var consumidorFinal = _oPersonaN.getConsumidorFinal() ?? new Entidades.Persona();
+            var sucursal = user.Sucursal ?? _oSucursalN.findById(user.IdSucursal);
+            if (sucursal == null)
+                return Json(new { ok = false, mensaje = "No se encontró la sucursal activa del usuario." });
+
+            var expendio = new Entidades.Venta
+            {
+                IdVenta = 0,
+                Persona = consumidorFinal,
+                Sucursal = sucursal,
+                TipoVenta = "Caja",
+                FechaVenta = model.FechaExpendio,
+                Turno = "",
+                DiaFestivo = "",
+                TotalImporte = model.Lineas.Sum(l => l.Total),
+                AcumRedondeoImporte = 0,
+                AcumRedondeoKgs = 0,
+                LineasVenta = new List<Entidades.LineaVenta>(),
+                FormaPago = Entidades.Venta.formaPagoEnum.Nulo.ToString(),
+                TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
+                IdentificacionExpendio = model.IdentificacionCliente ?? "",
+                Sector = (model.Sector ?? "").Trim(),
+                CantItems = model.Lineas.Count.ToString(CultureInfo.InvariantCulture),
+                Observaciones = model.Observaciones ?? "",
+                NroRemito = "",
+                SerialCPU = "",
+                Vendedor = operador
+            };
+
+            try
+            {
+                expendio.IdVenta = expendio.IdExpendio = _oVentaN.agregarExpendio(expendio);
+
+                foreach (var linea in model.Lineas)
+                {
+                    int idEmpresaSesionLinea = user.IdEmpresa;
+                    var corte = linea.IdCorte > 0
+                        ? _oCorteN.findCorteById(linea.IdCorte, false)
+                        : (linea.Codigo > 0
+                            ? (idEmpresaSesionLinea > 0
+                                ? _oCorteN.findCorteByCodigoEmpresa(linea.Codigo, idEmpresaSesionLinea, false)
+                                : _oCorteN.findCorteByCodigo(linea.Codigo, false))
+                            : null);
+
+                    if (corte == null || corte.IdCorte <= 0 || (idEmpresaSesionLinea > 0 && corte.IdEmpresa != idEmpresaSesionLinea))
+                        return Json(new { ok = false, mensaje = "No se encontró uno de los productos cargados." });
+
+                    var item = new Entidades.LineaVenta
+                    {
+                        Venta = expendio,
+                        Corte = new Entidades.Corte { IdCorte = corte.IdCorte },
+                        CantKg = linea.CantKg,
+                        KgsTotalCalculado = linea.CantKg,
+                        PrecioKg = linea.PrecioKg,
+                        PesoBalanza = linea.PesoBalanza,
+                        Estado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado),
+                        IndexAnulado = Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado)
+                    };
+
+                    _oVentaN.agregarLineaExprendio(item);
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    idExpendio = expendio.IdExpendio,
+                    redirectUrl = Url.Action("POS", "PuntosExpendio", new { sector = expendio.Sector, posInstanceId = request != null ? request.PosInstanceId : null }),
+                    pdfUrl = Url.Action("ImprimirPdf", "PuntosExpendio", new { id = expendio.IdExpendio })
+                    // imprimirUrl/imprimirPayloadUrl/whatsappTexto excluidos -- ImprimirTicket
+                    // (agente de impresion local) sigue sin portar, ver header del archivo.
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = ex.Message });
+            }
+        }
+
+        private string ValidarModelo(PuntoExpendioEditVm model)
+        {
+            if (model == null)
+                return "No se recibieron datos del punto de expendio.";
+
+            model.Sector = (model.Sector ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(model.Sector))
+                return "Debe seleccionar un sector para el punto de expendio.";
+
+            if (!ObtenerSectores().Any(s => string.Equals(s, model.Sector, StringComparison.OrdinalIgnoreCase)))
+                return "El sector seleccionado no existe o ya no está disponible.";
+
+            if (model.Lineas == null || model.Lineas.Count == 0)
+                return "Debe cargar al menos un producto en el punto de expendio.";
+
+            for (int i = 0; i < model.Lineas.Count; i++)
+            {
+                PuntoExpendioLineaVm linea = model.Lineas[i];
+                if (linea == null || linea.IdCorte <= 0)
+                    return "Hay una línea sin producto válido.";
+
+                if (linea.CantKg <= 0)
+                    return "La cantidad en kilos debe ser mayor a cero en todas las líneas.";
+
+                if (linea.PrecioKg <= 0)
+                    return "El precio por kilo debe ser mayor a cero en todas las líneas.";
+            }
+
+            return null;
+        }
+
+        private void NormalizarLineas(PuntoExpendioEditVm model)
+        {
+            if (model == null || model.Lineas == null)
+                return;
+
+            foreach (var linea in model.Lineas)
+            {
+                if (linea == null)
+                    continue;
+
+                linea.Producto = (linea.Producto ?? "").Trim();
+                linea.Total = linea.CantKg * linea.PrecioKg;
+            }
         }
 
         [HttpGet]

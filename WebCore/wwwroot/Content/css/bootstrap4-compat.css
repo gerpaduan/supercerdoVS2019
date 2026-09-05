@@ -1,0 +1,155 @@
+/* Shim de compatibilidad Bootstrap 4 -> 5 para WebCore.
+   Hallazgo real (2026-09-04, ver docs/DECISIONS.md): WebCore usa Bootstrap 5.3.3, pero el markup
+   ya portado (y el que se sigue portando) usa clases y atributos de Bootstrap 4
+   (.badge-warning, .custom-switch, data-dismiss, etc.) que BS5 renombro o elimino. El sintoma
+   real que lo disparo: el badge "Pendiente"/"Asignado" del modal de expendios de POS no tenia
+   color en modo claro (.badge-warning no existe en BS5, badge quedaba sin fondo).
+
+   En vez de reescribir el markup de las 30+ vistas que ya usan estas clases (roture innecesario,
+   y sigue habiendo vistas nuevas por portar que las van a seguir usando), este archivo mapea las
+   clases viejas al comportamiento real de BS5 -- se carga una sola vez desde los layouts
+   compartidos (_Layout.cshtml, _LayoutPOS.cshtml). Colores tomados de las variables reales de BS5
+   (--bs-warning, --bs-info, etc., ver bootstrap.min.css) para que coincidan con el resto del tema.
+   El .form-check-input/.form-switch de mas abajo es una copia literal de las reglas reales de BS5
+   (bootstrap.css lineas 2371-2484) re-aplicada a los selectores viejos .custom-control-input/
+   .custom-switch, no una reconstruccion inventada. */
+
+/* ===== Badges (.badge-* removidos en BS5, reemplazados por .text-bg-*) ===== */
+.badge-primary { background-color: #0d6efd; color: #fff; }
+.badge-secondary { background-color: #6c757d; color: #fff; }
+.badge-success { background-color: #198754; color: #fff; }
+.badge-danger { background-color: #dc3545; color: #fff; }
+.badge-warning { background-color: #ffc107; color: #000; }
+.badge-info { background-color: #0dcaf0; color: #000; }
+.badge-light { background-color: #f8f9fa; color: #000; }
+.badge-dark { background-color: #212529; color: #fff; }
+.badge-pill { border-radius: 50rem; }
+
+/* ===== Boton "cerrar" (.close, reemplazado por .btn-close) -- se mantiene el "&times;"/"×"
+   literal que ya usa el markup portado, solo se le devuelve el aspecto visual de BS4. ===== */
+.close {
+    float: right;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    opacity: .5;
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+.close:hover, .close:focus {
+    color: #000;
+    opacity: .75;
+    text-decoration: none;
+}
+.modal-header .close, .card-header .close {
+    padding: .25rem;
+    margin: -.5rem -.5rem -.5rem auto;
+}
+.text-white.close, .bg-primary .close, .bg-dark .close, .bg-secondary .close, .bg-danger .close {
+    color: #fff;
+}
+.text-white.close:hover, .bg-primary .close:hover, .bg-dark .close:hover, .bg-secondary .close:hover, .bg-danger .close:hover {
+    color: #fff;
+}
+
+/* ===== Checkbox/switch custom (.custom-control-*, reemplazados por .form-check-*) =====
+   Copia literal de bootstrap.css (.form-check/.form-check-input/.form-switch), re-aplicada a los
+   selectores .custom-control/.custom-control-input/.custom-switch que ya usa el markup. */
+.custom-control {
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5em;
+    margin-bottom: .125rem;
+}
+.custom-control .custom-control-input {
+    float: left;
+    margin-left: -1.5em;
+}
+.custom-control-input {
+    --bs-form-check-bg: var(--bs-body-bg, #fff);
+    flex-shrink: 0;
+    width: 1em;
+    height: 1em;
+    margin-top: .25em;
+    vertical-align: top;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: var(--bs-form-check-bg);
+    background-image: var(--bs-form-check-bg-image);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 1px solid rgba(0, 0, 0, .25);
+    print-color-adjust: exact;
+}
+.custom-control-input[type=checkbox] { border-radius: .25em; }
+.custom-control-input[type=radio] { border-radius: 50%; }
+.custom-control-input:active { filter: brightness(90%); }
+.custom-control-input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+.custom-control-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+.custom-control-input:checked[type=checkbox] {
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+.custom-control-input:checked[type=radio] {
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e");
+}
+.custom-control-input:disabled {
+    pointer-events: none;
+    filter: none;
+    opacity: .5;
+}
+.custom-control-input[disabled] ~ .custom-control-label,
+.custom-control-input:disabled ~ .custom-control-label {
+    cursor: default;
+    opacity: .5;
+}
+.custom-control-label { cursor: pointer; }
+/* El modelo viejo de BS4 dibujaba el check/switch con ::before/::after sobre el label; en BS5 el
+   dibujo ya sale del propio input (arriba), asi que esos pseudo-elementos quedan inertes. */
+.custom-control-label::before, .custom-control-label::after { content: none !important; }
+
+.custom-switch { padding-left: 2.5em; }
+.custom-switch .custom-control-input {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e");
+    width: 2em;
+    margin-left: -2.5em;
+    background-image: var(--bs-form-switch-bg);
+    background-position: left center;
+    border-radius: 2em;
+    transition: background-position .15s ease-in-out;
+}
+.custom-switch .custom-control-input:focus {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2386b7fe'/%3e%3c/svg%3e");
+}
+.custom-switch .custom-control-input:checked {
+    background-position: right center;
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+/* ===== input-group-prepend/-append (removidos en BS5 -- ahora .input-group-text va directo como
+   hijo de .input-group). display:contents preserva el layout flex del padre sin el wrapper. ===== */
+.input-group-prepend, .input-group-append {
+    display: contents;
+}
+
+/* ===== dropdown-menu-right (renombrado a .dropdown-menu-end en BS5) ===== */
+.dropdown-menu-right {
+    --bs-position: end;
+    right: 0;
+    left: auto;
+}
+
+html.dark-mode .close,
+body.dark-mode .close {
+    color: #e6e6e6;
+}

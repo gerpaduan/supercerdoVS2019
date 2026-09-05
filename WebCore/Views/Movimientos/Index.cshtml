@@ -1,0 +1,540 @@
+@model WebCore.Models.MovimientoIndexVm
+@using System.Collections.Generic
+@using Entidades
+
+@{
+    ViewBag.Title = "Movimientos";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
+}
+
+<div class="container-fluid px-2 px-md-3" data-movimientos-index="1" data-detalle-url="@Url.Action("Detalle", "Movimientos")">
+    <div class="d-flex flex-wrap align-items-center mb-3 gap-2 movimientos-acciones-header">
+        <a class="btn btn-success movimientos-btn-accion" href="@Url.Action("Nuevo", "Movimientos")" id="btnNuevoMovimientoIndex">
+            <i class="fas fa-plus mr-1"></i> Nuevo movimiento
+        </a>
+        <a class="btn btn-outline-primary movimientos-btn-accion ml-md-2" href="@Url.Action("Lineas", "Movimientos", new { idSucursalOrigen = Model.IdSucursalOrigen, idSucursalDestino = Model.IdSucursalDestino, fechaDesde = Model.FechaDesde.ToString("yyyy-MM-dd"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-dd") })" id="btnVerLineasMovimientosIndex">
+            <i class="fas fa-stream mr-1"></i> Ver lineas
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-3 movimientos-filtros-card">
+        <div class="card-body">
+            <form method="get">
+                <div class="movimientos-filtros-stack">
+                    <div id="alertaFiltrosPendientesMovimientos" class="alert alert-warning d-none mb-0" role="alert">
+                        Cambiaste las fechas. Presioná <strong>Buscar</strong> para actualizar los resultados.
+                    </div>
+
+                    <div class="movimientos-filtros-row movimientos-filtros-row-sucursales">
+                        <div class="form-group mb-0">
+                            <label for="idSucursalOrigen" class="movimientos-filtro-label">Sucursal origen</label>
+                            <select id="idSucursalOrigen" name="idSucursalOrigen" class="form-control">
+                                @foreach (var sucursal in sucursales)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursalOrigen ? "selected" : null)">@sucursal.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label for="idSucursalDestino" class="movimientos-filtro-label">Sucursal destino</label>
+                            <select id="idSucursalDestino" name="idSucursalDestino" class="form-control">
+                                @foreach (var sucursal in sucursales)
+                                {
+                                    <option value="@sucursal.IdSucursal" selected="@(sucursal.IdSucursal == Model.IdSucursalDestino ? "selected" : null)">@sucursal.SucursalNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="movimientos-filtros-row movimientos-filtros-row-fechas">
+                        <div class="form-group mb-0">
+                            <label for="fechaDesde" class="movimientos-filtro-label">Fecha desde</label>
+                            <input type="date" id="fechaDesde" name="fechaDesde" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-dd")" />
+                            @Html.Partial("_AdvertenciaPermisoFecha")
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label for="fechaHasta" class="movimientos-filtro-label">Fecha hasta</label>
+                            <input type="date" id="fechaHasta" name="fechaHasta" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-dd")" />
+                        </div>
+
+                        <div class="form-group mb-0 movimientos-filtro-switch">
+                            <label class="movimientos-filtro-label d-block">Ver detalles</label>
+                            <div class="custom-control custom-switch pt-2">
+                                <input type="checkbox" class="custom-control-input" id="verDetalles" name="verDetalles" value="true" checked="@(Model.VerDetalles ? "checked" : null)" />
+                                <label class="custom-control-label" for="verDetalles">Expandir todos</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0 movimientos-filtro-accion">
+                            <label class="movimientos-filtro-label d-none d-lg-block">&nbsp;</label>
+                            <button type="submit" class="btn btn-outline-primary btn-block" id="btnBuscarMovimientos">
+                                <i class="fas fa-search mr-1"></i><span class="btn-buscar-texto"> Buscar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div id="estadoBusquedaMovimientos" class="text-muted small">Resultados actualizados.</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaMovimientos">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width:140px;">Fecha movimiento</th>
+                            <th>Origen</th>
+                            @if (Model.MostrarColumnasInternas)
+                            {
+                                <th style="width:100px;">De origen</th>
+                                <th style="width:120px;">Estado</th>
+                            }
+                            <th>Destino</th>
+                            <th class="text-right" style="width:120px;">Total unidad</th>
+                            <th class="text-right" style="width:120px;">Total kilos</th>
+                            <th class="text-center" style="width:70px;">Obs.</th>
+                            <th style="width:150px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Movimientos == null || Model.Movimientos.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="@(Model.MostrarColumnasInternas ? 9 : 7)" class="text-center text-muted py-4">
+                                    No se encontraron movimientos para los filtros seleccionados.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var movimiento in Model.Movimientos)
+                            {
+                                <tr data-movimiento-row="@movimiento.IdMovimiento">
+                                    <td>@movimiento.FechaMovimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@movimiento.Origen</td>
+                                    @if (Model.MostrarColumnasInternas)
+                                    {
+                                        <td>@(string.IsNullOrWhiteSpace(movimiento.DeOrigen) ? "-" : movimiento.DeOrigen)</td>
+                                        <td>@movimiento.Estado</td>
+                                    }
+                                    <td>@movimiento.Destino</td>
+                                    <td class="text-right">@movimiento.TotalUnidad.ToString("N0")</td>
+                                    <td class="text-right">@movimiento.TotalKilos.ToString("N3")</td>
+                                    <td class="text-center">
+                                        @if (movimiento.TieneObservaciones)
+                                        {
+                                            <span class="badge badge-pill badge-info" title="@movimiento.Observaciones">1</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a class="btn btn-outline-primary" href="@Url.Action("Editar", "Movimientos", new { id = movimiento.IdMovimiento })" title="Ver movimiento">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary js-toggle-detalle"
+                                                    data-id="@movimiento.IdMovimiento"
+                                                    data-target="#movDetalle_@movimiento.IdMovimiento"
+                                                    title="Ver detalle">
+                                                <i class="fas fa-angle-down"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr id="movDetalle_@movimiento.IdMovimiento" class="d-none bg-light" data-detalle-row="@movimiento.IdMovimiento" data-loaded="false">
+                                    <td colspan="@(Model.MostrarColumnasInternas ? 9 : 7)">
+                                        <div class="p-3 js-detalle-container text-muted">Cargando detalle...</div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .movimientos-filtros-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+        font-size: .9rem;
+    }
+
+    .movimientos-index-page .card-body,
+    .container-fluid[data-movimientos-index] .card-body {
+        padding: .85rem 1rem;
+    }
+
+    .movimientos-filtros-card .card-body {
+        padding: .72rem .85rem;
+    }
+
+    .movimientos-filtros-stack {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .movimientos-filtros-row {
+        display: grid;
+        gap: .65rem;
+    }
+
+    .movimientos-filtro-label {
+        font-size: .76rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .movimientos-filtros-card .form-control,
+    .movimientos-filtros-card .btn {
+        font-size: .87rem;
+        min-height: 2.65rem;
+        border-radius: .55rem;
+        padding: .32rem .62rem;
+    }
+
+    .movimientos-acciones-header {
+        justify-content: flex-start;
+    }
+
+    .movimientos-btn-accion {
+        width: 100%;
+        min-height: 2.1rem;
+        font-size: .82rem;
+        padding: .24rem .58rem;
+        border-radius: .5rem;
+    }
+
+    .movimientos-filtros-card .alert,
+    .movimientos-filtros-card .small,
+    .movimientos-filtros-card .text-muted,
+    .movimientos-filtros-card .btn-buscar-texto {
+        font-size: .8rem !important;
+    }
+
+    .container-fluid[data-movimientos-index] .table {
+        font-size: .84rem;
+    }
+
+    .container-fluid[data-movimientos-index] .table th,
+    .container-fluid[data-movimientos-index] .table td {
+        padding: .38rem .5rem;
+        vertical-align: middle;
+        line-height: 1.15;
+    }
+
+    .container-fluid[data-movimientos-index] .table thead th,
+    .container-fluid[data-movimientos-index] .table > thead > tr > th {
+        font-size: .72rem !important;
+        line-height: 1.05;
+        padding-top: .42rem;
+        padding-bottom: .42rem;
+    }
+
+    .container-fluid[data-movimientos-index] .btn-group-sm > .btn,
+    .container-fluid[data-movimientos-index] .btn-sm {
+        padding: .18rem .42rem;
+        line-height: 1.15;
+    }
+
+    @@media (min-width: 1200px) {
+        .container-fluid[data-movimientos-index] .mb-3 {
+            margin-bottom: .85rem !important;
+        }
+
+        .movimientos-acciones-header {
+            justify-content: flex-end;
+        }
+
+        .movimientos-btn-accion {
+            width: auto;
+        }
+
+        .movimientos-filtros-card .card-body {
+            padding: .65rem .8rem;
+        }
+
+        .movimientos-filtros-row-sucursales {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .movimientos-filtros-row-fechas {
+            grid-template-columns: 1fr 1fr 1fr 140px;
+            align-items: end;
+        }
+
+        .movimientos-filtros-card .form-control,
+        .movimientos-filtros-card .btn {
+            min-height: 2.15rem;
+            font-size: .84rem;
+            padding: .28rem .56rem;
+        }
+
+        .container-fluid[data-movimientos-index] .table {
+            font-size: .81rem;
+        }
+
+        .container-fluid[data-movimientos-index] .table thead th,
+        .container-fluid[data-movimientos-index] .table > thead > tr > th {
+            font-size: .69rem !important;
+        }
+    }
+
+    @@media (min-width: 768px) and (max-width: 1199.98px) {
+        .movimientos-filtros-row-fechas,
+        .movimientos-filtros-row-sucursales {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .movimientos-filtro-accion {
+            grid-column: 2;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .movimientos-filtros-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            document.addEventListener("keydown", function (event) {
+                if (!event.altKey) return;
+
+                var target = event.target;
+                var tagName = target && target.tagName ? target.tagName.toUpperCase() : "";
+                var isEditable = target && (target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT");
+                if (isEditable) return;
+
+                var key = (event.key || "").toLowerCase();
+                var btnNuevo = document.getElementById("btnNuevoMovimientoIndex");
+                var btnLineas = document.getElementById("btnVerLineasMovimientosIndex");
+
+                if ((key === "n" || key === "enter") && btnNuevo) {
+                    event.preventDefault();
+                    navegarConLoader(btnNuevo.href, false);
+                } else if (key === "v" && btnLineas) {
+                    event.preventDefault();
+                    navegarConLoader(btnLineas.href, false);
+                }
+            });
+
+            var storageKey = "movimientos_index_filters_v1";
+            var form = document.querySelector('.movimientos-filtros-card form');
+            var inputFechaDesde = document.getElementById('fechaDesde');
+            var inputFechaHasta = document.getElementById('fechaHasta');
+            var inputSucursalOrigen = document.getElementById('idSucursalOrigen');
+            var inputSucursalDestino = document.getElementById('idSucursalDestino');
+            var inputVerDetalles = document.getElementById('verDetalles');
+            var alertaPendiente = document.getElementById('alertaFiltrosPendientesMovimientos');
+            var nativeFormSubmit = window.HTMLFormElement && window.HTMLFormElement.prototype
+                ? window.HTMLFormElement.prototype.submit
+                : null;
+            var fechasAplicadas = {
+                fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+            };
+
+            function showNavigationLoading(message) {
+                if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
+                    window.ModalRequestLoading.trackNavigation(message || "Cargando solicitud...");
+                }
+            }
+
+            function navegarConLoader(url, useReplace) {
+                if (!url) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (useReplace) {
+                        window.location.replace(url);
+                    } else {
+                        window.location.href = url;
+                    }
+                }, 40);
+            }
+
+            function submitConLoader() {
+                if (!form) return;
+                showNavigationLoading("Cargando solicitud...");
+                window.setTimeout(function () {
+                    if (nativeFormSubmit) {
+                        nativeFormSubmit.call(form);
+                    } else {
+                        form.submit();
+                    }
+                }, 40);
+            }
+
+            function buildState() {
+                return {
+                    fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                    fechaHasta: inputFechaHasta ? inputFechaHasta.value : "",
+                    idSucursalOrigen: inputSucursalOrigen ? inputSucursalOrigen.value : "",
+                    idSucursalDestino: inputSucursalDestino ? inputSucursalDestino.value : "",
+                    verDetalles: inputVerDetalles ? inputVerDetalles.checked : false
+                };
+            }
+
+            function saveState() {
+                if (!form || !window.sessionStorage) return;
+                window.sessionStorage.setItem(storageKey, JSON.stringify(buildState()));
+            }
+
+            function hayFechasPendientes() {
+                return !!inputFechaDesde && !!inputFechaHasta
+                    && (inputFechaDesde.value !== fechasAplicadas.fechaDesde
+                        || inputFechaHasta.value !== fechasAplicadas.fechaHasta);
+            }
+
+            function actualizarAvisoPendiente() {
+                if (!alertaPendiente) return;
+                alertaPendiente.classList.toggle('d-none', !hayFechasPendientes());
+            }
+
+            function setBuscandoMovimientos(mensaje) {
+                var btnBuscar = document.getElementById("btnBuscarMovimientos");
+                var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                var estado = document.getElementById("estadoBusquedaMovimientos");
+
+                if (btnBuscar) {
+                    btnBuscar.disabled = true;
+                }
+
+                if (btnTexto) {
+                    btnTexto.textContent = " Cargando...";
+                }
+
+                if (estado) {
+                    estado.textContent = mensaje || "Actualizando búsqueda...";
+                }
+            }
+
+            function enviarFiltrosEnVivo() {
+                if (!form) return;
+
+                saveState();
+                setBuscandoMovimientos("Actualizando búsqueda en vivo...");
+
+                if (hayFechasPendientes()) {
+                    if (inputFechaDesde) inputFechaDesde.value = fechasAplicadas.fechaDesde;
+                    if (inputFechaHasta) inputFechaHasta.value = fechasAplicadas.fechaHasta;
+                    saveState();
+                }
+
+                submitConLoader();
+            }
+
+            function restoreStateIfNeeded() {
+                if (!form || !window.sessionStorage || window.location.search) return;
+
+                var raw = window.sessionStorage.getItem(storageKey);
+                if (!raw) return;
+
+                try {
+                    var state = JSON.parse(raw);
+                    var params = new URLSearchParams();
+                    if (state.fechaDesde) params.set("fechaDesde", state.fechaDesde);
+                    if (state.fechaHasta) params.set("fechaHasta", state.fechaHasta);
+                    if (state.idSucursalOrigen) params.set("idSucursalOrigen", state.idSucursalOrigen);
+                    if (state.idSucursalDestino) params.set("idSucursalDestino", state.idSucursalDestino);
+                    if (state.verDetalles) params.set("verDetalles", "true");
+
+                    var query = params.toString();
+                    if (query) {
+                        navegarConLoader((form.action || window.location.pathname) + "?" + query, true);
+                    }
+                } catch (e) {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            }
+
+            restoreStateIfNeeded();
+            saveState();
+            actualizarAvisoPendiente();
+
+            if (form) {
+                form.addEventListener("submit", function (event) {
+                    if (form.dataset.loadingSubmitPending === "true") {
+                        form.dataset.loadingSubmitPending = "";
+                        return;
+                    }
+
+                    event.preventDefault();
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    saveState();
+                    var btnBuscar = document.getElementById("btnBuscarMovimientos");
+                    var btnTexto = btnBuscar ? btnBuscar.querySelector(".btn-buscar-texto") : null;
+                    var estado = document.getElementById("estadoBusquedaMovimientos");
+
+                    if (btnBuscar) {
+                        btnBuscar.disabled = true;
+                    }
+
+                    if (btnTexto) {
+                        btnTexto.textContent = " Cargando...";
+                    }
+
+                    if (estado) {
+                        estado.textContent = "Actualizando búsqueda...";
+                    }
+                    form.dataset.loadingSubmitPending = "true";
+                    submitConLoader();
+                });
+                form.querySelectorAll("input, select").forEach(function (el) {
+                    el.addEventListener("change", saveState);
+                    el.addEventListener("input", saveState);
+                });
+
+                form.addEventListener("submit", function () {
+                    fechasAplicadas = {
+                        fechaDesde: inputFechaDesde ? inputFechaDesde.value : "",
+                        fechaHasta: inputFechaHasta ? inputFechaHasta.value : ""
+                    };
+                    actualizarAvisoPendiente();
+                });
+            }
+
+            if (inputFechaDesde) {
+                inputFechaDesde.addEventListener('change', actualizarAvisoPendiente);
+            }
+
+            if (inputFechaHasta) {
+                inputFechaHasta.addEventListener('change', actualizarAvisoPendiente);
+            }
+
+            if (inputSucursalOrigen) {
+                inputSucursalOrigen.addEventListener('change', enviarFiltrosEnVivo);
+            }
+
+            if (inputSucursalDestino) {
+                inputSucursalDestino.addEventListener('change', enviarFiltrosEnVivo);
+            }
+
+            document.querySelectorAll("#btnNuevoMovimientoIndex, #btnVerLineasMovimientosIndex").forEach(function (link) {
+                link.addEventListener("click", function (event) {
+                    var href = link.getAttribute("href") || "";
+                    if (!href) return;
+                    event.preventDefault();
+                    navegarConLoader(href, false);
+                });
+            });
+        })();
+    </script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=29")"></script>
+}

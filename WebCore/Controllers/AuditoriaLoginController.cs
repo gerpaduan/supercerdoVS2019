@@ -1,4 +1,4 @@
-// Port de spike de Web/Controllers/AuditoriaLoginController.cs (ver docs/DECISIONS.md,
+﻿// Port de spike de Web/Controllers/AuditoriaLoginController.cs (ver docs/DECISIONS.md,
 // migracion a ASP.NET Core). Misma logica de negocio y mapeo que el original, MISMA
 // Negocio.Usuario compartida. Diferencia deliberada: usa un IEmpresaContext hardcodeado en vez
 // de Session["Usuario"] (todavia no hay login/sesion en WebCore) y NO reproduce el chequeo de
@@ -24,7 +24,7 @@ namespace WebCore.Controllers
         public IActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta)
         {
             var empresa = new SpikeEmpresaContext();
-            var oUsuarioN = new Negocio.Usuario(empresa);
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(empresa);
 
             DateTime desde = (fechaDesde ?? DateTime.Today.AddDays(-7)).Date;
             DateTime hasta = (fechaHasta ?? DateTime.Today).Date.AddDays(1).AddSeconds(-1);

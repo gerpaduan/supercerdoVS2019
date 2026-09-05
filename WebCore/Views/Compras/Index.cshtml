@@ -110,26 +110,26 @@
 
     <div class="row mb-3">
         <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-info shadow-sm h-100 compras-total-card">
+            <div class="card border-left-info shadow-sm h-100 index-total-card">
                 <div class="card-body">
-                    <div class="compras-total-label text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
-                    <div class="compras-total-value font-weight-bold text-gray-800">@totalCantMedias</div>
+                    <div class="index-total-label text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
+                    <div class="index-total-value font-weight-bold text-gray-800">@totalCantMedias</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-primary shadow-sm h-100 compras-total-card">
+            <div class="card border-left-primary shadow-sm h-100 index-total-card">
                 <div class="card-body">
-                    <div class="compras-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
-                    <div class="compras-total-value font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
+                    <div class="index-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="index-total-value font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
                 </div>
             </div>
         </div>
         <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-success shadow-sm h-100 compras-total-card">
+            <div class="card border-left-success shadow-sm h-100 index-total-card">
                 <div class="card-body">
-                    <div class="compras-total-label text-xs font-weight-bold text-success text-uppercase mb-1">Total</div>
-                    <div class="compras-total-value font-weight-bold text-gray-800">@totalS.ToString("N2")</div>
+                    <div class="index-total-label text-xs font-weight-bold text-success text-uppercase mb-1">Total</div>
+                    <div class="index-total-value font-weight-bold text-gray-800">@totalS.ToString("N2")</div>
                 </div>
             </div>
         </div>
@@ -208,21 +208,6 @@
         font-size: .8rem !important;
     }
 
-    .compras-total-card .card-body {
-        padding: .6rem .8rem;
-    }
-
-    .compras-total-label {
-        font-size: .68rem;
-        line-height: 1.05;
-        margin-bottom: .12rem !important;
-    }
-
-    .compras-total-value {
-        font-size: 1rem;
-        line-height: 1.05;
-    }
-
     .compras-index-page .tabla-full .table {
         font-size: .84rem;
     }
@@ -262,10 +247,6 @@
 
         .compras-index-page .compras-filtros-card .card-body {
             padding: .65rem .8rem;
-        }
-
-        .compras-total-card .card-body {
-            padding: .5rem .72rem;
         }
 
         .compras-filtros-row-fechas {
