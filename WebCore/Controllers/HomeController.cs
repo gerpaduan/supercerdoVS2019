@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
@@ -24,6 +25,7 @@ public class HomeController : Controller
 
     private readonly IEmpresaContext _empresa = new StubEmpresaContext();
     private readonly Negocio.Sucursal _oSucursalN;
+    private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
 
     private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
     {
@@ -34,8 +36,9 @@ public class HomeController : Controller
         Nombre = "ger"
     };
 
-    public HomeController()
+    public HomeController(Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
     {
+        _env = env;
         _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa);
         _usuarioActual.Sucursal = _oSucursalN.findById(_usuarioActual.IdSucursal);
     }
@@ -54,6 +57,94 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    // Port de Web/Controllers/HomeController.cs Utilidades()/DescargarAgenteImpresion() --
+    // pagina de descarga de agentes locales (balanza/impresion), 100% estatica (sin acceso a
+    // base de datos). Server.MapPath (MVC5) -> IWebHostEnvironment.WebRootPath (Core), mismo
+    // criterio ya usado en VentasController (AFIP) y ProductosController (logo de etiquetas).
+    public IActionResult Utilidades()
+    {
+        var model = new UtilitiesIndexVm
+        {
+            Agentes = new System.Collections.Generic.List<UtilityItemVm>
+            {
+                BuildUtilityItem(
+                    "Agente de balanza",
+                    "Agente local",
+                    "Lee la balanza desde la PC local y expone la API en 127.0.0.1 para POS y otras pantallas web.",
+                    "Content/downloads/Carnisys.Balanza.Agent.zip",
+                    "Carnisys.Balanza.Agent.zip",
+                    "Incluye ejecutable, configuración inicial y script de instalación local."),
+                BuildUtilityItem(
+                    "Agente de impresión",
+                    "Agente local",
+                    "Permite imprimir tickets desde la terminal local sin depender del servidor web.",
+                    "Content/downloads/CarniSys.PrintAgent.zip",
+                    "CarniSys.PrintAgent.zip",
+                    "Instalar en la terminal donde está conectada la impresora térmica.")
+            },
+            OtrasUtilidades = new System.Collections.Generic.List<UtilityItemVm>
+            {
+                new UtilityItemVm
+                {
+                    Nombre = "Próximas utilidades",
+                    Categoria = "Catálogo",
+                    Descripcion = "Este sector queda preparado para sumar nuevas herramientas locales o instaladores del sistema.",
+                    Estado = "Próximamente",
+                    Version = "-",
+                    Disponible = false,
+                    NotaInstalacion = "Aquí podremos ir agregando nuevas utilidades sin tocar el resto del menú."
+                }
+            }
+        };
+
+        ViewBag.Title = "CarniSys | Utilidades";
+        return View(model);
+    }
+
+    public IActionResult DescargarAgenteImpresion()
+    {
+        string path = System.IO.Path.Combine(_env.WebRootPath, "Content", "downloads", "CarniSys.PrintAgent.zip");
+        if (!System.IO.File.Exists(path))
+            return NotFound();
+
+        return PhysicalFile(path, "application/zip", "CarniSys.PrintAgent.zip");
+    }
+
+    private UtilityItemVm BuildUtilityItem(string nombre, string categoria, string descripcion, string relativePath, string archivoNombre, string notaInstalacion)
+    {
+        string physicalPath = System.IO.Path.Combine(_env.WebRootPath, relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+        bool disponible = System.IO.File.Exists(physicalPath);
+        var info = disponible ? new System.IO.FileInfo(physicalPath) : null;
+
+        return new UtilityItemVm
+        {
+            Nombre = nombre,
+            Categoria = categoria,
+            Descripcion = descripcion,
+            Estado = disponible ? "Disponible" : "No disponible",
+            Version = info != null ? info.LastWriteTime.ToString("dd/MM/yyyy HH:mm") : "-",
+            ArchivoUrl = disponible ? Url.Content("~/" + relativePath) : string.Empty,
+            ArchivoNombre = archivoNombre,
+            ArchivoTamano = info != null ? FormatFileSize(info.Length) : "-",
+            NotaInstalacion = notaInstalacion,
+            Disponible = disponible
+        };
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes <= 0) return "0 KB";
+
+        double kb = bytes / 1024d;
+        if (kb < 1024d)
+        {
+            return kb.ToString("0.#", CultureInfo.InvariantCulture) + " KB";
+        }
+
+        double mb = kb / 1024d;
+        return mb.ToString("0.##", CultureInfo.InvariantCulture) + " MB";
     }
 
     [HttpPost]

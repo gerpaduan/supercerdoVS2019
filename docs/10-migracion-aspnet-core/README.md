@@ -55,6 +55,8 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 | 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (Factura A y B reales) + núcleo POS + **UI de POS completa (batches 1-7, verificada por el usuario en navegador)**, ver `PLAN-POS.md`/`PLAN-POS-UI.md` — ver detalle abajo |
 | 9 | Movimientos (adicional, fuera del plan original de 8) | validado | Traslados de stock entre sucursales -- las 8 acciones portadas y verificadas de punta a punta, incluida la escritura real -- ver detalle abajo |
 | 10 | Elaborados (adicional, fuera del plan original de 8) | validado (deuda de verificación menor) | Catálogo de embutidos -- las 17 acciones portadas; carga manual/fórmulas verificadas de punta a punta con escritura real; ingreso rápido con fórmula automática sin probar (sin producto de prueba disponible) -- ver detalle abajo |
+| 11 | Códigos de barra (adicional, fuera del plan original de 8) | validado | Formatos de código interno de balanza (Configuración) -- 4 acciones, escritura real verificada -- ver detalle abajo |
+| 12 | Home/Utilidades (adicional, fuera del plan original de 8) | validado | Descarga de agentes locales (balanza/impresión), 100% estático -- ver detalle abajo |
 
 ## Módulo 1 — Administración de sistema
 
@@ -553,3 +555,27 @@ Atacado en la misma sesión que Módulo 9 (Movimientos), a pedido explícito del
 **No verificado en esta sesión**: `GuardarIngresoRapido`/`EditarIngresoRapido` con datos reales -- no hay en la base de desarrollo ningún producto con `IngresoRapidoEmbutido=true` que además tenga una fórmula cargada (`IngresoRapido`/`Desarme` renderizan bien pero con la lista vacía); el modo edición de `GuardarCarga` (solo se probó alta); envío real a `wa.me` (no aplica a este módulo, no tiene esa opción).
 
 Build limpio, suite completa de `WebCore.E2ETests` corrida (18/18 OK, incluido el test nuevo `ElaboradosTests`).
+
+## Módulo 11 — Códigos de barra (adicional, fuera del plan original de 8 módulos) -- COMPLETO
+
+`Web/Controllers/CodigosBarraController.cs` (188 líneas, 4 acciones) -- formatos de código interno de balanza (EAN-13, prefijo 20-29) por empresa, usados por `Negocio.BarcodeInterpreter` para interpretar un código escaneado en el POS (Configuración → Códigos de barra).
+
+`WebCore/Controllers/CodigosBarraController.cs` (nuevo) porta las 4 acciones (`Index`, `Nuevo`, `Editar`, `Guardar`) sin cambios de lógica. Modelo nuevo `WebCore/Models/FormatoCodigoBarraVm.cs` (port literal). Vista `Editar.cshtml` porta el preset selector (JS puro, sin roundtrip al servidor) y el ejemplo de lectura EAN-13 en vivo tal cual. Único parche de sintaxis: `Html.BeginForm(...)` → `<form asp-controller="..." asp-action="..." method="post">`.
+
+**Gap ya conocido, no nuevo**: los mensajes de validación (`[Required]`/`[Range]` de `FormatoCodigoBarraEditVm`) salen en inglés -- mismo gap documentado en `gaps.md` ("Mensajes de validación built-in de ASP.NET Core en inglés"), sin decisión tomada todavía.
+
+**Verificado con datos reales, con escritura real**: `Index` muestra el formato real existente (prefijo 25). Alta real vía curl con antiforgery real (prefijo 21 de prueba) → apareció en el listado → editado para desactivarlo (`Activo=false`, ya que este módulo no tiene acción de borrado, igual que el original) → confirmado en el listado ("No"). Sin residuo funcional: un formato inactivo no lo usa `BarcodeInterpreter`.
+
+## Módulo 12 — Home/Utilidades (adicional, fuera del plan original de 8 módulos) -- COMPLETO
+
+`Web/Controllers/HomeController.cs`, acción `Utilidades()` -- página de descarga de agentes locales (balanza, impresión), 100% estática (sin acceso a base de datos).
+
+Agregado a `WebCore/Controllers/HomeController.cs` (ya existía, portado en el batch 7 de POS para la calculadora de billetes): `Utilidades()` y `DescargarAgenteImpresion()`. `Server.MapPath` → `IWebHostEnvironment.WebRootPath` (mismo patrón ya usado en `VentasController` para AFIP y `ProductosController` para el logo de etiquetas) -- se agregó `IWebHostEnvironment` al constructor. Modelos nuevos `WebCore/Models/UtilitiesIndexVm.cs`/`UtilityItemVm.cs` (port literal). Vista `Utilidades.cshtml` sin cambios de sintaxis (Razor puro, sin `Html.BeginForm` ni atributos condicionales).
+
+**Assets estáticos**: `Carnisys.Balanza.Agent.zip`/`CarniSys.PrintAgent.zip` copiados a `WebCore/wwwroot/Content/downloads/` (no estaban) -- sin esto, la página igual habría renderizado bien mostrando "No disponible"/"Próximamente" (el mismo `BuildUtilityItem` chequea `File.Exists`), pero copiarlos hace que la descarga real funcione, que es el propósito de la página.
+
+**Verificado con datos reales**: `Home/Utilidades` muestra ambos agentes como "Disponible" con tamaño/fecha reales; la descarga directa (`/Content/downloads/Carnisys.Balanza.Agent.zip`) devuelve el ZIP real (200, tamaño correcto).
+
+## Sidebar: los 3 módulos de arriba ya no linkean al clásico
+
+Con Módulos 9-12 portados, `WebCore/Views/Shared/_Layout.cshtml` actualiza sus links de `Movimientos`, `Elaborados`, `CodigosBarra` y `Home/Utilidades` a `@@Url.Action` local (ya no absolutos al clásico). Queda un solo link absoluto en todo el sidebar: `/MercadoPago` (integración de otra sesión en paralelo, no portada, ver header de `_Layout.cshtml`).

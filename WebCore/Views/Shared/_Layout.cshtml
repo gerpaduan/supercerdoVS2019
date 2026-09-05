@@ -14,8 +14,8 @@
     // Admin=true de cada controller migrado ya deja pasar todo, asi que el sidebar tampoco
     // gatilla "Configuracion"/"Administracion del sistema" por permiso -- se muestran siempre.
     //
-    // Modulos NO migrados a WebCore todavia (CodigosBarra, MercadoPago,
-    // Home/Utilidades) linkean con URL absoluta al Web clasico via el appSetting
+    // Modulos NO migrados a WebCore todavia (MercadoPago, integracion de otra sesion en
+    // paralelo) linkean con URL absoluta al Web clasico via el appSetting
     // WebClasicoBaseUrl (App.config) -- se navega fluido entre los dos sistemas mientras dura la
     // migracion, sin togs muertos ni 404s. Cuando un modulo de esa lista se porte, su link pasa
     // a @@Url.Action local (mismo criterio que el resto de la lista).
@@ -413,9 +413,9 @@
                         <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
                         <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
                         <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
-                        <a class="collapse-item" href="@legacy("/CodigosBarra")">Codigos de barra</a>
+                        <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
                         <a class="collapse-item" href="@legacy("/MercadoPago")">Mercado Pago</a>
-                        <a class="collapse-item" href="@legacy("/Home/Utilidades")">Utilidades</a>
+                        <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
                     </div>
                 </div>
             </li>
