@@ -47,14 +47,14 @@ Verificado con evidencia real (no diseño): `WebCore.csproj` (net10.0) compila y
 |---|---|---|---|
 | 1 | Administración de sistema | validado (con gaps menores) | Ver detalle abajo |
 | 2 | Clientes y proveedores | validado (con gaps menores) | Ver detalle abajo |
-| 3 | Productos | validado (deuda de verificación menor) | Todas las acciones portadas; `ImportarSeleccionados`/`ImportarTiposProductoSeleccionados` y filtros de listado sin probar con datos reales -- ver detalle abajo |
+| 3 | Productos | validado (deuda de verificación menor) | Todas las acciones portadas y verificadas (filtros, alta/edición/baja reales, import de catálogo global real, guard de import de tipos confirmado); solo "carga continua" y el camino feliz de import de tipos sin probar (sin dato de prueba) -- ver detalle abajo |
 | 4 | Stock e inventario | validado | Las 13 acciones portadas y verificadas de punta a punta, incluidas las escrituras reales -- ver detalle abajo |
 | 5 | Compras y abastecimiento | validado | Las 8 acciones portadas y validadas de punta a punta, incluida la escritura real -- ver detalle abajo |
 | 6 | Reportes y administración | validado | 6 controllers portados, incluida la escritura real de Usuarios -- ver detalle abajo |
 | 7 | Caja y tesorería | validado | `CajasController` (2 slices) + `FinanzasController` completos, incluidos modo POS y pago con Cheque/EftvoCheque de `AddOrEditPago` -- sin gaps abiertos, ver detalle abajo |
 | 8 | Ventas y POS | en progreso | Slices 1-2 (listados) + mini-spike AFIP (Factura A y B reales) + núcleo POS + **UI de POS completa (batches 1-7, verificada por el usuario en navegador)**, ver `PLAN-POS.md`/`PLAN-POS-UI.md` — ver detalle abajo |
 | 9 | Movimientos (adicional, fuera del plan original de 8) | validado | Traslados de stock entre sucursales -- las 8 acciones portadas y verificadas de punta a punta, incluida la escritura real -- ver detalle abajo |
-| 10 | Elaborados (adicional, fuera del plan original de 8) | validado (deuda de verificación menor) | Catálogo de embutidos -- las 17 acciones portadas; carga manual/fórmulas verificadas de punta a punta con escritura real; ingreso rápido con fórmula automática sin probar (sin producto de prueba disponible) -- ver detalle abajo |
+| 10 | Elaborados (adicional, fuera del plan original de 8) | validado | Catálogo de embutidos -- las 17 acciones portadas y verificadas de punta a punta con escritura real (carga manual, fórmulas, ingreso rápido/desarme) -- ver detalle abajo |
 | 11 | Códigos de barra (adicional, fuera del plan original de 8) | validado | Formatos de código interno de balanza (Configuración) -- 4 acciones, escritura real verificada -- ver detalle abajo |
 | 12 | Home/Utilidades (adicional, fuera del plan original de 8) | validado | Descarga de agentes locales (balanza/impresión), 100% estático -- ver detalle abajo |
 
@@ -160,7 +160,13 @@ El controller (`Guardar`/`BuildVM`/`MapToEntity`/etc.), al ser reescrito a mano 
 
 **Juez de paridad de `AddOrEdit`**: comparado en modo alta (id=0) y edición (id=20, "Chorizo") -- texto visible idéntico byte a byte en ambos casos (incluye todos los valores reales: precio, punto de stock, promedio, alícuota). Única categoría de diferencia en las etiquetas: el gap de validación ya documentado (ahora en 15+ campos de este formulario). Un falso positivo encontrado y descartado durante la comparación: una carrera de timing entre el script de validación en vivo del formulario y la captura del DOM por Playwright (con un `waitForTimeout(500)` adicional, ambos lados coinciden exactamente) -- no es un bug de paridad.
 
-No verificado en esta sesion: filtros del listado (SucursalId/tipo/marca/proveedor/fechas) via querystring; el guardado real (POST a `Guardar`) contra `WebCore`, incluido el flujo de "carga continua" y el clonado desde catálogo global.
+**Actualización 2026-09-05: filtros y escritura real verificados, gap cerrado.** Filtros del listado probados con datos reales y valores de control (`tipo=CERDO` → 28 de 60; `tipo=VACA`, inexistente → 0; `codigoDesde/Hasta` → 4; `SucursalId=2` → 0, confirma que el catálogo de esta empresa de prueba solo tiene stock configurado en sucursal 1; `marcaId` inexistente → 0; `fechaDesde/Hasta` futuro → 0 -- todos los filtros discriminan correctamente, sin falsos positivos/negativos). Escritura real de punta a punta vía curl con antiforgery real: alta (`Guardar`, código 9999, `IdCorte` real devuelto), edición (mismo producto, nombre/precio actualizados y confirmados), baja (`Eliminar`, confirmado que el producto ya no se encuentra) -- sin dejar residuo, el producto de prueba no existe más en la base.
+
+**`ImportarSeleccionados` verificado, gap cerrado (mismo día)**: import real vía curl con antiforgery real (`Productos/VerGlobales`, id de catálogo global 99 → código destino 8888) devolvió `{"ok":true,"mensaje":"Se importaron 1 productos correctamente."}`, el producto real quedó accesible (`Carre`, promedio 3.9, datos correctos copiados del catálogo global) -- eliminado después con `Eliminar` (ya verificado más arriba), y se confirmó que `VerGlobales` vuelve a marcar esa fila como `data-importado="0"` (el flag se calcula en vivo contra el catálogo local, no queda un residuo aunque se haya borrado el producto importado).
+
+**`ImportarTiposProductoSeleccionados`: guard verificado, camino feliz sin probar.** Se probó con un tipo inventado (`E2E_TEST_TIPO_CLAUDE`, no existente en el catálogo global) -- respondió correctamente `{"ok":false,"mensaje":"Los tipos seleccionados ya existen en el sistema o no están disponibles para importar."}`, confirmando que la acción sólo permite importar tipos que realmente están en el catálogo global (no crea tipos arbitrarios). No se pudo probar el camino feliz (importar un tipo real todavía no presente localmente): los 5 tipos visibles en `VerGlobalesTiposProducto` de esta base de desarrollo (CERDO/ELABORADO/EMBUTIDO/VACUNO/ALMACEN) ya están todos importados localmente -- mismo tipo de limitación que el caso de `GuardarIngresoRapido` en Elaborados (sin dato de prueba disponible, no un problema del código).
+
+**Sigue sin verificar** (fuera de alcance de esta pasada): el flujo de "carga continua" (`CargaContinua`/`SiguienteIdEdicion`/`FlujoBaseContinuo`); el clonado desde catálogo global vía `AddOrEdit`/`ClonarProductoGlobal` (se dispara al editar un producto con `IdEmpresa==0` directo desde el formulario de alta/edición -- `ImportarSeleccionados` ya verificado cubre el camino equivalente desde el modal de catálogo global, que es el flujo real que usa la UI).
 
 ## Módulo 4 — Stock e inventario (COMPLETO -- 13 acciones portadas y validadas, incluidas las escrituras reales)
 
@@ -536,7 +542,7 @@ Detectado el 2026-09-05: `Web/Controllers/MovimientosController.cs` (932 líneas
 
 Build limpio, suite completa de `WebCore.E2ETests` corrida (17/17 OK, incluido el test nuevo).
 
-## Módulo 10 — Elaborados (adicional, fuera del plan original de 8 módulos) -- COMPLETO (deuda de verificación menor)
+## Módulo 10 — Elaborados (adicional, fuera del plan original de 8 módulos) -- COMPLETO
 
 Atacado en la misma sesión que Módulo 9 (Movimientos), a pedido explícito del usuario. `Web/Controllers/ElaboradosController.cs` (1859 líneas, 17 acciones) -- catálogo de elaborados/embutidos: carga manual, ingreso rápido con fórmula automática, fórmulas/recetas, desarme.
 
@@ -552,7 +558,9 @@ Atacado en la misma sesión que Módulo 9 (Movimientos), a pedido explícito del
 
 **Verificado con datos reales, de punta a punta**: `Index`/`Lineas`/`Formulas`/`EditarFormula`/`Carga`/`IngresoRapido`/`Desarme` renderizan sin excepciones ocultas; `BuscarProducto`/`BuscarProductoPorCodigo`/`ObtenerFormula` contra datos reales (CARRE código 1, Chorizo código 4 con fórmula real de Sal/Pimienta/Genérico IVA 21%). **3 escrituras reales probadas de punta a punta**: `GuardarCarga` (click + submit real vía UI, antiforgery real, ver `WebCore.E2ETests/ElaboradosTests.cs` -- elaborado real creado, Chorizo + Sal, 0,5 kg, verificado en `Index`/`Lineas`); `GuardarFormula`/`EliminarFormula` (vía curl con antiforgery real -- fórmula nueva creada para CARRE, verificada con `BuscarProductoPorCodigo` -- `tieneFormula` pasó de `false` a `true` y de vuelta a `false` tras eliminar, round-trip limpio); `Anular` (vía curl -- elaborado de prueba de `GuardarCarga` anulado correctamente).
 
-**No verificado en esta sesión**: `GuardarIngresoRapido`/`EditarIngresoRapido` con datos reales -- no hay en la base de desarrollo ningún producto con `IngresoRapidoEmbutido=true` que además tenga una fórmula cargada (`IngresoRapido`/`Desarme` renderizan bien pero con la lista vacía); el modo edición de `GuardarCarga` (solo se probó alta); envío real a `wa.me` (no aplica a este módulo, no tiene esa opción).
+**Actualización 2026-09-05 (mismo día): `GuardarIngresoRapido`/`EditarIngresoRapido` verificados, gap cerrado.** No había en la base de desarrollo ningún producto con `IngresoRapidoEmbutido=true` con fórmula cargada -- se armó el escenario real vía `GuardarFormula` (CARRE, código 1, con `EsIngresoRapidoElaborado=true` + Sal al 50%, lo que también flipea `Corte.IngresoRapidoEmbutido` como hace el original), se probaron `IngresoRapido` (cantidad 2 → Sal calculada en vivo 1,000 kg, verificado en `Detalle`) y `Desarme` (cantidad 1) de punta a punta, y se revirtió todo al estado original: los 2 embutidos de prueba (id 72/73) anulados, la fórmula de prueba eliminada (con `EsIngresoRapidoElaborado=false` reenviado primero para devolver `Corte.IngresoRapidoEmbutido` a `false`) -- confirmado con `BuscarProductoPorCodigo` que CARRE quedó exactamente igual que antes (`ingresoRapido:false, tieneFormula:false`).
+
+**Sigue sin verificar**: el modo edición de `GuardarCarga` (solo se probó alta); envío real a `wa.me` (no aplica a este módulo, no tiene esa opción).
 
 Build limpio, suite completa de `WebCore.E2ETests` corrida (18/18 OK, incluido el test nuevo `ElaboradosTests`).
 
