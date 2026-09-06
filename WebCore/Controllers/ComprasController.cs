@@ -3,8 +3,9 @@
 // Mismo criterio de escala que Modulos 3/4: se porta en slices. Portado hasta ahora: Index()/
 // Detalle() (listado + detalle expandible), Lineas() (listado por producto), BuscarCorte/
 // BuscarCortePorCodigo (autocompletado propio de Compras, no comparte los de Stock), y ahora
-// Editar()/NuevaCompra()/ModificarCompra()/Guardar() (alta y edicion de compras). NO se portan
-// AutorizarModuloCompras/AutorizarOperadorModuloCompras -- ver decision mas abajo.
+// Editar()/NuevaCompra()/ModificarCompra()/Guardar() (alta y edicion de compras).
+// AutorizarModuloCompras/AutorizarOperadorModuloCompras portados 2026-09-06 (Batch 5, ver
+// docs/DECISIONS.md).
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06) -- ya no hay stub hardcodeado. Id real del usuario logueado es obligatorio (no
@@ -17,10 +18,8 @@
 //
 // El gate de "usuario de sala de produccion" (Index/Editar redirigen a AutorizarModuloCompras
 // cuando el usuario logueado tiene EsUsuarioProduccion==true y no hay operador de modulo
-// autorizado todavia, ver Web/Controllers/ComprasController.cs:52/197 y docs/DECISIONS.md "Login
-// de operador para el modulo Compras") todavia NO se porta -- es Batch 5 del plan de login/
-// permisos reales. Por la misma razon, ResolverOperadorModulo("Compras", user) se reemplaza
-// directamente por _usuarioActual en vez de portar el metodo.
+// autorizado todavia) ya esta portado, ver Web/Controllers/ComprasController.cs:52/197 y
+// docs/DECISIONS.md "Login de operador para el modulo Compras".
 //
 // PermiteMediaRes(user) en el original compara Session["Usuario"].Empresa.Cuit contra un CUIT
 // fijo (20306210786) que habilita el tipo "Media Res". Se verifico contra la base local
@@ -60,6 +59,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.CierreCaja _oCierreN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         private const long CuitHabilitaMediaRes = 20306210786;
 
@@ -77,10 +77,129 @@ namespace WebCore.Controllers
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
+        }
+
+        // ===== "Usuario de produccion" para el modulo Compras (Batch 5, 2026-09-06, ver
+        // docs/DECISIONS.md) -- mismo patron que VentasController, sin centralizar (ningun base
+        // controller comun entre ambos en WebCore). =====
+        private Entidades.Usuario ResolverOperadorModulo(string modulo, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
+            return ObtenerOperadorModulo(modulo) ?? usuarioSesion;
+        }
+
+        private static string ClaveSessionOperadorModulo(string modulo) => "OperadorModulo_" + (modulo ?? "");
+
+        private void RegistrarOperadorModulo(string modulo, Entidades.Usuario operador)
+        {
+            HttpContext.Session.SetString(ClaveSessionOperadorModulo(modulo), System.Text.Json.JsonSerializer.Serialize(operador));
+        }
+
+        private Entidades.Usuario ObtenerOperadorModulo(string modulo)
+        {
+            var json = HttpContext.Session.GetString(ClaveSessionOperadorModulo(modulo));
+            return string.IsNullOrEmpty(json) ? null : System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
+        }
+
+        // Ver comentario identico en VentasController.ObtenerSessionIdEstable -- ASP.NET Core
+        // Session no manda el Set-Cookie hasta el primer write, asi que sin esto el rate-limit
+        // por sesion nunca acumula (bug real encontrado y corregido en la verificacion de Batch 5).
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        private JsonResult ValidarOperadorModulo(int idUsuario, string clave, string modulo)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(modulo))
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            RegistrarOperadorModulo(modulo, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        [HttpGet]
+        public IActionResult AutorizarModuloCompras(string returnUrl)
+        {
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.ReturnUrlModuloCompras = string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Index", "Home") : returnUrl;
+            ViewBag.Title = "Autorizar operador";
+            ViewBag.Seccion = "Compras";
+            return View("~/Views/Compras/AutorizarModulo.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorModuloCompras(int idUsuario, string clave)
+        {
+            return ValidarOperadorModulo(idUsuario, clave, "Compras");
+        }
+
+        private List<object> ObtenerUsuariosActivosEmpresaParaCombo()
+        {
+            var dt = _oUsuarioN.obtenerUsuarios(true);
+            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
+                return new List<object>();
+
+            return dt.AsEnumerable()
+                .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
+                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>()
+                .ToList();
+        }
+
+        private int ValorInt(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return 0;
+
+            int valor;
+            return int.TryParse(Convert.ToString(row[columna]), out valor) ? valor : 0;
+        }
+
+        private string ValorString(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return "";
+
+            return Convert.ToString(row[columna]) ?? "";
         }
 
         public IActionResult Index(int idSucursal = -1, string tipoCompra = "Todos", string texto = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
         {
+            // Usuario de produccion: exige operador autorizado antes de entrar (Batch 5, ver
+            // docs/DECISIONS.md "Login de operador para el modulo Compras"). Port literal de
+            // Web/Controllers/ComprasController.cs:48-53.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Compras") == null)
+                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.Path + Request.QueryString });
+
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
@@ -318,6 +437,12 @@ namespace WebCore.Controllers
             Entidades.Usuario user = _usuarioActual;
             string origenNormalizado = NormalizarOrigen(origen);
             bool desdePos = EsOrigenPos(origenNormalizado);
+
+            // Usuario de produccion: exige operador autorizado solo en la pantalla completa, no
+            // en el modo embebido en POS (desdePos) -- Batch 5, port literal de
+            // Web/Controllers/ComprasController.cs:193-198.
+            if (!desdePos && user.EsUsuarioProduccion && ObtenerOperadorModulo("Compras") == null)
+                return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.Path + Request.QueryString });
 
             Entidades.Compra compra = null;
             if (id > 0)

@@ -89,6 +89,7 @@ namespace WebCore.Controllers
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Corte _oCorteN;
+        private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
@@ -109,7 +110,324 @@ namespace WebCore.Controllers
             _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
             _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
+        }
+
+        // ===== Permisos reales de Venta + "usuario de produccion" (Batch 5 del plan de login/
+        // permisos reales, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
+        // Web/Controllers/VentasController.cs:2497-2686 y Web/Controllers/BaseController.cs:
+        // 293-445, adaptado a IUsuarioSesionService/ISession en vez de Session["Usuario"]/
+        // HttpSessionStateBase. =====
+
+        // "La ultima venta del cierre del vendedor" resuelve por el CierreCaja mas reciente de esa
+        // sucursal+usuario (findByIdOrLast/FindLast) que todavia no tiene UsuarioCierre asignado.
+        private Entidades.CierreCaja ObtenerCierreCajaActual(Entidades.Usuario user)
+        {
+            if (user == null || user.IdSucursal == 0) return null;
+            if (user.Sucursal == null) user.Sucursal = _oSucursalN.findById(user.IdSucursal);
+            if (user.Sucursal == null) return null;
+
+            var cierre = new Entidades.CierreCaja { Sucursal = user.Sucursal, UsuarioInicio = user };
+            cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+            return cajaAbierta ? cierre : null;
+        }
+
+        private bool TienePermisoAdministrativoSobreVenta(Entidades.Venta venta, Entidades.Usuario user = null)
+        {
+            if (venta == null) return false;
+            user = user ?? _usuarioActual;
+            if (user == null) return false;
+
+            int idCreador = venta.Vendedor != null ? venta.Vendedor.Id : -1;
+            return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.UltimaVenta, venta.FechaVenta, idCreador);
+        }
+
+        private bool PuedeModificarUltimaVenta(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null) return false;
+            user = user ?? _usuarioActual;
+            if (user == null) return false;
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user)) return true;
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.UsuarioInicio == null) return false;
+
+            var ultimaVenta = _oVentaN.getUltimaVentaVendedor(cierre);
+            if (ultimaVenta == null || ultimaVenta.IdVenta != venta.IdVenta) return false;
+
+            return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
+        }
+
+        private string ObtenerMotivoNoPuedeModificarUltimaVenta(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null) return "Venta inválida.";
+            user = user ?? _usuarioActual;
+            if (user == null) return "Sesión expirada.";
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user)) return "";
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.UsuarioInicio == null) return "No tenés una caja abierta.";
+
+            var ultimaVenta = _oVentaN.getUltimaVentaVendedor(cierre);
+            if (ultimaVenta == null || ultimaVenta.IdVenta != venta.IdVenta)
+                return "Solo se puede modificar la última venta de tu cierre de caja actual.";
+
+            return "No tenés permisos para modificar esta venta.";
+        }
+
+        private bool PuedeEditarFechaVenta(Entidades.Venta venta, DateTime? fechaSeleccionada = null, Entidades.Usuario user = null)
+        {
+            if (venta == null) return false;
+            user = user ?? _usuarioActual;
+            if (user == null) return false;
+
+            int vendedorId = venta.Vendedor != null ? venta.Vendedor.Id : -1;
+            return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, fechaSeleccionada ?? venta.FechaVenta, vendedorId);
+        }
+
+        private bool PuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null) return false;
+            user = user ?? _usuarioActual;
+            if (user == null || user.IdSucursal == 0) return false;
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user)) return true;
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.FechaHoraInicio == null || cierre.UsuarioInicio == null) return false;
+            if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal) return false;
+            if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id) return false;
+
+            DateTime inicio = cierre.FechaHoraInicio.Value;
+            DateTime fin = cierre.FechaHoraCierre ?? DateTime.Now;
+            return venta.FechaVenta >= inicio && venta.FechaVenta <= fin;
+        }
+
+        private string ObtenerMotivoNoPuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
+        {
+            if (venta == null) return "Venta inválida.";
+            user = user ?? _usuarioActual;
+            if (user == null || user.IdSucursal == 0) return "Sesión expirada.";
+
+            if (TienePermisoAdministrativoSobreVenta(venta, user)) return "";
+
+            cierre = cierre ?? ObtenerCierreCajaActual(user);
+            if (cierre == null || cierre.FechaHoraInicio == null || cierre.UsuarioInicio == null) return "No tenés una caja abierta.";
+            if (venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal) return "La venta pertenece a otra sucursal.";
+            if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id) return "La venta no pertenece a tu cierre de caja actual.";
+
+            DateTime inicio = cierre.FechaHoraInicio.Value;
+            DateTime fin = cierre.FechaHoraCierre ?? DateTime.Now;
+            if (venta.FechaVenta < inicio || venta.FechaVenta > fin)
+                return "La venta quedó fuera del rango de tu cierre de caja actual.";
+
+            return "No tenés permisos para cambiar la forma de pago.";
+        }
+
+        // Resuelve quien queda como creador/operador real de una operacion cuando el usuario
+        // logueado es la cuenta compartida de sala de produccion: si hay un operador ya
+        // autorizado en Session para este posInstanceId/modulo, se usa ese; para cualquier
+        // usuario normal (EsUsuarioProduccion=false) devuelve el usuario de sesion sin cambios --
+        // cero impacto en el comportamiento fuera de la sala de produccion.
+        private Entidades.Usuario ResolverOperadorPOS(string posInstanceId, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
+            return ObtenerOperadorPOS(posInstanceId) ?? usuarioSesion;
+        }
+
+        private Entidades.Usuario ResolverOperadorModulo(string modulo, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
+            return ObtenerOperadorModulo(modulo) ?? usuarioSesion;
+        }
+
+        // Claves de Session (ASP.NET Core ISession solo guarda string/byte[] -- se serializa el
+        // Entidades.Usuario resuelto a JSON, a diferencia del clasico que guardaba el objeto tal
+        // cual en HttpSessionStateBase). Mismo criterio de nombres de clave que
+        // Web/Helpers/PermisosHelper.cs (ClaveSessionOperadorPOS/ClaveSessionOperadorModulo).
+        private static string ClaveSessionOperadorPOS(string posInstanceId) => "OperadorPOS_" + (posInstanceId ?? "");
+        private static string ClaveSessionOperadorModulo(string modulo) => "OperadorModulo_" + (modulo ?? "");
+
+        // ASP.NET Core Session solo manda el Set-Cookie de sesion al browser la PRIMERA VEZ que
+        // se escribe algo -- leer HttpContext.Session.Id antes de eso devuelve un id "fantasma"
+        // que cambia en cada request (nunca persiste), lo que rompe por completo el rate-limit
+        // por sesion (cada intento fallido cae en una key distinta, nunca acumula). Bug real
+        // encontrado en la verificacion de este mismo batch: 4 intentos con clave incorrecta NO
+        // bloqueaban el 5to. Fix: forzar un primer write (idempotente) antes de leer el Id.
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        private void RegistrarOperadorPOS(string posInstanceId, Entidades.Usuario operador)
+        {
+            HttpContext.Session.SetString(ClaveSessionOperadorPOS(posInstanceId), System.Text.Json.JsonSerializer.Serialize(operador));
+        }
+
+        private Entidades.Usuario ObtenerOperadorPOS(string posInstanceId)
+        {
+            var json = HttpContext.Session.GetString(ClaveSessionOperadorPOS(posInstanceId));
+            return string.IsNullOrEmpty(json) ? null : System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
+        }
+
+        private void LimpiarOperadorPOS(string posInstanceId)
+        {
+            HttpContext.Session.Remove(ClaveSessionOperadorPOS(posInstanceId));
+        }
+
+        private void RegistrarOperadorModulo(string modulo, Entidades.Usuario operador)
+        {
+            HttpContext.Session.SetString(ClaveSessionOperadorModulo(modulo), System.Text.Json.JsonSerializer.Serialize(operador));
+        }
+
+        private Entidades.Usuario ObtenerOperadorModulo(string modulo)
+        {
+            var json = HttpContext.Session.GetString(ClaveSessionOperadorModulo(modulo));
+            return string.IsNullOrEmpty(json) ? null : System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
+        }
+
+        // Valida usuario+clave de un empleado real (nunca la cuenta compartida) y, si tiene
+        // permiso de Ventas, lo deja registrado como operador de este posInstanceId. Rate-limit
+        // por sesion (no por usuario/IP): los intentos son totales para esta pestaña de POS, sin
+        // importar a que usuario del combo se le probo la contraseña.
+        private JsonResult ValidarOperadorPOS(int idUsuario, string clave, string posInstanceId, bool exigirPermisoVentas = true)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos, o el usuario no tiene permiso de Ventas.";
+
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(posInstanceId))
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            bool tienePermiso = !exigirPermisoVentas ||
+                (validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Venta.NuevaVenta, DateTime.Now, validado.Id));
+            if (validado == null || !validado.Activo || !tienePermiso)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            RegistrarOperadorPOS(posInstanceId, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        private JsonResult ValidarOperadorModulo(int idUsuario, string clave, string modulo)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(modulo))
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            if (validado == null || !validado.Activo)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            RegistrarOperadorModulo(modulo, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorPOS(int idUsuario, string clave, string posInstanceId)
+        {
+            return ValidarOperadorPOS(idUsuario, clave, posInstanceId);
+        }
+
+        [HttpPost]
+        public JsonResult CerrarOperadorPOS(string posInstanceId)
+        {
+            LimpiarOperadorPOS(posInstanceId);
+            return Json(new { ok = true });
+        }
+
+        [HttpGet]
+        public IActionResult AutorizarModuloVentas(string returnUrl)
+        {
+            if (_usuarioActual == null)
+                return RedirectToAction("Index", "Login");
+
+            ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            ViewBag.ReturnUrlModuloVentas = string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("Index", "Home") : returnUrl;
+            ViewBag.Title = "Autorizar operador";
+            ViewBag.Seccion = "Ventas";
+            return View("~/Views/Ventas/AutorizarModulo.cshtml");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorModuloVentas(int idUsuario, string clave)
+        {
+            return ValidarOperadorModulo(idUsuario, clave, "Ventas");
+        }
+
+        // Port de Web/Controllers/BaseController.cs:272-285 -- combo de usuarios activos de la
+        // empresa para el modal de seleccion de operador (POS y modulo).
+        private List<object> ObtenerUsuariosActivosEmpresaParaCombo()
+        {
+            var dt = _oUsuarioN.obtenerUsuarios(true);
+            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
+                return new List<object>();
+
+            return dt.AsEnumerable()
+                .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
+                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>()
+                .ToList();
+        }
+
+        private int ValorInt(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return 0;
+
+            int valor;
+            return int.TryParse(Convert.ToString(row[columna]), out valor) ? valor : 0;
+        }
+
+        private string ValorString(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return "";
+
+            return Convert.ToString(row[columna]) ?? "";
         }
 
         private async System.Threading.Tasks.Task<string> RenderPartialViewToStringAsync(string viewName, object model)
@@ -137,6 +455,12 @@ namespace WebCore.Controllers
 
         public IActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
         {
+            // Usuario de produccion: exige operador autorizado antes de entrar (Batch 5, ver
+            // docs/DECISIONS.md "Login de operador para el modulo Ventas"). Port literal de
+            // Web/Controllers/VentasController.cs:63-68.
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
@@ -263,6 +587,10 @@ namespace WebCore.Controllers
 
         public IActionResult Lineas(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1, string cliente = "", string vendedor = "", string formasPago = "", string producto = "")
         {
+            // Usuario de produccion: mismo gate que Index (Batch 5, ver docs/DECISIONS.md).
+            if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
@@ -381,6 +709,12 @@ namespace WebCore.Controllers
         // GET: Ventas/DetalleVenta/5
         public IActionResult DetalleVenta(int id, bool modal = false, bool desdePos = false, int idCierre = 0, string returnUrl = "")
         {
+            // Usuario de produccion: exige operador autorizado SOLO en la pantalla completa -- no
+            // en modo "modal" (embebido dentro de POS, que ya tiene su propio operador de POS
+            // autenticado). Port literal de Web/Controllers/VentasController.cs:402-409.
+            if (!modal && _usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
+                return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
+
             Entidades.Venta venta = _oVentaN.getVentaById(id);
             if (venta == null)
                 return NotFound();
@@ -392,10 +726,12 @@ namespace WebCore.Controllers
             ViewBag.TieneFacturaVenta = _oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
             ViewBag.IdNotaCreditoVenta = _oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
             ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
-            // Bypass de permisos (usuario unico Admin=true, sin sesion) -- ver TODO(claude) en
-            // VentasController.POS() y header de _DetalleVentaCard.cshtml.
-            ViewBag.PuedeModificarVenta = true;
-            ViewBag.PuedeCambiarFormaPago = true;
+            // Permisos reales (Batch 5, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/VentasController.cs:454-457.
+            ViewBag.PuedeModificarVenta = PuedeModificarUltimaVenta(venta);
+            ViewBag.MotivoNoPuedeModificarVenta = (bool)ViewBag.PuedeModificarVenta ? "" : ObtenerMotivoNoPuedeModificarUltimaVenta(venta);
+            ViewBag.PuedeCambiarFormaPago = PuedeCambiarFormaPago(venta);
+            ViewBag.MotivoNoPuedeCambiarFormaPago = (bool)ViewBag.PuedeCambiarFormaPago ? "" : ObtenerMotivoNoPuedeCambiarFormaPago(venta);
 
             if (modal)
                 return PartialView(venta);
@@ -1467,6 +1803,29 @@ namespace WebCore.Controllers
         public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false)
         {
             var user = _usuarioActual;
+            string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
+                ? Guid.NewGuid().ToString("N")
+                : posInstanceId.Trim();
+
+            // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): el operador real
+            // se resuelve por posInstanceId, no por modulo (cada pestaña de POS es independiente).
+            // Port literal de Web/Controllers/VentasController.cs:789-808.
+            var operador = ResolverOperadorPOS(posInstanceIdNormalizado, user);
+            bool requiereOperadorPOS = user.EsUsuarioProduccion && ObtenerOperadorPOS(posInstanceIdNormalizado) == null;
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.RequiereOperadorPOS = requiereOperadorPOS;
+            ViewBag.OperadorPOSNombre = (user.EsUsuarioProduccion && !requiereOperadorPOS) ? operador.Nombre : null;
+            if (user.EsUsuarioProduccion)
+                ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+
+            if (requiereOperadorPOS)
+            {
+                // Sin operador resuelto todavia: no se toca caja/venta hasta que el modal de
+                // seleccion de usuario (ver PosOperadorConfig en POS.cshtml) resuelva uno real.
+                ViewBag.PosModoInstancia = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase) ? "duplicado" : "original";
+                ViewBag.PosInstanceId = posInstanceIdNormalizado;
+                return View((Entidades.Venta)null);
+            }
 
             if (idVentaEditar > 0)
             {
@@ -1479,12 +1838,25 @@ namespace WebCore.Controllers
                     return RedirectToAction("POS");
                 }
 
+                var cierreEditar = ObtenerCierreCajaActual(user);
+                bool puedeEditarVenta = !soloFormaPago && PuedeModificarUltimaVenta(ventaEditar, operador, cierreEditar);
+                bool puedeCambiarPago = soloFormaPago && PuedeCambiarFormaPago(ventaEditar, operador, cierreEditar);
+                if (!puedeEditarVenta && !puedeCambiarPago)
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = soloFormaPago ? "Venta fuera de caja" : "Sin permisos";
+                    TempData["AlertMsg"] = soloFormaPago
+                        ? ObtenerMotivoNoPuedeCambiarFormaPago(ventaEditar, operador, cierreEditar)
+                        : ObtenerMotivoNoPuedeModificarUltimaVenta(ventaEditar, operador, cierreEditar);
+                    return RedirectToAction("POS");
+                }
+
                 ViewBag.CajaAbierta = true;
                 ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
                 ViewBag.IdSucursalPOS = user.IdSucursal;
                 ViewBag.IdUsuarioPOS = user.Id;
                 ViewBag.PosModoInstancia = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase) ? "duplicado" : "original";
-                ViewBag.PosInstanceId = string.IsNullOrWhiteSpace(posInstanceId) ? Guid.NewGuid().ToString("N") : posInstanceId.Trim();
+                ViewBag.PosInstanceId = posInstanceIdNormalizado;
 
                 var formasPagoConfigEditar = ObtenerConfiguracionFormaPagoPOS();
                 ViewBag.FormasPagoConfig = formasPagoConfigEditar;
@@ -1502,9 +1874,6 @@ namespace WebCore.Controllers
             string modoPosNormalizado = string.Equals(modoPos, "duplicado", StringComparison.OrdinalIgnoreCase)
                 ? "duplicado"
                 : "original";
-            string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
-                ? Guid.NewGuid().ToString("N")
-                : posInstanceId.Trim();
 
             var cierre = new Entidades.CierreCaja
             {
@@ -1539,7 +1908,7 @@ namespace WebCore.Controllers
                 LineasVenta = new List<Entidades.LineaVenta>(),
                 Persona = consumidorFinal,
                 IdPersona = consumidorFinal.idPersona,
-                Vendedor = user,
+                Vendedor = operador,
                 FechaVenta = DateTime.Now
             };
 
@@ -1581,10 +1950,10 @@ namespace WebCore.Controllers
         // comportamiento observable. AgregarProducto NO se porta -- confirmado codigo muerto (
         // ningun .js del original le pega, ver PLAN-POS.md seccion 2).
         //
-        // Chequeos de permisos del original (PuedeModificarUltimaVenta/PuedeCambiarFormaPago/
-        // TienePermisoAdministrativoSobreVenta, todos vía PermisosHelper.TienePermiso) se omiten
-        // directamente: bajo el usuario stub (Admin=true) siempre resuelven "permitido", mismo
-        // criterio que el resto de esta migracion.
+        // Vendedor real (Batch 5, 2026-09-06, ver docs/DECISIONS.md): resuelto via
+        // ResolverOperadorPOS -- para un usuario de produccion es el operador ya autorizado con
+        // password real para este posInstanceId; para cualquier usuario normal es el mismo `user`
+        // de siempre, cero cambio de comportamiento.
         // [FromBody]: el cliente original (pos-cart.js) manda `data: JSON.stringify(payload)` --
         // en MVC5 el JsonValueProviderFactory bindea eso automaticamente sin atributo; en ASP.NET
         // Core hace falta declararlo explicito para un Controller comun (no [ApiController]).
@@ -1594,6 +1963,7 @@ namespace WebCore.Controllers
             try
             {
                 var user = _usuarioActual;
+                var operador = ResolverOperadorPOS(request?.PosInstanceId, user);
 
                 if (request == null || request.LineasVenta == null || !request.LineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
@@ -1628,7 +1998,7 @@ namespace WebCore.Controllers
                 {
                     Persona = persona,
                     Sucursal = sucursal,
-                    Vendedor = user,
+                    Vendedor = operador,
                     FechaVenta = DateTime.Now,
                     TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
                     Observaciones = request.Observaciones ?? "",
@@ -1673,6 +2043,9 @@ namespace WebCore.Controllers
         }
 
         [HttpPost]
+        // Permisos reales portados 2026-09-06 (Batch 5, ver docs/DECISIONS.md) -- port literal de
+        // Web/Controllers/VentasController.cs:636-733 (antes solo escritura, sin ningun chequeo,
+        // bajo el usuario stub Admin=true que siempre resolvia "permitido").
         public IActionResult ModificarVenta([FromBody] FinalizarVentaRequest request)
         {
             try
@@ -1687,8 +2060,30 @@ namespace WebCore.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "La venta no existe." });
 
+                var operador = ResolverOperadorPOS(request.PosInstanceId, user);
+                var cierreActual = ObtenerCierreCajaActual(user);
+                bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, operador);
+
+                if (soloFormaPago)
+                {
+                    if (!PuedeCambiarFormaPago(venta, operador, cierreActual))
+                        return Json(new { ok = false, msg = ObtenerMotivoNoPuedeCambiarFormaPago(venta, operador, cierreActual) });
+                }
+                else
+                {
+                    if (!PuedeModificarUltimaVenta(venta, operador, cierreActual))
+                        return Json(new { ok = false, msg = "No tiene permisos para modificar esta venta." });
+                }
+
                 if (request.LineasVenta == null || !request.LineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
+
+                if (user.IdSucursal == 0 && !tienePermisoAdministrativoVenta)
+                    return Json(new { ok = false, msg = "Seleccione una sucursal antes de guardar la venta." });
+
+                if (!tienePermisoAdministrativoVenta &&
+                    (request.IdSucursalPOS != user.IdSucursal || venta.Sucursal == null || venta.Sucursal.idSucursal != user.IdSucursal))
+                    return Json(new { ok = false, msg = "La venta pertenece a otra sucursal. Cambie a la sucursal correcta antes de modificarla." });
 
                 var persona = _oPersonaN.findById(request.IdPersona);
                 if (persona == null)
@@ -1704,10 +2099,27 @@ namespace WebCore.Controllers
                 if (venta.Sucursal == null)
                     return Json(new { ok = false, msg = "Sucursal inválida." });
 
+                if (!tienePermisoAdministrativoVenta && (cierreActual == null || cierreActual.UsuarioInicio == null))
+                    return Json(new { ok = false, msg = "La caja ha sido cerrada." });
+
+                bool cajaAbierta = tienePermisoAdministrativoVenta ||
+                    _oCierreN.validarCajaAbiertaVendedor(venta.FechaVenta, venta.Sucursal, cierreActual.UsuarioInicio);
+
+                if (!cajaAbierta)
+                    return Json(new { ok = false, msg = "La caja ha sido cerrada." });
+
                 venta.Observaciones = request.Observaciones ?? venta.Observaciones ?? "";
                 venta.FormaPago = request.FormaPago;
                 venta.EnCtaCte = request.FormaPago == Entidades.Venta.formaPagoEnum.CtaCte.ToString();
                 venta.PagoMixtoEfectivo = request.EsPagoMixto ? request.Efectivo : 0;
+
+                if (!soloFormaPago && request.FechaVenta.HasValue && request.FechaVenta.Value != venta.FechaVenta)
+                {
+                    if (!PuedeEditarFechaVenta(venta, request.FechaVenta.Value, operador))
+                        return Json(new { ok = false, msg = "No tiene permisos para modificar la venta con la fecha seleccionada." });
+
+                    venta.FechaVenta = request.FechaVenta.Value;
+                }
 
                 if (venta.EnCtaCte && (!venta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())
                     || persona.idPersona.Equals(_param.GetInt(ParamKeys.IdConsumidorFinal, 0))))

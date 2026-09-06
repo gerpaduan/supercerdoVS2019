@@ -4498,3 +4498,65 @@ fan-out mecánico de los 18 controllers del stub a `IUsuarioSesionService`, gate
 Auditoría/Administración del sistema, y permisos reales de Venta + "usuario producción" (ver entrada
 "en progreso" en `docs/10-migracion-aspnet-core/gaps.md`).
 
+## 2026-09-06 - Batch 5 (final): permisos reales de Venta + "usuario producción" -- gap cerrado
+
+**Decisión**: portados los 4 métodos reales de permiso de `Web/Controllers/VentasController.cs`
+(`PuedeModificarUltimaVenta`, `PuedeCambiarFormaPago`, `PuedeEditarFechaVenta`,
+`TienePermisoAdministrativoSobreVenta`) y el mecanismo completo de "usuario de producción" (cuenta
+compartida de POS/módulo, con login de operador real por contraseña) a `WebCore`. Cierra
+definitivamente el gap "Permisos reales de venta y usuario producción" abierto desde 2026-09-04 y
+las entradas de Batch 3/4 -- el plan de login/permisos reales queda completo.
+
+**Piezas nuevas**: `WebCore/Helpers/PosOperadorStepUpRateLimiter.cs` (port literal, sin cambios de
+firma respecto al clásico -- ya usaba `string sessionId`); `VentasController` gana
+`ObtenerCierreCajaActual`/`TienePermisoAdministrativoSobreVenta`/`PuedeModificarUltimaVenta`/
+`PuedeCambiarFormaPago`/`PuedeEditarFechaVenta` (con sus "Motivo") + `ResolverOperadorPOS`/
+`ResolverOperadorModulo`/`ValidarOperadorPOS`/`ValidarOperadorModulo` +
+`AutorizarOperadorPOS`/`CerrarOperadorPOS`/`AutorizarModuloVentas`/`AutorizarOperadorModuloVentas`;
+`ComprasController` gana el equivalente a nivel de módulo (`ResolverOperadorModulo`/
+`AutorizarModuloCompras`/`AutorizarOperadorModuloCompras`). El operador resuelto (`Entidades.Usuario`
+completo) se guarda en `ISession` serializado a JSON (`System.Text.Json`) bajo las claves
+`OperadorPOS_<posInstanceId>`/`OperadorModulo_<modulo>` -- mismo criterio de nombres que
+`Web/Helpers/PermisosHelper.cs`, adaptado de `HttpSessionStateBase` (objeto tal cual) a
+`ISession` (solo string/byte[]).
+
+**`ModificarVenta`/`FinalizarVenta`/`POS()` (GET) ahora usan el operador resuelto, no la cuenta
+compartida**: `Vendedor = operador` (antes `Vendedor = user`), y `ModificarVenta` porta la cascada
+completa de validaciones del clásico (permiso de edición según `soloFormaPago`, sucursal, caja
+abierta, permiso de fecha) -- antes escribía sin ningún chequeo bajo el stub admin. `DetalleVenta`
+reemplaza `ViewBag.PuedeModificarVenta/PuedeCambiarFormaPago` hardcodeados a `true` por los
+métodos reales.
+
+**`FinalizarVentaRequest` (DTO)**: se agregaron `FechaVenta`/`PosInstanceId` -- el cliente
+(`forma-pago.js`, ya portado sin cambios en un batch anterior) ya mandaba ambos campos; llegaban al
+servidor y se descartaban en silencio por no existir en el DTO. Ningún cambio de JS fue necesario.
+
+**Bug real encontrado y corregido durante la verificación de este mismo batch**: el rate-limiter de
+`ValidarOperadorPOS`/`ValidarOperadorModulo` leía `HttpContext.Session.Id` para la clave de
+bloqueo, pero ASP.NET Core Session no manda el `Set-Cookie` de sesión hasta el primer *write* --
+leer el `Id` antes de eso da un id "fantasma" que cambia en cada request, así que 4 intentos
+seguidos con clave incorrecta nunca acumulaban en la misma clave y nunca bloqueaban. Fix: helper
+`ObtenerSessionIdEstable()` (duplicado en `VentasController`/`ComprasController`, mismo criterio
+que `ResolverUsuarioCreador`) que fuerza un primer `SetString` idempotente antes de leer el `Id`.
+Verificado con datos reales: 3 intentos con clave incorrecta bloquean el 4to (`bloqueado:true`,
+300s), reset correcto tras un login exitoso.
+
+**Verificado end-to-end con datos reales** (plan de verificación cumplido punto por punto):
+usuario de prueba ya existente `produccion`/`a` (`Id=16`, `EsUsuarioProduccion=true`,
+`Admin=false`) -- `GET /Ventas/POS` dispara el modal de selección de operador
+(`requiereOperadorPOS:true`); clave incorrecta rechazada; 3 intentos fallidos bloquean el 4to;
+un usuario real sin permiso `Permisos.Venta.NuevaVenta` (creado a propósito, sin `PuedeOperarPOS`)
+es rechazado pese a clave correcta; "ger" (`Admin=true`, bypassa el permiso) autoriza
+correctamente y el operador queda resuelto y persistido en `Session` -- una request posterior al
+mismo `posInstanceId` ya no pide operador y muestra el POS real. Suite completa
+`WebCore.E2ETests` (20 tests) en verde sin cambios, confirmando cero regresión para usuarios
+no-producción.
+
+**Fuera de alcance de este batch** (no pedido explícitamente por el plan, documentado para
+después si hace falta): `PuntosExpendioController` no recibió el mismo mecanismo de operador de
+POS (`AutorizarOperadorPOS`/`CerrarOperadorPOS` con `exigirPermisoVentas:false`) -- mismo patrón
+que Ventas, no portado en este batch por no estar nombrado explícitamente en el texto del plan.
+El botón "Cambiar operario" (`#btnCambiarOperadorPOS`) tampoco tiene un elemento HTML todavía en
+`POS.cshtml` -- el handler JS existe (inerte hasta que el botón se agregue), el flujo obligatorio
+inicial (`requiereOperadorPOS`) funciona completo sin él.
+

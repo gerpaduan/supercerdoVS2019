@@ -55,11 +55,13 @@
         venta y precarga los montos si era pago mixto.
       - Iter. 6: soloFormaPago ("Cambiar Forma de Pago"), reusa la mecanica de la iteracion 5.
 
+    Login de operador de produccion + permisos reales de edicion portados 2026-09-06 (Batch 5 del
+    plan de login/permisos reales, ver docs/DECISIONS.md) -- window.PosOperadorConfig mas abajo,
+    port literal de Web/Views/Ventas/POS.cshtml:1396-1486.
+
     Excluido a proposito (ver PLAN-POS-UI.md/gaps.md para el detalle y el resto de los batches):
       - Cambiar/buscar cliente (boton F9/CF quedan visibles pero sin JS todavia -- el cliente
         de la venta es siempre Consumidor Final).
-      - Login de operador de produccion + permisos reales de edicion (bloqueado por falta de
-        login/sesion real, ver gaps.md).
       - Factura AFIP automatica desde post-venta, WhatsApp, ticket ESC/POS con agente de
         impresion local, configurar impresora.
     El CSS (WebCore/wwwroot/Content/css/pos.css) es un port literal completo -- varias reglas
@@ -72,6 +74,11 @@
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
+    // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): con requiereOperadorPOS
+    // el controller devuelve Model=null (igual que !cajaAbierta) -- se necesita distinguir los 2
+    // casos aca para mostrar el modal correcto (seleccion de operador vs abrir caja).
+    bool esUsuarioProduccionPOS = ViewBag.EsUsuarioProduccion != null && (bool)ViewBag.EsUsuarioProduccion;
+    bool requiereOperadorPOS = ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS;
     int idSucursalPOS = ViewBag.IdSucursalPOS != null ? (int)ViewBag.IdSucursalPOS : 0;
     int idUsuarioPOS = ViewBag.IdUsuarioPOS != null ? (int)ViewBag.IdUsuarioPOS : 0;
     string sucursalNombrePOS = ViewBag.SucursalNombre as string ?? "";
@@ -579,6 +586,13 @@
         @Html.AntiForgeryToken()
     </div>
 }
+else if (requiereOperadorPOS)
+{
+    @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
+    <div id="globalAntiForgeryToken" style="display:none;">
+        @Html.AntiForgeryToken()
+    </div>
+}
 else
 {
     @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
@@ -601,9 +615,93 @@ else
     <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
     <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
     <script src="~/Scripts/app/pos-compact.js?v=1"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js?v=2"></script>
+
+    @* Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
+       Web/Views/Ventas/POS.cshtml:1396-1486. Vive en un bloque propio, ANTES del IIFE de
+       "cajaAbierta" de abajo: con requiereOperadorPOS el controller devuelve Model=null (mismo
+       caso que !cajaAbierta), asi que este bloque no puede depender de #pos-app/#inputCodigo --
+       solo depende del modal de _ModalSeleccionUsuario.cshtml, que ahora se renderiza siempre
+       (ver el @@if/else if/else de mas arriba). *@
+    <script>
+        (function () {
+            window.PosOperadorConfig = {
+                esUsuarioProduccion: @(esUsuarioProduccionPOS ? "true" : "false"),
+                requiereOperadorPOS: @(requiereOperadorPOS ? "true" : "false"),
+                posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+                urlAutorizar: '@Url.Action("AutorizarOperadorPOS", "Ventas")',
+                urlCerrar: '@Url.Action("CerrarOperadorPOS", "Ventas")',
+                usuariosActivos: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()))
+            };
+
+            var cfg = window.PosOperadorConfig;
+            if (!cfg.esUsuarioProduccion) return;
+
+            var loginObligatorioPendiente = false;
+
+            // No confiar en que pos-multi-instance.js ya sincronizo posInstanceId a la URL --
+            // un location.reload() plano perdia el posInstanceId y el servidor generaba uno
+            // nuevo en cada vuelta, mostrando el login en loop infinito (bug real ya encontrado
+            // y corregido en el clasico). Se arma la URL a mano, explicita.
+            function recargarConOperadorAutorizado() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('posInstanceId', cfg.posInstanceId);
+                window.PosNavegandoInternoPOS = true;
+                window.location.href = url.toString();
+            }
+
+            function pedirOperador(esInicial) {
+                loginObligatorioPendiente = esInicial;
+                window.SeleccionUsuario.abrir({
+                    titulo: esInicial ? 'Autorizate para operar este Punto de Venta' : 'Cambiar operario',
+                    usuarios: cfg.usuariosActivos,
+                    requierePassword: true,
+                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId)
+                }).then(function () {
+                    loginObligatorioPendiente = false;
+                    recargarConOperadorAutorizado();
+                }).catch(function () {
+                    if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+
+            // Red de seguridad: si el login era obligatorio y el modal se cierra sin resolver
+            // (Escape/backdrop/"Cancelar"/X), el Promise de SeleccionUsuario.abrir() nunca se
+            // resuelve NI se rechaza (ver seleccion-usuario.js) -- sin esto, .catch() nunca corre.
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (loginObligatorioPendiente && !$(this).data('resuelto')) {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                }
+            });
+
+            if (cfg.requiereOperadorPOS) {
+                pedirOperador(true);
+            }
+
+            $(document).on('click', '#btnCambiarOperadorPOS', function () {
+                pedirOperador(false);
+            });
+
+            // BUG real ya encontrado y corregido en el clasico: 'pagehide' dispara con CUALQUIER
+            // navegacion, incluida una vuelta a esta misma instancia de POS (reload post-login,
+            // cambio de sucursal, reset post-venta) -- el sendBeacon de limpieza competia con el
+            // GET de la pagina siguiente por la misma Session, borrando el operador recien
+            // autorizado antes de que la pagina nueva lo buscara. Las navegaciones que vuelven a
+            // esta misma instancia marcan window.PosNavegandoInternoPOS=true antes de navegar.
+            window.addEventListener('pagehide', function () {
+                if (window.PosNavegandoInternoPOS) return;
+                if (navigator.sendBeacon) {
+                    var data = new Blob([JSON.stringify({ posInstanceId: cfg.posInstanceId })], { type: 'application/json' });
+                    navigator.sendBeacon(cfg.urlCerrar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId), data);
+                }
+            });
+        })();
+    </script>
 
     <script>
         (function () {
+            if (@(requiereOperadorPOS ? "true" : "false")) return;
+
             var cajaAbierta = @(cajaAbierta ? "true" : "false");
 
             if (!cajaAbierta) {

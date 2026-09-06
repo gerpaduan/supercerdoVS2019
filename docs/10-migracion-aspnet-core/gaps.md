@@ -8,32 +8,6 @@ No confundir con `docs/GAPS.md` (raíz), que es específico de la migración SQL
 
 ## Abiertos
 
-### Permisos reales de venta y "usuario producción" — bypaseados en WebCore, portar cuando haya login/sesión real [EN PROGRESO 2026-09-06]
-
-**Actualizacion 2026-09-06**: arrancado el plan "Login/Sesion real para WebCore" (ver `docs/DECISIONS.md`). Batch 1 (Cookie Authentication + `IUsuarioSesionService`), Batch 2 (`LoginController` real, rate limiting) y Batch 3 (fan-out de los 18 controllers del stub a la sesion real) ya completos y verificados. Batch 4 (gates reales de Auditoria/Administracion del sistema + sidebar por permiso) tambien completo y verificado: `EsSuperAdmin` portado a `WebCore/Helpers/ISystemAdministrationRepository.cs`/`SystemAdministrationRepository.cs`/`SystemAdministrationRepositoryPg.cs`; `SystemAdministrationController`/`AuditoriaLoginController` gatean de verdad contra `IUsuarioSesionService`; `_Layout.cshtml` reemplaza el "ger" hardcodeado por el usuario real y gatea Configuracion/Administracion del sistema/Usuarios/Auditoria por permiso real -- verificado con "ger" (superadmin real, sidebar sin regresion) y con un segundo usuario no-admin/no-superadmin de prueba (`test_pg_auditoria`, ya existente de una sesion anterior) confirmando que las 3 secciones se ocultan y los 2 controllers devuelven Acceso Denegado. Falta solo Batch 5 (permisos reales de Venta + usuario produccion en si, que es lo que esta entrada describe) -- recien al cerrarlo esta entrada se borra y migra a `DECISIONS.md`.
-
-
-Detectado: 2026-09-04, batch 7 POS UI, iteración 5 (edición de venta existente). Pedido explícito del usuario: **"ESTOS PERMISOS SON PROPIOS DE LA APP, Y MUY IMPORTANTES. ANOTALO PARA MAS ADELANTE PORQUE NECESITAMOS PORTAR ESTAS REGLAS, AL IGUAL QUE UN USUARIO 'PRODUCCION'"**.
-
-`Web/Controllers/VentasController.cs` (clásico) protege la edición de una venta con reglas reales:
-
-- `PuedeModificarUltimaVenta` (2521-2542): admin, o la venta es literalmente `getUltimaVentaVendedor(cierre)` del cierre de caja actual del vendedor + permiso `Permisos.Venta.UltimaVenta` vigente.
-- `PuedeCambiarFormaPago` (2618-2643): admin, o misma sucursal + mismo vendedor del cierre actual + `FechaVenta` dentro del rango del cierre.
-- `PuedeEditarFechaVenta`: permiso `Permisos.Venta.NuevaVenta` sobre la fecha del vendedor — más estricto que editar productos.
-- **"Usuario de producción"** (cuenta compartida de POS): `user.EsUsuarioProduccion` + `PermisosHelper.RegistrarOperadorPOS/ObtenerOperadorPOS(Session, posInstanceId)` — pide login real de un empleado (usuario+contraseña) antes de operar cada instancia de POS; el operador autorizado gobierna permisos finos (Bonificar, editar/anular última venta) dentro de esa pestaña. Ver `Web/Views/Ventas/POS.cshtml:782-808` y `docs/DECISIONS.md` 2026-08-27/28.
-
-`WebCore` corre con un usuario único hardcodeado (`_usuarioActual`, `Id=2/Admin=true/IdEmpresa=1/IdSucursal=2`, sin `Session`) — todo el sistema de permisos de la migración resuelve siempre "permitido" (mismo criterio en Cajas/Finanzas/Reportes/Ventas). Concretamente hoy:
-
-- `ViewBag.PuedeModificarVenta = true` siempre (`VentasController.DetalleVenta`) — el botón "Modificar venta" aparece para cualquier venta, sin importar cierre de caja ni vendedor.
-- `ModificarVenta`/`POS` en WebCore no validan caja abierta del vendedor ni sucursal del request contra el usuario (documentado en el header de `VentasController.cs`).
-- "Cambiar Forma de Pago" (modo `soloFormaPago`) directamente no está portado.
-- No existe ningún concepto de "usuario producción" ni login de operador por pestaña en WebCore.
-
-**No se resuelve ahora** porque no hay sistema de login/sesión real en WebCore todavía (diseño deliberado del spike inicial, ver plan de migración) — portar estas reglas sin eso no se puede probar de verdad (no hay multi-usuario). Queda anotado para cuando se diseñe autenticación real: en ese momento, portar `PuedeModificarUltimaVenta`/`PuedeCambiarFormaPago`/`PuedeEditarFechaVenta`/`TienePermisoAdministrativoSobreVenta` y la feature completa de "usuario producción" (login de operador por instancia de POS) juntas, no por separado — están relacionadas (mismo helper `PermisosHelper`, misma pantalla).
-
-Impacto real: alto una vez que haya usuarios reales — sin esto, cualquier usuario puede editar cualquier venta sin restricción de caja/turno, y no hay forma de compartir una PC de POS entre varios empleados con auditoría real de quién operó qué. Hoy (usuario único de desarrollo) no bloquea nada.
-
-
 ### Mensajes de validación built-in de ASP.NET Core en ingles (campos de tipo valor no-nullable)
 
 Detectado: 2026-09-01, juez de paridad sobre `SystemAdministration/EditarEmpresa`. Confirmado como patron transversal a los Modulos 1, 2 y 3 (no exclusivo de Empresas): reaparece igual en `EditarSucursal` (IdSucursal, IdEmpresa, CodPuntoVentaAfip), `EditarUsuario` (Id, IdEmpresa, IdSucursalUser, Admin, Activo, PermitirLoginFueraSucursal), `AltaRapidaEmpresa` (Usuario.Admin, Usuario.Activo, Sucursal.CodPuntoVentaAfip, Empresa.CodigoGenericoCodigo, Empresa.CodigoGenericoIdAlicuotaIva), `Personas/Editar` (IdPersona, IdIva, CtaCte) y `Productos/AddOrEdit` (IdCorte, IdMarca, IdCorteMaestro, Porcentaje, PorcentajeHueso, AlicuotaIva, SiguienteIdEdicion, UltimoProductoContinuoId, RetomarProductoId, CargaContinua, Pesable, Habilitado, IngresoRapidoEmbutido, EnCierreStock, Independiente, PuntoStock, IdAlicuotaIva -- el formulario mas grande portado hasta ahora, mismo patron en 16+ campos). Tambien se confirmo que Core no emite `data-val-number` para NINGUN campo numerico (con o sin Required), a diferencia de MVC5 que siempre lo agrega para `int`/`long`/`int?` -- mismo gap, alcance mas amplio de lo que parecia con el primer campo encontrado.
