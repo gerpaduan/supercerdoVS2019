@@ -31,7 +31,7 @@ public sealed class PagoChequesTests
     [Fact]
     public async Task FormaPagoCheque_MuestraBloqueYAgregaChequeReal()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 
@@ -79,7 +79,7 @@ public sealed class PagoChequesTests
     [Fact]
     public async Task FormaPagoEftvoCheque_MuestraBloqueEfectivoYCheques()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var idPersona = await BuscarUnaPersonaReal(page);
 
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Finanzas/AddOrEditPago?idPersona={idPersona}&returnUrl=", new PageGotoOptions

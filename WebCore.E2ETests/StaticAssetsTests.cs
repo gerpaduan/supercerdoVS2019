@@ -23,6 +23,8 @@ public sealed class StaticAssetsTests
         // Playwright siempre pide gzip/br (Accept-Encoding), igual que cualquier navegador real
         // -- a diferencia de curl sin --compressed, que no dispara este bug.
         var page = await _fixture.Browser.NewPageAsync();
+        // Archivo estatico servido por UseStaticFiles, antes del pipeline de auth -- no necesita
+        // login (a diferencia del segundo test de este archivo, que navega a una vista real).
         var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/lib/jquery/dist/jquery.min.js");
 
         Assert.NotNull(response);
@@ -37,7 +39,7 @@ public sealed class StaticAssetsTests
     [Fact]
     public async Task JQuery_QuedaDefinidoEnUnaPaginaReal()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Personas", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,

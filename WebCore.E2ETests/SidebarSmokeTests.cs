@@ -18,7 +18,7 @@ public sealed class SidebarSmokeTests
     [Fact]
     public async Task Personas_RenderizaConSidebar()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Personas", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,

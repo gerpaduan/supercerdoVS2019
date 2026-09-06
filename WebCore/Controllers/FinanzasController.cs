@@ -12,9 +12,11 @@
 // AddOrEditPago: modo POS (2026-09-05) y pago con Cheque/EftvoCheque (2026-09-05) ya portados,
 // ver docs/DECISIONS.md. Sin piezas deferred pendientes en este controller.
 //
-// Mismo stub que el resto de la migracion. PermisosHelper.TienePermiso(Session, ...) se omite
-// (bypass de Admin=true) salvo donde el original ya usa un chequeo real independiente de Session
-// (ej. "usuario.Admin" en PuedeVerSaldosCuentaCorriente, que se preserva).
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. PermisosHelper.TienePermiso(Session, ...) se omite
+// -- TODO(claude): revisar en Batch 4/5, salvo donde el original ya usa un chequeo real
+// independiente de Session (ej. "usuario.Admin" en PuedeVerSaldosCuentaCorriente, que se
+// preserva).
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -32,29 +34,20 @@ namespace WebCore.Controllers
 {
     public class FinanzasController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.CuentaCorriente _oCtaCteN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.CierreCaja _oCierreN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public FinanzasController()
+        public FinanzasController(IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
@@ -65,9 +58,9 @@ namespace WebCore.Controllers
         }
 
         // Port de FinanzasController.ObtenerCajaAbiertaUsuario (Web/Controllers/FinanzasController.cs:1215)
-        // -- misma logica exacta, adaptada al stub _usuarioActual en vez de Session["Usuario"]
-        // (WebCore no tiene sesion real, ver docs/DECISIONS.md). Mismo patron ya usado y verificado
-        // en VentasController/CajasController para resolver "la caja abierta del vendedor actual".
+        // -- misma logica exacta, adaptada al usuario real de sesion en vez de Session["Usuario"]
+        // clasico. Mismo patron ya usado y verificado en VentasController/CajasController para
+        // resolver "la caja abierta del vendedor actual".
         private Entidades.CierreCaja ObtenerCajaAbiertaUsuario(Entidades.Usuario user)
         {
             if (user == null || user.IdSucursal == 0)

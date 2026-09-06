@@ -7,13 +7,10 @@
 // llama ninguna accion publica, ver Web/Controllers/PersonasController.cs -- codigo muerto, no se
 // porta). Ver gap en docs/10-migracion-aspnet-core/gaps.md.
 //
-// Diferencia deliberada respecto al original: usa un IEmpresaContext + Entidades.Usuario
-// hardcodeados en vez de Session["Usuario"] (mismo criterio que AuditoriaLoginController/
-// SystemAdministrationController -- WebCore todavia no tiene login/sesion real). A diferencia de
-// esos 2 controllers, aca el "usuario actual" no es solo un gate de acceso: alimenta reglas de
-// negocio reales (EsAdministrador, PuedeGestionarCuentaCorriente, PuedeModificarPersona) que
-// afectan que se guarda. El stub imita al usuario real de prueba (ger, admin=true, empresa 1) para
-// que el juez de paridad compare contra el mismo comportamiento.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. El "usuario actual" no es solo un gate de acceso:
+// alimenta reglas de negocio reales (EsAdministrador, PuedeGestionarCuentaCorriente,
+// PuedeModificarPersona) que afectan que se guarda.
 using System;
 using System.Data;
 using System.Globalization;
@@ -32,27 +29,26 @@ namespace WebCore.Controllers
 {
     public class PersonasController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Persona _oPersonaN;
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario { Admin = true, IdEmpresa = 1 };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider)
+        public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, WebCore.Services.IUsuarioSesionService sesion)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
 
             // Negocio.Persona/Datos.Persona.findById necesita un IParametrosContext real (no null)
             // para resolver ParamKeys.IdConsumidorFinal -- Web/Controllers/BaseController.cs lo arma
             // igual (NegocioFactory.CrearParametros(empresa) + Reload()) y lo cachea en
-            // Session["PARAM_CTX"]; aca no hay sesion todavia, se crea uno nuevo por request.
+            // Session["PARAM_CTX"]; aca se crea uno nuevo por request en vez de cachearlo (mismo
+            // criterio que el resto de los controllers de esta migracion).
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

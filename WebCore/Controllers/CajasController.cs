@@ -8,21 +8,18 @@
 // CalcularComisionesElectronicas/GuardarComisionesElectronicas/TiposEgresoCajaOpciones (pantalla
 // administrativa separada, "Egresos de Caja", segundo slice de este modulo).
 //
-// Mismo criterio de stub que el resto de la migracion: IEmpresaContext + IParametrosContext
-// reales, Entidades.Usuario stub (Id=2, Admin=true, IdEmpresa=1, IdSucursal=2, Nombre="ger").
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado.
 //
 // Autenticacion de step-up de Cierre de Caja (Web/Controllers/CajasController.cs:
-// AutorizarAccionCierre/RevocarAutorizacionCierre, con CierreCajaStepUpRateLimiter) NO se porta:
-// es un mecanismo para que un usuario SIN el permiso directo de cerrar caja pueda autorizar
-// temporalmente tipeando la clave de otro usuario que si lo tiene. PermisosHelper.
-// ObtenerUsuarioAutorizadoCierre(Session) resuelve primero TienePermisoVer(Cajas.CerrarCaja), que
-// con Admin=true (bypass ya usado en toda la migracion) siempre da true -- el stub SIEMPRE tiene
-// el permiso directo, asi que la rama de step-up nunca se ejecuta (mismo criterio que
-// AutorizarModuloCompras en Compras, o SeleccionUsuarioController: codigo inalcanzable bajo este
-// stub, no se reproduce con infraestructura de Session que WebCore no tiene). El front-end sigue
-// intacto (window.CajasStepUpTienePermisoDirecto=true evita que el modal de autorizacion se abra
-// nunca) y las URLs de esas 2 acciones quedan armadas en el JS aunque no exista el endpoint en el
-// servidor -- no se disparan bajo ningun flujo de esta pantalla.
+// AutorizarAccionCierre/RevocarAutorizacionCierre, con CierreCajaStepUpRateLimiter) todavia NO se
+// porta: es un mecanismo para que un usuario SIN el permiso directo de cerrar caja pueda autorizar
+// temporalmente tipeando la clave de otro usuario que si lo tiene -- depende del mismo sistema de
+// permisos reales de Batch 4/5 (ver docs/10-migracion-aspnet-core/gaps.md). Con un usuario admin
+// real (que siempre tiene el permiso directo) la rama de step-up no se ejecuta, mismo
+// comportamiento observable que antes. El front-end sigue intacto
+// (window.CajasStepUpTienePermisoDirecto=true evita que el modal de autorizacion se abra nunca) y
+// las URLs de esas 2 acciones quedan armadas en el JS aunque no exista el endpoint en el servidor.
 //
 // El boton "Ventas" de cada fila abre Ventas/MisVentas (Modulo 8, POS, no portado) -- queda
 // wireado igual que el original pero da 404 al clickear, gap ya aceptado en este mismo patron
@@ -45,11 +42,6 @@ namespace WebCore.Controllers
 {
     public class CajasController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
         private sealed class GuardarEgresoCajaResultado
         {
             public bool Ok { get; set; }
@@ -63,24 +55,20 @@ namespace WebCore.Controllers
             public int IdSucursalNueva { get; set; }
         }
 
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.Venta _oVentaN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public CajasController()
+        public CajasController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

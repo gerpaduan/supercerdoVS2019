@@ -22,7 +22,7 @@ public sealed class DarkModeTests
     [Fact]
     public async Task CajasAbiertas_TablasNoQuedanBlancasEnModoOscuro()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Cajas/CajasAbiertas", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,
@@ -57,7 +57,7 @@ public sealed class DarkModeTests
     [Fact]
     public async Task PosCarrito_NoQuedaBlancoEnModoOscuro()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,
@@ -88,7 +88,7 @@ public sealed class DarkModeTests
     [Fact]
     public async Task StockDetalleFila_MetaCardNoQuedaBlancaEnModoOscuro()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,

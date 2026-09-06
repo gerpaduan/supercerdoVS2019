@@ -3,12 +3,11 @@
 // (self-service, distinto de SystemAdministrationController.Usuarios, cross-tenant para el
 // super-admin de plataforma, ya portado en Modulo 1).
 //
-// Mismo criterio de stub que el resto del modulo (Id=2, Admin=true, IdEmpresa=1, IdSucursal=2,
-// Nombre="ger"). Con Admin=true, TienePermisoUsuarios/PuedeVerUsuarios/PuedeAdministrarUsuarios
-// siempre dan true (el chequeo real de negocio ya contempla el bypass de Admin, no es una
-// omision). ObtenerUsuarioActualConPermisos() se reemplaza por el stub directo -- el original
-// refresca el usuario de Session con sus Permisos si hace falta, pero con Admin=true el bypass
-// de permisos nunca llega a mirar la lista de Permisos, asi que no hace falta portar ese refresh.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. ObtenerUsuarioActualConPermisos() se reemplaza por
+// el usuario de sesion directo -- el original refresca el usuario de Session con sus Permisos si
+// hace falta, pero IUsuarioSesionService ya re-resuelve Permisos frescos en cada request (ver
+// UsuarioSesionService.ResolverUsuarioActual), asi que no hace falta portar ese refresh aparte.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -26,27 +25,18 @@ namespace WebCore.Controllers
         // -- mismo hardcodeo que el original (no hay tabla de mapeo clave->idform en el proyecto).
         private const int IdFormVentas = 7;
 
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.Sucursal _oSucursalN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public UsuariosController()
+        public UsuariosController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

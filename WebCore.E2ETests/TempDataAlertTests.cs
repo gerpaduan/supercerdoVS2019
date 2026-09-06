@@ -20,7 +20,7 @@ public sealed class TempDataAlertTests
     [Fact]
     public async Task AgregarDispositivoSeguro_MuestraAlertaYSeLimpiaSolo()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 

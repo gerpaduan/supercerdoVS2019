@@ -6,25 +6,21 @@
 // Editar()/NuevaCompra()/ModificarCompra()/Guardar() (alta y edicion de compras). NO se portan
 // AutorizarModuloCompras/AutorizarOperadorModuloCompras -- ver decision mas abajo.
 //
-// Mismo criterio que Stock/Personas/Productos: IEmpresaContext + IParametrosContext reales, y un
-// stub Entidades.Usuario (Id=2, Admin=true, IdEmpresa=1, IdSucursal=2, Nombre="ger") que imita al
-// usuario real de prueba usado en el juez de paridad. Id=2 es obligatorio (no cosmetico): un bug
-// real encontrado en Stock (ver docs/DECISIONS.md 2026-09-01) mostro que un stub sin Id graba
-// CreadoPor=0 en vez del usuario real al escribir datos -- se aplica la leccion desde el arranque
-// de este controller, aunque Index/Detalle no escriben nada.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. Id real del usuario logueado es obligatorio (no
+// cosmetico): un bug real encontrado en Stock (ver docs/DECISIONS.md 2026-09-01) mostro que un
+// stub sin Id graba CreadoPor=0 en vez del usuario real al escribir datos.
 //
 // El sistema de "permiso con limite de fecha" (BaseController.AjustarFechaSiNoTienePermiso/
-// ConfigurarAdvertenciaFechaEnVivo/VistaAccesoDenegado) se omite por completo, mismo criterio que
-// en Stock: con el stub admin el resultado es siempre "sin restriccion, sin aviso".
+// ConfigurarAdvertenciaFechaEnVivo/VistaAccesoDenegado) se omite por completo -- TODO(claude):
+// revisar en Batch 4/5 de permisos reales.
 //
 // El gate de "usuario de sala de produccion" (Index/Editar redirigen a AutorizarModuloCompras
-// cuando Session["Usuario"].EsUsuarioProduccion==true y no hay operador de modulo autorizado
-// todavia, ver Web/Controllers/ComprasController.cs:52/197 y docs/DECISIONS.md "Login de operador
-// para el modulo Compras") NO se porta: el stub admin nunca es usuario de produccion
-// (EsUsuarioProduccion queda en su default, false), asi que esa rama nunca se dispara. Por la
-// misma razon, ResolverOperadorModulo("Compras", user) siempre devuelve el usuario de sesion sin
-// cambios para este stub -- se reemplaza directamente por _usuarioActual en vez de portar el
-// metodo (que ademas depende de Session, no disponible aca).
+// cuando el usuario logueado tiene EsUsuarioProduccion==true y no hay operador de modulo
+// autorizado todavia, ver Web/Controllers/ComprasController.cs:52/197 y docs/DECISIONS.md "Login
+// de operador para el modulo Compras") todavia NO se porta -- es Batch 5 del plan de login/
+// permisos reales. Por la misma razon, ResolverOperadorModulo("Compras", user) se reemplaza
+// directamente por _usuarioActual en vez de portar el metodo.
 //
 // PermiteMediaRes(user) en el original compara Session["Usuario"].Empresa.Cuit contra un CUIT
 // fijo (20306210786) que habilita el tipo "Media Res". Se verifico contra la base local
@@ -56,12 +52,8 @@ namespace WebCore.Controllers
 {
     public class ComprasController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Compra _oCompraN;
         private readonly Negocio.Sucursal _oSucursalN;
@@ -71,17 +63,12 @@ namespace WebCore.Controllers
 
         private const long CuitHabilitaMediaRes = 20306210786;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public ComprasController()
+        public ComprasController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

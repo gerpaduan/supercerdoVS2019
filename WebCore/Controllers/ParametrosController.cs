@@ -1,11 +1,13 @@
 ﻿// Port de Web/Controllers/ParametrosController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Grilla de parametros de la empresa actual (catalogo
-// general + valor particular por tenant). Mismo criterio de stub que Empresa/SucursalController.
+// general + valor particular por tenant). Usuario/empresa reales via IUsuarioSesionService
+// (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no hay stub hardcodeado.
 //
 // ObtenerEmpresaCuit(usuario) en el original compara Session["Usuario"].Empresa.Cuit contra el
 // mismo CUIT fijo (20306210786) ya verificado real para la empresa del stub en otros controllers
 // de esta migracion (ver Compras/ExistenciaPorSucursales) -- se hardcodea a true en vez de
-// reproducir el chequeo via Session.
+// reproducir el chequeo via Session. TODO(claude): al implementarse Batch 4/5 (permisos reales),
+// revisar si este hardcodeo sigue siendo correcto o debe reproducir el chequeo real de CUIT.
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -25,26 +27,17 @@ namespace WebCore.Controllers
         private const int TIPO_INT = 3;
         private const int TIPO_LONG = 4;
 
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Parametros _oParametrosN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public ParametrosController()
+        public ParametrosController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
             _oParametrosN = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);

@@ -1,7 +1,8 @@
 ﻿// Port de Web/Controllers/DispositivosSegurosController.cs (ver docs/DECISIONS.md, migracion
 // ASP.NET Core, Modulo 6 -- Reportes y administracion). Registro de PCs conocidas (numero de
-// serie via agente local) que saltan el bloqueo por IP del login. Mismo criterio de stub que
-// Empresa/SucursalController.
+// serie via agente local) que saltan el bloqueo por IP del login. Usuario/empresa reales via
+// IUsuarioSesionService (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no hay stub
+// hardcodeado.
 using System;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
@@ -11,25 +12,16 @@ namespace WebCore.Controllers
 {
     public class DispositivosSegurosController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly Negocio.DispositivoSeguro _oDispositivoN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public DispositivosSegurosController()
+        public DispositivosSegurosController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(_empresa);
         }
 

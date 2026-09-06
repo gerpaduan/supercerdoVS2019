@@ -2,10 +2,9 @@
 // codigo interno de balanza (EAN-13, prefijo 20-29) por empresa, usados por
 // Negocio.BarcodeInterpreter al interpretar un codigo escaneado en el POS.
 //
-// Mismo criterio que el resto de la migracion: IEmpresaContext real y un stub Entidades.Usuario
-// (Admin=true, IdEmpresa=1). El chequeo de permiso original (PuedeAdministrar: Admin de la misma
-// empresa) se preserva tal cual -- con el stub admin siempre resuelve "autorizado", mismo
-// resultado observable, no se omite el metodo en si (queda listo para un login real futuro).
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. El chequeo de permiso original (PuedeAdministrar:
+// Admin de la misma empresa) se preserva tal cual, ahora con datos reales del usuario logueado.
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
 using WebCore.Models;
@@ -14,25 +13,16 @@ namespace WebCore.Controllers
 {
     public class CodigosBarraController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly Negocio.FormatoCodigoBarras _oFormatoN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public CodigosBarraController()
+        public CodigosBarraController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _oFormatoN = WebCore.Infrastructure.NegocioFactory.CrearFormatoCodigoBarras(_empresa);
         }
 

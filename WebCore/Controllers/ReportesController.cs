@@ -3,13 +3,12 @@
 // (1676 lineas en el original) -- de solo lectura (ninguna accion escribe datos), asi que no hace
 // falta prueba de escritura en vivo, solo verificacion de que cada tipo de reporte trae datos reales.
 //
-// Mismo stub que el resto de Modulo 6: IEmpresaContext/IParametrosContext reales, Entidades.Usuario
-// stub (Id=2, Admin=true, IdEmpresa=1, IdSucursal=2, Nombre="ger"). El sistema de "permiso con
-// limite de fecha" (BaseController.AjustarFechaSiNoTienePermiso/ConfigurarAdvertenciaFechaEnVivo/
-// VistaAccesoDenegado, y PermisosHelper.TienePermiso) se omite por completo -- mismo criterio que
-// Stock/Compras: con el stub admin el resultado es siempre "sin restriccion, sin aviso". Por la
-// misma razon, ObtenerIdEmpresaSesion() (que en el original cae a Session["Usuario"] o a empresa)
-// se simplifica a devolver directamente _empresa.IdEmpresa.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. El sistema de "permiso con limite de fecha"
+// (BaseController.AjustarFechaSiNoTienePermiso/ConfigurarAdvertenciaFechaEnVivo/
+// VistaAccesoDenegado, y PermisosHelper.TienePermiso) se omite por completo -- TODO(claude):
+// revisar en Batch 4/5. Por la misma razon, ObtenerIdEmpresaSesion() (que en el original cae a
+// Session["Usuario"] o a empresa) se simplifica a devolver directamente _empresa.IdEmpresa.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -32,12 +31,8 @@ namespace WebCore.Controllers
         private const string TipoReporteVentasProducto = "Ventas por Producto";
         private const string TipoReporteBalance = "Balance Economico";
 
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
         private readonly Negocio.Sucursal _oSucursalN;
@@ -47,17 +42,12 @@ namespace WebCore.Controllers
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.CuentaCorriente _oCuentaCorrienteN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public ReportesController()
+        public ReportesController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

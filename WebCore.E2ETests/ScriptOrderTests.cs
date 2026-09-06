@@ -22,9 +22,9 @@ public sealed class ScriptOrderTests
     }
 
     private static async Task<(IResponse? Response, List<string> Errors, IPage Page)> GotoAndCollectErrors(
-        IBrowser browser, string url)
+        WebCoreFixture fixture, string url)
     {
-        var page = await browser.NewPageAsync();
+        var page = await fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 
@@ -40,7 +40,7 @@ public sealed class ScriptOrderTests
     [Fact]
     public async Task PersonasIndex_SinErroresDeScript_YBusquedaEnVivoFunciona()
     {
-        var (response, errors, page) = await GotoAndCollectErrors(_fixture.Browser, $"{WebCoreFixture.BaseUrl}/Personas");
+        var (response, errors, page) = await GotoAndCollectErrors(_fixture,$"{WebCoreFixture.BaseUrl}/Personas");
 
         Assert.NotNull(response);
         Assert.Equal(200, response!.Status);
@@ -61,7 +61,7 @@ public sealed class ScriptOrderTests
     [Fact]
     public async Task UsuariosEditar_SinErroresDeScript_YEditReadOnlyQuedaWireado()
     {
-        var (response, errors, page) = await GotoAndCollectErrors(_fixture.Browser, $"{WebCoreFixture.BaseUrl}/Usuarios/Editar?id=0");
+        var (response, errors, page) = await GotoAndCollectErrors(_fixture,$"{WebCoreFixture.BaseUrl}/Usuarios/Editar?id=0");
 
         Assert.NotNull(response);
         Assert.Equal(200, response!.Status);
@@ -82,7 +82,7 @@ public sealed class ScriptOrderTests
         // AddOrEditPago no puede usar @section Scripts (tambien se sirve sin layout via
         // PartialView/AJAX) -- este test cubre especificamente el caso CON layout completo,
         // que es el que corria antes de jquery.min.js y rompia.
-        var listado = await _fixture.Browser.NewPageAsync();
+        var listado = await _fixture.NewAuthenticatedPageAsync();
         var respListado = await listado.GotoAsync($"{WebCoreFixture.BaseUrl}/Personas/Listar?filtro=");
         var json = await respListado!.TextAsync();
         using var doc = JsonDocument.Parse(json);
@@ -90,7 +90,7 @@ public sealed class ScriptOrderTests
         await listado.CloseAsync();
 
         var (response, errors, page) = await GotoAndCollectErrors(
-            _fixture.Browser,
+            _fixture,
             $"{WebCoreFixture.BaseUrl}/Finanzas/AddOrEditPago?idPersona={idPersona}&returnUrl=");
 
         Assert.NotNull(response);

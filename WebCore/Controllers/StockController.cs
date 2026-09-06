@@ -11,26 +11,23 @@
 // ningun endpoint queda pendiente en este controller -- ver docs/10-migracion-aspnet-core/README.md
 // para el estado real (juez de paridad corrido o no por accion) y gaps.md para lo encontrado.
 //
-// Mismo criterio que Personas/Productos: IEmpresaContext + IParametrosContext reales, y un stub
-// Entidades.Usuario (Admin=true, IdEmpresa=1, IdSucursal=2, Nombre="ger") que imita al usuario
-// real de prueba usado en el juez de paridad. El sistema de "permiso con limite de fecha" del
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. El sistema de "permiso con limite de fecha" del
 // original (BaseController.AjustarFechaIndiceSegunLimiteYPermiso/
 // ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo, ver Web/Controllers/BaseController.cs:175-246)
-// se omite por completo (no solo se hardcodea a true): con el stub admin de esta migracion el
-// resultado de esas funciones es siempre "sin restriccion, sin aviso", asi que no llamarlas
-// produce el mismo resultado observable que llamarlas con permiso total. Lo mismo se aplica ahora
-// a PermisosHelper.TienePermiso(Session, Stock.AddOrEditStock, ...) en Editar/Guardar: se
-// hardcodea a "siempre autorizado" (mismo criterio ya usado en ProductosController para
-// esAdministrador). El calculo de la fecha default del filtro de Index ("fechaLimiteSinPermiso")
-// SI se preserva -- es un valor de negocio real, no parte del gate de permiso.
+// se omite por completo -- TODO(claude): revisar en Batch 4/5 de permisos reales si corresponde
+// portarlo. Lo mismo para PermisosHelper.TienePermiso(Session, Stock.AddOrEditStock, ...) en
+// Editar/Guardar: se hardcodea a "siempre autorizado". El calculo de la fecha default del filtro
+// de Index ("fechaLimiteSinPermiso") SI se preserva -- es un valor de negocio real, no parte del
+// gate de permiso.
 //
 // El gate de "usuario de sala de produccion" (Editar redirige a un controller SeleccionUsuario
-// separado cuando Session["Usuario"].EsUsuarioProduccion==true y todavia no se eligio operador,
-// ver Web/Controllers/StockController.cs:466 y docs/DECISIONS.md "Mover la seleccion de
-// usuario...") NO se porta: el stub admin nunca es usuario de produccion (EsUsuarioProduccion
-// queda en su default, false), asi que esa rama nunca se dispara -- mismo comportamiento
-// observable que un usuario real no-produccion. ResolverUsuarioCreador() SI se porta (metodo
-// trivial, no cuesta nada mantenerlo fiel) por si se agrega login real mas adelante.
+// separado cuando el usuario logueado tiene EsUsuarioProduccion==true y todavia no se eligio
+// operador, ver Web/Controllers/StockController.cs:466 y docs/DECISIONS.md "Mover la seleccion de
+// usuario...") todavia NO se porta -- es Batch 5 del plan de login/permisos reales (usuario
+// produccion), documentado en docs/10-migracion-aspnet-core/gaps.md. Con un usuario admin real
+// (EsUsuarioProduccion=false) esa rama no se dispara, mismo comportamiento observable que antes.
+// ResolverUsuarioCreador() SI se porta (metodo trivial, ya fiel al original).
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -44,11 +41,6 @@ namespace WebCore.Controllers
 {
     public class StockController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
         private static readonly string[] TiposStock =
         {
             Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock),
@@ -58,38 +50,25 @@ namespace WebCore.Controllers
             Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock)
         };
 
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Compra _oCompraN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Corte _oCorteN;
 
-        // Mismo criterio que PersonasController: stub que imita al usuario real de prueba (ger,
-        // id=2, admin=true, empresa 1, sucursal San Lorenzo=2) para que el juez de paridad compare
-        // contra el mismo comportamiento. EsUsuarioProduccion queda en su default (false) --
-        // deliberado: el gate de "usuario de sala de produccion" (Editar redirige a
-        // SeleccionUsuario, ver Web/Controllers/StockController.cs:466 y docs/DECISIONS.md,
-        // "Mover la seleccion de usuario...") nunca aplica a un usuario admin real, asi que con
-        // este stub esa rama no se dispara -- mismo comportamiento observable, no una omision.
-        // Id=2 es OBLIGATORIO, no cosmetico: a diferencia de Index/Detalle (donde Id nunca se
-        // persiste), Guardar/GenerarAjustePesaje escriben CreadoPor/ActualizadoPor a la base real
-        // -- un stub sin Id (default 0) graba el usuario de sistema "CarniSys Admin" (id=0, un
-        // usuario real pero equivocado) en vez de "ger". Bug real encontrado en la prueba en vivo
-        // del 2026-09-01 (compra idCompra=9037 quedo con creadoPor=0 en vez de 2), ver docs/
-        // DECISIONS.md. PersonasController/ProductosController no tienen este problema: ninguno
-        // persiste CreadoPor/ActualizadoPor del usuario de sesion (revisado en la misma sesion).
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        // Id real del usuario logueado (no un stub) -- OBLIGATORIO que sea correcto, no cosmetico:
+        // a diferencia de Index/Detalle (donde Id nunca se persiste), Guardar/GenerarAjustePesaje
+        // escriben CreadoPor/ActualizadoPor a la base real. Bug real encontrado en la prueba en
+        // vivo del 2026-09-01 con el stub anterior (compra idCompra=9037 quedo con creadoPor=0 en
+        // vez de 2), ver docs/DECISIONS.md -- motivo por el cual esta nota se preserva.
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public StockController()
+        public StockController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

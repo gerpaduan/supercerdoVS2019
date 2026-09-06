@@ -16,11 +16,10 @@
 // ImportarSeleccionados/ImportarTiposProductoSeleccionados (las 2 escrituras reales) quedan sin
 // probar con un POST real, ver docs/10-migracion-aspnet-core/README.md.
 //
-// Mismo criterio que Personas: IEmpresaContext + IParametrosContext reales (Negocio.Parametros +
-// Reload(), evita el NullReferenceException ya encontrado en Modulo 2) en vez de Session["Usuario"]/
-// Session["PARAM_CTX"]. Los flags de ViewBag/gates que en el original vienen de
-// PermisosHelper.TienePermiso(Session, ...) se hardcodean a true (mismo criterio que el usuario
-// admin=true de Personas) -- documentado, no un permiso real todavia.
+// Empresa real via IUsuarioSesionService (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no
+// hay stub hardcodeado. Los flags de ViewBag/gates que en el original vienen de
+// PermisosHelper.TienePermiso(Session, ...) se hardcodean a true -- documentado, no un permiso
+// real todavia (TODO(claude): revisar en Batch 4/5 de permisos reales).
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -45,17 +44,13 @@ namespace WebCore.Controllers
 {
     public class ProductosController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
         private const int CatalogoGlobalTamanoPagina = 50;
 
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
         private readonly IWebHostEnvironment _env;
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Corte _oCorteN;
@@ -65,11 +60,13 @@ namespace WebCore.Controllers
         // IWebHostEnvironment: mismo criterio ya establecido en VentasController para AFIP -- lee
         // el logo de GenerarEtiquetasPdf desde WebRootPath, GenerarDocsCore.cs se mantiene libre
         // de acceso a disco.
-        public ProductosController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env)
+        public ProductosController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _env = env;
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
 
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();

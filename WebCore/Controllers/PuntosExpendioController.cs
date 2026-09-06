@@ -11,10 +11,10 @@
 // AGREGADO (2026-09-04, PLAN-POS.md batch 7): FinalizarPOS -- el endpoint transaccional que crea
 // el expendio real (Negocio.Venta.agregarExpendio/agregarLineaExprendio), mismo patron y mismo
 // nivel de verificacion que VentasController.FinalizarVenta (HTTP directo + sqlcmd, sin UI propia
-// todavia). ResolverOperadorPOS (step-up de la cuenta compartida de produccion) se omite: bajo el
-// stub Admin=true, _usuarioActual.EsUsuarioProduccion siempre es false, asi que ese metodo
-// devolveria el mismo usuario sin cambios -- mismo criterio de "codigo muerto bajo el stub" que el
-// resto de la migracion.
+// todavia). ResolverOperadorPOS (step-up de la cuenta compartida de produccion) todavia se omite:
+// es Batch 5 del plan de login/permisos reales (usuario produccion, ver
+// docs/10-migracion-aspnet-core/gaps.md) -- con un usuario real no-produccion ese metodo
+// devolveria el mismo usuario sin cambios, mismo comportamiento observable que antes.
 //
 // Las 11 acciones restantes del original siguen sin portar en este slice:
 //  - POS transaccional restante (la vista POS.cshtml en si, 1980 lineas, y el flujo de
@@ -28,9 +28,10 @@
 // Consecuencia visible en la vista: el boton "Imprimir" (ticket) de cada card de
 // ExpendiosGenerados sigue excluido; se agregan botones nuevos "PDF" y "Email" en su lugar.
 //
-// Bypass de permisos, mismo criterio de toda la migracion: el usuario stub (Admin=true) hace que
-// PermisosHelper.TienePermiso(Session, Permisos.Venta.NuevaVenta, ...) del original resuelva
-// siempre "sin restriccion" -- se omite directamente en las acciones portadas.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. PermisosHelper.TienePermiso(Session,
+// Permisos.Venta.NuevaVenta, ...) del original se omite directamente -- TODO(claude): revisar en
+// Batch 4/5 de permisos reales.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -51,12 +52,8 @@ namespace WebCore.Controllers
 {
     public class PuntosExpendioController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
         private readonly Negocio.Venta _oVentaN;
@@ -66,17 +63,12 @@ namespace WebCore.Controllers
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public PuntosExpendioController()
+        public PuntosExpendioController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 
@@ -86,8 +78,6 @@ namespace WebCore.Controllers
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
-
-            _usuarioActual.Sucursal = _oSucursalN.findById(_usuarioActual.IdSucursal);
         }
 
         // Port de PuntosExpendioController.POS (batch UI de Expendios, ver

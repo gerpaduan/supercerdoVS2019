@@ -24,7 +24,7 @@ public sealed class LayoutParidadTests
         // franja gris a la derecha, y el menu de usuario del topbar terminaba a mitad de
         // pantalla en vez de la esquina superior derecha. Fix: #content-wrapper { width: 100%; }
         // (mismas 2 reglas que trae sb-admin-2.css original, nunca copiadas a mano).
-        var page = await _fixture.Browser.NewPageAsync(new BrowserNewPageOptions
+        var page = await _fixture.NewAuthenticatedPageAsync(new BrowserNewPageOptions
         {
             ViewportSize = new ViewportSize { Width = 1400, Height = 900 }
         });
@@ -54,7 +54,7 @@ public sealed class LayoutParidadTests
         // copiada pero quedaba muerta sin este JS, asi que el teclado del POS nunca se
         // compactaba y quedaba desproporcionado en pantallas con poca altura util. Fix:
         // Scripts/app/pos-compact.js (nuevo, port literal de la IIFE del original).
-        var page = await _fixture.Browser.NewPageAsync(new BrowserNewPageOptions
+        var page = await _fixture.NewAuthenticatedPageAsync(new BrowserNewPageOptions
         {
             ViewportSize = new ViewportSize { Width = 1366, Height = 768 }
         });

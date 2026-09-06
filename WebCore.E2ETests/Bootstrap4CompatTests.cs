@@ -23,7 +23,7 @@ public sealed class Bootstrap4CompatTests
     [Fact]
     public async Task JQueryFnModalCollapseAlert_QuedanDefinidosComoPluginReal()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 
@@ -46,7 +46,7 @@ public sealed class Bootstrap4CompatTests
     {
         // Repro original del gap (docs/10-migracion-aspnet-core/gaps.md, ya cerrado): esta vista
         // tiraba "$(...).modal is not a function" apenas cargaba la pagina, antes de cualquier click.
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 

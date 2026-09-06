@@ -7,14 +7,12 @@
 // PuntosExpendio); el boton "Imprimir ticket" del modal post-guardado se excluye, "Generar PDF"
 // y "Enviar a WhatsApp" si se portan (no dependen del agente).
 //
-// Mismo criterio que Stock/Compras/Productos: IEmpresaContext + IParametrosContext reales, y un
-// stub Entidades.Usuario (Admin=true, IdEmpresa=1, IdSucursal=2, Id=2, Nombre="ger"). El sistema
-// de "permiso con limite de fecha" (AjustarFechaIndiceSegunLimiteYPermiso/
-// ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo) y PermisosHelper.TienePermiso se omiten por
-// completo (mismo resultado observable que "siempre autorizado" con el stub admin). El gate de
-// "usuario de sala de produccion" (SeleccionUsuario) NO se dispara con el stub (EsUsuarioProduccion
-// = false por default) -- ResolverUsuarioCreador() SI se porta (trivial, deja la puerta abierta a
-// un login real futuro).
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. El sistema de "permiso con limite de fecha"
+// (AjustarFechaIndiceSegunLimiteYPermiso/ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo) y
+// PermisosHelper.TienePermiso se omiten por completo -- TODO(claude): revisar en Batch 4/5. El
+// gate de "usuario de sala de produccion" (SeleccionUsuario) todavia no se porta (Batch 5) --
+// ResolverUsuarioCreador() SI se porta (trivial, ya fiel al original).
 using System.Data;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,29 +23,20 @@ namespace WebCore.Controllers
 {
     public class MovimientosController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
         private const long CuitColumnasInternas = 20306210786;
 
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Sucursal _oSucursalN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public MovimientosController()
+        public MovimientosController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
 

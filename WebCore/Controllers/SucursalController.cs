@@ -1,8 +1,9 @@
 ﻿// Port de Web/Controllers/SucursalController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
 // Modulo 6 -- Reportes y administracion). Pantalla "Mis Sucursales": ver/editar las sucursales de
 // la empresa actual (distinto de SystemAdministrationController.Sucursales, cross-tenant para el
-// super-admin de plataforma, ya portado en Modulo 1). Mismo criterio de stub que EmpresaController
-// (Id=2, Admin=true, IdEmpresa=1, IdSucursal=2, Nombre="ger") -- PuedeAdministrar siempre da true.
+// super-admin de plataforma, ya portado en Modulo 1). Usuario/empresa reales via
+// IUsuarioSesionService (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no hay stub
+// hardcodeado.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,25 +16,16 @@ namespace WebCore.Controllers
 {
     public class SucursalController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly Negocio.Sucursal _oSucursalN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public SucursalController()
+        public SucursalController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa);
         }
 

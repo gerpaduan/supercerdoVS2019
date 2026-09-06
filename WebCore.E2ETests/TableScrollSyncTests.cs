@@ -19,14 +19,17 @@ public sealed class TableScrollSyncTests
     [Fact]
     public async Task StockLineas_GeneraBarraFlotanteEnTablaAncha()
     {
-        var page = await _fixture.Browser.NewPageAsync(new BrowserNewPageOptions
+        var page = await _fixture.NewAuthenticatedPageAsync(new BrowserNewPageOptions
         {
             ViewportSize = new ViewportSize { Width = 480, Height = 800 } // fuerza overflow horizontal
         });
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 
-        var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock/Lineas", new PageGotoOptions
+        // idSucursal=2 (San Lorenzo) explicito: desde el login real (2026-09-06) el default ya no
+        // es el stub hardcodeado sino la sucursal real de "ger" (San Martin=1), que no tiene datos
+        // de stock en el rango de fecha por defecto -- la tabla quedaria vacia sin esto.
+        var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock/Lineas?idSucursal=2", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 20000

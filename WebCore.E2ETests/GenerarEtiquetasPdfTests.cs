@@ -20,7 +20,7 @@ public sealed class GenerarEtiquetasPdfTests
     [Fact]
     public async Task GenerarEtiquetas_DescargaPdfRealParaProductosSeleccionados()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Productos?modo=etiquetas", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,

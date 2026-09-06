@@ -19,7 +19,7 @@ public sealed class MovimientosTests
     [Fact]
     public async Task NuevoMovimiento_AgregaLineaYGuardaReal()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         // Filtra en origen el quirk heredado del original (Web/Views/Movimientos/Editar.cshtml
         // usa el mismo type="number" en #txtCodigoProducto/#txtCantUnidad): movimientos.js llama

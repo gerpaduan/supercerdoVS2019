@@ -19,7 +19,7 @@ public sealed class ElaboradosTests
     [Fact]
     public async Task Carga_BuscaElaboradoAgregaIngredienteYGuardaReal()
     {
-        var page = await _fixture.Browser.NewPageAsync();
+        var page = await _fixture.NewAuthenticatedPageAsync();
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 

@@ -3,14 +3,11 @@
 // horario laboral de la empresa actual (distinto de SystemAdministrationController, que es
 // cross-tenant para el super-admin de plataforma, ya portado en Modulo 1).
 //
-// Mismo criterio de siempre: stub Entidades.Usuario (Id=2, Admin=true, IdEmpresa=1, IdSucursal=2,
-// Nombre="ger"). Con este stub, PuedeAdministrar(usuario) siempre da true (Admin=true e
-// IdEmpresa coincide con el stub de empresa) -- el gate "solo lectura para no-admin" del original
-// nunca se ejercita, pero el codigo real de PuedeAdministrar SI se porta (usa campos reales del
-// usuario, no se omite como los sistemas de permiso con Session). El chequeo
-// usuario.IdEmpresa != empresa.IdEmpresa (VistaAccesoDenegado) tampoco se porta -- con el stub
-// nunca es true, y VistaAccesoDenegado depende de infraestructura de permisos con fecha que ya se
-// omite en el resto de la migracion.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. PuedeAdministrar(usuario) usa campos reales del
+// usuario logueado (Admin + IdEmpresa). El chequeo usuario.IdEmpresa != empresa.IdEmpresa
+// (VistaAccesoDenegado) tampoco se porta -- ver TODO(claude) mas abajo, requiere infraestructura
+// de permisos con fecha que se omite en el resto de la migracion.
 using System;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
@@ -20,25 +17,16 @@ namespace WebCore.Controllers
 {
     public class EmpresaController : Controller
     {
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly Negocio.Empresa _oEmpresaN;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public EmpresaController()
+        public EmpresaController(WebCore.Services.IUsuarioSesionService sesion)
         {
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
             _oEmpresaN = WebCore.Infrastructure.NegocioFactory.CrearEmpresa(_empresa);
         }
 

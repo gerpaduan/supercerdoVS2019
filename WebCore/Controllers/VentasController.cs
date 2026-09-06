@@ -29,13 +29,14 @@
 // dejarlos wireados a una accion inexistente -- mismo criterio que FinanzasController excluyo
 // CtaCtePersona/AddOrEditPago en cascada.
 //
-// Bypass de permisos: igual que el resto de la migracion (Cajas/Finanzas/Reportes), el usuario
-// stub tiene Admin=true, asi que TODOS los chequeos de PermisosHelper.TienePermiso*/
-// VistaAccesoDenegado/ConfigurarAdvertenciaFechaEnVivo del original siempre resuelven "sin
-// restriccion" -- se omiten directamente en vez de portarlos como no-ops. Por la misma razon se
-// omiten los helpers que solo existen para calcular esos permisos (PuedeModificarUltimaVenta,
-// PuedeCambiarFormaPago, TienePermisoAdministrativoSobreVenta y sus "Motivo") ya que solo los
-// usaban los botones ya excluidos arriba.
+// Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
+// 2026-09-06) -- ya no hay stub hardcodeado. Bypass de permisos: los chequeos de
+// PermisosHelper.TienePermiso*/VistaAccesoDenegado/ConfigurarAdvertenciaFechaEnVivo del original
+// se omiten directamente -- TODO(claude): revisar en Batch 4/5. PuedeModificarUltimaVenta,
+// PuedeCambiarFormaPago, TienePermisoAdministrativoSobreVenta (permisos reales de Venta + usuario
+// produccion) son justamente el Batch 5 del plan de login/permisos reales, ver
+// docs/10-migracion-aspnet-core/gaps.md -- todavia no portados, es el trabajo mas grande que
+// queda de ese plan.
 //
 // PerformanceInstrumentation.LogServerEvent (llamado en el DetalleVenta original) no se porta:
 // no existe en WebCore/Utilidades.Core (ver docs/DECISIONS.md, spike de Utilidades.Core), y
@@ -76,15 +77,11 @@ namespace WebCore.Controllers
         // ProductosController.CatalogoGlobalTamanoPagina.
         private const int FacturasTamanoPagina = 50;
 
-        private sealed class StubEmpresaContext : IEmpresaContext
-        {
-            public int IdEmpresa => 1;
-        }
-
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
         private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
-        private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
 
         private readonly Negocio.Venta _oVentaN;
@@ -94,20 +91,15 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.BarcodeInterpreter _oBarcodeInterpreter;
 
-        private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-        {
-            Id = 2,
-            Admin = true,
-            IdEmpresa = 1,
-            IdSucursal = 2,
-            Nombre = "ger"
-        };
+        private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
+        public VentasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
             _env = env;
+            _sesion = sesion;
+            _empresa = sesion.Empresa;
 
             _param = WebCore.Infrastructure.NegocioFactory.CrearParametros(_empresa);
             _param.Reload();
@@ -118,8 +110,6 @@ namespace WebCore.Controllers
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
-
-            _usuarioActual.Sucursal = _oSucursalN.findById(_usuarioActual.IdSucursal);
         }
 
         private async System.Threading.Tasks.Task<string> RenderPartialViewToStringAsync(string viewName, object model)

@@ -14,33 +14,24 @@ namespace WebCore.Controllers;
 // ver WebCore/Views/Shared/_Layout.cshtml) desde el atajo F3 del POS y el boton "Calcular
 // efectivo" de Cajas/_AddOrEditEgresoCaja.cshtml (este ultimo estaba roto -- faltaba el modal,
 // ver _CalculadoraBilletesModal.cshtml, ya portado). PDF via QuestPDF (GenerarDocsCore.cs),
-// no iTextSharp (no corre en .NET Core). Sin Session["Usuario"]: usa el mismo stub Id=2/
-// Admin=true/IdEmpresa=1/IdSucursal=2/Nombre="ger" que el resto de los controllers portados.
+// no iTextSharp (no corre en .NET Core). Usuario/empresa reales via IUsuarioSesionService
+// (login real, ver docs/DECISIONS.md "Login/Sesion real para WebCore" 2026-09-06) -- ya no
+// hay stub hardcodeado.
 public class HomeController : Controller
 {
-    private sealed class StubEmpresaContext : IEmpresaContext
-    {
-        public int IdEmpresa => 1;
-    }
-
-    private readonly IEmpresaContext _empresa = new StubEmpresaContext();
+    private readonly WebCore.Services.IUsuarioSesionService _sesion;
+    private readonly IEmpresaContext _empresa;
     private readonly Negocio.Sucursal _oSucursalN;
     private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
 
-    private readonly Entidades.Usuario _usuarioActual = new Entidades.Usuario
-    {
-        Id = 2,
-        Admin = true,
-        IdEmpresa = 1,
-        IdSucursal = 2,
-        Nombre = "ger"
-    };
+    private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-    public HomeController(Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
+    public HomeController(Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
     {
         _env = env;
+        _sesion = sesion;
+        _empresa = sesion.Empresa;
         _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa);
-        _usuarioActual.Sucursal = _oSucursalN.findById(_usuarioActual.IdSucursal);
     }
 
     public IActionResult Index()
