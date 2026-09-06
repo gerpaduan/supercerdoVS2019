@@ -11,17 +11,13 @@
 // AGREGADO (2026-09-04, PLAN-POS.md batch 7): FinalizarPOS -- el endpoint transaccional que crea
 // el expendio real (Negocio.Venta.agregarExpendio/agregarLineaExprendio), mismo patron y mismo
 // nivel de verificacion que VentasController.FinalizarVenta (HTTP directo + sqlcmd, sin UI propia
-// todavia). ResolverOperadorPOS (step-up de la cuenta compartida de produccion) todavia se omite:
-// es Batch 5 del plan de login/permisos reales (usuario produccion, ver
-// docs/10-migracion-aspnet-core/gaps.md) -- con un usuario real no-produccion ese metodo
-// devolveria el mismo usuario sin cambios, mismo comportamiento observable que antes.
+// todavia). ResolverOperadorPOS/AutorizarOperadorPOS/CerrarOperadorPOS portados 2026-09-06
+// (retomado del Batch 5 del plan de login/permisos reales, ver docs/DECISIONS.md) --
+// exigirPermisoVentas=false a diferencia de Ventas: cualquier usuario activo puede operar
+// Expendio, no solo quien tiene Ventas > Editar.
 //
-// Las 11 acciones restantes del original siguen sin portar en este slice:
-//  - POS transaccional restante (la vista POS.cshtml en si, 1980 lineas, y el flujo de
-//    autorizacion de operador que solo aplica a la cuenta compartida de produccion, no usada en
-//    ningun juez de esta migracion): Abrir, POS, AutorizarOperadorPOS, CerrarOperadorPOS, Guardar,
-//    BuscarProducto, BuscarProductoPorCodigo, BuscarProductoPOS, MisExpendiosPOS (este ultimo
-//    ademas depende de ResolverOperadorPOS, infraestructura de POS que no existe sin Session).
+// Las acciones restantes del original siguen sin portar en este slice:
+//  - Abrir, Guardar, BuscarProducto, BuscarProductoPorCodigo, MisExpendiosPOS.
 //  - Impresion de tickets ESC/POS (agente de impresion local, sin relacion con el bloqueante de
 //    PDF): ImprimirTicket, ImprimirTicketPayload, DescargarAgenteImpresion.
 //
@@ -30,8 +26,9 @@
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06) -- ya no hay stub hardcodeado. PermisosHelper.TienePermiso(Session,
-// Permisos.Venta.NuevaVenta, ...) del original se omite directamente -- TODO(claude): revisar en
-// Batch 4/5 de permisos reales.
+// Permisos.Venta.NuevaVenta, ...) del original (gate de ExpendiosGenerados/Guardar) se sigue
+// omitiendo -- son permisos de "ver"/"nueva venta" generales del modulo, no del mecanismo de
+// usuario de produccion (ya portado arriba); TODO(claude): revisar si hace falta portarlos aparte.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -80,11 +77,136 @@ namespace WebCore.Controllers
             _oBarcodeInterpreter = WebCore.Infrastructure.NegocioFactory.CrearBarcodeInterpreter(_empresa, _param);
         }
 
+        // ===== "Usuario de produccion" para el POS de Expendio (2026-09-06, retomado del Batch 5
+        // del plan de login/permisos reales, ver docs/DECISIONS.md) -- mismo patron que
+        // VentasController, sin centralizar (ningun base controller comun entre ambos en WebCore).
+        // Diferencia real respecto a Ventas: exigirPermisoVentas=false (cualquier usuario activo
+        // puede operar Expendio, no solo quien tiene Ventas > Editar, ver
+        // Web/Controllers/BaseController.cs:328-330) y PuedeBonificarPuntoExpendio se recalcula
+        // contra el operador resuelto (antes hardcodeado a true bajo el stub). =====
+        private Entidades.Usuario ResolverOperadorPOS(string posInstanceId, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
+            return ObtenerOperadorPOS(posInstanceId) ?? usuarioSesion;
+        }
+
+        private static string ClaveSessionOperadorPOS(string posInstanceId) => "OperadorPOS_" + (posInstanceId ?? "");
+
+        private void RegistrarOperadorPOS(string posInstanceId, Entidades.Usuario operador)
+        {
+            HttpContext.Session.SetString(ClaveSessionOperadorPOS(posInstanceId), System.Text.Json.JsonSerializer.Serialize(operador));
+        }
+
+        private Entidades.Usuario ObtenerOperadorPOS(string posInstanceId)
+        {
+            var json = HttpContext.Session.GetString(ClaveSessionOperadorPOS(posInstanceId));
+            return string.IsNullOrEmpty(json) ? null : System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
+        }
+
+        private void LimpiarOperadorPOS(string posInstanceId)
+        {
+            HttpContext.Session.Remove(ClaveSessionOperadorPOS(posInstanceId));
+        }
+
+        // Ver comentario identico en VentasController.ObtenerSessionIdEstable -- ASP.NET Core
+        // Session no manda el Set-Cookie hasta el primer write, asi que sin esto el rate-limit
+        // por sesion nunca acumula.
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        // exigirPermisoVentas=false: a diferencia de Ventas, cualquier usuario activo puede operar
+        // Expendio (ver Web/Controllers/BaseController.cs:328-330, PuntosExpendioController.cs:127).
+        private JsonResult ValidarOperadorPOS(int idUsuario, string clave, string posInstanceId, bool exigirPermisoVentas = false)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.PosOperadorStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos, o el usuario no tiene permiso de Ventas.";
+
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave) || string.IsNullOrWhiteSpace(posInstanceId))
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            bool tienePermiso = !exigirPermisoVentas ||
+                (validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Venta.NuevaVenta, DateTime.Now, validado.Id));
+            if (validado == null || !validado.Activo || !tienePermiso)
+            {
+                WebCore.Helpers.PosOperadorStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            WebCore.Helpers.PosOperadorStepUpRateLimiter.Reset(sessionId);
+            RegistrarOperadorPOS(posInstanceId, validado);
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult AutorizarOperadorPOS(int idUsuario, string clave, string posInstanceId)
+        {
+            return ValidarOperadorPOS(idUsuario, clave, posInstanceId, exigirPermisoVentas: false);
+        }
+
+        [HttpPost]
+        public JsonResult CerrarOperadorPOS(string posInstanceId)
+        {
+            LimpiarOperadorPOS(posInstanceId);
+            return Json(new { ok = true });
+        }
+
+        // Port de Web/Controllers/BaseController.cs:272-285.
+        private List<object> ObtenerUsuariosActivosEmpresaParaCombo()
+        {
+            var dt = _oUsuarioN.obtenerUsuarios(true);
+            if (dt == null || !dt.Columns.Contains("id") || !dt.Columns.Contains("nombre"))
+                return new List<object>();
+
+            return dt.AsEnumerable()
+                .Select(row => new { id = ValorInt(row, "id"), nombre = ValorString(row, "nombre") })
+                .Where(u => u.id > 0 && !string.IsNullOrWhiteSpace(u.nombre))
+                .OrderBy(u => u.nombre, StringComparer.OrdinalIgnoreCase)
+                .Cast<object>()
+                .ToList();
+        }
+
+        private int ValorInt(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return 0;
+
+            int valor;
+            return int.TryParse(Convert.ToString(row[columna]), out valor) ? valor : 0;
+        }
+
+        private string ValorString(DataRow row, string columna)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columna) || row[columna] == DBNull.Value)
+                return "";
+
+            return Convert.ToString(row[columna]) ?? "";
+        }
+
         // Port de PuntosExpendioController.POS (batch UI de Expendios, ver
-        // docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md). Sin login de operador de
-        // produccion (requiereOperadorPOS queda fijo en false -- mismo bypass de permisos que
-        // el resto de WebCore, ver gaps.md "Permisos reales de venta y usuario produccion") y
-        // sin AsegurarSucursalUsuario (no aplica bajo el usuario stub, que ya tiene sucursal fija).
+        // docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md). Login de operador de produccion
+        // portado 2026-09-06 (retomado del Batch 5 del plan de login/permisos reales, ver
+        // docs/DECISIONS.md) -- exigirPermisoVentas=false, a diferencia de Ventas/POS: cualquier
+        // usuario activo puede operar Expendio (Web/Controllers/BaseController.cs:328-330). Sin
+        // AsegurarSucursalUsuario (no aplica: la sucursal del usuario logueado ya es fija).
         [HttpGet]
         public IActionResult POS(string sector = "", string modoPos = "original", string posInstanceId = "")
         {
@@ -96,6 +218,18 @@ namespace WebCore.Controllers
             string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
                 ? Guid.NewGuid().ToString("N")
                 : posInstanceId.Trim();
+
+            // Port literal de Web/Controllers/PuntosExpendioController.cs:90-100.
+            var operador = user;
+            bool requiereOperadorPOS = false;
+            if (user.EsUsuarioProduccion)
+            {
+                operador = ObtenerOperadorPOS(posInstanceIdNormalizado);
+                requiereOperadorPOS = operador == null;
+                ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
+            }
+            operador = operador ?? user;
+            ViewBag.OperadorPOSNombre = (user.EsUsuarioProduccion && !requiereOperadorPOS) ? operador.Nombre : null;
 
             string sectorNormalizado = (sector ?? "").Trim();
             var model = new PuntoExpendioEditVm
@@ -112,11 +246,17 @@ namespace WebCore.Controllers
             };
 
             ViewBag.IdConsumidorFinal = _oPersonaN.getConsumidorFinal()?.idPersona ?? 0;
-            ViewBag.PuedeBonificarPuntoExpendio = true;
+            // -1 = Utilidades.ValoresParametrosMetodos.IdCreadorNulo() (chequeo de "ver", no de
+            // edicion) -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core,
+            // que es lo unico que WebCore referencia; se usa el literal directo.
+            ViewBag.PuedeBonificarPuntoExpendio = !requiereOperadorPOS &&
+                _oUsuarioN.tienePermiso(operador, Entidades.Permisos.Venta.Bonificar, DateTime.Today, -1);
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.IdUsuarioPOS = user.Id;
             ViewBag.PosModoInstancia = modoPosNormalizado;
             ViewBag.PosInstanceId = posInstanceIdNormalizado;
+            ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
+            ViewBag.RequiereOperadorPOS = requiereOperadorPOS;
 
             return View("~/Views/PuntosExpendio/POS.cshtml", model);
         }
@@ -404,7 +544,7 @@ namespace WebCore.Controllers
         {
             var user = _usuarioActual;
             DateTime fecha = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Today;
-            var operador = user;
+            var operador = ResolverOperadorPOS(request?.PosInstanceId, user);
 
             var model = new PuntoExpendioEditVm
             {

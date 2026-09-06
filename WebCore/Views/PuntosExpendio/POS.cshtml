@@ -19,11 +19,15 @@
       - Con "Duplicar POS" (pos-multi-instance.js, namespaced con productKey:'expendio' -- el
         modulo ya soporta esto, agregado cuando se porto para Ventas).
 
+    Login de operador de produccion (PosOperadorConfig/AutorizarOperadorPOS/CerrarOperadorPOS,
+    _ModalSeleccionUsuario.cshtml) portado 2026-09-06 (retomado del Batch 5 del plan de login/
+    permisos reales, ver docs/DECISIONS.md) -- exigirPermisoVentas=false a diferencia de
+    Ventas/POS: cualquier usuario activo puede operar Expendio. A diferencia de Ventas/POS, esta
+    vista SIEMPRE renderiza el Model completo (nunca depende de "caja abierta"), asi que el modal
+    de operador se superpone sobre el POS ya armado en vez de reemplazar toda la pantalla.
+
     Explicitamente afuera de este MVP (mismo criterio que toda la migracion, ver PLAN-POS-
     EXPENDIOS-UI.md):
-      - Login de operador de produccion (PosOperadorConfig/AutorizarOperadorPOS/CerrarOperadorPOS,
-        _ModalSeleccionUsuario.cshtml) -- gap ya abierto en gaps.md, bypaseado (requiereOperadorPOS
-        fijo en false desde el controller).
       - "Mis expendios" (F6) + su modal -- sin equivalente en el Ventas/POS ya portado tampoco.
       - Buscar cliente real (#btnBuscarPersona) y buscador avanzado (#btnAgregarManual) -- mismos
         2 excluidos que en Ventas/POS.cshtml (quedan visibles pero sin JS, "CF" si funciona).
@@ -43,6 +47,8 @@
     int idUsuarioPOS = ViewBag.IdUsuarioPOS != null ? (int)ViewBag.IdUsuarioPOS : 0;
     int idSucursalPOS = ViewBag.IdSucursalPOS != null ? (int)ViewBag.IdSucursalPOS : 0;
     int idConsumidorFinal = ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0;
+    bool esUsuarioProduccionPOS = ViewBag.EsUsuarioProduccion != null && (bool)ViewBag.EsUsuarioProduccion;
+    bool requiereOperadorPOS = ViewBag.RequiereOperadorPOS != null && (bool)ViewBag.RequiereOperadorPOS;
 }
 
 <div class="pos-page pos-expendio-page">
@@ -109,6 +115,16 @@
                     <i class="fas fa-clone"></i>
                     <span>Duplicar POS</span>
                 </button>
+                @if (esUsuarioProduccionPOS)
+                {
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm pos-btn-layout"
+                            id="btnCambiarOperadorPOS"
+                            title="Cambiar el empleado que está operando este POS">
+                        <i class="fas fa-user-clock"></i>
+                        <span>Cambiar operario</span>
+                    </button>
+                }
                 <a class="btn btn-light btn-sm pos-btn-layout"
                    href="@Url.Action("Index", "Home")"
                    title="Volver al sistema">
@@ -468,6 +484,7 @@
 @Html.Partial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml")
 @Html.Partial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml")
 @Html.Partial("~/Views/PuntosExpendio/_ModalPostPuntoExpendioBasico.cshtml")
+@Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <div id="globalAntiForgeryToken" style="display:none;">
     @Html.AntiForgeryToken()
@@ -486,6 +503,73 @@
     <script src="~/Scripts/app/scanner.js"></script>
     <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
     <script src="~/Scripts/app/pos-compact.js?v=1"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js?v=2"></script>
+
+    @* Usuario de produccion (2026-09-06, retomado del Batch 5, ver docs/DECISIONS.md) -- port
+       literal de Web/Views/Ventas/POS.cshtml:1396-1486, adaptado a PuntosExpendio (a diferencia
+       de Ventas, esta vista renderiza el Model completo siempre, asi que no hace falta postergar
+       nada: el modal simplemente se superpone). *@
+    <script>
+        (function () {
+            window.PosOperadorConfig = {
+                esUsuarioProduccion: @(esUsuarioProduccionPOS ? "true" : "false"),
+                requiereOperadorPOS: @(requiereOperadorPOS ? "true" : "false"),
+                posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId)),
+                urlAutorizar: '@Url.Action("AutorizarOperadorPOS", "PuntosExpendio")',
+                urlCerrar: '@Url.Action("CerrarOperadorPOS", "PuntosExpendio")',
+                usuariosActivos: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()))
+            };
+
+            var cfg = window.PosOperadorConfig;
+            if (!cfg.esUsuarioProduccion) return;
+
+            var loginObligatorioPendiente = false;
+
+            function recargarConOperadorAutorizado() {
+                var url = new URL(window.location.href);
+                url.searchParams.set('posInstanceId', cfg.posInstanceId);
+                window.PosNavegandoInternoPOS = true;
+                window.location.href = url.toString();
+            }
+
+            function pedirOperador(esInicial) {
+                loginObligatorioPendiente = esInicial;
+                window.SeleccionUsuario.abrir({
+                    titulo: esInicial ? 'Autorizate para operar este Punto de Expendio' : 'Cambiar operario',
+                    usuarios: cfg.usuariosActivos,
+                    requierePassword: true,
+                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId)
+                }).then(function () {
+                    loginObligatorioPendiente = false;
+                    recargarConOperadorAutorizado();
+                }).catch(function () {
+                    if (esInicial) window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
+
+            $(document).on('hidden.bs.modal', '#modalSeleccionUsuario', function () {
+                if (loginObligatorioPendiente && !$(this).data('resuelto')) {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                }
+            });
+
+            if (cfg.requiereOperadorPOS) {
+                pedirOperador(true);
+            }
+
+            $(document).on('click', '#btnCambiarOperadorPOS', function () {
+                pedirOperador(false);
+            });
+
+            window.addEventListener('pagehide', function () {
+                if (window.PosNavegandoInternoPOS) return;
+                if (navigator.sendBeacon) {
+                    var data = new Blob([JSON.stringify({ posInstanceId: cfg.posInstanceId })], { type: 'application/json' });
+                    navigator.sendBeacon(cfg.urlCerrar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId), data);
+                }
+            });
+        })();
+    </script>
     <script src="~/Scripts/app/punto-expendio-pos.js?v=1"></script>
 
     <script>

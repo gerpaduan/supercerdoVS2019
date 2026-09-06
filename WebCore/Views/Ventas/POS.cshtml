@@ -202,6 +202,16 @@
                             <i class="fas fa-clone"></i>
                             <span>Duplicar POS</span>
                         </button>
+                        @if (esUsuarioProduccionPOS)
+                        {
+                            <button type="button"
+                                    class="btn btn-outline-secondary btn-sm pos-btn-layout mr-2"
+                                    id="btnCambiarOperadorPOS"
+                                    title="Cambiar el empleado que está operando este POS">
+                                <i class="fas fa-user-clock"></i>
+                                <span>Cambiar operario</span>
+                            </button>
+                        }
                         <a class="btn btn-light btn-sm pos-btn-layout" id="btnSalirPOS" href="@Url.Action("Index", "Home")" title="Volver al sistema">
                             <i class="fas fa-arrow-left"></i>
                             <span>Salir</span>

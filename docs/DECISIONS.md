@@ -4560,3 +4560,32 @@ El botón "Cambiar operario" (`#btnCambiarOperadorPOS`) tampoco tiene un element
 `POS.cshtml` -- el handler JS existe (inerte hasta que el botón se agregue), el flujo obligatorio
 inicial (`requiereOperadorPOS`) funciona completo sin él.
 
+## 2026-09-06 - Retomado: "usuario producción" en PuntosExpendioController + botón "Cambiar operario"
+
+**Decisión**: pedido explícito del usuario ("retomar y ademas agregar todos los atajos en los pos,
+dejarlo completo... tal como web clasico") para cerrar los 2 puntos que quedaron fuera del Batch 5
+original. Se porta a `PuntosExpendioController` el mismo mecanismo de operador de POS que
+`VentasController` (`ResolverOperadorPOS`/`ValidarOperadorPOS`/`AutorizarOperadorPOS`/
+`CerrarOperadorPOS`, duplicado por controller, mismo criterio que `ResolverUsuarioCreador`), con
+una diferencia de negocio real y confirmada contra el clásico
+(`Web/Controllers/BaseController.cs:328-330`): `exigirPermisoVentas=false` -- cualquier usuario
+activo puede operar un Punto de Expendio, no solo quien tiene `Permisos.Venta.NuevaVenta` (a
+diferencia de Ventas/POS, que sí lo exige). `PuedeBonificarPuntoExpendio` (antes hardcodeado a
+`true`) pasa a calcularse contra el operador resuelto real, vía `Permisos.Venta.Bonificar`.
+
+`FinalizarPOS` ahora resuelve `Vendedor` vía `ResolverOperadorPOS` (antes usaba directamente
+`_usuarioActual`, la cuenta compartida). A diferencia de `Ventas/POS`, esta vista SIEMPRE renderiza
+el `Model` completo (nunca depende de "caja abierta"), así que el modal de operador se superpone
+sobre el POS ya armado en vez de reemplazar toda la pantalla con un `Model` nulo -- más simple que
+el caso de Ventas, sin la reestructuración de `@if`/`else if`/`else` que hizo falta ahí.
+
+Se agregó también el botón "Cambiar operario" (`#btnCambiarOperadorPOS`) a **ambas** vistas de POS
+(`Ventas/POS.cshtml` y `PuntosExpendio/POS.cshtml`), gateado por `esUsuarioProduccionPOS` -- el
+handler JS ya existía desde el Batch 5 original (quedaba inerte sin el botón).
+
+**Verificado con datos reales**: login como `produccion`/`a` (`EsUsuarioProduccion=true`) en
+`/PuntosExpendio/POS` dispara el modal (`requiereOperadorPOS:true`); un usuario sin permiso de
+Ventas (`prueba_rls_2026`, id=18) SÍ logra autorizarse (confirma `exigirPermisoVentas=false`,
+comportamiento distinto y correcto respecto a Ventas/POS); el operador queda resuelto y persistido
+en `Session` para el mismo `posInstanceId`. Suite completa `WebCore.E2ETests` (20 tests) en verde.
+
