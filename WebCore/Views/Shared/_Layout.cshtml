@@ -96,6 +96,23 @@
             display: flex;
         }
 
+        /* Bug real encontrado 2026-09-06: al escribir a mano la estructura de tamaño del
+           sidebar (sb-admin-2.min.css nunca se carga, ver comentario de arriba) se recreo el
+           ancho del sidebar pero no esta regla -- #content-wrapper (hijo flex de #wrapper) sin
+           flex-grow ocupa solo el ancho de su contenido en vez de todo el espacio restante.
+           Efecto visible: el topbar/contenido quedaba encogido a la izquierda con una franja
+           gris a la derecha en CUALQUIER vista (ej. Ventas/Index), y el menu de usuario del
+           topbar terminaba a mitad de pantalla en vez de la esquina superior derecha. Mismas 2
+           reglas que trae sb-admin-2.css original (#wrapper #content-wrapper / #content). */
+        #content-wrapper {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        #content-wrapper #content {
+            flex: 1 0 auto;
+        }
+
         .sidebar {
             width: 6.5rem;
             min-height: 100vh;

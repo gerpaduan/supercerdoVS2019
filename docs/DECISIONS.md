@@ -4400,3 +4400,51 @@ y `Scripts/app/ventas-expendios-pos.js` de WebCore. `Datos/Venta.cs` y `DatosPos
 solo ganaron un método nuevo (`obtenerExpendiosAvanzado`), aditivo -- no se tocó ningún método
 existente que use el `Web/` clásico.
 
+## 2026-09-06 - Dos bugs reales de layout encontrados por el usuario, corregidos con impacto global
+
+Reportados directamente por el usuario tras usar la app: "`/Ventas/Index` quedó desordenada, el
+menú de usuario queda aproximadamente a mitad de la vista en vez de la esquina superior derecha" y
+"el teclado del POS en Core se ve más chico" (comparando contra el clásico en responsive).
+
+**Bug 1 -- `#content-wrapper` sin `width:100%`.** Al escribir a mano la estructura de tamaño del
+sidebar (`sb-admin-2.min.css` nunca se carga en WebCore, ver la entrada de "UI de WebCore igual al
+clásico" más arriba) se recreó el ancho del sidebar pero se omitieron 2 reglas del original
+(`sb-admin-2.css:9799-9807`): `#wrapper #content-wrapper { width: 100%; overflow-x: hidden; }` y
+`#wrapper #content-wrapper #content { flex: 1 0 auto; }`. Sin `width:100%`, `#content-wrapper`
+(hijo flex de `#wrapper`, `display:flex` sin dirección explícita = fila) se encogía al ancho de su
+propio contenido en vez de ocupar el espacio restante -- efecto visible en **cualquier vista** de
+la app: el topbar y el contenido quedaban corridos a la izquierda con una franja gris a la derecha,
+y por eso el menú de usuario del topbar (que sí estaba bien posicionado *dentro* de su propio
+contenedor encogido) terminaba visualmente a mitad de pantalla. Confirmado con capturas de
+Playwright en `/Ventas/Index` a 1400px/820px/390px de ancho: la franja gris desaparece por completo
+tras agregar las 2 reglas faltantes en `WebCore/Views/Shared/_Layout.cshtml`. Se auditaron 8 vistas
+más (Reportes, Stock, Productos, Personas, Finanzas/CtasCtes, Cajas/CajasAbiertas, Elaborados,
+Compras) para confirmar que el fix es realmente global y no hacía falta nada por vista.
+
+**Bug 2 -- el sistema de compactado por altura de viewport (`pos-compact`/`pos-tiny`) nunca se
+portó.** `Web/Views/Ventas/POS.cshtml` tiene una IIFE (comentada "ayuda en 1366x768 / zoom 125%")
+que mide `window.visualViewport.height` y agrega `pos-compact`/`pos-tiny`/`pos-footer-fit` al
+`<html>` cuando la altura útil baja de 960/860/950/860px respectivamente -- pensada explícitamente
+para el caso muy común de una notebook 1366x768 con el zoom de Windows al 125-150%, donde la altura
+útil real cae bien por debajo de esos umbrales. La CSS correspondiente (`.pos-compact
+.keyboard-grid`, `.pos-tiny .btn-key`, etc.) ya estaba copiada **byte a byte** en
+`WebCore/wwwroot/Content/css/pos.css` desde el batch de POS, pero el JS que la activa nunca se
+portó -- ni en `Ventas/POS.cshtml` ni en el `punto-expendio-pos.js` "recortado" de
+`PuntosExpendio/POS.cshtml` (verificado con `diff`: 974 líneas el original vs 571 la versión
+recortada de WebCore). Resultado: en cualquier pantalla con poca altura útil (caso muy frecuente,
+no un borde), WebCore mostraba siempre el teclado en su tamaño grande por defecto en vez de
+compactarse como el clásico -- y como el padding/font-size de los botones están calibrados *junto*
+con el `grid-auto-rows` mínimo dentro de esas reglas, quedaba desproporcionado en vez de
+simplemente "más grande". Fix: `WebCore/wwwroot/Scripts/app/pos-compact.js` (nuevo, port literal de
+la IIFE), incluido en `Ventas/POS.cshtml` y `PuntosExpendio/POS.cshtml` (ambos tienen `#pos-app` +
+`.pos-footer-panel`; sólo Ventas tiene `.pos-ventas-workbench-col`, y el ajuste de footer se
+saltea solo si ese selector no existe, mismo criterio que el original). Verificado con Playwright a
+1366x768: las 4 clases (`pos-compact pos-tiny pos-footer-fit pos-footer-tiny-fit`) se aplican
+correctamente.
+
+Ambos bugs pasaron desapercibidos hasta ahora porque el juez de paridad de cada módulo comparaba
+HTML/datos renderizados, no la geometría real del layout en el navegador -- se agregó
+`WebCore.E2ETests/LayoutParidadTests.cs` (2 tests, ambos verifican geometría real vía
+`BoundingBoxAsync`/clases de `<html>`, no solo presencia de markup) para que esta clase de
+regresión no vuelva a pasar inadvertida.
+
