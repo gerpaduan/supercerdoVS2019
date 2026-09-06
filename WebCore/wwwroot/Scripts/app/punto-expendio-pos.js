@@ -48,6 +48,9 @@
     $(function () {
         var config = window.puntoExpendioPosConfig || {};
         if (!document.getElementById('pos-app')) return;
+        // "Mis expendios" (F6, 2026-09-06, retomado -- ver docs/DECISIONS.md).
+        var misExpendiosCache = [];
+        var misExpendiosFetchState = { fechaDesde: '', fechaHasta: '' };
 
         window.buscarProductoUrl = config.urlBuscarProductoPos;
 
@@ -65,6 +68,12 @@
         function formatFechaSql(fecha) {
             return fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate()) +
                 'T' + pad(fecha.getHours()) + ':' + pad(fecha.getMinutes()) + ':' + pad(fecha.getSeconds());
+        }
+
+        // "Mis expendios" (F6, 2026-09-06, retomado -- ver docs/DECISIONS.md): formato para
+        // <input type="date">, distinto de formatFechaSql (que incluye hora).
+        function formatDateInput(fecha) {
+            return fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate());
         }
 
         function formatFechaVisible(fecha) {
@@ -510,6 +519,275 @@
             });
         });
 
+        // ===== "Mis expendios" (F6, 2026-09-06, retomado -- ver docs/DECISIONS.md). Port literal
+        // de Web/Scripts/app/punto-expendio-pos.js:199-227,229-450,564-627 -- unica diferencia
+        // real: el boton "Imprimir" reusa mostrarModalPostExpendio (PDF+email, ya portado) en vez
+        // de window.PostPuntoExpendioModal (ticket ESC/POS, modal-postexpendio.js, no portado). =====
+        function formatKg(value) {
+            return Number(value || 0).toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+        }
+
+        function formatMoney(value) {
+            return '$ ' + Number(value || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeText(value) {
+            return String(value == null ? '' : value).toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+
+        function setMisExpendiosDateHint(visible) {
+            $('#msgFiltroFechaMisExpendios').toggleClass('d-none', !visible);
+        }
+
+        function ensureMisExpendiosDefaultDates() {
+            var hoy = formatDateInput(new Date());
+            var $fechaDesde = $('#filtroMisExpendiosFechaDesde');
+            var $fechaHasta = $('#filtroMisExpendiosFechaHasta');
+            if (!$fechaDesde.val()) $fechaDesde.val(hoy);
+            if (!$fechaHasta.val()) $fechaHasta.val(hoy);
+        }
+
+        function populateMisExpendiosSelects(items) {
+            var estadoActual = $('#filtroMisExpendiosEstado').val() || '';
+            var sucursalActual = $('#filtroMisExpendiosSucursal').val() || '';
+            var estados = {};
+            var sucursales = {};
+
+            (items || []).forEach(function (item) {
+                var estado = String(item && item.estado ? item.estado : '').trim();
+                var sucursal = String(item && item.sucursal ? item.sucursal : '').trim();
+                if (estado) estados[estado] = true;
+                if (sucursal) sucursales[sucursal] = true;
+            });
+
+            var estadoOptions = ['<option value="">Todos</option>'];
+            Object.keys(estados).sort().forEach(function (estado) {
+                estadoOptions.push('<option value="' + escapeHtml(estado) + '">' + escapeHtml(estado) + '</option>');
+            });
+            $('#filtroMisExpendiosEstado').html(estadoOptions.join('')).val(estadoActual);
+            if ($('#filtroMisExpendiosEstado').val() !== estadoActual) $('#filtroMisExpendiosEstado').val('');
+
+            var sucursalOptions = ['<option value="">Todas</option>'];
+            Object.keys(sucursales).sort().forEach(function (sucursal) {
+                sucursalOptions.push('<option value="' + escapeHtml(sucursal) + '">' + escapeHtml(sucursal) + '</option>');
+            });
+            $('#filtroMisExpendiosSucursal').html(sucursalOptions.join('')).val(sucursalActual);
+            if ($('#filtroMisExpendiosSucursal').val() !== sucursalActual) $('#filtroMisExpendiosSucursal').val('');
+        }
+
+        function getMisExpendiosFilteredItems() {
+            var cliente = normalizeText($('#filtroMisExpendiosCliente').val());
+            var producto = normalizeText($('#filtroMisExpendiosProducto').val());
+            var sucursal = normalizeText($('#filtroMisExpendiosSucursal').val());
+            var estado = normalizeText($('#filtroMisExpendiosEstado').val());
+
+            return (misExpendiosCache || []).filter(function (item) {
+                var clienteTexto = normalizeText(item.identificacionExpendio);
+                var sucursalTexto = normalizeText(item.sucursal);
+                var estadoTexto = normalizeText(item.estado);
+                var coincideProducto = !producto || (item.lineas || []).some(function (linea) {
+                    return normalizeText(linea.producto).indexOf(producto) >= 0;
+                });
+
+                if (cliente && clienteTexto.indexOf(cliente) < 0) return false;
+                if (sucursal && sucursalTexto !== sucursal) return false;
+                if (estado && estadoTexto !== estado) return false;
+                if (!coincideProducto) return false;
+                return true;
+            });
+        }
+
+        function renderDetalleMisExpendios(lineas) {
+            if (!lineas || !lineas.length) {
+                return '<div class="small text-muted">Sin detalle de líneas.</div>';
+            }
+
+            var html = '<div class="table-responsive"><table class="table table-sm table-borderless mb-0"><thead><tr>'
+                + '<th style="width:90px;">Código</th>'
+                + '<th>Producto</th>'
+                + '<th style="width:95px;" class="text-right">Kgs.</th>'
+                + '<th style="width:110px;" class="text-right">Precio</th>'
+                + '<th style="width:110px;" class="text-right">Total</th>'
+                + '</tr></thead><tbody>';
+
+            lineas.forEach(function (linea) {
+                html += '<tr>'
+                    + '<td>' + escapeHtml(linea.codigo || 0) + '</td>'
+                    + '<td>' + escapeHtml(linea.producto || '') + '</td>'
+                    + '<td class="text-right">' + formatKg(linea.cantKg) + '</td>'
+                    + '<td class="text-right">' + formatMoney(linea.precioKg) + '</td>'
+                    + '<td class="text-right">' + formatMoney(linea.total) + '</td>'
+                    + '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function showMisExpendiosMessage(type, text) {
+            var $msg = $('#msgMisExpendiosPuntoExpendio');
+            if (!$msg.length) return;
+
+            if (!text) {
+                $msg.addClass('d-none').removeClass('alert-info alert-warning alert-danger alert-success').text('');
+                return;
+            }
+
+            var css = { info: 'alert-info', warning: 'alert-warning', danger: 'alert-danger', success: 'alert-success' }[type || 'info'] || 'alert-info';
+            $msg.removeClass('d-none alert-info alert-warning alert-danger alert-success').addClass(css).text(text);
+        }
+
+        function renderMisExpendios(items) {
+            var $tbody = $('#tablaMisExpendiosPuntoExpendio tbody');
+            if (!$tbody.length) return;
+
+            $tbody.empty();
+
+            if (!items || !items.length) {
+                $tbody.append('<tr><td colspan="9" class="text-center text-muted py-4">No hay expendios para mostrar.</td></tr>');
+                return;
+            }
+
+            items.forEach(function (item) {
+                var estadoClass = item.estado === 'Asignado' ? 'badge-secondary' : 'badge-warning';
+
+                $tbody.append(
+                    '<tr>' +
+                    '<td>' + (item.fecha || '') + '</td>' +
+                    '<td>' + (item.hora || '') + '</td>' +
+                    '<td><strong>' + (item.idExpendio || 0) + '</strong></td>' +
+                    '<td>' + (item.identificacionExpendio || '') + '</td>' +
+                    '<td><span class="badge ' + estadoClass + '">' + (item.estado || '') + '</span></td>' +
+                    '<td class="text-right">' + (item.cantItems || '0') + '</td>' +
+                    '<td class="text-right">' + formatKg(item.totalKg) + '</td>' +
+                    '<td class="text-right">' + formatMoney(item.totalImporte) + '</td>' +
+                    '<td class="text-center">' +
+                    '<button type="button" class="btn btn-sm btn-outline-primary btnImprimirMisExpendio" data-id-expendio="' + (item.idExpendio || 0) + '">Imprimir</button>' +
+                    '</td>' +
+                    '</tr>' +
+                    '<tr class="bg-light">' +
+                    '<td colspan="9">' +
+                    '<div class="small font-weight-bold text-muted mb-1">Detalle</div>' +
+                    renderDetalleMisExpendios(item.lineas || []) +
+                    '</td>' +
+                    '</tr>'
+                );
+            });
+        }
+
+        function applyMisExpendiosFilters() {
+            renderMisExpendios(getMisExpendiosFilteredItems());
+        }
+
+        function loadMisExpendios() {
+            var fechaDesde = $('#filtroMisExpendiosFechaDesde').val() || '';
+            var fechaHasta = $('#filtroMisExpendiosFechaHasta').val() || '';
+
+            if (fechaDesde && fechaHasta && fechaDesde > fechaHasta) {
+                showMisExpendiosMessage('warning', 'La fecha desde no puede ser mayor a la fecha hasta.');
+                return;
+            }
+
+            misExpendiosFetchState.fechaDesde = fechaDesde;
+            misExpendiosFetchState.fechaHasta = fechaHasta;
+            showMisExpendiosMessage(null, '');
+            renderMisExpendios([]);
+            $('#tablaMisExpendiosPuntoExpendio tbody').html('<tr><td colspan="9" class="text-center text-muted py-4">Consultando expendios...</td></tr>');
+            setMisExpendiosDateHint(false);
+
+            $.ajax({
+                url: config.urlMisExpendios,
+                type: 'GET',
+                data: { fechaDesde: fechaDesde, fechaHasta: fechaHasta, posInstanceId: config.posInstanceId || '' },
+                dataType: 'json',
+                cache: false
+            })
+                .done(function (resp) {
+                    if (!resp || resp.ok === false) {
+                        misExpendiosCache = [];
+                        renderMisExpendios([]);
+                        showMisExpendiosMessage('warning', resp && resp.mensaje ? resp.mensaje : 'No se pudieron consultar los expendios.');
+                        return;
+                    }
+
+                    misExpendiosCache = resp.items || [];
+                    populateMisExpendiosSelects(misExpendiosCache);
+                    applyMisExpendiosFilters();
+                    if (!misExpendiosCache.length) {
+                        showMisExpendiosMessage('info', 'No hay expendios para el rango de fechas seleccionado.');
+                    }
+                })
+                .fail(function () {
+                    misExpendiosCache = [];
+                    renderMisExpendios([]);
+                    showMisExpendiosMessage('danger', 'No se pudieron consultar los expendios.');
+                });
+        }
+
+        function abrirMisExpendios() {
+            if ($('.modal.show').not('#modalAyudaPOS').length && !$('#modalAyudaPOS').hasClass('show')) return;
+
+            ensureMisExpendiosDefaultDates();
+            $('#modalMisExpendiosPuntoExpendio').modal('show');
+            loadMisExpendios();
+        }
+
+        $('#btnBuscarMisExpendiosPuntoExpendio').on('click', function () {
+            loadMisExpendios();
+        });
+
+        $('#filtroMisExpendiosFechaDesde, #filtroMisExpendiosFechaHasta').on('change', function () {
+            var cambioPendiente = misExpendiosFetchState.fechaDesde !== ($('#filtroMisExpendiosFechaDesde').val() || '') ||
+                misExpendiosFetchState.fechaHasta !== ($('#filtroMisExpendiosFechaHasta').val() || '');
+            setMisExpendiosDateHint(cambioPendiente);
+        });
+
+        $('#filtroMisExpendiosCliente, #filtroMisExpendiosProducto').on('input', function () {
+            applyMisExpendiosFilters();
+        });
+
+        $('#filtroMisExpendiosSucursal, #filtroMisExpendiosEstado').on('change', function () {
+            applyMisExpendiosFilters();
+        });
+
+        $(document).on('click', '.btnImprimirMisExpendio', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            var idExpendio = parseInt($(this).data('id-expendio') || 0, 10) || 0;
+            if (idExpendio <= 0) return;
+
+            var item = null;
+            for (var i = 0; i < misExpendiosCache.length; i++) {
+                if ((misExpendiosCache[i].idExpendio || 0) === idExpendio) {
+                    item = misExpendiosCache[i];
+                    break;
+                }
+            }
+
+            if (!item) {
+                Swal.fire({ icon: 'warning', title: 'Mis expendios', text: 'No se pudo recuperar la información del expendio seleccionado.' });
+                return;
+            }
+
+            $('#modalMisExpendiosPuntoExpendio').modal('hide');
+            mostrarModalPostExpendio({ idExpendio: item.idExpendio || idExpendio, pdfUrl: item.pdfUrl || '' });
+        });
+
+        window.posHotkeysHooks = window.posHotkeysHooks || {};
+        window.posHotkeysHooks.F6 = function () {
+            abrirMisExpendios();
+        };
+
         document.addEventListener('keydown', function (e) {
             if ($('.modal.show').length && !$('#modalAyudaPOS').hasClass('show')) return;
 
@@ -549,7 +827,13 @@
 
             if (e.key === 'F10') {
                 e.preventDefault();
-                if (typeof window.abrirBuscadorProductosPOS === 'function') {
+                // Guard agregado 2026-09-06 (retomado, ver docs/DECISIONS.md): #btnAgregarManual
+                // esta disabled (buscador avanzado real, modal-productos.js, no portado) -- sin
+                // este chequeo, abrirBuscadorProductosPOS() SI existe (la define pos-product.js)
+                // pero su dependencia interna (abrirBuscarProductoModal) no, y tira un error
+                // visible al usuario. Mismo criterio que el guard ya usado para F9 arriba.
+                var btnManual = document.getElementById('btnAgregarManual');
+                if (btnManual && !btnManual.disabled && typeof window.abrirBuscadorProductosPOS === 'function') {
                     window.abrirBuscadorProductosPOS();
                 }
             }

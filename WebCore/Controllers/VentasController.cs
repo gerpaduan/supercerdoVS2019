@@ -1867,6 +1867,7 @@ namespace WebCore.Controllers
                 ViewBag.EsEdicionVenta = true;
                 ViewBag.IdVentaEditar = idVentaEditar;
                 ViewBag.SoloFormaPago = soloFormaPago;
+                ViewBag.IdCierreActividadPOS = cierreEditar?.Id ?? 0;
 
                 return View(ventaEditar);
             }
@@ -1889,6 +1890,9 @@ namespace WebCore.Controllers
             ViewBag.IdUsuarioPOS = user.Id;
             ViewBag.PosModoInstancia = modoPosNormalizado;
             ViewBag.PosInstanceId = posInstanceIdNormalizado;
+            // F6/F7 (Mis actividades/Nuevo egreso, 2026-09-06 retomado -- ver docs/DECISIONS.md):
+            // CajasController.ActividadesCaja/NuevoEgresoCaja necesitan el id de cierre explicito.
+            ViewBag.IdCierreActividadPOS = cajaAbierta && cierre != null ? cierre.Id : 0;
 
             var formasPagoConfig = ObtenerConfiguracionFormaPagoPOS();
             ViewBag.FormasPagoConfig = formasPagoConfig;

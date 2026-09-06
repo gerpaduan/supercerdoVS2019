@@ -4589,3 +4589,73 @@ Ventas (`prueba_rls_2026`, id=18) SÍ logra autorizarse (confirma `exigirPermiso
 comportamiento distinto y correcto respecto a Ventas/POS); el operador queda resuelto y persistido
 en `Session` para el mismo `posInstanceId`. Suite completa `WebCore.E2ETests` (20 tests) en verde.
 
+## 2026-09-06 - Atajos de teclado del POS: paridad completa con Web clásico
+
+**Decisión**: pedido explícito del usuario ("agregar todos los atajos en los pos, dejarlo completo
+con toda la funcionalidad tal como web clásico"). Investigación previa (agente de exploración)
+confirmó que casi todos los módulos JS del POS (`pos-cart.js`, `pos-product.js`, `pos-balanza.js`,
+`forma-pago.js`, `pos-help.js`, `pos-guard.js`, `pos-keyboard.js`, `punto-expendio-pos.js` salvo
+2 huecos, `ventas-expendios-pos.js`) ya eran idénticos byte a byte al clásico -- el trabajo real
+pendiente estaba concentrado en las vistas `.cshtml` (los `<script>` inline) y en la infraestructura
+de "abrir módulo externo dentro de un modal del POS".
+
+**Portado en `Ventas/POS.cshtml`**:
+- Atajos globales **Home/End/F9/F10** (`document.addEventListener("keydown", ...)`, guard de modal
+  abierto) -- port literal de `Web/Views/Ventas/POS.cshtml:2202-2234`. F9/F10 quedan como no-ops
+  seguros: sus botones (`#btnBuscarPersona`/`#btnAgregarManual`) siguen `disabled` (buscador de
+  cliente/producto avanzado no portado) y el guard `!btn.disabled` ya lo contempla.
+- Rama **Escape** faltante en el keydown de `#montoInicial` (modal "Abrir caja").
+- **Protección de salida con venta en curso + `POSDraft`** (persistencia del carrito en
+  `localStorage`) -- port de `Web/Views/Ventas/POS.cshtml:1935-2090,2491-2558`, SIMPLIFICADO en 2
+  puntos: sin restauración de `identificacionCliente`/helpers de "cliente real" (el cliente en
+  WebCore siempre es Consumidor Final, ese buscador no está portado) y usa `#fechaVenta` directo
+  en vez de `getFechaVentaPOS`/`setFechaVentaPOS` (helpers de un módulo de fecha editable tampoco
+  portado). `pos-cart.js`/`forma-pago.js`/`pos-multi-instance.js` ya llamaban a
+  `window.POSDraft?.save?.()`/`window.desactivarAvisoSalidaPOS` (definido en `pos-cart.js`,
+  confirmado ya presente) -- nada que tocar ahí.
+- **F2 (Ctas Ctes)/F4 (editar última línea)/F5 (Nueva compra)/F6 (Mis actividades)/F7 (Nuevo
+  egreso)**: modal genérico `#modalFinanzasPOS` + overlay `window.POSModalLoading` (**ambos
+  faltaban por completo**, no solo los hooks -- bug real encontrado en la verificación: sin
+  `POSModalLoading`, `POSFinanzas.cargar` tiraba `TypeError` en silencio dentro del handler de
+  teclado y ningún modal abría) + `renderConScripts` + `window.POSFinanzas`/`POSCompras`/
+  `POSEgresos`, port de `Web/Views/Ventas/POS.cshtml:674-680,711-897,1108-1177,1206-1276,3015-3416,
+  3439-3468`. F6/F7 requirieron adaptar las URLs a los nombres reales de acción de WebCore
+  (`CajasController.ActividadesCaja(idCierre,...)` en vez de `MisEgresosCaja` -- WebCore la portó
+  con otro nombre y firma, requiere `idCierre` explícito en vez de resolverlo de `Session`; se
+  agregó `ViewBag.IdCierreActividadPOS` en `VentasController.POS()`, resuelto del mismo cierre que
+  ya usa `ObtenerCierreCajaActual`). F8 (Historial de precios de cliente) y F9 (Buscar cliente)
+  **no se portan**: ambos dependen del buscador de cliente real (no portado, ver gap abajo) -- un
+  "historial de precios" no tiene sentido sin un cliente real seleccionado.
+
+**Portado en `PuntosExpendio/POS.cshtml`**: **F6 "Mis expendios"** completo --
+`PuntosExpendioController.MisExpendiosPOS` (nueva acción) + `_ModalMisExpendiosPuntoExpendio.cshtml`
+(nueva) + el bloque JS completo en `punto-expendio-pos.js` (helpers `formatKg`/`formatMoney`/
+`escapeHtml`/`normalizeText`/`formatDateInput` + toda la lógica de filtros/render/carga), port de
+`Web/Scripts/app/punto-expendio-pos.js:199-450,564-627`. Única diferencia real: el botón "Imprimir"
+reusa `mostrarModalPostExpendio` (modal PDF+email ya portado) en vez de
+`window.PostPuntoExpendioModal` (ticket ESC/POS, `modal-postexpendio.js`, no portado en ningún lado
+de esta migración). De paso, se corrigió `puedeBonificar` en `window.puntoExpendioPosConfig`
+(estaba hardcodeado a `true` en el `.cshtml`, sin leer `ViewBag.PuedeBonificarPuntoExpendio` que
+Batch 5 ya había hecho real en el controller -- inconsistencia real encontrada, no relacionada a
+atajos).
+
+**Bug real corregido, no relacionado a atajos**: F10 en `PuntosExpendio/POS` (buscador avanzado)
+mostraba un **error visible** al usuario en vez de no-op -- `punto-expendio-pos.js` llamaba a
+`abrirBuscadorProductosPOS()` sin chequear si `#btnAgregarManual` estaba `disabled` (a diferencia
+del guard ya usado para F9 en el mismo archivo). Se agregó el mismo guard. La causa raíz real
+(`modal-productos.js`, el buscador avanzado en sí, no está portado) sigue sin resolver -- ver gap.
+
+**Verificado con datos reales**: F2 abre Ctas Ctes con datos reales; F5 abre el formulario de nueva
+compra; F6 abre Mis Actividades con egresos reales de la caja de "ger" ($25.513,45 total); F7 abre
+el formulario de nuevo egreso; Home/End mueven foco/disparan Finalizar correctamente; F6 de
+PuntosExpendio abre el modal de Mis Expendios (vacío para "ger", que no tiene expendios propios
+registrados -- comportamiento correcto, no un error). Se agregó `WebCore.E2ETests/PosHotkeysTests.cs`
+(5 tests permanentes) verificando geometría real de cada modal (`.show` de Bootstrap, no solo
+markup) y contenido no vacío. Suite completa `WebCore.E2ETests` (25 tests) en verde.
+
+**Gaps que quedan, documentados en `docs/10-migracion-aspnet-core/gaps.md`**: buscador de cliente
+real (`#btnBuscarPersona`/F9), buscador avanzado de producto (`#btnAgregarManual`/F10/
+`modal-productos.js`), historial de precios de cliente (F8, depende del buscador de cliente).
+Ninguno estaba en el alcance de "atajos que ya tienen su backend/UI lista" -- todos requieren
+construir una feature nueva de cero, no portar infraestructura ya existente.
+

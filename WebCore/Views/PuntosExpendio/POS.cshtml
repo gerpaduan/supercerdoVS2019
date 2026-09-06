@@ -26,11 +26,18 @@
     vista SIEMPRE renderiza el Model completo (nunca depende de "caja abierta"), asi que el modal
     de operador se superpone sobre el POS ya armado en vez de reemplazar toda la pantalla.
 
+    "Mis expendios" (F6) portado 2026-09-06 (retomado -- ver docs/DECISIONS.md):
+    PuntosExpendioController.MisExpendiosPOS + _ModalMisExpendiosPuntoExpendio.cshtml, port
+    literal de Web/Scripts/app/punto-expendio-pos.js:230-450 -- el boton "Imprimir" de este
+    listado reusa el modal PDF+email ya portado (mostrarModalPostExpendio) en vez del ticket
+    ESC/POS del original (imprimirUrl/imprimirPayloadUrl, no portado en ningun lado de esta
+    migracion).
+
     Explicitamente afuera de este MVP (mismo criterio que toda la migracion, ver PLAN-POS-
     EXPENDIOS-UI.md):
-      - "Mis expendios" (F6) + su modal -- sin equivalente en el Ventas/POS ya portado tampoco.
       - Buscar cliente real (#btnBuscarPersona) y buscador avanzado (#btnAgregarManual) -- mismos
-        2 excluidos que en Ventas/POS.cshtml (quedan visibles pero sin JS, "CF" si funciona).
+        2 excluidos que en Ventas/POS.cshtml (quedan visibles pero sin JS, "CF" si funciona). F10
+        (buscador avanzado) queda como no-op seguro -- ver TODO(claude) en el guard del handler.
       - Ticket ESC/POS / agente de impresion local / WhatsApp -- modal-postexpendio.js reemplazado
         por _ModalPostPuntoExpendioBasico.cshtml (solo PDF + email, ya portados).
 *@
@@ -484,6 +491,7 @@
 @Html.Partial("~/Views/PuntosExpendio/_ModalComentarioPuntoExpendio.cshtml")
 @Html.Partial("~/Views/PuntosExpendio/_ModalAyudaPuntoExpendio.cshtml")
 @Html.Partial("~/Views/PuntosExpendio/_ModalPostPuntoExpendioBasico.cshtml")
+@Html.Partial("~/Views/PuntosExpendio/_ModalMisExpendiosPuntoExpendio.cshtml")
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 <div id="globalAntiForgeryToken" style="display:none;">
@@ -582,8 +590,9 @@
             urlPdf: '@Url.Action("ImprimirPdf", "PuntosExpendio")',
             urlEmailConfig: '@Url.Action("ObtenerDatosEmailExpendio", "PuntosExpendio")',
             urlEmailEnviar: '@Url.Action("EnviarComprobanteEmailExpendio", "PuntosExpendio")',
+            urlMisExpendios: '@Url.Action("MisExpendiosPOS", "PuntosExpendio")',
             idConsumidorFinal: @idConsumidorFinal,
-            puedeBonificar: true,
+            puedeBonificar: @(ViewBag.PuedeBonificarPuntoExpendio != null && (bool)ViewBag.PuedeBonificarPuntoExpendio ? "true" : "false"),
             mensajeSinPermisoBonificar: 'No tiene permisos para bonificar.',
             posInstanceId: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId))
         };

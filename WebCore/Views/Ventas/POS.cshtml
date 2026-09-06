@@ -87,6 +87,7 @@
     bool esEdicionVenta = ViewBag.EsEdicionVenta != null && (bool)ViewBag.EsEdicionVenta;
     int idVentaEditar = ViewBag.IdVentaEditar != null ? (int)ViewBag.IdVentaEditar : 0;
     bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
+    int idCierreActividadPOS = ViewBag.IdCierreActividadPOS != null ? (int)ViewBag.IdCierreActividadPOS : 0;
 
     // Precarga de POSState en modo edicion -- port de Web/Views/Ventas/POS.cshtml:24-63 (batch 7,
     // iteracion 5). "anulado"/"indexAnulado" replican EXACTAMENTE la logica del original
@@ -592,6 +593,333 @@
     @Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
 
+    @* Overlay "Cargando solicitud..." que usan F2/F5/F6/F7 mientras el AJAX de POSFinanzas.cargar
+       esta en vuelo -- port literal de Web/Views/Ventas/POS.cshtml:674-680,711-783 (HTML+CSS).
+       window.POSModalLoading (el modulo JS que lo controla) se define mas abajo junto a
+       renderConScripts. *@
+    <div id="posModalLoading" class="pos-modal-loading" style="display:none;" aria-hidden="true">
+        <div class="pos-modal-loading__box" role="status" aria-live="polite" aria-atomic="true">
+            <div class="pos-modal-loading__spinner"></div>
+            <div class="pos-modal-loading__title" data-loading-text>Cargando solicitud...</div>
+            <div class="pos-modal-loading__subtitle">Aguarde un instante</div>
+        </div>
+    </div>
+
+    <style>
+        .pos-modal-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(255, 255, 255, .38);
+            display: none;
+        }
+
+        .pos-modal-loading__box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 230px;
+            max-width: calc(100vw - 2rem);
+            padding: 1rem 1.2rem;
+            border-radius: .85rem;
+            background: rgba(255, 255, 255, .96);
+            border: 1px solid rgba(78, 115, 223, .18);
+            box-shadow: 0 .7rem 1.8rem rgba(58, 59, 69, .18);
+            text-align: center;
+        }
+
+        .pos-modal-loading__spinner {
+            width: 2rem;
+            height: 2rem;
+            margin: 0 auto .65rem;
+            border-radius: 50%;
+            border: .22rem solid rgba(78, 115, 223, .16);
+            border-top-color: #4e73df;
+            animation: posModalLoadingSpin .8s linear infinite;
+        }
+
+        .pos-modal-loading__title {
+            color: #2f3a56;
+            font-weight: 600;
+            font-size: .98rem;
+        }
+
+        .pos-modal-loading__subtitle {
+            margin-top: .2rem;
+            color: #858796;
+            font-size: .83rem;
+        }
+
+        @@keyframes posModalLoadingSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        html.dark-mode .pos-modal-loading,
+        body.dark-mode .pos-modal-loading {
+            background: rgba(10, 18, 32, .42);
+        }
+
+        html.dark-mode .pos-modal-loading__box,
+        body.dark-mode .pos-modal-loading__box {
+            background: rgba(22, 37, 56, .96);
+            border-color: rgba(77, 112, 150, .5);
+            box-shadow: 0 1rem 2.2rem rgba(2, 6, 23, .45);
+        }
+
+        html.dark-mode .pos-modal-loading__title,
+        body.dark-mode .pos-modal-loading__title {
+            color: #ecf2ff;
+        }
+
+        html.dark-mode .pos-modal-loading__subtitle,
+        body.dark-mode .pos-modal-loading__subtitle {
+            color: #b8c7df;
+        }
+    </style>
+
+    @* Modal generico "Finanzas" para F2 (Ctas Ctes)/F5 (Nueva compra)/F6 (Mis actividades)/F7
+       (Nuevo egreso) -- port literal de Web/Views/Ventas/POS.cshtml:690-709, 2026-09-06,
+       retomado (ver docs/DECISIONS.md). CSS de tamaño/color por variante, port literal recortado
+       de Web/Views/Ventas/POS.cshtml:785-897,1120-1177,1206-1276 (se omiten las variantes de
+       modal-mis-ventas-pos-compacto/modal-detalle-venta-pos-compacto/modal-historial-precios-pos-
+       compacto -- son de POSVentas/F8, fuera de alcance de este batch). *@
+    <style>
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+            max-width: 400px;
+            width: calc(100% - 1rem);
+            margin: 1.75rem auto;
+        }
+
+        @@media (min-width: 992px) {
+            #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+                max-width: 690px;
+                width: calc(100% - 2.5rem);
+            }
+
+            #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
+                padding: 1.1rem 1.25rem !important;
+            }
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-content {
+            border: 1px solid #e3e6f0;
+            border-radius: .75rem;
+            overflow: hidden;
+            box-shadow: 0 .35rem 1.25rem rgba(58, 59, 69, .18);
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-header {
+            background: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 1.25rem;
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-title {
+            font-weight: 700;
+        }
+
+        #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
+            padding: 1rem !important;
+            background: #fff;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-dialog {
+            max-width: 1320px;
+            width: calc(100% - 1.25rem);
+            margin: 1rem auto;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-content {
+            border: 1px solid #e3e6f0;
+            border-radius: .8rem;
+            overflow: hidden;
+            box-shadow: 0 .45rem 1.4rem rgba(58, 59, 69, .18);
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+            background: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: .95rem 1.2rem;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-title,
+        #modalFinanzasPOS.modal-compra-pos-layout .close {
+            color: #2f3e52;
+            text-shadow: none !important;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-title {
+            font-weight: 700;
+        }
+
+        #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+            padding: .6rem !important;
+            background: #f4f7fb;
+        }
+
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-dialog {
+            max-width: 400px;
+            width: calc(100% - 1rem);
+            margin: 1.75rem auto;
+        }
+
+        @@media (min-width: 992px) {
+            #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-dialog {
+                max-width: 690px;
+                width: calc(100% - 2.5rem);
+            }
+        }
+
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-content {
+            border: 1px solid #e3e6f0;
+            border-radius: .75rem;
+            overflow: hidden;
+            box-shadow: 0 .35rem 1.25rem rgba(58, 59, 69, .18);
+        }
+
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-header {
+            background: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: .9rem 1.1rem;
+        }
+
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-title,
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .close {
+            color: #2f3e52 !important;
+            text-shadow: none !important;
+        }
+
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-title {
+            font-weight: 700;
+        }
+
+        #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-body {
+            padding: .75rem !important;
+            background: #fff;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+            max-width: 920px;
+            width: calc(100% - 1rem);
+            margin: 1.25rem auto;
+        }
+
+        @@media (min-width: 992px) {
+            #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+                width: min(920px, calc(100% - 1rem));
+            }
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
+            padding: 0 !important;
+            background-color: #fff;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header {
+            background: #4e73df !important;
+            border-bottom: none;
+            padding: .9rem 1.1rem;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-title,
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .close {
+            color: #fff !important;
+            text-shadow: none !important;
+            font-weight: 700;
+        }
+
+        #modalFinanzasPOS.modal-mis-actividades-pos-compacto .close {
+            opacity: .85;
+        }
+
+        html.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
+            background-color: #182232;
+        }
+
+        html.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header,
+        body.dark-mode #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header {
+            background: #2b4a86 !important;
+        }
+
+        @@media (max-width: 767.98px) {
+            #modalFinanzasPOS.modal-egreso-pos-compacto .modal-dialog {
+                width: calc(100% - .75rem);
+                margin: .5rem auto;
+            }
+
+            #modalFinanzasPOS.modal-egreso-pos-compacto .modal-header {
+                padding: .85rem 1rem;
+            }
+
+            #modalFinanzasPOS.modal-egreso-pos-compacto .modal-body {
+                padding: .75rem !important;
+            }
+
+            #modalFinanzasPOS.modal-compra-pos-layout .modal-dialog {
+                width: calc(100% - .5rem);
+                margin: .25rem auto;
+            }
+
+            #modalFinanzasPOS.modal-compra-pos-layout .modal-header {
+                padding: .85rem .95rem;
+            }
+
+            #modalFinanzasPOS.modal-compra-pos-layout .modal-body {
+                padding: .35rem !important;
+            }
+
+            #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-dialog {
+                width: calc(100% - .75rem);
+                margin: .5rem auto;
+            }
+
+            #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-header {
+                padding: .85rem 1rem;
+            }
+
+            #modalFinanzasPOS.modal-ctasctes-pos-compacto .modal-body {
+                padding: .6rem !important;
+            }
+
+            #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
+                width: calc(100% - .5rem);
+                margin: .25rem auto;
+            }
+
+            #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-header {
+                padding: .75rem .9rem;
+            }
+
+            #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-title {
+                font-size: 1rem;
+            }
+
+            #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-body {
+                padding: 0 !important;
+            }
+        }
+    </style>
+    <div class="modal fade" id="modalFinanzasPOS" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="modalFinanzasPOSTitle">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>Finanzas
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0" id="contenedorFinanzasPOS">
+                    <div class="p-4 text-center text-muted">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="globalAntiForgeryToken" style="display:none;">
         @Html.AntiForgeryToken()
     </div>
@@ -623,6 +951,7 @@ else
     <script src="~/Scripts/app/scanner.js"></script>
     <script src="~/Scripts/app/calculadora-billetes.js?v=3239"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
+    <script src="~/Scripts/app/egresos-caja.js?v=10"></script>
     <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
     <script src="~/Scripts/app/pos-compact.js?v=1"></script>
     <script src="~/Scripts/app/seleccion-usuario.js?v=2"></script>
@@ -769,6 +1098,10 @@ else
                             e.preventDefault();
                             window.abrirCaja();
                         }
+                        if (e.key === "Escape") {
+                            e.preventDefault();
+                            $("#btnCancelarAbrirCaja").trigger("click");
+                        }
                     });
                 });
 
@@ -904,10 +1237,275 @@ else
                     titulo: "Detalle de billetes"
                 });
             };
-            // F2/F4-F8 y F9 (Buscar cliente) NO se registran a proposito: sus modulos originales
-            // (CtasCtes/POSCompras/POSEgresos/POSFinanzas, boton de cliente) no estan portados
-            // todavia -- pos-help.js los deja degradar solos (evento sin listener / boton
-            // disabled), ver header del archivo.
+            // ===== F2 (Ctas Ctes)/F4 (editar ultima linea)/F5 (Nueva compra)/F6 (Mis
+            // actividades)/F7 (Nuevo egreso) -- 2026-09-06, retomado (ver docs/DECISIONS.md).
+            // Port literal de Web/Views/Ventas/POS.cshtml:3015-3416,3439-3468 (renderConScripts +
+            // POSFinanzas.cargar/abrirCtasCtes/abrirCtaCtePersona + POSCompras + POSEgresos).
+            // F8 (Historial de precios de cliente) y F9 (Buscar cliente) siguen sin registrar:
+            // ambos dependen del buscador de cliente real, todavia no portado (el cliente en
+            // WebCore siempre es Consumidor Final) -- no tiene sentido un "historial de precios"
+            // sin un cliente real seleccionado. pos-help.js los deja degradar solos.
+            window.POSModalLoading = window.POSModalLoading || (function ($) {
+                function getOverlay() {
+                    return $('#posModalLoading');
+                }
+
+                function show(message) {
+                    var $overlay = getOverlay();
+                    if (!$overlay.length) return;
+
+                    $overlay.find('[data-loading-text]').text(message || 'Cargando solicitud...');
+                    $overlay.stop(true, true).fadeIn(120).attr('aria-hidden', 'false');
+                }
+
+                function hide() {
+                    var $overlay = getOverlay();
+                    if (!$overlay.length) return;
+
+                    $overlay.stop(true, true).fadeOut(120).attr('aria-hidden', 'true');
+                }
+
+                function html(message) {
+                    var texto = message || 'Cargando...';
+                    return '<div class="p-4 text-center text-muted">'
+                        + '<div class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></div>'
+                        + texto
+                        + '</div>';
+                }
+
+                return { show: show, hide: hide, html: html };
+            })(window.jQuery);
+
+            function renderConScripts(html, selectorContenedor, onComplete) {
+                var $contenedor = $(selectorContenedor);
+                var $tmp = $("<div>").html(html);
+                var scripts = [];
+
+                $tmp.find("script").each(function () {
+                    scripts.push({
+                        src: this.getAttribute("src"),
+                        code: this.text || this.textContent || this.innerHTML || ""
+                    });
+                    $(this).remove();
+                });
+
+                $contenedor.html($tmp.html());
+
+                function normalizarSrc(src) {
+                    try { return new URL(src, document.baseURI).href; } catch (e) { return src; }
+                }
+
+                function yaExisteScript(srcNormalizado) {
+                    return Array.from(document.scripts).some(function (s) {
+                        return s.src && normalizarSrc(s.src) === srcNormalizado;
+                    });
+                }
+
+                function ejecutarScript(index) {
+                    if (index >= scripts.length) {
+                        if (typeof onComplete === "function") onComplete();
+                        return;
+                    }
+
+                    var item = scripts[index];
+
+                    if (item.src) {
+                        var srcNormalizado = normalizarSrc(item.src);
+
+                        if (yaExisteScript(srcNormalizado)) {
+                            ejecutarScript(index + 1);
+                            return;
+                        }
+
+                        var nuevo = document.createElement("script");
+                        nuevo.src = srcNormalizado;
+                        nuevo.async = false;
+                        nuevo.setAttribute("data-pos-loaded", "true");
+                        nuevo.onload = function () { ejecutarScript(index + 1); };
+                        nuevo.onerror = function () {
+                            console.error("No se pudo cargar el script:", srcNormalizado);
+                            ejecutarScript(index + 1);
+                        };
+                        document.body.appendChild(nuevo);
+                        return;
+                    }
+
+                    $.globalEval(item.code);
+                    ejecutarScript(index + 1);
+                }
+
+                ejecutarScript(0);
+            }
+
+            function mostrarErrorFinanzas(msg) {
+                $("#contenedorFinanzasPOS").html('<div class="alert alert-danger m-3 mb-0">' + msg + '</div>');
+            }
+
+            window.POSFinanzas = {
+                cargar: function (url, titulo) {
+                    if (window.POSGuard && !window.POSGuard.startAction("finanzas:cargar")) return;
+
+                    var esMisActividades = !!url && url.indexOf("ActividadesCaja") >= 0;
+                    var esCompra = !!url && url.indexOf("/Compras/") >= 0;
+                    var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
+
+                    $("#modalFinanzasPOS")
+                        .removeClass("modal-egreso-pos-compacto modal-compra-pos-layout modal-ctasctes-pos-compacto modal-mis-actividades-pos-compacto")
+                        .toggleClass("modal-compra-pos-layout", esCompra)
+                        .toggleClass("modal-ctasctes-pos-compacto", esCtasCtes)
+                        .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades);
+                    $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
+                    $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
+                    window.POSModalLoading?.show('Cargando solicitud...');
+
+                    const abierto = window.POSGuard
+                        ? window.POSGuard.requestModalOpen('finanzas', function () { $("#modalFinanzasPOS").modal("show"); })
+                        : true;
+
+                    if (!abierto) {
+                        window.POSModalLoading?.hide();
+                        window.POSGuard?.endAction("finanzas:cargar");
+                        return;
+                    }
+
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        cache: false,
+                        success: function (html) {
+                            renderConScripts(html, "#contenedorFinanzasPOS", function () {
+                                window.POSModalLoading?.hide();
+                            });
+                        },
+                        error: function () {
+                            window.POSModalLoading?.hide();
+                            mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
+                        },
+                        complete: function () {
+                            window.POSGuard?.endAction("finanzas:cargar");
+                        }
+                    });
+                },
+
+                abrirCtasCtes: function () {
+                    this.cargar('@Url.Action("CtasCtes", "Finanzas")', "Cuentas corrientes");
+                },
+
+                abrirCtaCtePersona: function (idPersona, fechaDesde) {
+                    var url = '@Url.Action("CtaCtePersona", "Finanzas")' + '?idPersona=' + encodeURIComponent(idPersona) + '&desdePos=true';
+                    if (fechaDesde) url += '&fechaDesde=' + encodeURIComponent(fechaDesde);
+                    this.cargar(url, "Cuenta corriente");
+                }
+            };
+
+            window.POSCompras = {
+                abrirNueva: function () {
+                    window.POSFinanzas.cargar('@Url.Action("NuevaCompra", "Compras", new { origen = "pos" })', "Nueva compra");
+                },
+                abrirModificar: function (idCompra) {
+                    var id = parseInt(idCompra, 10) || 0;
+                    if (id <= 0) return;
+                    var url = '@Url.Action("ModificarCompra", "Compras")' + '?id=' + encodeURIComponent(id) + '&origen=pos';
+                    window.POSFinanzas.cargar(url, "Modificar compra");
+                }
+            };
+
+            // Egresos de caja dentro del POS: a diferencia del clasico (accion MisEgresosCaja que
+            // resuelve la caja actual del vendedor de sesion internamente), WebCore porto ese
+            // listado como ActividadesCaja(idCierre,...) -- requiere el id de cierre explicito, no
+            // lo resuelve solo. Se pasa idCierreActividadPOS (resuelto server-side en
+            // VentasController.POS, mismo criterio que ObtenerCierreCajaActual).
+            window.EgresosCajaUrls = {
+                mis: '@Url.Action("ActividadesCaja", "Cajas", new { idCierre = idCierreActividadPOS })',
+                nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas", new { desdePos = true, idCierre = idCierreActividadPOS })',
+                guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
+            };
+
+            window.POSEgresos = {
+                cargarEnModal: function (url, titulo, compacto) {
+                    if (window.EgresosCaja && typeof window.EgresosCaja.formDirty === "function" && window.EgresosCaja.formDirty()) {
+                        window.EgresosCaja.confirmarSalidaCambios(function () {
+                            window.EgresosCaja.permitirSalida();
+                            window.POSEgresos.cargarEnModal(url, titulo, compacto);
+                        });
+                        return;
+                    }
+
+                    if (window.POSGuard && !window.POSGuard.startAction("egresos:cargar")) return;
+
+                    var esMisActividades = !!url && url.indexOf("ActividadesCaja") >= 0;
+                    $("#modalFinanzasPOS")
+                        .removeClass("modal-compra-pos-layout modal-ctasctes-pos-compacto")
+                        .toggleClass("modal-egreso-pos-compacto", compacto === true)
+                        .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades);
+                    $("#modalFinanzasPOSTitle").text(titulo || "Egresos de Caja");
+                    $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
+                    window.POSModalLoading?.show('Cargando solicitud...');
+
+                    const abierto = window.POSGuard
+                        ? window.POSGuard.requestModalOpen('finanzas', function () { $("#modalFinanzasPOS").modal("show"); })
+                        : true;
+
+                    if (!abierto) {
+                        window.POSModalLoading?.hide();
+                        window.POSGuard?.endAction("egresos:cargar");
+                        return;
+                    }
+
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        cache: false,
+                        success: function (html) {
+                            window.POSModalLoading?.hide();
+                            if (window.EgresosCaja && typeof window.EgresosCaja.renderConScripts === "function") {
+                                window.EgresosCaja.renderConScripts(html, "#contenedorFinanzasPOS");
+                            } else {
+                                renderConScripts(html, "#contenedorFinanzasPOS");
+                            }
+                        },
+                        error: function () {
+                            window.POSModalLoading?.hide();
+                            mostrarErrorFinanzas("No se pudo cargar egresos de caja.");
+                        },
+                        complete: function () {
+                            window.POSGuard?.endAction("egresos:cargar");
+                        }
+                    });
+                },
+
+                abrirMis: function (filtroActividad) {
+                    var url = window.EgresosCajaUrls.mis;
+                    if (filtroActividad) url += (url.indexOf("?") >= 0 ? "&" : "?") + "filtroActividad=" + encodeURIComponent(filtroActividad);
+                    this.cargarEnModal(url, "Mis actividades", false);
+                },
+
+                abrirNuevo: function () {
+                    this.cargarEnModal(window.EgresosCajaUrls.nuevo, "Nuevo Egreso de Caja", true);
+                }
+            };
+
+            window.posHotkeysHooks.F2 = function () {
+                window.POSFinanzas.abrirCtasCtes();
+            };
+
+            window.posHotkeysHooks.F4 = function () {
+                // Simula el click sobre la ultima fila del carrito para abrir el modal "Linea de
+                // venta" de ese producto -- mismo flujo que ya corre al hacer click con el mouse.
+                $("#tablaItems tr.fila-item").last().trigger("click");
+            };
+
+            window.posHotkeysHooks.F5 = function () {
+                window.POSCompras.abrirNueva();
+            };
+
+            window.posHotkeysHooks.F6 = function () {
+                window.POSEgresos.abrirMis();
+            };
+
+            window.posHotkeysHooks.F7 = function () {
+                window.POSEgresos.abrirNuevo();
+            };
 
             posProduct.init();
             posCart.init();
@@ -916,6 +1514,46 @@ else
             posComment.init();
             posHelp.init();
             posKeyboard.init();
+
+            // Atajos globales Home/End/F9/F10 (2026-09-06, retomado -- ver docs/DECISIONS.md).
+            // Port literal de Web/Views/Ventas/POS.cshtml:2202-2234. F9 (#btnBuscarPersona) y F10
+            // (#btnAgregarManual) quedan como no-ops seguros hoy: ambos botones estan `disabled`
+            // en el markup (buscador de cliente/producto avanzado todavia no portados) y el guard
+            // `!btn.disabled` ya lo contempla -- se portan igual para no repetir este trabajo
+            // cuando esos modulos lleguen, y para que el navegador no intercepte las teclas.
+            document.addEventListener("keydown", function (e) {
+                if ($(".modal.show").length) return;
+
+                if (e.key === "End") {
+                    e.preventDefault();
+                    const btn = document.getElementById("btnFinalizar");
+                    if (btn && !btn.disabled) btn.click();
+                }
+
+                if (e.key === "Home") {
+                    e.preventDefault();
+                    const inp = document.getElementById("inputCodigo");
+                    if (inp) {
+                        inp.focus();
+                        try { inp.select(); } catch { }
+                    }
+                }
+
+                if (e.key === "F9" || e.key === "F10") e.preventDefault();
+                else return;
+
+                if (e.key === "F9") {
+                    const btn = document.getElementById("btnBuscarPersona");
+                    if (btn && !btn.disabled) btn.click();
+                    return;
+                }
+
+                if (e.key === "F10") {
+                    const btn = document.getElementById("btnAgregarManual");
+                    if (btn && !btn.disabled) abrirBuscadorProductosPOS();
+                    return;
+                }
+            });
 
             // ===== Batch 7, iteracion 3: scanner de camara =====
             // Port literal de Web/Views/Ventas/POS.cshtml (~1614-1644): scanner.js/zxing.min.js
@@ -1057,6 +1695,197 @@ else
             if (typeof window.POSState.setRequierePreseleccionFormaPago === "function") {
                 window.POSState.setRequierePreseleccionFormaPago(requierePreseleccionFormaPago);
             }
+
+            // ===== Proteccion de salida con venta en curso + POSDraft (2026-09-06, retomado --
+            // ver docs/DECISIONS.md). Port de Web/Views/Ventas/POS.cshtml:1935-2090 (POSDraft) y
+            // :2491-2558 (bloqueo de salida), SIMPLIFICADO respecto al original en 2 puntos
+            // documentados, ninguno cambia el comportamiento del carrito en si (lo unico que
+            // protege esta funcionalidad):
+            //   1. Sin identificacionCliente/razonSocial "visual sync" (resolverIdentificacionCli
+            //      enteActual/setClienteIdentificacionVisual/actualizarAccesoHistorialPreciosClien
+            //      te): esas funciones son del buscador de cliente real, todavia no portado (el
+            //      cliente en WebCore siempre es Consumidor Final) -- se restauran idPersona/
+            //      razonSocial con un .val() directo en vez de esos helpers.
+            //   2. Sin getFechaVentaPOS/setFechaVentaPOS (helpers del modulo de fecha editable,
+            //      tampoco portado): se lee/escribe #fechaVenta directo, el mismo campo que ya usa
+            //      forma-pago.js para mandar fechaVenta al servidor.
+            // pos-cart.js/forma-pago.js/pos-multi-instance.js YA llaman a window.POSDraft?.save?.()
+            // y window.desactivarAvisoSalidaPOS (definido en pos-cart.js) -- nada mas que tocar ahi.
+            window.POSDraft = window.POSDraft || (function () {
+                const keyBase = "carnisys-pos-venta-en-curso";
+                const idSucursalActual = parseInt($("#idSucursalPOS").val(), 10) || 0;
+                const idUsuarioActual = @idUsuarioPOS;
+                const draftSuffix = (window.POSMultiInstanceConfig && window.POSMultiInstanceConfig.instanceId)
+                    ? window.POSMultiInstanceConfig.instanceId
+                    : "default";
+                const key = keyBase + "-" + idUsuarioActual + "-" + idSucursalActual + "-" + draftSuffix;
+
+                function save() {
+                    if (window.esEdicionVenta) {
+                        clear();
+                        return;
+                    }
+
+                    if (window.POSFinalizandoVenta || window.POSVentaFinalizada) {
+                        localStorage.removeItem(key);
+                        return;
+                    }
+
+                    const lineas = POSState.getLineas();
+
+                    if (!lineas.some(function (linea) { return !!linea; })) {
+                        if (window.POSCancelacionEnCurso) return;
+                        localStorage.removeItem(key);
+                        return;
+                    }
+
+                    localStorage.setItem(key, JSON.stringify({
+                        lineas: lineas,
+                        listaExpendios: POSState.getListaExpendios ? POSState.getListaExpendios() : [],
+                        formaPagoPreseleccionada: POSState.getFormaPagoPreseleccionada ? POSState.getFormaPagoPreseleccionada() : null,
+                        idUsuarioPOS: idUsuarioActual,
+                        idSucursalPOS: idSucursalActual,
+                        idPersona: $("#idPersona").val(),
+                        razonSocial: $("#razonSocial").val(),
+                        observaciones: POSState.getObservaciones(),
+                        fechaVenta: $("#fechaVenta").val()
+                    }));
+                }
+
+                function tryParseDraft() {
+                    try {
+                        return JSON.parse(localStorage.getItem(key) || "null");
+                    } catch (e) {
+                        localStorage.removeItem(key);
+                        return null;
+                    }
+                }
+
+                function esDraftCompatible(draft) {
+                    if (!draft || !Array.isArray(draft.lineas)) return false;
+
+                    const lineasCargadas = draft.lineas.filter(function (linea) { return !!linea; });
+                    if (!lineasCargadas.length) return false;
+
+                    const draftSucursal = parseInt(draft.idSucursalPOS, 10);
+                    if (Number.isFinite(draftSucursal) && draftSucursal > 0 && draftSucursal !== idSucursalActual) return false;
+
+                    const draftUsuario = parseInt(draft.idUsuarioPOS, 10);
+                    if (Number.isFinite(draftUsuario) && draftUsuario > 0 && draftUsuario !== idUsuarioActual) return false;
+
+                    return true;
+                }
+
+                function restore() {
+                    if (window.POSMultiInstance?.isBlocked?.()) {
+                        return false;
+                    }
+
+                    let draft = tryParseDraft();
+
+                    if (!esDraftCompatible(draft)) {
+                        if (draft != null) localStorage.removeItem(key);
+                        draft = null;
+                    }
+
+                    if (!draft) return false;
+
+                    POSState.setLineas(draft.lineas);
+                    POSState.setListaExpendios?.(draft.listaExpendios || []);
+                    POSState.setFormaPagoPreseleccionada?.(draft.formaPagoPreseleccionada || null);
+
+                    if (draft.idPersona) $("#idPersona").val(draft.idPersona);
+                    if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
+                    if (draft.observaciones != null) POSState.setObservaciones(draft.observaciones);
+                    if (draft.fechaVenta) $("#fechaVenta").val(draft.fechaVenta);
+
+                    return true;
+                }
+
+                function clear() {
+                    localStorage.removeItem(key);
+                }
+
+                return { save: save, restore: restore, clear: clear };
+            })();
+
+            const ventaRestauradaPOS = window.esEdicionVenta ? false : window.POSDraft.restore();
+            if (ventaRestauradaPOS) {
+                posCart.renderTable(window.POSState.getLineas());
+                posCart.recalculateTotal();
+                posCart.updateSaleState();
+                posCart.updateCartSummary?.();
+                posComment.updateButtonState?.();
+                posExpendios.syncAssignedFromCart?.();
+            }
+
+            function hayVentaActivaPOS() {
+                if (window.POSFinalizandoVenta) return false;
+                if (window.POSCancelacionEnCurso) return true;
+
+                const lineas = window.POSState?.getLineas?.() || [];
+                return lineas.some(function (linea) { return !!linea; });
+            }
+
+            function mostrarBloqueoSalidaPOS() {
+                Swal.fire({
+                    icon: "warning",
+                    title: "No puede salir con una venta en curso",
+                    text: 'Debe presionar "Cancelar Venta".'
+                });
+            }
+
+            function bloquearSalidaSiVentaEnCurso(e) {
+                if (!hayVentaActivaPOS()) return false;
+
+                if (e) {
+                    e.preventDefault();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                        e.stopImmediatePropagation();
+                    } else if (typeof e.stopPropagation === "function") {
+                        e.stopPropagation();
+                    }
+                }
+
+                window.POSDraft?.save?.();
+                mostrarBloqueoSalidaPOS();
+                return true;
+            }
+
+            function hayModalAbiertoEnPOS() {
+                return $(".modal.show:visible").length > 0;
+            }
+
+            document.addEventListener("keydown", function (e) {
+                const key = (e.key || "").toLowerCase();
+                const intentaRecargar = e.key === "F5" || ((e.ctrlKey || e.metaKey) && key === "r");
+
+                if (e.key === "F5" && hayModalAbiertoEnPOS()) {
+                    e.preventDefault();
+                    if (typeof e.stopImmediatePropagation === "function") {
+                        e.stopImmediatePropagation();
+                    } else if (typeof e.stopPropagation === "function") {
+                        e.stopPropagation();
+                    }
+                    return;
+                }
+
+                if (intentaRecargar) {
+                    bloquearSalidaSiVentaEnCurso(e);
+                }
+            }, true);
+
+            $(document).on("click.posSalidaVenta", "a[href]", function (e) {
+                const href = ($(this).attr("href") || "").trim();
+
+                if (!href || href === "#" || href.indexOf("javascript:") === 0) return;
+                if ($(this).data("pos-ajax") === true || $(this).attr("data-pos-ajax") === "true") return;
+                if ($(this).attr("data-pos-descarga") === "true") return;
+                if ($(this).attr("data-toggle") === "modal" || $(this).attr("data-dismiss") === "modal" ||
+                    $(this).attr("data-bs-toggle") === "modal" || $(this).attr("data-bs-dismiss") === "modal") return;
+
+                bloquearSalidaSiVentaEnCurso(e);
+            });
 
             // Port de Web/Views/Ventas/POS.cshtml:1716-1727 (faltaba en WebCore -- pedido del
             // usuario 2026-09-04 al probar "Modificar venta"). window.POSFormaPagoActual ya lo

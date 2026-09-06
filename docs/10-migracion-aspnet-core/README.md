@@ -615,3 +615,12 @@ Entrada completa en `docs/DECISIONS.md` ("Batch 5 (final)..."). Resumen: `PuedeM
 Verificado con datos reales con el usuario de prueba ya existente `produccion`/`a` (`Id=16`): modal de operador se dispara, clave incorrecta rechazada, rate-limit bloquea tras 3 intentos, usuario sin permiso `Permisos.Venta.NuevaVenta` rechazado pese a clave correcta, "ger" autoriza y el operador queda resuelto y persistido en `Session`. Bug real de sesión encontrado y corregido durante esta misma verificación: `HttpContext.Session.Id` no era estable hasta el primer *write*, rompiendo el rate-limiter (ver `DECISIONS.md` para el detalle completo del fix).
 
 **No incluido en este batch** (no nombrado explícitamente en el plan): `PuntosExpendioController` no recibió el mismo mecanismo de operador de POS; el botón "Cambiar operario" no tiene todavía un elemento HTML en `POS.cshtml` (el handler JS existe, inerte).
+
+## Retomado + atajos de teclado del POS (2026-09-06) — paridad completa con Web clásico
+
+Entrada completa en `docs/DECISIONS.md`. Resumen de lo agregado en esta vuelta:
+
+- **Usuario de producción en `PuntosExpendioController`** (lo que había quedado fuera del Batch 5): mismo mecanismo de operador de POS que `VentasController`, con `exigirPermisoVentas=false` (cualquier usuario activo puede operar Expendio). `PuedeBonificarPuntoExpendio` pasa a calcularse real. Botón "Cambiar operario" agregado a **ambas** vistas de POS.
+- **Atajos de teclado, paridad completa**: Home/End/F9/F10 globales, `Escape` en el modal de abrir caja, protección de salida con venta en curso + `POSDraft` (persistencia del carrito), F2 (Ctas Ctes)/F4/F5 (Nueva compra)/F6 (Mis actividades)/F7 (Nuevo egreso) en `Ventas/POS.cshtml`, F6 "Mis expendios" completo (backend + modal + JS) en `PuntosExpendio/POS.cshtml`. F8/F9 (historial de precios / buscar cliente) y el buscador avanzado de producto (F10 real) quedan como gap explícito -- dependen de un buscador de cliente/producto real que no existe todavía, ver `docs/10-migracion-aspnet-core/gaps.md`.
+- **Bug real encontrado y corregido**: `window.POSModalLoading` (el overlay "Cargando solicitud...") nunca se había portado -- sin él, `POSFinanzas.cargar` tiraba una excepción en silencio y ningún modal de F2/F5/F6/F7 abría. Se agregó junto con el resto de la infraestructura que faltaba.
+- Nuevo `WebCore.E2ETests/PosHotkeysTests.cs` (5 tests permanentes). Suite completa en verde (25 tests).

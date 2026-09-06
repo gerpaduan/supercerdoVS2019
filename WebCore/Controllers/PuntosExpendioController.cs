@@ -201,6 +201,73 @@ namespace WebCore.Controllers
             return Convert.ToString(row[columna]) ?? "";
         }
 
+        // Port de PuntosExpendioController.MisExpendiosPOS (F6 "Mis expendios", 2026-09-06,
+        // retomado -- ver docs/DECISIONS.md). Diferencia real respecto al original: sin
+        // imprimirUrl/imprimirPayloadUrl/whatsappTexto (ticket ESC/POS via agente local, no
+        // portado en ningun lugar de esta migracion) -- el boton "Imprimir" de este listado abre
+        // el mismo modal PDF+email ya usado al finalizar un expendio (_ModalPostPuntoExpendioBasico
+        // .cshtml), reusando pdfUrl (ImprimirPdf, ya portado) en vez del ticket.
+        [HttpGet]
+        public JsonResult MisExpendiosPOS(string fechaDesde = null, string fechaHasta = null, int top = 100, string posInstanceId = null)
+        {
+            var user = _usuarioActual;
+            if (user.IdSucursal == 0)
+                return Json(new { ok = false, mensaje = "Sesión inválida o sucursal no seleccionada." });
+
+            var operador = ResolverOperadorPOS(posInstanceId, user);
+
+            try
+            {
+                DateTime? fechaDesdeFiltro = DateTime.TryParse(fechaDesde, out var fechaDesdeValue) ? fechaDesdeValue.Date : (DateTime?)null;
+                DateTime? fechaHastaFiltro = DateTime.TryParse(fechaHasta, out var fechaHastaValue) ? fechaHastaValue.Date : (DateTime?)null;
+                DataTable dt = _oVentaN.obtenerExpendiosPorUsuario(user.IdSucursal, operador.Id, top <= 0 ? 100 : top, fechaDesdeFiltro, fechaHastaFiltro);
+                string sucursalNombre = user.Sucursal != null ? user.Sucursal.SucursalNombre : "";
+
+                var items = dt.AsEnumerable()
+                    .Select(row =>
+                    {
+                        DateTime fechaExpendio = row["fechaExpendio"] != DBNull.Value ? Convert.ToDateTime(row["fechaExpendio"]) : DateTime.MinValue;
+                        int idExpendio = row["idExpendio"] != DBNull.Value ? Convert.ToInt32(row["idExpendio"]) : 0;
+                        int idVenta = row["idVenta"] != DBNull.Value ? Convert.ToInt32(row["idVenta"]) : 0;
+                        var expendio = idExpendio > 0 ? _oVentaN.getExpedioById(idExpendio) : null;
+                        var lineas = (expendio != null ? expendio.LineasVenta : null) ?? new List<Entidades.LineaVenta>();
+                        string pdfUrl = idExpendio > 0 ? Url.Action("ImprimirPdf", "PuntosExpendio", new { id = idExpendio }) : "";
+
+                        return new
+                        {
+                            fecha = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("dd/MM/yyyy") : "",
+                            hora = fechaExpendio != DateTime.MinValue ? fechaExpendio.ToString("HH:mm") : "",
+                            idExpendio = idExpendio,
+                            identificacionExpendio = Convert.ToString(row["identificacionExpendio"] ?? ""),
+                            sucursal = sucursalNombre,
+                            sector = Convert.ToString(row["sector"] ?? ""),
+                            cantItems = Convert.ToString(row["cantItems"] ?? "0"),
+                            totalKg = row["totalKg"] != DBNull.Value ? Convert.ToDecimal(row["totalKg"]) : 0m,
+                            totalImporte = row["importe"] != DBNull.Value ? Convert.ToDecimal(row["importe"]) : 0m,
+                            vendedor = Convert.ToString(row["vendedor"] ?? ""),
+                            idVenta = idVenta,
+                            estado = idVenta > 0 && idVenta != idExpendio ? "Asignado" : "Pendiente",
+                            pdfUrl = pdfUrl,
+                            lineas = lineas.Select(l => new
+                            {
+                                codigo = l.Corte != null ? l.Corte.Codigo : 0,
+                                producto = l.Corte != null ? (!string.IsNullOrWhiteSpace(l.Corte.corte) ? l.Corte.corte : l.Corte.CorteDesc) : "",
+                                cantKg = l.CantKg,
+                                precioKg = l.PrecioKg,
+                                total = l.CantKg * l.PrecioKg
+                            }).ToList()
+                        };
+                    })
+                    .ToList();
+
+                return Json(new { ok = true, items = items });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, mensaje = "No se pudieron consultar los expendios: " + ex.Message });
+            }
+        }
+
         // Port de PuntosExpendioController.POS (batch UI de Expendios, ver
         // docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md). Login de operador de produccion
         // portado 2026-09-06 (retomado del Batch 5 del plan de login/permisos reales, ver

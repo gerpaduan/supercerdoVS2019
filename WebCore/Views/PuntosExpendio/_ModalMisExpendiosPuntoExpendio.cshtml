@@ -1,0 +1,98 @@
+@* Port literal de Web/Views/PuntosExpendio/_ModalMisExpendiosPuntoExpendio.cshtml (F6, 2026-09-06,
+   retomado -- ver docs/DECISIONS.md). *@
+<div class="modal fade" id="modalMisExpendiosPuntoExpendio" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-inbox mr-2"></i>Mis expendios
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="small text-muted mb-2">
+                    Expendios generados por el usuario actual.
+                </div>
+
+                <div class="border rounded p-2 mb-3">
+                    <div class="form-row align-items-end">
+                        <div class="col-12 col-md-2 mb-2">
+                            <label class="small font-weight-bold mb-1" for="filtroMisExpendiosFechaDesde">Fecha desde</label>
+                            <input type="date" class="form-control form-control-sm" id="filtroMisExpendiosFechaDesde" />
+                        </div>
+                        <div class="col-12 col-md-2 mb-2">
+                            <label class="small font-weight-bold mb-1" for="filtroMisExpendiosFechaHasta">Fecha hasta</label>
+                            <input type="date" class="form-control form-control-sm" id="filtroMisExpendiosFechaHasta" />
+                        </div>
+                        <div class="col-12 col-md-2 mb-2">
+                            <label class="small font-weight-bold mb-1" for="filtroMisExpendiosEstado">Estado</label>
+                            <select class="form-control form-control-sm" id="filtroMisExpendiosEstado">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2 mb-2">
+                            <label class="small font-weight-bold mb-1" for="filtroMisExpendiosSucursal">Sucursal</label>
+                            <select class="form-control form-control-sm" id="filtroMisExpendiosSucursal">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2 mb-2">
+                            <button type="button" class="btn btn-primary btn-sm btn-block" id="btnBuscarMisExpendiosPuntoExpendio">
+                                <i class="fas fa-search mr-1"></i>Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-12 col-md-4 mb-2 mb-md-0">
+                            <label class="small font-weight-bold mb-1" for="filtroMisExpendiosCliente">Identificacion cliente</label>
+                            <input type="text" class="form-control form-control-sm" id="filtroMisExpendiosCliente" placeholder="Filtrar por cliente o identificacion" />
+                        </div>
+                        <div class="col-12 col-md-4 mb-2 mb-md-0">
+                            <label class="small font-weight-bold mb-1" for="filtroMisExpendiosProducto">Producto</label>
+                            <input type="text" class="form-control form-control-sm" id="filtroMisExpendiosProducto" placeholder="Filtrar por producto" />
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="small text-muted pt-4 d-none" id="msgFiltroFechaMisExpendios">
+                                Cambio el rango de fechas. Presione Buscar para actualizar los datos.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info d-none" id="msgMisExpendiosPuntoExpendio"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0" id="tablaMisExpendiosPuntoExpendio">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:95px;">Fecha</th>
+                                <th style="width:70px;">Hora</th>
+                                <th style="width:95px;">Nro.Exp.</th>
+                                <th>Identificación / Cliente</th>
+                                <th style="width:120px;">Estado</th>
+                                <th style="width:95px;" class="text-right">Items</th>
+                                <th style="width:110px;" class="text-right">Kgs.</th>
+                                <th style="width:120px;" class="text-right">Total</th>
+                                <th style="width:130px;" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">No hay expendios para mostrar.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted">F6 abre este listado desde el POS.</small>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
