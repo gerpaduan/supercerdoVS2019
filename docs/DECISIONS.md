@@ -4448,3 +4448,53 @@ HTML/datos renderizados, no la geometría real del layout en el navegador -- se 
 `BoundingBoxAsync`/clases de `<html>`, no solo presencia de markup) para que esta clase de
 regresión no vuelva a pasar inadvertida.
 
+## 2026-09-06 - Login/Sesión real para WebCore: Cookie Authentication, sin Identity ni OIDC
+
+**Decisión**: reemplazar el usuario único hardcodeado (`StubEmpresaContext`/`_usuarioActual`, en los
+18 controllers ya portados) por autenticación real con **ASP.NET Core Cookie Authentication** (no
+ASP.NET Core Identity, no OIDC) -- el modelo de usuario es 100% custom (`Entidades.Usuario`/
+`Negocio.Usuario`, ya compartido `net472;net10.0`), reusar Identity hubiera significado duplicar ese
+modelo o migrar todo el esquema de usuarios, sin necesidad real.
+
+**Arquitectura**: claims en la cookie firmada (`WebCore/Infrastructure/SesionClaims.cs`):
+`NameIdentifier` (Id), `IdEmpresa`, `IdSucursal`, `Admin`, `EsUsuarioProduccion`,
+`PermitirLoginFueraSucursal`, `NombreCompleto`. Deliberadamente el catálogo `Permisos` NO va en la
+cookie (puede ser largo y cambia sin re-login) -- se re-resuelve fresco desde DB en cada request vía
+`WebCore/Services/UsuarioSesionService.cs` (scoped), mismo criterio que ya usa
+`Web/Controllers/BaseController.cs` (clásico) para `Sucursal`. `WebCore/Infrastructure/
+EmpresaContextClaims.cs` reemplaza a `Web/EmpresaContextWeb.cs`, leyendo el claim `IdEmpresa` vía
+`IHttpContextAccessor`. `Program.cs` agrega un `FallbackPolicy` de autenticación requerida para TODA
+acción por default -- evita tener que taggear `[Authorize]` a mano en cada uno de los ~18 controllers
+ya portados; `LoginController` es la única excepción, marcada `[AllowAnonymous]`.
+
+**Mejora real de paso** (no buscada, efecto colateral positivo): todo el estado de sesión ahora vive
+en la cookie firmada, no en memoria del proceso -- resuelve de raíz un bug ya documentado en
+producción del `Web` clásico ("la sesión vencía a los pocos minutos" por el idle-timeout del App Pool
+matando la `Session` in-proc).
+
+**Alcance v1 confirmado con el usuario** (lo que se excluye, no por omisión sino por decisión): sin
+geo-validación de ubicación de login, sin recuperación de contraseña por email (ambas quedan en
+`docs/10-migracion-aspnet-core/gaps.md` como gap v2). Doble login durante la transición (WebCore con
+cookie, Web clásico con `Session`) se acepta como transitorio -- ya es la decisión de fondo del plan
+original de migración ("re-login al cruzar"), sin invertir en SSO. Timeout: 12hs deslizante
+(`SlidingExpiration=true`), igual al `sessionState`/`forms timeout=720` del `Web.config` clásico.
+Horario laboral (`EstaDentroDelHorarioPermitido`, solo aplica a no-admin) sí entra en v1 -- es
+trivial (2 comparaciones de `TimeSpan`) y ya estaba en el clásico.
+
+**Verificado end-to-end (Batch 2, no solo compilado)**: login real con "ger"/clave de dev vs. el
+mismo mensaje de error con clave incorrecta; bloqueo por rate-limiter de IP tras 5 intentos (HTTP
+429, `WebCore/Helpers/LoginRateLimiter.cs`, puerto de `Web/Helpers/LoginRateLimiter.cs` cambiando
+`HttpRequestBase`→`string ip`); claims de la cookie confirmados campo a campo contra la fila real de
+"ger" en la base (`Id=2, IdEmpresa=1, IdSucursal=1, Admin=true`); logout limpia la cookie y una
+request posterior a una ruta protegida vuelve a redirigir a `/Login`.
+
+**Alternativa descartada**: ASP.NET Core Identity -- exigía migrar el modelo de usuario o mantener
+dos tablas de usuarios en paralelo, sin beneficio real dado que toda la lógica de validación/hash de
+clave (`Negocio.Usuario.ValidarUsuarioWeb`, `Utilidades.PasswordSecurity`) ya existe y es compartida
+con `Presentacion`/`Web`.
+
+Pendiente (Batch 3-5 del plan, `~/.claude/plans/en-reportes-1-al-cambiar-vectorized-harbor.md`):
+fan-out mecánico de los 18 controllers del stub a `IUsuarioSesionService`, gates reales de
+Auditoría/Administración del sistema, y permisos reales de Venta + "usuario producción" (ver entrada
+"en progreso" en `docs/10-migracion-aspnet-core/gaps.md`).
+

@@ -16,6 +16,45 @@ builder.Services.AddControllersWithViews(options =>
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
 });
 
+// Login/sesion real (2026-09-06, ver docs/DECISIONS.md "Login/Sesion real para WebCore"). Cookie
+// Authentication (no Identity, no OIDC -- el modelo de usuario es 100% custom, Entidades.Usuario/
+// Negocio.Usuario ya compartido net472;net10.0) reemplaza a Session["Usuario"]+Forms Auth del
+// clasico. Mejora real de paso: todo el estado de sesion vive en la cookie firmada, no en memoria
+// del proceso -- resuelve de raiz el bug ya documentado en produccion clasica ("la sesion vencia a
+// los pocos minutos" por el idle-timeout del App Pool matando la Session in-proc).
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<WebCore.Services.IUsuarioSesionService, WebCore.Services.UsuarioSesionService>();
+
+builder.Services
+    .AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login";
+        options.LogoutPath = "/Login/Logout";
+        options.AccessDeniedPath = "/Login";
+        // 12hs deslizante, misma duracion que sessionState/forms timeout=720 del Web.config
+        // clasico -- ver decision registrada en el plan, facil de ajustar despues.
+        options.ExpireTimeSpan = TimeSpan.FromHours(12);
+        options.SlidingExpiration = true;
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    // Toda accion requiere sesion real por default -- LoginController se marca [AllowAnonymous]
+    // explicitamente (unico controller que lo necesita). Evita tener que poner [Authorize] a mano
+    // en cada uno de los controllers ya portados (fan-out del Batch 3, ver docs/DECISIONS.md).
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+// Session de ASP.NET Core (in-memory, un solo servidor -- ya descartada la sesion distribuida en
+// el plan original de esta migracion) SOLO para el estado transitorio del operador de produccion
+// con contraseña (mecanismo B, Batch 5) -- la identidad principal del usuario va en la cookie de
+// autenticacion de arriba, nunca en esta Session.
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -40,6 +79,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

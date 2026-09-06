@@ -8,7 +8,10 @@ No confundir con `docs/GAPS.md` (raíz), que es específico de la migración SQL
 
 ## Abiertos
 
-### Permisos reales de venta y "usuario producción" — bypaseados en WebCore, portar cuando haya login/sesión real
+### Permisos reales de venta y "usuario producción" — bypaseados en WebCore, portar cuando haya login/sesión real [EN PROGRESO 2026-09-06]
+
+**Actualizacion 2026-09-06**: arrancado el plan "Login/Sesion real para WebCore" (ver `docs/DECISIONS.md`). Batch 1 (Cookie Authentication + `IUsuarioSesionService`) y Batch 2 (`LoginController` real, rate limiting, verificado end-to-end con "ger"/clave real) ya completos y verificados. Faltan Batch 3 (fan-out de los 18 controllers del stub a la sesion real), Batch 4 (gates de Auditoria/Administracion del sistema) y Batch 5 (permisos reales de Venta + usuario produccion en si, que es lo que esta entrada describe) -- recien al cerrar Batch 5 esta entrada se borra y migra a `DECISIONS.md`.
+
 
 Detectado: 2026-09-04, batch 7 POS UI, iteración 5 (edición de venta existente). Pedido explícito del usuario: **"ESTOS PERMISOS SON PROPIOS DE LA APP, Y MUY IMPORTANTES. ANOTALO PARA MAS ADELANTE PORQUE NECESITAMOS PORTAR ESTAS REGLAS, AL IGUAL QUE UN USUARIO 'PRODUCCION'"**.
 
