@@ -16,9 +16,9 @@ namespace WebCore.Helpers
     // clase que usa el clasico) y resolviendo los mismos defaults de negocio que el repo SQL
     // Server resuelve en MapEmpresaEntidad/MapSucursalEntidad/MapUsuarioEntidad (pais->
     // "Argentina", nombreFantasia->razonSocialAfip, tenantSlug/basePath autogenerados por slug).
-    // EsSuperAdmin no se porta -- mismo criterio que SystemAdministrationRepository.cs (SQL
-    // Server), solo lo usa el gate de permisos, deliberadamente fuera de alcance en
-    // SystemAdministrationController.cs.
+    // EsSuperAdmin portado 2026-09-06 (Batch 4 del plan de login/permisos reales, ver
+    // docs/DECISIONS.md) -- delega directo a DatosPostgres.SystemAdministrationPg.EsSuperAdmin,
+    // que ya existe y es compartida con el clasico (columna usuarios.superadmin).
     public class SystemAdministrationRepositoryPg : ISystemAdministrationRepository
     {
         private readonly DatosPostgres.SystemAdministrationPg _repo;
@@ -34,6 +34,8 @@ namespace WebCore.Helpers
         // (SQL Server) usa cuando la columna no existe (Activa por defecto true, Telefono vacio).
         public bool TablaSucursalTieneTelefono() => false;
         public bool TablaSucursalTieneActiva() => false;
+
+        public bool EsSuperAdmin(int idUsuario) => _repo.EsSuperAdmin(idUsuario);
 
         public List<SystemAdministrationEmpresaResumenVm> ObtenerEmpresas()
         {

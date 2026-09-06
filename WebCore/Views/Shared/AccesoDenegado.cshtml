@@ -1,0 +1,28 @@
+@{
+    string seccion = ViewBag.Seccion ?? "esta sección";
+    string mensajePermiso = ViewBag.MensajePermiso as string;
+    ViewBag.Title = seccion;
+}
+
+<div class="container-fluid mt-5">
+
+    <div class="text-center">
+        <h4 class="text-danger">Acceso Denegado</h4>
+        <p class="text-gray-500 mb-4">@(string.IsNullOrWhiteSpace(mensajePermiso) ? "No tenés permisos para acceder a esta sección." : mensajePermiso)</p>
+
+        <button class="btn btn-secondary mt-4" onclick="volverAtras()">
+            ← Volver
+        </button>
+    </div>
+
+</div>
+
+<script>
+    function volverAtras() {
+        if (document.referrer) {
+            window.location = document.referrer;
+        } else {
+            history.back();
+        }
+    }
+</script>

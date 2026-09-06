@@ -40,5 +40,11 @@ namespace WebCore.Helpers
 
         List<SystemAdministrationAlicuotaIvaVm> ObtenerAlicuotasIva();
         List<SystemAdministrationCondicionIvaVm> ObtenerCondicionesIva();
+
+        // Port de Web/Helpers/ISystemAdministrationRepository.cs (2026-09-06, ver docs/DECISIONS.md
+        // "Login/Sesion real para WebCore", Batch 4) -- gate de super-admin de plataforma, columna
+        // real Usuarios.superadmin/usuarios.superadmin, NO forma parte del sistema de Permisos/
+        // tienePermiso. Antes deliberadamente fuera de alcance (WebCore no tenia sesion real).
+        bool EsSuperAdmin(int idUsuario);
     }
 }

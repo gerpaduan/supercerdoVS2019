@@ -1,3 +1,5 @@
+@using System.Linq
+@inject WebCore.Services.IUsuarioSesionService Sesion
 @{
     // Sidebar + identidad visual (2026-09-05, ver docs/DECISIONS.md "UI de WebCore igual al
     // clasico"): porta la estructura real de Web/Views/Shared/_LayoutBase.cshtml (mismos nombres
@@ -10,9 +12,9 @@
     // first) SI hace falta escribirla a mano mas abajo: esa parte vive en sb-admin-2.min.css, no
     // en ui-refresh.css (que solo re-colorea encima de una estructura que asume ya existente).
     //
-    // Sin permisos reales todavia (ver docs/DECISIONS.md "permisos reales pendientes"): el stub
-    // Admin=true de cada controller migrado ya deja pasar todo, asi que el sidebar tampoco
-    // gatilla "Configuracion"/"Administracion del sistema" por permiso -- se muestran siempre.
+    // Permisos reales del sidebar (2026-09-06, Batch 4 del plan de login/permisos reales, ver
+    // docs/DECISIONS.md): port literal de Web/Views/Shared/_LayoutBase.cshtml:21-56, ahora contra
+    // IUsuarioSesionService.UsuarioActual en vez de Session["Usuario"].
     //
     // Modulos NO migrados a WebCore todavia (MercadoPago, integracion de otra sesion en
     // paralelo) linkean con URL absoluta al Web clasico via el appSetting
@@ -31,6 +33,45 @@
     bool enConfiguracion = controller == "Usuarios" || controller == "AuditoriaLogin" || controller == "Parametros"
         || controller == "Empresa" || controller == "Sucursal" || controller == "DispositivosSeguros";
     bool enAdministracionSistema = controller == "SystemAdministration";
+
+    var usuarioActual = Sesion.UsuarioActual;
+    bool esAdmin = usuarioActual.Admin;
+
+    bool puedeAdministrarUsuarios = esAdmin;
+    if (!puedeAdministrarUsuarios && usuarioActual.Permisos != null)
+    {
+        puedeAdministrarUsuarios = usuarioActual.Permisos.Any(p =>
+            p != null &&
+            p.Formulario != null &&
+            (
+                string.Equals(p.Formulario.FormConsulta ?? "", Entidades.Permisos.Usuario.VerUsuarios, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicion ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicionExtra1 ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicionExtra2 ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase)
+            ));
+    }
+
+    // Mas estricto que puedeAdministrarUsuarios: ese tambien deja pasar con el permiso de
+    // solo-ver-usuarios (VerUsuarios), que NO debe dar acceso a la auditoria de accesos (mismo
+    // criterio que Web/Views/Shared/_LayoutBase.cshtml:40-42 y AuditoriaLoginController.PuedeVerAuditoria).
+    bool puedeVerAuditoriaLogin = esAdmin;
+    if (!puedeVerAuditoriaLogin && usuarioActual.Permisos != null)
+    {
+        puedeVerAuditoriaLogin = usuarioActual.Permisos.Any(p =>
+            p != null &&
+            p.Formulario != null &&
+            (
+                string.Equals(p.Formulario.FormEdicion ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicionExtra1 ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(p.Formulario.FormEdicionExtra2 ?? "", Entidades.Permisos.Usuario.NuevoUsuario, System.StringComparison.OrdinalIgnoreCase)
+            ));
+    }
+
+    // EsSuperAdmin (columna Usuarios.superadmin) es un concepto separado del sistema de Permisos,
+    // independiente de esAdmin -- mismo criterio que SystemAdministrationAccessHelper del clasico.
+    bool puedeAdministrarSistema = WebCore.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository().EsSuperAdmin(usuarioActual.Id);
+
+    bool mostrarConfiguracion = esAdmin;
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -416,41 +457,54 @@
                     <span>Reportes</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseConfiguracion" role="button" aria-expanded="@(enConfiguracion ? "true" : "false")" aria-controls="collapseConfiguracion">
-                    <i class="fas fa-fw fa-tools"></i>
-                    <span>Configuracion</span>
-                    <i class="fas fa-chevron-down"></i>
-                </a>
-                <div id="collapseConfiguracion" class="collapse @(enConfiguracion ? "show" : "")">
-                    <div class="collapse-inner rounded">
-                        <a class="collapse-item @(controller == "Usuarios" ? "active" : "")" href="@Url.Action("Index", "Usuarios")">Usuarios</a>
-                        <a class="collapse-item @(controller == "AuditoriaLogin" ? "active" : "")" href="@Url.Action("Index", "AuditoriaLogin")">Auditoria de accesos</a>
-                        <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
-                        <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
-                        <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
-                        <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
-                        <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
-                        <a class="collapse-item" href="@legacy("/MercadoPago")">Mercado Pago</a>
-                        <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
+            @if (mostrarConfiguracion)
+            {
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseConfiguracion" role="button" aria-expanded="@(enConfiguracion ? "true" : "false")" aria-controls="collapseConfiguracion">
+                        <i class="fas fa-fw fa-tools"></i>
+                        <span>Configuracion</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div id="collapseConfiguracion" class="collapse @(enConfiguracion ? "show" : "")">
+                        <div class="collapse-inner rounded">
+                            @if (puedeAdministrarUsuarios)
+                            {
+                                <a class="collapse-item @(controller == "Usuarios" ? "active" : "")" href="@Url.Action("Index", "Usuarios")">Usuarios</a>
+                            }
+                            @if (puedeVerAuditoriaLogin)
+                            {
+                                <a class="collapse-item @(controller == "AuditoriaLogin" ? "active" : "")" href="@Url.Action("Index", "AuditoriaLogin")">Auditoria de accesos</a>
+                            }
+                            @* mostrarConfiguracion ya exige esAdmin, no hace falta re-chequearlo aca (mismo criterio que el clasico) *@
+                            <a class="collapse-item @(controller == "Parametros" ? "active" : "")" href="@Url.Action("Index", "Parametros")">Parametros</a>
+                            <a class="collapse-item @(controller == "Empresa" ? "active" : "")" href="@Url.Action("Index", "Empresa")">Mi Empresa</a>
+                            <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
+                            <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
+                            <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
+                            <a class="collapse-item" href="@legacy("/MercadoPago")">Mercado Pago</a>
+                            <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
+                        </div>
                     </div>
-                </div>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAdministracionSistema" role="button" aria-expanded="@(enAdministracionSistema ? "true" : "false")" aria-controls="collapseAdministracionSistema">
-                    <i class="fas fa-fw fa-network-wired"></i>
-                    <span>Administracion del sistema</span>
-                    <i class="fas fa-chevron-down"></i>
-                </a>
-                <div id="collapseAdministracionSistema" class="collapse @(enAdministracionSistema ? "show" : "")">
-                    <div class="collapse-inner rounded">
-                        <a class="collapse-item @(enAdministracionSistema && (action == "Empresas" || action == "EditarEmpresa") ? "active" : "")" href="@Url.Action("Empresas", "SystemAdministration")">Empresas</a>
-                        <a class="collapse-item @(enAdministracionSistema && (action == "Sucursales" || action == "EditarSucursal") ? "active" : "")" href="@Url.Action("Sucursales", "SystemAdministration")">Sucursales</a>
-                        <a class="collapse-item @(enAdministracionSistema && (action == "Usuarios" || action == "EditarUsuario") ? "active" : "")" href="@Url.Action("Usuarios", "SystemAdministration")">Usuarios</a>
-                        <a class="collapse-item @(enAdministracionSistema && action == "AltaRapidaEmpresa" ? "active" : "")" href="@Url.Action("AltaRapidaEmpresa", "SystemAdministration")">Alta rapida de empresa</a>
+                </li>
+            }
+            @if (puedeAdministrarSistema)
+            {
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAdministracionSistema" role="button" aria-expanded="@(enAdministracionSistema ? "true" : "false")" aria-controls="collapseAdministracionSistema">
+                        <i class="fas fa-fw fa-network-wired"></i>
+                        <span>Administracion del sistema</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div id="collapseAdministracionSistema" class="collapse @(enAdministracionSistema ? "show" : "")">
+                        <div class="collapse-inner rounded">
+                            <a class="collapse-item @(enAdministracionSistema && (action == "Empresas" || action == "EditarEmpresa") ? "active" : "")" href="@Url.Action("Empresas", "SystemAdministration")">Empresas</a>
+                            <a class="collapse-item @(enAdministracionSistema && (action == "Sucursales" || action == "EditarSucursal") ? "active" : "")" href="@Url.Action("Sucursales", "SystemAdministration")">Sucursales</a>
+                            <a class="collapse-item @(enAdministracionSistema && (action == "Usuarios" || action == "EditarUsuario") ? "active" : "")" href="@Url.Action("Usuarios", "SystemAdministration")">Usuarios</a>
+                            <a class="collapse-item @(enAdministracionSistema && action == "AltaRapidaEmpresa" ? "active" : "")" href="@Url.Action("AltaRapidaEmpresa", "SystemAdministration")">Alta rapida de empresa</a>
+                        </div>
                     </div>
-                </div>
-            </li>
+                </li>
+            }
 
             <li class="nav-item">
                 <hr class="sidebar-divider">
@@ -474,7 +528,7 @@
                             </li>
                             <div class="topbar-divider d-none d-sm-block"></div>
                             <li class="nav-item no-arrow d-flex align-items-center">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">ger</span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">@usuarioActual.Nombre</span>
                                 <i class="fas fa-user-circle fa-2x text-gray-600"></i>
                             </li>
                         </ul>

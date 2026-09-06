@@ -1,13 +1,15 @@
 // Port de Web/Controllers/SystemAdministrationController.cs (ver docs/DECISIONS.md, migracion
-// ASP.NET Core) -- Modulo 1 completo: Empresas, Sucursales, Usuarios y Alta rapida. Deliberadamente
-// NO reproducido (igual criterio que AuditoriaLoginController): el gate
-// SystemAdministrationAccessHelper.PuedeAdministrarSistema (depende de Session["Usuario"], que
-// WebCore todavia no tiene) -- el original tambien puebla ViewBag.AlicuotasIva/CondicionesIva en
+// ASP.NET Core) -- Modulo 1 completo: Empresas, Sucursales, Usuarios y Alta rapida. Gate real
+// portado 2026-09-06 (Batch 4 del plan de login/permisos reales, ver docs/DECISIONS.md): mismo
+// criterio que SystemAdministrationAccessHelper.PuedeAdministrarSistema del clasico (Web/Helpers/
+// SystemAdministrationAccessHelper.cs), pero via IUsuarioSesionService.UsuarioActual en vez de
+// Session["Usuario"]. El original tambien puebla ViewBag.AlicuotasIva/CondicionesIva en
 // OnActionExecuting para todo el controller; aca se puebla accion por accion donde se necesita
 // (EditarEmpresa/GuardarEmpresa/AltaRapidaEmpresa/GuardarAltaRapidaEmpresa), mismo resultado.
 using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using WebCore.Helpers;
 using WebCore.Models;
 
@@ -20,6 +22,28 @@ namespace WebCore.Controllers
         // SystemAdministrationRepository directo (siempre SQL Server), el unico controller que no
         // seguia el switch de WebCore.Infrastructure.NegocioFactory.
         private readonly ISystemAdministrationRepository _repo = WebCore.Infrastructure.NegocioFactory.CrearSystemAdministrationRepository();
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+
+        public SystemAdministrationController(WebCore.Services.IUsuarioSesionService sesion)
+        {
+            _sesion = sesion;
+        }
+
+        // Gate real de super-admin de plataforma -- EsSuperAdmin (columna Usuarios.superadmin, NO
+        // el sistema de Permisos/tienePermiso) resuelto contra el usuario real de la cookie, mismo
+        // criterio que SystemAdministrationAccessHelper.PuedeAdministrarSistema del clasico.
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if (!_repo.EsSuperAdmin(_sesion.UsuarioActual.Id))
+            {
+                ViewBag.Title = "Administracion del sistema";
+                ViewBag.Seccion = "Administracion del sistema";
+                filterContext.Result = View("~/Views/Shared/AccesoDenegado.cshtml");
+                return;
+            }
+
+            base.OnActionExecuting(filterContext);
+        }
 
         public IActionResult Empresas()
         {

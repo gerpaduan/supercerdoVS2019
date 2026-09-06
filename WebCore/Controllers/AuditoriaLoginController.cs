@@ -1,9 +1,10 @@
-﻿// Port de spike de Web/Controllers/AuditoriaLoginController.cs (ver docs/DECISIONS.md,
-// migracion a ASP.NET Core). Misma logica de negocio y mapeo que el original, MISMA
-// Negocio.Usuario compartida. Diferencia deliberada: usa un IEmpresaContext hardcodeado en vez
-// de Session["Usuario"] (todavia no hay login/sesion en WebCore) y NO reproduce el chequeo de
-// permisos PuedeVerAuditoria (depende de sesion real) -- ambos son parte del diseño de
-// autenticacion pendiente (Forms Auth -> Cookie Auth), no de esta prueba de paridad puntual.
+﻿// Port de Web/Controllers/AuditoriaLoginController.cs (ver docs/DECISIONS.md, migracion a
+// ASP.NET Core). Misma logica de negocio y mapeo que el original, MISMA Negocio.Usuario
+// compartida. Gate real portado 2026-09-06 (Batch 4 del plan de login/permisos reales, ver
+// docs/DECISIONS.md): PuedeVerAuditoria usa el mismo criterio que el original (Admin, o permiso
+// de EDICION -- no solo "ver" -- sobre Entidades.Permisos.Usuario.NuevoUsuario, deliberadamente
+// mas estricto que "administrar usuarios" del sidebar, ver comentario original), ahora contra
+// IUsuarioSesionService.UsuarioActual en vez de Session["Usuario"].
 using System;
 using System.Data;
 using System.Linq;
@@ -15,16 +16,26 @@ namespace WebCore.Controllers
 {
     public class AuditoriaLoginController : Controller
     {
-        private sealed class SpikeEmpresaContext : IEmpresaContext
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
+
+        public AuditoriaLoginController(WebCore.Services.IUsuarioSesionService sesion)
         {
-            public int IdEmpresa => 1;
+            _sesion = sesion;
         }
 
         [HttpGet]
         public IActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta)
         {
-            var empresa = new SpikeEmpresaContext();
+            var usuario = _sesion.UsuarioActual;
+            var empresa = _sesion.Empresa;
             var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(empresa);
+
+            if (!PuedeVerAuditoria(usuario, oUsuarioN))
+            {
+                ViewBag.Title = "Auditoria de accesos";
+                ViewBag.Seccion = "Auditoria de accesos";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
 
             DateTime desde = (fechaDesde ?? DateTime.Today.AddDays(-7)).Date;
             DateTime hasta = (fechaHasta ?? DateTime.Today).Date.AddDays(1).AddSeconds(-1);
@@ -39,6 +50,17 @@ namespace WebCore.Controllers
             };
 
             return View(model);
+        }
+
+        // Port de Web/Controllers/AuditoriaLoginController.cs (PuedeVerAuditoria) -- deliberadamente
+        // mas estricto que "administrar usuarios" del sidebar: solo mira el permiso de EDICION
+        // (idCreador=usuario.Id, no -1) sobre NuevoUsuario, no el de "ver" ni VerUsuarios.
+        private bool PuedeVerAuditoria(Entidades.Usuario usuario, Negocio.Usuario oUsuarioN)
+        {
+            if (usuario == null) return false;
+            if (usuario.Admin) return true;
+            if (usuario.Permisos == null || usuario.Permisos.Count == 0) return false;
+            return oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Usuario.NuevoUsuario, DateTime.Today, usuario.Id);
         }
 
         private AuditoriaLoginItemVm MapItem(DataRow row)

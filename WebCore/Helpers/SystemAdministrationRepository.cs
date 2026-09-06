@@ -1,13 +1,14 @@
 // Port de Web/Helpers/SystemAdministrationRepository.cs (ver docs/DECISIONS.md, migracion
 // ASP.NET Core) -- Modulo 1 completo: Empresas, Sucursales, Usuarios y Alta rapida. Mismo SQL,
-// misma logica que el original. EsSuperAdmin/QuoteSqlIdentifier no se portan: solo los usa
-// SystemAdministrationAccessHelper (el gate de permisos), deliberadamente fuera de alcance en
-// WebCore/Controllers/SystemAdministrationController.cs (ver su comentario de cabecera).
+// misma logica que el original. EsSuperAdmin/QuoteSqlIdentifier portados 2026-09-06 (Batch 4 del
+// plan de login/permisos reales, ver docs/DECISIONS.md) -- antes deliberadamente fuera de alcance
+// porque WebCore no tenia sesion real para usarlos.
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Utilidades;
 using WebCore.Models;
@@ -21,6 +22,34 @@ namespace WebCore.Helpers
         public SystemAdministrationRepository()
         {
             _empresaRaiz = new EmpresaContextNulo();
+        }
+
+        public bool EsSuperAdmin(int idUsuario)
+        {
+            if (idUsuario <= 0)
+                return false;
+
+            using (var con = Db.OpenAdmin(_empresaRaiz))
+            {
+                string columnName = GetExistingColumnName(con, null, "Usuarios", "superadmin");
+                if (string.IsNullOrWhiteSpace(columnName))
+                    return false;
+
+                using (var cmd = new SqlCommand("SELECT CAST(ISNULL(" + QuoteSqlIdentifier(columnName) + ", 0) AS bit) FROM dbo.Usuarios WHERE id = @id", con))
+                {
+                    cmd.Parameters.Add("@id", SqlDbType.Int).Value = idUsuario;
+                    object value = cmd.ExecuteScalar();
+                    return value != null && value != DBNull.Value && Convert.ToBoolean(value);
+                }
+            }
+        }
+
+        private static string QuoteSqlIdentifier(string identifier)
+        {
+            if (string.IsNullOrWhiteSpace(identifier) || !Regex.IsMatch(identifier, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+                throw new InvalidOperationException("El identificador SQL no es válido.");
+
+            return "[" + identifier.Replace("]", "]]") + "]";
         }
 
         public bool TablaSucursalTieneTelefono()
