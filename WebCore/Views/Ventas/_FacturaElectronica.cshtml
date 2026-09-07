@@ -1,0 +1,820 @@
+@model WebCore.Models.DTO.FacturaElectronicaDto
+@using System.Globalization
+
+@*
+    Modal de Factura Electronica (AFIP), 2026-09-06 (retomado -- ver docs/DECISIONS.md). Port
+    literal de Web/Views/Ventas/_FacturaElectronica.cshtml (828 lineas) -- sin cambios de logica
+    ni de markup, solo el @@model (WebCore.Models.DTO.FacturaElectronicaDto en vez de
+    Web.Models.DTO.FacturaElectronicaDTO) y ViewBag.AlicuotasIva (List<AlicuotaIvaVm> en vez de un
+    DataTable). Se renderiza SIEMPRE via AJAX dentro del shell vacio #modalFacturaElectronica de
+    Ventas/POS.cshtml (nunca standalone) -- lo llaman VentasController.ImprimirTicket(id, mm=0)
+    (venta ya facturada o pendiente) y NuevaFacturaSinVenta() (factura manual sin venta real),
+    diferenciados solo por ViewBag.EsSinVenta. El detalle completo del flujo (calculo de
+    facturacion parcial, buscador de cliente, nota de credito, cerrar sin facturar) vive en
+    Scripts/app/factura-electronica.js, tambien portado sin cambios de logica.
+*@
+
+@{
+    bool yaEmitida = (Model?.IdFactura ?? 0) > 0 && !string.IsNullOrWhiteSpace(Model?.CAE);
+    bool esSinVenta = ViewBag.EsSinVenta as bool? ?? false;
+    int idNotaCreditoAsociada = ViewBag.NotaCreditoAsociadaId != null ? (int)ViewBag.NotaCreditoAsociadaId : 0;
+    bool permiteNotaCredito = yaEmitida
+        && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoA_Afip
+        && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoB_Afip
+        && (Model?.CodTipoCbteAfip ?? 0) != Entidades.FacturaElectronica.codNotaCreditoC_Afip
+        && idNotaCreditoAsociada <= 0;
+
+    var empresaNombre = !string.IsNullOrWhiteSpace(Model?.EmisorRazonSocial)
+        ? Model.EmisorRazonSocial
+        : (ViewBag.EmpresaNombre as string) ?? "Empresa";
+
+    var empresaCuit = !string.IsNullOrWhiteSpace(Model?.EmisorCUIT)
+        ? Model.EmisorCUIT
+        : (ViewBag.EmpresaCUIT as string) ?? "";
+    var sucursalNombreFactura = (ViewBag.SucursalNombreFactura as string) ?? "";
+
+    decimal totalOrig = yaEmitida
+        ? (Model?.ImporteTotal ?? 0m)
+        : 0m;
+    if (!yaEmitida && Model?.Detalle != null && Model.Detalle.Any())
+    {
+        totalOrig = Model.Detalle.Sum(x => (decimal)x.CantKg * (decimal)x.PrecioKg);
+    }
+}
+
+<style>
+     /* Mantener ancho modal habitual; limitar altura y permitir scroll en body */
+     #modalFacturaElectronica .modal-dialog {
+         max-width: 960px;
+         margin: .75rem auto;
+         height: calc(100vh - 1.5rem);
+     }
+
+     #modalFacturaElectronica .modal-content {
+         height: 100%;
+         max-height: 100%;
+         display: flex;
+         flex-direction: column;
+         border-radius: .35rem;
+         overflow: hidden;
+     }
+
+     /* modal-body ahora scrollea si el contenido supera la altura disponible.
+    El body es flexible (flex:1) para que footer quede siempre visible */
+     #modalFacturaElectronica .modal-body.fe-body {
+         display: flex;
+         flex-direction: column;
+         padding: 1rem;
+         overflow-x: hidden;
+         overflow-y: auto;
+         flex: 1 1 auto;
+     }
+
+     /* la tabla seguirá teniendo su propia área scrolleable si necesita más espacio */
+     #modalFacturaElectronica .fe-table-scroll {
+         overflow: auto;
+         -webkit-overflow-scrolling: touch;
+         max-height: calc(100vh - 420px);
+     }
+
+     /* footer siempre visible */
+     #modalFacturaElectronica .modal-footer {
+         flex: 0 0 auto;
+     }
+
+     /* estructura de layout interna */
+     .fe-top {
+         flex: 0 0 auto;
+     }
+
+     .fe-summary {
+         flex: 0 0 auto;
+     }
+
+     .fe-kpi {
+         display: flex;
+         align-items: baseline;
+         justify-content: space-between;
+         gap: .75rem;
+     }
+
+     .fe-kpi .label {
+             color: rgba(0,0,0,.82);
+             font-weight: 600;
+         }
+
+         .fe-kpi .value {
+             font-weight: 800;
+             font-size: 1.15rem;
+         }
+
+     .fe-muted {
+         color: rgba(0,0,0,.78);
+     }
+
+     .fe-card-compact {
+         border: 1px solid #dee2e6;
+         border-radius: .35rem;
+         padding: .65rem .75rem;
+         margin-bottom: .55rem;
+         background: #fff;
+     }
+
+     .fe-card-title {
+         font-size: .78rem;
+         font-weight: 700;
+         text-transform: uppercase;
+         letter-spacing: .02em;
+         color: #2f6f44;
+         margin-bottom: .45rem;
+     }
+
+     .fe-card-compact .form-group {
+         margin-bottom: .35rem;
+     }
+
+     .fe-card-compact label,
+     .fe-summary label {
+         font-size: .77rem;
+         color: #1f2933;
+     }
+
+     .fe-card-compact .form-control,
+     .fe-summary .form-control {
+         min-height: calc(1.15em + .4rem + 2px);
+         padding-top: .16rem;
+         padding-bottom: .16rem;
+         font-size: .82rem;
+     }
+
+     .fe-issuer-name {
+         font-size: .92rem;
+         font-weight: 700;
+         line-height: 1.2;
+     }
+
+     .fe-issuer-meta {
+         font-size: .74rem;
+         line-height: 1.2;
+     }
+
+     .fe-meta-grid {
+         display: grid;
+         grid-template-columns: repeat(2, minmax(0, 1fr));
+         gap: .45rem .8rem;
+     }
+
+     .fe-meta-label {
+         display: block;
+         font-size: .72rem;
+         font-weight: 600;
+         text-transform: uppercase;
+         letter-spacing: .02em;
+         color: rgba(0,0,0,.72);
+         line-height: 1.1;
+         margin-bottom: .08rem;
+     }
+
+     .fe-meta-value {
+         display: block;
+         font-size: .88rem;
+         font-weight: 600;
+         color: #212529;
+         line-height: 1.2;
+         word-break: break-word;
+     }
+
+     .fe-divider {
+         border-top: 1px solid #e9ecef;
+         margin: .55rem 0;
+     }
+
+     .fe-cliente-row .form-group,
+     .fe-ajuste-row .form-group {
+         margin-bottom: .28rem;
+     }
+
+     .fe-sticky-resumen {
+         position: sticky;
+         top: -.2rem;
+         z-index: 5;
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         gap: .75rem;
+         padding: .45rem .7rem;
+         margin-bottom: .6rem;
+         border: 1px solid #cfe3d6;
+         border-radius: .45rem;
+         background: rgba(255, 255, 255, .96);
+         box-shadow: 0 .2rem .45rem rgba(15, 23, 42, .06);
+         backdrop-filter: blur(6px);
+     }
+
+     .fe-sticky-resumen-item {
+         min-width: 0;
+     }
+
+     .fe-sticky-resumen-label {
+         display: block;
+         font-size: .7rem;
+         font-weight: 700;
+         text-transform: uppercase;
+         letter-spacing: .03em;
+         color: #52606d;
+         line-height: 1.05;
+         margin-bottom: .05rem;
+     }
+
+     .fe-sticky-resumen-value {
+         display: block;
+         font-size: .83rem;
+         font-weight: 700;
+         color: #111827;
+         line-height: 1.15;
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+     }
+
+     #feSwitchAjuste + label.custom-control-label,
+     label[for="feSwitchAjuste"] {
+         font-size: .76rem;
+         font-weight: 600;
+         color: #1f2933;
+     }
+
+     #feInputNetoUI,
+     #feInputIvaUI,
+     #feInputTotalUI {
+         font-size: .88rem !important;
+         font-weight: 700;
+         color: #111827;
+     }
+
+     #feInputTotalUI {
+         font-size: .94rem !important;
+     }
+
+     /* Warning pequeño para porcentaje */
+     #fePctWarning {
+         display: none;
+         color: #dc3545;
+         font-size: 0.85rem;
+         margin-top: .25rem;
+     }
+
+     /* Responsive */
+     @@media (max-width: 991.98px) {
+         #modalFacturaElectronica .modal-dialog {
+             max-width: calc(100% - 2rem);
+             margin: 0.5rem;
+             height: calc(100vh - 1rem);
+         }
+
+         #modalFacturaElectronica .modal-content {
+             height: 100%;
+             max-height: 100%;
+         }
+
+         #modalFacturaElectronica .fe-table-scroll {
+             max-height: calc(94vh - 420px);
+         }
+
+         .fe-meta-grid {
+             grid-template-columns: 1fr;
+         }
+
+         .fe-sticky-resumen {
+             flex-wrap: wrap;
+             gap: .35rem .7rem;
+         }
+
+         .fe-sticky-resumen-item {
+             flex: 1 1 100%;
+         }
+     }
+
+     html.dark-mode #modalFacturaElectronica .modal-content,
+     body.dark-mode #modalFacturaElectronica .modal-content,
+     html.dark-mode #modalFacturaElectronica .modal-body,
+     body.dark-mode #modalFacturaElectronica .modal-body,
+     html.dark-mode #modalFacturaElectronica .modal-footer,
+     body.dark-mode #modalFacturaElectronica .modal-footer {
+         background: #111827;
+         color: #e5e7eb;
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-card-compact,
+     body.dark-mode #modalFacturaElectronica .fe-card-compact {
+         background: #1f2937;
+         border-color: #374151;
+     }
+
+     html.dark-mode #modalFacturaElectronica .form-control,
+     body.dark-mode #modalFacturaElectronica .form-control,
+     html.dark-mode #modalFacturaElectronica .custom-select,
+     body.dark-mode #modalFacturaElectronica .custom-select {
+         background: #111827;
+         border-color: #4b5563;
+         color: #f3f4f6;
+     }
+
+     html.dark-mode #modalFacturaElectronica .form-control[readonly],
+     body.dark-mode #modalFacturaElectronica .form-control[readonly] {
+         background: #0f172a;
+         color: #f3f4f6;
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-muted,
+     body.dark-mode #modalFacturaElectronica .fe-muted,
+     html.dark-mode #modalFacturaElectronica label,
+     body.dark-mode #modalFacturaElectronica label,
+     html.dark-mode #modalFacturaElectronica .custom-control-label,
+     body.dark-mode #modalFacturaElectronica .custom-control-label,
+     html.dark-mode #modalFacturaElectronica .fe-meta-label,
+     body.dark-mode #modalFacturaElectronica .fe-meta-label {
+         color: #cbd5e1 !important;
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-issuer-name,
+     body.dark-mode #modalFacturaElectronica .fe-issuer-name,
+     html.dark-mode #modalFacturaElectronica .fe-meta-value,
+     body.dark-mode #modalFacturaElectronica .fe-meta-value,
+     html.dark-mode #modalFacturaElectronica #feInputNetoUI,
+     body.dark-mode #modalFacturaElectronica #feInputNetoUI,
+     html.dark-mode #modalFacturaElectronica #feInputIvaUI,
+     body.dark-mode #modalFacturaElectronica #feInputIvaUI,
+     html.dark-mode #modalFacturaElectronica #feInputTotalUI,
+     body.dark-mode #modalFacturaElectronica #feInputTotalUI {
+         color: #f9fafb !important;
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-divider,
+     body.dark-mode #modalFacturaElectronica .fe-divider {
+         border-top-color: #374151;
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-sticky-resumen,
+     body.dark-mode #modalFacturaElectronica .fe-sticky-resumen {
+         background: rgba(17, 24, 39, .96);
+         border-color: #374151;
+         box-shadow: 0 .2rem .45rem rgba(0, 0, 0, .28);
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-sticky-resumen-label,
+     body.dark-mode #modalFacturaElectronica .fe-sticky-resumen-label {
+         color: #cbd5e1;
+     }
+
+     html.dark-mode #modalFacturaElectronica .fe-sticky-resumen-value,
+     body.dark-mode #modalFacturaElectronica .fe-sticky-resumen-value {
+         color: #f9fafb;
+     }
+
+     #feAgruparItemWrap {
+         display: none;
+     }
+
+     #feObservacionesWrap {
+         display: none;
+     }
+</style>
+
+<!-- HEADER -->
+<div class="modal-header bg-success text-white py-2">
+    <h6 class="modal-title mb-0">
+        @(yaEmitida ? "Factura Electrónica (emitida)" : "Generar Factura Electrónica")
+    </h6>
+    <small class="d-block" style="opacity:.85;">@empresaNombre</small>
+    <button type="button" class="close text-white" id="btnCerrarXFacturaElectronica">
+        <span>&times;</span>
+    </button>
+</div>
+
+<form id="formFacturaElectronica" class="fe-root"
+      data-ya-emitida="@(yaEmitida ? "1" : "0")"
+      data-total-orig="@totalOrig.ToString(CultureInfo.InvariantCulture)"
+      data-neto-orig="@Model.ImporteNetoGravado.ToString(CultureInfo.InvariantCulture)"
+      data-iva-orig="@Model.Iva.ToString(CultureInfo.InvariantCulture)"
+      data-agrupar-item="@(Model.AgruparItemUnitario ? "1" : "0")"
+      data-sin-venta="@(esSinVenta ? "1" : "0")">
+
+    @* @Html.AntiForgeryToken() *@
+
+    <!-- ===== Hidden base ===== -->
+    <input type="hidden" id="feIdVenta" name="IdVenta" value="@Model.IdVenta" />
+    <input type="hidden" name="IdFactura" value="@Model.IdFactura" />
+    <input type="hidden" name="NroCbteAfip" value="@Model.NroCbteAfip" />
+    <input type="hidden" name="CAE" value="@Model.CAE" />
+    <input type="hidden" name="FecVtoCAE" value="@Model.FecVtoCAE" />
+
+    <div class="modal-body fe-body">
+        <div class="fe-sticky-resumen" id="feStickyResumen">
+            <div class="fe-sticky-resumen-item">
+                <span class="fe-sticky-resumen-label">Tipo</span>
+                <span class="fe-sticky-resumen-value" id="feStickyTipo">-</span>
+            </div>
+            <div class="fe-sticky-resumen-item">
+                <span class="fe-sticky-resumen-label">Punto de venta</span>
+                <span class="fe-sticky-resumen-value" id="feStickyPuntoVenta">-</span>
+            </div>
+            <div class="fe-sticky-resumen-item">
+                <span class="fe-sticky-resumen-label">Cliente</span>
+                <span class="fe-sticky-resumen-value" id="feStickyCliente">-</span>
+            </div>
+        </div>
+
+        <!-- ===== TOP: Empresa + Datos ===== -->
+        <div class="fe-top">
+
+            <!-- Empresa -->
+            <div class="fe-card-compact">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div class="fe-card-title mb-2">Emisor</div>
+                        <div class="fe-issuer-name">@empresaNombre</div>
+                        <div class="fe-issuer-meta fe-muted mt-1">
+                            @if (!string.IsNullOrWhiteSpace(Model?.EmisorDomicilio))
+                            {
+                                <div>@Model.EmisorDomicilio</div>
+                            }
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="fe-muted" style="font-size:.85rem;">CUIT</div>
+                        <div class="font-weight-bold">@empresaCuit</div>
+                        <div class="fe-muted mt-2" style="font-size:.85rem;">Punto de venta</div>
+                        <div class="font-weight-bold">
+                            @Model.PtoVtaAfip
+                            @if (!string.IsNullOrWhiteSpace(sucursalNombreFactura))
+                            {
+                                <span class="fe-muted d-block" style="font-size:.77rem; font-weight:600;">@sucursalNombreFactura</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comprobante -->
+            <div class="fe-card-compact">
+                <div class="fe-card-title">Comprobante</div>
+
+                <div class="form-row fe-cliente-row">
+                    <div class="form-group col-6 col-md-2">
+                        <label class="mb-1">Punto de Venta</label>
+                        <input type="text" name="PtoVtaAfip"
+                               class="form-control form-control-sm"
+                               value="@Model.PtoVtaAfip" readonly />
+                    </div>
+
+                    <div class="form-group col-6 col-md-3">
+                        <label class="mb-1">Tipo</label>
+                        <select name="CodTipoCbteAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                            <option value="1" selected="@(Model.CodTipoCbteAfip == 1 ? "selected" : null)">
+                                Factura A
+                            </option>
+                            <option value="6" selected="@(Model.CodTipoCbteAfip == 6 ? "selected" : null)">
+                                Factura B
+                            </option>
+                            <option value="11" selected="@(Model.CodTipoCbteAfip == 11 ? "selected" : null)">
+                                Factura C
+                            </option>
+                        </select>
+                        @if (yaEmitida)
+                        {
+                            <input type="hidden" name="CodTipoCbteAfip" value="@Model.CodTipoCbteAfip" />
+                        }
+                    </div>
+
+                    <div class="form-group col-12 col-md-3">
+                        <label class="mb-1">Forma de Pago</label>
+                        <input type="text" name="FormaPago"
+                               class="form-control form-control-sm"
+                               value="@Model.FormaPago" />
+                    </div>
+
+                    <div class="form-group col-12 col-md-3">
+                        <label class="mb-1">Fecha de facturación</label>
+                        <input type="date" name="FechaEmisionAfip"
+                               class="form-control form-control-sm"
+                               value="@(Model.FechaEmisionAfip?.ToString("yyyy-MM-dd"))"
+                               @(yaEmitida ? "readonly" : "") />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cliente -->
+            <div class="fe-card-compact">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="fe-card-title mb-0">Cliente</div>
+                    @if (esSinVenta)
+                    {
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnFeBuscarCliente">
+                            <i class="fas fa-search"></i>
+                            Buscar cliente
+                        </button>
+                    }
+                </div>
+                @if (esSinVenta)
+                {
+                    <input type="hidden" id="feIdPersonaSeleccionada" value="0" />
+                }
+
+                <div class="form-row">
+                    <div class="form-group col-6 col-md-2">
+                        <label class="mb-1">Tipo Doc</label>
+                        <select id="feTipoDocAfip" name="TipoDocAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                            <option value="99" selected="@(Model.TipoDocAfip == "99" ? "selected" : null)">Sin identificar</option>
+                            <option value="80" selected="@(Model.TipoDocAfip == "80" ? "selected" : null)">CUIT</option>
+                            <option value="96" selected="@(Model.TipoDocAfip == "96" ? "selected" : null)">DNI</option>
+                        </select>
+                        @if (yaEmitida)
+                        {
+                            <input type="hidden" name="TipoDocAfip" value="@Model.TipoDocAfip" />
+                        }
+                    </div>
+
+                    <div class="form-group col-6 col-md-3">
+                        <label class="mb-1">Nro Doc</label>
+                        <input type="text"
+                               id="NroDocAfip"
+                               name="NroDocAfip"
+                               class="form-control form-control-sm"
+                               value="@Model.NroDocAfip"
+                               data-original="@Model.NroDocAfip"
+                               readonly />
+                    </div>
+
+                    <div id="avisoCambioNroDoc"
+                         class="alert alert-warning mt-1 mb-2 py-2 px-3 mx-1 w-100"
+                         style="display: none; font-size: 0.78rem;">
+                        Al modificar este número de documento, la venta se actualizará con el CUIT facturado, en caso de estar cargado en la base de datos.
+                    </div>
+
+
+                    <div class="form-group col-12 col-md-5">
+                        <label class="mb-1">Razón Social</label>
+                        <input type="text" id="feRazonSocialAFIP" name="RazonSocialAFIP"
+                               class="form-control form-control-sm"
+                               value="@Model.RazonSocialAFIP" @(yaEmitida ? "readonly" : "") />
+                    </div>
+
+                    <div class="form-group col-12 col-md-3">
+                        <label class="mb-1">Cond. IVA</label>
+                        @*//1 = IVA Responsable Inscripto
+            //4 = IVA Sujeto Exento
+            //5 = Consumidor Final
+            //6 = Responsable Monotributo*@
+                        <select name="CondicionIvaAFIP" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                            <option value="Consumidor Final" selected="@(Model.CondicionIvaAFIP == "Consumidor Final" ? "selected" : null)">Consumidor Final</option>
+                            <option value="Responsable Inscripto" selected="@(Model.CondicionIvaAFIP == "Responsable Inscripto" ? "selected" : null)">Responsable Inscripto</option>
+                            <option value="Monotributista" selected="@(Model.CondicionIvaAFIP == "Monotributista" ? "selected" : null)">Monotributista</option>
+                            <option value="Exento" selected="@(Model.CondicionIvaAFIP == "Exento" ? "selected" : null)">Exento</option>
+                        </select>
+                        @if (yaEmitida)
+                        {
+                            <input type="hidden" name="CondicionIvaAFIP" value="@Model.CondicionIvaAFIP" />
+                        }
+                    </div>
+
+                    <div class="form-group col-12 col-md-9 mt-md-0 mt-n1">
+                        <label class="mb-1 fe-muted" style="font-size:.72rem;">Domicilio</label>
+                        <input type="text" name="DomicilioAFIP"
+                               class="form-control form-control-sm"
+                               value="@Model.DomicilioAFIP" @(yaEmitida ? "readonly" : "") />
+                    </div>
+
+                </div>
+            </div>
+
+            @* Toggle visible: activar/ocultar bloque de edición (siempre accesible) *@
+            <div class="d-flex justify-content-between align-items-center mb-2 @(esSinVenta ? "d-none" : "")">
+                <div class="fe-card-title mb-0">Opciones</div>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="feSwitchAjuste" @(yaEmitida ? "disabled" : "")>
+                    <label class="custom-control-label" for="feSwitchAjuste">Editar facturación</label>
+                </div>
+            </div>
+
+            @* BLOQUE DE AJUSTE: aparece solo cuando se activa el switch, justo debajo de él *@
+            <div id="feAjusteBlock" class="fe-card-compact d-none @(yaEmitida || esSinVenta ? "d-none" : "")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="font-weight-bold text-success">Facturación parcial</div>
+                    <small class="fe-muted">Modifica % o Total para facturar</small>
+                </div>
+
+
+                <div class="form-row mt-2 fe-ajuste-row">
+                    <div class="form-group col-6 col-md-3 mb-2">
+                        <label class="mb-1">% a facturar</label>
+
+                        <!-- UI (sin name) -->
+                        <input type="text" id="feInputPorcentajeUI"
+                               class="form-control form-control-sm"
+                               value="@Model.PorcentajeFacturacion.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))"
+                               inputmode="decimal" />
+
+                        <div id="fePctWarning" role="alert">No puede ser mayor a 100%</div>
+
+                        <!-- POST (con name, id único) -->
+                        <input type="hidden" name="PorcentajeFacturacion" id="fePorcentajeFacturacion"
+                               value="@Model.PorcentajeFacturacion.ToString("0.####", CultureInfo.GetCultureInfo("es-AR"))" />
+                    </div>
+
+                    <div class="form-group col-6 col-md-4 mb-2">
+                        <label class="mb-1">Total a facturar</label>
+                        <input type="text" id="feInputTotalFacturar" class="form-control form-control-sm" value="@totalOrig.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" inputmode="decimal" />
+                        <small class="fe-muted d-block mt-1">Podés editar % o Total (cuando activás el switch).</small>
+                    </div>
+
+                    <div class="form-group col-12 col-md-5 mb-2 d-flex align-items-center">
+                        <div class="custom-control custom-radio mr-3">
+                            <input type="radio" id="feModoPorcentaje" name="feModo" class="custom-control-input" checked>
+                            <label class="custom-control-label" for="feModoPorcentaje">Editar %</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" id="feModoTotal" name="feModo" class="custom-control-input">
+                            <label class="custom-control-label" for="feModoTotal">Editar Total</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fe-card-compact">
+                <div class="custom-control custom-switch mb-2">
+                    <input type="checkbox" class="custom-control-input" id="feAgruparItemUnitario" @(Model.AgruparItemUnitario || esSinVenta ? "checked" : "") @(esSinVenta ? "disabled" : "")>
+                    <label class="custom-control-label" for="feAgruparItemUnitario">Agrupar en ítem individual</label>
+                </div>
+                <div id="feAgruparItemWrap">
+                    <label class="mb-1" for="feDescItemUnitario">Descripción del ítem</label>
+                    <input type="text"
+                           id="feDescItemUnitario"
+                           name="DescItemUnitario"
+                           class="form-control form-control-sm"
+                           value="@Model.DescItemUnitario"
+                           placeholder="Productos varios" />
+                    <small class="fe-muted d-block mt-1">
+                        Se imprimirá un único renglón con esta descripción y la sumatoria de los importes facturados.
+                    </small>
+                </div>
+                <input type="hidden" name="AgruparItemUnitario" id="feAgruparItemUnitarioHidden" value="@(Model.AgruparItemUnitario ? "true" : "false")" />
+            </div>
+
+            <div class="fe-card-compact">
+                <div class="custom-control custom-switch mb-2">
+                    <input type="checkbox" class="custom-control-input" id="feUsarObservaciones" @(!string.IsNullOrWhiteSpace(Model.Observaciones) ? "checked" : "")>
+                    <label class="custom-control-label" for="feUsarObservaciones">Observación del comprobante</label>
+                </div>
+                <div id="feObservacionesWrap">
+                    <textarea id="feObservaciones"
+                              name="Observaciones"
+                              class="form-control form-control-sm"
+                              rows="3"
+                              placeholder="Comentario interno para la factura o nota de crédito">@Model.Observaciones</textarea>
+                    <small class="fe-muted d-block mt-1">
+                        En facturas nuevas se precarga desde la observación de la venta. Podés modificarla o borrarla.
+                    </small>
+                </div>
+            </div>
+
+            @if (esSinVenta)
+            {
+                <div class="fe-card-compact">
+                    <div class="fe-card-title">Facturación manual</div>
+                    <div class="form-row">
+                        <div class="form-group col-6 col-md-5">
+                            <label class="mb-1">Monto total</label>
+                            <input type="text" id="feMontoTotalManual" class="form-control form-control-sm" inputmode="decimal" placeholder="0,00" />
+                        </div>
+                        <div class="form-group col-6 col-md-7">
+                            <label class="mb-1">Alícuota IVA</label>
+                            <select id="feAlicuotaManual" class="form-control form-control-sm">
+                                @if (ViewBag.AlicuotasIva != null)
+                                {
+                                    foreach (var fila in (System.Collections.Generic.List<WebCore.Models.AlicuotaIvaVm>)ViewBag.AlicuotasIva)
+                                    {
+                                        <option value="@fila.IdIva" data-pct="@fila.Iva">@fila.Iva %</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <small class="fe-muted d-block mt-1">El Neto y el IVA se calculan automáticamente a partir del Total y la alícuota elegida.</small>
+                </div>
+            }
+
+        </div><!-- /fe-top -->
+
+        <!-- ===== TOTALES + IVA DISCRIMINADO (NO SCROLLEA) ===== -->
+        <div class="fe-summary fe-card-compact">
+            <div class="fe-card-title">Totales del comprobante</div>
+
+            <!-- Inputs que viajan al server (si te sirve guardarlos / auditar) -->
+            <div class="form-row" id="feLblTotal">
+                <div class="form-group col-4 mb-2">
+                    <label class="mb-1">Neto gravado</label>
+
+                    <!-- UI -->
+                    <input type="text" id="feInputNetoUI"
+                           class="form-control form-control-sm text-right"
+                           value="@Model.ImporteNetoGravado.ToString("N2", CultureInfo.GetCultureInfo("es-AR"))"
+                           readonly />
+
+                    <!-- POST -->
+                    <input type="hidden" name="ImporteNetoGravado" id="feInputNeto"
+                           value="@Model.ImporteNetoGravado.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" />
+                </div>
+
+                <div class="form-group col-4 mb-2">
+                    <label class="mb-1">IVA</label>
+
+                    <!-- UI -->
+                    <input type="text" id="feInputIvaUI"
+                           class="form-control form-control-sm text-right"
+                           value="@Model.Iva.ToString("N2", CultureInfo.GetCultureInfo("es-AR"))"
+                           readonly />
+
+                    <!-- POST -->
+                    <input type="hidden" name="Iva" id="feInputIva"
+                           value="@Model.Iva.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" />
+                </div>
+
+                <div class="form-group col-4 mb-2">
+                    <label class="mb-1">Total</label>
+
+                    <!-- UI -->
+                    <input type="text" id="feInputTotalUI"
+                           class="form-control form-control-sm text-right font-weight-bold"
+                           value="@Model.ImporteTotal.ToString("N2", CultureInfo.GetCultureInfo("es-AR"))"
+                           readonly />
+
+                    <!-- POST -->
+                    <input type="hidden" name="ImporteTotal" id="feInputTotal"
+                           value="@Model.ImporteTotal.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" />
+                </div>
+            </div>
+            @* Tabla de IVA discriminado (deshabilitada tambien en el clasico -- ver
+               Web/Views/Ventas/_FacturaElectronica.cshtml:753-767, factura-electronica.js's
+               renderTablaIva apunta a un #feTablaIva que nunca se renderiza acá a proposito). *@
+
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="modal-footer">
+        <div class="w-100 text-muted mb-1" style="font-size:.7rem;">
+            Atajos: Supr cerrar sin facturar &middot; Alt+R registrar factura
+        </div>
+        @if (permiteNotaCredito)
+        {
+            <button type="button" class="btn btn-outline-danger btn-sm mr-auto" id="btnGenerarNotaCredito">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Nota de Cr&eacute;dito
+            </button>
+        }
+        else if (yaEmitida && idNotaCreditoAsociada > 0)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm mr-auto" disabled="disabled">
+                <i class="fas fa-file-invoice-dollar"></i>
+                NC ya generada
+            </button>
+        }
+
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal" id="btnCancelarFacturaElectronica">
+            Cancelar
+        </button>
+
+        @if (!yaEmitida && !esSinVenta)
+        {
+            <button type="button" class="btn btn-outline-warning btn-sm" id="btnCerrarVentaSinFacturar">
+                <i class="fas fa-times-circle"></i>
+                Cerrar venta sin facturar
+            </button>
+        }
+
+        <button type="submit" class="btn btn-success btn-sm" id="btnRegistrarFactura">
+            <i class="fas fa-file-invoice"></i>
+            @(yaEmitida ? "Guardar cambios" : "Registrar factura")
+        </button>
+    </div>
+</form>
+
+@if (esSinVenta)
+{
+    @Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
+}
+
+<script>
+    $(document).off('input', '#NroDocAfip').on('input', '#NroDocAfip', function () {
+        var valorOriginal = ($(this).data('original') || '').toString().trim();
+        var valorActual = ($(this).val() || '').toString().trim();
+
+        if (valorActual !== valorOriginal) {
+            $('#avisoCambioNroDoc').show();
+        } else {
+            $('#avisoCambioNroDoc').hide();
+        }
+    });
+</script>

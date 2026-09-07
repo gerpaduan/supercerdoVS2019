@@ -2,12 +2,17 @@
     Batch 6 (post-venta basico, ver docs/10-migracion-aspnet-core/PLAN-POS-UI.md) -- version
     reducida y deliberadamente distinta de Web/Views/Ventas/_ModalPostVenta.cshtml (198 lineas:
     ticket ESC/POS con agente local, factura AFIP automatica, WhatsApp, configurar impresora).
-    Alcance de este batch: imprimir (PDF via Imprimir?documento=detalle, ya portado, el navegador
-    hace de "agente" con su propio dialogo de impresion) + email (ObtenerDatosEmailComprobante/
-    EnviarComprobanteEmail, ya portados, mismo patron ya usado en Finanzas/CtaCtePersona y
-    PuntosExpendio/ExpendiosGenerados). Factura AFIP automatica, WhatsApp, agente de impresion
-    local y ticket ESC/POS quedan para el batch 7 o una iteracion futura -- ver header de
-    Ventas/POS.cshtml.
+    Alcance de este batch: imprimir (PDF via Imprimir?documento=X, con eleccion de tipo de
+    comprobante igual que el clasico) + ticket termico HTML (ImprimirTicketHtml, 58/80mm, mismo
+    diseño que _TicketHTML.cshtml clasico, ver docs/DECISIONS.md 2026-09-06) + email
+    (ObtenerDatosEmailComprobante/EnviarComprobanteEmail, ya portados). Factura AFIP automatica y
+    WhatsApp quedan para una iteracion futura. El agente de impresion local ESC/POS (ticket
+    "nativo" sin dialogo del navegador) sigue fuera de alcance -- ver header de Ventas/POS.cshtml.
+
+    Orden y atajos numericos (1-5, 2026-09-06, pedido explicito del usuario -- ver
+    docs/DECISIONS.md): "Nueva venta" primero porque es la accion mas probable despues de cobrar,
+    el resto sigue el orden visual de los botones. Wireado en Ventas/POS.cshtml
+    (posbAtajosNumericos).
 *@
 <div class="modal fade" id="modalPostVentaBasico" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -22,14 +27,33 @@
                 <h3 class="mb-3 font-weight-bold text-success" id="pvbTotalVenta"></h3>
 
                 <div class="d-flex flex-column" style="gap:.5rem;">
-                    <a class="btn btn-outline-primary" id="btnPvbImprimir" target="_blank" rel="noopener">
-                        <i class="fas fa-print mr-1"></i>Imprimir comprobante
-                    </a>
+                    <button type="button" class="btn btn-success" id="btnPvbContinuar">
+                        <span class="badge badge-light mr-1">1</span>
+                        <i class="fas fa-cash-register mr-1"></i>Nueva venta
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnPvbTicket">
+                        <span class="badge badge-light mr-1">2</span>
+                        <i class="fas fa-receipt mr-1"></i>Imprimir ticket
+                    </button>
+                    <div class="small text-muted" id="pvbTicketMedidaInfo" style="margin-top:-.35rem;">
+                        Tamaño: <span id="pvbTicketMedidaTexto">80mm</span> ·
+                        <a href="#" id="pvbTicketCambiarMedida">cambiar</a>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" id="btnPvbImprimir">
+                        <span class="badge badge-light mr-1">3</span>
+                        <i class="fas fa-print mr-1"></i>Imprimir PDF
+                    </button>
                     <button type="button" class="btn btn-outline-success" id="btnPvbEmail">
+                        <span class="badge badge-light mr-1">4</span>
                         <i class="fas fa-envelope mr-1"></i>Enviar por email
                     </button>
-                    <button type="button" class="btn btn-success" id="btnPvbContinuar">
-                        <i class="fas fa-cash-register mr-1"></i>Nueva venta
+                    @* Factura Electronica (AFIP), 2026-09-06 (retomado -- ver docs/DECISIONS.md).
+                       Equivalente reducido de #btnPostVenta3 de Web/Views/Ventas/_ModalPostVenta.cshtml
+                       -- abre el mismo modal real _FacturaElectronica.cshtml, wireado en POS.cshtml
+                       (abrirFacturaVentaModal, port de modal-postventa.js). *@
+                    <button type="button" class="btn btn-outline-info" id="btnPvbFactura">
+                        <span class="badge badge-light mr-1">5</span>
+                        <i class="fas fa-file-invoice mr-1"></i>Factura electrónica
                     </button>
                 </div>
             </div>

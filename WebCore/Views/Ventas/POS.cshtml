@@ -63,9 +63,22 @@
       - Cambiar/buscar cliente (boton F9/CF quedan visibles pero sin JS todavia -- el cliente
         de la venta es siempre Consumidor Final).
       - Factura AFIP automatica desde post-venta, WhatsApp, ticket ESC/POS con agente de
-        impresion local, configurar impresora.
+        impresion local (distinto del ticket HTML 58/80mm, que si esta portado, ver mas abajo),
+        configurar impresora.
     El CSS (WebCore/wwwroot/Content/css/pos.css) es un port literal completo -- varias reglas
     todavia no tienen HTML/JS correspondiente en este batch, son inertes hasta que lleguen.
+
+    Post-venta: ticket 58/80mm + PDF con eleccion de comprobante + atajos numericos, 2026-09-06
+    (pedido explicito del usuario -- ver docs/DECISIONS.md). _ModalPostVentaBasico.cshtml
+    reordenado (Nueva venta/Ticket/PDF/Email/Factura, atajos 1-5) -- detalle completo en el header
+    de ese archivo. Ticket termico HTML: mismo diseño que Web/Views/Ventas/_TicketHTML.cshtml
+    clasico, portado a WebCore/Views/Ventas/_TicketHTML.cshtml, servido por
+    VentasController.ImprimirTicketHtml -- el navegador hace de "agente" (dialogo nativo de
+    impresion), el agente local ESC/POS sigue sin portar. Tamaño recordado en localStorage
+    (postventa_ticket_mm) hasta que el usuario lo cambie explicitamente. PDF: el boton "Imprimir
+    PDF" ahora pregunta el tipo de comprobante (detalle/factura/nota de credito) igual que el
+    clasico (pvSeleccionarOpcionSimple), reutilizando ObtenerDatosEmailComprobante sin cambios de
+    backend.
 *@
 @model Entidades.Venta
 
@@ -88,6 +101,7 @@
     int idVentaEditar = ViewBag.IdVentaEditar != null ? (int)ViewBag.IdVentaEditar : 0;
     bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
     int idCierreActividadPOS = ViewBag.IdCierreActividadPOS != null ? (int)ViewBag.IdCierreActividadPOS : 0;
+    int idConsumidorFinalPOS = ViewBag.IdConsumidorFinal != null ? (int)ViewBag.IdConsumidorFinal : 0;
 
     // Precarga de POSState en modo edicion -- port de Web/Views/Ventas/POS.cshtml:24-63 (batch 7,
     // iteracion 5). "anulado"/"indexAnulado" replican EXACTAMENTE la logica del original
@@ -145,6 +159,7 @@
             <div class="col-12 col-lg-6 order-2 order-lg-1 d-flex align-items-center">
                 <div class="pos-cliente w-100">
                     <input type="hidden" id="idPersona" value="@Model.IdPersona" />
+                    <input type="hidden" id="clienteIdentificacionValor" value="@(Model.Persona?.Identificacion ?? "")" />
 
                     <div class="input-group input-group-sm">
                         <input type="text"
@@ -154,14 +169,32 @@
                                readonly />
 
                         <div class="input-group-append">
-                            <button type="button" class="btn btn-primary" id="btnBuscarPersona" title="Buscar cliente (disponible en un próximo batch)" disabled>
+                            <button type="button" class="btn btn-primary" id="btnBuscarPersona" title="Buscar cliente (F9)">
                                 <i class="fas fa-search"></i>
                             </button>
 
-                            <button type="button" class="btn btn-secondary" id="btnConsumidorFinal" title="Consumidor Final" disabled>
+                            <button type="button" class="btn btn-secondary" id="btnConsumidorFinal" title="Consumidor Final">
                                 CF
                             </button>
+
+                            @* Historial de precios de cliente (F8), 2026-09-06 (retomado -- ver
+                               docs/DECISIONS.md). Arranca oculto (d-none): actualizarAccesoHistorialPreciosCliente
+                               lo muestra/oculta segun el cliente actual (gate real lo re-aplica el
+                               controller, esto es solo UX). Port literal de
+                               Web/Views/Ventas/POS.cshtml:104-109. *@
+                            <button type="button" class="btn btn-outline-primary d-none" id="btnHistorialPreciosCliente" title="Historial de precios (F8)">
+                                <i class="fas fa-history"></i>
+                            </button>
                         </div>
+                    </div>
+                    @* Muestra la identificacion (DNI/CUIT) solo cuando difiere de la razon social --
+                       port literal de Web/Views/Ventas/POS.cshtml:112-117, 2026-09-06 (retomado,
+                       ver docs/DECISIONS.md). *@
+                    <div id="clienteIdentificacionWrap"
+                         class="pos-cliente-identificacion @((Model.Persona == null || string.IsNullOrWhiteSpace(Model.Persona.Identificacion) || string.Equals(Model.Persona.Identificacion, Model.Persona.RazonSocial, StringComparison.OrdinalIgnoreCase)) ? "d-none" : "")"
+                         title="@(Model.Persona?.Identificacion ?? "")">
+                        <span class="pos-cliente-identificacion-label">Ident.:</span>
+                        <span id="clienteIdentificacionTexto">@(Model.Persona?.Identificacion ?? "")</span>
                     </div>
                 </div>
             </div>
@@ -325,7 +358,7 @@
                                                    autocomplete="off"
                                                    autofocus />
 
-                                            <button class="btn btn-outline-secondary" id="btnAgregarManual" disabled title="Buscador avanzado (disponible en un próximo batch)">
+                                            <button class="btn btn-outline-secondary" id="btnAgregarManual" title="Buscador avanzado (F10)">
                                                 Buscar
                                             </button>
                                         </div>
@@ -541,6 +574,12 @@
                             <div class="col-6" id="bloquePrecioBonificado">
                                 <label class="small">Precio bonificado</label>
                                 <input id="txtPrecioKg" class="form-control text-right" inputmode="decimal" autocomplete="off">
+                                @* Copiar/pegar precio del historial (F8), 2026-09-06 (retomado --
+                                   ver docs/DECISIONS.md). Port literal de
+                                   Web/Views/Ventas/POS.cshtml:566-568. *@
+                                <button type="button" id="btnPegarPrecioCopiado" class="btn btn-sm btn-outline-secondary btn-block mt-1 d-none" title="Pegar el precio copiado del historial">
+                                    <i class="fas fa-paste mr-1"></i> Pegar precio
+                                </button>
                             </div>
 
                             <div class="col-6">
@@ -580,6 +619,12 @@
 
                     </div>
 
+                    @* Guia de atajos del modal de linea (2026-09-06, pedido explicito del usuario
+                       -- ver docs/DECISIONS.md): solo en desktop (los atajos de teclado no
+                       aplican en touch), texto dinamico segun el paso de la cascada de
+                       bonificacion -- actualizarHintAtajosLinea() en pos-cart.js. *@
+                    <div id="posLineaAtajosHint" class="d-none d-md-block small text-muted text-center mt-3"></div>
+
                 </div>
             </div>
         </div>
@@ -589,9 +634,51 @@
     @Html.Partial("~/Views/Ventas/_ModalExpendiosPOS.cshtml")
     @Html.Partial("~/Views/Ventas/_ModalObservacionesExpendio.cshtml")
     @Html.Partial("~/Views/Ventas/_ModalPostVentaBasico.cshtml")
+
+    @* Factura Electronica (AFIP), 2026-09-06 (retomado -- ver docs/DECISIONS.md). Shell vacio,
+       igual que el clasico (Web/Views/Ventas/POS.cshtml:682-688) -- el contenido real
+       (_FacturaElectronica.cshtml) se inyecta por AJAX via abrirFacturaVentaModal/
+       abrirFacturaSinVentaModal (definidos mas abajo), nunca se renderiza en el load inicial. *@
+    <div class="modal fade" id="modalFacturaElectronica" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content" id="contenedorFacturaElectronica">
+                <!-- se inyecta por ajax -->
+            </div>
+        </div>
+    </div>
+
     @Html.Partial("~/Views/Ventas/_ModalComentarioVenta.cshtml")
     @Html.Partial("~/Views/Ventas/_ModalAyudaPOS.cshtml")
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
+
+    @* Buscador de cliente real (F9), 2026-09-06 (retomado, ver docs/DECISIONS.md). El backend
+       (PersonasController.Buscar/Listar/Obtener/PersonaModal/GuardarPersonaModal) y la vista
+       (_BuscarPersona.cshtml/_AddOrEditPersonaModal.cshtml) ya estaban portados -- faltaba solo
+       este wiring. #contenedorModalPersona se llena por AJAX la primera vez que se aprieta
+       #btnBuscarPersona (ver persona-buscar.js). Port literal de
+       Web/Views/Ventas/POS.cshtml:658-672. *@
+    <div id="contenedorModalPersona"></div>
+
+    <div class="modal fade" id="modalPersonaCrearVenta" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva persona</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" id="modalPersonaCrearVentaBody">
+                    <div class="text-center text-muted py-4">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Buscador avanzado de producto (F10), 2026-09-06 (retomado -- ver docs/DECISIONS.md).
+       pos-product.js ya tenia el wiring completo (bindDomEvents -> #btnAgregarManual ->
+       openSearchModal -> window.abrirBuscarProductoModal) inerte por 2 faltantes: este
+       partial (modal + tabla) y modal-productos.js (el modulo que define la funcion global).
+       Ambos son ports literales, sin cambios de logica. *@
+    @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml")
 
     @* Overlay "Cargando solicitud..." que usan F2/F5/F6/F7 mientras el AJAX de POSFinanzas.cargar
        esta en vuelo -- port literal de Web/Views/Ventas/POS.cshtml:674-680,711-783 (HTML+CSS).
@@ -801,6 +888,29 @@
             background: #fff;
         }
 
+        /* Historial de precios (F8, 2026-09-06 retomado, "aireado" el mismo dia a pedido
+           explicito del usuario -- ver docs/DECISIONS.md): tabla angosta de 5 columnas, con mas
+           aire que la version original (que reducia el modal al 50% de modal-xl -- se sentia
+           demasiado comprimido). Mejora deliberada sobre el diseño original del clasico, no un
+           port literal en estos anchos puntuales. */
+        #modalFinanzasPOS.modal-historial-precios-pos-compacto .modal-dialog {
+            max-width: 320px;
+            width: calc(100% - 1rem);
+        }
+
+        @@media (min-width: 992px) {
+            #modalFinanzasPOS.modal-historial-precios-pos-compacto .modal-dialog {
+                max-width: 500px;
+                width: calc(100% - 2.5rem);
+            }
+        }
+
+        @@media (min-width: 1200px) {
+            #modalFinanzasPOS.modal-historial-precios-pos-compacto .modal-dialog {
+                max-width: 680px;
+            }
+        }
+
         #modalFinanzasPOS.modal-mis-actividades-pos-compacto .modal-dialog {
             max-width: 920px;
             width: calc(100% - 1rem);
@@ -955,6 +1065,9 @@ else
     <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
     <script src="~/Scripts/app/pos-compact.js?v=1"></script>
     <script src="~/Scripts/app/seleccion-usuario.js?v=2"></script>
+    <script src="~/Scripts/app/persona-buscar.js?v=1"></script>
+    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
+    <script src="~/Scripts/app/factura-electronica.js?v=1"></script>
 
     @* Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
        Web/Views/Ventas/POS.cshtml:1396-1486. Vive en un bloque propio, ANTES del IIFE de
@@ -1067,7 +1180,10 @@ else
                         url: "@Url.Action("AbrirCaja", "Cajas")",
                         type: "POST",
                         dataType: "json",
-                        data: { cajaInicio: cajaInicio, fechaHora: fechaHora, posInstanceId: "" },
+                        // posInstanceId real (2026-09-06, ver docs/DECISIONS.md) -- antes iba
+                        // vacio a proposito, asi que CajasController.AbrirCaja nunca podia
+                        // resolver el operador real de la cuenta compartida de produccion.
+                        data: { cajaInicio: cajaInicio, fechaHora: fechaHora, posInstanceId: window.PosOperadorConfig?.posInstanceId || "" },
                         success: function (r) {
                             if (r && r.ok) {
                                 $("#modalAbrirCaja").modal("hide");
@@ -1241,10 +1357,10 @@ else
             // actividades)/F7 (Nuevo egreso) -- 2026-09-06, retomado (ver docs/DECISIONS.md).
             // Port literal de Web/Views/Ventas/POS.cshtml:3015-3416,3439-3468 (renderConScripts +
             // POSFinanzas.cargar/abrirCtasCtes/abrirCtaCtePersona + POSCompras + POSEgresos).
-            // F8 (Historial de precios de cliente) y F9 (Buscar cliente) siguen sin registrar:
-            // ambos dependen del buscador de cliente real, todavia no portado (el cliente en
-            // WebCore siempre es Consumidor Final) -- no tiene sentido un "historial de precios"
-            // sin un cliente real seleccionado. pos-help.js los deja degradar solos.
+            // F8 (Historial de precios de cliente) y F9 (Buscar cliente) -- nota vieja: decia que
+            // seguian sin registrar porque el buscador de cliente real no existia todavia. Ya no es
+            // asi (retomado el mismo dia, ver mas abajo y persona-buscar.js): F9 abre el buscador
+            // real, F8 y el click de #btnHistorialPreciosCliente abren el historial.
             window.POSModalLoading = window.POSModalLoading || (function ($) {
                 function getOverlay() {
                     return $('#posModalLoading');
@@ -1348,12 +1464,14 @@ else
                     var esMisActividades = !!url && url.indexOf("ActividadesCaja") >= 0;
                     var esCompra = !!url && url.indexOf("/Compras/") >= 0;
                     var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
+                    var esHistorialPrecios = !!url && url.indexOf("/Ventas/HistorialPreciosCliente") >= 0;
 
                     $("#modalFinanzasPOS")
-                        .removeClass("modal-egreso-pos-compacto modal-compra-pos-layout modal-ctasctes-pos-compacto modal-mis-actividades-pos-compacto")
+                        .removeClass("modal-egreso-pos-compacto modal-compra-pos-layout modal-ctasctes-pos-compacto modal-mis-actividades-pos-compacto modal-historial-precios-pos-compacto")
                         .toggleClass("modal-compra-pos-layout", esCompra)
                         .toggleClass("modal-ctasctes-pos-compacto", esCtasCtes)
-                        .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades);
+                        .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades)
+                        .toggleClass("modal-historial-precios-pos-compacto", esHistorialPrecios);
                     $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                     $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
                     window.POSModalLoading?.show('Cargando solicitud...');
@@ -1395,6 +1513,16 @@ else
                     var url = '@Url.Action("CtaCtePersona", "Finanzas")' + '?idPersona=' + encodeURIComponent(idPersona) + '&desdePos=true';
                     if (fechaDesde) url += '&fechaDesde=' + encodeURIComponent(fechaDesde);
                     this.cargar(url, "Cuenta corriente");
+                },
+
+                // Historial de precios de cliente (F8), 2026-09-06 (retomado -- ver docs/DECISIONS.md).
+                // Port literal de Web/Views/Ventas/POS.cshtml:3298-3308.
+                abrirHistorialPreciosCliente: function (idPersona) {
+                    if (!window.POSHistorialPreciosHabilitado) return;
+
+                    var url = '@Url.Action("HistorialPreciosCliente", "Ventas")' + '?idPersona=' + encodeURIComponent(idPersona);
+                    window.POSPrecioCopiado = null;
+                    this.cargar(url, "Historial de precios");
                 }
             };
 
@@ -1507,6 +1635,121 @@ else
                 window.POSEgresos.abrirNuevo();
             };
 
+            // Historial de precios de cliente (F8), 2026-09-06 (retomado -- ver docs/DECISIONS.md).
+            window.posHotkeysHooks.F8 = function () {
+                window.POSFinanzas.abrirHistorialPreciosCliente($('#idPersona').val());
+            };
+
+            // Click en el boton del historial de precios (2026-09-07, bug real encontrado por el
+            // usuario -- ver docs/DECISIONS.md): el atajo F8 de arriba quedo conectado, pero el
+            // boton visible #btnHistorialPreciosCliente nunca tuvo su propio handler de click --
+            // por eso el modal nunca se abria clickeandolo, solo con la tecla F8.
+            $("#btnHistorialPreciosCliente").on("click", function () {
+                window.POSFinanzas.abrirHistorialPreciosCliente($('#idPersona').val());
+            });
+
+            // Copiar/pegar precio del historial (F8), 2026-09-06 (retomado -- ver docs/DECISIONS.md)
+            // -- en memoria JS, sin portapapeles del sistema operativo (algunos servidores corren
+            // sin HTTPS). Port literal de Web/Views/Ventas/POS.cshtml:3478-3504.
+            function actualizarBotonPegarPrecio() {
+                $("#btnPegarPrecioCopiado").toggleClass("d-none", window.POSPrecioCopiado == null);
+            }
+
+            // Cambiar precio directo en el carrito al copiar (2026-09-06, pedido explicito del
+            // usuario -- ver docs/DECISIONS.md): si el producto de la fila copiada YA esta
+            // cargado en el carrito de esta venta, se ofrece aplicarle el precio del historial
+            // ahi mismo -- como si se hubiese hecho a mano desde el modal "Linea de venta" con
+            // "Bonificar por precio" (mismo calculo exacto de % que syncDesdePrecio() en
+            // pos-cart.js: pct = (1 - precioNuevo/precioLista) * 100, linea.bonificacion queda
+            // seteado y el carrito lo muestra igual que cualquier otra bonificacion). Si el
+            // usuario dice que no, o el producto no esta en el carrito, se comporta como antes
+            // (solo copia el precio para pegar despues en el modal de linea).
+            function buscarLineaCarritoPorCodigo(codigo) {
+                var cod = String(codigo == null ? "" : codigo).trim();
+                if (!cod) return null;
+
+                return (POSState.getLineas() || []).find(function (linea) {
+                    return linea && !linea.anulado && String(linea.codigo) === cod;
+                }) || null;
+            }
+
+            function aplicarPrecioHistorialALineaCarrito(linea, precioNuevo) {
+                var precioLista = parseFloat(String(linea.precioOriginal ?? linea.precio).replace("$", "").trim());
+                var cant = parseFloat(String(linea.cant).replace(",", "."));
+
+                if (!isFinite(precioLista) || precioLista <= 0 || !isFinite(cant) || cant <= 0) return false;
+
+                var pct = (1 - (precioNuevo / precioLista)) * 100.0;
+                pct = Math.round(pct * 100) / 100.0;
+
+                linea.precio = "$ " + precioNuevo.toFixed(2);
+                linea.subtotal = "$ " + (precioNuevo * cant).toFixed(2);
+                linea.bonificacion = pct;
+
+                posCart.renderTable(POSState.getLineas());
+                posCart.recalculateTotal();
+                posCart.updateSaleState();
+                posCart.updateCartSummary?.();
+                return true;
+            }
+
+            $(document).on("click", "#modalFinanzasPOS .js-copiar-precio-historial", function () {
+                var $btn = $(this);
+                var precio = parseFloat($btn.data("precio"));
+                if (!isFinite(precio)) return;
+
+                window.POSPrecioCopiado = precio;
+                actualizarBotonPegarPrecio();
+
+                var $icono = $btn.find("i");
+                $icono.removeClass("fa-copy").addClass("fa-check text-success");
+                setTimeout(function () {
+                    $icono.removeClass("fa-check text-success").addClass("fa-copy");
+                }, 1200);
+
+                var codigo = $btn.data("codigo");
+                var lineaEnCarrito = buscarLineaCarritoPorCodigo(codigo);
+                if (!lineaEnCarrito) return;
+
+                var producto = $btn.data("producto") || lineaEnCarrito.producto || ("código " + codigo);
+                var preguntar = function () {
+                    if (aplicarPrecioHistorialALineaCarrito(lineaEnCarrito, precio)) {
+                        if (window.Swal) {
+                            window.Swal.fire({
+                                icon: "success",
+                                title: "Precio actualizado",
+                                text: producto + " quedó con el precio del historial en el carrito.",
+                                timer: 1800,
+                                timerProgressBar: true,
+                                showConfirmButton: false
+                            });
+                        }
+                    }
+                };
+
+                if (window.Swal) {
+                    window.Swal.fire({
+                        icon: "question",
+                        title: "Cambiar precio en el carrito",
+                        text: producto + " ya está cargado en la venta actual. ¿Cambiar su precio al de este historial?",
+                        showCancelButton: true,
+                        confirmButtonText: "Sí, cambiar",
+                        cancelButtonText: "No, solo copiar"
+                    }).then(function (result) {
+                        if (result.isConfirmed) preguntar();
+                    });
+                } else if (confirm(producto + " ya está en el carrito. ¿Cambiar su precio al de este historial?")) {
+                    preguntar();
+                }
+            });
+
+            $("#modalLineaVenta").on("shown.bs.modal", actualizarBotonPegarPrecio);
+
+            $("#btnPegarPrecioCopiado").on("click", function () {
+                if (window.POSPrecioCopiado == null) return;
+                $("#txtPrecioKg").val(window.POSPrecioCopiado.toFixed(2)).trigger("input");
+            });
+
             posProduct.init();
             posCart.init();
             posBalanza.init();
@@ -1599,6 +1842,7 @@ else
                 buscarExpendiosPos: "@Url.Action("BuscarExpendiosPOS", "Ventas")",
                 obtenerExpendioPos: "@Url.Action("ObtenerExpendioPOS", "Ventas")",
                 imprimir: "@Url.Action("Imprimir", "Ventas")",
+                imprimirTicketHtml: "@Url.Action("ImprimirTicketHtml", "Ventas")",
                 obtenerDatosEmailComprobante: "@Url.Action("ObtenerDatosEmailComprobante", "Ventas")",
                 enviarComprobanteEmail: "@Url.Action("EnviarComprobanteEmail", "Ventas")"
             };
@@ -1630,6 +1874,185 @@ else
             window.POSModo.instanceId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId));
             window.POSModo.soloFormaPago = @(soloFormaPago ? "true" : "false");
             window.POSMultiInstance?.init?.();
+
+            // ===== Buscador de cliente real (F9), 2026-09-06 (retomado, ver docs/DECISIONS.md).
+            // Port literal de Web/Views/Ventas/POS.cshtml:1829-1881 (helpers) y :2133-2196
+            // (handlers de #btnBuscarPersona/#btnConsumidorFinal). =====
+            var posCtaCtePermisoCompleto = @(ViewBag.PuedeVerCtaCteCompleta != null && (bool)ViewBag.PuedeVerCtaCteCompleta ? "true" : "false");
+
+            window.api = window.api || {};
+            window.api.persona = {
+                listar: '@Url.Action("Listar", "Personas")',
+                buscar: '@Url.Action("Buscar", "Personas")',
+                obtener: '@Url.Action("Obtener", "Personas")',
+                crear: '@Url.Action("PersonaModal", "Personas")',
+                guardarCrear: '@Url.Action("GuardarPersonaModal", "Personas")'
+            };
+
+            function normalizeClientText(value) {
+                return (value || "").toString().trim();
+            }
+
+            function setClienteIdentificacionVisual(identificacion, razonSocial) {
+                var razon = normalizeClientText(razonSocial || $("#razonSocial").val());
+                var identificacionNormalizada = normalizeClientText(identificacion);
+                var $wrap = $("#clienteIdentificacionWrap");
+                var $texto = $("#clienteIdentificacionTexto");
+                var $valor = $("#clienteIdentificacionValor");
+
+                if (!$wrap.length || !$texto.length) return;
+
+                var mostrar = !!identificacionNormalizada && !!razon &&
+                    identificacionNormalizada.localeCompare(razon, undefined, { sensitivity: 'accent' }) !== 0;
+
+                if ($valor.length) $valor.val(identificacionNormalizada);
+                $texto.text(identificacionNormalizada);
+                $wrap.attr("title", identificacionNormalizada);
+                $wrap.toggleClass("d-none", !mostrar);
+            }
+
+            window.setClienteIdentificacionVisual = setClienteIdentificacionVisual;
+
+            // Gate del historial de precios por cliente (F8 / boton), 2026-09-06 (retomado -- ver
+            // docs/DECISIONS.md): mismo criterio de sensibilidad que Finanzas/CtaCtePersona -- se
+            // oculta con Consumidor Final y con clientes de cuenta corriente si el usuario no tiene
+            // permiso para ver cuentas corrientes completas. Este chequeo del lado del cliente es
+            // solo comodidad de UX; el limite real lo vuelve a aplicar el controller
+            // (VentasController.HistorialPreciosCliente) antes de devolver los precios. Port literal
+            // de Web/Views/Ventas/POS.cshtml:1883-1933.
+            function actualizarAccesoHistorialPreciosCliente(idPersona) {
+                var $btn = $("#btnHistorialPreciosCliente");
+                idPersona = parseInt(idPersona, 10) || 0;
+
+                // Un precio copiado es especifico del cliente del que se copio -- si cambia el
+                // cliente, no tiene sentido seguir ofreciendo "Pegar" con un precio de otro cliente.
+                window.POSPrecioCopiado = null;
+
+                function deshabilitar() {
+                    window.POSHistorialPreciosHabilitado = false;
+                    $btn.addClass("d-none");
+                }
+
+                function habilitar() {
+                    window.POSHistorialPreciosHabilitado = true;
+                    $btn.removeClass("d-none");
+                }
+
+                if (!idPersona || idPersona === @idConsumidorFinalPOS) {
+                    deshabilitar();
+                    return;
+                }
+
+                if (!window.api || !window.api.persona || !window.api.persona.obtener) {
+                    deshabilitar();
+                    return;
+                }
+
+                $.get(window.api.persona.obtener, { id: idPersona })
+                    .done(function (resp) {
+                        if (!resp || !resp.ok) {
+                            deshabilitar();
+                            return;
+                        }
+
+                        var ocultarPorCtaCte = !!resp.ctaCte && !posCtaCtePermisoCompleto;
+                        if (ocultarPorCtaCte) {
+                            deshabilitar();
+                        } else {
+                            habilitar();
+                        }
+                    })
+                    .fail(deshabilitar);
+            }
+
+            window.actualizarAccesoHistorialPreciosCliente = actualizarAccesoHistorialPreciosCliente;
+
+            function resolverIdentificacionClienteActual() {
+                var idPersonaActual = parseInt($("#idPersona").val(), 10) || 0;
+                var razonActual = normalizeClientText($("#razonSocial").val());
+                var identificacionActual = normalizeClientText($("#clienteIdentificacionValor").val() || $("#clienteIdentificacionTexto").text());
+
+                if (!idPersonaActual || idPersonaActual === @idConsumidorFinalPOS || !razonActual || identificacionActual) {
+                    return;
+                }
+
+                if (!window.api || !window.api.persona || !window.api.persona.obtener) return;
+
+                $.get(window.api.persona.obtener, { id: idPersonaActual }).done(function (resp) {
+                    if (!resp || !resp.ok) return;
+
+                    var razonRespuesta = normalizeClientText(resp.razonSocial || razonActual);
+                    var identificacionRespuesta = normalizeClientText(resp.identificacion);
+                    if (!identificacionRespuesta) return;
+
+                    setClienteIdentificacionVisual(identificacionRespuesta, razonRespuesta || razonActual);
+                });
+            }
+
+            resolverIdentificacionClienteActual();
+            actualizarAccesoHistorialPreciosCliente($('#idPersona').val());
+
+            $(document).on('click', '#btnBuscarPersona', function () {
+                var $btn = $(this);
+                var $contenedor = $('#contenedorModalPersona');
+
+                $('#modalBuscarPersona').removeData('origen-persona-buscar');
+
+                if ($contenedor.find('#modalBuscarPersona').length) {
+                    var abierto = window.POSGuard
+                        ? window.POSGuard.requestModalOpen('persona', function () {
+                            $('#modalBuscarPersona').modal('show');
+                            if (typeof cargarPersonas === 'function') cargarPersonas();
+                        })
+                        : true;
+                    if (!abierto) return;
+                    return;
+                }
+
+                if (window.POSGuard && !window.POSGuard.startModalLoad('persona')) return;
+
+                $btn.prop('disabled', true);
+                window.POSModalLoading?.show('Cargando clientes...');
+
+                $.get(window.api.persona.buscar)
+                    .done(function (html) {
+                        $contenedor.html(html);
+                        window.POSGuard?.endModalLoad('persona');
+                        window.POSModalLoading?.hide();
+
+                        var abierto = window.POSGuard
+                            ? window.POSGuard.requestModalOpen('persona', function () {
+                                $('#modalBuscarPersona').modal('show');
+                                if (typeof cargarPersonas === 'function') cargarPersonas();
+                            })
+                            : true;
+
+                        if (!abierto) {
+                            $('#modalBuscarPersona').modal('show');
+                            if (typeof cargarPersonas === 'function') cargarPersonas();
+                        }
+                    })
+                    .fail(function () {
+                        window.POSGuard?.endModalLoad('persona');
+                        window.POSModalLoading?.hide();
+                        Swal.fire({ icon: 'error', title: 'Cliente', text: 'No se pudo cargar el buscador de clientes' });
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false);
+                    });
+            });
+
+            $('#btnConsumidorFinal').on('click', function () {
+                $('#idPersona').val(@idConsumidorFinalPOS);
+                $('#razonSocial').val('Consumidor Final');
+                setClienteIdentificacionVisual('', 'Consumidor Final');
+                actualizarAccesoHistorialPreciosCliente(@idConsumidorFinalPOS);
+            });
+
+            if (window.POSGuard) {
+                window.POSGuard.bindModal('#modalBuscarPersona', 'persona');
+                window.POSGuard.bindModal('#modalPersonaCrearVenta', 'personaCrear');
+            }
 
             // ===== Batch 7, iteracion 5: edicion de venta existente =====
             // Recortado sin soloFormaPago (queda para una iteracion siguiente, ver
@@ -1698,17 +2121,15 @@ else
 
             // ===== Proteccion de salida con venta en curso + POSDraft (2026-09-06, retomado --
             // ver docs/DECISIONS.md). Port de Web/Views/Ventas/POS.cshtml:1935-2090 (POSDraft) y
-            // :2491-2558 (bloqueo de salida), SIMPLIFICADO respecto al original en 2 puntos
-            // documentados, ninguno cambia el comportamiento del carrito en si (lo unico que
+            // :2491-2558 (bloqueo de salida), SIMPLIFICADO respecto al original en 1 punto
+            // documentado, que no cambia el comportamiento del carrito en si (lo unico que
             // protege esta funcionalidad):
-            //   1. Sin identificacionCliente/razonSocial "visual sync" (resolverIdentificacionCli
-            //      enteActual/setClienteIdentificacionVisual/actualizarAccesoHistorialPreciosClien
-            //      te): esas funciones son del buscador de cliente real, todavia no portado (el
-            //      cliente en WebCore siempre es Consumidor Final) -- se restauran idPersona/
-            //      razonSocial con un .val() directo en vez de esos helpers.
-            //   2. Sin getFechaVentaPOS/setFechaVentaPOS (helpers del modulo de fecha editable,
-            //      tampoco portado): se lee/escribe #fechaVenta directo, el mismo campo que ya usa
-            //      forma-pago.js para mandar fechaVenta al servidor.
+            //   - Sin getFechaVentaPOS/setFechaVentaPOS (helpers del modulo de fecha editable,
+            //     tampoco portado): se lee/escribe #fechaVenta directo, el mismo campo que ya usa
+            //     forma-pago.js para mandar fechaVenta al servidor.
+            // (El buscador de cliente real -- F9 -- y el gate de historial de precios -- F8 -- ya
+            // estan portados; restore() re-sincroniza ambos con setClienteIdentificacionVisual/
+            // actualizarAccesoHistorialPreciosCliente al restaurar un draft con cliente real.)
             // pos-cart.js/forma-pago.js/pos-multi-instance.js YA llaman a window.POSDraft?.save?.()
             // y window.desactivarAvisoSalidaPOS (definido en pos-cart.js) -- nada mas que tocar ahi.
             window.POSDraft = window.POSDraft || (function () {
@@ -1796,6 +2217,15 @@ else
 
                     if (draft.idPersona) $("#idPersona").val(draft.idPersona);
                     if (draft.razonSocial) $("#razonSocial").val(draft.razonSocial);
+                    if (draft.idPersona) {
+                        // 2026-09-06 (retomado -- ver docs/DECISIONS.md): al restaurar un borrador
+                        // con un cliente real (no Consumidor Final), hay que re-resolver la
+                        // identificacion visual y el gate de historial de precios -- sin esto, el
+                        // draft restaurado dejaba la linea "Ident.:" y el boton de historial en el
+                        // estado que tenian antes de recargar la pagina, no el del cliente restaurado.
+                        resolverIdentificacionClienteActual();
+                        actualizarAccesoHistorialPreciosCliente(draft.idPersona);
+                    }
                     if (draft.observaciones != null) POSState.setObservaciones(draft.observaciones);
                     if (draft.fechaVenta) $("#fechaVenta").val(draft.fechaVenta);
 
@@ -2009,28 +2439,293 @@ else
                 posCart.updateSaleState();
             });
 
-            // ===== Batch 6: post-venta basico (ticket + email, sin AFIP) =====
+            // ===== Batch 6: post-venta basico (ticket + PDF + email, sin AFIP automatica) =====
             // Reemplaza al modal real de post-venta (modal-postventa.js: ticket ESC/POS con
             // agente local, factura AFIP automatica, WhatsApp -- 1298 lineas, no portado, ver
-            // header del archivo). Este modal reducido cubre imprimir (PDF via Imprimir, el
-            // navegador hace de "agente" con su propio dialogo de impresion) y email (mismos
-            // endpoints ya portados que usa Ventas/DetalleVenta).
+            // header del archivo). Este modal reducido cubre: ticket termico HTML (58/80mm, el
+            // navegador hace de "agente" con su propio dialogo de impresion), PDF (con eleccion de
+            // tipo de comprobante) y email -- ver docs/DECISIONS.md 2026-09-06.
             var pvbDocumentoEmail = "detalle";
+
+            // Tamaño de ticket recordado (2026-09-06, pedido explicito del usuario -- ver
+            // docs/DECISIONS.md): misma clave literal que usa Web clasico (postventa_ticket_mm)
+            // para el mismo concepto, aunque WebCore no comparte localStorage con el clasico (son
+            // origenes distintos) -- se reutiliza el nombre solo por consistencia de convencion.
+            var KEY_TICKET_MM = "postventa_ticket_mm";
+            function pvbObtenerMedidaTicket() {
+                var guardado = parseInt(localStorage.getItem(KEY_TICKET_MM), 10);
+                return (guardado === 58 || guardado === 80) ? guardado : null;
+            }
+            function pvbGuardarMedidaTicket(mm) {
+                try { localStorage.setItem(KEY_TICKET_MM, String(mm)); } catch (e) { }
+            }
+            function pvbActualizarTextoMedida() {
+                var mm = pvbObtenerMedidaTicket() || 80;
+                $("#pvbTicketMedidaTexto").text(mm + "mm");
+            }
+            function pvbElegirMedidaTicket() {
+                return Swal.fire({
+                    title: "Tamaño de ticket",
+                    input: "select",
+                    inputOptions: { 80: "80 mm", 58: "58 mm" },
+                    inputValue: pvbObtenerMedidaTicket() || 80,
+                    showCancelButton: true,
+                    confirmButtonText: "Usar este tamaño",
+                    cancelButtonText: "Cancelar"
+                }).then(function (result) {
+                    if (!result.isConfirmed) return null;
+                    var mm = parseInt(result.value, 10);
+                    pvbGuardarMedidaTicket(mm);
+                    pvbActualizarTextoMedida();
+                    return mm;
+                });
+            }
 
             window.mostrarModalPostVenta = function (ventaId) {
                 // Filtros del modal de expendios reiniciados al finalizar (pedido explicito del
                 // usuario, ver docs/DECISIONS.md).
                 posExpendios.resetFiltros();
-                beep();
+                // Sin beep al finalizar (2026-09-06, pedido explicito del usuario -- ver
+                // docs/DECISIONS.md): se confundia con el beep de "producto agregado al carrito"
+                // (options.beep() en pos-cart.js), que sigue sonando igual que siempre. Se saca
+                // SOLO este beep puntual, no la funcion beep() en si (la sigue usando el resto
+                // del POS).
 
                 var total = window.POSState?.getTotal ? window.POSState.getTotal() : 0;
                 $("#pvbResumenVenta").text("Venta #" + ventaId + " registrada correctamente.");
                 $("#pvbTotalVenta").text("$ " + total.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                $("#btnPvbImprimir").attr("href", window.api.venta.imprimir + "?id=" + ventaId + "&documento=detalle");
                 $("#btnPvbImprimir").data("venta-id", ventaId);
+                $("#btnPvbTicket").data("venta-id", ventaId);
                 $("#btnPvbEmail").data("venta-id", ventaId);
+                pvbActualizarTextoMedida();
 
                 $("#modalPostVentaBasico").modal("show");
+            };
+
+            // ===== Ticket termico HTML (58/80mm), 2026-09-06 (pedido explicito del usuario -- ver
+            // docs/DECISIONS.md) =====
+            $("#btnPvbTicket").on("click", function () {
+                var ventaId = $(this).data("venta-id");
+                var mmRecordado = pvbObtenerMedidaTicket();
+
+                function abrirTicket(mm) {
+                    window.open(window.api.venta.imprimirTicketHtml + "?id=" + ventaId + "&mm=" + mm, "_blank");
+                }
+
+                if (mmRecordado) {
+                    abrirTicket(mmRecordado);
+                } else {
+                    pvbElegirMedidaTicket().then(function (mm) {
+                        if (mm) abrirTicket(mm);
+                    });
+                }
+            });
+
+            $("#pvbTicketCambiarMedida").on("click", function (e) {
+                e.preventDefault();
+                pvbElegirMedidaTicket();
+            });
+
+            // ===== PDF con eleccion de tipo de comprobante, 2026-09-06 (pedido explicito del
+            // usuario -- "agregar la generacion del pdf como lo hace el mvc clasico" -- ver
+            // docs/DECISIONS.md). Mismo criterio que pvSeleccionarOpcionSimple del clasico
+            // (Web/Scripts/app/modal-postventa.js): sin factura -> detalle directo; con nota de
+            // credito -> elegir entre detalle/factura/nc; agrupa items -> elegir entre
+            // detalle/factura; si no, factura directo. Reutiliza ObtenerDatosEmailComprobante
+            // (mismos campos que ya consume el flujo de email) sin cambios de backend. =====
+            $("#btnPvbImprimir").on("click", function () {
+                var ventaId = $(this).data("venta-id");
+
+                function abrirPdf(documento) {
+                    window.open(window.api.venta.imprimir + "?id=" + ventaId + "&documento=" + documento, "_blank");
+                }
+
+                $.ajax({
+                    url: window.api.venta.obtenerDatosEmailComprobante,
+                    type: "GET",
+                    dataType: "json",
+                    data: { id: ventaId }
+                }).done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        Swal.fire({ icon: "error", title: "No se pudo preparar el PDF", text: (resp && resp.msg) || "Error desconocido." });
+                        return;
+                    }
+
+                    if (!resp.tieneFactura) {
+                        abrirPdf("detalle");
+                        return;
+                    }
+
+                    if (resp.tieneNotaCredito) {
+                        Swal.fire({
+                            title: "¿Qué comprobante desea imprimir?",
+                            input: "select",
+                            inputOptions: { detalle: "Detalle", factura: "Factura", nc: "Nota de Crédito" },
+                            inputValue: "factura",
+                            showCancelButton: true,
+                            confirmButtonText: "Imprimir"
+                        }).then(function (result) {
+                            if (result.isConfirmed) abrirPdf(result.value);
+                        });
+                        return;
+                    }
+
+                    if (resp.facturaAgrupaItems) {
+                        Swal.fire({
+                            title: "¿Qué comprobante desea imprimir?",
+                            input: "select",
+                            inputOptions: { detalle: "Detalle", factura: "Factura" },
+                            inputValue: "factura",
+                            showCancelButton: true,
+                            confirmButtonText: "Imprimir"
+                        }).then(function (result) {
+                            if (result.isConfirmed) abrirPdf(result.value);
+                        });
+                        return;
+                    }
+
+                    abrirPdf("factura");
+                }).fail(function (xhr) {
+                    Swal.fire({ icon: "error", title: "No se pudo preparar el PDF", text: (xhr.responseJSON && xhr.responseJSON.msg) || "Error de conexión." });
+                });
+            });
+
+            // ===== Atajos numericos 1-5 en el modal de post-venta, 2026-09-06 (pedido explicito
+            // del usuario -- ver docs/DECISIONS.md): orden = Nueva venta(1)/Ticket(2)/PDF(3)/
+            // Email(4)/Factura(5), igual al orden visual de los botones. =====
+            $(document).on("keydown", function (e) {
+                if (!$("#modalPostVentaBasico").hasClass("show")) return;
+                var tag = (e.target.tagName || "").toUpperCase();
+                if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+                var mapaAtajos = {
+                    "1": "#btnPvbContinuar",
+                    "2": "#btnPvbTicket",
+                    "3": "#btnPvbImprimir",
+                    "4": "#btnPvbEmail",
+                    "5": "#btnPvbFactura"
+                };
+                var selector = mapaAtajos[e.key];
+                if (!selector) return;
+
+                e.preventDefault();
+                $(selector).trigger("click");
+            });
+
+            // ===== Factura Electronica (AFIP), 2026-09-06 (retomado -- ver docs/DECISIONS.md) =====
+            // Port acotado de Web/Scripts/app/modal-postventa.js: solo abrirFacturaVentaModal/
+            // abrirFacturaSinVentaModal/traerModalFacturaAlFrente (el modal en si, ya completo via
+            // factura-electronica.js), NO el resto de ese archivo (ticket ESC/POS, WhatsApp, PDF
+            // con seleccion de NC, email con seleccion de comprobante) -- esas piezas dependen del
+            // modal post-venta COMPLETO (#modalPostVenta), que WebCore reemplaza a proposito por
+            // _ModalPostVentaBasico.cshtml (ver header de ese archivo). Simplificacion deliberada:
+            // al cerrar el modal de factura por cualquier via (facturada, cerrada sin facturar, o
+            // cancelada sin forzar), siempre se reabre #modalPostVentaBasico (el clasico abre un
+            // modal aparte con CAE/WhatsApp tras facturar con exito, que no existe aca) -- el
+            // usuario igual puede imprimir/emailear el comprobante desde ahi.
+            window.AppUrls = window.AppUrls || {
+                ventasImprimir: '@Url.Action("ImprimirTicket", "Ventas")',
+                ventasGenerarFactura: '@Url.Action("GenerarFactura", "Ventas")',
+                ventasCerrarSinFacturar: '@Url.Action("CerrarVentaSinFacturar", "Ventas")',
+                ventasGenerarNotaCredito: '@Url.Action("GenerarNotaCredito", "Ventas")',
+                ventasNuevaFacturaSinVenta: '@Url.Action("NuevaFacturaSinVenta", "Ventas")',
+                ventasCrearVentaManual: '@Url.Action("CrearVentaManualParaFactura", "Ventas")',
+                ventasLimpiarLineasVentaManual: '@Url.Action("LimpiarLineasVentaManual", "Ventas")',
+                personaListar: '@Url.Action("Listar", "Personas")'
+            };
+
+            function traerModalFacturaAlFrente($modal) {
+                if (!$modal || !$modal.length) return;
+                if (!$modal.parent().is('body')) $modal.appendTo('body');
+
+                var zBase = 1040;
+                $('.modal.show').not($modal).each(function () {
+                    var zActual = parseInt($(this).css('z-index'), 10) || 1040;
+                    if (zActual > zBase) zBase = zActual;
+                });
+
+                $modal.css('z-index', zBase + 20);
+                window.setTimeout(function () {
+                    $('.modal-backdrop').last().css('z-index', zBase + 10);
+                }, 0);
+            }
+
+            var facturaOkPOS = false;
+
+            function abrirFacturaVentaModal(ventaId) {
+                if (!ventaId) return;
+                facturaOkPOS = false;
+
+                // dataType:'html' fuerza a jQuery a NO auto-parsear la respuesta como JSON aunque
+                // el Content-Type sea application/json (el catch generico de ImprimirTicket
+                // devuelve {ok:false,msg:...} con ese content-type ante cualquier excepcion).
+                $.ajax({
+                    url: window.AppUrls.ventasImprimir,
+                    type: 'GET',
+                    data: { id: ventaId, mm: 0 },
+                    dataType: 'html'
+                })
+                    .fail(function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo abrir la factura electrónica.' });
+                    })
+                    .done(function (html) {
+                        var pareceError = typeof html === 'string' && /^\s*\{\s*"ok"\s*:\s*false/.test(html);
+                        if (pareceError) {
+                            var msg = 'No se pudo abrir la factura electrónica.';
+                            try { msg = JSON.parse(html).msg || msg; } catch (e) { }
+                            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                            return;
+                        }
+
+                        $('#contenedorFacturaElectronica').html(html);
+                        var $modal = $('#modalFacturaElectronica');
+
+                        traerModalFacturaAlFrente($modal);
+                        $modal.modal({ backdrop: 'static', keyboard: false, show: true });
+                    });
+            }
+
+            function abrirFacturaSinVentaModal() {
+                facturaOkPOS = false;
+
+                $.get(window.AppUrls.ventasNuevaFacturaSinVenta)
+                    .done(function (html) {
+                        $('#contenedorFacturaElectronica').html(html);
+                        var $modal = $('#modalFacturaElectronica');
+
+                        traerModalFacturaAlFrente($modal);
+                        $modal.modal({ backdrop: true, keyboard: true, show: true });
+                    })
+                    .fail(function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo abrir el formulario de factura manual.' });
+                    });
+            }
+
+            $('#btnPvbFactura').on('click', function () {
+                var ventaId = $('#btnPvbImprimir').data('venta-id');
+                $('#modalPostVentaBasico').modal('hide');
+                abrirFacturaVentaModal(ventaId);
+            });
+
+            $(document).on('venta:facturada venta:cerradaSinFacturar', function (e, resp) {
+                facturaOkPOS = true;
+                var ventaId = (resp && (resp.ventaId || resp.idVenta)) || $('#feIdVenta').val();
+                window.mostrarModalPostVenta(ventaId);
+            });
+
+            $('#modalFacturaElectronica').on('hidden.bs.modal', function () {
+                if (!facturaOkPOS) {
+                    window.mostrarModalPostVenta($('#btnPvbImprimir').data('venta-id'));
+                }
+            });
+
+            // Sin boton dedicado todavia (mismo estado que el clasico -- el research de este
+            // batch no encontro un trigger de "facturar sin venta" wireado en Web/Views/Ventas/
+            // POS.cshtml, solo la funcion expuesta via window.VentasFacturaModal.abrirSinVenta
+            // para uso puntual). Se expone igual para no perder la funcionalidad ya portada.
+            window.VentasFacturaModal = window.VentasFacturaModal || {
+                abrir: abrirFacturaVentaModal,
+                abrirSinVenta: abrirFacturaSinVentaModal
             };
 
             function pvbContinuarNuevaVenta() {

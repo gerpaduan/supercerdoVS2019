@@ -71,11 +71,13 @@
         return Ctor.getOrCreateInstance ? Ctor.getOrCreateInstance(el, config) : (Ctor.getInstance(el) || new Ctor(el, config));
     }
 
-    // Registra $.fn.<nombre> solo si el componente de BS5 existe y el plugin no fue definido ya
-    // por otra parte (nunca pisa una implementacion real si en algun momento se agrega jquery-ui
-    // u otra libreria que sí traiga estos metodos).
+    // Registra $.fn.<nombre>, pisando cualquier definicion previa a proposito -- ver el hallazgo
+    // de 2026-09-06 (ver docs/DECISIONS.md) mas abajo. Los 6 nombres que este archivo registra
+    // (modal/collapse/alert/tooltip/popover/dropdown) son exclusivos de componentes de Bootstrap,
+    // asi que la unica fuente real de un $.fn.<nombre> preexistente es el propio
+    // bootstrap.bundle.min.js (ver abajo), nunca una libreria de terceros -- pisarlo es seguro.
     function registrarPluginJQuery(nombre, Ctor) {
-        if (!Ctor || window.jQuery.fn[nombre]) return;
+        if (!Ctor) return;
 
         window.jQuery.fn[nombre] = function (opcionesOComando) {
             return this.each(function () {
@@ -84,15 +86,45 @@
 
                 if (typeof opcionesOComando === 'string' && typeof instancia[opcionesOComando] === 'function') {
                     instancia[opcionesOComando]();
+                    return;
+                }
+
+                // Bug real encontrado 2026-09-06 (ver docs/DECISIONS.md), al portar el modal de
+                // Factura Electronica: el modismo de Bootstrap 4 "$(el).modal({backdrop:'static',
+                // keyboard:false, show:true})" (usado en varios archivos de Web/Scripts/app/*.js
+                // sin portar todavia, ej. modal-postventa.js) configuraba la instancia de BS5 pero
+                // NUNCA llamaba a show() -- ni con este shim (el objeto de opciones no es un
+                // string, la rama de arriba nunca corria) NI con la interfaz jQuery nativa que trae
+                // esta version de bootstrap.bundle.min.js (mismo defecto: solo atiende comandos
+                // string). Sintoma real: el modal quedaba con class="modal fade" (sin "show"),
+                // display:none, invisible, sin ningun error en consola -- muy dificil de diagnosticar
+                // a simple vista. Mismo criterio que el plugin jQuery real de Bootstrap 4 (Modal.
+                // prototype de bootstrap.js 4.x: "else if (_config.show) data.show(...)").
+                if (config && config.show && typeof instancia.show === 'function') {
+                    instancia.show();
                 }
             });
         };
     }
 
-    registrarPluginJQuery('modal', window.bootstrap.Modal);
-    registrarPluginJQuery('collapse', window.bootstrap.Collapse);
-    registrarPluginJQuery('alert', window.bootstrap.Alert);
-    registrarPluginJQuery('tooltip', window.bootstrap.Tooltip);
-    registrarPluginJQuery('popover', window.bootstrap.Popover);
-    registrarPluginJQuery('dropdown', window.bootstrap.Dropdown);
+    function registrarTodos() {
+        registrarPluginJQuery('modal', window.bootstrap.Modal);
+        registrarPluginJQuery('collapse', window.bootstrap.Collapse);
+        registrarPluginJQuery('alert', window.bootstrap.Alert);
+        registrarPluginJQuery('tooltip', window.bootstrap.Tooltip);
+        registrarPluginJQuery('popover', window.bootstrap.Popover);
+        registrarPluginJQuery('dropdown', window.bootstrap.Dropdown);
+    }
+
+    registrarTodos();
+
+    // Hallazgo real 2026-09-06 (ver docs/DECISIONS.md): esta version de bootstrap.bundle.min.js
+    // (5.0/5.1) trae su PROPIA interfaz jQuery nativa (Modal.jQueryInterface, etc., con el mismo
+    // defecto de "show" documentado arriba), pero la registra en un listener propio de
+    // DOMContentLoaded -- que corre DESPUES de este script (ambos son <script> sincronicos al
+    // final del body, y DOMContentLoaded recien dispara cuando termina de parsearse TODO el
+    // documento). Resultado: el registrarTodos() de arriba corria bien, pero milisegundos despues
+    // Bootstrap pisaba $.fn.modal/etc con su propia version rota otra vez -- por eso hacia falta
+    // volver a registrar aca, despues de ese mismo evento, para quedar con la ultima palabra.
+    document.addEventListener('DOMContentLoaded', registrarTodos);
 })();

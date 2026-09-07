@@ -8,15 +8,11 @@ No confundir con `docs/GAPS.md` (raíz), que es específico de la migración SQL
 
 ## Abiertos
 
-### Buscador de cliente real (F9/#btnBuscarPersona), buscador avanzado de producto (F10/#btnAgregarManual/modal-productos.js) e Historial de precios de cliente (F8) -- sin portar en ningún POS
+### Nota de crédito con "Anular venta" (clonar venta como anulada) -- no portado a proposito en el modal de Factura Electrónica
 
-Detectado/confirmado 2026-09-06 durante el batch de paridad de atajos de teclado del POS (ver `docs/DECISIONS.md`). Los 3 botones/atajos existen visibles en `Ventas/POS.cshtml` y `PuntosExpendio/POS.cshtml` (`#btnBuscarPersona`/`#btnAgregarManual`) pero quedan deliberadamente `disabled` -- el cliente de toda venta/expendio en WebCore es siempre "Consumidor Final" (o texto libre en Expendio), nunca una `Persona` real buscada. Sin esto:
+Detectado 2026-09-06 al portar `_FacturaElectronica.cshtml`/`factura-electronica.js` (modal completo de Factura Electrónica del POS, ver `docs/DECISIONS.md`). El clásico ofrece, al generar una nota de crédito, elegir entre "Generar y anular venta" (clona la venta entera como venta anulada, `VentasController.ClonarVentaParaNotaCredito`) y "Generar sin anular" -- `WebCore.VentasController.GenerarNotaCredito(int idFactura)` **solo soporta la segunda opción** (recorte deliberado ya documentado en la cabecera de esa acción desde el 2026-09-05, mini-spike de AFIP). El puerto del modal de este batch quitó la opción "anular venta" del diálogo de confirmación en vez de ofrecer un choice que el servidor ignoraría en silencio.
 
-- F9 (buscar cliente real) no tiene funcionalidad para activar -- el botón queda disabled a propósito.
-- F10 (buscador avanzado de producto, `modal-productos.js` del clásico) tampoco está portado -- el botón queda disabled. En `PuntosExpendio/POS.cshtml` se agregó un guard (2026-09-06) para que apretar F10 sea un no-op silencioso en vez de mostrar un error visible (la función `abrirBuscadorProductosPOS()` existe pero su dependencia interna, `abrirBuscarProductoModal` de `modal-productos.js`, no).
-- F8 (historial de precios de un cliente) no tiene sentido sin un cliente real seleccionado -- depende directamente de que F9 exista primero. `VentasController` no tiene ninguna acción `HistorialPreciosCliente`.
-
-**No se resuelve ahora** porque implica portar `modal-productos.js` (buscador avanzado completo, con paginación/filtros) y el flujo de búsqueda de `Personas` embebido en el POS (reusa el mismo modal de selección de cliente que otras partes de la app, pero conectado al carrito) -- son 2 features nuevas de tamaño considerable, no infraestructura ya construida esperando wiring (a diferencia de F2/F5/F6/F7, que sí eran solo wiring). Impacto real: bajo para el flujo típico (mostrador con Consumidor Final), alto para el caso de venta a cliente de cuenta corriente real desde el POS (hoy hay que buscarlo por otra vía, no desde el POS mismo).
+**No se resuelve ahora** porque clonar una venta como anulada toca reportes/stock (pieza separada y más grande que "probar que la nota de crédito real contra AFIP funciona", que ya está verificado en producción). Impacto real: bajo -- el usuario puede generar la nota de crédito igual, solo que la venta original queda intacta en vez de reemplazada por una copia anulada; si hace falta más adelante, portar `ClonarVentaParaNotaCredito` + agregar `AnularVenta` (bool) al parámetro de `GenerarNotaCredito` y devolver la opción en el modal.
 
 ### Mensajes de validación built-in de ASP.NET Core en ingles (campos de tipo valor no-nullable)
 

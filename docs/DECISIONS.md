@@ -4659,3 +4659,522 @@ real (`#btnBuscarPersona`/F9), buscador avanzado de producto (`#btnAgregarManual
 Ninguno estaba en el alcance de "atajos que ya tienen su backend/UI lista" -- todos requieren
 construir una feature nueva de cero, no portar infraestructura ya existente.
 
+## 2026-09-06 - Retomado: buscador de cliente real (F9/F10/F8), fix de operador en AbrirCaja, y modal de Factura Electrónica completo
+
+**Pedido explícito del usuario** (con autorización de trabajar 2 horas sin confirmar cada paso):
+"migrar todos los modales existentes en clásico", ver cómo muestra el cliente cuando la razón
+social difiere de la identificación, crear el modal de Factura Electrónica, y que el modal de
+abrir caja muestre las validaciones del clásico. Cierra los 3 gaps dejados abiertos en la entrada
+anterior (F9/F10/F8) más el ítem explícito de Factura Electrónica.
+
+**Buscador de cliente real (F9)**: portado `Web/Scripts/app/persona-buscar.js` (236 líneas, sin
+cambios) a ambos POS. En `Ventas/POS.cshtml` el cliente principal muestra la `RazonSocial`, con una
+línea secundaria "Ident.: X" (`#clienteIdentificacionWrap`) solo si la identificación difiere
+(case/accent-insensitive) -- esto resuelve el punto explícito del usuario sobre cómo se muestra el
+cliente. En `PuntosExpendio/POS.cshtml` la lógica ya estaba portada en un batch anterior (invertida:
+identificación en el campo principal, razón social como referencia) y solo faltaba habilitar el
+botón. Verificado con datos reales vía Playwright en ambas pantallas.
+
+**Buscador avanzado de producto (F10)**: port literal de `Web/Scripts/app/modal-productos.js`
+(299 líneas) -- el backend (`ProductosController.ListarProductos`) y el wiring en `pos-product.js`
+YA estaban listos de batches anteriores; solo faltaba este archivo y el partial
+`_BuscarProductoModal.cshtml` incluido en ambas vistas de POS. Verificado con datos reales (60
+productos cargados, selección con doble clic completa `#inputCodigo`).
+
+**Historial de precios de cliente (F8)**: port literal de `Web/Controllers/VentasController.cs`
+(`HistorialPreciosCliente`, `PuedeVerCtaCteCompleta`) y `_HistorialPreciosClientePOS.cshtml` a
+`WebCore/Controllers/VentasController.cs`/`WebCore/Views/Ventas/_HistorialPreciosClientePOS.cshtml`,
+más `WebCore/Models/HistorialPrecioProductoVm.cs` (nuevo). Gate de UX (oculta con Consumidor Final o
+cliente de cuenta corriente sin permiso) + copiar/pegar precio en `#txtPrecioKg` -- todo port
+literal de `factura`-independiente lógica ya existente en el clásico. Se corrigió de paso un drift
+real en el comentario de `POSDraft.restore()` (2026-09-06, mismo día): al restaurar un borrador de
+venta con cliente real, ahora re-sincroniza `setClienteIdentificacionVisual`/
+`actualizarAccesoHistorialPreciosCliente` (antes solo hacía `.val()` directo, dejando la línea de
+identificación y el botón de historial en el estado de ANTES de recargar la página).
+
+**Fix de atribución real en AbrirCaja (usuario producción)**: `CajasController.AbrirCaja` en
+WebCore ignoraba el `posInstanceId` recibido (`var operador = user;`), así que abrir caja con la
+cuenta compartida de producción siempre atribuía `CierreCaja.UsuarioInicio` a la cuenta compartida,
+nunca al operador real ya autorizado -- mismo patrón (`ResolverOperadorPOS`) que `VentasController`/
+`PuntosExpendioController` ya usan. Se agregó el método y se corrigió el JS de `Ventas/POS.cshtml`
+que mandaba `posInstanceId: ""` a propósito. **Código completo y compilado, NO verificado en vivo
+con un `AbrirCaja` real** -- la sucursal 2 (San Lorenzo) tenía una `CierreCaja` vieja abierta
+(id `20000008`, `usuarioInicio=11`, sin fecha de cierre, del 2026-05-28) que bloqueaba abrir una
+caja nueva para probar el flujo sin alterar ese dato de prueba compartido con otros tests -- se
+decidió no tocarla sin pedirlo explícitamente. La resolución del operador SÍ se verificó
+indirectamente: `VentasController.POS()` (que usa el mismo `ResolverOperadorPOS`) mostró
+correctamente el POS real tras autorizar "ger" desde la cuenta "produccion" de prueba.
+
+**Modal de Factura Electrónica (AFIP), el ítem más grande**: port completo de
+`Web/Views/Ventas/_FacturaElectronica.cshtml` (828 líneas) y `Web/Scripts/app/factura-electronica.js`
+(1078 líneas) a `WebCore/Views/Ventas/_FacturaElectronica.cshtml`/`wwwroot/Scripts/app/
+factura-electronica.js`, sin cambios de lógica salvo:
+- `@@model` → `WebCore.Models.DTO.FacturaElectronicaDto`; `ViewBag.AlicuotasIva` pasa de
+  `DataTable` a `List<WebCore.Models.AlicuotaIvaVm>` (nuevo) -- mismos nombres de campo.
+  El `<option selected="@@(...)">`de ASP.NET Core no acepta `@@(cond ? "selected" : "")` como
+  atributo bool-shorthand en `<option>` (error de build `RZ1031`, el `OptionTagHelper` de Core lo
+  rechaza) -- se usa `selected="@@(cond ? "selected" : null)"` en su lugar (10 ocurrencias).
+- `#btnGenerarNotaCredito` ofrece un solo botón "Generar nota de crédito" en vez del choice
+  "Generar y anular venta"/"Generar sin anular" del clásico -- `WebCore.GenerarNotaCredito` no
+  soporta `AnularVenta` (recorte deliberado del 2026-09-05, gap nuevo documentado en
+  `docs/10-migracion-aspnet-core/gaps.md`).
+- Gate de "empresa tiene certificado AFIP" (`window.POSFacturaElectronicaConfig`) NO se portó --
+  requeriría resolver `Usuario.Empresa` en el controller, que WebCore no carga hoy; se prefirió
+  dejar que `GenerarFactura` reporte el error real de AFIP si falta el certificado, en vez de
+  agregar un lookup nuevo solo para una validación de UX.
+
+**Backend, 3 gaps reales cerrados en `WebCore/Controllers/VentasController.cs`**:
+- `NuevaFacturaSinVenta`: devolvía `Json(...)` con el DTO armado "para verificar el armado" --
+  ahora devuelve `PartialView("_FacturaElectronica.cshtml", dto)` de verdad.
+- `GenerarFactura`: le faltaba la rama `dto.IdFactura > 0` (editar una factura YA emitida --
+  FormaPago/Observaciones/DescItemUnitario, los únicos campos que la UI deja editables cuando
+  `yaEmitida=1`) -- sin esto, reenviar el form de una factura ya emitida cae en el chequeo de
+  idempotencia y devuelve `{ok:true, already:true}` **sin guardar los cambios**, un bug de pérdida
+  de datos silenciosa. Port literal de `Web/Controllers/VentasController.cs:1967-2012`.
+- Acción nueva `ImprimirTicket(int id, int mm=0)`: port SOLO de la rama `mm==0` del clásico ("ver
+  factura ya emitida", HTML puro, nada que ver con el resto del nombre del clásico) -- se mantiene
+  el mismo nombre/ruta porque `window.AppUrls.ventasImprimir` la llama literal. `mm!=0` (ticket
+  ESC/POS) devuelve el mismo JSON de error que el resto del controller usa para lo no portado.
+- Acción nueva `CerrarVentaSinFacturar(int idVenta)`: port literal de
+  `Web/Controllers/VentasController.cs:2261-2310` (no borra nada, marca un registro
+  `FacturaElectronica.Error=true`).
+- `GenerarNotaCredito`/su chequeo de idempotencia ahora devuelven `detalleUrl` (faltaba, el JS ya
+  lo esperaba para redirigir tras generar la NC).
+
+**Bug real encontrado y corregido, transversal a TODA la app (no solo Factura Electrónica)**: el
+modismo de Bootstrap 4 `$(el).modal({backdrop:'static', keyboard:false, show:true})` -- usado en
+varios archivos de `Web/Scripts/app/*.js` sin portar todavía (ej. `modal-postventa.js`) y ahora
+también en mi propio port de `abrirFacturaVentaModal` -- **nunca mostraba el modal** en WebCore.
+Causa raíz, no evidente (sin ningún error en consola, el modal quedaba con `class="modal fade"`,
+`display:none`): la versión de `bootstrap.bundle.min.js` en uso (5.0/5.1) trae su PROPIA interfaz
+jQuery nativa (`Modal.jQueryInterface`, con el mismo defecto: ignora `show` en un objeto de
+opciones, solo atiende comandos string), y la registra en un listener de `DOMContentLoaded` que
+corre DESPUÉS del shim de `bootstrap4-compat.js` (ambos `<script>` sincrónicos al final del body;
+`DOMContentLoaded` dispara recién cuando termina de parsearse todo el documento) -- pisando la
+versión corregida del shim otra vez, silenciosamente. Fix en `bootstrap4-compat.js`:
+1. `registrarPluginJQuery` ahora pisa cualquier `$.fn.<nombre>` preexistente sin condición (antes
+   se abstenía "para no pisar una implementación real" -- pero la única fuente real de un
+   `$.fn.modal`/`.collapse`/etc. preexistente es el propio Bootstrap, nunca una librería de
+   terceros, así que pisarlo es seguro).
+2. El registro se vuelve a aplicar en un listener de `DOMContentLoaded` (además del registro
+   inmediato), para quedar con la última palabra sin importar el timing interno de Bootstrap.
+Se agregó `Bootstrap4CompatTests.ModalConOpcionShowTrue_SeMuestraDeVerdad` (regresión permanente)
+y se bumpeó `bootstrap4-compat.js?v=1` → `?v=2` en `_Layout.cshtml`/`_LayoutPOS.cshtml`. Este
+hallazgo es relevante para CUALQUIER futuro port que use el modismo `.modal({...show:true})` del
+clásico -- ya no hace falta evitarlo a mano, el shim lo soporta de verdad ahora.
+
+**Verificado con datos reales vía Playwright**: F9/F10/F8 (ver arriba); modal de Factura
+Electrónica abierto desde el post-venta de una venta real (`#btnPvbFactura`, nuevo, agregado a
+`_ModalPostVentaBasico.cshtml`), con sticky-resumen mostrando "Factura B"/"CONSUMIDOR FINAL" y
+totales reales; flujo "Cerrar venta sin facturar" completo (confirma SweetAlert, cierra el modal,
+vuelve al post-venta). **NO se probó en vivo el flujo real de `GenerarFactura`/`GenerarNotaCredito`
+contra AFIP producción** en esta sesión (requiere autorización explícita del usuario para usar
+montos reales, como en el mini-spike original) -- el código es un port literal 1:1 del que ya está
+verificado en producción real desde el 2026-09-05. Suite completa `WebCore.E2ETests` (30 tests) en
+verde, incluyendo 2 tests permanentes nuevos (`FacturaElectronicaTests`,
+`Bootstrap4CompatTests.ModalConOpcionShowTrue_SeMuestraDeVerdad`).
+
+**Pendiente**: commitear todo este batch (nada de esta entrada está commiteado todavía); verificar
+en vivo `AbrirCaja` con un operador real una vez que se decida qué hacer con la `CierreCaja` vieja
+de prueba en sucursal 2.
+
+## 2026-09-06 - Modal de Expendios del POS: agrupado por expendio, no por línea
+
+**Pedido explícito del usuario**: la tabla del modal "Expendios" (post-venta/`PageDown` en
+`Ventas/POS`) mostraba una fila por cada línea de producto de cada expendio, repitiendo
+fecha/hora/nro/identificación/sector/vendedor y un botón "Cargar" en CADA fila -- pidió agrupar
+por expendio: una fila de encabezado con los datos del expendio (fecha, hora, nro, etc.) y el
+único botón "Cargar" de ese grupo, y debajo las filas de ítem (solo producto + cantidad, sin
+botón). También pidió validar que se carguen todas las líneas de un expendio, que "Quitar
+expendios cargados" no toque productos ya existentes en el carrito, y verificar si la primera vez
+que se carga y luego se quita un expendio se borra el carrito entero por error.
+
+**Implementado en `WebCore/wwwroot/Scripts/app/ventas-expendios-pos.js`**: nueva función
+`agruparPorExpendio(items)` (agrupa por `idExpendio` vía `Map`, preserva el orden de primera
+aparición -- no depende de que el backend devuelva las filas contiguas, aunque hoy lo hace por el
+`ORDER BY fechaExpendio, idExpendio` de `BuscarExpendiosPOS`). `renderRows` ahora arma, por cada
+grupo, una `<tr class="exp-group-header">` (fecha/hora/nro+badge/identificación/sector/sucursal/
+"N ítem(s)"/vendedor/obs/botón Cargar único) seguida de una `<tr class="exp-group-item">` por cada
+línea (solo producto + cantidad, resto de columnas colapsadas con `colspan`, indentado via CSS en
+`_ModalExpendiosPOS.cshtml`). El "Cargar" real (`cargarExpendioInterno`) ya traía siempre TODAS
+las líneas del expendio vía `ObtenerExpendioPOS` (no depende de qué fila se clickeó) -- agrupar la
+vista no cambió esa garantía, solo la UI dejó de mostrar N botones idénticos por expendio.
+
+**Fix real encontrado al agrupar**: `cargarTodosVisibles()` ("Cargar todos los expendios
+mostrados") armaba `candidatos` a partir de `visibleItems`, la lista PLANA (una fila por línea) --
+sin deduplicar por `idExpendio`, un expendio de 3 líneas contaba 3 veces: el contador "Cargando N
+expendio(s)..." y el resumen final mentían (mostraban líneas, no expendios), y se disparaban N-1
+requests redundantes que `cargarExpendioInterno` descartaba en silencio por "ya cargado" (no
+rompía nada, pero era ineficiente y el conteo mostrado al usuario era incorrecto). Fix: `candidatos`
+ahora sale de `agruparPorExpendio(visibleItems)`, un id por expendio real.
+
+**Verificado en vivo (no solo lectura de código) con un expendio real pendiente (#108, 2 líneas,
+sector "Presupuesto")**: la tabla agrupa 1 encabezado + 2 filas de ítem, con el único botón
+"Cargar" en el encabezado (0 en las filas de ítem). Cargar ese expendio agrega las 2 líneas al
+carrito (más 1 línea manual agregada antes, a propósito, para la siguiente verificación). "Quitar
+expendios cargados" deja el carrito en 1 línea -- **la línea manual preexistente no se borra,
+confirmado, no es un bug** -- la sospecha del usuario sobre "la primera vez" no se reprodujo en
+este escenario: `removeExpendiosNow()` (ver `ventas-expendios-pos.js`) ya filtraba correctamente
+por `linea.idExpendio > 0`, y las líneas manuales de `pos-cart.js` nunca setean ese campo
+(`parseInt(undefined) || 0` = `0`, quedan excluidas). Se agregó
+`WebCore.E2ETests/ExpendiosPOSTests.cs` (test permanente) cubriendo exactamente este flujo
+(agrupado + un solo botón + carga completa + quitar sin tocar la línea manual). Suite completa
+`WebCore.E2ETests` (31 tests) en verde.
+
+**Sin cambios de backend** -- `BuscarExpendiosPOS`/`ObtenerExpendioPOS` (`VentasController.cs`) no
+se tocaron, el agrupado es puramente de presentación en el cliente.
+
+## 2026-09-06 - Modal de Expendios: precio y total por ítem, y etiqueta "Cambio precio" al cargar al carrito
+
+**Pedido explícito del usuario**: mostrar en las filas de ítem del modal de Expendios el precio y
+el total de cada línea, y avisar en el carrito (con una etiqueta pequeña "Cambio precio") cuando
+el precio con el que se cargó una línea de expendio difiere del precio de lista actual del
+producto -- consecuencia directa de la conversación anterior confirmando que Puntos de Expendio
+graba el precio de lista al crear el expendio (sin forma de pago) y ese precio queda congelado.
+
+**Modal (`_ModalExpendiosPOS.cshtml`/`ventas-expendios-pos.js`)**: agregadas columnas "Precio" y
+"Total" al `<thead>`; las filas de ítem (`tr.exp-group-item`) ahora muestran ambos valores usando
+`precioKg`/`total` que `BuscarExpendiosPOS` ya devolvía (sin cambios de backend acá) -- solo
+faltaba pintarlos. Nuevo helper `formatMoney()`. Recalculados los `colspan` de la fila de
+encabezado (resumen "N ítem(s)" pasa de `colspan=2` a `colspan=4`) y de la fila de ítem (2 celdas
+nuevas antes del `colspan=3` final de Vendedor/Obs/Acción).
+
+**Etiqueta "Cambio precio" en el carrito (`pos-cart.js`)**: requirió un cambio real de backend --
+`VentasController.ObtenerExpendioPOS` ahora calcula `precioListaActual`/`cambioPrecio` por línea,
+comparando `l.PrecioKg` (el precio guardado en la línea al crear el expendio) contra
+`l.Corte.PrecioKg` (el precio de lista **actual**, porque `VentaPg.GetLineasExpendio` hace un JOIN
+en vivo contra `corte`, no una copia histórica -- confirmado leyendo el SQL). Tolerancia de 1
+centavo para no marcar diferencias de redondeo float como cambio real. `buildLinea` en
+`ventas-expendios-pos.js` propaga `cambioPrecio`/`precioListaActual` a la línea del carrito;
+`pos-cart.js` renderiza un `badge badge-warning` con el precio de lista actual en el `title` cuando
+`cambioPrecio` es `true`.
+
+**Verificado en vivo**: `ObtenerExpendioPOS?idExpendio=108` (real) devuelve `cambioPrecio:false`
+para sus 2 líneas (los precios de esta base no difieren hoy) -- el modal muestra correctamente
+"$ 12.000,00" / "$ 36.000,00" para 3kg a $12.000/kg. Como no hay un caso real con diferencia de
+precio en esta base de desarrollo, se verificó el render de la etiqueta simulando una línea con
+`cambioPrecio:true` directo sobre `POSState` + `window.renderTablaProductos()` (expuesto
+globalmente por `pos-cart.js`) -- el badge aparece correctamente, y no aparece con datos reales sin
+diferencia. Se agregó `ExpendiosPOSTests.VentasPOS_ModalMuestraPrecioYTotalPorItem_YCarritoMuestraEtiquetaCambioPrecio`
+(test permanente). Suite completa `WebCore.E2ETests` (32 tests) en verde.
+
+## 2026-09-06 - Atajo "/" en cascada para agilizar la bonificación (modal "Línea de venta")
+
+**Pedido explícito del usuario**: agregar un atajo más al modal de línea (Ventas/POS y
+PuntosExpendio/POS) -- además de "B", la tecla "/" debe: 1) con el bloque de bonificar cerrado,
+abrirlo (igual que "B"); 2) con el foco en "Precio bonificado", tildar "Bonificar por porcentaje";
+3) con el foco en el porcentaje, tildar "Aplicar a todos los productos". Objetivo explícito del
+usuario: agilizar la bonificación, "el camino más rápido para mejorar la UX".
+
+**Implementado en `WebCore/wwwroot/Scripts/app/pos-cart.js`** (un solo archivo cubre ambas
+pantallas -- `Ventas/POS.cshtml` y `PuntosExpendio/POS.cshtml` reusan el mismo `#modalLineaVenta`
+y el mismo `pos-cart.js`, confirmado comparando ambos `.cshtml`):
+- Paso 1: se agregó `key === "/"` junto a `key === "b"` en el handler global de teclado del modal
+  (el que ya ignora el atajo si el foco está en un input) -- en este paso el foco todavía no está
+  en `#txtPrecioKg`, así que ese guard no interfiere.
+- Pasos 2 y 3: nuevos bindings `keydown` dedicados en `#txtPrecioKg` y `#txtPorcentaje`
+  (`e.preventDefault()` primero, para que el "/" nunca quede tipeado en el campo numérico) que
+  tildan `#chkPorcentaje`/`#chkBonificarTodos` vía `.prop("checked", true).trigger("change")` --
+  reusan los `change` handlers ya existentes de esos checkboxes (que ya mueven el foco a
+  `#txtPorcentaje` solos, vía `setModoBonificacion`), sin lógica nueva de foco.
+
+**Verificado en vivo con Playwright** en ambas pantallas: paso 1 abre el bloque y mueve el foco a
+`#txtPrecioKg`; paso 2 tilda "por porcentaje", mueve el foco a `#txtPorcentaje`, y el campo de
+precio queda limpio (sin el "/" tipeado); paso 3 tilda "aplicar a todos", y el campo de porcentaje
+también queda limpio. Se agregó `PosHotkeysTests.POS_AtajoBarra_CascadaDeBonificacionSinSoltarElTeclado`
+(test permanente, parametrizado para las 2 pantallas). Suite completa `WebCore.E2ETests`
+(34 tests) en verde.
+
+## 2026-09-06 - Guía visual de atajos al pie del modal "Línea de venta"
+
+**Pedido explícito del usuario**: agregar al pie del modal (debajo de los botones Bonificar/
+Cantidad/Eliminar) un texto guía de atajos que vaya cambiando a medida que el usuario avanza por
+la cascada de "/" (ver entrada anterior), para que sea obvio qué tecla presionar en cada paso sin
+tener que memorizarlo. Solo en desktop.
+
+**Implementado** (`WebCore/Views/Ventas/POS.cshtml`, `WebCore/Views/PuntosExpendio/POS.cshtml`,
+`WebCore/wwwroot/Scripts/app/pos-cart.js`): nuevo `<div id="posLineaAtajosHint" class="d-none
+d-md-block small text-muted text-center mt-3">` al pie de ambos modales (mismo `#modalLineaVenta`,
+duplicado en cada `.cshtml` -- a diferencia de `pos-cart.js`, que es compartido, el HTML del modal
+no lo es). Nueva función `actualizarHintAtajosLinea()` en `pos-cart.js`, llamada desde
+`syncUIBonificacionTodos()` (que ya corre en todos los puntos donde cambia el estado de la
+bonificación: abrir el bloque, tildar "por porcentaje", tildar "aplicar a todos", y al cargar la
+línea en `loadLineModal`) -- sin necesidad de agregar llamadas nuevas en otros lugares. 4 estados:
+"Atajos: B ó / bonificar · C cantidad · E eliminar" (bloque cerrado) → "Presioná / para bonificar
+por porcentaje" (bloque abierto, sin %) → "Presioná / para aplicar a todos los ítems del carrito"
+(% activo, sin "todos") → "Presioná Enter para aplicar la bonificación" (cascada completa).
+
+**Verificado en vivo con Playwright**: los 4 textos aparecen exactamente en ese orden al ir
+presionando "/" tres veces seguidas. Se extendió el test permanente
+`PosHotkeysTests.POS_AtajoBarra_CascadaDeBonificacionSinSoltarElTeclado` (ya existente, ver
+entrada anterior) con aserciones del texto del hint en cada paso, en vez de crear un test nuevo.
+
+## 2026-09-06 - Sin beep al finalizar venta/expendio (se confundía con "producto agregado")
+
+**Pedido explícito del usuario**: sacar el beep que suena al finalizar una venta (Ventas/POS) o un
+expendio (PuntosExpendio/POS) -- se confundía con el beep de "producto agregado al carrito", que
+debe seguir sonando igual que siempre.
+
+**Implementado**: se sacó la llamada puntual a `beep()` en `window.mostrarModalPostVenta`
+(`Ventas/POS.cshtml`) y en `mostrarModalPostExpendio` (`punto-expendio-pos.js`) -- **no** se tocó
+la función `beep()` en sí ni sus otras llamadas (`pos-cart.js` al agregar un producto,
+`ventas-expendios-pos.js` al cargar un expendio), que siguen sonando exactamente igual.
+
+## 2026-09-06 - Test fragil de Expendios corregido: usaba "Todos" y un expendio de prueba se volvió real
+
+**Hallazgo durante la verificación de este mismo batch**: `ExpendiosPOSTests.
+VentasPOS_ExpendiosAgrupados_CargaTodasLasLineasYQuitarNoBorraLineaManual` empezó a fallar por
+timeout, clickeando un botón "Cargar" legítimamente `disabled`. Causa real (no un bug de la app,
+confirmado leyendo el código y probando en vivo): el expendio de prueba #108, usado en sesiones de
+verificación anteriores de este mismo día, terminó realmente asignado a una venta real
+(`idVenta:1780`) en algún momento de tanto probar en vivo contra la base compartida de desarrollo
+-- el test cambiaba el filtro a "Todos" (que sí muestra expendios ya asignados, con el botón
+deshabilitado a propósito) y clickeaba ciegamente el primer grupo, que ahora podía ser justo el
+asignado. Fix: el test ya no cambia a "Todos" (el filtro por defecto, "Pendientes", alcanza para lo
+que necesita probar -- cargar un expendio realmente cargable) y busca explícitamente el primer
+botón `:not([disabled])`, no el primer grupo a secas. Suite completa (34 tests) en verde.
+
+## 2026-09-06 - Historial de precios "aireado" + copiar precio ofrece cambiarlo en el carrito
+
+Pedido explícito del usuario ("airear el historial de precios... fijate en Web clásico cómo lo
+hace"), con permiso de trabajo desatendido de 2hs. `_HistorialPreciosClientePOS.cshtml`: más
+padding/font-size (`.55rem .75rem` / `.92rem`), `table-hover`, columnas Código/Precio/Fecha/acción
+más anchas -- comparado visualmente contra el modal de Web clásico. Breakpoints del modal
+ensanchados (250/400/570px -> 320/500/680px) para que la tabla más aireada entre sin scroll
+horizontal en pantallas chicas.
+
+**Función nueva** (no existe en el clásico, pedida explícitamente): si el código del ítem
+copiado ya está en el carrito, se pregunta "¿Cambiar precio al producto en el carrito?" (SweetAlert)
+antes de solo copiar el precio al portapapeles interno de "pegar". Si confirma,
+`aplicarPrecioHistorialALineaCarrito` (Ventas/POS.cshtml) recalcula el % de bonificación con la
+misma fórmula que usa el modal "Línea de venta" (`pct = round((1 - precioNuevo/precioLista) * 100,
+2)`) y re-renderiza el carrito -- el ítem queda visualmente igual que si se hubiera bonificado a
+mano. Si dice que no, se comporta como el clásico (solo copia, no toca el carrito).
+
+**Deuda pendiente**: sin test permanente en `WebCore.E2ETests` para este flujo (solo se verificó en
+vivo, diagnóstico descartado). Automatizarlo requiere un cliente de prueba real con historial de
+precios ya cargado (el botón está oculto para Consumidor Final y no aparece sin ventas previas de
+ese cliente) -- no se armó ese fixture por tiempo. Pendiente si se retoma este flujo.
+
+## 2026-09-06 - Bonificación por % a todos los productos desde "Forma de Pago"
+
+Pedido explícito del usuario, con permiso de trabajo desatendido de 2hs. En el modal de Forma de
+Pago, botón nuevo junto a "Total de la Venta" (`#btnTogglePorcentajeTotalVenta`, atajo `/`) despliega
+un bloque para ingresar un % de descuento (negativo = recargo) **solo si ningún producto del
+carrito ya tiene bonificación propia** -- si la hay, SweetAlert avisa que no se puede combinar y no
+despliega el bloque. "Total de la Venta" sigue mostrando siempre el monto **original** del carrito;
+el bloque agrega "Total con descuento" (el monto real a cobrar). Al elegir la forma de pago (o
+confirmar pago mixto), el % se aplica a **todas** las líneas del carrito con la misma función que ya
+usa el modal "Línea de venta" con "Aplicar a todos" (`aplicarBonificacionPorcentajeATodoElCarrito`,
+expuesta desde `pos-cart.js` para este uso) -- mismo mecanismo, no una segunda implementación. Si el
+usuario cierra el bloque sin confirmar, la venta sigue siendo normal (sin descuento).
+
+De paso: `#totalVenta` tenía un bug heredado del port original -- el media query de escritorio lo
+dejaba en `1.2rem`, **más chico** que en mobile (`1.75rem`). Aprovechando el pedido de "hacer el
+importe dos puntos más grande", se corrigió a la vez: `2.25rem` base / `2.6rem` desktop, creciendo
+de forma consistente en todos los tamaños.
+
+Verificado con interceptación del POST real a `FinalizarVenta` (`page.RouteAsync`, respuesta canned
+`ok:false` para no escribir una venta real) -- el payload interceptado confirma `Bonificacion:10` y
+el `PrecioKg` reducido correctamente en las 2 líneas de prueba. Tests permanentes:
+`DescuentoTotalVentaTests.cs` (2 casos: aplicación correcta antes de guardar, y bloqueo si ya hay
+bonificación individual). No probado explícitamente (por construcción debería funcionar,
+`totalVentaActual` es la misma variable que ya usa el split de pago mixto): la combinación
+descuento global + pago mixto.
+
+## 2026-09-06 - Modal Factura Electrónica en WebCore: bug real de `.form-row` sin definir en Bootstrap 5
+
+El usuario reportó que el modal "queda muy largo" en Core comparado con MVC clásico ("la idea es
+que entre todo en la vista de un pantallazo"). Diagnóstico: `.form-row` (clase de Bootstrap 4, usada
+en todo `_FacturaElectronica.cshtml`, un port literal del clásico) **no tenía ninguna definición
+CSS** en `bootstrap4-compat.css` -- confirmado con `grep -r "\.form-row" WebCore/wwwroot` sin
+resultados. Sin esa regla, Bootstrap 5 no sabe que es un `display:flex` y las columnas se apilan
+verticalmente en vez de ir en fila, alargando el modal muchísimo más de lo necesario.
+
+**Fix**: se agregó la regla literal de Bootstrap 4 (`display:flex; flex-wrap:wrap; margin:-5px` +
+`.form-row > .col, .form-row > [class*="col-"] { padding:5px }`, copiada de
+`Web/Content/vendor/bootstrap/scss/_forms.scss:199-209`) al shim compartido
+`bootstrap4-compat.css` -- **no solo a esta vista**: cualquier otra vista ya portada que use
+`.form-row` se beneficia igual, mismo criterio ya usado antes con el fix de `.modal({show:true})`
+en `bootstrap4-compat.js` (arreglar el shim compartido, no cada vista por separado). Verificado con
+capturas de Playwright antes/después: las tarjetas de Comprobante/Cliente/Totales pasan de apiladas
+a lado a lado. Queda un scroll interno residual chico (~125px, `scrollHeight:799` vs
+`clientHeight:674` en la última medición) sin optimizar más por tiempo -- si el usuario no queda
+conforme, revisar de nuevo.
+
+## 2026-09-06 - Post-venta: ticket térmico HTML (58/80mm) + PDF con elección de comprobante + atajos numéricos
+
+Pedido explícito del usuario (4 puntos, con permiso de trabajo desatendido de 2hs): "en modal venta
+completada poner los atajos, primero con 1 nueva venta y luego 2, 3... / en imprimir comprobante
+copiar como lo hace mvc clásico, que despliegue 58mm y 80mm / una vez elegido se recuerda ese
+tamaño... / copiar el diseño de impresión de los tickets por impresora térmica / agregar la
+generación del pdf como lo hace el mvc clásico".
+
+**Orden y atajos numéricos** (`_ModalPostVentaBasico.cshtml` reordenado): 1=Nueva venta (primero,
+por ser la acción más probable después de cobrar -- pedido explícito, distinto del "1=No imprimir"
+del clásico), 2=Imprimir ticket, 3=Imprimir PDF, 4=Email, 5=Factura electrónica. Cada botón muestra
+su número en un badge, y un handler de teclado en `Ventas/POS.cshtml` (scoped a
+`#modalPostVentaBasico.show`, ignora si el foco está en un input) dispara el click correspondiente.
+
+**Ticket térmico HTML**: se investigó el flujo real del clásico
+(`Web/Controllers/VentasController.cs:1399-1463`, rama `mm!=0` de `ImprimirTicket`) y se confirmó
+que existen DOS caminos paralelos: un `View` HTML (`_TicketHTML.cshtml`, pensado para que el
+navegador imprima con su propio diálogo -- `onload="window.print()"`) y un payload JSON separado
+(`ImprimirTicketPayload`, explícitamente para que el agente local de impresión arme comandos
+ESC/POS crudos). Se portó **solo el primero** -- el segundo sigue fuera de alcance, mismo criterio
+que el resto de esta migración (el agente local no se toca). Port literal de `_TicketHTML.cshtml`
+a `WebCore/Views/Ventas/_TicketHTML.cshtml` (mismo formateo de columnas fijas 58/80mm, mismos
+bloques factura AFIP vs. comprobante interno "X", mismo QR de AFIP RG 4892/2020 vía
+`GenerarDocsCore.GenerateQRCode`, ya portado y verificado en un slice anterior con QRCoder/
+`PngByteQRCode` -- sin `System.Drawing`, portable a Linux). Servido por
+`VentasController.ImprimirTicketHtml(id, mm)` -- ruta **nueva**, no `ImprimirTicket`: ese nombre ya
+está ocupado en WebCore por el modal de Factura Electrónica (decisión de un slice anterior, ver
+comentario propio en el controller), así que se evitó pisarlo.
+
+**Tamaño recordado**: `localStorage` (`postventa_ticket_mm`, mismo nombre de clave que usa el
+clásico para el mismo concepto, aunque no comparten storage por ser orígenes distintos) -- se
+pregunta una sola vez (SweetAlert `input:'select'`) y se reutiliza hasta que el usuario lo cambie
+explícitamente ("cambiar" al pie del botón Ticket).
+
+**PDF con elección de comprobante**: el botón "Imprimir PDF" (antes un `<a href>` fijo a
+`documento=detalle`) ahora es un botón que llama a `ObtenerDatosEmailComprobante` (ya portado, sin
+cambios de backend) y replica la lógica de `pvSeleccionarOpcionSimple` del clásico: sin factura ->
+detalle directo; con nota de crédito asociada -> elegir entre detalle/factura/NC; factura agrupa
+ítems -> elegir entre detalle/factura; si no, factura directo.
+
+**Sin AppSettings de `Negocio`/`NegocioAgregado1-3`**: el clásico lee esas claves de
+`ConfigurationManager.AppSettings` antes de caer al nombre/slogan de la Empresa -- como
+`WebCore/App.config` no tiene esas claves configuradas todavía y el controller nunca usó
+`ConfigurationManager` hasta ahora, se optó por ir directo al fallback de Empresa (mismo resultado
+que tendría el clásico sin esas claves seteadas, cero riesgo). `TODO(claude)`: si en algún momento
+se necesita personalizar el encabezado del ticket sin tocar código, wirear esas claves.
+
+**Verificación**: build limpio, suite completa `WebCore.E2ETests` (41 tests, incluye los 4 nuevos
+de `PostVentaPOSTests.cs`) en verde. Ticket verificado con datos reales (venta #1780) vía `curl`
+autenticado -- encabezado con nombre/slogan de empresa, líneas de detalle, total y pie, todo
+correcto. Rama con factura+QR (comprobante ya facturado) **no verificada en vivo** por falta de una
+venta de prueba facturada a mano en este momento -- es el mismo código ya usado y verificado antes
+(`BuildFacturaDTO`, `GenerateQRCode`) para el modal de Factura Electrónica y el PDF, riesgo bajo
+pero sin confirmación visual directa de esta rama específica.
+
+## 2026-09-07 - Historial de precios: excluir líneas anuladas (bug real, cantkg > 0)
+
+Pedido explícito del usuario tras reportar que el historial de precios debía filtrar "solo las
+líneas que no fueron anuladas ni son anuladas, es decir mayor a cantidad cero". Diagnóstico:
+`obtenerUltimosPreciosPorCliente` (`VentaPg.cs` y `Datos/Venta.cs`, misma query en Postgres y SQL
+Server) filtraba `idlineaventaanulado = 0` -- eso excluye las líneas que **son** una anulación de
+otra, pero no las líneas con cantidad negativa/anuladas en general. El resto del sistema
+(`obtenerVentas`, `getVentasVendedorCierreCaja`) ya usa `cantkg < 0` como criterio para identificar
+anulaciones -- se aplicó el criterio inverso (`cantkg > 0`) acá, dentro de la CTE `lineascliente`/
+`LineasCliente`, **antes** del `ROW_NUMBER()` que elige el precio más reciente por producto (así,
+si la compra más reciente de un producto fue anulada, el historial busca la siguiente con cantidad
+positiva en vez de mostrar un precio de una operación anulada).
+
+Corregido en ambos motores (Postgres, que es la base oficial, y SQL Server, mantenida en paridad de
+esquema/lógica -- ver [[carnisys_postgres_base_oficial]]) porque la query está deliberadamente
+duplicada para los dos. Verificado en vivo contra el cliente real "JUAN PEREZ" (idPersona 25):
+`GET /Ventas/HistorialPreciosCliente?idPersona=25` devuelve 200 con 3 filas, todas con precio > 0.
+Suite `WebCore.E2ETests`: 38/40 en verde -- los 2 fallos (`TableScrollSyncTests.
+StockLineas_GeneraBarraFlotanteEnTablaAncha`, `DarkModeTests.
+StockDetalleFila_MetaCardNoQuedaBlancaEnModoOscuro`) son de fixtures de datos de Stock volátiles en
+la base compartida de desarrollo, no relacionados con este cambio (no tocan Ventas ni la query
+modificada) -- quedan como deuda a investigar aparte.
+
+No verificado en la compilación net472 de `Datos.csproj` (la que usa `Web` clásico/`Presentacion`):
+`dotnet build` CLI no puede compilar ese TFM por una limitación preexistente y no relacionada
+(`ResolveComReference` de `Utilidades.csproj` requiere MSBuild.exe de Visual Studio, no el SDK de
+.NET Core) -- el cambio en sí es un string SQL dentro de un método ya existente, sin tocar firmas,
+riesgo de romper esa compilación prácticamente nulo, pero queda sin confirmar mecánicamente.
+
+## 2026-09-07 - Bug real: el botón de historial de precios nunca tenía su propio click
+
+El usuario reportó que, incluso ya con un cliente real seleccionado, el modal seguía sin abrirse al
+clickear el botón (`#btnHistorialPreciosCliente`, a la derecha del campo de cliente en el POS).
+Diagnóstico con Playwright: el botón existe, queda visible correctamente al elegir un cliente no-CF,
+pero **nunca tuvo un handler de click propio** -- solo el atajo de teclado F8 estaba conectado
+(`window.posHotkeysHooks.F8`). Esto viene de un comentario desactualizado en `Ventas/POS.cshtml`
+("F8 y F9 siguen sin registrar... no tiene sentido un historial sin cliente real") que quedó escrito
+cuando el buscador de cliente real todavía no existía -- al portarlo más tarde (mismo día, otra
+sesión) se conectó el atajo F8 pero se olvidó agregar el `click` del botón visual. Comentario
+corregido para no seguir mintiendo.
+
+**Fix**: `$("#btnHistorialPreciosCliente").on("click", ...)` llamando a la misma función que ya usa
+el atajo F8 (`window.POSFinanzas.abrirHistorialPreciosCliente`), en `Ventas/POS.cshtml`.
+
+**Gotcha de verificación durante este mismo diagnóstico**: el primer intento de reproducir el fix
+en vivo (tras editar el .cshtml) siguió fallando -- la causa no era el código sino que `dotnet run
+--no-build` sirve el `WebCore.dll` ya compilado, y las vistas Razor de este proyecto están
+precompiladas dentro de ese assembly (no hot-reload de `.cshtml` sueltos en este setup) -- un
+`dotnet build` explícito antes de relanzar el server es obligatorio después de tocar una vista, no
+alcanza con reiniciar el proceso. Confirmado comparando el HTML servido (`curl`) contra el archivo
+en disco antes y después del build.
+
+Verificado en vivo con Playwright contra "JUAN PEREZ" (idPersona 25): el click dispara
+`GET /Ventas/HistorialPreciosCliente?idPersona=25`, responde 200, el modal se muestra
+(`#modalFinanzasPOS.show`) con las 3 líneas ya filtradas por `cantkg > 0`. Test permanente agregado:
+`HistorialPreciosClienteTests.ClickEnBoton_AbreModalConHistorialDelClienteSeleccionado` (cubre
+selección de cliente real + click del botón + que todos los precios mostrados sean > 0). Suite
+completa: 39/41 en verde -- los mismos 2 fallos de Stock ya documentados arriba, sin relación.
+
+## 2026-09-07 - Descuento global en Forma de Pago: foco del input inhabilita atajos numéricos + Enter confirma
+
+Pedido explícito del usuario, refinando el flujo de bonificación global del 2026-09-06: mientras el
+input `#txtPorcentajeTotalVenta` tiene el foco, escribir un porcentaje como "10" disparaba a mitad
+de tipeo los atajos numéricos de forma de pago (`1`=Efectivo, `2`=Débito, etc. -- el keydown global
+no tenía guarda de foco para ese mapa, a diferencia del atajo `/` que sí la tenía), pudiendo
+finalizar la venta sin querer.
+
+**Cambios en `forma-pago.js`/`_FormaPagoModal.cshtml`**:
+- El keydown global ahora ignora el mapa `1-6` si el foco está en cualquier `INPUT`/`TEXTAREA`/
+  `SELECT` (misma guarda que ya usaba `/`).
+- Mientras `#txtPorcentajeTotalVenta` tiene foco (`focus`/`blur`), se togglea la clase
+  `pos-descuento-input-activo` en `#modalFormaPago`: el total con descuento (verde) crece a
+  `2.4rem` y el total original (azul) se achica a `1.1rem` -- vuelven a sus tamaños normales al
+  perder el foco.
+- **Enter** en el input confirma: lo deshabilita (`disabled`), actualiza un hint debajo
+  (`#pvbHintDescuento`, "Enter para confirmar" ↔ "Descuento confirmado -- presione / para
+  editarlo") y muestra un toast (SweetAlert `toast:true`) con el % aplicado y el total a cobrar.
+  Al perder el foco (por el propio `disabled`) los atajos numéricos vuelven a funcionar.
+- El atajo **"/"** ahora distingue 3 estados en vez de solo abrir/cerrar: bloque oculto → abre +
+  foco; bloque visible con el input ya confirmado (deshabilitado) → lo vuelve a habilitar y
+  enfocar, **sin perder el % ya cargado**; bloque visible con el input todavía editable → cierra
+  (cancela el descuento, como ya funcionaba). El caso "input editable con foco" nunca llega a esta
+  lógica porque el keydown global ya ignora `/` con el foco en un input.
+
+Verificado en vivo con Playwright: tipear "10" con foco en el input no dispara `FinalizarVenta`
+(interceptado); tras Enter el input queda `disabled` y aparece el toast; el atajo `1` sí finaliza la
+venta después de eso; `/` reabre el input conservando el valor tipeado. Tests permanentes:
+`DescuentoInputFocoTests.cs` (3 casos). Suite completa: 42/44 en verde -- los mismos 2 fallos de
+Stock ya documentados arriba, sin relación.
+
+## 2026-09-07 - Descuento global: rediseño de qué muestra cada color (azul = total real, verde = monto del descuento)
+
+El usuario vio confuso el diseño anterior (mismo día, entrada de arriba) y pidió invertir los
+roles: **"Total de la Venta" (azul, `#totalVenta`) pasa a mostrar SIEMPRE el monto real a cobrar**
+-- con el descuento/recargo aplicado si hay uno activo, o el total tal cual si no. El bloque verde
+(`#lblTotalConDescuentoTotalVenta`) **deja de mostrar el total resultante y pasa a mostrar el monto
+del descuento/recargo en sí** (la diferencia). Ejemplo del usuario: total $10, descuento 10% ->
+verde "$1" (el descuento), azul "$9" (lo que se cobra). Si se quita el descuento, el azul vuelve al
+total original tal cual.
+
+**Implementación** (`forma-pago.js`/`_FormaPagoModal.cshtml`):
+- `actualizarTotalConDescuento()`: sigue calculando `totalVentaActual` igual que antes (monto a
+  cobrar), pero ahora escribe ese valor en `#totalVenta` (antes solo se tocaba en la apertura del
+  modal) y calcula `montoDescuento = totalVentaOriginal - totalVentaActual` para el verde. La
+  etiqueta arriba del verde (`#lblEtiquetaMontoDescuento`) cambia entre "Descuento aplicado" /
+  "Recargo aplicado" según el signo del %.
+- Nuevo `<small id="lblTotalVentaConDescuentoTag">` debajo del azul, oculto por defecto, con el
+  texto "(con descuento)" -- se muestra solo mientras `porcentajeTotalVentaActivo` es distinto de
+  cero, para aclarar que el número de arriba ya lo incluye.
+- `cerrarBloquePorcentajeTotalVenta()` (se llama al quitar el % o cancelar el bloque): restaura
+  `#totalVenta` al total original y oculta el tag.
+- El CSS de tamaños invertidos (verde grande / azul chico mientras el input tiene foco, de la
+  entrada anterior) no cambió -- solo cambió QUÉ contenido muestra cada campo, no los tamaños ni
+  el mecanismo de foco/Enter/"/".
+
+Verificado en vivo con Playwright: con carrito de $32.400 y 10% de descuento, el verde muestra
+"3.240,00" (el descuento) y el azul "29.160,00" (a cobrar), con el tag "(con descuento)" visible;
+al cerrar el bloque el azul vuelve a "32.400,00" y el tag se oculta. Tests actualizados
+(`DescuentoTotalVentaTests.cs`, agregado un tercer caso para el "quitar descuento"). Suite
+completa: 43/45 en verde -- los mismos 2 fallos de Stock ya documentados, sin relación.
+

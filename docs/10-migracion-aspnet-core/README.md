@@ -492,6 +492,16 @@ Plan: `docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md`. Los 9 módulos `
 
 **Con esto, la UI de POS (Ventas + Puntos de Expendio) queda completa** para el alcance MVP de esta migración, salvo lo explícitamente bloqueado arriba (operador de producción, permisos reales de edición).
 
+**Actualización 2026-09-06** (ver entrada completa en `docs/DECISIONS.md`, "Retomado: buscador de
+cliente real (F9/F10/F8), fix de operador en AbrirCaja, y modal de Factura Electrónica completo"):
+login/operador de producción y permisos reales de venta ya se cerraron en un batch anterior (ver
+entrada "Login/Sesion real para WebCore" de `DECISIONS.md`); esta sesión cerró los 3 gaps que
+seguían abiertos de "atajos de teclado del POS" -- buscador de cliente real (F9), buscador
+avanzado de producto (F10), historial de precios de cliente (F8) -- y agregó el modal completo de
+Factura Electrónica (AFIP) al post-venta de `Ventas/POS`, antes solo disponible como endpoint JSON
+de verificación (`NuevaFacturaSinVenta`). Único gap nuevo: nota de crédito con "anular venta" (ver
+`gaps.md`).
+
 **Bug real encontrado y corregido en Ventas/POS después de cerrarlo como "completo" (2026-09-04)**: la calculadora de billetes (F3) no abría el modal -- ni con la tecla ni haciendo clic en el botón del menú de Ayuda (F1), sin ningún error visible. Causa real, verificada contra el código fuente de Bootstrap 5.3.3: `CalculadoraBilletes.open()` llamaba a `.modal({backdrop:'static', keyboard:false})` -- en Bootstrap 4 eso construía y mostraba el modal; en Bootstrap 5 el `jQueryInterface` cambió: si el argumento no es un string, solo crea/configura la instancia (`getOrCreateInstance`) pero **nunca llama a `.show()`**. Afectaba también al botón "Calcular efectivo" de Cajas (mismo `open()` compartido). Corregido agregando `.modal('show')` como segunda línea; verificado por el usuario en navegador real. Lección de proceso: esta iteración se había dado por cerrada solo con verificación por `curl` (no ejecuta JS) -- de acá en más, cualquier interacción de modal/JS del POS se prueba en navegador real antes de reportarla como funcionando.
 
 **Sidebar de navegación global + hibrido SQL Server/Postgres (2026-09-04)**: ver secciones dedicadas más abajo en este archivo -- no son parte de la UI de POS en sí, pero se hicieron en la misma sesión y afectan a toda la app ya migrada (17 controllers).

@@ -11,6 +11,17 @@ let totalVentaActual = 0;
 let otroTipoPagoSeleccionado = null;
 let ventaEnProceso = false;
 
+// Bonificacion por % a todos los productos, desde el modal de forma de pago (2026-09-06, pedido
+// explicito del usuario; UI rediseñada 2026-09-07 -- ver docs/DECISIONS.md). totalVentaOriginal es
+// el total REAL del carrito, fijo, usado solo para calcular. totalVentaActual es el monto A
+// COBRAR (con el descuento/recargo ya restado si esta activo, o igual al original si no) -- es lo
+// que ya usaba el resto de este archivo para dividir el pago mixto, sin tocar esa logica, y
+// ademas es lo que se muestra en "Total de la Venta" (azul, #totalVenta). El verde
+// (#lblTotalConDescuentoTotalVenta) muestra el MONTO del descuento/recargo en si (la diferencia
+// entre original y actual), no el total resultante.
+let totalVentaOriginal = 0;
+let porcentajeTotalVentaActivo = 0;
+
 function getPOSStateFormaPago() {
     return window.POSState || null;
 }
@@ -193,8 +204,16 @@ function configurarModalFormaPagoSegunModo() {
     otroTipoPagoSeleccionado = null;
 
     $('.form-group.form-check.mb-4').toggle(modo === 'finalizacion');
-    $('#totalVenta').val(modo === 'preseleccion' ? '-' : formatearImporteFormaPago(totalVentaActual));
+    $('#totalVenta').val(modo === 'preseleccion' ? '-' : formatearImporteFormaPago(totalVentaOriginal));
     $('#totalVenta').closest('.form-group').toggle(true);
+
+    // Bonificacion por % a todos: solo tiene sentido al finalizar una venta real (2026-09-06,
+    // ver docs/DECISIONS.md) -- en modo "preseleccion" (elegir forma de pago para que el carrito
+    // recalcule precios ANTES de tener productos cargados) no hay un total real que bonificar.
+    $('#btnTogglePorcentajeTotalVenta').toggle(modo === 'finalizacion');
+    if (modo !== 'finalizacion' && $('#bloquePorcentajeTotalVenta').is(':visible')) {
+        cerrarBloquePorcentajeTotalVenta();
+    }
 
     if (modo === 'preseleccion') {
         $('.btn-forma-pago').prop('disabled', ventaEnProceso);
@@ -223,6 +242,12 @@ window.preCargarFormaPagoActual = function () {
     const otroMonto = total - efectivo;
 
     totalVentaActual = total;
+    totalVentaOriginal = total;
+    porcentajeTotalVentaActivo = 0;
+    $('#txtPorcentajeTotalVenta').val('').prop('disabled', false);
+    $('#modalFormaPago').removeClass('pos-descuento-input-activo');
+    actualizarHintDescuentoInput(true);
+    $('#bloquePorcentajeTotalVenta').hide();
     limpiarSeleccionFormaPago();
     actualizarLeyendaFormaPagoActual();
     configurarModalFormaPagoSegunModo();
@@ -332,6 +357,12 @@ window.mostrarModalPostVenta = window.mostrarModalPostVenta || function (ventaId
 $('#modalFormaPago').on('shown.bs.modal', function () {
 
     totalVentaActual = obtenerTotalVenta(); // ya existente
+    totalVentaOriginal = totalVentaActual;
+    porcentajeTotalVentaActivo = 0;
+    $('#txtPorcentajeTotalVenta').val('').prop('disabled', false);
+    $('#modalFormaPago').removeClass('pos-descuento-input-activo');
+    actualizarHintDescuentoInput(true);
+    $('#bloquePorcentajeTotalVenta').hide();
     resetPagoMixto();
     window.preCargarFormaPagoActual?.();
 });
@@ -406,6 +437,8 @@ $('.btn-forma-pago').on('click', function () {
     // PAGO NORMAL
     // ---------------------------
     if (!esPagoMixto) {
+
+        if (!aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde()) return;
 
         finalizarVenta({
             formaPago: tipo,
@@ -482,6 +515,8 @@ $('#btnFinalizarPagoMixto').on('click', function () {
         });
         return;
     }
+
+    if (!aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde()) return;
 
     finalizarVenta({
         formaPago: otroTipoPagoSeleccionado,
@@ -747,6 +782,186 @@ function resetPagoMixto() {
 }
 
 // ===============================
+// BONIFICACION POR % A TODOS (2026-09-06, pedido explicito del usuario -- ver docs/DECISIONS.md)
+// ===============================
+// Solo se ofrece si NINGUN producto del carrito ya tiene su propia bonificacion (evita mezclar
+// una bonificacion por linea con una global, que daria un resultado ambiguo/incorrecto).
+function hayLineasBonificadasEnCarrito() {
+    return (window.POSState?.getLineas?.() || []).some(function (linea) {
+        return linea && !linea.anulado && Math.abs(Number(linea.bonificacion) || 0) > 0.0001;
+    });
+}
+
+// totalVentaActual pasa a ser el monto A COBRAR (con el % ya restado/sumado si esta activo) --
+// el resto del archivo (division de pago mixto, validacion de suma) ya lo usaba para eso, sin
+// cambios ahi.
+//
+// Diseño 2026-09-07 (reemplaza al del dia anterior, pedido explicito del usuario tras verlo
+// confuso -- ver docs/DECISIONS.md): "Total de la Venta" (azul, #totalVenta) pasa a mostrar
+// SIEMPRE el monto real a cobrar -- con descuento/recargo si hay uno activo, o el total tal cual
+// si no. El verde (#lblTotalConDescuentoTotalVenta) ya NO muestra el total resultante -- muestra
+// el MONTO del descuento/recargo en si (la diferencia). Ej: total $10, 10% de descuento -> verde
+// "$1", azul "$9".
+function actualizarTotalConDescuento() {
+    const montoConDescuento = totalVentaOriginal * (1 - (porcentajeTotalVentaActivo / 100));
+    totalVentaActual = montoConDescuento > 0 ? montoConDescuento : 0;
+
+    const montoDescuento = totalVentaOriginal - totalVentaActual;
+    const esRecargo = porcentajeTotalVentaActivo < 0;
+
+    $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
+    $('#lblTotalVentaConDescuentoTag').toggleClass('d-none', !porcentajeTotalVentaActivo);
+    $('#lblEtiquetaMontoDescuento').text(esRecargo ? 'Recargo aplicado' : 'Descuento aplicado');
+    $('#lblTotalConDescuentoTotalVenta').text('$ ' + formatearImporteFormaPago(Math.abs(montoDescuento)));
+
+    // Pago mixto en curso: resincroniza el split contra el nuevo monto a cobrar.
+    if ($('#chkPagoMixto').is(':checked')) {
+        $('#montoEfectivo').trigger('input');
+    }
+}
+
+function cerrarBloquePorcentajeTotalVenta() {
+    porcentajeTotalVentaActivo = 0;
+    $('#txtPorcentajeTotalVenta').val('').prop('disabled', false);
+    actualizarHintDescuentoInput(true);
+    $('#modalFormaPago').removeClass('pos-descuento-input-activo');
+    $('#bloquePorcentajeTotalVenta').slideUp(120);
+    totalVentaActual = totalVentaOriginal;
+    // Se quita el descuento: el azul vuelve a mostrar el total tal cual, sin el tag "(con descuento)".
+    $('#totalVenta').val(formatearImporteFormaPago(totalVentaActual));
+    $('#lblTotalVentaConDescuentoTag').addClass('d-none');
+
+    if ($('#chkPagoMixto').is(':checked')) {
+        $('#montoEfectivo').trigger('input');
+    }
+}
+
+function habilitarYEnfocarInputDescuento() {
+    $('#txtPorcentajeTotalVenta').prop('disabled', false);
+    actualizarHintDescuentoInput(true);
+    requestAnimationFrame(function () {
+        $('#txtPorcentajeTotalVenta').focus().select();
+    });
+}
+
+function abrirBloquePorcentajeTotalVenta() {
+    if (getModoFormaPagoActual() !== 'finalizacion') return;
+
+    if (hayLineasBonificadasEnCarrito()) {
+        if (window.Swal) {
+            window.Swal.fire({
+                icon: 'warning',
+                title: 'Bonificación conjunta no disponible',
+                text: 'No se puede aplicar un descuento o recargo a toda la venta porque ya existen productos bonificados dentro del carrito.'
+            });
+        }
+        return;
+    }
+
+    $('#bloquePorcentajeTotalVenta').slideDown(120);
+    actualizarTotalConDescuento();
+    habilitarYEnfocarInputDescuento();
+}
+
+// El atajo "/" (2026-09-07, refinado a pedido explicito del usuario -- ver docs/DECISIONS.md)
+// distingue 3 estados en vez de solo abrir/cerrar: bloque oculto -> abrir + foco; bloque visible
+// con el input YA CONFIRMADO (deshabilitado tras Enter, ver confirmarDescuentoInput) -> volver a
+// habilitarlo y darle foco para poder editarlo; bloque visible con el input todavia editable ->
+// cerrar (cancela el descuento, vuelve a ser una venta normal -- comportamiento ya existente).
+// El caso "input editable con foco" nunca llega aca: el keydown global ignora "/" si el foco esta
+// en un INPUT/TEXTAREA/SELECT.
+function toggleBloquePorcentajeTotalVenta() {
+    const bloqueVisible = $('#bloquePorcentajeTotalVenta').is(':visible');
+    const inputDeshabilitado = $('#txtPorcentajeTotalVenta').prop('disabled');
+
+    if (bloqueVisible && inputDeshabilitado) {
+        habilitarYEnfocarInputDescuento();
+    } else if (bloqueVisible) {
+        cerrarBloquePorcentajeTotalVenta();
+    } else {
+        abrirBloquePorcentajeTotalVenta();
+    }
+}
+
+$('#btnTogglePorcentajeTotalVenta').on('click', function () {
+    if (ventaEnProceso) return;
+    toggleBloquePorcentajeTotalVenta();
+});
+
+$('#txtPorcentajeTotalVenta').on('input', function () {
+    porcentajeTotalVentaActivo = parseNumeroPOS($(this).val());
+    if (!Number.isFinite(porcentajeTotalVentaActivo)) porcentajeTotalVentaActivo = 0;
+    actualizarTotalConDescuento();
+});
+
+// Mientras el input tiene el foco: enfasis visual invertido (verde grande / azul chico, ver CSS
+// en _FormaPagoModal.cshtml) Y los atajos numericos de forma de pago (1-6) quedan inhabilitados
+// -- el keydown global los ignora mientras el foco esta en cualquier INPUT/TEXTAREA/SELECT (ver
+// mas abajo). 2026-09-07, pedido explicito del usuario -- ver docs/DECISIONS.md.
+$('#txtPorcentajeTotalVenta').on('focus', function () {
+    $('#modalFormaPago').addClass('pos-descuento-input-activo');
+});
+
+$('#txtPorcentajeTotalVenta').on('blur', function () {
+    $('#modalFormaPago').removeClass('pos-descuento-input-activo');
+});
+
+function actualizarHintDescuentoInput(editable) {
+    $('#pvbHintDescuento').text(editable
+        ? 'Enter para confirmar'
+        : 'Descuento confirmado -- presione / para editarlo');
+}
+
+// Enter en el input de descuento (2026-09-07, pedido explicito del usuario -- ver
+// docs/DECISIONS.md): confirma el % tipeado, deshabilita el input (hasta que "/" lo vuelva a
+// habilitar) y muestra un cartel breve -- recien ahi, al perder el foco, se vuelven a habilitar
+// los atajos numericos de forma de pago para poder elegir con que se cobra.
+function confirmarDescuentoInput() {
+    $('#txtPorcentajeTotalVenta').prop('disabled', true).trigger('blur');
+    actualizarHintDescuentoInput(false);
+
+    if (window.Swal) {
+        window.Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: (porcentajeTotalVentaActivo || 0) >= 0
+                ? 'Descuento del ' + (porcentajeTotalVentaActivo || 0) + '% aplicado'
+                : 'Recargo del ' + Math.abs(porcentajeTotalVentaActivo || 0) + '% aplicado',
+            text: 'Total a cobrar: $ ' + formatearImporteFormaPago(totalVentaActual) + ' -- elija la forma de pago.',
+            showConfirmButton: false,
+            timer: 2200,
+            timerProgressBar: true
+        });
+    }
+}
+
+$('#txtPorcentajeTotalVenta').on('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        confirmarDescuentoInput();
+    }
+});
+
+// Aplica el % (si esta activo) a TODAS las lineas del carrito -- misma funcion que usa el modal
+// "Linea de venta" con "Bonificar por porcentaje" + "Aplicar a todos los productos" (expuesta
+// globalmente desde pos-cart.js), asi que el resultado es identico byte a byte. Se llama justo
+// antes de guardar la venta (finalizarVenta lee POSState.getLineas() recien en ese momento), NO
+// al tipear el %, para no mutar el carrito mientras el usuario todavia puede arrepentirse.
+function aplicarDescuentoTotalVentaAntesDeFinalizarSiCorresponde() {
+    if (!porcentajeTotalVentaActivo) return true;
+    if (typeof window.aplicarBonificacionPorcentajeATodoElCarrito !== 'function') return true;
+
+    const ok = window.aplicarBonificacionPorcentajeATodoElCarrito(porcentajeTotalVentaActivo);
+    if (ok) {
+        window.renderTablaProductos?.(window.POSState.getLineas());
+        window.recalcularTotal?.();
+    }
+    return ok;
+}
+
+// ===============================
 // ATAJOS DE TECLADO
 // ===============================
 $(document).ready(function () {
@@ -759,6 +974,19 @@ $(document).ready(function () {
 
         const esPagoMixto = $('#chkPagoMixto').is(':checked');
 
+        // ---- "/" bonificacion % a todos (2026-09-06, ver docs/DECISIONS.md) ----
+        // Va ANTES del branch de pago mixto: el descuento/recargo global es independiente de la
+        // forma de pago elegida. Se ignora si el foco esta en un input (evita interferir con el
+        // tipeo normal en los campos de pago mixto o en el propio campo de porcentaje).
+        if (e.key === '/') {
+            const tag = (document.activeElement && document.activeElement.tagName) || '';
+            if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+                e.preventDefault();
+                toggleBloquePorcentajeTotalVenta();
+            }
+            return;
+        }
+
         // ---- MIXTO ----
         if (esPagoMixto) {
             if (e.key === 'End') {
@@ -767,6 +995,13 @@ $(document).ready(function () {
             }
             return;
         }
+
+        // Atajos numericos de forma de pago inhabilitados mientras el foco esta en un input
+        // (2026-09-07, pedido explicito del usuario -- ver docs/DECISIONS.md): sin esto, escribir
+        // "10" en el campo de % de descuento disparaba "1"=Efectivo/"0"=nada a mitad de tipeo,
+        // finalizando la venta sin querer. Misma guarda que ya usa el atajo "/" mas arriba.
+        const tagFoco = (document.activeElement && document.activeElement.tagName) || '';
+        if (tagFoco === 'INPUT' || tagFoco === 'TEXTAREA' || tagFoco === 'SELECT') return;
 
         const mapa = { '1': 'Efectivo', '2': 'Debito', '3': 'Credito', '4': 'CtaCte', '5': 'Qr', '6': 'Transferencia' };
         const k = mapa[e.key] || mapa[(e.code || '').replace('Numpad', '')];

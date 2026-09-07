@@ -142,6 +142,26 @@
     display: contents;
 }
 
+/* ===== .form-row (eliminado en BS5 -- las vistas ya portadas dependen de el para agrupar
+   form-group en fila, ej. _FacturaElectronica.cshtml) -- copia literal de Bootstrap 4
+   (Web/Content/vendor/bootstrap/scss/_forms.scss:199-209, gutter de 10px = 5px por lado, la
+   MITAD del gutter de .row que es 15px por lado). Hallazgo real 2026-09-06 (ver
+   docs/DECISIONS.md): sin esto .form-row es un <div> sin estilo (display:block), asi que cada
+   .form-group col-* de adentro cae en su propia linea en vez de ir lado a lado -- sintoma real
+   que disparo este fix: el modal de Factura Electronica se veia mucho mas largo/vertical en
+   WebCore que en Web clasico, con la MISMA marca exacta (era un port literal). ===== */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -5px;
+    margin-left: -5px;
+}
+.form-row > .col,
+.form-row > [class*="col-"] {
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
 /* ===== dropdown-menu-right (renombrado a .dropdown-menu-end en BS5) ===== */
 .dropdown-menu-right {
     --bs-position: end;

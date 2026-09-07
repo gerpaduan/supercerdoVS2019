@@ -101,6 +101,8 @@
                                 <th class="exp-col-sucursal d-none" style="width:130px;">Sucursal</th>
                                 <th>Producto</th>
                                 <th style="width:95px;" class="text-right">Cantidad</th>
+                                <th style="width:95px;" class="text-right">Precio</th>
+                                <th style="width:100px;" class="text-right">Total</th>
                                 <th style="width:160px;">Vendedor</th>
                                 <th style="width:40px;" class="text-center" title="Observación">Obs.</th>
                                 <th style="width:110px;" class="text-center">Acción</th>
@@ -108,7 +110,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">No hay expendios para mostrar.</td>
+                                <td colspan="13" class="text-center text-muted py-4">No hay expendios para mostrar.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -187,5 +189,32 @@
 
     .exp-filtros-toolbar {
         margin-top: -.25rem;
+    }
+
+    /* Agrupado por expendio (2026-09-06, ver docs/DECISIONS.md): la fila de encabezado (fecha,
+       hora, nro, identificacion, sector, vendedor, boton Cargar unico) se distingue de las filas
+       de item (solo producto + cantidad, indentadas, sin boton) debajo suyo. */
+    .modal-expendios-compact #tablaExpendiosPOS tr.exp-group-header {
+        background-color: #f4f7fb;
+        border-top: 2px solid #dee2e6;
+    }
+
+    .modal-expendios-compact #tablaExpendiosPOS tr.exp-group-item td {
+        padding-top: .18rem;
+        padding-bottom: .18rem;
+        color: #495057;
+        border-top: none;
+    }
+
+    /* La celda de Producto es siempre el 2do <td> de la fila de item (el 1ro es el colspan
+       "vacio" de la parte Fecha..Sucursal) sin importar si la columna Sucursal esta visible --
+       colspan no crea <td> adicionales, asi que nth-child no varia con esa columna. */
+    .modal-expendios-compact #tablaExpendiosPOS tr.exp-group-item td:nth-child(2) {
+        padding-left: 1.5rem;
+    }
+
+    html.dark-mode .modal-expendios-compact #tablaExpendiosPOS tr.exp-group-header,
+    body.dark-mode .modal-expendios-compact #tablaExpendiosPOS tr.exp-group-header {
+        background-color: rgba(255, 255, 255, .04);
     }
 </style>

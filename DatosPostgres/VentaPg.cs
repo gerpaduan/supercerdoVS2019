@@ -865,7 +865,12 @@ namespace DatosPostgres
                         ROW_NUMBER() OVER (PARTITION BY lv.idcorte ORDER BY uv.fechaventa DESC, lv.idlineaventa DESC) AS rn
                     FROM lineaventa lv
                     INNER JOIN ultimasventas uv ON uv.idventa = lv.idventa
-                    WHERE lv.idlineaventaanulado = 0
+                    -- Solo lineas activas (2026-09-07, pedido explicito del usuario -- ver
+                    -- docs/DECISIONS.md): idlineaventaanulado=0 excluye las lineas QUE anulan a
+                    -- otra, pero no alcanza para dejar afuera lineas anuladas/negativas -- cantkg>0
+                    -- es el criterio que ya usa el resto del sistema (obtenerVentas/
+                    -- getVentasVendedorCierreCaja) para distinguir una linea real de una anulacion.
+                    WHERE lv.idlineaventaanulado = 0 AND lv.cantkg > 0
                 )
                 SELECT c.codigo, c.corte AS producto, lc.preciokg, lc.cantkg, lc.fechaventa
                 FROM lineascliente lc

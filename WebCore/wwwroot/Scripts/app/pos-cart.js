@@ -357,6 +357,16 @@
                     ? `<div class="text-muted small">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exp.Nro: ${l.idExpendio}</div>`
                     : "";
 
+                // Etiqueta "Cambio precio" (2026-09-06, pedido explicito del usuario -- ver
+                // docs/DECISIONS.md): el precio con el que se creo la linea en Puntos de Expendio
+                // quedo congelado en ese momento (esa pantalla no toma forma de pago, ver
+                // docs/DECISIONS.md); si el precio de lista del producto cambio desde entonces
+                // (VentasController.ObtenerExpendioPOS ya hace la comparacion contra el precio
+                // actual real via join), se avisa aca para que el cajero lo note antes de cobrar.
+                const cambioPrecioBadge = l.cambioPrecio
+                    ? ` <span class="badge badge-warning" title="El precio de lista actual es $ ${Number(l.precioListaActual || 0).toFixed(2)}, distinto al precio con que se cargó este ítem del expendio.">Cambio precio</span>`
+                    : "";
+
                 // El numero visible es la posicion actual en la lista (1-based), no
                 // l.index (que es un contador que nunca se reutiliza). Asi, al eliminar
                 // un item del medio, los siguientes se renumeran sin saltos. l.index se
@@ -370,7 +380,7 @@
                             </div>
                             ${detalleExpendio}
                             <div class="d-flex justify-content-between item-detalle">
-                                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}</span>
+                                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}${cambioPrecioBadge}</span>
                                 <span class="fw-bold">${l.subtotal}</span>
                             </div>
                         </td>
@@ -535,6 +545,37 @@
             $("#modalProducto").toggleClass("d-none", aplicarTodos);
             $("#bloqueDatosLineaBonificacion").toggleClass("d-none", aplicarTodos);
             $("#bloquePrecioBonificado").toggleClass("d-none", aplicarTodos);
+
+            actualizarHintAtajosLinea();
+        }
+
+        // Guia de atajos al pie del modal "Linea de venta" (2026-09-06, pedido explicito del
+        // usuario -- ver docs/DECISIONS.md): va cambiando el texto a medida que el usuario
+        // avanza por la cascada de "/" (ver el atajo global B//C/E y los bindings de
+        // #txtPrecioKg/#txtPorcentaje mas abajo), para que cada paso sea obvio sin tener que
+        // adivinar. Se llama desde syncUIBonificacionTodos(), que ya corre en todos los puntos
+        // donde el estado de la bonificacion cambia (abrir el bloque, tildar "por porcentaje",
+        // tildar "aplicar a todos", y al cargar la linea en loadLineModal).
+        function actualizarHintAtajosLinea() {
+            const $hint = $("#posLineaAtajosHint");
+            if (!$hint.length) return;
+
+            if ($("#bloqueBonificar").is(":hidden")) {
+                $hint.html('Atajos: <strong>B</strong> ó <strong>/</strong> bonificar &middot; <strong>C</strong> cantidad &middot; <strong>E</strong> eliminar');
+                return;
+            }
+
+            if (!$("#chkPorcentaje").is(":checked")) {
+                $hint.html('<i class="fas fa-arrow-down mr-1"></i>Presioná <strong>/</strong> para bonificar por porcentaje');
+                return;
+            }
+
+            if (!$("#chkBonificarTodos").is(":checked")) {
+                $hint.html('<i class="fas fa-arrow-down mr-1"></i>Presioná <strong>/</strong> para aplicar a todos los ítems del carrito');
+                return;
+            }
+
+            $hint.html('<i class="fas fa-check mr-1"></i>Presioná <strong>Enter</strong> para aplicar la bonificación');
         }
 
         function aplicarBonificacionALinea(linea, cantidad, precioNuevo, porcentaje) {
@@ -783,6 +824,34 @@
                     $("#btnAplicarBonificacion").trigger("click");
                 });
 
+            // Atajo "/" en cascada (2026-09-06, pedido explicito del usuario -- ver
+            // docs/DECISIONS.md): agiliza la bonificacion sin soltar el teclado. El primer "/"
+            // (con el bloque de bonificar cerrado) equivale a "B" -- lo maneja el handler
+            // global de abajo, que ya ignora el atajo si el foco esta en un input, y en este
+            // paso el foco todavia no esta en #txtPrecioKg. Estos 2 bindings cubren los 2
+            // pasos siguientes, que SI ocurren con el foco dentro de un input (por eso el
+            // handler global no les sirve): con foco en el precio bonificado, tilda "Bonificar
+            // por porcentaje" (el propio setModoBonificacion mueve el foco a %); con foco en el
+            // porcentaje, tilda "Aplicar a todos los productos". Cada paso previene el "/"
+            // literal (no tiene sentido en un campo numerico de este formulario).
+            $("#txtPrecioKg")
+                .off("keydown.atajoBarraBonif")
+                .on("keydown.atajoBarraBonif", function (e) {
+                    if (e.key !== "/") return;
+                    e.preventDefault();
+                    if ($("#chkPorcentaje").is(":checked")) return;
+                    $("#chkPorcentaje").prop("checked", true).trigger("change");
+                });
+
+            $("#txtPorcentaje")
+                .off("keydown.atajoBarraBonif")
+                .on("keydown.atajoBarraBonif", function (e) {
+                    if (e.key !== "/") return;
+                    e.preventDefault();
+                    if ($("#chkBonificarTodos").is(":checked")) return;
+                    $("#chkBonificarTodos").prop("checked", true).trigger("change");
+                });
+
             $("#btnAplicarBonificacion").off("click").on("click", function () {
                 if (soloFormaPago) return;
                 if (!window.lineaSeleccionada) return;
@@ -1012,6 +1081,11 @@
             // escribiendo en un input (para no pisar tipeo normal) o si hay
             // un SweetAlert encima (ese tiene sus propios atajos, ver
             // btnEliminarItem y el aviso de linea anulada).
+            //
+            // "/" es un atajo equivalente a "B" para este primer paso (ver docs/DECISIONS.md,
+            // 2026-09-06) -- los pasos 2 y 3 de la cascada (tildar "por porcentaje" y "aplicar a
+            // todos") se manejan aparte, en los bindings de #txtPrecioKg/#txtPorcentaje de mas
+            // arriba, porque esos SI ocurren con el foco dentro de un input.
             document.addEventListener("keydown", function (e) {
                 if (!$("#modalLineaVenta").hasClass("show")) return;
                 if (window.Swal && Swal.isVisible && Swal.isVisible()) return;
@@ -1021,7 +1095,7 @@
 
                 const key = e.key.toLowerCase();
 
-                if (key === "b" && $("#bloqueBonificar").is(":hidden")) {
+                if ((key === "b" || key === "/") && $("#bloqueBonificar").is(":hidden")) {
                     e.preventDefault();
                     $("#btnMostrarBonificar").trigger("click");
                     return;
@@ -1083,6 +1157,12 @@
         window.agregarProducto = addProduct;
         window.renderTablaProductos = renderTable;
         window.actualizarEstadoVentaEnCurso = updateSaleState;
+        // Bonificacion por % a todos los productos del carrito (2026-09-06, pedido explicito del
+        // usuario -- ver docs/DECISIONS.md), reusada tal cual desde forma-pago.js para que el
+        // descuento/recargo global del modal de forma de pago se aplique EXACTAMENTE igual que si
+        // se hubiese hecho a mano desde el modal "Linea de venta" con "Bonificar por porcentaje" +
+        // "Aplicar a todos los productos" -- mismo calculo, una sola implementacion.
+        window.aplicarBonificacionPorcentajeATodoElCarrito = aplicarBonificacionPorcentajeATodoElCarrito;
 
         return api;
     }

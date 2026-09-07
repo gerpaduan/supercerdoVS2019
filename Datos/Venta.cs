@@ -673,7 +673,13 @@ namespace Datos
                         ROW_NUMBER() OVER (PARTITION BY lv.idCorte ORDER BY uv.fechaVenta DESC, lv.idLineaVenta DESC) AS rn
                     FROM dbo.LineaVenta lv
                     INNER JOIN UltimasVentas uv ON uv.idVenta = lv.idVenta
-                    WHERE lv.idLineaVentaAnulado = 0
+                    -- Solo lineas activas (2026-09-07, pedido explicito del usuario -- ver
+                    -- docs/DECISIONS.md): idLineaVentaAnulado=0 excluye las lineas QUE anulan a
+                    -- otra, pero no alcanza para dejar afuera lineas anuladas/negativas -- cantKg>0
+                    -- es el mismo criterio que el resto del sistema (obtenerVentas/
+                    -- getVentasVendedorCierreCaja) usa para distinguir una linea real de una
+                    -- anulacion. Mismo fix que VentaPg.cs (Postgres), misma query duplicada.
+                    WHERE lv.idLineaVentaAnulado = 0 AND lv.cantKg > 0
                 )
                 SELECT c.codigo, c.corte AS producto, lc.precioKg, lc.cantKg, lc.fechaVenta
                 FROM LineasCliente lc

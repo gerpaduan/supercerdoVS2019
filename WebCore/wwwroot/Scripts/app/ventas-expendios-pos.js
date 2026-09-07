@@ -77,6 +77,14 @@
             return num.toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
         }
 
+        // Precio/Total por item (2026-09-06, pedido explicito del usuario -- ver
+        // docs/DECISIONS.md). BuscarExpendiosPOS ya devuelve precioKg/total por linea
+        // (VentasController.cs), solo faltaba mostrarlos en la tabla.
+        function formatMoney(value) {
+            const num = Number(value || 0);
+            return '$ ' + num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
         function formatDate(value) {
             if (!value) return '';
 
@@ -178,6 +186,33 @@
             $('.exp-col-sucursal').toggleClass('d-none', !mostrar);
         }
 
+        // Agrupa la lista plana que devuelve BuscarExpendiosPOS (una fila por CADA linea/producto
+        // de cada expendio) en grupos por idExpendio, preservando el orden de primera aparicion.
+        // No depende de que el backend devuelva las filas de un mismo expendio contiguas (aunque
+        // hoy lo hace, por el ORDER BY fechaExpendio, idExpendio) -- agrupar por Map es correcto
+        // sin importar el orden real de la respuesta.
+        function agruparPorExpendio(items) {
+            const orden = [];
+            const mapa = new Map();
+
+            (items || []).forEach(function (item) {
+                const id = parseInt(item.idExpendio, 10) || 0;
+                if (!mapa.has(id)) {
+                    mapa.set(id, { idExpendio: id, cabecera: item, lineas: [] });
+                    orden.push(id);
+                }
+                mapa.get(id).lineas.push(item);
+            });
+
+            return orden.map(function (id) { return mapa.get(id); });
+        }
+
+        // Pedido explicito del usuario (2026-09-06, ver docs/DECISIONS.md): la tabla se organiza
+        // por expendio -- una fila de "encabezado" con fecha/hora/nro/identificacion/sector/
+        // vendedor/observacion y el UNICO boton "Cargar" de todo el grupo, y debajo una fila por
+        // cada item (producto + cantidad) del expendio, sin boton propio. cargarExpendioInterno ya
+        // trae SIEMPRE todas las lineas del expendio via ObtenerExpendioPOS (no las de esta lista,
+        // que es solo para mostrar) -- agrupar la vista no cambia que se cargue "todo o nada".
         function renderRows(items) {
             const $tbody = $('#tablaExpendiosPOS tbody');
             if (!$tbody.length) return;
@@ -186,14 +221,24 @@
 
             $tbody.empty();
 
-            const colspan = $('.exp-col-sucursal').hasClass('d-none') ? 10 : 11;
+            const mostrarSucursal = !$('.exp-col-sucursal').hasClass('d-none');
+            const colspan = mostrarSucursal ? 13 : 12;
 
             if (!items || !items.length) {
                 $tbody.append('<tr><td colspan="' + colspan + '" class="text-center text-muted py-4">No se encontraron expendios para esos filtros.</td></tr>');
                 return;
             }
 
-            items.forEach(function (item) {
+            // Colspan de la parte "identificatoria" del expendio (Fecha..Sucursal) que las filas
+            // de item dejan en blanco/indentado, y de la parte final (Vendedor+Obs+Accion) que la
+            // fila de encabezado sí completa pero la fila de item deja en blanco.
+            const colspanIzquierdo = mostrarSucursal ? 6 : 5;
+
+            const grupos = agruparPorExpendio(items);
+
+            grupos.forEach(function (grupo) {
+                const item = grupo.cabecera;
+
                 const estadoBadge = item.cargadoEnVentaActual
                     ? '<span class="badge badge-info">En venta actual</span>'
                     : (item.asignado ? '<span class="badge badge-secondary">Asignado</span>' : '<span class="badge badge-warning">Pendiente</span>');
@@ -210,15 +255,14 @@
                     : '';
 
                 $tbody.append(
-                    '<tr data-id-expendio="' + item.idExpendio + '">' +
+                    '<tr class="exp-group-header" data-id-expendio="' + item.idExpendio + '">' +
                     '<td>' + formatDate(item.fechaExpendio) + '</td>' +
                     '<td>' + (item.hora || '') + '</td>' +
                     '<td><strong>' + item.idExpendio + '</strong><div>' + estadoBadge + '</div></td>' +
                     '<td>' + (item.identificacionExpendio || '') + '</td>' +
                     '<td>' + (item.sector || '') + '</td>' +
-                    '<td class="exp-col-sucursal d-none">' + escapeHtml(item.sucursal || '') + '</td>' +
-                    '<td><div><strong>' + (item.producto || '') + '</strong></div><div class="text-muted small">Cod. ' + (item.codigo || 0) + '</div></td>' +
-                    '<td class="text-right">' + formatKg(item.cantKg) + '</td>' +
+                    (mostrarSucursal ? '<td class="exp-col-sucursal">' + escapeHtml(item.sucursal || '') + '</td>' : '') +
+                    '<td colspan="4" class="text-muted small">' + grupo.lineas.length + ' ítem(s)</td>' +
                     '<td>' + (item.vendedor || '') + '</td>' +
                     '<td class="text-center">' + celdaObservacion + '</td>' +
                     '<td class="text-center">' +
@@ -226,6 +270,20 @@
                     '</td>' +
                     '</tr>'
                 );
+
+                grupo.lineas.forEach(function (linea) {
+                    const total = linea.total != null ? linea.total : (Number(linea.precioKg || 0) * Number(linea.cantKg || 0));
+                    $tbody.append(
+                        '<tr class="exp-group-item" data-id-expendio="' + item.idExpendio + '">' +
+                        '<td colspan="' + colspanIzquierdo + '"></td>' +
+                        '<td><div>' + (linea.producto || '') + '</div><div class="text-muted small">Cod. ' + (linea.codigo || 0) + '</div></td>' +
+                        '<td class="text-right">' + formatKg(linea.cantKg) + '</td>' +
+                        '<td class="text-right">' + formatMoney(linea.precioKg) + '</td>' +
+                        '<td class="text-right">' + formatMoney(total) + '</td>' +
+                        '<td colspan="3"></td>' +
+                        '</tr>'
+                    );
+                });
             });
 
             actualizarColumnaSucursal();
@@ -383,7 +441,14 @@
                 balanza: detalle.balanza === true,
                 // Los expendios siempre se cargan por peso (cantKg), no hay
                 // variante "por unidad" para este flujo.
-                pesable: true
+                pesable: true,
+                // Etiqueta "Cambio precio" en el carrito (2026-09-06, pedido explicito del
+                // usuario -- ver docs/DECISIONS.md): ObtenerExpendioPOS ya compara el precio
+                // guardado en la linea del expendio contra el precio de lista ACTUAL del
+                // producto (join en vivo contra corte) -- se propaga tal cual, pos-cart.js la
+                // usa para mostrar el aviso.
+                cambioPrecio: detalle.cambioPrecio === true,
+                precioListaActual: Number(detalle.precioListaActual || 0)
             };
         }
 
@@ -491,9 +556,16 @@
         // cargados en esta venta). Al terminar, refresca la busqueda, muestra un resumen y abre
         // el modal de observaciones acumuladas una sola vez si hizo falta.
         function cargarTodosVisibles() {
-            const candidatos = (visibleItems || [])
-                .filter(function (item) { return item && item.cargadoEnVentaActual !== true && item.asignado !== true; })
-                .map(function (item) { return parseInt(item.idExpendio, 10) || 0; })
+            // Validacion 2026-09-06 (ver docs/DECISIONS.md): visibleItems es la lista PLANA de
+            // BuscarExpendiosPOS (una fila por cada linea/producto), asi que sin deduplicar por
+            // idExpendio un expendio con 3 lineas contaba 3 veces -- el contador de "Cargando N
+            // expendio(s)..." y el resumen final mentian (mostraban lineas, no expendios), y se
+            // disparaban N-1 requests redundantes que cargarExpendioInterno descartaba en
+            // silencio por "ya cargado". Agrupar primero asegura que la cuenta y las requests
+            // sean por EXPENDIO real, uno por uno, no por linea.
+            const candidatos = agruparPorExpendio(visibleItems || [])
+                .filter(function (grupo) { return grupo.cabecera.cargadoEnVentaActual !== true && grupo.cabecera.asignado !== true; })
+                .map(function (grupo) { return grupo.idExpendio; })
                 .filter(function (id) { return id > 0; });
 
             if (!candidatos.length) {

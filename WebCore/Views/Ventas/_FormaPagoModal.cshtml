@@ -88,15 +88,66 @@
                     <!-- TOTAL VENTA -->
                     <div class="col-12 mt-3">
                         <div class="form-group text-center">
-                            <label class="text-primary mb-1" style="font-size:1.1rem;">
+                            <label class="text-primary mb-1 d-flex align-items-center justify-content-center" style="font-size:1.1rem; gap:.5rem;">
                                 Total de la Venta
+                                @* Bonificacion por % a todos los productos (2026-09-06, pedido
+                                   explicito del usuario -- ver docs/DECISIONS.md): solo disponible
+                                   si NINGUN producto del carrito ya tiene su propia bonificacion
+                                   (validado en forma-pago.js al abrir el bloque). Atajo "/". *@
+                                <button type="button"
+                                        id="btnTogglePorcentajeTotalVenta"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="Bonificar por porcentaje a todos los productos (atajo: /)">
+                                    <i class="fas fa-percentage"></i>
+                                </button>
                             </label>
 
                             <input type="text"
                                    id="totalVenta"
                                    class="form-control form-control-lg text-center text-primary mx-auto"
-                                   style="width:50%; font-size:1.75rem; font-weight:700;"
+                                   style="width:50%; font-weight:700;"
                                    readonly>
+                            @* "Total de la Venta" (azul) pasa a mostrar SIEMPRE el monto real a
+                               cobrar -- con descuento/recargo aplicado, o el total tal cual si no
+                               hay ninguno activo (2026-09-07, pedido explicito del usuario -- ver
+                               docs/DECISIONS.md, reemplaza el diseño anterior donde el azul era
+                               fijo y el verde mostraba el total resultante). Este tag solo se
+                               muestra mientras hay un % activo, para aclarar que el numero de
+                               arriba ya lo incluye. *@
+                            <small id="lblTotalVentaConDescuentoTag" class="text-muted d-none">(con descuento)</small>
+                        </div>
+                    </div>
+
+                    <!-- Bloque descuento/recargo % a todos (oculto por defecto) -->
+                    <div class="col-12" id="bloquePorcentajeTotalVenta" style="display:none;">
+                        <div class="border rounded p-3 mb-2 bg-light mx-auto" style="max-width: 420px;">
+                            <div class="form-group text-center mb-2">
+                                <label class="small mb-1">% descuento a todos los productos (negativo = recargo)</label>
+                                <input type="text"
+                                       id="txtPorcentajeTotalVenta"
+                                       class="form-control text-center mx-auto"
+                                       style="max-width: 180px;"
+                                       inputmode="decimal"
+                                       autocomplete="off"
+                                       placeholder="0">
+                                @* Hint de estado del input (2026-09-07, pedido explicito del
+                                   usuario -- ver docs/DECISIONS.md): mientras esta editable dice
+                                   "Enter para confirmar"; una vez confirmado con Enter queda
+                                   deshabilitado y el hint indica que "/" lo vuelve a habilitar. *@
+                                <small id="pvbHintDescuento" class="text-muted d-block mt-1">Enter para confirmar</small>
+                            </div>
+                            @* El verde pasa a mostrar el MONTO del descuento/recargo en si (la
+                               diferencia), no el total resultante -- ese ya se ve en "Total de la
+                               Venta" de arriba (2026-09-07, pedido explicito del usuario -- ver
+                               docs/DECISIONS.md). Ej: total $10, descuento 10% -> verde "$1", azul
+                               "$9". La etiqueta ("Descuento aplicado"/"Recargo aplicado") la arma
+                               forma-pago.js segun el signo del %. *@
+                            <div class="text-center">
+                                <div id="lblEtiquetaMontoDescuento" class="small text-muted mb-1">Descuento aplicado</div>
+                                <div id="lblTotalConDescuentoTotalVenta" class="font-weight-bold text-success" style="font-size:1.5rem;">
+                                    $ 0,00
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -183,9 +234,40 @@
             font-size: 1rem;
         }
 
-        #modalFormaPago #totalVenta,
         #modalFormaPago .text-primary.mb-1 {
             font-size: 1.2rem !important;
         }
+    }
+
+    /* Importe de venta 2 tamaños mas grande (2026-09-06, pedido explicito del usuario -- ver
+       docs/DECISIONS.md). Antes el media query de arriba lo dejaba en 1.2rem en pantallas
+       grandes -- MAS CHICO que en mobile (1.75rem), una inconsistencia heredada del port
+       original. Ahora crece de forma consistente en todos los tamaños. */
+    #modalFormaPago #totalVenta {
+        font-size: 2.25rem !important;
+    }
+
+    @@media (min-width: 1200px) {
+        #modalFormaPago #totalVenta {
+            font-size: 2.6rem !important;
+        }
+    }
+
+    /* Mientras el input de descuento tiene el foco (2026-09-07, pedido explicito del usuario --
+       ver docs/DECISIONS.md): se invierte el enfasis visual -- el total a cobrar (verde) crece y
+       el total original (azul) se achica, para que el usuario mire el numero que realmente
+       importa mientras define el %. Vuelve a los tamaños normales al perder el foco (clase
+       togglada por forma-pago.js en focus/blur de #txtPorcentajeTotalVenta). */
+    #modalFormaPago #totalVenta,
+    #modalFormaPago #lblTotalConDescuentoTotalVenta {
+        transition: font-size .15s ease;
+    }
+
+    #modalFormaPago.pos-descuento-input-activo #totalVenta {
+        font-size: 1.1rem !important;
+    }
+
+    #modalFormaPago.pos-descuento-input-activo #lblTotalConDescuentoTotalVenta {
+        font-size: 2.4rem !important;
     }
 </style>

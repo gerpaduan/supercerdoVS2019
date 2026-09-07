@@ -268,6 +268,46 @@
             setClienteIdentificacionVisual('', 'Consumidor Final');
         });
 
+        // Buscador de cliente real (F9), 2026-09-06 (retomado -- ver docs/DECISIONS.md). Port
+        // literal de Web/Scripts/app/punto-expendio-pos.js:525-556 -- a diferencia de Ventas/POS
+        // (persona-buscar.js maneja el click), aca el handler es propio porque no usa POSGuard
+        // (PuntosExpendio no tiene esa infraestructura de guard de modales apilados).
+        window.api = window.api || {};
+        window.api.persona = {
+            listar: config.urlPersonaListar,
+            buscar: config.urlPersonaBuscar,
+            obtener: config.urlPersonaObtener,
+            crear: config.urlPersonaCrear,
+            guardarCrear: config.urlPersonaGuardarCrear
+        };
+
+        $(document).on('click', '#btnBuscarPersona', function () {
+            var $btn = $(this);
+            var $contenedor = $('#contenedorModalPersona');
+
+            $('#modalBuscarPersona').removeData('origen-persona-buscar');
+
+            if ($contenedor.find('#modalBuscarPersona').length) {
+                $('#modalBuscarPersona').modal('show');
+                if (typeof cargarPersonas === 'function') cargarPersonas();
+                return;
+            }
+
+            $btn.prop('disabled', true);
+            $.get(window.api.persona.buscar)
+                .done(function (html) {
+                    $contenedor.html(html);
+                    $('#modalBuscarPersona').modal('show');
+                    if (typeof cargarPersonas === 'function') cargarPersonas();
+                })
+                .fail(function () {
+                    Swal.fire({ icon: 'error', title: 'Cliente', text: 'No se pudo cargar el buscador de clientes' });
+                })
+                .always(function () {
+                    $btn.prop('disabled', false);
+                });
+        });
+
         $('#razonSocial').on('input', function () {
             $('#idPersona').val('0');
             setClienteIdentificacionVisual('', '');
@@ -374,7 +414,9 @@
 
         // ===== Post-guardado basico (PDF + email, ver _ModalPostPuntoExpendioBasico.cshtml) =====
         function mostrarModalPostExpendio(resp) {
-            beep();
+            // Sin beep al finalizar (2026-09-06, pedido explicito del usuario -- ver
+            // docs/DECISIONS.md): se confundia con el beep de "producto agregado al carrito",
+            // que sigue sonando igual que siempre. Se saca SOLO este beep puntual.
             $('#ppebResumen').text('Expendio #' + resp.idExpendio + ' registrado correctamente.');
             $('#btnPpebPdf').attr('href', resp.pdfUrl);
             $('#btnPpebPdf, #btnPpebEmail').data('id-expendio', resp.idExpendio);

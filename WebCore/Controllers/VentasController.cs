@@ -11,7 +11,8 @@
 // cross-sucursal agregados a pedido del usuario, ver docs/DECISIONS.md), NuevaFacturaSinVenta/
 // CrearVentaManualParaFactura/GenerarFactura/LimpiarLineasVentaManual (flujo AFIP "facturar sin
 // venta", probado contra produccion real de AFIP), Imprimir/ObtenerDatosEmailComprobante/
-// EnviarComprobanteEmail (PDF con QuestPDF + email real, ya portados de un slice anterior).
+// EnviarComprobanteEmail (PDF con QuestPDF + email real, ya portados de un slice anterior),
+// ImprimirTicketHtml (ticket termico HTML 58/80mm, retomado 2026-09-06, ver docs/DECISIONS.md).
 //
 // SIN PORTAR (confirmado, no una lista vieja):
 //  - AFIP: ProbarLoginAfip, CerrarVentaSinFacturar. GenerarNotaCredito SI se porto (2026-09-05,
@@ -21,8 +22,12 @@
 //    CerrarOperadorPOS, AutorizarModuloVentas, AutorizarOperadorModuloVentas.
 //  - AgregarProducto: confirmado codigo muerto en el original (PLAN-POS.md seccion 2), no se
 //    porta nunca.
-//  - Impresion con agente local ESC/POS (distinto del PDF, que si esta portado): ImprimirTicket,
-//    ImprimirTicketPayload, ImprimirIngresoBilletesPayload, DescargarAgenteImpresion.
+//  - Impresion con agente local ESC/POS (distinto del PDF y del ticket HTML, que si estan
+//    portados -- Imprimir, ImprimirTicketHtml): ImprimirTicketPayload, ImprimirIngresoBilletesPayload,
+//    DescargarAgenteImpresion. ImprimirTicket (el nombre clasico) esta ocupado en este controller
+//    por el modal de Factura Electronica (ver su propio comentario) -- el ticket termico HTML real
+//    (58/80mm, mismo diseño de _TicketHTML.cshtml, retomado 2026-09-06) vive en ImprimirTicketHtml,
+//    ruta nueva para no pisar esa URL.
 //
 // Consecuencia visible en las vistas: los botones que dependen de lo no portado (AFIP automatica
 // desde post-venta, ticket ESC/POS, operador de produccion) se EXCLUYEN de las vistas en vez de
@@ -205,6 +210,65 @@ namespace WebCore.Controllers
             DateTime inicio = cierre.FechaHoraInicio.Value;
             DateTime fin = cierre.FechaHoraCierre ?? DateTime.Now;
             return venta.FechaVenta >= inicio && venta.FechaVenta <= fin;
+        }
+
+        // Historial de precios de cliente (F8, 2026-09-06 -- ver docs/DECISIONS.md). Mismo criterio
+        // que FinanzasController.PuedeVerSaldosCuentaCorriente: admin pasa siempre, si no, requiere
+        // el permiso de ver cuentas corrientes completas. Port literal de
+        // Web/Controllers/VentasController.cs:967-976 (se replica el helper por controller, no se
+        // centraliza -- mismo patron ya usado en este repo).
+        private bool PuedeVerCtaCteCompleta(Entidades.Usuario usuario)
+        {
+            if (usuario == null) return false;
+            if (usuario.Admin) return true;
+            return _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
+        }
+
+        // GET: Ventas/HistorialPreciosCliente
+        // Historial de "ultimo precio por producto" de un cliente, sobre sus ultimas N ventas --
+        // para el boton/atajo F8 del POS (2026-09-06, retomado -- ver docs/DECISIONS.md). Port
+        // literal de Web/Controllers/VentasController.cs:978-1023. obtenerUltimosPreciosPorCliente
+        // ya existe en Negocio/Venta.cs (compartido), no hubo que tocar la capa de negocio.
+        [HttpGet]
+        public PartialViewResult HistorialPreciosCliente(int idPersona, int topVentas = 10)
+        {
+            var user = _usuarioActual;
+            if (user == null)
+            {
+                ViewBag.HistorialPreciosError = "La sesión expiró. Recargá la página para continuar.";
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", (List<WebCore.Models.HistorialPrecioProductoVm>)null);
+            }
+
+            var persona = _oPersonaN.findById(idPersona);
+            if (persona == null || persona.IdPersona <= 0)
+            {
+                ViewBag.HistorialPreciosError = "No se encontró el cliente.";
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", (List<WebCore.Models.HistorialPrecioProductoVm>)null);
+            }
+
+            if (persona.CtaCte && !PuedeVerCtaCteCompleta(user))
+            {
+                ViewBag.HistorialPreciosError = "No tenés permiso para ver el historial de precios de este cliente.";
+                return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", (List<WebCore.Models.HistorialPrecioProductoVm>)null);
+            }
+
+            DataTable dt = _oVentaN.obtenerUltimosPreciosPorCliente(idPersona, topVentas);
+            var model = new List<WebCore.Models.HistorialPrecioProductoVm>();
+            if (dt != null)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    model.Add(new WebCore.Models.HistorialPrecioProductoVm
+                    {
+                        Codigo = row["codigo"] == DBNull.Value ? "" : Convert.ToString(row["codigo"]),
+                        Producto = row["producto"] == DBNull.Value ? "" : Convert.ToString(row["producto"]),
+                        PrecioKg = row["precioKg"] == DBNull.Value ? 0f : Convert.ToSingle(row["precioKg"]),
+                        FechaVenta = row["fechaVenta"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["fechaVenta"])
+                    });
+                }
+            }
+
+            return PartialView("~/Views/Ventas/_HistorialPreciosClientePOS.cshtml", model);
         }
 
         private string ObtenerMotivoNoPuedeCambiarFormaPago(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
@@ -762,10 +826,11 @@ namespace WebCore.Controllers
         }
 
         // GET /Ventas/NuevaFacturaSinVenta -- arma el DTO "en blanco" para el formulario de
-        // facturacion manual (sin venta de productos real detras, ver docs/DECISIONS.md). Devuelve
-        // JSON, no una vista: la vista rica original (_FacturaElectronica.cshtml, 828 lineas) NO se
-        // porta en este slice (fuera de alcance del mini-spike AFIP, ver docs/DECISIONS.md) -- este
-        // endpoint sirve para verificar el armado del DTO y como base de una UI futura.
+        // facturacion manual (sin venta de productos real detras, ver docs/DECISIONS.md). Modal de
+        // Factura Electronica (2026-09-06, retomado -- ver docs/DECISIONS.md): ahora SI devuelve la
+        // vista rica (_FacturaElectronica.cshtml, port literal de Web/Views/Ventas/
+        // _FacturaElectronica.cshtml) en vez de JSON -- gap ya cerrado, WebCore.VentasFacturaModal
+        // la consume igual que el clasico (GET + inyeccion AJAX en #contenedorFacturaElectronica).
         [HttpGet]
         public IActionResult NuevaFacturaSinVenta()
         {
@@ -794,17 +859,14 @@ namespace WebCore.Controllers
             dto.AgruparItemUnitario = true;
 
             var alicuotasDt = _oCorteN.obtenerAlicuotasIva(false);
-            var alicuotas = alicuotasDt.AsEnumerable()
-                .Select(r => new { idIva = Convert.ToInt32(r["idIva"]), iva = Convert.ToDouble(r["iva"]) })
+            ViewBag.AlicuotasIva = alicuotasDt.AsEnumerable()
+                .Select(r => new WebCore.Models.AlicuotaIvaVm { IdIva = Convert.ToInt32(r["idIva"]), Iva = Convert.ToDouble(r["iva"]) })
                 .ToList();
 
-            return Json(new
-            {
-                ok = true,
-                dto,
-                sucursalNombre = !string.IsNullOrWhiteSpace(sucursal.SucursalNombre) ? sucursal.SucursalNombre : sucursal.sucursal,
-                alicuotas
-            });
+            ViewBag.SucursalNombreFactura = !string.IsNullOrWhiteSpace(sucursal.SucursalNombre) ? sucursal.SucursalNombre : sucursal.sucursal;
+            ViewBag.EsSinVenta = true;
+
+            return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
         }
 
         // POST /Ventas/CrearVentaManualParaFactura -- crea una venta real minima (Efectivo, sin
@@ -895,6 +957,54 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, msg = "No se recibieron datos de la factura." });
 
                 var factura = MapDtoToFactura(dto);
+
+                // Editar una factura ya emitida (F.C. Electronica, boton "Factura" del post-venta,
+                // 2026-09-06 -- ver docs/DECISIONS.md). Port literal de Web/Controllers/
+                // VentasController.cs:1967-2012, gap real detectado al portar la vista rica: sin
+                // esta rama, reenviar el form con dto.IdFactura>0 caia en el chequeo de idempotencia
+                // de abajo y devolvia {ok:true, already:true} SIN GUARDAR los cambios de FormaPago/
+                // Observaciones/DescItemUnitario que la UI si deja editar cuando ya-emitida=1 -- los
+                // campos fiscales ya reportados a AFIP se restauran desde facturaExistente sin
+                // importar lo que mande el cliente (defensa en profundidad, la UI ya los deja
+                // readonly/disabled pero el servidor no confia en eso).
+                if (dto.IdFactura > 0)
+                {
+                    if (factura.Venta == null)
+                        return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                    var facturaExistente = _oVentaN.getFactuElecById(dto.IdFactura);
+                    if (facturaExistente == null)
+                        return Json(new { ok = false, msg = "Factura no encontrada" });
+
+                    factura.PtoVtaAfip = facturaExistente.PtoVtaAfip;
+                    factura.CodTipoCbteAfip = facturaExistente.CodTipoCbteAfip;
+                    factura.DescTipoCbteAfip = facturaExistente.DescTipoCbteAfip;
+                    factura.NroCbteAfip = facturaExistente.NroCbteAfip;
+                    factura.FechaEmisionAfip = facturaExistente.FechaEmisionAfip;
+                    factura.TipoDocAfip = facturaExistente.TipoDocAfip;
+                    factura.NroDocAfip = facturaExistente.NroDocAfip;
+                    factura.RazonSocialAFIP = facturaExistente.RazonSocialAFIP;
+                    factura.CondicionIvaAFIP = facturaExistente.CondicionIvaAFIP;
+                    factura.DomicilioAFIP = facturaExistente.DomicilioAFIP;
+                    factura.CondicionVenta = facturaExistente.CondicionVenta;
+                    factura.PorcentajeFacturacion = facturaExistente.PorcentajeFacturacion;
+                    factura.ImporteNetoGravado = facturaExistente.ImporteNetoGravado;
+                    factura.Iva = facturaExistente.Iva;
+                    factura.ImporteTotal = facturaExistente.ImporteTotal;
+                    factura.CAE1 = facturaExistente.CAE1;
+                    factura.FecVtoCAE = facturaExistente.FecVtoCAE;
+
+                    _oVentaN.addOrEditFactuElec(factura);
+
+                    return Json(new
+                    {
+                        ok = true,
+                        updated = true,
+                        facturaId = dto.IdFactura,
+                        ventaId = dto.IdVenta,
+                        msg = "Factura actualizada correctamente"
+                    });
+                }
 
                 if (factura.Venta == null)
                     return Json(new { ok = false, msg = "Venta no encontrada" });
@@ -1012,7 +1122,8 @@ namespace WebCore.Controllers
                         facturaId = idNotaExistente,
                         nro = ncExistente?.NroCbteAfip,
                         cae = ncExistente?.CAE1,
-                        mensaje = "Ya existe una nota de crédito asociada a esta venta"
+                        mensaje = "Ya existe una nota de crédito asociada a esta venta",
+                        detalleUrl = Url.Action("DetalleFactura", "Ventas", new { id = idNotaExistente })
                     });
                 }
 
@@ -1035,7 +1146,8 @@ namespace WebCore.Controllers
                     facturaId = idNotaGenerada,
                     nro = afipRes.Factura?.NroCbteAfip,
                     cae = afipRes.Factura?.CAE1,
-                    mensaje = "Nota de crédito generada correctamente"
+                    mensaje = "Nota de crédito generada correctamente",
+                    detalleUrl = idNotaGenerada > 0 ? Url.Action("DetalleFactura", "Ventas", new { id = idNotaGenerada }) : null
                 });
             }
             catch (Exception ex)
@@ -1102,6 +1214,47 @@ namespace WebCore.Controllers
             }
         }
 
+        // POST /Ventas/CerrarVentaSinFacturar -- boton "Cerrar venta sin facturar" del modal de
+        // Factura Electronica (2026-09-06, retomado -- ver docs/DECISIONS.md). Port literal de
+        // Web/Controllers/VentasController.cs:2261-2310: no borra nada, solo deja un registro de
+        // FacturaElectronica marcado Error=true (mismo mecanismo que un fallo real de AFIP) para
+        // que esVentaSinFacturar deje de considerar la venta pendiente de facturar.
+        [HttpPost]
+        public IActionResult CerrarVentaSinFacturar(int idVenta)
+        {
+            try
+            {
+                if (idVenta <= 0)
+                    return Json(new { ok = false, msg = "Venta inválida" });
+
+                var venta = _oVentaN.getVentaById(idVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                int idFacturaExistente = _oVentaN.esVentaSinFacturar(idVenta, false);
+                if (idFacturaExistente > 0)
+                    return Json(new { ok = false, msg = "La venta ya tiene una factura electrónica registrada." });
+
+                var factErr = new Entidades.FacturaElectronica
+                {
+                    IdVenta = idVenta,
+                    Venta = venta,
+                    Error = true,
+                    MensajeError = "se forzo el cierre de la ventana sin facturar.",
+                    FechaError = DateTime.Now
+                };
+
+                _oVentaN.addOrEditFactuElec(factErr);
+
+                return Json(new { ok = true, ventaId = idVenta, forcedClose = true });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, msg = "Error cerrando la venta sin facturar", error = ex.Message });
+            }
+        }
+
         // GET /Ventas/PreviewFacturaDto?idVenta=X -- helper de verificacion para probar el flujo de
         // facturacion manual de punta a punta sin portar la vista rica _FacturaElectronica.cshtml
         // (828 lineas, fuera de alcance de este slice, ver docs/DECISIONS.md). Devuelve el mismo
@@ -1117,6 +1270,38 @@ namespace WebCore.Controllers
 
             var dto = BuildFacturaDTO(venta, new Entidades.FacturaElectronica());
             return Json(new { ok = true, dto });
+        }
+
+        // GET /Ventas/ImprimirTicket?id=X&mm=0 -- modal de Factura Electronica (2026-09-06,
+        // retomado -- ver docs/DECISIONS.md). Port SOLO de la rama mm==0 de Web/Controllers/
+        // VentasController.cs:1399-1422 ("ver factura ya emitida" / formulario para generarla),
+        // que es html puro sin relacion con el resto del nombre "ImprimirTicket" -- se mantiene el
+        // mismo nombre/ruta que el clasico porque VentasFacturaModal.abrir (modal-postventa.js,
+        // window.AppUrls.ventasImprimir) llama a esta URL literal con mm=0 para ambos casos (venta
+        // ya facturada o pendiente de facturar). mm!=0 (ticket ESC/POS via agente local) sigue
+        // fuera de alcance -- devuelve el mismo JSON de error que ya usa este controller para lo no
+        // portado, que el JS del modal ya sabe reconocer (VentasFacturaModal.abrir hace
+        // dataType:'html' + un regex-sniff de {"ok":false...}).
+        [HttpGet]
+        public IActionResult ImprimirTicket(int id, int mm = 0)
+        {
+            var venta = _oVentaN.getVentaById(id);
+            if (venta == null)
+                return Json(new { ok = false, msg = "Venta no encontrada" });
+
+            if (mm != 0)
+                return Json(new { ok = false, msg = "Impresión de ticket ESC/POS no disponible en este sistema." });
+
+            var factuElec = ObtenerFacturaAsociadaVenta(venta.IdVenta) ?? new Entidades.FacturaElectronica();
+            var notaCreditoAsociada = ObtenerNotaCreditoAsociadaVenta(venta.IdVenta);
+            ViewBag.NotaCreditoAsociadaId = notaCreditoAsociada != null ? notaCreditoAsociada.Id : 0;
+
+            var dto = BuildFacturaDTO(venta, factuElec);
+            ViewBag.SucursalNombreFactura = venta.Sucursal != null
+                ? (!string.IsNullOrWhiteSpace(venta.Sucursal.SucursalNombre) ? venta.Sucursal.SucursalNombre : venta.Sucursal.sucursal)
+                : "";
+
+            return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
         }
 
         private FacturaElectronicaDto BuildFacturaDTO(Entidades.Venta venta, Entidades.FacturaElectronica factuElec)
@@ -1399,6 +1584,55 @@ namespace WebCore.Controllers
         {
             int idNotaCredito = _oVentaN.existeNotaCreditoParaVenta(idVenta);
             return idNotaCredito > 0 ? _oVentaN.getFactuElecById(idNotaCredito) : null;
+        }
+
+        // GET /Ventas/ImprimirTicketHtml?id=X&mm=58|80 -- ticket termico HTML, retomado 2026-09-06
+        // (pedido explicito del usuario -- ver docs/DECISIONS.md). Port fiel de la rama mm!=0 de
+        // Web/Controllers/VentasController.cs:ImprimirTicket (clasico) -- mismo diseño de
+        // _TicketHTML.cshtml (WebCore/Views/Ventas/_TicketHTML.cshtml, portado sin cambios de
+        // logica). El navegador hace de "agente" (dialogo nativo de impresion via window.print()
+        // en la vista), igual que el resto de comprobantes de este controller -- el agente local
+        // ESC/POS (ImprimirTicketPayload en el clasico) sigue explicitamente fuera de alcance, ver
+        // header de este archivo. Ruta separada de ImprimirTicket (que ya esta ocupada en este
+        // controller por el modal de Factura Electronica, ver su propio comentario) para no
+        // pisar esa URL que ya consume factura-electronica.js.
+        //
+        // TODO(claude): Negocio/NegocioAgregado1-3 configurables via AppSettings (el clasico los
+        // lee de ConfigurationManager.AppSettings antes de caer al fallback de Empresa) no estan
+        // wireados todavia en WebCore/App.config -- se usa siempre el fallback de datos de Empresa
+        // (mismo comportamiento que tendria el clasico si esas claves no estuvieran seteadas).
+        [HttpGet]
+        public IActionResult ImprimirTicketHtml(int id, int mm = 80)
+        {
+            var venta = _oVentaN.getVentaById(id);
+            if (venta == null)
+                return NotFound();
+
+            int medida = mm == 58 ? 58 : 80;
+            ViewBag.Medida = medida;
+
+            var facturaTicket = ObtenerFacturaAsociadaVenta(venta.IdVenta);
+            ViewBag.FacturaTicket = (facturaTicket != null && facturaTicket.Id > 0)
+                ? BuildFacturaDTO(venta, facturaTicket)
+                : null;
+
+            var empresaTicket = ObtenerEmpresaVenta(venta);
+            ViewBag.EmpresaSesion = empresaTicket;
+
+            // QR oficial de AFIP (RG 4892/2020) para el ticket -- solo si la venta esta facturada.
+            // GenerateQRCode devuelve null si falta algun dato obligatorio.
+            if (facturaTicket != null && facturaTicket.Id > 0)
+            {
+                var qrBytes = WebCore.Services.GenerarDocsCore.GenerateQRCode(facturaTicket, venta);
+                ViewBag.QrTicketBase64 = qrBytes != null ? Convert.ToBase64String(qrBytes) : null;
+            }
+
+            ViewBag.Negocio = ObtenerNombreEmpresaVenta(venta);
+            ViewBag.NegocioAgregado1 = empresaTicket != null ? empresaTicket.Slogan1 ?? "" : "";
+            ViewBag.NegocioAgregado2 = empresaTicket != null ? empresaTicket.Slogan2 ?? "" : "";
+            ViewBag.NegocioAgregado3 = empresaTicket != null ? empresaTicket.Slogan3 ?? "" : "";
+
+            return View("~/Views/Ventas/_TicketHTML.cshtml", venta);
         }
 
         // ===== PDF (QuestPDF, ver docs/DECISIONS.md) y email real =====
@@ -1863,6 +2097,7 @@ namespace WebCore.Controllers
                 ViewBag.RequierePreseleccionFormaPago = RequierePreseleccionFormaPagoPOS(formasPagoConfigEditar);
                 ViewBag.Sucursales = _oSucursalN.findAll();
                 ViewBag.IdConsumidorFinal = _oPersonaN.getConsumidorFinal().idPersona;
+                ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(operador);
 
                 ViewBag.EsEdicionVenta = true;
                 ViewBag.IdVentaEditar = idVentaEditar;
@@ -1906,6 +2141,7 @@ namespace WebCore.Controllers
 
             var consumidorFinal = _oPersonaN.getConsumidorFinal();
             ViewBag.IdConsumidorFinal = consumidorFinal.idPersona;
+            ViewBag.PuedeVerCtaCteCompleta = PuedeVerCtaCteCompleta(operador);
 
             var venta = new Entidades.Venta
             {
@@ -2394,15 +2630,30 @@ namespace WebCore.Controllers
                     idSucursal = expendio.Sucursal != null ? expendio.Sucursal.idSucursal : 0,
                     sucursal = expendio.Sucursal != null ? expendio.Sucursal.SucursalNombre : ""
                 },
-                lineas = (expendio.LineasVenta ?? new List<Entidades.LineaVenta>()).Select(l => new
+                // precioListaActual/cambioPrecio (2026-09-06, pedido explicito del usuario, ver
+                // docs/DECISIONS.md): l.Corte viene de un JOIN en vivo contra la tabla corte (ver
+                // VentaPg.GetLineasExpendio), asi que l.Corte.PrecioKg es el precio de lista DE
+                // HOY, distinto de l.PrecioKg (el precio guardado en la linea al momento de crear
+                // el expendio, en Puntos de Expendio -- ver docs/DECISIONS.md "no toma forma de
+                // pago"). Tolerancia de 1 centavo para no marcar diferencias de redondeo float
+                // como "cambio de precio" real.
+                lineas = (expendio.LineasVenta ?? new List<Entidades.LineaVenta>()).Select(l =>
                 {
-                    idExpendio = expendio.IdExpendio,
-                    codigo = l.Corte != null ? l.Corte.codigo : 0,
-                    producto = l.Corte != null ? l.Corte.corte : "",
-                    cantKg = l.CantKg,
-                    precioKg = l.PrecioKg,
-                    bonificacion = l.Bonificacion,
-                    balanza = l.PesoBalanza
+                    float precioListaActual = l.Corte != null ? l.Corte.PrecioKg : l.PrecioKg;
+                    bool cambioPrecio = l.Corte != null && Math.Abs(l.PrecioKg - precioListaActual) > 0.005f;
+
+                    return new
+                    {
+                        idExpendio = expendio.IdExpendio,
+                        codigo = l.Corte != null ? l.Corte.codigo : 0,
+                        producto = l.Corte != null ? l.Corte.corte : "",
+                        cantKg = l.CantKg,
+                        precioKg = l.PrecioKg,
+                        precioListaActual = precioListaActual,
+                        cambioPrecio = cambioPrecio,
+                        bonificacion = l.Bonificacion,
+                        balanza = l.PesoBalanza
+                    };
                 }).ToList()
             });
         }

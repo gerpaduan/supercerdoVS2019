@@ -75,4 +75,147 @@ public sealed class PosHotkeysTests
 
         await page.CloseAsync();
     }
+
+    // Buscador avanzado de producto (F10), 2026-09-06 (retomado -- ver docs/DECISIONS.md). El
+    // backend (ProductosController.ListarProductos) y el wiring de pos-product.js ya estaban
+    // portados; faltaba solo modal-productos.js y el partial _BuscarProductoModal en las 2 vistas
+    // de POS. Verifica el flujo completo: F10 abre el modal, la tabla carga productos reales
+    // (no vacia), y el doble click cierra el modal y completa #inputCodigo con el codigo elegido.
+    [Theory]
+    [InlineData("/Ventas/POS")]
+    [InlineData("/PuntosExpendio/POS")]
+    public async Task POS_F10_AbreBuscadorAvanzadoYSeleccionaProducto(string ruta)
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) => errors.Add(msg);
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}{ruta}", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        var sectorModal = page.Locator("#modalSectoresPuntoExpendio");
+        if (await sectorModal.IsVisibleAsync())
+        {
+            await sectorModal.Locator("button, a").First.ClickAsync();
+            await page.WaitForTimeoutAsync(500);
+        }
+
+        await page.Keyboard.PressAsync("F10");
+        await page.WaitForTimeoutAsync(800);
+
+        Assert.Equal(1, await page.Locator("#modalBuscarProducto.show").CountAsync());
+        Assert.True(await page.Locator("#modalBuscarProducto tbody tr").CountAsync() > 0);
+
+        await page.Locator("#modalBuscarProducto tbody tr").First.DblClickAsync();
+        await page.WaitForTimeoutAsync(800);
+
+        Assert.Equal(0, await page.Locator("#modalBuscarProducto.show").CountAsync());
+        Assert.False(string.IsNullOrWhiteSpace(await page.Locator("#inputCodigo").InputValueAsync()));
+        Assert.Empty(errors);
+
+        await page.CloseAsync();
+    }
+
+    // Historial de precios de cliente (F8), 2026-09-06 (retomado -- ver docs/DECISIONS.md). El
+    // boton/atajo arranca oculto con Consumidor Final (gate de actualizarAccesoHistorialPreciosCliente)
+    // y se habilita al elegir un cliente real via F9 -- verifica el gate de UX y que F8 abra el
+    // modal generico con la clase compacta correcta (VentasController.HistorialPreciosCliente).
+    [Fact]
+    public async Task VentasPOS_F8_HabilitaConClienteRealYAbreHistorialPrecios()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) => errors.Add(msg);
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        Assert.False(await page.Locator("#btnHistorialPreciosCliente").IsVisibleAsync());
+
+        await page.Keyboard.PressAsync("F9");
+        await page.WaitForTimeoutAsync(600);
+        await page.Locator("#tablaPersonas tr.fila-persona").First.DblClickAsync();
+        await page.WaitForTimeoutAsync(800);
+
+        Assert.True(await page.Locator("#btnHistorialPreciosCliente").IsVisibleAsync());
+
+        await page.Keyboard.PressAsync("F8");
+        await page.WaitForTimeoutAsync(1200);
+
+        Assert.Equal(1, await page.Locator("#modalFinanzasPOS.show").CountAsync());
+        Assert.Equal(1, await page.Locator("#modalFinanzasPOS.modal-historial-precios-pos-compacto").CountAsync());
+        var contenido = await page.Locator("#contenedorFinanzasPOS").InnerTextAsync();
+        Assert.False(string.IsNullOrWhiteSpace(contenido));
+        Assert.DoesNotContain("Cargando", contenido);
+        Assert.Empty(errors);
+
+        await page.CloseAsync();
+    }
+
+    // Atajo "/" en cascada dentro del modal "Linea de venta" (2026-09-06, pedido explicito del
+    // usuario -- ver docs/DECISIONS.md, para agilizar la bonificacion sin soltar el teclado).
+    // Compartido entre Ventas/POS y PuntosExpendio/POS -- ambos reusan el mismo #modalLineaVenta
+    // y pos-cart.js, un solo fix cubre las 2 pantallas. Paso 1 (bloque cerrado, foco fuera de un
+    // input): equivalente a "B", abre el bloque de bonificar. Paso 2 (foco en el precio
+    // bonificado): tilda "Bonificar por porcentaje". Paso 3 (foco en el porcentaje): tilda
+    // "Aplicar a todos los productos". Cada paso debe consumir el "/" (no debe quedar tipeado en
+    // el input).
+    [Theory]
+    [InlineData("/Ventas/POS")]
+    [InlineData("/PuntosExpendio/POS")]
+    public async Task POS_AtajoBarra_CascadaDeBonificacionSinSoltarElTeclado(string ruta)
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) => errors.Add(msg);
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}{ruta}", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        var sectorModal = page.Locator("#modalSectoresPuntoExpendio");
+        if (await sectorModal.IsVisibleAsync())
+        {
+            await sectorModal.Locator("button, a").First.ClickAsync();
+            await page.WaitForTimeoutAsync(500);
+        }
+
+        await page.FillAsync("#inputCodigo", "1");
+        await page.Keyboard.PressAsync("Enter");
+        await page.WaitForTimeoutAsync(600);
+        await page.FillAsync("#inputCantidad", "2");
+        await page.Keyboard.PressAsync("Enter");
+        await page.WaitForTimeoutAsync(600);
+
+        await page.ClickAsync("#tablaItems tr.fila-item");
+        await page.WaitForTimeoutAsync(500);
+        Assert.Equal(1, await page.Locator("#modalLineaVenta.show").CountAsync());
+        Assert.Equal(0, await page.Locator("#bloqueBonificar:visible").CountAsync());
+
+        // Guia de atajos al pie del modal (2026-09-06, pedido explicito del usuario -- ver
+        // docs/DECISIONS.md): el texto va cambiando en cada paso para encaminar al usuario.
+        Assert.Contains("Atajos", await page.Locator("#posLineaAtajosHint").InnerTextAsync());
+
+        await page.Keyboard.PressAsync("/");
+        await page.WaitForTimeoutAsync(300);
+        Assert.Equal(1, await page.Locator("#bloqueBonificar:visible").CountAsync());
+        Assert.False(await page.Locator("#chkPorcentaje").IsCheckedAsync());
+        Assert.Contains("bonificar por porcentaje", await page.Locator("#posLineaAtajosHint").InnerTextAsync());
+
+        await page.Keyboard.PressAsync("/");
+        await page.WaitForTimeoutAsync(300);
+        Assert.True(await page.Locator("#chkPorcentaje").IsCheckedAsync());
+        Assert.False(await page.Locator("#chkBonificarTodos").IsCheckedAsync());
+        Assert.DoesNotContain("/", await page.Locator("#txtPrecioKg").InputValueAsync());
+        Assert.Contains("todos los ítems", await page.Locator("#posLineaAtajosHint").InnerTextAsync());
+
+        await page.Keyboard.PressAsync("/");
+        await page.WaitForTimeoutAsync(300);
+        Assert.True(await page.Locator("#chkBonificarTodos").IsCheckedAsync());
+        Assert.DoesNotContain("/", await page.Locator("#txtPorcentaje").InputValueAsync());
+        Assert.Contains("Enter", await page.Locator("#posLineaAtajosHint").InnerTextAsync());
+
+        Assert.Empty(errors);
+
+        await page.CloseAsync();
+    }
 }
