@@ -1,16 +1,26 @@
 @*
     Port simplificado de Web/Views/Shared/_LayoutPOS.cshtml para la UI de POS (batch 1+2, ver
-    docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Diferencias deliberadas respecto al original,
-    todas por la misma razon (WebCore no tiene sistema de login/Session real, mismo criterio que
-    el resto de la migracion):
-      - Sin el redirect a Login si no hay usuario en Session (no existe ese Session).
-      - Sin el dropdown de usuario/logout/"Cambiar clave"/modal de sesion expirada/KeepAlive.
-      - Marca de la topbar fija ("CarniSys") en vez de leer Empresa.NombreFantasia de Session.
+    docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Diferencia deliberada que sigue vigente:
+      - Sin el dropdown de usuario/logout/"Cambiar clave"/modal de sesion expirada/KeepAlive (no
+        pedido, fuera de alcance -- ver docs/DECISIONS.md 2026-09-07).
     Scripts: solo los que necesita el batch 1+2 (jquery/bootstrap, SweetAlert2, pos-guard.js). Se
     van agregando mas a medida que avanzan los batches (forma-pago.js en el 3, balanza en el 4,
     etc.) -- no se precargan de una sola vez para no arrastrar dependencias de features que todavia
     no existen en esta vista.
+
+    Topbar por modulo + marca real (2026-09-07, pedido explicito del usuario, ver docs/DECISIONS.md):
+    port literal de Web/Views/Shared/_LayoutPOS.cshtml -- color de fondo distinto para Ventas/POS
+    (azul) vs PuntosExpendio/POS (ambar/rojizo), y el nombre real de la empresa (o el
+    label/valor que el controller haya seteado via ViewBag.PosBrandLabel/PosBrandName, como hace
+    PuntosExpendioController.POS con el sector elegido) en vez del texto fijo "CarniSys" que tenia
+    esta vista antes de que existiera login/sesion real.
 *@
+@inject WebCore.Services.IUsuarioSesionService Sesion
+@{
+    var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var posBrandLabel = ViewBag.PosBrandLabel as string;
+    var posBrandName = ViewBag.PosBrandName as string;
+}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -49,6 +59,15 @@
     @* Shim de compatibilidad Bootstrap 4 -> 5, ver docs/DECISIONS.md (2026-09-04) y
        WebCore/wwwroot/Content/css/bootstrap4-compat.css para el detalle. *@
     <link rel="stylesheet" href="~/Content/css/bootstrap4-compat.css" asp-append-version="true" />
+    @* Bug real (2026-09-07, ver docs/DECISIONS.md "Mis actividades: tabla duplicada sin
+       estructura"): los modales de Egresos/Mis actividades/Mis ventas que se cargan por AJAX
+       dentro del POS (_MisEgresosCaja.cshtml, _EgresosCajaTabla.cshtml, _MisVentas.cshtml) usan
+       clases (.egresos-*, .egreso-card, .egresos-tabla-desktop/.egresos-cards-mobile) definidas
+       en custom.css -- que _Layout.cshtml (el layout del resto de la app) SI carga, pero este
+       layout de POS nunca cargo. Sin custom.css, la regla que oculta la vista de tarjetas movil
+       cuando se ve la tabla de escritorio (".egresos-cards-mobile { display:none }") nunca se
+       aplicaba: ambas estructuras (tabla + tarjetas) se mostraban apiladas para los mismos datos. *@
+    <link rel="stylesheet" href="~/Content/css/custom.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Content/css/pos.css" asp-append-version="true" />
     <!-- UI de Expendios (ver docs/10-migracion-aspnet-core/PLAN-POS-EXPENDIOS-UI.md): reglas
@@ -56,10 +75,41 @@
     <link rel="stylesheet" href="~/Content/css/pos-expendio.css" asp-append-version="true" />
 
     <style>
+        /* ===== TOPBAR: color por modulo + marca real (2026-09-07, pedido explicito del usuario --
+           ver docs/DECISIONS.md) -- port literal de Web/Views/Shared/_LayoutPOS.cshtml. Reemplaza
+           el header fijo "CarniSys" con fondo azul unico que tenia WebCore (simplificacion
+           deliberada de cuando este layout no tenia sesion real todavia, ver comentario de
+           cabecera de este archivo) -- Venta reusa el gradiente del sidebar (azul), Expendio usa
+           ambar/rojizo (#b45309), igual que el clasico, con variantes de la misma luminosidad en
+           modo oscuro para que ningun modulo "pese" mas que el otro visualmente. */
+        .card-header.pos-header-venta {
+            background: linear-gradient(180deg, #3a4e67 0%, #243446 100%);
+        }
+
+        .card-header.pos-header-expendio {
+            background: linear-gradient(180deg, #b45309 0%, #92400e 100%);
+        }
+
+        body.dark-mode .card-header.pos-header-venta {
+            background: linear-gradient(180deg, #0d1f44 0%, #0b1730 100%) !important;
+        }
+
+        body.dark-mode .card-header.pos-header-expendio {
+            background: linear-gradient(180deg, #3a2410 0%, #241708 100%) !important;
+        }
+
         .pos-layout-brand {
             display: inline-flex;
             align-items: center;
+            min-width: 0;
+            max-width: 320px;
+        }
+
+        .pos-layout-brand .pos-brand-shell {
+            display: inline-flex;
+            align-items: center;
             gap: .5rem;
+            min-width: 0;
         }
 
         .pos-layout-brand .pos-brand-mark {
@@ -72,12 +122,58 @@
             background: linear-gradient(135deg, #fff3e8 0%, #ffe0c1 100%);
             color: #b45309;
             border: 1px solid rgba(180, 83, 9, .16);
+            flex: 0 0 auto;
+        }
+
+        .pos-layout-brand .pos-brand-copy {
+            min-width: 0;
+            text-align: left;
+        }
+
+        .pos-layout-brand .pos-brand-label {
+            font-size: .64rem;
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: rgba(255,255,255,.78);
+            margin-bottom: .18rem;
         }
 
         .pos-layout-brand .pos-empresa {
             font-weight: 800;
             color: #fff;
+            min-width: 0;
             font-size: 1rem;
+            line-height: 1.1;
+        }
+
+        body.dark-mode .pos-layout-brand .pos-brand-mark {
+            background: linear-gradient(135deg, rgba(203,109,50,.18) 0%, rgba(203,109,50,.30) 100%);
+            border-color: rgba(255,255,255,.08);
+            color: #ffd7be;
+        }
+
+        body.dark-mode .pos-layout-brand .pos-brand-label {
+            color: #97a7bd;
+        }
+
+        body.dark-mode .pos-layout-brand .pos-empresa {
+            color: #ecf2ff;
+        }
+
+        @@media (max-width: 991.98px) {
+            .pos-layout-brand {
+                max-width: 200px;
+            }
+
+            .pos-layout-brand .pos-brand-shell {
+                gap: .38rem;
+            }
+
+            .pos-layout-brand .pos-brand-mark {
+                width: 28px;
+                height: 28px;
+            }
         }
 
         .topbar-icon-btn {
@@ -146,12 +242,19 @@
 </head>
 <body id="page-top">
     <div id="pos-layout-content">
-        <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(180deg, #3a4e67 0%, #243446 100%);">
+        <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center @(controller == "PuntosExpendio" ? "pos-header-expendio" : "pos-header-venta")">
             <div class="pos-layout-brand">
-                <div class="pos-brand-mark">
-                    <i class="fas fa-store-alt"></i>
+                <div class="pos-brand-shell">
+                    <div class="pos-brand-mark">
+                        <i class="fas fa-store-alt"></i>
+                    </div>
+                    <div class="pos-brand-copy">
+                        <div class="pos-brand-label">@(string.IsNullOrWhiteSpace(posBrandLabel) ? "Punto de venta" : posBrandLabel)</div>
+                        <div class="pos-empresa text-truncate">
+                            @(!string.IsNullOrWhiteSpace(posBrandName) ? posBrandName : (Sesion.UsuarioActual?.Empresa?.NombreFantasia ?? ""))
+                        </div>
+                    </div>
                 </div>
-                <div class="pos-empresa">CarniSys</div>
             </div>
 
             <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
@@ -166,7 +269,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Scripts/app/bootstrap4-compat.js?v=1"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js?v=2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
     <script src="~/Scripts/app/pos-guard.js?v=4"></script>

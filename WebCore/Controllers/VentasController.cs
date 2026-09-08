@@ -139,6 +139,22 @@ namespace WebCore.Controllers
             return cajaAbierta ? cierre : null;
         }
 
+        // Pedido explicito del usuario (2026-09-07, ver docs/DECISIONS.md "Editar fecha de venta en
+        // curso + saltear caja abierta"): un usuario con permiso real de "modificar venta"
+        // (mismo permiso Entidades.Permisos.Venta.UltimaVenta que ya gatea PuedeModificarUltimaVenta
+        // para ventas YA GUARDADAS) puede, ademas, operar el POS sin caja abierta y editar la fecha
+        // de la venta EN CURSO (todavia sin finalizar) -- se advierte de inconsistencias, queda a su
+        // criterio, no se bloquea. Para una venta en curso (sin Id todavia) el "creador" relevante es
+        // el propio usuario -- mismo criterio que TienePermisoAdministrativoSobreVenta usa con
+        // venta.Vendedor.Id para una venta ya guardada.
+        private bool PuedeOperarSinCajaYEditarFecha(Entidades.Usuario user)
+        {
+            if (user == null) return false;
+            if (user.Admin) return true;
+
+            return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.UltimaVenta, DateTime.Now, user.Id);
+        }
+
         private bool TienePermisoAdministrativoSobreVenta(Entidades.Venta venta, Entidades.Usuario user = null)
         {
             if (venta == null) return false;
@@ -2119,7 +2135,14 @@ namespace WebCore.Controllers
             cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
             bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
 
-            ViewBag.CajaAbierta = cajaAbierta;
+            // Item 5 (2026-09-07, ver docs/DECISIONS.md): usuario con permiso de "modificar venta"
+            // puede operar el POS aunque no tenga caja abierta, y editar la fecha de la venta en
+            // curso -- ver PuedeOperarSinCajaYEditarFecha.
+            bool puedeOperarSinCaja = PuedeOperarSinCajaYEditarFecha(user);
+
+            ViewBag.CajaAbierta = cajaAbierta || puedeOperarSinCaja;
+            ViewBag.AdvertenciaCajaCerrada = !cajaAbierta && puedeOperarSinCaja;
+            ViewBag.PuedeEditarFechaVenta = puedeOperarSinCaja;
             ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.IdUsuarioPOS = user.Id;
@@ -2136,7 +2159,7 @@ namespace WebCore.Controllers
             // Para el filtro de sucursal del modal de expendios (batch 5, ver PLAN-POS-UI.md).
             ViewBag.Sucursales = _oSucursalN.findAll();
 
-            if (!cajaAbierta)
+            if (!cajaAbierta && !puedeOperarSinCaja)
                 return View((Entidades.Venta)null);
 
             var consumidorFinal = _oPersonaN.getConsumidorFinal();
@@ -2234,12 +2257,21 @@ namespace WebCore.Controllers
                 if (sucursal == null)
                     return Json(new { ok = false, msg = "Sucursal inválida." });
 
+                // Item 5 (2026-09-07, ver docs/DECISIONS.md): con permiso real de "modificar
+                // venta" se respeta la fecha editada en el POS (request.FechaVenta); sin permiso,
+                // se ignora (igual que siempre) y se fuerza DateTime.Now -- mismo criterio que
+                // ModificarVenta ya usa con PuedeEditarFechaVenta.
+                bool puedeEditarFechaEnCurso = PuedeOperarSinCajaYEditarFecha(user);
+                DateTime fechaVentaFinal = puedeEditarFechaEnCurso && request.FechaVenta.HasValue
+                    ? request.FechaVenta.Value
+                    : DateTime.Now;
+
                 var venta = new Entidades.Venta
                 {
                     Persona = persona,
                     Sucursal = sucursal,
                     Vendedor = operador,
-                    FechaVenta = DateTime.Now,
+                    FechaVenta = fechaVentaFinal,
                     TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()),
                     Observaciones = request.Observaciones ?? "",
                     FormaPago = request.FormaPago,
@@ -2259,7 +2291,7 @@ namespace WebCore.Controllers
                 }
 
                 bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, user);
-                if (!cajaAbierta)
+                if (!cajaAbierta && !puedeEditarFechaEnCurso)
                     return Json(new { ok = false, msg = "La caja ha sido cerrada." });
 
                 List<Entidades.LineaVenta> lineasVenta = ConstruirLineasVentaDesdeRequest(request);

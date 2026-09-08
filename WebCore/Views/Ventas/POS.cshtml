@@ -87,6 +87,11 @@
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
+    // Item 5 (2026-09-07, ver docs/DECISIONS.md): usuario con permiso real de "modificar venta" --
+    // puede editar la fecha de la venta en curso, y puede haber entrado sin caja abierta (se le
+    // advierte, queda a su criterio).
+    bool puedeEditarFechaVenta = ViewBag.PuedeEditarFechaVenta != null && (bool)ViewBag.PuedeEditarFechaVenta;
+    bool advertenciaCajaCerrada = ViewBag.AdvertenciaCajaCerrada != null && (bool)ViewBag.AdvertenciaCajaCerrada;
     // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): con requiereOperadorPOS
     // el controller devuelve Model=null (igual que !cajaAbierta) -- se necesita distinguir los 2
     // casos aca para mostrar el modal correcto (seleccion de operador vs abrir caja).
@@ -128,6 +133,16 @@
                 listaExpendiosEdicionPos.Add(linea.IdExpendio);
             }
 
+            // Bug real encontrado por el usuario (2026-09-07, ver docs/DECISIONS.md): "precioOriginal"
+            // quedaba igual a linea.PrecioKg (el precio YA BONIFICADO con el que se guardo la
+            // venta) -- el modal "Linea de venta" usa ese campo como base para calcular el % (ver
+            // pos-cart.js, #modalPrecio/syncDesdePrecio), asi que al reabrir una linea que ya tenia
+            // descuento, cualquier recalculo de % partia del precio bonificado en vez del precio
+            // de lista, aplicando el descuento dos veces en cascada. Fix: precioOriginal usa
+            // linea.Corte.PrecioKg (el precio de LISTA actual del producto -- getVentaById hace
+            // JOIN contra la tabla corte en vivo, ver DatosPostgres/VentaPg.cs), igual criterio
+            // que el resto del sistema (historial de precios, badge "cambio de precio" en
+            // expendios) usa para comparar contra el precio de lista de HOY, no el historico.
             lineasEdicionPos.Add(new
             {
                 index = indexLinea++,
@@ -135,7 +150,7 @@
                 codigo = linea.Corte.codigo,
                 cant = Math.Abs(linea.CantKg).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
                 precio = "$ " + linea.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
-                precioOriginal = "$ " + linea.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                precioOriginal = "$ " + linea.Corte.PrecioKg.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
                 subtotal = "$ " + (Math.Abs(linea.CantKg) * linea.PrecioKg).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
                 bonificacion = linea.Bonificacion,
                 anulado = lineasAnuladasPorLineaEdicion.ContainsKey(linea.IdLineaVenta),
@@ -209,14 +224,33 @@
                                     <span class="pos-brand-subline-value text-truncate">@sucursalNombrePOS</span>
                                 </div>
 
-                                <div class="pos-fecha pos-meta-time pos-meta-time-inline">
-                                    <span class="pos-time-chip">
-                                        <i class="far fa-clock"></i>
-                                        <span id="fechaHoraPOS" class="font-weight-bold"></span>
-                                    </span>
-                                </div>
+                                @if (!puedeEditarFechaVenta)
+                                {
+                                    <div class="pos-fecha pos-meta-time pos-meta-time-inline">
+                                        <span class="pos-time-chip">
+                                            <i class="far fa-clock"></i>
+                                            <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                                        </span>
+                                    </div>
+                                }
                             </div>
                         </div>
+
+                        @* Item 5 (2026-09-07, ver docs/DECISIONS.md): port literal de
+                           Web/Views/Ventas/POS.cshtml:148-157, extendido para habilitarse tambien
+                           en venta nueva (el clasico solo lo habilita editando una venta ya
+                           guardada) -- gatea por el mismo permiso que saltea la validacion de
+                           caja abierta (PuedeOperarSinCajaYEditarFecha). *@
+                        @if (puedeEditarFechaVenta)
+                        {
+                            <div class="pos-fecha pos-meta-time">
+                                <label for="fechaVentaEditable" class="small d-block mb-1">Fecha y hora</label>
+                                <input type="datetime-local"
+                                       id="fechaVentaEditable"
+                                       class="form-control form-control-sm"
+                                       value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm")" />
+                            </div>
+                        }
 
                         <div class="pos-meta-hidden">
                             <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
@@ -255,6 +289,18 @@
             </div>
 
         </div>
+
+        @* Item 5 (2026-09-07, ver docs/DECISIONS.md): aviso NO bloqueante -- el usuario con
+           permiso de "modificar venta" entro sin caja abierta. Se advierte, no se impide nada
+           (mismo criterio ya usado para #alertaPrecioListaInconsistente). *@
+        @if (advertenciaCajaCerrada)
+        {
+            <div class="alert alert-warning py-2 px-3 mb-2 small mx-2" id="alertaCajaCerradaPOS">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                No tenés una caja abierta en esta sucursal. Podés operar el POS igual por tu permiso de modificar venta,
+                pero pueden quedar inconsistencias en el cierre de caja -- queda a tu criterio.
+            </div>
+        }
 
         <!-- Vista: Punto de Venta -->
         <div class="container-fluid p-1" id="pos-app">
@@ -511,6 +557,18 @@
                 <div class="modal-body">
 
                     <input id="modalProducto" class="form-control mb-2" readonly>
+
+                    @* Aviso de inconsistencia entre el precio de lista actual y el precio guardado
+                       en la linea (2026-09-07, pedido explicito del usuario -- ver
+                       docs/DECISIONS.md): si el % de bonificacion guardado, aplicado sobre el
+                       precio de lista de HOY, no reproduce el precio unitario que quedo en el
+                       carrito, es porque el precio de lista cambio despues de cargar esta linea.
+                       Solo informativo -- si el usuario modifica la linea, el nuevo calculo parte
+                       del precio de lista vigente (queda a su criterio). *@
+                    <div class="alert alert-warning py-2 px-3 small d-none" id="alertaPrecioListaInconsistente">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        El precio de lista pudo haber cambiado desde que se cargó esta línea: el % aplicado no reproduce el precio unitario guardado. Si modifica esta línea, el nuevo precio se calculará sobre el precio de lista vigente (<strong id="precioListaVigenteTexto"></strong>).
+                    </div>
 
                     <div class="row mb-2" id="bloqueDatosLineaBonificacion">
 
@@ -1610,6 +1668,31 @@ else
 
                 abrirNuevo: function () {
                     this.cargarEnModal(window.EgresosCajaUrls.nuevo, "Nuevo Egreso de Caja", true);
+                }
+            };
+
+            // Boton "Mis ventas" dentro del modal "Mis actividades" del POS (2026-09-07, bug real
+            // reportado por el usuario -- ver docs/DECISIONS.md): _MisEgresosCaja.cshtml ya
+            // llamaba a window.POSVentas.abrirMis()/window.POSVentas.abrirDetalle(idVenta), pero
+            // ese objeto nunca se definia en esta vista (solo existe su equivalente admin,
+            // window.CajasAbiertas, en Cajas/CajasAbiertas.cshtml) -- el boton no hacia nada.
+            // Reusa el mismo modal/contenedor que Egresos (cargarEnModal), evita duplicar markup.
+            window.POSVentas = {
+                abrirMis: function () {
+                    window.POSEgresos.cargarEnModal(
+                        '@Url.Action("MisVentas", "Ventas", new { desdePos = true, idCierre = idCierreActividadPOS })',
+                        "Mis ventas",
+                        false);
+                },
+
+                abrirDetalle: function (idVenta) {
+                    var id = parseInt(idVenta, 10) || 0;
+                    if (id <= 0) return;
+
+                    var url = window.api.venta.detalle
+                        + '?id=' + encodeURIComponent(id)
+                        + '&modal=true&desdePos=true&idCierre=' + encodeURIComponent(@idCierreActividadPOS);
+                    window.POSEgresos.cargarEnModal(url, "Detalle de venta", false);
                 }
             };
 
@@ -2827,6 +2910,17 @@ else
                 actualizarFechaHora();
                 setInterval(actualizarFechaHora, 60000);
             })();
+
+            // Item 5 (2026-09-07, ver docs/DECISIONS.md): #fechaVentaEditable (datetime-local,
+            // solo existe si el usuario tiene permiso de "modificar venta") sincroniza el hidden
+            // #fechaVenta -- el mismo campo que ya lee forma-pago.js al finalizar/modificar la
+            // venta, sin tocar ese archivo.
+            if ($("#fechaVentaEditable").length) {
+                $("#fechaVentaEditable").on("change input", function () {
+                    var value = $(this).val();
+                    if (value) $("#fechaVenta").val(value);
+                });
+            }
         })();
     </script>
 }

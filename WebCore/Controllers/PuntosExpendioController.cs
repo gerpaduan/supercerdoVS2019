@@ -299,6 +299,13 @@ namespace WebCore.Controllers
             ViewBag.OperadorPOSNombre = (user.EsUsuarioProduccion && !requiereOperadorPOS) ? operador.Nombre : null;
 
             string sectorNormalizado = (sector ?? "").Trim();
+
+            // Topbar por modulo (2026-09-07, pedido explicito del usuario -- ver docs/DECISIONS.md):
+            // port literal de Web/Views/PuntosExpendio/POS.cshtml -- _LayoutPOS.cshtml usa estos dos
+            // ViewBag para mostrar "Punto de expendio" + el sector elegido en vez de la marca
+            // generica de Ventas/POS (empresa real).
+            ViewBag.PosBrandLabel = "Punto de expendio";
+            ViewBag.PosBrandName = string.IsNullOrWhiteSpace(sectorNormalizado) ? "Sin seleccionar" : sectorNormalizado;
             var model = new PuntoExpendioEditVm
             {
                 Sector = sectorNormalizado,

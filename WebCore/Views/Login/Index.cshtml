@@ -17,7 +17,7 @@
 <body class="carnisys-login">
     <main class="login-page">
         <section class="login-brand-panel" aria-label="Acerca de CARNISYS">
-            <a href="@Url.Content("~/")" class="login-brand" aria-label="Ir al inicio de CARNISYS">
+            <a href="@Url.Action("Index", "Landing")" class="login-brand" aria-label="Volver al inicio de CARNISYS">
                 <img src="@Url.Content("~/Content/img/CarniSys_Login.png")" alt="CARNISYS" />
             </a>
 
@@ -41,6 +41,10 @@
 
         <section class="login-form-panel" aria-labelledby="login-title">
             <div class="login-form-wrap">
+                @* Link a la landing publica, 2026-09-07 (pedido explicito del usuario -- ver
+                   docs/DECISIONS.md). Port literal de Web/Views/Login/Index.cshtml:44. *@
+                <a href="@Url.Action("Index", "Landing")" class="back-home"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver al inicio</a>
+
                 <div class="login-heading">
                     <span class="login-kicker">Acceso al sistema</span>
                     <h2 id="login-title">Bienvenido nuevamente</h2>

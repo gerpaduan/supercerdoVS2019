@@ -22,7 +22,7 @@ Acceso SSH de la VM: `~/hosts/carnisys-vm-windows.env` (fuera del repo). Sitio r
    msbuild Web/Web.csproj /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:publishUrl=<carpeta_local> /p:WebPublishMethod=FileSystem /p:DeployDefaultTarget=WebPublish
    ```
 2. **Antes de nada**, comparar el `Web.config` publicado contra el que corre en produccion (traerlo por SSH). Ver `riesgos-conocidos.md`: produccion necesita `requireSSL="false"` en `httpCookies`, `forms` y `Security:CookieRequireSsl` (el transform de Release trae `true`). Ajustar a mano antes de copiar.
-3. **Sacar del paquete** `Config\connectionStrings.config` y `Config\appSettings.secrets.config` (son secretos locales del dev, nunca se suben).
+3. **Sacar del paquete** `Config\connectionStrings.config`, `Config\appSettings.secrets.config` y `Config\machineKey.config` (son secretos locales del dev, nunca se suben) -- este último es la clave fija de antiforgery/Forms Auth/ViewState (ver `docs/DECISIONS.md` 2026-09-05): cada servidor tiene la suya, generada una vez a mano, nunca se pisa desde un deploy de código.
 4. Subir por SFTP (Posh-SSH) a `C:\inetpub\wwwroot\web\_deploy\<algo>.zip` y extraer ahi mismo. El SFTP de esta VM exige paths estilo POSIX: `/C:/inetpub/...`, no `C:\inetpub\...`.
 5. Backup completo de lo que esta corriendo: `robocopy C:\inetpub\wwwroot\CarniSysWeb C:\inetpub\wwwroot\web\backups\CarniSysWeb_<yyyyMMdd_HHmmss> /MIR`.
 6. Swap: `Stop-WebAppPool -Name CarniSys` -> `robocopy /MIR` de `bin`, `Content`, `Scripts`, `Views`, `fonts` desde lo extraido hacia `CarniSysWeb`, copiar sueltos (`Web.config`, `favicon.ico`, `libman.json`, `manifest.json`, `sw.js`, `PrecompiledApp.config`) -> `Start-WebAppPool -Name CarniSys`.

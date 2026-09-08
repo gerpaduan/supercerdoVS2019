@@ -48,16 +48,6 @@ Sin decision tomada todavia sobre cuando encarar la localizacion global -- queda
 
 **Cierre de esta investigacion**: no hay una solucion de plataforma de bajo costo y bajo riesgo -- las 3 opciones reales tienen costo (tocar cada campo, construir una pieza nueva, o sumar una dependencia con riesgo de mantenimiento). Dado que el impacto real ya esta documentado como bajo (solo cambia el idioma del mensaje, el server-side sigue validando bien), **queda sin resolver a proposito, pendiente de que el usuario decida cual de las 3 alternativas prefiere** (o si prefiere seguir sin resolverlo) -- no se elige una unilateralmente por ser una decision de plataforma (CLAUDE.md §0/§3), no un bug puntual.
 
-### Botones "Buscar en AFIP" (Personas, AltaRapidaEmpresa, modal de alta) no funcionan: el modulo AFIP no esta portado
-
-Detectado: 2026-09-01, al portar `AltaRapidaEmpresa.cshtml` (Modulo 1) y confirmado/ampliado el 2026-09-01 al portar `PersonasController`/`Editar.cshtml`/`_AddOrEditPersonaModal.cshtml` (Modulo 2).
-
-`PersonasController.BuscarPadronAfip`/`BuscarPadronAfipAjax` (original en `Web/Controllers/PersonasController.cs`) dependen de `AFIP.ConsultarPadronService`, que usa los 4 proxies SOAP de AFIP (`AFIP/Web References/*`) -- ese es el bloqueante ya identificado en el plan original de la migracion (seccion "Mini-spike de AFIP", la mayor incertidumbre tecnica del programa completo, todavia no ejecutado). NO se portaron esas 2 acciones ni el metodo privado `BuscarDatosAfipDesdeGuardar` (que ademas es codigo muerto en el original: ninguna accion publica lo llama).
-
-Se portaron los 3 botones "Buscar en AFIP" (Personas/Editar, AltaRapidaEmpresa, el modal de alta rapida de persona) con el mismo markup/JS que el original -- paridad visual OK, confirmada por el juez -- pero sus fetch a `.../BuscarPadronAfipAjax` van a devolver 404 en `WebCore` hasta que el modulo AFIP se porte.
-
-Impacto real: bajo -- los 3 formularios funcionan completos sin ese boton (los campos se completan a mano); solo el autocompletado por AFIP no anda. Se resuelve solo (sin decision aparte) cuando se ejecute el mini-spike de AFIP ya planeado -- es una dependencia de orden, no una ambiguedad nueva.
-
 ### Modal de alta rapida de persona (`_AddOrEditPersonaModal.cshtml`) depende de un script compartido con POS/Compras, todavia no portado
 
 Detectado: 2026-09-01, al portar el modulo Personas.
@@ -115,3 +105,9 @@ Detectado: 2026-09-01, Módulo 7 (Cajas), slice 2. `CajasController.CrearModelCo
 `ObtenerResumenComisionesElectronicas` (la acción detrás del botón "Recalcular totales") **sí** convierte correctamente (`idSucursal > 0 ? idSucursal : null`), así que el usuario puede corregir la vista con un click extra — el bug es de precarga inicial, no de la funcionalidad completa.
 
 **Presente igual en `Web` clásico** (mismo código fuente, ninguna línea distinta entre motores) — se portó tal cual, sin corregirlo, siguiendo el criterio de esta migración de preservar comportamiento exacto salvo decisión explícita. Impacto real: bajo (1 click de más para ver los totales correctos), pero es un bug funcional real, no cosmético — queda documentado para una eventual limpieza futura de `CajasController`, en ambos motores por igual.
+
+### Edición rápida de precio de Corte (`editPrecioCorte`) no deja rastro de auditoría
+
+Detectado 2026-09-07 al construir el módulo "Actividades" (ver `docs/DECISIONS.md`). Hay 2 caminos para cambiar el precio de un Corte: (a) edición completa del producto (`addOrEditCorte`), que SÍ inserta una fila en `actualizacioncorte`/`ActualizacionCorte` con el nuevo precio (sin guardar el anterior explícito, hay que calcularlo por `LAG()` contra la fila previa del mismo corte); (b) edición rápida de precio (`editPrecioCorte`, usada desde la grilla de "lista de precios" y probablemente el camino más frecuente), que hace un `UPDATE` directo **sin ningún insert de historial**. Presente igual en `Web`/`Negocio`/`Datos`/`DatosPostgres` (código compartido, no es una regresión de WebCore).
+
+**Impacto en el módulo Actividades**: los cambios de precio hechos vía `editPrecioCorte` **no aparecen** en la línea de tiempo — solo se ven los que pasaron por la edición completa del producto. No se resuelve ahora porque instrumentar `editPrecioCorte` para loguear el precio anterior toca `Negocio/Corte.cs` (compartido con `Web`/`Presentacion`), fuera del alcance acotado del pedido original. Si se quiere cobertura completa, agregar el mismo insert a `actualizacioncorte` (o una tabla nueva con precio anterior explícito + usuario, ya que `actualizacioncorte` no guarda quién hizo el cambio) en los 3 lugares que hacen `UPDATE corte SET preciokg=...` (`Negocio/Corte.cs:191-194` → `Datos/Corte.cs`/`DatosPostgres/CortePg.cs`).

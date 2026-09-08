@@ -25,13 +25,19 @@ namespace WebCore.Controllers
         private readonly Negocio.Usuario _oUsuarioN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Empresa _oEmpresaN;
+        private readonly WebCore.Services.IUsuarioSesionService _sesion;
 
-        public LoginController()
+        // _sesion solo lo usa CambiarSucursal (2026-09-07, ver docs/DECISIONS.md): esa accion
+        // corre YA logueado, con la empresa real del usuario -- distinto de _oUsuarioN/_oSucursalN
+        // de arriba, que a proposito usan EmpresaContextNulo porque Index/ValidarLogin corren
+        // ANTES de saber a que empresa pertenece el usuario.
+        public LoginController(WebCore.Services.IUsuarioSesionService sesion)
         {
             IEmpresaContext empresaNula = new EmpresaContextNulo();
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(empresaNula);
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(empresaNula);
             _oEmpresaN = WebCore.Infrastructure.NegocioFactory.CrearEmpresa(empresaNula);
+            _sesion = sesion;
         }
 
         [HttpGet]
@@ -154,6 +160,41 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Cambiar sucursal desde el menu de usuario (2026-09-07, pedido explicito del usuario --
+        // ver docs/DECISIONS.md). Port de Web/Controllers/LoginController.cs:562-600 -- misma
+        // logica (persistir en Usuarios.idSucursal + devolver el nombre nuevo), adaptado a
+        // IUsuarioSesionService en vez de Session["Usuario"]: el claim IdSucursal de la cookie NO
+        // se reemite (nada lo lee para resolver sucursal -- UsuarioSesionService.UsuarioActual
+        // relee Usuario/Sucursal frescos de la BD en cada request, asi que el proximo request ya
+        // ve el cambio solo con la persistencia).
+        [Authorize]
+        [HttpPost]
+        public IActionResult CambiarSucursal(int idSucursal)
+        {
+            try
+            {
+                var usuario = _sesion.UsuarioActual;
+                var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_sesion.Empresa, _sesion.Parametros);
+                var oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_sesion.Empresa, _sesion.Parametros);
+
+                var sucursal = oSucursalN.findById(idSucursal);
+                if (sucursal == null)
+                    return Json(new { ok = false, msg = "Sucursal inválida" });
+
+                usuario.IdSucursal = sucursal.IdSucursal;
+                usuario.Sucursal = sucursal;
+                usuario.SucursalNombre = sucursal.SucursalNombre;
+
+                oUsuarioN.setSucursalUsuario(usuario);
+
+                return Json(new { ok = true, sucursalNombre = usuario.SucursalNombre, idSucursal = usuario.IdSucursal });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message });
+            }
+        }
+
         private async Task FirmarCookieAsync(Entidades.Usuario user)
         {
             var claims = new List<Claim>
@@ -182,7 +223,13 @@ namespace WebCore.Controllers
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            return RedirectToAction("Index", "Home");
+            // Redirect LITERAL, no RedirectToAction("Index","Home") (2026-09-07, bug real
+            // encontrado por el usuario -- ver docs/DECISIONS.md): controller=Home/action=Index
+            // son los DEFAULTS de la ruta "default" (Program.cs), asi que el generador de links de
+            // ASP.NET Core colapsa esa URL a "/" -- que ahora sirve la landing publica
+            // (LandingController, ruta "PublicHome"), no el dashboard. El login terminaba
+            // mostrando el landing en vez de mandar al usuario ya logueado al Home real.
+            return Redirect("/Home/Index");
         }
 
         // Compara la hora actual del servidor contra las 2 jornadas configuradas en la empresa.

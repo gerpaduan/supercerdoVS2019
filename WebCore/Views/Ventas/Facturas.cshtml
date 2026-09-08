@@ -5,9 +5,14 @@
 }
 
 @*
-    El boton "Nueva factura" del original (btnNuevaFacturaSinVenta, abre VentasFacturaModal, que
-    depende de AFIP) se excluye a proposito -- ver header de VentasController.cs. El resto de la
-    pantalla (listado/filtro de facturas ya emitidas) es de solo lectura.
+    "Nueva factura" (sin venta relacionada), retomado 2026-09-07 (pedido explicito del usuario --
+    ver docs/DECISIONS.md). El botón del original (btnNuevaFacturaSinVenta, abre
+    VentasFacturaModal.abrirSinVenta) se habia excluido "a proposito" en una nota vieja que decia
+    que dependia de AFIP -- ya no es asi: AFIP esta probado en produccion real (ver
+    docs/DECISIONS.md, mini-spike AFIP) y la funcion abrirSinVenta ya existia portada y expuesta
+    desde Ventas/POS.cshtml, solo sin un boton que la dispare fuera del POS. Reutiliza el mismo
+    modal shell (#modalFacturaElectronica) y NuevaFacturaSinVenta/GenerarFactura/etc. ya portados,
+    sin cambios de backend.
 *@
 @Html.Partial("~/Views/Ventas/_VentasStyles.cshtml")
 
@@ -18,6 +23,9 @@
            href="@Url.Action("Index", "Ventas", new { fechaDesde = Model.FechaDesde.ToString("yyyy-MM-ddTHH:mm"), fechaHasta = Model.FechaHasta.ToString("yyyy-MM-ddTHH:mm"), idSucursal = Model.IdSucursal })">
             <i class="fas fa-arrow-left mr-1"></i> Ventas
         </a>
+        <button type="button" class="btn btn-success" id="btnNuevaFacturaSinVenta">
+            <i class="fas fa-file-invoice mr-1"></i> Nueva factura
+        </button>
     </div>
 
     <div class="card mb-3 shadow-sm p-3 buscador-card filtros-ventas-card">
@@ -87,12 +95,12 @@
                         <label for="btnFiltroFormaPago" class="filtro-label">Forma de pago</label>
                         <input type="hidden" id="hiddenFormasPago" name="formasPago" value="@Model.FormasPagoCsv" />
                         <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroFormaPagoDropdown">
-                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroFormaPago" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroFormaPago" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span id="filtroFormaPagoTexto">Todas las formas de pago</span>
                                 <span id="filtroFormaPagoBadge" class="badge badge-primary d-none ml-2">0</span>
                                 <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2" aria-labelledby="btnFiltroFormaPago">
+                            <div class="dropdown-menu dropdown-menu-end w-100 filtro-forma-pago-menu p-2" aria-labelledby="btnFiltroFormaPago">
                                 <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarFormaPago">
                                     Todas las formas de pago
                                 </button>
@@ -113,12 +121,12 @@
                         <label for="btnFiltroTipoComprobante" class="filtro-label">Tipo comprobante</label>
                         <input type="hidden" id="hiddenTiposComprobante" name="tiposComprobante" value="@Model.TiposComprobanteCsv" />
                         <div class="dropdown w-100 filtro-forma-pago-dropdown" id="filtroTipoComprobanteDropdown">
-                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroTipoComprobante" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button class="btn btn-light btn-block text-left filtro-forma-pago-btn" type="button" id="btnFiltroTipoComprobante" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span id="filtroTipoComprobanteTexto">Todos los comprobantes</span>
                                 <span id="filtroTipoComprobanteBadge" class="badge badge-primary d-none ml-2">0</span>
                                 <i class="fas fa-chevron-down float-right mt-1 text-muted"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right w-100 filtro-forma-pago-menu p-2" aria-labelledby="btnFiltroTipoComprobante">
+                            <div class="dropdown-menu dropdown-menu-end w-100 filtro-forma-pago-menu p-2" aria-labelledby="btnFiltroTipoComprobante">
                                 <button type="button" class="dropdown-item filtro-forma-pago-clear px-2" id="btnLimpiarTipoComprobante">
                                     Todos los comprobantes
                                 </button>
@@ -163,4 +171,66 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" id="contenedorFacturaElectronica"></div>
+    </div>
+</div>
+
 @Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "facturas")
+
+@section Scripts {
+<script src="~/Scripts/app/factura-electronica.js?v=1"></script>
+<script>
+    // "Nueva factura" sin venta (2026-09-07, ver header de este archivo y docs/DECISIONS.md) --
+    // mismas URLs/funcion que ya usa Ventas/POS.cshtml para el mismo flujo, duplicadas aca porque
+    // esta vista no comparte el modal post-venta del POS (no hay nada que reabrir al cerrar).
+    // Va dentro de @@section Scripts (se ejecuta despues de jQuery/Bootstrap, cargados al pie del
+    // layout) -- un <script> suelto en el body corre ANTES de que $ exista.
+    window.AppUrls = window.AppUrls || {
+        ventasGenerarFactura: '@Url.Action("GenerarFactura", "Ventas")',
+        ventasCerrarSinFacturar: '@Url.Action("CerrarVentaSinFacturar", "Ventas")',
+        ventasGenerarNotaCredito: '@Url.Action("GenerarNotaCredito", "Ventas")',
+        ventasNuevaFacturaSinVenta: '@Url.Action("NuevaFacturaSinVenta", "Ventas")',
+        ventasCrearVentaManual: '@Url.Action("CrearVentaManualParaFactura", "Ventas")',
+        ventasLimpiarLineasVentaManual: '@Url.Action("LimpiarLineasVentaManual", "Ventas")',
+        personaListar: '@Url.Action("Listar", "Personas")'
+    };
+
+    function traerModalFacturaAlFrenteFacturas($modal) {
+        if (!$modal || !$modal.length) return;
+        if (!$modal.parent().is('body')) $modal.appendTo('body');
+
+        var zBase = 1040;
+        $('.modal.show').not($modal).each(function () {
+            var zActual = parseInt($(this).css('z-index'), 10) || 1040;
+            if (zActual > zBase) zBase = zActual;
+        });
+
+        $modal.css('z-index', zBase + 20);
+        window.setTimeout(function () {
+            $('.modal-backdrop').last().css('z-index', zBase + 10);
+        }, 0);
+    }
+
+    $('#btnNuevaFacturaSinVenta').on('click', function () {
+        $.get(window.AppUrls.ventasNuevaFacturaSinVenta)
+            .done(function (html) {
+                $('#contenedorFacturaElectronica').html(html);
+                var $modal = $('#modalFacturaElectronica');
+                traerModalFacturaAlFrenteFacturas($modal);
+                $modal.modal({ backdrop: true, keyboard: true, show: true });
+            })
+            .fail(function () {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo abrir el formulario de factura manual.' });
+            });
+    });
+
+    // Al facturar/cerrar sin facturar con exito: cerrar el modal y refrescar el listado para que
+    // la factura recien creada aparezca.
+    $(document).on('venta:facturada venta:cerradaSinFacturar', function () {
+        $('#modalFacturaElectronica').modal('hide');
+        window.location.reload();
+    });
+</script>
+}

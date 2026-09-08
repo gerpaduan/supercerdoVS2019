@@ -25,8 +25,12 @@
 // wireado igual que el original pero da 404 al clickear, gap ya aceptado en este mismo patron
 // para toda dependencia de POS (ver Compras.desdePos).
 //
-// AbrirCaja se porta por fidelidad (accion simple) pero es codigo inalcanzable en este slice: su
-// unico punto de entrada real es Views/Ventas/POS.cshtml (_AbrirCajaModal.cshtml), Modulo 8.
+// AbrirCaja: todas las validaciones del original portadas 1:1 (importe>0, formato de fecha exacto
+// dd/MM/yyyy HH:mm, caja ya abierta por sucursal) -- confirmado 2026-09-06 comparando linea por
+// linea contra Web/Controllers/CajasController.cs:866-932. ResolverOperadorPOS (cuenta compartida
+// de produccion) portado el mismo dia -- antes faltaba, la caja quedaba siempre a nombre de la
+// cuenta compartida en vez del operador real resuelto por VentasController/PuntosExpendioController
+// (mismo posInstanceId, misma clave de Session).
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -76,6 +80,23 @@ namespace WebCore.Controllers
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
             _oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
+        }
+
+        // Resuelve el operador real de la cuenta compartida de produccion para AbrirCaja
+        // (2026-09-06, ver docs/DECISIONS.md) -- port literal de Web/Controllers/BaseController.cs:
+        // 314-320 y Web/Controllers/CajasController.cs:878. Mismo patron que VentasController/
+        // PuntosExpendioController (duplicado, sin base controller comun en WebCore); lee la MISMA
+        // clave de Session que esos 2 controllers escriben (OperadorPOS_<posInstanceId>), ya que
+        // comparten el mismo posInstanceId dentro de la misma pestaña de POS.
+        private Entidades.Usuario ResolverOperadorPOS(string posInstanceId, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
+
+            var json = HttpContext.Session.GetString("OperadorPOS_" + (posInstanceId ?? ""));
+            if (string.IsNullOrEmpty(json)) return usuarioSesion;
+
+            var operador = System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
+            return operador ?? usuarioSesion;
         }
 
         [HttpGet]
@@ -295,9 +316,11 @@ namespace WebCore.Controllers
             ViewBag.IdCierreActividad = idCierre;
             ViewBag.SucursalActividad = nombreSucursal;
             ViewBag.TituloActividades = "Actividades";
-            ViewBag.SubtituloActividades = string.IsNullOrWhiteSpace(nombreSucursal)
-                ? nombreVendedor
-                : nombreVendedor + " | " + nombreSucursal;
+            // Antes: un solo string concatenado "ger | San Martin" (ViewBag.SubtituloActividades)
+            // -- pedido explicito del usuario (2026-09-07, ver docs/DECISIONS.md): se ve feo.
+            // Se pasan por separado para que la vista los pueda mostrar cada uno con su propio
+            // estilo (icono + nombre, badge de sucursal) en vez de texto plano con un pipe.
+            ViewBag.VendedorActividad = nombreVendedor;
             CargarPermisosEdicionEgresos(dt, false, cierre);
 
             return PartialView("~/Views/Cajas/_MisEgresosCaja.cshtml", dt);
@@ -382,7 +405,7 @@ namespace WebCore.Controllers
             try
             {
                 var user = _usuarioActual;
-                var operador = user;
+                var operador = ResolverOperadorPOS(posInstanceId, user);
 
                 float cajaInicio_ = ParseFloat(cajaInicio);
                 if (cajaInicio_ <= 0)

@@ -11,15 +11,15 @@
 
   <!-- Proxies ASMX viejos (Web References\*\Reference.cs, herencia de
        System.Web.Services.Protocols.SoapHttpClientProtocol): solo compilan en net472.
-       ConsultarPadronService.cs (WSPSA13/WSPSA4, consulta de padron AFIP) tampoco se porta a
-       net10.0 en este slice, fuera de alcance de la migracion de GenerarFactura/LoginClass (ver
-       docs/DECISIONS.md, mini-spike AFIP). -->
+       ConsultarPadronService.cs (WSPSA13, consulta de padron AFIP) SI se porta a net10.0 (ver
+       docs/DECISIONS.md, 2026-09-07): mismo patron WCF que GenerarFacturaService/LoginClass,
+       via el shim de ServiceReferenceCore\WsPsa13Compat.cs. WSPSA4 (usado solo desde
+       Presentacion\Cortes, WinForms) queda fuera de alcance, no se toca. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <Compile Remove="ServiceReferenceCore\**\*.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="Web References\**\*.cs" />
-    <Compile Remove="ConsultarPadronService.cs" />
     <!-- Scaffolding de Settings.settings sin uso real (nada en el codigo lee
          Properties.Settings.Default), requeriria el paquete System.Configuration.ConfigurationManager
          solo para compilar cruft muerto. -->

@@ -82,6 +82,25 @@
         window.jQuery.fn[nombre] = function (opcionesOComando) {
             return this.each(function () {
                 var config = (opcionesOComando && typeof opcionesOComando === 'object') ? opcionesOComando : undefined;
+
+                // Bug real (2026-09-07, ver docs/DECISIONS.md "Productos/Index: detalle de fila
+                // arrancaba expandido"): sin este guard, $(el).collapse('hide') sobre un elemento
+                // SIN instancia previa de BS5 (el caso de "Vista completa" OFF al cargar la
+                // pagina, que corre en TODAS las filas) construye la instancia con el default de
+                // Collapse (toggle:true) -- el propio constructor de BS5 auto-invoca su show()
+                // ANTES de que corra el 'hide' explicito de abajo. show() marca
+                // this._isTransitioning=true de forma sincronica al arrancar; el 'hide' explicito
+                // que sigue ve ese flag y se aborta sin hacer nada (guard real de
+                // Collapse.prototype.hide en bootstrap.bundle.min.js) -- la fila queda EXPANDIDA
+                // en vez de colapsada. El plugin jQuery ORIGINAL de Bootstrap 4 (Collapse.js,
+                // funcion Plugin()) ya tenia este mismo guard exacto para evitar esta carrera:
+                // "if (!data && _config.toggle && /show|hide/.test(config)) config.toggle = false".
+                // Se replica aca: si todavia no existe instancia y el comando es 'show'/'hide'
+                // (no 'toggle'), se fuerza toggle:false al construir.
+                if (!config && typeof opcionesOComando === 'string' && /^(show|hide)$/.test(opcionesOComando) && !Ctor.getInstance(this)) {
+                    config = { toggle: false };
+                }
+
                 var instancia = getOrCreateInstance(Ctor, this, config);
 
                 if (typeof opcionesOComando === 'string' && typeof instancia[opcionesOComando] === 'function') {

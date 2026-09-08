@@ -343,15 +343,19 @@
                     <input type="hidden" id="Id" name="Id" />
                     <input type="hidden" id="ModoModificacion" name="modoModificacion" value="false" />
 
-                    <div class="mb-2">
-                        <label class="mb-1">Sucursal</label>
-                        <div id="labelSucursal" class="font-weight-bold"></div>
-                    </div>
-                    <hr />
                     <div class="row">
                         <div class="col-md-6">
                             <label>Usuario Inicio</label>
                             <input type="text" id="CajaDesc" class="form-control" readonly />
+                        </div>
+
+                        @* Pedido explicito del usuario (2026-09-07, ver docs/DECISIONS.md): antes
+                           "Sucursal" iba en su propia fila arriba, como texto plano
+                           (<div class="font-weight-bold">) en vez de label+input readonly como el
+                           resto de los campos del modal -- se movio al lado de "Usuario Inicio". *@
+                        <div class="col-md-6">
+                            <label>Sucursal</label>
+                            <input type="text" id="labelSucursal" class="form-control" readonly />
                         </div>
                     </div>
 
@@ -918,7 +922,7 @@
                 success: function (data) {
                     $("#Id").val(data.id);
                     $("#ModoModificacion").val(data.modoModificacion ? "true" : "false");
-                    $("#labelSucursal").text(data.suc);
+                    $("#labelSucursal").val(data.suc);
                     $("#CajaDesc").val(data.vendedor);
                     $("#FechaApertura").val(data.fechaApertura);
                     $("#FechaCierre").val(data.fechaCierre || "");

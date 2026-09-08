@@ -1,0 +1,45 @@
+@using WebCore.Services
+@inject IUsuarioSesionService Sesion
+@{
+    // Selector de sucursal desde el menu de usuario (2026-09-07, pedido explicito del usuario --
+    // ver docs/DECISIONS.md). Port literal de Web/Views/Shared/_ModalSucursales.cshtml -- misma
+    // logica y clases, solo Session["Usuario"] -> Sesion.UsuarioActual y ViewBag.Sucursales ->
+    // Negocio.Sucursal.findAll() resuelto aca mismo (no hay un BaseController comun en WebCore que
+    // lo arme para todos los controllers como en el clasico).
+    var usuario = Sesion.UsuarioActual;
+    var oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(Sesion.Empresa, Sesion.Parametros);
+    var sucursales = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+}
+<div class="modal fade" id="modalSucursales" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-store mr-2"></i> Cambiar Sucursal</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                @if (usuario != null)
+                {
+                    <p class="mb-3">
+                        @if (usuario.Sucursal != null)
+                        {
+                            <text>Usted está operando en la sucursal <strong>@usuario.SucursalNombre</strong>. Puede <a href="#" id="lnkContinuarSucursalActual" class="link-quedarse-aqui">quedarse aquí</a> o seleccionar otra:</text>
+                        }
+                        else
+                        {
+                            <text>Seleccione la sucursal en la que va a operar:</text>
+                        }
+                    </p>
+                }
+                @foreach (var s in sucursales)
+                {
+                    bool activa = usuario != null && s.IdSucursal == usuario.IdSucursal;
+                    <button class="btn btn-block mb-2 btnSucursal @(activa ? "btn-primary" : "btn-outline-secondary")"
+                            data-id="@s.IdSucursal" data-nombre="@s.SucursalNombre">
+                        @s.SucursalNombre@(activa ? " (seguir acá)" : "")
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>

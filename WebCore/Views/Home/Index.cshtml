@@ -1,8 +1,675 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model WebCore.Models.HomeDashboardIndexVm
+
+@{
+    // Port literal de Web/Views/Home/Index.cshtml (672 lineas, 2026-09-07, pedido explicito del
+    // usuario -- ver docs/DECISIONS.md). Layout por convencion de WebCore/Views/_ViewStart.cshtml
+    // (_Layout.cshtml) -- equivalente al _LayoutBase.cshtml del clasico, no hace falta setearlo
+    // explicito aca. Todos los datos (KPIs/graficos/tablas) se cargan por AJAX progresivo desde
+    // wwwroot/Scripts/app/home-dashboard.js para no frenar el render inicial.
+    ViewBag.Title = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .dashboard-shell {
+        --dash-ink: #16324f;
+        --dash-muted: #6c7c8f;
+        --dash-line: #dbe4ec;
+        --dash-warm: #cb6d32;
+        --dash-cool: #2d6a8a;
+        --dash-soft: #f4f7fa;
+        --dash-good: #2f9e67;
+        --dash-bad: #b94a48;
+        font-size: .93rem;
+    }
+
+    .dashboard-shell > .dashboard-hero,
+    .dashboard-shell > .row,
+    .dashboard-shell > .card {
+        margin-bottom: 1rem !important;
+    }
+
+    html.dark-mode .dashboard-shell {
+        --dash-ink: #9fd0ff;
+    }
+
+    .dashboard-hero {
+        background: linear-gradient(135deg, rgba(22, 50, 79, 0.96), rgba(45, 106, 138, 0.92));
+        border-radius: 1.25rem;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+        border-radius: 1rem;
+        padding: 1rem 1.25rem !important;
+    }
+
+    .dashboard-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -10% -45% auto;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 70%);
+        pointer-events: none;
+    }
+
+    .dashboard-filters .form-control,
+    .dashboard-filters .custom-select {
+        border-radius: .7rem;
+        min-height: 38px;
+        font-size: .86rem;
+        padding-top: .3rem;
+        padding-bottom: .3rem;
+    }
+
+    .dashboard-card {
+        border: 1px solid var(--dash-line);
+        border-radius: .85rem;
+        box-shadow: 0 10px 22px rgba(26, 46, 69, 0.05);
+    }
+
+    .dashboard-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid rgba(219, 228, 236, 0.9);
+        padding: .75rem .95rem !important;
+    }
+
+    .dashboard-card .card-body {
+        padding: .85rem .95rem;
+    }
+
+    .dashboard-kpi {
+        height: 100%;
+        background: #fff;
+    }
+
+    .dashboard-kpi .kpi-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: .75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(45, 106, 138, 0.1);
+        color: var(--dash-cool);
+        font-size: .9rem;
+    }
+
+    .dashboard-kpi .kpi-label {
+        color: var(--dash-muted);
+        font-size: .74rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .dashboard-kpi .kpi-value {
+        color: var(--dash-ink);
+        font-size: 1.35rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .dashboard-kpi .kpi-meta {
+        color: var(--dash-muted);
+        font-size: .78rem;
+    }
+
+    .balance-scale-card {
+        background: linear-gradient(180deg, #ffffff, #f7fafc);
+    }
+
+    .status-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        display: inline-block;
+        background: #adb5bd;
+        box-shadow: 0 0 0 4px rgba(173, 181, 189, 0.18);
+    }
+
+    .status-dot.is-online {
+        background: var(--dash-good);
+        box-shadow: 0 0 0 4px rgba(47, 158, 103, 0.18);
+    }
+
+    .status-dot.is-offline {
+        background: var(--dash-bad);
+        box-shadow: 0 0 0 4px rgba(185, 74, 72, 0.16);
+    }
+
+    .scale-weight {
+        font-size: 1.95rem;
+        font-weight: 700;
+        color: var(--dash-ink);
+        letter-spacing: .04em;
+    }
+
+    .dash-chart-wrap {
+        position: relative;
+        min-height: 235px;
+    }
+
+    .dash-chart-wrap.is-compact {
+        min-height: 280px;
+    }
+
+    .mini-table th,
+    .mini-table td {
+        vertical-align: middle;
+        font-size: .84rem;
+        padding: .4rem .5rem;
+        line-height: 1.15;
+    }
+
+    .mini-table thead th {
+        border-top: 0;
+        color: var(--dash-muted);
+        font-size: .69rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        padding-top: .35rem;
+        padding-bottom: .35rem;
+    }
+
+    .dashboard-empty,
+    .dashboard-loading {
+        color: var(--dash-muted);
+        font-size: .84rem;
+        padding: .75rem 0;
+    }
+
+    .dashboard-subtle {
+        color: var(--dash-muted);
+        font-size: .78rem;
+    }
+
+    .dashboard-finanzas-resumen {
+        border: 1px solid rgba(219, 228, 236, 0.85);
+        border-radius: .9rem;
+        padding: .72rem .85rem;
+        background: #f9fbfd;
+        height: 100%;
+    }
+
+    html.dark-mode .dashboard-finanzas-resumen {
+        background: #162131;
+        border-color: rgba(116, 145, 185, 0.2);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .dashboard-finanzas-resumen .summary-label {
+        color: var(--dash-muted);
+        font-size: .71rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .dashboard-finanzas-resumen .summary-value {
+        color: var(--dash-ink);
+        font-size: 1.08rem;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .dashboard-cheque-obs {
+        display: inline-block;
+        padding: .14rem .45rem;
+        border-radius: 999px;
+        background: rgba(45, 106, 138, 0.12);
+        color: var(--dash-cool);
+        font-size: .69rem;
+        font-weight: 700;
+    }
+
+    .dashboard-shell h1.h3 {
+        font-size: 1.45rem;
+        line-height: 1.15;
+    }
+
+    .dashboard-shell h6 {
+        font-size: .92rem;
+    }
+
+    .dashboard-shell .badge {
+        font-size: .72rem;
+        padding: .3rem .45rem;
+    }
+
+    .dashboard-cheque-obs.is-danger {
+        background: rgba(185, 74, 72, 0.14);
+        color: #b94a48;
+    }
+
+    .dashboard-cheque-obs.is-warning {
+        background: rgba(203, 109, 50, 0.16);
+        color: #cb6d32;
+    }
+
+    html.dark-mode .dashboard-cheque-obs.is-danger {
+        background: rgba(248, 113, 113, 0.18);
+        color: #ff9a9a;
+    }
+
+    html.dark-mode .dashboard-cheque-obs.is-warning {
+        background: rgba(251, 146, 60, 0.18);
+        color: #ffbf7a;
+    }
+
+    @@media (max-width: 767.98px) {
+        .dashboard-hero {
+            padding: .9rem 1rem !important;
+        }
+
+        .scale-weight {
+            font-size: 1.65rem;
+        }
+
+        .dash-chart-wrap,
+        .dash-chart-wrap.is-compact {
+            min-height: 210px;
+        }
+    }
+</style>
+
+<div class="container-fluid dashboard-shell"
+     id="dashboardHome"
+     data-puede-ver-dashboard="@(Model.PuedeVerDashboardDatos ? "true" : "false")"
+     data-url-resumen="@Url.Action("ObtenerResumenDashboard", "Home")"
+     data-url-ventas-hora="@Url.Action("ObtenerVentasPorHora", "Home")"
+     data-url-top-productos="@Url.Action("ObtenerTopProductosVendidos", "Home")"
+     data-url-top-deudores="@Url.Action("ObtenerTopDeudores", "Home")"
+     data-url-top-acreedores="@Url.Action("ObtenerTopAcreedores", "Home")"
+     data-url-ultimas-ventas="@Url.Action("ObtenerUltimasVentas", "Home")"
+     data-url-ultimos-elaborados="@Url.Action("ObtenerUltimosElaborados", "Home")"
+     data-url-movimientos-dashboard="@Url.Action("ObtenerUltimosMovimientosDashboard", "Home")"
+     data-url-finanzas="@Url.Action("ObtenerFinanzasDashboard", "Home")">
+
+    <div class="dashboard-hero px-4 px-lg-5 py-4 mb-4">
+        <div class="row align-items-end">
+            <div class="col-lg-7 mb-3 mb-lg-0">
+                <div class="text-uppercase small font-weight-bold" style="letter-spacing:.08em; opacity:.78;">Tablero diario</div>
+                <h1 class="h3 mb-2 font-weight-bold">Resumen del negocio en una sola pantalla</h1>
+                <p class="mb-0" style="max-width:760px; opacity:.88;">
+                    Ventas, cuentas corrientes, elaborados y estado de balanza con carga progresiva para no frenar el inicio.
+                </p>
+            </div>
+            <div class="col-lg-5">
+                <div class="row dashboard-filters">
+                    <div class="col-sm-6 mb-2">
+                        <label class="small text-white-50 mb-1" for="dashboardPeriodo">Periodo</label>
+                        <select id="dashboardPeriodo" class="custom-select">
+                            <option value="hoy" selected="@(Model.PeriodoDefault == "hoy")">Hoy</option>
+                            <option value="7dias" selected="@(Model.PeriodoDefault == "7dias")">Ultimos 7 dias</option>
+                            <option value="mes" selected="@(Model.PeriodoDefault == "mes")">Este mes</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 mb-2">
+                        <label class="small text-white-50 mb-1" for="dashboardSucursal">Sucursal</label>
+                        <select id="dashboardSucursal" class="custom-select">
+                            @foreach (var sucursal in Model.Sucursales)
+                            {
+                                <option value="@sucursal.Value" selected="@(sucursal.Value == Model.IdSucursalSeleccionada.ToString())">@sucursal.Text</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="small text-white-50 mt-2">El tablero abre en “Hoy” y refresca cada bloque al cambiar filtros.</div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.PuedeVerDashboardDatos)
+    {
+        <div class="card dashboard-card mb-4">
+            <div class="card-body">
+                <div class="alert alert-light border mb-0">
+                    <strong>Vista limitada.</strong> Los datos comerciales del dashboard estan disponibles solo para usuarios administradores.
+                    El estado de balanza sigue visible en esta pantalla.
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row" id="dashboardKpis">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Ventas</span>
+                        <span class="kpi-icon"><i class="fas fa-dollar-sign"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="ventasTotales">$ 0,00</div>
+                    <div class="kpi-meta" data-kpi-meta="periodo">Hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Ventas del dia</span>
+                        <span class="kpi-icon"><i class="fas fa-receipt"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="cantidadVentas">0</div>
+                    <div class="kpi-meta">Operaciones registradas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Clientes</span>
+                        <span class="kpi-icon"><i class="fas fa-user-friends"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="cantidadClientes">0</div>
+                    <div class="kpi-meta">Atendidos en el periodo</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Ticket promedio</span>
+                        <span class="kpi-icon"><i class="fas fa-chart-line"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="promedioPorVenta">$ 0,00</div>
+                    <div class="kpi-meta">Promedio por venta</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Cta. cte. a cobrar</span>
+                        <span class="kpi-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="saldoACobrar">$ 0,00</div>
+                    <div class="kpi-meta">Saldo actual global</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+            <div class="card dashboard-card dashboard-kpi">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="kpi-label">Cta. cte. a pagar</span>
+                        <span class="kpi-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+                    </div>
+                    <div class="kpi-value" data-kpi="saldoAPagar">$ 0,00</div>
+                    <div class="kpi-meta">Saldo actual global</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 font-weight-bold text-primary">Ventas por hora</h6>
+                        <div class="dashboard-subtle">Importe vendido distribuido por franja horaria del periodo elegido.</div>
+                    </div>
+                    <span class="badge badge-light" id="ventasHoraScope">Hoy</span>
+                </div>
+                <div class="card-body">
+                    <div class="dash-chart-wrap">
+                        <canvas id="dashboardVentasHoraChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <div class="card dashboard-card balance-scale-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Balanza</h6>
+                    <div class="dashboard-subtle">Lectura local reutilizando el agente actual.</div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <span class="status-dot mr-2" id="balanzaEstadoDot"></span>
+                            <div>
+                                <div class="font-weight-bold" id="balanzaEstadoTexto">Sin conexion</div>
+                                <div class="dashboard-subtle" id="balanzaPuertoTexto">Puerto sin detectar</div>
+                            </div>
+                        </div>
+                        <span class="badge badge-light" id="balanzaBadge">Esperando agente</span>
+                    </div>
+                    <div class="scale-weight mb-1" id="balanzaPesoActual">0.000 kg</div>
+                    <div class="dashboard-subtle mb-4">Lectura actual de la balanza conectada en esta terminal.</div>
+                    <div class="row no-gutters mt-auto">
+                        <div class="col-6 pr-2">
+                            <div class="small text-uppercase text-muted mb-1">Ultima lectura</div>
+                            <div class="font-weight-bold" id="balanzaUltimaLectura">--:--:--</div>
+                        </div>
+                        <div class="col-6 pl-2">
+                            <div class="small text-uppercase text-muted mb-1">Estado</div>
+                            <div class="font-weight-bold" id="balanzaEstadoSecundario">Agente no detectado</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-subtle mt-3">Si la balanza no aparece, verifique que el agente local este abierto en la PC actual.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 10 productos mas vendidos</h6>
+                    <div class="dashboard-subtle">Ordenado por kilos vendidos, mostrando tambien el importe.</div>
+                </div>
+                <div class="card-body">
+                    <div class="dash-chart-wrap is-compact">
+                        <canvas id="dashboardTopProductosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Finanzas</h6>
+                    <div class="dashboard-subtle">Cuentas corrientes, ultimos pagos y cobros, y cheques vencidos del sistema.</div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-xl-6 mb-4 mb-xl-0">
+                            <div class="font-weight-bold mb-3">Cuentas corrientes</div>
+                            <div class="row" id="resumenFinanzasCtaCte">
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">Cuentas con saldo</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">A cobrar</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">Total a cobrar</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 mb-3">
+                                    <div class="dashboard-finanzas-resumen">
+                                        <div class="summary-label">Total a pagar</div>
+                                        <div class="summary-value">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6 mb-3 mb-lg-0">
+                                    <div class="font-weight-bold mb-2">Top 10 deudores</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mini-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Persona</th>
+                                                    <th class="text-right">Saldo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablaTopDeudores">
+                                                <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="font-weight-bold mb-2">Top 10 acreedores</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mini-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Persona</th>
+                                                    <th class="text-right">Saldo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablaTopAcreedores">
+                                                <tr><td colspan="2" class="dashboard-loading">Cargando...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-6">
+                            <div class="font-weight-bold mb-3">Ultimos pagos y cobros</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm mini-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Persona</th>
+                                            <th>Tipo</th>
+                                            <th class="text-right">Monto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaFinanzasMovimientos">
+                                        <tr><td colspan="4" class="dashboard-loading">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="font-weight-bold mb-3">Cheques</div>
+                        <div class="table-responsive">
+                            <table class="table table-sm mini-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>NroCheque</th>
+                                        <th>Banco</th>
+                                        <th>Titular</th>
+                                        <th>FechaPago</th>
+                                        <th class="text-right">Importe</th>
+                                        <th>Estado</th>
+                                        <th>Observacion</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaFinanzasCheques">
+                                    <tr><td colspan="7" class="dashboard-loading">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-8 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ultimas 10 ventas</h6>
+                    <div class="dashboard-subtle">Las operaciones mas recientes del periodo filtrado.</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mini-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th class="text-right">Total</th>
+                                    <th>Usuario</th>
+                                    <th>Sucursal</th>
+                                    <th class="text-center">Accion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUltimasVentas">
+                                <tr><td colspan="6" class="dashboard-loading">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <div class="card dashboard-card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ultimos 5 elaborados</h6>
+                    <div class="dashboard-subtle">Producciones recientes del periodo filtrado.</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mini-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th class="text-right">Kg</th>
+                                    <th>Sucursal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUltimosElaborados">
+                                <tr><td colspan="4" class="dashboard-loading">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card dashboard-card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ultimos 5 movimientos</h6>
+                    <div class="dashboard-subtle">Movimientos recientes entre sucursales.</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm mini-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fecha movimiento</th>
+                                    <th>Origen</th>
+                                    <th>Destino</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUltimosMovimientosDashboard">
+                                <tr><td colspan="3" class="dashboard-loading">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script src="@Url.Content("~/Content/vendor/chart.js/Chart.bundle.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/carnisys.balanza.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/home-dashboard.js?v=3")"></script>
+}

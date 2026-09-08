@@ -230,11 +230,9 @@
     }
 </style>
 
-@* TODO(claude): el boton "Buscar en AFIP" llama a Personas/BuscarPadronAfipAjax, que todavia no
-   esta portado a WebCore (Modulo 2 de docs/10-migracion-aspnet-core/README.md, no iniciado).
-   Se preserva el markup/JS identico al original por fidelidad de paridad visual, pero el fetch
-   va a devolver 404 hasta que ese controller se porte -- ver gap en
-   docs/10-migracion-aspnet-core/gaps.md. *@
+@* El boton "Buscar en AFIP" llama a Personas/BuscarPadronAfipAjax -- portado y verificado contra
+   AFIP produccion real el 2026-09-07 (ver docs/DECISIONS.md, mismo dia). Markup/JS identico al
+   original, sin cambios. *@
 <script>
     (function () {
         function inicializarAltaRapidaAfip() {

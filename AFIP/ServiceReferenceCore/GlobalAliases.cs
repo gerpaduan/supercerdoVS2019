@@ -13,3 +13,7 @@ global using FECAEDetRequest = AFIP.WSFECore.FECAEDetRequest;
 global using FECAEResponse = AFIP.WSFECore.FECAEResponse;
 global using AlicIva = AFIP.WSFECore.AlicIva;
 global using CbteAsoc = AFIP.WSFECore.CbteAsoc;
+
+// ConsultarPadronService.cs (WSPSA13, consulta de padron AFIP) usa `personaReturn` sin calificar
+// como tipo de retorno de PersonaServiceA13.getPersona -- mismo mecanismo que los alias de arriba.
+global using personaReturn = AFIP.WSPSA13Core.personaReturn;

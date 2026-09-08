@@ -704,6 +704,26 @@
             if (bonif !== 0) texto += bonif > 0 ? ` | Desc:${bonif}%` : ` | Recargo:${Math.abs(bonif)}%`;
             $("#lblTotalModalLineaVenta").text(texto);
 
+            // Aviso de inconsistencia precio-de-lista vs precio-bonificado guardado (2026-09-07,
+            // pedido explicito del usuario -- ver docs/DECISIONS.md): si el precio de lista
+            // cambio despues de cargar esta linea (ej. al editar una venta ya guardada), el %
+            // guardado aplicado sobre el precio de lista de HOY ya no reproduce el precio unitario
+            // que quedo en el carrito -- se avisa, sin bloquear nada (el usuario decide si tocarla).
+            const precioActualNum = fnum(linea.precio);
+            const $alertaInconsistencia = $("#alertaPrecioListaInconsistente");
+            if (bonif !== 0 && precioListaNum > 0) {
+                const precioEsperado = precioListaNum * (1 - (bonif / 100));
+                const difiere = Math.abs(precioEsperado - precioActualNum) > 0.5;
+                if (difiere) {
+                    $("#precioListaVigenteTexto").text("$ " + precioListaNum.toFixed(2));
+                    $alertaInconsistencia.removeClass("d-none");
+                } else {
+                    $alertaInconsistencia.addClass("d-none");
+                }
+            } else {
+                $alertaInconsistencia.addClass("d-none");
+            }
+
             $("#txtPrecioKg").val(String(linea.precio ?? "").replace("$", "").trim());
             $("#txtPorcentaje").val(linea.bonificacion ?? 0);
 

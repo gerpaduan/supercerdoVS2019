@@ -162,7 +162,15 @@
     padding-left: 5px;
 }
 
-/* ===== dropdown-menu-right (renombrado a .dropdown-menu-end en BS5) ===== */
+/* ===== dropdown-menu-right (renombrado a .dropdown-menu-end en BS5) =====
+   LIMITACION REAL encontrada 2026-09-07 (ver docs/DECISIONS.md): este shim CSS NO alcanza para
+   dropdowns reales de Bootstrap 5 con su JS activo -- BS5 usa Popper.js para posicionar el menu
+   dinamicamente (aplica un `transform: translate3d(...)` inline), que pisa cualquier right/left
+   que este CSS intente forzar. La unica forma real de que BS5 alinee un dropdown a la derecha es
+   la clase NATIVA `dropdown-menu-end` (BS5 la lee en su propio JS para configurar Popper con
+   placement:'bottom-end') -- este shim queda solo como red de seguridad para markup que NO pase
+   por el JS de dropdown de BS5. Si aparece de nuevo un menu desbordado del viewport, revisar
+   PRIMERO si el HTML usa `dropdown-menu-right` en vez de `dropdown-menu-end` real. */
 .dropdown-menu-right {
     --bs-position: end;
     right: 0;

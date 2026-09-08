@@ -1,11 +1,10 @@
-﻿// Port PARCIAL de Web/Controllers/PersonasController.cs (ver docs/DECISIONS.md, migracion
-// ASP.NET Core, Modulo 2 -- Clientes y proveedores). Se porta el CRUD completo (Index, Nuevo,
-// Editar, Guardar, Buscar, Listar, Obtener, PersonaModal, GuardarPersonaModal) MENOS las 2
-// acciones que dependen de AFIP (BuscarPadronAfip, BuscarPadronAfipAjax -- el modulo AFIP todavia
-// no fue portado a WebCore, es un bloqueante conocido y documentado en el plan original, no una
-// omision nueva) y BuscarDatosAfipDesdeGuardar (metodo privado del original que ademas no lo
-// llama ninguna accion publica, ver Web/Controllers/PersonasController.cs -- codigo muerto, no se
-// porta). Ver gap en docs/10-migracion-aspnet-core/gaps.md.
+﻿// Port de Web/Controllers/PersonasController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+// Modulo 2 -- Clientes y proveedores). Se porta el CRUD completo (Index, Nuevo, Editar, Guardar,
+// Buscar, Listar, Obtener, PersonaModal, GuardarPersonaModal) MAS las 2 acciones de AFIP
+// (BuscarPadronAfip, BuscarPadronAfipAjax -- ver docs/DECISIONS.md 2026-09-07, mismo patron WCF
+// que GenerarFacturaService/LoginClass) MENOS BuscarDatosAfipDesdeGuardar (metodo privado del
+// original que ademas no lo llama ninguna accion publica, ver Web/Controllers/PersonasController.cs
+// -- codigo muerto, no se porta).
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06) -- ya no hay stub hardcodeado. El "usuario actual" no es solo un gate de acceso:
@@ -17,6 +16,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -31,16 +31,18 @@ namespace WebCore.Controllers
     {
         private readonly IRazorViewEngine _viewEngine;
         private readonly ITempDataProvider _tempDataProvider;
+        private readonly IWebHostEnvironment _env;
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Persona _oPersonaN;
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
-        public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, WebCore.Services.IUsuarioSesionService sesion)
+        public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
         {
             _viewEngine = viewEngine;
             _tempDataProvider = tempDataProvider;
+            _env = env;
             _sesion = sesion;
             _empresa = sesion.Empresa;
 
@@ -324,6 +326,123 @@ namespace WebCore.Controllers
                 string detalle = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Json(new { success = false, message = "No se pudo guardar la persona: " + detalle });
             }
+        }
+
+        // Port de Web/Controllers/PersonasController.cs:370 (BuscarPadronAfip). Usada por el botón
+        // "Buscar en AFIP" del alta rápida de empresa (ver AltaRapidaEmpresa.cshtml, gap ya cerrado
+        // en docs/DECISIONS.md 2026-09-07).
+        [HttpGet]
+        public JsonResult BuscarPadronAfip(string cuit)
+        {
+            try
+            {
+                string cuitNormalizado = NormalizarCuit(cuit);
+                long cuitPersona;
+                if (string.IsNullOrWhiteSpace(cuitNormalizado) || cuitNormalizado.Length != 11 || !long.TryParse(cuitNormalizado, out cuitPersona))
+                    return Json(new { ok = false, msg = "Ingrese un CUIT válido de 11 dígitos." });
+
+                var empresaAfip = ObtenerEmpresaAfipActual();
+                if (empresaAfip == null || empresaAfip.Cuit <= 0)
+                    return Json(new { ok = false, msg = "No se encontró la configuración AFIP de la empresa actual." });
+
+                var servicioPadron = new AFIP.ConsultarPadronService(empresaAfip, _env.ContentRootPath);
+                var resultado = servicioPadron.ConsultarDatosContribuyente(cuitNormalizado);
+
+                if (!resultado.Ok || resultado.Persona == null)
+                    return Json(new { ok = false, msg = resultado.Mensaje ?? "No se encontraron datos para el CUIT especificado." });
+
+                return Json(new
+                {
+                    ok = true,
+                    razonSocial = resultado.Persona.RazonSocial,
+                    identificacion = resultado.Persona.Identificacion,
+                    domicilio = resultado.Persona.Domicilio,
+                    ciudad = resultado.Persona.Ciudad
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = "No se pudo obtener los datos desde AFIP. " + ex.Message });
+            }
+        }
+
+        // Port de Web/Controllers/PersonasController.cs:413 (BuscarPadronAfipAjax). Consumida por el
+        // botón "Buscar en AFIP" de Personas/Editar y del modal de alta rápida de persona (JS ya
+        // portado literal en las vistas, ver docs/DECISIONS.md 2026-09-07).
+        [HttpGet]
+        public JsonResult BuscarPadronAfipAjax(string cuit)
+        {
+            try
+            {
+                string cuitNormalizado = NormalizarCuit(cuit);
+                long cuitPersona;
+                if (string.IsNullOrWhiteSpace(cuitNormalizado) || cuitNormalizado.Length != 11 || !long.TryParse(cuitNormalizado, out cuitPersona))
+                    return Json(new { ok = false, msg = "Ingrese un CUIT válido de 11 dígitos.", tipo = "warning" });
+
+                var empresaAfip = ObtenerEmpresaAfipActual();
+                if (empresaAfip == null || empresaAfip.Cuit <= 0)
+                    return Json(new { ok = false, msg = "No se encontró la configuración AFIP de la empresa actual.", tipo = "error" });
+
+                var servicioPadron = new AFIP.ConsultarPadronService(empresaAfip, _env.ContentRootPath);
+                var resultado = servicioPadron.ConsultarDatosContribuyente(cuitNormalizado);
+
+                if (!resultado.Ok || resultado.Persona == null)
+                {
+                    return Json(new
+                    {
+                        ok = false,
+                        msg = resultado.Mensaje ?? "No se encontraron datos para el CUIT ingresado.",
+                        tipo = EsMensajeSinDatosAfip(resultado.Mensaje) ? "info" : "error"
+                    });
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    razonSocial = resultado.Persona.RazonSocial,
+                    identificacion = resultado.Persona.Identificacion,
+                    domicilio = resultado.Persona.Domicilio,
+                    ciudad = resultado.Persona.Ciudad,
+                    idIva = resultado.IdIvaSugerido,
+                    condicionIva = resultado.CondicionIvaAfip ?? "",
+                    estadoClave = resultado.EstadoClaveAfip ?? "",
+                    actividadPrincipal = resultado.ActividadPrincipalAfip ?? "",
+                    msg = "Datos recuperados desde AFIP/ARCA."
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    ok = false,
+                    msg = AFIP.ConsultarPadronService.TraducirMensajeError(ex),
+                    tipo = "error"
+                });
+            }
+        }
+
+        // Port de Web/Controllers/PersonasController.cs:464 (ObtenerEmpresaAfipActual). El usuario
+        // logueado puede traer la Empresa ya cargada (IUsuarioSesionService); si falta o esta
+        // incompleta la config AFIP, se resuelve de nuevo via Sucursal (misma logica que el original).
+        private Entidades.Empresa ObtenerEmpresaAfipActual()
+        {
+            var usuario = _usuarioActual;
+            int idEmpresa = usuario != null ? usuario.IdEmpresa : 0;
+            var empresaAfip = usuario != null ? usuario.Empresa : null;
+
+            if ((empresaAfip == null || empresaAfip.Cuit <= 0 || string.IsNullOrWhiteSpace(empresaAfip.NombreCertificado_pfx)) && idEmpresa > 0)
+            {
+                var sucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+                empresaAfip = sucursalN.findEmpresaById(idEmpresa);
+            }
+
+            return empresaAfip;
+        }
+
+        private bool EsMensajeSinDatosAfip(string mensaje)
+        {
+            return !string.IsNullOrWhiteSpace(mensaje)
+                && mensaje.IndexOf("No se encontraron datos", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private async Task<string> RenderPartialViewToStringAsync(string viewName, object model)

@@ -337,13 +337,16 @@
         transform: translateY(-1px);
     }
 
-    /* body.app-shell fuerza background transparente en los .btn-outline-*
-       incluso en :hover (ui-refresh.css), pisando por especificidad el
-       fondo solido que pone Bootstrap en su :hover. El texto se pone
-       blanco (por Bootstrap) sobre fondo transparente = invisible en modo
-       claro. Se repone el fondo solido puntualmente para este boton. */
+    /* Causa real (2026-09-07, ver docs/DECISIONS.md): ".pos-btn-layout" (arriba)
+       pinta el boton con "background: linear-gradient(...)" -- un shorthand que
+       fija background-image (el degrade, opaco) ademas de background-color. El
+       fix anterior solo sobreescribia "background-color" en :hover, pero el
+       degrade opaco seguia pintado ENCIMA y lo tapaba -- el boton se veia igual
+       de claro, con el texto blanco que pone Bootstrap en su :hover = invisible.
+       Se usa el shorthand "background" (no solo background-color) para que
+       tambien resetee background-image a "none" y el color solido se vea. */
     #btnDuplicarPOS.btn-outline-primary:hover {
-        background-color: #4e73df !important;
+        background: #4e73df !important;
         color: #fff !important;
     }
 

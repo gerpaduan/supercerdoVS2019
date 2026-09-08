@@ -37,6 +37,12 @@
     var usuarioActual = Sesion.UsuarioActual;
     bool esAdmin = usuarioActual.Admin;
 
+    // Menu de usuario + sucursal actual (2026-09-07, pedido explicito del usuario -- ver
+    // docs/DECISIONS.md). Nombre de la sucursal actual ya viene resuelto fresco de BD en
+    // usuarioActual.Sucursal/.SucursalNombre (UsuarioSesionService), igual que el clasico
+    // re-resuelve Session["Usuario"].Sucursal en cada request.
+    string sucursalActualNombre = usuarioActual.Sucursal != null ? usuarioActual.SucursalNombre : "Sin sucursal";
+
     bool puedeAdministrarUsuarios = esAdmin;
     if (!puedeAdministrarUsuarios && usuarioActual.Permisos != null)
     {
@@ -457,6 +463,18 @@
                     <span>Reportes</span>
                 </a>
             </li>
+            @* "Actividades" (solo admin), 2026-09-07 -- pedido explicito del usuario, ver
+               docs/DECISIONS.md: linea de tiempo de eventos de negocio (precios, ventas anuladas/
+               bonificadas, egresos, movimientos, compras, formulas). *@
+            @if (esAdmin)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(controller == "Actividades" ? "active" : "")" href="@Url.Action("Index", "Actividades")">
+                        <i class="fas fa-fw fa-stream"></i>
+                        <span>Actividades</span>
+                    </a>
+                </li>
+            }
             @if (mostrarConfiguracion)
             {
                 <li class="nav-item">
@@ -527,9 +545,36 @@
                                 </a>
                             </li>
                             <div class="topbar-divider d-none d-sm-block"></div>
-                            <li class="nav-item no-arrow d-flex align-items-center">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">@usuarioActual.Nombre</span>
-                                <i class="fas fa-user-circle fa-2x text-gray-600"></i>
+                            @* Menu de usuario (dropdown) + sucursal actual, 2026-09-07 (pedido
+                               explicito del usuario -- ver docs/DECISIONS.md). Port de
+                               Web/Views/Shared/_LayoutBase.cshtml:512-568 -- mismas opciones
+                               (sucursal actual -> abre #modalSucursales, logout -> ya portado en
+                               LoginController.Logout) salvo "Cambiar clave": el clasico linkea a
+                               Login/ChangePassword, que todavia no esta portado a WebCore (gap
+                               conocido, ver docs/10-migracion-aspnet-core/gaps.md) -- se omite el
+                               link en vez de apuntar a una accion inexistente. *@
+                            <li class="nav-item dropdown no-arrow">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="mr-2 d-none d-lg-inline text-gray-600 small">@usuarioActual.Nombre</span>
+                                    <i class="fas fa-user-circle fa-2x text-gray-600"></i>
+                                </a>
+                                @* Bug real encontrado 2026-09-07 (ver docs/DECISIONS.md): "dropdown-menu-right" es
+                                   sintaxis de Bootstrap 4 -- en Bootstrap 5 esa clase no existe, se llama
+                                   "dropdown-menu-end". Sin ella, el menu se alineaba al borde IZQUIERDO del
+                                   boton (cerca del extremo derecho de la pantalla) y se salia del viewport. *@
+                                <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+                                    <h6 class="dropdown-header d-lg-none">@usuarioActual.Nombre</h6>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalSucursales">
+                                        <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        <strong id="lblSucursalActual">@sucursalActualNombre</strong>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="@Url.Action("Logout", "Login")">
+                                        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Cerrar sesión
+                                    </a>
+                                </div>
                             </li>
                         </ul>
                     </div>
@@ -557,9 +602,12 @@
        pero #modalCalculadoraBilletes no existia). Este mismo port lo arregla de paso. *@
     @Html.Partial("~/Views/Shared/_CalculadoraBilletesModal.cshtml")
 
+    @* Selector de sucursal (menu de usuario), 2026-09-07 -- ver docs/DECISIONS.md. *@
+    @Html.Partial("~/Views/Shared/_ModalSucursales.cshtml")
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Scripts/app/bootstrap4-compat.js?v=1"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js?v=2"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md): el HTML de las vistas con tablas
        anchas ya tenia la clase .js-sync-scroll-body desde que se portaron (fiel al original),
@@ -580,6 +628,30 @@
        colapsa confirm+alert de exito en un solo dialogo. *@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
+
+    @* Gap real preexistente encontrado 2026-09-07 (ver docs/DECISIONS.md): manejarPermiso() es un
+       helper global del clasico (Web/Views/Shared/_LayoutBase.cshtml:225-231) que varias vistas ya
+       portadas literal (Productos/Index.cshtml, _StockPorSucursalesProductoModal.cshtml) siguen
+       llamando en el .done() de sus respuestas AJAX -- nunca se porto a WebCore, asi que tiraba
+       "ReferenceError: manejarPermiso is not defined" y cortaba el resto del callback (ej. guardar
+       un precio de producto nunca actualizaba la UI). Mismo criterio que swal-single-confirm.js de
+       arriba: helper global, se carga una sola vez aca. *@
+    <script>
+        function manejarPermiso(resp) {
+            if (resp && resp.error) {
+                Swal.fire("Permiso denegado", resp.error, "error");
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+    @* Selector de sucursal desde el menu de usuario, 2026-09-07 (pedido explicito del usuario --
+       ver docs/DECISIONS.md). window.urlCambiarSucursal la consume modal-sucursales.js. *@
+    <script>
+        window.urlCambiarSucursal = '@Url.Action("CambiarSucursal", "Login")';
+    </script>
+    <script src="~/Scripts/app/modal-sucursales.js?v=1"></script>
 
     @* Toggle de tema oscuro -- port literal de Web/Views/Shared/_LayoutBase.cshtml (mismas
        claves de localStorage: "carnisys-theme"/"darkMode", mismo id de boton/icono). *@

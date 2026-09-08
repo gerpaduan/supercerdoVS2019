@@ -364,6 +364,14 @@
             <div class="modal-body">
                 <input id="modalProducto" class="form-control mb-2" readonly>
 
+                @* Aviso de inconsistencia precio de lista vs bonificado guardado (2026-09-07,
+                   pedido explicito del usuario -- ver docs/DECISIONS.md). Duplicado de
+                   Ventas/POS.cshtml (el modal HTML no es compartido, solo pos-cart.js lo es). *@
+                <div class="alert alert-warning py-2 px-3 small d-none" id="alertaPrecioListaInconsistente">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    El precio de lista pudo haber cambiado desde que se cargó esta línea: el % aplicado no reproduce el precio unitario guardado. Si modifica esta línea, el nuevo precio se calculará sobre el precio de lista vigente (<strong id="precioListaVigenteTexto"></strong>).
+                </div>
+
                 <div class="row mb-2" id="bloqueDatosLineaBonificacion">
                     <div class="col-12 col-md-5">
                         <label class="small">Cant.</label>

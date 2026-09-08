@@ -9,7 +9,8 @@
     bool permitirNuevo = ViewBag.PermitirNuevo == null || (bool)ViewBag.PermitirNuevo;
     int idCierreActividad = ViewBag.IdCierreActividad != null ? (int)ViewBag.IdCierreActividad : 0;
     string tituloActividades = ViewBag.TituloActividades as string ?? "Mis actividades";
-    string subtituloActividades = ViewBag.SubtituloActividades as string;
+    string vendedorActividad = ViewBag.VendedorActividad as string;
+    string sucursalActividadEncabezado = ViewBag.SucursalActividad as string;
     bool mostrarResumenMisActividades = ViewBag.MostrarResumenMisActividades == null || (bool)ViewBag.MostrarResumenMisActividades;
 }
 
@@ -22,9 +23,18 @@
     {
         <div class="egresos-pos-toolbar">
             <div class="egresos-pos-toolbar-main">
-                @if (!string.IsNullOrWhiteSpace(subtituloActividades))
+                @if (!string.IsNullOrWhiteSpace(vendedorActividad) || !string.IsNullOrWhiteSpace(sucursalActividadEncabezado))
                 {
-                    <small class="text-muted d-block">@subtituloActividades</small>
+                    <div class="mis-actividades-quien">
+                        @if (!string.IsNullOrWhiteSpace(vendedorActividad))
+                        {
+                            <span class="mis-actividades-vendedor"><i class="fas fa-user-circle mr-1"></i>@vendedorActividad</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(sucursalActividadEncabezado))
+                        {
+                            <span class="mis-actividades-sucursal-badge"><i class="fas fa-store mr-1"></i>@sucursalActividadEncabezado</span>
+                        }
+                    </div>
                 }
                 <span class="mis-actividades-items-badge" title="Cantidad de items mostrados en la tabla">
                     @cantidadItems item@(cantidadItems == 1 ? "" : "s")
@@ -151,6 +161,34 @@
     .mis-actividades-modal .egresos-pos-toolbar-main {
         flex: 1 1 180px;
         min-width: 0;
+    }
+
+    /* Pedido explicito del usuario (2026-09-07, ver docs/DECISIONS.md): el subtitulo "ger | San
+       Martin" (texto plano con un pipe) se veia feo -- se separa vendedor (icono + nombre) y
+       sucursal (badge), cada uno con su propio estilo. */
+    .mis-actividades-modal .mis-actividades-quien {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .4rem;
+        margin-bottom: .3rem;
+    }
+
+    .mis-actividades-modal .mis-actividades-vendedor {
+        font-weight: 700;
+        color: #4a5568;
+        font-size: .85rem;
+    }
+
+    .mis-actividades-modal .mis-actividades-sucursal-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: .12rem .5rem;
+        border-radius: 999px;
+        background: #eef2f9;
+        color: #4f5d75;
+        font-size: .72rem;
+        font-weight: 600;
     }
 
     .mis-actividades-modal .mis-actividades-items-badge {
@@ -472,6 +510,15 @@
     html.dark-mode .mis-actividades-modal .mis-actividades-items-badge {
         background: #162538;
         border-color: #2f4d69;
+        color: #d7e7fb;
+    }
+
+    html.dark-mode .mis-actividades-modal .mis-actividades-vendedor {
+        color: #eaf2fb;
+    }
+
+    html.dark-mode .mis-actividades-modal .mis-actividades-sucursal-badge {
+        background: #162538;
         color: #d7e7fb;
     }
 

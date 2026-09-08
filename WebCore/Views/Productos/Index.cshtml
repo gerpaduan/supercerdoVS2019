@@ -746,6 +746,12 @@
 
 @section Scripts {
 
+    @* Mascara de miles/coma en vivo para "Nuevo precio" (2026-09-07, pedido explicito del
+       usuario -- ver docs/DECISIONS.md). Port literal de Web/Scripts/app/money-input-mask.js
+       (ya usado en el clasico para importes de Finanzas/Pagos) -- no estaba aplicado a este
+       campo ni en el clasico ni en WebCore hasta ahora. *@
+    <script src="~/Scripts/app/money-input-mask.js?v=1"></script>
+
     <script>
     function showProductosNavigationLoading(message) {
         if (window.ModalRequestLoading && typeof window.ModalRequestLoading.trackNavigation === "function") {
@@ -1995,7 +2001,7 @@
         $("#IdCorte").val("");
         $("#CorteDesc").val("");
         $("#PrecioActual").val("");
-        $("#PrecioKg").val("");
+        $("#PrecioKg").val("").trigger("input");
         $("#CodigoPrecio").val("");
         $("#precioVariacion").text("Sin variación");
         $("#errorPrecio").addClass("d-none");
@@ -2011,7 +2017,9 @@
 
         $("#CorteDesc").val(descripcion || "");
         $("#PrecioActual").val(formatCurrencyEs(precioNormalizado));
-        $("#PrecioKg").val(formatNumberEs(precioNormalizado, 2));
+        // .trigger("input") resincroniza el estado interno de MoneyInputMask con el valor
+        // seteado por JS (ver comentario de "resincronizar" en money-input-mask.js).
+        $("#PrecioKg").val(formatNumberEs(precioNormalizado, 2)).trigger("input");
         actualizarVariacionPrecio();
     }
 
@@ -2037,7 +2045,7 @@
                     $("#IdCorte").val("");
                     $("#CorteDesc").val("");
                     $("#PrecioActual").val("");
-                    $("#PrecioKg").val("");
+                    $("#PrecioKg").val("").trigger("input");
                     $("#precioVariacion").text("Sin variación");
                     setScannerPrecioMsg("Producto no encontrado");
                     $("#CodigoPrecio").focus().select();
@@ -2053,7 +2061,7 @@
                 $("#CodigoPrecio").val(codigo);
                 $("#CorteDesc").val(resp.descripcion || resp.nombre || "");
                 $("#PrecioActual").val(formatCurrencyEs(precioModalState.currentPrecioActual));
-                $("#PrecioKg").val(formatNumberEs(precioModalState.currentPrecioActual, 2));
+                $("#PrecioKg").val(formatNumberEs(precioModalState.currentPrecioActual, 2)).trigger("input");
                 actualizarVariacionPrecio();
                 setScannerPrecioMsg("");
 
@@ -2160,15 +2168,17 @@
     }
 
     function getPrecioValidoDesdeInput() {
-        let precioRaw = ($("#PrecioKg").val() || "").trim();
+        // Con MoneyInputMask el campo ya muestra el separador de miles ("12.000,00") -- usar
+        // getRawValue (solo saca los puntos) en vez de normalizarTextoDecimal, que convertia
+        // TODOS los puntos a comas indiscriminadamente y rompia el numero cuando habia miles.
+        let precioRaw = (window.MoneyInputMask ? window.MoneyInputMask.getRawValue("#PrecioKg") : ($("#PrecioKg").val() || "")).trim();
         if (precioRaw === "") return null;
 
-        precioRaw = normalizarTextoDecimal(precioRaw, false);
         const numero = parseDecimalEs(precioRaw);
         if (!isFinite(numero) || numero <= 0) return null;
 
         const normalizado = formatNumberEs(round2(numero), 2);
-        $("#PrecioKg").val(normalizado);
+        $("#PrecioKg").val(normalizado).trigger("input");
         return {
             raw: normalizado,
             numero: round2(numero)
@@ -2481,6 +2491,15 @@
         const inputCodigoPrecio = document.getElementById("CodigoPrecio");
         if (!inputPrecio) return;
 
+        // Mascara de miles/coma en vivo (2026-09-07, ver docs/DECISIONS.md): reemplaza el
+        // formateo manual (normalizarTextoDecimal, que no agregaba separador de miles mientras
+        // se tipea) por MoneyInputMask, ya usado en Finanzas/Pagos. El propio mask intercepta
+        // Enter dejandolo pasar (esta en su lista de teclas de navegacion), asi que el listener
+        // de Enter->guardar de abajo sigue funcionando sin cambios.
+        if (window.MoneyInputMask) {
+            window.MoneyInputMask.attach(inputPrecio);
+        }
+
         inputPrecio.addEventListener("keydown", function (e) {
             if (e.key === "Enter") {
                 e.preventDefault();
@@ -2489,7 +2508,6 @@
         });
 
         inputPrecio.addEventListener("input", function () {
-            this.value = normalizarTextoDecimal(this.value, false);
             actualizarVariacionPrecio();
             $("#errorPrecio").addClass("d-none");
         });

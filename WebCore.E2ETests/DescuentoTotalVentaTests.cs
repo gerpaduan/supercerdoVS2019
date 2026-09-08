@@ -26,6 +26,7 @@ public sealed class DescuentoTotalVentaTests
     public async Task DescuentoTotalVenta_SeAplicaATodasLasLineasAntesDeGuardar()
     {
         var page = await _fixture.NewAuthenticatedPageAsync();
+        await PreciosSeedHelper.FijarPreciosCanonicosAsync(page);
         var errors = new List<string>();
         page.PageError += (_, msg) => errors.Add(msg);
 
@@ -107,6 +108,7 @@ public sealed class DescuentoTotalVentaTests
     public async Task DescuentoTotalVenta_BloqueadoSiYaHayLineaBonificadaIndividualmente()
     {
         var page = await _fixture.NewAuthenticatedPageAsync();
+        await PreciosSeedHelper.FijarPreciosCanonicosAsync(page);
 
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(500);
@@ -145,6 +147,7 @@ public sealed class DescuentoTotalVentaTests
     public async Task DescuentoTotalVenta_AlQuitarloElAzulVuelveAlTotalOriginalSinTag()
     {
         var page = await _fixture.NewAuthenticatedPageAsync();
+        await PreciosSeedHelper.FijarPreciosCanonicosAsync(page);
 
         await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(500);

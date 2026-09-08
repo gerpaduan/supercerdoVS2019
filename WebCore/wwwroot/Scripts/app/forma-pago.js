@@ -114,6 +114,14 @@ function actualizarLeyendaFormaPagoActual() {
             ' + ' + formatearNombreFormaPagoConAtajo(formaPago) + ' $' + formatearImporteFormaPago(otroMonto > 0 ? otroMonto : 0);
     }
 
+    // Atajo "mantener la forma de pago actual" (2026-09-07, pedido explicito del usuario -- ver
+    // docs/DECISIONS.md): solo tiene sentido al MODIFICAR una venta ya guardada (esEdicionVenta),
+    // donde "la actual" es un dato real de la venta -- en modo preseleccion (armar precios antes
+    // de cargar productos) no hay nada que "mantener" todavia.
+    if (window.esEdicionVenta) {
+        texto += '<br><span class="text-muted"><i class="fas fa-level-down-alt fa-rotate-90 mr-1"></i>Presione <strong>Enter</strong> para mantener la misma forma de pago.</span>';
+    }
+
     $info.html(texto).show();
 }
 
@@ -973,6 +981,26 @@ $(document).ready(function () {
         if (window.POSGuard && !window.POSGuard.isModalOnTop('#modalFormaPago')) return;
 
         const esPagoMixto = $('#chkPagoMixto').is(':checked');
+
+        // ---- Enter: mantener la forma de pago actual al modificar una venta (2026-09-07,
+        // pedido explicito del usuario -- ver docs/DECISIONS.md). Solo aplica en edicion de venta
+        // real (esEdicionVenta) con una forma de pago actual conocida, y con el foco fuera de
+        // cualquier input (el campo de % de descuento ya intercepta su propio Enter con
+        // stopPropagation, asi que nunca llega hasta aca -- este guard cubre los demas inputs,
+        // ej. montoEfectivo/montoOtroPago del bloque mixto). Si la venta era pago mixto, "mantener"
+        // equivale a confirmar el split ya precargado (mismo botón que ya usa el atajo "End").
+        if (e.key === 'Enter' && window.esEdicionVenta && window.POSFormaPagoActual?.formaPago) {
+            const tagFocoEnter = (document.activeElement && document.activeElement.tagName) || '';
+            if (tagFocoEnter !== 'INPUT' && tagFocoEnter !== 'TEXTAREA' && tagFocoEnter !== 'SELECT') {
+                e.preventDefault();
+                if (esPagoMixto) {
+                    $('#btnFinalizarPagoMixto').click();
+                } else {
+                    window.seleccionarFormaPago(window.POSFormaPagoActual.formaPago);
+                }
+            }
+            return;
+        }
 
         // ---- "/" bonificacion % a todos (2026-09-06, ver docs/DECISIONS.md) ----
         // Va ANTES del branch de pago mixto: el descuento/recargo global es independiente de la

@@ -3,7 +3,13 @@ using Entidades;
 using System;
 using System.IO;
 using System.Net;
+#if NET472
+// SoapException solo existe en System.Web.Services (net472) -- en net10.0 el shim de
+// ServiceReferenceCore\WsPsa13Compat.cs llama al servicio via WCF, los errores SOAP llegan como
+// System.ServiceModel.FaultException/CommunicationException (ya cubiertos por TraducirMensajeError
+// via el texto del mensaje, ver mas abajo).
 using System.Web.Services.Protocols;
+#endif
 
 namespace AFIP
 {
@@ -33,7 +39,13 @@ namespace AFIP
         private readonly string _urlPadron;
         private readonly LoginClass _login;
 
-        public ConsultarPadronService(Entidades.Empresa empresa)
+        // basePathOverride: opcional, solo lo usa WebCore (ver PersonasController.BuscarPadronAfipAjax),
+        // mismo motivo que AFIP.GenerarFacturaService: AppDomain.CurrentDomain.BaseDirectory es el
+        // root del sitio para el Web clasico (asi corre IIS las apps ASP.NET), pero para WebCore
+        // (Kestrel self-hosted) es la carpeta de build (bin/Debug/net10.0), no el content root del
+        // proyecto -- ahi no esta AFIP/<cuit>/. Sin override, comportamiento identico al original
+        // (net472 no cambia).
+        public ConsultarPadronService(Entidades.Empresa empresa, string basePathOverride = null)
         {
             if (empresa == null) throw new ArgumentNullException(nameof(empresa));
             if (empresa.Cuit <= 0) throw new ArgumentException("Empresa sin CUIT válido.", nameof(empresa));
@@ -52,8 +64,12 @@ namespace AFIP
                 ? "https://aws.afip.gov.ar/sr-padron/webservices/personaServiceA13"
                 : "https://awshomo.afip.gov.ar/sr-padron/webservices/personaServiceA13";
 
+            string appBaseDirectory = string.IsNullOrWhiteSpace(basePathOverride)
+                ? AppDomain.CurrentDomain.BaseDirectory
+                : basePathOverride;
+
             string basePath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
+                appBaseDirectory,
                 "AFIP",
                 _cuitEmpresa
             );
@@ -206,7 +222,11 @@ namespace AFIP
             if (ex is WebException || texto.Contains("unable to connect") || texto.Contains("forcibly closed") || texto.Contains("connection") || texto.Contains("remote name could not be resolved"))
                 return "No se pudo conectar con AFIP/ARCA. Revise la conexión o el servicio. " + detalle;
 
+#if NET472
             if (ex is SoapException || texto.Contains("soap"))
+#else
+            if (ex is System.ServiceModel.FaultException || texto.Contains("soap") || texto.Contains("fault"))
+#endif
                 return "El servicio de AFIP/ARCA devolvió un error. " + detalle;
 
             if (texto.Contains("token") || texto.Contains("sign") || texto.Contains("cms") || texto.Contains("certificado") || texto.Contains("certificate") || texto.Contains("wsaa"))
