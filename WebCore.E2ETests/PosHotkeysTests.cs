@@ -218,4 +218,60 @@ public sealed class PosHotkeysTests
 
         await page.CloseAsync();
     }
+
+    // Atajo "5" (QR) del modal de forma de pago (item 4 de los 12 pendientes, 2026-09-09, ver
+    // docs/DECISIONS.md "Batch C: POS forma de pago"). Causa raiz: Scripts/app/pos-forma-pago-
+    // precios.js nunca se habia portado a WebCore -- sin el, normalizarTipoFormaPago("QR") (el
+    // data-tipo del boton, en mayusculas) no coincidia con "Qr" (el valor del mapa de atajos), asi
+    // que getBotonFormaPago() no encontraba el boton y el atajo no hacia nada. Los atajos 1-4 y 6
+    // no se veian afectados porque sus data-tipo ya coinciden exactamente con el mapa sin
+    // normalizar. Intercepta el POST real a FinalizarVenta para confirmar que efectivamente se
+    // dispara con "Qr" sin crear una venta real en la base compartida de desarrollo.
+    [Fact]
+    public async Task VentasPOS_AtajoCinco_SeleccionaFormaDePagoQr()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) => errors.Add(msg);
+
+        string? payloadCapturado = null;
+        await page.RouteAsync("**/Ventas/FinalizarVenta", async route =>
+        {
+            payloadCapturado = route.Request.PostData;
+            await route.FulfillAsync(new RouteFulfillOptions
+            {
+                Status = 200,
+                ContentType = "application/json",
+                Body = "{\"ok\":false,\"msg\":\"interceptado por test, no se guardo nada\"}"
+            });
+        });
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        await page.FillAsync("#inputCodigo", "1");
+        await page.Keyboard.PressAsync("Enter");
+        await page.WaitForTimeoutAsync(600);
+        await page.FillAsync("#inputCantidad", "1");
+        await page.Keyboard.PressAsync("Enter");
+        await page.WaitForTimeoutAsync(600);
+
+        await page.Keyboard.PressAsync("End");
+        await page.WaitForTimeoutAsync(600);
+        Assert.Equal(1, await page.Locator("#modalFormaPago.show").CountAsync());
+
+        // Foco fuera de cualquier input (el guard de 2026-09-07 desactiva los atajos numericos
+        // mientras se esta escribiendo en el campo de % de descuento) -- estado normal al abrir
+        // el modal recien, sin tocar el bloque de descuento.
+        await page.ClickAsync("#modalFormaPago .modal-header", new PageClickOptions { Position = new Position { X = 5, Y = 5 } });
+
+        await page.Keyboard.PressAsync("5");
+        await page.WaitForTimeoutAsync(800);
+
+        Assert.NotNull(payloadCapturado);
+        Assert.Contains("\"formaPago\":\"Qr\"", payloadCapturado);
+        Assert.Empty(errors);
+
+        await page.CloseAsync();
+    }
 }

@@ -203,6 +203,16 @@ namespace WebCore.Controllers
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
+            // Port de Web/Controllers/ComprasController.cs:55-61 -- el permiso se chequea contra
+            // el OPERADOR resuelto (para produccion, la persona real ya identificada; para un
+            // usuario normal, ResolverOperadorModulo devuelve el mismo user sin cambios).
+            var operadorIndex = ResolverOperadorModulo("Compras", _usuarioActual);
+            if (!_oUsuarioN.tienePermiso(operadorIndex, Entidades.Permisos.Compra.VerCompras, desde, -1))
+            {
+                ViewBag.Seccion = "Compras";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             bool permiteMediaRes = PermiteMediaRes();
             string tipoFiltrado = string.IsNullOrWhiteSpace(tipoCompra) ? "Todos" : tipoCompra.Trim();
             if (!permiteMediaRes &&
@@ -237,6 +247,13 @@ namespace WebCore.Controllers
         {
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            // Port de Web/Controllers/ComprasController.cs:104-109.
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Compra.VerCompras, desde, -1))
+            {
+                ViewBag.Seccion = "Compras";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
 
             bool permiteMediaRes = PermiteMediaRes();
             string tipoFiltrado = string.IsNullOrWhiteSpace(tipoCompra) ? "Todos" : tipoCompra.Trim();
@@ -318,6 +335,16 @@ namespace WebCore.Controllers
             if (compra == null || compra.IdCompra <= 0)
             {
                 ViewBag.ComprasDetalleError = "No se encontraron los detalles de la compra.";
+                return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
+            }
+
+            // Port de Web/Controllers/ComprasController.cs:803-812 -- chequeo contra el operador
+            // resuelto, no contra el usuario de sesion directamente: sin esto, expandir una fila
+            // fallaria para el operador de produccion aunque Index ya lo haya dejado entrar.
+            var operadorDetalle = ResolverOperadorModulo("Compras", _usuarioActual);
+            if (!_oUsuarioN.tienePermiso(operadorDetalle, Entidades.Permisos.Compra.VerCompras, compra.FechaCompra, -1))
+            {
+                ViewBag.ComprasDetalleError = "No tiene permisos para consultar esta compra.";
                 return PartialView("~/Views/Compras/_ComprasDetalle.cshtml", null);
             }
 
@@ -444,17 +471,33 @@ namespace WebCore.Controllers
             if (!desdePos && user.EsUsuarioProduccion && ObtenerOperadorModulo("Compras") == null)
                 return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.Path + Request.QueryString });
 
+            // Port de Web/Controllers/ComprasController.cs:200-206.
+            var operador = ResolverOperadorModulo("Compras", user);
+            string permiso = id > 0 ? Entidades.Permisos.Compra.ModificarCompra : Entidades.Permisos.Compra.NuevaCompra;
+            int idCreador = operador.Id;
+
             Entidades.Compra compra = null;
             if (id > 0)
             {
                 compra = _oCompraN.findById_convertToCompra(id);
                 if (compra == null || compra.IdCompra == 0)
                     return NotFound();
+
+                idCreador = compra.CreadoPor != null ? compra.CreadoPor.Id : operador.Id;
             }
 
-            // TODO(claude): permiso Compra.ModificarCompra/NuevaCompra omitido, mismo criterio
-            // que el resto del sistema de "permiso con limite de fecha" (ver header del archivo)
-            // -- el stub admin siempre esta autorizado.
+            // Port de Web/Controllers/ComprasController.cs:218-229.
+            DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
+            if (!_oUsuarioN.tienePermiso(operador, permiso, fechaPermiso, idCreador))
+            {
+                if (desdePos)
+                    return StatusCode(403, "No tiene permisos para operar compras.");
+
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para operar compras.";
+                return RedirectToAction("Index");
+            }
 
             var model = compra != null
                 ? CrearViewModelEdicion(compra, user, origenNormalizado)
@@ -510,7 +553,11 @@ namespace WebCore.Controllers
             try
             {
                 Entidades.Usuario user = _usuarioActual;
-                Entidades.Usuario operador = user;
+                // Bug real encontrado de paso (2026-09-09, ver docs/DECISIONS.md "Batch B"):
+                // "operador" quedaba igual a "user" sin resolver -- para un usuario de produccion,
+                // CreadoPor/ActualizadoPor (mas abajo) quedaban atribuidos a la cuenta compartida
+                // en vez del operador real. Port de Web/Controllers/ComprasController.cs:401.
+                Entidades.Usuario operador = ResolverOperadorModulo("Compras", user);
 
                 string origenNormalizado = NormalizarOrigen(model != null ? model.Origen : null);
                 bool desdePos = EsOrigenPos(origenNormalizado);
@@ -535,8 +582,12 @@ namespace WebCore.Controllers
                         return Fallo("No se encontró la compra a modificar.");
                 }
 
-                // TODO(claude): permiso Compra.ModificarCompra/NuevaCompra omitido aca tambien
-                // (ver Editar) -- stub admin siempre autorizado.
+                // Port de Web/Controllers/ComprasController.cs:426-430.
+                string permisoGuardar = model.IdCompra > 0 ? Entidades.Permisos.Compra.ModificarCompra : Entidades.Permisos.Compra.NuevaCompra;
+                DateTime fechaPermisoGuardar = model.FechaCompra;
+                int idCreadorGuardar = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : operador.Id;
+                if (!_oUsuarioN.tienePermiso(operador, permisoGuardar, fechaPermisoGuardar, idCreadorGuardar))
+                    return Fallo("No tiene permisos para guardar esta compra.");
 
                 Entidades.Persona proveedor = _oPersonaN.findById(model.IdProveedor);
                 if (proveedor == null || proveedor.IdPersona <= 0)

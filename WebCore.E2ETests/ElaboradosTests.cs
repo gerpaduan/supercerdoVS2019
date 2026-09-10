@@ -63,4 +63,38 @@ public sealed class ElaboradosTests
 
         await page.CloseAsync();
     }
+
+    // Item 12 de los 12 pendientes (2026-09-09, ver docs/DECISIONS.md "Batch D: scanner +
+    // buscador de productos"): "en /Elaborados/EditarFormula completar todas las funcionalidades
+    // faltantes (modales de buscar los productos)". El HTML/JS de los modales de busqueda y toda
+    // la logica de negocio ya estaban completos con paridad 1:1 (no era un gap de logica) --
+    // causa real: Scripts/app/modal-productos.js (define window.abrirBuscarProductoModal, usado
+    // por los botones F9/F10) nunca se cargaba en esta vista, asi que clickear "Buscar" caia en un
+    // "console.error" defensivo sin abrir nada. Fix: modal-productos.js pasa a cargarse global en
+    // _Layout.cshtml (igual que scanner.js, mismo batch, mismo criterio -- ver el comentario en
+    // _Layout.cshtml). Este test verifica los 2 botones de esta vista (elaborado E ingrediente).
+    [Fact]
+    public async Task EditarFormula_BotonesBuscar_AbrenElModalDeProductos()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) => errors.Add(msg);
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Elaborados/EditarFormula/0", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        await page.ClickAsync("#btnBuscarElaboradoFormula");
+        await page.WaitForTimeoutAsync(500);
+        Assert.True(await page.Locator(".modal.show").CountAsync() > 0, "El boton 'Buscar elaborado (F9)' deberia abrir el modal de busqueda de productos.");
+        await page.Keyboard.PressAsync("Escape");
+        await page.WaitForTimeoutAsync(400);
+
+        await page.ClickAsync("#btnBuscarIngredienteFormula");
+        await page.WaitForTimeoutAsync(500);
+        Assert.True(await page.Locator(".modal.show").CountAsync() > 0, "El boton 'Buscar ingrediente (F10)' deberia abrir el modal de busqueda de productos.");
+
+        Assert.Empty(errors);
+
+        await page.CloseAsync();
+    }
 }

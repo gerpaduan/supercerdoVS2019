@@ -6,10 +6,13 @@
 // BuscarProducto/BuscarProductoPorCodigo/ObtenerFormula (autocompletado), Anular.
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
-// 2026-09-06) -- ya no hay stub hardcodeado. PermisosHelper.TienePermiso se omite por completo --
-// TODO(claude): revisar en Batch 4/5. El gate de "usuario de sala de produccion"
-// (SeleccionUsuario) todavia no se porta (Batch 5) -- ResolverUsuarioCreador() SI se porta
-// (trivial, ya fiel al original).
+// 2026-09-06). Permisos reales y gate de "usuario de sala de produccion" portados 2026-09-09
+// (Batch B, ver docs/DECISIONS.md "Batch B: permisos reales + operador de produccion"):
+// Permisos.Elaborado.* via _oUsuarioN.tienePermiso (equivalente exacto de
+// PermisosHelper.TienePermiso del clasico), SeleccionUsuario para la cuenta compartida de
+// produccion (port de Web/Controllers/SeleccionUsuarioController.cs,
+// WebCore/Helpers/PermisosHelper.cs). NO portado (deliberado, UX-only, ver mismo criterio en
+// MovimientosController.cs): ConstruirMensajePermisoFecha/ConfigurarAdvertenciaFechaEnVivo.
 using System.Data;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +28,7 @@ namespace WebCore.Controllers
         private readonly IParametrosContext _param;
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Sucursal _oSucursalN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -37,6 +41,7 @@ namespace WebCore.Controllers
 
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         public IActionResult Index(int? idSucursal = null, string elaborado = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
@@ -115,8 +120,17 @@ namespace WebCore.Controllers
         public IActionResult Formulas(string descripcion = "")
         {
             var user = _usuarioActual;
+
+            // Port de Web/Controllers/ElaboradosController.cs:127-131.
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerFormulas, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Elaborados";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             DataTable dt = _oCorteN.buscarFormula((descripcion ?? "").Trim()) ?? new DataTable();
-            bool puedeEditar = true;
+            // Port de Web/Controllers/ElaboradosController.cs:134.
+            bool puedeEditar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoFormula, DateTime.Today, user.Id);
             var model = new ElaboradoFormulasIndexVm
             {
                 Descripcion = (descripcion ?? "").Trim(),
@@ -137,12 +151,31 @@ namespace WebCore.Controllers
         {
             var user = _usuarioActual;
 
+            // Port de Web/Controllers/ElaboradosController.cs:158-164.
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoFormula, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para administrar fórmulas.";
+                return RedirectToAction("Formulas");
+            }
+
             ElaboradoFormulaEditVm model;
             if (id > 0)
             {
                 var formula = _oCorteN.findFormulaByID(id, 0);
                 if (formula == null || formula.IdFormula <= 0)
                     return NotFound("No se encontró la fórmula.");
+
+                // Port de Web/Controllers/ElaboradosController.cs:173-180.
+                int idCreadorFormula = formula.CreadoPor != null ? formula.CreadoPor.Id : user.Id;
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoFormula, DateTime.Today, idCreadorFormula))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tiene permisos para administrar fórmulas.";
+                    return RedirectToAction("Formulas");
+                }
 
                 model = CrearViewModelFormulaEdicion(formula, user);
             }
@@ -179,26 +212,58 @@ namespace WebCore.Controllers
             var user = _usuarioActual;
             int idCreadorPermiso = user.Id;
 
+            // Port de Web/Controllers/ElaboradosController.cs:224-231.
+            var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
+                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+            if (redirectSeleccion != null) return redirectSeleccion;
+
+            // Port de Web/Controllers/ElaboradosController.cs:236.
+            var operadorResuelto = user.EsUsuarioProduccion ? ResolverUsuarioCreador(idUsuarioCreador, user) : null;
+            int idUsuarioCreadorResuelto = operadorResuelto?.Id ?? 0;
+
+            // Port de Web/Controllers/ElaboradosController.cs:240-246.
+            if (id <= 0 && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para ingreso rápido.";
+                return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
+            }
+
             if (id > 0)
             {
                 var embutido = _oCorteN.findEmbutidoById(id);
                 if (embutido == null || embutido.IdEmbutido <= 0)
                     return NotFound("No se encontró el elaborado.");
 
-                bool puedeModificar = true;
-                idCreadorPermiso = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
+                // Port de Web/Controllers/ElaboradosController.cs:254-262.
+                int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
+                bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, embutido.FechaEmbutido, idCreador);
+                if (!puedeModificar && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tiene permisos para consultar elaborados.";
+                    return RedirectToAction(esDesarme ? "Desarme" : "IngresoRapido");
+                }
+
+                idCreadorPermiso = idCreador;
                 var modelEdicion = CrearViewModelIngresoRapidoEdicion(embutido, user, esDesarme);
                 if (modelEdicion == null)
                     return NotFound("No se encontró el elaborado.");
 
                 modelEdicion.SoloLecturaInicial = !string.Equals(modelEdicion.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
                 modelEdicion.PuedeHabilitarEdicion = puedeModificar;
+                if (!puedeModificar)
+                    modelEdicion.PuedeAnular = false;
+                if (operadorResuelto != null)
+                    modelEdicion.UsuarioNombre = operadorResuelto.Nombre;
 
                 ViewBag.Title = modelEdicion.EsDesarme ? "Desarme de elaborado" : "Ingreso rápido";
                 ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
                 ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
                 ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
-                ViewBag.IdUsuarioCreadorPreseleccionado = 0;
+                ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
                 return View(modelEdicion);
             }
 
@@ -221,7 +286,7 @@ namespace WebCore.Controllers
                 EsDesarme = esDesarme,
                 IdSucursal = user.IdSucursal > 0 ? user.IdSucursal : 0,
                 FechaEmbutido = DateTime.Now,
-                UsuarioNombre = user.Nombre ?? "",
+                UsuarioNombre = operadorResuelto != null ? operadorResuelto.Nombre : (user.Nombre ?? ""),
                 IdElaborado = corte.IdCorte,
                 CodigoElaborado = corte.Codigo,
                 Elaborado = !string.IsNullOrWhiteSpace(corte.CorteDesc) ? corte.CorteDesc : corte.corte,
@@ -238,7 +303,7 @@ namespace WebCore.Controllers
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
-            ViewBag.IdUsuarioCreadorPreseleccionado = 0;
+            ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
             return View(model);
         }
 
@@ -247,6 +312,15 @@ namespace WebCore.Controllers
             var user = _usuarioActual;
             int idCreadorPermiso = user.Id;
 
+            // Port de Web/Controllers/ElaboradosController.cs:337-344.
+            var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
+                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+            if (redirectSeleccion != null) return redirectSeleccion;
+
+            // Port de Web/Controllers/ElaboradosController.cs:349.
+            var operadorResuelto = user.EsUsuarioProduccion ? ResolverUsuarioCreador(idUsuarioCreador, user) : null;
+            int idUsuarioCreadorResuelto = operadorResuelto?.Id ?? 0;
+
             ElaboradoCargaVm model;
             if (id > 0)
             {
@@ -254,20 +328,43 @@ namespace WebCore.Controllers
                 if (embutido == null || embutido.IdEmbutido <= 0)
                     return NotFound("No se encontró el elaborado.");
 
-                bool puedeModificar = true;
-                idCreadorPermiso = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
+                // Port de Web/Controllers/ElaboradosController.cs:360-368.
+                int idCreador = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
+                bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, embutido.FechaEmbutido, idCreador);
+                if (!puedeModificar && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.VerEmbutidos, embutido.FechaEmbutido, -1))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tiene permisos para consultar elaborados.";
+                    return RedirectToAction("Index");
+                }
+
+                idCreadorPermiso = idCreador;
                 model = CrearViewModelEdicion(embutido, user);
                 model.SoloLecturaInicial = !string.Equals(model.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase);
                 model.PuedeHabilitarEdicion = puedeModificar;
                 model.PermiteGuardarEdicion = puedeModificar;
+                if (!puedeModificar)
+                    model.PuedeAnular = false;
+                if (operadorResuelto != null)
+                    model.UsuarioNombre = operadorResuelto.Nombre;
             }
             else
             {
+                // Port de Web/Controllers/ElaboradosController.cs:382-388.
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, DateTime.Today, user.Id))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tiene permisos para crear o modificar elaborados.";
+                    return RedirectToAction("Index");
+                }
+
                 model = new ElaboradoCargaVm
                 {
                     IdSucursal = user.IdSucursal > 0 ? user.IdSucursal : 0,
                     FechaEmbutido = DateTime.Now,
-                    UsuarioNombre = user.Nombre ?? "",
+                    UsuarioNombre = operadorResuelto != null ? operadorResuelto.Nombre : (user.Nombre ?? ""),
                     Tabs = BuildTabs("Carga"),
                     PermiteGuardarEdicion = true,
                     PuedeHabilitarEdicion = true
@@ -278,7 +375,7 @@ namespace WebCore.Controllers
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
-            ViewBag.IdUsuarioCreadorPreseleccionado = 0;
+            ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreadorResuelto;
 
             return View(model);
         }
@@ -400,6 +497,13 @@ namespace WebCore.Controllers
 
                 if (formulaActual.CreadoPor != null)
                     idCreador = formulaActual.CreadoPor.Id;
+            }
+
+            // Port de Web/Controllers/ElaboradosController.cs:547-551.
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoFormula, DateTime.Today, idCreador))
+            {
+                ViewBag.Seccion = "Elaborados";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
 
             string error = ValidarFormula(model);
@@ -534,12 +638,21 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, mensaje = error });
 
                 Entidades.Embutido embutidoOriginal = null;
+                int idCreadorPermiso = user.Id;
                 if (model.IdEmbutido > 0)
                 {
                     embutidoOriginal = _oCorteN.findEmbutidoById(model.IdEmbutido);
                     if (embutidoOriginal == null || embutidoOriginal.IdEmbutido <= 0)
                         return Json(new { ok = false, mensaje = "No se encontro el elaborado original a modificar." });
+
+                    if (embutidoOriginal.CreadoPor != null)
+                        idCreadorPermiso = embutidoOriginal.CreadoPor.Id;
                 }
+
+                // Port de Web/Controllers/ElaboradosController.cs:724 (GuardarIngresoRapido).
+                DateTime fechaPermisoRapido = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, fechaPermisoRapido, idCreadorPermiso))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
 
                 var elaborado = _oCorteN.findCorteById(model.IdElaborado, false);
                 int idEmpresaSesion = _usuarioActual.IdEmpresa > 0 ? _usuarioActual.IdEmpresa : _empresa.IdEmpresa;
@@ -625,12 +738,21 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, mensaje = error });
 
                 Entidades.Embutido embutidoOriginal = null;
+                int idCreadorPermisoCarga = user.Id;
                 if (model.IdEmbutido > 0)
                 {
                     embutidoOriginal = _oCorteN.findEmbutidoById(model.IdEmbutido);
                     if (embutidoOriginal == null || embutidoOriginal.IdEmbutido <= 0)
                         return Json(new { ok = false, mensaje = "No se encontro el elaborado original a modificar." });
+
+                    if (embutidoOriginal.CreadoPor != null)
+                        idCreadorPermisoCarga = embutidoOriginal.CreadoPor.Id;
                 }
+
+                // Port de Web/Controllers/ElaboradosController.cs:830-832.
+                DateTime fechaPermisoCarga = embutidoOriginal != null ? embutidoOriginal.FechaEmbutido : (model != null ? model.FechaEmbutido : DateTime.Today);
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Elaborado.IngresoEmbutido, fechaPermisoCarga, idCreadorPermisoCarga))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar elaborados." });
 
                 var corteElaborado = _oCorteN.findCorteById(model.IdElaborado, false);
                 int idEmpresaSesion = _usuarioActual.IdEmpresa > 0 ? _usuarioActual.IdEmpresa : _empresa.IdEmpresa;
@@ -707,9 +829,19 @@ namespace WebCore.Controllers
         {
             try
             {
+                var user = _usuarioActual;
                 var embutido = _oCorteN.findEmbutidoById(idEmbutido);
                 if (embutido == null || embutido.IdEmbutido <= 0)
                     return Json(new { ok = false, mensaje = "No se encontró el elaborado." });
+
+                // Port de Web/Controllers/ElaboradosController.cs:919-924 -- el permiso depende
+                // de si el elaborado se cargo por ingreso rapido (con formula) o carga manual.
+                int idCreadorAnulacion = embutido.CreadoPor != null ? embutido.CreadoPor.Id : user.Id;
+                string permisoAnulacion = embutido.Corte != null && embutido.Corte.IngresoRapidoEmbutido
+                    ? Entidades.Permisos.Elaborado.IngresoEmbutidoRapido
+                    : Entidades.Permisos.Elaborado.IngresoEmbutido;
+                if (!_oUsuarioN.tienePermiso(user, permisoAnulacion, embutido.FechaEmbutido, idCreadorAnulacion))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para anular este elaborado." });
 
                 if (string.Equals(embutido.Estado ?? "", "Anulado", StringComparison.OrdinalIgnoreCase))
                     return Json(new { ok = false, mensaje = "El elaborado ya se encuentra anulado." });
@@ -732,6 +864,13 @@ namespace WebCore.Controllers
 
         private IActionResult VistaIngresoRapido(bool esDesarme)
         {
+            // Port de Web/Controllers/ElaboradosController.cs:952-956.
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Elaborado.IngresoEmbutidoRapido, DateTime.Today, _usuarioActual.Id))
+            {
+                ViewBag.Seccion = "Elaborados";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             var model = new ElaboradoRapidoIndexVm
             {
                 EsDesarme = esDesarme,

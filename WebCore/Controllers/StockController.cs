@@ -57,6 +57,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Corte _oCorteN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         // Id real del usuario logueado (no un stub) -- OBLIGATORIO que sea correcto, no cosmetico:
         // a diferencia de Index/Detalle (donde Id nunca se persiste), Guardar/GenerarAjustePesaje
@@ -76,6 +77,7 @@ namespace WebCore.Controllers
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         public IActionResult Index(int? idSucursal = null, string tipoCompra = "Ver Todos", DateTime? fechaDesde = null, DateTime? fechaHasta = null)
@@ -212,7 +214,18 @@ namespace WebCore.Controllers
         {
             string tipoNormalizado = NormalizarTipoOperacion(tipoCompra);
             if (string.IsNullOrWhiteSpace(tipoNormalizado))
+            {
+                // Bug real (2026-09-10, item 8 de la segunda ronda de pedidos, ver
+                // docs/DECISIONS.md): a diferencia de todos los demas redirect de este
+                // controller, este quedaba mudo -- sin TempData/mensaje. Solo se dispara por
+                // acceso directo a /Stock/Nuevo sin querystring (los botones reales del Index ya
+                // pasan tipoCompra bien), pero cuando pasaba, el usuario quedaba en el Index sin
+                // ninguna explicacion de por que no se abrio nada.
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Movimiento de stock";
+                TempData["AlertMsg"] = "No se indicó un tipo de operación válido. Ingresá desde el listado de Stock.";
                 return RedirectToAction("Index");
+            }
 
             return RedirectToAction("Editar", new { id = 0, tipoCompra = tipoNormalizado, idUsuarioCreador });
         }
@@ -220,6 +233,14 @@ namespace WebCore.Controllers
         public IActionResult Editar(int id = 0, string tipoCompra = "", int idUsuarioCreador = 0)
         {
             Entidades.Usuario user = _usuarioActual;
+
+            // Port de Web/Controllers/StockController.cs:466-473 -- usuario de la cuenta
+            // compartida de produccion sin identificar todavia redirige a la pantalla comun de
+            // seleccion (sin contraseña, ver SeleccionUsuarioController). Batch B, 2026-09-09,
+            // ver docs/DECISIONS.md "Batch B: permisos reales + operador de produccion".
+            var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
+                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+            if (redirectSeleccion != null) return redirectSeleccion;
 
             Entidades.Compra compra = null;
             if (id > 0)
@@ -231,15 +252,29 @@ namespace WebCore.Controllers
 
             string tipoOperacion = compra != null ? compra.TipoCompra : NormalizarTipoOperacion(tipoCompra);
             if (string.IsNullOrWhiteSpace(tipoOperacion) || !EsTipoStock(tipoOperacion))
+            {
+                // Mismo bug que en Nuevo() de arriba (2026-09-10, item 8 de la segunda ronda de
+                // pedidos, ver docs/DECISIONS.md) -- redirect mudo sin TempData.
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Movimiento de stock";
+                TempData["AlertMsg"] = "No se indicó un tipo de operación de stock válido.";
                 return RedirectToAction("Index");
+            }
 
-            // TODO(claude): el original chequea PermisosHelper.TienePermiso(Session,
-            // Stock.AddOrEditStock, fechaPermiso, idCreador) -- y si falla, exige ademas VerStock
-            // para no redirigir directo a Index. Se omite igual que el resto del sistema de
-            // "permiso con limite de fecha" (ver header del archivo): el stub admin de esta
-            // migracion siempre esta autorizado, mismo resultado observable que portar el chequeo
-            // real con Admin=true.
-            bool puedeModificar = true;
+            // Port de Web/Controllers/StockController.cs:487-499.
+            DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
+            int idCreadorPermiso = compra != null && compra.CreadoPor != null ? compra.CreadoPor.Id : user.Id;
+            bool puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermiso, idCreadorPermiso);
+            if (!puedeModificar)
+            {
+                if (compra == null || !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, fechaPermiso, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tiene permisos para crear o modificar stock.";
+                    return RedirectToAction("Index");
+                }
+            }
 
             if (EsAjuste(tipoOperacion) && !user.Admin)
             {
@@ -316,8 +351,19 @@ namespace WebCore.Controllers
                 return View("~/Views/Stock/Editar.cshtml", model);
             }
 
-            // TODO(claude): permiso Stock.AddOrEditStock omitido aca tambien (ver Editar) -- stub
-            // admin siempre autorizado.
+            // Port de Web/Controllers/StockController.cs:584-593.
+            DateTime fechaPermisoGuardar = model.FechaCompra;
+            int idCreadorPermisoGuardar = compraActual != null && compraActual.CreadoPor != null ? compraActual.CreadoPor.Id : user.Id;
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.AddOrEditStock, fechaPermisoGuardar, idCreadorPermisoGuardar))
+            {
+                ModelState.AddModelError("", "No tiene permisos para guardar este movimiento.");
+                if (user.EsUsuarioProduccion)
+                    model.UsuarioNombre = usuarioCreador.Nombre;
+                CargarViewBags(model, idUsuarioCreador);
+                CargarDatosRelacionadosEnModelo(model, compraActual);
+                RecalcularTotales(model);
+                return View("~/Views/Stock/Editar.cshtml", model);
+            }
 
             Entidades.Sucursal sucursal = _oSucursalN.findById(model.IdSucursal);
             if (sucursal == null || sucursal.IdSucursal <= 0)

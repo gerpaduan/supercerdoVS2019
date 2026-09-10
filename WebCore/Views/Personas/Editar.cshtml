@@ -575,3 +575,12 @@
         esperarJQuery();
     })();
 </script>
+
+@section Scripts {
+    @* edit-page-guard.js nunca se cargaba en esta vista (solo se llamaba a .init() en el script
+       de arriba, que hacia no-op en silencio) -- se agrega aca porque las secciones @section
+       Scripts renderizan despues de jQuery en _Layout.cshtml, a diferencia de un <script src>
+       puesto directo en el body (ver docs/DECISIONS.md, batch de "advertencia de salir sin
+       guardar", 2026-09-10). *@
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+}

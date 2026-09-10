@@ -16,10 +16,18 @@
 // ImportarSeleccionados/ImportarTiposProductoSeleccionados (las 2 escrituras reales) quedan sin
 // probar con un POST real, ver docs/10-migracion-aspnet-core/README.md.
 //
-// Empresa real via IUsuarioSesionService (login real, ver docs/DECISIONS.md 2026-09-06) -- ya no
-// hay stub hardcodeado. Los flags de ViewBag/gates que en el original vienen de
-// PermisosHelper.TienePermiso(Session, ...) se hardcodean a true -- documentado, no un permiso
-// real todavia (TODO(claude): revisar en Batch 4/5 de permisos reales).
+// Empresa real via IUsuarioSesionService (login real, ver docs/DECISIONS.md 2026-09-06). Permisos
+// reales portados 2026-09-09 (Batch B, ver docs/DECISIONS.md "Batch B: permisos reales + operador
+// de produccion"): Permisos.Producto.NuevoCorte (Index flags/AddOrEdit/Guardar) y
+// Permisos.Producto.ModificarPrecios (EditPrecioCorte) via _oUsuarioN.tienePermiso. Los permisos de
+// Marcas (VerCortes/NuevoCorte), Tipos de Producto (VerTiposProducto/AddOrEditTipoProducto), punto
+// de stock por sucursal (GuardarPuntosStockSucursal, gap real no documentado) y los 2 catalogos
+// globales (Productos/Tipos: VerGlobales*/BuscarGlobales*/Importar*Seleccionados, todos con
+// NuevoCorte o AddOrEditTipoProducto segun corresponda) se portaron en la tercera ronda de pedidos
+// (2026-09-10, ver docs/DECISIONS.md) -- BuscarMarca queda sin gate a proposito, el clasico
+// (Web/Controllers/ProductosController.cs:2116) tampoco lo tiene. De paso se resolvieron 2
+// TODO(claude) desactualizados en ImportarSeleccionados/ImportarTiposProductoSeleccionados que
+// pasaban idUsuario=null "por falta de sesion real" -- esa sesion ya existe desde 2026-09-06.
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -56,6 +64,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.CortePuntoStockSucursal _oCortePuntoStockSucursalN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         // IWebHostEnvironment: mismo criterio ya establecido en VentasController para AFIP -- lee
         // el logo de GenerarEtiquetasPdf desde WebRootPath, GenerarDocsCore.cs se mantiene libre
@@ -75,6 +84,7 @@ namespace WebCore.Controllers
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCortePuntoStockSucursalN = WebCore.Infrastructure.NegocioFactory.CrearCortePuntoStockSucursal(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         private Negocio.CatalogoGlobalProducto ObtenerGestorCatalogoGlobal()
@@ -159,9 +169,15 @@ namespace WebCore.Controllers
             ViewBag.Tipos = ObtenerListaTipos();
             ViewBag.Marcas = ObtenerListaMarcas();
             ViewBag.Proveedores = ObtenerListaProveedores();
-            ViewBag.PuedeEditarProducto = true;
-            ViewBag.PuedeModificarPreciosProducto = true;
-            ViewBag.PuedeEliminarProducto = true;
+            // Port de Web/Controllers/ProductosController.cs:125-127 (2026-09-09, Batch B, ver
+            // docs/DECISIONS.md "Batch B: permisos reales + operador de produccion"). "Eliminar"
+            // reusa el mismo permiso NuevoCorte que Editar -- no hay un permiso separado en
+            // clasico.
+            var usuarioIndex = _sesion.UsuarioActual;
+            bool puedeEditarProductoIndex = _oUsuarioN.tienePermiso(usuarioIndex, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+            ViewBag.PuedeEditarProducto = puedeEditarProductoIndex;
+            ViewBag.PuedeModificarPreciosProducto = _oUsuarioN.tienePermiso(usuarioIndex, Entidades.Permisos.Producto.ModificarPrecios, DateTime.Today, -1);
+            ViewBag.PuedeEliminarProducto = puedeEditarProductoIndex;
 
             return View(productos);
         }
@@ -331,6 +347,13 @@ namespace WebCore.Controllers
 
         public IActionResult AddOrEdit(int id = 0, bool cargaContinua = false, bool productoGuardado = false, int? ultimoProductoContinuoId = null, int? retomarProductoId = null, string flujoBaseContinuo = null)
         {
+            // Port de Web/Controllers/ProductosController.cs:884-888.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+            {
+                TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
+                return RedirectToAction("Index");
+            }
+
             Entidades.Corte entity = (id == 0)
                 ? new Entidades.Corte()
                 : _oCorteN.findCorteById(id, true);
@@ -356,6 +379,13 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Guardar(CorteUpsertVM vm)
         {
+            // Port de Web/Controllers/ProductosController.cs:921-925.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+            {
+                TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
+                return RedirectToAction("Index");
+            }
+
             NormalizarFloatsDesdeRequest(vm);
 
             bool esEdicionFormulario = string.Equals(Request.Form["EsEdicionFormulario"], "1", StringComparison.Ordinal);
@@ -1030,8 +1060,17 @@ namespace WebCore.Controllers
 
         public IActionResult Tipos(string buscar = "")
         {
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) --
+            // revierte la exclusion deliberada de una ronda anterior (pedido explicito del
+            // usuario). Port literal de Web/Controllers/ProductosController.cs:1618-1622.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.VerTiposProducto, DateTime.Today, -1))
+            {
+                TempData["FlashError"] = "No tenés permisos para ver tipos de producto.";
+                return RedirectToAction("Index");
+            }
+
             ViewBag.BuscarTipoProducto = (buscar ?? "").Trim();
-            ViewBag.PuedeEditarTiposProducto = true;
+            ViewBag.PuedeEditarTiposProducto = _oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1);
 
             DataTable dt = _oCorteN.obtenerTiposProductoGrillaEmpresa((buscar ?? "").Trim()) ?? new DataTable();
             return View(dt);
@@ -1042,6 +1081,11 @@ namespace WebCore.Controllers
         {
             try
             {
+                // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+                // Web/Controllers/ProductosController.cs:1698-1699.
+                if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                    return Content("<div class='alert alert-danger mb-0'>No tenés permisos para administrar tipos de producto.</div>", "text/html");
+
                 bool esEdicion = !string.IsNullOrWhiteSpace(tipo);
                 var model = new TipoProductoEditVm
                 {
@@ -1079,6 +1123,11 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult GuardarTipoProducto(TipoProductoEditVm model)
         {
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:1737-1738.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                return Json(new { success = false, message = "No tenés permisos para administrar tipos de producto." });
+
             string tipo = (model != null ? model.Tipo : null) ?? "";
             string tipoOriginal = (model != null ? model.TipoOriginal : null) ?? "";
             tipo = tipo.Trim();
@@ -1120,6 +1169,11 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult EliminarTipoProducto(string tipo)
         {
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:1789-1790.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                return Json(new { success = false, message = "No tenés permisos para eliminar tipos de producto." });
+
             tipo = (tipo ?? "").Trim();
             if (string.IsNullOrWhiteSpace(tipo))
                 return Json(new { success = false, message = "No se encontró el tipo de producto seleccionado." });
@@ -1155,9 +1209,21 @@ namespace WebCore.Controllers
 
         public IActionResult Marcas(string buscar = "")
         {
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) --
+            // revierte la exclusion deliberada de una ronda anterior (pedido explicito del
+            // usuario). Port literal de Web/Controllers/ProductosController.cs:1816-1824. De
+            // paso se reemplaza el stub "UsuarioAdmin = true" por el valor real -- con el stub,
+            // GuardarMarca dejaba modificar el nombre de cualquier marca existente a un usuario
+            // no-administrador (el chequeo "solo administradores" nunca se disparaba).
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.VerCortes, DateTime.Today, -1))
+            {
+                TempData["FlashError"] = "No tenés permisos para ver marcas.";
+                return RedirectToAction("Index");
+            }
+
             ViewBag.BuscarMarcaAdmin = (buscar ?? "").Trim();
-            ViewBag.PuedeCrearMarca = true;
-            ViewBag.UsuarioAdmin = true;
+            ViewBag.PuedeCrearMarca = _oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1);
+            ViewBag.UsuarioAdmin = _sesion.UsuarioActual.Admin;
 
             DataTable dt = _oPersonaN.buscarPersona((buscar ?? "").Trim(), true) ?? new DataTable();
             return View(dt);
@@ -1168,7 +1234,12 @@ namespace WebCore.Controllers
         {
             try
             {
-                bool esAdministrador = true;
+                // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+                // Web/Controllers/ProductosController.cs:1835-1836.
+                if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                    return Content("<div class='alert alert-danger mb-0'>No tenés permisos para administrar marcas.</div>", "text/html");
+
+                bool esAdministrador = _sesion.UsuarioActual.Admin;
 
                 var model = new MarcaEditVm
                 {
@@ -1211,7 +1282,12 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult GuardarMarca(MarcaEditVm model)
         {
-            bool esAdministrador = true;
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:1882-1883.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { success = false, message = "No tenés permisos para administrar marcas." });
+
+            bool esAdministrador = _sesion.UsuarioActual.Admin;
             bool esInsert = model == null || model.IdPersona <= 0;
 
             if (model == null)
@@ -1384,12 +1460,16 @@ namespace WebCore.Controllers
         // por _StockPorSucursalesProductoModal.cshtml, que a su vez es servido por
         // StockController.StockPorSucursalesProducto (Modulo 4) -- quedo deliberadamente sin
         // portar hasta ahora porque dependia de ese GET, ya portado (ver docs/DECISIONS.md).
-        // TODO(claude): permiso Producto.NuevoCorte omitido, mismo criterio ya usado en el resto
-        // de este controller (esAdministrador=true) -- el stub admin siempre esta autorizado.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult GuardarPuntosStockSucursal(int idCorte, List<PuntoStockSucursalItemVm> valores)
         {
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
+            // literal de Web/Controllers/ProductosController.cs:1517-1520 (gap real, nunca
+            // documentado como exclusion deliberada -- a diferencia de Marcas/Tipos).
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { error = "No tenés permisos para editar el punto de stock." });
+
             if (idCorte <= 0)
                 return Json(new { error = "Producto inválido." });
 
@@ -1478,6 +1558,13 @@ namespace WebCore.Controllers
         [HttpPost]
         public IActionResult EditPrecioCorte(int IdCorte, string PrecioKg)
         {
+            // Port de Web/Controllers/ProductosController.cs:1474-1478.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.ModificarPrecios, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Productos - Modificar Precios";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             if (string.IsNullOrWhiteSpace(PrecioKg))
                 return Json(new { error = "Precio vacío" });
 
@@ -1511,6 +1598,12 @@ namespace WebCore.Controllers
         [HttpGet]
         public async Task<IActionResult> VerGlobales()
         {
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
+            // literal de Web/Controllers/ProductosController.cs:143-144 (gap real, nunca
+            // documentado como exclusion deliberada).
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return StatusCode(403);
+
             var model = ConstruirCatalogoGlobalVm("", "", 1, true);
             string html = await RenderPartialViewToStringAsync("_CatalogoGlobalModal", model);
             return Content(html, "text/html");
@@ -1519,6 +1612,11 @@ namespace WebCore.Controllers
         [HttpGet]
         public async Task<IActionResult> BuscarGlobales(string q = "", string tipo = "", int pagina = 1)
         {
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:153-154.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar productos." });
+
             var model = ConstruirCatalogoGlobalVm(q, tipo, pagina, false);
             string html = await RenderPartialViewToStringAsync("_CatalogoGlobalRows", model.Productos);
 
@@ -1536,10 +1634,14 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult ImportarSeleccionados(ImportarProductosGlobalesRequest request)
         {
-            // TODO(claude): el original usa Session["Usuario"] como usuario que hizo la
-            // importacion (GuardarImportacionCatalogoGlobal, ultimo parametro). WebCore todavia
-            // no tiene sesion real -- se pasa null (columna nullable, ver Negocio/Corte.cs).
-            int? idUsuario = null;
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:173-174.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar productos." });
+
+            // Ya hay sesion real (el TODO original decia "sin sesion real, se pasa null" --
+            // desactualizado desde 2026-09-06, ver docs/DECISIONS.md "Login/Sesion real").
+            int? idUsuario = _sesion.UsuarioActual.Id;
 
             _oCorteN.AsegurarTablaImportacionCatalogoGlobal();
 
@@ -1920,6 +2022,11 @@ namespace WebCore.Controllers
         [HttpGet]
         public async Task<IActionResult> VerGlobalesTiposProducto()
         {
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
+            // literal de Web/Controllers/ProductosController.cs:1632-1633.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                return StatusCode(403);
+
             var model = ConstruirCatalogoGlobalTiposProductoVm("");
             string html = await RenderPartialViewToStringAsync("_CatalogoGlobalTiposProductoModal", model);
             return Content(html, "text/html");
@@ -1928,6 +2035,11 @@ namespace WebCore.Controllers
         [HttpGet]
         public async Task<IActionResult> BuscarGlobalesTiposProducto(string q = "")
         {
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:1641-1642.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar tipos de producto." });
+
             var model = ConstruirCatalogoGlobalTiposProductoVm(q);
             string html = await RenderPartialViewToStringAsync("_CatalogoGlobalTiposProductoRows", model.Tipos);
 
@@ -1943,9 +2055,14 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult ImportarTiposProductoSeleccionados(ImportarTiposProductoGlobalesRequest request)
         {
-            // TODO(claude): mismo criterio que ImportarSeleccionados -- sin sesion real todavia,
-            // se pasa null como usuario que hizo la importacion.
-            int? idUsuario = null;
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/ProductosController.cs:1664-1665.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.AddOrEditTipoProducto, DateTime.Today, -1))
+                return Json(new { ok = false, mensaje = "No tenés permisos para importar tipos de producto." });
+
+            // Ya hay sesion real (TODO original desactualizado, mismo criterio que
+            // ImportarSeleccionados -- ver docs/DECISIONS.md "Login/Sesion real").
+            int? idUsuario = _sesion.UsuarioActual.Id;
 
             var seleccionados = (request?.Tipos ?? new List<TipoProductoGlobalSeleccionVm>())
                 .Where(x => x != null && !string.IsNullOrWhiteSpace(x.Tipo))

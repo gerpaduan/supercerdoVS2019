@@ -42,6 +42,34 @@
         padding: 1rem 1.25rem !important;
     }
 
+    /* Bug real (2026-09-08, ver docs/DECISIONS.md): este <h1> tiene la clase "font-weight-bold"
+       (heredada del markup generico de titulos), y ui-refresh.css tiene una regla
+       "body.app-shell ..., body.app-shell .font-weight-bold, ... { color: var(--ui-text)
+       !important; }" -- el !important le gana a CUALQUIER regla sin !important sin importar
+       especificidad. En modo claro --ui-text es oscuro, texto oscuro sobre el fondo navy fijo
+       del hero = bajo contraste, casi ilegible. Confirmado con Playwright (inspeccion de
+       document.styleSheets): sin !important esta regla no alcanzaba a pisarla aunque tuviera
+       mas especificidad. Se repone el blanco con el mismo !important. */
+    body.app-shell .dashboard-hero h1 {
+        color: #fff !important;
+    }
+
+    /* Mismo bug que el del <h1> de arriba, 2 reglas genericas mas de ui-refresh.css:451-456
+       (2026-09-10, item 5 de la segunda ronda de pedidos, ver docs/DECISIONS.md): "Tablero
+       diario" tiene la clase .font-weight-bold (pisada por "body.app-shell .font-weight-bold {
+       color: var(--ui-text) !important; }"), y "Periodo"/"Sucursal" son <label> (pisados por
+       "body.app-shell label { color: var(--ui-text) !important; }"). En modo claro --ui-text es
+       oscuro sobre el mismo fondo navy fijo del hero. Selectores scoped a .dashboard-hero (no
+       genericos, para no repetir el mismo error en otro lugar). El segundo preserva el look
+       "muted" original (text-white-50) en vez de blanco puro, son subtitulos secundarios. */
+    body.app-shell .dashboard-hero .text-uppercase.font-weight-bold {
+        color: #fff !important;
+    }
+
+    body.app-shell .dashboard-hero label.text-white-50 {
+        color: rgba(255,255,255,.6) !important;
+    }
+
     .dashboard-hero::after {
         content: "";
         position: absolute;
@@ -274,6 +302,7 @@
      id="dashboardHome"
      data-puede-ver-dashboard="@(Model.PuedeVerDashboardDatos ? "true" : "false")"
      data-url-resumen="@Url.Action("ObtenerResumenDashboard", "Home")"
+     data-url-actividades="@Url.Action("ObtenerUltimasActividadesDashboard", "Home")"
      data-url-ventas-hora="@Url.Action("ObtenerVentasPorHora", "Home")"
      data-url-top-productos="@Url.Action("ObtenerTopProductosVendidos", "Home")"
      data-url-top-deudores="@Url.Action("ObtenerTopDeudores", "Home")"
@@ -404,20 +433,30 @@
         </div>
     </div>
 
+    @* Item 4 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 8:
+       Actividades en el dashboard"): bloque "Actividades" pasa a ocupar el lugar que tenia
+       "Ventas por hora" (col-xl-8, primero de la fila, junto a Balanza) -- decision confirmada
+       con el usuario: "Ventas por hora" se REUBICA (no se elimina) a una fila propia debajo, ver
+       mas abajo. Ultimas 10 actividades, cargadas por AJAX (home-dashboard.js) desde
+       HomeController.ObtenerUltimasActividadesDashboard (reusa ActividadesFeedService). El
+       titulo "Actividades" es un link a /Actividades (pantalla completa) -- cumple el pedido de
+       "el link para acceder desde el dashboard a las actividades". *@
     <div class="row">
         <div class="col-xl-8 mb-4">
             <div class="card dashboard-card h-100">
                 <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center">
                     <div>
-                        <h6 class="m-0 font-weight-bold text-primary">Ventas por hora</h6>
-                        <div class="dashboard-subtle">Importe vendido distribuido por franja horaria del periodo elegido.</div>
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <a href="@Url.Action("Index", "Actividades")" class="text-primary text-decoration-none">
+                                Actividades <i class="fas fa-arrow-right fa-xs ml-1"></i>
+                            </a>
+                        </h6>
+                        <div class="dashboard-subtle">Últimos cambios de precio, ventas anuladas o bonificadas, egresos, movimientos, compras y fórmulas.</div>
                     </div>
-                    <span class="badge badge-light" id="ventasHoraScope">Hoy</span>
+                    <span class="badge badge-light">Últimas 10</span>
                 </div>
-                <div class="card-body">
-                    <div class="dash-chart-wrap">
-                        <canvas id="dashboardVentasHoraChart"></canvas>
-                    </div>
+                <div class="card-body" id="dashboardActividadesLista">
+                    <div class="dashboard-subtle text-center py-3">Cargando...</div>
                 </div>
             </div>
         </div>
@@ -451,6 +490,27 @@
                         </div>
                     </div>
                     <div class="dashboard-subtle mt-3">Si la balanza no aparece, verifique que el agente local este abierto en la PC actual.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* "Ventas por hora" reubicado aca (2026-09-10, item 4) -- antes ocupaba el lugar de
+       "Actividades" arriba. Mismo contenido, misma fuente de datos, solo cambio de posicion. *@
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 font-weight-bold text-primary">Ventas por hora</h6>
+                        <div class="dashboard-subtle">Importe vendido distribuido por franja horaria del periodo elegido.</div>
+                    </div>
+                    <span class="badge badge-light" id="ventasHoraScope">Hoy</span>
+                </div>
+                <div class="card-body">
+                    <div class="dash-chart-wrap">
+                        <canvas id="dashboardVentasHoraChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>

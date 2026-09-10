@@ -906,15 +906,19 @@
         }
 
         function openPrintOptions() {
-            if (!config.imprimirUrl || !window.PostMovimientoModal || typeof window.PostMovimientoModal.open !== 'function') {
+            // El guard antes miraba config.imprimirUrl (ticket ESC/POS via agente local,
+            // print-agent.js) -- ese campo quedo siempre vacio porque el agente de impresion
+            // local nunca se porto a WebCore (decision ya tomada, ver docs/DECISIONS.md), asi
+            // que el boton "Imprimir" nunca abria el modal aunque "Generar PDF"/"Enviar a
+            // WhatsApp" ya funcionaban perfectamente. PostMovimientoModal.open() no lee
+            // imprimirUrl/imprimirPayloadUrl para nada -- el campo real que necesita es pdfUrl.
+            if (!config.pdfUrl || !window.PostMovimientoModal || typeof window.PostMovimientoModal.open !== 'function') {
                 showAlert('warning', 'Movimiento', 'Todavía no se pueden mostrar las opciones de impresión para este movimiento.');
                 return;
             }
 
             window.PostMovimientoModal.open({
                 redirectUrl: '',
-                imprimirUrl: config.imprimirUrl,
-                imprimirPayloadUrl: config.imprimirPayloadUrl,
                 pdfUrl: config.pdfUrl,
                 whatsappTexto: config.whatsappTexto,
                 stayOnPage: true

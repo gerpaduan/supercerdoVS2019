@@ -180,6 +180,16 @@
             requierePassword = !!opciones.requierePassword;
             validarUrl = opciones.validarUrl || null;
 
+            // opciones.obligatorio (2026-09-10, reporte real: "en ventas al dar acceso, no se
+            // termina al cliquear afuera"): cuando la autorizacion es obligatoria para poder
+            // seguir (ej. Ventas/PuntosExpendio POS al entrar sin operador resuelto), un click
+            // en el backdrop cerraba el modal SIN resolver -- el llamador interpreta eso como
+            // cancelado y redirige a Home, perdiendo lo que el usuario ya habia tipeado. Con
+            // backdrop:'static' + keyboard:false, clickear afuera o Escape ya no cierran el
+            // modal -- solo los botones explicitos "Cancelar"/"Confirmar" lo hacen. Comportamiento
+            // sin cambios para los usos NO obligatorios (Cambiar operario, Cierre de Caja, etc.).
+            var obligatorio = !!opciones.obligatorio;
+
             reset();
             $('#seleccionUsuarioTitulo').text(opciones.titulo || 'Seleccionar usuario');
             $('#seleccionUsuarioPasswordWrap').toggleClass('d-none', !requierePassword);
@@ -187,7 +197,11 @@
 
             return new Promise(function (resolve) {
                 resolverPromesa = resolve;
-                $('#modalSeleccionUsuario').data('resuelto', false).modal('show');
+                $('#modalSeleccionUsuario').data('resuelto', false).modal({
+                    backdrop: obligatorio ? 'static' : true,
+                    keyboard: !obligatorio,
+                    show: true
+                });
             });
         }
 

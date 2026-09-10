@@ -28,6 +28,7 @@
 
     var urls = {
         resumen: $root.data('url-resumen'),
+        actividades: $root.data('url-actividades'),
         ventasHora: $root.data('url-ventas-hora'),
         topProductos: $root.data('url-top-productos'),
         topDeudores: $root.data('url-top-deudores'),
@@ -358,6 +359,49 @@
             });
     }
 
+    // Item 4 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 8:
+    // Actividades en el dashboard") -- ultimas 10 actividades (mezcla de 6 fuentes heterogeneas,
+    // ver HomeController.ObtenerUltimasActividadesDashboard/ActividadesFeedService). Lista simple
+    // (no tabla, el contenedor es un <div>), cada item con fecha + badge de tipo + descripcion,
+    // linkeando a DetalleVenta cuando corresponde.
+    function cargarActividades(token) {
+        if (!puedeVerDashboard || !urls.actividades) {
+            return $.Deferred().resolve().promise();
+        }
+        var filtros = getFiltros();
+        $('#dashboardActividadesLista').html('<div class="dashboard-subtle text-center py-3">Cargando...</div>');
+
+        return getJsonSilently(buildUrl(urls.actividades, filtros))
+            .done(function (response) {
+                if (token !== state.reloadToken) {
+                    return;
+                }
+
+                if (!response || !response.ok || !response.data || !response.data.length) {
+                    $('#dashboardActividadesLista').html('<div class="dashboard-empty text-center py-3">No hay actividad en el periodo seleccionado.</div>');
+                    return;
+                }
+
+                var filas = $.map(response.data, function (item) {
+                    var descripcion = escapeHtml(item.descripcion || '-');
+                    if (item.detalleUrl) {
+                        descripcion = '<a href="' + escapeHtml(item.detalleUrl) + '">' + descripcion + '</a>';
+                    }
+
+                    return '' +
+                        '<div class="dashboard-actividad-item d-flex align-items-start py-2 border-bottom">' +
+                        '<div class="mr-3 text-muted small" style="white-space:nowrap;">' + escapeHtml(item.fecha || '-') + '</div>' +
+                        '<div class="flex-grow-1">' +
+                        '<span class="badge badge-light mr-2">' + escapeHtml(item.tipo || '-') + '</span>' +
+                        '<span>' + descripcion + '</span>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+
+                $('#dashboardActividadesLista').html(filas);
+            });
+    }
+
     function cargarUltimasVentas(token) {
         if (!puedeVerDashboard) {
             return $.Deferred().resolve().promise();
@@ -680,6 +724,7 @@
         var sequence = $.Deferred().resolve().promise();
 
         sequence = runDashboardStep(sequence, cargarResumen, token);
+        sequence = runDashboardStep(sequence, cargarActividades, token);
         sequence = runDashboardStep(sequence, cargarVentasPorHora, token);
         sequence = runDashboardStep(sequence, cargarTopProductos, token);
         sequence = runDashboardStep(sequence, cargarCuentasCorrientes, token);

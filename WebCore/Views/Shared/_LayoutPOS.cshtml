@@ -1,8 +1,6 @@
 @*
     Port simplificado de Web/Views/Shared/_LayoutPOS.cshtml para la UI de POS (batch 1+2, ver
-    docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Diferencia deliberada que sigue vigente:
-      - Sin el dropdown de usuario/logout/"Cambiar clave"/modal de sesion expirada/KeepAlive (no
-        pedido, fuera de alcance -- ver docs/DECISIONS.md 2026-09-07).
+    docs/10-migracion-aspnet-core/PLAN-POS-UI.md).
     Scripts: solo los que necesita el batch 1+2 (jquery/bootstrap, SweetAlert2, pos-guard.js). Se
     van agregando mas a medida que avanzan los batches (forma-pago.js en el 3, balanza en el 4,
     etc.) -- no se precargan de una sola vez para no arrastrar dependencias de features que todavia
@@ -14,12 +12,31 @@
     label/valor que el controller haya seteado via ViewBag.PosBrandLabel/PosBrandName, como hace
     PuntosExpendioController.POS con el sector elegido) en vez del texto fijo "CarniSys" que tenia
     esta vista antes de que existiera login/sesion real.
-*@
+
+    Menu de usuario (dropdown), 2026-09-10 (item 6 de la segunda ronda de pedidos, ver
+    docs/DECISIONS.md): nombre + "Operador: X" si es cuenta de produccion con operador ya
+    resuelto (ViewBag.OperadorPOSNombre, ya seteado por VentasController/PuntosExpendioController,
+    solo faltaba leerlo aca), cambiar sucursal DESHABILITADO (bloqueo puramente visual, igual que
+    el clasico -- no hay ni va a haber validacion server-side de "venta abierta" en CambiarSucursal,
+    ninguno de los 2 sistemas la tiene hoy), cambiar clave, cerrar sesion (link directo sin modal
+    de confirmacion, a diferencia del clasico -- consistente con el dropdown no-POS de
+    _Layout.cshtml, decision confirmada con el usuario). *@
 @inject WebCore.Services.IUsuarioSesionService Sesion
 @{
     var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+
+    // Mismo mecanismo que _Layout.cshtml (port de Web/Views/Shared/_LayoutPOS.cshtml:16, ver
+    // docs/DECISIONS.md "operador de modulo Ventas nunca se limpiaba", 2026-09-10): si hay un
+    // operador de modulo (Ventas/Compras, mecanismo de "consulta", distinto del operador de POS
+    // por posInstanceId) activo en sesion y esta vista de POS no es de ese controller, se limpia
+    // aca -- este layout tambien se renderiza en cada request de POS, asi que sin esta llamada el
+    // operador de modulo podia quedar autorizado "de mas" mientras el usuario opera el POS.
+    WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
     var posBrandLabel = ViewBag.PosBrandLabel as string;
     var posBrandName = ViewBag.PosBrandName as string;
+    var usuarioActualPOS = Sesion.UsuarioActual;
+    var operadorPOSNombre = ViewBag.OperadorPOSNombre as string;
+    string sucursalActualNombrePOS = usuarioActualPOS?.Sucursal != null ? usuarioActualPOS.SucursalNombre : "Sin sucursal";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -257,9 +274,44 @@
                 </div>
             </div>
 
-            <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
-                <i id="icoTheme" class="fas fa-moon text-light"></i>
-            </a>
+            <div class="d-flex align-items-center">
+                <a href="#" id="btnToggleTheme" class="nav-link topbar-icon-btn" title="Cambiar tema">
+                    <i id="icoTheme" class="fas fa-moon text-light"></i>
+                </a>
+
+                <div class="nav-item dropdown no-arrow">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="posUserDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="mr-2 d-none d-lg-inline small">
+                            @usuarioActualPOS?.Nombre
+                            @if (!string.IsNullOrWhiteSpace(operadorPOSNombre))
+                            {
+                                <text> &middot; Operador: @operadorPOSNombre</text>
+                            }
+                        </span>
+                        <i class="fas fa-user-circle fa-lg text-light"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="posUserDropdown">
+                        <h6 class="dropdown-header d-lg-none">
+                            @usuarioActualPOS?.Nombre
+                            @if (!string.IsNullOrWhiteSpace(operadorPOSNombre))
+                            {
+                                <text><br />Operador: @operadorPOSNombre</text>
+                            }
+                        </h6>
+                        <span class="dropdown-item disabled" title="Para cambiar de sucursal, cerrá el punto de venta y hacelo desde el menú principal.">
+                            <i class="fas fa-store fa-sm fa-fw mr-2"></i>@sucursalActualNombrePOS
+                        </span>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
+                            <i class="fas fa-key fa-sm fa-fw mr-2"></i>Cambiar clave
+                        </a>
+                        <a class="dropdown-item" href="@Url.Action("Logout", "Login")">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2"></i>Cerrar sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
         </nav>
 
         <div id="pos-container">
@@ -273,6 +325,16 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
     <script src="~/Scripts/app/pos-guard.js?v=4"></script>
+
+    @* scanner.js/ZXing/modal-productos.js -- port de Web/Views/Shared/_LayoutPOS.cshtml:470-473
+       (2026-09-09, ver docs/DECISIONS.md "Batch D: scanner + buscador de productos"). Este layout
+       es independiente de _Layout.cshtml (que recibio el mismo agregado por separado) -- las
+       vistas de POS (Ventas/POS.cshtml, PuntosExpendio/POS.cshtml) tenian su propio include
+       puntual de estos 3 scripts, ya sacado de esas vistas para no declarar "class BarcodeScanner"
+       2 veces en la misma pagina (SyntaxError real en el navegador). *@
+    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
+    <script src="~/Scripts/app/scanner.js"></script>
+    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
 
     <script>
         window.buscarProductoUrl = '@Url.Action("BuscarProducto", "Ventas")';

@@ -15,8 +15,11 @@
     unico Admin=true, sin sesion. TODO(claude): portar esas reglas reales (y "usuario
     produccion") cuando se diseñe login/sesion real -- ver docs/10-migracion-aspnet-core/gaps.md.
 
-    Excluye a proposito el resto: "Factura"/"Imprimir"/"Enviar por email" (AFIP e impresion/
-    email, no portados en esta pantalla) -- ver header de WebCore/Controllers/VentasController.cs.
+    "Factura / Imprimir" (2026-09-10, item 1 de la segunda ronda de pedidos -- ver
+    docs/DECISIONS.md "Batch 9: Factura/Imprimir en DetalleVenta/DetalleFactura") abre
+    #modalComprobanteVenta (_ModalComprobanteVenta.cshtml, incluida una sola vez al final de este
+    archivo -- como esta partial ya es compartida sin duplicarse por DetalleVenta.cshtml/
+    DetalleFactura.cshtml, el modal queda disponible en ambas vistas automaticamente).
 *@
 @{
     bool modoModal = ViewBag.ModoModal != null && (bool)ViewBag.ModoModal;
@@ -159,6 +162,13 @@
         </div>
     </div>
 
+    <div class="row mt-2">
+        <div class="col">
+            <button type="button" class="btn btn-light btn-block text-left mb-2" data-bs-toggle="modal" data-bs-target="#modalComprobanteVenta">
+                <i class="fas fa-print mr-2"></i> Factura / Imprimir
+            </button>
+        </div>
+    </div>
     @if (ViewBag.PuedeModificarVenta != null && (bool)ViewBag.PuedeModificarVenta)
     {
         <div class="row mt-2">
@@ -182,6 +192,8 @@
         </div>
     }
 </div>
+
+@await Html.PartialAsync("_ModalComprobanteVenta", Model)
 
 <style>
     .venta-lineas {

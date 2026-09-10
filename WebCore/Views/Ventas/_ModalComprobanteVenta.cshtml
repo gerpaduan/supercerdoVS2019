@@ -1,0 +1,205 @@
+@model Entidades.Venta
+@*
+    Item 1 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 9: Factura/
+    Imprimir en DetalleVenta/DetalleFactura"): "agregar las opciones que faltan y estan en
+    clasico 'factura' 'imprimir'... que se muestre el modal de Imprimir venta como en clasico
+    (pero manteniendo el estilo que esta usando webcore)".
+
+    Copia DERIVADA y RECORTADA de _ModalPostVentaBasico.cshtml (mismo estilo visual WebCore/BS5),
+    adaptada al contexto de "venta ya guardada, consultada despues" en vez de "venta recien
+    cobrada en el POS" -- IDs propios (prefijo "Cv") para no colisionar nunca si algun dia
+    convive con POS.cshtml en la misma pagina. Diferencias deliberadas respecto al modal de POS:
+      - SIN el boton "Nueva venta" (no aplica fuera del flujo de POS) ni los atajos numericos 1-5.
+      - CON boton de cierre (data-bs-dismiss="modal") -- en POS no lo hay a proposito (el cajero
+        debe elegir una accion explicita antes de seguir vendiendo); aca no hay ningun flujo
+        obligatorio despues, tiene sentido poder cerrar sin elegir nada.
+      - Header "Acciones sobre este comprobante" en vez de "Venta completada" (el texto de exito
+        no aplica a una venta consultada dias despues).
+    Backend 100% reusado sin cambios: Imprimir/ImprimirTicketHtml/ObtenerDatosEmailComprobante/
+    EnviarComprobanteEmail/GenerarFactura/ImprimirTicket (VentasController.cs) -- todos
+    "id"-driven (_oVentaN.getVentaById(id)), sin ninguna dependencia de sesion/estado de POS
+    activo (confirmado leyendo el codigo antes de comprometerse a este batch).
+    Fuera de alcance, decision explicita confirmada con el usuario: agente de impresion local
+    ESC/POS y envio por WhatsApp -- ninguna pantalla de WebCore los usa hoy, ni siquiera POS.
+*@
+<div class="modal fade" id="modalComprobanteVenta" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title mb-0">
+                    <i class="fas fa-file-invoice mr-2"></i>Acciones sobre este comprobante
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="d-flex flex-column" style="gap:.5rem;">
+                    <button type="button" class="btn btn-outline-secondary" id="btnCvTicket">
+                        <i class="fas fa-receipt mr-1"></i>Imprimir ticket
+                    </button>
+                    <div class="small text-muted" id="cvTicketMedidaInfo" style="margin-top:-.35rem;">
+                        Tamaño: <span id="cvTicketMedidaTexto">80mm</span> ·
+                        <a href="#" id="cvTicketCambiarMedida">cambiar</a>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" id="btnCvImprimir">
+                        <i class="fas fa-print mr-1"></i>Imprimir PDF
+                    </button>
+                    <button type="button" class="btn btn-outline-success" id="btnCvEmail">
+                        <i class="fas fa-envelope mr-1"></i>Enviar por email
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="btnCvFactura">
+                        <i class="fas fa-file-invoice mr-1"></i>Factura electrónica
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEmailComprobanteVenta" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content modal-postventa-compact">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Enviar comprobante por email</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="cvEmailDestino">Email destino</label>
+                    <input type="email" class="form-control" id="cvEmailDestino" maxlength="200" placeholder="cliente@dominio.com">
+                </div>
+                <div class="form-group">
+                    <label for="cvEmailAsunto">Asunto</label>
+                    <input type="text" class="form-control" id="cvEmailAsunto" maxlength="200">
+                </div>
+                <div class="form-group mb-0">
+                    <label for="cvEmailMensaje">Mensaje</label>
+                    <textarea class="form-control" id="cvEmailMensaje" rows="5"></textarea>
+                </div>
+                <div class="alert alert-danger d-none mb-0 mt-2" id="cvEmailError"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" type="button" id="btnCvConfirmarEmail">
+                    <i class="fas fa-paper-plane mr-1"></i>Enviar email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Factura Electronica (AFIP) -- shell vacio, mismo patron que Ventas/POS.cshtml:705-711: el
+   contenido real (_FacturaElectronica.cshtml) se inyecta por AJAX, nunca se renderiza en el
+   load inicial. IDs "#modalFacturaElectronica"/"#contenedorFacturaElectronica" NO se pueden
+   renombrar (a diferencia del resto de este archivo) -- _FacturaElectronica.cshtml/
+   factura-electronica.js los tienen hardcodeados en su propio CSS/JS, no son parametrizables.
+   Sin colision real: DetalleVenta/DetalleFactura y Ventas/POS son rutas distintas, nunca
+   coexisten en la misma pagina. *@
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" id="contenedorFacturaElectronica">
+            <!-- se inyecta por ajax -->
+        </div>
+    </div>
+</div>
+
+@* factura-electronica.js no esta cargado globalmente en _Layout.cshtml (solo lo incluia
+   Ventas/POS.cshtml puntual, dentro de su propio @@section Scripts). window.AppUrls sigue el
+   mismo patron ya usado en POS.cshtml (variable global, "|| {}" para no pisar si ya existiera).
+
+   Bug real encontrado durante este batch (2026-09-10, ver docs/DECISIONS.md "Batch 9: Factura/
+   Imprimir en DetalleVenta/DetalleFactura"): esta partial se renderiza dentro de @@RenderBody(),
+   que en _Layout.cshtml corre ANTES que el <script src="jquery.min.js"> del layout (jQuery se
+   carga al final del <body>) -- un <script src> normal aca ejecutaria factura-electronica.js
+   (que usa "$" a nivel de modulo, sin envolver en DOMContentLoaded) con "$" todavia indefinido,
+   tirando "ReferenceError: $ is not defined". Mismo patron de bug ya documentado en esta sesion
+   para Personas/Index.cshtml. Fix: inyectar los <script> por JS recien en DOMContentLoaded --
+   para ese momento el parser ya proceso el <script src="jquery.min.js"> sincronico del layout
+   (aunque este mas abajo en el HTML), asi que jQuery ya esta disponible. Sin este problema
+   cuando esta vista se embebe con Layout=null dentro de POS (modoModal=true): ahi jQuery ya
+   esta cargado por la pagina host antes de inyectar este fragmento por AJAX, pero el fix de
+   abajo funciona igual en ese caso (DOMContentLoaded ya paso, injectarScript corre inmediato). *@
+<script>
+    (function () {
+        function injectarScript(src, onLoad) {
+            var s = document.createElement('script');
+            s.src = src;
+            if (onLoad) s.onload = onLoad;
+            document.body.appendChild(s);
+        }
+
+        function cargarScriptsComprobante() {
+            window.AppUrls = window.AppUrls || {
+                ventasImprimir: '@Url.Action("ImprimirTicket", "Ventas")',
+                ventasGenerarFactura: '@Url.Action("GenerarFactura", "Ventas")',
+                ventasCerrarSinFacturar: '@Url.Action("CerrarVentaSinFacturar", "Ventas")',
+                ventasGenerarNotaCredito: '@Url.Action("GenerarNotaCredito", "Ventas")',
+                personaListar: '@Url.Action("Listar", "Personas")'
+            };
+
+            injectarScript('@Url.Content("~/Scripts/app/factura-electronica.js")?v=4');
+        }
+
+        if (window.jQuery || document.readyState !== 'loading') {
+            cargarScriptsComprobante();
+        } else {
+            document.addEventListener('DOMContentLoaded', cargarScriptsComprobante);
+        }
+    })();
+</script>
+
+<style>
+    .modal-postventa-compact {
+        font-size: .86rem;
+    }
+
+    .modal-postventa-compact .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-postventa-compact label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: .18rem;
+    }
+
+    .modal-postventa-compact .form-control,
+    .modal-postventa-compact .btn {
+        min-height: 2.15rem;
+        font-size: .84rem;
+        padding: .28rem .56rem;
+        border-radius: .5rem;
+    }
+</style>
+
+@* Config para detalle-venta-comprobante.js (nuevo, wire de los botones de arriba) -- las URLs
+   de AFIP (imprimirTicket/generarFactura/cerrarVentaSinFacturar) NO se repiten aca, viven en
+   window.AppUrls (arriba), que es lo que factura-electronica.js espera. La asignacion del
+   config en si es JS vainilla (segura a nivel de modulo), pero el <script src> de
+   detalle-venta-comprobante.js SI usa "$" a nivel de modulo -- mismo problema y mismo fix
+   (inyeccion diferida a DOMContentLoaded) que factura-electronica.js mas arriba. *@
+<script>
+    window.DetalleVentaComprobanteConfig = {
+        ventaId: @Model.IdVenta,
+        urls: {
+            imprimir: '@Url.Action("Imprimir", "Ventas")',
+            imprimirTicketHtml: '@Url.Action("ImprimirTicketHtml", "Ventas")',
+            obtenerDatosEmailComprobante: '@Url.Action("ObtenerDatosEmailComprobante", "Ventas")',
+            enviarComprobanteEmail: '@Url.Action("EnviarComprobanteEmail", "Ventas")'
+        }
+    };
+
+    (function () {
+        function inyectar() {
+            var s = document.createElement('script');
+            s.src = '@Url.Content("~/Scripts/app/detalle-venta-comprobante.js")?v=1';
+            document.body.appendChild(s);
+        }
+
+        if (window.jQuery || document.readyState !== 'loading') {
+            inyectar();
+        } else {
+            document.addEventListener('DOMContentLoaded', inyectar);
+        }
+    })();
+</script>

@@ -213,7 +213,10 @@
                             <i class="fas fa-ban mr-1"></i> Anular
                         </button>
                     }
-                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2" data-ignore-exit="1">
+                    @* data-ignore-exit="1" removido 2026-09-10 (item 2 de la segunda ronda de
+                       pedidos, ver docs/DECISIONS.md "Batch 10: advertencia de salir sin
+                       guardar") -- ver mismo comentario en Elaborados/Carga.cshtml. *@
+                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2">
                         Cancelar
                     </a>
                 </div>
@@ -254,11 +257,12 @@
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=11")"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formIngresoRapidoElaborado",
@@ -271,5 +275,13 @@
                 }
             }
         });
+
+        if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+            window.EditPageGuard.init({
+                formSelector: "#formIngresoRapidoElaborado",
+                modifyButtonSelector: "#btnHabilitarEdicionIngresoRapido",
+                saveButtonSelector: "#btnGuardarIngresoRapido"
+            });
+        }
     </script>
 }

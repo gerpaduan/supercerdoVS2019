@@ -380,10 +380,24 @@
             window.location.href = urlPosConSector(sector);
         });
 
-        if (!config.sectorSeleccionado) {
-            openSectorModal();
-        } else {
-            actualizarSectorUI(config.sectorSeleccionado);
+        // Bug real (2026-09-09, ver docs/DECISIONS.md "Batch B: permisos reales + operador de
+        // produccion"): si la sesion es la cuenta de produccion sin operador todavia resuelto, el
+        // <script> inline de POS.cshtml (que corre ANTES que este archivo) ya disparo
+        // pedirOperador(true) -- abriendo #modalSeleccionUsuario. Si aca se llamaba
+        // openSectorModal() igual, los dos modales de Bootstrap 5 competian por el backdrop casi
+        // al mismo tiempo (dos ".modal('show')" en la misma carga de pagina): el backdrop
+        // "static" del modal de sector terminaba tapando los inputs del modal de seleccion de
+        // usuario -- "no se puede escribir para buscar usuario ni contraseña". Con un operador
+        // pendiente de resolver, la eleccion de sector se salta: al elegir el operador la pagina
+        // recarga entera (recargarConOperadorAutorizado(), ver POS.cshtml) y esta misma logica
+        // corre de nuevo, ya sin "requiereOperadorPOS" -- ahi si abre el modal de sector solo.
+        var operadorPendiente = window.PosOperadorConfig && window.PosOperadorConfig.requiereOperadorPOS;
+        if (!operadorPendiente) {
+            if (!config.sectorSeleccionado) {
+                openSectorModal();
+            } else {
+                actualizarSectorUI(config.sectorSeleccionado);
+            }
         }
 
         function construirPayload() {

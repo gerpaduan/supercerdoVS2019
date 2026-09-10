@@ -627,6 +627,7 @@
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
     <script>
 (function () {
     // =========================
@@ -2509,6 +2510,14 @@
             actualizarTextoAtajosAcciones();
         }
     });
+
+    if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+        window.EditPageGuard.init({
+            formSelector: "#frmCorte",
+            modifyButtonSelector: "#btnHabilitarEdicionProducto",
+            saveButtonSelector: "#btnGuardarProducto"
+        });
+    }
 
     if (window.productosEditReadonly && esEdicion && cargaContinuaInicial && obtenerModoEdicionActivo()) {
         window.productosEditReadonly.setReadOnly(false);

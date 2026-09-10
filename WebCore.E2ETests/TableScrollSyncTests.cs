@@ -29,7 +29,16 @@ public sealed class TableScrollSyncTests
         // idSucursal=2 (San Lorenzo) explicito: desde el login real (2026-09-06) el default ya no
         // es el stub hardcodeado sino la sucursal real de "ger" (San Martin=1), que no tiene datos
         // de stock en el rango de fecha por defecto -- la tabla quedaria vacia sin esto.
-        var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock/Lineas?idSucursal=2", new PageGotoOptions
+        //
+        // fechaDesde tambien explicito (2026-09-09, ver docs/DECISIONS.md "Fix: 2 tests de Stock
+        // con fecha por defecto"): StockController.Lineas() usa desde=DateTime.Today cuando no se
+        // pasa fechaDesde -- la tabla queda vacia salvo que exista un movimiento cargado ESE MISMO
+        // dia. La base compartida de desarrollo no se re-siembra a diario, asi que confiar en el
+        // default hacia que este test fallara solo por el paso del calendario real, sin relacion
+        // con ningun cambio de codigo. 1 año atras cubre cualquier dato de seed existente sin
+        // necesidad de mantener una fecha fija a mano.
+        string fechaDesde = DateTime.UtcNow.AddYears(-1).ToString("yyyy-MM-dd");
+        var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock/Lineas?idSucursal=2&fechaDesde={fechaDesde}", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 20000

@@ -4,11 +4,14 @@
 // falta prueba de escritura en vivo, solo verificacion de que cada tipo de reporte trae datos reales.
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
-// 2026-09-06) -- ya no hay stub hardcodeado. El sistema de "permiso con limite de fecha"
-// (BaseController.AjustarFechaSiNoTienePermiso/ConfigurarAdvertenciaFechaEnVivo/
-// VistaAccesoDenegado, y PermisosHelper.TienePermiso) se omite por completo -- TODO(claude):
-// revisar en Batch 4/5. Por la misma razon, ObtenerIdEmpresaSesion() (que en el original cae a
-// Session["Usuario"] o a empresa) se simplifica a devolver directamente _empresa.IdEmpresa.
+// 2026-09-06). Permiso real portado 2026-09-09 (Batch B, ver docs/DECISIONS.md "Batch B:
+// permisos reales + operador de produccion"): Permisos.Stock.VerStock via _oUsuarioN.tienePermiso
+// (unico permiso que chequea este controller en clasico -- no existe Permisos.Reporte.*, los
+// nombres "Stock Actual"/"Balance Economico"/etc. son tipos de reporte, no permisos). NO portado
+// (deliberado, UX-only): AjustarFechaSiNoTienePermiso/ConfigurarAdvertenciaFechaEnVivo (recortan
+// el filtro de fecha en silencio en vez de bloquear -- ver mismo criterio en MovimientosController.cs).
+// ObtenerIdEmpresaSesion() (que en el original cae a Session["Usuario"] o a empresa) se simplifica
+// a devolver directamente _empresa.IdEmpresa.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -41,6 +44,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Venta _oVentaN;
         private readonly Negocio.CierreCaja _oCierreN;
         private readonly Negocio.CuentaCorriente _oCuentaCorrienteN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -57,6 +61,7 @@ namespace WebCore.Controllers
             _oVentaN = WebCore.Infrastructure.NegocioFactory.CrearVenta(_empresa, _param);
             _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
             _oCuentaCorrienteN = WebCore.Infrastructure.NegocioFactory.CrearCuentaCorriente(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         private int ObtenerIdEmpresaSesion()
@@ -83,6 +88,13 @@ namespace WebCore.Controllers
 
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
             DateTime hasta = fechaHasta ?? DateTime.Now;
+
+            // Port de Web/Controllers/ReportesController.cs:79-84.
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
+            {
+                ViewBag.Seccion = "Reportes";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
 
             int sucursalSeleccionada = idSucursal.HasValue
                 ? idSucursal.Value
@@ -168,6 +180,11 @@ namespace WebCore.Controllers
 
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
             DateTime hasta = fechaHasta ?? DateTime.Now;
+
+            // Port de Web/Controllers/ReportesController.cs:180-185 -- fallo distinto de Index:
+            // sin permiso, no bloquea con AccesoDenegado, devuelve la parcial vacia.
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Stock.VerStock, desde, -1))
+                return PartialView("~/Views/Reportes/_FiltrosSecundarios.cshtml", new ReportesViewModel());
 
             int sucursalSeleccionada = idSucursal.HasValue
                 ? idSucursal.Value

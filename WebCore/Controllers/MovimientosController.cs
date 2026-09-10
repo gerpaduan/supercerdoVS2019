@@ -8,11 +8,16 @@
 // y "Enviar a WhatsApp" si se portan (no dependen del agente).
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
-// 2026-09-06) -- ya no hay stub hardcodeado. El sistema de "permiso con limite de fecha"
-// (AjustarFechaIndiceSegunLimiteYPermiso/ConfigurarAdvertenciaFechaIndiceConLimiteEnVivo) y
-// PermisosHelper.TienePermiso se omiten por completo -- TODO(claude): revisar en Batch 4/5. El
-// gate de "usuario de sala de produccion" (SeleccionUsuario) todavia no se porta (Batch 5) --
-// ResolverUsuarioCreador() SI se porta (trivial, ya fiel al original).
+// 2026-09-06). Permisos reales y gate de "usuario de sala de produccion" portados 2026-09-09
+// (Batch B, ver docs/DECISIONS.md "Batch B: permisos reales + operador de produccion"):
+// Permisos.Movimiento.NuevoMovimiento/VerMovimientos via _oUsuarioN.tienePermiso (equivalente
+// exacto de PermisosHelper.TienePermiso del clasico, que por debajo llama al mismo metodo),
+// SeleccionUsuario para la cuenta compartida de produccion (port de
+// Web/Controllers/SeleccionUsuarioController.cs, WebCore/Helpers/PermisosHelper.cs). NO
+// portado (deliberado, UX-only, no afecta el control de acceso en si -- Negocio.Usuario.
+// tienePermiso ya aplica el limite de fecha internamente): ConstruirMensajePermisoFecha/
+// AjustarFechaSiNoTienePermiso (arman un mensaje mas detallado con la fecha minima permitida y
+// recortan el filtro de fecha en silencio) -- se usa un mensaje generico en su lugar.
 using System.Data;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +35,7 @@ namespace WebCore.Controllers
         private readonly IParametrosContext _param;
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Sucursal _oSucursalN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -42,6 +48,7 @@ namespace WebCore.Controllers
 
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         public IActionResult Index(int idSucursalOrigen = 0, int idSucursalDestino = 0, DateTime? fechaDesde = null, DateTime? fechaHasta = null, bool verDetalles = false)
@@ -159,10 +166,15 @@ namespace WebCore.Controllers
         {
             var user = _usuarioActual;
 
-            // Gate de "usuario de sala de produccion" (Web/Controllers/MovimientosController.cs:174,
-            // redirige a SeleccionUsuario) NO se dispara: el stub admin nunca es EsUsuarioProduccion.
+            // Port de Web/Controllers/MovimientosController.cs:174-181 -- usuario de la cuenta
+            // compartida de produccion sin identificar todavia (idUsuarioCreador<=0) redirige a
+            // la pantalla comun de seleccion (sin contraseña, ver SeleccionUsuarioController).
+            var redirectSeleccion = WebCore.Helpers.PermisosHelper.RequiereSeleccionUsuario(
+                this, user, idUsuarioCreador, Request.Path + Request.QueryString);
+            if (redirectSeleccion != null) return redirectSeleccion;
+
             MovimientoEditVm model;
-            bool puedeModificar = true;
+            bool puedeModificar;
 
             if (id > 0)
             {
@@ -170,11 +182,30 @@ namespace WebCore.Controllers
                 if (model == null)
                     return NotFound();
 
+                // Port de Web/Controllers/MovimientosController.cs:192-199.
+                puedeModificar = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, model.FechaMovimiento, user.Id);
+                if (!puedeModificar && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.VerMovimientos, model.FechaMovimiento, -1 /* Utilidades.ValoresParametrosMetodos.IdCreadorNulo() -- esa clase vive en Utilidades.csproj (WinForms), no en Utilidades.Core que es lo unico que WebCore referencia, se usa el literal directo (mismo criterio ya usado en PuntosExpendioController.cs) */))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tenés permisos para consultar movimientos.";
+                    return RedirectToAction("Index");
+                }
+
                 model.SoloLecturaInicial = true;
                 model.PuedeHabilitarEdicion = puedeModificar;
             }
             else
             {
+                // Port de Web/Controllers/MovimientosController.cs:206-212.
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, DateTime.Today, user.Id))
+                {
+                    TempData["AlertType"] = "warning";
+                    TempData["AlertTitle"] = "Permisos";
+                    TempData["AlertMsg"] = "No tenés permisos para crear o modificar movimientos.";
+                    return RedirectToAction("Index");
+                }
+
                 model = CrearModeloNuevo(user);
                 model.SoloLecturaInicial = false;
                 model.PuedeHabilitarEdicion = true;
@@ -184,9 +215,15 @@ namespace WebCore.Controllers
             ViewBag.Sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             ViewBag.EsUsuarioProduccion = user.EsUsuarioProduccion;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
-            ViewBag.IdUsuarioCreadorPreseleccionado = 0;
+            ViewBag.IdUsuarioCreadorPreseleccionado = idUsuarioCreador;
 
-            return View(model);
+            // Bug real (2026-09-08, ver docs/DECISIONS.md): "return View(model)" sin nombre
+            // explicito resuelve la vista segun la RUTA ENTRANTE, no segun el metodo C# que
+            // efectivamente corrio -- al entrar por /Movimientos/Nuevo (que llama a Editar(0,...)
+            // por invocacion directa de metodo, no RedirectToAction), ASP.NET Core buscaba
+            // "Views/Movimientos/Nuevo.cshtml" (no existe) y tiraba InvalidOperationException.
+            // Clasico usa ruta explicita ("~/Views/Movimientos/Editar.cshtml") por el mismo motivo.
+            return View("Editar", model);
         }
 
         [HttpGet]
@@ -276,6 +313,15 @@ namespace WebCore.Controllers
             try
             {
                 var user = _usuarioActual;
+
+                // Port de Web/Controllers/MovimientosController.cs:341-347: el chequeo de
+                // permiso usa SIEMPRE el usuario de sesion real (asi funciona SoloRegistrosPropios
+                // sin cambios); el creador que efectivamente queda grabado se resuelve DESPUES,
+                // con el id elegido en la pantalla de SeleccionUsuario (cuenta de produccion).
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Movimiento.NuevoMovimiento, model?.FechaMovimiento ?? DateTime.Today, user.Id))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para guardar movimientos." });
+
+                user = ResolverUsuarioCreador(idUsuarioCreador, user);
 
                 NormalizarDecimalesPosteados(model);
 

@@ -504,7 +504,7 @@
 </style>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
     <script>
         window.EgresosCajaUrls = {
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
@@ -533,8 +533,10 @@
         // hace menos de 5 minutos en esta misma vista, ejecuta la accion directo. Si no,
         // abre el selector de usuario+contraseña (componente reusable, ver
         // seleccion-usuario.js) y recien ejecuta la accion si la autorizacion vino bien.
-        // En WebCore, CajasStepUpTienePermisoDirecto siempre es true (stub Admin) -- esta
-        // rama de step-up nunca se ejecuta, ver cabecera de CajasController.cs.
+        // Step-up real portado (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) --
+        // esta rama SI se ejecuta para cualquier usuario logueado sin Permisos.Caja.CerrarCaja
+        // directo (el comentario anterior, de cuando WebCore corria con usuario stub Admin, ya
+        // no aplica desde que se porto el login real).
         var cierreCajaElevacionExpira = 0;
         var CIERRE_CAJA_ELEVACION_MS = 5 * 60 * 1000;
 

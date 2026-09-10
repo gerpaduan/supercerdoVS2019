@@ -421,6 +421,16 @@ namespace WebCore.Controllers
 
         public IActionResult ExpendiosGenerados()
         {
+            // Port de Web/Controllers/PuntosExpendioController.cs:146-152.
+            var user = _usuarioActual;
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para consultar expendios generados.";
+                return RedirectToAction("Index", "Home");
+            }
+
             var sectoresDt = _oVentaN.obtenerSectores();
             var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             _oUsuarioN.obtenerUsuarios(true);
@@ -527,6 +537,16 @@ namespace WebCore.Controllers
 
         public IActionResult Sectores(string editar = "")
         {
+            // Port de Web/Controllers/PuntosExpendioController.cs:923-929.
+            var user = _usuarioActual;
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para administrar sectores.";
+                return RedirectToAction("Index", "Home");
+            }
+
             var model = new SectorAbmVm
             {
                 SectorOriginal = editar ?? "",
@@ -545,6 +565,16 @@ namespace WebCore.Controllers
             string nombre = (model != null ? model.Nombre : "") ?? "";
             string nombreNormalizado = nombre.Trim();
             string sectorOriginal = (model != null ? model.SectorOriginal : "") ?? "";
+
+            // Port de Web/Controllers/PuntosExpendioController.cs:955-961.
+            var user = _usuarioActual;
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para administrar sectores.";
+                return RedirectToAction("Sectores");
+            }
 
             if (string.IsNullOrWhiteSpace(nombreNormalizado))
             {
@@ -584,6 +614,16 @@ namespace WebCore.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult EliminarSector(string sector)
         {
+            // Port de Web/Controllers/PuntosExpendioController.cs:1005-1011.
+            var user = _usuarioActual;
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.NuevaVenta, DateTime.Today, user.Id))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Permisos";
+                TempData["AlertMsg"] = "No tiene permisos para administrar sectores.";
+                return RedirectToAction("Sectores");
+            }
+
             string nombre = (sector ?? "").Trim();
             if (string.IsNullOrWhiteSpace(nombre))
             {
@@ -619,6 +659,14 @@ namespace WebCore.Controllers
             var user = _usuarioActual;
             DateTime fecha = request != null && request.FechaExpendio.HasValue ? request.FechaExpendio.Value : DateTime.Today;
             var operador = ResolverOperadorPOS(request?.PosInstanceId, user);
+
+            // Port de Web/Controllers/PuntosExpendioController.cs:198-204 (accion "Guardar" del
+            // flujo legado, nunca portado a WebCore -- FinalizarPOS es el equivalente moderno,
+            // ver el "POS"/FinalizarPOS actual). Reusa Permisos.Venta.NuevaVenta, chequeado contra
+            // el operador resuelto (igual criterio que Compras -- para produccion, la persona
+            // real ya identificada; para un usuario normal, es el mismo user sin cambios).
+            if (!_oUsuarioN.tienePermiso(operador, Entidades.Permisos.Venta.NuevaVenta, fecha, operador.Id))
+                return Json(new { ok = false, mensaje = "No tiene permisos para guardar puntos de expendio." });
 
             var model = new PuntoExpendioEditVm
             {

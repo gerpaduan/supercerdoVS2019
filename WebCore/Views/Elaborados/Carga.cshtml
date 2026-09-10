@@ -330,7 +330,12 @@
                             <i class="fas fa-ban mr-1"></i> Anular
                         </button>
                     }
-                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2" data-ignore-exit="1">
+                    @* data-ignore-exit="1" removido 2026-09-10 (item 2 de la segunda ronda de
+                       pedidos, ver docs/DECISIONS.md "Batch 10: advertencia de salir sin
+                       guardar") -- este atributo excluiria este link del intercept global de
+                       _Layout.cshtml, contradiciendo el pedido explicito del usuario ("cliqueando
+                       cancelar... siempre advertir"). *@
+                    <a href="@Url.Action("Index", "Elaborados")" class="btn btn-outline-secondary mb-2">
                         Cancelar
                     </a>
                 </div>
@@ -399,7 +404,7 @@
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=20")"></script>
@@ -440,6 +445,7 @@
         window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
     </script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formCargaElaborado",
@@ -452,5 +458,13 @@
                 }
             }
         });
+
+        if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+            window.EditPageGuard.init({
+                formSelector: "#formCargaElaborado",
+                modifyButtonSelector: "#btnHabilitarEdicionElaborado",
+                saveButtonSelector: "#btnGuardarElaborado"
+            });
+        }
     </script>
 }

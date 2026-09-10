@@ -276,6 +276,45 @@ public class HomeController : Controller
         }
     }
 
+    // Item 4 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 8:
+    // Actividades en el dashboard"): "agregar las actividades al dashboard, que muestre las
+    // ultimas 10 actividades". Reusa WebCore/Services/ActividadesFeedService.cs (extraido de
+    // ActividadesController.cs, mismo dia) para no duplicar la agregacion de las 6 fuentes
+    // heterogeneas. A diferencia del resto de los endpoints del dashboard, idSucursal se recibe
+    // por consistencia con la firma pero NO filtra -- ninguno de los 6 repositorios de origen del
+    // feed de Actividades acepta ese parametro (limitacion heredada del modulo completo, no un
+    // bug nuevo de este endpoint).
+    [HttpGet]
+    public JsonResult ObtenerUltimasActividadesDashboard(string periodo = "hoy", int? idSucursal = null)
+    {
+        try
+        {
+            var acceso = ValidarAccesoDashboardAdmin();
+            if (acceso != null) return acceso;
+
+            var filtro = CrearFiltroDashboard(periodo, idSucursal);
+            var feed = new WebCore.Services.ActividadesFeedService(_empresa, _param);
+            var items = feed.ObtenerActividades(filtro.FechaDesde, filtro.FechaHasta)
+                .OrderByDescending(x => x.Fecha)
+                .Take(10)
+                .Select(x => new
+                {
+                    fecha = x.Fecha.ToString("dd/MM HH:mm"),
+                    tipo = x.Tipo,
+                    descripcion = x.Descripcion,
+                    idVenta = x.IdVenta,
+                    detalleUrl = x.IdVenta.HasValue ? Url.Action("DetalleVenta", "Ventas", new { id = x.IdVenta.Value }) : null
+                })
+                .ToList();
+
+            return Json(new { ok = true, data = items });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { ok = false, mensaje = ex.Message });
+        }
+    }
+
     [HttpGet]
     public JsonResult ObtenerUltimosElaborados(string periodo = "hoy", int? idSucursal = null)
     {

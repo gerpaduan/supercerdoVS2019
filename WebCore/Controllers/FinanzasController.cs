@@ -13,10 +13,11 @@
 // ver docs/DECISIONS.md. Sin piezas deferred pendientes en este controller.
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
-// 2026-09-06) -- ya no hay stub hardcodeado. PermisosHelper.TienePermiso(Session, ...) se omite
-// -- TODO(claude): revisar en Batch 4/5, salvo donde el original ya usa un chequeo real
-// independiente de Session (ej. "usuario.Admin" en PuedeVerSaldosCuentaCorriente, que se
-// preserva).
+// 2026-09-06). Permisos reales portados 2026-09-09 (Batch B, ver docs/DECISIONS.md "Batch B:
+// permisos reales + operador de produccion") en CtasCtes/Cheques/GuardarCheque/CtaCtePersona via
+// _oUsuarioN.tienePermiso. AddOrEditPago/AddOrEditPagoPost quedan DELIBERADAMENTE sin gate: el
+// propio clasico (Web/Controllers/FinanzasController.cs:822,910) tampoco chequea ningun permiso
+// ahi -- es un gap real del sistema legacy, no se inventa un chequeo que el original no tiene.
 using Entidades;
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.CierreCaja _oCierreN;
+        private readonly Negocio.Usuario _oUsuarioN;
 
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
@@ -55,6 +57,7 @@ namespace WebCore.Controllers
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(_empresa, _param);
             _oCierreN = WebCore.Infrastructure.NegocioFactory.CrearCierreCaja(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         // Port de FinanzasController.ObtenerCajaAbiertaUsuario (Web/Controllers/FinanzasController.cs:1215)
@@ -94,6 +97,14 @@ namespace WebCore.Controllers
         {
             bool renderParcial = EsPeticionAjax();
 
+            // Port de Web/Controllers/FinanzasController.cs:113-120 (rama "no modo POS" -- esta
+            // accion siempre es esa rama, WebCore no porto el modo embebido en POS para CtasCtes).
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Cuenta Corriente";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             ordenSaldo = string.Equals(ordenSaldo, "ASC", StringComparison.OrdinalIgnoreCase)
                 ? "ASC"
                 : "DESC";
@@ -117,6 +128,14 @@ namespace WebCore.Controllers
         public IActionResult Cheques(string estado = "", string nroCheque = "", string desde = "")
         {
             bool renderParcial = EsPeticionAjax();
+
+            // Port de Web/Controllers/FinanzasController.cs:179-186 (rama "no modo POS" -- esta
+            // accion siempre es esa rama).
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCheques, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Cheques";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
 
             DateTime fechaDesde = DateTime.Today.AddMonths(-1);
             if (!string.IsNullOrWhiteSpace(desde))
@@ -247,6 +266,13 @@ namespace WebCore.Controllers
 
                 if (cheque == null)
                     return Json(new { ok = false, message = "No se recibieron los datos del cheque." });
+
+                // Port de Web/Controllers/FinanzasController.cs:1819-1826 -- el idCreador para el
+                // chequeo de permiso es el creador ORIGINAL del cheque (si es edicion) o el
+                // usuario actual (si es alta).
+                int idUserCreador = cheque.Id > 0 ? (_oCtaCteN.getChequePorIDorNro(cheque.Id, "")?.CreadoPor?.Id ?? user.Id) : user.Id;
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.Finanza.VerCheques, DateTime.Today, idUserCreador))
+                    return Json(new { ok = false, message = "No tienes permisos para esta acción." });
 
                 if (string.IsNullOrWhiteSpace(cheque.Banco))
                     return Json(new { ok = false, message = "El Banco ingresado no es válido." });
@@ -431,6 +457,14 @@ namespace WebCore.Controllers
         public IActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, string returnUrl = "")
         {
             bool renderParcial = EsPeticionAjax();
+
+            // Port de Web/Controllers/FinanzasController.cs:227-235 (rama "no modo POS" -- esta
+            // accion siempre es esa rama).
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Cuenta Corriente Persona";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
 
             if (!fechaDesde.HasValue)
                 fechaDesde = DateTime.Now.Date;

@@ -1,9 +1,10 @@
-// TODO(claude): copia temporal, ver comentario en IEmpresaContext.cs de esta carpeta. Porta solo
+// TODO(claude): copia temporal, ver comentario en IEmpresaContext.cs de esta carpeta. Porta
 // SendMail/IsValidEmail de Web/Helpers/SmtpMailHelper.cs (los 2 metodos que usan
-// VentasController/PuntosExpendioController/FinanzasController de WebCore) -- SendPasswordReset/
-// SendAccountUnlock no se portan, fuera de alcance (no los usa ningun controller de WebCore).
-// SendMail porta los 3 adjuntos (factura + detalle + nota de credito) del original -- Ventas.
-// EnviarComprobanteEmail los necesita simultaneos.
+// VentasController/PuntosExpendioController/FinanzasController de WebCore). SendMail porta los 3
+// adjuntos (factura + detalle + nota de credito) del original -- Ventas.EnviarComprobanteEmail los
+// necesita simultaneos. SendAccountUnlock sigue sin portarse (fuera de alcance, no lo usa ningun
+// controller de WebCore). IsConfigured/SendPasswordReset se agregaron 2026-09-09 (Batch E, ver
+// docs/DECISIONS.md "Batch E: recuperacion de contraseña") para LoginController.ForgotPassword.
 using System;
 using System.Configuration;
 using System.IO;
@@ -15,6 +16,60 @@ namespace Utilidades
 {
     public static class SmtpMailHelper
     {
+        public static bool IsConfigured()
+        {
+            return !string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["SmtpHost"])
+                && !string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["SmtpFromEmail"]);
+        }
+
+        public static void SendPasswordReset(string toEmail, string toName, string resetUrl, int expirationMinutes)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail))
+                throw new ArgumentException("El email destino es obligatorio.", nameof(toEmail));
+
+            string host = ConfigurationManager.AppSettings["SmtpHost"];
+            string fromEmail = ConfigurationManager.AppSettings["SmtpFromEmail"];
+
+            if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(fromEmail))
+                throw new ConfigurationErrorsException("Falta configurar SMTP para recuperación de contraseña.");
+
+            string fromName = ConfigurationManager.AppSettings["SmtpFromName"] ?? "CarniSys";
+            string user = ConfigurationManager.AppSettings["SmtpUser"] ?? "";
+            string pass = NormalizeAppPassword(ConfigurationManager.AppSettings["SmtpPass"] ?? "");
+            bool enableSsl = ParseBool(ConfigurationManager.AppSettings["SmtpEnableSsl"], true);
+            int port = ParseInt(ConfigurationManager.AppSettings["SmtpPort"], 587);
+
+            string subject = "Recuperación de contraseña - CarniSys";
+            string safeName = string.IsNullOrWhiteSpace(toName) ? "usuario" : toName.Trim();
+            string bodyHtml =
+                "<p>Hola " + WebUtility.HtmlEncode(safeName) + ".</p>" +
+                "<p>Recibimos una solicitud para restablecer tu contraseña.</p>" +
+                "<p><a href=\"" + WebUtility.HtmlEncode(resetUrl) + "\">Hacé clic acá para crear una nueva contraseña</a></p>" +
+                "<p>Este enlace vence en " + expirationMinutes + " minutos y solo puede usarse una vez.</p>" +
+                "<p>Si no solicitaste este cambio, podés ignorar este mensaje.</p>";
+
+            using (var message = new MailMessage())
+            {
+                message.From = new MailAddress(fromEmail, fromName);
+                message.To.Add(new MailAddress(toEmail, safeName));
+                message.Subject = subject;
+                message.Body = bodyHtml;
+                message.IsBodyHtml = true;
+
+                using (var client = new SmtpClient(host, port))
+                {
+                    client.EnableSsl = enableSsl;
+                    client.UseDefaultCredentials = false;
+                    if (!string.IsNullOrWhiteSpace(user))
+                    {
+                        client.Credentials = new NetworkCredential(user, pass);
+                    }
+
+                    client.Send(message);
+                }
+            }
+        }
+
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

@@ -2057,6 +2057,17 @@ namespace WebCore.Controllers
                 ? Guid.NewGuid().ToString("N")
                 : posInstanceId.Trim();
 
+            // Bug real reportado 2026-09-09 (ver docs/DECISIONS.md): al elegir una forma de pago
+            // que no sea Efectivo/CtaCte, clasico abre el modal de Factura Electronica DIRECTO al
+            // finalizar (Web/Views/Ventas/POS.cshtml:1670-1715, VentasFacturaModal.
+            // requiereFacturaAutomatica) -- en WebCore, forma-pago.js YA llama a ese mismo metodo
+            // (forma-pago.js:728-730), pero window.VentasFacturaModal (definido mas abajo en esta
+            // vista) nunca definio requiereFacturaAutomatica/empresaPuedeFacturar, asi que la
+            // condicion siempre daba false y caia siempre al modal basico. Se setea aca (una sola
+            // vez, sirve para todas las ramas de return de esta accion) para que la vista arme
+            // window.POSFacturaElectronicaConfig igual que el clasico.
+            ViewBag.EmpresaTieneCertificadoAfip = EmpresaTieneCertificadoFacturaElectronica(user);
+
             // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): el operador real
             // se resuelve por posInstanceId, no por modulo (cada pestaña de POS es independiente).
             // Port literal de Web/Controllers/VentasController.cs:789-808.
@@ -2088,7 +2099,11 @@ namespace WebCore.Controllers
                     return RedirectToAction("POS");
                 }
 
-                var cierreEditar = ObtenerCierreCajaActual(user);
+                // Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md): la caja
+                // se abre a nombre del OPERADOR real (CajasController.AbrirCaja), asi que buscarla
+                // con "user" (la cuenta compartida de produccion) nunca matcheaba -- ObtenerCierreCajaActual
+                // debe recibir el mismo operador que ya se resuelve mas arriba.
+                var cierreEditar = ObtenerCierreCajaActual(operador);
                 bool puedeEditarVenta = !soloFormaPago && PuedeModificarUltimaVenta(ventaEditar, operador, cierreEditar);
                 bool puedeCambiarPago = soloFormaPago && PuedeCambiarFormaPago(ventaEditar, operador, cierreEditar);
                 if (!puedeEditarVenta && !puedeCambiarPago)
@@ -2127,18 +2142,25 @@ namespace WebCore.Controllers
                 ? "duplicado"
                 : "original";
 
+            // Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md): "con el user
+            // produccion, este mensaje aparece siempre aunque tenga la caja abierta". Causa: la
+            // caja se abre a nombre del OPERADOR real (CajasController.AbrirCaja), pero esta
+            // busqueda usaba "user" (la cuenta compartida) -- nunca encontraba la caja real. Para
+            // un usuario NO-produccion, ResolverOperadorPOS ya devuelve la misma persona sin
+            // cambios, asi que este fix no altera nada para el caso normal.
             var cierre = new Entidades.CierreCaja
             {
-                Sucursal = user.Sucursal,
-                UsuarioInicio = user
+                Sucursal = operador.Sucursal,
+                UsuarioInicio = operador
             };
             cierre = _oCierreN.findByIdOrLast(cierre, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
             bool cajaAbierta = cierre != null && (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
 
             // Item 5 (2026-09-07, ver docs/DECISIONS.md): usuario con permiso de "modificar venta"
             // puede operar el POS aunque no tenga caja abierta, y editar la fecha de la venta en
-            // curso -- ver PuedeOperarSinCajaYEditarFecha.
-            bool puedeOperarSinCaja = PuedeOperarSinCajaYEditarFecha(user);
+            // curso -- ver PuedeOperarSinCajaYEditarFecha. Chequeado contra el operador real, no
+            // contra la cuenta compartida (mismo fix de arriba).
+            bool puedeOperarSinCaja = PuedeOperarSinCajaYEditarFecha(operador);
 
             ViewBag.CajaAbierta = cajaAbierta || puedeOperarSinCaja;
             ViewBag.AdvertenciaCajaCerrada = !cajaAbierta && puedeOperarSinCaja;
@@ -2176,6 +2198,23 @@ namespace WebCore.Controllers
             };
 
             return View(venta);
+        }
+
+        // Mismo criterio que Web/Views/Ventas/POS.cshtml:1670 (empresaTieneCertificadoFacturaElectronica)
+        // y PersonasController.ObtenerEmpresaAfipActual: getUsuarioById (DatosPostgres/UsuarioPg.cs:219)
+        // ya carga user.Empresa via findEmpresaById, asi que el fallback por Sucursal casi nunca
+        // deberia ejecutarse -- se deja igual por si algun camino de resolucion de usuario no la trae.
+        private bool EmpresaTieneCertificadoFacturaElectronica(Entidades.Usuario user)
+        {
+            var empresaAfip = user?.Empresa;
+            if (empresaAfip == null || string.IsNullOrWhiteSpace(empresaAfip.NombreCertificado_pfx))
+            {
+                int idEmpresa = user?.IdEmpresa ?? 0;
+                if (idEmpresa > 0)
+                    empresaAfip = _oSucursalN.findEmpresaById(idEmpresa);
+            }
+
+            return !string.IsNullOrWhiteSpace(empresaAfip?.NombreCertificado_pfx);
         }
 
         // Port de VentasController.ObtenerConfiguracionFormaPagoPOS/RequierePreseleccionFormaPagoPOS
@@ -2260,8 +2299,10 @@ namespace WebCore.Controllers
                 // Item 5 (2026-09-07, ver docs/DECISIONS.md): con permiso real de "modificar
                 // venta" se respeta la fecha editada en el POS (request.FechaVenta); sin permiso,
                 // se ignora (igual que siempre) y se fuerza DateTime.Now -- mismo criterio que
-                // ModificarVenta ya usa con PuedeEditarFechaVenta.
-                bool puedeEditarFechaEnCurso = PuedeOperarSinCajaYEditarFecha(user);
+                // ModificarVenta ya usa con PuedeEditarFechaVenta. Chequeado contra el operador
+                // real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md), mismo fix
+                // que el resto de los sitios de este controller.
+                bool puedeEditarFechaEnCurso = PuedeOperarSinCajaYEditarFecha(operador);
                 DateTime fechaVentaFinal = puedeEditarFechaEnCurso && request.FechaVenta.HasValue
                     ? request.FechaVenta.Value
                     : DateTime.Now;
@@ -2290,7 +2331,10 @@ namespace WebCore.Controllers
                     });
                 }
 
-                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, user);
+                // Bug real encontrado leyendo el clasico (Web/Controllers/VentasController.cs:596):
+                // ahi ya usaba "operador", no "user" -- WebCore se habia desviado (tercera ronda
+                // de pedidos, 2026-09-10, ver docs/DECISIONS.md).
+                bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, operador);
                 if (!cajaAbierta && !puedeEditarFechaEnCurso)
                     return Json(new { ok = false, msg = "La caja ha sido cerrada." });
 
@@ -2333,7 +2377,9 @@ namespace WebCore.Controllers
                     return Json(new { ok = false, msg = "La venta no existe." });
 
                 var operador = ResolverOperadorPOS(request.PosInstanceId, user);
-                var cierreActual = ObtenerCierreCajaActual(user);
+                // Mismo fix que POS() (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md):
+                // la caja se abre a nombre del operador real, hay que buscarla con ese mismo operador.
+                var cierreActual = ObtenerCierreCajaActual(operador);
                 bool tienePermisoAdministrativoVenta = TienePermisoAdministrativoSobreVenta(venta, operador);
 
                 if (soloFormaPago)

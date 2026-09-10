@@ -68,6 +68,17 @@
          overflow-x: hidden;
          overflow-y: auto;
          flex: 1 1 auto;
+         /* Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "modal Factura
+            Electronica: bloque blanco") -- sin min-height:0, el default de un item flex en
+            columna es min-height:auto, que fuerza a este contenedor a crecer segun el alto
+            INTRINSECO de su contenido (.fe-top solo mide ~790px) en vez de respetar el espacio
+            disponible -- overflow-y:auto nunca llegaba a recortar realmente adentro de este
+            div (el recorte real terminaba pasando en .modal-content, un nivel mas arriba), asi
+            que al scrollear via JS (scrollTop) el contenido se desalineaba de forma rara
+            respecto al bloque sticky, dejando texto de la card "Emisor" asomando por encima de
+            el en vez de quedar prolijamente tapado/scrolleado. Mismo gotcha clasico de
+            flexbox + overflow. */
+         min-height: 0;
      }
 
      /* la tabla seguirá teniendo su propia área scrolleable si necesita más espacio */
@@ -115,8 +126,11 @@
      .fe-card-compact {
          border: 1px solid #dee2e6;
          border-radius: .35rem;
-         padding: .65rem .75rem;
-         margin-bottom: .55rem;
+         /* Rediseno compacto (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) --
+            padding/margen reducidos respecto al original (.65rem .75rem / .55rem) para que
+            entren mas secciones sin scrollear tanto, sin sacar ningun campo. */
+         padding: .5rem .65rem;
+         margin-bottom: .4rem;
          background: #fff;
      }
 
@@ -196,7 +210,14 @@
 
      .fe-sticky-resumen {
          position: sticky;
-         top: -.2rem;
+         /* Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "modal Factura
+            Electronica: bloque blanco") -- con top:-.2rem, al scrollear el bloque sticky se
+            "pegaba" mas arriba de lo que su fondo opaco llegaba a cubrir, dejando un resto sin
+            tapar de la card "Emisor" (justo arriba) visible y amontonado contra el. Con top:1rem
+            el bloque sticky se pega mas abajo, alineado con el padding real del contenedor, y
+            deja de solaparse con el contenido que queda scrolleando por detras. Confirmado
+            empiricamente con capturas reales en varios valores antes de elegir este. */
+         top: 1rem;
          z-index: 5;
          display: flex;
          align-items: center;
@@ -206,9 +227,13 @@
          margin-bottom: .6rem;
          border: 1px solid #cfe3d6;
          border-radius: .45rem;
-         background: rgba(255, 255, 255, .96);
+         /* Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "modal Factura
+            Electronica: bloque blanco") -- con background al 96% de opacidad, el texto de la
+            card "Emisor" (nombre/CUIT/sucursal) que scrollea por detras de este bloque sticky se
+            veia "sangrando" (fantasma semi-transparente) a traves suyo, exactamente el "bloque
+            blanco que quita vision a los otros componentes" reportado. Fondo 100% opaco. */
+         background: #fff;
          box-shadow: 0 .2rem .45rem rgba(15, 23, 42, .06);
-         backdrop-filter: blur(6px);
      }
 
      .fe-sticky-resumen-item {
@@ -357,7 +382,7 @@
 
      html.dark-mode #modalFacturaElectronica .fe-sticky-resumen,
      body.dark-mode #modalFacturaElectronica .fe-sticky-resumen {
-         background: rgba(17, 24, 39, .96);
+         background: #111827;
          border-color: #374151;
          box-shadow: 0 .2rem .45rem rgba(0, 0, 0, .28);
      }
@@ -428,37 +453,33 @@
         <!-- ===== TOP: Empresa + Datos ===== -->
         <div class="fe-top">
 
-            <!-- Empresa -->
+            <!-- Emisor + Comprobante (unificados 2026-09-10, ver docs/DECISIONS.md "modal Factura
+                 Electronica: rediseno compacto"): eran 2 cards separadas, y la de Emisor
+                 mostraba "Punto de venta" solo como texto, duplicando el campo real (input
+                 name="PtoVtaAfip") de la card Comprobante. Ningun campo se saco, solo se
+                 reorganizo la presentacion. -->
             <div class="fe-card-compact">
                 <div class="d-flex justify-content-between align-items-start gap-2">
                     <div>
-                        <div class="fe-card-title mb-2">Emisor</div>
                         <div class="fe-issuer-name">@empresaNombre</div>
                         <div class="fe-issuer-meta fe-muted mt-1">
                             @if (!string.IsNullOrWhiteSpace(Model?.EmisorDomicilio))
                             {
-                                <div>@Model.EmisorDomicilio</div>
+                                <span>@Model.EmisorDomicilio</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(sucursalNombreFactura))
+                            {
+                                <span>@(!string.IsNullOrWhiteSpace(Model?.EmisorDomicilio) ? " · " : "")@sucursalNombreFactura</span>
                             }
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="fe-muted" style="font-size:.85rem;">CUIT</div>
+                        <div class="fe-muted" style="font-size:.78rem;">CUIT</div>
                         <div class="font-weight-bold">@empresaCuit</div>
-                        <div class="fe-muted mt-2" style="font-size:.85rem;">Punto de venta</div>
-                        <div class="font-weight-bold">
-                            @Model.PtoVtaAfip
-                            @if (!string.IsNullOrWhiteSpace(sucursalNombreFactura))
-                            {
-                                <span class="fe-muted d-block" style="font-size:.77rem; font-weight:600;">@sucursalNombreFactura</span>
-                            }
-                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Comprobante -->
-            <div class="fe-card-compact">
-                <div class="fe-card-title">Comprobante</div>
+                <div class="fe-divider"></div>
 
                 <div class="form-row fe-cliente-row">
                     <div class="form-group col-6 col-md-2">

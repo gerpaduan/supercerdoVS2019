@@ -8,10 +8,11 @@
     // Diferencia deliberada respecto al original: se elimina la distincion
     // renderInlineScripts/Layout=null (pensada para cuando esta vista se abre por AJAX dentro de
     // un modal, asumiendo que _LayoutBase.cshtml ya precargo scanner.js/zxing/etc.). WebCore
-    // siempre navega a esta vista de forma completa (nunca por AJAX) y su _Layout.cshtml todavia
-    // no tiene esos bundles precargados (gap ya documentado), asi que se colapsa siempre al
-    // comportamiento de la rama "inline" original (la version autosuficiente, que ya incluye
-    // zxing/scanner.js por si misma) -- ver seccion Scripts al final del archivo.
+    // siempre navega a esta vista de forma completa (nunca por AJAX), asi que se colapsa siempre
+    // al comportamiento de la rama "inline" original. _Layout.cshtml ya precarga scanner.js/zxing
+    // globalmente (2026-09-09, ver docs/DECISIONS.md "Batch D: scanner + buscador de productos"),
+    // asi que el include puntual que tenia esta vista se saco (cargarlo 2 veces declara "class
+    // BarcodeScanner" dos veces en la misma pagina -- SyntaxError real, no solo redundancia).
     ViewBag.Title = Model.EsEdicion ? "Modificar Stock" : "Nuevo Stock";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     bool esPesaje = string.Equals(Model.TipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes), StringComparison.OrdinalIgnoreCase);
@@ -1036,17 +1037,12 @@
             color: #f8f9fc;
         }
     </style>
-    @* Este modo no pasa por _LayoutBase.cshtml, asi que scanner.js/ZXing no estan
-       cargados todavia: se agregan aca para que el boton de escanear funcione
-       igual que en el modo con layout completo. *@
-    <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
-    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
     <script>
         window.EsUsuarioProduccion = @(ViewBag.EsUsuarioProduccion == true ? "true" : "false");
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
     <script src="@Url.Content("~/Scripts/app/stock.js?v=40")"></script>
@@ -1123,6 +1119,14 @@
                     }
                 }
             });
+
+            if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+                window.EditPageGuard.init({
+                    formSelector: "#formStock",
+                    modifyButtonSelector: "#btnHabilitarEdicionStock",
+                    saveButtonSelector: "#btnGuardarStock"
+                });
+            }
 
             // Escanear codigo de barra: pisa #txtCodigoProducto y dispara el mismo
             // Enter que ya usa la busqueda manual (stock.js), asi reusa la logica

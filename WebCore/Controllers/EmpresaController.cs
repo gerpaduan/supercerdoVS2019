@@ -4,10 +4,11 @@
 // cross-tenant para el super-admin de plataforma, ya portado en Modulo 1).
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
-// 2026-09-06) -- ya no hay stub hardcodeado. PuedeAdministrar(usuario) usa campos reales del
-// usuario logueado (Admin + IdEmpresa). El chequeo usuario.IdEmpresa != empresa.IdEmpresa
-// (VistaAccesoDenegado) tampoco se porta -- ver TODO(claude) mas abajo, requiere infraestructura
-// de permisos con fecha que se omite en el resto de la migracion.
+// 2026-09-06). PuedeAdministrar(usuario) usa campos reales del usuario logueado (Admin +
+// IdEmpresa) -- ya estaba correcto, este controller no usa Entidades.Permisos.* en absoluto
+// (confirmado contra clasico). El chequeo usuario.IdEmpresa != empresa.IdEmpresa en Index() se
+// porto 2026-09-09 (Batch B, ver docs/DECISIONS.md "Batch B: permisos reales + operador de
+// produccion").
 using System;
 using Microsoft.AspNetCore.Mvc;
 using Utilidades;
@@ -33,6 +34,17 @@ namespace WebCore.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            // Port de Web/Controllers/EmpresaController.cs:26-30 (aislamiento multi-tenant, no
+            // Permisos.* -- este controller no usa el catalogo de permisos, ver header). En la
+            // arquitectura actual de WebCore _empresa ya se resuelve desde el propio claim
+            // IdEmpresa del usuario logueado, asi que esta condicion no deberia poder fallar en la
+            // practica -- se porta igual por fidelidad/defensa en profundidad.
+            if (_usuarioActual == null || _usuarioActual.IdEmpresa != _empresa.IdEmpresa)
+            {
+                ViewBag.Seccion = "Mi Empresa";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             var datosEmpresa = _oEmpresaN.findById(_empresa.IdEmpresa);
             var model = CrearViewModel(datosEmpresa, _usuarioActual, true);
 

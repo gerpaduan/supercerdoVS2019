@@ -292,13 +292,18 @@
 
         @* Item 5 (2026-09-07, ver docs/DECISIONS.md): aviso NO bloqueante -- el usuario con
            permiso de "modificar venta" entro sin caja abierta. Se advierte, no se impide nada
-           (mismo criterio ya usado para #alertaPrecioListaInconsistente). *@
+           (mismo criterio ya usado para #alertaPrecioListaInconsistente).
+           Boton "ocultar" agregado 2026-09-10 (item 10 de la segunda ronda de pedidos, ver
+           docs/DECISIONS.md): antes no tenia forma de cerrarse, molestaba durante toda la
+           sesion de POS. Patron BS5 ya usado en Productos/Index.cshtml (alert-dismissible +
+           btn-close), sin JS propio -- Bootstrap 5 maneja el dismiss solo. *@
         @if (advertenciaCajaCerrada)
         {
-            <div class="alert alert-warning py-2 px-3 mb-2 small mx-2" id="alertaCajaCerradaPOS">
+            <div class="alert alert-warning alert-dismissible fade show py-2 px-3 mb-2 small mx-2" id="alertaCajaCerradaPOS" role="alert">
                 <i class="fas fa-exclamation-triangle mr-1"></i>
                 No tenés una caja abierta en esta sucursal. Podés operar el POS igual por tu permiso de modificar venta,
                 pero pueden quedar inconsistencias en el cierre de caja -- queda a tu criterio.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
         }
 
@@ -1108,6 +1113,13 @@ else
     <script src="~/Scripts/carnisys.balanza.js?v=1"></script>
     <script src="~/Scripts/app/pos-state.js?v=1"></script>
     <script src="~/Scripts/app/pos-keyboard.js?v=1"></script>
+    @* Port de Web/Scripts/app/pos-forma-pago-precios.js (2026-09-09, Batch C, ver
+       docs/DECISIONS.md "Batch C: POS forma de pago") -- nunca se habia incluido, causaba que el
+       atajo "5" (QR) del modal de forma de pago no hiciera nada (normalizarTipoFormaPago sin este
+       script no normaliza mayusculas/minusculas) y que pos-product.js/pos-cart.js no recalcularan
+       el precio segun forma de pago electronica. Cargado antes de pos-product.js/pos-cart.js
+       (ambos lo referencian) y de forma-pago.js (que lo usa para el matching de atajos). *@
+    <script src="~/Scripts/app/pos-forma-pago-precios.js?v=1"></script>
     <script src="~/Scripts/app/pos-product.js?v=1"></script>
     <script src="~/Scripts/app/pos-cart.js?v=1"></script>
     <script src="~/Scripts/app/pos-balanza.js?v=1"></script>
@@ -1115,17 +1127,15 @@ else
     <script src="~/Scripts/app/ventas-expendios-pos.js?v=1"></script>
     <script src="~/Scripts/app/pos-comment.js?v=1"></script>
     <script src="~/Scripts/app/pos-help.js?v=1"></script>
-    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
-    <script src="~/Scripts/app/scanner.js"></script>
     <script src="~/Scripts/app/calculadora-billetes.js?v=3239"></script>
     <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
     <script src="~/Scripts/app/egresos-caja.js?v=10"></script>
     <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
     <script src="~/Scripts/app/pos-compact.js?v=1"></script>
-    <script src="~/Scripts/app/seleccion-usuario.js?v=2"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js?v=3"></script>
     <script src="~/Scripts/app/persona-buscar.js?v=1"></script>
     <script src="~/Scripts/app/modal-productos.js?v=1"></script>
-    <script src="~/Scripts/app/factura-electronica.js?v=1"></script>
+    <script src="~/Scripts/app/factura-electronica.js?v=4"></script>
 
     @* Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
        Web/Views/Ventas/POS.cshtml:1396-1486. Vive en un bloque propio, ANTES del IIFE de
@@ -1166,7 +1176,8 @@ else
                     titulo: esInicial ? 'Autorizate para operar este Punto de Venta' : 'Cambiar operario',
                     usuarios: cfg.usuariosActivos,
                     requierePassword: true,
-                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId)
+                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId),
+                    obligatorio: esInicial
                 }).then(function () {
                     loginObligatorioPendiente = false;
                     recargarConOperadorAutorizado();
@@ -1245,6 +1256,9 @@ else
                         success: function (r) {
                             if (r && r.ok) {
                                 $("#modalAbrirCaja").modal("hide");
+                                // Mismo fix que pvbContinuarNuevaVenta (2026-09-10, item 9, ver
+                                // docs/DECISIONS.md) -- bug secundario de la misma familia.
+                                window.PosNavegandoInternoPOS = true;
                                 location.reload();
                                 return;
                             }
@@ -2412,6 +2426,13 @@ else
                 pagoMixtoEfectivo: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model != null ? Model.PagoMixtoEfectivo : 0f)),
                 total: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model != null ? Model.TotalImporte : 0f))
             };
+
+            // Port de Web/Views/Ventas/POS.cshtml:1713-1715 (bug real reportado 2026-09-09, ver
+            // docs/DECISIONS.md): sin esto, VentasFacturaModal.requiereFacturaAutomatica (mas abajo
+            // en este archivo) siempre asumia que la empresa tiene certificado AFIP.
+            window.POSFacturaElectronicaConfig = {
+                empresaTieneCertificado: @Html.Raw(System.Text.Json.JsonSerializer.Serialize((bool)(ViewBag.EmpresaTieneCertificadoAfip ?? false)))
+            };
             if (window.POSFormaPagoActual.formaPago && typeof window.POSState.setFormaPagoPreseleccionada === "function") {
                 window.POSState.setFormaPagoPreseleccionada({
                     id: window.POSFormaPagoActual.formaPago,
@@ -2806,9 +2827,37 @@ else
             // batch no encontro un trigger de "facturar sin venta" wireado en Web/Views/Ventas/
             // POS.cshtml, solo la funcion expuesta via window.VentasFacturaModal.abrirSinVenta
             // para uso puntual). Se expone igual para no perder la funcionalidad ya portada.
+            //
+            // empresaPuedeFacturar/requiereFacturaAutomatica (bug real reportado 2026-09-09, ver
+            // docs/DECISIONS.md): faltaban desde que se definio este objeto -- forma-pago.js:728-730
+            // ya llama a requiereFacturaAutomatica(payload.formaPago) al finalizar una venta para
+            // decidir si abre la Factura Electronica directo en vez del modal basico, pero como la
+            // funcion no existia la condicion siempre daba false. Port literal de
+            // Web/Scripts/app/modal-postventa.js:10-28 (pvEmpresaTieneCertificadoFacturaElectronica/
+            // pvFacturaElectronicaRequeridaPorFormaPago), leyendo window.POSFacturaElectronicaConfig
+            // (recien agregado arriba) y window.normalizarTipoFormaPago (forma-pago.js, ya portado).
+            function empresaTieneCertificadoFacturaElectronicaPOS() {
+                var cfg = window.POSFacturaElectronicaConfig || null;
+                if (!cfg || typeof cfg.empresaTieneCertificado === 'undefined') return true;
+                return cfg.empresaTieneCertificado === true;
+            }
+
+            function facturaElectronicaRequeridaPorFormaPagoPOS(formaPago) {
+                var normalizada = typeof window.normalizarTipoFormaPago === 'function'
+                    ? window.normalizarTipoFormaPago(formaPago)
+                    : (formaPago || '');
+
+                return empresaTieneCertificadoFacturaElectronicaPOS()
+                    && !!normalizada
+                    && normalizada !== 'Efectivo'
+                    && normalizada !== 'CtaCte';
+            }
+
             window.VentasFacturaModal = window.VentasFacturaModal || {
                 abrir: abrirFacturaVentaModal,
-                abrirSinVenta: abrirFacturaSinVentaModal
+                abrirSinVenta: abrirFacturaSinVentaModal,
+                empresaPuedeFacturar: empresaTieneCertificadoFacturaElectronicaPOS,
+                requiereFacturaAutomatica: facturaElectronicaRequeridaPorFormaPagoPOS
             };
 
             function pvbContinuarNuevaVenta() {
@@ -2818,6 +2867,13 @@ else
                 // el foco al POS original -- mismo patron que modal-postventa.js (el modal real,
                 // no portado) usa en cerrarPostVentaYRecargar.
                 window.POSMultiInstance?.closeAfterPostVenta?.();
+                // Bug real (2026-09-10, item 9 de la segunda ronda de pedidos, ver
+                // docs/DECISIONS.md): faltaba este flag -- sin el, el listener de 'pagehide'
+                // (mas abajo en este archivo) mandaba el sendBeacon de limpieza de operador en
+                // CADA venta, forzando a pedir la autorizacion de nuevo a cada rato aunque la
+                // vista de POS nunca se hubiera cerrado. Mismo patron ya usado en
+                // recargarConOperadorAutorizado().
+                window.PosNavegandoInternoPOS = true;
                 window.location.reload();
             }
 

@@ -357,6 +357,7 @@
 
 @section Scripts {
 <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+<script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
 <script>
     window.EditReadOnly && window.EditReadOnly.init({
         formSelector: "#formUsuario",
@@ -364,6 +365,14 @@
         modifyButtonSelector: "#btnHabilitarEdicionUsuario",
         saveButtonSelector: "#btnGuardarUsuario"
     });
+
+    if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+        window.EditPageGuard.init({
+            formSelector: "#formUsuario",
+            modifyButtonSelector: "#btnHabilitarEdicionUsuario",
+            saveButtonSelector: "#btnGuardarUsuario"
+        });
+    }
 
     // Admin y Usuario de producción son mutuamente excluyentes (el server lo vuelve a validar
     // igual en UsuariosController.ValidarUsuario) -- tildar uno destilda el otro, para que el

@@ -3,9 +3,13 @@
 // WebCore"). Alcance v1 (decidido con el usuario): login + rate limiting por IP + bloqueo de
 // cuenta por intentos fallidos + dispositivo seguro + horario laboral. Fuera de alcance v1
 // (documentado como gap para v2): geo-validacion de ubicacion de login (ValidarUbicacion,
-// LoginUbicacionLog), recuperacion de contraseña por email (ForgotPassword/PasswordReset), mail
-// automatico de desbloqueo de cuenta (EnviarMailDesbloqueo) -- el desbloqueo en v1 lo hace un
-// admin a mano via UsuariosController.DesbloquearUsuario, que ya existe.
+// LoginUbicacionLog), mail automatico de desbloqueo de cuenta (EnviarMailDesbloqueo) -- el
+// desbloqueo en v1 lo hace un admin a mano via UsuariosController.DesbloquearUsuario, que ya
+// existe. Recuperacion de contraseña por email (ForgotPassword/ResetPassword) se agrego 2026-09-09
+// (item 1 de los 12 pendientes, Batch E, ver docs/DECISIONS.md "Batch E: recuperacion de
+// contraseña"), con mejoras de seguridad deliberadas sobre el clasico (confirmadas con el
+// usuario): rate limiting propio por IP (PasswordResetRateLimiter, nuevo) y clave minima de 6
+// caracteres (el clasico aceptaba 1).
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -153,11 +157,227 @@ namespace WebCore.Controllers
             return View(model);
         }
 
+        // Mensaje generico deliberado (2026-09-09, port de Web/Controllers/LoginController.cs:22):
+        // nunca revela si el usuario/email ingresado existe -- evita que este endpoint sirva para
+        // enumerar cuentas reales.
+        private const string GenericRecoveryMessage = "Si los datos ingresados corresponden a un usuario registrado, recibirás instrucciones para recuperar tu contraseña. Si no te llega el mail, comunicate con el administrador de tu empresa.";
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new PasswordRecoveryRequestVm());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgotPassword(PasswordRecoveryRequestVm model)
+        {
+            model ??= new PasswordRecoveryRequestVm();
+            model.UsuarioOEmail = (model.UsuarioOEmail ?? "").Trim();
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            string ip = ObtenerDireccionIp();
+
+            // Rate limiting por IP (mejora de seguridad nueva, ver cabecera del archivo) -- se
+            // registra el intento ANTES de chequear el bloqueo para que el propio intento que
+            // dispara el bloqueo ya cuente, igual que LoginRateLimiter.
+            if (PasswordResetRateLimiter.IsBlocked(ip, out var retryAfter))
+            {
+                Response.StatusCode = 429;
+                model.Mensaje = string.Format(
+                    CultureInfo.CurrentCulture,
+                    "Se superó el máximo de solicitudes. Esperá {0} minuto(s) y volvé a intentar.",
+                    Math.Max(1, (int)Math.Ceiling(retryAfter.TotalMinutes)));
+                return View(model);
+            }
+
+            PasswordResetRateLimiter.RegisterRequest(ip);
+
+            try
+            {
+                var usuarios = _oUsuarioN.BuscarUsuariosPorIdentificador(model.UsuarioOEmail, true)
+                    .Where(u => u != null && u.Activo)
+                    .ToList();
+
+                foreach (var usuario in usuarios)
+                {
+                    if (string.IsNullOrWhiteSpace(usuario.Email))
+                        continue;
+
+                    string rawToken = PasswordSecurity.GenerateToken();
+                    string tokenHash = PasswordSecurity.ComputeSha256Base64(rawToken);
+                    int expirationMinutes = GetPasswordResetExpirationMinutes();
+                    DateTime nowUtc = DateTime.UtcNow;
+
+                    _oUsuarioN.CrearTokenRecuperacion(new Entidades.UsuarioPasswordResetToken
+                    {
+                        IdUsuario = usuario.Id,
+                        IdEmpresa = usuario.IdEmpresa,
+                        TokenHash = tokenHash,
+                        FechaCreacionUtc = nowUtc,
+                        FechaExpiracionUtc = nowUtc.AddMinutes(expirationMinutes),
+                        Usado = false,
+                        IdentificadorSolicitado = model.UsuarioOEmail,
+                        EmailDestino = usuario.Email ?? ""
+                    });
+
+                    if (SmtpMailHelper.IsConfigured())
+                    {
+                        string resetUrl = Url.Action("ResetPassword", "Login", new { token = rawToken }, Request.Scheme) ?? "";
+                        SmtpMailHelper.SendPasswordReset(usuario.Email, usuario.Nombre, resetUrl, expirationMinutes);
+                    }
+                }
+            }
+            catch
+            {
+                // Se responde igual para no filtrar informacion sensible (mismo criterio que
+                // clasico) -- un fallo de SMTP/DB no debe revelar si la cuenta existe.
+            }
+
+            TempData["Success"] = GenericRecoveryMessage;
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string token = "")
+        {
+            var model = new PasswordResetVm
+            {
+                Token = token ?? "",
+                TokenValido = TokenEsValido(token, "reset")
+            };
+
+            if (!model.TokenValido)
+                model.Mensaje = "El enlace de recuperación no es válido o ya venció.";
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ResetPassword(PasswordResetVm model)
+        {
+            model ??= new PasswordResetVm();
+            model.Token = model.Token ?? "";
+            model.TokenValido = TokenEsValido(model.Token, "reset");
+
+            if (!string.IsNullOrEmpty(model.NuevaClave) && model.NuevaClave.Contains(' '))
+                ModelState.AddModelError(nameof(model.NuevaClave), "La contraseña no puede contener espacios en blanco.");
+
+            if (!model.TokenValido)
+                ModelState.AddModelError("", "El enlace de recuperación no es válido o ya venció.");
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            string tokenHash = PasswordSecurity.ComputeSha256Base64(model.Token);
+            var token = _oUsuarioN.ObtenerTokenRecuperacion(tokenHash);
+            if (token == null || token.Usado || token.Proposito != "reset" || token.FechaExpiracionUtc < DateTime.UtcNow)
+            {
+                model.TokenValido = false;
+                model.Mensaje = "El enlace de recuperación no es válido o ya venció.";
+                ModelState.AddModelError("", model.Mensaje);
+                return View(model);
+            }
+
+            var usuario = _oUsuarioN.getUsuarioById(token.IdUsuario, sinRestriccionDeTenant: true);
+            if (usuario == null || !usuario.Activo)
+            {
+                model.TokenValido = false;
+                ModelState.AddModelError("", "No fue posible actualizar la contraseña.");
+                return View(model);
+            }
+
+            _oUsuarioN.ActualizarPasswordWebSeguro(usuario.Id, model.NuevaClave, sinRestriccionDeTenant: true);
+            _oUsuarioN.MarcarTokenRecuperacionComoUsado(token.Id);
+            _oUsuarioN.InvalidarTokensPendientesUsuario(usuario.Id, "reset");
+
+            TempData["Success"] = "Tu contraseña fue actualizada correctamente. Ya podés iniciar sesión.";
+            return RedirectToAction("Index");
+        }
+
+        private bool TokenEsValido(string? tokenRaw, string proposito)
+        {
+            if (string.IsNullOrWhiteSpace(tokenRaw))
+                return false;
+
+            try
+            {
+                string tokenHash = PasswordSecurity.ComputeSha256Base64(tokenRaw);
+                var token = _oUsuarioN.ObtenerTokenRecuperacion(tokenHash);
+                return token != null && !token.Usado && token.Proposito == proposito && token.FechaExpiracionUtc >= DateTime.UtcNow;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static int GetPasswordResetExpirationMinutes()
+        {
+            if (int.TryParse(System.Configuration.ConfigurationManager.AppSettings["Security:PasswordResetTokenMinutes"], out var minutes) && minutes > 0)
+                return minutes;
+
+            return 60;
+        }
+
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Clear();
             return RedirectToAction("Index");
+        }
+
+        // Cambiar clave desde el menu de usuario del POS (2026-09-10, item 6 de la segunda ronda
+        // de pedidos, ver docs/DECISIONS.md). Port de Web/Controllers/LoginController.cs:291-337,
+        // adaptado a IUsuarioSesionService en vez de Session["Usuario"] (mismo patron que
+        // CambiarSucursal, arriba) -- esta accion corre con sesion YA iniciada (a diferencia de
+        // ForgotPassword/ResetPassword, pre-login), asi que usa el _Layout.cshtml normal con
+        // sidebar, no el layout standalone de login. Mismo criterio de seguridad ya aplicado a
+        // PasswordResetVm (Batch E): minimo 6 caracteres, no 1 como el clasico.
+        [Authorize]
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            if (_sesion.UsuarioActual == null)
+                return RedirectToAction("Index");
+
+            var model = new ChangePasswordVm
+            {
+                Error = TempData["Error"] as string,
+                Success = TempData["Success"] as string
+            };
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ChangePassword(ChangePasswordVm model)
+        {
+            if (_sesion.UsuarioActual == null)
+                return RedirectToAction("Index");
+
+            model ??= new ChangePasswordVm();
+
+            var oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_sesion.Empresa, _sesion.Parametros);
+            var usuarioActual = oUsuarioN.getUsuarioById(_sesion.UsuarioActual.Id);
+
+            if (usuarioActual == null || !usuarioActual.Activo)
+                ModelState.AddModelError("", "No fue posible actualizar la contraseña.");
+            else if (oUsuarioN.ValidarUsuarioWeb(usuarioActual.User, model.ClaveActual) == null)
+                ModelState.AddModelError(nameof(model.ClaveActual), "La contraseña actual es incorrecta.");
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            oUsuarioN.ActualizarPasswordWebSeguro(usuarioActual.Id, model.NuevaClave);
+            oUsuarioN.InvalidarTokensPendientesUsuario(usuarioActual.Id, "reset");
+
+            TempData["Success"] = "Tu contraseña fue actualizada correctamente.";
+            return RedirectToAction("ChangePassword");
         }
 
         // Cambiar sucursal desde el menu de usuario (2026-09-07, pedido explicito del usuario --

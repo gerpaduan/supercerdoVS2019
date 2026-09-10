@@ -157,4 +157,52 @@ public sealed class ExpendiosPOSTests
 
         await page.CloseAsync();
     }
+
+    // Item 7 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md): "que los botones
+    // de finalizar y los de abajo se comporten como en /POS de ventas... el bloque de balanza
+    // tapa los 3 botones inferiores". Causa raíz: PuntosExpendio/POS.cshtml usaba "col-lg-7" sin
+    // "col-md-6" (el selector CSS de pos.css que ancla el footer/scroll interno usa la clase
+    // literal ".col-md-6.d-flex.flex-column"), y ".zona-botones-carrito" quedaba SUELTA fuera de
+    // ".pos-footer-panel" -- sin ancla al fondo, los botones se movían y la balanza (sticky) podía
+    // superponerse. Fix: estructura HTML alineada a Ventas/POS.cshtml (que sí funciona).
+    [Fact]
+    public async Task PuntosExpendioPOS_BotonesYBalanza_NoSeSuperponenEnDistintasAlturasDeViewport()
+    {
+        int[] alturas = { 1080, 720, 600 };
+
+        foreach (var altura in alturas)
+        {
+            var page = await _fixture.NewAuthenticatedPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = 1366, Height = altura }
+            });
+            var errors = new List<string>();
+            page.PageError += (_, msg) => errors.Add(msg);
+
+            await page.GotoAsync($"{WebCoreFixture.BaseUrl}/PuntosExpendio/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.WaitForTimeoutAsync(600);
+
+            var sectorModal = page.Locator("#modalSectoresPuntoExpendio");
+            if (await sectorModal.IsVisibleAsync())
+            {
+                await sectorModal.Locator("button, a").First.ClickAsync();
+                await page.WaitForTimeoutAsync(500);
+            }
+
+            var botonesBox = await page.Locator(".zona-botones-carrito").BoundingBoxAsync();
+            var balanzaBox = await page.Locator(".pos-balanza-card").BoundingBoxAsync();
+            Assert.NotNull(botonesBox);
+            Assert.NotNull(balanzaBox);
+
+            bool seSuperponen = botonesBox!.Y < balanzaBox!.Y + balanzaBox.Height && botonesBox.Y + botonesBox.Height > balanzaBox.Y;
+            Assert.False(seSuperponen, $"A {altura}px de alto de viewport, los botones inferiores y el bloque de balanza se superponen (botones y={botonesBox.Y}..{botonesBox.Y + botonesBox.Height}, balanza y={balanzaBox.Y}..{balanzaBox.Y + balanzaBox.Height}).");
+
+            // Ambos bloques deben quedar completamente dentro del viewport.
+            Assert.True(botonesBox.Y + botonesBox.Height <= altura + 1, $"Los botones se salen del viewport a {altura}px de alto.");
+            Assert.True(balanzaBox.Y + balanzaBox.Height <= altura + 1, $"El bloque de balanza se sale del viewport a {altura}px de alto.");
+
+            Assert.Empty(errors);
+            await page.CloseAsync();
+        }
+    }
 }

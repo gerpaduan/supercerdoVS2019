@@ -1,8 +1,13 @@
-﻿@* Port literal de Web/Views/Ventas/_FormaPagoModal.cshtml (batch 3, ver
-   docs/10-migracion-aspnet-core/PLAN-POS-UI.md). Sin cambios -- se usa junto con
-   Scripts/app/forma-pago.js, tambien portado sin cambios. *@
+﻿@* Port de Web/Views/Ventas/_FormaPagoModal.cshtml (batch 3, ver
+   docs/10-migracion-aspnet-core/PLAN-POS-UI.md), usado junto con Scripts/app/forma-pago.js.
+   YA NO es sin cambios: el bloque de descuento/recargo % a todos los productos
+   (#bloquePorcentajeTotalVenta, 2026-09-06/07) es una mejora nueva de WebCore, sin equivalente
+   en el clasico. Ese bloque, al desplegarse, podia empujar el contenido del modal fuera de la
+   pantalla en resoluciones bajas -- Batch C del 2026-09-09 (ver docs/DECISIONS.md "Batch C: POS
+   forma de pago") agrega modal-dialog-scrollable para que el modal completo scrollee dentro del
+   viewport en vez de desbordar. *@
 <div class="modal fade" id="modalFormaPago" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
 
             <div class="modal-header bg-primary text-white">

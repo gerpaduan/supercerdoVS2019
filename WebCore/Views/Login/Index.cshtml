@@ -95,6 +95,14 @@
                     <button type="submit" class="login-submit">Ingresar <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
                 </form>
 
+                @* Link a recuperar contraseña (2026-09-09, item 1 de los 12 pendientes -- ver
+                   docs/DECISIONS.md "Batch E: recuperacion de contraseña"). Las clases
+                   login-forgot-wrap/login-forgot ya existian en carnisys-login.css sin usarse en
+                   ninguna vista -- quedaron preparadas para esto. *@
+                <div class="login-forgot-wrap">
+                    <a href="@Url.Action("ForgotPassword", "Login")" class="login-forgot">¿Olvidaste tu contraseña?</a>
+                </div>
+
                 <div class="login-support">
                     <i class="fab fa-whatsapp" aria-hidden="true"></i>
                     <span>¿Necesitás ayuda? <a href="https://wa.me/5493482547897" target="_blank" rel="noopener">Escribinos por WhatsApp</a></span>

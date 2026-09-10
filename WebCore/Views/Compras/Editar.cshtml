@@ -498,6 +498,7 @@
        (navegacion completa por Compras/Index), ya estructurada como @section Scripts. *@
     @section Scripts {
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
+        <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
         <script src="@Url.Content("~/Scripts/app/compras.js?v=27")"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
@@ -542,6 +543,14 @@
                         }
                     }
                 });
+
+                if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+                    window.EditPageGuard.init({
+                        formSelector: "#formCompra",
+                        modifyButtonSelector: "#btnHabilitarEdicionCompra",
+                        saveButtonSelector: "#btnGuardarCompra"
+                    });
+                }
             })();
         </script>
     }

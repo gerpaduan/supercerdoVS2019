@@ -36,6 +36,7 @@ namespace WebCore.Controllers
         private readonly IEmpresaContext _empresa;
         private readonly IParametrosContext _param;
         private readonly Negocio.Persona _oPersonaN;
+        private readonly Negocio.Usuario _oUsuarioN;
         private Entidades.Usuario _usuarioActual => _sesion.UsuarioActual;
 
         public PersonasController(IRazorViewEngine viewEngine, ITempDataProvider tempDataProvider, IWebHostEnvironment env, WebCore.Services.IUsuarioSesionService sesion)
@@ -55,6 +56,7 @@ namespace WebCore.Controllers
             _param.Reload();
 
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
+            _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
         [HttpGet]
@@ -535,11 +537,11 @@ namespace WebCore.Controllers
 
         private bool PuedeGestionarCuentaCorriente(Entidades.Usuario usuario)
         {
-            // El original ademas permite via PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtasCtes, null)
-            // para usuarios no-admin con ese permiso puntual -- no portado (depende de Session real).
-            // El stub de esta sesion es Admin=true, asi que este atajo nunca se ejercita en la
-            // comparacion de paridad; queda documentado por si se porta un usuario no-admin.
-            return usuario != null && usuario.Admin;
+            // Port de Web/Controllers/PersonasController.cs:550-554 (2026-09-09, Batch B, ver
+            // docs/DECISIONS.md "Batch B: permisos reales + operador de produccion"). Antes solo
+            // chequeaba Admin -- la rama de permiso puntual (Permisos.Finanza.VerCtasCtes) quedo
+            // sin portar mientras WebCore no tenia sesion real; ya la tiene.
+            return usuario != null && (usuario.Admin || _oUsuarioN.tienePermiso(usuario, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1));
         }
 
         private void CargarIvas(PersonaEditVm model)

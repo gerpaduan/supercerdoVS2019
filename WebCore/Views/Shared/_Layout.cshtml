@@ -24,6 +24,14 @@
     var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
     var action = (ViewContext.RouteData.Values["action"] as string) ?? "";
 
+    // Operador de modulo de Compras (2026-09-09, Batch B, ver docs/DECISIONS.md "Batch B:
+    // permisos reales + operador de produccion"): asi es como el operador autorizado "pierde el
+    // permiso al hacer clic afuera" del modulo -- este layout se renderiza en TODA la app, asi
+    // que en cada request que no sea a Compras, si hay un operador de Compras activo en Session
+    // se limpia aca mismo. Server side, sin beacon/pagehide. Port de
+    // Web/Views/Shared/_LayoutBase.cshtml:19.
+    WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
+
     string webClasico = (System.Configuration.ConfigurationManager.AppSettings["WebClasicoBaseUrl"] ?? "").TrimEnd('/');
     Func<string, string> legacy = path => webClasico + path;
 
@@ -162,7 +170,16 @@
 
         .sidebar {
             width: 6.5rem;
-            min-height: 100vh;
+            /* Bug real (2026-09-08, ver docs/DECISIONS.md): "min-height" es un piso, no un techo --
+               si el contenido (items + submenu desplegado) supera el viewport, la caja crecia mas
+               alla de 100vh en vez de generar scroll interno, y "overflow-y: auto" de abajo nunca
+               se activaba (scrollHeight nunca superaba clientHeight). Al ser position:sticky
+               dentro de un #wrapper flex, el sidebar terminaba atado al scroll del body --
+               scrollear con el mouse sobre el sidebar movia toda la pagina. "height" fijo acota la
+               caja de verdad y deja que el scroll interno haga su trabajo. Nota: el clasico nunca
+               tuvo este problema resuelto (su sidebar no es sticky ni tiene overflow propio) --
+               esto es una mejora de WebCore, no un port. */
+            height: 100vh;
             position: sticky;
             top: 0;
             align-self: flex-start;
@@ -172,6 +189,24 @@
             padding: 0;
             list-style: none;
             margin: 0;
+            /* Item 3 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md): la
+               barra de scroll nativa quedaba fea sobre el gradiente del sidebar. Se oculta la
+               barra visual (el scroll en si sigue funcionando, scrollear con mouse/touch sigue
+               andando igual) y se compensa con foco de teclado -- ver tabindex/aria-label mas
+               abajo en el <ul id="accordionSidebar">. Con overflow-y:auto + height:100vh ya
+               presentes arriba, un contenedor con foco scrollea con flechas/PageUp/PageDown/
+               Home/End de forma nativa del navegador, sin JS adicional. */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none; /* Chrome/Edge/Safari */
+        }
+
+        .sidebar:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, .55);
+            outline-offset: -2px;
         }
 
         .sidebar .nav-item {
@@ -231,6 +266,12 @@
             z-index: 1;
             min-width: 10rem;
             padding: .5rem 0;
+            /* Bug real (2026-09-08, ver docs/DECISIONS.md): nunca se porto un font-size propio
+               para el submenu -- heredaba el tamano por defecto de Bootstrap (~1rem) contra los
+               .85rem del item de primer nivel (.nav-link span mas abajo), se veia mas grande.
+               Paridad con el clasico: Web/Content/css/sb-admin-2.css:10371 define el mismo
+               0.85rem en .collapse-inner. */
+            font-size: 0.85rem;
             border-radius: .35rem;
             box-shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15);
         }
@@ -347,7 +388,7 @@
 </head>
 <body id="page-top" class="app-shell">
     <div id="wrapper">
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" tabindex="0" aria-label="Menú de navegación. Usá las flechas o Av Pág/Re Pág para desplazar.">
             <li class="nav-item">
                 <a class="sidebar-brand d-flex align-items-center justify-content-center" href="@Url.Action("Index", "Home")">
                     <div class="sidebar-brand-icon sidebar-brand-mark">
@@ -549,10 +590,9 @@
                                explicito del usuario -- ver docs/DECISIONS.md). Port de
                                Web/Views/Shared/_LayoutBase.cshtml:512-568 -- mismas opciones
                                (sucursal actual -> abre #modalSucursales, logout -> ya portado en
-                               LoginController.Logout) salvo "Cambiar clave": el clasico linkea a
-                               Login/ChangePassword, que todavia no esta portado a WebCore (gap
-                               conocido, ver docs/10-migracion-aspnet-core/gaps.md) -- se omite el
-                               link en vez de apuntar a una accion inexistente. *@
+                               LoginController.Logout, cambiar clave -> Login/ChangePassword,
+                               portado 2026-09-10 junto con el mismo dropdown para _LayoutPOS.cshtml,
+                               item 6 de la segunda ronda de pedidos). *@
                             <li class="nav-item dropdown no-arrow">
                                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -570,6 +610,10 @@
                                         <strong id="lblSucursalActual">@sucursalActualNombre</strong>
                                     </a>
                                     <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
+                                        <i class="fas fa-key fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Cambiar clave
+                                    </a>
                                     <a class="dropdown-item" href="@Url.Action("Logout", "Login")">
                                         <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                         Cerrar sesión
@@ -628,6 +672,30 @@
        colapsa confirm+alert de exito en un solo dialogo. *@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
+
+    @* Gap real preexistente, mismo patron que los de arriba (2026-09-09, items 7 y 12 de los 12
+       pendientes -- ver docs/DECISIONS.md "Batch D: scanner + buscador de productos"). Cargados
+       globalmente igual que en Web/Views/Shared/_LayoutBase.cshtml:665-667. Sin esto:
+       (a) window.abrirBuscarProductoModal quedaba indefinido -- Elaborados/EditarFormula.cshtml y
+       Movimientos/Editar.cshtml (via movimientos.js) y Elaborados/Carga.cshtml (via
+       elaborados-carga.js) ya llamaban a esta funcion con un fallback defensivo
+       (console.error+return si no existe), asi que sus botones "Buscar"/F9/F10 no abrian nada sin
+       tirar error visible; (b) BarcodeScanner quedaba indefinido en Productos/AddOrEdit.cshtml --
+       el boton de escaner existia pero al no cargar la clase, el bloque completo de inicializacion
+       (adentro de "if (typeof BarcodeScanner !== 'undefined')") nunca se ejecutaba, asi que el
+       listener del boton nunca se registraba (click sin efecto, sin error visible tampoco). Se
+       verifico que ningun otro script defina su propia version de window.abrirBuscarProductoModal
+       (grep: solo modal-productos.js la define, el resto solo la LLAMA) ni de BarcodeScanner --
+       cero riesgo de colision con Compras/Editar o Stock/Editar, que resuelven su propio modal de
+       busqueda de productos de forma completamente independiente (compras.js/stock.js, con su
+       propio selector de modal, sin pasar por esta funcion). Las 4 vistas que ya cargaban
+       zxing.min.js/scanner.js puntual (Movimientos/Editar, Stock/Editar, Ventas/POS,
+       PuntosExpendio/POS) mantienen su propio include -- cargar el mismo script 2 veces en una
+       pagina es inofensivo (misma IIFE, sin registro de handlers duplicado) pero se deja como
+       deuda menor de limpieza, no bloqueante, para no tocar 4 archivos mas en este batch. *@
+    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
+    <script src="~/Scripts/app/scanner.js"></script>
+    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
 
     @* Gap real preexistente encontrado 2026-09-07 (ver docs/DECISIONS.md): manejarPermiso() es un
        helper global del clasico (Web/Views/Shared/_LayoutBase.cshtml:225-231) que varias vistas ya
@@ -779,5 +847,86 @@
         })();
         </script>
     }
+
+    @* Item 2 de la segunda ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 10:
+       advertencia de salir sin guardar"): "al salir de una vista de alta/edición... si hay
+       datos cargados, se largue una advertencia que se van a perder los datos. ya sea
+       cliqueando el menú, dándole cancelar al botón de la vista, queriendo cerrar el
+       navegador, etc. Siempre advertir."
+
+       WebCore/wwwroot/Scripts/app/edit-page-guard.js (idéntico byte a byte al clásico) ya
+       calcula window.__protegerSalida (dirty-check por formulario, syncGlobalProtection())
+       desde antes de esta sesión, pero nadie lo leía -- el enforcement real (beforeunload +
+       intercept de clicks de menú/Cancelar con confirmación) solo existía en clásico
+       (Web/Views/Shared/_LayoutBase.cshtml:940-1024). Port literal de ese bloque acá.
+
+       Desviación deliberada del port literal (hallazgo real durante este batch): el intercept
+       de clicks agrega stopImmediatePropagation() -- sin esto, el listener de click local de
+       Personas/Editar.cshtml (spinner "Cargando solicitud...") dispara IGUAL sobre el mismo
+       click y navega antes de que el SweetAlert confirme, porque ese listener también está
+       en document y no hay garantía de orden entre listeners de distintos archivos. Con
+       stopImmediatePropagation(), al confirmar la salida desde Personas/Editar con datos
+       sucios, se pierde ese spinner puntual (navega directo vía window.location.href) --
+       degradación menor y aceptada, documentada acá para no sorprender a futuro. *@
+    <script>
+        window.__protegerSalida = window.__protegerSalida || false;
+
+        window.activarProteccionSalida = window.activarProteccionSalida || function () {
+            window.__protegerSalida = true;
+        };
+        window.desactivarProteccionSalida = window.desactivarProteccionSalida || function () {
+            window.__protegerSalida = false;
+        };
+
+        window.addEventListener("beforeunload", function (e) {
+            if (!window.__protegerSalida) return;
+            e.preventDefault();
+            e.returnValue = "";
+        });
+
+        $(document).on("click", "a:not([data-ignore-exit]), button[data-navega]", function (e) {
+            if (!window.__protegerSalida) return;
+
+            var url = $(this).attr("href");
+            if (!url) return;
+
+            e.preventDefault();
+            if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+
+            var keyHandler = null;
+            Swal.fire({
+                title: "Salir sin guardar",
+                text: "¿Está seguro de salir sin guardar?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, salir",
+                cancelButtonText: "No, quedarme",
+                reverseButtons: true,
+                focusCancel: true,
+                allowOutsideClick: false,
+                allowEscapeKey: true,
+                didOpen: function () {
+                    keyHandler = function (evt) {
+                        if (evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.repeat) return;
+                        var key = String(evt.key || "").toLowerCase();
+                        if (key === "s") { evt.preventDefault(); Swal.clickConfirm(); }
+                        if (key === "n") { evt.preventDefault(); Swal.close(); }
+                    };
+                    document.addEventListener("keydown", keyHandler, true);
+                },
+                willClose: function () {
+                    if (keyHandler) {
+                        document.removeEventListener("keydown", keyHandler, true);
+                        keyHandler = null;
+                    }
+                }
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    window.desactivarProteccionSalida();
+                    window.location.href = url;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

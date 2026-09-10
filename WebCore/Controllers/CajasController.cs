@@ -1,25 +1,26 @@
-﻿// Port PARCIAL de Web/Controllers/CajasController.cs (ver docs/DECISIONS.md, migracion ASP.NET
-// Core, Modulo 7 -- Caja y tesoreria). El original tiene 1631 lineas y ~20 acciones. Primer slice
-// (confirmado con el usuario): la pantalla "Cajas Abiertas" completa -- listado + historial +
-// egresos de caja (Nuevo/Guardar/Actividades) + cierre de caja + cambio de sucursal. Portado:
-// CajasAbiertas, HistorialCierresCaja, ObtenerDatosCierre, CerrarCaja, PreviewCambioSucursalCaja,
-// CambiarSucursalCaja, ActividadesCaja, NuevoEgresoCaja, GuardarEgresoCaja, AbrirCaja. NO portados
-// en este slice: EgresosCaja/TiposEgresoCaja/GuardarTipoEgresoCaja/EliminarTipoEgresoCaja/
-// CalcularComisionesElectronicas/GuardarComisionesElectronicas/TiposEgresoCajaOpciones (pantalla
-// administrativa separada, "Egresos de Caja", segundo slice de este modulo).
+﻿// Port de Web/Controllers/CajasController.cs (ver docs/DECISIONS.md, migracion ASP.NET Core,
+// Modulo 7 -- Caja y tesoreria). Incluye la pantalla "Cajas Abiertas" (listado + historial +
+// egresos de caja + cierre de caja + cambio de sucursal) y la pantalla administrativa separada
+// "Egresos de Caja" (EgresosCaja/TiposEgresoCaja/GuardarTipoEgresoCaja/EliminarTipoEgresoCaja/
+// CalcularComisionesElectronicas/GuardarComisionesElectronicas/TiposEgresoCajaOpciones) -- este
+// comentario decia "NO portados en este slice" para el segundo grupo, pero las acciones ya
+// estaban escritas mas abajo sin permisos reales; el gate de permisos de Egresos de Caja se
+// completo en la tercera ronda de pedidos (2026-09-10, ver docs/DECISIONS.md).
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06) -- ya no hay stub hardcodeado.
 //
-// Autenticacion de step-up de Cierre de Caja (Web/Controllers/CajasController.cs:
-// AutorizarAccionCierre/RevocarAutorizacionCierre, con CierreCajaStepUpRateLimiter) todavia NO se
-// porta: es un mecanismo para que un usuario SIN el permiso directo de cerrar caja pueda autorizar
-// temporalmente tipeando la clave de otro usuario que si lo tiene -- depende del mismo sistema de
-// permisos reales de Batch 4/5 (ver docs/10-migracion-aspnet-core/gaps.md). Con un usuario admin
-// real (que siempre tiene el permiso directo) la rama de step-up no se ejecuta, mismo
-// comportamiento observable que antes. El front-end sigue intacto
-// (window.CajasStepUpTienePermisoDirecto=true evita que el modal de autorizacion se abra nunca) y
-// las URLs de esas 2 acciones quedan armadas en el JS aunque no exista el endpoint en el servidor.
+// Step-up de Cierre de Caja (AutorizarAccionCierre/RevocarAutorizacionCierre, con
+// CierreCajaStepUpRateLimiter + PermisosHelper.RegistrarElevacionCierre/ObtenerUsuarioAutorizadoCierre)
+// portado en la tercera ronda de pedidos (2026-09-10, ver docs/DECISIONS.md) -- mecanismo para que
+// un usuario SIN el permiso directo de cerrar caja pueda autorizar temporalmente (5 min) tipeando
+// la clave de otro usuario que si lo tiene. De paso se cerraron 3 gates de servidor que hasta
+// entonces aceptaban la peticion de CUALQUIER usuario logueado sin validar nada:
+// CerrarCaja/ActividadesCaja/PuedeCambiarSucursalCaja (esta ultima protege tambien
+// PreviewCambioSucursalCaja/CambiarSucursalCaja, que ya la llamaban). Desviacion deliberada de
+// MECANISMO respecto al clasico: la elevacion se guarda en ISession (no en MemoryCache -- ver
+// comentario completo en PermisosHelper.cs), porque WebCore/CajasController.cs no tiene la
+// restriccion [SessionState(ReadOnly)] que forzaba esa eleccion en clasico.
 //
 // El boton "Ventas" de cada fila abre Ventas/MisVentas (Modulo 8, POS, no portado) -- queda
 // wireado igual que el original pero da 404 al clickear, gap ya aceptado en este mismo patron
@@ -99,11 +100,85 @@ namespace WebCore.Controllers
             return operador ?? usuarioSesion;
         }
 
+        // ===== Step-up de Cierre de Caja (tercera ronda de pedidos, 2026-09-10, ver
+        // docs/DECISIONS.md) -- port de Web/Controllers/CajasController.cs:805-864. =====
+
+        // Mismo criterio que VentasController.ObtenerSessionIdEstable/ComprasController (duplicado
+        // por controller, sin base controller comun en WebCore): ASP.NET Core Session no manda el
+        // Set-Cookie hasta el primer write, asi que sin esto el rate-limit por sesion nunca acumula.
+        private string ObtenerSessionIdEstable()
+        {
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("_estable")))
+                HttpContext.Session.SetString("_estable", "1");
+            return HttpContext.Session.Id;
+        }
+
+        // Wrapper fino sobre PermisosHelper.ObtenerUsuarioAutorizadoCierre -- el chequeo de
+        // permiso directo (Permisos.Caja.CerrarCaja) se resuelve aca con _oUsuarioN (el helper
+        // compartido no tiene acceso a Negocio.Usuario), igual que ya hace CajasAbiertas() con
+        // tienePermisoCerrarCaja.
+        private Entidades.Usuario ObtenerUsuarioAutorizadoCierre()
+        {
+            var user = _usuarioActual;
+            bool tienePermisoDirecto = user != null && _oUsuarioN.tienePermiso(user, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
+            return WebCore.Helpers.PermisosHelper.ObtenerUsuarioAutorizadoCierre(HttpContext.Session, user, tienePermisoDirecto);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AutorizarAccionCierre(int idUsuario, string clave)
+        {
+            string sessionId = ObtenerSessionIdEstable();
+            if (WebCore.Helpers.CierreCajaStepUpRateLimiter.IsBlocked(sessionId, out var retryAfter))
+                return Json(new { ok = false, bloqueado = true, segundosRestantes = (int)Math.Ceiling(retryAfter.TotalSeconds) });
+
+            const string mensajeGenerico = "Usuario o contraseña incorrectos.";
+            if (idUsuario <= 0 || string.IsNullOrWhiteSpace(clave))
+            {
+                WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var candidato = _oUsuarioN.getUsuarioById(idUsuario);
+            if (candidato == null || !candidato.Activo)
+            {
+                WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            var validado = _oUsuarioN.ValidarUsuarioWeb(candidato.User, clave);
+            bool tienePermiso = validado != null && _oUsuarioN.tienePermiso(validado, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
+            if (validado == null || !validado.Activo || !tienePermiso)
+            {
+                WebCore.Helpers.CierreCajaStepUpRateLimiter.RegisterFailure(sessionId);
+                return Json(new { ok = false, msg = mensajeGenerico });
+            }
+
+            WebCore.Helpers.CierreCajaStepUpRateLimiter.Reset(sessionId);
+            WebCore.Helpers.PermisosHelper.RegistrarElevacionCierre(HttpContext.Session, validado, TimeSpan.FromMinutes(5));
+            return Json(new { ok = true, nombre = validado.Nombre });
+        }
+
+        // SIN [ValidateAntiForgeryToken] a proposito -- se llama via navigator.sendBeacon() al
+        // navegar afuera de Cierre de Caja (beforeunload), que no puede adjuntar el token. Mismo
+        // criterio que el clasico (Web/Controllers/CajasController.cs:859-864).
+        [HttpPost]
+        public IActionResult RevocarAutorizacionCierre()
+        {
+            WebCore.Helpers.PermisosHelper.RevocarElevacionCierre(HttpContext.Session);
+            return Json(new { ok = true });
+        }
+
         [HttpGet]
         public IActionResult CajasAbiertas(int? idSucursal, string buscar = "", DateTime? fechaDesde = null, bool ajax = false)
         {
             var user = _usuarioActual;
-            bool tienePermisoCerrarCaja = true;
+            // Port de Web/Controllers/CajasController.cs:57-60 -- la pantalla en si es
+            // accesible para cualquier usuario logueado (nunca se bloqueo con AccesoDenegado);
+            // el historial de cierres y "PuedeModificarCierres" se gatean aparte con permisos
+            // reales. PermisosPantallasWeb.Cajas.CerrarCaja/CajasAbiertasConsulta son alias de
+            // Permisos.Caja.CerrarCaja/CierresDeCaja (Web/Helpers/PermisosPantallasWeb.cs:7-11).
+            bool tienePermisoCerrarCaja = _oUsuarioN.tienePermiso(user, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1);
 
             var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             int? idSucursalSeleccionada = ResolverSucursalSeleccionada(sucursales, idSucursal);
@@ -114,7 +189,8 @@ namespace WebCore.Controllers
             ViewBag.IdSucursal = idSucursalSeleccionada;
             ViewBag.Buscar = buscar ?? "";
             ViewBag.FechaDesde = desde;
-            ViewBag.PuedeModificarCierres = true;
+            // Port de Web/Controllers/CajasController.cs:81.
+            ViewBag.PuedeModificarCierres = user != null && _oUsuarioN.tienePermiso(user, Entidades.Permisos.Caja.CierresDeCaja, DateTime.Today, -1);
             ViewBag.TienePermisoCerrarCaja = tienePermisoCerrarCaja;
             ViewBag.UsuariosActivosEmpresa = ObtenerUsuariosActivosEmpresaParaCombo();
             ViewBag.HistorialCierres = tienePermisoCerrarCaja
@@ -133,11 +209,17 @@ namespace WebCore.Controllers
         [HttpGet]
         public IActionResult HistorialCierresCaja(int? idSucursal, string buscar = "", DateTime? fechaDesde = null)
         {
+            // Port de Web/Controllers/CajasController.cs:658-665 -- el historial NUNCA se
+            // desbloquea con la autorizacion temporal (step-up), solo con el permiso de cerrar
+            // caja en forma directa.
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Caja.CerrarCaja, DateTime.Today, -1))
+                return StatusCode(403, "No tiene permisos para ver cierres de caja.");
+
             var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
             int? idSucursalSeleccionada = ResolverSucursalSeleccionada(sucursales, idSucursal);
             DateTime desde = fechaDesde ?? DateTime.Today.AddDays(-7);
 
-            ViewBag.PuedeModificarCierres = true;
+            ViewBag.PuedeModificarCierres = _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Caja.CierresDeCaja, DateTime.Today, -1);
             var dt = ObtenerHistorialCierresCaja(idSucursalSeleccionada, buscar ?? "", desde, sucursales);
             return PartialView("~/Views/Cajas/_TablaCierresDeCaja.cshtml", dt);
         }
@@ -191,7 +273,16 @@ namespace WebCore.Controllers
                 bool modoModificacion = false
             )
         {
-            var usuarioAutorizado = _usuarioActual;
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
+            // literal de Web/Controllers/CajasController.cs:751-765. Antes: "var usuarioAutorizado
+            // = _usuarioActual;" sin ningun chequeo -- cualquier usuario logueado podia cerrar
+            // cualquier caja llamando esta accion directo, gate de servidor real ausente.
+            var usuarioAutorizado = ObtenerUsuarioAutorizadoCierre();
+            if (usuarioAutorizado == null)
+                return Json(new { ok = false, error = "No tiene permisos para cerrar caja. Volvé a autorizar e intentá de nuevo." });
+
+            if (modoModificacion && !_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Caja.CierresDeCaja, DateTime.Today, -1))
+                return Json(new { ok = false, error = "No tiene permisos para modificar un cierre de caja histórico." });
 
             Entidades.CierreCaja model = _oCierreN.findByIdOrLast(
                 new CierreCaja { Id = Id },
@@ -291,6 +382,11 @@ namespace WebCore.Controllers
         {
             var user = _usuarioActual;
 
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/CajasController.cs:166-168. Antes sin ningun chequeo.
+            if (ObtenerUsuarioAutorizadoCierre() == null)
+                return StatusCode(403, "No tiene permisos para ver actividades de caja.");
+
             if (idCierre <= 0)
                 return BadRequest("Caja inválida.");
 
@@ -310,9 +406,13 @@ namespace WebCore.Controllers
             ViewBag.CierreCaja = cierre;
             ViewBag.TiposEgresoCaja = _oCierreN.obtenerTiposEgresoCaja("", 0);
             ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
-            ViewBag.MostrarResumenMisActividades = true;
+            // Port literal de Web/Controllers/CajasController.cs:189,192 (antes stub "= true" /
+            // sin el chequeo de permiso -- mismo batch de Egresos de Caja, 2026-09-10).
+            ViewBag.MostrarResumenMisActividades = _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1);
             ViewBag.ModoActividades = true;
-            ViewBag.PermitirNuevo = CajaSigueAbierta(cierre);
+            ViewBag.PermitirNuevo = CajaSigueAbierta(cierre) &&
+                user != null &&
+                _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditEgresoCaja, DateTime.Today, user.Id);
             ViewBag.IdCierreActividad = idCierre;
             ViewBag.SucursalActividad = nombreSucursal;
             ViewBag.TituloActividades = "Actividades";
@@ -330,6 +430,13 @@ namespace WebCore.Controllers
         public IActionResult NuevoEgresoCaja(int id = 0, bool desdePos = false, int idCierre = 0)
         {
             var user = _usuarioActual;
+
+            // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
+            // literal de Web/Controllers/CajasController.cs:210-215. Igual que clasico, el gate se
+            // saltea cuando desdePos=true: el egreso se registra desde el propio POS del vendedor,
+            // ya protegido por el acceso al POS en si (misma decision que clasico, no una omision).
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditEgresoCaja, DateTime.Today, user.Id) && !desdePos)
+                return StatusCode(403, "No tiene permisos para registrar egresos de caja.");
 
             CierreCaja? cierreContexto = idCierre > 0
                 ? _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "")
@@ -448,11 +555,9 @@ namespace WebCore.Controllers
             }
         }
 
-        // ---- Slice 2: pantalla administrativa "Egresos de Caja" (EgresosCaja/TiposEgresoCaja) ----
-        // Mismo criterio de stub que el resto del controller. PermisosHelper.TienePermisoVer/
-        // TienePermisoEditar se omiten (siempre true bajo Admin=true) salvo donde el original
-        // ya usaba un chequeo real de negocio (ej. "!user.Admin" en EliminarTipoEgresoCaja, que
-        // se deja tal cual aunque nunca se dispare con este stub).
+        // ---- Pantalla administrativa "Egresos de Caja" (EgresosCaja/TiposEgresoCaja) ----
+        // Gate de permisos real (Entidades.Permisos.EgresoCaja.*) agregado en la tercera ronda de
+        // pedidos (2026-09-10, ver docs/DECISIONS.md) -- antes estas acciones no chequeaban nada.
 
         [HttpGet]
         public IActionResult EgresosCaja(int? idSucursal, int idUsuario = -1, int idTipoEgresoCaja = 0, string descripcion = "", DateTime? fechaDesde = null, DateTime? fechaHasta = null, string filtroGasto = "todos", bool ajax = false)
@@ -463,6 +568,20 @@ namespace WebCore.Controllers
                 hasta = hasta.AddDays(1).AddSeconds(-1);
 
             int sucursalSeleccionada = idSucursal ?? 0;
+
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/CajasController.cs:104-112.
+            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.EgresoCaja.VerEgresosCaja, desde, -1))
+            {
+                if (ajax)
+                    return StatusCode(403, "No tiene permisos para ver egresos de caja.");
+
+                CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
+                ViewBag.SinPermiso = true;
+                ViewBag.MensajePermiso = "No tiene permisos para ver egresos de caja.";
+                ViewBag.Title = "Egresos de Caja";
+                return View("~/Views/Cajas/EgresosCaja.cshtml", new DataTable());
+            }
 
             CargarViewBagsEgresos(sucursalSeleccionada, idUsuario, idTipoEgresoCaja, descripcion, desde, hasta, filtroGasto, false);
 
@@ -482,8 +601,13 @@ namespace WebCore.Controllers
         {
             var user = _usuarioActual;
 
+            // Permisos reales (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/CajasController.cs:367-378.
+            if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerTiposEgresos, DateTime.Today, -1))
+                return StatusCode(403, "No tiene permisos para ver tipos de egreso.");
+
             ViewBag.BuscarTipoEgreso = buscar ?? "";
-            ViewBag.PuedeEditarTipos = true;
+            ViewBag.PuedeEditarTipos = _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditTipoEgreso, DateTime.Today, user.Id);
             ViewBag.UsuarioAdmin = user.Admin;
 
             DataTable dt = _oCierreN.obtenerTiposEgresoCaja(buscar ?? "", 0);
@@ -493,6 +617,13 @@ namespace WebCore.Controllers
         [HttpGet]
         public IActionResult AddOrEditTipoEgresoCaja(int id = 0)
         {
+            var userTipo = _usuarioActual;
+
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/CajasController.cs:384-387.
+            if (!_oUsuarioN.tienePermiso(userTipo, Entidades.Permisos.EgresoCaja.AddOrEditTipoEgreso, DateTime.Today, userTipo.Id))
+                return StatusCode(403, "No tiene permisos para administrar tipos de egreso.");
+
             var model = new TipoEgresoCajaEditVm();
             if (id > 0)
             {
@@ -611,6 +742,13 @@ namespace WebCore.Controllers
         {
             try
             {
+                var user = _usuarioActual;
+
+                // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+                // Web/Controllers/CajasController.cs:535-538.
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditTipoEgreso, DateTime.Today, user.Id))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para administrar tipos de egreso." });
+
                 string nombre = model != null ? (model.TipoEgresoCaja ?? "").Trim() : "";
                 if (string.IsNullOrWhiteSpace(nombre))
                     return Json(new { ok = false, mensaje = "El campo Tipo no puede ser vacío." });
@@ -645,6 +783,12 @@ namespace WebCore.Controllers
             try
             {
                 var user = _usuarioActual;
+
+                // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+                // Web/Controllers/CajasController.cs:575-581 (el gate de permiso va ANTES del
+                // chequeo de Admin, mismo orden que clasico).
+                if (!_oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditTipoEgreso, DateTime.Today, user.Id))
+                    return Json(new { ok = false, mensaje = "No tiene permisos para administrar tipos de egreso." });
 
                 if (!user.Admin)
                     return Json(new { ok = false, mensaje = "Debe tener permiso de Administrador para eliminar un Tipo Egreso." });
@@ -981,10 +1125,18 @@ namespace WebCore.Controllers
             return total;
         }
 
+        // Permiso real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- port
+        // literal de Web/Controllers/CajasController.cs:1284-1295. Antes: solo chequeaba
+        // "cantidadSucursales > 1" -- CUALQUIER usuario logueado podia cambiar la sucursal de
+        // cualquier caja, sin ningun chequeo de permiso.
         private bool PuedeCambiarSucursalCaja(List<Entidades.Sucursal> sucursales = null)
         {
+            var user = _usuarioActual;
+            if (user == null) return false;
+
+            bool tienePermiso = user.Admin || ObtenerUsuarioAutorizadoCierre() != null;
             int cantidadSucursales = sucursales != null ? sucursales.Count : _oSucursalN.findAll().Count;
-            return cantidadSucursales > 1;
+            return tienePermiso && cantidadSucursales > 1;
         }
 
         private void CargarPermisosEdicionEgresos(DataTable dt, bool desdePos, CierreCaja? cierreContexto = null)
@@ -1161,6 +1313,14 @@ namespace WebCore.Controllers
             else if (cierreContexto != null && !FechaDentroDeCaja(fecha, cierreContexto))
             {
                 return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "La fecha y hora del egreso debe corresponder a la caja abierta seleccionada." };
+            }
+            // Permiso real (tercera ronda, ver docs/DECISIONS.md) -- port literal de
+            // Web/Controllers/CajasController.cs:1496-1499: solo aplica a un egreso NUEVO
+            // (id==0) y fuera de POS -- modificar uno existente ya lo cubre EgresosCajaPolicy
+            // mas abajo, y desde POS el gate se saltea igual que en NuevoEgresoCaja.
+            else if (id == 0 && !_oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditEgresoCaja, fecha, user.Id))
+            {
+                return new GuardarEgresoCajaResultado { Ok = false, Mensaje = "No tiene permisos para registrar egresos de caja." };
             }
 
             if (egresoAnterior != null)

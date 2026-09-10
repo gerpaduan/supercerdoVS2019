@@ -21,7 +21,7 @@
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
     <script>
         (function () {
             var usuariosActivos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()));

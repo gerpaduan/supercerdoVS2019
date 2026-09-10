@@ -656,17 +656,15 @@
 </style>
 
 @section Scripts {
-    @* _Layout.cshtml no precarga scanner.js/ZXing (a diferencia de Web/_LayoutBase.cshtml) --
-       se agregan aca, mismo criterio ya usado en Stock/Editar.cshtml. *@
-    <script src="@Url.Content("~/Content/vendor/zxing/zxing.min.js")"></script>
-    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
+    @* scanner.js/ZXing ya se cargan globalmente desde _Layout.cshtml (2026-09-09, ver
+       docs/DECISIONS.md "Batch D: scanner + buscador de productos") -- el include puntual que
+       tenia esta vista se saco para no declarar "class BarcodeScanner" 2 veces en la misma
+       pagina (SyntaxError real en el navegador, no solo carga redundante). *@
     <script>
         window.movimientosConfig = {
             draftKey: 'movimiento_draft_@(Model.EsEdicion ? Model.IdMovimiento.ToString() : "new")',
             urlBuscarProductoPorCodigo: '@Url.Action("BuscarProductoPorCodigo", "Movimientos")',
             redirectUrl: '@Url.Action("Index", "Movimientos")',
-            imprimirUrl: '',
-            imprimirPayloadUrl: '',
             pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             whatsappTexto: '@(Model.EsEdicion ? System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Context.Request.Scheme)) : "")',
             balanzaUrl: 'http://localhost:5100/peso',
@@ -680,10 +678,25 @@
         // ya tiene un valor.
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script>
+        $(function () {
+            if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+                window.EditPageGuard.init({
+                    formSelector: "#formMovimiento",
+                    modifyButtonSelector: "#btnHabilitarEdicionMovimiento",
+                    saveButtonSelector: "#btnGuardarMovimiento"
+                });
+            }
+        });
+    </script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/print-agent.js?v=4")"></script>
+    @* print-agent.js (ESC/POS via agente local) no se porto a proposito -- ver el comentario
+       de cabecera de _ModalPostMovimiento.cshtml. Este <script src> quedaba apuntando a un
+       archivo que nunca existio en WebCore, tirando un 404 silencioso en cada carga de esta
+       vista (2026-09-10, hallado investigando un reporte de autenticacion de usuario produccion). *@
     <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=8")"></script>
     <script src="@Url.Content("~/Scripts/app/movimientos.js?v=29")"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />

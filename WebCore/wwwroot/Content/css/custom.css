@@ -249,6 +249,12 @@ body.app-shell.dark-mode .app-product-highlight:read-only {
    =========================================== */
 
 #modalFormaPago .btn-forma-pago {
+    /* La vista trae la clase "btn-block" (Bootstrap 4, width:100% + display:block) pero el
+       proyecto carga Bootstrap 5, que la eliminó -- sin esta regla, cada botón queda con ancho de
+       contenido (chico) en vez de ocupar toda su columna .col-4, quedando desalineado/desproporcionado
+       en la grilla (2026-09-09, item 4 de los 12 pendientes, ver docs/DECISIONS.md "Batch C: POS
+       forma de pago"). width:100% reemplaza ese comportamiento perdido. */
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;

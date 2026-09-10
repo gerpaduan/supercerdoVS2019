@@ -89,7 +89,16 @@ public sealed class DarkModeTests
     public async Task StockDetalleFila_MetaCardNoQuedaBlancaEnModoOscuro()
     {
         var page = await _fixture.NewAuthenticatedPageAsync();
-        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock", new PageGotoOptions
+
+        // fechaDesde/idSucursal explicitos (2026-09-09, ver docs/DECISIONS.md "Fix: 2 tests de
+        // Stock con fecha por defecto"): StockController.Index() usa desde=DateTime.Today cuando
+        // no se pasa fechaDesde -- sin un movimiento cargado ESE MISMO dia, la tabla queda vacia y
+        // no hay boton "Detalles" que clickear. La base compartida de desarrollo no se re-siembra
+        // a diario, asi que confiar en el default hacia que este test fallara solo por el paso del
+        // calendario real. idSucursal=1 (San Martin) es la sucursal real de "ger" -- se deja
+        // explicito por claridad, aunque ya coincide con el default del usuario logueado.
+        string fechaDesde = DateTime.UtcNow.AddYears(-1).ToString("yyyy-MM-dd");
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Stock?idSucursal=1&fechaDesde={fechaDesde}", new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 20000

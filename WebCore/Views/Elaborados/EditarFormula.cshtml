@@ -278,6 +278,7 @@
 </style>
 
 @section Scripts {
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
     <script>
         (function () {
             var $form = $('#formEditarFormula');
@@ -848,6 +849,14 @@
             renderLineas();
             actualizarMensajeAuto();
             setReadOnly(state.soloLectura);
+
+            if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+                window.EditPageGuard.init({
+                    formSelector: "#formEditarFormula",
+                    modifyButtonSelector: "#btnHabilitarEdicionFormula",
+                    saveButtonSelector: "#btnGuardarFormula"
+                });
+            }
         })();
     </script>
 }

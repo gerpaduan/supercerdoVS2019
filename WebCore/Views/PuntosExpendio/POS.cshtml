@@ -13,9 +13,10 @@
       - Cliente = texto libre (IdentificacionCliente), no Persona real salvo "Consumidor Final".
       - Con balanza (mismo mecanismo que Ventas). CON scanner de camara: confirmado que el
         original SI lo tiene disponible (scanner.js/zxing.min.js se cargan globalmente desde
-        _LayoutPOS.cshtml en el clasico -- no hay que reinventar wiring, solo replicar el mismo
-        <script> puntual que ya se agrego en Ventas/POS.cshtml, ya que WebCore no tiene ese
-        global en su _LayoutPOS.cshtml).
+        _LayoutPOS.cshtml en el clasico). WebCore/Views/Shared/_LayoutPOS.cshtml ahora tambien los
+        carga global (2026-09-09, ver docs/DECISIONS.md "Batch D: scanner + buscador de
+        productos") -- este archivo NO debe volver a declararlos puntual (SyntaxError real:
+        "class BarcodeScanner" no se puede declarar 2 veces en la misma pagina).
       - Con "Duplicar POS" (pos-multi-instance.js, namespaced con productKey:'expendio' -- el
         modulo ya soporta esto, agregado cuando se porto para Ventas).
 
@@ -181,7 +182,15 @@
                             </div>
                         </div>
 
-                        <div class="col-12 col-lg-7 d-flex flex-column pos-expendio-actions-col">
+                        @* col-md-6 agregado 2026-09-10 (item 7 de la segunda ronda de pedidos, ver
+                           docs/DECISIONS.md): pos.css:1120-1191 ancla el footer/scroll interno via
+                           el selector literal ".col-md-6.d-flex.flex-column" -- sin esta clase
+                           presente en el HTML (aunque col-lg-7 siga dando el ancho real en
+                           pantallas >=992px), ninguna de esas reglas aplicaba aca, y los botones
+                           de abajo se movian/la balanza los tapaba al cambiar el alto del
+                           viewport. Mismo criterio que Ventas/POS.cshtml. *@
+                        <div class="col-12 col-md-6 col-lg-7 d-flex flex-column pos-expendio-actions-col">
+                            <div class="pos-workbench-scroll">
                             <div class="row" id="scannerContainer" style="display:none;">
                                 <div class="col-12">
                                     <div class="card shadow">
@@ -297,6 +306,11 @@
                                 </div>
                             </div>
 
+                            </div>
+                            @* Cierre de .pos-workbench-scroll -- Finalizar y .pos-footer-panel
+                               quedan AFUERA de este wrapper, como hijos directos de la columna,
+                               igual que en Ventas/POS.cshtml (2026-09-10, item 7). *@
+
                             <div class="mb-3">
                                 <button class="btn btn-success btn-lg w-100" id="btnFinalizar" disabled="@(string.IsNullOrWhiteSpace(Model.Sector) ? "disabled" : null)">
                                     <i class="fas fa-check-circle"></i>
@@ -309,24 +323,27 @@
 
                             <div id="pos-bottom-anchor"></div>
 
-                            <div class="zona-botones zona-botones-carrito mt-2">
-                                <div class="row g-2">
-                                    <div class="col-4">
-                                        <button class="btn btn-outline-secondary w-100" id="btnCancelarItem">Cancelar</button>
-                                    </div>
-                                    <div class="col-4">
-                                        <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
-                                            Comentario
-                                            <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
-                                        </button>
-                                    </div>
-                                    <div class="col-4">
-                                        <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                            @* .zona-botones-carrito movida DENTRO de .pos-footer-panel, junto a
+                               .pos-balanza-card, igual que Ventas/POS.cshtml:510-536 (antes
+                               quedaba suelta en flujo normal, sin ancla al fondo -- 2026-09-10,
+                               item 7 de la segunda ronda de pedidos, ver docs/DECISIONS.md). *@
+                            <div class="mt-auto pos-footer-panel">
+                                <div class="zona-botones zona-botones-carrito">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnCancelarItem">Cancelar</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">
+                                                Comentario
+                                                <span id="badgeComentarioVenta" class="badge badge-info pos-comment-badge d-none">1</span>
+                                            </button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="mt-auto pos-footer-panel">
                                 <div class="pos-balanza-card">
                                     <small class="text-muted d-block pos-balanza-caption">
                                         Conexión balanza: <span id="estadoBalanza">Desconocida</span>
@@ -545,11 +562,9 @@
     <script src="~/Scripts/app/pos-balanza.js?v=1"></script>
     <script src="~/Scripts/app/pos-comment.js?v=1"></script>
     <script src="~/Scripts/app/pos-help.js?v=1"></script>
-    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
-    <script src="~/Scripts/app/scanner.js"></script>
     <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
     <script src="~/Scripts/app/pos-compact.js?v=1"></script>
-    <script src="~/Scripts/app/seleccion-usuario.js?v=2"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js?v=3"></script>
     <script src="~/Scripts/app/persona-buscar.js?v=1"></script>
     <script src="~/Scripts/app/modal-productos.js?v=1"></script>
 
@@ -586,7 +601,8 @@
                     titulo: esInicial ? 'Autorizate para operar este Punto de Expendio' : 'Cambiar operario',
                     usuarios: cfg.usuariosActivos,
                     requierePassword: true,
-                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId)
+                    validarUrl: cfg.urlAutorizar + '?posInstanceId=' + encodeURIComponent(cfg.posInstanceId),
+                    obligatorio: esInicial
                 }).then(function () {
                     loginObligatorioPendiente = false;
                     recargarConOperadorAutorizado();

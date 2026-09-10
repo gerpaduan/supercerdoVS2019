@@ -76,4 +76,116 @@ public sealed class MovimientosTests
 
         await page.CloseAsync();
     }
+
+    // Bug real (2026-09-10, tercera ronda de pedidos, ver docs/DECISIONS.md): "habilitar los
+    // botones de imprimir, tal como lo hace el clasico, en vistas como editar movimiento".
+    // Causa: window.movimientosConfig.imprimirUrl quedaba SIEMPRE vacio (campo muerto -- el
+    // agente de impresion local ESC/POS nunca se porto a WebCore, decision ya tomada), y
+    // openPrintOptions() en movimientos.js gateaba con "!config.imprimirUrl" -- como era
+    // siempre falsy, el boton nunca abria #modalPostMovimiento (que YA funciona bien para PDF/
+    // WhatsApp, ninguno de los 2 depende de imprimirUrl). Fix: el guard ahora mira config.pdfUrl.
+    [Fact]
+    public async Task BtnImprimirMovimiento_AbreModalConPdfFuncional()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) =>
+        {
+            if (!msg.Contains("setSelectionRange")) errors.Add(msg);
+        };
+
+        // Crear un movimiento real primero (mismo flujo que NuevoMovimiento_AgregaLineaYGuardaReal)
+        // para tener un id real de EsEdicion=true, unico escenario donde #btnImprimirMovimiento
+        // se renderiza (Editar.cshtml:26-31).
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Movimientos/Editar", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+            Timeout = 20000
+        });
+        await page.FillAsync("#txtCodigoProducto", "1");
+        await page.Locator("#txtCodigoProducto").PressAsync("Enter");
+        await page.WaitForFunctionAsync("() => document.getElementById('txtProductoNombre').value.length > 0", new PageWaitForFunctionOptions { Timeout = 5000 });
+        await page.FillAsync("#txtCantUnidad", "1");
+        await page.FillAsync("#txtCantKgs", "1,5");
+        await page.ClickAsync("#btnAgregarProducto");
+        await page.WaitForSelectorAsync("#tablaLineasMovimiento tbody tr", new PageWaitForSelectorOptions { Timeout = 5000 });
+        await page.FillAsync("#Observaciones", "E2E imprimir " + DateTime.UtcNow.Ticks);
+
+        var guardarResponseTask = page.WaitForResponseAsync(r => r.Url.Contains("/Movimientos/Guardar") && r.Request.Method == "POST");
+        await page.ClickAsync("#btnGuardarMovimiento");
+        var guardarResponse = await guardarResponseTask;
+        var body = await guardarResponse.JsonAsync();
+        var pdfUrl = body!.Value.GetProperty("pdfUrl").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(pdfUrl), $"pdfUrl real: '{pdfUrl}' -- body completo: {body}");
+        // ImprimirPdf usa ruta con segmento (/Movimientos/ImprimirPdf/{id}), no query string.
+        var idMovimiento = pdfUrl!.TrimEnd('/').Split('/').Last();
+        Assert.False(string.IsNullOrWhiteSpace(idMovimiento), $"No se pudo extraer el id de pdfUrl='{pdfUrl}'");
+
+        await page.WaitForSelectorAsync("#modalPostMovimiento.show", new PageWaitForSelectorOptions { Timeout = 10000 });
+        await page.ClickAsync("#btnPostMovimientoNoImprimir");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Ahora el escenario real reportado: entrar a Editar/{id} y clickear "Imprimir".
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Movimientos/Editar/{idMovimiento}", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(400);
+
+        var swalCount = await page.Locator(".swal2-popup:visible").CountAsync();
+        Assert.Equal(0, swalCount); // no deberia haber ningun warning previo
+
+        await page.ClickAsync("#btnImprimirMovimiento");
+        await page.WaitForTimeoutAsync(500);
+
+        Assert.Equal(0, await page.Locator(".swal2-popup:visible").CountAsync());
+        Assert.Equal(1, await page.Locator("#modalPostMovimiento.show").CountAsync());
+
+        // #btnPostMovimientoPdf abre el PDF en una pestana nueva (abrirNuevaVentana) -- la
+        // response real llega en el Page nuevo, no en el original, por eso se escucha a nivel
+        // de BrowserContext (mismo patron ya usado en DetalleVentaComprobanteTests).
+        IResponse? respuestaPdf = null;
+        page.Context.Response += (_, resp) =>
+        {
+            if (resp.Url.Contains("/Movimientos/ImprimirPdf")) respuestaPdf = resp;
+        };
+        await page.RunAndWaitForPopupAsync(async () => await page.ClickAsync("#btnPostMovimientoPdf"));
+        await page.WaitForTimeoutAsync(1000);
+
+        Assert.NotNull(respuestaPdf);
+        Assert.Equal(200, respuestaPdf!.Status);
+        Assert.Equal("application/pdf", await respuestaPdf.HeaderValueAsync("content-type"));
+
+        Assert.Empty(errors);
+        await page.CloseAsync();
+    }
+
+    // Bug real (2026-09-08, ver docs/DECISIONS.md): "/Movimientos/Nuevo" tiraba
+    // InvalidOperationException. Causa: Nuevo() delega a Editar(0,...) por llamada C# directa
+    // (no RedirectToAction); Editar() hacia "return View(model)" sin nombre explicito, y ASP.NET
+    // Core resuelve el nombre de vista segun la RUTA ENTRANTE ("/Movimientos/Nuevo"), no segun el
+    // metodo que corrio -- buscaba "Views/Movimientos/Nuevo.cshtml", que no existe. El unico test
+    // existente (arriba) solo navegaba a "/Movimientos/Editar", nunca reprodujo el bug.
+    [Fact]
+    public async Task Nuevo_CargaSinError()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var pageErrors = new List<string>();
+        // Mismo quirk heredado y ya documentado arriba (setSelectionRange sobre inputs
+        // type="number") -- no es parte de este bug, se filtra igual que en el otro test.
+        page.PageError += (_, msg) =>
+        {
+            if (!msg.Contains("setSelectionRange") && !msg.Contains("setSelection")) pageErrors.Add(msg);
+        };
+
+        var response = await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Movimientos/Nuevo", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+            Timeout = 20000
+        });
+
+        Assert.NotNull(response);
+        Assert.True(response!.Ok, $"GET /Movimientos/Nuevo devolvio {response.Status}");
+        Assert.True(await page.Locator("#txtCodigoProducto").CountAsync() > 0, "no se renderizo el formulario de Movimientos (Views/Movimientos/Editar.cshtml)");
+        Assert.Empty(pageErrors);
+
+        await page.CloseAsync();
+    }
 }

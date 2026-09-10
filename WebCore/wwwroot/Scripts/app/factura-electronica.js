@@ -797,10 +797,42 @@
         }
     });
 
+    // Bug real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "modal Factura
+    // Electronica: bloque blanco"): _FacturaElectronica.cshtml (solo en el flujo "Nueva factura
+    // sin venta") inyecta #modalBuscarPersona ANIDADO dentro de #contenedorFacturaElectronica
+    // (que tiene overflow:hidden), en vez de vivir como hijo directo de <body> como cualquier
+    // otro modal de Bootstrap. custom.css fuerza el mismo z-index fijo para TODOS los modales
+    // (sin incrementar por anidamiento), asi que al abrir este 2do modal sobre el de factura, su
+    // backdrop terminaba tapando el contenido del modal de factura en vez de quedar bien apilado
+    // -- exactamente el "bloque blanco" reportado. Fix: mover el nodo a <body> antes de
+    // mostrarlo (patron estandar de Bootstrap para modales), y sacarlo de ahi al cerrarse para
+    // que la proxima inyeccion AJAX de #contenedorFacturaElectronica (con su propio
+    // #modalBuscarPersona nuevo) no quede duplicando el id. #modalBuscarPersona se reusa tal
+    // cual en otros 2 contextos (buscador normal de POS.cshtml, compras.js) -- ninguno de los 2
+    // lo tiene nunca como hijo directo de <body>, asi que el chequeo de mas abajo no los afecta.
     $(document).on('click', '#btnFeBuscarCliente', function () {
+        $('body > #modalBuscarPersona').remove();
+        $('#modalBuscarPersona').appendTo(document.body);
         $('#modalBuscarPersona').modal('show');
         $('#filtroPersona').val('');
         cargarPersonasFactura('');
+    });
+
+    // Bug real encontrado verificando el fix de arriba con capturas reales (2026-09-10, ver
+    // docs/DECISIONS.md): con #modalBuscarPersona ya como hijo directo de <body>, el fade-out de
+    // Bootstrap (~150-300ms, semi-transparente) quedaba SIN el recorte que antes le daba
+    // #contenedorFacturaElectronica (overflow:hidden) -- durante esa transicion se veia un
+    // "fantasma" de la tabla de busqueda de personas flotando encima del modal de factura. Se
+    // corta la transicion apenas empieza a cerrarse (hide.bs.modal, antes de que arranque el
+    // fade) en vez de esperar a que termine sola -- solo afecta esta reapertura (se remueve del
+    // DOM igual al terminar), no cambia nada en los otros 2 usos de #modalBuscarPersona (ahi no
+    // hay otro modal detras para que el fade-out se note como bug).
+    $(document).on('hide.bs.modal', '#modalBuscarPersona', function () {
+        if ($(this).parent().is('body')) $(this).css({ display: 'none', opacity: '0' });
+    });
+
+    $(document).on('hidden.bs.modal', '#modalBuscarPersona', function () {
+        if ($(this).parent().is('body')) $(this).remove();
     });
 
     $(document).on('shown.bs.modal', '#modalBuscarPersona', function () {
