@@ -147,6 +147,17 @@
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
+        /* Bug real encontrado 2026-09-11 (el hueco gris debajo del footer, confirmado con captura
+           real de celular, no era de vh/flexbox): wwwroot/css/site.css trae "body { margin-bottom:
+           60px; }" -- sobrante de la plantilla default de ASP.NET Core (pensada para SU propio
+           footer con position:absolute/bottom:0), nunca se limpio al reemplazarlo por el sistema
+           de footer propio (#wrapper/#content-wrapper flex + footer.sticky-footer). Se pisa el
+           margen solo para "body.app-shell" (esta vista) en vez de tocar site.css, para no romper
+           otras vistas (Login/Landing) que puedan seguir dependiendo del comportamiento default. */
+        body.app-shell {
+            margin-bottom: 0;
+        }
+
         #wrapper {
             display: flex;
         }
@@ -162,10 +173,38 @@
         #content-wrapper {
             width: 100%;
             overflow-x: hidden;
+            /* Bug real (2026-09-11): el clasico logra el mismo layout sin esto porque su
+               ".sidebar" no tiene "align-self: flex-start" -- ahi #content-wrapper estira su
+               altura al 100% de #wrapper por el "align-items: stretch" default de flexbox, sin
+               ambiguedad. Ac el sidebar SI tiene align-self:flex-start (mejora propia del
+               2026-09-08, para poder scrollearlo internamente sin arrastrar toda la pagina) --
+               eso lo saca del stretch, y deja el alto automatico de #wrapper (fila flex) en un
+               calculo ambiguo entre item con stretch e item sin el. Resultado visible: el
+               footer quedaba un poco mas arriba del borde real de la pantalla, no pegado al
+               pie. Fijar el minimo en 100vh saca la ambiguedad: #content (flex:1 0 auto) crece
+               para llenarlo y el footer queda empujado al fondo real, sin depender de como el
+               sidebar participe del stretch.
+               Correccion 2026-09-11 (probado en celular real, seguia fallando con min-height:
+               100vh solo): "vh" no se ajusta cuando el navegador mobile oculta/muestra su barra
+               de direcciones al scrollear -- el alto calculado al cargar queda mas chico que el
+               visible real una vez que esa barra se esconde, dejando un hueco debajo del
+               footer. "100dvh" (dynamic viewport height) si seguis el alto visible real; se
+               declara DESPUES de 100vh a proposito (mejora progresiva -- un navegador que no
+               conoce dvh ignora esa linea y se queda con el valor de vh de arriba). */
+            min-height: 100vh;
+            min-height: 100dvh;
         }
 
         #content-wrapper #content {
             flex: 1 0 auto;
+        }
+
+        /* Nunca se porto esta regla del clasico (Web/Content/css/sb-admin-2.css:11269) -- sin
+           flex-shrink:0 el footer (flex item de #content-wrapper.flex-column) podia encogerse
+           en vez de mantener su alto natural cuando el contenido+footer llegaban justo al
+           limite del contenedor. */
+        footer.sticky-footer {
+            flex-shrink: 0;
         }
 
         .sidebar {
@@ -178,8 +217,13 @@
                scrollear con el mouse sobre el sidebar movia toda la pagina. "height" fijo acota la
                caja de verdad y deja que el scroll interno haga su trabajo. Nota: el clasico nunca
                tuvo este problema resuelto (su sidebar no es sticky ni tiene overflow propio) --
-               esto es una mejora de WebCore, no un port. */
+               esto es una mejora de WebCore, no un port.
+               2026-09-11: mismo fix de dvh que #content-wrapper -- si el sidebar se queda en
+               puro "100vh" mientras #content-wrapper ya usa dvh, los dos flex items del mismo
+               #wrapper terminarian con alturas distintas segun el estado de la barra del
+               navegador, un desajuste nuevo. Se corrigen los dos juntos. */
             height: 100vh;
+            height: 100dvh;
             position: sticky;
             top: 0;
             align-self: flex-start;
@@ -286,6 +330,24 @@
 
         .sidebar .nav-link[data-bs-toggle="collapse"] .fa-chevron-down {
             display: none;
+        }
+
+        /* Bug real (2026-09-11): abajo de 768px el sidebar es SIEMPRE visible (franja de solo
+           iconos, mobile-first por diseño) -- ".toggled" hasta ahora solo tenia efecto visual
+           dentro del @@media (min-width:768px) de mas abajo (modo iconos en desktop). El gesto de
+           swipe (mas abajo en @@section Scripts) prende/apaga esa misma clase via el boton
+           existente (#sidebarToggle) pero sin esta regla no pasaba nada en mobile: la clase
+           cambiaba, nada reaccionaba. Reusa el mismo toggle/clase/localStorage en vez de sumar un
+           mecanismo aparte -- en mobile ahora significa "ocultar del todo" (no "modo iconos" como
+           en desktop), el layout flex de #wrapper ya hace que #content-wrapper ocupe el espacio
+           liberado sin ajustes extra. */
+        @@media (max-width: 767.98px) {
+            .sidebar.toggled {
+                width: 0;
+                min-width: 0;
+                overflow: hidden;
+                border: 0;
+            }
         }
 
         /* Desde 768px: sidebar expandido con texto, salvo modo iconos manual (.toggled). */
@@ -577,6 +639,13 @@
             <div id="content">
                 <nav class="navbar navbar-expand navbar-light topbar mb-4 static-top shadow">
                     <div class="container-fluid">
+                        @* Boton hamburguesa del topbar, solo visible en mobile (d-md-none) -- port de
+                           Web/Views/Shared/_LayoutBase.cshtml #sidebarToggleTop. En mobile #sidebarToggle
+                           (dentro del sidebar) queda con d-none y ademas inalcanzable una vez oculto el
+                           menu: sin este boton no habia forma de reabrirlo salvo el gesto de swipe. *@
+                        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" title="Mostrar/ocultar menú" aria-label="Mostrar/ocultar menú">
+                            <i class="fas fa-bars"></i>
+                        </button>
                         <span class="navbar-text h5 mb-0 fw-bold text-dark page-section-title">@ViewData["Title"]</span>
 
                         <ul class="navbar-nav ml-auto">
@@ -608,6 +677,21 @@
                                     <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalSucursales">
                                         <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
                                         <strong id="lblSucursalActual">@sucursalActualNombre</strong>
+                                    </a>
+                                    @* Autoservicio de numero de serie (2026-09-10, ver docs/DECISIONS.md
+                                       "Batch 6"): visible para CUALQUIER usuario logueado -- a diferencia
+                                       del link de arriba (sucursal, siempre visible tambien) y a diferencia
+                                       de "Dispositivos seguros" (admin-only, dentro de Configuracion), un
+                                       no-admin necesita poder ver el numero de serie de SU PC para pasarselo
+                                       a un administrador. *@
+                                    @* Texto acortado (quinta ronda de pedidos, 2026-09-10, ver
+                                       docs/DECISIONS.md "Batch 11"): "Ver número de serie de este
+                                       dispositivo" quedaba muy largo/confuso en el dropdown -- el
+                                       icono de laptop + el contexto (modal que se llama igual) ya
+                                       aclaran de que se trata. *@
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalMiDispositivo" title="Ver número de serie de este dispositivo">
+                                        <i class="fas fa-laptop fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Número de serie
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="@Url.Action("ChangePassword", "Login")">
@@ -649,10 +733,20 @@
     @* Selector de sucursal (menu de usuario), 2026-09-07 -- ver docs/DECISIONS.md. *@
     @Html.Partial("~/Views/Shared/_ModalSucursales.cshtml")
 
+    @* Autoservicio de numero de serie (menu de usuario), 2026-09-10 -- ver docs/DECISIONS.md
+       "Batch 6: Dispositivos Seguros -- numero de serie + auto-deteccion + autoservicio". *@
+    @Html.Partial("~/Views/Shared/_ModalMiDispositivo.cshtml")
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/Scripts/app/bootstrap4-compat.js?v=2"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* print-agent.js (cliente contra el agente de impresion local, 127.0.0.1:18777) -- cargado
+       globalmente (2026-09-10, ver docs/DECISIONS.md "Batch 6"): lo necesita tanto el modal de
+       arriba (disponible en toda pagina via el dropdown de usuario) como DispositivosSeguros/
+       Index.cshtml. DESPUES de jquery.min.js a proposito: la IIFE de print-agent.js lee
+       window.jQuery apenas se ejecuta, no espera a ningun evento de carga. *@
+    <script src="~/Scripts/app/print-agent.js?v=1"></script>
     @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md): el HTML de las vistas con tablas
        anchas ya tenia la clase .js-sync-scroll-body desde que se portaron (fiel al original),
        pero este script y su CSS nunca se cargaron -- la barra de scroll flotante nunca aparecia,
@@ -771,13 +865,18 @@
 
     @* Toggle a modo iconos del sidebar (2026-09-04, adaptado 2026-09-05 a los nombres de clase
        reales del clasico -- ".sidebar"/".toggled"/"#sidebarToggle") -- vanilla JS, no depende del
-       orden de carga de jQuery. *@
+       orden de carga de jQuery. 2026-09-11: se suma #sidebarToggleTop (boton hamburguesa en el
+       topbar, solo visible en mobile via d-md-none -- #sidebarToggle vive DENTRO del sidebar con
+       d-none d-md-inline, invisible en mobile y ademas inalcanzable una vez oculto el sidebar; sin
+       este boton en el topbar no habia forma de reabrir el menu en el celular salvo el swipe).
+       Ambos botones llaman a la misma funcion, ninguno reimplementa logica propia. *@
     <script>
         (function () {
             var STORAGE_KEY = "carnisys-sidebar-collapsed";
             var sidebar = document.querySelector(".sidebar");
-            var toggleBtn = document.getElementById("sidebarToggle");
-            if (!sidebar || !toggleBtn) return;
+            var toggleBtns = [document.getElementById("sidebarToggle"), document.getElementById("sidebarToggleTop")]
+                .filter(function (b) { return !!b; });
+            if (!sidebar || toggleBtns.length === 0) return;
 
             // Titulos accesibles cuando el sidebar queda en modo iconos -- se generan del texto
             // visible de cada link en vez de escribirlos a mano en las 20+ filas del menu.
@@ -800,13 +899,322 @@
 
             applyCollapsed(collapsedGuardado);
 
-            toggleBtn.addEventListener("click", function () {
+            function toggleSidebar() {
                 var collapsed = !sidebar.classList.contains("toggled");
                 applyCollapsed(collapsed);
                 try {
                     localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
                 } catch (e) { }
+            }
+
+            toggleBtns.forEach(function (btn) {
+                btn.addEventListener("click", toggleSidebar);
             });
+
+            // Expuesto para el gesto de swipe de mas abajo -- evita depender de "clickear" un
+            // boton que puede estar oculto (d-none) segun el ancho de pantalla.
+            window.__toggleSidebarCarniSys = toggleSidebar;
+        })();
+    </script>
+
+    @* Gesto de swipe para mostrar/ocultar el menu lateral, solo en mobile -- port de
+       Web/Views/Shared/_LayoutBase.cshtml (lineas 888-938), adaptado. Llama directo a la funcion
+       de toggle de arriba (window.__toggleSidebarCarniSys) en vez de clickear un boton -- en
+       mobile #sidebarToggle esta con d-none, un click sintetico ahi no dispara nada.
+       2026-09-11: fix real -- el navegador (Chrome/Safari mobile) interpreta un swipe que arranca
+       cerca del borde izquierdo como gesto nativo de "volver atras" (por eso el swipe derecha
+       terminaba en Login: volvia al historial). touchmove ya no es passive: en cuanto el gesto se
+       confirma horizontal (no un scroll vertical) y cumple nuestras condiciones, se llama
+       preventDefault() para que el navegador ceda el gesto -- nunca se llama en gestos
+       verticales, asi que el scroll normal de la pagina no se ve afectado. *@
+    <script>
+        (function () {
+            var mqMobile = window.matchMedia("(max-width: 767.98px)");
+            var EDGE_ZONE_PX = 24;          // franja desde el borde izquierdo que "abre" el menu
+            var SWIPE_THRESHOLD_PX = 45;    // distancia horizontal minima para contar como swipe
+            var MAX_VERTICAL_DRIFT_PX = 60; // si el dedo se desvia mucho en vertical, no es swipe (es scroll)
+            var COMMIT_PX = 10;             // distancia minima para "decidir" que el gesto es horizontal
+
+            var sidebar = document.querySelector(".sidebar");
+            if (!sidebar) return;
+
+            var touchStartX = null;
+            var touchStartY = null;
+            var startedOnSidebar = false;
+            var startedOnEdge = false;
+            var comprometido = false; // ya decidimos que es nuestro swipe -- preventDefault en curso
+
+            document.addEventListener("touchstart", function (e) {
+                comprometido = false;
+                if (!mqMobile.matches) { touchStartX = null; return; }
+                if (!e.touches || e.touches.length !== 1) { touchStartX = null; return; }
+                var touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                startedOnSidebar = !!(e.target && e.target.closest && e.target.closest(".sidebar"));
+                startedOnEdge = touch.clientX <= EDGE_ZONE_PX;
+            }, { passive: true });
+
+            document.addEventListener("touchmove", function (e) {
+                if (!mqMobile.matches || touchStartX === null) return;
+                if (!e.touches || e.touches.length !== 1) return;
+
+                var oculto = sidebar.classList.contains("toggled");
+                var candidato = (startedOnSidebar && !oculto) || (startedOnEdge && oculto);
+                if (!candidato) return;
+
+                var touch = e.touches[0];
+                var dx = touch.clientX - touchStartX;
+                var dy = touch.clientY - touchStartY;
+
+                if (!comprometido) {
+                    if (Math.abs(dy) > MAX_VERTICAL_DRIFT_PX) return; // es scroll vertical, no tocar
+                    if (Math.abs(dx) < COMMIT_PX) return; // todavia no se sabe la direccion
+                    comprometido = true;
+                }
+
+                // Nuestro swipe horizontal confirmado: frenamos el gesto nativo de "volver atras"
+                // del navegador antes de que se dispare.
+                e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener("touchend", function (e) {
+                if (!mqMobile.matches || touchStartX === null) return;
+                var touch = e.changedTouches && e.changedTouches[0];
+                var startX = touchStartX, startY = touchStartY;
+                touchStartX = null;
+                touchStartY = null;
+                if (!touch) return;
+
+                var dx = touch.clientX - startX;
+                var dy = touch.clientY - startY;
+                if (Math.abs(dy) > MAX_VERTICAL_DRIFT_PX) return;
+
+                var oculto = sidebar.classList.contains("toggled");
+                var toggle = window.__toggleSidebarCarniSys;
+                if (!toggle) return;
+
+                if (dx <= -SWIPE_THRESHOLD_PX && startedOnSidebar && !oculto) {
+                    // swipe hacia la izquierda empezando sobre el menu: ocultarlo
+                    toggle();
+                } else if (dx >= SWIPE_THRESHOLD_PX && startedOnEdge && oculto) {
+                    // swipe hacia la derecha empezando cerca del borde izquierdo: mostrarlo
+                    toggle();
+                }
+            }, { passive: true });
+        })();
+    </script>
+
+    @* Estilo propio del flyout cuando esta "en portal" (ver script de abajo, se mueve a ser
+       hijo directo de <body>). Bug real encontrado al probarlo: todo el estilo de
+       ".collapse-inner"/".collapse-item" (colores, hover, modo oscuro, display:block) vive en
+       Content/css/ui-refresh.css con selectores "body.app-shell .sidebar .collapse-item" --
+       exigen ".sidebar" como ancestro. Al mover el elemento afuera de ".sidebar" pierde ese
+       contexto y cae al estilo por defecto del navegador (link azul subrayado, todo en una
+       linea). Se repiten aca los mismos valores (no se tocan los originales, que siguen
+       rigiendo el modo expandido de escritorio sin cambios) mas el borde/sombra pedidos
+       explicitamente para que se note como flotante. *@
+    <style>
+        .collapse-inner.flyout-portal {
+            display: block;
+            padding: .5rem 0;
+            background: rgba(255, 255, 255, .96);
+            border: 2px solid rgba(255, 255, 255, .85);
+            border-radius: .35rem;
+            box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .35);
+        }
+
+        .collapse-inner.flyout-portal .collapse-item {
+            display: block;
+            padding: .5rem 1rem;
+            margin: 0 .5rem;
+            white-space: nowrap;
+            text-decoration: none;
+            border-radius: .65rem;
+            color: #34475c;
+        }
+
+        .collapse-inner.flyout-portal .collapse-item:hover,
+        .collapse-inner.flyout-portal .collapse-item.active {
+            background: var(--ui-primary-soft);
+            color: var(--ui-primary) !important;
+        }
+
+        html.dark-mode .collapse-inner.flyout-portal {
+            background: #172235;
+            border-color: rgba(255, 255, 255, .25);
+            box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .6);
+        }
+
+        html.dark-mode .collapse-inner.flyout-portal .collapse-item,
+        html.dark-mode .collapse-inner.flyout-portal .collapse-item:visited {
+            color: #d8e6f7 !important;
+        }
+
+        html.dark-mode .collapse-inner.flyout-portal .collapse-item:hover,
+        html.dark-mode .collapse-inner.flyout-portal .collapse-item:focus,
+        html.dark-mode .collapse-inner.flyout-portal .collapse-item.active {
+            background: rgba(94, 136, 199, .18) !important;
+            color: #f8fbff !important;
+        }
+    </style>
+
+    @* Fix real (2026-09-11): los submenus flotantes (.collapse-inner, position:absolute, se
+       "escapan" a la derecha del sidebar angosto en modo iconos) quedaban invisibles -- el
+       sidebar tiene overflow-x:hidden (2026-09-08, para ocultar la barra de scroll fea) y por
+       como funciona overflow en CSS, con overflow-y:auto en el mismo elemento el navegador
+       tambien recorta el eje X aunque se intente poner "visible" (no se puede tener "recorta
+       vertical, deja escapar horizontal" en un mismo elemento). Antes pasaba desapercibido
+       porque el sidebar de escritorio rara vez queda en modo iconos (.toggled); ahora en mobile
+       el sidebar ES modo iconos por defecto, asi que el corte se nota siempre (Stock, Punto de
+       Expendio, etc).
+       Version 3 (mismo dia): la v1 copiaba la posicion original del CSS (siempre "top:2px",
+       pegado arriba, tapado por el topbar) -- la v2 la calculo bien (altura del trigger) y le
+       dio z-index alto, pero seguia quedando detras del contenido propio de cada vista
+       (Movimientos, Stock, dashboard) porque ".collapse-inner" sigue siendo hijo del sidebar:
+       cualquier ancestro con su propio stacking context (varios lo tienen, cada vista trae el
+       suyo) puede tapar un z-index alto igual, no importa que tan alto sea el numero si esta
+       "encerrado" en un contexto de apilamiento mas atras. Solucion real (v3): mientras esta
+       abierto, se MUEVE el elemento a ser hijo directo de <body> (mismo truco que usan los
+       modales) -- asi queda completamente afuera de cualquier stacking context de la pagina, y
+       vuelve a su lugar original en el DOM al cerrarse (recordamos el padre + hermano siguiente
+       para restaurarlo exacto). Tambien se cierra solo con un click/toque afuera (pedido
+       explicito) -- antes quedaba abierto hasta navegar a otra vista. En modo expandido de
+       escritorio (.collapse-inner: position:static) nada de esto se activa -- ahi el submenu ya
+       se ve bien, expandido debajo de su padre en el flujo normal. *@
+    <script>
+        (function () {
+            var sidebar = document.querySelector(".sidebar");
+            if (!sidebar) return;
+            var mqDesktop = window.matchMedia("(min-width: 768px)");
+            var GAP_PX = 12; // separacion visual entre el sidebar/trigger y el flyout (antes ".75rem")
+            var Z_INDEX_FLYOUT = 1090; // por encima de topbar, tooltips y popovers de Bootstrap (max 1080)
+
+            function enModoFlyout() {
+                return !mqDesktop.matches || sidebar.classList.contains("toggled");
+            }
+
+            var abiertos = []; // { collapseEl, inner, padreOriginal, hermanoSiguienteOriginal }
+
+            var MARGIN_VIEWPORT_PX = 8; // aire minimo contra el borde de la pantalla
+
+            function ubicarFlyout(entry) {
+                var trigger = sidebar.querySelector('[data-bs-target="#' + entry.collapseEl.id + '"]') ||
+                    entry.collapseEl.previousElementSibling;
+                if (!trigger) return;
+
+                // Se resetea antes de medir -- si quedo un max-height/overflow de una
+                // ubicacion anterior (rotar el telefono, etc.) alteraria la altura natural real.
+                entry.inner.style.maxHeight = "";
+                entry.inner.style.overflowY = "";
+
+                var rectTrigger = trigger.getBoundingClientRect();
+                entry.inner.style.position = "fixed";
+                entry.inner.style.left = (rectTrigger.right + GAP_PX) + "px";
+                entry.inner.style.margin = "0";
+                entry.inner.style.zIndex = String(Z_INDEX_FLYOUT);
+                entry.inner.style.top = rectTrigger.top + "px";
+
+                // Pedido explicito: que entren todos los items del submenu visibles en pantalla.
+                // Se mide la altura natural (ya con top puesto arriba, sin todavia recortar) y,
+                // si no entra debajo del trigger, se sube el flyout -- nunca por encima del
+                // borde superior de la pantalla. Si ni asi entra completo (mas alto que el
+                // viewport disponible), se le pone scroll interno propio como ultimo recurso,
+                // asi ningun item queda inalcanzable.
+                var alturaNatural = entry.inner.getBoundingClientRect().height;
+                var alturaDisponible = window.innerHeight - (2 * MARGIN_VIEWPORT_PX);
+
+                if (alturaNatural > alturaDisponible) {
+                    entry.inner.style.top = MARGIN_VIEWPORT_PX + "px";
+                    entry.inner.style.maxHeight = alturaDisponible + "px";
+                    entry.inner.style.overflowY = "auto";
+                } else if (rectTrigger.top + alturaNatural > window.innerHeight - MARGIN_VIEWPORT_PX) {
+                    var topAjustado = window.innerHeight - MARGIN_VIEWPORT_PX - alturaNatural;
+                    entry.inner.style.top = Math.max(MARGIN_VIEWPORT_PX, topAjustado) + "px";
+                }
+            }
+
+            function limpiarEstiloFijo(inner) {
+                inner.classList.remove("flyout-portal");
+                inner.style.position = "";
+                inner.style.top = "";
+                inner.style.left = "";
+                inner.style.margin = "";
+                inner.style.zIndex = "";
+                inner.style.maxHeight = "";
+                inner.style.overflowY = "";
+            }
+
+            function cerrarFlyout(entry) {
+                // Devuelve el elemento a su lugar original en el DOM (antes del "portal" a body).
+                if (entry.inner.parentNode === document.body) {
+                    entry.padreOriginal.insertBefore(entry.inner, entry.hermanoSiguienteOriginal);
+                }
+                limpiarEstiloFijo(entry.inner);
+                abiertos = abiertos.filter(function (e) { return e !== entry; });
+            }
+
+            sidebar.querySelectorAll(".nav-item > .collapse").forEach(function (collapseEl) {
+                var inner = collapseEl.querySelector(".collapse-inner");
+                if (!inner) return;
+
+                collapseEl.addEventListener("show.bs.collapse", function () {
+                    if (!enModoFlyout()) return;
+                    var entry = {
+                        collapseEl: collapseEl,
+                        inner: inner,
+                        padreOriginal: inner.parentNode,
+                        hermanoSiguienteOriginal: inner.nextSibling
+                    };
+                    document.body.appendChild(inner);
+                    inner.classList.add("flyout-portal");
+                    ubicarFlyout(entry);
+                    abiertos.push(entry);
+                });
+
+                collapseEl.addEventListener("hidden.bs.collapse", function () {
+                    var entry = abiertos.filter(function (e) { return e.collapseEl === collapseEl; })[0];
+                    if (entry) cerrarFlyout(entry);
+                });
+
+                // Si cambia el ancho de pantalla mientras esta abierto (rotar el telefono,
+                // redimensionar la ventana), evita que quede "pegado" en una posicion vieja.
+                window.addEventListener("resize", function () {
+                    if (!collapseEl.classList.contains("show")) return;
+                    var entry = abiertos.filter(function (e) { return e.collapseEl === collapseEl; })[0];
+                    if (!entry) return;
+                    if (enModoFlyout()) {
+                        ubicarFlyout(entry);
+                    } else {
+                        // Bootstrap Collapse maneja el cierre real; esto solo limpia el portal.
+                        cerrarFlyout(entry);
+                    }
+                });
+            });
+
+            // Cierra el/los flyout abiertos al tocar/clickear afuera de ellos (y de su propio
+            // trigger, para no cerrarlo y reabrirlo en el mismo click). Solo aplica a los que
+            // estan en modo flyout -- el accordion expandido de escritorio sigue con su
+            // comportamiento normal (se cierra clickeando el mismo item, como toda la vida).
+            function alTocarAfuera(e) {
+                if (abiertos.length === 0) return;
+                abiertos.slice().forEach(function (entry) {
+                    if (entry.inner.contains(e.target)) return;
+                    var trigger = sidebar.querySelector('[data-bs-target="#' + entry.collapseEl.id + '"]');
+                    if (trigger && trigger.contains(e.target)) return;
+
+                    var instancia = window.bootstrap && window.bootstrap.Collapse
+                        ? window.bootstrap.Collapse.getOrCreateInstance(entry.collapseEl)
+                        : null;
+                    if (instancia) {
+                        instancia.hide();
+                    } else {
+                        cerrarFlyout(entry);
+                    }
+                });
+            }
+            document.addEventListener("click", alTocarAfuera, true);
+            document.addEventListener("touchstart", alTocarAfuera, { passive: true, capture: true });
         })();
     </script>
 
@@ -845,6 +1253,22 @@
                 avisarCerrado();
             }
         })();
+        </script>
+    }
+
+    @* Ítem 3 de la cuarta ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 2: modal de
+       sucursal automatico al loguearse"): esto NUNCA se habia portado (no es un bug, faltaba
+       directo) -- LoginController seteaba el modal manual (dropdown de usuario) pero no el
+       disparo automatico post-login que si tiene el clasico (Web/Controllers/LoginController.cs:
+       151-157, Web/Views/Shared/_LayoutBase.cshtml:678-685). Mismo mecanismo TempData ya usado
+       arriba para AlertMsg (en vez de Session, mas idiomatico en Core y ya establecido en este
+       archivo) -- LoginController.cs setea TempData["MostrarModalSucursalPostLogin"]=true tras un
+       login exitoso si la empresa tiene 2+ sucursales, sin ninguna otra condicion (igual que
+       clasico: no depende de admin ni de cuantas sucursales tenga el usuario en particular). *@
+    @if (TempData["MostrarModalSucursalPostLogin"] != null)
+    {
+        <script>
+            $(function () { $('#modalSucursales').modal('show'); });
         </script>
     }
 

@@ -332,7 +332,7 @@
                                 </td>
                             }
 
-                            <td class="text-nowrap td-codigo-producto">@item.Codigo</td>
+                            <td class="text-nowrap td-codigo-producto" data-label="Código">@item.Codigo</td>
 
                             <td class="td-producto">
                                 <div class="d-flex align-items-center justify-content-between">
@@ -354,7 +354,7 @@
 
                             @if (sucursalIdSeleccionada != 0)
                             {
-                                <td class="text-nowrap th-stock-simple td-stock-simple">
+                                <td class="text-nowrap th-stock-simple td-stock-simple" data-label="Stock">
                                     @item.Stock_EnString @item.StockUnidades
                                 </td>
                             }
@@ -364,12 +364,13 @@
                             {
                                 <td class="td-stock-sucursal d-none text-nowrap"
                                     data-sucid="@s.IdSucursal"
+                                    data-label="@s.SucursalNombre"
                                     id="stk_@s.IdSucursal">
                                     <span class="text-muted">—</span>
                                 </td>
                             }
 
-                            <td class="text-nowrap font-weight-bold td-precio-producto" id="precio_@item.idCorte">
+                            <td class="text-nowrap font-weight-bold td-precio-producto" data-label="Precio" id="precio_@item.idCorte">
                                 @item.PrecioKg.ToString("C")
                             </td>
 
@@ -3114,6 +3115,119 @@
 
         .productos-wrap .btn {
             margin-bottom: 4px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        /* Bug real reportado en celular (2026-09-11): incluso ocultando codigo/stock (arriba), a
+           menos de 576px "Producto" (truncado a 140px) + "Precio" + los 4 botones de accion
+           seguian compitiendo por el mismo ancho horizontal en una sola fila y terminaban
+           superpuestos. En vez de seguir ajustando anchos (mismo enfoque fragil), cada fila pasa
+           a ser una tarjeta apilada: nombre como titulo, precio en su propia linea con etiqueta,
+           acciones en una fila propia al pie -- nada compite por ancho horizontal, elimina la
+           superposicion de raiz. Pedido explicito del usuario, confirmado el enfoque antes de
+           implementarlo. */
+        .tabla-productos,
+        .tabla-productos thead,
+        .tabla-productos tbody,
+        .tabla-productos th,
+        .tabla-productos td,
+        .tabla-productos tr {
+            display: block;
+        }
+
+        .tabla-productos thead {
+            display: none; /* los encabezados se reemplazan por la etiqueta de cada celda */
+        }
+
+        .tabla-productos tbody tr:not(.tr-detalles) {
+            border: 1px solid var(--ui-border, #d7dce3);
+            border-radius: .5rem;
+            margin-bottom: .6rem;
+            padding: .6rem .7rem;
+            background: var(--ui-surface, #fff) !important; /* pisa el rayado de .table-striped */
+        }
+
+        .tabla-productos tbody tr.tr-detalles {
+            border: 0;
+            margin-top: -.6rem;
+            margin-bottom: .6rem;
+        }
+
+        .tabla-productos td {
+            border: 0 !important;
+            padding: .2rem 0 !important;
+            white-space: normal !important;
+            font-size: .85rem;
+        }
+
+        /* El codigo pasa a ser una fila con etiqueta propia (mismo tratamiento que Precio) en
+           vez del texto chico debajo del nombre -- evita mostrarlo dos veces. */
+        .codigo-inline-mobile {
+            display: none !important;
+        }
+
+        /* El nombre actua como titulo de la tarjeta. */
+        .td-producto {
+            padding-bottom: .4rem !important;
+        }
+
+        .producto-text {
+            max-width: none;
+            font-weight: 600;
+            font-size: .92rem;
+        }
+
+        /* Filas de dato con etiqueta (Codigo, Precio): etiqueta a la izquierda, valor a la
+           derecha, cada una en su propia linea, sin partirse en dos renglones.
+           Bug real (2026-09-11): custom.css trae ".table.tabla-productos td { white-space:
+           normal !important; word-break: break-word !important; overflow-wrap: break-word
+           !important; }" con la MISMA especificidad que la de aca abajo -- el precio se cortaba
+           en cualquier caracter (ni siquiera en espacios). Se agrega "tbody" a la cadena para
+           ganar en especificidad de forma explicita, no depender del orden de carga. */
+        .tabla-productos tbody td[data-label] {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: baseline;
+            white-space: nowrap !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+        }
+
+        .tabla-productos tbody td[data-label]::before {
+            content: attr(data-label) ":";
+            color: #6c757d;
+            font-weight: 600;
+            margin-right: .5rem;
+            white-space: nowrap !important;
+        }
+
+        /* Bug real (2026-09-11): ".tabla-productos td {display:block}" de mas arriba tiene mas
+           especificidad (clase+elemento) que ".td-codigo-producto{display:none}"/".d-none"
+           (una sola clase, ver regla de 768px y el markup de columnas de sucursal) -- pisaba el
+           ocultamiento intencional. Efecto reportado: las columnas de stock por sucursal
+           (normalmente .d-none) se mostraban igual. Va DESPUES de la regla de "[data-label]" a
+           proposito -- .td-stock-sucursal tambien tiene data-label (para si algun dia se
+           necesita mostrarlo) y con igual especificidad gana el que viene despues en el
+           archivo. Pedido explicito: la tarjeta muestra SOLO Codigo, Nombre y Precio. */
+        .tabla-productos tbody td.td-stock-simple,
+        .tabla-productos tbody td.td-stock-sucursal {
+            display: none !important;
+        }
+
+        /* Los botones de accion pasan a su propia fila al pie de la tarjeta, separados del
+           resto por un filete -- ya no compiten por ancho con el nombre/precio. */
+        .td-acciones-producto {
+            display: flex !important;
+            justify-content: flex-end;
+            gap: .3rem;
+            margin-top: .4rem !important;
+            padding-top: .4rem !important;
+            border-top: 1px solid #e9ecef !important;
+        }
+
+        .td-acciones-producto .btn {
+            margin-right: 0;
         }
     }
 

@@ -159,11 +159,40 @@
             });
         }
 
+        // En mobile, #inputCodigo/#inputCantidad se llenan solo con el
+        // teclado virtual propio (.btn-key de arriba) -- nunca con tipeo
+        // real. Sin esto, tocar el input abre ADEMAS el teclado nativo del
+        // telefono, tapando la pantalla. inputmode="none" lo suprime sin
+        // impedir el foco (bindFocusTracking/writeCharacter lo siguen
+        // necesitando); readonly es el resguardo para navegadores que
+        // ignoran inputmode. Mismo umbral (768px) y mismo criterio que
+        // Web/Views/Ventas/POS.cshtml:configurarInputsPOS -- portado y
+        // centralizado aca porque este modulo ya es compartido por
+        // Ventas y PuntosExpendio.
+        function esPantallaChica() {
+            return window.innerWidth < 768;
+        }
+
+        function configurarInputsMobile() {
+            const $inputs = $('#inputCodigo, #inputCantidad');
+            if (esPantallaChica()) {
+                $inputs.attr('readonly', true).attr('inputmode', 'none');
+            } else {
+                $inputs.removeAttr('readonly').removeAttr('inputmode');
+            }
+        }
+
+        function bindConfigurarInputsMobile() {
+            configurarInputsMobile();
+            $(window).on('resize', configurarInputsMobile);
+        }
+
         const api = {
             init: function () {
                 bindFocusTracking();
                 bindVirtualKeyboard();
                 bindPOSFocusEvents();
+                bindConfigurarInputsMobile();
                 focusCodigo();
             },
             focusCodigo: focusCodigo,

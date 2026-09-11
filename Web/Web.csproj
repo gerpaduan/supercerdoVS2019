@@ -143,6 +143,8 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LandingController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\MercadoPagoController.cs" />
+    <Compile Include="Controllers\MercadoPagoTerminalesController.cs" />
     <Compile Include="Controllers\MigracionPostgresController.cs" />
     <Compile Include="Controllers\MovimientosController.cs" />
     <Compile Include="Controllers\ParametrosController.cs" />
@@ -204,6 +206,8 @@
     <Compile Include="Models\ComparacionCatalogoGlobalVm.cs" />
     <Compile Include="Models\AuditoriaLoginVm.cs" />
     <Compile Include="Models\EmpresaVm.cs" />
+    <Compile Include="Models\MercadoPagoVm.cs" />
+    <Compile Include="Models\MercadoPagoTerminalesVm.cs" />
     <Compile Include="Models\SucursalVm.cs" />
     <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\PuntoStockSucursalItemVm.cs" />
@@ -2242,6 +2246,8 @@
     <Content Include="Views\CodigosBarra\Index.cshtml" />
     <Content Include="Views\CodigosBarra\Editar.cshtml" />
     <Content Include="Views\Empresa\Index.cshtml" />
+    <Content Include="Views\MercadoPago\Index.cshtml" />
+    <Content Include="Views\MercadoPagoTerminales\Index.cshtml" />
     <Content Include="Views\Sucursal\Index.cshtml" />
     <Content Include="Views\Sucursal\Editar.cshtml" />
     <Content Include="Views\AuditoriaLogin\Index.cshtml" />

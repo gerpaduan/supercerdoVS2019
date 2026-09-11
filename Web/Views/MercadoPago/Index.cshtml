@@ -1,0 +1,71 @@
+@model Web.Models.MercadoPagoIndexVm
+
+@{
+    ViewBag.Title = "Mercado Pago";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid mercadopago-index-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Mercado Pago</h1>
+            <p class="text-muted mb-0">Conexión con la cuenta de Mercado Pago para cobrar con las terminales Point.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (!Model.PuedeAdministrar)
+            {
+                <div class="alert alert-secondary">
+                    Puede consultar el estado de la conexión. Solo un usuario administrador puede conectar o desconectar la cuenta.
+                </div>
+            }
+
+            @if (Model.Conectado)
+            {
+                <div class="alert alert-success">
+                    <strong>Conectado.</strong>
+                    @if (Model.FechaConexionUtc.HasValue)
+                    {
+                        <span>Conexión realizada el @Model.FechaConexionUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm").</span>
+                    }
+                    @if (Model.TokenExpiraUtc.HasValue)
+                    {
+                        <span>Vence el @Model.TokenExpiraUtc.Value.ToLocalTime().ToString("dd/MM/yyyy").</span>
+                    }
+                </div>
+
+                <a href="@Url.Action("Index", "MercadoPagoTerminales")" class="btn btn-primary mr-2">Gestionar sucursales y terminales</a>
+
+                if (Model.PuedeAdministrar)
+                {
+                    using (Html.BeginForm("Desconectar", "MercadoPago", FormMethod.Post, new { id = "formMercadoPagoDesconectar", @class = "d-inline" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('¿Desconectar la cuenta de Mercado Pago? Vas a tener que volver a autorizarla para seguir cobrando con el Point.');">
+                            Desconectar
+                        </button>
+                    }
+                }
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <strong>No conectado.</strong> Sin conectar una cuenta de Mercado Pago no se puede cobrar automáticamente con las terminales Point.
+                </div>
+
+                if (Model.PuedeAdministrar)
+                {
+                    using (Html.BeginForm("Conectar", "MercadoPago", FormMethod.Post, new { id = "formMercadoPagoConectar" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary">
+                            Conectar con Mercado Pago
+                        </button>
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>

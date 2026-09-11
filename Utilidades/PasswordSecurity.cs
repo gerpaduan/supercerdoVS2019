@@ -96,6 +96,21 @@ namespace Utilidades
             }
         }
 
+        // PKCE (RFC 7636): code_challenge = BASE64URL(SHA256(ASCII(code_verifier))). Usado por
+        // Negocio.MercadoPagoOAuthClient -- el code_verifier en si se genera con GenerateToken
+        // (32 bytes -> 43 caracteres, el minimo que exige el RFC).
+        public static string ComputeSha256UrlSafeBase64(string value)
+        {
+            if (value == null)
+                value = string.Empty;
+
+            using (var sha = SHA256.Create())
+            {
+                var bytes = System.Text.Encoding.ASCII.GetBytes(value);
+                return ToUrlSafeBase64(sha.ComputeHash(bytes));
+            }
+        }
+
         private static string ToUrlSafeBase64(byte[] bytes)
         {
             return Convert.ToBase64String(bytes)
