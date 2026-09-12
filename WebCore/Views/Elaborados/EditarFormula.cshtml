@@ -1,4 +1,4 @@
-@model WebCore.Models.ElaboradoFormulaEditVm
+﻿@model WebCore.Models.ElaboradoFormulaEditVm
 @using System.Collections.Generic
 
 @{
@@ -278,7 +278,7 @@
 </style>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var $form = $('#formEditarFormula');

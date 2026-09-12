@@ -60,6 +60,12 @@ public sealed class PagoChequesTests
             Timeout = 20000
         });
 
+        // Batch 10 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): en alta, el resto del
+        // formulario (incluido FormaPago_) queda deshabilitado hasta elegir Pago/Cobro -- hay que
+        // elegir la operacion antes de poder tocar cualquier otro campo.
+        await page.ClickAsync(".pago-operacion-opcion[data-operacion-valor='false']");
+        await page.WaitForTimeoutAsync(300);
+
         await page.SelectOptionAsync("#FormaPago_", "Cheque");
         await page.WaitForTimeoutAsync(300);
         Assert.True(await page.Locator("#bloqueCheques").IsVisibleAsync());
@@ -87,6 +93,11 @@ public sealed class PagoChequesTests
             WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 20000
         });
+
+        // Batch 10 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): en alta, el resto del
+        // formulario (incluido FormaPago_) queda deshabilitado hasta elegir Pago/Cobro.
+        await page.ClickAsync(".pago-operacion-opcion[data-operacion-valor='false']");
+        await page.WaitForTimeoutAsync(300);
 
         await page.SelectOptionAsync("#FormaPago_", "EftvoCheque");
         await page.WaitForTimeoutAsync(300);

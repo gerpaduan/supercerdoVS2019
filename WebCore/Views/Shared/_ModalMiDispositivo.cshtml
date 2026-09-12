@@ -1,0 +1,100 @@
+@{
+    // Autoservicio de numero de serie (item 8 de la cuarta ronda de pedidos, 2026-09-10, ver
+    // docs/DECISIONS.md "Batch 6: Dispositivos Seguros -- numero de serie + auto-deteccion +
+    // autoservicio"). Problema real: /DispositivosSeguros ya existe, pero (a) el link del menu
+    // "Configuracion" es admin-only (_Layout.cshtml, mostrarConfiguracion) y (b) el campo
+    // NumeroSerie autocompletado esta detras de @@if (Model.PuedeAdministrar) -- un usuario
+    // no-admin no tiene NINGUNA forma de ver el numero de serie de su propia PC. Este modal es
+    // 100% cliente (reusa window.CarniSysPrintAgent.getDeviceId() -- print-agent.js se carga
+    // globalmente en _Layout.cshtml, DESPUES de este partial, ver ese archivo -- habla directo
+    // contra http://127.0.0.1:18777, no contra WebCore), no requiere ningun controller/permiso
+    // nuevo. Disponible para CUALQUIER usuario logueado, no solo admin -- deliberadamente NO se
+    // amplia el gate de "Configuracion" (eso expondria Usuarios/Parametros/Mi Empresa/Sucursales a
+    // no-admins, fuera de alcance).
+}
+<div class="modal fade" id="modalMiDispositivo" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-laptop mr-2"></i> Número de serie de este dispositivo</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">
+                    No es un número que se pueda buscar en la PC a mano -- es un identificador único de esta máquina que solo se obtiene automáticamente si el <strong>agente de impresión CarniSys</strong> está instalado y corriendo acá. Copiá este código y enviáselo a un administrador para que agregue este dispositivo a la lista de dispositivos seguros.
+                </p>
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="miDispositivoNumeroSerie" readonly placeholder="Detectando..." />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary" id="btnCopiarMiDispositivo" disabled>
+                            <i class="fas fa-copy mr-1"></i> Copiar
+                        </button>
+                    </div>
+                </div>
+                <small class="form-text text-muted" id="miDispositivoEstado"></small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var $modal = document.getElementById('modalMiDispositivo');
+        if (!$modal) return;
+
+        var consultado = false;
+
+        function consultarNumeroSerie() {
+            if (consultado) return;
+            consultado = true;
+
+            var $input = document.getElementById('miDispositivoNumeroSerie');
+            var $estado = document.getElementById('miDispositivoEstado');
+            var $btnCopiar = document.getElementById('btnCopiarMiDispositivo');
+
+            if (!window.CarniSysPrintAgent) {
+                $input.value = '';
+                $input.placeholder = 'No disponible';
+                $estado.textContent = 'No se pudo cargar el detector -- contactá a soporte.';
+                return;
+            }
+
+            window.CarniSysPrintAgent.getDeviceId()
+                .done(function (resp) {
+                    if (resp && resp.ok && resp.deviceId) {
+                        $input.value = resp.deviceId;
+                        $estado.textContent = 'Detectado automáticamente desde el agente de impresión.';
+                        $btnCopiar.disabled = false;
+                    } else {
+                        $input.placeholder = 'No se pudo detectar';
+                        $estado.textContent = 'El agente respondió, pero sin un número de serie válido.';
+                    }
+                })
+                .fail(function () {
+                    $input.placeholder = 'No se pudo detectar';
+                    $estado.textContent = 'No se pudo detectar automáticamente. Verificá que el agente de impresión CarniSys esté instalado y corriendo en esta PC, o contactá a un administrador.';
+                });
+        }
+
+        $modal.addEventListener('shown.bs.modal', consultarNumeroSerie);
+
+        var $btnCopiar = document.getElementById('btnCopiarMiDispositivo');
+        if ($btnCopiar) {
+            $btnCopiar.addEventListener('click', function () {
+                var $input = document.getElementById('miDispositivoNumeroSerie');
+                if (!$input || !$input.value) return;
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText($input.value);
+                } else {
+                    $input.select();
+                    document.execCommand('copy');
+                }
+
+                var textoOriginal = $btnCopiar.innerHTML;
+                $btnCopiar.innerHTML = '<i class="fas fa-check mr-1"></i> Copiado';
+                setTimeout(function () { $btnCopiar.innerHTML = textoOriginal; }, 1500);
+            });
+        }
+    })();
+</script>

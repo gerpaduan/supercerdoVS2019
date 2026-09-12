@@ -1,4 +1,4 @@
-@model System.Data.DataTable
+﻿@model System.Data.DataTable
 @using System.Data
 
 @{
@@ -498,5 +498,5 @@
             usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))
         };
     </script>
-<script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=10")"></script>
+<script src="@Url.Content("~/Scripts/app/egresos-caja.js")" asp-append-version="true"></script>
 }

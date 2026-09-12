@@ -564,6 +564,150 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Alta rapida de producto desde el POS (ver docs/DECISIONS.md, feature "codigo de barra
+        // inexistente en el POS", 2026-09-12): cuando el cajero escanea/tipea un codigo que no
+        // existe, el POS ofrece cargarlo sin salir de la pantalla. A diferencia de Guardar()
+        // (pensada para el formulario completo, con RedirectToAction/View), esta accion devuelve
+        // JSON y solo cubre el subconjunto minimo de campos del alta express -- reusa los mismos
+        // metodos privados de validacion/persistencia que Guardar() (MapToEntity,
+        // ObtenerAlicuotaPorcentajeDesdeDT, catalogo global), no los duplica.
+        //
+        // Viaja como form-urlencoded (no JSON) a proposito: WebCore no tiene
+        // AntiforgeryOptions.HeaderName configurado en Program.cs, asi que [ValidateAntiForgeryToken]
+        // sobre un body JSON rechazaria siempre con 400. Ademas NormalizarFloatsDesdeRequest lee
+        // directo de Request.Form, que tambien exige form-urlencoded.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarRapidoPOS(CorteUpsertVM vm)
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+            {
+                return Json(new { ok = false, error = "No tenés permisos para realizar la acción seleccionada." });
+            }
+
+            NormalizarFloatsDesdeRequest(vm);
+
+            // Defaults forzados server-side, sin confiar en el cliente: el alta rapida no expone
+            // estos campos en su formulario. Habilitado/EnCierreStock arrancan en false en
+            // CorteUpsertVM -- el alta completa los fuerza a true via JS en AddOrEdit.cshtml (linea
+            // 1756-1760, spoofeable); aca se fijan directo en el controller.
+            vm.IdCorte = 0;
+            vm.ModoCorte = "Ninguno";
+            vm.Habilitado = true;
+            vm.EnCierreStock = true;
+            vm.PuntoStock = 0;
+            vm.Independiente = true;
+            vm.Tipo = "Sin asignar";
+
+            if (vm.Codigo > 0)
+            {
+                int idEmpresaSesionDuplicado = _empresa != null ? _empresa.IdEmpresa : 0;
+                var existente = idEmpresaSesionDuplicado > 0
+                    ? _oCorteN.findCorteByCodigoEmpresa(vm.Codigo, idEmpresaSesionDuplicado, false)
+                    : _oCorteN.findCorteByCodigo(vm.Codigo, false);
+
+                if (existente != null)
+                {
+                    return Json(new { ok = false, error = $"El código ya existe para el producto: {existente.CorteDesc}" });
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                string mensajeError = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { ok = false, error = string.IsNullOrWhiteSpace(mensajeError) ? "Datos inválidos." : mensajeError });
+            }
+
+            int idEmpresaSesionActual = _empresa != null ? _empresa.IdEmpresa : 0;
+            bool altaDesdeCatalogoGlobal = false;
+
+            if (idEmpresaSesionActual > 0 && vm.Codigo > 0)
+            {
+                altaDesdeCatalogoGlobal = ObtenerGestorCatalogoGlobal().findCorteGlobalByCodigo(vm.Codigo, false) != null;
+            }
+
+            try
+            {
+                vm.AlicuotaIva = ObtenerAlicuotaPorcentajeDesdeDT(vm.IdAlicuotaIva);
+
+                var entity = new Entidades.Corte();
+                MapToEntity(vm, entity);
+                entity.IdEmpresa = idEmpresaSesionActual;
+                entity.IdCorte = 0;
+
+                if (altaDesdeCatalogoGlobal)
+                {
+                    entity.IdCorte = _oCorteN.InsertarCorteEnEmpresa(entity);
+                }
+                else
+                {
+                    _oCorteN.addOrEditCorte(entity);
+                }
+
+                int idProductoGuardado = entity.IdCorte;
+                if (idProductoGuardado <= 0 && vm.Codigo > 0)
+                {
+                    var productoGuardado = idEmpresaSesionActual > 0
+                        ? _oCorteN.findCorteByCodigoEmpresa(vm.Codigo, idEmpresaSesionActual, false)
+                        : _oCorteN.findCorteByCodigo(vm.Codigo, false);
+
+                    if (productoGuardado != null)
+                    {
+                        idProductoGuardado = productoGuardado.IdCorte;
+                    }
+                }
+
+                if (idProductoGuardado > 0)
+                {
+                    _oCortePuntoStockSucursalN.CrearParaTodasLasSucursales(idEmpresaSesionActual, idProductoGuardado, vm.PuntoStock);
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    corte = new
+                    {
+                        id = idProductoGuardado,
+                        nombre = entity.CorteDesc,
+                        precioKg = entity.PrecioKg,
+                        precioOriginal = entity.PrecioKg,
+                        codigo = entity.Codigo.ToString(),
+                        pesable = entity.Pesable
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("GuardarRapidoPOS - no se pudo guardar el producto (codigo {0}): {1}", vm.Codigo, ex);
+                return Json(new { ok = false, error = "No se pudo guardar el producto." });
+            }
+        }
+
+        // Combo de "Tipo de IVA" para el formulario de alta rapida del POS. Reusa el mismo metodo
+        // de negocio que ya usan LoadCombos() y ObtenerAlicuotaPorcentajeDesdeDT() -- no hay una
+        // lista fija de valores, la carga cada empresa vía la tabla alicuotasiva.
+        [HttpGet]
+        public JsonResult ObtenerAlicuotasIva()
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+            {
+                return Json(new { ok = false, alicuotas = new object[0] });
+            }
+
+            DataTable dt = _oCorteN.obtenerAlicuotasIva(false);
+            var lista = new List<object>();
+
+            if (dt != null)
+            {
+                foreach (DataRow r in dt.Rows)
+                {
+                    lista.Add(new { value = ToInt(r["idIva"]), text = ToStr(r["iva"]) });
+                }
+            }
+
+            return Json(new { ok = true, alicuotas = lista });
+        }
+
         private void ValidarModoCorte(CorteUpsertVM vm)
         {
             vm.ModoCorte = (vm.ModoCorte ?? "Ninguno").Trim();

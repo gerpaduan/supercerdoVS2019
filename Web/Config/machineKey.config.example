@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Clave fija de cifrado/firma (antiforgery tokens, Forms Auth, ViewState). Sin esto, ASP.NET
+     genera una clave nueva al azar en cada arranque del proceso, y como el proceso recicla en
+     cada deploy (o por idle timeout de IIS), cualquier token emitido antes del reciclado deja de
+     validar despues: "La solicitud no paso la validacion de seguridad." al primer POST (ej. login)
+     de un usuario que ya tenia la pagina abierta. Bug real, ver docs/DECISIONS.md 2026-09-05.
+     Password real en Web/Config/machineKey.config (gitignored, generado por servidor, nunca
+     compartir la misma clave entre servidores). Generar con .NET RandomNumberGenerator:
+     validationKey = 64 bytes random en hex (128 caracteres), decryptionKey = 32 bytes random en
+     hex (64 caracteres). -->
+<machineKey validationKey="VALIDATION_KEY_PLACEHOLDER" decryptionKey="DECRYPTION_KEY_PLACEHOLDER" validation="HMACSHA256" decryption="AES" />

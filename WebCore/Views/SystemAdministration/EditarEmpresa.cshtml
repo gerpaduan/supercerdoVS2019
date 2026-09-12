@@ -140,6 +140,24 @@
                 </div>
             </div>
 
+            @* Item 6 (2026-09-11, ver docs/DECISIONS.md "esquema Empresas: EmpresaPropia/
+               EsCarniceria"): clasificacion admin, default false -- solo se tildan a mano para la
+               carniceria propia real. *@
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <div class="custom-control custom-switch mt-4">
+                        @Html.CheckBoxFor(m => m.EmpresaPropia, new { @class = "custom-control-input" })
+                        <label class="custom-control-label" for="EmpresaPropia">Empresa propia</label>
+                    </div>
+                </div>
+                <div class="form-group col-md-3">
+                    <div class="custom-control custom-switch mt-4">
+                        @Html.CheckBoxFor(m => m.EsCarniceria, new { @class = "custom-control-input" })
+                        <label class="custom-control-label" for="EsCarniceria">Es carnicería</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>Observaciones</label>
                 @Html.TextAreaFor(m => m.Observaciones, 3, 1, new { @class = "form-control" })

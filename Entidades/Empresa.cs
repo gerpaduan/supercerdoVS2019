@@ -32,6 +32,13 @@ namespace Entidades
         public byte Activa { get; set; }
         public string Observaciones { get; set; }
 
+        // Item 6 (2026-09-11, ver docs/DECISIONS.md): clasificacion admin de la empresa, no
+        // autoservicio -- default false en todas, true solo para la carniceria propia real
+        // (CUIT 20306210786). No se exponen en "Mi Empresa" (Datos/Empresa.cs, DatosPostgres/
+        // EmpresaPg.cs) -- ese flujo excluye deliberadamente campos fiscales/infra.
+        public bool EmpresaPropia { get; set; }
+        public bool EsCarniceria { get; set; }
+
         // Horario laboral (2 jornadas diarias, ver LoginController.EstaDentroDelHorarioPermitido).
         // Default 00:00-23:59 = sin restriccion real hasta que el admin de la empresa las acote.
         public TimeSpan HorarioDiurnoDesde { get; set; }

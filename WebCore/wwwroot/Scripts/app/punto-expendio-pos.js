@@ -442,6 +442,28 @@
             window.location.href = urlPosConSector($('#sectorPuntoExpendio').val());
         });
 
+        // Atajos numericos 1/2/3 en el modal de "Expendio guardado", 2026-09-12 (pedido explicito
+        // del usuario -- ver docs/DECISIONS.md), mismo patron que el modal de post-venta de POS
+        // (Ventas/POS.cshtml, atajos 1-5): 1 = Nuevo expendio (#btnPpebContinuar, primero pedido
+        // explicitamente aunque no sea el primer boton en el DOM), 2 = PDF (#btnPpebPdf), 3 =
+        // Email (#btnPpebEmail). Sin factura electronica -- no aplica a Puntos de Expendio.
+        $(document).on('keydown', function (e) {
+            if (!$('#modalPostPuntoExpendioBasico').hasClass('show')) return;
+            var tag = (e.target.tagName || '').toUpperCase();
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            var mapaAtajos = {
+                '1': '#btnPpebContinuar',
+                '2': '#btnPpebPdf',
+                '3': '#btnPpebEmail'
+            };
+            var selector = mapaAtajos[e.key];
+            if (!selector) return;
+
+            e.preventDefault();
+            $(selector).trigger('click');
+        });
+
         $('#btnPpebEmail').on('click', function () {
             var idExpendio = $(this).data('id-expendio');
             $('#ppebEmailError').addClass('d-none').text('');

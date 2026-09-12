@@ -146,6 +146,39 @@
         if ($('#verDetalles').is(':checked')) {
             $('#verDetalles').trigger('change');
         }
+
+        // Boton "Imprimir" nuevo en la columna Acciones (cuarta ronda de pedidos, 2026-09-10, ver
+        // docs/DECISIONS.md "Batch 7"). Trae pdfUrl/imprimirUrl/whatsappTexto recien al click
+        // (MovimientosController.ImprimirInfo) -- el listado arma la tabla desde un DataTable
+        // liviano sin entidades cargadas por fila, calcularlos para cada fila visible seria un
+        // N+1 real.
+        var imprimirInfoUrl = $page.data('imprimir-info-url');
+
+        $(document).on('click.movimientosIndex', '.js-imprimir-movimiento', function () {
+            var id = $(this).data('id');
+            if (!imprimirInfoUrl || !id) return;
+
+            $.getJSON(imprimirInfoUrl, { id: id })
+                .done(function (resp) {
+                    if (!resp || !resp.ok) {
+                        showAlert('warning', 'Movimiento', 'No se pudo preparar la impresión de este movimiento.');
+                        return;
+                    }
+
+                    if (!window.PostMovimientoModal || typeof window.PostMovimientoModal.open !== 'function') return;
+
+                    window.PostMovimientoModal.open({
+                        redirectUrl: '',
+                        pdfUrl: resp.pdfUrl,
+                        imprimirUrl: resp.imprimirUrl,
+                        whatsappTexto: resp.whatsappTexto,
+                        stayOnPage: true
+                    });
+                })
+                .fail(function () {
+                    showAlert('error', 'Movimiento', 'No se pudo preparar la impresión de este movimiento.');
+                });
+        });
     }
 
     function initEdit() {
@@ -920,6 +953,7 @@
             window.PostMovimientoModal.open({
                 redirectUrl: '',
                 pdfUrl: config.pdfUrl,
+                imprimirUrl: config.imprimirUrl,
                 whatsappTexto: config.whatsappTexto,
                 stayOnPage: true
             });

@@ -783,6 +783,40 @@ namespace DatosPostgres
                 return plan;
             }
 
+            // Advertencia (no bloqueante, a diferencia del chequeo de arriba): puede haber ventas o
+            // egresos de OTROS usuarios ya cargados en la sucursal destino durante el mismo rango de
+            // esta caja -- si el usuario avanza igual, esos movimientos van a quedar mezclados con
+            // los que se están por trasladar y el cierre puede quedar inconsistente. A diferencia de
+            // las queries de arriba (que filtran por idvendedor/creadopor = este usuario), acá
+            // interesa CUALQUIER movimiento en destino, de cualquier usuario.
+            int ventasEnDestino = ObtenerEnteroCambioSucursal(con, tx,
+                "SELECT COUNT(*) FROM ventas WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND fechaventa BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                    cmd.Parameters.AddWithValue("idSucursal", preview.IdSucursalNueva);
+                    cmd.Parameters.AddWithValue("fechaDesde", preview.FechaDesde);
+                    cmd.Parameters.AddWithValue("fechaHasta", preview.FechaHasta);
+                });
+
+            int egresosEnDestino = ObtenerEnteroCambioSucursal(con, tx,
+                "SELECT COUNT(*) FROM egresoscaja WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND fechahora BETWEEN @fechaDesde AND @fechaHasta;",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("idEmpresa", _idEmpresa);
+                    cmd.Parameters.AddWithValue("idSucursal", preview.IdSucursalNueva);
+                    cmd.Parameters.AddWithValue("fechaDesde", preview.FechaDesde);
+                    cmd.Parameters.AddWithValue("fechaHasta", preview.FechaHasta);
+                });
+
+            if (ventasEnDestino > 0 || egresosEnDestino > 0)
+            {
+                preview.HayMovimientosEnDestino = true;
+                preview.AdvertenciaMovimientosEnDestino =
+                    $"La sucursal destino ya tiene {ventasEnDestino} venta(s) y {egresosEnDestino} egreso(s) de caja registrados en el mismo rango de fechas de esta caja. " +
+                    "Si avanza, esos movimientos van a quedar mezclados con los que se están por trasladar y el cierre de caja puede quedar inconsistente.";
+            }
+
             plan.VentasIds = ObtenerIdsCambioSucursal(con, tx,
                 "SELECT idventa FROM ventas WHERE idempresa = @idEmpresa AND idsucursal = @idSucursal AND idvendedor = @idUsuario AND fechaventa BETWEEN @fechaDesde AND @fechaHasta;",
                 cmd => AgregarParametrosBaseCambioSucursal(cmd, preview));

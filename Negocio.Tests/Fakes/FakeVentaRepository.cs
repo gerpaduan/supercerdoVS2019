@@ -75,6 +75,7 @@ namespace NegocioTests.Fakes
         public LineaVenta agregarLineaExprendio(LineaVenta oLineaE) => throw new NotImplementedException();
         public void asignarVentaEnExpendio(int idVenta, int idExpendio, Contratos.IUnitOfWork unitOfWork = null) => throw new NotImplementedException();
         public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal) => throw new NotImplementedException();
+        public DataTable obtenerExpendiosAvanzado(DateTime fechaDesde, DateTime? fechaHasta, int idSucursal) => throw new NotImplementedException();
         public DataTable obtenerExpendiosPorUsuario(int idSucursal, int idVendedor, int top = 100, DateTime? fechaDesde = null, DateTime? fechaHasta = null) => throw new NotImplementedException();
         public DataTable obtenerExpendiosEmpresa(int top = 300, DateTime? fechaDesde = null, DateTime? fechaHasta = null) => throw new NotImplementedException();
         public Venta getExpedioById(int idExpendio) => throw new NotImplementedException();

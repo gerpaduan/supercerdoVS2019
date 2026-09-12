@@ -86,13 +86,17 @@ namespace WebCore.Controllers
             DateTime desde = fechaDesde ?? fechaLimiteSinPermiso;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
-            // TODO(claude): el original usa Session["Usuario"].IdSucursal como default cuando no
-            // hay ?idSucursal en la URL. Sin sesion real, se hardcodea a 2 (San Lorenzo) -- la
-            // sucursal del usuario de prueba (ger) usado en todo el juez de paridad de esta
-            // migracion, para que la comparacion sea real. Si el usuario stub de WebCore cambia
-            // en el futuro (ver otros controllers), actualizar este valor tambien.
-            const int idSucursalUsuarioStub = 2;
-            int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : idSucursalUsuarioStub;
+            // Bug real (2026-09-11, ver docs/DECISIONS.md): quedaba un hardcodeo de la epoca del
+            // stub sin sesion real ("sin sesion real, se hardcodea a 2 (San Lorenzo), la sucursal
+            // del usuario de prueba"), nunca actualizado cuando se porto el login real (2026-09-06).
+            // Con "ger" logueado en una sucursal distinta a San Lorenzo (ej. San Martin), el default
+            // de este filtro seguia apuntando a San Lorenzo -- un alta/edicion de Stock se guarda
+            // con la sucursal REAL del usuario (ver CrearViewModelNuevo, ya usaba user.IdSucursal
+            // correctamente) pero el Index, sin ?idSucursal en la URL, mostraba la sucursal
+            // equivocada: "se guarda bien pero no aparece en el listado". Mismo criterio que
+            // Lineas() (linea 130), que ya usa user.IdSucursal real.
+            Entidades.Usuario usuarioIndice = _usuarioActual;
+            int sucursalSeleccionada = idSucursal.HasValue ? idSucursal.Value : (usuarioIndice != null && usuarioIndice.IdSucursal > 0 ? usuarioIndice.IdSucursal : 0);
             string tipoNormalizado = NormalizarTipoFiltro(tipoCompra);
 
             DataTable dt = _oCompraN.obtenerCompras(sucursalSeleccionada, tipoNormalizado, "", desde, hasta, null) ?? new DataTable();

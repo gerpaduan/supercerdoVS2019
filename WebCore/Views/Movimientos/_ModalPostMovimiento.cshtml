@@ -1,9 +1,14 @@
 @*
     Version reducida de Web/Views/Movimientos/_ModalPostMovimiento.cshtml -- excluye el ticket
-    ESC/POS via agente local (print-agent.js, ImprimirTicket/ImprimirTicketPayload/
-    DescargarAgenteImpresion, "Configurar impresora") porque el agente no esta portado, mismo
-    criterio ya usado en Ventas/PuntosExpendio (_ModalPostVentaBasico/_ModalPostPuntoExpendioBasico).
-    "Generar PDF" y "Enviar a WhatsApp" si funcionan (no dependen del agente).
+    ESC/POS via agente local (print-agent.js, ImprimirTicketPayload/DescargarAgenteImpresion,
+    "Configurar impresora") porque el agente no esta portado, mismo criterio ya usado en Ventas/
+    PuntosExpendio (_ModalPostVentaBasico/_ModalPostPuntoExpendioBasico). El ticket termico HTML
+    (opcion 2, sin agente) SI se porto (cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+    "Batch 7: boton Imprimir en Movimientos + ticket termico") -- mismo patron ya usado en Ventas
+    (recordar tamaño 58/80mm en localStorage, poder cambiarlo). "Enviar a WhatsApp" sigue
+    funcionando (el boton/id/handler NO se borraron) pero queda OCULTO (d-none) a pedido explicito
+    del usuario -- su atajo numerico se retiro (ver modal-postmovimiento.js) para no mostrar un
+    atajo de una accion invisible.
 *@
 <div class="modal fade" id="modalPostMovimiento" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
@@ -19,13 +24,29 @@
                     Continuar
                 </button>
 
+                <div class="d-flex mb-2">
+                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2" id="btnPostMovimientoImprimir" type="button">
+                        <span class="badge badge-primary mr-2">2</span>
+                        <span id="lblMovimientoTicketAccion">Imprimir</span>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg" id="btnCambiarTicketMovimiento" type="button" title="Cambiar tamaño de ticket">
+                        Cambiar
+                    </button>
+                </div>
+                <div class="collapse mb-2" id="bloqueTicketOpcionesMovimiento">
+                    <div class="card card-body p-2">
+                        <button class="btn btn-outline-primary btn-block mb-2 btnTicketMovimientoOpt" type="button" data-mm="58">Ticket 58 mm</button>
+                        <button class="btn btn-outline-primary btn-block btnTicketMovimientoOpt" type="button" data-mm="80">Ticket 80 mm</button>
+                    </div>
+                </div>
+
                 <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostMovimientoPdf" type="button">
-                    <span class="badge badge-light mr-2">2</span>
+                    <span class="badge badge-light mr-2">3</span>
                     Generar PDF
                 </button>
 
-                <button class="btn btn-success btn-lg btn-block" id="btnPostMovimientoWhatsapp" type="button">
-                    <span class="badge badge-light mr-2">3</span>
+                <button class="btn btn-success btn-lg btn-block d-none" id="btnPostMovimientoWhatsapp" type="button">
+                    <span class="badge badge-light mr-2">4</span>
                     <i class="fab fa-whatsapp mr-2"></i>Enviar a WhatsApp
                 </button>
             </div>

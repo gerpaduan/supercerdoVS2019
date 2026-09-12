@@ -1,11 +1,14 @@
 // Port de Web/Controllers/MovimientosController.cs (932 lineas, 10 acciones) -- traslados de
 // stock entre sucursales. Portado completo: Index/Lineas (listados), Nuevo/Editar/Guardar
 // (alta/edicion), Detalle (AJAX), BuscarProducto/BuscarProductoPorCodigo (autocompletado),
-// ImprimirPdf (QuestPDF, ver GenerarDocsCore.GenerarPdfMovimiento). NO portado: ImprimirTicket/
-// ImprimirTicketPayload/DescargarAgenteImpresion -- dependen del agente de impresion local
-// (print-agent.js), mismo bloqueante ya documentado en el resto de la migracion (Ventas/
-// PuntosExpendio); el boton "Imprimir ticket" del modal post-guardado se excluye, "Generar PDF"
-// y "Enviar a WhatsApp" si se portan (no dependen del agente).
+// ImprimirPdf (QuestPDF, ver GenerarDocsCore.GenerarPdfMovimiento), ImprimirTicket (2026-09-10,
+// ver docs/DECISIONS.md "Batch 7") -- HTML plano con window.print(), NO depende del agente local.
+// NO portado: ImprimirTicketPayload/DescargarAgenteImpresion -- esos si dependen del agente de
+// impresion local (print-agent.js), mismo bloqueante ya documentado en el resto de la migracion
+// (Ventas/PuntosExpendio). El comentario anterior de esta cabecera decia que ImprimirTicket
+// TAMBIEN dependia del agente -- error de lectura corregido esta ronda: en clasico, ImprimirTicket
+// (Web/Controllers/MovimientosController.cs:415-425) genera HTML propio, ImprimirTicketPayload es
+// la unica que habla con el agente. "Enviar a WhatsApp" tambien portado, sin cambios.
 //
 // Usuario/empresa reales via IUsuarioSesionService (login real, ver docs/DECISIONS.md
 // 2026-09-06). Permisos reales y gate de "usuario de sala de produccion" portados 2026-09-09
@@ -375,6 +378,7 @@ namespace WebCore.Controllers
                     mensaje = model.IdMovimiento > 0 ? "El movimiento se guardó correctamente." : "El movimiento se registró correctamente.",
                     redirectUrl = Url.Action("Index", "Movimientos"),
                     pdfUrl = Url.Action("ImprimirPdf", "Movimientos", new { id = idMovimiento }),
+                    imprimirUrl = Url.Action("ImprimirTicket", "Movimientos", new { id = idMovimiento }),
                     whatsappTexto = ConstruirMensajeWhatsapp(idMovimiento)
                 });
             }
@@ -394,6 +398,45 @@ namespace WebCore.Controllers
             var lineas = _oCorteN.cargarCortesPorMovimiento(id, true) ?? new List<Entidades.CortePorMovimiento>();
             byte[] bytes = WebCore.Services.GenerarDocsCore.GenerarPdfMovimiento(movimiento, lineas);
             return File(bytes, "application/pdf", "Movimiento_" + id + ".pdf");
+        }
+
+        // Port de Web/Controllers/MovimientosController.cs:415-425 (cuarta ronda de pedidos,
+        // 2026-09-10, ver docs/DECISIONS.md "Batch 7: boton Imprimir en Movimientos + ticket
+        // termico"). Corrige la premisa del comentario de cabecera de este archivo: ImprimirTicket
+        // NO depende del agente de impresion local (a diferencia de ImprimirTicketPayload, que si
+        // -- ese sigue sin portarse) -- genera HTML plano con onload="window.print()", mismo
+        // patron ya portado para Ventas (_TicketHTML.cshtml).
+        [HttpGet]
+        public IActionResult ImprimirTicket(int id, int mm = 80)
+        {
+            var movimiento = _oCorteN.cargarMovimiento(id, true);
+            if (movimiento == null || movimiento.IdMovimiento <= 0)
+                return NotFound();
+
+            movimiento.ListaCortesPorMov = _oCorteN.cargarCortesPorMovimiento(id, true) ?? new List<Entidades.CortePorMovimiento>();
+            ViewBag.TicketMm = mm == 58 ? 58 : 80;
+            return View("_TicketMovimiento", movimiento);
+        }
+
+        // Sin equivalente en clasico: el boton "Imprimir" nuevo de la columna Acciones del listado
+        // (Index.cshtml) necesita pdfUrl/imprimirUrl/whatsappTexto de una fila puntual, pero Index
+        // arma la tabla desde un DataTable liviano (obtenerMovimientos), sin cargar entidades por
+        // fila -- calcularlos para las N filas visibles dispararia un N+1 real de
+        // cargarMovimiento/cargarCortesPorMovimiento. Se resuelven recien al click, para 1 solo id.
+        [HttpGet]
+        public JsonResult ImprimirInfo(int id)
+        {
+            var movimiento = _oCorteN.cargarMovimiento(id, false);
+            if (movimiento == null || movimiento.IdMovimiento <= 0)
+                return Json(new { ok = false });
+
+            return Json(new
+            {
+                ok = true,
+                pdfUrl = Url.Action("ImprimirPdf", "Movimientos", new { id }),
+                imprimirUrl = Url.Action("ImprimirTicket", "Movimientos", new { id }),
+                whatsappTexto = ConstruirMensajeWhatsapp(id)
+            });
         }
 
         private MovimientoEditVm CrearModeloNuevo(Entidades.Usuario user)

@@ -41,6 +41,20 @@
                     <input type="text" id="montoInicial" class="form-control form-control-lg" placeholder="Ingrese monto inicial">
                 </div>
 
+                @* Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): antes, tener
+                   este permiso (PuedeOperarSinCajaYEditarFecha) saltaba este modal en silencio --
+                   ahora el modal SIEMPRE se muestra sin caja real, y el permiso solo habilita esta
+                   opcion, que debe tildarse explicitamente para continuar sin abrir caja. *@
+                @if (ViewBag.PuedeOperarSinCajaBypass != null && (bool)ViewBag.PuedeOperarSinCajaBypass)
+                {
+                    <div class="form-group custom-control custom-checkbox mb-0">
+                        <input type="checkbox" class="custom-control-input" id="chkOperarSinCaja">
+                        <label class="custom-control-label" for="chkOperarSinCaja">
+                            Quiero realizar una venta rápida sin apertura de caja
+                        </label>
+                    </div>
+                }
+
             </div>
 
             <div class="modal-footer d-block">
@@ -49,6 +63,14 @@
                     <i class="fas fa-unlock mr-2"></i>
                     Abrir Caja
                 </button>
+
+                @if (ViewBag.PuedeOperarSinCajaBypass != null && (bool)ViewBag.PuedeOperarSinCajaBypass)
+                {
+                    <button type="button" class="btn btn-outline-warning btn-block" id="btnContinuarSinCaja" disabled>
+                        <i class="fas fa-bolt mr-2"></i>
+                        Continuar sin abrir caja
+                    </button>
+                }
 
                 <button type="button" class="btn btn-outline-secondary btn-block" id="btnCancelarAbrirCaja">
                     Cancelar

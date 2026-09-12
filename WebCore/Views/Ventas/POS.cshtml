@@ -1,4 +1,4 @@
-@*
+﻿@*
     Port de Web/Views/Ventas/POS.cshtml (6226 lineas) -- docs/10-migracion-aspnet-core/PLAN-POS-UI.md.
     Venta SIEMPRE nueva -- ver VentasController.POS() para el diseno sin Session.
 
@@ -90,7 +90,12 @@
     // Item 5 (2026-09-07, ver docs/DECISIONS.md): usuario con permiso real de "modificar venta" --
     // puede editar la fecha de la venta en curso, y puede haber entrado sin caja abierta (se le
     // advierte, queda a su criterio).
-    bool puedeEditarFechaVenta = ViewBag.PuedeEditarFechaVenta != null && (bool)ViewBag.PuedeEditarFechaVenta;
+    int diasLimitFechaVentaPOS = ViewBag.DiasLimitFechaVentaPOS != null ? (int)ViewBag.DiasLimitFechaVentaPOS : 0;
+    // Item 5b (2026-09-12, ver docs/DECISIONS.md): primera validacion de fecha -- con caja real
+    // abierta, piso = fecha de apertura. Vacio si no hay caja real (solo Admin llega hasta aca
+    // sin caja, ver PuedeOperarSinCajaYEditarFecha + item 7) -- en ese caso, sin piso de caja,
+    // solo rige la ventana de dias existente (diasLimitFechaVentaPOS).
+    string cajaAperturaFechaPOS = ViewBag.CajaAperturaFecha as string ?? "";
     bool advertenciaCajaCerrada = ViewBag.AdvertenciaCajaCerrada != null && (bool)ViewBag.AdvertenciaCajaCerrada;
     // Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md): con requiereOperadorPOS
     // el controller devuelve Model=null (igual que !cajaAbierta) -- se necesita distinguir los 2
@@ -102,6 +107,7 @@
     string sucursalNombrePOS = ViewBag.SucursalNombre as string ?? "";
     string posModoInstancia = ViewBag.PosModoInstancia as string ?? "original";
     string posInstanceId = ViewBag.PosInstanceId as string ?? "";
+    string returnUrlPOS = ViewBag.ReturnUrlPOS as string ?? "";
     bool esEdicionVenta = ViewBag.EsEdicionVenta != null && (bool)ViewBag.EsEdicionVenta;
     int idVentaEditar = ViewBag.IdVentaEditar != null ? (int)ViewBag.IdVentaEditar : 0;
     bool soloFormaPago = ViewBag.SoloFormaPago != null && (bool)ViewBag.SoloFormaPago;
@@ -224,33 +230,35 @@
                                     <span class="pos-brand-subline-value text-truncate">@sucursalNombrePOS</span>
                                 </div>
 
-                                @if (!puedeEditarFechaVenta)
-                                {
-                                    <div class="pos-fecha pos-meta-time pos-meta-time-inline">
-                                        <span class="pos-time-chip">
-                                            <i class="far fa-clock"></i>
-                                            <span id="fechaHoraPOS" class="font-weight-bold"></span>
-                                        </span>
-                                    </div>
-                                }
+                                @* Item 5 (2026-09-11, ver docs/DECISIONS.md "fecha del POS: click-to-reveal +
+                                   ventana de dias"): reemplaza el gate binario anterior (chip de solo lectura
+                                   O input editable, segun permiso) -- ahora el chip se muestra SIEMPRE para
+                                   cualquier usuario, y al hacer click revela el input editable en su lugar.
+                                   Validacion por ventana de dias (DiasLimitFechaVentaPOS) en vez de permiso
+                                   binario -- ver JS mas abajo y VentasController.FechaVentaDentroDeVentanaPermitida
+                                   (chequeado tambien server-side, no confia solo en el cliente). *@
+                                <div class="pos-fecha pos-meta-time pos-meta-time-inline" id="fechaHoraPOSWrap">
+                                    <span class="pos-time-chip" id="fechaHoraPOSChip" role="button" tabindex="0" title="Click para editar la fecha y hora">
+                                        <i class="far fa-clock"></i>
+                                        <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                                    </span>
+                                </div>
+                                <div class="pos-fecha pos-meta-time d-none" id="fechaVentaEditableWrap">
+                                    @* Item 5a (2026-09-12, ver docs/DECISIONS.md): se saco el label
+                                       "Fecha y hora" a pedido explicito del usuario -- el input ya
+                                       es autoexplicativo (aparece al hacer click en el chip que
+                                       muestra la fecha/hora). *@
+                                    @* data-caja-apertura: expuesto para que los tests E2E puedan leer el piso
+                                       real de la ventana (item 5b) sin adivinar por reloj de pared -- no se usa
+                                       en la logica de produccion, esa vive en cajaAperturaFechaPOS (JS) mas abajo. *@
+                                    <input type="datetime-local"
+                                           id="fechaVentaEditable"
+                                           class="form-control form-control-sm"
+                                           data-caja-apertura="@cajaAperturaFechaPOS"
+                                           value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm")" />
+                                </div>
                             </div>
                         </div>
-
-                        @* Item 5 (2026-09-07, ver docs/DECISIONS.md): port literal de
-                           Web/Views/Ventas/POS.cshtml:148-157, extendido para habilitarse tambien
-                           en venta nueva (el clasico solo lo habilita editando una venta ya
-                           guardada) -- gatea por el mismo permiso que saltea la validacion de
-                           caja abierta (PuedeOperarSinCajaYEditarFecha). *@
-                        @if (puedeEditarFechaVenta)
-                        {
-                            <div class="pos-fecha pos-meta-time">
-                                <label for="fechaVentaEditable" class="small d-block mb-1">Fecha y hora</label>
-                                <input type="datetime-local"
-                                       id="fechaVentaEditable"
-                                       class="form-control form-control-sm"
-                                       value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm")" />
-                            </div>
-                        }
 
                         <div class="pos-meta-hidden">
                             <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta.ToString("yyyy-MM-ddTHH:mm:ss")" />
@@ -383,6 +391,14 @@
                                                         Flash
                                                     </button>
 
+                                                    @* Limpia #inputCodigo nomas -- utilidad general para descartar un
+                                                       codigo mal leido/tipeado, sin relacion con el alta rapida de
+                                                       producto (esa se cancela con el boton "Cancelar" del propio
+                                                       formulario, no con este). Siempre visible. *@
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarCodigoPOS">
+                                                        Limpiar
+                                                    </button>
+
                                                     <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">
                                                         Cerrar cámara
                                                     </button>
@@ -457,6 +473,62 @@
                                                     <small>a la venta</small>
                                                 </span>
                                             </button>
+
+                                            @* Alta rapida de producto (codigo no encontrado): ocultos por default, los
+                                               muestra pos-product.js. Clase propia "pos-alta-rapida-bloque" (NO ".mb-3")
+                                               a proposito: a <=991.98px .producto-resumen pasa a CSS grid con
+                                               ".producto-resumen > .mb-3 { display:contents }" para acomodar
+                                               Nombre/Precio/Cantidad/Subtotal en una grilla de 2x2 (ver pos.css) -- si
+                                               este bloque nuevo (5-6 campos) tomara ".mb-3" caeria en esa misma regla y
+                                               sus hijos se desparramarian sin area asignada en la grilla. La clase
+                                               "pos-alta-rapida-activa" en .producto-resumen (ver pos.css) oculta el grupo
+                                               normal de arriba (.pos-product-metric + #btnAgregarProducto) sin tocar sus
+                                               clases -- evita pisar el d-none/d-md-flex responsive ya existente en
+                                               #btnAgregarProducto. *@
+                                            <div id="prodAltaRapidaSugerencia" class="pos-alta-rapida-bloque d-none">
+                                                <div class="alert alert-warning py-2 px-3 mb-2" id="prodAltaRapidaSugerenciaMsg"></div>
+                                                <div class="d-flex" style="gap:.5rem;">
+                                                    <button type="button" id="btnAltaRapidaSi" class="btn btn-success btn-sm flex-fill">Sí, dar de alta</button>
+                                                    <button type="button" id="btnAltaRapidaNo" class="btn btn-secondary btn-sm flex-fill">No</button>
+                                                </div>
+                                            </div>
+
+                                            @* Formulario compacto a proposito (ver pos.css .pos-alta-rapida-form): el panel
+                                               original solo tenia 3 filas cortas + 1 boton, y este agrega Descripcion +
+                                               Precio/IVA + Pesable + Guardar/Cancelar -- sin achicar espaciado y agrupar
+                                               Precio+IVA en una fila, el contenido no entraba en el alto disponible y
+                                               Guardar/Cancelar quedaban fuera de la vista (bug real reportado 2026-09-12).
+                                               ".pos-alta-rapida-campos" tiene ademas un max-height + scroll propio como
+                                               resguardo: pase lo que pase (pantalla chica, mensaje de autocompletado largo),
+                                               los botones Guardar/Cancelar quedan siempre fuera de esa zona scrolleable y
+                                               por lo tanto siempre visibles. *@
+                                            <div id="prodAltaRapidaForm" class="pos-alta-rapida-bloque pos-alta-rapida-form d-none">
+                                                <div class="pos-alta-rapida-campos">
+                                                    <div id="prodAltaRapidaAutocompleteMsg" class="small text-success mb-1 d-none"></div>
+                                                    <div class="mb-1">
+                                                        <label class="form-label small mb-0">Descripción</label>
+                                                        <input type="text" id="inputAltaRapidaDescripcion" class="form-control form-control-sm" maxlength="50" autocomplete="off">
+                                                    </div>
+                                                    <div class="row g-1 mb-1">
+                                                        <div class="col-7">
+                                                            <label class="form-label small mb-0">Precio</label>
+                                                            <input type="text" id="inputAltaRapidaPrecio" class="form-control form-control-sm" autocomplete="off" inputmode="decimal">
+                                                        </div>
+                                                        <div class="col-5">
+                                                            <label class="form-label small mb-0">IVA</label>
+                                                            <select id="selectAltaRapidaIva" class="form-select form-select-sm"></select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-check mb-1">
+                                                        <input type="checkbox" id="checkAltaRapidaPesable" class="form-check-input">
+                                                        <label class="form-check-label small" for="checkAltaRapidaPesable">Pesable</label>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex" style="gap:.5rem;">
+                                                    <button type="button" id="btnAltaRapidaGuardar" class="btn btn-success btn-sm flex-fill">Guardar</button>
+                                                    <button type="button" id="btnAltaRapidaCancelar" class="btn btn-secondary btn-sm flex-fill">Cancelar</button>
+                                                </div>
+                                            </div>
 
                                         </div>
 
@@ -1093,6 +1165,29 @@
         </div>
     </div>
 
+    @* Batch 10 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): "Nuevo Pago" en POS --
+       #modalPagoPOS se apila SOBRE #modalFinanzasPOS (que ya está abierto cuando se llega acá,
+       vía F2 -> Cuentas Corrientes -> #btnAgregarPagoCtaCte con data-pos-ajax). Mismo mecanismo
+       de z-index dinámico ya usado en Cajas/CajasAbiertas.cshtml (Batch 6) -- ver el handler
+       show.bs.modal.posPagoStack más abajo. *@
+    <div class="modal fade" id="modalPagoPOS" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="modalPagoPOSTitle">
+                        <i class="fas fa-hand-holding-usd mr-2"></i>Pago / Cobro
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0" id="contenedorPagoPOS">
+                    <div class="p-4 text-center text-muted">Cargando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="globalAntiForgeryToken" style="display:none;">
         @Html.AntiForgeryToken()
     </div>
@@ -1107,35 +1202,53 @@ else if (requiereOperadorPOS)
 else
 {
     @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
+    @* Item 7 (2026-09-11, ver docs/DECISIONS.md): ContinuarSinCajaAbierta es [ValidateAntiForgeryToken] --
+       sin este token, la rama de "sin caja real" hoy nunca lo incluia (nadie lo necesitaba antes). *@
+    <div id="globalAntiForgeryToken" style="display:none;">
+        @Html.AntiForgeryToken()
+    </div>
 }
 
 @section Scripts {
     <script src="~/Scripts/carnisys.balanza.js?v=1"></script>
-    <script src="~/Scripts/app/pos-state.js?v=1"></script>
-    <script src="~/Scripts/app/pos-keyboard.js?v=1"></script>
+    <script src="~/Scripts/app/pos-state.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-keyboard.js" asp-append-version="true"></script>
     @* Port de Web/Scripts/app/pos-forma-pago-precios.js (2026-09-09, Batch C, ver
        docs/DECISIONS.md "Batch C: POS forma de pago") -- nunca se habia incluido, causaba que el
        atajo "5" (QR) del modal de forma de pago no hiciera nada (normalizarTipoFormaPago sin este
        script no normaliza mayusculas/minusculas) y que pos-product.js/pos-cart.js no recalcularan
        el precio segun forma de pago electronica. Cargado antes de pos-product.js/pos-cart.js
        (ambos lo referencian) y de forma-pago.js (que lo usa para el matching de atajos). *@
-    <script src="~/Scripts/app/pos-forma-pago-precios.js?v=1"></script>
-    <script src="~/Scripts/app/pos-product.js?v=1"></script>
-    <script src="~/Scripts/app/pos-cart.js?v=1"></script>
-    <script src="~/Scripts/app/pos-balanza.js?v=1"></script>
-    <script src="~/Scripts/app/forma-pago.js?v=1"></script>
-    <script src="~/Scripts/app/ventas-expendios-pos.js?v=1"></script>
-    <script src="~/Scripts/app/pos-comment.js?v=1"></script>
-    <script src="~/Scripts/app/pos-help.js?v=1"></script>
-    <script src="~/Scripts/app/calculadora-billetes.js?v=3239"></script>
-    <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
-    <script src="~/Scripts/app/egresos-caja.js?v=10"></script>
-    <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
-    <script src="~/Scripts/app/pos-compact.js?v=1"></script>
-    <script src="~/Scripts/app/seleccion-usuario.js?v=3"></script>
-    <script src="~/Scripts/app/persona-buscar.js?v=1"></script>
-    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
-    <script src="~/Scripts/app/factura-electronica.js?v=4"></script>
+    <script src="~/Scripts/app/pos-forma-pago-precios.js" asp-append-version="true"></script>
+
+    @* Alta rapida de producto (ver docs/DECISIONS.md 2026-09-12): feature scoped SOLO a esta
+       vista -- pos-product.js es compartido con PuntosExpendio/POS.cshtml, que tiene su propio
+       bloque de scanner/panel no verificado para esta feature. Sin este flag (y sin declararlo en
+       el _LayoutPOS.cshtml compartido, a proposito), evaluarSugerenciaAlta() queda inerte en
+       cualquier otra vista que cargue pos-product.js. *@
+    <script>
+        window.POS_ALTA_RAPIDA_HABILITADA = true;
+        window.guardarRapidoPOSUrl = '@Url.Action("GuardarRapidoPOS", "Productos")';
+        window.obtenerAlicuotasIvaUrl = '@Url.Action("ObtenerAlicuotasIva", "Productos")';
+        window.buscarProductoGlobalParaAltaUrl = '@Url.Action("BuscarProductoGlobalParaAlta", "Productos")';
+    </script>
+
+    <script src="~/Scripts/app/pos-product.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-cart.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-balanza.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/forma-pago.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/ventas-expendios-pos.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-comment.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-help.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/egresos-caja.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-multi-instance.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-compact.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/persona-buscar.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/factura-electronica.js" asp-append-version="true"></script>
 
     @* Usuario de produccion (Batch 5, 2026-09-06, ver docs/DECISIONS.md) -- port literal de
        Web/Views/Ventas/POS.cshtml:1396-1486. Vive en un bloque propio, ANTES del IIFE de
@@ -1281,6 +1394,40 @@ else
                         window.location.href = "@Url.Action("Index", "Home")";
                     });
 
+                    // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): checkbox
+                    // + boton solo existen cuando ViewBag.PuedeOperarSinCajaBypass es true (ver
+                    // _AbrirCajaModal.cshtml) -- confirmacion explicita, requerida SIEMPRE que no
+                    // haya caja real, antes de entrar a POS con el banner de advertencia.
+                    $("#chkOperarSinCaja").off("change").on("change", function () {
+                        $("#btnContinuarSinCaja").prop("disabled", !$(this).is(":checked"));
+                    });
+
+                    $("#btnContinuarSinCaja").off("click").on("click", function () {
+                        var $btn = $(this);
+                        $btn.prop("disabled", true);
+
+                        $.ajax({
+                            url: "@Url.Action("ContinuarSinCajaAbierta", "Ventas")",
+                            type: "POST",
+                            dataType: "json",
+                            data: { posInstanceId: "@posInstanceId" },
+                            headers: { RequestVerificationToken: document.querySelector('#globalAntiForgeryToken input[name="__RequestVerificationToken"]')?.value || "" },
+                            success: function (r) {
+                                if (r && r.ok) {
+                                    window.PosNavegandoInternoPOS = true;
+                                    location.reload();
+                                    return;
+                                }
+                                mostrarErrorAbrirCaja((r && r.msg) ? r.msg : "No se pudo continuar sin abrir caja.");
+                                $btn.prop("disabled", false);
+                            },
+                            error: function () {
+                                mostrarErrorAbrirCaja("No se pudo contactar al servidor.");
+                                $btn.prop("disabled", false);
+                            }
+                        });
+                    });
+
                     $("#montoInicial").off("keydown").on("keydown", function (e) {
                         if (e.key === "Enter") {
                             e.preventDefault();
@@ -1320,7 +1467,13 @@ else
             var posKeyboard = window.POSKeyboard.create({
                 handleEnter: function () { return posProduct ? posProduct.handleEnter() : null; },
                 calculateSubtotal: function () { return posCart ? posCart.calculateSubtotal() : null; },
-                finishTyping: function (value) { return posProduct ? posProduct.finishTyping(value) : null; },
+                // omitirSugerenciaAlta=true (5to arg): bug real reportado 2026-09-12 -- el teclado
+                // virtual llama a finishTyping en CADA digito (writeCharacter/backspace de
+                // pos-keyboard.js), igual que bindLiveSearch() hace con el tipeo fisico via keyup.
+                // Sin este flag, la sugerencia de alta rapida aparecia con el codigo a medio
+                // escribir; recien debe ofrecerse al confirmar con Enter (fisico o "Enter" del
+                // propio teclado virtual, que pasa por handleEnter(), no por aca).
+                finishTyping: function (value) { return posProduct ? posProduct.finishTyping(value, undefined, undefined, undefined, true) : null; },
                 setEnterDesdeTecladoVirtual: function (value) { return posProduct ? posProduct.setEnterDesdeTecladoVirtual(value) : null; },
                 onManualModeRequested: function (inputId) { return posBalanza ? posBalanza.alternarDesdeAsterisco(inputId) : null; }
             });
@@ -1536,6 +1689,7 @@ else
                     var esMisActividades = !!url && url.indexOf("ActividadesCaja") >= 0;
                     var esCompra = !!url && url.indexOf("/Compras/") >= 0;
                     var esCtasCtes = !!url && url.indexOf("/Finanzas/CtasCtes") >= 0;
+                    var esCtaCtePersona = !!url && url.indexOf("/Finanzas/CtaCtePersona") >= 0;
                     var esHistorialPrecios = !!url && url.indexOf("/Ventas/HistorialPreciosCliente") >= 0;
 
                     $("#modalFinanzasPOS")
@@ -1543,7 +1697,14 @@ else
                         .toggleClass("modal-compra-pos-layout", esCompra)
                         .toggleClass("modal-ctasctes-pos-compacto", esCtasCtes)
                         .toggleClass("modal-mis-actividades-pos-compacto", esMisActividades)
-                        .toggleClass("modal-historial-precios-pos-compacto", esHistorialPrecios);
+                        .toggleClass("modal-historial-precios-pos-compacto", esHistorialPrecios)
+                        // Item 4 (2026-09-12, ver docs/DECISIONS.md): Escape debe poder cerrar
+                        // #modalFinanzasPOS cuando muestra Cuentas Corrientes (solo consulta, sin
+                        // riesgo de perder datos en curso) -- Compras/Egresos/Nuevo Pago quedan
+                        // afuera a proposito (formularios con carga en curso, data-keyboard=false
+                        // sigue protegiendolos igual que hoy). Ver keydown.escapeCierraFinanzasPOS
+                        // mas abajo, que lee este data-flag.
+                        .data("escape-cierra", esCtasCtes || esCtaCtePersona);
                     $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
                     $("#contenedorFinanzasPOS").html(window.POSModalLoading.html("Cargando..."));
                     window.POSModalLoading?.show('Cargando solicitud...');
@@ -1577,13 +1738,23 @@ else
                     });
                 },
 
+                // Bug real (cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 4:
+                // modal Cuenta Corriente desde POS (F2)"): faltaba desdePos=true -- el controller
+                // bloqueaba a cualquier usuario sin el permiso general Finanza.VerCtasCtes, en vez
+                // de dejarlo entrar (consulta puntual) con el saldo oculto, igual que ya hace
+                // abrirCtaCtePersona (abajo) desde hace tiempo.
                 abrirCtasCtes: function () {
-                    this.cargar('@Url.Action("CtasCtes", "Finanzas")', "Cuentas corrientes");
+                    this.cargar('@Url.Action("CtasCtes", "Finanzas", new { desdePos = true })', "Cuentas corrientes");
                 },
 
                 abrirCtaCtePersona: function (idPersona, fechaDesde) {
                     var url = '@Url.Action("CtaCtePersona", "Finanzas")' + '?idPersona=' + encodeURIComponent(idPersona) + '&desdePos=true';
                     if (fechaDesde) url += '&fechaDesde=' + encodeURIComponent(fechaDesde);
+                    // Batch 4 (2026-09-11, ver docs/DECISIONS.md): se propaga el posInstanceId de
+                    // esta pestaña de POS para que "nuevo pago"/"editar pago", mas abajo en esta
+                    // Cuenta Corriente, puedan resolver el operador real de produccion en vez de la
+                    // cuenta compartida (ver FinanzasController.ResolverOperadorPOS).
+                    if (window.POSModo && window.POSModo.instanceId) url += '&posInstanceId=' + encodeURIComponent(window.POSModo.instanceId);
                     this.cargar(url, "Cuenta corriente");
                 },
 
@@ -1595,8 +1766,101 @@ else
                     var url = '@Url.Action("HistorialPreciosCliente", "Ventas")' + '?idPersona=' + encodeURIComponent(idPersona);
                     window.POSPrecioCopiado = null;
                     this.cargar(url, "Historial de precios");
+                },
+
+                // "Nuevo pago" (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md) --
+                // port de Web/Views/Ventas/POS.cshtml:3238-3279 (POSFinanzas.cargarPago). Carga
+                // AddOrEditPago dentro de #modalPagoPOS, apilado SOBRE #modalFinanzasPOS (que ya
+                // esta abierto: se llega aca desde el boton "Agregar Pago / Cobro" dentro de
+                // Cuentas Corrientes/Cuenta Corriente Persona, ambos cargados en #modalFinanzasPOS).
+                cargarPago: function (url, titulo) {
+                    if (window.POSGuard && !window.POSGuard.startAction("finanzas:cargarPago")) return;
+
+                    $("#modalPagoPOSTitle").html('<i class="fas fa-hand-holding-usd mr-2"></i>' + (titulo || "Pago / Cobro"));
+                    $("#contenedorPagoPOS").html(window.POSModalLoading.html("Cargando..."));
+                    $("#modalPagoPOS").modal("show");
+
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        cache: false,
+                        success: function (html) {
+                            renderConScripts(html, "#contenedorPagoPOS", function () { });
+                        },
+                        error: function () {
+                            $("#contenedorPagoPOS").html('<div class="alert alert-danger m-3 mb-0">No se pudo cargar el formulario de pago.</div>');
+                        },
+                        complete: function () {
+                            window.POSGuard?.endAction("finanzas:cargarPago");
+                        }
+                    });
+                },
+
+                cerrarModalPago: function () {
+                    $("#modalPagoPOS").modal("hide");
                 }
             };
+
+            // Item 4 (2026-09-12, ver docs/DECISIONS.md): #modalFinanzasPOS tiene
+            // data-keyboard="false" (bloquea Escape para TODO su contenido, sin importar cual
+            // sea) -- se pidio habilitar Escape puntualmente para Cuentas Corrientes (solo
+            // consulta, sin riesgo de perder una carga en curso), sin tocar el comportamiento
+            // para Compras/Egresos/Nuevo Pago (formularios con datos sin guardar). El data-flag
+            // "escape-cierra" ya se setea/limpia en POSFinanzas.cargar segun el tipo de contenido
+            // -- ese es el unico lugar que decide "aplica o no", este handler solo lo lee.
+            $(document).on("keydown", function (e) {
+                if (e.key !== "Escape") return;
+                if (!$("#modalFinanzasPOS").hasClass("show")) return;
+                if (!$("#modalFinanzasPOS").data("escape-cierra")) return;
+                // Si hay un modal apilado ENCIMA (ej. #modalPagoPOS), Escape debe cerrar ESE
+                // primero -- no saltear directo a cerrar Cuentas Corrientes de abajo.
+                if ($(".modal.show").last().attr("id") !== "modalFinanzasPOS") return;
+
+                $("#modalFinanzasPOS").modal("hide");
+            });
+
+            // Interceptor de click para links "data-pos-ajax" que aparezcan DENTRO del contenido
+            // cargado en #modalFinanzasPOS (ej. el boton "Agregar Pago / Cobro" de Cuentas
+            // Corrientes/Cuenta Corriente Persona) -- sin esto, el click navegaria de pagina
+            // completa y sacaria al usuario de /Ventas/POS. Port de Web/Views/Ventas/POS.cshtml:
+            // 3506-3518 (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md).
+            $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {
+                var href = $(this).attr("href") || "";
+                if (!href || href.indexOf("/Finanzas/AddOrEditPago") === -1) return;
+
+                e.preventDefault();
+                window.POSFinanzas.cargarPago(href, $(this).attr("data-pos-title") || "Pago / Cobro");
+            });
+
+            // Modal sobre modal: mismo mecanismo ya establecido en Cajas/CajasAbiertas.cshtml
+            // (Batch 6, 2026-09-10) -- custom.css fija el mismo z-index fijo para TODOS los
+            // modales (".modal { z-index: var(--z-modal) !important; }"), asi que hace falta
+            // setProperty(...,'important') para que el calculo dinamico realmente le gane.
+            $(document)
+                .off('show.bs.modal.posPagoStack', '#modalPagoPOS')
+                .on('show.bs.modal.posPagoStack', '#modalPagoPOS', function () {
+                    var zIndex = 1040 + (10 * $('.modal.show').length);
+                    this.style.setProperty('z-index', zIndex, 'important');
+
+                    setTimeout(function () {
+                        var backdrop = $('.modal-backdrop').not('.modal-stack').last();
+                        if (backdrop.length) {
+                            backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
+                            backdrop.addClass('modal-stack');
+                        }
+                    }, 0);
+                })
+                .off('hidden.bs.modal.posPagoStack', '#modalPagoPOS')
+                .on('hidden.bs.modal.posPagoStack', '#modalPagoPOS', function () {
+                    $("#contenedorPagoPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                    var $restantes = $('.modal.show');
+                    if ($restantes.length > 0) {
+                        $('body').addClass('modal-open');
+                        if ($('.modal-backdrop').length === 0) {
+                            $('<div class="modal-backdrop fade show"></div>').appendTo('body');
+                        }
+                    }
+                });
 
             window.POSCompras = {
                 abrirNueva: function () {
@@ -1616,7 +1880,11 @@ else
             // lo resuelve solo. Se pasa idCierreActividadPOS (resuelto server-side en
             // VentasController.POS, mismo criterio que ObtenerCierreCajaActual).
             window.EgresosCajaUrls = {
-                mis: '@Url.Action("ActividadesCaja", "Cajas", new { idCierre = idCierreActividadPOS })',
+                // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): F6 apuntaba a
+                // ActividadesCaja, gateada por el permiso de CERRAR caja -- un vendedor sin ese
+                // permiso no podia ver ni su propia actividad. MisActividadesCaja es la misma
+                // pantalla sin ese gate (solo exige que la caja consultada sea la propia).
+                mis: '@Url.Action("MisActividadesCaja", "Cajas", new { idCierre = idCierreActividadPOS })',
                 nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas", new { desdePos = true, idCierre = idCierreActividadPOS })',
                 guardar: '@Url.Action("GuardarEgresoCaja", "Cajas")'
             };
@@ -1902,10 +2170,34 @@ else
             // pos-product.js. #btnLimpiarScanner del partial compartido _ScannerCodigoBarra.cshtml
             // NO se usa aca a proposito: el bloque HTML de POS es el propio del original (con
             // Flash/Cerrar camara nomas), no el partial compartido con otros modulos.
+            // Alta rapida de producto (codigo no encontrado, ver docs/DECISIONS.md 2026-09-12):
+            // se le informa a pos-product.js si esta lectura de camara es la primera vez que se ve
+            // este codigo o si ya es la segunda lectura IGUAL consecutiva -- evaluarSugerenciaAlta()
+            // recien ofrece el alta rapida en la segunda lectura confirmada. Esto NO cambia en nada
+            // el comportamiento de busqueda: manejarEnter() se sigue disparando en cada lectura,
+            // igual que siempre (un producto que YA EXISTE se agrega con una sola lectura, como hoy).
+            var ultimoCodigoLeidoPOS = null;
+
             var scannerPOS = new BarcodeScanner({
                 videoSelector: "#videoScanner",
                 containerSelector: "#scannerContainer",
                 onCodeDetected: function (codigo) {
+                    // Con el formulario de alta rapida abierto, la camara sigue corriendo en
+                    // segundo plano (no se cierra sola) -- sin este corte, cualquier lectura
+                    // pisaria #inputCodigo y dispararia una busqueda nueva mientras el cajero esta
+                    // completando el formulario. No es el mismo chequeo que el de dos-lecturas de
+                    // abajo: esto corta TODO el manejo de esta lectura, no solo la sugerencia.
+                    if (posProduct && typeof posProduct.isModoAltaProductoActivo === "function" && posProduct.isModoAltaProductoActivo()) {
+                        return;
+                    }
+
+                    var confirmadoPorDobleLectura = (ultimoCodigoLeidoPOS === codigo);
+                    ultimoCodigoLeidoPOS = codigo;
+
+                    if (posProduct && typeof posProduct.registrarOrigenLecturaCamara === "function") {
+                        posProduct.registrarOrigenLecturaCamara(codigo, confirmadoPorDobleLectura);
+                    }
+
                     document.querySelector("#inputCodigo").value = codigo;
                     document.querySelector("#inputCodigo").focus();
                     window.manejarEnter();
@@ -1913,6 +2205,13 @@ else
             });
             document.getElementById("btnScanner")?.addEventListener("click", () => scannerPOS.iniciar());
             document.getElementById("btnCerrarScanner")?.addEventListener("click", () => scannerPOS.cerrar());
+            document.getElementById("btnLimpiarCodigoPOS")?.addEventListener("click", () => {
+                var input = document.querySelector("#inputCodigo");
+                if (input) {
+                    input.value = "";
+                    input.focus();
+                }
+            });
             document.getElementById("btnFlash")?.addEventListener("click", async () => {
                 var estado = await scannerPOS.toggleFlash();
                 var btn = document.getElementById("btnFlash");
@@ -1970,6 +2269,7 @@ else
             window.POSModo.instancia = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posModoInstancia));
             window.POSModo.instanceId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceId));
             window.POSModo.soloFormaPago = @(soloFormaPago ? "true" : "false");
+            window.POSModo.returnUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(returnUrlPOS));
             window.POSMultiInstance?.init?.();
 
             // ===== Buscador de cliente real (F9), 2026-09-06 (retomado, ver docs/DECISIONS.md).
@@ -2952,12 +3252,20 @@ else
             (function () {
                 var dias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
                 var meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                var diasLimitFechaVentaPOS = @diasLimitFechaVentaPOS;
+                var cajaAperturaFechaPOS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(cajaAperturaFechaPOS));
+
+                function pad2(n) { return String(n).padStart(2, "0"); }
+
+                function formatDatetimeLocal(fecha) {
+                    return fecha.getFullYear() + "-" + pad2(fecha.getMonth() + 1) + "-" + pad2(fecha.getDate())
+                        + "T" + pad2(fecha.getHours()) + ":" + pad2(fecha.getMinutes());
+                }
 
                 function actualizarFechaHora() {
                     var ahora = new Date();
                     var texto = dias[ahora.getDay()] + " " + ahora.getDate() + " de " + meses[ahora.getMonth()]
-                        + ", " + ahora.getFullYear() + ". " + String(ahora.getHours()).padStart(2, "0")
-                        + ":" + String(ahora.getMinutes()).padStart(2, "0");
+                        + ", " + ahora.getFullYear() + ". " + pad2(ahora.getHours()) + ":" + pad2(ahora.getMinutes());
 
                     var span = document.getElementById("fechaHoraPOS");
                     if (span) span.innerText = texto;
@@ -2965,18 +3273,67 @@ else
 
                 actualizarFechaHora();
                 setInterval(actualizarFechaHora, 60000);
-            })();
 
-            // Item 5 (2026-09-07, ver docs/DECISIONS.md): #fechaVentaEditable (datetime-local,
-            // solo existe si el usuario tiene permiso de "modificar venta") sincroniza el hidden
-            // #fechaVenta -- el mismo campo que ya lee forma-pago.js al finalizar/modificar la
-            // venta, sin tocar ese archivo.
-            if ($("#fechaVentaEditable").length) {
-                $("#fechaVentaEditable").on("change input", function () {
-                    var value = $(this).val();
-                    if (value) $("#fechaVenta").val(value);
+                // Item 5 (2026-09-11, ver docs/DECISIONS.md "fecha del POS: click-to-reveal +
+                // ventana de dias"): click (o Enter/Espacio con teclado) en el chip revela el
+                // input editable -- reemplaza el gate binario anterior por permiso, ahora
+                // universal para cualquier usuario.
+                var $chipWrap = $("#fechaHoraPOSWrap");
+                var $editableWrap = $("#fechaVentaEditableWrap");
+                var $editable = $("#fechaVentaEditable");
+
+                function revelarFechaEditable() {
+                    $chipWrap.addClass("d-none");
+                    $editableWrap.removeClass("d-none");
+                    $editable.trigger("focus");
+                }
+
+                $("#fechaHoraPOSChip").on("click", revelarFechaEditable).on("keydown", function (e) {
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    e.preventDefault();
+                    revelarFechaEditable();
                 });
-            }
+
+                // #fechaVentaEditable sincroniza el hidden #fechaVenta -- el mismo campo que ya
+                // lee forma-pago.js al finalizar/modificar la venta, sin tocar ese archivo. Item 5
+                // (2026-09-11): valida contra la ventana de dias permitida -- fuera de rango,
+                // revierte a la fecha/hora actual real. El servidor vuelve a validar lo mismo
+                // (VentasController.FechaVentaDentroDeVentanaPermitida) -- esto es solo UX, no el
+                // unico control, no se puede bypassear editando el DOM a mano.
+                if ($editable.length) {
+                    $editable.on("change input", function () {
+                        var value = $(this).val();
+                        if (!value) return;
+
+                        var seleccionada = new Date(value);
+                        var ahora = new Date();
+
+                        // Item 5b (2026-09-12, ver docs/DECISIONS.md): con caja real abierta, la
+                        // fecha no puede ser anterior a cuando se abrio -- primera validacion,
+                        // mas precisa que la ventana de dias. La ventana de dias sigue aplicando
+                        // ADEMAS (no se reemplaza): se toma el piso mas restrictivo de los 2. Sin
+                        // caja real (bypass de Admin, cajaAperturaFechaPOS vacio), solo rige la
+                        // ventana de dias, igual que antes.
+                        var minima = new Date();
+                        minima.setHours(0, 0, 0, 0);
+                        minima.setDate(minima.getDate() - diasLimitFechaVentaPOS);
+
+                        if (cajaAperturaFechaPOS) {
+                            var minimaPorCaja = new Date(cajaAperturaFechaPOS);
+                            if (minimaPorCaja > minima) minima = minimaPorCaja;
+                        }
+
+                        if (isNaN(seleccionada.getTime()) || seleccionada < minima || seleccionada > ahora) {
+                            var valorAhora = formatDatetimeLocal(ahora);
+                            $(this).val(valorAhora);
+                            $("#fechaVenta").val(valorAhora);
+                            return;
+                        }
+
+                        $("#fechaVenta").val(value);
+                    });
+                }
+            })();
         })();
     </script>
 }

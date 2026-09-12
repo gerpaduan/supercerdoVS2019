@@ -155,7 +155,10 @@ namespace DatosPostgres
                 Entorno_HOMO_PROD = GetString(dr, "entorno_homo_prod"),
                 BaseDatosNombre = GetString(dr, "basedatosnombre"),
                 Activa = GetByte(dr, "activa"),
-                Observaciones = GetString(dr, "observaciones")
+                Observaciones = GetString(dr, "observaciones"),
+                // Item 6 (2026-09-11, ver docs/DECISIONS.md): mismo helper defensivo que EsRRII.
+                EmpresaPropia = GetBool(dr, "empresa_propia"),
+                EsCarniceria = GetBool(dr, "es_carniceria")
             };
         }
 
@@ -291,11 +294,12 @@ namespace DatosPostgres
             using (var cmd = new NpgsqlCommand(@"
                 INSERT INTO empresas (idempresa, razonsocialafip, cuit, nombrefantasia, slogan1, slogan2, slogan3,
                     iibb, condicioniva, inicioactividad, tenantslug, domicilio, ciudad, pais, telefono, email,
-                    basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod, basedatosnombre, activa, observaciones)
+                    basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod, basedatosnombre, activa, observaciones,
+                    empresa_propia, es_carniceria)
                 VALUES (@idEmpresa, @razonSocialAfip, @cuit, @nombreFantasia, @slogan1, @slogan2, @slogan3,
                     @iibb, @condicionIVA, @inicioActividad, @tenantSlug, @domicilio, @ciudad, @pais, @telefono,
                     @email, @basePath, @esRRII, @nombreCertificadoPfx, @entornoHomoProd, @baseDatosNombre,
-                    @activa, @observaciones);", cn, tx))
+                    @activa, @observaciones, @empresaPropia, @esCarniceria);", cn, tx))
             {
                 cmd.Parameters.AddWithValue("idEmpresa", idEmpresa);
                 cmd.Parameters.AddWithValue("razonSocialAfip", NullIfEmpty(empresa.RazonSocialAfip));
@@ -320,6 +324,8 @@ namespace DatosPostgres
                 cmd.Parameters.AddWithValue("baseDatosNombre", NullIfEmpty(empresa.BaseDatosNombre));
                 cmd.Parameters.Add("activa", NpgsqlTypes.NpgsqlDbType.Smallint).Value = (short)empresa.Activa;
                 cmd.Parameters.AddWithValue("observaciones", NullIfEmpty(empresa.Observaciones));
+                cmd.Parameters.AddWithValue("empresaPropia", empresa.EmpresaPropia);
+                cmd.Parameters.AddWithValue("esCarniceria", empresa.EsCarniceria);
                 cmd.ExecuteNonQuery();
             }
 
@@ -407,7 +413,7 @@ namespace DatosPostgres
                     domicilio = @domicilio, ciudad = @ciudad, pais = @pais, telefono = @telefono, email = @email,
                     basepath = @basePath, esrrii = @esRRII, nombrecertificado_pfx = @nombreCertificadoPfx,
                     entorno_homo_prod = @entornoHomoProd, basedatosnombre = @baseDatosNombre, activa = @activa,
-                    observaciones = @observaciones
+                    observaciones = @observaciones, empresa_propia = @empresaPropia, es_carniceria = @esCarniceria
                 WHERE idempresa = @idEmpresa;",
                 p =>
                 {
@@ -434,6 +440,8 @@ namespace DatosPostgres
                     p.AddWithValue("baseDatosNombre", NullIfEmpty(empresa.BaseDatosNombre));
                     p.Add("activa", NpgsqlTypes.NpgsqlDbType.Smallint).Value = (short)empresa.Activa;
                     p.AddWithValue("observaciones", NullIfEmpty(empresa.Observaciones));
+                    p.AddWithValue("empresaPropia", empresa.EmpresaPropia);
+                    p.AddWithValue("esCarniceria", empresa.EsCarniceria);
                 });
         }
 

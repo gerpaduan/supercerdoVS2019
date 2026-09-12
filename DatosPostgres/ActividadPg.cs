@@ -11,6 +11,12 @@ namespace DatosPostgres
     // negocio transaccional aca, es puro reporting cross-dominio (decision documentada en
     // docs/DECISIONS.md). Cada metodo devuelve un DataTable crudo; el mapeo a texto legible
     // ("se modifico el precio de X...") lo arma WebCore.Controllers.ActividadesController.
+    // 2026-09-10 (Batch 9 de la quinta ronda, ver docs/DECISIONS.md): las 4 queries con fecha de
+    // negocio propia (ventas anuladas/bonificadas, movimientos, compras) devuelven fecha_negocio/
+    // creado/actualizado por separado en vez de un unico COALESCE ya resuelto -- el WHERE/ORDER BY
+    // sigue filtrando y ordenando por el COALESCE (mismo comportamiento de rango que antes), pero
+    // el SELECT ya no lo colapsa, para que el service pueda calcular el origen ("creación"/
+    // "modificación") y detectar fechas anomalas (>1 dia de diferencia con la fecha de negocio).
     public class ActividadPg
     {
         private readonly string _connectionString;
@@ -56,18 +62,22 @@ namespace DatosPostgres
         // COALESCE(actualizado,creado,fechaventa): lineaventa no tiene timestamp propio, asi que
         // se aproxima con el de la venta (LIMITACION CONOCIDA: si la anulacion ocurrio en una
         // edicion posterior, "actualizado" de la venta si la refleja; si la venta nunca se
-        // reescribio via "modificar venta", cae en fechaventa/creado).
+        // reescribio via "modificar venta", cae en fechaventa/creado). Las 3 columnas (fecha de
+        // negocio, creado, actualizado) se devuelven CRUDAS por separado (2026-09-10, Batch 9 de
+        // la quinta ronda, ver docs/DECISIONS.md) -- el calculo de cual mostrar y la deteccion de
+        // fecha anomala (>1 dia de diferencia) se movieron de SQL a ActividadesFeedService.cs.
         public DataTable ObtenerVentasConLineasAnuladas(DateTime desde, DateTime hasta)
         {
             const string sql = @"
-                SELECT DISTINCT v.idventa, COALESCE(v.actualizado, v.creado, v.fechaventa) AS fecha,
-                       u.nombre AS vendedor
+                SELECT DISTINCT v.idventa, v.fechaventa AS fecha_negocio, v.creado AS creado,
+                       v.actualizado AS actualizado, u.nombre AS vendedor,
+                       COALESCE(v.actualizado, v.creado, v.fechaventa) AS orden_fecha
                 FROM lineaventa lv
                 INNER JOIN ventas v ON v.idventa = lv.idventa
                 LEFT JOIN usuarios u ON u.id = v.idvendedor
                 WHERE lv.cantkg < 0
                   AND COALESCE(v.actualizado, v.creado, v.fechaventa) BETWEEN @desde AND @hasta
-                ORDER BY fecha DESC;";
+                ORDER BY orden_fecha DESC;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
             {
@@ -83,14 +93,15 @@ namespace DatosPostgres
         public DataTable ObtenerVentasConBonificacionManual(DateTime desde, DateTime hasta)
         {
             const string sql = @"
-                SELECT DISTINCT v.idventa, COALESCE(v.actualizado, v.creado, v.fechaventa) AS fecha,
-                       u.nombre AS vendedor
+                SELECT DISTINCT v.idventa, v.fechaventa AS fecha_negocio, v.creado AS creado,
+                       v.actualizado AS actualizado, u.nombre AS vendedor,
+                       COALESCE(v.actualizado, v.creado, v.fechaventa) AS orden_fecha
                 FROM lineaventa lv
                 INNER JOIN ventas v ON v.idventa = lv.idventa
                 LEFT JOIN usuarios u ON u.id = v.idvendedor
                 WHERE lv.cantkg > 0 AND lv.bonificacion <> 0
                   AND COALESCE(v.actualizado, v.creado, v.fechaventa) BETWEEN @desde AND @hasta
-                ORDER BY fecha DESC;";
+                ORDER BY orden_fecha DESC;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
             {
@@ -104,7 +115,8 @@ namespace DatosPostgres
         public DataTable ObtenerMovimientos(DateTime desde, DateTime hasta)
         {
             const string sql = @"
-                SELECT m.idmovimiento, COALESCE(m.actualizado, m.creado, m.fechamovimiento) AS fecha,
+                SELECT m.idmovimiento, m.fechamovimiento AS fecha_negocio, m.creado AS creado,
+                       m.actualizado AS actualizado,
                        so.sucursal AS sucursal_origen, sd.sucursal AS sucursal_destino,
                        COALESCE(ap.nombre, cp.nombre) AS usuario
                 FROM movimiento m
@@ -113,7 +125,7 @@ namespace DatosPostgres
                 LEFT JOIN usuarios cp ON cp.id = m.creadopor
                 LEFT JOIN usuarios ap ON ap.id = m.actualizadopor
                 WHERE COALESCE(m.actualizado, m.creado, m.fechamovimiento) BETWEEN @desde AND @hasta
-                ORDER BY fecha DESC;";
+                ORDER BY COALESCE(m.actualizado, m.creado, m.fechamovimiento) DESC;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
             {
@@ -127,13 +139,14 @@ namespace DatosPostgres
         public DataTable ObtenerCompras(DateTime desde, DateTime hasta)
         {
             const string sql = @"
-                SELECT c.idcompra, COALESCE(c.actualizado, c.creado, c.fechacompra) AS fecha,
+                SELECT c.idcompra, c.fechacompra AS fecha_negocio, c.creado AS creado,
+                       c.actualizado AS actualizado,
                        c.tipocompra, COALESCE(ap.nombre, cp.nombre) AS usuario
                 FROM compras c
                 LEFT JOIN usuarios cp ON cp.id = c.creadopor
                 LEFT JOIN usuarios ap ON ap.id = c.actualizadopor
                 WHERE COALESCE(c.actualizado, c.creado, c.fechacompra) BETWEEN @desde AND @hasta
-                ORDER BY fecha DESC;";
+                ORDER BY COALESCE(c.actualizado, c.creado, c.fechacompra) DESC;";
 
             return DbPg.DataTable(_connectionString, _idEmpresa, sql, p =>
             {

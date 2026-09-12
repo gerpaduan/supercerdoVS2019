@@ -5,10 +5,16 @@ namespace WebCore.Services
     // Extraido de ActividadesController.cs (2026-09-10, item 4 de la segunda ronda de pedidos --
     // ver docs/DECISIONS.md "Batch 8: Actividades en el dashboard"). Refactor de extraccion pura
     // (sin cambio de comportamiento, verificado con Playwright que /Actividades sigue mostrando
-    // exactamente los mismos items antes/despues): junta las 6 fuentes heterogeneas (cambio de
+    // exactamente los mismos items antes/despues): junta las 7 fuentes heterogeneas (cambio de
     // precio, venta anulada, venta con bonificacion manual, egreso de caja, movimiento, compra,
     // formula) en una sola lista ordenada por fecha. Reusado por ActividadesController (pantalla
     // completa) y HomeController (bloque "Actividades" del dashboard, ultimas 10).
+    //
+    // Batch 9 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): para venta anulada/venta
+    // bonificada/movimiento/compra, ademas de la fecha ya calcula OrigenFecha ("creación"/
+    // "modificación") y EsAnomalia (>1 dia de diferencia con la fecha de negocio real del
+    // registro) -- ver ResolverFechaMostrada mas abajo. El fin es poder filtrar registros con
+    // comportamiento extraño (cargados/editados con fecha muy distinta a cuando ocurrieron).
     public class ActividadesFeedService
     {
         private readonly Utilidades.IEmpresaContext _empresa;
@@ -45,9 +51,12 @@ namespace WebCore.Services
             {
                 int idVenta = Convert.ToInt32(row["idventa"]);
                 string vendedor = row["vendedor"] == DBNull.Value ? "" : Convert.ToString(row["vendedor"]) ?? "";
+                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
-                    Fecha = (DateTime)row["fecha"],
+                    Fecha = fecha,
+                    OrigenFecha = origenFecha,
+                    EsAnomalia = esAnomalia,
                     Tipo = "Venta anulada",
                     Descripcion = $"Hubo ítems anulados en la venta #{idVenta}" + (string.IsNullOrWhiteSpace(vendedor) ? "" : $" (vendedor: {vendedor})"),
                     IdVenta = idVenta
@@ -58,9 +67,12 @@ namespace WebCore.Services
             {
                 int idVenta = Convert.ToInt32(row["idventa"]);
                 string vendedor = row["vendedor"] == DBNull.Value ? "" : Convert.ToString(row["vendedor"]) ?? "";
+                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
-                    Fecha = (DateTime)row["fecha"],
+                    Fecha = fecha,
+                    OrigenFecha = origenFecha,
+                    EsAnomalia = esAnomalia,
                     Tipo = "Precio modificado en venta",
                     Descripcion = $"Se aplicó un descuento/recargo manual en la venta #{idVenta}" + (string.IsNullOrWhiteSpace(vendedor) ? "" : $" (vendedor: {vendedor})"),
                     IdVenta = idVenta
@@ -94,9 +106,12 @@ namespace WebCore.Services
                 string origen = row["sucursal_origen"] == DBNull.Value ? "?" : Convert.ToString(row["sucursal_origen"]) ?? "?";
                 string destino = row["sucursal_destino"] == DBNull.Value ? "?" : Convert.ToString(row["sucursal_destino"]) ?? "?";
                 string usuarioMov = row["usuario"] == DBNull.Value ? "" : Convert.ToString(row["usuario"]) ?? "";
+                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
-                    Fecha = (DateTime)row["fecha"],
+                    Fecha = fecha,
+                    OrigenFecha = origenFecha,
+                    EsAnomalia = esAnomalia,
                     Tipo = "Movimiento",
                     Descripcion = $"Movimiento de stock de {origen} a {destino}" + (string.IsNullOrWhiteSpace(usuarioMov) ? "" : $" (por {usuarioMov})")
                 });
@@ -104,12 +119,20 @@ namespace WebCore.Services
 
             foreach (System.Data.DataRow row in repo.ObtenerCompras(desdeConHora, hastaConHora).Rows)
             {
+                // El sub-tipo real (Media Res/Cortes/Ingreso Stock/Egreso Stock/Cierre Stock/
+                // Pesaje Cortes/Ajuste Stock -- Entidades.Compra.tipoCompraEnum) ya viaja tal cual
+                // en la columna "tipocompra" (confirmado: CompraPg.cs filtra con ILIKE contra estos
+                // mismos textos, no hay conversion de enum pendiente) -- antes solo se usaba en la
+                // Descripcion, ahora tambien en el Tipo (2026-09-10, Batch 9 quinta ronda).
                 string tipo = row["tipocompra"] == DBNull.Value ? "Compra" : Convert.ToString(row["tipocompra"]) ?? "Compra";
                 string usuarioCompra = row["usuario"] == DBNull.Value ? "" : Convert.ToString(row["usuario"]) ?? "";
+                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
-                    Fecha = (DateTime)row["fecha"],
-                    Tipo = "Compra/Stock",
+                    Fecha = fecha,
+                    OrigenFecha = origenFecha,
+                    EsAnomalia = esAnomalia,
+                    Tipo = string.IsNullOrWhiteSpace(tipo) ? "Compra/Stock" : tipo,
                     Descripcion = $"{tipo} #{row["idcompra"]}" + (string.IsNullOrWhiteSpace(usuarioCompra) ? "" : $" (por {usuarioCompra})")
                 });
             }
@@ -127,6 +150,27 @@ namespace WebCore.Services
             }
 
             return items.OrderByDescending(i => i.Fecha).ToList();
+        }
+
+        // Batch 9 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): resuelve, para las 4
+        // fuentes que tienen una fecha de negocio propia separada de creado/actualizado (ventas
+        // anuladas/bonificadas, movimientos, compras), (a) que fecha mostrar (mismo criterio que
+        // el COALESCE que antes vivia en SQL: actualizado > creado > fecha_negocio), (b) si esa
+        // fecha viene de una creacion o una modificacion, y (c) si difiere de la fecha de negocio
+        // real por mas de 1 dia -- señal de un registro cargado o editado fuera de tiempo. Precio/
+        // Formula/Egreso de caja no llaman a este metodo (no tienen fecha de negocio separada del
+        // todo, o no fue confirmado con el usuario incluirlos en la deteccion de anomalias).
+        private static (DateTime fecha, string origenFecha, bool esAnomalia) ResolverFechaMostrada(System.Data.DataRow row)
+        {
+            DateTime fechaNegocio = (DateTime)row["fecha_negocio"];
+            DateTime? creado = row["creado"] == DBNull.Value ? null : (DateTime?)row["creado"];
+            DateTime? actualizado = row["actualizado"] == DBNull.Value ? null : (DateTime?)row["actualizado"];
+
+            DateTime fecha = actualizado ?? creado ?? fechaNegocio;
+            string origenFecha = actualizado.HasValue ? "modificación" : "creación";
+            bool esAnomalia = Math.Abs((fecha - fechaNegocio).TotalDays) > 1;
+
+            return (fecha, origenFecha, esAnomalia);
         }
 
         private static decimal ToDecimal(object value)

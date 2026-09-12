@@ -1,4 +1,4 @@
-@model FacturasIndexVm
+﻿@model FacturasIndexVm
 
 @{
     ViewBag.Title = "Facturas";
@@ -180,7 +180,7 @@
 @Html.Partial("~/Views/Ventas/_VentasFacturasFiltrosScripts.cshtml", "facturas")
 
 @section Scripts {
-<script src="~/Scripts/app/factura-electronica.js?v=4"></script>
+<script src="~/Scripts/app/factura-electronica.js" asp-append-version="true"></script>
 <script>
     // "Nueva factura" sin venta (2026-09-07, ver header de este archivo y docs/DECISIONS.md) --
     // mismas URLs/funcion que ya usa Ventas/POS.cshtml para el mismo flujo, duplicadas aca porque

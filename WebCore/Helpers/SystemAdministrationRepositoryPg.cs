@@ -84,7 +84,9 @@ namespace WebCore.Helpers
                 EntornoHomoProd = e.Entorno_HOMO_PROD ?? "",
                 BaseDatosNombre = e.BaseDatosNombre ?? "",
                 Activa = e.Activa == 1,
-                Observaciones = e.Observaciones ?? ""
+                Observaciones = e.Observaciones ?? "",
+                EmpresaPropia = e.EmpresaPropia,
+                EsCarniceria = e.EsCarniceria
             };
         }
 
@@ -129,7 +131,9 @@ namespace WebCore.Helpers
                 Entorno_HOMO_PROD = model.EntornoHomoProd,
                 BaseDatosNombre = model.BaseDatosNombre,
                 Activa = (byte)(model.Activa ? 1 : 0),
-                Observaciones = model.Observaciones
+                Observaciones = model.Observaciones,
+                EmpresaPropia = model.EmpresaPropia,
+                EsCarniceria = model.EsCarniceria
             };
         }
 

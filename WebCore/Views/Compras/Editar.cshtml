@@ -1,9 +1,16 @@
-@model WebCore.Models.CompraEditVm
+﻿@model WebCore.Models.CompraEditVm
 @using System
 @using System.Collections.Generic
 @using Entidades
 
 @{
+    // Bug real (cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 3: modal Nueva
+    // Compra embebido en POS"): faltaba el equivalente a Web/Views/Compras/Editar.cshtml:8. Sin
+    // esto, cuando la vista se carga embebida dentro del modal de POS (DesdePos=true, via AJAX +
+    // renderConScripts en Ventas/POS.cshtml), se devolvia la pagina COMPLETA (con _Layout.cshtml:
+    // nav, sidebar, sus propios <script src="jquery">/<script src="bootstrap.bundle">) anidada
+    // dentro del modal-body chico de POS.
+    Layout = Model.DesdePos ? null : "_Layout";
     ViewBag.Title = Model.EsEdicion ? "Modificar Compra" : "Nueva Compra";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     var modalProductoData = new ViewDataDictionary(ViewData);
@@ -491,18 +498,24 @@
     </div>
 }
 
-    @* Diferencia deliberada respecto al original: se elimino la rama "@if (Model.DesdePos) {...}"
-       (scripts inline para cuando esta vista se abre embebida en POS, ver header del controller)
-       porque el Modulo 8 (POS) todavia no esta portado a WebCore -- nada navega hoy con
-       origen=pos, asi que esa rama nunca se ejecutaria. Se conserva solo la rama "else" original
-       (navegacion completa por Compras/Index), ya estructurada como @section Scripts. *@
-    @section Scripts {
-        <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=3")"></script>
-        <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
-        <script src="@Url.Content("~/Scripts/app/compras.js?v=27")"></script>
-        <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    @* Restaurado 2026-09-10 (cuarta ronda de pedidos, ver docs/DECISIONS.md "Batch 3: modal Nueva
+       Compra embebido en POS") -- la rama "@if (Model.DesdePos)" se habia sacado con el argumento
+       de que "nada navega hoy con origen=pos", pero Ventas/POS.cshtml (window.POSCompras.
+       abrirNueva, atajo F5) ya navega asi. Sin Layout (embebido), los scripts van inline en el
+       body -- no hay @section Scripts que renderizar sin un _Layout que lo pida. Diferencias
+       reales vs. la rama normal, ambas ya presentes en el clasico (Web/Views/Compras/Editar.cshtml
+       :498-548): (1) modalProductoSelector apunta a "#modalBuscarProducto", el modal generico YA
+       presente en la pagina padre de POS (Ventas/POS.cshtml:744, via _BuscarProductoModal.cshtml
+       con id default) -- NO se re-renderiza el modal nested de esta vista (linea 482 lo excluye
+       con @if (!Model.DesdePos), evita duplicar el id dentro de un modal ya anidado. (2)
+       EditPageGuard.init() NO se llama embebido, igual que clasico -- solo EditReadOnly.init(). *@
+    @if (Model.DesdePos)
+    {
+        <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
-        <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+        <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
         <script>
             (function () {
                 window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
@@ -513,12 +526,12 @@
 
                 window.ComprasUI.init({
                     formSelector: "#formCompra",
-                    desdePos: false,
-                    widgetFijo: false,
+                    desdePos: true,
+                    widgetFijo: true,
                     permiteMediaRes: @(permiteMediaRes ? "true" : "false"),
                     esEdicion: @(Model.EsEdicion ? "true" : "false"),
                     draftKey: "@Model.DraftKey",
-                    modalProductoSelector: "#modalBuscarProductoCompra",
+                    modalProductoSelector: "#modalBuscarProducto",
                     initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas)),
                     urls: {
                         guardar: "@Url.Action("Guardar", "Compras")",
@@ -543,14 +556,67 @@
                         }
                     }
                 });
-
-                if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
-                    window.EditPageGuard.init({
-                        formSelector: "#formCompra",
-                        modifyButtonSelector: "#btnHabilitarEdicionCompra",
-                        saveButtonSelector: "#btnGuardarCompra"
-                    });
-                }
             })();
         </script>
+    }
+    else
+    {
+        @section Scripts {
+            <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
+            <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
+            <script>
+                (function () {
+                    window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
+
+                    if (!window.ComprasUI || typeof window.ComprasUI.init !== "function") {
+                        return;
+                    }
+
+                    window.ComprasUI.init({
+                        formSelector: "#formCompra",
+                        desdePos: false,
+                        widgetFijo: false,
+                        permiteMediaRes: @(permiteMediaRes ? "true" : "false"),
+                        esEdicion: @(Model.EsEdicion ? "true" : "false"),
+                        draftKey: "@Model.DraftKey",
+                        modalProductoSelector: "#modalBuscarProductoCompra",
+                        initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas)),
+                        urls: {
+                            guardar: "@Url.Action("Guardar", "Compras")",
+                            personaBuscarModal: "@Url.Action("Buscar", "Personas")",
+                            personaListar: "@Url.Action("Listar", "Personas")",
+                            personaCrear: "@Url.Action("PersonaModal", "Personas")",
+                            personaGuardarCrear: "@Url.Action("GuardarPersonaModal", "Personas")",
+                            buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
+                            editarLayout: "@Url.Action("Editar", "Compras")",
+                            nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
+                        }
+                    });
+
+                    window.EditReadOnly && window.EditReadOnly.init({
+                        formSelector: "#formCompra",
+                        soloLecturaInicial: @(Model.EsEdicion ? "true" : "false"),
+                        modifyButtonSelector: "#btnHabilitarEdicionCompra",
+                        saveButtonSelector: "#btnGuardarCompra",
+                        onStateChanged: function (readOnly, $form) {
+                            if (window.ComprasUI && typeof window.ComprasUI.syncPrimaryAction === "function") {
+                                window.ComprasUI.syncPrimaryAction($form);
+                            }
+                        }
+                    });
+
+                    if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
+                        window.EditPageGuard.init({
+                            formSelector: "#formCompra",
+                            modifyButtonSelector: "#btnHabilitarEdicionCompra",
+                            saveButtonSelector: "#btnGuardarCompra"
+                        });
+                    }
+                })();
+            </script>
+        }
     }

@@ -155,6 +155,28 @@ namespace WebCore.Controllers
             return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.UltimaVenta, DateTime.Now, user.Id);
         }
 
+        // Item 5 (2026-09-11, ver docs/DECISIONS.md "fecha del POS: click-to-reveal + ventana de
+        // dias"): reemplaza el gate binario que antes decidia si el chip de fecha del POS era
+        // editable (antes: solo con PuedeOperarSinCajaYEditarFecha, Admin o Venta.UltimaVenta).
+        // Ahora CUALQUIER usuario puede intentar editar la fecha de la venta en curso desde el
+        // chip -- acotado por esta ventana de dias, mismo parametro ya usado para los filtros de
+        // Stock (StockController.cs, Entidades.ParamKeys.DiasLimitFechaDesde). No reemplaza ni
+        // toca PuedeEditarFechaVenta (permiso Venta.NuevaVenta con fecha, usado por ModificarVenta
+        // para autorizar el backdating de una venta YA GUARDADA) -- es una regla distinta, de
+        // negocio, preexistente; esta ventana se suma como techo adicional, no la reemplaza.
+        // Item 5b (2026-09-12, ver docs/DECISIONS.md): "pisoCaja" es la fecha de apertura de la
+        // caja REAL del vendedor (si tiene una abierta) -- primera validacion, mas precisa que la
+        // ventana de dias. La ventana de dias sigue aplicando ADEMAS (no se reemplaza): se toma
+        // el piso mas restrictivo de los 2. Sin caja real (pisoCaja null -- solo Admin llega hasta
+        // aca sin caja, ver PuedeOperarSinCajaYEditarFecha), solo rige la ventana de dias.
+        private bool FechaVentaDentroDeVentanaPermitida(DateTime fecha, DateTime? pisoCaja = null)
+        {
+            DateTime minima = DateTime.Today.AddDays(-_param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
+            if (pisoCaja.HasValue && pisoCaja.Value > minima)
+                minima = pisoCaja.Value;
+            return fecha >= minima && fecha <= DateTime.Now;
+        }
+
         private bool TienePermisoAdministrativoSobreVenta(Entidades.Venta venta, Entidades.Usuario user = null)
         {
             if (venta == null) return false;
@@ -163,6 +185,24 @@ namespace WebCore.Controllers
 
             int idCreador = venta.Vendedor != null ? venta.Vendedor.Id : -1;
             return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.UltimaVenta, venta.FechaVenta, idCreador);
+        }
+
+        // Item 2b (2026-09-12, ver docs/DECISIONS.md): antes exigia que la venta fuera LITERALMENTE
+        // la ultima del cierre (ultimaVenta.IdVenta == venta.IdVenta) -- el pedido es "ver todas
+        // las ventas propias desde la apertura de caja, pero modificar solo las que caen dentro
+        // de la ventana de dias" (Entidades.PermisosUsuarios.DiasPermitidosEditar, ya el unico
+        // gate real via tienePermiso mas abajo). Se reemplaza "debe ser la ultima" por "debe
+        // pertenecer a este cierre" (mismo vendedor+sucursal, y con fecha dentro de la ventana en
+        // que el cierre estuvo abierto) -- la ventana de dias del permiso sigue siendo, como antes,
+        // el unico filtro real de "puede modificar ESTA venta puntual".
+        private bool VentaPerteneceAlCierreActual(Entidades.Venta venta, Entidades.CierreCaja cierre)
+        {
+            if (venta == null || cierre == null || cierre.UsuarioInicio == null) return false;
+            if (venta.Vendedor == null || venta.Vendedor.Id != cierre.UsuarioInicio.Id) return false;
+            if (venta.Sucursal == null || cierre.Sucursal == null || venta.Sucursal.idSucursal != cierre.Sucursal.idSucursal) return false;
+            if (cierre.FechaHoraInicio.HasValue && venta.FechaVenta < cierre.FechaHoraInicio.Value) return false;
+
+            return true;
         }
 
         private bool PuedeModificarUltimaVenta(Entidades.Venta venta, Entidades.Usuario user = null, Entidades.CierreCaja cierre = null)
@@ -174,10 +214,7 @@ namespace WebCore.Controllers
             if (TienePermisoAdministrativoSobreVenta(venta, user)) return true;
 
             cierre = cierre ?? ObtenerCierreCajaActual(user);
-            if (cierre == null || cierre.UsuarioInicio == null) return false;
-
-            var ultimaVenta = _oVentaN.getUltimaVentaVendedor(cierre);
-            if (ultimaVenta == null || ultimaVenta.IdVenta != venta.IdVenta) return false;
+            if (!VentaPerteneceAlCierreActual(venta, cierre)) return false;
 
             return _oUsuarioN.tienePermiso(user, Entidades.Permisos.Venta.UltimaVenta, venta.FechaVenta, cierre.UsuarioInicio.Id);
         }
@@ -193,9 +230,8 @@ namespace WebCore.Controllers
             cierre = cierre ?? ObtenerCierreCajaActual(user);
             if (cierre == null || cierre.UsuarioInicio == null) return "No tenés una caja abierta.";
 
-            var ultimaVenta = _oVentaN.getUltimaVentaVendedor(cierre);
-            if (ultimaVenta == null || ultimaVenta.IdVenta != venta.IdVenta)
-                return "Solo se puede modificar la última venta de tu cierre de caja actual.";
+            if (!VentaPerteneceAlCierreActual(venta, cierre))
+                return "Solo se pueden modificar ventas de tu cierre de caja actual.";
 
             return "No tenés permisos para modificar esta venta.";
         }
@@ -332,6 +368,16 @@ namespace WebCore.Controllers
         private static string ClaveSessionOperadorPOS(string posInstanceId) => "OperadorPOS_" + (posInstanceId ?? "");
         private static string ClaveSessionOperadorModulo(string modulo) => "OperadorModulo_" + (modulo ?? "");
 
+        // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): clave de Session para
+        // el "acepto operar sin caja" explicito -- por operador (Id de usuario), NO por
+        // posInstanceId. Bug real encontrado verificando este mismo batch: POS() genera un
+        // posInstanceId nuevo (Guid.NewGuid()) en CADA GET sin ese parametro explicito en la URL
+        // (ver linea ~2070) -- un simple location.reload() tras tildar el checkbox (mismo patron
+        // que window.abrirCaja ya usa) cae en una instancia distinta, y la clave de Session nunca
+        // volvia a matchear. La caja real tampoco esta scopeada por posInstanceId (es por operador
+        // + sucursal) -- este bypass sigue el mismo criterio.
+        private static string ClaveSessionBypassCaja(int idOperador) => "BypassCajaPOS_" + idOperador;
+
         // ASP.NET Core Session solo manda el Set-Cookie de sesion al browser la PRIMERA VEZ que
         // se escribe algo -- leer HttpContext.Session.Id antes de eso devuelve un id "fantasma"
         // que cambia en cada request (nunca persiste), lo que rompe por completo el rate-limit
@@ -359,6 +405,11 @@ namespace WebCore.Controllers
         private void LimpiarOperadorPOS(string posInstanceId)
         {
             HttpContext.Session.Remove(ClaveSessionOperadorPOS(posInstanceId));
+        }
+
+        private bool TieneBypassCajaActivo(int idOperador)
+        {
+            return HttpContext.Session.GetString(ClaveSessionBypassCaja(idOperador)) == "1";
         }
 
         private void RegistrarOperadorModulo(string modulo, Entidades.Usuario operador)
@@ -457,6 +508,25 @@ namespace WebCore.Controllers
             return Json(new { ok = true });
         }
 
+        // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): antes, tener el
+        // permiso PuedeOperarSinCajaYEditarFecha saltaba en silencio el modal de apertura de caja
+        // -- el usuario entraba directo a POS con solo un banner de advertencia, sin ninguna
+        // accion explicita de por medio. Ahora _AbrirCajaModal.cshtml SIEMPRE se muestra sin caja
+        // real; con el permiso, agrega un checkbox que debe tildarse para llamar a esta accion. El
+        // permiso se revalida server-side (nunca se confia en que el cliente solo mande el OK) --
+        // sin el permiso real, esta accion no hace nada.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ContinuarSinCajaAbierta(string posInstanceId)
+        {
+            var operador = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+            if (!PuedeOperarSinCajaYEditarFecha(operador))
+                return Json(new { ok = false, msg = "No tiene permisos para operar sin caja abierta." });
+
+            HttpContext.Session.SetString(ClaveSessionBypassCaja(operador.Id), "1");
+            return Json(new { ok = true });
+        }
+
         [HttpGet]
         public IActionResult AutorizarModuloVentas(string returnUrl)
         {
@@ -541,6 +611,24 @@ namespace WebCore.Controllers
             if (_usuarioActual.EsUsuarioProduccion && ObtenerOperadorModulo("Ventas") == null)
                 return RedirectToAction("AutorizarModuloVentas", new { returnUrl = Request.Path + Request.QueryString });
 
+            // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md): esta accion no validaba
+            // ningun permiso -- cualquier usuario autenticado podia ver el historial completo de
+            // ventas aunque tuviera "Puede ver" desactivado para el formulario Ventas
+            // (Permisos.Venta.VerVentas). Mismo criterio ya usado en Elaborados/Finanzas/
+            // Actividades/Empresa/AuditoriaLogin (binario, contra DateTime.Today) -- y para este
+            // mismo permiso, en el gate del checkbox de bypass de caja de POS() mas abajo en este
+            // controller. Port de Web/Controllers/VentasController.cs:70-81, sin la variante de
+            // "ventana de dias" (AjustarFechaSiNoTienePermiso/ConfigurarAdvertenciaFechaEnVivo) --
+            // ese sistema completo no esta portado a WebCore (TODO(claude) ya marcado en
+            // ComprasController.cs); si hace falta narrowing por fecha en vez de deny total, es un
+            // batch aparte a confirmar.
+            var operadorVentas = ResolverOperadorModulo("Ventas", _usuarioActual);
+            if (!_oUsuarioN.tienePermiso(operadorVentas, Entidades.Permisos.Venta.VerVentas, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Ventas";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
@@ -565,6 +653,16 @@ namespace WebCore.Controllers
             DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1,
             string cliente = "", string vendedor = "", string formasPago = "", string tiposComprobante = "")
         {
+            // Mismo gate que Index() (ver docs/DECISIONS.md, 2026-09-12) -- el listado de facturas
+            // usa el mismo permiso Permisos.Venta.VerVentas en el clasico (Web/Controllers/
+            // VentasController.cs:136), faltaba portar aca.
+            var operadorFacturas = ResolverOperadorModulo("Ventas", _usuarioActual);
+            if (!_oUsuarioN.tienePermiso(operadorFacturas, Entidades.Permisos.Venta.VerVentas, DateTime.Today, -1))
+            {
+                ViewBag.Seccion = "Ventas";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
 
@@ -603,6 +701,11 @@ namespace WebCore.Controllers
             string cliente, string vendedor, string formasPago, string tiposComprobante,
             int pagina = 1)
         {
+            // Mismo gate que Index()/Facturas() -- port de Web/Controllers/VentasController.cs:186.
+            var operadorBuscarFacturas = ResolverOperadorModulo("Ventas", _usuarioActual);
+            if (!_oUsuarioN.tienePermiso(operadorBuscarFacturas, Entidades.Permisos.Venta.VerVentas, DateTime.Today, -1))
+                return Json(new { ok = false, mensaje = "No tenés permisos para ver ventas." });
+
             var formasPagoSeleccionadas = SepararValoresCsv(formasPago);
             var codigosComprobante = TipoComprobanteFacturas.ObtenerCodigos(SepararValoresCsv(tiposComprobante));
 
@@ -723,7 +826,12 @@ namespace WebCore.Controllers
                     TotalTexto = venta.TotalImporte.ToString("C"),
                     TotalImporte = Convert.ToDecimal(venta.TotalImporte),
                     TotalKg = lineas.Sum(x => Convert.ToDecimal(x.CantKg)),
-                    EditUrl = Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta })
+                    // returnUrl agregado (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+                    // "Batch 4: boton Volver siempre visible + recuerda el filtro de origen") --
+                    // antes faltaba, asi que "Volver" no aparecia al entrar a DetalleVenta desde
+                    // esta pantalla. Mismo patron que _TablaVentas.cshtml (URL actual completa,
+                    // con su querystring de filtros).
+                    EditUrl = Url.Action("DetalleVenta", "Ventas", new { id = venta.IdVenta, returnUrl = Request.Path + Request.QueryString })
                 };
 
                 grupo.Campos.Add(new CabeceraDetalleCampoVm { Etiqueta = "Fecha", Valor = venta.FechaVenta.ToString("dd/MM/yyyy HH:mm") });
@@ -802,7 +910,16 @@ namespace WebCore.Controllers
             ViewBag.ModoModal = modal;
             ViewBag.DesdePOS = desdePos;
             ViewBag.IdCierreActividad = idCierre;
-            ViewBag.ReturnUrlDetalle = DecodeReturnUrlIfNeeded(returnUrl);
+            // Boton "Volver" siempre visible (quinta ronda de pedidos, 2026-09-10, ver
+            // docs/DECISIONS.md "Batch 4: boton Volver siempre visible + recuerda el filtro de
+            // origen"). _DetalleVentaCard.cshtml solo renderiza el boton si hay un returnUrl no
+            // vacio (o modo modal) -- si el origen no mando returnUrl (ver Ventas/Lineas.cshtml,
+            // arreglado en este mismo batch, o cualquier otro origen futuro que no lo mande), en
+            // vez de dejar el boton sin existir se cae al listado general (mejor que nada).
+            string returnUrlResuelto = DecodeReturnUrlIfNeeded(returnUrl);
+            if (!modal && string.IsNullOrWhiteSpace(returnUrlResuelto))
+                returnUrlResuelto = Url.Action("Index", "Ventas");
+            ViewBag.ReturnUrlDetalle = returnUrlResuelto;
             ViewBag.TieneFacturaVenta = _oVentaN.existeFactuElectParaVenta(venta.IdVenta) > 0;
             ViewBag.IdNotaCreditoVenta = _oVentaN.existeNotaCreditoParaVenta(venta.IdVenta);
             ViewBag.TieneNotaCreditoVenta = (int)ViewBag.IdNotaCreditoVenta > 0;
@@ -2050,8 +2167,15 @@ namespace WebCore.Controllers
         // mecanica de edicion de venta ya portada (misma carga de lineasEdicionPos, mismo
         // ModificarVenta) -- solo cambia el texto del banner y bloquea la UI de productos en la
         // vista (ver aplicarModoSoloFormaPago en POS.cshtml).
-        public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false)
+        public IActionResult POS(string modoPos = "original", string posInstanceId = "", int idVentaEditar = 0, bool soloFormaPago = false, string returnUrl = "")
         {
+            // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al modificar una venta desde
+            // POS, al guardar se redirigia al layout de DetalleVenta en vez de volver a POS --
+            // forma-pago.js:699-720 ya sabia leer window.POSModo.returnUrl al terminar de guardar,
+            // pero esta accion nunca lo recibia ni se lo pasaba a la vista. Mismo patron
+            // DecodeReturnUrlIfNeeded que el resto del controller (FinanzasController, DetalleVenta
+            // de aca mismo).
+            ViewBag.ReturnUrlPOS = DecodeReturnUrlIfNeeded(returnUrl);
             var user = _usuarioActual;
             string posInstanceIdNormalizado = string.IsNullOrWhiteSpace(posInstanceId)
                 ? Guid.NewGuid().ToString("N")
@@ -2117,6 +2241,12 @@ namespace WebCore.Controllers
                 }
 
                 ViewBag.CajaAbierta = true;
+                // Item 5b (2026-09-12, ver docs/DECISIONS.md): primera validacion de la fecha del
+                // POS -- con caja real abierta, la fecha no puede ser anterior a cuando se abrio.
+                // null si no hay cierre real (ej. admin editando via TienePermisoAdministrativoSobreVenta
+                // sin caja propia abierta) -- en ese caso no hay piso de caja, solo la ventana de dias.
+                ViewBag.CajaAperturaFecha = cierreEditar?.FechaHoraInicio?.ToString("yyyy-MM-ddTHH:mm:ss");
+                ViewBag.DiasLimitFechaVentaPOS = _param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0);
                 ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
                 ViewBag.IdSucursalPOS = user.IdSucursal;
                 ViewBag.IdUsuarioPOS = user.Id;
@@ -2162,9 +2292,30 @@ namespace WebCore.Controllers
             // contra la cuenta compartida (mismo fix de arriba).
             bool puedeOperarSinCaja = PuedeOperarSinCajaYEditarFecha(operador);
 
-            ViewBag.CajaAbierta = cajaAbierta || puedeOperarSinCaja;
-            ViewBag.AdvertenciaCajaCerrada = !cajaAbierta && puedeOperarSinCaja;
-            ViewBag.PuedeEditarFechaVenta = puedeOperarSinCaja;
+            // Item 7 (2026-09-11, ver docs/DECISIONS.md "gate de caja abierta"): antes, el mero
+            // PERMISO (puedeOperarSinCaja) ya saltaba el modal de apertura de caja en silencio --
+            // ahora hace falta ADEMAS una confirmacion explicita, one-time, persistida en Session
+            // por posInstanceId (ContinuarSinCajaAbierta, ver _AbrirCajaModal.cshtml) para no
+            // re-preguntar en cada reload de la misma pestaña de POS.
+            bool bypassCajaActivo = puedeOperarSinCaja && TieneBypassCajaActivo(operador.Id);
+
+            ViewBag.CajaAbierta = cajaAbierta || bypassCajaActivo;
+            ViewBag.AdvertenciaCajaCerrada = !cajaAbierta && bypassCajaActivo;
+            // Item 5b (2026-09-12, ver docs/DECISIONS.md): primera validacion de la fecha del POS
+            // -- con caja real abierta, la fecha no puede ser anterior a cuando se abrio. Sin
+            // caja real (bypassCajaActivo), queda null -- no hay piso de caja, solo Admin llega
+            // hasta aca sin caja (ver PuedeOperarSinCajaYEditarFecha), acotado solo por la
+            // ventana de dias existente.
+            ViewBag.CajaAperturaFecha = cajaAbierta && cierre != null ? cierre.FechaHoraInicio?.ToString("yyyy-MM-ddTHH:mm:ss") : null;
+            // Item 7 (2026-09-12, ver docs/DECISIONS.md): ademas del permiso de bypass en si
+            // (puedeOperarSinCaja), el checkbox solo se muestra a quien tambien puede ver el
+            // index de ventas (Permisos.Venta.VerVentas) -- condicion aditiva, no reemplaza la
+            // anterior: sin ninguna de las 2, sigue sin verse la opcion.
+            ViewBag.PuedeOperarSinCajaBypass = puedeOperarSinCaja
+                && _oUsuarioN.tienePermiso(operador, Entidades.Permisos.Venta.VerVentas, DateTime.Today, -1);
+            // Item 5 (2026-09-11, ver docs/DECISIONS.md): la ventana de dias se manda siempre --
+            // el chip de fecha ahora es universal (click-to-reveal), ya no depende de un permiso.
+            ViewBag.DiasLimitFechaVentaPOS = _param.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0);
             ViewBag.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
             ViewBag.IdSucursalPOS = user.IdSucursal;
             ViewBag.IdUsuarioPOS = user.Id;
@@ -2296,16 +2447,27 @@ namespace WebCore.Controllers
                 if (sucursal == null)
                     return Json(new { ok = false, msg = "Sucursal inválida." });
 
-                // Item 5 (2026-09-07, ver docs/DECISIONS.md): con permiso real de "modificar
-                // venta" se respeta la fecha editada en el POS (request.FechaVenta); sin permiso,
-                // se ignora (igual que siempre) y se fuerza DateTime.Now -- mismo criterio que
-                // ModificarVenta ya usa con PuedeEditarFechaVenta. Chequeado contra el operador
-                // real (tercera ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md), mismo fix
-                // que el resto de los sitios de este controller.
-                bool puedeEditarFechaEnCurso = PuedeOperarSinCajaYEditarFecha(operador);
-                DateTime fechaVentaFinal = puedeEditarFechaEnCurso && request.FechaVenta.HasValue
+                // Item 5b (2026-09-12, ver docs/DECISIONS.md): piso adicional por caja real
+                // abierta -- se resuelve aca (antes de validar la fecha) para poder pasarselo a
+                // FechaVentaDentroDeVentanaPermitida como primera validacion.
+                var cierreParaFecha = ObtenerCierreCajaActual(operador);
+
+                // Item 5 (2026-09-11, ver docs/DECISIONS.md): reemplaza el gate binario anterior
+                // (PuedeOperarSinCajaYEditarFecha) -- ahora se respeta la fecha editada en el POS
+                // (request.FechaVenta) para CUALQUIER usuario, siempre que caiga dentro de la
+                // ventana permitida (FechaVentaDentroDeVentanaPermitida: piso de caja real +
+                // ventana de dias). Fuera de rango, o sin fecha enviada, se fuerza DateTime.Now --
+                // mismo fallback de siempre, ahora no bypasseable via llamada directa a la API
+                // con una fecha arbitraria.
+                DateTime fechaVentaFinal = request.FechaVenta.HasValue
+                    && FechaVentaDentroDeVentanaPermitida(request.FechaVenta.Value, cierreParaFecha?.FechaHoraInicio)
                     ? request.FechaVenta.Value
                     : DateTime.Now;
+
+                // Bypass de caja cerrada (item 5 original, 2026-09-07 -- ver docs/DECISIONS.md):
+                // sigue gateado por PuedeOperarSinCajaYEditarFecha, sin cambios -- el rediseño de
+                // Batch 6 (2026-09-11) solo afecta la fecha de la venta (arriba), no este bypass.
+                bool puedeOperarSinCajaEnCurso = PuedeOperarSinCajaYEditarFecha(operador);
 
                 var venta = new Entidades.Venta
                 {
@@ -2335,7 +2497,7 @@ namespace WebCore.Controllers
                 // ahi ya usaba "operador", no "user" -- WebCore se habia desviado (tercera ronda
                 // de pedidos, 2026-09-10, ver docs/DECISIONS.md).
                 bool cajaAbierta = _oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, operador);
-                if (!cajaAbierta && !puedeEditarFechaEnCurso)
+                if (!cajaAbierta && !puedeOperarSinCajaEnCurso)
                     return Json(new { ok = false, msg = "La caja ha sido cerrada." });
 
                 List<Entidades.LineaVenta> lineasVenta = ConstruirLineasVentaDesdeRequest(request);
@@ -2435,6 +2597,14 @@ namespace WebCore.Controllers
                 {
                     if (!PuedeEditarFechaVenta(venta, request.FechaVenta.Value, operador))
                         return Json(new { ok = false, msg = "No tiene permisos para modificar la venta con la fecha seleccionada." });
+
+                    // Item 5 (2026-09-11, ver docs/DECISIONS.md): techo adicional de la ventana de
+                    // dias del chip de fecha del POS -- se suma AL LADO de PuedeEditarFechaVenta
+                    // (regla de negocio distinta y preexistente), no la reemplaza. Item 5b
+                    // (2026-09-12): se le suma tambien el piso de la caja real (cierreActual), si
+                    // hay una abierta.
+                    if (!FechaVentaDentroDeVentanaPermitida(request.FechaVenta.Value, cierreActual?.FechaHoraInicio))
+                        return Json(new { ok = false, msg = "La fecha seleccionada está fuera del rango permitido." });
 
                     venta.FechaVenta = request.FechaVenta.Value;
                 }

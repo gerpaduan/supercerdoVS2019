@@ -708,6 +708,45 @@ namespace Datos
                 return plan;
             }
 
+            // Advertencia (no bloqueante, a diferencia del chequeo de arriba): puede haber ventas o
+            // egresos de OTROS usuarios ya cargados en la sucursal destino durante el mismo rango de
+            // esta caja -- si el usuario avanza igual, esos movimientos van a quedar mezclados con
+            // los que se están por trasladar y el cierre puede quedar inconsistente. Mismo criterio
+            // que DatosPostgres.CierreCajaPg (Postgres) -- ver docs/DECISIONS.md, quinta ronda,
+            // Batch 7. A diferencia de las queries de arriba (que filtran por idVendedor/creadoPor =
+            // este usuario), acá interesa CUALQUIER movimiento en destino, de cualquier usuario.
+            int ventasEnDestino = ObtenerEntero(
+                cn,
+                tx,
+                "SELECT COUNT(*) FROM Ventas WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND fechaVenta BETWEEN @fechaDesde AND @fechaHasta",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = preview.IdSucursalNueva;
+                    cmd.Parameters.Add("@fechaDesde", SqlDbType.DateTime).Value = preview.FechaDesde;
+                    cmd.Parameters.Add("@fechaHasta", SqlDbType.DateTime).Value = preview.FechaHasta;
+                });
+
+            int egresosEnDestino = ObtenerEntero(
+                cn,
+                tx,
+                "SELECT COUNT(*) FROM EgresosCaja WHERE idEmpresa = @idEmpresa AND idSucursal = @idSucursal AND fechaHora BETWEEN @fechaDesde AND @fechaHasta",
+                cmd =>
+                {
+                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    cmd.Parameters.Add("@idSucursal", SqlDbType.Int).Value = preview.IdSucursalNueva;
+                    cmd.Parameters.Add("@fechaDesde", SqlDbType.DateTime).Value = preview.FechaDesde;
+                    cmd.Parameters.Add("@fechaHasta", SqlDbType.DateTime).Value = preview.FechaHasta;
+                });
+
+            if (ventasEnDestino > 0 || egresosEnDestino > 0)
+            {
+                preview.HayMovimientosEnDestino = true;
+                preview.AdvertenciaMovimientosEnDestino =
+                    $"La sucursal destino ya tiene {ventasEnDestino} venta(s) y {egresosEnDestino} egreso(s) de caja registrados en el mismo rango de fechas de esta caja. " +
+                    "Si avanza, esos movimientos van a quedar mezclados con los que se están por trasladar y el cierre de caja puede quedar inconsistente.";
+            }
+
             plan.VentasIds = ObtenerIds(
                 cn,
                 tx,

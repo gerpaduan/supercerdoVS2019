@@ -1,4 +1,4 @@
-@*
+﻿@*
     Port simplificado de Web/Views/Shared/_LayoutPOS.cshtml para la UI de POS (batch 1+2, ver
     docs/10-migracion-aspnet-core/PLAN-POS-UI.md).
     Scripts: solo los que necesita el batch 1+2 (jquery/bootstrap, SweetAlert2, pos-guard.js). Se
@@ -24,6 +24,7 @@
 @inject WebCore.Services.IUsuarioSesionService Sesion
 @{
     var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var action = (ViewContext.RouteData.Values["action"] as string) ?? "";
 
     // Mismo mecanismo que _Layout.cshtml (port de Web/Views/Shared/_LayoutPOS.cshtml:16, ver
     // docs/DECISIONS.md "operador de modulo Ventas nunca se limpiaba", 2026-09-10): si hay un
@@ -32,6 +33,12 @@
     // aca -- este layout tambien se renderiza en cada request de POS, asi que sin esta llamada el
     // operador de modulo podia quedar autorizado "de mas" mientras el usuario opera el POS.
     WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
+
+    // Item 7 (2026-09-12, ver docs/DECISIONS.md "gate de caja abierta"): este layout tambien lo
+    // usa PuntosExpendio/POS (controller distinto, mismo _LayoutPOS.cshtml) -- si el usuario paso
+    // de Ventas/POS a PuntosExpendio/POS (ambos con este layout, pero controller/action distintos),
+    // tambien cuenta como "salio de POS de Ventas" y el bypass debe limpiarse.
+    WebCore.Helpers.PermisosHelper.LimpiarBypassCajaSiSalioDePOS(Context.Session, controller, action, Sesion.UsuarioActual?.Id ?? 0);
     var posBrandLabel = ViewBag.PosBrandLabel as string;
     var posBrandName = ViewBag.PosBrandName as string;
     var usuarioActualPOS = Sesion.UsuarioActual;
@@ -321,10 +328,10 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Scripts/app/bootstrap4-compat.js?v=2"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
-    <script src="~/Scripts/app/pos-guard.js?v=4"></script>
+    <script src="~/Scripts/app/swal-single-confirm.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-guard.js" asp-append-version="true"></script>
 
     @* scanner.js/ZXing/modal-productos.js -- port de Web/Views/Shared/_LayoutPOS.cshtml:470-473
        (2026-09-09, ver docs/DECISIONS.md "Batch D: scanner + buscador de productos"). Este layout
@@ -333,8 +340,15 @@
        puntual de estos 3 scripts, ya sacado de esas vistas para no declarar "class BarcodeScanner"
        2 veces en la misma pagina (SyntaxError real en el navegador). *@
     <script src="~/Content/vendor/zxing/zxing.min.js"></script>
-    <script src="~/Scripts/app/scanner.js"></script>
-    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
+    <script src="~/Scripts/app/scanner.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
+    @* Bug real (2026-09-12, ver docs/DECISIONS.md): faltaba en este layout -- pos-product.js
+       (finishTyping) espera "window.esEANValido", definido aca (barcode-code-input.js). Sin
+       cargar este script en las vistas de POS, esa funcion nunca existia y la rama de "EAN
+       valido -> cantidad 1 -> agregar automatico" nunca se ejecutaba en Ventas/POS ni
+       PuntosExpendio/POS. Mismo criterio que scanner.js/zxing de arriba: cargado global aca en
+       vez de por vista, para no repetirlo en cada .cshtml de POS. *@
+    <script src="~/Scripts/app/barcode-code-input.js" asp-append-version="true"></script>
 
     <script>
         window.buscarProductoUrl = '@Url.Action("BuscarProducto", "Ventas")';

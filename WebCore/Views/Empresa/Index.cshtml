@@ -1,4 +1,4 @@
-@model WebCore.Models.EmpresaIndexVm
+﻿@model WebCore.Models.EmpresaIndexVm
 @using System.Linq
 
 @{
@@ -211,7 +211,7 @@
 </style>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formEmpresa",

@@ -1,4 +1,4 @@
-@model System.Data.DataTable
+﻿@model System.Data.DataTable
 
 @{
     ViewBag.Title = "Cajas Abiertas";
@@ -279,6 +279,16 @@
                             Selecciona la nueva sucursal para calcular los registros que se van a corregir.
                         </div>
                     </div>
+
+                    <div id="cambioSucursalMovimientosDestinoWrap" class="mt-3 d-none">
+                        <div id="cambioSucursalMovimientosDestinoAlerta" class="alert alert-warning mb-2"></div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="chkCambioSucursalAceptaRiesgo">
+                            <label class="form-check-label" for="chkCambioSucursalAceptaRiesgo">
+                                Entiendo el riesgo y quiero continuar de todos modos
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" id="btnConfirmarCambioSucursalCaja" class="btn btn-warning" onclick="confirmarCambioSucursalCaja()" disabled>Cambiar sucursal</button>
@@ -429,6 +439,18 @@
             </div>
 
             <div class="modal-footer">
+                @* Boton "Actividades" (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+                   "Batch 6: boton Actividades en el pie de Cerrar Caja"): antes, el unico punto de
+                   entrada a Actividades era el boton de la fila en la tabla de cajas abiertas
+                   (fuera de este modal) -- el usuario tenia que cerrar/salir de Cerrar Caja para
+                   llegar ahi. mr-auto lo empuja al extremo izquierdo del footer flex. Reusa
+                   abrirModalActividades(idCierre) tal cual (ya global, lineas 677-707), con el id
+                   de esta misma caja (input hidden #Id, ya cargado al abrir el modal). El z-index
+                   de "modal sobre modal" ya esta resuelto para este caso exacto -- ver el handler
+                   compartido de show.bs.modal para #modalActividadesCaja/#modalCerrarCaja/etc. *@
+                <button type="button" class="btn btn-outline-secondary mr-auto" onclick="abrirModalActividades($('#Id').val())">
+                    <i class="fas fa-stream mr-1"></i> Actividades
+                </button>
                 <button type="button" class="btn btn-danger" id="btnGuardarCierreCaja" onclick="guardarCierreCaja()">Cerrar Caja</button>
                 <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
             </div>
@@ -504,7 +526,7 @@
 </style>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
     <script>
         window.EgresosCajaUrls = {
             nuevo: '@Url.Action("NuevoEgresoCaja", "Cajas")',
@@ -664,14 +686,38 @@
         $(document)
             .off('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
             .on('show.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja', function () {
+                // Bug real encontrado 2026-09-10 verificando el Batch 6 (boton Actividades dentro
+                // de Cerrar Caja, ver docs/DECISIONS.md): este handler ya existia pero nunca
+                // funciono de verdad -- custom.css fija ".modal { z-index: var(--z-modal)
+                // !important; }", y un !important de una hoja de estilos le gana a un estilo
+                // inline sin !important (jQuery.css() setea inline, sin !important), asi que TODOS
+                // los modales terminaban con el mismo z-index pese a este calculo. Se usa
+                // setProperty(...,'important') para que el z-index calculado realmente gane.
                 var zIndex = 1040 + (10 * $('.modal.show').length);
-                $(this).css('z-index', zIndex);
+                this.style.setProperty('z-index', zIndex, 'important');
 
                 setTimeout(function () {
-                    $('.modal-backdrop').not('.modal-stack').last()
-                        .css('z-index', zIndex - 1)
-                        .addClass('modal-stack');
+                    var backdrop = $('.modal-backdrop').not('.modal-stack').last();
+                    if (backdrop.length) {
+                        backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
+                        backdrop.addClass('modal-stack');
+                    }
                 }, 0);
+            })
+            // Boton "Actividades" dentro de Cerrar Caja (2026-09-10, ver docs/DECISIONS.md "Batch
+            // 6"): Bootstrap 4 no soporta oficialmente modales anidados -- al cerrar el modal de
+            // arriba (Actividades), su propio "hide" puede sacar la clase modal-open del <body> y
+            // el backdrop de mas, aunque el modal de abajo (Cerrar Caja) siga abierto. Si despues
+            // de cerrar uno sigue habiendo un .modal.show, se restaura el estado a mano.
+            .off('hidden.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja')
+            .on('hidden.bs.modal.cajasStack', '#modalActividadesCaja, #modalEgresoCaja, #modalCerrarCaja, #modalCambioSucursalCaja', function () {
+                var $restantes = $('.modal.show');
+                if (!$restantes.length) return;
+
+                $('body').addClass('modal-open');
+                if (!$('.modal-backdrop').length) {
+                    $('<div class="modal-backdrop fade show"></div>').appendTo('body');
+                }
             });
 
         function abrirModalActividades(idCierre, filtroActividad) {
@@ -783,12 +829,26 @@
             $("#cambioSucursalCajaError").addClass("d-none").text("");
             $("#cambioSucursalCajaPreview").removeClass("text-danger").addClass("text-muted").html("Selecciona la nueva sucursal para calcular los registros que se van a corregir.");
             $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
+            $("#cambioSucursalMovimientosDestinoWrap").addClass("d-none");
+            $("#chkCambioSucursalAceptaRiesgo").prop("checked", false);
             $("#modalCambioSucursalCaja").modal("show");
+        }
+
+        // Habilita el boton de confirmar segun el resultado del preview Y, si hay movimientos ya
+        // registrados en destino (advertencia no bloqueante, no confundir con
+        // tieneCajaAbiertaEnDestino que si bloquea), segun si el usuario tildo el checkbox de
+        // "entiendo el riesgo". Ver docs/DECISIONS.md, quinta ronda, Batch 7.
+        function reevaluarBotonConfirmarCambioSucursal(resp) {
+            const puedeEjecutar = !!(resp && resp.puedeEjecutar);
+            const hayMovimientosEnDestino = !!(resp && resp.hayMovimientosEnDestino);
+            const aceptoRiesgo = $("#chkCambioSucursalAceptaRiesgo").is(":checked");
+            $("#btnConfirmarCambioSucursalCaja").prop("disabled", !puedeEjecutar || (hayMovimientosEnDestino && !aceptoRiesgo));
         }
 
         function renderPreviewCambioSucursalCaja(resp) {
             if (!resp || !resp.ok) {
                 $("#cambioSucursalCajaPreview").removeClass("text-muted").addClass("text-danger").text((resp && resp.mensaje) || "No se pudo generar la vista previa.");
+                $("#cambioSucursalMovimientosDestinoWrap").addClass("d-none");
                 $("#btnConfirmarCambioSucursalCaja").prop("disabled", true);
                 return;
             }
@@ -808,8 +868,24 @@
 
             html += '<div class="small ' + (resp.puedeEjecutar ? 'text-muted' : 'text-danger') + '">' + mensaje + '</div>';
             $("#cambioSucursalCajaPreview").removeClass("text-muted text-danger").html(html);
-            $("#btnConfirmarCambioSucursalCaja").prop("disabled", !resp.puedeEjecutar);
+
+            if (resp.hayMovimientosEnDestino) {
+                $("#cambioSucursalMovimientosDestinoAlerta").text(resp.advertenciaMovimientosEnDestino || "La sucursal destino ya tiene movimientos registrados en el mismo rango de fechas.");
+                $("#chkCambioSucursalAceptaRiesgo").prop("checked", false);
+                $("#cambioSucursalMovimientosDestinoWrap").removeClass("d-none");
+            } else {
+                $("#cambioSucursalMovimientosDestinoWrap").addClass("d-none");
+            }
+
+            reevaluarBotonConfirmarCambioSucursal(resp);
+            window.CajasAbiertas._ultimoPreviewCambioSucursal = resp;
         }
+
+        $(document)
+            .off('change.cajasCambioSucursal', '#chkCambioSucursalAceptaRiesgo')
+            .on('change.cajasCambioSucursal', '#chkCambioSucursalAceptaRiesgo', function () {
+                reevaluarBotonConfirmarCambioSucursal(window.CajasAbiertas._ultimoPreviewCambioSucursal);
+            });
 
         function cargarPreviewCambioSucursalCaja() {
             const idCierre = $("#CambioSucursalIdCierre").val();
@@ -1174,5 +1250,5 @@
             }
         }
     </script>
-    <script src="@Url.Content("~/Scripts/app/egresos-caja.js?v=10")"></script>
+    <script src="@Url.Content("~/Scripts/app/egresos-caja.js")" asp-append-version="true"></script>
 }

@@ -157,6 +157,76 @@ public sealed class MovimientosTests
         await page.CloseAsync();
     }
 
+    // Boton "Imprimir" nuevo en la columna Acciones del listado (item 1 de la cuarta ronda de
+    // pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 7: boton Imprimir en Movimientos + ticket
+    // termico"). A diferencia del test de arriba (que ejercita #btnImprimirMovimiento dentro de
+    // Editar.cshtml), este cubre el botón NUEVO del listado (Index.cshtml), que trae sus datos via
+    // ImprimirInfo (AJAX) recien al click -- no por fila, para no cargar entidades de mas.
+    [Fact]
+    public async Task BotonImprimirEnListado_AbreModalConTicketTermicoFuncional()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) =>
+        {
+            if (!msg.Contains("setSelectionRange")) errors.Add(msg);
+        };
+
+        // Crear un movimiento real primero (mismo patron que el test de arriba).
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Movimientos/Editar", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+            Timeout = 20000
+        });
+        await page.FillAsync("#txtCodigoProducto", "1");
+        await page.Locator("#txtCodigoProducto").PressAsync("Enter");
+        await page.WaitForFunctionAsync("() => document.getElementById('txtProductoNombre').value.length > 0", new PageWaitForFunctionOptions { Timeout = 5000 });
+        await page.FillAsync("#txtCantUnidad", "1");
+        await page.FillAsync("#txtCantKgs", "1,5");
+        await page.ClickAsync("#btnAgregarProducto");
+        await page.WaitForSelectorAsync("#tablaLineasMovimiento tbody tr", new PageWaitForSelectorOptions { Timeout = 5000 });
+        await page.FillAsync("#Observaciones", "E2E imprimir listado " + DateTime.UtcNow.Ticks);
+
+        var guardarResponseTask = page.WaitForResponseAsync(r => r.Url.Contains("/Movimientos/Guardar") && r.Request.Method == "POST");
+        await page.ClickAsync("#btnGuardarMovimiento");
+        var guardarResponse = await guardarResponseTask;
+        var body = await guardarResponse.JsonAsync();
+        var movimientoId = body!.Value.GetProperty("movimientoId").GetInt32();
+
+        await page.WaitForSelectorAsync("#modalPostMovimiento.show", new PageWaitForSelectorOptions { Timeout = 10000 });
+        await page.ClickAsync("#btnPostMovimientoNoImprimir");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Movimientos", new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 20000 });
+        var fila = page.Locator($"tr[data-movimiento-row='{movimientoId}']");
+        await fila.WaitForAsync(new LocatorWaitForOptions { Timeout = 10000 });
+
+        await fila.Locator(".js-imprimir-movimiento").ClickAsync();
+        await page.Locator("#modalPostMovimiento.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 10000 });
+
+        // WhatsApp oculto a pedido del usuario -- el boton sigue en el DOM, no visible.
+        Assert.False(await page.Locator("#btnPostMovimientoWhatsapp").IsVisibleAsync());
+
+        // Sin tamaño recordado todavia (localStorage limpio en este contexto de browser nuevo) --
+        // el boton "Imprimir" (2) debe desplegar el selector de tamaño en vez de abrir directo.
+        await page.ClickAsync("#btnPostMovimientoImprimir");
+        await page.Locator("#bloqueTicketOpcionesMovimiento.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+
+        var popup = await page.Context.RunAndWaitForPageAsync(async () =>
+        {
+            await page.ClickAsync("button.btnTicketMovimientoOpt[data-mm='80']");
+        });
+        await popup.WaitForLoadStateAsync(LoadState.Load);
+        Assert.Contains("/Movimientos/ImprimirTicket/" + movimientoId, popup.Url);
+        Assert.Contains("mm=80", popup.Url);
+        var contenidoTicket = await popup.Locator("pre.ticket-text").InnerTextAsync();
+        Assert.Contains("Movimiento", contenidoTicket);
+        await popup.CloseAsync();
+
+        Assert.Empty(errors);
+        await page.CloseAsync();
+    }
+
     // Bug real (2026-09-08, ver docs/DECISIONS.md): "/Movimientos/Nuevo" tiraba
     // InvalidOperationException. Causa: Nuevo() delega a Editar(0,...) por llamada C# directa
     // (no RedirectToAction); Editar() hacia "return View(model)" sin nombre explicito, y ASP.NET

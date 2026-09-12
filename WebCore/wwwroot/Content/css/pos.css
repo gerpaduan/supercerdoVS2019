@@ -238,6 +238,9 @@
         background: rgba(15, 23, 42, .04);
         border: 1px solid rgba(15, 23, 42, .06);
         color: var(--posbar-text);
+        /* Item 5 (2026-09-11, ver docs/DECISIONS.md): ahora es clickeable (click-to-reveal de la
+           fecha editable) para cualquier usuario -- antes era puramente informativo. */
+        cursor: pointer;
     }
 
     .pos-time-chip i {
@@ -1934,6 +1937,53 @@
 
     html.dark-mode #tablaItems tr.fila-item:hover {
         background: rgba(255,255,255,.06);
+    }
+
+    /* =========================================================
+    Alta rapida de producto desde el POS (codigo no encontrado, 2026-09-12).
+    ".pos-alta-rapida-bloque" imita el spacing de ".mb-3" a proposito sin
+    usar esa clase (ver comentario en POS.cshtml: ".mb-3" cae en la regla
+    responsive de grid de mas abajo y rompe el layout del formulario).
+    ".pos-alta-rapida-activa" en .producto-resumen oculta el grupo normal
+    (Precio/Cantidad/Subtotal/Agregar) mientras se muestra la sugerencia o el
+    formulario -- selector con especificidad + !important mayor que el
+    ".d-none"/".d-md-flex" de Bootstrap en #btnAgregarProducto, para no tener
+    que tocar esas clases responsive ya existentes.
+    ========================================================= */
+    .pos-alta-rapida-bloque {
+        margin-bottom: 1rem;
+    }
+
+    /* Bug real (2026-09-12): con espaciado normal (.mb-2 por campo, Precio e IVA en filas
+       separadas) el formulario no entraba en el alto que ocupaba el panel original (3 filas +
+       1 boton) y Guardar/Cancelar quedaban fuera de la vista. Se compacta el layout en POS.cshtml
+       (Precio+IVA en una fila, margenes .mb-1) y ademas se deja este scroll interno como resguardo:
+       Guardar/Cancelar viven FUERA de ".pos-alta-rapida-campos", asi que siempre quedan visibles
+       aunque los campos de arriba no entren y haya que scrollearlos. */
+    .pos-alta-rapida-form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pos-alta-rapida-form .pos-alta-rapida-campos {
+        max-height: 38vh;
+        overflow-y: auto;
+        padding-right: .15rem;
+        margin-bottom: .5rem;
+    }
+
+    .producto-resumen.pos-alta-rapida-activa > .pos-product-metric,
+    .producto-resumen.pos-alta-rapida-activa > #btnAgregarProducto {
+        display: none !important;
+    }
+
+    /* A <=991.98px .producto-resumen pasa a CSS grid 2x2 (ver regla RESPONSIVE mas abajo) --
+       mientras el alta rapida esta activa, se vuelve a flujo normal para que el formulario
+       (mas campos que la grilla de 2 celdas) no quede recortado/superpuesto. */
+    @media (max-width: 991.98px) {
+        .producto-resumen.pos-alta-rapida-activa {
+            display: block !important;
+        }
     }
 
     /* =========================================================

@@ -219,4 +219,12 @@
     }
 
     window.BarcodeCodeInput = { attach: attach };
+
+    // Bug real (2026-09-12, ver docs/DECISIONS.md): pos-product.js espera un global
+    // "window.esEANValido" para decidir "codigo escaneado por teclado/lectora fisica -> es EAN
+    // valido -> cantidad 1 -> agregar automatico al carrito" -- esa funcion nunca se definia en
+    // ningun lado (ni aca ni en el clasico, mismo hueco preexistente en los dos), asi que esa
+    // rama nunca se ejecutaba. La validacion YA existe en este archivo (isValidEAN, usada por
+    // el scanner de camara) -- se expone tal cual, sin reimplementarla.
+    window.esEANValido = isValidEAN;
 })(window, window.jQuery);

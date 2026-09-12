@@ -44,11 +44,14 @@ public sealed class FacturaElectronicaTests
         Assert.NotEqual("-", (await page.Locator("#feStickyCliente").InnerTextAsync()).Trim());
         Assert.True(await page.Locator("#btnCerrarVentaSinFacturar").IsVisibleAsync());
 
-        // Cerrar sin facturar es una operacion segura (no toca AFIP) -- confirma el SweetAlert y
+        // Cerrar sin facturar es una operacion segura (no toca AFIP) -- confirma el SweetAlert con
+        // ENTER (no click, bug real reportado 2026-09-10 -- ver docs/DECISIONS.md "Batch 1: Enter
+        // en SweetAlert2 (items 4+9)": este Swal tiene showCancelButton:true y se abre encima del
+        // modal Bootstrap de Factura Electronica -- antes del fix, Enter no confirmaba nada) y
         // verifica que vuelve al post-venta basico (mismo comportamiento que el clasico).
         await page.ClickAsync("#btnCerrarVentaSinFacturar");
-        await page.WaitForTimeoutAsync(400);
-        await page.ClickAsync(".swal2-confirm");
+        await page.Locator(".swal2-confirm").WaitForAsync();
+        await page.Keyboard.PressAsync("Enter");
         await page.WaitForTimeoutAsync(1200);
 
         Assert.Equal(0, await page.Locator("#modalFacturaElectronica.show").CountAsync());
@@ -123,6 +126,90 @@ public sealed class FacturaElectronicaTests
             $"() => {{ var el = document.elementFromPoint({centroX}, {centroY}); return el ? (el.closest('.fe-sticky-resumen') ? 'sticky' : el.closest('.fe-card-compact') ? 'emisor' : el.tagName) : 'ninguno'; }}");
         Assert.Equal("sticky", elementoEncima);
 
+        await page.CloseAsync();
+    }
+
+    // Bug real reportado por el usuario 2026-09-11 (ver docs/DECISIONS.md), dos causas raiz
+    // distintas encadenadas:
+    //
+    // 1) Enter no confirmaba "Cerrar venta sin facturar". Causa real (mas profunda que un simple
+    // cache viejo): el foco nunca se quedaba en el boton de SweetAlert2 -- Bootstrap 5 (la app usa
+    // Bootstrap 5 real, no 4) le gana la pulseada via el FocusTrap de su propio modal
+    // (#modalFacturaElectronica), que reafirma el foco dentro de si mismo apenas lo detecta
+    // afuera. El foco terminaba en el boton "X" de cerrar del modal de Bootstrap, y presionar
+    // Enter ahi disparaba el comportamiento nativo del navegador (Enter sobre un <button>
+    // enfocado = click en ESE boton), no la confirmacion del Swal -- confirmado con un diagnostico
+    // real que mostro ~14 idas y vueltas de foco por segundo entre ambos, y el boton "X" siendo
+    // clickeado en vez del de SweetAlert2. El workaround puntual que existia antes en
+    // factura-electronica.js ($(document).off('focusin.bs.modal'), sacado en una ronda anterior)
+    // nunca funciono de verdad contra Bootstrap 5 real (namespace y sistema de eventos
+    // equivocados). Fix real: swal-single-confirm.js desactiva el FocusTrap de Bootstrap
+    // (bootstrap.Modal.getInstance(el)._focustrap.deactivate(), API publica real) mientras el Swal
+    // esta abierto, y lo reactiva al cerrarse.
+    //
+    // 2) Con Enter ya funcionando, cuando el modal "Venta Completada" reaparece sus botones no
+    // respondian. Causa: factura-electronica.js llamaba a modal('hide') sobre
+    // #modalFacturaElectronica y, en la linea siguiente, SIN esperar a que terminara la transicion
+    // (~150-300ms en Bootstrap 5, asincronica), disparaba el evento que reabre
+    // #modalPostVentaBasico -- durante esa ventana ambos modales quedaban simultaneamente
+    // visibles, empatados en el mismo z-index forzado por custom.css, y el de Factura (todavia
+    // display:block, mas adelante en el DOM por traerModalFacturaAlFrente) tapaba los clicks del
+    // que se acababa de reabrir. Fix: esperar el hidden.bs.modal real antes de disparar el evento.
+    //
+    // Se usa document.elementFromPoint + page.Mouse.ClickAsync (no Locator.ClickAsync, que
+    // reintenta solo y esconde justo esta clase de bug de timing) para confirmar que el click
+    // realmente le llega al modal correcto, sin ningun WaitForTimeoutAsync artificial entre
+    // confirmar y verificar -- si hubiera overlap, este test lo agarra; con una espera de por
+    // medio, no lo agarraria nunca.
+    [Fact]
+    public async Task VentasPOS_CerrarSinFacturarConEnter_ModalPostVentaQuedaInteractuableSinSuperposicion()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        var errors = new List<string>();
+        page.PageError += (_, msg) => errors.Add(msg);
+
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Ventas/POS", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(500);
+
+        await page.EvaluateAsync("window.mostrarModalPostVenta(1755)");
+        await page.WaitForTimeoutAsync(300);
+        await page.ClickAsync("#btnPvbFactura");
+        await page.WaitForTimeoutAsync(1500);
+        Assert.Equal(1, await page.Locator("#modalFacturaElectronica.show").CountAsync());
+
+        await page.ClickAsync("#btnCerrarVentaSinFacturar");
+        await page.Locator(".swal2-confirm").WaitForAsync();
+
+        // El foco debe quedar realmente en el boton de confirmar de SweetAlert2 (no en el boton
+        // "X" del modal de Bootstrap de fondo) -- esto es lo que hace que Enter funcione.
+        var focoEnConfirmar = await page.EvaluateAsync<bool>(
+            "() => document.activeElement && document.activeElement.classList.contains('swal2-confirm')");
+        Assert.True(focoEnConfirmar, "el foco deberia quedar en el boton de SweetAlert2, no en el modal de Bootstrap de fondo");
+
+        await page.Keyboard.PressAsync("Enter");
+
+        // Espera activa a que #modalPostVentaBasico reaparezca (sin timeout fijo artificial que
+        // enmascare el timing real), y desde ahi SIN esperar nada mas se verifica que ya es
+        // interactuable.
+        await page.Locator("#modalPostVentaBasico.show").WaitForAsync(new LocatorWaitForOptions { Timeout = 10000 });
+        Assert.Equal(0, await page.Locator("#modalFacturaElectronica.show").CountAsync());
+
+        var box = await page.Locator("#btnPvbFactura").BoundingBoxAsync();
+        Assert.NotNull(box);
+        var x = box!.X + box.Width / 2;
+        var y = box.Y + box.Height / 2;
+
+        var elementoEncima = await page.EvaluateAsync<string>(
+            $"() => {{ var el = document.elementFromPoint({x}, {y}); if (!el) return 'ninguno'; if (el.closest('#modalFacturaElectronica')) return 'factura'; if (el.closest('#modalPostVentaBasico')) return 'postventa'; return el.tagName; }}");
+        Assert.Equal("postventa", elementoEncima);
+
+        // Click real (no Locator.ClickAsync) en esas coordenadas -- confirma que el click de verdad
+        // llega al boton correcto y produce su efecto real (reabre el modal de Factura).
+        await page.Mouse.ClickAsync(x, y);
+        await page.WaitForTimeoutAsync(500);
+        Assert.Equal(1, await page.Locator("#modalFacturaElectronica.show").CountAsync());
+
+        Assert.Empty(errors);
         await page.CloseAsync();
     }
 

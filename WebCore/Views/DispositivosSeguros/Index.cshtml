@@ -22,7 +22,18 @@
                     <div class="row align-items-end">
                         <div class="col-12 col-md-4">
                             <div class="form-group mb-2">
-                                <label for="NumeroSerie">Número de serie</label>
+                                <label for="NumeroSerie">
+                                    Número de serie
+                                    @* Boton "i" (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+                                       "Batch 11"): el parrafo explicativo agregado en la ronda anterior
+                                       quedaba siempre visible ocupando espacio permanente -- se mueve a un
+                                       modal on-demand, mismo patron ya usado en el proyecto para este caso
+                                       exacto (Usuarios/Editar.cshtml, #btnInfoLoginFueraSucursal/
+                                       #btnInfoUsuarioProduccion). Texto sin cambios, solo cambia donde vive. *@
+                                    <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" data-bs-toggle="modal" data-bs-target="#modalInfoNumeroSerie" title="¿Qué es el número de serie?" tabindex="-1">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </label>
                                 <input type="text" class="form-control" id="NumeroSerie" name="numeroSerie" autocomplete="off" placeholder="Se completa solo si el agente de impresión está corriendo" />
                                 <small class="form-text text-muted" id="dispositivoAgenteEstado"></small>
                             </div>
@@ -100,6 +111,24 @@
     </div>
 </div>
 
+@* Modal de ayuda del boton "i" de arriba (quinta ronda de pedidos, 2026-09-10, ver
+   docs/DECISIONS.md "Batch 11"). Mismo texto que antes vivia siempre visible como <small>. *@
+<div class="modal fade" id="modalInfoNumeroSerie" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">¿Qué es el número de serie?</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    No es un número que se pueda buscar en la PC a mano -- es un identificador único de esa máquina que solo se obtiene automáticamente si el <strong>agente de impresión CarniSys</strong> está instalado y corriendo ahí. Si un usuario no-admin necesita agregar su propio equipo, puede consultarlo desde el menú de usuario ("Número de serie") y pasártelo para completar este campo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .dispositivos-seguros-page {
         font-size: .9rem;
@@ -165,6 +194,12 @@
     }
 </style>
 
+@* Gap real cerrado 2026-09-10 (cuarta ronda de pedidos, ver docs/DECISIONS.md "Batch 6"): el JS
+   de abajo (window.CarniSysPrintAgent.getDeviceId()) ya existia y ya funcionaba en clasico, pero
+   nunca se habia portado el script que expone window.CarniSysPrintAgent -- el "if (!window.
+   CarniSysPrintAgent) return;" cortaba siempre, en silencio. print-agent.js ahora se carga
+   globalmente en _Layout.cshtml (lo necesita tambien el modal de autoservicio del dropdown de
+   usuario, _ModalMiDispositivo.cshtml) -- no hace falta incluirlo de nuevo aca. *@
 <script>
     // Los scripts de _LayoutBase.cshtml (jQuery incluido) se cargan al final del body, despues
     // del contenido de esta vista -- si esto corriera inline ni jQuery ni window.CarniSysPrintAgent

@@ -1,4 +1,4 @@
-@model WebCore.Models.MovimientoLineasIndexPageVm
+﻿@model WebCore.Models.MovimientoLineasIndexPageVm
 @using Entidades
 @using System.Collections.Generic
 @using System.Linq
@@ -395,5 +395,5 @@
             });
         })();
     </script>
-    <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/lineas-agrupadas.js")" asp-append-version="true"></script>
 }

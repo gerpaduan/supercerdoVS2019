@@ -1,4 +1,4 @@
-@model WebCore.Models.UsuarioEditVm
+﻿@model WebCore.Models.UsuarioEditVm
 
 @{
     ViewBag.Title = Model.EsEdicion ? "Modificar usuario" : "Nuevo usuario";
@@ -356,8 +356,8 @@
 </style>
 
 @section Scripts {
-<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
-<script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+<script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
 <script>
     window.EditReadOnly && window.EditReadOnly.init({
         formSelector: "#formUsuario",

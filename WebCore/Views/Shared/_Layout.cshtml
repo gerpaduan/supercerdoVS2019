@@ -1,4 +1,4 @@
-@using System.Linq
+﻿@using System.Linq
 @inject WebCore.Services.IUsuarioSesionService Sesion
 @{
     // Sidebar + identidad visual (2026-09-05, ver docs/DECISIONS.md "UI de WebCore igual al
@@ -31,6 +31,13 @@
     // se limpia aca mismo. Server side, sin beacon/pagehide. Port de
     // Web/Views/Shared/_LayoutBase.cshtml:19.
     WebCore.Helpers.PermisosHelper.LimpiarOperadorModuloSiSalioDelModulo(Context.Session, controller);
+
+    // Item 7 (2026-09-12, ver docs/DECISIONS.md "gate de caja abierta"): "el permiso para
+    // registrar ventas sin apertura de caja termina al salir de la vista del pos venta" -- este
+    // layout se renderiza en TODA la app excepto POS (que usa _LayoutPOS.cshtml), asi que
+    // cualquier request que llegue aca YA significa "salio de POS". Mismo criterio que la
+    // limpieza de operador de modulo, una linea arriba.
+    WebCore.Helpers.PermisosHelper.LimpiarBypassCajaSiSalioDePOS(Context.Session, controller, action, Sesion.UsuarioActual?.Id ?? 0);
 
     string webClasico = (System.Configuration.ConfigurationManager.AppSettings["WebClasicoBaseUrl"] ?? "").TrimEnd('/');
     Func<string, string> legacy = path => webClasico + path;
@@ -739,33 +746,33 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Scripts/app/bootstrap4-compat.js?v=2"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @* print-agent.js (cliente contra el agente de impresion local, 127.0.0.1:18777) -- cargado
        globalmente (2026-09-10, ver docs/DECISIONS.md "Batch 6"): lo necesita tanto el modal de
        arriba (disponible en toda pagina via el dropdown de usuario) como DispositivosSeguros/
        Index.cshtml. DESPUES de jquery.min.js a proposito: la IIFE de print-agent.js lee
        window.jQuery apenas se ejecuta, no espera a ningun evento de carga. *@
-    <script src="~/Scripts/app/print-agent.js?v=1"></script>
+    <script src="~/Scripts/app/print-agent.js" asp-append-version="true"></script>
     @* Gap real cerrado 2026-09-05 (ver docs/DECISIONS.md): el HTML de las vistas con tablas
        anchas ya tenia la clase .js-sync-scroll-body desde que se portaron (fiel al original),
        pero este script y su CSS nunca se cargaron -- la barra de scroll flotante nunca aparecia,
        aunque el markup estaba listo. Cargado despues de jquery.min.js (igual que en
        Web/Views/Shared/_LayoutBase.cshtml) porque su unico uso de jQuery ya chequea
        window.jQuery antes de usarlo, pero corre mejor si jQuery ya esta disponible. *@
-    <script src="~/Scripts/app/table-scroll-sync.js?v=1"></script>
+    <script src="~/Scripts/app/table-scroll-sync.js" asp-append-version="true"></script>
     @* Cargados globalmente igual que en Web/Views/Shared/_LayoutBase.cshtml: cualquier pantalla
        con un boton "calcular efectivo" (ej. Cajas/_AddOrEditEgresoCaja.cshtml) depende de estos
        2 scripts. *@
-    <script src="~/Scripts/app/calculadora-billetes.js?v=3239"></script>
-    <script src="~/Scripts/app/calculadora-billetes-targets.js?v=7"></script>
+    <script src="~/Scripts/app/calculadora-billetes.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/calculadora-billetes-targets.js" asp-append-version="true"></script>
     @* SweetAlert2 -- gap real preexistente encontrado en Modulo 7 (Cajas), pero afecta a varias
        vistas de Modulos 1-3 ya portadas que tambien llaman Swal.fire(...) sin que este script
        estuviera cargado en ningun lado de WebCore (ver docs/DECISIONS.md 2026-09-01). Mismas 2
        fuentes que Web/Views/Shared/_LayoutBase.cshtml: el CDN oficial + el helper local que
        colapsa confirm+alert de exito en un solo dialogo. *@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/Scripts/app/swal-single-confirm.js?v=2"></script>
+    <script src="~/Scripts/app/swal-single-confirm.js" asp-append-version="true"></script>
 
     @* Gap real preexistente, mismo patron que los de arriba (2026-09-09, items 7 y 12 de los 12
        pendientes -- ver docs/DECISIONS.md "Batch D: scanner + buscador de productos"). Cargados
@@ -788,8 +795,8 @@
        pagina es inofensivo (misma IIFE, sin registro de handlers duplicado) pero se deja como
        deuda menor de limpieza, no bloqueante, para no tocar 4 archivos mas en este batch. *@
     <script src="~/Content/vendor/zxing/zxing.min.js"></script>
-    <script src="~/Scripts/app/scanner.js"></script>
-    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
+    <script src="~/Scripts/app/scanner.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
 
     @* Gap real preexistente encontrado 2026-09-07 (ver docs/DECISIONS.md): manejarPermiso() es un
        helper global del clasico (Web/Views/Shared/_LayoutBase.cshtml:225-231) que varias vistas ya
@@ -813,7 +820,7 @@
     <script>
         window.urlCambiarSucursal = '@Url.Action("CambiarSucursal", "Login")';
     </script>
-    <script src="~/Scripts/app/modal-sucursales.js?v=1"></script>
+    <script src="~/Scripts/app/modal-sucursales.js" asp-append-version="true"></script>
 
     @* Toggle de tema oscuro -- port literal de Web/Views/Shared/_LayoutBase.cshtml (mismas
        claves de localStorage: "carnisys-theme"/"darkMode", mismo id de boton/icono). *@

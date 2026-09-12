@@ -1,4 +1,4 @@
-@model System.Data.DataTable
+﻿@model System.Data.DataTable
 
 @{
     ViewBag.Title = "Tipos de Producto";
@@ -177,7 +177,7 @@
 </style>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var urlModal = '@Url.Action("TipoProductoModal", "Productos")';

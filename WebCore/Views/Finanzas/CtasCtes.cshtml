@@ -1,4 +1,4 @@
-@model System.Data.DataTable
+﻿@model System.Data.DataTable
 
 @{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
@@ -147,7 +147,7 @@
 </div>
 
 <link rel="stylesheet" href="@Url.Content("~/Content/css/ctasctes.css?v=1")" />
-<script src="@Url.Content("~/Scripts/app/ctasctes.js?v=1")"></script>
+<script src="@Url.Content("~/Scripts/app/ctasctes.js")" asp-append-version="true"></script>
 <script>
     (function () {
         function showNavigationLoading(message) {

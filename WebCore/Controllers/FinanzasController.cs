@@ -87,19 +87,41 @@ namespace WebCore.Controllers
             return abierta ? cierre : null;
         }
 
+        // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): AddOrEditPago buscaba la caja
+        // abierta con _usuarioActual directo -- para una cuenta de produccion (usuario compartido)
+        // eso nunca coincide con la caja real, abierta a nombre del OPERADOR resuelto por
+        // posInstanceId (mismo patron ya usado en VentasController/CajasController/
+        // ComprasController, duplicado por controller a proposito -- no hay base controller comun
+        // en WebCore). Sin efecto para un usuario normal: ResolverOperadorPOS devuelve el mismo
+        // usuario sin cambios cuando no es cuenta de produccion.
+        private Entidades.Usuario ResolverOperadorPOS(string posInstanceId, Entidades.Usuario usuarioSesion)
+        {
+            if (usuarioSesion == null || !usuarioSesion.EsUsuarioProduccion) return usuarioSesion;
+
+            var json = HttpContext.Session.GetString("OperadorPOS_" + (posInstanceId ?? ""));
+            if (string.IsNullOrEmpty(json)) return usuarioSesion;
+
+            var operador = System.Text.Json.JsonSerializer.Deserialize<Entidades.Usuario>(json);
+            return operador ?? usuarioSesion;
+        }
+
         private bool EsPeticionAjax()
         {
             return string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
         }
 
         [HttpGet]
-        public IActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC")
+        public IActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC", bool desdePos = false)
         {
-            bool renderParcial = EsPeticionAjax();
+            bool renderParcial = desdePos || EsPeticionAjax();
 
-            // Port de Web/Controllers/FinanzasController.cs:113-120 (rama "no modo POS" -- esta
-            // accion siempre es esa rama, WebCore no porto el modo embebido en POS para CtasCtes).
-            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1))
+            // Port de Web/Controllers/FinanzasController.cs:99-134. Bug real (cuarta ronda de
+            // pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 4: modal Cuenta Corriente desde
+            // POS (F2)"): faltaba el parametro desdePos -- el gate de permiso corria siempre, asi
+            // que F2 desde POS quedaba bloqueado para cualquier usuario sin el permiso general,
+            // en vez de entrar igual (consulta puntual) con el saldo oculto.
+            bool puedeVerCtasCtes = _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtasCtes, DateTime.Today, -1);
+            if (!desdePos && !puedeVerCtasCtes)
             {
                 ViewBag.Seccion = "Cuenta Corriente";
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
@@ -110,10 +132,10 @@ namespace WebCore.Controllers
                 : "DESC";
 
             ViewBag.Buscar = buscar;
-            ViewBag.DesdePOS = false;
+            ViewBag.DesdePOS = desdePos;
             ViewBag.RenderSinLayout = renderParcial;
             ViewBag.OrdenSaldo = ordenSaldo;
-            ViewBag.OcultarSaldo = false;
+            ViewBag.OcultarSaldo = desdePos && !puedeVerCtasCtes;
 
             DataTable dt = _oCtaCteN.obtenerCtasCtes(buscar, null, ordenSaldo);
 
@@ -454,13 +476,24 @@ namespace WebCore.Controllers
         // ===== CtaCtePersona: extracto de una persona, con exportacion PDF/Excel/email real =====
 
         [HttpGet]
-        public IActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, string returnUrl = "")
+        public IActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, string returnUrl = "", bool desdePos = false, string posInstanceId = "")
         {
-            bool renderParcial = EsPeticionAjax();
+            bool renderParcial = desdePos || EsPeticionAjax();
+            // Se reenvia a la vista para armar los links de "nuevo pago"/"editar pago" -- ver
+            // ResolverOperadorPOS mas arriba.
+            ViewBag.PosInstanceId = posInstanceId;
 
-            // Port de Web/Controllers/FinanzasController.cs:227-235 (rama "no modo POS" -- esta
-            // accion siempre es esa rama).
-            if (!_oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1))
+            // Port de Web/Controllers/FinanzasController.cs:217-235. Bug real (cuarta ronda de
+            // pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 4: modal Cuenta Corriente desde
+            // POS (F2)"): faltaba el parametro desdePos -- Ventas/POS.cshtml ya lo mandaba en la
+            // URL (abrirCtaCtePersona) pero la firma de esta accion no lo aceptaba, asi que se
+            // ignoraba en silencio. Simplificacion deliberada frente al clasico (Web/Controllers/
+            // FinanzasController.cs:277-294, que ademas ajusta MostrarSoloMovimientosCajaActual/
+            // PuedeExportarCuentaCorriente/OcultarFiltroFechaDesde segun el modo POS): acá solo se
+            // replica el bypass de permiso + ocultar saldo, que es lo unico pedido y verificado --
+            // si en el futuro se necesita paridad completa de esos otros campos, es un batch aparte.
+            bool puedeVerCtaCtePersona = _oUsuarioN.tienePermiso(_usuarioActual, Entidades.Permisos.Finanza.VerCtaCtePersona, DateTime.Today, -1);
+            if (!desdePos && !puedeVerCtaCtePersona)
             {
                 ViewBag.Seccion = "Cuenta Corriente Persona";
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
@@ -468,6 +501,20 @@ namespace WebCore.Controllers
 
             if (!fechaDesde.HasValue)
                 fechaDesde = DateTime.Now.Date;
+
+            // Item 2a (2026-09-12, ver docs/DECISIONS.md): "Días ver" ya es un mecanismo real
+            // configurable por usuario (Entidades.PermisosUsuarios.DiasPermitidosVer, ver
+            // PermisosHelper.ObtenerFechaMinimaPermitida) -- antes solo se usaba para el gate
+            // todo-o-nada de arriba (tienePermiso con DateTime.Today fijo), nunca para acotar
+            // hasta donde puede pedir el filtro de fecha. Si el usuario pide explicitamente algo
+            // mas viejo que la ventana permitida, se acota (no se le muestra igual) y se informa
+            // -- "informar, no fallar en silencio", mismo criterio que el resto del proyecto.
+            // null = admin o sin este permiso asignado con limite -- sin restriccion.
+            DateTime? fechaMinimaPermitidaCtaCte = WebCore.Helpers.PermisosHelper.ObtenerFechaMinimaPermitida(
+                _usuarioActual, Entidades.Permisos.Finanza.VerCtaCtePersona);
+            bool fechaRecortadaPorPermiso = fechaMinimaPermitidaCtaCte.HasValue && fechaDesde.Value < fechaMinimaPermitidaCtaCte.Value;
+            if (fechaRecortadaPorPermiso)
+                fechaDesde = fechaMinimaPermitidaCtaCte.Value;
 
             var persona = _oPersonaN.findById(idPersona);
             DataTable dtMov = _oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value);
@@ -490,9 +537,14 @@ namespace WebCore.Controllers
             ViewBag.SaldoPersona = saldo;
             ViewBag.ReturnUrlCtaCte = DecodeReturnUrlIfNeeded(returnUrl);
             ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd");
+            ViewBag.FechaMinimaPermitidaCtaCte = fechaMinimaPermitidaCtaCte?.ToString("yyyy-MM-dd");
+            ViewBag.MensajeFechaRecortadaPorPermiso = fechaRecortadaPorPermiso
+                ? "No podés ver movimientos anteriores al " + fechaMinimaPermitidaCtaCte.Value.ToString("dd/MM/yyyy") + "."
+                : "";
             ViewBag.MostrarAnulados = mostrarAnulados;
             ViewBag.RenderSinLayout = renderParcial;
-            ViewBag.OcultarSaldo = false;
+            ViewBag.DesdePOS = desdePos;
+            ViewBag.OcultarSaldo = desdePos && !puedeVerCtaCtePersona;
             ViewBag.PuedeExportarCuentaCorriente = true;
             ViewBag.Title = "Cuenta Corriente";
 
@@ -651,7 +703,7 @@ namespace WebCore.Controllers
         // Gap de permisos real encontrado en el original (Permisos.Finanza.AddOrEditPago nunca se
         // valida) -- documentado en gaps.md, no se corrige (bypass, mismo criterio de siempre).
         [HttpGet]
-        public IActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false)
+        public IActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false, string posInstanceId = "")
         {
             bool renderParcial = desdePos || EsPeticionAjax();
             var sucursales = _oSucursalN.findAll();
@@ -661,10 +713,12 @@ namespace WebCore.Controllers
             // _ModalAltaCheque.cshtml (incluido en esta vista desde 2026-09-05, pago con cheque)
             // necesita ViewBag.Bancos -- mismo dato que ya carga Cheques() para el mismo modal.
             ViewBag.Bancos = _oCtaCteN.getBancos();
+            ViewBag.PosInstanceId = posInstanceId;
 
             if (desdePos)
             {
-                var cierreCajaActual = ObtenerCajaAbiertaUsuario(_usuarioActual);
+                var operadorPago = ResolverOperadorPOS(posInstanceId, _usuarioActual);
+                var cierreCajaActual = ObtenerCajaAbiertaUsuario(operadorPago);
                 if (cierreCajaActual == null)
                     return StatusCode(403, "Debe tener una caja abierta en la sucursal activa para registrar pagos o cobros desde POS.");
             }
@@ -735,7 +789,8 @@ namespace WebCore.Controllers
             string importe = "",
             string Efectivo = "",
             string ChequesJson = "",
-            bool desdePos = false)
+            bool desdePos = false,
+            string posInstanceId = "")
         {
             returnUrl = DecodeReturnUrlIfNeeded(returnUrl);
 
@@ -790,7 +845,7 @@ namespace WebCore.Controllers
             Entidades.CierreCaja cierreCajaActual = null;
             if (desdePos)
             {
-                cierreCajaActual = ObtenerCajaAbiertaUsuario(_usuarioActual);
+                cierreCajaActual = ObtenerCajaAbiertaUsuario(ResolverOperadorPOS(posInstanceId, _usuarioActual));
                 if (cierreCajaActual == null)
                 {
                     return Json(new

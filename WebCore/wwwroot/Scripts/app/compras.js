@@ -626,6 +626,75 @@
             });
     }
 
+    // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): F9/F10 en Compras embebida en POS
+    // abren su modal (#modalBuscarPersona/#modalBuscarProducto) por encima de #modalFinanzasPOS,
+    // ya abierto -- pero custom.css fija el mismo z-index fijo para TODOS los .modal, asi que con
+    // z-index identico gana el elemento que esta despues en el DOM (#modalFinanzasPOS, ver
+    // Ventas/POS.cshtml:744 vs :1078), y el buscador queda invisible/no clickeable detras. Mismo
+    // mecanismo ya usado 3 veces en el proyecto (posPagoStack en Ventas/POS.cshtml, cajasStack en
+    // Cajas/CajasAbiertas.cshtml, traerModalFacturaAlFrente en Ventas/POS.cshtml): subir el
+    // z-index a mano con setProperty(...,'important') al mostrarse. Solo se llama cuando la
+    // Compra esta embebida en POS (el unico caso con otro modal ya abierto detras) -- en pantalla
+    // completa no hay nada que apilar.
+    function elevarZIndexSobreModalAbierto($modal) {
+        if (!$modal || !$modal.length) return;
+        var zIndex = 1040 + (10 * $('.modal.show').length);
+        $modal[0].style.setProperty('z-index', zIndex, 'important');
+
+        setTimeout(function () {
+            var backdrop = $('.modal-backdrop').not('.modal-stack').last();
+            if (backdrop.length) {
+                backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
+                backdrop.addClass('modal-stack');
+            }
+        }, 0);
+    }
+
+    // Item 3b (2026-09-12, ver docs/DECISIONS.md): el z-index solo no alcanzo -- #modalFinanzasPOS
+    // (el modal de fondo, siempre presente cuando la Compra esta embebida en POS) tiene su propio
+    // FocusTrap de Bootstrap 5 (bootstrap.bundle.js, clase FocusTrap) que reafirma el foco DENTRO
+    // de si mismo via un listener nativo propio -- le disputa el foco tanto a la apertura del
+    // modal anidado (probable causa de "hace falta 2 intentos") como al foco explicito que
+    // seleccionarProductoDesdeModal pone en #txtCantKgs despues de cerrar. Mismo mecanismo ya
+    // probado en swal-single-confirm.js (Bootstrap-modal-vs-SweetAlert2), aca aplicado a
+    // Bootstrap-modal-vs-Bootstrap-modal. Se desactiva lo antes posible (show.bs.modal, antes de
+    // que el modal anidado termine de abrirse) y se reactiva lo mas tarde posible (hidden.bs.modal,
+    // despues de que termino la transicion de cierre) -- a proposito NO en hide.bs.modal (que
+    // dispara sincronico, casi al mismo tiempo que el .focus() explicito de
+    // seleccionarProductoDesdeModal): reactivar tan temprano le ganaria la carrera a ese .focus()
+    // y volveria a robarle el foco antes de que el usuario lo note.
+    function gestionarFocusTrapModalAbierto($modal) {
+        if (!$modal || !$modal.length || !window.bootstrap || !window.bootstrap.Modal) return;
+
+        var elFondo = document.getElementById('modalFinanzasPOS');
+        if (!elFondo) return;
+
+        $modal.off('show.bs.modal.focusTrapFix hidden.bs.modal.focusTrapFix')
+            .on('show.bs.modal.focusTrapFix', function () {
+                var instanciaFondo = window.bootstrap.Modal.getInstance(elFondo);
+                if (instanciaFondo && instanciaFondo._focustrap && typeof instanciaFondo._focustrap.deactivate === 'function') {
+                    instanciaFondo._focustrap.deactivate();
+                }
+            })
+            .on('hidden.bs.modal.focusTrapFix', function () {
+                var instanciaFondo = window.bootstrap.Modal.getInstance(elFondo);
+                if (!instanciaFondo || !instanciaFondo._focustrap || typeof instanciaFondo._focustrap.activate !== 'function') return;
+
+                // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): FocusTrap.activate()
+                // de Bootstrap (autofocus:true por defecto) fuerza el foco a elFondo
+                // (#modalFinanzasPOS) sin importar donde estuviera antes -- si seleccionarProductoDesdeModal
+                // ya puso el foco a proposito en #txtCantKgs (dentro de elFondo) antes de que este
+                // handler corra, activate() se lo robaba de vuelta al contenedor del modal. Se
+                // restaura explicitamente ese foco previo si seguia siendo valido (dentro de
+                // elFondo) despues de reactivar el trap.
+                var focoPrevio = document.activeElement;
+                instanciaFondo._focustrap.activate();
+                if (focoPrevio && focoPrevio !== document.body && elFondo.contains(focoPrevio) && document.activeElement !== focoPrevio) {
+                    focoPrevio.focus();
+                }
+            });
+    }
+
     function mostrarProveedorModal($form) {
         var state = getState($form);
         window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
@@ -635,6 +704,8 @@
         // de POS venta) sepa que la creacion de personas no aplica aca.
         if (state.config.desdePos) {
             $('#modalBuscarPersona').data('origen-persona-buscar', 'compra-embebida');
+            elevarZIndexSobreModalAbierto($('#modalBuscarPersona'));
+            gestionarFocusTrapModalAbierto($('#modalBuscarPersona'));
         } else {
             $('#modalBuscarPersona').removeData('origen-persona-buscar');
         }
@@ -677,6 +748,18 @@
         $.get(state.config.urls.personaBuscarModal)
             .done(function (html) {
                 $('#contenedorModalPersonaCompra').html(html);
+
+                // Item 3a (2026-09-12, ver docs/DECISIONS.md): el modal recien inyectado queda
+                // como DESCENDIENTE del DOM de #modalFinanzasPOS (dentro del formulario de
+                // Compra), no como un sibling real a nivel body -- estructuralmente distinto de
+                // los demas casos donde el z-index a mano ya funciona bien (posPagoStack/
+                // cajasStack/traerModalFacturaAlFrente, todos siblings). Re-parentarlo a body lo
+                // vuelve un sibling real -- mismo criterio que esos 3 casos, y de paso corta
+                // cualquier cascada de Escape hacia #modalFinanzasPOS (ya no es su descendiente).
+                if (state.config.desdePos) {
+                    $('#modalBuscarPersona').appendTo(document.body);
+                }
+
                 mostrarProveedorModal($form);
             })
             .fail(function () {
@@ -732,6 +815,34 @@
         }
 
         window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
+        if (state.config.desdePos) {
+            // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): a diferencia de
+            // #modalBuscarPersona (autocurado, se re-parenta al inyectarse), #modalBuscarProducto
+            // es un sibling real desde el arranque de la pagina -- pero declarado ANTES que
+            // #modalFinanzasPOS en el DOM (Ventas/POS.cshtml). elevarZIndexSobreModalAbierto solo
+            // IGUALA el z-index al de #modalFinanzasPOS (mismo valor, no mayor) -- con z-index
+            // empatado, Bootstrap/el navegador desempata por orden en el DOM, y gana el que esta
+            // DESPUES (#modalFinanzasPOS). Re-parentarlo a body (como ultimo hijo) antes de
+            // mostrarlo lo pone despues en el DOM -- mismo truco que ya funciona para
+            // #modalPagoPOS (declarado despues de #modalFinanzasPOS de entrada, ver
+            // Ventas/POS.cshtml) y para #modalBuscarPersona autocurado.
+            if ($modal[0].parentNode !== document.body) {
+                $modal.appendTo(document.body);
+            }
+            elevarZIndexSobreModalAbierto($modal);
+            gestionarFocusTrapModalAbierto($modal);
+
+            // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): #modalBuscarProducto
+            // es compartido con el buscador de producto del POS principal (pos-product.js,
+            // bindSearchModalFocus) -- ese modulo SIEMPRE devuelve el foco a #inputCodigo del POS
+            // al cerrarse el modal (correcto para el flujo de venta principal). Con Compras
+            // embebida, el foco debe quedar en #txtCantKgs del formulario de Compra, no en el
+            // input de codigo de la venta de fondo. Mismo criterio ya usado para
+            // #modalBuscarPersona/origen-persona-buscar (persona-buscar.js).
+            $modal.data('origen-producto-buscar', 'compra-embebida');
+        } else {
+            $modal.removeData('origen-producto-buscar');
+        }
         $modal.modal('show');
         $modal.find('.js-buscar-producto-input').val('');
         cargarProductosModal($form, '');
@@ -922,6 +1033,21 @@
                 }
 
                 clearDraft($form);
+
+                // Bug real (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 8:
+                // advertencia de salir sin guardar despues de guardar una compra"): EditPageGuard
+                // (edit-page-guard.js) fija allowExit=true en el submit del form, pero arranca un
+                // timer de 1500ms que lo revierte solo si nadie lo cancela explicitamente. El Swal
+                // de exito de abajo tiene timer:1800ms -- 300ms MAS que el del guard -- asi que
+                // para cuando el .then() navega, la proteccion ya se habia reactivado y el usuario
+                // veia "salir sin guardar" pese a haber guardado. Mismo patron ya usado en
+                // modal-postmovimiento.js (permitirSalidaSinAdvertencia): cancelar el timer del
+                // guard de forma persistente apenas se confirma el guardado, antes de cualquier
+                // demora de UX.
+                var guardApi = $form.data('editPageGuardApi');
+                if (guardApi && typeof guardApi.allowNavigation === 'function') {
+                    guardApi.allowNavigation();
+                }
 
                 if (state.config.desdePos) {
                     if (window.Swal) {

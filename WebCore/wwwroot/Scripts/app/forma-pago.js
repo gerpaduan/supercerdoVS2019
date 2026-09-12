@@ -219,6 +219,7 @@ function configurarModalFormaPagoSegunModo() {
     // ver docs/DECISIONS.md) -- en modo "preseleccion" (elegir forma de pago para que el carrito
     // recalcule precios ANTES de tener productos cargados) no hay un total real que bonificar.
     $('#btnTogglePorcentajeTotalVenta').toggle(modo === 'finalizacion');
+    $('#lblAtajoDescuentoTotalVenta').toggle(modo === 'finalizacion');
     if (modo !== 'finalizacion' && $('#bloquePorcentajeTotalVenta').is(':visible')) {
         cerrarBloquePorcentajeTotalVenta();
     }
@@ -833,6 +834,11 @@ function cerrarBloquePorcentajeTotalVenta() {
     $('#txtPorcentajeTotalVenta').val('').prop('disabled', false);
     actualizarHintDescuentoInput(true);
     $('#modalFormaPago').removeClass('pos-descuento-input-activo');
+    // Item 2 de la cuarta ronda de pedidos (2026-09-10, ver docs/DECISIONS.md "Batch 8: rediseño
+    // modal Forma de Pago"): "reducir la altura de los botones para que todo quepa sin scroll... y
+    // al desactivar que vuelvan al tamaño normal". A diferencia de pos-descuento-input-activo (atada
+    // al foco/blur del input), esta clase queda atada a que el BLOQUE este desplegado, no al foco.
+    $('#modalFormaPago').removeClass('pos-modal-compacto');
     $('#bloquePorcentajeTotalVenta').slideUp(120);
     totalVentaActual = totalVentaOriginal;
     // Se quita el descuento: el azul vuelve a mostrar el total tal cual, sin el tag "(con descuento)".
@@ -866,6 +872,7 @@ function abrirBloquePorcentajeTotalVenta() {
         return;
     }
 
+    $('#modalFormaPago').addClass('pos-modal-compacto');
     $('#bloquePorcentajeTotalVenta').slideDown(120);
     actualizarTotalConDescuento();
     habilitarYEnfocarInputDescuento();

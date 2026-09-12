@@ -1,12 +1,22 @@
-@model Entidades.Pago
+﻿@model Entidades.Pago
 @*
     Port simplificado de Web/Views/Finanzas/AddOrEditPago.cshtml (1541 lineas) +
     _AddOrEditPagoScripts.cshtml (698 lineas) -- ver docs/10-migracion-aspnet-core/
     PLAN-ADDOREDITPAGO.md. Alta/edicion de un Pago o Cobro en cuenta corriente.
 
-    Recortes deliberados (confirmados con el usuario antes de implementar):
-      - Sin atajos de teclado 1/2 (pagar/cobrar), sin bloque colapsable de observaciones -- UI
-        simplificada, misma logica de negocio.
+    Recorte restante (confirmado con el usuario, se mantiene): sin bloque colapsable de
+    observaciones -- UI simplificada, misma logica de negocio.
+
+    REVERSION explicita del recorte "sin atajos de teclado 1/2" (Batch 10 de la quinta ronda,
+    2026-09-10, ver docs/DECISIONS.md, pedido explicito del usuario): en alta (esNuevo), se
+    restaura el flujo "elegí primero Pago/Cobro" -- 2 botones grandes en vez del <select> directo,
+    atajos de teclado "1" (Pago)/"2" (Cobro), foco inicial en el boton de Pago, y el resto del
+    formulario deshabilitado hasta elegir. Version SCOPEADA del original clasico (698 lineas en
+    Web/Views/Finanzas/_AddOrEditPagoScripts.cshtml): se porta el gate de "operacion pendiente" +
+    atajos + foco (lo pedido explicitamente), NO se porta el compactado/expansion de la tarjeta de
+    operacion ni la revalidacion de cheques ya asignados al cambiar de tipo de operacion (edge
+    case de edicion, no de alta, sin markup equivalente en esta version simplificada). En edicion
+    (!esNuevo) no cambia nada -- sigue siendo el <select> plano de siempre, sin gate.
 
     Pago con Cheque/EftvoCheque portado 2026-09-05 (ver docs/DECISIONS.md): reusa el CRUD de
     cheques ya existente (_ChequeBusquedaTabla.cshtml, _ModalAltaCheque.cshtml,
@@ -16,6 +26,8 @@
 *@
 @{
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+    string posInstanceIdPago = ViewBag.PosInstanceId as string ?? "";
     var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
     var personaObj = ViewBag.Persona as Entidades.Persona;
     string persona = personaObj != null ? (personaObj.RazonSocial ?? "") : "";
@@ -45,7 +57,7 @@
     <div class="alert alert-primary d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <a href="@(string.IsNullOrWhiteSpace(returnUrl) ? Url.Action("CtaCtePersona", "Finanzas", new { idPersona }) : returnUrl)"
-               class="btn btn-sm btn-outline-secondary mr-2">
+               class="btn btn-sm btn-outline-secondary mr-2" id="btnVolverAddOrEditPago">
                 <i class="fas fa-arrow-left"></i>
             </a>
             <h5 class="mb-0"><strong>@persona</strong></h5>
@@ -61,16 +73,38 @@
             <input type="hidden" id="hddIdPersona" value="@idPersona" />
             <input type="hidden" id="hddReturnUrl" value="@returnUrl" />
 
-            <div class="form-row">
-                <div class="col-md-3 mb-3">
-                    <label for="AProveedor">Operación</label>
-                    <select id="AProveedor" name="AProveedor" class="form-control">
-                        <option value="false" selected="@(!Model.AProveedor ? "selected" : null)">Cobro (recibo dinero)</option>
-                        <option value="true" selected="@(Model.AProveedor ? "selected" : null)">Pago (entrego dinero)</option>
+            @if (esNuevo)
+            {
+                <div class="form-group mb-3 pago-operacion-elegir">
+                    <label>Operación</label>
+                    <div class="d-flex" style="gap:.5rem;">
+                        <button type="button" class="btn btn-outline-danger flex-fill pago-operacion-opcion" data-operacion-valor="true">
+                            <i class="fas fa-arrow-up mr-1"></i>Realizar un pago <small class="d-block text-muted">Atajo: 1</small>
+                        </button>
+                        <button type="button" class="btn btn-outline-success flex-fill pago-operacion-opcion" data-operacion-valor="false">
+                            <i class="fas fa-arrow-down mr-1"></i>Recibir un cobro <small class="d-block text-muted">Atajo: 2</small>
+                        </button>
+                    </div>
+                    <select id="AProveedor" name="AProveedor" class="form-control d-none">
+                        <option value="" selected>-- Elegí una operación --</option>
+                        <option value="false">Cobro (recibo dinero)</option>
+                        <option value="true">Pago (entrego dinero)</option>
                     </select>
                 </div>
+            }
 
-                <div class="col-md-3 mb-3">
+            <div class="form-row">
+                @if (!esNuevo)
+                {
+                    <div class="col-md-3 mb-3">
+                        <label for="AProveedor">Operación</label>
+                        <select id="AProveedor" name="AProveedor" class="form-control">
+                            <option value="false" selected="@(!Model.AProveedor ? "selected" : null)">Cobro (recibo dinero)</option>
+                            <option value="true" selected="@(Model.AProveedor ? "selected" : null)">Pago (entrego dinero)</option>
+                        </select>
+                    </div>
+                }
+                <div class="col-md-3 mb-3 pago-requiere-operacion">
                     <label for="SucursalId">Sucursal</label>
                     <select id="SucursalId" name="SucursalId" class="form-control">
                         @foreach (var sucursal in sucursales)
@@ -80,7 +114,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-3 mb-3">
+                <div class="col-md-3 mb-3 pago-requiere-operacion">
                     <label for="Fecha">Fecha</label>
                     <input type="datetime-local" id="Fecha" class="form-control" value="@Model.Fecha.ToString("yyyy-MM-ddTHH:mm:ss")" />
                 </div>
@@ -92,7 +126,7 @@
             </div>
 
             <div class="form-row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-4 mb-3 pago-requiere-operacion">
                     <label for="FormaPago_">Forma de pago</label>
                     <select id="FormaPago_" name="FormaPago_" class="form-control">
                         @foreach (var forma in formasPago)
@@ -102,7 +136,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-4 mb-3 pago-requiere-operacion">
                     <label for="txtImporte">Importe</label>
                     <input type="text" id="txtImporte" class="form-control text-right" inputmode="decimal" autocomplete="off"
                            value="@(Model.Importe > 0 ? Model.Importe.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")" />
@@ -153,7 +187,7 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group pago-requiere-operacion">
                 <label for="Observaciones">Observaciones</label>
                 <textarea id="Observaciones" class="form-control" rows="3" maxlength="500">@Model.Observaciones</textarea>
             </div>
@@ -292,8 +326,9 @@
     @Html.AntiForgeryToken()
 </div>
 
-<script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
-<script src="@Url.Content("~/Scripts/app/pago-cheques.js")"></script>
+<script src="@Url.Content("~/Scripts/app/modal-cheque.js")" asp-append-version="true"></script>
+<script src="@Url.Content("~/Scripts/app/pago-cheques.js")" asp-append-version="true"></script>
+<script src="@Url.Content("~/Scripts/app/form-hotkeys.js")" asp-append-version="true"></script>
 <script>
     (function () {
         // Esta vista se renderiza tanto con layout completo (navegacion directa) como sin layout
@@ -304,6 +339,10 @@
         function inicializarAddOrEditPago() {
         var idPago = @Model.Id;
         var idPersona = @idPersona;
+        var esNuevoPago = @(esNuevo ? "true" : "false");
+        var desdePosPago = @(desdePos ? "true" : "false");
+        var posInstanceIdPago = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceIdPago));
+        var operacionPendienteSeleccion = esNuevoPago;
         var urlPost = '@Url.Action("AddOrEditPagoPost", "Finanzas")';
         var pdfUrlBase = '@Url.Action("ImprimirPdfPago", "Finanzas")';
         var emailConfigUrl = '@Url.Action("ObtenerDatosEmailPago", "Finanzas")';
@@ -313,16 +352,175 @@
             return document.querySelector('#globalAntiForgeryToken input[name="__RequestVerificationToken"]')?.value || '';
         }
 
+        // Atajos Alt+Enter=Guardar / Alt+C=Cancelar (Batch 5, 2026-09-11, ver docs/DECISIONS.md)
+        // -- primer consumidor real de Scripts/app/form-hotkeys.js. #btnGuardarPago ya tiene su
+        // propio gate de "elegi primero Pago/Cobro" (mas abajo, ~linea 452) -- FormHotkeys solo
+        // dispara un click sintetico, asi que ese gate se respeta solo, sin logica extra aca.
+        // #btnVolverAddOrEditPago ya sabe volver (navegacion normal) o cerrar #modalPagoPOS
+        // (desdePos, ver el handler unas lineas mas abajo) -- mismo criterio.
+        window.FormHotkeys && window.FormHotkeys.init({
+            formSelector: '#addOrEditPagoContainer',
+            saveSelector: '#btnGuardarPago',
+            cancelSelector: '#btnVolverAddOrEditPago'
+        });
+
+        // Enter-como-Tab (Batch 5, 2026-09-11, ver docs/DECISIONS.md): Enter en un input avanza
+        // al siguiente campo en vez de no hacer nada -- mismo criterio que Productos/AddOrEdit.
+        // cshtml (moverFocoComoTab) / Cajas/_AddOrEditEgresoCaja.cshtml (bindEnterFlow), pero con
+        // una lista explicita y acotada a los campos reales de este formulario (mas simple de
+        // razonar con esta vista corriendo standalone o embebida dentro de 2 modales apilados,
+        // #modalPagoPOS sobre #modalFinanzasPOS). Observaciones (textarea) queda como destino
+        // final de la cadena pero SIN el keydown -- Enter ahi debe insertar un salto de linea,
+        // mismo criterio de exclusion de textarea que el resto del proyecto.
+        var ORDEN_CAMPOS_ENTER_PAGO = ['#SucursalId', '#Fecha', '#NroRecibo', '#FormaPago_', '#txtImporte', '#Efectivo', '#Observaciones'];
+
+        function moverFocoSiguienteCampoPago(idActual) {
+            var indiceActual = ORDEN_CAMPOS_ENTER_PAGO.indexOf(idActual);
+            if (indiceActual < 0) return;
+
+            for (var i = indiceActual + 1; i < ORDEN_CAMPOS_ENTER_PAGO.length; i++) {
+                var $siguiente = $(ORDEN_CAMPOS_ENTER_PAGO[i]);
+                if ($siguiente.length && $siguiente.is(':visible') && !$siguiente.prop('disabled') && !$siguiente.prop('readonly')) {
+                    $siguiente.trigger('focus');
+                    if (typeof $siguiente[0].select === 'function') $siguiente[0].select();
+                    return;
+                }
+            }
+        }
+
+        $('#SucursalId, #Fecha, #NroRecibo, #FormaPago_, #txtImporte, #Efectivo').on('keydown.pagoEnterTab', function (e) {
+            if (e.key !== 'Enter' || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+
+            e.preventDefault();
+            moverFocoSiguienteCampoPago('#' + this.id);
+        });
+
         function parseDecimal(value) {
             var text = String(value == null ? '' : value).trim().replace(/\./g, '').replace(',', '.');
             var n = parseFloat(text.replace(/[^0-9.\-]/g, ''));
             return isNaN(n) ? 0 : n;
         }
 
+        // Boton "Volver" (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md): en modo
+        // POS, cierra #modalPagoPOS en vez de navegar afuera de /Ventas/POS -- mismo criterio que
+        // window.volverDesdePago del clasico.
+        if (desdePosPago) {
+            $('#btnVolverAddOrEditPago').on('click', function (e) {
+                e.preventDefault();
+                if (window.POSFinanzas && typeof window.POSFinanzas.cerrarModalPago === 'function') {
+                    window.POSFinanzas.cerrarModalPago();
+                }
+            });
+        }
+
+        // ===== "Elegí primero Pago/Cobro" (Batch 10 de la quinta ronda, 2026-09-10, ver
+        // docs/DECISIONS.md) -- reversion escopeada del recorte anterior. Solo aplica en alta
+        // (esNuevoPago); en edicion la operacion ya es conocida, no hay nada que elegir. =====
+        function focoEnControlEditable() {
+            var el = document.activeElement;
+            if (!el) return false;
+            var tag = (el.tagName || '').toLowerCase();
+            if (tag === 'textarea' || tag === 'select') return true;
+            if (tag !== 'input') return false;
+            var tipo = (el.type || '').toLowerCase();
+            return tipo !== 'button' && tipo !== 'checkbox' && tipo !== 'radio';
+        }
+
+        function setOperacionPendiente(pendiente) {
+            operacionPendienteSeleccion = !!pendiente;
+            $('.pago-requiere-operacion').find('input, select, textarea').prop('disabled', operacionPendienteSeleccion);
+        }
+
+        function actualizarBotonesOperacion() {
+            var valor = ($('#AProveedor').val() || '').toString();
+            $('.pago-operacion-opcion')
+                .removeClass('active btn-danger btn-success')
+                .each(function () {
+                    var esEsteBotonPago = $(this).attr('data-operacion-valor') === 'true';
+                    $(this).addClass(esEsteBotonPago ? 'btn-outline-danger' : 'btn-outline-success');
+                });
+
+            if (valor === '') return;
+
+            $('.pago-operacion-opcion[data-operacion-valor="' + valor + '"]')
+                .removeClass('btn-outline-danger btn-outline-success')
+                .addClass('active ' + (valor === 'true' ? 'btn-danger' : 'btn-success'));
+        }
+
+        function seleccionarOperacion(valor) {
+            $('#AProveedor').val(valor).trigger('change');
+        }
+
+        if (esNuevoPago) {
+            $('#AProveedor').on('change', function () {
+                var valor = ($(this).val() || '').toString();
+                actualizarBotonesOperacion();
+
+                if (valor === '') {
+                    setOperacionPendiente(true);
+                    return;
+                }
+
+                var estabaPendiente = operacionPendienteSeleccion;
+                setOperacionPendiente(false);
+                actualizarVisibilidadCheques();
+
+                if (estabaPendiente) {
+                    var $sucursal = $('#SucursalId:visible:not(:disabled)');
+                    if ($sucursal.length) $sucursal.trigger('focus');
+                }
+            });
+
+            $(document).on('click', '.pago-operacion-opcion', function (e) {
+                e.preventDefault();
+                seleccionarOperacion($(this).attr('data-operacion-valor'));
+            });
+
+            $(document)
+                .off('keydown.posPagoAtajos')
+                .on('keydown.posPagoAtajos', function (event) {
+                    if (desdePosPago && window.POSGuard && !window.POSGuard.isModalOnTop('#modalPagoPOS')) return;
+                    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+                    if (focoEnControlEditable()) return;
+                    if (!$('.pago-operacion-elegir').is(':visible')) return;
+
+                    if (event.key === '1') {
+                        event.preventDefault();
+                        seleccionarOperacion('true');
+                    } else if (event.key === '2') {
+                        event.preventDefault();
+                        seleccionarOperacion('false');
+                    }
+                });
+
+            $('#btnGuardarPago').on('click', function (e) {
+                if (!operacionPendienteSeleccion) return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                Swal.fire({ icon: 'warning', title: 'Validación', text: 'Seleccione primero si desea realizar un pago o recibir un cobro.' });
+            });
+
+            setOperacionPendiente(true);
+            actualizarBotonesOperacion();
+
+            // Reintento (no un solo setTimeout) -- Bootstrap 4/5 no soporta oficialmente modales
+            // anidados: cuando esta vista corre embebida en #modalPagoPOS (apilado sobre
+            // #modalFinanzasPOS), el enforce-focus del modal de AFUERA le gana a un foco puesto
+            // una sola vez apenas se inyecta el HTML, devolviendo el foco al boton "cerrar" poco
+            // despues. Mismo patron de reintento que enfocarCampoPagoConReintento del clasico
+            // (Web/Views/Finanzas/_AddOrEditPagoScripts.cshtml).
+            (function enfocarBotonPagoConReintento(intentos) {
+                var $btn = $('.pago-operacion-opcion[data-operacion-valor="true"]');
+                if ($btn.length) $btn.trigger('focus');
+                if (intentos < 8) {
+                    setTimeout(function () { enfocarBotonPagoConReintento(intentos + 1); }, 80);
+                }
+            })(0);
+        }
+
         // ===== Pago con Cheque/EftvoCheque (2026-09-05, ver docs/DECISIONS.md) =====
         // Port de la logica de _AddOrEditPagoScripts.cshtml (Web clasico), acotada a lo que esta
-        // vista simplificada necesita -- sin el gate "operacionPendienteSeleccion" del original,
-        // que no existe en esta version (AProveedor siempre tiene un valor por defecto acá).
+        // vista simplificada necesita.
         function normalizarFormaPago(valor) {
             return (valor || '').toString().trim().toLowerCase();
         }
@@ -443,7 +641,13 @@
                 '&importe=' + encodeURIComponent($('#txtImporte').val()) +
                 '&Efectivo=' + encodeURIComponent($('#Efectivo').val() || '0') +
                 '&ChequesJson=' + encodeURIComponent($('#ChequesJson').val() || '') +
-                '&returnUrl=' + encodeURIComponent($('#hddReturnUrl').val() || '');
+                '&returnUrl=' + encodeURIComponent($('#hddReturnUrl').val() || '') +
+                // Faltaba mandar desdePos (Batch 10 de la quinta ronda, 2026-09-10, ver
+                // docs/DECISIONS.md) -- sin esto, AddOrEditPagoPost SIEMPRE recibia desdePos=false
+                // por default aunque la vista corriera embebida en POS: nunca forzaba la
+                // sucursal/caja abierta del vendedor ni devolvia cerrarModalPago=true.
+                '&desdePos=' + (desdePosPago ? 'true' : 'false') +
+                '&posInstanceId=' + encodeURIComponent(posInstanceIdPago || '');
 
             var $btn = $(this);
             $btn.prop('disabled', true);
@@ -458,6 +662,21 @@
 
                 if (!resp || !resp.ok) {
                     $('#msgErrorPago').removeClass('d-none').text((resp && resp.mensaje) || 'No se pudo guardar el pago.');
+                    return;
+                }
+
+                // Modo POS (Batch 10 de la quinta ronda, 2026-09-10, ver docs/DECISIONS.md): antes
+                // navegaba afuera de /Ventas/POS con window.location.href, perdiendo la venta en
+                // curso -- ahora cierra #modalPagoPOS y refresca la Cuenta Corriente ya cargada en
+                // #modalFinanzasPOS (resp.redirectUrl ya trae desdePos=true, heredado del
+                // returnUrl con el que se abrio este formulario).
+                if (resp.cerrarModalPago) {
+                    if (window.POSFinanzas && typeof window.POSFinanzas.cerrarModalPago === 'function') {
+                        window.POSFinanzas.cerrarModalPago();
+                    }
+                    if (resp.redirectUrl && window.POSFinanzas && typeof window.POSFinanzas.cargar === 'function') {
+                        window.POSFinanzas.cargar(resp.redirectUrl, 'Cuenta corriente');
+                    }
                     return;
                 }
 

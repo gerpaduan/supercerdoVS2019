@@ -1,4 +1,4 @@
-@*
+﻿@*
     Port de Web/Views/PuntosExpendio/POS.cshtml (1980 lineas) -- docs/10-migracion-aspnet-core/
     PLAN-POS-EXPENDIOS-UI.md. Reusa casi toda la infraestructura ya construida para el POS de
     Ventas (Scripts/app/pos-state.js, pos-cart.js, pos-keyboard.js, pos-guard.js, pos-product.js,
@@ -555,18 +555,18 @@
 
 @section Scripts {
     <script src="~/Scripts/carnisys.balanza.js?v=1"></script>
-    <script src="~/Scripts/app/pos-state.js?v=1"></script>
-    <script src="~/Scripts/app/pos-keyboard.js?v=2"></script>
-    <script src="~/Scripts/app/pos-product.js?v=1"></script>
-    <script src="~/Scripts/app/pos-cart.js?v=1"></script>
-    <script src="~/Scripts/app/pos-balanza.js?v=1"></script>
-    <script src="~/Scripts/app/pos-comment.js?v=1"></script>
-    <script src="~/Scripts/app/pos-help.js?v=1"></script>
-    <script src="~/Scripts/app/pos-multi-instance.js?v=1"></script>
-    <script src="~/Scripts/app/pos-compact.js?v=1"></script>
-    <script src="~/Scripts/app/seleccion-usuario.js?v=3"></script>
-    <script src="~/Scripts/app/persona-buscar.js?v=1"></script>
-    <script src="~/Scripts/app/modal-productos.js?v=1"></script>
+    <script src="~/Scripts/app/pos-state.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-keyboard.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-product.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-cart.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-balanza.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-comment.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-help.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-multi-instance.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/pos-compact.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/persona-buscar.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
 
     @* Usuario de produccion (2026-09-06, retomado del Batch 5, ver docs/DECISIONS.md) -- port
        literal de Web/Views/Ventas/POS.cshtml:1396-1486, adaptado a PuntosExpendio (a diferencia
@@ -634,7 +634,7 @@
             });
         })();
     </script>
-    <script src="~/Scripts/app/punto-expendio-pos.js?v=1"></script>
+    <script src="~/Scripts/app/punto-expendio-pos.js" asp-append-version="true"></script>
 
     <script>
         window.puntoExpendioPosConfig = {

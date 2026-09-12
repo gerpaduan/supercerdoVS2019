@@ -1,4 +1,4 @@
-@model WebCore.Models.MovimientoIndexVm
+﻿@model WebCore.Models.MovimientoIndexVm
 @using System.Collections.Generic
 @using Entidades
 
@@ -7,7 +7,7 @@
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
 }
 
-<div class="container-fluid px-2 px-md-3" data-movimientos-index="1" data-detalle-url="@Url.Action("Detalle", "Movimientos")">
+<div class="container-fluid px-2 px-md-3" data-movimientos-index="1" data-detalle-url="@Url.Action("Detalle", "Movimientos")" data-imprimir-info-url="@Url.Action("ImprimirInfo", "Movimientos")">
     <div class="d-flex flex-wrap align-items-center mb-3 gap-2 movimientos-acciones-header">
         <a class="btn btn-success movimientos-btn-accion" href="@Url.Action("Nuevo", "Movimientos")" id="btnNuevoMovimientoIndex">
             <i class="fas fa-plus mr-1"></i> Nuevo movimiento
@@ -138,6 +138,17 @@
                                             <a class="btn btn-outline-primary" href="@Url.Action("Editar", "Movimientos", new { id = movimiento.IdMovimiento })" title="Ver movimiento">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @* Boton nuevo (cuarta ronda de pedidos, 2026-09-10, ver
+                                               docs/DECISIONS.md "Batch 7"): trae pdfUrl/imprimirUrl/
+                                               whatsappTexto recien al click (ImprimirInfo), no por fila --
+                                               evita un N+1 sobre este listado, que arma la tabla desde un
+                                               DataTable liviano sin cargar entidades. *@
+                                            <button type="button"
+                                                    class="btn btn-outline-dark js-imprimir-movimiento"
+                                                    data-id="@movimiento.IdMovimiento"
+                                                    title="Imprimir">
+                                                <i class="fas fa-print"></i>
+                                            </button>
                                             <button type="button"
                                                     class="btn btn-outline-secondary js-toggle-detalle"
                                                     data-id="@movimiento.IdMovimiento"
@@ -161,6 +172,10 @@
         </div>
     </div>
 </div>
+
+@* Boton "Imprimir" nuevo de la columna Acciones (cuarta ronda de pedidos, 2026-09-10, ver
+   docs/DECISIONS.md "Batch 7") -- el modal solo se incluia antes en Editar.cshtml. *@
+@Html.Partial("~/Views/Movimientos/_ModalPostMovimiento.cshtml")
 
 <style>
     .movimientos-filtros-card {
@@ -536,5 +551,6 @@
             });
         })();
     </script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=29")"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js")" asp-append-version="true"></script>
 }

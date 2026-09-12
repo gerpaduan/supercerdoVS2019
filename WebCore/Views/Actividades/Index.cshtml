@@ -10,6 +10,13 @@
     fuente de datos, se trae el rango completo y se pagina en memoria -- volumen bajo dado el tope
     de 7 dias). El link "Ver venta" en los eventos de venta abre Ventas/DetalleVenta?modal=true
     dentro de un modal (accion ya existente, reusada sin cambios de backend).
+
+    Batch 9 de la quinta ronda (2026-09-10, ver docs/DECISIONS.md): fuente de la columna Fecha
+    reducida, etiqueta "(creación)"/"(modificación)" debajo de la fecha, icono de advertencia si
+    la fecha difiere >1 dia de la fecha real del registro (venta anulada/bonificada, movimiento,
+    compra -- no aplica a Precio/Formula/Egreso de caja), sub-tipo real en la columna Tipo para
+    Compras/Stock, y filtro "solo anomalías" para poder aislar registros con comportamiento
+    extraño.
 *@
 <div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -25,6 +32,12 @@
             <div class="form-group mb-0">
                 <label for="fechaHasta" class="small mb-1">Hasta</label>
                 <input type="date" id="fechaHasta" name="fechaHasta" class="form-control" value="@Model.FechaHasta" />
+            </div>
+            <div class="form-group mb-0 form-check">
+                <input type="checkbox" class="form-check-input" id="soloAnomalias" name="soloAnomalias" value="true" @(Model.SoloAnomalias ? "checked" : "") />
+                <label class="form-check-label small" for="soloAnomalias">
+                    <i class="fas fa-exclamation-triangle text-warning mr-1"></i>Solo anomalías
+                </label>
             </div>
             <div class="form-group mb-0">
                 <button type="submit" class="btn btn-primary">Buscar</button>
@@ -57,7 +70,18 @@
                         @foreach (var item in Model.Items)
                         {
                             <tr>
-                                <td class="text-nowrap">@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-nowrap" style="font-size:13px;">
+                                    @item.Fecha.ToString("dd/MM/yyyy HH:mm")
+                                    @if (item.EsAnomalia)
+                                    {
+                                        <i class="fas fa-exclamation-triangle text-warning ml-1"
+                                           title="La fecha de creación/modificación difiere de la fecha del registro por más de 1 día"></i>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.OrigenFecha))
+                                    {
+                                        <br /><small class="text-muted">(@item.OrigenFecha)</small>
+                                    }
+                                </td>
                                 <td><span class="badge badge-secondary">@item.Tipo</span></td>
                                 <td>@item.Descripcion</td>
                                 <td class="text-center">
@@ -83,7 +107,7 @@
                 @for (int p = 1; p <= Model.TotalPaginas; p++)
                 {
                     <li class="page-item @(p == Model.Pagina ? "active" : "")">
-                        <a class="page-link" href="@Url.Action("Index", "Actividades", new { fechaDesde = Model.FechaDesde, fechaHasta = Model.FechaHasta, pagina = p })">@p</a>
+                        <a class="page-link" href="@Url.Action("Index", "Actividades", new { fechaDesde = Model.FechaDesde, fechaHasta = Model.FechaHasta, pagina = p, soloAnomalias = Model.SoloAnomalias })">@p</a>
                     </li>
                 }
             </ul>

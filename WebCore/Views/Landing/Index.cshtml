@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     var loginUrl = Url.Action("Index", "Login");
     var whatsappUrl = "https://wa.me/5493482547897?text=" + Uri.EscapeDataString("Hola, quiero conocer cómo CARNISYS puede adaptarse a mi comercio.");
@@ -412,6 +412,6 @@
         <div class="container footer-bottom"><span>© @DateTime.Now.Year CARNISYS. Todos los derechos reservados.</span><a href="#inicio">Volver arriba ↑</a></div>
     </footer>
 
-    <script src="@Url.Content("~/Scripts/app/carnisys-home.js?v=1")" defer></script>
+    <script src="@Url.Content("~/Scripts/app/carnisys-home.js")" asp-append-version="true" defer></script>
 </body>
 </html>

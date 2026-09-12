@@ -14,6 +14,7 @@
     bool mostrarAnulados = ViewBag.MostrarAnulados != null && (bool)ViewBag.MostrarAnulados;
     bool ocultarSaldo = ViewBag.OcultarSaldo != null && (bool)ViewBag.OcultarSaldo;
     bool puedeExportarCuentaCorriente = ViewBag.PuedeExportarCuentaCorriente != null && (bool)ViewBag.PuedeExportarCuentaCorriente;
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
 
     ViewBag.Title = "Cuenta Corriente";
 
@@ -21,7 +22,10 @@
     string persona = personaObj != null ? (personaObj.RazonSocial ?? "") : "";
     decimal saldo = ViewBag.SaldoPersona;
     string fechaDesde = ViewBag.FechaDesde ?? "";
+    string fechaMinimaPermitidaCtaCte = ViewBag.FechaMinimaPermitidaCtaCte as string ?? "";
+    string mensajeFechaRecortadaPorPermiso = ViewBag.MensajeFechaRecortadaPorPermiso as string ?? "";
     string returnUrlCtaCte = ViewBag.ReturnUrlCtaCte as string ?? "";
+    string posInstanceIdCtaCte = ViewBag.PosInstanceId as string ?? "";
     bool mostrarBotonVolver = !renderSinLayout;
     string hrefBotonVolver = !string.IsNullOrWhiteSpace(returnUrlCtaCte)
         ? returnUrlCtaCte
@@ -78,11 +82,20 @@
         </div>
     </div>
 
+    @if (!string.IsNullOrWhiteSpace(mensajeFechaRecortadaPorPermiso))
+    {
+        <div class="alert alert-warning py-2 mb-3" role="alert">
+            <i class="fas fa-exclamation-triangle mr-1"></i> @mensajeFechaRecortadaPorPermiso
+        </div>
+    }
+
     <div class="card shadow-sm mb-3 ctacte-panel-card">
         <div class="card-body">
-            <form method="get" action="@Url.Action("CtaCtePersona", "Finanzas")">
+            <form method="get" action="@Url.Action("CtaCtePersona", "Finanzas")" id="frmFiltroCtaCte">
                 <input type="hidden" name="idPersona" value="@ViewBag.IdPersona" />
                 <input type="hidden" name="returnUrl" value="@returnUrlCtaCte" />
+                <input type="hidden" name="desdePos" value="@(desdePos ? "true" : "false")" />
+                <input type="hidden" name="posInstanceId" value="@posInstanceIdCtaCte" />
 
                 <div class="d-flex flex-wrap justify-content-between align-items-center ctacte-toolbar-row">
                     <div class="d-flex align-items-center flex-wrap ctacte-filtros-group">
@@ -90,7 +103,8 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text">Desde</span>
                             </div>
-                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" id="ctacteFechaDesde" />
+                            <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" id="ctacteFechaDesde"
+                                   min="@fechaMinimaPermitidaCtaCte" />
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="submit" id="btnFiltrarCtaCte">
                                     <i class="fas fa-filter"></i> Filtrar
@@ -104,19 +118,40 @@
                                    id="chkMostrarAnulados"
                                    name="mostrarAnulados"
                                    value="true"
-                                   onchange="this.form.submit();"
+                                   onchange="this.form.requestSubmit();"
                                    @(mostrarAnulados ? "checked" : "") />
                             <label class="custom-control-label" for="chkMostrarAnulados">Mostrar anulados</label>
                         </div>
                     </div>
 
-                    @if (puedeExportarCuentaCorriente)
-                    {
-                        <div class="d-flex justify-content-end align-items-center ctacte-acciones-row">
-                            <a href="@Url.Action("AddOrEditPago", "Finanzas", new { idPersona = ViewBag.IdPersona, returnUrl = Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString) })"
-                               class="btn btn-outline-primary mr-2">
-                                <i class="fas fa-hand-holding-usd"></i> Agregar Pago / Cobro
-                            </a>
+                    <div class="d-flex justify-content-end align-items-center ctacte-acciones-row">
+                        @* Boton "Agregar Pago / Cobro" (Batch 10 de la quinta ronda, 2026-09-10,
+                           ver docs/DECISIONS.md) -- SIN condicionar a puedeExportarCuentaCorriente
+                           (antes vivia adentro de ese mismo @if, acoplado sin necesidad a un
+                           permiso de exportacion de PDF/Excel que no tiene nada que ver con poder
+                           cargar un pago -- mismo criterio que el clasico, Web/Views/Finanzas/
+                           CtaCtePersona.cshtml:153-161, boton incondicional, exportar aparte).
+                           data-pos-ajax/data-pos-title: para que, si esta vista corre embebida en
+                           POS, el interceptor de POSFinanzas la abra en #modalPagoPOS en vez de
+                           navegar afuera. *@
+                        @* Bug real preexistente encontrado verificando el Batch 10 (2026-09-10, ver
+                           docs/DECISIONS.md): Uri.EscapeDataString(...) ya escapa el valor UNA vez, y
+                           Url.Action lo vuelve a escapar al armar el href -- returnUrl llegaba doble
+                           percent-encoded al controller, DecodeReturnUrlIfNeeded (que solo sabe
+                           revertir Base64 o aceptar un string YA crudo con "/") lo dejaba intacto y
+                           garabateado, rompiendo la navegacion de "Volver"/redirect tras guardar.
+                           Fix: pasar el valor CRUDO (sin escapar a mano) -- Url.Action lo escapa una
+                           sola vez, mismo patron ya usado en VentasController/_TablaVentas.cshtml
+                           (Batch 4 de esta misma ronda). *@
+                        <a href="@Url.Action("AddOrEditPago", "Finanzas", new { idPersona = ViewBag.IdPersona, returnUrl = Context.Request.Path + Context.Request.QueryString, desdePos, posInstanceId = posInstanceIdCtaCte })"
+                           class="btn btn-success mr-2"
+                           id="btnAgregarPagoCtaCte"
+                           data-pos-ajax="@(desdePos ? "true" : "false")"
+                           data-pos-title="Pago / Cobro">
+                            <i class="fas fa-hand-holding-usd"></i> Agregar Pago / Cobro
+                        </a>
+                        @if (puedeExportarCuentaCorriente)
+                        {
                             <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde, mostrarAnulados })"
                                class="btn btn-outline-danger mr-2">
                                 <i class="fas fa-file-pdf"></i> PDF
@@ -128,8 +163,8 @@
                             <button type="button" class="btn btn-outline-primary ctacte-btn-mail" id="btnEnviarMailCtaCte">
                                 <i class="fas fa-envelope"></i> Enviar por mail
                             </button>
-                        </div>
-                    }
+                        }
+                    </div>
                 </div>
             </form>
         </div>
@@ -291,9 +326,56 @@
     (function () {
         var idPersona = @ViewBag.IdPersona;
         var fechaDesde = '@fechaDesde';
+        var desdePosCtaCte = @Html.Raw(desdePos ? "true" : "false");
+        var posInstanceIdCtaCte = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(posInstanceIdCtaCte));
+
+        // Alt+Enter = abrir "nuevo pago" (Batch 5, 2026-09-11, ver docs/DECISIONS.md, pedido
+        // explicito del usuario). Scopeado al modal visible mas arriba (mismo criterio que
+        // Scripts/app/edit-page-guard.js/form-hotkeys.js): si #modalPagoPOS ya esta abierto
+        // encima de esta vista, el boton de abajo no es el destino correcto -- se deja pasar el
+        // Alt+Enter para que lo maneje el formulario de pago (form-hotkeys.js en AddOrEditPago).
+        document.addEventListener('keydown', function (e) {
+            if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
+            if ((e.key || '').toLowerCase() !== 'enter') return;
+            if (window.Swal && typeof window.Swal.isVisible === 'function' && window.Swal.isVisible()) return;
+
+            var $btn = $('#btnAgregarPagoCtaCte');
+            if (!$btn.length || !$btn.is(':visible')) return;
+
+            var $topModal = $('.modal.show:visible').last();
+            if ($topModal.length && !$.contains($topModal[0], $btn[0]) && !$btn.is($topModal)) return;
+
+            e.preventDefault();
+            $btn.trigger('click');
+        }, true);
         var puedeExportarCuentaCorriente = @Html.Raw(puedeExportarCuentaCorriente ? "true" : "false");
         var emailConfigUrl = '@Url.Action("ObtenerDatosEmailCuentaCorriente", "Finanzas")';
         var emailSendUrl = '@Url.Action("EnviarCuentaCorrienteEmail", "Finanzas")';
+
+        // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 4b"): el filtro de fecha /
+        // "Mostrar anulados" es un <form method="get"> plano, sin desdePos en el submit -- al
+        // presionar "Filtrar" (o tildar el checkbox, que ahora usa requestSubmit() en vez de
+        // submit() para que este handler SI se dispare) hacia una navegacion GET real de pagina
+        // completa: con #modalFinanzasPOS abierto, disparaba el beforeunload de pos-cart.js, y
+        // ademas -- al no viajar desdePos=true -- el controller devolvia la vista COMPLETA con
+        // Layout en vez del parcial embebido, sacando al usuario de POS en vez de "filtrar
+        // adentro". Fix: interceptar el submit y recargar DENTRO de #modalFinanzasPOS con el
+        // mismo mecanismo que ya usa abrirCtaCtePersona (POS.cshtml:1655-1663). Fuera de POS
+        // (desdePosCtaCte false), el form sigue navegando normal, sin cambios.
+        var frmFiltroCtaCte = document.getElementById('frmFiltroCtaCte');
+        if (frmFiltroCtaCte) {
+            frmFiltroCtaCte.addEventListener('submit', function (e) {
+                if (!desdePosCtaCte || !window.POSFinanzas || typeof window.POSFinanzas.cargar !== 'function') return;
+
+                e.preventDefault();
+                var datos = new FormData(frmFiltroCtaCte);
+                var params = new URLSearchParams();
+                datos.forEach(function (valor, clave) { params.append(clave, valor); });
+                // El checkbox no manda valor si esta destildado -- FormData ya lo omite en ese
+                // caso (comportamiento nativo de HTML), consistente con el submit normal del form.
+                window.POSFinanzas.cargar('@Url.Action("CtaCtePersona", "Finanzas")?' + params.toString(), 'Cuenta corriente');
+            });
+        }
 
         document.querySelectorAll('.js-fila-ctacte').forEach(function (fila) {
             if (fila.dataset.esVenta === 'true') {
@@ -306,7 +388,24 @@
             if (fila.dataset.esPago === 'true') {
                 fila.addEventListener('click', function () {
                     var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                    window.location.href = '@Url.Action("AddOrEditPago", "Finanzas")?idPersona=' + idPersona + '&idPago=' + fila.dataset.idPago + '&returnUrl=' + returnUrl;
+                    var url = '@Url.Action("AddOrEditPago", "Finanzas")?idPersona=' + idPersona + '&idPago=' + fila.dataset.idPago + '&returnUrl=' + returnUrl
+                        + (posInstanceIdCtaCte ? '&posInstanceId=' + encodeURIComponent(posInstanceIdCtaCte) : '');
+
+                    // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): esta fila hacia
+                    // window.location.href directo -- una navegacion de pagina completa que, con
+                    // #modalFinanzasPOS abierto (embebida en POS), disparaba el guard de
+                    // beforeunload de pos-cart.js (cartel "Desea salir del sitio?") y terminaba
+                    // sacando al usuario de POS. El boton "Agregar Pago / Cobro" de esta misma
+                    // vista (arriba) ya evita esto siendo un <a data-pos-ajax="true">, interceptado
+                    // por POS.cshtml para cargar en #modalPagoPOS sin navegar -- se replica ese
+                    // mismo comportamiento aca en vez de duplicar el atributo en un <a> generado
+                    // por JS.
+                    if (desdePosCtaCte && window.POSFinanzas && typeof window.POSFinanzas.cargarPago === 'function') {
+                        window.POSFinanzas.cargarPago(url, 'Pago / Cobro');
+                        return;
+                    }
+
+                    window.location.href = url;
                 });
             }
         });

@@ -1,4 +1,4 @@
-@model WebCore.Models.CorteUpsertVM
+﻿@model WebCore.Models.CorteUpsertVM
 @using System.Collections.Generic
 @using Microsoft.AspNetCore.Mvc.Rendering
 
@@ -626,8 +626,8 @@
 </script>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script>
 (function () {
     // =========================
@@ -1490,8 +1490,14 @@
             $destino = $btnSiguienteProducto;
         } else if (tecla === "m") {
             $destino = $btnHabilitarEdicionProducto;
-        } else if (tecla === "g" || tecla === "c") {
+        } else if (tecla === "g") {
             $destino = $btnGuardar;
+        } else if (tecla === "c") {
+            // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): Alt+C estaba mapeado a
+            // Guardar aca -- al reves de compras.js (Alt+C=Cancelar) y del mapeo unico confirmado
+            // por el usuario para toda la app (Alt+Enter=Guardar, Alt+C=Cancelar). Esta vista no
+            // tiene un boton "Cancelar" separado de "Volver" -- se une al mismo destino que "v".
+            $destino = $btnVolver;
         }
 
         if (!esElementoAccion($destino)) return;

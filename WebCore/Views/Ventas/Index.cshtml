@@ -105,6 +105,18 @@
                                 >
                             <span class="btn-buscar-texto">Buscar</span>
                         </button>
+                        @* Placeholder invisible (quinta ronda de pedidos, 2026-09-10, ver
+                           docs/DECISIONS.md "Batch 5: alinear el boton Buscar con los inputs de
+                           fecha"). Causa real: .filtros-fila-fechas es un grid con align-items:end
+                           -- las 3 celdas comparten el alto de fila (el de la mas alta), y cada
+                           una alinea su PROPIO ultimo elemento al fondo de esa fila compartida. Las
+                           celdas "Desde"/"Hasta" tienen un <small class="fecha-resumen-dia"> como
+                           ultimo elemento; la celda del boton no tenia nada despues del boton, asi
+                           que el boton quedaba alineado contra el fondo de la fila (a la altura del
+                           <small>), no contra el input. Este <small> vacio iguala la pila de
+                           contenido de las 3 celdas para que el boton quede a la altura real del
+                           input. *@
+                        <small class="form-text fecha-resumen-dia" style="visibility:hidden;" aria-hidden="true">&nbsp;</small>
                     </div>
                 </div>
 

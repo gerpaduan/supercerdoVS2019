@@ -14,6 +14,20 @@
         let enterDesdeTecladoVirtual = false;
         const soloFormaPago = options.soloFormaPago === true;
 
+        // Alta rapida de producto desde el POS (codigo no encontrado, ver docs/DECISIONS.md
+        // 2026-09-12). Scoped a la vista via window.POS_ALTA_RAPIDA_HABILITADA (declarado solo en
+        // Ventas/POS.cshtml, no en el _LayoutPOS.cshtml compartido) para no activarse en
+        // PuntosExpendio/POS.cshtml, que tiene su propio scanner/panel no verificado para esto.
+        let modoAltaProductoActivo = false;
+        let codigoParaAltaRapida = null;
+        let timestampCongeladoAlta = 0;
+        const FREEZE_ALTA_RAPIDA_MS = 5000;
+        // Origen de la ultima lectura por camara: permite exigir dos lecturas iguales consecutivas
+        // antes de ofrecer el alta rapida SOLO para ese canal (cámara) -- no gatea la busqueda en
+        // si (manejarEnter sigue disparandose en cada lectura, igual que siempre), solo si se
+        // ofrece o no la sugerencia cuando el codigo no existe.
+        let origenLecturaCamara = null;
+
         // Normaliza el codigo para que todas las comparaciones hablen el mismo
         // idioma: mayusculas, sin espacios sobrantes y con la X consistente.
         function normalizeInput(raw) {
@@ -197,7 +211,25 @@
         // Hace la consulta real al backend. Mantiene varias defensas del flujo
         // original: abortar requests viejos, ignorar respuestas atrasadas y
         // permitir callbacks para los casos de auto-agregado.
-        function finishTyping(codigo, callback, ingresoCantidadXParam) {
+        // omitirAutoContinuar: bug real (2026-09-12, ver docs/DECISIONS.md) -- processCodeWithQuantity
+        // ya tiene su PROPIO callback que fija cantidad y llama a options.addProduct() para el
+        // caso EAN. Sin este flag, el bloque interno de aca abajo (linea ~250) TAMBIEN detecta
+        // el mismo EAN valido y dispara su propio auto-continuar (handleEnter() -> addProduct())
+        // antes de que corra ese callback -- el producto se agregaba dos veces (o la segunda
+        // pasada chocaba con el estado ya limpiado por la primera, y visualmente "no pasaba
+        // nada"). Nunca se habia notado: esEANValido no existia hasta ahora, esta rama jamas se
+        // habia ejecutado. Los demas call-sites (busqueda en vivo, elegir del modal, codigo no-EAN
+        // por Enter) siguen usando el bloque interno tal cual, sin este flag.
+        // omitirSugerenciaAlta: bug real (2026-09-12, ver docs/DECISIONS.md) -- sin este flag, CUALQUIER
+        // llamador de finishTyping (busqueda en vivo mientras se tipea, seleccion desde el modal
+        // #modalBuscarProducto) dispararia la sugerencia de "codigo no encontrado, dar de alta" del
+        // POS ante un data.success===false. Eso es incorrecto para esos dos casos: bindLiveSearch()
+        // corre en cada tecla (el codigo puede estar a medio escribir) y openSearchModal() es una
+        // busqueda/seleccion de un producto YA EXISTENTE (si no matchea es una carrera rara, no un
+        // codigo recien escaneado). Solo los llamadores que representan "el usuario termino de
+        // ingresar un codigo" (handleEnter(), las dos ramas de processCodeWithQuantity()) dejan este
+        // flag en su default (permitido).
+        function finishTyping(codigo, callback, ingresoCantidadXParam, omitirAutoContinuar, omitirSugerenciaAlta) {
             if (soloFormaPago) return;
             const codigoTrim = normalizeInput(codigo);
 
@@ -235,6 +267,10 @@
                         productoSeleccionado = null;
                         showNoMatch(data.message);
 
+                        if (!omitirSugerenciaAlta) {
+                            evaluarSugerenciaAlta(codigoTrim);
+                        }
+
                         if (typeof callback === 'function') {
                             callback(false, data);
                         }
@@ -249,7 +285,7 @@
                     // servidor haya interpretado el codigo como interno de balanza con
                     // TipoValor=Cantidad (data.cantidadSugerida) -- ahi el peso viene
                     // embebido en el codigo, no es "1 unidad" (ver BarcodeInterpreter).
-                    if (typeof window.esEANValido === 'function' && window.esEANValido(codigoTrim)) {
+                    if (!omitirAutoContinuar && typeof window.esEANValido === 'function' && window.esEANValido(codigoTrim)) {
                         var cantidadDesdeServidor = Number(data && data.cantidadSugerida);
                         $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
                         document.querySelector('#inputCantidad')?.focus();
@@ -304,7 +340,7 @@
                     $('#inputCantidad').val(String(parsed.cant));
                     options.addProduct();
                     showWaiting();
-                }, true);
+                }, true, true);
 
                 return true;
             }
@@ -325,7 +361,7 @@
                     $('#inputCantidad').val(cantidadDesdeServidor > 0 ? String(cantidadDesdeServidor) : '1');
                     options.addProduct();
                     showWaiting();
-                }, true);
+                }, true, true);
 
                 return true;
             }
@@ -343,6 +379,185 @@
             abortPendingProductRequest();
             window.POSExpendiosCurrent?.cargarExpendio?.(parsed.idExpendio);
             return true;
+        }
+
+        // Alta rapida de producto desde el POS (codigo no encontrado, ver docs/DECISIONS.md
+        // 2026-09-12). Alterna entre el grupo normal del panel (.pos-product-metric +
+        // #btnAgregarProducto) y los bloques nuevos via la clase "pos-alta-rapida-activa" en
+        // .producto-resumen (ver pos.css) -- asi no se toca el DOM de #prodPrecio/#inputCantidad/
+        // #prodSubtotal/#btnAgregarProducto, que el resto del modulo sigue referenciando por id.
+        function mostrarPanelNormal(mostrar) {
+            $('.producto-resumen').toggleClass('pos-alta-rapida-activa', !mostrar);
+        }
+
+        // Le informa al modulo que la camara del POS detecto "codigo", y si ya es la segunda
+        // lectura igual consecutiva. Solo se usa para decidir si se ofrece el alta rapida cuando el
+        // codigo no existe -- la busqueda en si (manejarEnter) se dispara en cada lectura, sin
+        // cambios respecto al comportamiento de siempre.
+        function registrarOrigenLecturaCamara(codigo, confirmadoPorDobleLectura) {
+            origenLecturaCamara = { codigo: normalizeInput(codigo), confirmado: !!confirmadoPorDobleLectura };
+        }
+
+        // Decide si corresponde ofrecer el alta rapida para "codigo" (ya confirmado por el server
+        // como inexistente). No hace nada si: la feature esta deshabilitada en esta vista, ya hay
+        // un alta en curso, el codigo vino de la camara sin las dos lecturas iguales todavia, o el
+        // mismo codigo ya fue sugerido/descartado hace menos de 5s (freeze).
+        function evaluarSugerenciaAlta(codigo) {
+            if (!window.POS_ALTA_RAPIDA_HABILITADA) return;
+            if (modoAltaProductoActivo) return;
+
+            if (origenLecturaCamara && origenLecturaCamara.codigo === codigo && !origenLecturaCamara.confirmado) {
+                return;
+            }
+
+            const ahora = Date.now();
+            if (codigoParaAltaRapida === codigo && (ahora - timestampCongeladoAlta) < FREEZE_ALTA_RAPIDA_MS) {
+                return;
+            }
+
+            codigoParaAltaRapida = codigo;
+            timestampCongeladoAlta = ahora;
+            showSugerenciaAltaRapida(codigo);
+        }
+
+        function showSugerenciaAltaRapida(codigo) {
+            mostrarPanelNormal(false);
+            $('#prodAltaRapidaForm').addClass('d-none');
+            $('#prodAltaRapidaSugerenciaMsg').text('Código ' + codigo + ' no encontrado. ¿Desea darlo de alta?');
+            $('#prodAltaRapidaSugerencia').removeClass('d-none');
+        }
+
+        function ocultarBloquesAltaRapida() {
+            modoAltaProductoActivo = false;
+            $('#prodAltaRapidaSugerencia, #prodAltaRapidaForm').addClass('d-none');
+            mostrarPanelNormal(true);
+        }
+
+        function showFormularioAltaRapida(codigo) {
+            modoAltaProductoActivo = true;
+            mostrarPanelNormal(false);
+            $('#prodAltaRapidaSugerencia').addClass('d-none');
+
+            $('#inputAltaRapidaDescripcion').val('');
+            $('#inputAltaRapidaPrecio').val('');
+            $('#checkAltaRapidaPesable').prop('checked', false);
+            $('#prodAltaRapidaAutocompleteMsg').addClass('d-none').text('');
+            $('#selectAltaRapidaIva').empty();
+
+            $('#prodAltaRapidaForm').removeClass('d-none');
+
+            let ultimoIva = null;
+            try {
+                ultimoIva = window.localStorage.getItem('posAltaRapidaUltimoIva');
+            } catch (e) { /* localStorage no disponible (ej. navegacion privada) -- sin default */ }
+
+            // El autocompletado desde el catalogo global (mas abajo) selecciona un <option> del
+            // combo de IVA por value -- se encadena DESPUES de poblar el combo (no en paralelo) para
+            // evitar la carrera de "seleccionar un value que todavia no existe" si esta respuesta
+            // llegara antes que la de ObtenerAlicuotasIva.
+            const $selectIva = $('#selectAltaRapidaIva');
+            const poblarCombosPromise = window.obtenerAlicuotasIvaUrl
+                ? $.get(window.obtenerAlicuotasIvaUrl).done(function (data) {
+                    if (!data || !data.ok) return;
+                    (data.alicuotas || []).forEach(function (a) {
+                        $selectIva.append($('<option>').val(a.value).text(a.text));
+                    });
+                    if (ultimoIva) $selectIva.val(ultimoIva);
+                })
+                : $.Deferred().resolve();
+
+            // Autocompletado desde el catalogo global: mismo endpoint y mismo gate cliente
+            // (solo EAN-8/13 valido) que ya usa AddOrEdit.cshtml -- un codigo generico ni siquiera
+            // dispara la consulta (el propio endpoint tambien lo rechazaria server-side).
+            if (typeof window.esEANValido === 'function' && window.esEANValido(codigo) && window.buscarProductoGlobalParaAltaUrl) {
+                poblarCombosPromise.always(function () {
+                    $.get(window.buscarProductoGlobalParaAltaUrl, { codigoBarra: codigo }).done(function (data) {
+                        if (!data || !data.ok || !data.producto) return;
+
+                        $('#inputAltaRapidaDescripcion').val(data.producto.descripcion || '');
+                        if (data.producto.precioKg) {
+                            $('#inputAltaRapidaPrecio').val(String(data.producto.precioKg).replace('.', ','));
+                        }
+                        $('#checkAltaRapidaPesable').prop('checked', !!data.producto.pesable);
+                        if (data.producto.idAlicuotaIva) {
+                            $selectIva.val(data.producto.idAlicuotaIva);
+                        }
+                        $('#prodAltaRapidaAutocompleteMsg').text('Se autocompletaron los datos desde el catálogo global.').removeClass('d-none');
+                    });
+                });
+            }
+
+            document.querySelector('#inputAltaRapidaDescripcion')?.focus();
+        }
+
+        function guardarAltaRapida() {
+            const codigo = codigoParaAltaRapida;
+            const descripcion = String($('#inputAltaRapidaDescripcion').val() ?? '').trim();
+            const precio = parseFloatAR($('#inputAltaRapidaPrecio').val());
+            const idAlicuotaIva = $('#selectAltaRapidaIva').val();
+            const pesable = $('#checkAltaRapidaPesable').is(':checked');
+
+            if (!descripcion) {
+                showMessage('warning', 'Alta rápida', 'Ingresá una descripción.');
+                return;
+            }
+
+            if (!Number.isFinite(precio) || precio <= 0) {
+                showMessage('warning', 'Alta rápida', 'Ingresá un precio válido.');
+                return;
+            }
+
+            const tokenAntiForgery = document.querySelector('#globalAntiForgeryToken input[name="__RequestVerificationToken"]')?.value
+                || document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                || '';
+
+            $.ajax({
+                url: window.guardarRapidoPOSUrl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    Codigo: codigo,
+                    CorteDesc: descripcion,
+                    PrecioKg: precio,
+                    IdAlicuotaIva: idAlicuotaIva,
+                    Pesable: pesable,
+                    __RequestVerificationToken: tokenAntiForgery
+                }
+            }).done(function (data) {
+                if (!data || !data.ok) {
+                    showMessage('error', 'Alta rápida', (data && data.error) || 'No se pudo guardar el producto.');
+                    return;
+                }
+
+                try {
+                    window.localStorage.setItem('posAltaRapidaUltimoIva', String(idAlicuotaIva));
+                } catch (e) { /* localStorage no disponible -- no se persiste, sin impacto funcional */ }
+
+                ocultarBloquesAltaRapida();
+
+                productoSeleccionado = data.corte;
+                showProduct(data.corte);
+                $('#inputCantidad').val('1');
+                options.addProduct();
+                showWaiting();
+            }).fail(function () {
+                showMessage('error', 'Alta rápida', 'No se pudo contactar al servidor.');
+            });
+        }
+
+        function bindAltaRapidaEvents() {
+            $('#btnAltaRapidaSi').off('click').on('click', function () {
+                showFormularioAltaRapida(codigoParaAltaRapida);
+            });
+            $('#btnAltaRapidaNo').off('click').on('click', function () {
+                ocultarBloquesAltaRapida();
+                focusCodigo();
+            });
+            $('#btnAltaRapidaGuardar').off('click').on('click', guardarAltaRapida);
+            $('#btnAltaRapidaCancelar').off('click').on('click', function () {
+                ocultarBloquesAltaRapida();
+                focusCodigo();
+            });
         }
 
         // Centraliza la accion Enter del bloque de producto.
@@ -428,6 +643,9 @@
                     $('#inputCodigo').val(codigo);
                     clearTimeout(typingTimer);
 
+                    // omitirSugerenciaAlta=true: es una seleccion desde el buscador de productos
+                    // existentes, no un escaneo/tipeo de codigo nuevo -- si no matchea es una
+                    // carrera rara (el producto se borro entre listar y elegir), no un caso de alta.
                     finishTyping(codigo, function (ok) {
                         if (ok === false) {
                             focusCodigo();
@@ -453,7 +671,7 @@
                         }
 
                         focusCantidad();
-                    });
+                    }, undefined, undefined, true);
                 }
             });
         }
@@ -486,7 +704,8 @@
                 }
 
                 typingTimer = setTimeout(function () {
-                    finishTyping(codigo);
+                    // omitirSugerenciaAlta=true: se sigue tipeando, el codigo puede estar incompleto.
+                    finishTyping(codigo, undefined, undefined, undefined, true);
                 }, 250);
             });
         }
@@ -500,6 +719,14 @@
                     options.clearInputActivo();
                 })
                 .on('hidden.bs.modal.posBuscar', function () {
+                    // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"):
+                    // #modalBuscarProducto es compartido con el buscador de producto embebido en
+                    // Compras dentro de POS (compras.js, abrirProductoModal) -- si el modal se abrio
+                    // desde ahi, el foco debe quedar en #txtCantKgs del formulario de Compra, no
+                    // volver aca a #inputCodigo de la venta de fondo. Mismo criterio ya usado para
+                    // #modalBuscarPersona/origen-persona-buscar (persona-buscar.js).
+                    if ($(this).data('origen-producto-buscar') === 'compra-embebida') return;
+
                     setTimeout(function () {
                         focusCodigo();
                     }, 0);
@@ -515,6 +742,7 @@
 
             bindLiveSearch();
             bindSearchModalFocus();
+            bindAltaRapidaEvents();
         }
 
         const api = {
@@ -549,7 +777,11 @@
             normalizeInput: normalizeInput,
             parseFloatAR: parseFloatAR,
             parseCantidadXCodigo: parseCantidadXCodigo,
-            parseExpendioBarcode: parseExpendioBarcode
+            parseExpendioBarcode: parseExpendioBarcode,
+            registrarOrigenLecturaCamara: registrarOrigenLecturaCamara,
+            isModoAltaProductoActivo: function () {
+                return modoAltaProductoActivo;
+            }
         };
 
         // Wrappers globales para mantener compatibilidad con el codigo que todavia

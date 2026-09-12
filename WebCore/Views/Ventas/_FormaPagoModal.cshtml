@@ -26,12 +26,17 @@
                      style="display:none;">
                 </div>
 
-                <!-- Pago Mixto -->
-                <div class="form-group form-check mb-4">
+                @* Pago Mixto: interruptor en vez de checkbox (item 2 de la cuarta ronda de
+                   pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 8"). Mismo id/evento change --
+                   cero cambios de logica en forma-pago.js. Usa la convencion de switch YA
+                   establecida en el proyecto (custom-control/custom-switch, 44 vistas,
+                   reimplementada para BS5 en bootstrap4-compat.css), no .form-switch nativo de
+                   BS5 ni nada nuevo. *@
+                <div class="custom-control custom-switch mb-4">
                     <input type="checkbox"
-                           class="form-check-input"
+                           class="custom-control-input"
                            id="chkPagoMixto">
-                    <label class="form-check-label font-weight-bold"
+                    <label class="custom-control-label font-weight-bold"
                            for="chkPagoMixto">
                         Pago Mixto
                     </label>
@@ -106,6 +111,13 @@
                                     <i class="fas fa-percentage"></i>
                                 </button>
                             </label>
+                            @* Etiqueta chica visible del atajo (item 2 de la cuarta ronda de
+                               pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 8"): antes solo
+                               estaba como title (tooltip on-hover) del boton de arriba. Misma
+                               condicion de visibilidad que ese boton (modo=='finalizacion'). *@
+                            <small class="text-muted d-block mb-2" id="lblAtajoDescuentoTotalVenta" style="font-size:.7rem;">
+                                Atajo: presioná "/" para aplicar descuento o recargo
+                            </small>
 
                             <input type="text"
                                    id="totalVenta"
@@ -274,5 +286,36 @@
 
     #modalFormaPago.pos-descuento-input-activo #lblTotalConDescuentoTotalVenta {
         font-size: 2.4rem !important;
+    }
+
+    /* Modo compacto (item 2 de la cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+       "Batch 8: rediseño modal Forma de Pago"): activo mientras el bloque de descuento esta
+       desplegado (clase togglada por forma-pago.js en abrirBloquePorcentajeTotalVenta/
+       cerrarBloquePorcentajeTotalVenta), no atada al foco del input como pos-descuento-input-activo
+       -- el objetivo es que el modal completo entre en una pantalla desktop estandar SIN scroll
+       mientras el bloque esta abierto, y vuelva al tamaño normal al cerrarlo. Colocada despues de
+       las reglas de pos-descuento-input-activo (misma especificidad en #totalVenta) para que gane
+       el desempate por orden de aparicion -- evita un salto de tamaño feo si el usuario saca el
+       foco del input sin cerrar el bloque. */
+    #modalFormaPago.pos-modal-compacto .btn-forma-pago {
+        padding: .35rem .3rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .btn-forma-pago .fp-key {
+        width: 1.4rem;
+        height: 1.4rem;
+        font-size: .8rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .btn-forma-pago .fp-text {
+        font-size: .8rem;
+    }
+
+    #modalFormaPago.pos-modal-compacto .row.text-center > .col-4 {
+        margin-bottom: .5rem !important;
+    }
+
+    #modalFormaPago.pos-modal-compacto #totalVenta {
+        font-size: 1.5rem !important;
     }
 </style>

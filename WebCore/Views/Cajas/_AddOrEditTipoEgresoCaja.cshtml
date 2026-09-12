@@ -1,4 +1,4 @@
-@model WebCore.Models.TipoEgresoCajaEditVm
+﻿@model WebCore.Models.TipoEgresoCajaEditVm
 
 @{
     bool esEdicion = Model != null && Model.Id > 0;
@@ -47,7 +47,7 @@
     </div>
 </form>
 
-<script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=1")"></script>
+<script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
 <script>
     (function () {
         if (window.EgresosCaja && typeof window.EgresosCaja.bindTipoForm === "function") {

@@ -1,4 +1,4 @@
-@{
+﻿@{
     // Pantalla dedicada de login del operador para el modulo "Ventas" -- port de
     // Web/Views/Ventas/AutorizarModulo.cshtml (Batch 5, 2026-09-06, ver docs/DECISIONS.md).
     // Usuario de produccion sin operador autorizado todavia: se lo trae aca en vez de tapar el
@@ -21,7 +21,7 @@
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
     <script>
         (function () {
             var usuariosActivos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()));

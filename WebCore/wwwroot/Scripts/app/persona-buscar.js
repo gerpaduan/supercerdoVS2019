@@ -231,6 +231,13 @@ $(document).on('hidden.bs.modal', '#modalBuscarPersona', function () {
     // el foco al codigo de barras, el modal de alta enfoca su propio campo.
     if ($(this).data('suprimir-foco-codigo')) return;
 
+    // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al buscar proveedor (F9) desde una
+    // Compra embebida en POS, cerrar este modal devolvia el foco al POS de atras -- este handler
+    // era el unico de los 3 usos de 'origen-persona-buscar'==='compra-embebida' en este archivo
+    // que no chequeaba el flag (ver lineas 24 y 33 mas arriba). Con Compras embebida, el foco
+    // debe quedar en el formulario de Compra, no en el input de codigo del POS.
+    if ($(this).data('origen-persona-buscar') === 'compra-embebida') return;
+
     $(document).trigger('pos:foco-codigo');
 
     // Refuerzo extra: cuando Bootstrap termina de devolver el foco,

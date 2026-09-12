@@ -6,6 +6,11 @@ Debug/
 release/
 Release/
 
+# Salidas de publish y resultados de test runs (artefactos locales, no fuente)
+WebCore-lan5271-publish/
+WebCore.E2ETests/TestResults/
+*.trx
+
 # Ignorar otros archivos de compilacion y temporales
 *.log
 *.tmp

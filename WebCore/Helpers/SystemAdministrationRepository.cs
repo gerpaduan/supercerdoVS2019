@@ -127,7 +127,9 @@ namespace WebCore.Helpers
                     EntornoHomoProd = dr["entorno_HOMO_PROD"] == DBNull.Value ? "" : Convert.ToString(dr["entorno_HOMO_PROD"]),
                     BaseDatosNombre = dr["baseDatosNombre"] == DBNull.Value ? "" : Convert.ToString(dr["baseDatosNombre"]),
                     Activa = dr["activa"] != DBNull.Value && Convert.ToByte(dr["activa"]) == 1,
-                    Observaciones = HasColumn(dr, "observaciones") && dr["observaciones"] != DBNull.Value ? Convert.ToString(dr["observaciones"]) : ""
+                    Observaciones = HasColumn(dr, "observaciones") && dr["observaciones"] != DBNull.Value ? Convert.ToString(dr["observaciones"]) : "",
+                    EmpresaPropia = HasColumn(dr, "EmpresaPropia") && dr["EmpresaPropia"] != DBNull.Value && Convert.ToBoolean(dr["EmpresaPropia"]),
+                    EsCarniceria = HasColumn(dr, "EsCarniceria") && dr["EsCarniceria"] != DBNull.Value && Convert.ToBoolean(dr["EsCarniceria"])
                 },
                 setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = idEmpresa,
                 openConnection: Db.OpenAdmin
@@ -180,7 +182,9 @@ namespace WebCore.Helpers
                     entorno_HOMO_PROD = @entorno_HOMO_PROD,
                     baseDatosNombre = @baseDatosNombre,
                     activa = @activa,
-                    observaciones = @observaciones
+                    observaciones = @observaciones,
+                    EmpresaPropia = @empresaPropia,
+                    EsCarniceria = @esCarniceria
                 WHERE idEmpresa = @idEmpresa;";
 
             Db.NonQuery(
@@ -763,6 +767,10 @@ namespace WebCore.Helpers
             p.Add("@activa", SqlDbType.TinyInt).Value = model.Activa ? 1 : 0;
             p.Add("@creado", SqlDbType.Date).Value = DateTime.Today;
             p.Add("@observaciones", SqlDbType.NVarChar).Value = NullIfEmpty(model.Observaciones);
+            // Item 6 (2026-09-11, ver docs/DECISIONS.md): usado tanto por el UPDATE de
+            // ActualizarEmpresa como por los 2 parametros nuevos de dbo.AA_AltaEmpresa.
+            p.Add("@empresaPropia", SqlDbType.Bit).Value = model.EmpresaPropia;
+            p.Add("@esCarniceria", SqlDbType.Bit).Value = model.EsCarniceria;
         }
 
         private int ObtenerSucursalDefaultEmpresa(SqlConnection con, SqlTransaction tx, int idEmpresa)

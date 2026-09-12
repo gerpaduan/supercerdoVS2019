@@ -1,4 +1,4 @@
-@{
+﻿@{
     bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
     bool renderSinLayout = ViewBag.RenderSinLayout != null && (bool)ViewBag.RenderSinLayout;
     var chequeBusquedaViewData = new ViewDataDictionary(ViewData);
@@ -152,7 +152,7 @@
 </style>
 
 @section Scripts {
-    <script src="@Url.Content("~/Scripts/app/modal-cheque.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-cheque.js")" asp-append-version="true"></script>
     <script>
         (function (window) {
             function iniciarVistaCheques() {

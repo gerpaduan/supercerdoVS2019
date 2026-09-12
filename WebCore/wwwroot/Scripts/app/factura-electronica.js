@@ -888,12 +888,25 @@
                         text: esActualizacion ? (resp.msg || 'Los cambios se guardaron correctamente.') : ('Nro: ' + (resp.nro || ''))
                     });
 
+                    // Bug real (2026-09-11, ver docs/DECISIONS.md): el evento se disparaba
+                    // sincronicamente justo despues de pedir el hide, pero modal('hide') de
+                    // Bootstrap 5 es asincronico (~150-300ms de fade) -- el modal seguia
+                    // display:block mientras el listener de abajo (POS.cshtml) ya abria
+                    // #modalPostVentaBasico, y como ambos quedaban empatados en el mismo
+                    // z-index forzado por custom.css, el modal de Factura (todavia visible,
+                    // mas adelante en el DOM) tapaba los clicks del modal recien reabierto.
+                    // Se espera a que termine de cerrarse de verdad (hidden.bs.modal) antes
+                    // de disparar el evento -- se asume que el modal esta abierto y sin otra
+                    // transicion en curso en este punto (el boton que llega hasta aca ya se
+                    // deshabilita antes del AJAX, evita el doble submit).
+                    $('#modalFacturaElectronica').one('hidden.bs.modal', function () {
+                        if (esActualizacion) {
+                            $(document).trigger('factura:actualizada', [resp]);
+                        } else {
+                            $(document).trigger('venta:facturada', [resp]);
+                        }
+                    });
                     $('#modalFacturaElectronica').modal('hide');
-                    if (esActualizacion) {
-                        $(document).trigger('factura:actualizada', [resp]);
-                    } else {
-                        $(document).trigger('venta:facturada', [resp]);
-                    }
 
                     // La linea temporal de la venta manual ya cumplio su proposito
                     // (la factura ya tiene CAE): se limpia sin bloquear el cierre del modal.
@@ -1007,6 +1020,12 @@
             return;
         }
 
+        // El didOpen puntual que este Swal tenia (desactivar focusin.bs.modal + forzar foco a
+        // mano) quedo redundante 2026-09-10 -- ver docs/DECISIONS.md "Batch 1: Enter en
+        // SweetAlert2 (items 4+9)": swal-single-confirm.js ahora tambien envuelve los Swal con
+        // showCancelButton:true, y su listener de Enter dispara Swal.clickConfirm() directo en
+        // fase de captura sobre document (no depende de que el boton tenga el foco real), asi que
+        // el robo de foco de Bootstrap ya no afecta si Enter confirma o no.
         Swal.fire({
             icon: 'warning',
             title: 'Cerrar venta sin facturar',
@@ -1014,23 +1033,7 @@
             showCancelButton: true,
             focusConfirm: true,
             confirmButtonText: 'Sí, cerrar venta',
-            cancelButtonText: 'Cancelar',
-            didOpen: function () {
-                // Este Swal se abre encima del modal Bootstrap _FacturaElectronica, ya abierto.
-                // Bootstrap 4 reafirma el foco dentro de SU modal via un handler global de
-                // "focusin" en document (_enforceFocus) que le devuelve el foco a su propio
-                // elemento apenas detecta que se movio a algo que no es descendiente suyo -- como
-                // el boton de SweetAlert2 cuelga de <body>, por fuera del modal Bootstrap, le
-                // ganaba la pulseada al .focus() de aca abajo y el usuario nunca veia el foco
-                // puesto en "Si, cerrar venta". Se desactiva ese handler mientras este Swal esta
-                // abierto; no hace falta restaurarlo a mano, Bootstrap ya lo desactiva el solo al
-                // cerrar el modal (_hideModal).
-                $(document).off('focusin.bs.modal');
-                var confirmButton = Swal.getConfirmButton ? Swal.getConfirmButton() : null;
-                if (confirmButton && confirmButton.focus) {
-                    confirmButton.focus();
-                }
-            }
+            cancelButtonText: 'Cancelar'
         }).then(function (result) {
             if (!result.isConfirmed) return;
 
@@ -1045,8 +1048,13 @@
             })
                 .done(function (resp) {
                     if (resp && resp.ok) {
+                        // Mismo bug y mismo fix que en enviarGenerarFactura (2026-09-11, ver
+                        // docs/DECISIONS.md): esperar hidden.bs.modal real antes de disparar el
+                        // evento, para no dejar 2 modales de Bootstrap transicionando a la vez.
+                        $('#modalFacturaElectronica').one('hidden.bs.modal', function () {
+                            $(document).trigger('venta:cerradaSinFacturar', [resp]);
+                        });
                         $('#modalFacturaElectronica').modal('hide');
-                        $(document).trigger('venta:cerradaSinFacturar', [resp]);
                         return;
                     }
 

@@ -62,6 +62,11 @@ namespace WebCore.Models
         public bool Activa { get; set; }
         public string Observaciones { get; set; } = "";
 
+        // Item 6 (2026-09-11, ver docs/DECISIONS.md "esquema Empresas: EmpresaPropia/EsCarniceria"):
+        // clasificacion admin, default false -- solo sysadmin las edita (AltaRapidaEmpresa.cshtml).
+        public bool EmpresaPropia { get; set; }
+        public bool EsCarniceria { get; set; }
+
         public long CodigoGenericoCodigo { get; set; } = 999999;
         public string CodigoGenericoNombre { get; set; } = "Codigo Generico";
         public int CodigoGenericoIdAlicuotaIva { get; set; } = 4;

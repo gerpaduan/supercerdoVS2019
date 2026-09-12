@@ -29,6 +29,15 @@ namespace Contratos
         public DateTime FechaDesde { get; set; }
         public DateTime FechaHasta { get; set; }
         public bool TieneCajaAbiertaEnDestino { get; set; }
+
+        // Distinto de TieneCajaAbiertaEnDestino: esto NO bloquea, es una advertencia. Indica que ya
+        // hay ventas o egresos de caja registrados en la sucursal destino durante el rango
+        // [FechaDesde, FechaHasta] de ESTA caja -- si el usuario avanza igual, esos movimientos
+        // quedarán mezclados con los de la caja que se está por trasladar y el cierre puede quedar
+        // inconsistente. Ver docs/DECISIONS.md, quinta ronda, Batch 7.
+        public bool HayMovimientosEnDestino { get; set; }
+        public string AdvertenciaMovimientosEnDestino { get; set; }
+
         public List<CambioSucursalCajaTabla> Tablas { get; set; } = new List<CambioSucursalCajaTabla>();
     }
 

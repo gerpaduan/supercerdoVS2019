@@ -1,4 +1,4 @@
-@model WebCore.Models.ElaboradoCargaVm
+﻿@model WebCore.Models.ElaboradoCargaVm
 @using System.Collections.Generic
 @using Entidades
 
@@ -404,12 +404,12 @@
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js?v=20")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
-    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script>
         $(function () {
             if (window.NumericKeypad) {
@@ -427,9 +427,9 @@
             });
         });
     </script>
-    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
-    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
     <script>
         // Solo en mobile: cada aviso de validacion queda entre su propio
         // input de codigo y el de nombre (elaborado / ingrediente), a la
@@ -444,8 +444,8 @@
         );
         window.CapturaRespaldo && window.CapturaRespaldo.iniciarUI();
     </script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formCargaElaborado",

@@ -1,4 +1,4 @@
-@model WebCore.Models.MovimientoEditVm
+﻿@model WebCore.Models.MovimientoEditVm
 @using System.Collections.Generic
 @using Entidades
 
@@ -666,6 +666,7 @@
             urlBuscarProductoPorCodigo: '@Url.Action("BuscarProductoPorCodigo", "Movimientos")',
             redirectUrl: '@Url.Action("Index", "Movimientos")',
             pdfUrl: '@(Model.EsEdicion ? Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }) : "")',
+            imprimirUrl: '@(Model.EsEdicion ? Url.Action("ImprimirTicket", "Movimientos", new { id = Model.IdMovimiento }) : "")',
             whatsappTexto: '@(Model.EsEdicion ? System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode("Movimiento " + Model.IdMovimiento + " - " + Url.Action("ImprimirPdf", "Movimientos", new { id = Model.IdMovimiento }, Context.Request.Scheme)) : "")',
             balanzaUrl: 'http://localhost:5100/peso',
             soloLecturaInicial: @(Model.SoloLecturaInicial ? "true" : "false")
@@ -678,9 +679,9 @@
         // ya tiene un valor.
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script>
         $(function () {
             if (window.EditPageGuard && typeof window.EditPageGuard.init === "function") {
@@ -697,10 +698,10 @@
        de cabecera de _ModalPostMovimiento.cshtml. Este <script src> quedaba apuntando a un
        archivo que nunca existio en WebCore, tirando un 404 silencioso en cada carga de esta
        vista (2026-09-10, hallado investigando un reporte de autenticacion de usuario produccion). *@
-    <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js?v=8")"></script>
-    <script src="@Url.Content("~/Scripts/app/movimientos.js?v=29")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postmovimiento.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/movimientos.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
-    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
     <script>
         $(function () {
             if (window.NumericKeypad) {
@@ -718,10 +719,10 @@
             });
         });
     </script>
-    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
-    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/captura-respaldo.js")" asp-append-version="true"></script>
     <script>
         // Solo en mobile: el aviso de validacion queda entre codigo y
         // producto (a la vista del usuario, en vez de arriba de todo,
@@ -757,7 +758,7 @@
             }
         });
     </script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formMovimiento",

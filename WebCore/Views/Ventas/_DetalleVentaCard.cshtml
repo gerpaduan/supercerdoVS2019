@@ -53,8 +53,12 @@
         font-size: 0.625rem;
     }
 
+    /* Ver docs/DECISIONS.md, Batch 2 de la quinta ronda: font-weight-bold no existe en el
+       bootstrap.min.css real de este proyecto -- se fija el h5 en peso normal explicito y se usa
+       <strong> (bold real del navegador) solo en el valor, ver el HTML mas abajo. */
     .detalle-venta-resumen h5 {
         font-size: 14px;
+        font-weight: 400;
     }
 
     .detalle-venta-identificacion {
@@ -78,9 +82,17 @@
 
     <div class="card-body bg-white">
         <div class="row mb-3 detalle-documento-resumen detalle-venta-resumen">
+            @* Negrita en las variables (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+               "Batch 2: negrita en Cliente/Tipo Comprobante/Fecha/Forma de pago"). Antes, el
+               font-weight-bold estaba en el <h5> entero (etiqueta + valor) y el valor ademas tenia
+               text-muted (gris) -- las 2 reglas competian, restandole el efecto de negrita al
+               valor. Ahora la etiqueta queda en peso normal (font-weight:400, CSS de arriba) y el
+               valor usa <strong> -- NO la clase "font-weight-bold" (confirmado que no existe en el
+               bootstrap.min.css real de este proyecto, ver el comentario de la regla CSS de
+               arriba), asi que se usa negrita real de <strong> (default del navegador). *@
             <div class="col-md-6">
-                <h5 class="font-weight-bold text-dark">
-                    Cliente: <span class="text-muted">@razonSocialCliente</span>
+                <h5 class="text-dark">
+                    Cliente: <strong>@razonSocialCliente</strong>
                 </h5>
                 @if (mostrarIdentificacionCliente)
                 {
@@ -88,18 +100,18 @@
                 }
             </div>
             <div class="col-md-6 text-md-right">
-                <h5 class="font-weight-bold text-dark">
-                    <span class="text-muted">@Model.FechaVenta</span>
+                <h5 class="text-dark">
+                    <strong>@Model.FechaVenta</strong>
                 </h5>
             </div>
             <div class="col-md-6">
-                <h5 class="font-weight-bold text-dark">
-                    Tipo Comprobante: <span class="text-muted">@Model.TipoComprobante</span>
+                <h5 class="text-dark">
+                    Tipo Comprobante: <strong>@Model.TipoComprobante</strong>
                 </h5>
             </div>
             <div class="col-md-6 text-md-right">
-                <h5 class="font-weight-bold text-dark">
-                    Forma de pago: <span class="text-muted">@formaPagoTexto</span>
+                <h5 class="text-dark">
+                    Forma de pago: <strong>@formaPagoTexto</strong>
                 </h5>
             </div>
         </div>
@@ -139,9 +151,20 @@
                         #@index <strong>@linea.Corte.CorteDesc</strong> (cod: @linea.Corte.codigo)&nbsp;&nbsp;
                     </div>
 
+                    @{
+                        // Bonificacion/recargo por linea (quinta ronda de pedidos, 2026-09-10, ver
+                        // docs/DECISIONS.md "Batch 1: bonificacion en las lineas de DetalleVenta").
+                        // Mismo texto/formato que ya usa el carrito del POS (pos-cart.js,
+                        // funcion renderTable) -- texto plano, sin badge propio.
+                        string bonifTexto = linea.Bonificacion == 0
+                            ? ""
+                            : (linea.Bonificacion > 0
+                                ? $" | Bonif:{linea.Bonificacion:0.##}%"
+                                : $" | Recargo:{Math.Abs(linea.Bonificacion):0.##}%");
+                    }
                     <div class="d-flex justify-content-between">
                         <div>
-                            &nbsp;&nbsp;&nbsp;&nbsp; @linea.CantKg.ToString("0.###") x @linea.PrecioKg.ToString("C")
+                            &nbsp;&nbsp;&nbsp;&nbsp; @linea.CantKg.ToString("0.###") x @linea.PrecioKg.ToString("C")@bonifTexto
                         </div>
 
                         <div class="text-right font-weight-bold">
@@ -152,19 +175,34 @@
                 index++;
             }
         </div>
-    </div>
 
-    <div class="row mt-3">
-        <div class="col text-right">
-            <h4 class="font-weight-bold">
-                Total Venta: <span class="text-success">@Model.TotalImporte.ToString("C")   </span>
+        @* Alineacion del total (quinta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md
+           "Batch 3: alinear el total a la derecha con los decimales en linea"). Antes el total
+           vivia en un .row.mt-3 > .col aparte, FUERA de .card-body -- .card-body tiene su propio
+           padding-right (Bootstrap default), pero el .row de afuera no, asi que el borde derecho
+           del total quedaba mas a la derecha que el de las lineas (que si estan dentro de
+           .card-body). Moviendolo DENTRO de .card-body, con el mismo ancho/padding que las
+           lineas, el borde derecho coincide. Se saco tambien un triple espacio en blanco literal
+           que quedaba despues del monto (empujaba el ultimo caracter visible mas a la izquierda). *@
+        <div class="text-right mt-3">
+            <h4 class="font-weight-bold mb-0">
+                Total Venta: <span class="text-success">@Model.TotalImporte.ToString("C")</span>
             </h4>
         </div>
     </div>
 
     <div class="row mt-2">
         <div class="col">
-            <button type="button" class="btn btn-light btn-block text-left mb-2" data-bs-toggle="modal" data-bs-target="#modalComprobanteVenta">
+            @* Bug real reportado 2026-09-12 (ver docs/DECISIONS.md): SIN data-bs-toggle a proposito.
+               El data-api nativo de Bootstrap (bootstrap.bundle.js, handler de
+               "[data-bs-toggle=modal]") oculta automaticamente CUALQUIER .modal.show antes de
+               abrir el target ("avoid conflict when clicking modal toggler while another one is
+               open") -- con esta vista embebida en POS, eso ocultaba #modalFinanzasPOS (el fondo)
+               ademas de nunca volver a mostrarlo al cerrar el comprobante: pantalla oscura, nada
+               visible, exactamente el bug reportado. Se abre por JS (mismo criterio ya usado para
+               #modalBuscarPersona/#modalBuscarProducto en compras.js) para no pasar por ese
+               data-api. *@
+            <button type="button" class="btn btn-light btn-block text-left mb-2" id="btnFacturaImprimirDetalle">
                 <i class="fas fa-print mr-2"></i> Factura / Imprimir
             </button>
         </div>
@@ -173,7 +211,14 @@
     {
         <div class="row mt-2">
             <div class="col">
-                <a href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta })"
+                @* Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): al modificar una venta
+                   desde POS (siempre desdePos=true aca, ver POS.cshtml:1809-1811), al guardar
+                   volvia al layout de DetalleVenta en vez de a POS -- forma-pago.js:713 ya lee
+                   window.POSModo.returnUrl, pero nadie se lo mandaba. Se pasa returnUrl=POS solo
+                   cuando venimos de POS; fuera de POS (pantalla completa de Actividades/Cajas
+                   Abiertas) se sigue cayendo al fallback de forma-pago.js (DetalleVenta). *@
+                <a id="btnModificarVentaDetalle"
+                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, returnUrl = desdePos ? Url.Action("POS", "Ventas") : null })"
                    class="btn btn-light btn-block text-left mb-2">
                     <i class="fas fa-edit mr-2"></i> Modificar venta
                 </a>
@@ -184,7 +229,8 @@
     {
         <div class="row mt-2">
             <div class="col">
-                <a href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true })"
+                <a id="btnCambiarFormaPagoDetalle"
+                   href="@Url.Action("POS", "Ventas", new { idVentaEditar = Model.IdVenta, soloFormaPago = true, returnUrl = desdePos ? Url.Action("POS", "Ventas") : null })"
                    class="btn btn-light btn-block text-left mb-2">
                     <i class="fas fa-sync-alt mr-2"></i> Cambiar Forma de Pago
                 </a>
@@ -293,6 +339,89 @@
                 volverDetalleVenta();
             });
         }
+
+        // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md): "Modificar venta"/"Cambiar Forma
+        // de Pago" son links <a href> planos -- si esta vista esta embebida en POS (dentro de
+        // #modalFinanzasPOS), navegar dispara el beforeunload de pos-cart.js:460-474 (hay un
+        // .modal.show abierto) aunque sea una navegacion interna intencional. Mismo mecanismo ya
+        // usado para casos identicos (POS.cshtml:2326-2328, forma-pago.js:680): desactivar el
+        // aviso ANTES de dejar navegar (sin preventDefault, el link sigue funcionando igual).
+        function desactivarAvisoAntesDeNavegar(idBoton) {
+            var btn = document.getElementById(idBoton);
+            if (!btn) return;
+            btn.addEventListener("click", function () {
+                if (typeof window.desactivarAvisoSalidaPOS === "function") {
+                    window.desactivarAvisoSalidaPOS();
+                }
+            });
+        }
+
+        desactivarAvisoAntesDeNavegar("btnModificarVentaDetalle");
+        desactivarAvisoAntesDeNavegar("btnCambiarFormaPagoDetalle");
+
+        // Causa raiz real del "pantalla oscurecida, no muestra nada" (2026-09-12, ver
+        // docs/DECISIONS.md): NO era el z-index -- el boton usaba data-bs-toggle="modal" plano, y
+        // el propio data-api de Bootstrap (bootstrap.bundle.js, handler de
+        // "[data-bs-toggle=modal]") oculta automaticamente CUALQUIER .modal.show antes de abrir el
+        // target ("avoid conflict when clicking modal toggler while another one is open") --
+        // ocultaba #modalFinanzasPOS (el fondo) y nunca lo volvia a mostrar. Como
+        // #modalComprobanteVenta es DESCENDIENTE del DOM de #modalFinanzasPOS (se carga por AJAX
+        // dentro de #contenedorFinanzasPOS), ocultar el ancestro colapsa tambien al descendiente
+        // (0x0, invisible) sin importar su propio display/show. Se abre por JS en vez de
+        // data-bs-toggle para no pasar por ese data-api -- mismo criterio ya usado para
+        // #modalBuscarPersona/#modalBuscarProducto en compras.js.
+        // jQuery se chequea DENTRO del handler (al click, no al bindearlo): en la vista standalone
+        // (DetalleVenta/DetalleFactura con Layout completo) este script corre dentro de
+        // @@RenderBody(), que en _Layout.cshtml se renderiza ANTES que <script src="jquery.min.js">
+        // (cargado al final del <body>) -- mismo problema de orden ya documentado arriba en este
+        // archivo para factura-electronica.js/detalle-venta-comprobante.js. Chequear window.jQuery
+        // aca (al bindear) haria que el botón quedara sin ningún click handler en ese caso; al
+        // click, la pagina ya esta completamente cargada hace rato.
+        var btnFactura = document.getElementById("btnFacturaImprimirDetalle");
+        if (btnFactura) {
+            btnFactura.addEventListener("click", function () {
+                if (window.jQuery) {
+                    window.jQuery("#modalComprobanteVenta").modal("show");
+                }
+            });
+        }
+
+        // Con el fix de arriba, #modalFinanzasPOS ya queda abierto de fondo -- vuelve a aplicar el
+        // problema original de z-index empatado (custom.css fija el mismo z-index fijo para TODO
+        // .modal/.modal-backdrop) mas el hecho de ser descendiente del DOM de #modalFinanzasPOS, no
+        // sibling. Mismo mecanismo ya usado 3 veces en el proyecto (elevarZIndexSobreModalAbierto
+        // en compras.js, posPagoStack/traerModalFacturaAlFrente en Ventas/POS.cshtml) -- solo actua
+        // si YA hay otro modal abierto (no rompe el caso standalone, donde no hay nada que apilar).
+        //
+        // Ademas: esta partial (_DetalleVentaCard.cshtml, y con ella _ModalComprobanteVenta.cshtml)
+        // se carga por AJAX DENTRO de #contenedorFinanzasPOS -- #modalComprobanteVenta queda como
+        // DESCENDIENTE del DOM de #modalFinanzasPOS, no como sibling. Con z-index empatado (mismo
+        // valor para ambos), el navegador desempata por orden en el DOM -- pero ademas, al ser
+        // descendiente, ni siquiera compite en el mismo contexto de apilamiento que #modalFinanzasPOS.
+        // Re-parentarlo a body (ultimo hijo) antes de mostrarlo resuelve ambos problemas de una vez
+        // -- mismo criterio que compras.js aplica para #modalBuscarPersona/#modalBuscarProducto.
+        document.addEventListener("show.bs.modal", function (evt) {
+            if (!evt.target || evt.target.id !== "modalComprobanteVenta") return;
+
+            var modalesAbiertos = document.querySelectorAll(".modal.show").length;
+            if (modalesAbiertos === 0) return;
+
+            if (evt.target.parentNode !== document.body) {
+                document.body.appendChild(evt.target);
+            }
+
+            var zIndex = 1040 + (10 * modalesAbiertos);
+            evt.target.style.setProperty("z-index", zIndex, "important");
+
+            setTimeout(function () {
+                var backdrops = document.querySelectorAll(".modal-backdrop:not(.modal-stack)");
+                var backdrop = backdrops.length ? backdrops[backdrops.length - 1] : null;
+                if (backdrop) {
+                    backdrop.style.setProperty("z-index", zIndex - 1, "important");
+                    backdrop.classList.add("modal-stack");
+                }
+            }, 0);
+        });
 
         if (document.readyState === "loading") {
             document.addEventListener("DOMContentLoaded", enlazarBotonVolverDetalle);

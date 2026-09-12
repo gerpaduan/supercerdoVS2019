@@ -141,6 +141,15 @@ namespace WebCore.Controllers
                 await FirmarCookieAsync(user);
                 LoginRateLimiter.Reset(ip, model.Usuario);
 
+                // Modal de sucursal post-login (item 3 de la cuarta ronda de pedidos, 2026-09-10 --
+                // ver docs/DECISIONS.md "Batch 2: modal de sucursal automatico al loguearse"). Port
+                // de Web/Controllers/LoginController.cs:151-157: si la empresa tiene 2+ sucursales,
+                // se avisa siempre en que sucursal va a operar -- sin condicion adicional (no
+                // depende de admin ni de cuantas sucursales tenga ESTE usuario en particular).
+                var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+                if (sucursalesEmpresa.Count >= 2)
+                    TempData["MostrarModalSucursalPostLogin"] = true;
+
                 return RedirigirPostLogin(model.ReturnUrl);
             }
 

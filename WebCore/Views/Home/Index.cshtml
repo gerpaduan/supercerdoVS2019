@@ -1,4 +1,4 @@
-@model WebCore.Models.HomeDashboardIndexVm
+﻿@model WebCore.Models.HomeDashboardIndexVm
 
 @{
     // Port literal de Web/Views/Home/Index.cshtml (672 lineas, 2026-09-07, pedido explicito del
@@ -317,9 +317,6 @@
             <div class="col-lg-7 mb-3 mb-lg-0">
                 <div class="text-uppercase small font-weight-bold" style="letter-spacing:.08em; opacity:.78;">Tablero diario</div>
                 <h1 class="h3 mb-2 font-weight-bold">Resumen del negocio en una sola pantalla</h1>
-                <p class="mb-0" style="max-width:760px; opacity:.88;">
-                    Ventas, cuentas corrientes, elaborados y estado de balanza con carga progresiva para no frenar el inicio.
-                </p>
             </div>
             <div class="col-lg-5">
                 <div class="row dashboard-filters">
@@ -731,5 +728,5 @@
 @section Scripts {
     <script src="@Url.Content("~/Content/vendor/chart.js/Chart.bundle.min.js")"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js")"></script>
-    <script src="@Url.Content("~/Scripts/app/home-dashboard.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/home-dashboard.js")" asp-append-version="true"></script>
 }

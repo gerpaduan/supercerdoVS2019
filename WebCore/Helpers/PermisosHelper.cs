@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -82,6 +83,72 @@ namespace WebCore.Helpers
                 if (!string.Equals(controllerActual ?? "", modulo, StringComparison.OrdinalIgnoreCase))
                     session.Remove(ClaveSessionOperadorModulo(modulo));
             }
+        }
+
+        // Item 7 (2026-09-12, ver docs/DECISIONS.md "gate de caja abierta"): "el permiso para
+        // registrar ventas sin apertura de caja termina al salir de la vista del pos venta" --
+        // mismo criterio que LimpiarOperadorModuloSiSalioDelModulo de arriba (llamado en cada
+        // render desde _Layout.cshtml/_LayoutPOS.cshtml), pero para el flag de bypass de caja
+        // (VentasController.ClaveSessionBypassCaja/ContinuarSinCajaAbierta/TieneBypassCajaActivo
+        // -- clave duplicada aca a proposito, mismo criterio de duplicacion ya establecido en este
+        // archivo para OperadorModulo/OperadorPOS, cada controller mantiene su propia copia
+        // privada para su uso interno). Simplificacion aceptada: usa el Id del usuario de sesion,
+        // no el operador real resuelto por posInstanceId (cuentas de produccion) -- los layouts no
+        // tienen ese dato facilmente disponible, y el caso de una cuenta de produccion usando
+        // ESTE bypass puntual es marginal.
+        private static string ClaveSessionBypassCajaPOS(int idOperador) => "BypassCajaPOS_" + idOperador;
+
+        public static void LimpiarBypassCajaSiSalioDePOS(ISession session, string controllerActual, string actionActual, int idOperador)
+        {
+            if (session == null || idOperador <= 0) return;
+
+            bool enPOS = string.Equals(controllerActual ?? "", "Ventas", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(actionActual ?? "", "POS", StringComparison.OrdinalIgnoreCase);
+            if (enPOS) return;
+
+            session.Remove(ClaveSessionBypassCajaPOS(idOperador));
+        }
+
+        // ===== Ventana de dias por permiso (Ver/Editar) =====
+        // Port literal de Web/Helpers/PermisosHelper.cs:263-299 (item 2, 2026-09-12, ver
+        // docs/DECISIONS.md) -- mismo mecanismo ya usado por Negocio.Usuario.tienePermiso para
+        // decidir SI un usuario tiene un permiso valido en una fecha dada; este helper devuelve
+        // la FECHA MINIMA que ese mismo calculo permite, para poder acotar listados/filtros (no
+        // solo un true/false por registro individual). null = admin, o el usuario no tiene el
+        // permiso asignado (Formulario.FormConsulta/FormEdicion* no matchea ninguna fila de
+        // usuario.Permisos), o el permiso esta configurado sin limite (DiasPermitidosVer/Editar
+        // < 0) -- en los 3 casos, "sin restriccion de fecha", el llamador no debe filtrar nada.
+        public static DateTime? ObtenerFechaMinimaPermitida(Entidades.Usuario user, string permiso, int idCreador = -1)
+        {
+            if (user == null || user.Admin || user.Permisos == null || user.Permisos.Count == 0)
+                return null;
+
+            string permisoNormalizado = (permiso ?? string.Empty).Trim().ToUpperInvariant();
+            bool esEdicion = idCreador >= 0;
+
+            var permisoUsuario = user.Permisos.FirstOrDefault(p =>
+            {
+                if (p == null || p.Formulario == null)
+                    return false;
+
+                if (esEdicion)
+                {
+                    return string.Equals(p.Formulario.FormEdicion ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(p.Formulario.FormEdicionExtra1 ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(p.Formulario.FormEdicionExtra2 ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase);
+                }
+
+                return string.Equals(p.Formulario.FormConsulta ?? string.Empty, permisoNormalizado, StringComparison.OrdinalIgnoreCase);
+            });
+
+            if (permisoUsuario == null)
+                return null;
+
+            int dias = esEdicion ? permisoUsuario.DiasPermitidosEditar : permisoUsuario.DiasPermitidosVer;
+            if (dias < 0)
+                return null;
+
+            return DateTime.Today.AddDays(-dias).Date;
         }
 
         // Port de Web/Controllers/MovimientosController.cs:174-181 (mismo gate en Stock/

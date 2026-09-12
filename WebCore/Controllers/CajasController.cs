@@ -340,6 +340,8 @@ namespace WebCore.Controllers
                 puedeEjecutar = preview.PuedeEjecutar,
                 mensaje = preview.Mensaje,
                 tieneCajaAbiertaEnDestino = preview.TieneCajaAbiertaEnDestino,
+                hayMovimientosEnDestino = preview.HayMovimientosEnDestino,
+                advertenciaMovimientosEnDestino = preview.AdvertenciaMovimientosEnDestino,
                 idCierreCaja = preview.IdCierreCaja,
                 sucursalActual = preview.SucursalActual,
                 sucursalNueva = preview.SucursalNueva,
@@ -420,6 +422,64 @@ namespace WebCore.Controllers
             // -- pedido explicito del usuario (2026-09-07, ver docs/DECISIONS.md): se ve feo.
             // Se pasan por separado para que la vista los pueda mostrar cada uno con su propio
             // estilo (icono + nombre, badge de sucursal) en vez de texto plano con un pipe.
+            ViewBag.VendedorActividad = nombreVendedor;
+            CargarPermisosEdicionEgresos(dt, false, cierre);
+
+            return PartialView("~/Views/Cajas/_MisEgresosCaja.cshtml", dt);
+        }
+
+        // Bug real reportado 2026-09-11 (ver docs/DECISIONS.md): F6 en POS ("Mis actividades")
+        // llamaba a ActividadesCaja, que exige Permisos.Caja.CerrarCaja (el permiso de CERRAR
+        // caja, no de ver la propia actividad) -- un vendedor sin ese permiso no podia ver ni sus
+        // propios movimientos. El clasico (Web/Controllers/CajasController.cs:130-162) resuelve
+        // esto con una accion separada, MisEgresosCaja, sin ese gate -- se porta acá como
+        // MisActividadesCaja, sin tocar ActividadesCaja (que sigue siendo la pantalla admin de
+        // Cajas Abiertas, correctamente gateada). A diferencia del clasico (que resuelve la caja
+        // del vendedor de sesion internamente y por eso nunca puede ver la caja de otro), aca se
+        // recibe idCierre ya resuelto server-side por VentasController.POS (correcto tambien para
+        // cuentas de produccion, que ObtenerCajaAbiertaUsuario(_usuarioActual) no resolveria bien
+        // -- ver Batch 4/docs/DECISIONS.md) -- por eso se valida que la caja consultada sea
+        // realmente la propia antes de mostrarla, en vez de confiar ciegamente en el idCierre que
+        // manda el cliente.
+        [HttpGet]
+        public IActionResult MisActividadesCaja(int idCierre, string filtroActividad = "todos")
+        {
+            var user = _usuarioActual;
+            if (idCierre <= 0)
+                return BadRequest("Caja inválida.");
+
+            var cierre = _oCierreN.findByIdOrLast(new CierreCaja { Id = idCierre }, CierreCaja.tipoBusqueda.FindById, "");
+            if (cierre == null || cierre.Id == 0)
+                return NotFound("No se encontró la caja seleccionada.");
+
+            // Solo la propia actividad: sin esto, cualquier usuario logueado podria ver la caja de
+            // otro cambiando el idCierre a mano. Las cuentas de produccion (usuario compartido) no
+            // se pueden validar por Id sin el posInstanceId -- quedan confiadas al mismo criterio
+            // que el resto del flujo de POS para ese tipo de cuenta.
+            bool esPropiaCaja = cierre.UsuarioInicio != null && cierre.UsuarioInicio.Id == user.Id;
+            if (!esPropiaCaja && !user.EsUsuarioProduccion)
+                return StatusCode(403, "No tiene permisos para ver esta actividad de caja.");
+
+            DataTable dt = _oCierreN.getEgresosCajaVendedor(cierre);
+            dt = FiltrarActividadesCaja(dt, filtroActividad);
+
+            string nombreVendedor = cierre.UsuarioInicio != null ? cierre.UsuarioInicio.Nombre : "cajero";
+            string nombreSucursal = cierre.Sucursal != null ? cierre.Sucursal.SucursalNombre : "";
+
+            ViewBag.DesdePOS = false;
+            ViewBag.SoloEgresos = false;
+            ViewBag.FiltroActividad = filtroActividad ?? "todos";
+            ViewBag.CierreCaja = cierre;
+            ViewBag.TiposEgresoCaja = _oCierreN.obtenerTiposEgresoCaja("", 0);
+            ViewBag.TotalVisible = CalcularTotalGastosCaja(dt);
+            ViewBag.MostrarResumenMisActividades = _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.VerEgresosCaja, DateTime.Today, -1);
+            ViewBag.ModoActividades = true;
+            ViewBag.PermitirNuevo = CajaSigueAbierta(cierre) &&
+                user != null &&
+                _oUsuarioN.tienePermiso(user, Entidades.Permisos.EgresoCaja.AddOrEditEgresoCaja, DateTime.Today, user.Id);
+            ViewBag.IdCierreActividad = idCierre;
+            ViewBag.SucursalActividad = nombreSucursal;
+            ViewBag.TituloActividades = "Actividades";
             ViewBag.VendedorActividad = nombreVendedor;
             CargarPermisosEdicionEgresos(dt, false, cierre);
 

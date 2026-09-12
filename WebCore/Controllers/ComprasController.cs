@@ -31,9 +31,13 @@
 // El flujo "desdePos" (Editar/Guardar embebidos como modal dentro del modulo POS, con caja
 // registradora real -- oCierreN.validarCajaAbiertaVendedor/findEgresoCajaByTablaYId/etc.) se porta
 // TAL CUAL en el codigo (mismas ramas, mismas llamadas a Negocio.CierreCaja) porque es la misma
-// logica compartida y no cuesta nada mantenerla fiel, pero no se puede ejercitar en este slice:
-// el modulo POS (Modulo 8) todavia no esta portado, asi que nada en WebCore navega hoy con
-// origen=pos. Documentado para que quede claro que esa rama esta sin probar, no que se omitio.
+// logica compartida. Actualizado 2026-09-10 (cuarta ronda de pedidos, ver docs/DECISIONS.md
+// "Batch 3: modal Nueva Compra embebido en POS"): el comentario original decia que esta rama
+// "no se puede ejercitar... nada en WebCore navega con origen=pos" -- eso quedo desactualizado
+// cuando Ventas/POS.cshtml (window.POSCompras.abrirNueva, atajo F5) se porto y empezo a navegar
+// asi. Bug real encontrado por el supuesto obsoleto: Compras/Editar.cshtml no nuleaba su Layout
+// para este caso, asi que la pagina completa (con _Layout.cshtml, nav/sidebar/scripts propios)
+// quedaba anidada dentro del modal chico de POS -- ya corregido.
 //
 // SubmissionToken + MemoryCache (proteccion anti-doble-submit real, ver comentario original de
 // ClaveLockGuardarCompra en el controller) se porta sin cambios -- es una mitigacion de un bug

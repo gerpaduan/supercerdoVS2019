@@ -1,4 +1,4 @@
-@{
+﻿@{
     // Port literal de Web/Views/SeleccionUsuario/Index.cshtml (2026-09-09, ver docs/DECISIONS.md
     // "Batch B: permisos reales + operador de produccion"). Pantalla compartida: "quien esta
     // haciendo esto" para la cuenta de produccion, usada por Movimientos/Stock/Elaborados ANTES
@@ -19,7 +19,7 @@
 @Html.Partial("~/Views/Shared/_ModalSeleccionUsuario.cshtml")
 
 @section Scripts {
-    <script src="~/Scripts/app/seleccion-usuario.js?v=3"></script>
+    <script src="~/Scripts/app/seleccion-usuario.js" asp-append-version="true"></script>
     <script>
         (function () {
             var usuariosActivos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new System.Collections.Generic.List<object>()));

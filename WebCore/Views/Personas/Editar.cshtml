@@ -1,4 +1,4 @@
-@model WebCore.Models.PersonaEditVm
+﻿@model WebCore.Models.PersonaEditVm
 @using System.Linq
 
 @{
@@ -582,5 +582,5 @@
        Scripts renderizan despues de jQuery en _Layout.cshtml, a diferencia de un <script src>
        puesto directo en el body (ver docs/DECISIONS.md, batch de "advertencia de salir sin
        guardar", 2026-09-10). *@
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
 }

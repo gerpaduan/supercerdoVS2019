@@ -1,4 +1,4 @@
-@model WebCore.Models.ElaboradoIndexVm
+﻿@model WebCore.Models.ElaboradoIndexVm
 @using System
 @using System.Collections.Generic
 @using System.Globalization
@@ -278,5 +278,5 @@
             }
         })();
     </script>
-    <script src="@Url.Content("~/Scripts/app/elaborados.js?v=3")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados.js")" asp-append-version="true"></script>
 }

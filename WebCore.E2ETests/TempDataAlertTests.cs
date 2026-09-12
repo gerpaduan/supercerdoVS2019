@@ -34,11 +34,20 @@ public sealed class TempDataAlertTests
         await page.FillAsync("#NumeroSerie", nroSerie);
         await page.FillAsync("#Descripcion", "E2E TempDataAlertTests");
         await page.ClickAsync("button[type='submit']");
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        await page.WaitForTimeoutAsync(400);
+        // Esperar el Swal DIRECTO (no NetworkIdle + sleep fijo): el Swal de exito tiene
+        // opts.timer=2000 (auto-cierra a los 2s, _Layout.cshtml) -- con NetworkIdle+sleep fijo,
+        // el tiempo total hasta interactuar con el Swal dependia de cuanto tardara OTRA actividad
+        // de red no relacionada (en esta maquina de dev, /DispositivosSeguros dispara un fetch
+        // real a getDeviceId() en window.load, ~1.1s de ida y vuelta, ver docs/DECISIONS.md
+        // "Batch 6" -- window.CarniSysPrintAgent, agente de impresion real corriendo en esta PC).
+        // Esa demora empujaba el tiempo acumulado peligrosamente cerca del auto-cierre de 2s,
+        // causando fallas intermitentes reales (a veces "elemento inestable/desprendido del DOM"
+        // clickeando casi al mismo tiempo que el auto-cierre, a veces el Swal ya cerrado del
+        // todo) -- no es un bug del producto, es una carrera de timing del test contra un timer
+        // que no depende de la red en absoluto.
+        await page.Locator(".swal2-popup:visible").WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
 
         Assert.Empty(errors);
-        Assert.Equal(1, await page.Locator(".swal2-popup:visible").CountAsync());
         Assert.Contains("agregó correctamente", await page.Locator(".swal2-popup").InnerTextAsync());
 
         // Limpieza: mismo dispositivo recien creado, round-trip sin dejar rastro (mismo criterio

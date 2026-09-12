@@ -75,6 +75,26 @@ public sealed class HomeDashboardTests
         await page.CloseAsync();
     }
 
+    // Item 7 de la cuarta ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md "Batch 5: textos del
+    // Dashboard": el usuario pidio sacar el subtitulo "Ventas, cuentas corrientes, elaborados y
+    // estado de balanza con carga progresiva para no frenar el inicio." (se mostraba siempre, para
+    // todos los usuarios) y dejar "Vista limitada..." solo para no-admin -- confirmado que esto
+    // ultimo YA estaba bien implementado (@if (!Model.PuedeVerDashboardDatos)), sin cambios ahi.
+    [Fact]
+    public async Task DashboardHero_SubtituloDeCargaProgresivaFueRemovido()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Home/Index", new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 20000 });
+
+        var texto = await page.Locator(".dashboard-hero").InnerTextAsync();
+        Assert.DoesNotContain("carga progresiva", texto);
+        Assert.Contains("Resumen del negocio", texto);
+        // "Vista limitada" no debe aparecer para un admin -- regresion del gate ya existente.
+        Assert.DoesNotContain("Vista limitada", texto);
+
+        await page.CloseAsync();
+    }
+
     // Mismo bug que el del <h1> de arriba, pero en "Tablero diario"/"Periodo"/"Sucursal" (item 5
     // de la segunda ronda de pedidos, 2026-09-10, ver docs/DECISIONS.md) -- pisados por 2 reglas
     // genericas mas de ui-refresh.css (".font-weight-bold" y "label"). Fix scoped a

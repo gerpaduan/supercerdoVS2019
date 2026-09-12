@@ -1,4 +1,4 @@
-@model WebCore.Models.ReportesViewModel
+﻿@model WebCore.Models.ReportesViewModel
 @using System
 @using System.Globalization
 @using System.Linq
@@ -1760,5 +1760,5 @@
             filtrosSecundariosUrl: "@Url.Action("FiltrosSecundarios", "Reportes")"
         };
     </script>
-    <script src="@Url.Content("~/Scripts/app/reportes.js?v=20260814-1")"></script>
+    <script src="@Url.Content("~/Scripts/app/reportes.js")" asp-append-version="true"></script>
 }

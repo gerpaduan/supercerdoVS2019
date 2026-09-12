@@ -13,6 +13,7 @@
 // (HomeController.ObtenerUltimasActividadesDashboard) sin duplicar la logica de agregacion.
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
+using System.Linq;
 
 namespace WebCore.Controllers
 {
@@ -31,7 +32,7 @@ namespace WebCore.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int pagina = 1)
+        public IActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int pagina = 1, bool soloAnomalias = false)
         {
             var usuario = _sesion.UsuarioActual;
             if (!usuario.Admin)
@@ -51,6 +52,12 @@ namespace WebCore.Controllers
 
             var items = _feed.ObtenerActividades(desdeConHora, hastaConHora);
 
+            // Filtro "solo anomalías" (Batch 9 de la quinta ronda, 2026-09-10, ver
+            // docs/DECISIONS.md) -- se aplica ANTES de paginar, sobre la lista ya completa, para
+            // que la paginacion refleje el total real filtrado (no anomalias por pagina sueltas).
+            if (soloAnomalias)
+                items = items.Where(i => i.EsAnomalia).ToList();
+
             int totalItems = items.Count;
             int totalPaginas = Math.Max(1, (int)Math.Ceiling(totalItems / (double)ItemsPorPagina));
             pagina = Math.Max(1, Math.Min(pagina, totalPaginas));
@@ -63,6 +70,7 @@ namespace WebCore.Controllers
                 Pagina = pagina,
                 TotalPaginas = totalPaginas,
                 TotalItems = totalItems,
+                SoloAnomalias = soloAnomalias,
                 Items = pagina_items
             };
 

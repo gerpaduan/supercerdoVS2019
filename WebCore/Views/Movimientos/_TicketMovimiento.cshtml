@@ -1,0 +1,147 @@
+@model Entidades.Movimiento
+@using System
+@using System.Text
+@{
+    // Port literal de Web/Views/Movimientos/_TicketMovimiento.cshtml (2026-09-10, cuarta ronda de
+    // pedidos, ver docs/DECISIONS.md "Batch 7: boton Imprimir en Movimientos + ticket termico").
+    // Sin cambios de estructura: la primera linea YA es el nombre del movimiento centrado
+    // ("Movimiento"), y "Fecha: ..." es parte del bloque de detalle (4ta linea), no un renglon
+    // aislado arriba de todo -- verificado generando un ticket real antes de decidir si tocar
+    // algo, ver la entrada de DECISIONS.md de este batch.
+    Layout = null;
+
+    var lineas = Model.ListaCortesPorMov;
+    int ticketMm = ViewBag.TicketMm != null ? (int)ViewBag.TicketMm : 80;
+    int cantMaxChar = ticketMm == 58 ? 32 : 43;
+    string ticketClass = ticketMm == 58 ? "ticket-58" : "ticket-80";
+    int totalUnidades = 0;
+    decimal totalKilos = 0m;
+    int anchoProducto = cantMaxChar == 32 ? 15 : 22;
+    int anchoCant = cantMaxChar == 32 ? 5 : 6;
+    int anchoKgs = cantMaxChar == 32 ? 7 : 8;
+
+    Func<string, int, string> truncar = (texto, maximo) =>
+    {
+        texto = texto ?? "";
+        return texto.Length > maximo ? texto.Substring(0, maximo) : texto;
+    };
+
+    Func<string, int, string> centrar = (texto, ancho) =>
+    {
+        texto = truncar(texto, ancho);
+        int espaciosIzquierda = (ancho - texto.Length) / 2;
+        if (espaciosIzquierda < 0) espaciosIzquierda = 0;
+        return new string(' ', espaciosIzquierda) + texto;
+    };
+
+    Func<string, string, int, string> alinearExtremos = (izquierda, derecha, ancho) =>
+    {
+        izquierda = truncar(izquierda, ancho);
+        derecha = truncar(derecha, ancho);
+        int espacios = ancho - (izquierda.Length + derecha.Length);
+        if (espacios < 1) espacios = 1;
+        return izquierda + new string(' ', espacios) + derecha;
+    };
+
+    Func<string, int, bool, string> ajustarColumna = (texto, ancho, derecha) =>
+    {
+        texto = truncar(texto, ancho);
+        return derecha ? texto.PadLeft(ancho) : texto.PadRight(ancho);
+    };
+
+    var sb = new StringBuilder();
+    Action<string> linea = texto => sb.AppendLine(texto ?? "");
+
+    linea(centrar("Movimiento", cantMaxChar));
+    linea(truncar("ID: " + Model.IdMovimiento, cantMaxChar));
+    linea(truncar("Origen: " + (Model.SucursalOrigen != null ? Model.SucursalOrigen.SucursalNombre : "-"), cantMaxChar));
+    linea(truncar("Destino: " + (Model.SucursalDestino != null ? Model.SucursalDestino.SucursalNombre : "-"), cantMaxChar));
+    linea(truncar("Fecha: " + Model.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"), cantMaxChar));
+    linea(" ");
+    linea(ajustarColumna("Producto", anchoProducto, false) + " " + ajustarColumna("Cant.", anchoCant, true) + "    " + ajustarColumna("Kgs.", anchoKgs, true));
+    linea(new string('-', cantMaxChar));
+
+    if (lineas != null)
+    {
+        foreach (var item in lineas)
+        {
+            if (item == null)
+            {
+                continue;
+            }
+
+            string nombreProducto = item.Corte != null ? item.Corte.CorteDesc : "";
+            string codigoProducto = item.Corte != null ? item.Corte.Codigo.ToString() : "";
+            string cantidadTexto = item.CantUnidad.ToString();
+            string kilosTexto = Convert.ToDecimal(item.CantKg).ToString("N3");
+
+            totalUnidades += item.CantUnidad;
+            totalKilos += Convert.ToDecimal(item.CantKg);
+
+            linea(ajustarColumna(nombreProducto, anchoProducto, false) + " " + ajustarColumna(cantidadTexto, anchoCant, true) + "    " + ajustarColumna(kilosTexto, anchoKgs, true));
+            linea(ajustarColumna("Cod:" + codigoProducto, anchoProducto, false));
+        }
+    }
+
+    linea(new string('-', cantMaxChar));
+    linea(ajustarColumna("Total", anchoProducto, false) + " " + ajustarColumna(totalUnidades.ToString(), anchoCant, true) + "    " + ajustarColumna(totalKilos.ToString("N3"), anchoKgs, true));
+
+    if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+    {
+        linea("");
+        linea("Observaciones:");
+        string observacion = Model.Observaciones ?? "";
+        for (int i = 0; i < observacion.Length; i += cantMaxChar)
+        {
+            linea(observacion.Substring(i, Math.Min(cantMaxChar, observacion.Length - i)));
+        }
+    }
+
+    string ticketTexto = sb.ToString();
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Movimiento @Model.IdMovimiento</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+
+        body {
+            font-family: Consolas, "Courier New", monospace;
+            color: #000;
+        }
+
+        .ticket-80 {
+            width: 80mm;
+            font-size: 12px;
+        }
+
+        .ticket-58 {
+            width: 58mm;
+            font-size: 11px;
+        }
+
+        pre.ticket-text {
+            margin: 0;
+            padding: 2mm;
+            white-space: pre-wrap;
+            line-height: 1.15;
+            box-sizing: border-box;
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="@ticketClass" onload="window.print()">
+    <pre class="ticket-text">@ticketTexto</pre>
+
+    @for (int i = 0; i < 10; i++)
+    {
+        <pre class="ticket-line">&nbsp;</pre>
+    }
+</body>
+</html>

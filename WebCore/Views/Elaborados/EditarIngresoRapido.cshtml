@@ -1,4 +1,4 @@
-@model WebCore.Models.ElaboradoRapidoEditVm
+﻿@model WebCore.Models.ElaboradoRapidoEditVm
 @using System.Collections.Generic
 @using Entidades
 
@@ -257,12 +257,12 @@
         window.UsuariosActivosEmpresa = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.UsuariosActivosEmpresa ?? new List<object>()));
         window.IdUsuarioCreadorPreseleccionado = @(ViewBag.IdUsuarioCreadorPreseleccionado != null ? (int)ViewBag.IdUsuarioCreadorPreseleccionado : 0);
     </script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js?v=2")"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/seleccion-usuario-produccion.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/carnisys.balanza.js?v=6")"></script>
-    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js?v=11")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-readonly.js?v=2")"></script>
-    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js?v=1")"></script>
+    <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formIngresoRapidoElaborado",
