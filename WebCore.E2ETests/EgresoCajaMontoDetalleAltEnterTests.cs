@@ -95,4 +95,35 @@ public sealed class EgresoCajaMontoDetalleAltEnterTests
 
         await page.CloseAsync();
     }
+
+    // Pedido real (2026-09-15, ver docs/DECISIONS.md): al guardar, un SweetAlert de exito de 2
+    // segundos (auto-cierra solo), cerrable antes con Enter o Escape -- mismo patron ya
+    // establecido en el proyecto (elaborados-carga.js/elaborados-rapido.js) y habilitado
+    // automaticamente por el patch global swal-single-confirm.js (exige showConfirmButton:true,
+    // no false, para engancharse).
+    [Fact]
+    public async Task Guardar_MuestraSweetAlertDeExitoQueSePuedeCerrarConEscape()
+    {
+        var page = await AbrirNuevoEgresoAsync(_fixture);
+
+        var opciones = await page.Locator("#idTipoEgresoCaja option").AllAsync();
+        Assert.True(opciones.Count > 1, "hace falta al menos un tipo de egreso real (no reservado) en la base de dev para este test");
+        await page.SelectOptionAsync("#idTipoEgresoCaja", new SelectOptionValue { Index = 1 });
+        await page.FillAsync("#egresoDescripcion", "E2E SwalExito " + DateTime.UtcNow.Ticks);
+        await page.ClickAsync("#egresoMonto");
+        await page.Keyboard.TypeAsync("50");
+
+        await page.ClickAsync("#btnGuardarEgresoCaja");
+
+        var swal = page.Locator(".swal2-popup.swal2-icon-success");
+        await swal.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+        Assert.Contains("Egreso guardado", await swal.Locator(".swal2-title").InnerTextAsync());
+
+        // El bug real: sin showConfirmButton:true, swal-single-confirm.js no engancha el atajo, y
+        // Escape no cerraba nada antes de los 2 segundos del timer.
+        await page.Keyboard.PressAsync("Escape");
+        await swal.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 1000 });
+
+        await page.CloseAsync();
+    }
 }

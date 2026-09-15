@@ -750,6 +750,28 @@
 
                     $form.data("permitir-salida", true);
 
+                    // Pedido real (2026-09-15, ver docs/DECISIONS.md): SweetAlert de exito de 2
+                    // segundos, cerrable antes con Enter/Escape -- mismo patron ya establecido en
+                    // el proyecto (elaborados-carga.js/elaborados-rapido.js). "window.SaveSuccessAlert"
+                    // (lo que habia antes) nunca existio en ningun archivo -- era un no-op.
+                    // showConfirmButton:true (no false) es necesario para que
+                    // swal-single-confirm.js (patch global de Swal.fire) le agregue el
+                    // atajo de Enter/Escape -- un toast con showConfirmButton:false queda afuera de
+                    // ese patch a proposito (ver isSingleConfirmAlert).
+                    if (window.Swal && typeof window.Swal.fire === "function") {
+                        window.Swal.fire({
+                            icon: "success",
+                            title: "Egreso guardado correctamente",
+                            text: resp.mensaje || "",
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: true,
+                            confirmButtonText: "OK",
+                            allowOutsideClick: false,
+                            returnFocus: false
+                        });
+                    }
+
                     if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
                         window.POSEgresos.abrirMis();
                         return;
@@ -763,10 +785,6 @@
 
                     $("#modalEgresoCaja").modal("hide");
                     filtrar();
-
-                    if (window.SaveSuccessAlert) {
-                        window.SaveSuccessAlert.show(resp.mensaje || "El egreso se guardó correctamente.");
-                    }
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el egreso de caja.");
                 });
@@ -912,6 +930,28 @@
 
                     $form.data("permitir-salida", true);
 
+                    // Pedido real (2026-09-15, ver docs/DECISIONS.md): SweetAlert de exito de 2
+                    // segundos, cerrable antes con Enter/Escape -- mismo patron ya establecido en
+                    // el proyecto (elaborados-carga.js/elaborados-rapido.js). "window.SaveSuccessAlert"
+                    // (lo que habia antes) nunca existio en ningun archivo -- era un no-op.
+                    // showConfirmButton:true (no false) es necesario para que
+                    // swal-single-confirm.js (patch global de Swal.fire) le agregue el
+                    // atajo de Enter/Escape -- un toast con showConfirmButton:false queda afuera de
+                    // ese patch a proposito (ver isSingleConfirmAlert).
+                    if (window.Swal && typeof window.Swal.fire === "function") {
+                        window.Swal.fire({
+                            icon: "success",
+                            title: "Egreso guardado correctamente",
+                            text: resp.mensaje || "",
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: true,
+                            confirmButtonText: "OK",
+                            allowOutsideClick: false,
+                            returnFocus: false
+                        });
+                    }
+
                     if (desdePos && window.POSEgresos && typeof window.POSEgresos.abrirMis === "function") {
                         window.POSEgresos.abrirMis();
                         return;
@@ -925,10 +965,6 @@
 
                     $("#modalEgresoCaja").modal("hide");
                     filtrar();
-
-                    if (window.SaveSuccessAlert) {
-                        window.SaveSuccessAlert.show(resp.mensaje || "El egreso se guardó correctamente.");
-                    }
                 }).fail(function () {
                     mostrarError($error, "No se pudo guardar el egreso por comisiones.");
                 });
