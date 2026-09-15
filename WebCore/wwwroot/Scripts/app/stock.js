@@ -1661,7 +1661,23 @@
         renderLineas($form);
         renderNoCargados($form);
         scheduleDraft($form);
-        showFeedback($form, 'Se agregaron ' + agregados + ' productos');
+
+        // Pedido real (2026-09-15): el modal "Productos no cargados" quedaba sin ningun aviso
+        // visible tras agregar (el mensaje de showFeedback se pierde detras del modal, que sigue
+        // abierto) -- mismo criterio ya usado en este archivo para otros exitos puntuales
+        // (mostrarExitoVinculacion): SweetAlert si esta cargado, si no el feedback inline de
+        // siempre como respaldo.
+        var mensajeAgregados = 'Se agregaron ' + agregados + ' productos';
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                icon: 'success',
+                title: mensajeAgregados,
+                timer: 1800,
+                showConfirmButton: false
+            });
+        } else {
+            showFeedback($form, mensajeAgregados);
+        }
     }
 
     function readDraft($form) {
