@@ -240,6 +240,7 @@ namespace WebCore.Controllers
             ViewBag.FechaDesde = desde;
             ViewBag.FechaHasta = hasta;
             ViewBag.PermiteMediaRes = permiteMediaRes;
+            ViewBag.MostrarTipoCompraEnListado = MostrarTipoCompraEnListado();
             ViewBag.TotalCantMedias = CalcularTotalCantMedias(dt);
             ViewBag.TotalKg = CalcularTotalKg(dt);
             ViewBag.TotalS = CalcularTotalImporte(dt);
@@ -729,6 +730,7 @@ namespace WebCore.Controllers
                 EsEdicion = false,
                 EmpresaCuit = ObtenerEmpresaCuit(),
                 PermiteMediaRes = permiteMediaRes,
+                EmpresaPropia = EsEmpresaPropia(),
                 SucursalEditable = !desdePos,
                 PuedeEditar = true,
                 TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes),
@@ -755,6 +757,7 @@ namespace WebCore.Controllers
                 EsEdicion = true,
                 EmpresaCuit = ObtenerEmpresaCuit(),
                 PermiteMediaRes = permiteMediaRes,
+                EmpresaPropia = EsEmpresaPropia(),
                 SucursalEditable = !desdePos,
                 PuedeEditar = true,
                 TipoCompra = compra.TipoCompra,
@@ -856,13 +859,17 @@ namespace WebCore.Controllers
             if (model == null)
                 return "No se recibieron datos.";
 
-            bool permiteMediaRes = PermiteMediaRes();
             string tipoCortes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);
 
             if (string.IsNullOrWhiteSpace(model.TipoCompra))
                 return "Seleccione un tipo de compra.";
 
-            if (!permiteMediaRes && !string.Equals(model.TipoCompra, tipoCortes, StringComparison.OrdinalIgnoreCase))
+            // El selector "Tipo Compra" solo se muestra si EmpresaPropia=true (ver Editar.cshtml,
+            // mostrarSelectorTipo) -- si no es propia, el <select> ni siquiera existe en el DOM y el
+            // TipoCompra viaja fijo en "Cortes" via hidden. Validar contra EsEmpresaPropia() (no
+            // PermiteMediaRes()/EsCarniceria) para que esto rechace un POST manipulado a mano que
+            // mande MediaRes desde una empresa a la que nunca se le mostró esa opción.
+            if (!EsEmpresaPropia() && !string.Equals(model.TipoCompra, tipoCortes, StringComparison.OrdinalIgnoreCase))
                 return "El tipo de compra seleccionado no está habilitado para la empresa actual.";
 
             if (model.IdSucursal <= 0)
@@ -955,6 +962,33 @@ namespace WebCore.Controllers
             return CuitHabilitaMediaRes;
         }
 
+        // Resuelve la Entidades.Empresa real de la sesion actual -- mismo patron ya usado en
+        // FinanzasController/VentasController/PersonasController (_oSucursalN.findEmpresaById),
+        // no hace falta una dependencia nueva en el constructor.
+        private Entidades.Empresa ObtenerEmpresaActual()
+        {
+            return _oSucursalN.findEmpresaById(_empresa.IdEmpresa);
+        }
+
+        // ¿La empresa logueada es carnicera dueña de CarniSys? (Entidades.Empresa.EmpresaPropia,
+        // clasificacion administrativa, ver docs/DECISIONS.md item 2026-09-11). Gobierna si se
+        // muestra el selector "Tipo Compra" -- si no es propia, queda oculto y fijo en "Producto".
+        private bool EsEmpresaPropia()
+        {
+            var empresa = ObtenerEmpresaActual();
+            return empresa != null && empresa.EmpresaPropia;
+        }
+
+        // Pedido 2026-09-15: a diferencia de PermiteMediaRes() (EsCarniceria||EmpresaPropia, con
+        // override), la columna/filtro "Tipo Compra" del listado de Compras (Index) exige las DOS
+        // condiciones juntas -- solo tiene sentido mostrar en el listado el tipo de cada compra
+        // (Cortes vs Media) para la empresa que realmente puede generar ambos tipos.
+        private bool MostrarTipoCompraEnListado()
+        {
+            var empresa = ObtenerEmpresaActual();
+            return empresa != null && empresa.EmpresaPropia && empresa.EsCarniceria;
+        }
+
         private List<string> ObtenerTiposCompraDisponibles(bool permiteMediaRes, bool desdePos, string tipoActual = "")
         {
             var tipos = new List<string>();
@@ -984,9 +1018,15 @@ namespace WebCore.Controllers
             return string.Equals(origen, "pos", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool PermiteMediaRes()
+        // Pedido 2026-09-15 (ver docs/DECISIONS.md "Compras: Tipo Compra y Media Res por rubro real
+        // de empresa"): reemplaza el hardcode de CUIT (20306210786) por Entidades.Empresa.EsCarniceria
+        // real. EmpresaPropia=true actua como override -- habilita Media Res aunque EsCarniceria sea
+        // false (edge case confirmado con el usuario: la empresa propia siempre tiene acceso a Media
+        // Res, sin depender de que el rubro este bien cargado).
+        private bool PermiteMediaRes()
         {
-            return true;
+            var empresa = ObtenerEmpresaActual();
+            return empresa != null && (empresa.EsCarniceria || empresa.EmpresaPropia);
         }
 
         private static int CalcularTotalCantMedias(DataTable dt)

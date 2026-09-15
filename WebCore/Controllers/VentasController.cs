@@ -1825,7 +1825,7 @@ namespace WebCore.Controllers
                 string cuerpo =
                     "Estimado/a cliente:\n\n" +
                     "Adjuntamos la factura correspondiente.\n\n" +
-                    "Este correo fue enviado automáticamente. Por favor, no responda a este mensaje.\n\n" +
+                    "Este correo fue generado automáticamente. Ante cualquier consulta, podés responderlo directamente.\n\n" +
                     "Atentamente,\n" +
                     nombreEmpresa;
 
@@ -1882,7 +1882,7 @@ namespace WebCore.Controllers
                 string nombreAdjunto = ConstruirNombreArchivoComprobante(venta, factura, "Factura_" + venta.IdVenta + ".pdf");
                 string nombreAdjuntoDetalle = "Detalle_" + venta.IdVenta + ".pdf";
                 string nombreAdjuntoNotaCredito = ConstruirNombreArchivoComprobante(venta, notaCredito, "NotaCredito_" + venta.IdVenta + ".pdf");
-                string fromName = "CarniSys - " + nombreEmpresa;
+                string fromName = SmtpMailHelper.BuildTenantFromName(nombreEmpresa);
                 string replyToEmail = empresaVenta != null ? (empresaVenta.Email ?? "").Trim() : "";
                 string documentoSolicitado = (documento ?? "").Trim().ToLowerInvariant();
 

@@ -20,9 +20,15 @@
     modalProductoData["MostrarPrecio"] = "true";
     string tipoCortes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);
     string tipoMediaRes = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes);
-    bool permiteMediaRes = Model.EmpresaCuit == 20306210786;
-    bool mostrarSelectorTipo = permiteMediaRes;
-    string tipoCompraInicial = !permiteMediaRes && !Model.EsEdicion ? tipoCortes : (string.IsNullOrWhiteSpace(Model.TipoCompra) ? tipoCortes : Model.TipoCompra);
+    // 2026-09-15 (ver docs/DECISIONS.md "Compras: Tipo Compra y Media Res por rubro real de
+    // empresa"): antes ambas variables salian del mismo hardcode de CUIT -- ahora son dos flags
+    // de negocio independientes. permiteMediaRes (EsCarniceria||EmpresaPropia, ya resuelto server-
+    // side en ComprasController.PermiteMediaRes) gobierna el input/panel/columnas de Media Res.
+    // mostrarSelectorTipo (EmpresaPropia) gobierna el selector "Tipo Compra" en si -- si la empresa
+    // no es propia, el selector se oculta y el tipo queda siempre fijo en "Cortes"/"Producto".
+    bool permiteMediaRes = Model.PermiteMediaRes;
+    bool mostrarSelectorTipo = Model.EmpresaPropia;
+    string tipoCompraInicial = !mostrarSelectorTipo && !Model.EsEdicion ? tipoCortes : (string.IsNullOrWhiteSpace(Model.TipoCompra) ? tipoCortes : Model.TipoCompra);
     bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
 }
 
@@ -405,12 +411,15 @@
 
                     <div class="col-12 col-xl-4">
                         <div class="compra-sidebar-stack">
-                        <div class="border rounded p-3 bg-white compra-medias-box">
-                            <div class="form-group mb-0">
-                                <label for="CantMediasMediaRes">Cantidad medias reses</label>
-                                <input type="number" class="form-control js-cant-medias-visible" id="CantMediasMediaRes" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                        @if (permiteMediaRes)
+                        {
+                            <div class="border rounded p-3 bg-white compra-medias-box">
+                                <div class="form-group mb-0">
+                                    <label for="CantMediasMediaRes">Cantidad medias reses</label>
+                                    <input type="number" class="form-control js-cant-medias-visible" id="CantMediasMediaRes" value="@(Model.CantMedias.HasValue ? Model.CantMedias.Value.ToString() : "")" min="0" step="1" />
+                                </div>
                             </div>
-                        </div>
+                        }
                         <div class="border rounded p-3 bg-light compra-totales-box">
                             <div class="d-flex justify-content-between">
                                 <span>Items</span>

@@ -71,6 +71,14 @@ namespace DatosPostgres
                 Entorno_HOMO_PROD = dr["entorno_homo_prod"] as string,
                 BaseDatosNombre = dr["basedatosnombre"] as string,
                 Activa = dr["activa"] == DBNull.Value ? (byte)0 : Convert.ToByte(dr["activa"]),
+                // Bug real encontrado 2026-09-15 (ver docs/DECISIONS.md "Compras: Tipo Compra y
+                // Media Res por rubro real de empresa"): estas 2 columnas existen en la tabla
+                // "empresas" desde 20260911-Alter_empresas_add_propia_carniceria.sql pero nunca se
+                // seleccionaban aca -- ComprasController.EsEmpresaPropia()/PermiteMediaRes() (y
+                // cualquier otro consumidor futuro de findEmpresaById/findEmpresaByCuit) siempre
+                // habria leido false, incluso para la empresa real que ya las tiene en true en la DB.
+                EmpresaPropia = dr["empresa_propia"] != DBNull.Value && Convert.ToBoolean(dr["empresa_propia"]),
+                EsCarniceria = dr["es_carniceria"] != DBNull.Value && Convert.ToBoolean(dr["es_carniceria"]),
                 HorarioDiurnoDesde = dr["horariodiurnodesde"] == DBNull.Value ? TimeSpan.Zero : (TimeSpan)dr["horariodiurnodesde"],
                 HorarioDiurnoHasta = dr["horariodiurnohasta"] == DBNull.Value ? new TimeSpan(23, 59, 59) : (TimeSpan)dr["horariodiurnohasta"],
                 HorarioTardeDesde = dr["horariotardedesde"] == DBNull.Value ? TimeSpan.Zero : (TimeSpan)dr["horariotardedesde"],
@@ -117,7 +125,7 @@ namespace DatosPostgres
                        iibb, condicioniva, inicioactividad, tenantslug, domicilio, ciudad, pais,
                        telefono, email, basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod,
                        basedatosnombre, activa, horariodiurnodesde, horariodiurnohasta,
-                       horariotardedesde, horariotardehasta
+                       horariotardedesde, horariotardehasta, empresa_propia, es_carniceria
                 FROM empresas WHERE idempresa = @id;";
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa, sql, MapEmpresa,
@@ -133,7 +141,7 @@ namespace DatosPostgres
                        iibb, condicioniva, inicioactividad, tenantslug, domicilio, ciudad, pais,
                        telefono, email, basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod,
                        basedatosnombre, activa, horariodiurnodesde, horariodiurnohasta,
-                       horariotardedesde, horariotardehasta
+                       horariotardedesde, horariotardehasta, empresa_propia, es_carniceria
                 FROM empresas WHERE cuit = @cuit;";
 
             var lista = DbPg.Reader(_connectionString, _idEmpresa, sql, MapEmpresa,

@@ -23,6 +23,11 @@ namespace WebCore.Models
 
         public bool PermiteMediaRes { get; set; }
 
+        // Entidades.Empresa.EmpresaPropia (2026-09-15, ver docs/DECISIONS.md "Compras: Tipo Compra
+        // y Media Res por rubro real de empresa"): gobierna si se muestra el selector "Tipo Compra"
+        // en Editar.cshtml -- si es false, queda oculto y fijo en "Cortes"/"Producto".
+        public bool EmpresaPropia { get; set; }
+
         public bool SucursalEditable { get; set; }
 
         public bool PuedeEditar { get; set; }

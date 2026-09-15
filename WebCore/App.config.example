@@ -9,12 +9,21 @@
     <add key="idSucursal" value="1" />
     <add key="cuit" value="20306210786" />
     <add key="timeOut" value="30" />
-    <add key="SmtpHost" value="smtp.gmail.com" />
+    <!-- Postmark (mail multi-tenant, 2026-09-15, ver docs/DECISIONS.md): reemplaza el relay Gmail
+         de antes -- proveedor transaccional con dominio propio autenticado (SPF/DKIM). SmtpUser y
+         SmtpPass van con el MISMO valor: el "Server API Token" de Postmark (no son un usuario y una
+         contraseña distintos). SmtpFromEmail debe ser una direccion del dominio verificado en
+         Postmark (Sender Signature / Domain), no cualquier casilla. Si en este ambiente todavia se
+         usa Gmail sin migrar, dejar SmtpHost=smtp.gmail.com / SmtpPort=587 como antes. -->
+    <add key="SmtpHost" value="smtp.postmarkapp.com" />
     <add key="SmtpPort" value="587" />
     <add key="SmtpEnableSsl" value="true" />
-    <add key="SmtpUser" value="usuario@dominio.com" />
-    <add key="SmtpPass" value="clave-o-app-password" />
-    <add key="SmtpFromEmail" value="usuario@dominio.com" />
+    <add key="SmtpUser" value="server-api-token-de-postmark" />
+    <add key="SmtpPass" value="server-api-token-de-postmark" />
+    <add key="SmtpFromEmail" value="notificaciones@mail.carnisys.com" />
+    <!-- Fallback para mails que no pasan fromNameOverride (ej. reset de contraseña) -- se mantiene
+         "CarniSys" a proposito, ese mail lo firma la plataforma, no una empresa puntual. Los mails
+         de comprobantes SI llevan nombre por empresa via SmtpMailHelper.BuildTenantFromName. -->
     <add key="SmtpFromName" value="CarniSys" />
     <!-- Postgres es la base oficial y unica de la plataforma (2026-09-05, ver docs/DECISIONS.md).
          SQL Server queda solo como legado -- el switch (WebCore/Infrastructure/NegocioFactory.cs)

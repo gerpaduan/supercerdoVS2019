@@ -853,7 +853,7 @@ namespace WebCore.Controllers
                 string cuerpo =
                     "Hola:\n\n" +
                     "Adjuntamos el comprobante del punto de expendio Nro " + expendio.IdExpendio + ".\n\n" +
-                    "Este correo fue enviado automáticamente. Por favor, no responda a este mensaje.\n\n" +
+                    "Este correo fue generado automáticamente. Ante cualquier consulta, podés responderlo directamente.\n\n" +
                     "Atentamente,\n" +
                     nombreEmpresa;
 
@@ -891,7 +891,7 @@ namespace WebCore.Controllers
                 var empresaExpendio = ObtenerEmpresaExpendio(expendio);
                 byte[] pdfBytes = GenerarPdfPuntoExpendio(expendio);
                 string nombreAdjunto = "PuntoExpendio_" + expendio.IdExpendio + ".pdf";
-                string fromName = "CarniSys - " + nombreEmpresa;
+                string fromName = SmtpMailHelper.BuildTenantFromName(nombreEmpresa);
                 string replyToEmail = empresaExpendio != null ? (empresaExpendio.Email ?? "").Trim() : "";
 
                 SmtpMailHelper.SendMail(

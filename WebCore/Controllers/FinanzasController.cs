@@ -662,7 +662,7 @@ namespace WebCore.Controllers
                     contentType = "application/pdf";
                 }
 
-                string fromName = "CarniSys - " + nombreEmpresa;
+                string fromName = SmtpMailHelper.BuildTenantFromName(nombreEmpresa);
                 string replyToEmail = empresaActual != null ? (empresaActual.Email ?? "").Trim() : "";
 
                 SmtpMailHelper.SendMail(
@@ -988,7 +988,7 @@ namespace WebCore.Controllers
                     : "";
                 if (string.IsNullOrWhiteSpace(nombreEmpresa)) nombreEmpresa = "CarniSys";
 
-                string fromName = "CarniSys - " + nombreEmpresa;
+                string fromName = SmtpMailHelper.BuildTenantFromName(nombreEmpresa);
                 string replyToEmail = model.Empresa != null ? (model.Empresa.Email ?? "").Trim() : "";
 
                 SmtpMailHelper.SendMail(

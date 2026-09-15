@@ -10,6 +10,9 @@
     DateTime fechaDesde = ViewBag.FechaDesde != null ? (DateTime)ViewBag.FechaDesde : DateTime.Today;
     DateTime fechaHasta = ViewBag.FechaHasta != null ? (DateTime)ViewBag.FechaHasta : DateTime.Today;
     bool permiteMediaRes = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
+    // Pedido 2026-09-15: a diferencia de permiteMediaRes (EsCarniceria||EmpresaPropia), el filtro
+    // "Tipo compra" exige las DOS condiciones juntas -- ver ComprasController.MostrarTipoCompraEnListado.
+    bool mostrarTipoCompra = ViewBag.MostrarTipoCompraEnListado != null && (bool)ViewBag.MostrarTipoCompraEnListado;
     int totalCantMedias = ViewBag.TotalCantMedias != null ? (int)ViewBag.TotalCantMedias : 0;
     float totalKg = ViewBag.TotalKg != null ? (float)ViewBag.TotalKg : 0f;
     float totalS = ViewBag.TotalS != null ? (float)ViewBag.TotalS : 0f;
@@ -80,7 +83,7 @@
                     <div class="compras-filtros-row compras-filtros-row-busqueda">
                         <div class="form-group mb-0">
                             <label class="compras-filtro-label">Tipo compra</label>
-                            @if (permiteMediaRes)
+                            @if (mostrarTipoCompra)
                             {
                                 <select name="tipoCompra" id="tipoCompraCompras" class="form-control">
                                     <option value="Todos" selected="@(tipoCompra == "Todos" ? "selected" : null)">Todos</option>
@@ -109,18 +112,21 @@
     </div>
 
     <div class="row mb-3">
-        <div class="col-12 col-md-4 mb-2">
-            <div class="card border-left-info shadow-sm h-100 index-total-card">
-                <div class="card-body">
-                    <div class="index-total-label text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
-                    <div class="index-total-value font-weight-bold text-gray-800">@totalCantMedias</div>
+        @if (permiteMediaRes)
+        {
+            <div class="col-12 col-md-4 mb-2">
+                <div class="card border-left-info shadow-sm h-100 index-total-card">
+                    <div class="card-body">
+                        <div class="index-total-label text-xs font-weight-bold text-info text-uppercase mb-1">Cant. Medias</div>
+                        <div class="index-total-value font-weight-bold text-gray-800">@totalCantMedias</div>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
         <div class="col-12 col-md-4 mb-2">
             <div class="card border-left-primary shadow-sm h-100 index-total-card">
                 <div class="card-body">
-                    <div class="index-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Kg</div>
+                    <div class="index-total-label text-xs font-weight-bold text-primary text-uppercase mb-1">Total Un./Kg.</div>
                     <div class="index-total-value font-weight-bold text-gray-800">@totalKg.ToString("N3")</div>
                 </div>
             </div>

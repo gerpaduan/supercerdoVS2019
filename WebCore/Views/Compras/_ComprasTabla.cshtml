@@ -5,8 +5,14 @@
 
 @{
     var dt = Model != null ? Model.Compras : null;
-    bool mostrarTipoCompra = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
-    int totalColumnas = 8 + (mostrarTipoCompra ? 1 : 0);
+    // Dos condiciones distintas (2026-09-15, ver docs/DECISIONS.md): la columna "TipoCompra" exige
+    // EmpresaPropia Y EsCarniceria juntas (ComprasController.MostrarTipoCompraEnListado) -- solo
+    // tiene sentido listar el tipo de cada compra para la empresa que realmente puede generar
+    // ambos. "Medias Reses" sigue el flag mas amplio de siempre (EsCarniceria||EmpresaPropia,
+    // ViewBag.PermiteMediaRes) -- antes se renderizaba siempre sin ningun condicional (gap real).
+    bool mostrarTipoCompra = ViewBag.MostrarTipoCompraEnListado != null && (bool)ViewBag.MostrarTipoCompraEnListado;
+    bool mostrarMediasReses = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
+    int totalColumnas = 6 + (mostrarTipoCompra ? 1 : 0) + (mostrarMediasReses ? 1 : 0);
 }
 
 <div class="table-responsive tabla-full">
@@ -21,7 +27,10 @@
                     <th>TipoCompra</th>
                 }
                 <th class="text-right">Un./Kg.</th>
-                <th class="text-right">Medias Reses</th>
+                @if (mostrarMediasReses)
+                {
+                    <th class="text-right">Medias Reses</th>
+                }
                 <th class="text-right">Total</th>
                 <th style="width: 180px;">Acciones</th>
             </tr>
@@ -55,7 +64,10 @@
                             <td>@row["tipoCompra"]</td>
                         }
                         <td class="text-right">@cantKg.ToString("N2")</td>
-                        <td class="text-right">@cantMedias</td>
+                        @if (mostrarMediasReses)
+                        {
+                            <td class="text-right">@cantMedias</td>
+                        }
                         <td class="text-right">@totalS.ToString("N2")</td>
                         <td class="text-center text-nowrap">
                             <button type="button"

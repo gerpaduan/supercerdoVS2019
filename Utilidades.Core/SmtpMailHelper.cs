@@ -16,6 +16,22 @@ namespace Utilidades
 {
     public static class SmtpMailHelper
     {
+        // Nombre de remitente por empresa (2026-09-15, ver docs/DECISIONS.md "mail multi-tenant"):
+        // antes los controllers armaban "CarniSys - " + nombreEmpresa a mano en 4 lugares -- el
+        // cliente final del comerciante veia "CarniSys" primero en vez del negocio que le vendio.
+        // Centralizado aca para no duplicar la regla, y para manejar el caso borde de una empresa
+        // sin NombreFantasia/RazonSocialAfip cargado (algunos call-sites ya hacen fallback a
+        // "CarniSys" en ese caso) sin terminar en el resultado redundante "CarniSys (vía CarniSys)".
+        public static string BuildTenantFromName(string nombreEmpresa)
+        {
+            string nombre = (nombreEmpresa ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(nombre) || string.Equals(nombre, "CarniSys", StringComparison.OrdinalIgnoreCase))
+                return "CarniSys";
+
+            return nombre + " (vía CarniSys)";
+        }
+
         public static bool IsConfigured()
         {
             return !string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["SmtpHost"])
