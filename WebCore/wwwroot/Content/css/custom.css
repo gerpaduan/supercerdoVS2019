@@ -476,6 +476,35 @@ body.app-shell.dark-mode .app-product-highlight:read-only {
     }
 }
 
+/* Ocultar en responsive (pedido 2026-09-14): interruptor de balanza, boton
+   "Activar respaldo automatico" (+ su label "activado") y el indicador
+   "Conexion balanza: <estado>". Solo <=767.98px -- en desktop no cambia nada.
+   Los ids difieren por vista (Stock/Movimientos/Elaborados/EditarIngresoRapido
+   no comparten un contenedor comun sin arrastrar otros botones que SI deben
+   seguir visibles en mobile, ver docs/DECISIONS.md), por eso se listan
+   explicitos en vez de un selector generico por clase/contenedor padre. */
+@media (max-width: 767.98px) {
+    /* Interruptor de balanza (checkbox + label del switch, no el switch de
+       otras features que tambien usan .custom-switch en estas mismas vistas). */
+    #chkBalanzaLinea, label[for="chkBalanzaLinea"],
+    #chkBalanzaIngrediente, label[for="chkBalanzaIngrediente"],
+    #chkBalanzaRapido, label[for="chkBalanzaRapido"],
+    /* Boton "Activar respaldo automatico" + label "activado" (Stock, Movimientos,
+       Elaborados/Carga, Compras/Editar -- mismos 2 ids en las 4 vistas). */
+    #btnActivarCapturaRespaldo,
+    #lblCapturaRespaldoActiva,
+    /* "Conexion balanza: <estado>" + barra de progreso (Stock/Movimientos/
+       Elaborados/EditarIngresoRapido). */
+    #balanzaStatusWrapStock,
+    #balanzaStatusWrapMovimiento,
+    #balanzaStatusWrapElaborado,
+    #balanzaStatusWrapRapido,
+    /* Mismo indicador en POS (Ventas y PuntosExpendio comparten esta clase). */
+    .pos-balanza-card {
+        display: none !important;
+    }
+}
+
 /* Scanner de codigo de barra por camara (compartido por las vistas que usan
    Views/Shared/_ScannerCodigoBarra.cshtml + Scripts/app/barcode-code-input.js).
    Mismos valores que el bloque propio de Views/Productos/AddOrEdit.cshtml

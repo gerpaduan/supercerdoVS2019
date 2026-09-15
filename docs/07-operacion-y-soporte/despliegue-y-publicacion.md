@@ -11,9 +11,49 @@ Documentar el proceso actual de publicacion de escritorio, web y componentes aux
 - Artefactos generados
 - Validaciones posteriores
 
-## Sistema web (`Web/`) -> VM Windows de produccion
+## Sistema web -> VM Windows de produccion "CarniSys" (`carnisys.com`)
 
-Acceso SSH de la VM: `~/hosts/carnisys-vm-windows.env` (fuera del repo). Sitio real: IIS "CarniSys" en `C:\inetpub\wwwroot\CarniSysWeb`, detras de Caddy (`C:\caddy\Caddyfile` en la VM) que termina TLS y reenvia a `localhost:8069`. **No hay pipeline git en el servidor**: es un publish precompilado copiado a mano, no un `git pull`.
+**Cutover 2026-09-14: la clasica (`Web/`) se retiro de esta VM, `carnisys.com` corre WebCore standalone.** Todo lo que sigue en esta seccion reemplaza el procedimiento anterior (que describia IIS "CarniSys" -- esa parte quedo obsoleta, ver "Historia" al final). Las otras 2 VMs (Servidor SM, San Lorenzo, mas abajo en este archivo) siguen con la clasica sin cambios, este cutover fue especifico de esta VM.
+
+Acceso SSH de la VM: `~/hosts/carnisys-vm-windows.env` (fuera del repo). **No hay pipeline git en el servidor**: es un publish precompilado copiado a mano, no un `git pull`.
+
+### Arquitectura actual
+
+- **WebCore corre standalone (self-contained `win-x64`, sin IIS)** en `C:\WebCore\WebCore.exe --urls http://127.0.0.1:5250`. El publish incluye el runtime de .NET 10 completo -- la VM no tiene instalado (ni necesita) el SDK/Hosting Bundle de ASP.NET Core.
+- **Proceso administrado por Tarea Programada + Watchdog**, mismo patron que ya usaba Caddy en esta VM (`C:\caddy\{caddy.exe, watchdog.ps1, register-watchdog.ps1}`): tarea `WebCoreApp` (lanza el proceso, `ExecutionTimeLimit=PT0S` = sin limite), tarea `WebCoreAppWatchdog` (cada 2 min, SYSTEM, revisa `Get-NetTCPConnection -LocalPort 5250`, mata y relanza `WebCoreApp` si no escucha). Scripts en `C:\WebCore\{watchdog.ps1, register-webcore-tasks.ps1}` (staging local, no versionados en el repo -- son especificos de esta VM).
+- **Kestrel bindea solo a `127.0.0.1`**, nunca expuesto directo a la red (mismo criterio que Postgres en esta VM).
+- **Caddy** (`C:\caddy\Caddyfile`) hace `reverse_proxy localhost:5250` para `carnisys.com` -- ya no hay compat-redirect de `/CarniSysWeb/*` (la clasica se retiro, ese prefijo no aplica mas). `www.carnisys.com` sigue redirigiendo al apex, sin cambios.
+- **Base de datos**: `C:\WebCore\App.config` -> `DataEngine=Postgres`, `ConexionPostgresPiloto` = la MISMA conexion que ya usaba la clasica en esta VM (`localhost`, base `carnisys`, rol `carnisys_user` -- ver `~/hosts/carnisys-vm-postgres.env`). SMTP tambien reusado de `Config\appSettings.secrets.config` de la clasica. `App.config` es estado de esta VM, generado una vez a mano -- **nunca se pisa en un deploy de codigo** (mismo criterio que `Config\` de la clasica en las otras VMs).
+
+### Bug real encontrado en el cutover: registrar un watchdog con trigger `AtStartup + Repetition` no empieza a repetir hasta el proximo reboot
+
+Al copiar literalmente el patron de `C:\caddy\register-watchdog.ps1` (trigger `-AtStartup` con un `Repetition` pegado desde un trigger `-Once` descartado) para `WebCoreAppWatchdog`, `Get-ScheduledTaskInfo` mostraba `NextRunTime` vacio -- la tarea NUNCA arrancaba su ciclo de 2 minutos porque el trigger base (`AtStartup`) no habia disparado (la VM no reinicio desde que se registro la tarea), y sin ese primer disparo la repeticion adosada nunca arranca. Confirmado en vivo: se mato el proceso a mano, `curl` dio `502` durante ~1.5 minutos hasta que se corrigio el trigger.
+
+**Fix real aplicado**: 2 triggers separados en la misma tarea -- uno `-Once -At (Get-Date).AddSeconds(30) -RepetitionInterval 2min -RepetitionDuration 3650dias` (arranca el ciclo YA, sin esperar un reboot) mas uno `-AtStartup` (para que tambien arranque solo si el sistema reinicia). Verificado en vivo: proceso matado a mano -> log (`C:\WebCore\watchdog.log`) registro `CAIDO -> reinicio tarea` y `RECUPERADO` ~9 segundos despues, sitio de nuevo en `200` dentro del ciclo de 2 minutos esperado.
+
+**Nota importante, no corregida todavia**: `C:\caddy\CaddyWatchdog` (el original, referencia de este patron) probablemente tiene el MISMO problema estructural -- si nunca reinicio la VM desde que se registro esa tarea (2026-06-15), su repeticion tampoco arranco hasta el primer reboot real. Como Caddy viene funcionando bien hace meses, lo mas probable es que la VM ya reinicio al menos una vez desde entonces y el ciclo arranco en ese momento -- pero **no esta confirmado**, y si algun dia se reinicia `CaddyWatchdog` con `Register-ScheduledTask -Force` sin corregir el trigger, quedaria con el mismo bug latente. Fuera de alcance de este cutover (no se toco la tarea de Caddy); queda como hallazgo para una revision aparte si se justifica.
+
+### Pasos de deploy (probado 2026-09-14, primer deploy de WebCore standalone a esta VM)
+
+1. `dotnet publish WebCore/WebCore.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o <carpeta_local>`.
+2. Comprimir con `Compress-Archive` (un solo zip, mas resistente a cortes que subir ~370 archivos sueltos).
+3. Subir por SFTP (Posh-SSH) a `C:\WebCore\<nombre>.zip`.
+4. **Swap con backup/restore de `App.config`** (el zip trae el `App.config` de DEV local, hay que preservar el de produccion): `Stop-ScheduledTask WebCoreApp` -> matar proceso residual -> guardar el contenido actual de `C:\WebCore\App.config` en una variable -> `Expand-Archive -Force` (pisa todo, incluido `App.config`) -> restaurar el contenido guardado con `Set-Content` -> `Start-ScheduledTask WebCoreApp`.
+5. Verificar `Get-NetTCPConnection -LocalPort 5250` y `curl https://carnisys.com/` -> `200`.
+
+### Validaciones posteriores
+
+- `curl https://carnisys.com/` y `/Login` -> `200`, `Server: Kestrel` en la respuesta (confirma que es WebCore, no la clasica vieja).
+- `Get-ScheduledTask -TaskName "WebCoreApp","WebCoreAppWatchdog"` -> ambas `Running`/`Ready` segun corresponda, sin `LastTaskResult` de error.
+- **Verificado 2026-09-14**: `carnisys.com` devolvia `404` en `/Login/Index` y `/Home/Index` ANTES de este cutover (causa: el sitio IIS "CarniSys" de la clasica estaba `Stopped`, el trafico caia por fallback a un sitio "web" con una copia vieja de julio -- ver "Historia" abajo). Post-cutover: `200` en ambas rutas, sirviendo WebCore.
+
+### Retiro de la clasica en esta VM (2026-09-14)
+
+Sitios IIS "CarniSys" y "web" **detenidos** (`Stop-Website`), no borrados -- los archivos (incluido `AFIP\` con certificados/tickets WSAA reales) quedan intactos en `C:\inetpub\wwwroot\{CarniSysWeb,web}` como red de seguridad. Decision explicita del usuario: no borrar de disco por ahora. El unico link de WebCore que apuntaba a la clasica (Mercado Pago, via `WebClasicoBaseUrl`) se oculto en `WebCore/Views/Shared/_Layout.cshtml` -- es el unico modulo que todavia no se porto.
+
+### Historia (obsoleto, se deja como referencia del estado anterior al 2026-09-14)
+
+Antes del cutover, el sitio real de la clasica en esta VM era IIS "CarniSys" en `C:\inetpub\wwwroot\CarniSysWeb`, detras de Caddy reenviando a `localhost:8069`. **Hallazgo real al investigar el cutover**: para cuando se audito el estado de esta VM (2026-09-14), ese sitio ya estaba `Stopped` de antes (causa desconocida, no relacionada a este cutover) y el trafico real caia, por el binding sin hostname de IIS, a un sitio "web" con una copia de julio desactualizada -- de ahi el `404` real encontrado en produccion antes de arrancar este trabajo. La doc de abajo (pasos con `Stop-WebAppPool -Name CarniSys`, etc.) describe el procedimiento que se usaba CUANDO ese sitio era el real -- ya no aplica a esta VM, se conserva por si alguna vez se necesita reconstruir el contexto historico:
 
 ### Pasos (probado 2026-07-29)
 

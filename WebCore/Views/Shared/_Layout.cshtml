@@ -16,11 +16,6 @@
     // docs/DECISIONS.md): port literal de Web/Views/Shared/_LayoutBase.cshtml:21-56, ahora contra
     // IUsuarioSesionService.UsuarioActual en vez de Session["Usuario"].
     //
-    // Modulos NO migrados a WebCore todavia (MercadoPago, integracion de otra sesion en
-    // paralelo) linkean con URL absoluta al Web clasico via el appSetting
-    // WebClasicoBaseUrl (App.config) -- se navega fluido entre los dos sistemas mientras dura la
-    // migracion, sin togs muertos ni 404s. Cuando un modulo de esa lista se porte, su link pasa
-    // a @@Url.Action local (mismo criterio que el resto de la lista).
     var controller = (ViewContext.RouteData.Values["controller"] as string) ?? "";
     var action = (ViewContext.RouteData.Values["action"] as string) ?? "";
 
@@ -38,9 +33,6 @@
     // cualquier request que llegue aca YA significa "salio de POS". Mismo criterio que la
     // limpieza de operador de modulo, una linea arriba.
     WebCore.Helpers.PermisosHelper.LimpiarBypassCajaSiSalioDePOS(Context.Session, controller, action, Sesion.UsuarioActual?.Id ?? 0);
-
-    string webClasico = (System.Configuration.ConfigurationManager.AppSettings["WebClasicoBaseUrl"] ?? "").TrimEnd('/');
-    Func<string, string> legacy = path => webClasico + path;
 
     bool enStock = controller == "Stock";
     bool enPuntosExpendio = controller == "PuntosExpendio";
@@ -609,8 +601,12 @@
                             <a class="collapse-item @(controller == "Sucursal" ? "active" : "")" href="@Url.Action("Index", "Sucursal")">Mis Sucursales</a>
                             <a class="collapse-item @(controller == "DispositivosSeguros" ? "active" : "")" href="@Url.Action("Index", "DispositivosSeguros")">Dispositivos seguros</a>
                             <a class="collapse-item @(controller == "CodigosBarra" ? "active" : "")" href="@Url.Action("Index", "CodigosBarra")">Codigos de barra</a>
-                            <a class="collapse-item" href="@legacy("/MercadoPago")">Mercado Pago</a>
-                            <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
+                            @* Bug real evitado 2026-09-14 (ver docs/DECISIONS.md): la clasica se retiro de
+                               produccion (VM CarniSys) -- WebClasicoBaseUrl quedo vacio, asi que @legacy(...)
+                               generaba href="" (linkeaba a la pagina actual, silenciosamente roto). Mercado
+                               Pago es el unico modulo que todavia no se porto a WebCore -- se oculta el link
+                               en vez de dejarlo apuntando a un backend que ya no existe. Sacar este comentario
+                               y volver a mostrarlo (como @Url.Action local) cuando se migre el modulo. *@                            <a class="collapse-item @(controller == "Home" && action == "Utilidades" ? "active" : "")" href="@Url.Action("Utilidades", "Home")">Utilidades</a>
                         </div>
                     </div>
                 </li>

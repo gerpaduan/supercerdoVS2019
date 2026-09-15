@@ -263,6 +263,11 @@
     <script src="@Url.Content("~/Scripts/app/elaborados-rapido.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
+    <script>
+        // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en la cantidad a elaborar/desarmar.
+        window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#CantidadRapida');
+    </script>
     <script>
         window.EditReadOnly && window.EditReadOnly.init({
             formSelector: "#formIngresoRapidoElaborado",

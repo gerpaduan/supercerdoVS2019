@@ -279,6 +279,12 @@
 
 @section Scripts {
     <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
+    <script>
+        // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el valor de la formula.
+        // attach() usa delegacion sobre document, no requiere que el input ya exista en el DOM.
+        window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtPorcentajeFormula');
+    </script>
     <script>
         (function () {
             var $form = $('#formEditarFormula');

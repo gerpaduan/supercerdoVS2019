@@ -410,8 +410,12 @@
     <script src="@Url.Content("~/Scripts/app/elaborados-carga.js")" asp-append-version="true"></script>
     <link rel="stylesheet" href="@Url.Content("~/Content/css/numeric-keypad.css")" />
     <script src="@Url.Content("~/Scripts/app/numeric-keypad.js")" asp-append-version="true"></script>
+    <script src="@Url.Content("~/Scripts/app/solo-decimal-input.js")" asp-append-version="true"></script>
     <script>
         $(function () {
+            // Pedido 2026-09-14: no dejar tipear un segundo punto/coma en el Kg del ingrediente.
+            window.SoloDecimalGuard && window.SoloDecimalGuard.attach('#txtKgIngrediente');
+
             if (window.NumericKeypad) {
                 window.NumericKeypad.create({
                     selectorTeclado: '#numericKeypad',
