@@ -225,6 +225,14 @@
             $(document)
                 .off('shown.bs.modal.seleccionUsuario', '#modalSeleccionUsuario')
                 .on('shown.bs.modal.seleccionUsuario', '#modalSeleccionUsuario', function () {
+                    // Pedido real (2026-09-15): el usuario siempre tiene que arrancar vacio.
+                    // reset() ya limpia los 2 campos al abrir, pero Chrome/Edge autocompletan
+                    // usuario/contraseña igual (ignoran autocomplete="off") a veces recien
+                    // cuando el campo termina de quedar visible -- despues de que reset() ya
+                    // corrio. Se vuelve a limpiar aca, tras terminar la transicion del modal,
+                    // para pisar un autocompletado tardio del navegador.
+                    $('#txtSeleccionUsuario').val('');
+                    $('#passSeleccionUsuario').val('');
                     $('#txtSeleccionUsuario').trigger('focus');
                 })
                 .off('hidden.bs.modal.seleccionUsuario', '#modalSeleccionUsuario')
@@ -279,6 +287,15 @@
                         e.preventDefault();
                         confirmar();
                     }
+                })
+                // Pedido real (2026-09-15): si a pesar de todo el navegador dejo algo
+                // autocompletado en la contraseña (respaldo del fix de arriba, no siempre
+                // alcanza a ganarle a la autocompletacion del navegador), seleccionar todo el
+                // texto al entrar al campo -- que escribir directamente lo reemplace en vez de
+                // insertarse en el medio de lo autocompletado.
+                .off('focus.seleccionUsuario', '#passSeleccionUsuario')
+                .on('focus.seleccionUsuario', '#passSeleccionUsuario', function () {
+                    this.select();
                 })
                 .off('click.seleccionUsuario', '#btnConfirmarSeleccionUsuario')
                 .on('click.seleccionUsuario', '#btnConfirmarSeleccionUsuario', confirmar);
