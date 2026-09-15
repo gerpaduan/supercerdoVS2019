@@ -717,10 +717,27 @@
                 $error.addClass("d-none").text("");
                 var idCierreActual = idCierreActividadActual();
 
+                // Pedido real (2026-09-15, ver docs/DECISIONS.md): #egresoMonto ahora usa
+                // MoneyInputMask (puntos de miles + coma decimal en pantalla) -- $form.serialize()
+                // mandaria ese valor formateado tal cual (ej. "1.500,50"), y el ParseFloat del
+                // server solo reemplaza coma por punto sin sacar los puntos de miles, rompiendo el
+                // parseo (float.TryParse fallaria con 2 puntos y guardaria 0). Se cambia el input a
+                // su valor "de negocio" (sin puntos de miles) justo antes de serializar, y se
+                // restaura el valor mostrado enseguida (serialize() es sincronico).
+                var $monto = $form.find("#egresoMonto, [name='monto']").first();
+                var montoMostrado = $monto.val();
+                if ($monto.length && window.MoneyInputMask) {
+                    $monto.val(window.MoneyInputMask.getRawValue($monto));
+                }
+                var datosEnvio = $form.serialize();
+                if ($monto.length) {
+                    $monto.val(montoMostrado);
+                }
+
                 $.ajax({
                     url: cfg.guardar,
                     type: "POST",
-                    data: $form.serialize(),
+                    data: datosEnvio,
                     dataType: "json"
                 }).done(function (resp) {
                     if (!resp || !resp.ok) {

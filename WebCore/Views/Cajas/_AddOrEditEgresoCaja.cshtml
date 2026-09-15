@@ -135,9 +135,23 @@
                 </div>
             </div>
 
+            @{
+                string detalleActual = Model != null ? (Model.Detalle ?? "") : "";
+                bool detalleTieneContenido = !string.IsNullOrWhiteSpace(detalleActual);
+            }
             <div class="form-group egreso-field egreso-field-detalle">
-                <label>Detalle</label>
-                <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@(Model != null ? Model.Detalle : "")</textarea>
+                @* Pedido real (2026-09-15, ver docs/DECISIONS.md): colapsado por defecto salvo que
+                   ya tenga contenido (edicion de un registro con detalle cargado) -- mismo patron
+                   ya usado para "Observacion del comprobante" en _FacturaElectronica.cshtml
+                   (feUsarObservaciones/feObservacionesWrap): un switch revela el campo, que queda
+                   disabled mientras esta oculto (no se manda al servidor si no se activo). *@
+                <div class="custom-control custom-switch mb-2">
+                    <input type="checkbox" class="custom-control-input" id="egresoUsarDetalle" @(detalleTieneContenido ? "checked" : "")>
+                    <label class="custom-control-label" for="egresoUsarDetalle">Detalle</label>
+                </div>
+                <div id="egresoDetalleWrap">
+                    <textarea class="form-control" id="egresoDetalle" name="detalle" rows="3">@detalleActual</textarea>
+                </div>
             </div>
         </div>
 
@@ -246,6 +260,32 @@
         var inputDescripcion = document.getElementById("egresoDescripcion") || (form ? form.querySelector("[name='descripcion']") : null);
         var inputMonto = document.getElementById("egresoMonto") || (form ? form.querySelector("[name='monto']") : null);
         var inputDetalle = document.getElementById("egresoDetalle") || (form ? form.querySelector("[name='detalle']") : null);
+        var chkUsarDetalle = document.getElementById("egresoUsarDetalle");
+        var wrapDetalle = document.getElementById("egresoDetalleWrap");
+
+        // Pedido real (2026-09-15, ver docs/DECISIONS.md): mismo patron que
+        // syncObservacionesComprobante (factura-electronica.js) -- oculta y deshabilita el
+        // textarea mientras el switch esta apagado (deshabilitado = $form.serialize() no lo manda
+        // al guardar), lo muestra y habilita cuando se prende.
+        function syncUsarDetalle() {
+            if (!chkUsarDetalle || !wrapDetalle || !inputDetalle) return;
+            var activo = chkUsarDetalle.checked;
+            wrapDetalle.classList.toggle("d-none", !activo);
+            inputDetalle.disabled = !activo;
+        }
+
+        if (chkUsarDetalle) {
+            chkUsarDetalle.addEventListener("change", syncUsarDetalle);
+        }
+        syncUsarDetalle();
+
+        // Pedido real (2026-09-15, ver docs/DECISIONS.md): solo numeros validos, puntos de miles
+        // en pantalla, y "." tecleado se interpreta como la coma decimal -- mismo mecanismo ya
+        // usado en Productos/Index.cshtml (#PrecioKg). egresos-caja.js (bindForm) manda el valor
+        // "de negocio" (sin puntos de miles) al guardar, no el que se ve en pantalla.
+        if (inputMonto && window.MoneyInputMask) {
+            window.MoneyInputMask.attach(inputMonto);
+        }
         var tiposDisponibles = [];
         var busquedaTipoTexto = "";
         var busquedaTipoTimer = null;
@@ -631,6 +671,51 @@
         bindEnterFlow(inputDetalle);
 
         setSoloLectura(soloLecturaInicial);
+
+        // Pedido real (2026-09-15, ver docs/DECISIONS.md): Alt+Enter guarda el registro, o si el
+        // formulario todavia esta en modo solo-lectura (edicion sin "Modificar" presionado
+        // todavia), habilita la edicion -- mismo combo ya establecido en el proyecto para
+        // guardar (Scripts/app/form-hotkeys.js: Alt+Enter=Guardar), pero implementado localmente
+        // (no via ese modulo compartido) porque aca el boton "destino" cambia dinamicamente entre
+        // Modificar/Guardar segun soloLecturaInicial, y form-hotkeys.js cachea el boton una sola
+        // vez al iniciar (no sirve para un destino que cambia en la misma carga del formulario).
+        // Se re-registra en cada carga de este parcial (reemplaza el handler anterior por su
+        // referencia en window) para no acumular listeners duplicados en document tras abrir el
+        // modal varias veces.
+        if (window.__egresoCajaAltEnterHandler) {
+            document.removeEventListener("keydown", window.__egresoCajaAltEnterHandler, true);
+        }
+        window.__egresoCajaAltEnterHandler = function (evt) {
+            if (!evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.repeat) return;
+            if (String(evt.key || "").toLowerCase() !== "enter") return;
+            if (!form || !$(form).is(":visible")) return;
+            if (window.Swal && typeof window.Swal.isVisible === "function" && window.Swal.isVisible()) return;
+
+            // Mismo criterio que form-hotkeys.js (getTopVisibleModal): si hay un modal visible, el
+            // atajo solo actua si este formulario esta dentro de ese modal (o es el modal mismo) --
+            // evita disparar el guardado/habilitar si este form quedo abierto detras de otro modal.
+            var $topModal = $(".modal.show:visible").last();
+            if ($topModal.length && !$.contains($topModal[0], form) && $topModal[0] !== form) return;
+
+            evt.preventDefault();
+            evt.stopPropagation();
+
+            if (soloLecturaInicial) {
+                if (btnModificar && !btnModificar.classList.contains("d-none")) {
+                    btnModificar.click();
+                }
+                return;
+            }
+
+            if (btnGuardar && !btnGuardar.disabled && !btnGuardar.classList.contains("d-none")) {
+                if (typeof form.requestSubmit === "function") {
+                    form.requestSubmit(btnGuardar);
+                } else {
+                    btnGuardar.click();
+                }
+            }
+        };
+        document.addEventListener("keydown", window.__egresoCajaAltEnterHandler, true);
 
         function enfocarInicialEgreso() {
             var selector = @Html.Raw(esEdicion ? "\"#btnHabilitarEdicionEgresoCaja\"" : (desdePos ? "\"#idTipoEgresoCaja\"" : "\"#egresoFecha\""));

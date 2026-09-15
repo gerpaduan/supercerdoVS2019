@@ -498,5 +498,6 @@
             usuarioAdmin: @Html.Raw((ViewBag.UsuarioAdmin != null && (bool)ViewBag.UsuarioAdmin ? "true" : "false"))
         };
     </script>
+<script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
 <script src="@Url.Content("~/Scripts/app/egresos-caja.js")" asp-append-version="true"></script>
 }
