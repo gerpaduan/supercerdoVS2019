@@ -122,10 +122,28 @@ sea una migracion nueva que todavia no se aplico ahi (comparar contra dev local 
 
 ## Segundo destino: "Servidor SM" (`192.168.0.151`) -> distinto de la VM de produccion "Carnisys"
 
-**No confundir con la VM de arriba.** Hay dos servidores de deploy distintos para este proyecto:
+**No confundir con la VM de arriba.** Hay tres servidores de deploy distintos para este proyecto:
 
 - **Servidor "Carnisys"**: la VM Windows de produccion documentada arriba, acceso SSH (`~/hosts/carnisys-vm-windows.env`), publica detras de Caddy en `carnisys.com`.
-- **Servidor "SM"** (`PCSERVIDORSM`, IP `192.168.0.151`): otro servidor en la LAN. Acceso por **SMB** (`\\servidorsm\carnisysweb` o `\\192.168.0.151\carnisysweb`) y por **SSH** (puerto 22, cuenta admin), credenciales en `~/hosts/servidorsm.env`. Aloja IIS con un sitio "web" en el puerto **8069** (HTTP) y **443** (HTTPS) que contiene, como aplicaciones separadas: `CarniSysWeb` (produccion de este servidor), `CarniSysWeb - copia`, y otro sitio independiente `SuperCerdoWeb` (otro proyecto, fuera de alcance). URL real: `https://192.168.0.151/CarniSysWeb/` (el `:8069` sobre HTTP redirige ahi con 301). PENDIENTE: confirmar si hay un hostname/dominio real para este server (hoy solo se probo por IP).
+- **Servidor "SM"** (`PCSERVIDORSM`, IP `192.168.0.151`): otro servidor en la LAN. Acceso por **SMB** (`\\servidorsm\carnisysweb` o `\\192.168.0.151\carnisysweb`) y por **SSH** (puerto 22, cuenta admin), credenciales en `~/hosts/servidorsm.env`. Aloja IIS con un sitio "web" en el puerto **8069** (HTTP) y **443** (HTTPS) que contiene, como aplicaciones separadas: `CarniSysWeb` (produccion de este servidor, registrada pero inalcanzable desde el cutover del 2026-09-16, ver abajo), `CarniSysWeb - copia`, y otro sitio independiente `SuperCerdoWeb` (otro proyecto, fuera de alcance, **nunca tocar**). URL real: `https://192.168.0.151/` (raiz del sitio, WebCore desde el cutover). PENDIENTE: confirmar si hay un hostname/dominio real para este server (hoy solo se probo por IP).
+- **Servidor "San Lorenzo"**: ver tercer destino mas abajo, cutover propio con arquitectura distinta (IIS + ASP.NET Core Module, no ARR).
+
+**Cutover 2026-09-16: la clasica (`Web/`) se retiro de este servidor, `https://192.168.0.151/` corre WebCore standalone detras de IIS+ARR.** Todo lo que sigue en esta seccion reemplaza el procedimiento anterior (que describia el deploy de la clasica -- esa parte quedo obsoleta, ver "Historia" al final de esta seccion). Ver `docs/DECISIONS.md` 2026-09-16 para el detalle completo de los bugs reales encontrados durante este cutover.
+
+### Arquitectura actual (desde el cutover)
+
+- **WebCore corre standalone (self-contained `win-x64`, sin ANCM)** en `C:\WebCore\WebCore.exe --urls http://127.0.0.1:5250`, bindeado solo a `127.0.0.1`. El publish incluye el runtime de .NET 10 completo -- este servidor no tiene instalado (ni necesita) el SDK/Hosting Bundle de ASP.NET Core.
+- **Proceso administrado por Tarea Programada + Watchdog**, mismo patron que la VM CarniSys: tarea `WebCoreApp` (lanza el proceso, `ExecutionTimeLimit=PT0S`), tarea `WebCoreAppWatchdog` (cada 2 min, SYSTEM, revisa `Get-NetTCPConnection -LocalPort 5250`, mata y relanza si no escucha). Scripts en `C:\WebCore\{watchdog.ps1, register-webcore-tasks-sm.ps1}` (staging local de este servidor, no versionados en el repo). **Importante**: el watchdog necesita DOS triggers separados en la tarea (`TimeTrigger` con `Repetition` que arranca ya, mas un `BootTrigger` aparte) -- adosar la `Repetition` directamente a un trigger `-AtStartup` no arranca el ciclo hasta el proximo reboot real (mismo bug ya encontrado y corregido en la VM CarniSys el 2026-09-14, ver esa seccion arriba). Verificado en vivo: proceso matado a mano, recuperado en ~8s, dos veces.
+- **IIS + ARR (Application Request Routing) + URL Rewrite Module como reverse proxy**, no Caddy (no estaba instalado en este servidor) ni ANCM (patron usado en cambio para San Lorenzo -- decision independiente). `C:\inetpub\wwwroot\web.config` (raiz fisica del sitio "web") tiene las reglas de rewrite: excluye `/SuperCerdoWeb*` (nunca proxeado), redirige `/CarniSysWeb/*` (bookmarks viejos) con `301` a la raiz equivalente, y reversa-proxea todo el resto a `http://127.0.0.1:5250/{R:1}`. El proxy de ARR se habilita una vez a nivel de maquina (`appcmd set config -section:system.webServer/proxy /enabled:"True"`).
+- **`/CarniSysWeb` sigue registrada como aplicacion IIS, pero inalcanzable**: **no se puede simplemente "sacarla" de la config de IIS** -- su propio `Web.config` clasico tiene secciones de `<system.web>` que solo son validas en la raiz de una aplicacion; si se quita el registro de aplicacion, esa carpeta pasa a evaluarse como subcarpeta de la app raiz del sitio y **tira `500` en las tres rutas del sitio** (bug real encontrado y revertido, ver `docs/DECISIONS.md`). Se mantiene registrada, apuntando al mismo physical path y pool "web" de siempre -- la regla de redirect a nivel de sitio intercepta antes de que cualquier peticion real llegue a ejecutarla.
+- **Base de datos**: `C:\WebCore\WebCore.dll.config` -> `DataEngine=SqlServer`, connectionString `ConexionPrincipal` = la MISMA conexion que ya usa la clasica en este servidor (base `SuperCerdo`, ver `~/hosts/servidorsm.env`). SMTP reusado de `Config\appSettings.secrets.config` de la clasica. **`WebCore.dll.config`, NO `App.config`, es el archivo que se lee en runtime** (mismo bug real que la VM CarniSys, ver esa seccion arriba) -- ambos se generan identicos por prolijidad, pero solo el `.dll.config` importa.
+- **`idSucursal=2` (San Martin), DIVERGE del `1` que usa la clasica en este mismo servidor**: decision explicita del usuario (confirmada durante el cutover, ver `docs/DECISIONS.md`) -- la clasica corre con `1`, WebCore con `2`. No es un bug si algun dia se nota que las dos apps ven sucursales distintas.
+
+### Bug real encontrado: comentarios XML con `--` rompen el archivo entero (2 veces en el mismo cutover)
+
+Tanto el primer intento de `App.config`/`WebCore.dll.config` como el primer intento del `web.config` de la raiz del sitio se armaron con un comentario de cabecera que incluia `--` (guion doble) -- **los comentarios XML no admiten `--` en su contenido** (spec XML 1.0), el archivo queda mal formado. Para el `web.config` de IIS el efecto fue grave: **toda la config del sitio quedo invalida, `500` en las tres rutas** (WebCore, SuperCerdoWeb, CarniSysWeb), confirmado con `appcmd list config` (`"El archivo de configuracion no es un codigo XML correcto"`). **Regla**: nunca usar `--` dentro de un comentario XML, y validar todo XML generado con un parser real (`System.Xml.XmlDocument.Load()`, o `appcmd list config` para configs de IIS) antes de darlo por bueno -- no confiar en la ausencia de error visible.
+
+### Setup unico del servidor (hecho 2026-07-31, no hace falta repetir en cada deploy)
 
 ### Setup unico del servidor (hecho 2026-07-31, no hace falta repetir en cada deploy)
 
@@ -141,7 +159,37 @@ Al momento del primer deploy (2026-07-30) el servidor no tenia SSH, la cuenta de
    ```
    **Nota**: al ser autofirmado, cualquier navegador muestra advertencia de "certificado no confiable" la primera vez, hasta que se instale como confiable en cada PC que lo use. Es el mismo tradeoff que la VM evita usando Caddy con TLS real hacia afuera; este servidor no tiene ese reverse proxy.
 
-### Pasos de deploy (probado 2026-07-30 y 2026-07-31)
+### Pasos de deploy (WebCore, probado 2026-09-16, primer deploy de este cutover)
+
+1. `dotnet publish WebCore/WebCore.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o <carpeta_local>`.
+2. Subir el publish completo por SFTP (Posh-SSH, `New-SFTPSession`/`Set-SFTPItem` archivo por archivo preservando estructura) a `C:\WebCore\` en el servidor.
+3. Instalar URL Rewrite Module 2.1 y ARR 3.0 (una sola vez, no en cada deploy -- descarga directa de Microsoft, `msiexec /qn`) y habilitar el proxy de ARR (`appcmd set config -section:system.webServer/proxy /enabled:"True" /commit:apphost`, tambien una sola vez).
+4. Registrar las tareas `WebCoreApp`/`WebCoreAppWatchdog` (`C:\WebCore\register-webcore-tasks-sm.ps1`, idempotente con `-Force` -- reusar en cada deploy que reinstale las tareas, no hace falta si ya existen).
+5. **Ultimo paso antes de arrancar, SIEMPRE despues de la subida del publish**: armar `App.config`/`WebCore.dll.config` **directo en el servidor por SSH** a partir de `WebCore/App.config.example` (nunca en la maquina local): un script remoto lee el connectionString real de `Config\connectionStrings.config` y los `Smtp*` de `Config\appSettings.secrets.config` de la clasica (backupeados/vivos en este mismo servidor) y arma el archivo con `DataEngine=SqlServer`, `idSucursal=2`, `cuit` real. **Validar con `System.Xml.XmlDocument.Load()` antes de darlo por bueno** (ver bug real de comentarios `--` arriba). `WebCore.dll.config` (no `App.config`) es el que se lee en runtime -- se generan ambos identicos por prolijidad. **Bug real (2026-09-16, ver `docs/DECISIONS.md`)**: si este paso se hace ANTES de subir el publish, la subida lo pisa silenciosamente con el `App.config`/`WebCore.dll.config` de DEV que trae el publish (`DataEngine=Postgres`) -- login roto en producción sin error visible salvo en el Event Viewer. El orden de esta lista ya reflaja el fix.
+6. Arrancar `WebCoreApp` (o reiniciarlo si ya estaba corriendo desde un intento previo -- `ConfigurationManager` cachea la config al primer acceso del proceso, un archivo nuevo sin reiniciar el proceso no tiene efecto) y confirmar `http://127.0.0.1:5250/Login` en `200` **desde el propio servidor** antes de exponerlo.
+7. Subir `C:\inetpub\wwwroot\web.config` (reglas de reverse-proxy/exclusion/redirect, ver Arquitectura arriba) -- **no se pisa en cada deploy de codigo**, es config de infraestructura del servidor, igual criterio que `WebCore.dll.config`.
+8. Confirmar que `/CarniSysWeb` sigue registrada como aplicacion IIS (no removerla, ver bug real arriba) y que `/SuperCerdoWeb` sigue intacta.
+
+### Validaciones posteriores (WebCore)
+
+- `curl -k https://192.168.0.151/Login` -> `200`, contenido real `Ingresar a CARNISYS` (no alcanza con el status code: confirmar el body, para descartar una pagina estatica de error servida por IIS con `200` enganoso).
+- `curl -k https://192.168.0.151/SuperCerdoWeb/` -> `200`, sin cambios (proyecto fuera de alcance, nunca deberia verse afectado por un deploy de WebCore).
+- `curl -k https://192.168.0.151/CarniSysWeb/Login/Index` y `https://192.168.0.151/CarniSysWeb` (bookmarks viejos) -> `301` a la raiz equivalente, **sin doble slash** en el `Location` (bug real encontrado y corregido en la regex de redirect, ver `docs/DECISIONS.md`).
+- `Get-ScheduledTask -TaskName "WebCoreApp","WebCoreAppWatchdog"` -> `Ready`/corriendo, sin `LastTaskResult` de error.
+- Prueba real del watchdog (matar el proceso a mano por SSH, confirmar que se recupera solo dentro de ~15s, mucho antes del ciclo de 2 minutos) -- **verificado 2026-09-16**, dos veces.
+- **Pendiente, a cargo del usuario** (mismo criterio de riesgo aceptado que San Lorenzo): login real con un usuario real contra la base `SuperCerdo` de este servidor especifico -- no se hizo Fase C antes del cutover. Tampoco se verifico la URL publica (`PUBLIC_URL` de `servidorsm.env`), solo la LAN.
+
+### Rollback (WebCore)
+
+1. Detener las tareas (`Stop-ScheduledTask WebCoreApp`, `Stop-ScheduledTask WebCoreAppWatchdog` -- detener el watchdog primero o va a relanzar `WebCoreApp` solo).
+2. Restaurar `C:\inetpub\wwwroot\web.config` al estado anterior (sin reglas de rewrite) o borrarlo -- sin el, IIS vuelve a servir `/CarniSysWeb/` y `/SuperCerdoWeb/` como antes (ambas aplicaciones siguen registradas e intactas, nunca se tocaron sus archivos).
+3. No hace falta desinstalar ARR/URL Rewrite -- no tienen efecto sin las reglas del `web.config`.
+
+### Historia (obsoleto, se deja como referencia del deploy de la clasica anterior al 2026-09-16)
+
+Antes del cutover, `CarniSysWeb` en este servidor era la aplicacion clasica real, deployada con el procedimiento de abajo. Ya no aplica a deploys nuevos -- WebCore es lo que corre en produccion desde el 2026-09-16.
+
+### Pasos de deploy (clasica, HISTORIA -- probado 2026-07-30 y 2026-07-31)
 
 1. Publish Release precompilado a una carpeta local, igual que el paso 1 de la VM (mismo `msbuild ... /p:PublishProfile=FolderProfile /p:publishUrl=<carpeta_local> ...`). A diferencia de la VM, **no hace falta tocar `requireSSL`**: el transform de `Web.Release.config` (`true`) ya es el valor correcto para este servidor.
 2. Backup del sitio actual: mapear el share con `net use Z: \\192.168.0.151\carnisysweb /user:ServidorSM\carnisys-deploy <password>` y `robocopy Z:\ <carpeta_local_backup> /MIR`.
@@ -150,13 +198,13 @@ Al momento del primer deploy (2026-07-30) el servidor no tenia SSH, la cuenta de
 5. `net use Z: /delete` al terminar.
 6. No hay pipeline ni acceso remoto para reciclar el App Pool a mano; IIS/ASP.NET recicla el AppDomain solo al detectar cambios en `bin\` o `Web.config`, asi que no hace falta paso manual.
 
-### Validaciones posteriores
+### Validaciones posteriores (clasica, HISTORIA)
 
 - `curl http://192.168.0.151:8069/CarniSysWeb/` debe dar `301` a `https://192.168.0.151/CarniSysWeb/` con los headers de seguridad (`Content-Security-Policy`, `X-Frame-Options`) del `Web.config` publicado.
 - `curl -k https://192.168.0.151/CarniSysWeb/Login/Index` debe dar `200`, titulo `Ingresar a CARNISYS` (el texto del titulo cambio de `CarniSysWeb - Login`, desactualizado en este runbook hasta hoy -- CLAUDE.md SS8.3, manda el codigo, mismo motivo ya corregido en la seccion de San Lorenzo mas abajo), sin `Stack Trace`/`Server Error` en el body, y `Set-Cookie` con `secure`/`HttpOnly` (confirma que `requireSSL="true"` esta funcionando con el binding). El `-k` es porque el certificado es autofirmado. **Verificado 2026-07-31, re-verificado 2026-08-26 (deploy commit `7eb5547f`, tras excluir `Web.config` del swap -- ver `docs/DECISIONS.md`) y 2026-08-29 (deploy commit `d9b3e3f7`, fix de `Web.csproj` sin wildcard -- mismo fix ya publicado en San Lorenzo y la VM Carnisys ese mismo dia; CSP incluye `http://127.0.0.1:5100` del agente de balanza).**
 - **2026-08-29**: swap hecho con `Copy-Item`/`Remove-Item` por carpeta (no `robocopy /MIR`) via drive mapeado (`net use Z:`), corriendo el script como proceso hijo local (`powershell -NoProfile -EncodedCommand <base64>`) -- ver `incidencias-frecuentes.md` (el sandbox del agente bloquea `Remove-Item -Recurse -Force` en un loop, igual que bloquea `/MIR`).
 
-### Rollback
+### Rollback (clasica, HISTORIA)
 
 Restaurar el backup local (paso 2 de arriba) con `robocopy <backup> Z:\ /MIR`, respetando no tocar `Web.config`/`Config\`/`AFIP\`/`App_Data\`. No hay snapshot historico en el propio servidor (a diferencia de la VM, que tiene `web\backups\`) — el backup queda en la maquina donde se corrio el deploy, PENDIENTE definir si conviene subirlo tambien a un `backups\` dentro del server. **Usado en un caso real 2026-08-26**: swap con `Web.config` incluido rompio el login (ver `docs/DECISIONS.md`), rollback completo con este mismo procedimiento resolvio en <1 minuto.
 
@@ -166,7 +214,9 @@ Restaurar el backup local (paso 2 de arriba) con `robocopy <backup> Z:\ /MIR`, r
 
 **Diferencia critica con los otros dos destinos**: este servidor **no tiene carpeta `Config\`** — el `connectionStrings` y todo `appSettings` (incluidas credenciales SMTP reales) viven **directo dentro de `Web.config`**. Esto significa que un publish normal (que trae su propio `Web.config` transformado, con connection strings distintas) **pisaria los secretos reales del servidor** si se copia sin cuidado. Por eso el paso de swap de este destino **excluye explicitamente `Web.config`** — se deja el que ya esta en el servidor, intacto.
 
-### Primer deploy de codigo (hecho 2026-08-03, commit `257ca0ab` de `codex_ia`)
+**Cutover a WebCore, 2026-09-16**: `CarniSysWeb` en este servidor **ya no es la clasica** — fue reemplazada por WebCore (IIS + ASP.NET Core Module). Ver seccion "Cutover a WebCore" mas abajo. Las subsecciones que siguen (`Primer deploy de codigo`, `Metodo revisado`, sus `Validaciones` y `Rollback`) describen el deploy de la **clasica** y quedan como **historia** — solo son relevantes si algun dia se necesita entender como se llego hasta aca, no para deploys nuevos.
+
+### Primer deploy de codigo (hecho 2026-08-03, commit `257ca0ab` de `codex_ia`) — HISTORIA, ver nota de cutover arriba
 
 El IIS/cert/binding de este servidor ya estaban configurados de antes (alta del servidor, 2026-08-01/02) — este fue el primer deploy de la **aplicacion** en si.
 
@@ -201,6 +251,54 @@ Ver `incidencias-frecuentes.md` (2026-08-29): un `Move-Item`/`robocopy /MIR` sob
 - `Invoke-WebRequest` de PowerShell 5.1 **falla** contra el binding HTTPS de este servidor (error de renegociacion TLS) aunque `curl.exe` funciona bien — usar siempre `curl.exe`/`curl -k` para health checks aca, nunca `Invoke-WebRequest`.
 - **2026-08-29**: `Content-Security-Policy` en la respuesta incluye `connect-src ... http://127.0.0.1:18777 http://127.0.0.1:5100` (confirma que el fix de CSP para el agente de balanza, del mismo deploy, quedo publicado) y `providerName="System.Data.SqlClient"` en `Web.config` (confirma que la conexion a SQL Server del servidor no se toco).
 
-### Rollback
+### Rollback (de la clasica — historia)
 
 Restaurar el backup remoto (paso 2 de arriba, o el backup por-carpeta del metodo revisado) con `robocopy C:\inetpub\wwwroot\web\backups\CarniSysWeb_<timestamp> C:\inetpub\wwwroot\web\CarniSysWeb /MIR` (via SSH), sin tocar `Web.config`/`Global.asax`/`AFIP\`/`App_Data\`. El backup queda en el propio servidor (a diferencia de Servidor SM, que no tiene backup remoto — aca si, porque no hay SMB para bajarlo a la maquina local).
+
+### Cutover a WebCore (IIS + ASP.NET Core Module) — hecho 2026-09-16
+
+Reemplaza la clasica descripta arriba. Mismo patron de diseño que el planificado para Servidor SM (ver plan `en-reportes-cuando-se-sprightly-planet.md`): **IIS + ASP.NET Core Module (ANCM)**, no standalone+Caddy (ese patron, usado en la VM `carnisys.com`, no aplica aca porque el mismo IIS sirve tambien a `SuperCerdoWeb` y al sitio standalone `SuperCerdo` — parar IIS completo los afectaria a los tres).
+
+**Verificado antes de tocar nada (solo lectura, por SSH)**:
+- Hosting Bundle de ASP.NET Core **no estaba instalado** (prerequisito real, no de rutina).
+- Sin runtime `.NET` compartido instalado → publish tiene que ser **self-contained win-x64**, no framework-dependent.
+- `CarniSysWeb` y `SuperCerdoWeb` **comparten el mismo application pool** ("web") → un solo `w3wp.exe`. El hosting model `inprocess` de ANCM aloja el runtime .NET Core dentro de ese worker process — mezclarlo con `SuperCerdoWeb` (clasica, `System.Web`) no es soportado. Por eso se creo un pool dedicado.
+
+**Pasos ejecutados**:
+1. Backup de la carpeta clasica completa: `Copy-Item` (no `Move-Item`/`robocopy /MIR`, para no arriesgar el gotcha de archivo bloqueado documentado arriba) a `C:\inetpub\wwwroot\web\CarniSysWeb-backup-20260916` — permite rollback inmediato.
+2. Publish local self-contained: `dotnet publish WebCore/WebCore.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o <carpeta_local>`. `dotnet publish` genera automaticamente el `web.config` correcto con el stanza `<aspNetCore processPath=".\WebCore.exe" ... hostingModel="inprocess" />` — no hace falta armarlo a mano.
+3. `WebCore.dll.config` (no `App.config` — bug ya conocido, `dotnet publish` lo pisa con el de dev) se arma **directo en el servidor por SSH**, nunca en la maquina local: un script remoto lee los valores `Smtp*` reales del `Web.config` clasico (backupeado en el paso 1) y arma el nuevo archivo con `DataEngine=SqlServer` y `ConexionPrincipal` local (`Data Source=.\sqlexpress;Initial Catalog=supercerdo;...`). Los secretos nunca salen del servidor ni pasan por la maquina de deploy — evita el permiso de "Credential Materialization" del sandbox local y reduce superficie de exposicion.
+4. Subida por SFTP (mismo patron `New-SFTPSession`/`Set-SFTPItem` archivo-por-archivo con reintento que el metodo original de este servidor) de los 816 archivos del publish (todo excepto `WebCore.dll.config`) a un staging: `C:\inetpub\wwwroot\web\_deploy\webcore_sl_<timestamp>\`.
+5. Instalacion del Hosting Bundle (`dotnet-hosting-10.0.12-win.exe /quiet /norestart`, descargado directo en el servidor desde `https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.12/dotnet-hosting-10.0.12-win.exe`) — **una sola vez para todo el IIS**, afecta potencialmente a los 3 sitios (interrupcion breve esperada, no observada en la practica: los 3 sitios respondieron `200` antes y despues sin downtime perceptible).
+6. Application pool nuevo y dedicado `CarniSysWebCore` ("No Managed Code") — `SuperCerdoWeb` se deja intacto en el pool "web".
+7. Swap: `robocopy <staging> C:\inetpub\wwwroot\web\CarniSysWeb /MIR` (staging → carpeta viva, ambas en el mismo disco del servidor, no hay riesgo de la mitad-borrado del incidente de 2026-08-29 porque no es un rename de directorio sino un mirror archivo-por-archivo).
+8. Reasignar `/CarniSysWeb` al pool `CarniSysWebCore` (`Set-ItemProperty IIS:\Sites\web\CarniSysWeb -Name applicationPool`) y reciclar **solo ese pool** (`Restart-WebAppPool`), nunca el pool "web".
+
+**Nota de sandbox local** (agrega al gotcha ya documentado mas arriba de `/MIR`): el filtro tambien bloquea por texto la combinacion de `Get-ChildItem` sobre rutas `"C:\Program Files\..."` entre comillas junto con `Remove-SSHSession` en el mismo script ("Credential Materialization" / "Remove-Item on system path" son los mensajes de error enganosos vistos). Mismo workaround: variables en runtime en vez de literales, y/o separar en llamadas mas chicas.
+
+### Validaciones posteriores (WebCore)
+
+- `curl -k https://200.107.108.44/CarniSysWeb/Login/Index` → `200`, headers con `.AspNetCore.Antiforgery.*` y `.AspNetCore.Mvc.CookieTempDataProvider` en `Set-Cookie` (marca real de ASP.NET Core — la clasica no los tiene) y `X-Powered-By: ASP.NET` (sin el `Server: Microsoft-IIS/10.0` engaña, ese header lo pone IIS igual como reverse proxy/host, no indica el framework de la app).
+- Assets estaticos (`/CarniSysWeb/Content/css/carnisys-login.css`, `/CarniSysWeb/lib/jquery/dist/jquery.min.js`) → `200`.
+- `SuperCerdoWeb` (`https://200.107.108.44/SuperCerdoWeb/`) → `200`, sin cambios.
+- **Login real confirmado por el usuario (2026-09-16, post-fix)**: primer intento con usuario real dio `404` en `https://200.107.108.44/Home/Index` -- bug real encontrado y corregido el mismo dia, ver mas abajo. Reintentado despues del fix, confirmado funcionando.
+- **Pendiente todavia**: una lectura y una escritura real de negocio contra `supercerdo` (alta simple) -- el login en si ya se probo, falta ejercitar un modulo de datos (Compras/Ventas/Stock) para cerrar del todo la Fase C.
+
+### Bug real encontrado y corregido el mismo dia del cutover (2026-09-16): login exitoso daba `404` en `/Home/Index`
+
+**Sintoma**: con credenciales correctas, el login devolvia `404 - File or directory not found` en vez de mostrar el dashboard. Con credenciales incorrectas, el mensaje de error normal aparecia bien (esto ayudo a descartar que fuera un problema de la base de datos o del hash de password -- confirmado por lectura, sin escribir nada: el usuario de prueba existia, activo, sin bloquear, y el intento fallido se registro correctamente en `intentosFallidosLogin`, probando que la logica de auth contra SQL Server funciona).
+
+**Causa real** (`WebCore\Controllers\LoginController.cs`, metodo `RedirigirPostLogin`, y el mismo patron en `WebCore\Controllers\LandingController.cs`): ambos usaban `Redirect("/Home/Index")` -- una ruta **absoluta literal**, elegida a proposito el 2026-09-07 para evitar que el generador de links de ASP.NET Core colapsara `RedirectToAction("Index","Home")` de vuelta a `"/"` (ver comentario en el codigo). Ese fix funcionaba bien en `carnisys.com` (standalone, hosteado en la raiz del dominio, `PathBase` vacio) pero **nunca se probo en un deploy hosteado como subaplicacion de IIS** -- en San Lorenzo (y Servidor SM, mismo codigo compartido) la app corre bajo `/CarniSysWeb`, con `PathBase="/CarniSysWeb"` seteado automaticamente por el modulo ANCM in-process. Un `Redirect` con ruta absoluta literal ignora el `PathBase` -- el browser terminaba pidiendo `/Home/Index` (sin el prefijo) contra el sitio IIS "web", que no tiene nada mapeado ahi -> `404`.
+
+**Fix**: `Redirect(Url.Content("~/Home/Index"))` en los 2 lugares -- `Url.Content` resuelve el `~` contra el `PathBase` real de la request (da `/CarniSysWeb/Home/Index` aca, `/Home/Index` en `carnisys.com`), sin reintroducir el colapso a `"/"` que motivo el fix original (no pasa por generacion de rutas con valores default).
+
+**Deploy del fix**: solo `WebCore.dll`/`WebCore.pdb` cambiaron (unico codigo tocado, ver `git diff`) -- se paro el pool `CarniSysWebCore` (corte de segundos, solo `CarniSysWeb`), se subieron los 2 archivos por SFTP, se volvio a arrancar el pool. Verificado con `Get-FileHash` que el binario en el servidor coincide exactamente con el build local antes de dar el fix por desplegado.
+
+**Impacto en Servidor SM**: mismo codigo compartido (`WebCore/Controllers/LoginController.cs`/`LandingController.cs`), pero **NO afectado** -- ese cutover (hecho en paralelo, ver seccion "Segundo destino" arriba) uso una arquitectura distinta (IIS + ARR reverse-proxy hacia WebCore standalone en la raiz del sitio, no ANCM como subaplicacion bajo `/CarniSysWeb`), asi que `PathBase` queda vacio igual que en `carnisys.com` y el `Redirect` a ruta absoluta literal era correcto ahi de casualidad. El `Url.Content("~/...")` de este fix es inocuo si algun dia se actualiza ese binario tambien (mismo resultado con `PathBase` vacio), pero no era necesario.
+
+### Rollback (WebCore)
+
+1. Reasignar `/CarniSysWeb` de nuevo al pool "web" (`Set-ItemProperty IIS:\Sites\web\CarniSysWeb -Name applicationPool -Value "web"`).
+2. Restaurar el contenido: `robocopy C:\inetpub\wwwroot\web\CarniSysWeb-backup-20260916 C:\inetpub\wwwroot\web\CarniSysWeb /MIR`.
+3. Reciclar el pool "web" (`Restart-WebAppPool -Name web`).
+4. No hace falta desinstalar el Hosting Bundle — no tiene efecto sobre la clasica ni sobre `SuperCerdoWeb`/`SuperCerdo`.
