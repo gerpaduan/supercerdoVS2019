@@ -239,7 +239,16 @@ namespace Datos
                 NombreCertificado_pfx = dr["nombreCertificado_pfx"]?.ToString(),
                 Entorno_HOMO_PROD = dr["entorno_HOMO_PROD"]?.ToString(),
                 BaseDatosNombre = dr["baseDatosNombre"]?.ToString(),
-                Activa = dr["activa"] != DBNull.Value ? Convert.ToByte(dr["activa"]) : (byte)0
+                Activa = dr["activa"] != DBNull.Value ? Convert.ToByte(dr["activa"]) : (byte)0,
+                // Bug real encontrado 2026-09-15 (ver docs/DECISIONS.md "Compras: Tipo Compra y
+                // Media Res por rubro real de empresa" / cutover Servidor SM): estas 2 columnas
+                // nunca se leian aca, mismo gap que ya se corrigio del lado Postgres
+                // (DatosPostgres/SucursalPg.cs). GetOptionalBool (no dr["..."] directo) porque no
+                // todas las instancias SQL Server (local/SanLorenzo/ServidorSM) corrieron
+                // necesariamente la migracion que las agrega -- confirmado en vivo que ServidorSM
+                // (SuperCerdo) SI las tiene, pero otras instancias podrian no tenerlas todavia.
+                EmpresaPropia = GetOptionalBool(dr, "EmpresaPropia"),
+                EsCarniceria = GetOptionalBool(dr, "EsCarniceria")
             };
         }
 
