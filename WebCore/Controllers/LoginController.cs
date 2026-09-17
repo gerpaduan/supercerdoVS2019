@@ -458,7 +458,15 @@ namespace WebCore.Controllers
             // ASP.NET Core colapsa esa URL a "/" -- que ahora sirve la landing publica
             // (LandingController, ruta "PublicHome"), no el dashboard. El login terminaba
             // mostrando el landing en vez de mandar al usuario ya logueado al Home real.
-            return Redirect("/Home/Index");
+            //
+            // Bug real encontrado 2026-09-16 (cutover San Lorenzo, ver docs/DECISIONS.md): un
+            // Redirect("/Home/Index") con ruta absoluta literal ignora el PathBase de la app --
+            // funciona en carnisys.com (standalone, PathBase vacio) pero da 404 en cualquier
+            // deploy hosteado como subaplicacion de IIS (San Lorenzo/Servidor SM, PathBase
+            // "/CarniSysWeb"): el browser termina pidiendo "/Home/Index" sin el prefijo, y el
+            // sitio IIS no tiene nada mapeado ahi. Url.Content("~/...") resuelve el "~" contra el
+            // PathBase real de la request, evitando el 404 sin reintroducir el colapso a "/".
+            return Redirect(Url.Content("~/Home/Index"));
         }
 
         // Compara la hora actual del servidor contra las 2 jornadas configuradas en la empresa.

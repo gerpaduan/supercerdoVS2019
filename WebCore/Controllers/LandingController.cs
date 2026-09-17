@@ -32,8 +32,14 @@ namespace WebCore.Controllers
             // defaults de la propia ruta "default" (Program.cs), asi que el generador de links
             // los colapsa de vuelta a "/" -- causaria un loop infinito de 302 contra este mismo
             // action. Ver el comentario grande de arriba.
+            //
+            // Url.Content("~/...") en vez de una ruta absoluta literal (mismo bug y mismo fix que
+            // LoginController.RedirigirPostLogin, encontrado 2026-09-16 en el cutover de San
+            // Lorenzo, ver docs/DECISIONS.md): resuelve el "~" contra el PathBase real de la
+            // request, para no dar 404 cuando la app corre como subaplicacion de IIS
+            // ("/CarniSysWeb", no la raiz del dominio como carnisys.com).
             if (_sesion.EstaAutenticado)
-                return Redirect("/Home/Index");
+                return Redirect(Url.Content("~/Home/Index"));
 
             return View("~/Views/Landing/Index.cshtml");
         }
