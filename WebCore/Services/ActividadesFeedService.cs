@@ -51,12 +51,13 @@ namespace WebCore.Services
             {
                 int idVenta = Convert.ToInt32(row["idventa"]);
                 string vendedor = row["vendedor"] == DBNull.Value ? "" : Convert.ToString(row["vendedor"]) ?? "";
-                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
+                var (fecha, origenFecha, esAnomalia, fechaNegocio) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
                     Fecha = fecha,
                     OrigenFecha = origenFecha,
                     EsAnomalia = esAnomalia,
+                    FechaNegocio = fechaNegocio,
                     Tipo = "Venta anulada",
                     Descripcion = $"Hubo ítems anulados en la venta #{idVenta}" + (string.IsNullOrWhiteSpace(vendedor) ? "" : $" (vendedor: {vendedor})"),
                     IdVenta = idVenta
@@ -67,12 +68,13 @@ namespace WebCore.Services
             {
                 int idVenta = Convert.ToInt32(row["idventa"]);
                 string vendedor = row["vendedor"] == DBNull.Value ? "" : Convert.ToString(row["vendedor"]) ?? "";
-                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
+                var (fecha, origenFecha, esAnomalia, fechaNegocio) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
                     Fecha = fecha,
                     OrigenFecha = origenFecha,
                     EsAnomalia = esAnomalia,
+                    FechaNegocio = fechaNegocio,
                     Tipo = "Precio modificado en venta",
                     Descripcion = $"Se aplicó un descuento/recargo manual en la venta #{idVenta}" + (string.IsNullOrWhiteSpace(vendedor) ? "" : $" (vendedor: {vendedor})"),
                     IdVenta = idVenta
@@ -106,12 +108,13 @@ namespace WebCore.Services
                 string origen = row["sucursal_origen"] == DBNull.Value ? "?" : Convert.ToString(row["sucursal_origen"]) ?? "?";
                 string destino = row["sucursal_destino"] == DBNull.Value ? "?" : Convert.ToString(row["sucursal_destino"]) ?? "?";
                 string usuarioMov = row["usuario"] == DBNull.Value ? "" : Convert.ToString(row["usuario"]) ?? "";
-                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
+                var (fecha, origenFecha, esAnomalia, fechaNegocio) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
                     Fecha = fecha,
                     OrigenFecha = origenFecha,
                     EsAnomalia = esAnomalia,
+                    FechaNegocio = fechaNegocio,
                     Tipo = "Movimiento",
                     Descripcion = $"Movimiento de stock de {origen} a {destino}" + (string.IsNullOrWhiteSpace(usuarioMov) ? "" : $" (por {usuarioMov})")
                 });
@@ -126,12 +129,13 @@ namespace WebCore.Services
                 // Descripcion, ahora tambien en el Tipo (2026-09-10, Batch 9 quinta ronda).
                 string tipo = row["tipocompra"] == DBNull.Value ? "Compra" : Convert.ToString(row["tipocompra"]) ?? "Compra";
                 string usuarioCompra = row["usuario"] == DBNull.Value ? "" : Convert.ToString(row["usuario"]) ?? "";
-                var (fecha, origenFecha, esAnomalia) = ResolverFechaMostrada(row);
+                var (fecha, origenFecha, esAnomalia, fechaNegocio) = ResolverFechaMostrada(row);
                 items.Add(new Models.ActividadItemVm
                 {
                     Fecha = fecha,
                     OrigenFecha = origenFecha,
                     EsAnomalia = esAnomalia,
+                    FechaNegocio = fechaNegocio,
                     Tipo = string.IsNullOrWhiteSpace(tipo) ? "Compra/Stock" : tipo,
                     Descripcion = $"{tipo} #{row["idcompra"]}" + (string.IsNullOrWhiteSpace(usuarioCompra) ? "" : $" (por {usuarioCompra})")
                 });
@@ -160,7 +164,7 @@ namespace WebCore.Services
         // real por mas de 1 dia -- señal de un registro cargado o editado fuera de tiempo. Precio/
         // Formula/Egreso de caja no llaman a este metodo (no tienen fecha de negocio separada del
         // todo, o no fue confirmado con el usuario incluirlos en la deteccion de anomalias).
-        private static (DateTime fecha, string origenFecha, bool esAnomalia) ResolverFechaMostrada(System.Data.DataRow row)
+        private static (DateTime fecha, string origenFecha, bool esAnomalia, DateTime fechaNegocio) ResolverFechaMostrada(System.Data.DataRow row)
         {
             DateTime fechaNegocio = (DateTime)row["fecha_negocio"];
             DateTime? creado = row["creado"] == DBNull.Value ? null : (DateTime?)row["creado"];
@@ -170,7 +174,7 @@ namespace WebCore.Services
             string origenFecha = actualizado.HasValue ? "modificación" : "creación";
             bool esAnomalia = Math.Abs((fecha - fechaNegocio).TotalDays) > 1;
 
-            return (fecha, origenFecha, esAnomalia);
+            return (fecha, origenFecha, esAnomalia, fechaNegocio);
         }
 
         private static decimal ToDecimal(object value)

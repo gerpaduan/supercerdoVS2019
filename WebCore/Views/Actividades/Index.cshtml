@@ -72,10 +72,18 @@
                             <tr>
                                 <td class="text-nowrap" style="font-size:13px;">
                                     @item.Fecha.ToString("dd/MM/yyyy HH:mm")
-                                    @if (item.EsAnomalia)
+                                    @if (item.EsAnomalia && item.FechaNegocio.HasValue)
                                     {
-                                        <i class="fas fa-exclamation-triangle text-warning ml-1"
-                                           title="La fecha de creación/modificación difiere de la fecha del registro por más de 1 día"></i>
+                                        string origenTexto = string.IsNullOrWhiteSpace(item.OrigenFecha) ? "cargó" : (item.OrigenFecha == "modificación" ? "modificó" : "cargó");
+                                        string contenidoPopover = $"Este registro corresponde al <b>{item.FechaNegocio.Value:dd/MM/yyyy}</b>, pero se {origenTexto} recién el <b>{item.Fecha:dd/MM/yyyy HH:mm}</b> -- {Math.Abs((item.Fecha - item.FechaNegocio.Value).TotalDays):N0} día(s) de diferencia. Puede indicar una carga o edición fuera de término.";
+                                        <i class="fas fa-exclamation-triangle text-warning ml-1 js-anomalia-popover"
+                                           style="cursor:pointer;"
+                                           data-bs-toggle="popover"
+                                           data-bs-trigger="hover focus click"
+                                           data-bs-html="true"
+                                           data-bs-placement="top"
+                                           title="Registro cargado o editado fuera de término"
+                                           data-bs-content="@contenidoPopover"></i>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(item.OrigenFecha))
                                     {
@@ -123,6 +131,14 @@
 
 @section Scripts {
 <script>
+    // Popover de advertencia de anomalias (2026-09-16, pedido explicito del usuario): pagina
+    // 100% server-rendered con recarga completa por filtro/pagina (no hay AJAX de tabla), asi
+    // que alcanza con inicializar una sola vez al cargar -- no hace falta reinicializar tras
+    // ningun fetch.
+    document.querySelectorAll('.js-anomalia-popover').forEach(function (el) {
+        new bootstrap.Popover(el);
+    });
+
     $(document).on('click', '.js-ver-venta-actividad', function () {
         var idVenta = $(this).data('venta-id');
         $.get('@Url.Action("DetalleVenta", "Ventas")', { id: idVenta, modal: true })

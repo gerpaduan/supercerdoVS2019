@@ -27,6 +27,13 @@ namespace WebCore.Models
         // por mas de 1 dia -- señal de que el registro pudo haber sido cargado/editado fuera de
         // tiempo. Mismo alcance que OrigenFecha (solo las 4 fuentes con fecha de negocio propia).
         public bool EsAnomalia { get; set; }
+
+        // Fecha de negocio real del registro (ej. fechaventa/fechamovimiento/fechacompra), la que
+        // se compara contra Fecha para calcular EsAnomalia -- agregado 2026-09-16 (pedido explicito
+        // del usuario) para poder MOSTRAR ambas fechas en el popover de advertencia y que quede
+        // claro el caso concreto (ej. "esta venta es del 15/08 pero se cargo/edito el 16/09").
+        // Mismo alcance que OrigenFecha/EsAnomalia (null para Precio/Formula/Egreso).
+        public DateTime? FechaNegocio { get; set; }
     }
 
     public class ActividadesIndexVm

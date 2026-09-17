@@ -126,4 +126,46 @@ public sealed class ActividadesMejorasTests
 
         await page.CloseAsync();
     }
+
+    // Pedido explicito del usuario (2026-09-16, ver docs/DECISIONS.md): que quede claro para el
+    // usuario POR QUE se marco un item como anomalia (ej. "una venta se creo hoy con fecha del mes
+    // pasado") -- antes el icono solo tenia un title nativo generico, ahora un popover de
+    // Bootstrap 5 (hover/focus/click) muestra ambas fechas reales del registro.
+    [Fact]
+    public async Task Index_IconoAnomalia_PopoverMuestraAmbasFechasReales()
+    {
+        var page = await _fixture.NewAuthenticatedPageAsync();
+
+        var hoy = DateTime.Today;
+        var desde = hoy.AddDays(-6).ToString("yyyy-MM-dd");
+        var hasta = hoy.ToString("yyyy-MM-dd");
+        await page.GotoAsync($"{WebCoreFixture.BaseUrl}/Actividades?fechaDesde={desde}&fechaHasta={hasta}&soloAnomalias=true", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.WaitForTimeoutAsync(400);
+
+        // Regresion condicionada a datos reales (mismo criterio que el resto de este archivo): si
+        // no hay ninguna anomalia real en los ultimos 7 dias de la base de dev, no hay nada que
+        // verificar hoy.
+        int filas = await page.Locator("table tbody tr").CountAsync();
+        if (filas == 0)
+        {
+            await page.CloseAsync();
+            return;
+        }
+
+        var icono = page.Locator(".js-anomalia-popover").First;
+        await icono.ClickAsync();
+
+        var popoverBody = page.Locator(".popover .popover-body");
+        await popoverBody.WaitForAsync(new LocatorWaitForOptions { Timeout = 5000 });
+        var textoPopover = await popoverBody.InnerTextAsync();
+
+        // El bug real que motivo el pedido: el usuario no podia saber, sin abrir la venta/registro,
+        // que la fecha mostrada era de creacion/modificacion y no la fecha real del hecho -- el
+        // popover ahora dice las dos fechas explicitamente y el motivo.
+        Assert.Contains("corresponde al", textoPopover, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("día", textoPopover, StringComparison.OrdinalIgnoreCase);
+        Assert.Matches(@"\d{2}/\d{2}/\d{4}.*\d{2}/\d{2}/\d{4}", textoPopover);
+
+        await page.CloseAsync();
+    }
 }

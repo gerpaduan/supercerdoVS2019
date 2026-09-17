@@ -197,13 +197,12 @@ namespace WebCore.Infrastructure
         }
 
         // Modulo "Actividades" (solo admin, 2026-09-07, pedido explicito del usuario -- ver
-        // docs/DECISIONS.md). Solo Postgres -- es reporting cross-dominio de solo lectura, sin
-        // logica de negocio ni equivalente en SQL Server (WebCore ya corre siempre en modo
-        // Postgres via App.config, ver docs/DECISIONS.md "Postgres es la base oficial y unica").
-        public static DatosPostgres.ActividadPg CrearActividadRepository(IEmpresaContext empresa)
+        // docs/DECISIONS.md). Portado a SQL Server el 2026-09-16 (ver docs/DECISIONS.md) -- de las
+        // 6 fuentes, "Cambios de precio" queda excluida en SQL Server por falta de historial real
+        // (ver docs/GAPS.md); Datos.Actividad devuelve un DataTable vacio para ese metodo puntual.
+        public static Contratos.IActividadRepository CrearActividadRepository(IEmpresaContext empresa)
         {
-            if (!UsarPostgres)
-                throw new InvalidOperationException("El modulo Actividades solo esta implementado contra Postgres.");
+            if (!UsarPostgres) return new Datos.Actividad(empresa);
 
             return new DatosPostgres.ActividadPg(PgConnString, empresa.IdEmpresa);
         }

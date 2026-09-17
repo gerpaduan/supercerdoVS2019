@@ -17,7 +17,7 @@ namespace DatosPostgres
     // sigue filtrando y ordenando por el COALESCE (mismo comportamiento de rango que antes), pero
     // el SELECT ya no lo colapsa, para que el service pueda calcular el origen ("creación"/
     // "modificación") y detectar fechas anomalas (>1 dia de diferencia con la fecha de negocio).
-    public class ActividadPg
+    public class ActividadPg : Contratos.IActividadRepository
     {
         private readonly string _connectionString;
         private readonly int _idEmpresa;

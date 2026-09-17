@@ -11,9 +11,9 @@ no acá. Este archivo es solo para comportamiento real pendiente de portar.
 
 ---
 
-## Abiertos (actualizado 2026-08-20, tras cablear los 10 módulos del modo dual)
+## Abiertos (actualizado 2026-09-16)
 
-Sin gaps abiertos por ahora.
+- **Actividades: "Cambios de precio" no disponible en SQL Server** — `WebCore/Infrastructure/NegocioFactory.cs::CrearActividadRepository` ya tiene implementación real para SQL Server (`Datos/Actividad.cs`, ver `docs/DECISIONS.md` 2026-09-16), pero `ObtenerCambiosPrecio` devuelve un `DataTable` vacío a propósito: SQL Server no tiene historial de precios — `Corte` solo guarda el precio vigente y `Datos/Corte.cs::editPrecioCorte` hace un `UPDATE` directo sin loguear nada (a diferencia de Postgres, que tiene `actualizacioncorte` con el historial completo vía `LAG()`). Resolver requeriría una tabla de historial nueva + cambio de código en `editPrecioCorte`/`addOrEditCorte` — cambio de schema real, decisión pendiente si algún día se prioriza.
 
 ## Fuera de alcance, no son gaps de esta migración (documentado para no reabrir por error)
 
