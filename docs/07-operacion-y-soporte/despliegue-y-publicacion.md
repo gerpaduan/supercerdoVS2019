@@ -161,6 +161,7 @@ Al momento del primer deploy (2026-07-30) el servidor no tenia SSH, la cuenta de
 
 ### Pasos de deploy (WebCore, probado 2026-09-16, primer deploy de este cutover)
 
+0. **Deploys posteriores al primero (no aplica al setup inicial)**: `Disable-ScheduledTask -TaskName "WebCoreAppWatchdog"` ANTES de tocar `WebCore.dll.config` o subir archivos -- **bug real encontrado 2026-09-16** (ver `docs/DECISIONS.md`): `Stop-ScheduledTask` solo corta la corrida en curso, el trigger de repeticion (cada 2 min) sigue activo y el watchdog puede relanzar `WebCoreApp` a mitad del deploy, con el config equivocado (el que trajo el publish nuevo, todavia sin restaurar). `Enable-ScheduledTask` recien al final, despues de confirmar que el proceso arranco con el config correcto.
 1. `dotnet publish WebCore/WebCore.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o <carpeta_local>`.
 2. Subir el publish completo por SFTP (Posh-SSH, `New-SFTPSession`/`Set-SFTPItem` archivo por archivo preservando estructura) a `C:\WebCore\` en el servidor.
 3. Instalar URL Rewrite Module 2.1 y ARR 3.0 (una sola vez, no en cada deploy -- descarga directa de Microsoft, `msiexec /qn`) y habilitar el proxy de ARR (`appcmd set config -section:system.webServer/proxy /enabled:"True" /commit:apphost`, tambien una sola vez).
