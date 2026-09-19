@@ -103,3 +103,9 @@ bld/
 # Idem para WebCore -- mismo certificado, referenciado via junction local (ver docs/DECISIONS.md,
 # mini-spike AFIP). NUNCA debe trackearse una segunda copia del certificado.
 /WebCore/AFIP/
+
+# Salidas de "dotnet publish" para pruebas/deploy manual (WebCore-sm-test, WebCore-sl-publish, etc.):
+# ~700 MB de binarios regenerables y, ademas, cada WebCore.dll.config trae conexiones y SMTP reales
+# del servidor. Nunca deben trackearse (ver docs/07-operacion-y-soporte/despliegue-y-publicacion.md).
+/WebCore-*/
+/WebCore-*.zip
