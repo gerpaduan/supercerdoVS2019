@@ -1094,6 +1094,17 @@
                 $("#btnCantMas").addClass("d-none");
 
                 window.lineaSeleccionada = null;
+
+                // Al cerrar el modal de linea el cajero sigue escaneando: el foco vuelve siempre a
+                // #inputCodigo, salvo que otro modal (ej. pago) ya se haya abierto encima.
+                setTimeout(function () {
+                    if ($(".modal.show").length) return;
+                    if (window.Swal && Swal.isVisible && Swal.isVisible()) return;
+                    var inputCodigo = document.getElementById("inputCodigo");
+                    if (!inputCodigo) return;
+                    inputCodigo.focus();
+                    try { inputCodigo.select(); } catch (e) { /* select no aplica a todos los tipos de input */ }
+                }, 50);
             });
 
             // Atajos B/Bonificar, C/Cantidad, E/Eliminar mientras el modal

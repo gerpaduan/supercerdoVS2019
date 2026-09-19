@@ -102,6 +102,10 @@
         }
 
         $(input).on('keydown', function (e) {
+            // Un campo de solo lectura/deshabilitado no se edita: el mask intercepta cada tecla y
+            // escribe el valor por JS, lo que se saltearia el readonly nativo.
+            if (input.readOnly || input.disabled) return;
+
             var tecla = e.key;
             var seleccionTotal = input.value.length > 0 &&
                 input.selectionStart === 0 && input.selectionEnd === input.value.length;
@@ -147,6 +151,8 @@
         });
 
         $(input).on('paste', function (e) {
+            if (input.readOnly || input.disabled) return;
+
             var evt = e.originalEvent || e;
             evt.preventDefault();
             var texto = ((evt.clipboardData || window.clipboardData).getData('text') || '').trim();

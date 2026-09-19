@@ -163,8 +163,22 @@
         return toNumber($form.find('#txtIvaCompra').val());
     }
 
+    // #txtPrecioKg usa MoneyInputMask y muestra "1.234,50": se lee el valor "crudo" (sin puntos de
+    // miles), porque toNumber("1.234") interpretaria ese punto como decimal (1,234 en vez de 1234).
+    function getPrecioKgRaw($form) {
+        var $input = $form.find('#txtPrecioKg');
+        if (!$input.length) return '';
+        return window.MoneyInputMask ? window.MoneyInputMask.getRawValue($input) : ($input.val() || '');
+    }
+
+    // Todo cambio programatico del precio dispara 'input': el mask resincroniza su estado interno
+    // (si no, la proxima tecla se sumaria al valor viejo) y se recalculan subtotal/margen.
+    function setPrecioKg($form, value) {
+        $form.find('#txtPrecioKg').val(value).trigger('input');
+    }
+
     function getBasePrice($form) {
-        return toNumber($form.find('#txtPrecioKg').val());
+        return toNumber(getPrecioKgRaw($form));
     }
 
     function getCurrentProductPrice($form) {
@@ -295,11 +309,11 @@
     function syncContinuousProductState($form) {
         var enabled = isContinuousProductMode($form);
         var productName = $.trim($form.find('#txtProductoNombre').val() || '');
-        var priceText = $.trim($form.find('#txtPrecioKg').val() || '');
+        var priceText = $.trim(getPrecioKgRaw($form));
 
         $form.find('#panelCargaContinuaProducto').toggle(enabled);
         $form.find('#lblProductoContinuo').text(productName || '-');
-        $form.find('#lblPrecioContinuo').text(priceText ? formatNumber(priceText) : '-');
+        $form.find('#lblPrecioContinuo').text(priceText && toNumber(priceText) > 0 ? formatNumber(priceText) : '-');
     }
 
     function syncContinuousMediaState($form) {
@@ -378,7 +392,7 @@
         $form.find('#txtProductoNombre').val('');
         $form.find('#lblPrecioActualProducto').text('-');
         $form.find('#txtCantKgs').val('');
-        $form.find('#txtPrecioKg').val('');
+        setPrecioKg($form, '');
         $form.find('#txtSubtotalLinea').val('');
         $form.find('#txtPrecioVenta').val('');
         syncPriceHelpers($form, 'reset');
@@ -406,7 +420,7 @@
         $form.find('#txtCodigoProducto').val(producto && producto.codigo ? producto.codigo : '');
         $form.find('#txtProductoNombre').val(producto && producto.nombre ? producto.nombre : '');
         setCurrentProductPrice($form, producto && producto.precio !== undefined && producto.precio !== null ? producto.precio : 0);
-        $form.find('#txtPrecioKg').val('');
+        setPrecioKg($form, '');
         syncPriceHelpers($form, 'producto');
     }
 
@@ -663,10 +677,20 @@
     // dispara sincronico, casi al mismo tiempo que el .focus() explicito de
     // seleccionarProductoDesdeModal): reactivar tan temprano le ganaria la carrera a ese .focus()
     // y volveria a robarle el foco antes de que el usuario lo note.
-    function gestionarFocusTrapModalAbierto($modal) {
+    // Compra dentro de un modal: POS venta (desdePos) o Cta. Cte. de proveedor (modoModal). En ambos
+    // casos los buscadores se apilan sobre el modal contenedor (hostModalSelector).
+    function esEmbebido(state) {
+        return !!(state.config.desdePos || state.config.modoModal);
+    }
+
+    function getHostModalSelector(state) {
+        return state.config.hostModalSelector || '#modalFinanzasPOS';
+    }
+
+    function gestionarFocusTrapModalAbierto($modal, hostModalSelector) {
         if (!$modal || !$modal.length || !window.bootstrap || !window.bootstrap.Modal) return;
 
-        var elFondo = document.getElementById('modalFinanzasPOS');
+        var elFondo = document.querySelector(hostModalSelector || '#modalFinanzasPOS');
         if (!elFondo) return;
 
         $modal.off('show.bs.modal.focusTrapFix hidden.bs.modal.focusTrapFix')
@@ -702,10 +726,10 @@
         // Marca el origen de esta apertura para que persona-buscar.js (que puede
         // estar cargado en la misma pagina cuando la compra esta embebida dentro
         // de POS venta) sepa que la creacion de personas no aplica aca.
-        if (state.config.desdePos) {
+        if (esEmbebido(state)) {
             $('#modalBuscarPersona').data('origen-persona-buscar', 'compra-embebida');
             elevarZIndexSobreModalAbierto($('#modalBuscarPersona'));
-            gestionarFocusTrapModalAbierto($('#modalBuscarPersona'));
+            gestionarFocusTrapModalAbierto($('#modalBuscarPersona'), getHostModalSelector(state));
         } else {
             $('#modalBuscarPersona').removeData('origen-persona-buscar');
         }
@@ -756,7 +780,7 @@
                 // cajasStack/traerModalFacturaAlFrente, todos siblings). Re-parentarlo a body lo
                 // vuelve un sibling real -- mismo criterio que esos 3 casos, y de paso corta
                 // cualquier cascada de Escape hacia #modalFinanzasPOS (ya no es su descendiente).
-                if (state.config.desdePos) {
+                if (esEmbebido(state)) {
                     $('#modalBuscarPersona').appendTo(document.body);
                 }
 
@@ -815,7 +839,7 @@
         }
 
         window.ModalRequestLoading && window.ModalRequestLoading.show('Cargando solicitud...');
-        if (state.config.desdePos) {
+        if (esEmbebido(state)) {
             // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): a diferencia de
             // #modalBuscarPersona (autocurado, se re-parenta al inyectarse), #modalBuscarProducto
             // es un sibling real desde el arranque de la pagina -- pero declarado ANTES que
@@ -830,7 +854,7 @@
                 $modal.appendTo(document.body);
             }
             elevarZIndexSobreModalAbierto($modal);
-            gestionarFocusTrapModalAbierto($modal);
+            gestionarFocusTrapModalAbierto($modal, getHostModalSelector(state));
 
             // Bug real reportado 2026-09-12 (ver docs/DECISIONS.md "Batch 3b"): #modalBuscarProducto
             // es compartido con el buscador de producto del POS principal (pos-product.js,
@@ -859,6 +883,11 @@
             .done(function (res) {
                 if (!res || res.ok !== true) {
                     clearProductoInputs($form, true);
+                    // Solo con Enter/lector (enfocarCantidad): la busqueda por tipeo se dispara en cada
+                    // tecla y no debe ofrecer el alta a mitad de camino.
+                    if (enfocarCantidad) {
+                        ofrecerAltaProducto($form, codigo);
+                    }
                     return;
                 }
                 setProductoActual($form, res);
@@ -869,6 +898,155 @@
             .fail(function () {
                 clearProductoInputs($form, true);
             });
+    }
+
+    // ---- Alta completa de producto desde Compras --------------------------------------------
+    // El alta es la vista real Productos/AddOrEdit dentro de un iframe (embed=true): cualquier campo
+    // nuevo del alta de productos aparece aca sin duplicar codigo. Al guardar, esa vista avisa con
+    // postMessage y la compra agrega la linea con el producto recien creado.
+    var ALTA_PRODUCTO_MODAL_ID = 'modalAltaProductoCompra';
+    var ALTA_PRODUCTO_MENSAJE = 'producto-guardado';
+
+    function esCodigoEan(codigo) {
+        return typeof window.esEANValido === 'function' && window.esEANValido(codigo);
+    }
+
+    function ofrecerAltaProducto($form, codigo) {
+        var state = getState($form);
+        if (!state.config.urls.altaProducto || !esCodigoEan(codigo) || state.altaProductoPendiente) return;
+
+        state.altaProductoPendiente = true;
+        window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+
+        function terminar(confirmado) {
+            state.altaProductoPendiente = false;
+            if (confirmado) {
+                abrirAltaProductoModal($form, codigo);
+            } else {
+                $form.find('#txtCodigoProducto').focus().select();
+            }
+        }
+
+        if (window.Swal) {
+            Swal.fire({
+                icon: 'question',
+                title: 'Producto inexistente',
+                text: 'El código ' + codigo + ' no existe. ¿Querés darlo de alta ahora?',
+                showCancelButton: true,
+                confirmButtonText: 'Crear producto',
+                cancelButtonText: 'Cancelar'
+            }).then(function (result) { terminar(!!result.isConfirmed); });
+            return;
+        }
+
+        terminar(window.confirm('El código ' + codigo + ' no existe. ¿Querés darlo de alta ahora?'));
+    }
+
+    function asegurarAltaProductoModal() {
+        var $modal = $('#' + ALTA_PRODUCTO_MODAL_ID);
+        if ($modal.length) return $modal;
+
+        $modal = $(
+            '<div class="modal fade" id="' + ALTA_PRODUCTO_MODAL_ID + '" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">'
+            + '<div class="modal-dialog modal-xl modal-dialog-scrollable" role="document"><div class="modal-content">'
+            + '<div class="modal-header bg-light"><h5 class="modal-title">Nuevo producto</h5>'
+            + '<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button></div>'
+            + '<div class="modal-body p-0"><iframe id="frmAltaProductoCompra" title="Alta de producto" style="width:100%;height:78vh;border:0;"></iframe></div>'
+            + '</div></div></div>'
+        );
+        $modal.appendTo(document.body);
+        // Al cerrar se vacia el iframe (libera el formulario) y el foco vuelve al campo Codigo.
+        $modal.on('hidden.bs.modal', function () {
+            $modal.find('iframe').attr('src', 'about:blank');
+            // Si tras guardar la busqueda ya llevo el foco a Cantidad, no se lo saca.
+            var activo = document.activeElement;
+            if (!activo || activo === document.body || activo.tagName === 'IFRAME') {
+                $('#formCompra').find('#txtCodigoProducto').focus().select();
+            }
+        });
+        return $modal;
+    }
+
+    function abrirAltaProductoModal($form, codigo) {
+        var state = getState($form);
+        var $modal = asegurarAltaProductoModal();
+        var url = state.config.urls.altaProducto + '?embed=true&codigo=' + encodeURIComponent(codigo);
+
+        if (esEmbebido(state)) {
+            // Mismo apilado que los buscadores: por encima del modal contenedor y sin robarle el foco.
+            $modal.appendTo(document.body);
+            elevarZIndexSobreModalAbierto($modal);
+            gestionarFocusTrapModalAbierto($modal, getHostModalSelector(state));
+        }
+
+        $modal.find('iframe').attr('src', url);
+        $modal.modal('show');
+    }
+
+    // Un solo listener global (compras.js puede inicializarse varias veces, ej. modal de POS).
+    function bindMensajeAltaProducto() {
+        if (window.__comprasAltaProductoHandler) {
+            window.removeEventListener('message', window.__comprasAltaProductoHandler);
+        }
+
+        window.__comprasAltaProductoHandler = function (event) {
+            if (event.origin !== window.location.origin) return;
+            var data = event.data;
+            if (!data) return;
+
+            // "Volver" dentro del alta embebida: solo se cierra el modal.
+            if (data.tipo === 'producto-cancelado') {
+                $('#' + ALTA_PRODUCTO_MODAL_ID).modal('hide');
+                return;
+            }
+
+            if (data.tipo !== ALTA_PRODUCTO_MENSAJE || !data.codigo) return;
+
+            var $form = $('#formCompra');
+            if (!$form.length) return;
+
+            $('#' + ALTA_PRODUCTO_MODAL_ID).modal('hide');
+            $form.find('#txtCodigoProducto').val(data.codigo);
+            buscarProductoPorCodigo($form, String(data.codigo), true);
+        };
+        window.addEventListener('message', window.__comprasAltaProductoHandler);
+    }
+
+    // ---- Lector de codigo de barra por camara ------------------------------------------------
+    // Mismo mecanismo que Movimientos/Stock: BarcodeCodeInput valida EAN y llama a onCodigoAceptado; aca se
+    // escribe el codigo y se simula el Enter que ya usa la busqueda manual (no se duplica esa logica).
+    function initScanner($form) {
+        var $boton = $form.find('#btnCompraScanner');
+        if (!window.BarcodeCodeInput || !$boton.length || $boton.data('scannerAttached')) return;
+        $boton.data('scannerAttached', true);
+
+        window.BarcodeCodeInput.attach({
+            videoSelector: '#compraVideoScanner',
+            containerSelector: '#compraScannerContainer',
+            buttonSelector: '#btnCompraScanner',
+            closeButtonSelector: '#btnCompraCerrarScanner',
+            clearButtonSelector: '#btnCompraLimpiarScanner',
+            flashButtonSelector: '#btnCompraFlash',
+            msgSelector: '#compraScannerMsg',
+            beepSelector: '#compraBeep',
+            codigoInputSelector: '#txtCodigoProducto',
+            // Se cargan varios productos seguidos: la camara queda abierta para la proxima lectura.
+            cerrarAlLeer: false,
+            onCodigoAceptado: function (codigo) {
+                var el = document.getElementById('txtCodigoProducto');
+                if (!el) return;
+                window.BusquedaFeedback && window.BusquedaFeedback.beepExito();
+                el.value = codigo;
+                el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+            }
+        });
+    }
+
+    function initPrecioMask($form) {
+        var $precio = $form.find('#txtPrecioKg');
+        if (!window.MoneyInputMask || !$precio.length || $precio.data('moneyMaskAttached')) return;
+        $precio.data('moneyMaskAttached', true);
+        window.MoneyInputMask.attach($precio);
     }
 
     function addLineaCorte($form) {
@@ -1018,6 +1196,15 @@
         // tiene ademas su propio lock (ver ComprasController.Guardar) como garantia final.
         if (state.saving || $btn.prop('disabled')) return;
 
+        // Un codigo tipeado/escaneado que no se agrego como linea se pierde al guardar (o se guarda
+        // la compra sin ese producto sin que el usuario lo note): se exige dejar el campo vacio.
+        var $codigoPendiente = $form.find('#txtCodigoProducto');
+        if ($codigoPendiente.is(':visible') && $.trim($codigoPendiente.val() || '') !== '') {
+            window.BusquedaFeedback && window.BusquedaFeedback.beepError();
+            showValidationMessage('El campo Código tiene un valor sin agregar. Agregá el producto a la compra o borrá el código; tiene que estar vacío para finalizar la compra.', $codigoPendiente);
+            return;
+        }
+
         rebuildHiddenInputs($form);
         state.saving = true;
         $btn.prop('disabled', true);
@@ -1049,11 +1236,17 @@
                     guardApi.allowNavigation();
                 }
 
-                if (state.config.desdePos) {
-                    if (window.Swal) {
+                if (esEmbebido(state)) {
+                    // En modo modal el aviso lo muestra la Cta. Cte. despues de recargarse (una recarga de
+                    // pagina se llevaria por delante este Swal).
+                    if (window.Swal && !state.config.modoModal) {
                         Swal.fire({ icon: 'success', title: 'Compra registrada', text: res.mensaje || 'La compra se guardó correctamente.', timer: 1800, timerProgressBar: true, showConfirmButton: false });
                     }
-                    $('#modalFinanzasPOS').modal('hide');
+                    $(getHostModalSelector(state)).modal('hide');
+                    // Evento nativo (no de jQuery): la Cta. Cte. lo escucha para recargarse con los filtros vigentes.
+                    if (state.config.modoModal) {
+                        document.dispatchEvent(new CustomEvent('compra:guardada', { detail: { idCompra: res.idCompra } }));
+                    }
                     return;
                 }
 
@@ -1146,7 +1339,7 @@
         $(document)
             .off('click.comprasPersonaNueva', '#btnNuevaPersonaDesdeBuscar')
             .on('click.comprasPersonaNueva', '#btnNuevaPersonaDesdeBuscar', function () {
-                if (state.config.desdePos) return; // deshabilitado: compra embebida dentro de POS venta
+                if (esEmbebido(state)) return; // deshabilitado: compra embebida dentro de un modal (POS venta / Cta. Cte.)
                 abrirCrearProveedorModal($form);
             });
 
@@ -1511,8 +1704,18 @@
         init: function (config) {
             var $form = $(config && config.formSelector ? config.formSelector : '#formCompra');
             if (!$form.length) return;
+
+            // Cta. Cte. (origen=modal): el buscador de producto de una apertura anterior quedo re-parentado
+            // en <body> y su id se repetiria con el de esta carga -- se descarta antes de inicializar.
+            if (config && config.modoModal) {
+                $('body > #modalBuscarProductoCompra').remove();
+            }
+
             initState($form, config || {});
+            initPrecioMask($form);
             bindEvents($form);
+            initScanner($form);
+            bindMensajeAltaProducto();
         }
     };
 

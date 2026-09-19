@@ -17,6 +17,9 @@ namespace WebCore.Models
 
         public bool DesdePos { get; set; }
 
+        // Origen "modal": embebida en un modal fuera del POS (Cta. Cte. de proveedor). Sin logica de caja.
+        public bool EnModal { get; set; }
+
         public bool EsEdicion { get; set; }
 
         public long EmpresaCuit { get; set; }

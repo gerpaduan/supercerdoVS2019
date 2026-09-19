@@ -469,12 +469,19 @@ namespace WebCore.Controllers
             Entidades.Usuario user = _usuarioActual;
             string origenNormalizado = NormalizarOrigen(origen);
             bool desdePos = EsOrigenPos(origenNormalizado);
+            bool enModal = EsOrigenModal(origenNormalizado);
 
             // Usuario de produccion: exige operador autorizado solo en la pantalla completa, no
             // en el modo embebido en POS (desdePos) -- Batch 5, port literal de
             // Web/Controllers/ComprasController.cs:193-198.
             if (!desdePos && user.EsUsuarioProduccion && ObtenerOperadorModulo("Compras") == null)
+            {
+                // En modal un redirect a la pantalla de autorizacion se renderizaria adentro del modal.
+                if (enModal)
+                    return StatusCode(403, "Para operar compras hay que autorizar el modulo Compras desde el menu.");
+
                 return RedirectToAction("AutorizarModuloCompras", new { returnUrl = Request.Path + Request.QueryString });
+            }
 
             // Port de Web/Controllers/ComprasController.cs:200-206.
             var operador = ResolverOperadorModulo("Compras", user);
@@ -495,7 +502,7 @@ namespace WebCore.Controllers
             DateTime fechaPermiso = compra != null ? compra.FechaCompra : DateTime.Today;
             if (!_oUsuarioN.tienePermiso(operador, permiso, fechaPermiso, idCreador))
             {
-                if (desdePos)
+                if (desdePos || enModal)
                     return StatusCode(403, "No tiene permisos para operar compras.");
 
                 TempData["AlertType"] = "warning";
@@ -509,9 +516,10 @@ namespace WebCore.Controllers
                 : CrearViewModelNuevo(user, origenNormalizado);
 
             model.SubmissionToken = Guid.NewGuid().ToString("N");
+            model.EnModal = enModal;
             CargarViewBags(model, user);
 
-            if (desdePos)
+            if (desdePos || enModal)
                 return PartialView("~/Views/Compras/Editar.cshtml", model);
 
             return View("~/Views/Compras/Editar.cshtml", model);
@@ -566,6 +574,7 @@ namespace WebCore.Controllers
 
                 string origenNormalizado = NormalizarOrigen(model != null ? model.Origen : null);
                 bool desdePos = EsOrigenPos(origenNormalizado);
+                bool enModal = EsOrigenModal(origenNormalizado);
 
                 if (model == null)
                     return Fallo("No se recibieron datos de la compra.");
@@ -573,6 +582,14 @@ namespace WebCore.Controllers
                 if (desdePos)
                 {
                     model.IdSucursal = user.IdSucursal;
+                }
+
+                // Kgs.Medias viaja como "1267.00" (punto decimal): el binder de es-AR lo leia como 126700
+                // (punto = miles). Se relee con la regla fija punto/coma = decimal.
+                if (WebCore.Helpers.NumeroDecimalPunto.TryParse(Request.Form["KgsMedias"], out float kgsMediasPosteado))
+                {
+                    model.KgsMedias = kgsMediasPosteado;
+                    ModelState.Remove("KgsMedias");
                 }
 
                 string errorValidacion = ValidarModelo(model, user, desdePos);
@@ -584,14 +601,6 @@ namespace WebCore.Controllers
                 {
                     compraActual = _oCompraN.findById_convertToCompra(model.IdCompra);
                     if (compraActual == null || compraActual.IdCompra == 0)
-                // Kgs.Medias viaja como "1267.00" (punto decimal): el binder de es-AR lo leia como 126700
-                // (punto = miles). Se relee con la regla fija punto/coma = decimal.
-                if (WebCore.Helpers.NumeroDecimalPunto.TryParse(Request.Form["KgsMedias"], out float kgsMediasPosteado))
-                {
-                    model.KgsMedias = kgsMediasPosteado;
-                    ModelState.Remove("KgsMedias");
-                }
-
                         return Fallo("No se encontró la compra a modificar.");
                 }
 
@@ -701,7 +710,7 @@ namespace WebCore.Controllers
                     desdePos,
                     egresoCaja);
 
-                if (!desdePos)
+                if (!desdePos && !enModal)
                     TempData["ComprasSuccessMessage"] = model.IdCompra > 0
                         ? "La compra se guardó correctamente."
                         : "La compra se registró correctamente.";
@@ -711,8 +720,8 @@ namespace WebCore.Controllers
                     ok = true,
                     idCompra = idCompra,
                     mensaje = model.IdCompra > 0 ? "La compra se guardó correctamente." : "La compra se registró correctamente.",
-                    closeModal = desdePos,
-                    redirectUrl = !desdePos
+                    closeModal = desdePos || enModal,
+                    redirectUrl = !desdePos && !enModal
                         ? Url.Action("Index", "Compras")
                         : ""
                 });
@@ -1016,9 +1025,18 @@ namespace WebCore.Controllers
             return string.Equals(tipoCompra, Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes), StringComparison.OrdinalIgnoreCase);
         }
 
+        // "modal": la misma pantalla embebida en un modal fuera del POS (ej. Cta. Cte. de un proveedor).
+        // A diferencia de "pos", NO exige caja abierta ni crea/edita EgresoCaja: guarda como "layout".
         private static string NormalizarOrigen(string origen)
         {
-            return string.Equals(origen, "pos", StringComparison.OrdinalIgnoreCase) ? "pos" : "layout";
+            if (string.Equals(origen, "pos", StringComparison.OrdinalIgnoreCase)) return "pos";
+            if (string.Equals(origen, "modal", StringComparison.OrdinalIgnoreCase)) return "modal";
+            return "layout";
+        }
+
+        private static bool EsOrigenModal(string origen)
+        {
+            return string.Equals(origen, "modal", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool EsOrigenPos(string origen)

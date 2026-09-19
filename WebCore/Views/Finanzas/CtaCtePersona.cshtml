@@ -217,12 +217,22 @@
                             int.TryParse(Convert.ToString(row["IdTabla"]), out idTablaPago);
                             bool esPagoEditable = esPago && !esHistorico && idTablaPago > 0;
 
-                            <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(!esVenta && !esPagoEditable ? "ctacte-row-sin-operacion" : "")"
+                            // Compra (2026-09-19): IdTabla es el id de la compra (row["ID"] es el del movimiento
+                            // de cta. cte.). Se abre en un modal (Compras/Editar?origen=modal), sin logica de caja.
+                            int idTablaCompra = 0;
+                            bool esCompraEditable = string.Equals(tablaMovimiento, "Compras", StringComparison.OrdinalIgnoreCase)
+                                && !esHistorico
+                                && int.TryParse(Convert.ToString(row["IdTabla"]), out idTablaCompra)
+                                && idTablaCompra > 0;
+
+                            <tr class="js-fila-ctacte @(esHistorico ? "ctacte-row-historico" : "") @(mostrarAdvertenciaAdmin ? "ctacte-row-modificado" : "") @(!esVenta && !esPagoEditable && !esCompraEditable ? "ctacte-row-sin-operacion" : "")"
                                 data-es-venta="@(esVenta ? "true" : "false")"
                                 data-id-venta="@idTablaMovimiento"
                                 data-es-pago="@(esPagoEditable ? "true" : "false")"
                                 data-id-pago="@(esPagoEditable ? idTablaPago : 0)"
-                                style="cursor:@((esVenta || esPagoEditable) ? "pointer" : "default");">
+                                data-es-compra="@(esCompraEditable ? "true" : "false")"
+                                data-id-compra="@(esCompraEditable ? idTablaCompra : 0)"
+                                style="cursor:@((esVenta || esPagoEditable || esCompraEditable) ? "pointer" : "default");">
                                 <td style="display:none;">@row["ID"]</td>
                                 <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
                                 <td class="@claseColorOperacion" style="font-weight:bold;">
@@ -256,6 +266,24 @@
                         }
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Modal para ver/editar una Compra desde su fila (Compras/Editar?origen=modal, ver script de abajo).
+   Su id lo usa compras.js (hostModalSelector) para cerrarlo al guardar. *@
+<div class="modal fade" id="modalCompraCtaCte" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="fas fa-file-invoice-dollar mr-2"></i>Compra</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-2" id="contenedorCompraCtaCte" style="background:#f4f7fb;">
+                <div class="p-4 text-center text-muted">Cargando...</div>
             </div>
         </div>
     </div>
@@ -306,18 +334,24 @@
 }
 
 <style>
-    .ctacte-page { font-size: .9rem; }
+    .ctacte-page { font-size: .84rem; }
     .ctacte-page .ctacte-panel-card { border: 1px solid #e9ecef; border-radius: .75rem; }
     .ctacte-page .ctacte-panel-card .card-body { padding: .8rem .92rem; }
     .ctacte-page .ctacte-header-box { padding: .62rem .82rem; margin-bottom: .85rem; border-radius: .75rem; }
     .ctacte-page .ctacte-filtros-group { gap: .5rem; }
-    .ctacte-page .ctacte-fecha-group { max-width: 286px; }
+    /* Bug real encontrado 2026-09-17: con la fuente mas grande de antes (.9rem) y este ancho
+       (286px), el input type="date" quedaba sin espacio para mostrar el valor completo dentro
+       del input-group (comparte lugar con el prepend "Desde" y el boton "Filtrar"). Bajamos la
+       fuente de la pagina a .84rem (mismo criterio que los filtros de Compras/Index.cshtml) y
+       ensanchamos el grupo para que el dd/mm/aaaa entre siempre, incluso con distinto locale. */
+    .ctacte-page .ctacte-fecha-group { max-width: 320px; }
     .ctacte-page .ctacte-btn-mail { color: #007bff; border-color: #007bff; }
     .ctacte-page .ctacte-btn-mail:hover, .ctacte-page .ctacte-btn-mail:focus { color: #fff; background-color: #007bff; border-color: #007bff; }
     .ctacte-page .ctacte-table-compact { font-size: .82rem; }
     #tablaPersona .ctacte-color-positivo { color: green; }
     #tablaPersona .ctacte-color-negativo { color: red; }
     #tablaPersona td, #tablaPersona th { white-space: nowrap; }
+    #modalCompraCtaCte .modal-dialog { max-width: 1320px; width: calc(100% - 1.25rem); }
     .ctacte-row-historico { opacity: .7; }
     .ctacte-row-modificado { background-color: #fff8e1; }
 </style>
@@ -377,7 +411,164 @@
             });
         }
 
+        // ---- Compra en modal (Compras/Editar?origen=modal), 2026-09-19 ---------------------------
+        // Reusa la misma pantalla de Compras/Editar pero SIN la logica de caja de origen=pos. Al guardar,
+        // compras.js cierra el modal y emite el evento nativo 'compra:guardada': aca se recarga la cuenta
+        // corriente con los filtros vigentes (submit del mismo formulario de "Filtrar") y se muestra el aviso.
+        // OJO: este <script> corre antes de que el layout cargue jQuery -- $ solo se usa dentro de handlers.
+        var urlEditarCompra = '@Url.Action("Editar", "Compras")';
+        var CLAVE_AVISO_COMPRA = 'ctacteCompraGuardada';
+
+        // Inyecta HTML y ejecuta sus <script> en orden (innerHTML no los ejecuta). Los <script src> ya
+        // cargados en la pagina se saltean (misma tecnica que renderConScripts de Ventas/POS.cshtml).
+        function renderConScriptsCompra(html, contenedor) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            var scripts = [];
+            tmp.querySelectorAll('script').forEach(function (s) {
+                scripts.push({ src: s.getAttribute('src'), code: s.text || s.textContent || '' });
+                s.parentNode.removeChild(s);
+            });
+            contenedor.innerHTML = tmp.innerHTML;
+
+            function normalizar(src) {
+                try { return new URL(src, document.baseURI).href; } catch (e) { return src; }
+            }
+            function yaCargado(href) {
+                return Array.prototype.some.call(document.scripts, function (s) { return s.src && normalizar(s.src) === href; });
+            }
+            function ejecutar(i) {
+                if (i >= scripts.length) return;
+                var item = scripts[i];
+                if (item.src) {
+                    var href = normalizar(item.src);
+                    if (yaCargado(href)) { ejecutar(i + 1); return; }
+                    var nuevo = document.createElement('script');
+                    nuevo.src = href;
+                    nuevo.async = false;
+                    nuevo.onload = function () { ejecutar(i + 1); };
+                    nuevo.onerror = function () { console.error('No se pudo cargar el script:', href); ejecutar(i + 1); };
+                    document.body.appendChild(nuevo);
+                    return;
+                }
+                var inline = document.createElement('script');
+                inline.text = item.code;
+                document.body.appendChild(inline);
+                document.body.removeChild(inline);
+                ejecutar(i + 1);
+            }
+            ejecutar(0);
+        }
+
+        function avisarErrorCompra(mensaje) {
+            if (window.Swal) { Swal.fire({ icon: 'error', title: 'Compra', text: mensaje }); return; }
+            alert(mensaje);
+        }
+
+        function abrirCompra(idCompra) {
+            var modalEl = document.getElementById('modalCompraCtaCte');
+            var contenedor = document.getElementById('contenedorCompraCtaCte');
+            if (!modalEl || !contenedor) return;
+
+            // Restos de una apertura anterior (el modal se re-parenta a <body> para apilarse sobre el modal de POS).
+            document.querySelectorAll('body > #modalCompraCtaCte').forEach(function (el) {
+                if (el !== modalEl && !el.classList.contains('show')) el.remove();
+            });
+            if (modalEl.parentNode !== document.body) document.body.appendChild(modalEl);
+
+            contenedor.innerHTML = '<div class="p-4 text-center text-muted">Cargando...</div>';
+
+            var $modal = $(modalEl);
+            var elFondo = document.getElementById('modalFinanzasPOS');
+            var abiertos = document.querySelectorAll('.modal.show').length;
+
+            $modal.off('.ctacteCompra');
+            if (abiertos > 0) {
+                // Con la Cta. Cte. embebida en POS ya hay un modal abierto: se sube el z-index (mismo
+                // criterio que compras.js/elevarZIndexSobreModalAbierto) y se pausa el focus-trap del de fondo.
+                var zIndex = 1040 + (10 * abiertos);
+                modalEl.style.setProperty('z-index', zIndex, 'important');
+                $modal.on('shown.bs.modal.ctacteCompra', function () {
+                    var $backdrop = $('.modal-backdrop').not('.modal-stack').last();
+                    if ($backdrop.length) {
+                        $backdrop[0].style.setProperty('z-index', zIndex - 1, 'important');
+                        $backdrop.addClass('modal-stack');
+                    }
+                });
+            } else {
+                modalEl.style.removeProperty('z-index');
+            }
+            if (elFondo && window.bootstrap && window.bootstrap.Modal) {
+                $modal.on('show.bs.modal.ctacteCompra', function () {
+                    var inst = window.bootstrap.Modal.getInstance(elFondo);
+                    if (inst && inst._focustrap && typeof inst._focustrap.deactivate === 'function') inst._focustrap.deactivate();
+                }).on('hidden.bs.modal.ctacteCompra', function () {
+                    var inst = window.bootstrap.Modal.getInstance(elFondo);
+                    if (inst && inst._focustrap && typeof inst._focustrap.activate === 'function') inst._focustrap.activate();
+                });
+            }
+            // Al cerrar se vacia el formulario (evita ids duplicados en la proxima apertura).
+            $modal.on('hidden.bs.modal.ctacteCompra', function () {
+                contenedor.innerHTML = '';
+                $('body > #modalBuscarProductoCompra').remove();
+            });
+
+            $modal.modal('show');
+
+            fetch(urlEditarCompra + '?id=' + encodeURIComponent(idCompra) + '&origen=modal', {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (resp) {
+                if (resp.ok) return resp.text();
+                return resp.text().then(function (texto) { throw new Error(texto || 'No se pudo abrir la compra.'); });
+            }).then(function (html) {
+                renderConScriptsCompra(html, contenedor);
+            }).catch(function (err) {
+                console.error('Cta. Cte.: no se pudo abrir la compra', err);
+                $modal.modal('hide');
+                avisarErrorCompra(err && err.message ? err.message : 'No se pudo abrir la compra.');
+            });
+        }
+
+        // Un solo listener por carga (la Cta. Cte. embebida en POS se vuelve a inyectar en cada filtro).
+        if (window.__ctacteCompraGuardadaHandler) {
+            document.removeEventListener('compra:guardada', window.__ctacteCompraGuardadaHandler);
+        }
+        window.__ctacteCompraGuardadaHandler = function () {
+            if (!frmFiltroCtaCte || !document.body.contains(frmFiltroCtaCte)) return;
+            try {
+                sessionStorage.setItem(CLAVE_AVISO_COMPRA, '1');
+            } catch (e) {
+                console.warn('Cta. Cte.: sin sessionStorage, no se mostrara el aviso de compra guardada.', e);
+            }
+            frmFiltroCtaCte.requestSubmit();
+        };
+        document.addEventListener('compra:guardada', window.__ctacteCompraGuardadaHandler);
+
+        // Aviso de "compra guardada" tras la recarga (el Swal de compras.js no sobreviviria a la recarga).
+        (function mostrarAvisoCompraGuardada() {
+            function mostrar() {
+                try {
+                    if (sessionStorage.getItem(CLAVE_AVISO_COMPRA) !== '1') return;
+                    sessionStorage.removeItem(CLAVE_AVISO_COMPRA);
+                } catch (e) {
+                    console.warn('Cta. Cte.: no se pudo leer el aviso de compra guardada.', e);
+                    return;
+                }
+                if (window.Swal) {
+                    Swal.fire({ icon: 'success', title: 'Compra guardada', text: 'La cuenta corriente se actualizó.', timer: 1800, timerProgressBar: true, showConfirmButton: false });
+                }
+            }
+            if (document.readyState === 'complete') mostrar(); else window.addEventListener('load', mostrar);
+        })();
+
         document.querySelectorAll('.js-fila-ctacte').forEach(function (fila) {
+            if (fila.dataset.esCompra === 'true') {
+                fila.addEventListener('click', function () { abrirCompra(fila.dataset.idCompra); });
+                return;
+            }
+
             if (fila.dataset.esVenta === 'true') {
                 fila.addEventListener('click', function () {
                     window.location.href = '@Url.Action("DetalleVenta", "Ventas")?id=' + fila.dataset.idVenta;

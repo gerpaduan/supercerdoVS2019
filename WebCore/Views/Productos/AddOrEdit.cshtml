@@ -6,6 +6,14 @@
     bool esEdicion = Model != null && Model.IdCorte > 0;
     bool productoGuardadoContinuo = ViewBag.ProductoGuardadoContinuo != null && System.Convert.ToBoolean(ViewBag.ProductoGuardadoContinuo);
     ViewBag.Title = esEdicion ? "Editar producto" : "Alta de producto";
+
+    // Embed: la vista corre dentro de un iframe (alta completa desde Compras/Editar) con un layout
+    // minimo y sin carga continua. Sin ?embed=true nada de esto aplica y la vista es la de siempre.
+    bool embed = Model != null && Model.Embed;
+    if (embed)
+    {
+        Layout = "~/Views/Shared/_LayoutEmbed.cshtml";
+    }
 }
 
 <style>
@@ -170,6 +178,7 @@
                 @Html.HiddenFor(m => m.RetomarProductoId)
                 @Html.HiddenFor(m => m.FlujoBaseContinuo)
                 <input type="hidden" name="EsEdicionFormulario" value="@(esEdicion ? "1" : "0")" />
+                @Html.HiddenFor(m => m.Embed)
 
                 <div id="page-urls"
                      data-url-add-or-edit="@Url.Action("AddOrEdit", "Productos")"
@@ -198,10 +207,13 @@
                         <h5 class="mb-0 producto-edit-section-title">Datos del producto</h5>
                         <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
                             <span class="text-muted @(esEdicion ? "" : "d-none")">ID: <b>@Model.IdCorte</b></span>
-                            <div class="form-check form-switch mb-0 text-end producto-focus-switch">
-                                @Html.CheckBoxFor(m => m.CargaContinua, new { @class = "form-check-input", id = "swCargaContinua", data_edit_readonly_ignore = "true" })
-                                <label class="form-check-label fw-semibold" for="swCargaContinua">Carga continua</label>
-                            </div>
+                            @if (!embed)
+                            {
+                                <div class="form-check form-switch mb-0 text-end producto-focus-switch">
+                                    @Html.CheckBoxFor(m => m.CargaContinua, new { @class = "form-check-input", id = "swCargaContinua", data_edit_readonly_ignore = "true" })
+                                    <label class="form-check-label fw-semibold" for="swCargaContinua">Carga continua</label>
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -435,18 +447,6 @@
                     </div>
                 </div>
 
-                <!-- =========================
-                 4) BOTONERA (fija al pie)
-                 ========================= -->
-                <div class="espacio-botonera-fija"></div>
-
-                <div class="barra-acciones-fija">
-                    <div class="barra-acciones-inner d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                        <a class="btn btn-outline-secondary" id="btnVolverProducto" href="@Url.Action("Index","Productos")" title="Alt+V">
-                            <span class="shortcut-letter">V</span>olver
-                        </a>
-
-                        <div class="producto-edit-actions-right d-flex flex-column align-items-end">
                 @{
                     var jerarquiaSucursales = ViewBag.JerarquiaSucursales as List<WebCore.Models.CorteJerarquiaSucursalItemVm>;
                 }
@@ -501,6 +501,18 @@
                     </div>
                 }
 
+                <!-- =========================
+                 4) BOTONERA (fija al pie)
+                 ========================= -->
+                <div class="espacio-botonera-fija"></div>
+
+                <div class="barra-acciones-fija">
+                    <div class="barra-acciones-inner d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <a class="btn btn-outline-secondary" id="btnVolverProducto" href="@(embed ? "#" : Url.Action("Index","Productos"))" data-embed-cancelar="@(embed ? "1" : "0")" title="Alt+V">
+                            <span class="shortcut-letter">V</span>olver
+                        </a>
+
+                        <div class="producto-edit-actions-right d-flex flex-column align-items-end">
                             <div class="producto-edit-actions-buttons d-flex gap-2">
                             <button type="button"
                                     class="btn btn-outline-primary d-none"
@@ -1820,8 +1832,11 @@
     // =========================
     // ALTA: iniciar c�digo y precio vac�os
     // =========================
+    // Embed (alta desde Compras): el codigo escaneado llega precargado; DOMContentLoaded (mas abajo)
+    // dispara el mismo autocompletado desde catalogo global que el tipeo/escaneo manual.
+    const codigoPrecargadoEmbed = "@(embed && !esEdicion && Model != null && Model.Codigo > 0 ? Model.Codigo.ToString() : "")";
     if (!esEdicion) {
-        $codigo.val("");
+        $codigo.val(codigoPrecargadoEmbed);
         $precioKg.val(""); // placeholder 0,00 visible
     }
 
@@ -2461,6 +2476,12 @@
 
         enfocarInputCodigo();
 
+        // Embed: con el codigo ya precargado, 'input' activa validacion EAN + autocompletado desde el
+        // catalogo global (y su aviso "Se autocompletaron los datos...") igual que si se hubiera tipeado.
+        if (codigoPrecargadoEmbed) {
+            $codigo.trigger("input");
+        }
+
         actualizarUiCargaContinua();
         actualizarSnapshotEdicion();
 
@@ -2595,6 +2616,13 @@
 
     $btnVolver.on("click.productosLoader", function (e) {
         e.preventDefault();
+
+        // Embebida en un iframe (alta desde Compras): "Volver" solo le pide al padre cerrar el modal.
+        if ($btnVolver.data("embed-cancelar") === 1 || $btnVolver.attr("data-embed-cancelar") === "1") {
+            window.parent.postMessage({ tipo: "producto-cancelado" }, window.location.origin);
+            return;
+        }
+
         mostrarCargaSolicitud();
         window.setTimeout(function () {
             window.location.href = $btnVolver.attr("href");
@@ -2607,34 +2635,6 @@
 
         enfocarInputCodigo();
     }, 120);
-})();
-    </script>
-}
-
-<style>
-    /* Scanner */
-    #scannerContainer {
-        margin-bottom: .75rem;
-    }
-
-    .scanner-wrapper {
-        position: relative;
-        width: 100%;
-        max-width: 100%;
-        height: 80px;
-        overflow: hidden;
-        background: #000;
-        border-radius: 8px;
-    }
-
-    #videoScanner {
-        width: 100%;
-        height: auto;
-    }
-
-    .scanner-line {
-        position: absolute;
-        top: 50%;
 })();
     </script>
     <script>
@@ -2716,6 +2716,34 @@
                 $btn.prop("disabled", false);
             });
     });
+})();
+    </script>
+}
+
+<style>
+    /* Scanner */
+    #scannerContainer {
+        margin-bottom: .75rem;
+    }
+
+    .scanner-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        height: 80px;
+        overflow: hidden;
+        background: #000;
+        border-radius: 8px;
+    }
+
+    #videoScanner {
+        width: 100%;
+        height: auto;
+    }
+
+    .scanner-line {
+        position: absolute;
+        top: 50%;
         left: 0;
         width: 100%;
         height: 2px;

@@ -1,0 +1,67 @@
+@* Layout minimo para vistas que se muestran dentro de un <iframe> de otra pantalla (sin menu, barra
+   superior ni pie). Hoy lo usa Productos/AddOrEdit?embed=true (alta completa de producto desde
+   Compras/Editar). Carga los mismos assets base que _Layout.cshtml (Bootstrap 5 + shim BS4, Font
+   Awesome, custom.css/ui-refresh.css, jQuery, SweetAlert2, scanner y buscador de productos) y expone
+   la seccion "Scripts". Todo lo demas de _Layout (sidebar, modales de sucursal/dispositivo,
+   calculadora de billetes, tema, proteccion de salida) NO se carga a proposito. *@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CarniSys</title>
+    <script type="importmap"></script>
+
+    @* Mismo preload de modo oscuro que _Layout: el iframe respeta el tema elegido por el usuario. *@
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem("carnisys-theme") === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet" />
+    <link rel="stylesheet" href="~/Content/css/bootstrap4-compat.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Content/css/custom.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Content/css/ui-refresh.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebCore.styles.css" asp-append-version="true" />
+</head>
+<body class="app-shell app-embed">
+    <div class="container-fluid pt-2 pb-3">
+        @RenderBody()
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Scripts/app/bootstrap4-compat.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/Scripts/app/swal-single-confirm.js" asp-append-version="true"></script>
+    <script src="~/Content/vendor/zxing/zxing.min.js"></script>
+    <script src="~/Scripts/app/scanner.js" asp-append-version="true"></script>
+    <script src="~/Scripts/app/modal-productos.js" asp-append-version="true"></script>
+
+    @* Helpers globales que _Layout define y que las vistas ya portadas siguen llamando. *@
+    <script>
+        function manejarPermiso(resp) {
+            if (resp && resp.error) {
+                Swal.fire("Permiso denegado", resp.error, "error");
+                return false;
+            }
+            return true;
+        }
+
+        window.__protegerSalida = window.__protegerSalida || false;
+        window.activarProteccionSalida = window.activarProteccionSalida || function () { window.__protegerSalida = true; };
+        window.desactivarProteccionSalida = window.desactivarProteccionSalida || function () { window.__protegerSalida = false; };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

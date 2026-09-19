@@ -10,7 +10,10 @@
     // renderConScripts en Ventas/POS.cshtml), se devolvia la pagina COMPLETA (con _Layout.cshtml:
     // nav, sidebar, sus propios <script src="jquery">/<script src="bootstrap.bundle">) anidada
     // dentro del modal-body chico de POS.
-    Layout = Model.DesdePos ? null : "_Layout";
+    // "embebido" = dentro de un modal (POS venta o Cta. Cte. de proveedor, origen=modal): sin _Layout
+    // y con los scripts inline. Solo DesdePos aplica las reglas de caja (ver ComprasController.Guardar).
+    bool embebido = Model.DesdePos || Model.EnModal;
+    Layout = embebido ? null : "_Layout";
     ViewBag.Title = Model.EsEdicion ? "Modificar Compra" : "Nueva Compra";
     var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new List<Sucursal>();
     var modalProductoData = new ViewDataDictionary(ViewData);
@@ -32,7 +35,7 @@
     bool mostrarMediaInicial = string.Equals(tipoCompraInicial, tipoMediaRes, StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="container-fluid px-2 px-md-3 compra-page @(Model.DesdePos ? "compra-page-pos" : "")" data-compra-page="1">
+<div class="container-fluid px-2 px-md-3 compra-page @(embebido ? "compra-page-pos" : "")" data-compra-page="1">
     <div id="compraDraftBanner" class="alert alert-warning d-none" role="alert">
         Se encontró un borrador local de esta compra.
         <button type="button" class="btn btn-sm btn-warning ml-2" data-action="restore-draft">Recuperar</button>
@@ -178,14 +181,44 @@
                         <div><strong>Producto en carga:</strong> <span id="lblProductoContinuo">-</span></div>
                         <div><strong>Precio compra:</strong> <span id="lblPrecioContinuo">-</span></div>
                     </div>
+                    @* Lector de codigo de barra por camara: mismo mecanismo que Movimientos/Stock
+                       (BarcodeCodeInput, ver compras.js initScanner), pero con ids propios (compra*)
+                       porque esta pantalla puede estar embebida en el POS, que ya tiene #videoScanner,
+                       #scannerContainer, #btnScanner y #beep. *@
                     <div class="row">
-                        <div class="col-12 col-md-2">
-                            <div class="form-group">
-                                <label for="txtCodigoProducto">Código</label>
-                                <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" />
+                        <div class="col-12 scanner-shared-card" id="compraScannerContainer" style="display:none;">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body p-2">
+                                    <div class="scanner-wrapper">
+                                        <video id="compraVideoScanner" autoplay muted playsinline style="width:100%;height:auto;"></video>
+                                        <div class="scanner-line"></div>
+                                    </div>
+                                    <div class="d-flex flex-wrap justify-content-between mt-2">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnCompraFlash">Flash</button>
+                                        <button type="button" class="btn btn-warning btn-sm" id="btnCompraLimpiarScanner">Limpiar</button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="btnCompraCerrarScanner">Cerrar cámara</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <audio id="compraBeep" src="@Url.Content("~/Content/sounds/focus-beep.wav")" preload="auto"></audio>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-3">
+                            <div class="form-group">
+                                <label for="txtCodigoProducto">Código</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnCompraScanner" title="Escanear código de barra">
+                                            <i class="fas fa-barcode"></i>
+                                        </button>
+                                    </div>
+                                    <input type="number" id="txtCodigoProducto" class="form-control" min="0" step="1" autocomplete="off" />
+                                </div>
+                                <small id="compraScannerMsg" class="text-danger d-none"></small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3">
                             <div class="form-group">
                                 <label for="txtProductoNombre">Producto</label>
                                 <div class="input-group">
@@ -209,7 +242,8 @@
                         <div class="col-6 col-md-2">
                             <div class="form-group">
                                 <label for="txtPrecioKg">Precio</label>
-                                <input type="number" id="txtPrecioKg" class="form-control" min="0" step="0.01" />
+                                @* Monto con MoneyInputMask (compras.js): "." o "," = coma decimal y puntos de miles automaticos. *@
+                                <input type="text" id="txtPrecioKg" class="form-control" inputmode="decimal" autocomplete="off" />
                             </div>
                         </div>
                         <div class="col-12 col-md-2">
@@ -469,7 +503,7 @@
                                 <i class="fas fa-edit mr-1"></i> Modificar
                             </button>
                         }
-                        @if (!Model.DesdePos)
+                        @if (!embebido)
                         {
                             <a href="@Url.Action("Index", "Compras")" class="btn btn-outline-secondary" id="btnCancelarCompra">
                                 Cancelar
@@ -518,9 +552,14 @@
        con id default) -- NO se re-renderiza el modal nested de esta vista (linea 482 lo excluye
        con @if (!Model.DesdePos), evita duplicar el id dentro de un modal ya anidado. (2)
        EditPageGuard.init() NO se llama embebido, igual que clasico -- solo EditReadOnly.init(). *@
-    @if (Model.DesdePos)
+    @* 2026-09-19: "embebido" cubre tambien origen=modal (Cta. Cte. de proveedor). En ese caso el buscador
+       de producto es el propio de esta vista (#modalBuscarProductoCompra, renderizado arriba porque
+       !DesdePos) y el modal contenedor es #modalCompraCtaCte (Views/Finanzas/CtaCtePersona.cshtml). *@
+    @if (embebido)
     {
         <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
+        <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
         <script src="@Url.Content("~/Content/vendor/html2canvas/html2canvas.min.js")"></script>
@@ -535,12 +574,14 @@
 
                 window.ComprasUI.init({
                     formSelector: "#formCompra",
-                    desdePos: true,
+                    desdePos: @(Model.DesdePos ? "true" : "false"),
+                    modoModal: @(Model.EnModal ? "true" : "false"),
+                    hostModalSelector: "@(Model.EnModal ? "#modalCompraCtaCte" : "#modalFinanzasPOS")",
                     widgetFijo: true,
                     permiteMediaRes: @(permiteMediaRes ? "true" : "false"),
                     esEdicion: @(Model.EsEdicion ? "true" : "false"),
                     draftKey: "@Model.DraftKey",
-                    modalProductoSelector: "#modalBuscarProducto",
+                    modalProductoSelector: "@(Model.DesdePos ? "#modalBuscarProducto" : "#modalBuscarProductoCompra")",
                     initialLines: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Lineas)),
                     urls: {
                         guardar: "@Url.Action("Guardar", "Compras")",
@@ -549,6 +590,7 @@
                         personaCrear: "@Url.Action("PersonaModal", "Personas")",
                         personaGuardarCrear: "@Url.Action("GuardarPersonaModal", "Personas")",
                         buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
+                        altaProducto: "@Url.Action("AddOrEdit", "Productos")",
                         editarLayout: "@Url.Action("Editar", "Compras")",
                         nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
                     }
@@ -572,6 +614,8 @@
     {
         @section Scripts {
             <script src="@Url.Content("~/Scripts/app/edit-readonly.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/money-input-mask.js")" asp-append-version="true"></script>
+            <script src="@Url.Content("~/Scripts/app/barcode-code-input.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/edit-page-guard.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/compras.js")" asp-append-version="true"></script>
             <script src="@Url.Content("~/Scripts/app/busqueda-feedback.js")" asp-append-version="true"></script>
@@ -601,6 +645,7 @@
                             personaCrear: "@Url.Action("PersonaModal", "Personas")",
                             personaGuardarCrear: "@Url.Action("GuardarPersonaModal", "Personas")",
                             buscarCortePorCodigo: "@Url.Action("BuscarCortePorCodigo", "Compras")",
+                            altaProducto: "@Url.Action("AddOrEdit", "Productos")",
                             editarLayout: "@Url.Action("Editar", "Compras")",
                             nuevaLayout: "@Url.Action("NuevaCompra", "Compras", new { origen = "layout" })"
                         }

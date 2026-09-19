@@ -1,0 +1,23 @@
+@model WebCore.Models.ProductoEmbedGuardadoVm
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Producto guardado</title>
+</head>
+<body style="font-family:sans-serif;padding:1rem">
+    <p>Producto guardado. Volviendo a la compra...</p>
+    @* Avisa a la pantalla que embebe el alta (compras.js escucha "producto-guardado" y valida el origen). *@
+    <script>
+        (function () {
+            var payload = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { tipo = "producto-guardado", idCorte = Model.IdCorte, codigo = Model.Codigo, nombre = Model.Nombre }));
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage(payload, window.location.origin);
+            }
+        })();
+    </script>
+</body>
+</html>

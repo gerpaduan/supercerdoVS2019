@@ -58,5 +58,8 @@ namespace WebCore.Models
         public string FlujoBaseContinuo { get; set; } = "";
 
         public float? PresentacionUnidades { get; set; }
+
+        // true cuando la vista se muestra dentro de un iframe (Compras/Editar -> alta de producto).
+        public bool Embed { get; set; }
     }
 }

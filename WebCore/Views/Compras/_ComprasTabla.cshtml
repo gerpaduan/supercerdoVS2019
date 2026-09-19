@@ -12,7 +12,7 @@
     // ViewBag.PermiteMediaRes) -- antes se renderizaba siempre sin ningun condicional (gap real).
     bool mostrarTipoCompra = ViewBag.MostrarTipoCompraEnListado != null && (bool)ViewBag.MostrarTipoCompraEnListado;
     bool mostrarMediasReses = ViewBag.PermiteMediaRes != null && (bool)ViewBag.PermiteMediaRes;
-    int totalColumnas = 6 + (mostrarTipoCompra ? 1 : 0) + (mostrarMediasReses ? 1 : 0);
+    int totalColumnas = 7 + (mostrarTipoCompra ? 1 : 0) + (mostrarMediasReses ? 1 : 0);
 }
 
 <div class="table-responsive tabla-full">
@@ -32,6 +32,7 @@
                     <th class="text-right">Medias Reses</th>
                 }
                 <th class="text-right">Total</th>
+                <th>Sucursal</th>
                 <th style="width: 180px;">Acciones</th>
             </tr>
         </thead>
@@ -69,6 +70,7 @@
                             <td class="text-right">@cantMedias</td>
                         }
                         <td class="text-right">@totalS.ToString("N2")</td>
+                        <td>@row["sucursal"]</td>
                         <td class="text-center text-nowrap">
                             <button type="button"
                                     class="btn btn-sm btn-outline-secondary btn-detalles-compra"

@@ -347,11 +347,17 @@ namespace WebCore.Controllers
             return 0;
         }
 
-        public IActionResult AddOrEdit(int id = 0, bool cargaContinua = false, bool productoGuardado = false, int? ultimoProductoContinuoId = null, int? retomarProductoId = null, string flujoBaseContinuo = null)
+        // embed=true: la vista se muestra dentro de un <iframe> (alta completa de producto desde
+        // Compras/Editar) con _LayoutEmbed, sin carga continua, y "codigo" precarga el codigo de
+        // barra escaneado (la propia vista lo autocompleta desde el catalogo global si existe).
+        public IActionResult AddOrEdit(int id = 0, bool cargaContinua = false, bool productoGuardado = false, int? ultimoProductoContinuoId = null, int? retomarProductoId = null, string flujoBaseContinuo = null, bool embed = false, long codigo = 0)
         {
             // Port de Web/Controllers/ProductosController.cs:884-888.
             if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
             {
+                if (embed)
+                    return Content("<div style=\"font-family:sans-serif;padding:1rem\">No tenés permisos para realizar la acción seleccionada.</div>", "text/html");
+
                 TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
                 return RedirectToAction("Index");
             }
@@ -363,26 +369,20 @@ namespace WebCore.Controllers
             if (id > 0 && entity == null) return NotFound();
 
             var vm = BuildVM(entity);
-            vm.CargaContinua = cargaContinua;
+            vm.CargaContinua = embed ? false : cargaContinua;
             vm.UltimoProductoContinuoId = ultimoProductoContinuoId;
             vm.RetomarProductoId = retomarProductoId;
             vm.FlujoBaseContinuo = !string.IsNullOrWhiteSpace(flujoBaseContinuo)
                 ? flujoBaseContinuo
                 : (id > 0 ? "edicion" : "alta");
+            vm.Embed = embed;
+            if (embed && id == 0 && codigo > 0)
+                vm.Codigo = codigo;
 
             LoadCombos(vm);
             ViewBag.ProductoGuardadoContinuo = productoGuardado;
             ViewBag.FlashSuccessContinuo = TempData["FlashSuccessContinuo"] as string;
 
-            return View("AddOrEdit", vm);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Guardar(CorteUpsertVM vm)
-        {
-            // Port de Web/Controllers/ProductosController.cs:921-925.
-            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
             // Seccion "Jerarquia por sucursal" (2026-09-17, ver docs/DECISIONS.md): solo tiene
             // sentido para un corte ya guardado (id>0) que depende de un corte maestro global --
             // si ya es independiente globalmente, no hay nada que excepcionar. Disponible en los
@@ -403,10 +403,25 @@ namespace WebCore.Controllers
                 }).ToList();
             }
 
+            return View("AddOrEdit", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Guardar(CorteUpsertVM vm)
+        {
+            // Port de Web/Controllers/ProductosController.cs:921-925.
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
             {
+                if (vm.Embed)
+                    return Content("<div style=\"font-family:sans-serif;padding:1rem\">No tenés permisos para realizar la acción seleccionada.</div>", "text/html");
+
                 TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
                 return RedirectToAction("Index");
             }
+
+            if (vm.Embed)
+                vm.CargaContinua = false;
 
             NormalizarFloatsDesdeRequest(vm);
 
@@ -517,6 +532,18 @@ namespace WebCore.Controllers
             else if (!esAltaNueva && idProductoGuardado > 0 && !enCierreStockAntesDeEditar && entity.EnCierreStock)
             {
                 _oCortePuntoStockSucursalN.CrearParaTodasLasSucursales(idEmpresaSesionActual, idProductoGuardado, entity.PuntoStock);
+            }
+
+            // Modo embed (iframe dentro de Compras/Editar): no se redirige a Index; la pagina le avisa
+            // al padre con postMessage para que agregue la linea con el producto recien creado.
+            if (vm.Embed)
+            {
+                return View("EmbedGuardado", new WebCore.Models.ProductoEmbedGuardadoVm
+                {
+                    IdCorte = idProductoGuardado,
+                    Codigo = vm.Codigo,
+                    Nombre = vm.CorteDesc
+                });
             }
 
             string flujoBase = string.Equals(vm.FlujoBaseContinuo, "edicion", StringComparison.OrdinalIgnoreCase)
@@ -1663,33 +1690,6 @@ namespace WebCore.Controllers
             return Json(new { ok = true });
         }
 
-        // Port de Web/Controllers/ProductosController.cs GenerarEtiquetasPdf (2026-09-04) -- el
-        // bloqueante de licencia de iTextSharp ya no aplica (esta migracion adopto QuestPDF, ver
-        // docs/10-migracion-aspnet-core/README.md); el layout/logica de seleccion de codigo de
-        // barras se porto tal cual a WebCore/Services/GenerarDocsCore.cs (GenerarPdfEtiquetas).
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult GenerarEtiquetasPdf(string ids, string tamano)
-        {
-            var idsList = (ids ?? "")
-                .Split(',')
-                .Select(s => { int id; return int.TryParse(s, out id) ? id : 0; })
-                .Where(id => id > 0)
-                .Distinct()
-                .ToList();
-
-            if (idsList.Count == 0)
-                return NotFound();
-
-            var productos = idsList
-                .Select(id => _oCorteN.findCorteById(id, false))
-                .Where(c => c != null && c.IdCorte > 0)
-                .ToList();
-
-            if (productos.Count == 0)
-                return NotFound();
-
-            byte[] logoBytes = null;
         // Excepcion de jerarquia por sucursal (2026-09-17, ver docs/DECISIONS.md): marca un
         // corte como independiente/en-cierre-de-stock SOLO para una sucursal puntual, sin
         // tocar el valor global ni el corte maestro. Consumida por la seccion "Jerarquia por
@@ -1743,6 +1743,33 @@ namespace WebCore.Controllers
             return Json(new { ok = true });
         }
 
+        // Port de Web/Controllers/ProductosController.cs GenerarEtiquetasPdf (2026-09-04) -- el
+        // bloqueante de licencia de iTextSharp ya no aplica (esta migracion adopto QuestPDF, ver
+        // docs/10-migracion-aspnet-core/README.md); el layout/logica de seleccion de codigo de
+        // barras se porto tal cual a WebCore/Services/GenerarDocsCore.cs (GenerarPdfEtiquetas).
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GenerarEtiquetasPdf(string ids, string tamano)
+        {
+            var idsList = (ids ?? "")
+                .Split(',')
+                .Select(s => { int id; return int.TryParse(s, out id) ? id : 0; })
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (idsList.Count == 0)
+                return NotFound();
+
+            var productos = idsList
+                .Select(id => _oCorteN.findCorteById(id, false))
+                .Where(c => c != null && c.IdCorte > 0)
+                .ToList();
+
+            if (productos.Count == 0)
+                return NotFound();
+
+            byte[] logoBytes = null;
             try
             {
                 string logoPath = Path.Combine(_env.WebRootPath, "Content", "img", "CarniSys_Logo_sinSlogan.png");
