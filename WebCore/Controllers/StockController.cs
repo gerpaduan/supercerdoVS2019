@@ -1670,7 +1670,9 @@ namespace WebCore.Controllers
 
             float valorFloat;
 
-            if (TryParseFloatFlexible(Request.Form["KgsMedias"], out valorFloat))
+            // Kgs.Medias: el punto es decimal (no de miles). TryParseFloatFlexible (cultura es-AR) leia
+            // "1267.00" como 126700.
+            if (WebCore.Helpers.NumeroDecimalPunto.TryParse(Request.Form["KgsMedias"], out valorFloat))
             {
                 model.KgsMedias = valorFloat;
                 ModelState.Remove("KgsMedias");

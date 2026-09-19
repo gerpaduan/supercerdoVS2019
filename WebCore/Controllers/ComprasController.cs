@@ -584,6 +584,14 @@ namespace WebCore.Controllers
                 {
                     compraActual = _oCompraN.findById_convertToCompra(model.IdCompra);
                     if (compraActual == null || compraActual.IdCompra == 0)
+                // Kgs.Medias viaja como "1267.00" (punto decimal): el binder de es-AR lo leia como 126700
+                // (punto = miles). Se relee con la regla fija punto/coma = decimal.
+                if (WebCore.Helpers.NumeroDecimalPunto.TryParse(Request.Form["KgsMedias"], out float kgsMediasPosteado))
+                {
+                    model.KgsMedias = kgsMediasPosteado;
+                    ModelState.Remove("KgsMedias");
+                }
+
                         return Fallo("No se encontró la compra a modificar.");
                 }
 

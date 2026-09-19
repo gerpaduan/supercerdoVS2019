@@ -2253,6 +2253,13 @@
         $modalComprasPesaje.off('.stockCompras');
         $modalVincularPesajes.off('.stockVincular');
 
+        // Kgs.Medias usa punto decimal: la coma tipeada es el mismo separador (punto de gramos).
+        $form.on('input.stock', '#KgsMedias', function () {
+            if (this.value.indexOf(',') >= 0) {
+                this.value = this.value.replace(',', '.');
+            }
+        });
+
         $form.on('input.stock change.stock', '#IdSucursal, #FechaCompra, #Observaciones, #CantMedias, #KgsMedias', function () {
             actualizarContextoNoCargados($form);
             scheduleDraft($form);

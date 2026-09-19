@@ -8,7 +8,8 @@ namespace WebCore.E2ETests;
 // haria. Corren estos tests con: dotnet test WebCore.E2ETests (con WebCore ya arriba).
 public sealed class WebCoreFixture : IAsyncLifetime
 {
-    public const string BaseUrl = "http://localhost:5270";
+    // E2E_BASE_URL permite apuntar a otra instancia (ej. cuando el 5270 lo ocupa otra sesion).
+    public static readonly string BaseUrl = Environment.GetEnvironmentVariable("E2E_BASE_URL") ?? "http://localhost:5270";
 
     public IPlaywright Playwright { get; private set; } = null!;
     public IBrowser Browser { get; private set; } = null!;
