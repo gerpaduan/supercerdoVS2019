@@ -447,6 +447,60 @@
                         </a>
 
                         <div class="producto-edit-actions-right d-flex flex-column align-items-end">
+                @{
+                    var jerarquiaSucursales = ViewBag.JerarquiaSucursales as List<WebCore.Models.CorteJerarquiaSucursalItemVm>;
+                }
+                @if (esEdicion && jerarquiaSucursales != null && jerarquiaSucursales.Count > 0)
+                {
+                    <!-- =========================
+                     3b) JERARQUIA POR SUCURSAL (excepcion de independiente/en cierre de stock)
+                     ========================= -->
+                    <div class="p-3 rounded bg-light border mb-3 producto-edit-card" id="cardJerarquiaSucursal">
+                        <h5 class="mb-3 producto-edit-section-title">Jerarquía por sucursal</h5>
+                        <small class="text-muted d-block mb-2">
+                            Por defecto todas las sucursales usan la configuración de arriba (Independiente /
+                            Producto maestro). Acá podés marcar una excepción puntual para que una sucursal
+                            trate este producto como independiente, sin afectar a las demás.
+                        </small>
+
+                        <div class="list-group" id="listaJerarquiaSucursal" data-id-corte="@Model.IdCorte">
+                            @foreach (var item in jerarquiaSucursales)
+                            {
+                                <div class="list-group-item js-fila-jerarquia-sucursal" data-id-sucursal="@item.IdSucursal">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;">
+                                        <div>
+                                            <strong>@item.SucursalNombre</strong>
+                                            @if (item.TieneExcepcion)
+                                            {
+                                                <span class="badge badge-warning ml-1">Excepción</span>
+                                            }
+                                        </div>
+                                        <div class="d-flex align-items-center flex-wrap" style="gap:.75rem;">
+                                            <div class="form-check form-switch d-inline-block mb-0">
+                                                <input type="checkbox" class="form-check-input js-jerarquia-independiente"
+                                                       id="swJerarquiaIndep_@item.IdSucursal"
+                                                       @(item.IndependienteEfectivo ? "checked" : "") />
+                                                <label class="form-check-label" for="swJerarquiaIndep_@item.IdSucursal">Independiente</label>
+                                            </div>
+                                            <div class="form-check form-switch d-inline-block mb-0">
+                                                <input type="checkbox" class="form-check-input js-jerarquia-encierrestock"
+                                                       id="swJerarquiaCierre_@item.IdSucursal"
+                                                       @(item.EnCierreStockEfectivo ? "checked" : "")
+                                                       @(!item.IndependienteEfectivo ? "disabled" : "") />
+                                                <label class="form-check-label" for="swJerarquiaCierre_@item.IdSucursal">En cierre de stock</label>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-primary js-guardar-jerarquia-sucursal">Guardar</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger js-quitar-excepcion-jerarquia" @(!item.TieneExcepcion ? "disabled" : "")>
+                                                Quitar excepción
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
                             <div class="producto-edit-actions-buttons d-flex gap-2">
                             <button type="button"
                                     class="btn btn-outline-primary d-none"
@@ -2581,6 +2635,87 @@
     .scanner-line {
         position: absolute;
         top: 50%;
+})();
+    </script>
+    <script>
+(function () {
+    // Seccion "Jerarquia por sucursal" (2026-09-17, ver docs/DECISIONS.md) -- excepcion de
+    // independiente/en-cierre-de-stock por sucursal puntual, sin tocar el corte maestro global.
+    const $lista = $("#listaJerarquiaSucursal");
+    if (!$lista.length) return;
+
+    const idCorte = parseInt($lista.data("id-corte"), 10) || 0;
+    const token = $('input[name="__RequestVerificationToken"]').first().val();
+    const urlGuardar = '@Url.Action("GuardarExcepcionSucursal", "Productos")';
+    const urlQuitar = '@Url.Action("QuitarExcepcionSucursal", "Productos")';
+
+    $lista.on("change", ".js-jerarquia-independiente", function () {
+        const $fila = $(this).closest(".js-fila-jerarquia-sucursal");
+        const $swCierre = $fila.find(".js-jerarquia-encierrestock");
+        if (!this.checked) {
+            $swCierre.prop("checked", false);
+        }
+        $swCierre.prop("disabled", !this.checked);
+    });
+
+    $lista.on("click", ".js-guardar-jerarquia-sucursal", function () {
+        const $btn = $(this);
+        const $fila = $btn.closest(".js-fila-jerarquia-sucursal");
+        const idSucursal = parseInt($fila.data("id-sucursal"), 10);
+        const independiente = $fila.find(".js-jerarquia-independiente").is(":checked");
+        const enCierreStock = $fila.find(".js-jerarquia-encierrestock").is(":checked");
+
+        $btn.prop("disabled", true);
+        $.post(urlGuardar, {
+            __RequestVerificationToken: token,
+            idCorte: idCorte,
+            idSucursal: idSucursal,
+            independiente: independiente,
+            enCierreStock: enCierreStock
+        })
+            .done(function (resp) {
+                if (resp && resp.ok) {
+                    if (!$fila.find(".badge-warning").length) {
+                        $fila.find("strong").after('<span class="badge badge-warning ml-1">Excepción</span>');
+                    }
+                    $fila.find(".js-quitar-excepcion-jerarquia").prop("disabled", false);
+                } else {
+                    alert((resp && resp.error) || "No se pudo guardar la excepción.");
+                }
+            })
+            .fail(function () {
+                alert("No se pudo guardar la excepción. Intentá de nuevo.");
+            })
+            .always(function () {
+                $btn.prop("disabled", false);
+            });
+    });
+
+    $lista.on("click", ".js-quitar-excepcion-jerarquia", function () {
+        const $btn = $(this);
+        const $fila = $btn.closest(".js-fila-jerarquia-sucursal");
+        const idSucursal = parseInt($fila.data("id-sucursal"), 10);
+
+        $btn.prop("disabled", true);
+        $.post(urlQuitar, {
+            __RequestVerificationToken: token,
+            idCorte: idCorte,
+            idSucursal: idSucursal
+        })
+            .done(function (resp) {
+                if (resp && resp.ok) {
+                    $fila.find(".badge-warning").remove();
+                    $btn.prop("disabled", true);
+                } else {
+                    alert((resp && resp.error) || "No se pudo quitar la excepción.");
+                    $btn.prop("disabled", false);
+                }
+            })
+            .fail(function () {
+                alert("No se pudo quitar la excepción. Intentá de nuevo.");
+                $btn.prop("disabled", false);
+            });
+    });
         left: 0;
         width: 100%;
         height: 2px;

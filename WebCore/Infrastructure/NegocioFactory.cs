@@ -25,7 +25,11 @@ namespace WebCore.Infrastructure
     //
     public static class NegocioFactory
     {
-        private static bool UsarPostgres =>
+        // Publico (antes privado) para que los controllers puedan gatear features que todavia
+        // no tienen implementacion Postgres real (ej. la seccion "Jerarquia por sucursal" de
+        // Productos/AddOrEdit.cshtml, ver docs/DECISIONS.md 2026-09-17) sin duplicar esta lectura
+        // del appSetting en cada controller.
+        public static bool UsarPostgres =>
             string.Equals(System.Configuration.ConfigurationManager.AppSettings["DataEngine"], "Postgres", StringComparison.OrdinalIgnoreCase);
 
         private static string PgConnString =>
@@ -95,6 +99,16 @@ namespace WebCore.Infrastructure
 
             var repo = new DatosPostgres.CortePuntoStockSucursalPg(PgConnString, empresa.IdEmpresa);
             return new Negocio.CortePuntoStockSucursal(repo);
+        }
+
+        // Rama Postgres real agregada 2026-09-17 tras verificar la version SQL Server contra
+        // datos reales (ver docs/DECISIONS.md). Mismo patron que CrearCortePuntoStockSucursal.
+        public static Negocio.CorteJerarquiaSucursal CrearCorteJerarquiaSucursal(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            if (!UsarPostgres) return new Negocio.CorteJerarquiaSucursal(empresa, param);
+
+            var repo = new DatosPostgres.CorteJerarquiaSucursalPg(PgConnString, empresa.IdEmpresa);
+            return new Negocio.CorteJerarquiaSucursal(repo);
         }
 
         public static Negocio.CuentaCorriente CrearCuentaCorriente(IEmpresaContext empresa, IParametrosContext param = null)

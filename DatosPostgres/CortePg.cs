@@ -1870,59 +1870,99 @@ namespace DatosPostgres
         {
             const string sql = @"
                 WITH RECURSIVE
-                selfmap AS (
-                    SELECT c.idcorte AS idcorteorigen, c.idcorte AS idcortestock, 1::numeric(38,10) AS factor
+                corteefectivoporsucursal AS (
+                    -- Resuelve, por (idcorte, idsucursal), el valor EFECTIVO de independiente/
+                    -- encierrestock (override de cortejerarquiasucursal si existe, si no el
+                    -- global de corte) y si hay una EXCEPCION activa marcando independiente=true
+                    -- (tieneexcepcionindependiente). Ver Datos/DB-Procedures/20260917-Alter_a_
+                    -- ExistenciaStockPorSucursales_JerarquiaPorSucursal.sql (SQL Server, ya
+                    -- probado) para el razonamiento completo, incluido el bug real encontrado y
+                    -- corregido ahi: la exclusion de descendientes/ascendientes tiene que usar
+                    -- tieneexcepcionindependiente, NUNCA independiente a secas -- un corte puede
+                    -- ser independiente globalmente Y AL MISMO TIEMPO depender de otro corte
+                    -- independiente mas arriba en la cadena (fan-out, no un unico camino).
+                    -- Standalone (CROSS JOIN sucursal directo, no la CTE sucursales de mas abajo)
+                    -- para no tener que reordenar CTEs existentes.
+                    SELECT
+                        c.idcorte,
+                        s.idsucursal,
+                        COALESCE(ov.independiente, c.independiente = 1) AS independiente,
+                        COALESCE(ov.encierrestock, COALESCE(c.encierrestock,false)) AS encierrestock,
+                        (ov.idcortejerarquiasucursal IS NOT NULL AND ov.independiente = true) AS tieneexcepcionindependiente
                     FROM corte c
-                    WHERE c.independiente = 1 AND c.idempresa = @idEmpresa
+                    CROSS JOIN sucursal s
+                    LEFT JOIN cortejerarquiasucursal ov
+                        ON ov.idempresa = c.idempresa AND ov.idcorte = c.idcorte AND ov.idsucursal = s.idsucursal
+                    WHERE c.idempresa = @idEmpresa
+                      AND s.idempresa = @idEmpresa
+                      AND (@idSucursal = 0 OR s.idsucursal = @idSucursal)
+                ),
+                selfmap AS (
+                    SELECT ce.idsucursal, c.idcorte AS idcorteorigen, c.idcorte AS idcortestock, 1::numeric(38,10) AS factor
+                    FROM corte c
+                    INNER JOIN corteefectivoporsucursal ce ON ce.idcorte = c.idcorte AND ce.independiente = true
+                    WHERE c.idempresa = @idEmpresa
                 ),
                 descendientes AS (
-                    SELECT padre.idcorte AS idcorteorigen, hijo.idcorte AS idcortestock,
+                    SELECT cehijo.idsucursal, padre.idcorte AS idcorteorigen, hijo.idcorte AS idcortestock,
                            (COALESCE(hijo.porcentaje,0) / 100.0)::numeric(38,10) AS factor,
                            1 AS nivel
                     FROM corte padre
                     INNER JOIN corte hijo ON hijo.idcortemaestro = padre.idcorte AND hijo.idcorte <> padre.idcorte
+                    INNER JOIN corteefectivoporsucursal cehijo
+                        ON cehijo.idcorte = hijo.idcorte AND cehijo.tieneexcepcionindependiente = false
                     WHERE padre.idempresa = @idEmpresa
                     UNION ALL
-                    SELECT d.idcorteorigen, hijo.idcorte,
+                    SELECT d.idsucursal, d.idcorteorigen, hijo.idcorte,
                            (d.factor * (COALESCE(hijo.porcentaje,0) / 100.0))::numeric(38,10),
                            d.nivel + 1
                     FROM descendientes d
                     INNER JOIN corte actual ON actual.idcorte = d.idcortestock
                     INNER JOIN corte hijo ON hijo.idcortemaestro = actual.idcorte AND hijo.idcorte <> actual.idcorte
+                    INNER JOIN corteefectivoporsucursal cehijo
+                        ON cehijo.idcorte = hijo.idcorte AND cehijo.idsucursal = d.idsucursal
+                       AND cehijo.tieneexcepcionindependiente = false
                     WHERE d.nivel < 10
                 ),
                 ascendientes AS (
-                    SELECT hijo.idcorte AS idcorteorigen, padre.idcorte AS idcortestock,
+                    SELECT cehijo.idsucursal, hijo.idcorte AS idcorteorigen, padre.idcorte AS idcortestock,
                            (1 + COALESCE(hijo.porcentajehueso / NULLIF(hijo.porcentaje,0), 0))::numeric(38,10) AS factor,
                            1 AS nivel
                     FROM corte hijo
                     INNER JOIN corte padre ON hijo.idcortemaestro = padre.idcorte AND hijo.idcorte <> padre.idcorte
+                    INNER JOIN corteefectivoporsucursal cehijo
+                        ON cehijo.idcorte = hijo.idcorte AND cehijo.tieneexcepcionindependiente = false
                     WHERE hijo.idempresa = @idEmpresa
                     UNION ALL
-                    SELECT a.idcorteorigen, padre.idcorte,
+                    SELECT a.idsucursal, a.idcorteorigen, padre.idcorte,
                            (a.factor * (1 + COALESCE(actual.porcentajehueso / NULLIF(actual.porcentaje,0), 0)))::numeric(38,10),
                            a.nivel + 1
                     FROM ascendientes a
                     INNER JOIN corte actual ON actual.idcorte = a.idcortestock
                     INNER JOIN corte padre ON actual.idcortemaestro = padre.idcorte AND actual.idcorte <> padre.idcorte
+                    INNER JOIN corteefectivoporsucursal ceactual
+                        ON ceactual.idcorte = actual.idcorte AND ceactual.idsucursal = a.idsucursal
+                       AND ceactual.tieneexcepcionindependiente = false
                     WHERE a.nivel < 10
                 ),
                 mapa AS (
-                    SELECT idcorteorigen, idcortestock, factor FROM selfmap
+                    SELECT idsucursal, idcorteorigen, idcortestock, factor FROM selfmap
                     UNION ALL
-                    SELECT d.idcorteorigen, d.idcortestock, d.factor
+                    SELECT d.idsucursal, d.idcorteorigen, d.idcortestock, d.factor
                     FROM descendientes d
-                    INNER JOIN corte cstock ON cstock.idcorte = d.idcortestock AND cstock.independiente = 1
+                    INNER JOIN corteefectivoporsucursal cestock
+                        ON cestock.idcorte = d.idcortestock AND cestock.idsucursal = d.idsucursal AND cestock.independiente = true
                     UNION ALL
-                    SELECT a.idcorteorigen, a.idcortestock, a.factor
+                    SELECT a.idsucursal, a.idcorteorigen, a.idcortestock, a.factor
                     FROM ascendientes a
-                    INNER JOIN corte cstock ON cstock.idcorte = a.idcortestock AND cstock.independiente = 1
+                    INNER JOIN corteefectivoporsucursal cestock
+                        ON cestock.idcorte = a.idcortestock AND cestock.idsucursal = a.idsucursal AND cestock.independiente = true
                 ),
                 mapacorte AS (
-                    SELECT idcorteorigen, idcortestock, SUM(factor) AS factor
+                    SELECT idsucursal, idcorteorigen, idcortestock, SUM(factor) AS factor
                     FROM mapa
                     WHERE factor <> 0
-                    GROUP BY idcorteorigen, idcortestock
+                    GROUP BY idsucursal, idcorteorigen, idcortestock
                 ),
                 sucursales AS (
                     SELECT s.idsucursal, s.sucursal
@@ -1938,9 +1978,10 @@ namespace DatosPostgres
                         COALESCE(c.pesable,false) AS pesable
                     FROM corte c
                     CROSS JOIN sucursales s
+                    INNER JOIN corteefectivoporsucursal ce ON ce.idcorte = c.idcorte AND ce.idsucursal = s.idsucursal
                     LEFT JOIN corteproveedor cp ON cp.idcorte = c.idcorte
-                    WHERE c.independiente = 1
-                      AND COALESCE(c.encierrestock,false) = true
+                    WHERE ce.independiente = true
+                      AND ce.encierrestock = true
                       AND c.idempresa = @idEmpresa
                       AND (@tipo = '' OR c.tipo = @tipo)
                       AND (@idProveedor = 0 OR cp.idproveedor = @idProveedor)
@@ -1952,7 +1993,7 @@ namespace DatosPostgres
                     FROM compras c
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
                     WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra = @fechaDesde
                     GROUP BY cpc.idsucursal, mc.idcortestock
 
@@ -1963,7 +2004,7 @@ namespace DatosPostgres
                     FROM compras c
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
                     WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = '' AND c.fechacompra = @fechaHasta
                     GROUP BY cpc.idsucursal, mc.idcortestock
 
@@ -1975,7 +2016,7 @@ namespace DatosPostgres
                     INNER JOIN mediares mr ON mr.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = mr.idsucursal
                     INNER JOIN corte cortemedia ON cortemedia.codigo = 0
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cortemedia.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cortemedia.idcorte AND mc.idsucursal = mr.idsucursal
                     WHERE COALESCE(c.estado,'') = '' AND c.fechacompra >= @fechaDesde AND c.fechacompra <= @fechaHasta
                     GROUP BY mr.idsucursal, mc.idcortestock
 
@@ -1993,7 +2034,7 @@ namespace DatosPostgres
                     FROM compras c
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
                     WHERE c.tipocompra IN ('Cortes','Ingreso Stock','Ajuste Stock','Egreso Stock')
                       AND COALESCE(c.estado,'') = '' AND c.fechacompra >= @fechaDesde AND c.fechacompra <= @fechaHasta
                     GROUP BY
@@ -2012,7 +2053,7 @@ namespace DatosPostgres
                     FROM ventas v
                     INNER JOIN lineaventa lv ON lv.idventa = v.idventa
                     INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = lv.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = lv.idcorte AND mc.idsucursal = v.idsucursal
                     WHERE v.fechaventa >= @fechaDesde AND v.fechaventa <= @fechaHasta
                     GROUP BY v.idsucursal, mc.idcortestock
 
@@ -2023,7 +2064,7 @@ namespace DatosPostgres
                     FROM movimiento m
                     INNER JOIN cortepormovimiento cpm ON cpm.idmovimientos = m.idmovimiento
                     INNER JOIN sucursales s ON s.idsucursal = m.sucursaldestino
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte AND mc.idsucursal = m.sucursaldestino
                     WHERE m.fechamovimiento >= @fechaDesde AND m.fechamovimiento <= @fechaHasta
                     GROUP BY m.sucursaldestino, mc.idcortestock
 
@@ -2034,7 +2075,7 @@ namespace DatosPostgres
                     FROM movimiento m
                     INNER JOIN cortepormovimiento cpm ON cpm.idmovimientos = m.idmovimiento
                     INNER JOIN sucursales s ON s.idsucursal = m.sucursalorigen
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte AND mc.idsucursal = m.sucursalorigen
                     WHERE m.fechamovimiento >= @fechaDesde AND m.fechamovimiento <= @fechaHasta
                     GROUP BY m.sucursalorigen, mc.idcortestock
 
@@ -2045,7 +2086,7 @@ namespace DatosPostgres
                     FROM embutidos e
                     INNER JOIN corteporembutido cpe ON cpe.idembutido = e.idembutido
                     INNER JOIN sucursales s ON s.idsucursal = e.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = e.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = e.idcorte AND mc.idsucursal = e.idsucursal
                     WHERE COALESCE(e.estado,'') = '' AND e.fechaembutido >= @fechaDesde AND e.fechaembutido <= @fechaHasta
                     GROUP BY e.idsucursal, mc.idcortestock
 
@@ -2056,7 +2097,7 @@ namespace DatosPostgres
                     FROM embutidos e
                     INNER JOIN corteporembutido cpe ON cpe.idembutido = e.idembutido
                     INNER JOIN sucursales s ON s.idsucursal = e.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpe.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpe.idcorte AND mc.idsucursal = e.idsucursal
                     WHERE COALESCE(e.estado,'') = '' AND e.fechaembutido >= @fechaDesde AND e.fechaembutido <= @fechaHasta
                     GROUP BY e.idsucursal, mc.idcortestock
                 ),
@@ -2574,53 +2615,87 @@ namespace DatosPostgres
                     WHERE (@idSucursal = 0 OR s.idsucursal = @idSucursal) AND s.idempresa = @idEmpresa
                     GROUP BY s.idsucursal, s.sucursal
                 ),
-                selfmap AS (
-                    SELECT c.idcorte AS idcorteorigen, c.idcorte AS idcortestock, 1::numeric(38,10) AS factor
+                corteefectivoporsucursal AS (
+                    -- Ver Datos/DB-Procedures/20260917-Alter_a_ExistenciaStockPorSucursales_
+                    -- JerarquiaPorSucursal.sql (SQL Server, ya probado) para el razonamiento
+                    -- completo, incluido el bug real corregido ahi: la exclusion de
+                    -- descendientes/ascendientes usa tieneexcepcionindependiente, NUNCA
+                    -- independiente a secas (un corte puede ser independiente globalmente Y
+                    -- depender de otro corte independiente mas arriba en la cadena).
+                    SELECT
+                        c.idcorte,
+                        s.idsucursal,
+                        COALESCE(ov.independiente, c.independiente = 1) AS independiente,
+                        COALESCE(ov.encierrestock, COALESCE(c.encierrestock,false)) AS encierrestock,
+                        (ov.idcortejerarquiasucursal IS NOT NULL AND ov.independiente = true) AS tieneexcepcionindependiente
                     FROM corte c
-                    WHERE c.independiente = 1 AND c.idempresa = @idEmpresa
+                    CROSS JOIN sucursales s
+                    LEFT JOIN cortejerarquiasucursal ov
+                        ON ov.idempresa = c.idempresa AND ov.idcorte = c.idcorte AND ov.idsucursal = s.idsucursal
+                    WHERE c.idempresa = @idEmpresa
+                ),
+                selfmap AS (
+                    SELECT ce.idsucursal, c.idcorte AS idcorteorigen, c.idcorte AS idcortestock, 1::numeric(38,10) AS factor
+                    FROM corte c
+                    INNER JOIN corteefectivoporsucursal ce ON ce.idcorte = c.idcorte AND ce.independiente = true
+                    WHERE c.idempresa = @idEmpresa
                 ),
                 descendientes AS (
-                    SELECT padre.idcorte AS idcorteorigen, hijo.idcorte AS idcortestock,
+                    SELECT cehijo.idsucursal, padre.idcorte AS idcorteorigen, hijo.idcorte AS idcortestock,
                            (COALESCE(hijo.porcentaje,0) / 100.0)::numeric(38,10) AS factor, 1 AS nivel
                     FROM corte padre
                     INNER JOIN corte hijo ON hijo.idcortemaestro = padre.idcorte AND hijo.idcorte <> padre.idcorte
+                    INNER JOIN corteefectivoporsucursal cehijo
+                        ON cehijo.idcorte = hijo.idcorte AND cehijo.tieneexcepcionindependiente = false
                     WHERE padre.idempresa = @idEmpresa
                     UNION ALL
-                    SELECT d.idcorteorigen, hijo.idcorte,
+                    SELECT d.idsucursal, d.idcorteorigen, hijo.idcorte,
                            (d.factor * (COALESCE(hijo.porcentaje,0) / 100.0))::numeric(38,10), d.nivel + 1
                     FROM descendientes d
                     INNER JOIN corte actual ON actual.idcorte = d.idcortestock
                     INNER JOIN corte hijo ON hijo.idcortemaestro = actual.idcorte AND hijo.idcorte <> actual.idcorte
+                    INNER JOIN corteefectivoporsucursal cehijo
+                        ON cehijo.idcorte = hijo.idcorte AND cehijo.idsucursal = d.idsucursal
+                       AND cehijo.tieneexcepcionindependiente = false
                     WHERE d.nivel < 10
                 ),
                 ascendientes AS (
-                    SELECT hijo.idcorte AS idcorteorigen, padre.idcorte AS idcortestock,
+                    SELECT cehijo.idsucursal, hijo.idcorte AS idcorteorigen, padre.idcorte AS idcortestock,
                            (1 + COALESCE(hijo.porcentajehueso / NULLIF(hijo.porcentaje,0), 0))::numeric(38,10) AS factor, 1 AS nivel
                     FROM corte hijo
                     INNER JOIN corte padre ON hijo.idcortemaestro = padre.idcorte AND hijo.idcorte <> padre.idcorte
+                    INNER JOIN corteefectivoporsucursal cehijo
+                        ON cehijo.idcorte = hijo.idcorte AND cehijo.tieneexcepcionindependiente = false
                     WHERE hijo.idempresa = @idEmpresa
                     UNION ALL
-                    SELECT a.idcorteorigen, padre.idcorte,
+                    SELECT a.idsucursal, a.idcorteorigen, padre.idcorte,
                            (a.factor * (1 + COALESCE(actual.porcentajehueso / NULLIF(actual.porcentaje,0), 0)))::numeric(38,10), a.nivel + 1
                     FROM ascendientes a
                     INNER JOIN corte actual ON actual.idcorte = a.idcortestock
                     INNER JOIN corte padre ON actual.idcortemaestro = padre.idcorte AND actual.idcorte <> padre.idcorte
+                    INNER JOIN corteefectivoporsucursal ceactual
+                        ON ceactual.idcorte = actual.idcorte AND ceactual.idsucursal = a.idsucursal
+                       AND ceactual.tieneexcepcionindependiente = false
                     WHERE a.nivel < 10
                 ),
                 mapa AS (
-                    SELECT idcorteorigen, idcortestock, factor FROM selfmap
+                    SELECT idsucursal, idcorteorigen, idcortestock, factor FROM selfmap
                     UNION ALL
-                    SELECT d.idcorteorigen, d.idcortestock, d.factor
-                    FROM descendientes d INNER JOIN corte cstock ON cstock.idcorte = d.idcortestock AND cstock.independiente = 1
+                    SELECT d.idsucursal, d.idcorteorigen, d.idcortestock, d.factor
+                    FROM descendientes d
+                    INNER JOIN corteefectivoporsucursal cestock
+                        ON cestock.idcorte = d.idcortestock AND cestock.idsucursal = d.idsucursal AND cestock.independiente = true
                     UNION ALL
-                    SELECT a.idcorteorigen, a.idcortestock, a.factor
-                    FROM ascendientes a INNER JOIN corte cstock ON cstock.idcorte = a.idcortestock AND cstock.independiente = 1
+                    SELECT a.idsucursal, a.idcorteorigen, a.idcortestock, a.factor
+                    FROM ascendientes a
+                    INNER JOIN corteefectivoporsucursal cestock
+                        ON cestock.idcorte = a.idcortestock AND cestock.idsucursal = a.idsucursal AND cestock.independiente = true
                 ),
                 mapacorte AS (
-                    SELECT idcorteorigen, idcortestock, SUM(factor) AS factor
+                    SELECT idsucursal, idcorteorigen, idcortestock, SUM(factor) AS factor
                     FROM mapa
                     WHERE factor <> 0 AND (@idCorte = 0 OR idcortestock = @idCorte)
-                    GROUP BY idcorteorigen, idcortestock
+                    GROUP BY idsucursal, idcorteorigen, idcortestock
                 ),
                 allcortes AS (
                     SELECT DISTINCT
@@ -2630,9 +2705,10 @@ namespace DatosPostgres
                         COALESCE(c.pesable,false) AS pesable
                     FROM corte c
                     CROSS JOIN sucursales s
+                    INNER JOIN corteefectivoporsucursal ce ON ce.idcorte = c.idcorte AND ce.idsucursal = s.idsucursal
                     LEFT JOIN corteproveedor cp ON cp.idcorte = c.idcorte
-                    WHERE c.independiente = 1
-                      AND COALESCE(c.encierrestock,false) = true
+                    WHERE ce.independiente = true
+                      AND ce.encierrestock = true
                       AND c.idempresa = @idEmpresa
                       AND (@tipo = '' OR c.tipo = @tipo)
                       AND (@idProveedor = 0 OR cp.idproveedor = @idProveedor)
@@ -2646,7 +2722,7 @@ namespace DatosPostgres
                     FROM compras c
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal AND c.fechacompra = s.fechaultimocierre
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
                     WHERE c.tipocompra = 'Cierre Stock' AND COALESCE(c.estado,'') = ''
                     GROUP BY cpc.idsucursal, mc.idcortestock
 
@@ -2658,7 +2734,7 @@ namespace DatosPostgres
                     INNER JOIN mediares mr ON mr.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = mr.idsucursal
                     INNER JOIN corte cortemedia ON cortemedia.codigo = 0
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cortemedia.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cortemedia.idcorte AND mc.idsucursal = mr.idsucursal
                     WHERE COALESCE(c.estado,'') = '' AND c.fechacompra >= s.fechaultimocierre AND c.fechacompra <= @fechaHasta
                     GROUP BY mr.idsucursal, mc.idcortestock
 
@@ -2676,7 +2752,7 @@ namespace DatosPostgres
                     FROM compras c
                     INNER JOIN corteporcompra cpc ON cpc.idcompra = c.idcompra
                     INNER JOIN sucursales s ON s.idsucursal = cpc.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpc.idcorte AND mc.idsucursal = cpc.idsucursal
                     WHERE c.tipocompra IN ('Cortes','Ingreso Stock','Ajuste Stock','Egreso Stock')
                       AND COALESCE(c.estado,'') = '' AND c.fechacompra >= s.fechaultimocierre AND c.fechacompra <= @fechaHasta
                     GROUP BY
@@ -2695,7 +2771,7 @@ namespace DatosPostgres
                     FROM ventas v
                     INNER JOIN lineaventa lv ON lv.idventa = v.idventa
                     INNER JOIN sucursales s ON s.idsucursal = v.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = lv.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = lv.idcorte AND mc.idsucursal = v.idsucursal
                     WHERE v.fechaventa >= s.fechaultimocierre AND v.fechaventa <= @fechaHasta
                     GROUP BY v.idsucursal, mc.idcortestock
 
@@ -2706,7 +2782,7 @@ namespace DatosPostgres
                     FROM movimiento m
                     INNER JOIN cortepormovimiento cpm ON cpm.idmovimientos = m.idmovimiento
                     INNER JOIN sucursales s ON s.idsucursal = m.sucursaldestino
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte AND mc.idsucursal = m.sucursaldestino
                     WHERE m.fechamovimiento >= s.fechaultimocierre AND m.fechamovimiento <= @fechaHasta
                     GROUP BY m.sucursaldestino, mc.idcortestock
 
@@ -2717,7 +2793,7 @@ namespace DatosPostgres
                     FROM movimiento m
                     INNER JOIN cortepormovimiento cpm ON cpm.idmovimientos = m.idmovimiento
                     INNER JOIN sucursales s ON s.idsucursal = m.sucursalorigen
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpm.idcorte AND mc.idsucursal = m.sucursalorigen
                     WHERE m.fechamovimiento >= s.fechaultimocierre AND m.fechamovimiento <= @fechaHasta
                     GROUP BY m.sucursalorigen, mc.idcortestock
 
@@ -2728,7 +2804,7 @@ namespace DatosPostgres
                     FROM embutidos e
                     INNER JOIN corteporembutido cpe ON cpe.idembutido = e.idembutido
                     INNER JOIN sucursales s ON s.idsucursal = e.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = e.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = e.idcorte AND mc.idsucursal = e.idsucursal
                     WHERE COALESCE(e.estado,'') = '' AND e.fechaembutido >= s.fechaultimocierre AND e.fechaembutido <= @fechaHasta
                     GROUP BY e.idsucursal, mc.idcortestock
 
@@ -2739,7 +2815,7 @@ namespace DatosPostgres
                     FROM embutidos e
                     INNER JOIN corteporembutido cpe ON cpe.idembutido = e.idembutido
                     INNER JOIN sucursales s ON s.idsucursal = e.idsucursal
-                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpe.idcorte
+                    INNER JOIN mapacorte mc ON mc.idcorteorigen = cpe.idcorte AND mc.idsucursal = e.idsucursal
                     WHERE COALESCE(e.estado,'') = '' AND e.fechaembutido >= s.fechaultimocierre AND e.fechaembutido <= @fechaHasta
                     GROUP BY e.idsucursal, mc.idcortestock
                 ),

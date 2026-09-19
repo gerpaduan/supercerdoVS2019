@@ -64,6 +64,7 @@ namespace WebCore.Controllers
         private readonly Negocio.Corte _oCorteN;
         private readonly Negocio.Persona _oPersonaN;
         private readonly Negocio.CortePuntoStockSucursal _oCortePuntoStockSucursalN;
+        private readonly Negocio.CorteJerarquiaSucursal _oCorteJerarquiaSucursalN;
         private readonly Negocio.Usuario _oUsuarioN;
 
         // IWebHostEnvironment: mismo criterio ya establecido en VentasController para AFIP -- lee
@@ -84,6 +85,7 @@ namespace WebCore.Controllers
             _oCorteN = WebCore.Infrastructure.NegocioFactory.CrearCorte(_empresa, _param);
             _oPersonaN = WebCore.Infrastructure.NegocioFactory.CrearPersona(_empresa, _param);
             _oCortePuntoStockSucursalN = WebCore.Infrastructure.NegocioFactory.CrearCortePuntoStockSucursal(_empresa, _param);
+            _oCorteJerarquiaSucursalN = WebCore.Infrastructure.NegocioFactory.CrearCorteJerarquiaSucursal(_empresa, _param);
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(_empresa, _param);
         }
 
@@ -381,6 +383,26 @@ namespace WebCore.Controllers
         {
             // Port de Web/Controllers/ProductosController.cs:921-925.
             if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+            // Seccion "Jerarquia por sucursal" (2026-09-17, ver docs/DECISIONS.md): solo tiene
+            // sentido para un corte ya guardado (id>0) que depende de un corte maestro global --
+            // si ya es independiente globalmente, no hay nada que excepcionar. Disponible en los
+            // dos motores desde que se agrego la rama Postgres real en NegocioFactory.
+            if (id > 0 && entity != null && entity.CorteMaestro != null && entity.CorteMaestro.IdCorte > 0)
+            {
+                int idEmpresaSesionJerarquia = _empresa != null ? _empresa.IdEmpresa : 0;
+                var excepciones = _oCorteJerarquiaSucursalN.ListarExcepcionesPorCorte(idEmpresaSesionJerarquia, id);
+                var sucursales = _oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+
+                ViewBag.JerarquiaSucursales = sucursales.Select(s => new WebCore.Models.CorteJerarquiaSucursalItemVm
+                {
+                    IdSucursal = s.IdSucursal,
+                    SucursalNombre = s.SucursalNombre,
+                    TieneExcepcion = excepciones.ContainsKey(s.IdSucursal),
+                    IndependienteEfectivo = excepciones.TryGetValue(s.IdSucursal, out var ov) ? ov.independiente : entity.Independiente != 0,
+                    EnCierreStockEfectivo = excepciones.TryGetValue(s.IdSucursal, out var ov2) ? ov2.enCierreStock : entity.EnCierreStock
+                }).ToList();
+            }
+
             {
                 TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
                 return RedirectToAction("Index");
@@ -1668,6 +1690,59 @@ namespace WebCore.Controllers
                 return NotFound();
 
             byte[] logoBytes = null;
+        // Excepcion de jerarquia por sucursal (2026-09-17, ver docs/DECISIONS.md): marca un
+        // corte como independiente/en-cierre-de-stock SOLO para una sucursal puntual, sin
+        // tocar el valor global ni el corte maestro. Consumida por la seccion "Jerarquia por
+        // sucursal" de AddOrEdit.cshtml.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult GuardarExcepcionSucursal(int idCorte, int idSucursal, bool independiente, bool enCierreStock)
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { error = "No tenés permisos para editar la jerarquía por sucursal." });
+
+            if (idCorte <= 0 || idSucursal <= 0)
+                return Json(new { error = "Datos inválidos." });
+
+            int idEmpresaSesion = _empresa != null ? _empresa.IdEmpresa : 0;
+
+            try
+            {
+                _oCorteJerarquiaSucursalN.GuardarExcepcion(idEmpresaSesion, idCorte, idSucursal, independiente, enCierreStock);
+            }
+            catch (Exception)
+            {
+                return Json(new { error = "No se pudo guardar la excepción. Intentá de nuevo." });
+            }
+
+            return Json(new { ok = true });
+        }
+
+        // Quita la excepcion -- la sucursal vuelve a usar el valor global del corte.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult QuitarExcepcionSucursal(int idCorte, int idSucursal)
+        {
+            if (!_oUsuarioN.tienePermiso(_sesion.UsuarioActual, Entidades.Permisos.Producto.NuevoCorte, DateTime.Today, -1))
+                return Json(new { error = "No tenés permisos para editar la jerarquía por sucursal." });
+
+            if (idCorte <= 0 || idSucursal <= 0)
+                return Json(new { error = "Datos inválidos." });
+
+            int idEmpresaSesion = _empresa != null ? _empresa.IdEmpresa : 0;
+
+            try
+            {
+                _oCorteJerarquiaSucursalN.QuitarExcepcion(idEmpresaSesion, idCorte, idSucursal);
+            }
+            catch (Exception)
+            {
+                return Json(new { error = "No se pudo quitar la excepción. Intentá de nuevo." });
+            }
+
+            return Json(new { ok = true });
+        }
+
             try
             {
                 string logoPath = Path.Combine(_env.WebRootPath, "Content", "img", "CarniSys_Logo_sinSlogan.png");
