@@ -1,0 +1,164 @@
+@model WebCore.Models.DispositivoNoAutorizadoVm
+@{
+    Layout = null;
+}
+@*
+    Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md "Dispositivo seguro
+    como condicion de login"). El usuario ya puso bien su clave pero este dispositivo no esta
+    autorizado: todavia no hay sesion. Dos vias para autorizarlo:
+      - PC con el agente de impresion: se muestra el ID de hardware para copiarlo y pasarselo al
+        administrador (que lo carga en /DispositivosSeguros).
+      - Celular / equipo sin agente: codigo de 6 digitos por mail, se escribe aca y el navegador
+        queda autorizado sin intervencion del administrador.
+*@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#062d63">
+    <title>Dispositivo no autorizado - CARNISYS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="@Url.Content("~/Content/css/carnisys-login.css")" rel="stylesheet" />
+    <style>
+        .disp-opcion { border: 1px solid #d9e2ef; border-radius: 12px; padding: 16px; margin-bottom: 16px; background: #fff; }
+        .disp-opcion h3 { font-size: 16px; font-weight: 700; margin: 0 0 6px; color: #062d63; }
+        .disp-opcion p { font-size: 14px; margin: 0 0 10px; color: #4a5568; }
+        .disp-codigo { font-family: Consolas, Menlo, monospace; font-size: 15px; word-break: break-all; }
+        .disp-opcion .login-submit { width: 100%; }
+        .disp-opcion input[type=text] { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #c5d0e0; border-radius: 8px; font-size: 15px; margin-bottom: 10px; }
+        .disp-sec { background: transparent; border: 1px solid #c5d0e0; color: #062d63; }
+        .disp-small { font-size: 12.5px; color: #6b7a90; }
+    </style>
+</head>
+<body class="carnisys-login">
+    <main class="login-page">
+        <section class="login-brand-panel" aria-label="Acerca de CARNISYS">
+            <a href="@Url.Action("Index", "Landing")" class="login-brand" aria-label="Volver al inicio de CARNISYS">
+                <img src="@Url.Content("~/Content/img/CarniSys_Login.png")" alt="CARNISYS" />
+            </a>
+            <div class="brand-content">
+                <span class="brand-eyebrow"><i class="fas fa-shield-alt" aria-hidden="true"></i> Acceso seguro</span>
+                <h1>Cuidamos el acceso<br /><strong>de tu comercio</strong>.</h1>
+                <p>Por seguridad, tu empresa solo permite ingresar desde dispositivos autorizados. Es un paso que se hace una sola vez por dispositivo.</p>
+            </div>
+        </section>
+
+        <section class="login-form-panel" aria-labelledby="disp-title">
+            <div class="login-form-wrap">
+                <a href="@Url.Action("Index", "Login")" class="back-home"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a ingresar</a>
+
+                <div class="login-heading">
+                    <span class="login-kicker">Hola @Model.UsuarioNombre</span>
+                    <h2 id="disp-title">Este dispositivo no está autorizado</h2>
+                    <p>Tu contraseña es correcta, pero desde este dispositivo todavía no podés ingresar. Elegí cómo autorizarlo:</p>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Success))
+                {
+                    <div class="login-alert login-alert-success" role="status"><i class="fas fa-check-circle" aria-hidden="true"></i> @Model.Success</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Error))
+                {
+                    <div class="login-alert login-alert-error" role="alert"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> @Model.Error</div>
+                }
+
+                <div class="disp-opcion" id="opcionPc">
+                    <h3><i class="fas fa-desktop mr-2"></i> Estoy en una PC con el agente de CarniSys</h3>
+                    <p>Copiá el código de este equipo y enviáselo a tu administrador: él lo agrega en <em>Dispositivos seguros</em> y después ya podés ingresar.</p>
+                    <div id="pcConAgente" style="display:none">
+                        <input type="text" id="codigoEquipo" class="disp-codigo" readonly />
+                        <button type="button" class="login-submit disp-sec" id="btnCopiarCodigoEquipo"><i class="fas fa-copy"></i> Copiar código del equipo</button>
+                    </div>
+                    <p id="pcSinAgente" class="disp-small" style="margin:0">
+                        Buscando el agente de impresión de CarniSys en esta PC…
+                    </p>
+                </div>
+
+                <div class="disp-opcion" id="opcionMail">
+                    <h3><i class="fas fa-mobile-alt mr-2"></i> Estoy en un celular, o no tengo el agente</h3>
+                    @if (!Model.TieneEmail)
+                    {
+                        <p class="disp-small" style="margin:0">Tu usuario no tiene un mail válido cargado, así que no podemos mandarte un código. Pedile a tu administrador que cargue tu mail o que autorice este dispositivo.</p>
+                    }
+                    else if (!Model.SmtpConfigurado)
+                    {
+                        <p class="disp-small" style="margin:0">El envío de mails no está configurado en este servidor. Pedile a tu administrador que autorice este dispositivo.</p>
+                    }
+                    else
+                    {
+                        <p>Te mandamos un código de 6 dígitos a <strong>@Model.EmailEnmascarado</strong>. Lo escribís acá, le ponés un nombre a este dispositivo y listo: queda autorizado.</p>
+
+                        <form asp-controller="Login" asp-action="EnviarCodigoDispositivo" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="login-submit @(Model.CodigoEnviado ? "disp-sec" : "")">
+                                <i class="fas fa-envelope"></i> @(Model.CodigoEnviado ? "Reenviar el código" : "Enviarme un código por mail")
+                            </button>
+                        </form>
+
+                        @if (Model.CodigoEnviado)
+                        {
+                            <form asp-controller="Login" asp-action="VerificarDispositivo" method="post" style="margin-top:14px" autocomplete="off">
+                                @Html.AntiForgeryToken()
+                                <label for="codigo" class="disp-small">Código recibido por mail</label>
+                                <input type="text" id="codigo" name="codigo" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" autocomplete="one-time-code" placeholder="123456" required />
+                                <label for="nombreDispositivo" class="disp-small">Nombre de este dispositivo</label>
+                                <input type="text" id="nombreDispositivo" name="nombreDispositivo" maxlength="100" placeholder="Ej: Celular de Juan" required />
+                                <button type="submit" class="login-submit">Autorizar este dispositivo e ingresar <i class="fas fa-arrow-right"></i></button>
+                            </form>
+                            <p class="disp-small" style="margin:10px 0 0">El código vence en 10 minutos. Si no fuiste vos quien intentó ingresar, avisale a tu administrador: alguien conoce tu contraseña.</p>
+                        }
+                    }
+                </div>
+
+                <div class="login-support">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <span>Si borrás los datos del navegador o usás otro navegador, hay que autorizarlo de nuevo.</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="@Url.Content("~/lib/jquery/dist/jquery.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/print-agent.js")" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var sinAgente = document.getElementById('pcSinAgente');
+            var conAgente = document.getElementById('pcConAgente');
+            var campo = document.getElementById('codigoEquipo');
+            var btn = document.getElementById('btnCopiarCodigoEquipo');
+
+            function noDetectado() {
+                sinAgente.textContent = 'No se detectó el agente de impresión de CarniSys en esta PC. Para autorizarla necesitás tenerlo instalado y corriendo (pedile el instalador a tu administrador); si estás en un celular usá la opción de abajo.';
+            }
+
+            if (!window.CarniSysPrintAgent) { noDetectado(); return; }
+
+            window.CarniSysPrintAgent.getDeviceId()
+                .done(function (resp) {
+                    if (resp && resp.ok && resp.deviceId) {
+                        campo.value = resp.deviceId;
+                        conAgente.style.display = '';
+                        sinAgente.style.display = 'none';
+                    } else {
+                        noDetectado();
+                    }
+                })
+                .fail(noDetectado);
+
+            btn.addEventListener('click', function () {
+                if (!campo.value) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(campo.value);
+                } else {
+                    campo.select();
+                    document.execCommand('copy');
+                }
+                btn.innerHTML = '<i class="fas fa-check"></i> Copiado';
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -193,6 +193,29 @@ namespace Datos
             );
         }
 
+        public void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario)
+        {
+            if (oUsuario == null) throw new ArgumentNullException(nameof(oUsuario));
+            if (!ExisteColumnaUsuarios("RequiereDispositivoSeguro"))
+                return;
+
+            const string sql = @"
+                UPDATE Usuarios
+                SET RequiereDispositivoSeguro = @requiere
+                WHERE id = @idUsuario;";
+
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@requiere", SqlDbType.Bit).Value = oUsuario.RequiereDispositivoSeguro;
+                }
+            );
+        }
+
         // sinRestriccionDeTenant: ignorado, ver getUsuarioById.
         public void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario, bool sinRestriccionDeTenant = false)
         {
@@ -554,7 +577,9 @@ namespace Datos
                     DistanciaMetros,
                     Permitido,
                     Motivo,
-                    Ip
+                    Ip,
+                    IdDispositivoSeguro,
+                    Dispositivo
                 )
                 VALUES
                 (
@@ -567,7 +592,9 @@ namespace Datos
                     @DistanciaMetros,
                     @Permitido,
                     @Motivo,
-                    @Ip
+                    @Ip,
+                    @IdDispositivoSeguro,
+                    @Dispositivo
                 );";
 
             Db.NonQuery(
@@ -586,6 +613,8 @@ namespace Datos
                     p.Add("@Permitido", SqlDbType.Bit).Value = log.Permitido;
                     p.Add("@Motivo", SqlDbType.NVarChar, 300).Value = log.Motivo ?? string.Empty;
                     p.Add("@Ip", SqlDbType.NVarChar, 100).Value = log.Ip ?? string.Empty;
+                    p.Add("@IdDispositivoSeguro", SqlDbType.Int).Value = (object)log.IdDispositivoSeguro ?? DBNull.Value;
+                    p.Add("@Dispositivo", SqlDbType.NVarChar, 200).Value = string.IsNullOrWhiteSpace(log.Dispositivo) ? (object)DBNull.Value : log.Dispositivo;
 
                     p["@Latitud"].Precision = 10;
                     p["@Latitud"].Scale = 7;
@@ -618,10 +647,14 @@ namespace Datos
                     l.DistanciaMetros,
                     l.Permitido,
                     l.Motivo,
-                    l.Ip
+                    l.Ip,
+                    l.IdDispositivoSeguro,
+                    l.Dispositivo,
+                    ds.EmailAlta AS DispositivoEmail
                 FROM LoginUbicacionLog l
                 INNER JOIN Usuarios u ON u.id = l.IdUsuario
                 LEFT JOIN Sucursal s ON s.idSucursal = l.IdSucursal
+                LEFT JOIN DispositivosSeguros ds ON ds.Id = l.IdDispositivoSeguro
                 WHERE u.idEmpresa = @idEmpresa
                   AND l.FechaHora BETWEEN @desde AND @hasta
                 ORDER BY l.FechaHora DESC;";
@@ -659,6 +692,7 @@ namespace Datos
                 IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
                 PermitirLoginFueraSucursal = GetOptionalBool(dr, "PermitirLoginFueraSucursal"),
                 EsUsuarioProduccion = GetOptionalBool(dr, "esUsuarioProduccion"),
+                RequiereDispositivoSeguro = GetOptionalBool(dr, "RequiereDispositivoSeguro"),
                 IntentosFallidosLogin = GetOptionalInt(dr, "intentosFallidosLogin"),
                 Bloqueado = GetOptionalBool(dr, "bloqueado"),
                 FechaBloqueoUtc = GetOptionalDateTime(dr, "fechaBloqueoUtc")

@@ -104,6 +104,29 @@ namespace WebCore.Controllers
             return RedirectToAction("Index");
         }
 
+        // Bloquear / desbloquear un dispositivo (login solo desde dispositivos seguros, 2026-09-19).
+        // Un dispositivo bloqueado no cuenta como seguro y no se puede re-autorizar por mail; para
+        // que el usuario vuelva a usarlo hay que desbloquearlo aca.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CambiarBloqueo(int id, bool bloquear)
+        {
+            if (!PuedeAdministrar(_usuarioActual))
+            {
+                TempData["AlertType"] = "warning";
+                TempData["AlertTitle"] = "Sin permiso";
+                TempData["AlertMsg"] = "No tiene permisos para bloquear dispositivos seguros.";
+                return RedirectToAction("Index");
+            }
+
+            _oDispositivoN.SetBloqueado(id, _empresa.IdEmpresa, bloquear);
+
+            TempData["AlertType"] = "success";
+            TempData["AlertTitle"] = "Dispositivos seguros";
+            TempData["AlertMsg"] = bloquear ? "El dispositivo se bloqueó: ya no puede usarse para ingresar." : "El dispositivo se desbloqueó.";
+            return RedirectToAction("Index");
+        }
+
         private bool PuedeAdministrar(Entidades.Usuario usuario)
         {
             return usuario != null && usuario.IdEmpresa == _empresa.IdEmpresa && usuario.Admin;

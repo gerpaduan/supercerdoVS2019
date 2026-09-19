@@ -21,12 +21,10 @@ namespace WebCore.Models
         public string? Error { get; set; }
         public string? Success { get; set; }
 
-        // Numero de serie del dispositivo (CPU ID) -- en el clasico lo completa en silencio el JS
-        // del agente de impresion local (print-agent.js, no portado a WebCore, ver
-        // docs/10-migracion-aspnet-core/gaps.md). Queda el campo para que "Dispositivo seguro"
-        // (DispositivosSegurosController, ya portado) siga funcionando si alguna vez se completa a
-        // mano o se porta el agente -- sin el JS de auto-completado, en la practica siempre llega
-        // vacio en v1.
+        // ID de hardware del dispositivo (CPU ID) que informa el agente de impresion local: lo completa
+        // en silencio el JS de Views/Login/Index.cshtml (print-agent.js) si el agente esta corriendo
+        // en la PC; vacio en celular o PC sin agente (ahi se identifica por la cookie del navegador,
+        // ver Helpers/DispositivoNavegador.cs). Login solo desde dispositivos seguros, 2026-09-19.
         public string NumeroSerieDispositivo { get; set; } = "";
     }
 }

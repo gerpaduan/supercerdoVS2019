@@ -56,7 +56,7 @@ public sealed class TempDataAlertTests
         await page.Locator(".swal2-confirm").ClickAsync();
         page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
         var filaCreada = page.Locator($"tr:has-text('{nroSerie}')");
-        await filaCreada.Locator("button[type='submit']").ClickAsync();
+        await filaCreada.Locator("form[action*='Eliminar'] button[type='submit']").ClickAsync();
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await page.CloseAsync();

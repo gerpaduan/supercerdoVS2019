@@ -145,8 +145,9 @@ public sealed class ActividadesMejorasTests
         // Regresion condicionada a datos reales (mismo criterio que el resto de este archivo): si
         // no hay ninguna anomalia real en los ultimos 7 dias de la base de dev, no hay nada que
         // verificar hoy.
-        int filas = await page.Locator("table tbody tr").CountAsync();
-        if (filas == 0)
+        // (con el rango vacio la tabla igual trae 1 fila: el mensaje "No hay actividad", por eso se cuenta el icono)
+        int iconos = await page.Locator(".js-anomalia-popover").CountAsync();
+        if (iconos == 0)
         {
             await page.CloseAsync();
             return;

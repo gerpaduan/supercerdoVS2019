@@ -11,8 +11,10 @@ no acá. Este archivo es solo para comportamiento real pendiente de portar.
 
 ---
 
-## Abiertos (actualizado 2026-09-16)
+## Abiertos (actualizado 2026-09-19)
 
+- **Auditoría de accesos: solo registra login exitoso y decisiones de dispositivo** — desde 2026-09-19 el login de WebCore escribe `LoginUbicacionLog` (login correcto, dispositivo autorizado por mail, dispositivo no autorizado/bloqueado), pero NO los intentos con clave inválida, cuenta bloqueada ni fuera de horario. Decisión pendiente si se quiere auditar también esos casos (ver `docs/DECISIONS.md` 2026-09-19).
+- **Dispositivo seguro: el panel de sysadmin (`SystemAdministration`) no permite marcar `Usuarios.RequiereDispositivoSeguro` ni `Empresas.ExigirDispositivoSeguro`** — solo se editan desde `/Usuarios/Editar` y `/Empresa` (admin de la empresa). Fuera de alcance del pedido original.
 - **Actividades: "Cambios de precio" no disponible en SQL Server** — `WebCore/Infrastructure/NegocioFactory.cs::CrearActividadRepository` ya tiene implementación real para SQL Server (`Datos/Actividad.cs`, ver `docs/DECISIONS.md` 2026-09-16), pero `ObtenerCambiosPrecio` devuelve un `DataTable` vacío a propósito: SQL Server no tiene historial de precios — `Corte` solo guarda el precio vigente y `Datos/Corte.cs::editPrecioCorte` hace un `UPDATE` directo sin loguear nada (a diferencia de Postgres, que tiene `actualizacioncorte` con el historial completo vía `LAG()`). Resolver requeriría una tabla de historial nueva + cambio de código en `editPrecioCorte`/`addOrEditCorte` — cambio de schema real, decisión pendiente si algún día se prioriza.
 
 ## Fuera de alcance, no son gaps de esta migración (documentado para no reabrir por error)

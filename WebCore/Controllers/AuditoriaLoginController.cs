@@ -76,7 +76,9 @@ namespace WebCore.Controllers
                 DistanciaMetros = row["DistanciaMetros"] != DBNull.Value ? Convert.ToDecimal(row["DistanciaMetros"]) : (decimal?)null,
                 Permitido = row["Permitido"] != DBNull.Value && Convert.ToBoolean(row["Permitido"]),
                 Motivo = row["Motivo"] != DBNull.Value ? Convert.ToString(row["Motivo"]) : "",
-                Ip = row["Ip"] != DBNull.Value ? Convert.ToString(row["Ip"]) : ""
+                Ip = row["Ip"] != DBNull.Value ? Convert.ToString(row["Ip"]) : "",
+                Dispositivo = row.Table.Columns.Contains("Dispositivo") && row["Dispositivo"] != DBNull.Value ? Convert.ToString(row["Dispositivo"]) : "",
+                DispositivoEmail = row.Table.Columns.Contains("DispositivoEmail") && row["DispositivoEmail"] != DBNull.Value ? Convert.ToString(row["DispositivoEmail"]) : ""
             };
         }
     }

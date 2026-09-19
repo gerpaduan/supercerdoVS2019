@@ -204,6 +204,30 @@
                             }
                         </div>
                     </div>
+                    @* Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md). *@
+                    <div class="col-12 col-md-4">
+                        <div class="form-group pt-md-4 mt-md-2">
+                            <div class="custom-control custom-switch">
+                                @if (Model.SoloLectura)
+                                {
+                                    @Html.CheckBoxFor(m => m.RequiereDispositivoSeguro, new { @class = "custom-control-input", id = "RequiereDispositivoSeguro", @disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.RequiereDispositivoSeguro, new { @class = "custom-control-input", id = "RequiereDispositivoSeguro" })
+                                }
+                                <label class="custom-control-label" for="RequiereDispositivoSeguro">Requiere dispositivo seguro</label>
+                                <button type="button" class="btn btn-sm btn-link p-0 ml-1 align-baseline" id="btnInfoDispositivoSeguro" data-bs-toggle="modal" data-bs-target="#modalInfoDispositivoSeguro" data-edit-readonly-ignore="true" title="¿Cómo funciona 'Dispositivo seguro'?" tabindex="-1">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Solo puede ingresar desde un dispositivo autorizado (PC cargada por un administrador o celular autorizado por mail). No aplica a administradores. Si en <em>Mi Empresa</em> está activado “Exigir dispositivo seguro”, ya se le exige a todos los no-administradores. Para autorizar celulares necesita tener su <strong>mail cargado</strong>.</small>
+                            @if (Model.SoloLectura)
+                            {
+                                @Html.HiddenFor(m => m.RequiereDispositivoSeguro)
+                            }
+                        </div>
+                    </div>
                     <div class="col-12 col-md-4">
                         <div class="form-group pt-md-4 mt-md-2">
                             <div class="custom-control custom-switch">
@@ -250,6 +274,9 @@
         </div>
     </div>
 </div>
+
+@* MODAL INFO: como funciona "Dispositivo seguro" (2026-09-19, compartido con Mi Empresa) *@
+@await Html.PartialAsync("_InfoDispositivoSeguro")
 
 <!-- MODAL INFO: que significa "Permitir login fuera de sucursal" -->
 <div class="modal fade" id="modalInfoLoginFueraSucursal" tabindex="-1" aria-hidden="true">

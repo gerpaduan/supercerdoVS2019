@@ -14,5 +14,10 @@ namespace Entidades
         public bool Permitido { get; set; }
         public string Motivo { get; set; }
         public string Ip { get; set; }
+
+        // Dispositivo desde el que se logueo (2026-09-19): id del registro en DispositivosSeguros (si
+        // era seguro) y snapshot de su nombre, para que la auditoria no lo pierda si lo borran.
+        public int? IdDispositivoSeguro { get; set; }
+        public string Dispositivo { get; set; }
     }
 }

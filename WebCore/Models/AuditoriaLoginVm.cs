@@ -28,6 +28,11 @@ namespace WebCore.Models
         public string Motivo { get; set; }
         public string Ip { get; set; }
 
+        // Dispositivo desde el que se logueo (2026-09-19): nombre del dispositivo seguro (snapshot) y
+        // el mail con el que se autorizo (solo autoservicio). Vacio = ingreso sin dispositivo registrado.
+        public string Dispositivo { get; set; }
+        public string DispositivoEmail { get; set; }
+
         public bool TieneCoordenadas
         {
             get { return Latitud.HasValue && Longitud.HasValue; }

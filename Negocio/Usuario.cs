@@ -114,6 +114,7 @@ namespace Negocio
                                                         : Convert.ToInt32(drUsuario["idEmpresa"]);
                     user.PermitirLoginFueraSucursal = GetOptionalBool(drUsuario, "PermitirLoginFueraSucursal");
                     user.EsUsuarioProduccion = GetOptionalBool(drUsuario, "esUsuarioProduccion");
+                    user.RequiereDispositivoSeguro = GetOptionalBool(drUsuario, "RequiereDispositivoSeguro");
                     user.IntentosFallidosLogin = GetOptionalInt(drUsuario, "intentosFallidosLogin");
                     user.Bloqueado = GetOptionalBool(drUsuario, "bloqueado");
                     user.FechaBloqueoUtc = GetOptionalDateTime(drUsuario, "fechaBloqueoUtc");
@@ -436,6 +437,11 @@ namespace Negocio
         public void setEsUsuarioProduccion(Entidades.Usuario oUsuario)
         {
             oUsuarioD.setEsUsuarioProduccion(oUsuario);
+        }
+
+        public void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario)
+        {
+            oUsuarioD.setRequiereDispositivoSeguro(oUsuario);
         }
 
         public void RegistrarLoginUbicacion(Entidades.LoginUbicacionLog log)

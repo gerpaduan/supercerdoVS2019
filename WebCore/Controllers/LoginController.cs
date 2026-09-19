@@ -20,6 +20,7 @@ using Utilidades;
 using WebCore.Helpers;
 using WebCore.Infrastructure;
 using WebCore.Models;
+using VerificacionDispositivoStore = Negocio.VerificacionDispositivoStore;
 
 namespace WebCore.Controllers
 {
@@ -30,23 +31,28 @@ namespace WebCore.Controllers
         private readonly Negocio.Sucursal _oSucursalN;
         private readonly Negocio.Empresa _oEmpresaN;
         private readonly WebCore.Services.IUsuarioSesionService _sesion;
+        private readonly ILogger<LoginController> _logger;
 
         // _sesion solo lo usa CambiarSucursal (2026-09-07, ver docs/DECISIONS.md): esa accion
         // corre YA logueado, con la empresa real del usuario -- distinto de _oUsuarioN/_oSucursalN
         // de arriba, que a proposito usan EmpresaContextNulo porque Index/ValidarLogin corren
         // ANTES de saber a que empresa pertenece el usuario.
-        public LoginController(WebCore.Services.IUsuarioSesionService sesion)
+        public LoginController(WebCore.Services.IUsuarioSesionService sesion, ILogger<LoginController> logger)
         {
             IEmpresaContext empresaNula = new EmpresaContextNulo();
             _oUsuarioN = WebCore.Infrastructure.NegocioFactory.CrearUsuario(empresaNula);
             _oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(empresaNula);
             _oEmpresaN = WebCore.Infrastructure.NegocioFactory.CrearEmpresa(empresaNula);
             _sesion = sesion;
+            _logger = logger;
         }
 
         [HttpGet]
         public IActionResult Index(string returnUrl = "")
         {
+            // Deja emitida la cookie de identificacion del navegador (dispositivo seguro) antes del POST.
+            DispositivoNavegador.AsegurarToken(HttpContext);
+
             var model = new LoginIndexVm
             {
                 ReturnUrl = returnUrl ?? "",
@@ -75,10 +81,16 @@ namespace WebCore.Controllers
             // igual mas abajo sin excepcion; (b) lo reusa el chequeo de cuenta bloqueada.
             var candidato = _oUsuarioN.ObtenerUsuarioPorIdentificador(model.Usuario);
 
-            var oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(new EmpresaContextNulo());
-            bool esDispositivoSeguro = candidato != null
-                && !string.IsNullOrWhiteSpace(model.NumeroSerieDispositivo)
-                && oDispositivoN.ExisteSerieSegura(model.NumeroSerieDispositivo, candidato.IdEmpresa);
+            // Un dispositivo es "seguro" por (a) el ID de hardware que informa el agente de impresion
+            // (PC) o (b) la cookie del navegador ya autorizada (celular / PC sin agente). Un
+            // dispositivo bloqueado por el admin no cuenta como seguro ni se puede re-autorizar.
+            string tokenNavegador = DispositivoNavegador.AsegurarToken(HttpContext);
+            string serieToken = Negocio.DispositivoSeguro.SerieDeToken(tokenNavegador);
+            Entidades.DispositivoSeguro? dispositivoAutorizado = null;
+            Entidades.DispositivoSeguro? dispositivoBloqueado = null;
+            if (candidato != null)
+                (dispositivoAutorizado, dispositivoBloqueado) = ResolverDispositivo(candidato.IdEmpresa, model.NumeroSerieDispositivo, serieToken);
+            bool esDispositivoSeguro = dispositivoAutorizado != null;
 
             if (!esDispositivoSeguro && LoginRateLimiter.IsBlocked(ip, model.Usuario, out var retryAfter))
             {
@@ -136,21 +148,18 @@ namespace WebCore.Controllers
                         model.Error = "Fuera del horario laboral permitido para iniciar sesión.";
                         return View(model);
                     }
+
+                    // Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md): se
+                    // exige a los no-admin si la empresa lo activo o el usuario esta marcado. Los
+                    // admin quedan exentos siempre (evita quedarse sin acceso para autorizar).
+                    bool requiereDispositivo = user.RequiereDispositivoSeguro || (empresaActual?.ExigirDispositivoSeguro ?? false);
+                    if (requiereDispositivo && !esDispositivoSeguro)
+                        return DispositivoNoAutorizadoTrasClaveValida(user, ip, model, serieToken, dispositivoBloqueado);
                 }
 
-                await FirmarCookieAsync(user);
-                LoginRateLimiter.Reset(ip, model.Usuario);
-
-                // Modal de sucursal post-login (item 3 de la cuarta ronda de pedidos, 2026-09-10 --
-                // ver docs/DECISIONS.md "Batch 2: modal de sucursal automatico al loguearse"). Port
-                // de Web/Controllers/LoginController.cs:151-157: si la empresa tiene 2+ sucursales,
-                // se avisa siempre en que sucursal va a operar -- sin condicion adicional (no
-                // depende de admin ni de cuantas sucursales tenga ESTE usuario en particular).
-                var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
-                if (sucursalesEmpresa.Count >= 2)
-                    TempData["MostrarModalSucursalPostLogin"] = true;
-
-                return RedirigirPostLogin(model.ReturnUrl);
+                return await CompletarLoginAsync(
+                    user, model.ReturnUrl, ip, model.Usuario, dispositivoAutorizado,
+                    dispositivoAutorizado != null ? "Login desde dispositivo seguro" : "Login correcto");
             }
 
             // Solo cuenta contra el bloqueo persistente si el usuario/email existe y esta activo --
@@ -422,6 +431,289 @@ namespace WebCore.Controllers
             {
                 return Json(new { ok = false, msg = ex.Message });
             }
+        }
+
+        // ---------------------------------------------------------------------------------
+        // Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md "Dispositivo
+        // seguro como condicion de login"). Flujo: clave valida + usuario que requiere dispositivo
+        // seguro + dispositivo no autorizado -> pantalla DispositivoNoAutorizado con dos vias:
+        // (1) PC con el agente de impresion: el usuario copia el ID de hardware y se lo pasa al
+        // admin, que lo carga en /DispositivosSeguros; (2) celular / equipo sin agente: codigo de
+        // 6 digitos por mail que se escribe en la misma pantalla y deja el navegador autorizado
+        // sin intervencion del admin (el admin puede bloquearlo despues). Sin sesion emitida hasta
+        // que el dispositivo queda autorizado.
+        // ---------------------------------------------------------------------------------
+
+        private const string TempDispError = "DispError";
+        private const string TempDispSuccess = "DispSuccess";
+
+        [HttpGet]
+        public IActionResult DispositivoNoAutorizado()
+        {
+            var pedido = VerificacionDispositivoStore.Instancia.Obtener(DispositivoNavegador.LeerNoncePedido(HttpContext));
+            if (pedido == null)
+                return VolverAlLoginConError("La autorización venció. Ingresá de nuevo tu usuario y contraseña.");
+
+            return View(ArmarDispositivoNoAutorizadoVm(pedido));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EnviarCodigoDispositivo()
+        {
+            string? nonce = DispositivoNavegador.LeerNoncePedido(HttpContext);
+            var store = VerificacionDispositivoStore.Instancia;
+            var pedido = store.Obtener(nonce);
+            if (pedido == null)
+                return VolverAlLoginConError("La autorización venció. Ingresá de nuevo tu usuario y contraseña.");
+
+            var user = CrearUsuarioNegocio(pedido.IdEmpresa).getUsuarioById(pedido.IdUsuario, sinRestriccionDeTenant: true);
+            if (user == null || !user.Activo)
+                return VolverAlLoginConError("No fue posible iniciar sesión con los datos ingresados.");
+
+            if (!SmtpMailHelper.IsValidEmail(user.Email))
+            {
+                TempData[TempDispError] = "Tu usuario no tiene un mail válido cargado. Pedile a un administrador que lo cargue o que autorice este dispositivo.";
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            if (!SmtpMailHelper.IsConfigured())
+            {
+                TempData[TempDispError] = "El envío de mails no está configurado en este servidor. Pedile a un administrador que autorice este dispositivo.";
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            if (!store.PuedeEnviarCodigo(nonce!, out var espera))
+            {
+                TempData[TempDispError] = string.Format(CultureInfo.CurrentCulture, "Ya te enviamos un código. Esperá {0} segundo(s) para pedir otro.", Math.Max(1, (int)Math.Ceiling(espera.TotalSeconds)));
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            string? codigo = store.GenerarCodigo(nonce!);
+            if (codigo == null)
+                return VolverAlLoginConError("La autorización venció. Ingresá de nuevo tu usuario y contraseña.");
+
+            try
+            {
+                SmtpMailHelper.SendDeviceVerification(user.Email, user.Nombre, codigo, (int)VerificacionDispositivoStore.VidaCodigo.TotalMinutes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "No se pudo enviar el codigo de autorizacion de dispositivo al usuario {IdUsuario}.", user.Id);
+                TempData[TempDispError] = "No pudimos enviar el mail. Intentá de nuevo en unos minutos o pedile a un administrador que autorice este dispositivo.";
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            TempData[TempDispSuccess] = "Te enviamos un código a " + EnmascararEmail(user.Email) + ". Escribilo abajo (vence en " + (int)VerificacionDispositivoStore.VidaCodigo.TotalMinutes + " minutos).";
+            return RedirectToAction(nameof(DispositivoNoAutorizado));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerificarDispositivo(string? codigo, string? nombreDispositivo)
+        {
+            string? nonce = DispositivoNavegador.LeerNoncePedido(HttpContext);
+            var store = VerificacionDispositivoStore.Instancia;
+            var pedido = store.Obtener(nonce);
+            if (pedido == null)
+                return VolverAlLoginConError("La autorización venció. Ingresá de nuevo tu usuario y contraseña.");
+
+            // El nombre se valida ANTES de gastar un intento del codigo.
+            string nombre = (nombreDispositivo ?? "").Trim();
+            if (nombre.Length == 0 || nombre.Length > 100)
+            {
+                TempData[TempDispError] = "Ingresá un nombre para este dispositivo (ej. \"Celular de Juan\", máximo 100 caracteres).";
+                return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            var oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(new EmpresaContextFijo(pedido.IdEmpresa));
+            var existente = oDispositivoN.ObtenerPorSerie(pedido.SerieDispositivo, pedido.IdEmpresa);
+            if (existente != null && existente.Bloqueado)
+            {
+                store.Quitar(nonce!);
+                DispositivoNavegador.QuitarNoncePedido(HttpContext);
+                return VolverAlLoginConError("Este dispositivo fue bloqueado por el administrador.");
+            }
+
+            switch (store.Verificar(nonce!, codigo))
+            {
+                case VerificacionDispositivoStore.ResultadoVerificacion.Ok:
+                    break;
+                case VerificacionDispositivoStore.ResultadoVerificacion.Incorrecto:
+                    TempData[TempDispError] = "El código no es correcto. Revisalo e intentá de nuevo.";
+                    return RedirectToAction(nameof(DispositivoNoAutorizado));
+                case VerificacionDispositivoStore.ResultadoVerificacion.DemasiadosIntentos:
+                    DispositivoNavegador.QuitarNoncePedido(HttpContext);
+                    return VolverAlLoginConError("Demasiados intentos con un código incorrecto. Ingresá de nuevo tu usuario y contraseña.");
+                default:
+                    TempData[TempDispError] = "El código venció o todavía no pediste uno. Pedí un código nuevo.";
+                    return RedirectToAction(nameof(DispositivoNoAutorizado));
+            }
+
+            DispositivoNavegador.QuitarNoncePedido(HttpContext);
+
+            var oUsuarioN = CrearUsuarioNegocio(pedido.IdEmpresa);
+            var user = CargarUsuarioParaSesion(oUsuarioN, pedido.IdUsuario, pedido.IdEmpresa);
+            if (user == null || !user.Activo)
+                return VolverAlLoginConError("No fue posible iniciar sesión con los datos ingresados.");
+
+            if (existente == null)
+            {
+                oDispositivoN.Agregar(new Entidades.DispositivoSeguro
+                {
+                    IdEmpresa = pedido.IdEmpresa,
+                    NumeroSerie = pedido.SerieDispositivo,
+                    Descripcion = nombre,
+                    IdUsuarioCreador = user.Id,
+                    Origen = "Autoservicio",
+                    EmailAlta = user.Email
+                });
+                existente = oDispositivoN.ObtenerPorSerie(pedido.SerieDispositivo, pedido.IdEmpresa);
+            }
+
+            oUsuarioN.RegistrarLoginExitoso(user);
+            return await CompletarLoginAsync(
+                user, pedido.ReturnUrl, ObtenerDireccionIp(), user.User ?? "", existente,
+                "Dispositivo autorizado por mail: " + nombre);
+        }
+
+        private IActionResult DispositivoNoAutorizadoTrasClaveValida(
+            Entidades.Usuario user, string ip, LoginIndexVm model, string serieToken, Entidades.DispositivoSeguro? dispositivoBloqueado)
+        {
+            if (dispositivoBloqueado != null)
+            {
+                RegistrarAcceso(user, false, "Dispositivo bloqueado por el administrador", ip, dispositivoBloqueado);
+                model.Clave = "";
+                model.Error = "Este dispositivo fue bloqueado por el administrador. Pedile que lo habilite o ingresá desde otro dispositivo autorizado.";
+                return View("Index", model);
+            }
+
+            string nonce = VerificacionDispositivoStore.Instancia.CrearPedido(user.Id, user.IdEmpresa, serieToken, model.ReturnUrl);
+            DispositivoNavegador.GuardarNoncePedido(HttpContext, nonce);
+            RegistrarAcceso(user, false, "Dispositivo no autorizado", ip, null);
+            return RedirectToAction(nameof(DispositivoNoAutorizado));
+        }
+
+        private DispositivoNoAutorizadoVm ArmarDispositivoNoAutorizadoVm(VerificacionDispositivoStore.Pedido pedido)
+        {
+            var user = CrearUsuarioNegocio(pedido.IdEmpresa).getUsuarioById(pedido.IdUsuario, sinRestriccionDeTenant: true);
+            bool tieneEmail = user != null && SmtpMailHelper.IsValidEmail(user.Email);
+
+            return new DispositivoNoAutorizadoVm
+            {
+                UsuarioNombre = user?.Nombre ?? "",
+                TieneEmail = tieneEmail,
+                EmailEnmascarado = tieneEmail ? EnmascararEmail(user!.Email) : "",
+                SmtpConfigurado = SmtpMailHelper.IsConfigured(),
+                CodigoEnviado = pedido.CodigoExpiraUtc.HasValue && pedido.CodigoExpiraUtc.Value > DateTime.UtcNow,
+                Error = TempData[TempDispError] as string,
+                Success = TempData[TempDispSuccess] as string
+            };
+        }
+
+        // Autorizado = ID de hardware (agente) o token del navegador registrado y NO bloqueado.
+        // Bloqueado = alguno de los dos registrado pero bloqueado por el admin (solo se informa si
+        // ninguno esta autorizado).
+        private (Entidades.DispositivoSeguro? autorizado, Entidades.DispositivoSeguro? bloqueado) ResolverDispositivo(
+            int idEmpresa, string? serieHardware, string serieToken)
+        {
+            // Con el tenant real de la empresa (dispositivosseguros tiene RLS en Postgres: con
+            // EmpresaContextNulo el filtro nunca encuentra filas).
+            var oDispositivoN = WebCore.Infrastructure.NegocioFactory.CrearDispositivoSeguro(new EmpresaContextFijo(idEmpresa));
+
+            var candidatos = new List<Entidades.DispositivoSeguro?>();
+            if (!string.IsNullOrWhiteSpace(serieHardware))
+                candidatos.Add(oDispositivoN.ObtenerPorSerie(serieHardware.Trim(), idEmpresa));
+            if (!string.IsNullOrWhiteSpace(serieToken))
+                candidatos.Add(oDispositivoN.ObtenerPorSerie(serieToken, idEmpresa));
+
+            var autorizado = candidatos.FirstOrDefault(d => d != null && !d.Bloqueado);
+            var bloqueado = autorizado == null ? candidatos.FirstOrDefault(d => d != null && d.Bloqueado) : null;
+            return (autorizado, bloqueado);
+        }
+
+        private async Task<IActionResult> CompletarLoginAsync(
+            Entidades.Usuario user, string returnUrl, string ip, string usuarioTipeado,
+            Entidades.DispositivoSeguro? dispositivo, string motivo)
+        {
+            RegistrarAcceso(user, true, motivo, ip, dispositivo);
+            await FirmarCookieAsync(user);
+            LoginRateLimiter.Reset(ip, usuarioTipeado);
+
+            // Modal de sucursal post-login (item 3 de la cuarta ronda de pedidos, 2026-09-10 --
+            // ver docs/DECISIONS.md "Batch 2: modal de sucursal automatico al loguearse"). Port
+            // de Web/Controllers/LoginController.cs:151-157: si la empresa tiene 2+ sucursales,
+            // se avisa siempre en que sucursal va a operar -- sin condicion adicional (no
+            // depende de admin ni de cuantas sucursales tenga ESTE usuario en particular).
+            var oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(new EmpresaContextFijo(user.IdEmpresa));
+            var sucursalesEmpresa = oSucursalN.findAll() ?? new List<Entidades.Sucursal>();
+            if (sucursalesEmpresa.Count >= 2)
+                TempData["MostrarModalSucursalPostLogin"] = true;
+
+            return RedirigirPostLogin(returnUrl);
+        }
+
+        // Auditoria de accesos (LoginUbicacionLog, sin geolocalizacion): la auditoria nunca debe
+        // impedir el login, pero un fallo se loguea (no se traga en silencio).
+        private void RegistrarAcceso(Entidades.Usuario user, bool permitido, string motivo, string ip, Entidades.DispositivoSeguro? dispositivo)
+        {
+            try
+            {
+                _oUsuarioN.RegistrarLoginUbicacion(new Entidades.LoginUbicacionLog
+                {
+                    IdUsuario = user.Id,
+                    IdSucursal = user.IdSucursal,
+                    FechaHora = DateTime.Now,
+                    Permitido = permitido,
+                    Motivo = motivo.Length > 300 ? motivo.Substring(0, 300) : motivo,
+                    Ip = ip,
+                    IdDispositivoSeguro = dispositivo?.Id,
+                    Dispositivo = dispositivo?.Descripcion
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar el acceso del usuario {IdUsuario} en la auditoria.", user.Id);
+            }
+        }
+
+        private static Negocio.Usuario CrearUsuarioNegocio(int idEmpresa)
+        {
+            return WebCore.Infrastructure.NegocioFactory.CrearUsuario(new EmpresaContextFijo(idEmpresa));
+        }
+
+        // Mismo armado de usuario que el login normal (sucursal + permisos) -- reusado al
+        // completar el login tras autorizar el dispositivo por mail.
+        private static Entidades.Usuario? CargarUsuarioParaSesion(Negocio.Usuario oUsuarioN, int idUsuario, int idEmpresa)
+        {
+            var user = oUsuarioN.getUsuarioById(idUsuario, sinRestriccionDeTenant: true);
+            if (user == null)
+                return null;
+
+            var oSucursalN = WebCore.Infrastructure.NegocioFactory.CrearSucursal(new EmpresaContextFijo(idEmpresa));
+            user.Sucursal = user.IdSucursal > 0 ? oSucursalN.findById(user.IdSucursal) : null;
+            user.SucursalNombre = user.Sucursal?.SucursalNombre ?? "";
+            user.Permisos = oUsuarioN.getPermisosUsuario(user.Id);
+            return user;
+        }
+
+        private IActionResult VolverAlLoginConError(string mensaje)
+        {
+            TempData["Error"] = mensaje;
+            return RedirectToAction(nameof(Index));
+        }
+
+        // "juan.perez@gmail.com" -> "j***@gmail.com"
+        private static string EnmascararEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return "";
+
+            int arroba = email.IndexOf('@');
+            if (arroba <= 0)
+                return "***";
+
+            return email.Substring(0, 1) + "***" + email.Substring(arroba);
         }
 
         private async Task FirmarCookieAsync(Entidades.Usuario user)

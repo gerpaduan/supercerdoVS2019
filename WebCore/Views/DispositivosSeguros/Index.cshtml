@@ -7,8 +7,11 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
         <div>
             <p class="text-muted mb-0">
-                Los dispositivos de esta lista no quedan bloqueados por intentos fallidos de login desde su IP.
-                El bloqueo por cuenta (5 errores de contraseña) sigue aplicando igual.
+                Son los dispositivos desde los que se puede ingresar cuando la empresa (o el usuario) exige <strong>dispositivo seguro</strong>
+                (<em>Mi Empresa</em> / edición de usuario). Además, no quedan bloqueados por intentos fallidos de login desde su IP;
+                el bloqueo por cuenta (5 errores de contraseña) sigue aplicando igual.
+                Los celulares y navegadores los autoriza cada empleado con un código enviado a su mail (origen <em>Autoservicio</em>);
+                desde acá podés bloquear cualquiera.
             </p>
         </div>
     </div>
@@ -65,11 +68,14 @@
                         <tr>
                             <th>Número de serie</th>
                             <th>Descripción</th>
-                            <th style="width:160px;">Creado</th>
-                            <th style="width:160px;">Creado por</th>
+                            <th style="width:110px;">Origen</th>
+                            <th style="width:170px;">Mail de alta</th>
+                            <th style="width:140px;">Creado</th>
+                            <th style="width:130px;">Creado por</th>
+                            <th style="width:90px;">Estado</th>
                             @if (Model.PuedeAdministrar)
                             {
-                                <th style="width:110px;">Acciones</th>
+                                <th style="width:190px;">Acciones</th>
                             }
                         </tr>
                     </thead>
@@ -77,7 +83,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No hay dispositivos seguros registrados.</td>
+                                <td colspan="9" class="text-center text-muted py-4">No hay dispositivos seguros registrados.</td>
                             </tr>
                         }
                         else
@@ -85,13 +91,40 @@
                             foreach (var item in Model.Items)
                             {
                                 <tr>
-                                    <td><code>@item.NumeroSerie</code></td>
+                                    @{
+                                        // Los navegadores se identifican por el hash de su cookie ("web:<sha256>"): no es
+                                        // legible ni sirve para copiar, se muestra abreviado.
+                                        string serieItem = item.NumeroSerie ?? "";
+                                        bool esNavegador = serieItem.StartsWith("web:", StringComparison.Ordinal);
+                                        string serieMostrada = esNavegador ? "Navegador (" + serieItem.Substring(4, Math.Min(8, serieItem.Length - 4)) + "…)" : serieItem;
+                                    }
+                                    <td><code title="@serieItem">@serieMostrada</code></td>
                                     <td>@item.Descripcion</td>
+                                    <td>@item.Origen</td>
+                                    <td>@item.EmailAlta</td>
                                     <td>@item.CreadoUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                                     <td>@item.NombreUsuarioCreador</td>
+                                    <td>
+                                        @if (item.Bloqueado)
+                                        {
+                                            <span class="badge badge-danger bg-danger">Bloqueado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success bg-success">Activo</span>
+                                        }
+                                    </td>
                                     @if (Model.PuedeAdministrar)
                                     {
                                         <td>
+                                            <form asp-controller="DispositivosSeguros" asp-action="CambiarBloqueo" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                @Html.Hidden("id", item.Id)
+                                                @Html.Hidden("bloquear", item.Bloqueado ? "false" : "true")
+                                                <button type="submit" class="btn btn-sm @(item.Bloqueado ? "btn-outline-success" : "btn-outline-warning")">
+                                                    @(item.Bloqueado ? "Desbloquear" : "Bloquear")
+                                                </button>
+                                            </form>
                                             <form asp-controller="DispositivosSeguros" asp-action="Eliminar" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 @Html.Hidden("id", item.Id)
@@ -121,8 +154,11 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
+                <p>
+                    En una <strong>PC</strong>, no es un número que se pueda buscar a mano -- es un identificador único de esa máquina que solo se obtiene automáticamente si el <strong>agente de impresión CarniSys</strong> está instalado y corriendo ahí. Cuando un empleado intenta ingresar desde una PC no autorizada, la pantalla de login le muestra ese código para que te lo pase y lo completes en este campo (también puede consultarlo desde el menú de usuario, "Número de serie").
+                </p>
                 <p class="mb-0">
-                    No es un número que se pueda buscar en la PC a mano -- es un identificador único de esa máquina que solo se obtiene automáticamente si el <strong>agente de impresión CarniSys</strong> está instalado y corriendo ahí. Si un usuario no-admin necesita agregar su propio equipo, puede consultarlo desde el menú de usuario ("Número de serie") y pasártelo para completar este campo.
+                    En un <strong>celular</strong> (o una PC sin agente) no hace falta que cargues nada: el empleado se autoriza solo con un código que le llega a su mail y aparece en esta lista con origen <em>Autoservicio</em>. Si un dispositivo no te cierra, lo bloqueás desde la lista.
                 </p>
             </div>
         </div>

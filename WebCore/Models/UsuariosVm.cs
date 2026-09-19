@@ -43,6 +43,7 @@ namespace WebCore.Models
         public int IdSucursalUser { get; set; }
         public bool PermitirLoginFueraSucursal { get; set; }
         public bool EsUsuarioProduccion { get; set; }
+        public bool RequiereDispositivoSeguro { get; set; }
         public bool PuedeOperarPOS { get; set; } = true;
         public int IdEmpresa { get; set; }
         public List<SelectListItem> Sucursales { get; set; } = new List<SelectListItem>();

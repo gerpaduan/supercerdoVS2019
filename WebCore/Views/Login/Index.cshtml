@@ -114,5 +114,40 @@
     <script src="@Url.Content("~/lib/jquery/dist/jquery.min.js")"></script>
     <script src="@Url.Content("~/lib/jquery-validation/dist/jquery.validate.min.js")"></script>
     <script src="@Url.Content("~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js")"></script>
+    @* Dispositivo seguro (2026-09-19, ver docs/DECISIONS.md): si la PC tiene el agente de impresion
+       CarniSys corriendo, se completa en silencio el ID de hardware para que el servidor pueda
+       reconocer el dispositivo. Sin agente (celular, PC sin agente) el campo queda vacio y el login
+       sigue normal: ahi se usa la cookie del navegador. El submit espera como maximo ~1,5 s a que
+       responda el agente. *@
+    <script src="@Url.Content("~/Scripts/app/print-agent.js")" asp-append-version="true"></script>
+    <script>
+        (function () {
+            var form = document.querySelector('form.carnisys-login-form');
+            var campo = document.getElementById('NumeroSerieDispositivo');
+            if (!form || !campo || !window.CarniSysPrintAgent) return;
+
+            var pendiente = true;
+            var enviarAlTerminar = false;
+
+            function terminar() {
+                if (!pendiente) return;
+                pendiente = false;
+                if (enviarAlTerminar) form.submit();
+            }
+
+            window.CarniSysPrintAgent.getDeviceId()
+                .done(function (resp) {
+                    if (resp && resp.ok && resp.deviceId) campo.value = resp.deviceId;
+                })
+                .always(terminar);
+
+            form.addEventListener('submit', function (evento) {
+                if (!pendiente) return;
+                evento.preventDefault();
+                enviarAlTerminar = true;
+                setTimeout(terminar, 1500);
+            });
+        })();
+    </script>
 </body>
 </html>

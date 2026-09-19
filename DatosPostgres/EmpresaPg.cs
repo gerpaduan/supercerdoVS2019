@@ -47,7 +47,8 @@ namespace DatosPostgres
                 HorarioDiurnoDesde = dr["horariodiurnodesde"] == DBNull.Value ? TimeSpan.Zero : (TimeSpan)dr["horariodiurnodesde"],
                 HorarioDiurnoHasta = dr["horariodiurnohasta"] == DBNull.Value ? new TimeSpan(23, 59, 59) : (TimeSpan)dr["horariodiurnohasta"],
                 HorarioTardeDesde = dr["horariotardedesde"] == DBNull.Value ? TimeSpan.Zero : (TimeSpan)dr["horariotardedesde"],
-                HorarioTardeHasta = dr["horariotardehasta"] == DBNull.Value ? new TimeSpan(23, 59, 59) : (TimeSpan)dr["horariotardehasta"]
+                HorarioTardeHasta = dr["horariotardehasta"] == DBNull.Value ? new TimeSpan(23, 59, 59) : (TimeSpan)dr["horariotardehasta"],
+                ExigirDispositivoSeguro = dr["exigirdispositivoseguro"] != DBNull.Value && Convert.ToBoolean(dr["exigirdispositivoseguro"])
             };
         }
 
@@ -58,7 +59,7 @@ namespace DatosPostgres
                        iibb, condicioniva, inicioactividad, tenantslug, domicilio, ciudad, pais,
                        telefono, email, basepath, esrrii, nombrecertificado_pfx, entorno_homo_prod,
                        basedatosnombre, activa, horariodiurnodesde, horariodiurnohasta,
-                       horariotardedesde, horariotardehasta
+                       horariotardedesde, horariotardehasta, exigirdispositivoseguro
                 FROM empresas WHERE idempresa = @id;",
                 MapEmpresa,
                 p => p.AddWithValue("id", idEmpresa));
@@ -84,7 +85,8 @@ namespace DatosPostgres
                     horariodiurnodesde = @horarioDiurnoDesde,
                     horariodiurnohasta = @horarioDiurnoHasta,
                     horariotardedesde = @horarioTardeDesde,
-                    horariotardehasta = @horarioTardeHasta
+                    horariotardehasta = @horarioTardeHasta,
+                    exigirdispositivoseguro = @exigirDispositivoSeguro
                 WHERE idempresa = @idEmpresa;",
                 p =>
                 {
@@ -102,6 +104,7 @@ namespace DatosPostgres
                     p.AddWithValue("horarioDiurnoHasta", oEmpresaE.HorarioDiurnoHasta);
                     p.AddWithValue("horarioTardeDesde", oEmpresaE.HorarioTardeDesde);
                     p.AddWithValue("horarioTardeHasta", oEmpresaE.HorarioTardeHasta);
+                    p.AddWithValue("exigirDispositivoSeguro", oEmpresaE.ExigirDispositivoSeguro);
                 });
         }
     }

@@ -57,7 +57,8 @@ namespace Datos
                     HorarioDiurnoDesde = @HorarioDiurnoDesde,
                     HorarioDiurnoHasta = @HorarioDiurnoHasta,
                     HorarioTardeDesde = @HorarioTardeDesde,
-                    HorarioTardeHasta = @HorarioTardeHasta
+                    HorarioTardeHasta = @HorarioTardeHasta,
+                    ExigirDispositivoSeguro = @ExigirDispositivoSeguro
                 WHERE idEmpresa = @IdEmpresa;";
 
             Db.NonQuery(
@@ -80,6 +81,7 @@ namespace Datos
                     p.Add("@HorarioDiurnoHasta", SqlDbType.Time).Value = oEmpresaE.HorarioDiurnoHasta;
                     p.Add("@HorarioTardeDesde", SqlDbType.Time).Value = oEmpresaE.HorarioTardeDesde;
                     p.Add("@HorarioTardeHasta", SqlDbType.Time).Value = oEmpresaE.HorarioTardeHasta;
+                    p.Add("@ExigirDispositivoSeguro", SqlDbType.Bit).Value = oEmpresaE.ExigirDispositivoSeguro;
                 }
             );
         }
@@ -113,7 +115,8 @@ namespace Datos
                 HorarioDiurnoDesde = GetOptionalTime(dr, "HorarioDiurnoDesde", TimeSpan.Zero),
                 HorarioDiurnoHasta = GetOptionalTime(dr, "HorarioDiurnoHasta", new TimeSpan(23, 59, 59)),
                 HorarioTardeDesde = GetOptionalTime(dr, "HorarioTardeDesde", TimeSpan.Zero),
-                HorarioTardeHasta = GetOptionalTime(dr, "HorarioTardeHasta", new TimeSpan(23, 59, 59))
+                HorarioTardeHasta = GetOptionalTime(dr, "HorarioTardeHasta", new TimeSpan(23, 59, 59)),
+                ExigirDispositivoSeguro = GetOptionalBool(dr, "ExigirDispositivoSeguro")
             };
         }
 
@@ -128,6 +131,15 @@ namespace Datos
             }
 
             return false;
+        }
+
+        private static bool GetOptionalBool(IDataRecord dr, string columnName)
+        {
+            if (!HasColumn(dr, columnName))
+                return false;
+
+            object value = dr[columnName];
+            return value != DBNull.Value && Convert.ToBoolean(value);
         }
 
         private static TimeSpan GetOptionalTime(IDataRecord dr, string columnName, TimeSpan defaultValue)

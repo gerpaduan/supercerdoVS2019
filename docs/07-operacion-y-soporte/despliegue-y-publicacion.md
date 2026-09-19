@@ -303,3 +303,19 @@ Reemplaza la clasica descripta arriba. Mismo patron de diseño que el planificad
 2. Restaurar el contenido: `robocopy C:\inetpub\wwwroot\web\CarniSysWeb-backup-20260916 C:\inetpub\wwwroot\web\CarniSysWeb /MIR`.
 3. Reciclar el pool "web" (`Restart-WebAppPool -Name web`).
 4. No hace falta desinstalar el Hosting Bundle — no tiene efecto sobre la clasica ni sobre `SuperCerdoWeb`/`SuperCerdo`.
+
+## Migración "Login solo desde dispositivos seguros" (2026-09-19) -- orden de despliegue
+
+Cambio con esquema nuevo (todo aditivo, defaults apagados: no cambia el comportamiento del login hasta que un admin active el switch de "Mi Empresa" o el tilde por usuario). **Orden obligatorio: migración primero, código después** -- `Datos/Empresa.cs` (UPDATE explícito), `Datos/DispositivoSeguro.cs` (SELECT/INSERT explícitos) y `EmpresaPg.findById` usan las columnas nuevas y fallan si faltan. **Cada servidor requiere aprobación explícita del usuario; no se aplicó en ninguno todavía** (solo bases de dev locales).
+
+| Servidor | Motor | Script | Notas |
+|---|---|---|---|
+| Servidor SM | SQL Server (`SuperCerdo`) | `Datos/DB-Procedures/20260919-Alter_Login_DispositivoSeguro_ServidorSM.sql` | verificar en vivo que las columnas faltan antes de correr (`sys.columns`); tiene guards `COL_LENGTH`/`OBJECT_ID` |
+| San Lorenzo | SQL Server 2008 (`SuperCerdo`) | `Datos/DB-Procedures/20260919-Alter_Login_DispositivoSeguro_SanLorenzo.sql` | sin sintaxis nueva; verificar antes de correr |
+| VM CarniSys | Postgres (`carnisys`) | `DatosPostgres/DB-Migrations/20260919-Alter_login_dispositivo_seguro.sql` | correr como `carnisys_admin` (el rol de la app solo tiene SELECT/INSERT en `loginubicacionlog`); subir por SFTP a `C:\WebCore\pending-migrations\` como en 2026-09-14 |
+
+Después del deploy de código (mismos pasos que el resto de esta sección, incluido restaurar `WebCore.dll.config` al final):
+1. Verificar que el login normal sigue igual (switch apagado): `curl -k .../Login` -> 200 y login real.
+2. **Antes de activar el switch de empresa**: cargar el mail de cada empleado no-admin (sin mail no puede autorizar un celular) y que el SMTP esté configurado en el servidor (`SmtpHost`/`SmtpFromEmail` en `WebCore.dll.config`).
+3. Activar desde `/Empresa` ("Exigir dispositivo seguro a no-administradores") o por usuario, y probar con un usuario no-admin desde un celular. **Prueba manual pendiente del mail real** (no automatizable).
+4. Rollback funcional: apagar el switch/tilde (los admin siempre entran, así que nunca queda nadie afuera). Las columnas nuevas no requieren rollback de esquema.

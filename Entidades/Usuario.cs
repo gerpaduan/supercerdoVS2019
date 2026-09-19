@@ -85,6 +85,11 @@ namespace Entidades
         public int IdSucursal { get; set; }
         public bool PermitirLoginFueraSucursal { get; set; }
 
+        // Login solo desde dispositivos seguros (2026-09-19): si true, este usuario (no admin) solo
+        // puede iniciar sesion desde un dispositivo autorizado. Se suma al switch de empresa
+        // Empresa.ExigirDispositivoSeguro. Los admin siempre estan exentos.
+        public bool RequiereDispositivoSeguro { get; set; }
+
         // Usuario compartido de sala de produccion: sin acceso a Ventas ni Finanzas (bloqueado
         // server-side en UsuariosController.GuardarPermisos), y nunca admin (validado al guardar
         // en UsuariosController). Al guardar en Movimientos/Stock/Elaborados, el creador real no

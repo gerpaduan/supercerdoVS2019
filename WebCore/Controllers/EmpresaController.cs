@@ -108,7 +108,8 @@ namespace WebCore.Controllers
                     HorarioDiurnoDesde = diurnoDesde,
                     HorarioDiurnoHasta = diurnoHasta,
                     HorarioTardeDesde = tardeDesde,
-                    HorarioTardeHasta = tardeHasta
+                    HorarioTardeHasta = tardeHasta,
+                    ExigirDispositivoSeguro = model.ExigirDispositivoSeguro
                 });
 
                 TempData["AlertType"] = "success";
@@ -151,7 +152,8 @@ namespace WebCore.Controllers
                 HorarioDiurnoDesde = FormatearHora(datosEmpresa.HorarioDiurnoDesde),
                 HorarioDiurnoHasta = FormatearHora(datosEmpresa.HorarioDiurnoHasta),
                 HorarioTardeDesde = FormatearHora(datosEmpresa.HorarioTardeDesde),
-                HorarioTardeHasta = FormatearHora(datosEmpresa.HorarioTardeHasta)
+                HorarioTardeHasta = FormatearHora(datosEmpresa.HorarioTardeHasta),
+                ExigirDispositivoSeguro = datosEmpresa.ExigirDispositivoSeguro
             };
         }
 

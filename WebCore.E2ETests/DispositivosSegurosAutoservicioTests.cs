@@ -130,7 +130,7 @@ public sealed class DispositivosSegurosAutoservicioTests
 
         // El parrafo largo ya no esta siempre visible en la pagina.
         var textoPagina = await page.Locator(".dispositivos-seguros-page").InnerTextAsync();
-        Assert.DoesNotContain("No es un número que se pueda buscar en la PC a mano", textoPagina);
+        Assert.DoesNotContain("no es un número que se pueda buscar a mano", textoPagina);
 
         var btnInfo = page.Locator("[data-bs-target='#modalInfoNumeroSerie']");
         Assert.Equal(1, await btnInfo.CountAsync());
@@ -139,7 +139,7 @@ public sealed class DispositivosSegurosAutoservicioTests
 
         Assert.Equal(1, await page.Locator("#modalInfoNumeroSerie.show").CountAsync());
         var textoModal = await page.Locator("#modalInfoNumeroSerie .modal-body").InnerTextAsync();
-        Assert.Contains("No es un número que se pueda buscar en la PC a mano", textoModal);
+        Assert.Contains("no es un número que se pueda buscar a mano", textoModal);
         Assert.Contains("agente de impresión CarniSys", textoModal);
 
         await page.CloseAsync();

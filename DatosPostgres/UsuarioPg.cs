@@ -159,6 +159,7 @@ namespace DatosPostgres
                 IdEmpresa = dr["idempresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idempresa"]),
                 PermitirLoginFueraSucursal = GetBool(dr, "permitirloginfuerasucursal"),
                 EsUsuarioProduccion = GetBool(dr, "esusuarioproduccion"),
+                RequiereDispositivoSeguro = GetBool(dr, "requieredispositivoseguro"),
                 IntentosFallidosLogin = GetInt(dr, "intentosfallidoslogin"),
                 Bloqueado = GetBool(dr, "bloqueado"),
                 FechaBloqueoUtc = dr["fechabloqueoutc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fechabloqueoutc"])
@@ -366,6 +367,17 @@ namespace DatosPostgres
                 {
                     p.AddWithValue("idUsuario", oUsuario.Id);
                     p.AddWithValue("esUsuarioProduccion", oUsuario.EsUsuarioProduccion);
+                });
+        }
+
+        public void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario)
+        {
+            DbPg.NonQuery(_connectionString, _idEmpresa,
+                "UPDATE usuarios SET requieredispositivoseguro = @requiere WHERE id = @idUsuario;",
+                p =>
+                {
+                    p.AddWithValue("idUsuario", oUsuario.Id);
+                    p.AddWithValue("requiere", oUsuario.RequiereDispositivoSeguro);
                 });
         }
 
@@ -657,9 +669,9 @@ namespace DatosPostgres
 
             DbPg.NonQuery(_connectionString, _idEmpresa, @"
                 INSERT INTO loginubicacionlog
-                (idusuario, idsucursal, fechahora, latitud, longitud, precisionmetros, distanciametros, permitido, motivo, ip)
+                (idusuario, idsucursal, fechahora, latitud, longitud, precisionmetros, distanciametros, permitido, motivo, ip, iddispositivoseguro, dispositivo)
                 VALUES
-                (@idUsuario, @idSucursal, @fechaHora, @latitud, @longitud, @precisionMetros, @distanciaMetros, @permitido, @motivo, @ip);",
+                (@idUsuario, @idSucursal, @fechaHora, @latitud, @longitud, @precisionMetros, @distanciaMetros, @permitido, @motivo, @ip, @idDispositivoSeguro, @dispositivo);",
                 p =>
                 {
                     p.AddWithValue("idUsuario", log.IdUsuario);
@@ -672,6 +684,8 @@ namespace DatosPostgres
                     p.AddWithValue("permitido", log.Permitido);
                     p.AddWithValue("motivo", log.Motivo ?? string.Empty);
                     p.AddWithValue("ip", log.Ip ?? string.Empty);
+                    p.AddWithValue("idDispositivoSeguro", (object)log.IdDispositivoSeguro ?? DBNull.Value);
+                    p.AddWithValue("dispositivo", string.IsNullOrWhiteSpace(log.Dispositivo) ? (object)DBNull.Value : log.Dispositivo);
                 });
         }
 
@@ -690,10 +704,14 @@ namespace DatosPostgres
                     l.distanciametros AS ""DistanciaMetros"",
                     l.permitido AS ""Permitido"",
                     l.motivo AS ""Motivo"",
-                    l.ip AS ""Ip""
+                    l.ip AS ""Ip"",
+                    l.iddispositivoseguro AS ""IdDispositivoSeguro"",
+                    l.dispositivo AS ""Dispositivo"",
+                    ds.emailalta AS ""DispositivoEmail""
                 FROM loginubicacionlog l
                 INNER JOIN usuarios u ON u.id = l.idusuario
                 LEFT JOIN sucursal s ON s.idsucursal = l.idsucursal
+                LEFT JOIN dispositivosseguros ds ON ds.id = l.iddispositivoseguro
                 WHERE u.idempresa = @idEmpresa
                   AND l.fechahora BETWEEN @desde AND @hasta
                 ORDER BY l.fechahora DESC

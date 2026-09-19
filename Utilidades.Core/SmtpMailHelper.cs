@@ -86,6 +86,58 @@ namespace Utilidades
             }
         }
 
+        // Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md): codigo de 6
+        // digitos para autorizar el navegador desde el que el usuario intenta entrar. Va solo el
+        // codigo (sin link): se escribe en la misma pantalla del login, asi queda atado al navegador
+        // correcto aunque el mail se abra en otro equipo.
+        public static void SendDeviceVerification(string toEmail, string toName, string codigo, int expirationMinutes)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail))
+                throw new ArgumentException("El email destino es obligatorio.", nameof(toEmail));
+
+            string host = ConfigurationManager.AppSettings["SmtpHost"];
+            string fromEmail = ConfigurationManager.AppSettings["SmtpFromEmail"];
+
+            if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(fromEmail))
+                throw new ConfigurationErrorsException("Falta configurar SMTP para autorizar dispositivos.");
+
+            string fromName = ConfigurationManager.AppSettings["SmtpFromName"] ?? "CarniSys";
+            string user = ConfigurationManager.AppSettings["SmtpUser"] ?? "";
+            string pass = NormalizeAppPassword(ConfigurationManager.AppSettings["SmtpPass"] ?? "");
+            bool enableSsl = ParseBool(ConfigurationManager.AppSettings["SmtpEnableSsl"], true);
+            int port = ParseInt(ConfigurationManager.AppSettings["SmtpPort"], 587);
+
+            string subject = "Código para autorizar tu dispositivo - CarniSys";
+            string safeName = string.IsNullOrWhiteSpace(toName) ? "usuario" : toName.Trim();
+            string bodyHtml =
+                "<p>Hola " + WebUtility.HtmlEncode(safeName) + ".</p>" +
+                "<p>Alguien ingresó tu usuario y contraseña desde un dispositivo que todavía no está autorizado.</p>" +
+                "<p>Tu código es: <strong style=\"font-size:22px;letter-spacing:4px\">" + WebUtility.HtmlEncode(codigo) + "</strong></p>" +
+                "<p>Escribilo en la pantalla de CarniSys donde estás intentando ingresar. Vence en " + expirationMinutes + " minutos y solo puede usarse una vez.</p>" +
+                "<p><strong>Si no fuiste vos, no compartas este código</strong> y avisale a tu administrador: alguien conoce tu contraseña.</p>";
+
+            using (var message = new MailMessage())
+            {
+                message.From = new MailAddress(fromEmail, fromName);
+                message.To.Add(new MailAddress(toEmail, safeName));
+                message.Subject = subject;
+                message.Body = bodyHtml;
+                message.IsBodyHtml = true;
+
+                using (var client = new SmtpClient(host, port))
+                {
+                    client.EnableSsl = enableSsl;
+                    client.UseDefaultCredentials = false;
+                    if (!string.IsNullOrWhiteSpace(user))
+                    {
+                        client.Credentials = new NetworkCredential(user, pass);
+                    }
+
+                    client.Send(message);
+                }
+            }
+        }
+
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

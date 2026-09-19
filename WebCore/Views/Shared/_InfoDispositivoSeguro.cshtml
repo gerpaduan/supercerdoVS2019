@@ -1,0 +1,61 @@
+@* Explicacion para el administrador de como funciona "Dispositivo seguro" (login solo desde
+   dispositivos autorizados, 2026-09-19, ver docs/DECISIONS.md). Modal compartido por
+   Empresa/Index.cshtml (switch de empresa) y Usuarios/Editar.cshtml (tilde por usuario): se abre
+   con un boton "i" (data-bs-target="#modalInfoDispositivoSeguro"), mismo patron ya usado en el
+   proyecto (Usuarios/Editar.cshtml #btnInfoLoginFueraSucursal, DispositivosSeguros/Index.cshtml). *@
+<div class="modal fade" id="modalInfoDispositivoSeguro" tabindex="-1" role="dialog" aria-labelledby="tituloInfoDispositivoSeguro">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloInfoDispositivoSeguro"><i class="fas fa-shield-alt mr-2"></i> Cómo funciona “Dispositivo seguro”</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <strong>Para qué sirve:</strong> evitar que una persona ajena a la empresa pueda ingresar aunque conozca la contraseña de un empleado.
+                    Si se exige, un empleado solo puede iniciar sesión desde un <em>dispositivo autorizado</em>; desde cualquier otro, aunque la contraseña sea correcta, no entra hasta autorizarlo.
+                </p>
+
+                <h6 class="mt-3">A quién se le exige</h6>
+                <ul>
+                    <li><strong>A toda la empresa:</strong> switch <em>“Exigir dispositivo seguro a no-administradores”</em> en <em>Mi Empresa</em>. Aplica a todos los empleados que no son administradores.</li>
+                    <li><strong>A usuarios puntuales:</strong> tilde <em>“Requiere dispositivo seguro”</em> en la edición de cada usuario. Sirve para exigirlo solo a algunos aunque el switch de la empresa esté apagado.</li>
+                    <li>Si cualquiera de los dos está activo, se le exige. Los dos vienen <strong>apagados</strong> por defecto: no cambia nada hasta que los actives.</li>
+                    <li><strong>Los administradores nunca quedan afectados</strong>: siempre pueden ingresar (así nunca te quedás sin acceso para autorizar dispositivos).</li>
+                </ul>
+
+                <h6 class="mt-3">Qué ve el empleado y cómo autoriza su dispositivo</h6>
+                <p class="mb-1">Cuando pone bien su contraseña desde un dispositivo no autorizado, aparece la pantalla <em>“Este dispositivo no está autorizado”</em> con dos caminos:</p>
+                <ul>
+                    <li>
+                        <strong>Desde una PC con el agente de impresión CarniSys:</strong> la pantalla le muestra el <em>código de ese equipo</em> (ID de hardware). Se lo pasa a un administrador, que lo carga en
+                        <em>Dispositivos seguros</em> (campo “Número de serie”). Después ya puede ingresar.
+                    </li>
+                    <li>
+                        <strong>Desde un celular, o una PC sin agente:</strong> el sistema le envía un <em>código de 6 dígitos a su mail</em>. Lo escribe en la misma pantalla, le pone un nombre al dispositivo (por ejemplo “Celular de Juan”) y queda autorizado <strong>sin que intervenga un administrador</strong>.
+                        Requiere que el usuario tenga su <strong>mail cargado</strong> y que el envío de mails esté configurado en el servidor.
+                    </li>
+                </ul>
+
+                <h6 class="mt-3">Cómo lo administrás</h6>
+                <ul>
+                    <li>En <em>Dispositivos seguros</em> ves todos los dispositivos autorizados, con su origen (<em>Manual</em> si lo cargó un administrador, <em>Autoservicio</em> si lo autorizó el propio empleado por mail), el mail con el que se autorizó y quién lo creó.</li>
+                    <li>Podés <strong>bloquear</strong> cualquier dispositivo: deja de servir para ingresar y el empleado no lo puede volver a autorizar por su cuenta. Podés desbloquearlo o eliminarlo cuando quieras.</li>
+                    <li>En <em>Auditoría de accesos</em> ves desde qué dispositivo se ingresó cada vez (y los intentos desde dispositivos no autorizados o bloqueados).</li>
+                </ul>
+
+                <h6 class="mt-3">Cosas para tener en cuenta</h6>
+                <ul>
+                    <li><strong>Antes de activar el switch de la empresa, cargá el mail de cada empleado</strong> que use celular: sin mail no puede autorizar su dispositivo por su cuenta y tendría que pedirte ayuda.</li>
+                    <li>El mail de cada empleado tiene que ser <strong>personal</strong>. Si dos personas comparten un mail, cualquiera de ellas puede autorizar dispositivos del otro.</li>
+                    <li>La autorización es <strong>por navegador</strong>: Chrome y Edge de la misma PC son dos dispositivos distintos. Si el empleado borra los datos del navegador o usa una ventana de incógnito, tiene que autorizarlo de nuevo.</li>
+                    <li>Esto frena a personas externas; un equipo ya autorizado sigue permitiendo el acceso a quien lo use. Si perdés un equipo o un empleado se va, bloqueá sus dispositivos.</li>
+                    <li>Para apagarlo en cualquier momento, desactivá el switch o el tilde: es inmediato y nadie queda sin acceso.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>

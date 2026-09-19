@@ -50,5 +50,9 @@ namespace WebCore.Models
 
         [Display(Name = "Jornada tarde - hasta")]
         public string HorarioTardeHasta { get; set; } = "";
+
+        // Login solo desde dispositivos seguros (2026-09-19, ver docs/DECISIONS.md).
+        [Display(Name = "Exigir dispositivo seguro a no-administradores")]
+        public bool ExigirDispositivoSeguro { get; set; }
     }
 }

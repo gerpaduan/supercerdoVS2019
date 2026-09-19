@@ -49,6 +49,7 @@
                             <th>Sucursal</th>
                             <th class="text-center">Resultado</th>
                             <th>Motivo</th>
+                            <th>Dispositivo</th>
                             <th>IP</th>
                             <th style="width: 130px;"></th>
                         </tr>
@@ -57,7 +58,7 @@
                         @if (Model.Items == null || Model.Items.Count == 0)
                         {
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No hay accesos registrados en el rango seleccionado.</td>
+                                <td colspan="8" class="text-center text-muted py-4">No hay accesos registrados en el rango seleccionado.</td>
                             </tr>
                         }
                         else
@@ -79,6 +80,16 @@
                                         }
                                     </td>
                                     <td class="text-muted small">@item.Motivo</td>
+                                    <td class="small">
+                                        @if (!string.IsNullOrWhiteSpace(item.Dispositivo))
+                                        {
+                                            <span title="@(!string.IsNullOrWhiteSpace(item.DispositivoEmail) ? "Autorizado con el mail " + item.DispositivoEmail : "Dispositivo seguro cargado por un administrador")"><i class="fas fa-shield-alt text-success mr-1"></i>@item.Dispositivo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="Ingresó desde un dispositivo no registrado como seguro">Sin dispositivo registrado</span>
+                                        }
+                                    </td>
                                     <td class="text-muted small">@(!string.IsNullOrWhiteSpace(item.Ip) ? item.Ip : "-")</td>
                                     <td>
                                         @if (item.TieneCoordenadas)

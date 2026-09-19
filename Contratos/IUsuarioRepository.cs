@@ -29,6 +29,7 @@ namespace Contratos
         void setSucursalUsuario(Entidades.Usuario oUsuario);
         void setPermitirLoginFueraSucursal(Entidades.Usuario oUsuario);
         void setEsUsuarioProduccion(Entidades.Usuario oUsuario);
+        void setRequiereDispositivoSeguro(Entidades.Usuario oUsuario);
         void ActualizarEstadoBloqueoLogin(Entidades.Usuario oUsuario, bool sinRestriccionDeTenant = false);
         List<Entidades.Usuario> BuscarUsuariosPorIdentificador(string identificador, bool soloActivos);
         void ActualizarPasswordSeguro(int idUsuario, string claveLegacy, string passwordHash, string passwordSalt, int passwordHashIterations);

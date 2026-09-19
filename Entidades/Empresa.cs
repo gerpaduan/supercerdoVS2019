@@ -45,6 +45,10 @@ namespace Entidades
         public TimeSpan HorarioDiurnoHasta { get; set; }
         public TimeSpan HorarioTardeDesde { get; set; }
         public TimeSpan HorarioTardeHasta { get; set; }
+
+        // Login solo desde dispositivos seguros (2026-09-19): exige dispositivo autorizado a todos los
+        // usuarios no-admin de la empresa. Default false (no cambia nada hasta que el admin lo active).
+        public bool ExigirDispositivoSeguro { get; set; }
     }
 
 }
